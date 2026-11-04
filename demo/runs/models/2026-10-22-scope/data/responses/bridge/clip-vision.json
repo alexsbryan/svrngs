@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "1760"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"The screenshot shows a web page with a navigation bar at the top, containing links to \\\"The house,\\\" \\\"Rings,\\\" \\\"Pantry,\\\" and \\\"People.\\\" Below the navigation bar, there is a section titled \\\"Garden room\\\" with a description indicating that it has been booked by Ana for Saturday. The room is listed in the pantry. There are two buttons below this description: \\\"Open the room\\\" and \\\"Invite someone.\\\"\\n\\nBelow this section, there is another section titled \\\"What the group keeps,\\\" which displays a table with three rows. The table has three columns: \\\"Thing,\\\" \\\"Kept by,\\\" and \\\"Updated.\\\" The first row of the table shows \\\"Garden room\\\" in the \\\"Thing\\\" column, \\\"Ana\\\" in the \\\"Kept by\\\" column, and \\\"Thursday\\\" in the \\\"Updated\\\" column. The second row shows \\\"Album\\\" in the \\\"Thing\\\" column, \\\"Sam\\\" in the \\\"Kept by\\\" column, and \\\"Wednesday\\\" in the \\\"Updated\\\" column. The third row shows \\\"Money owed\\\" in the \\\"Thing\\\" column, \\\"Bo\\\" in the \\\"Kept by\\\" column, and \\\"Monday\\\" in the \\\"Updated\\\" column.\\n\\nThere are no visible visual defects such as clipping, overlap, cut-off content, or errors in the layout.\"}}],\"created\":1792716299,\"model\":\"ana/vision\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":269,\"prompt_tokens\":704,\"total_tokens\":973,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-GvCKvxcfSOPVK4P1uS4GMeRYGBtpDUaO\",\"timings\":{\"cache_n\":0,\"prompt_n\":704,\"prompt_ms\":1779.864,\"prompt_per_token_ms\":2.528215909090909,\"prompt_per_second\":395.53583869329344,\"predicted_n\":269,\"predicted_ms\":2319.714,\"predicted_per_token_ms\":8.623472118959107,\"predicted_per_second\":115.9625712480073}}"
+}

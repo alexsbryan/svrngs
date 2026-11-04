@@ -12,20 +12,29 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { driving, launch } from './page.mjs';
+import { driving, inApp, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 await driving(args, async ({ page, context, logs }) => {
-  const away = (url) => url.hostname.endsWith('.localhost') && !url.pathname.endsWith('/open.html');
-  await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.locator('#lent button', { hasText: args.open }).click()]);
-  await page.waitForFunction(() => document.title === 'the app', null, { timeout: 90_000 }).catch(() => {});
-  const link = await page.evaluate(() => document.getElementById('link')?.getAttribute('href') ?? null);
+  const away = (url) => inApp(url) && !url.pathname.endsWith('/open.html');
+  await Promise.all([
+    page.waitForURL(away, { timeout: 90_000 }),
+    page.locator('#lent button', { hasText: args.open }).click(),
+  ]);
+  await page
+    .waitForFunction(() => document.title === 'the app', null, { timeout: 90_000 })
+    .catch(() => {});
+  const link = await page.evaluate(
+    () => document.getElementById('link')?.getAttribute('href') ?? null,
+  );
   let landed = null;
   if (link) {
     const tab = await context.newPage();
     tab.on('pageerror', (e) => logs.push(`tab pageerror: ${e}`));
     await tab.goto(link);
-    await tab.waitForFunction(() => document.title === 'the app at a path', null, { timeout: 90_000 }).catch(() => {});
+    await tab
+      .waitForFunction(() => document.title === 'the app at a path', null, { timeout: 90_000 })
+      .catch(() => {});
     landed = { url: tab.url(), title: await tab.title() };
   }
   // The same link on a computer whose browser keeps no group: its person
@@ -41,14 +50,29 @@ await driving(args, async ({ page, context, logs }) => {
       await tab.goto(link);
       await tab.waitForSelector('#status.good, #status.bad', { timeout: 90_000 }).catch(() => {});
       const said = await tab.evaluate(() => document.getElementById('status').textContent);
-      const shown = await tab.evaluate(() => (document.getElementById('computer').hidden ? null : document.getElementById('line').textContent));
+      const shown = await tab.evaluate(() =>
+        document.getElementById('computer').hidden
+          ? null
+          : document.getElementById('line').textContent,
+      );
       await tab.goto(args.home);
       const box = tab.locator('#open input');
       let opened = null;
-      if (shown && (await box.waitFor({ timeout: 30_000 }).then(() => true, () => false))) {
+      if (
+        shown &&
+        (await box.waitFor({ timeout: 30_000 }).then(
+          () => true,
+          () => false,
+        ))
+      ) {
         await box.fill(shown);
-        const [lent] = await Promise.all([desk.context.waitForEvent('page'), tab.locator('#open button').click()]);
-        await lent.waitForFunction(() => document.title === 'the app at a path', null, { timeout: 90_000 }).catch(() => {});
+        const [lent] = await Promise.all([
+          desk.context.waitForEvent('page'),
+          tab.locator('#open button').click(),
+        ]);
+        await lent
+          .waitForFunction(() => document.title === 'the app at a path', null, { timeout: 90_000 })
+          .catch(() => {});
         opened = { url: lent.url(), title: await lent.title() };
       }
       computer = { said, shown, opened };

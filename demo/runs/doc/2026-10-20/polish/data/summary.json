@@ -1,0 +1,1367 @@
+{
+ "start": 1792529413032,
+ "mac_load": 6.7880859375,
+ "fedora_load": 1.78,
+ "clock": {
+  "fedora_minus_mac_ms": 4,
+  "rtt_ms": 5
+ },
+ "page": "ac15e0ef4110e9570f9600e5dd5790fe7c6945a6ed4bf2cbd97021d96f1ff351  -\napp.js?v=1be454a5db58",
+ "lend": {
+  "id": 6,
+  "ms": 3453,
+  "link": "https://group.svrnme.sh/#AiEACa4oMNUVaqpH11xeqbxGAaYxJKRp0Q_7-MEcj2uDlAKr5hsRqzWTBLsVjS_jwWh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8",
+  "port": 41767,
+  "share": 0,
+  "share_said": "lend doc (port 41767) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 41767 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare doc` stops lending it.\nIf doc takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"
+ },
+ "open": {
+  "bo": {
+   "joined": {
+    "ms": 3486,
+    "status": "You’re in House (Alex’s, since 20 Oct), as Bo",
+    "listed": [
+     "Alex’s doc"
+    ]
+   },
+   "pressed": {
+    "ms": 2303,
+    "at": 1792529423897,
+    "url": "https://ffaawnukhdmum4zmk9nz21zl1udadluufvvhwxks9s6pcjfsqrbt1556x7dhxv.group.svrnme.sh/"
+   }
+  },
+  "cy": {
+   "id": 7,
+   "joined_ms": 3466,
+   "lender": "Alex",
+   "origin": "http://ffaawnukhdmum4zmk9nz21zl1udadluufvvhwxks9s6pcjfsqrbt1556x7dhxv.localhost:41993/",
+   "opened": {
+    "ms": 167,
+    "at": 1792529421809
+   }
+  },
+  "di": {
+   "id": 8,
+   "joined": {
+    "ms": 3530,
+    "status": "You’re in House (Alex’s, since 20 Oct), as Di",
+    "listed": [
+     "Alex’s doc"
+    ]
+   },
+   "pressed": {
+    "ms": 2252,
+    "at": 1792529423983,
+    "url": "https://ffaawnukhdmum4zmk9nz21zl1udadluufvvhwxks9s6pcjfsqrbt1556x7dhxv.group.svrnme.sh/"
+   }
+  }
+ },
+ "named": [
+  {
+   "ms": 1,
+   "at": 1792529423985
+  },
+  {
+   "id": 9,
+   "ms": 2,
+   "at": 1792529423992
+  },
+  {
+   "id": 10,
+   "ms": 0,
+   "at": 1792529423991
+  }
+ ],
+ "everyone": [
+  {
+   "ms": 1,
+   "at": 1792529423994
+  },
+  {
+   "id": 11,
+   "ms": 1,
+   "at": 1792529424000
+  },
+  {
+   "id": 12,
+   "ms": 55,
+   "at": 1792529424054
+  }
+ ],
+ "read_open": [
+  {
+   "title": "Alex’s doc",
+   "you": "You’re Bo. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        \n        Goodnight from Alex’s.\n      ",
+   "kept": "",
+   "back": "",
+   "editor": "\n",
+   "notes": "",
+   "night_shown": false,
+   "paragraphs": [
+    ""
+   ],
+   "note_lines": [],
+   "carets": [],
+   "placed": [],
+   "errors": []
+  },
+  {
+   "id": 13,
+   "title": "Alex’s doc",
+   "you": "You’re Cy. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        \n        Goodnight from Alex’s.\n      ",
+   "kept": "",
+   "back": "",
+   "editor": "\n",
+   "notes": "",
+   "night_shown": false,
+   "paragraphs": [
+    ""
+   ],
+   "note_lines": [],
+   "carets": [],
+   "placed": [],
+   "errors": []
+  },
+  {
+   "id": 14,
+   "title": "Alex’s doc",
+   "you": "You’re Di. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        \n        Goodnight from Alex’s.\n      ",
+   "kept": "",
+   "back": "",
+   "editor": "\n",
+   "notes": "",
+   "night_shown": false,
+   "paragraphs": [
+    ""
+   ],
+   "note_lines": [],
+   "carets": [],
+   "placed": [],
+   "errors": []
+  }
+ ],
+ "first": {
+  "at": 1792529424266
+ },
+ "first_seen": [
+  {
+   "ms": 0,
+   "at": 1792529424267
+  },
+  {
+   "id": 15,
+   "ms": 53,
+   "at": 1792529424327
+  },
+  {
+   "id": 16,
+   "ms": 105,
+   "at": 1792529424379
+  }
+ ],
+ "typed": [
+  {
+   "started": 1792529424441,
+   "at": 1792529424459
+  },
+  {
+   "id": 17,
+   "started": 1792529424453,
+   "at": 1792529424474
+  },
+  {
+   "id": 18,
+   "started": 1792529424453,
+   "at": 1792529424471
+  }
+ ],
+ "live": [
+  {
+   "reader": "bo",
+   "ms_after_last_other_keystroke": 108
+  },
+  {
+   "reader": "cy",
+   "ms_after_last_other_keystroke": 68
+  },
+  {
+   "reader": "di",
+   "ms_after_last_other_keystroke": 110
+  }
+ ],
+ "notes_wait": [
+  {
+   "ms": 1,
+   "at": 1792529424590
+  },
+  {
+   "id": 21,
+   "ms": 2,
+   "at": 1792529424684
+  },
+  {
+   "id": 22,
+   "ms": 2,
+   "at": 1792529424684
+  }
+ ],
+ "read_typed": [
+  {
+   "title": "Alex’s doc",
+   "you": "You’re Bo. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        \n        Goodnight from Alex’s.\n      ",
+   "kept": "",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speakerDi\n\n\nCy brings drinksCy\n\nBo brings chips\n\n",
+   "notes": "last edited by Bo 0s agolast edited by Di 0s agolast edited by Cy 0s agolast edited by Bo 0s ago",
+   "night_shown": false,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips"
+   ],
+   "note_lines": [
+    "last edited by Bo 0s ago",
+    "last edited by Di 0s ago",
+    "last edited by Cy 0s ago",
+    "last edited by Bo 0s ago"
+   ],
+   "carets": [
+    "Di",
+    "Cy"
+   ],
+   "placed": [
+    {
+     "note": "last edited by Bo 0s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 0s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 0s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 0s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 23,
+   "title": "Alex’s doc",
+   "you": "You’re Cy. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        \n        Goodnight from Alex’s.\n      ",
+   "kept": "",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\nDi\n\n\n\n\nCy brings drinks\n\nBo brings chips\nBo\n\n",
+   "notes": "last edited by Bo 0s ago\nlast edited by Di 0s ago\nlast edited by Cy 0s ago\nlast edited by Bo 0s ago",
+   "night_shown": false,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips"
+   ],
+   "note_lines": [
+    "last edited by Bo 2s ago",
+    "last edited by Di 2s ago",
+    "last edited by Cy 2s ago",
+    "last edited by Bo 2s ago"
+   ],
+   "carets": [
+    "Di",
+    "Bo"
+   ],
+   "placed": [
+    {
+     "note": "last edited by Bo 2s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 2s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 2s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 2s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 24,
+   "title": "Alex’s doc",
+   "you": "You’re Di. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        \n        Goodnight from Alex’s.\n      ",
+   "kept": "",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\nCy\n\n\n\nBo brings chips\nBo\n\n",
+   "notes": "last edited by Bo 0s ago\nlast edited by Di 0s ago\nlast edited by Cy 0s ago\nlast edited by Bo 0s ago",
+   "night_shown": false,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips"
+   ],
+   "note_lines": [
+    "last edited by Bo 0s ago",
+    "last edited by Di 0s ago",
+    "last edited by Cy 0s ago",
+    "last edited by Bo 0s ago"
+   ],
+   "carets": [
+    "Cy",
+    "Bo"
+   ],
+   "placed": [
+    {
+     "note": "last edited by Bo 0s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 0s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 0s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 0s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  }
+ ],
+ "lid": {
+  "closed": 1792529427002.5,
+  "opened": 1792529472009.5
+ },
+ "goodnight": [
+  {
+   "who": "bo",
+   "ms_after_lid": 4451
+  },
+  {
+   "who": "cy",
+   "ms_after_lid": 4294
+  },
+  {
+   "who": "di",
+   "ms_after_lid": 4701
+  }
+ ],
+ "read_night": [
+  {
+   "title": "Alex’s doc",
+   "you": "You’re Bo. Everyone here writes in it at once.",
+   "here": "Here now: Bo",
+   "night": "☾ Alex’s window is dark\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nGoodnight from Alex’s.\n\n",
+   "kept": "",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\nCy brings drinks\n\nBo brings chips\n\n",
+   "notes": "last edited by Bo 7s agolast edited by Di 7s agolast edited by Cy 7s agolast edited by Bo 7s ago",
+   "night_shown": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips"
+   ],
+   "note_lines": [
+    "last edited by Bo 7s ago",
+    "last edited by Di 7s ago",
+    "last edited by Cy 7s ago",
+    "last edited by Bo 7s ago"
+   ],
+   "carets": [],
+   "placed": [
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 7s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 7s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 30,
+   "title": "Alex’s doc",
+   "you": "You’re Cy. Everyone here writes in it at once.",
+   "here": "Here now: Cy",
+   "night": "☾ Alex’s window is dark\n\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nGoodnight from Alex’s.",
+   "kept": "",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\n\nBo brings chips",
+   "notes": "last edited by Bo 7s ago\nlast edited by Di 7s ago\nlast edited by Cy 7s ago\nlast edited by Bo 7s ago",
+   "night_shown": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips"
+   ],
+   "note_lines": [
+    "last edited by Bo 7s ago",
+    "last edited by Di 7s ago",
+    "last edited by Cy 7s ago",
+    "last edited by Bo 7s ago"
+   ],
+   "carets": [],
+   "placed": [
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 7s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 7s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 31,
+   "title": "Alex’s doc",
+   "you": "You’re Di. Everyone here writes in it at once.",
+   "here": "Here now: Di",
+   "night": "☾ Alex’s window is dark\n\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nGoodnight from Alex’s.",
+   "kept": "",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\n\nBo brings chips",
+   "notes": "last edited by Bo 7s ago\nlast edited by Di 7s ago\nlast edited by Cy 7s ago\nlast edited by Bo 7s ago",
+   "night_shown": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips"
+   ],
+   "note_lines": [
+    "last edited by Bo 7s ago",
+    "last edited by Di 7s ago",
+    "last edited by Cy 7s ago",
+    "last edited by Bo 7s ago"
+   ],
+   "carets": [],
+   "placed": [
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 7s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 7s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  }
+ ],
+ "typed_away": [
+  {
+   "started": 1792529431789,
+   "at": 1792529431805
+  },
+  {
+   "id": 32,
+   "started": 1792529431795,
+   "at": 1792529431810
+  },
+  {
+   "id": 33,
+   "started": 1792529431797,
+   "at": 1792529431813
+  }
+ ],
+ "kept_own": [
+  {
+   "ms": 0,
+   "at": 1792529431812
+  },
+  {
+   "id": 34,
+   "ms": 1,
+   "at": 1792529431823
+  },
+  {
+   "id": 35,
+   "ms": 1,
+   "at": 1792529431823
+  }
+ ],
+ "kept_said": [
+  {
+   "ms": 0,
+   "at": 1792529431823
+  },
+  {
+   "id": 36,
+   "ms": 0,
+   "at": 1792529431830
+  },
+  {
+   "id": 37,
+   "ms": 1,
+   "at": 1792529431831
+  }
+ ],
+ "read_away": [
+  {
+   "title": "Alex’s doc",
+   "you": "You’re Bo. Everyone here writes in it at once.",
+   "here": "Here now: Bo",
+   "night": "☾ Alex’s window is dark\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nWhat you’ve written since is kept here.\n\nGoodnight from Alex’s.\n\n",
+   "kept": "What you’ve written since is kept here.",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\nCy brings drinks\n\nBo brings chips\n\nBo, away: ice\n\n",
+   "notes": "last edited by Bo 7s agolast edited by Di 7s agolast edited by Cy 7s agolast edited by Bo 7s ago",
+   "night_shown": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Bo, away: ice"
+   ],
+   "note_lines": [
+    "last edited by Bo 7s ago",
+    "last edited by Di 7s ago",
+    "last edited by Cy 7s ago",
+    "last edited by Bo 7s ago"
+   ],
+   "carets": [],
+   "placed": [
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 7s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 7s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 38,
+   "title": "Alex’s doc",
+   "you": "You’re Cy. Everyone here writes in it at once.",
+   "here": "Here now: Cy",
+   "night": "☾ Alex’s window is dark\n\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nWhat you’ve written since is kept here.\n\nGoodnight from Alex’s.",
+   "kept": "What you’ve written since is kept here.",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\n\nBo brings chips\n\nCy, away: cups",
+   "notes": "last edited by Bo 7s ago\nlast edited by Di 7s ago\nlast edited by Cy 7s ago\nlast edited by Bo 7s ago",
+   "night_shown": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Cy, away: cups"
+   ],
+   "note_lines": [
+    "last edited by Bo 7s ago",
+    "last edited by Di 7s ago",
+    "last edited by Cy 7s ago",
+    "last edited by Bo 7s ago"
+   ],
+   "carets": [],
+   "placed": [
+    {
+     "note": "last edited by Bo 8s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 7s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 7s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 39,
+   "title": "Alex’s doc",
+   "you": "You’re Di. Everyone here writes in it at once.",
+   "here": "Here now: Di",
+   "night": "☾ Alex’s window is dark\n\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nWhat you’ve written since is kept here.\n\nGoodnight from Alex’s.",
+   "kept": "What you’ve written since is kept here.",
+   "back": "",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\n\nBo brings chips\n\nDi, away: a playlist",
+   "notes": "last edited by Bo 7s ago\nlast edited by Di 7s ago\nlast edited by Cy 7s ago\nlast edited by Bo 7s ago",
+   "night_shown": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Di, away: a playlist"
+   ],
+   "note_lines": [
+    "last edited by Bo 7s ago",
+    "last edited by Di 7s ago",
+    "last edited by Cy 7s ago",
+    "last edited by Bo 7s ago"
+   ],
+   "carets": [],
+   "placed": [
+    {
+     "note": "last edited by Bo 8s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 7s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 7s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 7s ago",
+     "block": 3
+    }
+   ],
+   "errors": []
+  }
+ ],
+ "writers": {
+  "Friday: movie night at 8": "Bo",
+  "Bo brings chips": "Bo",
+  "Bo, away: ice": "Bo",
+  "Cy brings drinks": "Cy",
+  "Cy, away: cups": "Cy",
+  "Di brings a speaker": "Di",
+  "Di, away: a playlist": "Di"
+ },
+ "joined": [
+  {
+   "who": "bo",
+   "goodnight_gone_ms": 3570,
+   "all_six_ms": 3623
+  },
+  {
+   "who": "cy",
+   "goodnight_gone_ms": 2299,
+   "all_six_ms": 3602
+  },
+  {
+   "who": "di",
+   "goodnight_gone_ms": 374,
+   "all_six_ms": 3602
+  }
+ ],
+ "read_joined": [
+  {
+   "title": "Alex’s doc",
+   "you": "You’re Bo. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        What you’ve written since is kept here.\n        Goodnight from Alex’s.\n      ",
+   "kept": "What you’ve written since is kept here.",
+   "back": "Alex’s computer answered, and what you wrote meanwhile joined everyone’s writing.",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\nCy brings drinks\n\nBo brings chips\n\nDi, away: a playlistDi\n\nCy, away: cupsCy\n\nBo, away: ice\n\n",
+   "notes": "last edited by Bo 52s agolast edited by Di 51s agolast edited by Cy 51s agolast edited by Bo 51s agolast edited by Di 3s agolast edited by Cy 2s agolast edited by Bo 0s ago",
+   "night_shown": false,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Di, away: a playlist",
+    "Cy, away: cups",
+    "Bo, away: ice"
+   ],
+   "note_lines": [
+    "last edited by Bo 52s ago",
+    "last edited by Di 51s ago",
+    "last edited by Cy 51s ago",
+    "last edited by Bo 51s ago",
+    "last edited by Di 3s ago",
+    "last edited by Cy 2s ago",
+    "last edited by Bo 0s ago"
+   ],
+   "carets": [
+    "Di",
+    "Cy"
+   ],
+   "placed": [
+    {
+     "note": "last edited by Bo 52s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 51s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 51s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 51s ago",
+     "block": 3
+    },
+    {
+     "note": "last edited by Di 3s ago",
+     "block": 4
+    },
+    {
+     "note": "last edited by Cy 2s ago",
+     "block": 5
+    },
+    {
+     "note": "last edited by Bo 0s ago",
+     "block": 6
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 46,
+   "title": "Alex’s doc",
+   "you": "You’re Cy. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        What you’ve written since is kept here.\n        Goodnight from Alex’s.\n      ",
+   "kept": "What you’ve written since is kept here.",
+   "back": "Alex’s computer answered, and what you wrote meanwhile joined everyone’s writing.",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\n\nBo brings chips\n\nDi, away: a playlist\nDi\n\n\n\nCy, away: cups\n\nBo, away: ice\nBo\n\n",
+   "notes": "last edited by Bo 52s ago\nlast edited by Di 52s ago\nlast edited by Cy 52s ago\nlast edited by Bo 52s ago\nlast edited by Di 4s ago\nlast edited by Cy 2s ago\nlast edited by Bo 1s ago",
+   "night_shown": false,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Di, away: a playlist",
+    "Cy, away: cups",
+    "Bo, away: ice"
+   ],
+   "note_lines": [
+    "last edited by Bo 52s ago",
+    "last edited by Di 52s ago",
+    "last edited by Cy 52s ago",
+    "last edited by Bo 52s ago",
+    "last edited by Di 4s ago",
+    "last edited by Cy 2s ago",
+    "last edited by Bo 1s ago"
+   ],
+   "carets": [
+    "Di",
+    "Bo"
+   ],
+   "placed": [
+    {
+     "note": "last edited by Bo 52s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 52s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 52s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 52s ago",
+     "block": 3
+    },
+    {
+     "note": "last edited by Di 4s ago",
+     "block": 4
+    },
+    {
+     "note": "last edited by Cy 2s ago",
+     "block": 5
+    },
+    {
+     "note": "last edited by Bo 1s ago",
+     "block": 6
+    }
+   ],
+   "errors": []
+  },
+  {
+   "id": 47,
+   "title": "Alex’s doc",
+   "you": "You’re Di. Everyone here writes in it at once.",
+   "here": "Here now: Bo, Cy, Di",
+   "night": "\n        ☾ Alex’s window is dark\n        Alex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n        What you’ve written since is kept here.\n        Goodnight from Alex’s.\n      ",
+   "kept": "What you’ve written since is kept here.",
+   "back": "Alex’s computer answered, and what you wrote meanwhile joined everyone’s writing.",
+   "editor": "Friday: movie night at 8\n\nDi brings a speaker\n\n\n\nCy brings drinks\n\nBo brings chips\n\nDi, away: a playlist\n\nCy, away: cups\nCy\n\n\n\nBo, away: ice\nBo\n\n",
+   "notes": "last edited by Bo 52s ago\nlast edited by Di 51s ago\nlast edited by Cy 51s ago\nlast edited by Bo 51s ago\nlast edited by Di 3s ago\nlast edited by Cy 2s ago\nlast edited by Bo 0s ago",
+   "night_shown": false,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Di, away: a playlist",
+    "Cy, away: cups",
+    "Bo, away: ice"
+   ],
+   "note_lines": [
+    "last edited by Bo 52s ago",
+    "last edited by Di 51s ago",
+    "last edited by Cy 51s ago",
+    "last edited by Bo 51s ago",
+    "last edited by Di 3s ago",
+    "last edited by Cy 2s ago",
+    "last edited by Bo 0s ago"
+   ],
+   "carets": [
+    "Cy",
+    "Bo"
+   ],
+   "placed": [
+    {
+     "note": "last edited by Bo 52s ago",
+     "block": 0
+    },
+    {
+     "note": "last edited by Di 51s ago",
+     "block": 1
+    },
+    {
+     "note": "last edited by Cy 51s ago",
+     "block": 2
+    },
+    {
+     "note": "last edited by Bo 51s ago",
+     "block": 3
+    },
+    {
+     "note": "last edited by Di 3s ago",
+     "block": 4
+    },
+    {
+     "note": "last edited by Cy 2s ago",
+     "block": 5
+    },
+    {
+     "note": "last edited by Bo 0s ago",
+     "block": 6
+    }
+   ],
+   "errors": []
+  }
+ ],
+ "fresh": {
+  "id": 48,
+  "opened": {
+   "ms": 262,
+   "at": 1792529477609
+  },
+  "has": {
+   "ms": 8,
+   "at": 1792529477617
+  },
+  "paragraphs": [
+   "Friday: movie night at 8",
+   "Di brings a speaker",
+   "Cy brings drinks",
+   "Bo brings chips",
+   "Di, away: a playlist",
+   "Cy, away: cups",
+   "Bo, away: ice"
+  ],
+  "note_lines": [
+   "last edited by Bo 53s ago",
+   "last edited by Di 53s ago",
+   "last edited by Cy 53s ago",
+   "last edited by Bo 53s ago",
+   "last edited by Di 5s ago",
+   "last edited by Cy 3s ago",
+   "last edited by Bo 2s ago"
+  ]
+ },
+ "acts": {
+  "id": 49,
+  "acts": [
+   {
+    "seq": 1,
+    "person": "Bo",
+    "ts": 1792529424.274
+   },
+   {
+    "seq": 2,
+    "person": "Bo",
+    "ts": 1792529424.276
+   },
+   {
+    "seq": 3,
+    "person": "Bo",
+    "ts": 1792529424.277
+   },
+   {
+    "seq": 4,
+    "person": "Bo",
+    "ts": 1792529424.278
+   },
+   {
+    "seq": 5,
+    "person": "Bo",
+    "ts": 1792529424.279
+   },
+   {
+    "seq": 6,
+    "person": "Bo",
+    "ts": 1792529424.28
+   },
+   {
+    "seq": 7,
+    "person": "Bo",
+    "ts": 1792529424.285
+   },
+   {
+    "seq": 8,
+    "person": "Bo",
+    "ts": 1792529424.286
+   },
+   {
+    "seq": 9,
+    "person": "Bo",
+    "ts": 1792529424.287
+   },
+   {
+    "seq": 10,
+    "person": "Bo",
+    "ts": 1792529424.2879999
+   },
+   {
+    "seq": 11,
+    "person": "Bo",
+    "ts": 1792529424.2889998
+   },
+   {
+    "seq": 12,
+    "person": "Bo",
+    "ts": 1792529424.291
+   },
+   {
+    "seq": 13,
+    "person": "Bo",
+    "ts": 1792529424.2919998
+   },
+   {
+    "seq": 14,
+    "person": "Bo",
+    "ts": 1792529424.2929997
+   },
+   {
+    "seq": 15,
+    "person": "Bo",
+    "ts": 1792529424.2939997
+   },
+   {
+    "seq": 16,
+    "person": "Bo",
+    "ts": 1792529424.309
+   },
+   {
+    "seq": 17,
+    "person": "Bo",
+    "ts": 1792529424.31
+   },
+   {
+    "seq": 18,
+    "person": "Bo",
+    "ts": 1792529424.311
+   },
+   {
+    "seq": 19,
+    "person": "Bo",
+    "ts": 1792529424.312
+   },
+   {
+    "seq": 20,
+    "person": "Bo",
+    "ts": 1792529424.322
+   },
+   {
+    "seq": 21,
+    "person": "Bo",
+    "ts": 1792529424.323
+   },
+   {
+    "seq": 22,
+    "person": "Bo",
+    "ts": 1792529424.324
+   },
+   {
+    "seq": 23,
+    "person": "Bo",
+    "ts": 1792529424.3249998
+   },
+   {
+    "seq": 24,
+    "person": "Bo",
+    "ts": 1792529424.3259997
+   },
+   {
+    "seq": 25,
+    "person": "Cy",
+    "ts": 1792529424.453
+   },
+   {
+    "seq": 26,
+    "person": "Cy",
+    "ts": 1792529424.457
+   },
+   {
+    "seq": 27,
+    "person": "Cy",
+    "ts": 1792529424.47
+   },
+   {
+    "seq": 28,
+    "person": "Cy",
+    "ts": 1792529424.471
+   },
+   {
+    "seq": 29,
+    "person": "Cy",
+    "ts": 1792529424.472
+   },
+   {
+    "seq": 30,
+    "person": "Cy",
+    "ts": 1792529424.4729998
+   },
+   {
+    "seq": 31,
+    "person": "Cy",
+    "ts": 1792529424.4739997
+   },
+   {
+    "seq": 32,
+    "person": "Cy",
+    "ts": 1792529424.4749997
+   },
+   {
+    "seq": 33,
+    "person": "Cy",
+    "ts": 1792529424.4759996
+   },
+   {
+    "seq": 34,
+    "person": "Cy",
+    "ts": 1792529424.4769995
+   },
+   {
+    "seq": 35,
+    "person": "Cy",
+    "ts": 1792529424.4779994
+   },
+   {
+    "seq": 36,
+    "person": "Cy",
+    "ts": 1792529424.4789994
+   },
+   {
+    "seq": 37,
+    "person": "Cy",
+    "ts": 1792529424.4799993
+   },
+   {
+    "seq": 38,
+    "person": "Cy",
+    "ts": 1792529424.4809992
+   },
+   {
+    "seq": 39,
+    "person": "Cy",
+    "ts": 1792529424.4819992
+   },
+   {
+    "seq": 40,
+    "person": "Cy",
+    "ts": 1792529424.482999
+   },
+   {
+    "seq": 41,
+    "person": "Cy",
+    "ts": 1792529424.483999
+   },
+   {
+    "seq": 42,
+    "person": "Di",
+    "ts": 1792529424.484999
+   },
+   {
+    "seq": 43,
+    "person": "Bo",
+    "ts": 1792529424.4859989
+   },
+   {
+    "seq": 44,
+    "person": "Bo",
+    "ts": 1792529424.4869988
+   },
+   {
+    "seq": 45,
+    "person": "Bo",
+    "ts": 1792529424.4879987
+   },
+   {
+    "seq": 46,
+    "person": "Bo",
+    "ts": 1792529424.4889987
+   },
+   {
+    "seq": 47,
+    "person": "Bo",
+    "ts": 1792529424.4899986
+   },
+   {
+    "seq": 48,
+    "person": "Bo",
+    "ts": 1792529424.4909985
+   },
+   {
+    "seq": 49,
+    "person": "Di",
+    "ts": 1792529424.4919984
+   },
+   {
+    "seq": 50,
+    "person": "Di",
+    "ts": 1792529424.4929984
+   },
+   {
+    "seq": 51,
+    "person": "Di",
+    "ts": 1792529424.4939983
+   },
+   {
+    "seq": 52,
+    "person": "Bo",
+    "ts": 1792529424.4949982
+   },
+   {
+    "seq": 53,
+    "person": "Bo",
+    "ts": 1792529424.4959981
+   },
+   {
+    "seq": 54,
+    "person": "Bo",
+    "ts": 1792529424.496998
+   },
+   {
+    "seq": 55,
+    "person": "Bo",
+    "ts": 1792529424.497998
+   },
+   {
+    "seq": 56,
+    "person": "Bo",
+    "ts": 1792529424.498998
+   },
+   {
+    "seq": 57,
+    "person": "Bo",
+    "ts": 1792529424.4999979
+   },
+   {
+    "seq": 58,
+    "person": "Bo",
+    "ts": 1792529424.5009978
+   },
+   {
+    "seq": 59,
+    "person": "Di",
+    "ts": 1792529424.5019977
+   },
+   {
+    "seq": 60,
+    "person": "Di",
+    "ts": 1792529424.5029976
+   },
+   {
+    "seq": 61,
+    "person": "Di",
+    "ts": 1792529424.5039976
+   },
+   {
+    "seq": 62,
+    "person": "Di",
+    "ts": 1792529424.5049975
+   },
+   {
+    "seq": 63,
+    "person": "Di",
+    "ts": 1792529424.5059974
+   },
+   {
+    "seq": 64,
+    "person": "Di",
+    "ts": 1792529424.5069973
+   },
+   {
+    "seq": 65,
+    "person": "Di",
+    "ts": 1792529424.5079973
+   },
+   {
+    "seq": 66,
+    "person": "Di",
+    "ts": 1792529424.5089972
+   },
+   {
+    "seq": 67,
+    "person": "Di",
+    "ts": 1792529424.5099971
+   },
+   {
+    "seq": 68,
+    "person": "Bo",
+    "ts": 1792529424.510997
+   },
+   {
+    "seq": 69,
+    "person": "Bo",
+    "ts": 1792529424.511997
+   },
+   {
+    "seq": 70,
+    "person": "Bo",
+    "ts": 1792529424.512997
+   },
+   {
+    "seq": 71,
+    "person": "Di",
+    "ts": 1792529424.5139968
+   },
+   {
+    "seq": 72,
+    "person": "Di",
+    "ts": 1792529424.5149968
+   },
+   {
+    "seq": 73,
+    "person": "Di",
+    "ts": 1792529424.5159967
+   },
+   {
+    "seq": 74,
+    "person": "Di",
+    "ts": 1792529424.5169966
+   },
+   {
+    "seq": 75,
+    "person": "Di",
+    "ts": 1792529424.5179965
+   },
+   {
+    "seq": 76,
+    "person": "Di",
+    "ts": 1792529424.5189965
+   },
+   {
+    "seq": 77,
+    "person": "Di",
+    "ts": 1792529424.5199964
+   },
+   {
+    "seq": 78,
+    "person": "Di",
+    "ts": 1792529472.404
+   },
+   {
+    "seq": 79,
+    "person": "Cy",
+    "ts": 1792529474.298
+   },
+   {
+    "seq": 80,
+    "person": "Bo",
+    "ts": 1792529475.578
+   }
+  ]
+ },
+ "six": [
+  "Friday: movie night at 8",
+  "Bo brings chips",
+  "Cy brings drinks",
+  "Di brings a speaker",
+  "Bo, away: ice",
+  "Cy, away: cups",
+  "Di, away: a playlist"
+ ],
+ "bo_errors": [],
+ "end": 1792529477663,
+ "end_mac_load": 5.2138671875,
+ "ended": {
+  "id": 50,
+  "logs": {
+   "alex": 113974,
+   "server": 11327,
+   "cy": 9299
+  }
+ }
+}

@@ -1,0 +1,185 @@
+{
+  "$schema": "./web/node_modules/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true,
+    "worker": true,
+    "serviceworker": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error"
+  },
+  "plugins": [
+    "unicorn",
+    "typescript",
+    "oxc",
+    "import"
+  ],
+  "rules": {
+    "no-undef": "error",
+    "no-redeclare": "error",
+    "prefer-const": [
+      "error",
+      {
+        "ignoreReadBeforeAssign": true
+      }
+    ],
+    "eqeqeq": [
+      "error",
+      "smart"
+    ],
+    "no-var": "error",
+    "no-unused-vars": [
+      "error",
+      {
+        "ignoreRestSiblings": true
+      }
+    ],
+    "unicorn/no-invalid-fetch-options": "off"
+  },
+  "ignorePatterns": [
+    "**/vendor/**",
+    "apps/on-air/vendored.mjs",
+    "demo/runs/**"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "web/*.js",
+        "web/page/*.js",
+        "crates/svrngs-node/src/home/**/*.js"
+      ],
+      "rules": {
+        "id-length": [
+          "error",
+          {
+            "min": 2,
+            "exceptions": [
+              "i",
+              "_"
+            ],
+            "properties": "never"
+          }
+        ],
+        "no-shadow": "error",
+        "one-var": [
+          "error",
+          "never"
+        ],
+        "no-sequences": "error",
+        "no-unused-expressions": "error",
+        "no-nested-ternary": "error",
+        "max-params": [
+          "error",
+          {
+            "max": 4
+          }
+        ],
+        "max-depth": [
+          "error",
+          {
+            "max": 3
+          }
+        ],
+        "complexity": [
+          "error",
+          {
+            "max": 10,
+            "variant": "modified"
+          }
+        ],
+        "oxc/no-barrel-file": [
+          "error",
+          {
+            "threshold": 0
+          }
+        ],
+        "import/no-cycle": "error",
+        "typescript/switch-exhaustiveness-check": "error",
+        "typescript/prefer-nullish-coalescing": [
+          "error",
+          {
+            "ignorePrimitives": {
+              "string": true
+            }
+          }
+        ],
+        "typescript/no-unnecessary-condition": "error",
+        "typescript/strict-boolean-expressions": [
+          "error",
+          {
+            "allowNullableString": true,
+            "allowNullableBoolean": true
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "web/*.js",
+        "web/page/*.js",
+        "crates/svrngs-node/src/home/**/*.js"
+      ],
+      "excludeFiles": [
+        "crates/svrngs-node/src/home/ui/**/*.js"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)vendor/",
+                "message": "Only ui/view.js imports vendor/, so the pages hold one Preact behind one door (ralph/next/js/CHARTER.md, \"Layers\")."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "crates/svrngs-node/src/home/ui/**/*.js"
+      ],
+      "excludeFiles": [
+        "crates/svrngs-node/src/home/ui/view.js"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)vendor/",
+                "message": "Only ui/view.js imports vendor/, so the pages hold one Preact behind one door (ralph/next/js/CHARTER.md, \"Layers\")."
+              },
+              {
+                "regex": "(^|/)page/",
+                "message": "ui/ never imports page/: a page draws with ui/, never ui/ with a page (ralph/next/js/CHARTER.md, \"Layers\")."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "crates/svrngs-node/src/home/ui/view.js"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "regex": "(^|/)page/",
+                "message": "ui/ never imports page/: a page draws with ui/, never ui/ with a page (ralph/next/js/CHARTER.md, \"Layers\")."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

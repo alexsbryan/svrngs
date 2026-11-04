@@ -1,0 +1,7 @@
+$ echo "function plantedNeverCalled() {}" >> web/app.js; python3 jsnames.py
+13 files
+web/app.js: plantedNeverCalled said 1
+exit: red above
+$ git checkout web/app.js; python3 jsnames.py
+13 files
+every top-level name is said again

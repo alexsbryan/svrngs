@@ -1,0 +1,18 @@
+# The ratchet at the caps this pass leaves (oidc-economize (c)): one counted
+# line past each, then gone. No cut was found, so no cap is lowered; the plant
+# shows the caps the pass leaves still refuse one line more.
+$ echo "planted = 1" > scripts/plant.py; python3 scripts/lean_check.py; echo exit $?
+crates/svrngs-core     3072 / 3073 lines
+.                     16928 / 16928 lines
+BROKEN  . has 16928 lines of code, budget 16928: raised only by the operator, with the reason in the commit
+exit 1
+$ echo "const PLANTED: u8 = 1;" > crates/svrngs-core/src/plant.rs; python3 scripts/lean_check.py; echo exit $?
+crates/svrngs-core     3073 / 3073 lines
+.                     16929 / 16928 lines
+BROKEN  crates/svrngs-core has 3073 lines of code, budget 3073: raised only by the operator, with the reason in the commit
+BROKEN  . has 16929 lines of code, budget 16928: raised only by the operator, with the reason in the commit
+exit 1
+$ rm both; python3 scripts/lean_check.py; echo exit $?
+crates/svrngs-core     3072 / 3073 lines
+.                     16927 / 16928 lines
+exit 0

@@ -1,0 +1,6 @@
+exit 0
+You no longer lend ana-coder.
+2026-10-23T00:33:55.580600Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/svrngs"
+2026-10-23T00:33:55.581751Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=309bb54e3c8e600f00a2346b372da2e9dd09a494315af1e3edcbc09d84412545 at=N0
+2026-10-23T00:33:55.582035Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-23T00:33:55.582202Z DEBUG lend: lend: withdrawn lend=ana-coder declared=true

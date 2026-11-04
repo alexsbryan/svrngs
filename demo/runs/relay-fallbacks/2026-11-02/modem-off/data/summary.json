@@ -1,0 +1,951 @@
+{
+ "start": {
+  "build": "98e3712e",
+  "build_tree_clean": true,
+  "bin_sha256": "569f836d8d22bd047e7d771179b6ff0e16834d9f6ce84892d8bb72f852c68c03",
+  "load": 6.05419921875,
+  "cores": 12,
+  "macos": "27.0.1"
+ },
+ "instrument": {
+  "probes": [
+   {
+    "name": "curl a name",
+    "inside": true,
+    "cmd": [
+     "curl",
+     "-sS",
+     "-m5",
+     "-o",
+     "/dev/null",
+     "-w",
+     "%{http_code}",
+     "https://example.com"
+    ],
+    "exit": 6,
+    "ms": 27,
+    "said": "000curl: (6) Could not resolve host: example.com"
+   },
+   {
+    "name": "curl an address",
+    "inside": true,
+    "cmd": [
+     "curl",
+     "-sS",
+     "-m5",
+     "-o",
+     "/dev/null",
+     "-w",
+     "%{http_code}",
+     "https://1.1.1.1"
+    ],
+    "exit": 7,
+    "ms": 20,
+    "said": "000curl: (7) Failed to connect to 1.1.1.1 port 443 after 1 ms: Couldn't connect to server"
+   },
+   {
+    "name": "dig",
+    "inside": true,
+    "cmd": [
+     "dig",
+     "+time=2",
+     "+tries=1",
+     "example.com"
+    ],
+    "exit": 9,
+    "ms": 3028,
+    "said": "; <<>> DiG 9.10.6 <<>> +time=2 +tries=1 example.com\n;; global options: +cmd\n;; connection timed out; no servers could be reached"
+   },
+   {
+    "name": "host",
+    "inside": true,
+    "cmd": [
+     "host",
+     "-W",
+     "2",
+     "example.com"
+    ],
+    "exit": 1,
+    "ms": 6037,
+    "said": ";; connection timed out; no servers could be reached"
+   },
+   {
+    "name": "udp to this host's resolver",
+    "inside": true,
+    "cmd": [
+     "python3",
+     "-c",
+     "import socket,time;t=time.time()\ntry:\n socket.socket(socket.AF_INET,socket.SOCK_DGRAM).sendto(b'x',('100.100.100.100',53));print('sent')\nexcept OSError as e:print(repr(e))\nprint(round((time.time()-t)*1000),'ms')"
+    ],
+    "exit": 0,
+    "ms": 38,
+    "said": "PermissionError(1, 'Operation not permitted')\n0 ms"
+   },
+   {
+    "name": "curl loopback (control)",
+    "inside": true,
+    "cmd": [
+     "curl",
+     "-sS",
+     "-m5",
+     "-o",
+     "/dev/null",
+     "-w",
+     "%{http_code}",
+     "http://127.0.0.1:52678/"
+    ],
+    "exit": 0,
+    "ms": 19,
+    "said": "200"
+   },
+   {
+    "name": "curl a name, outside the profile",
+    "inside": false,
+    "cmd": [
+     "curl",
+     "-sS",
+     "-m5",
+     "-o",
+     "/dev/null",
+     "-w",
+     "%{http_code}",
+     "https://example.com"
+    ],
+    "exit": 0,
+    "ms": 298,
+    "said": "200"
+   }
+  ],
+  "held": {
+   "curl a name": true,
+   "curl an address": true,
+   "dig": true,
+   "host": true,
+   "udp to this host's resolver": true,
+   "curl loopback (control)": true,
+   "outside": true
+  }
+ },
+ "lsof_samples": 27,
+ "relay": {
+  "at": "http://127.0.0.1:52717",
+  "first": {
+   "said": "Relaying at http://127.0.0.1:52717/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running.",
+   "ms": 104
+  },
+  "again": {
+   "said": "Relaying at http://127.0.0.1:52717/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running.",
+   "ms": 105
+  }
+ },
+ "sam": {
+  "link_ms": 3109,
+  "said": "Ly8xMjcuMC4wLjE6NTI3MTcv\n\nmesh's folder is /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/sam/svrngs/mesh: what anyone in mesh puts there reaches this computer, and what you put there reaches theirs.\n\nLeave this running; Ctrl-C stops it.\n"
+ },
+ "ana": {
+  "joined_ms": 3106,
+  "said": "You're in mesh, as Ana.",
+  "folder": true
+ },
+ "alex": {
+  "joined_ms": 3107,
+  "said": "You're in mesh, as Alex.",
+  "folder": true
+ },
+ "file_before": {
+  "sam": 207,
+  "alex": 210
+ },
+ "share_notes": {
+  "who": "ana",
+  "name": "notes",
+  "exit": 0,
+  "ms": 18,
+  "said": "You lend notes (port 52678) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 52678 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it.",
+  "trace": "share \u2014 the password asked for lend=notes given=false terminal=false\n2026-11-03T02:05:09.900146Z DEBUG cli: cli: refused \u2014 another svrngs holds the data dir lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/ana/.svrngs/lock error=lock acquisition failed because the operation would block\n2026-11-03T02:05:09.900156Z DEBUG cli: cli: share \u2014 svrngs runs here already, and reads the lend from its declaration lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/ana/.svrngs/lock"
+ },
+ "notes_before": {
+  "ana": {
+   "listed_ms": 4,
+   "fetched_ms": 6,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  },
+  "sam": {
+   "listed_ms": 3,
+   "fetched_ms": 7,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  },
+  "alex": {
+   "listed_ms": 4,
+   "fetched_ms": 7,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  }
+ },
+ "stopped": [
+  {
+   "who": "sam",
+   "exit": 0,
+   "ms": 4,
+   "killed": false
+  },
+  {
+   "who": "ana",
+   "exit": 0,
+   "ms": 4,
+   "killed": false
+  },
+  {
+   "who": "alex",
+   "exit": 0,
+   "ms": 4,
+   "killed": false
+  },
+  {
+   "who": "relay",
+   "exit": 0,
+   "ms": 1,
+   "killed": false
+  }
+ ],
+ "restart": {
+  "api_ms": {
+   "sam": 111,
+   "ana": 108,
+   "alex": 105
+  },
+  "notes": {
+   "sam": {
+    "listed_ms": 116,
+    "fetched_ms": 118,
+    "unlisted": {
+     "unanswered": [],
+     "unheard": [],
+     "refused": [],
+     "older": []
+    }
+   },
+   "alex": {
+    "listed_ms": 108,
+    "fetched_ms": 111,
+    "unlisted": {
+     "unanswered": [],
+     "unheard": [],
+     "refused": [],
+     "older": []
+    }
+   }
+  },
+  "file_after": {
+   "sam": 206,
+   "ana": 205
+  },
+  "first_round_both_ms": {
+   "sam": 1090,
+   "ana": 108,
+   "alex": 104
+  },
+  "first_round_any_ms": {
+   "sam": 1090,
+   "ana": 108,
+   "alex": 104
+  }
+ },
+ "share_board": {
+  "who": "alex",
+  "name": "board",
+  "exit": 0,
+  "ms": 17,
+  "said": "You lend board (port 52681) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 52681 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare board` stops lending it.",
+  "trace": "are \u2014 the password asked for lend=board given=false terminal=false\n2026-11-03T02:05:19.395628Z DEBUG cli: cli: refused \u2014 another svrngs holds the data dir lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/alex/.svrngs/lock error=lock acquisition failed because the operation would block\n2026-11-03T02:05:19.395636Z DEBUG cli: cli: share \u2014 svrngs runs here already, and reads the lend from its declaration lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/alex/.svrngs/lock"
+ },
+ "board": {
+  "sam": {
+   "listed_ms": 3,
+   "fetched_ms": 6,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  },
+  "ana": {
+   "listed_ms": 3,
+   "fetched_ms": 6,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  }
+ },
+ "sam_for_link": {
+  "who": "sam",
+  "exit": 0,
+  "ms": 1032,
+  "killed": false
+ },
+ "link_again": {
+  "ms": 3095,
+  "said": "A new link to mesh. Any link you sent before stops letting anyone new in; everyone it let in stays.\nIt works for a day, while this computer is on:\n\n  svrngs://join/<the token>\n\nLeave this running; Ctrl-C stops it.\n"
+ },
+ "dee": {
+  "joined_ms": 3125,
+  "said": "You're in mesh, as Dee.",
+  "notes": {
+   "listed_ms": 18,
+   "fetched_ms": 21,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  },
+  "board": {
+   "listed_ms": 18,
+   "fetched_ms": 21,
+   "unlisted": {
+    "unanswered": [],
+    "unheard": [],
+    "refused": [],
+    "older": []
+   }
+  },
+  "files": {
+   "before.bin": 33,
+   "after.bin": 33
+  }
+ },
+ "people": {
+  "namespace": "21835adb7718b627e76c6ff846db586a4adf03d410c6d0e5ebe98ae7a89e2aba",
+  "people": [
+   {
+    "device": "computer",
+    "joined": {
+     "at": 1793671508
+    },
+    "key": "13bca6219f0f330b934ddd469a01dcfd58b1f716060e94e5cb6e10d62c6b32db",
+    "person": "Ana",
+    "person_key": "13bca6219f0f330b934ddd469a01dcfd58b1f716060e94e5cb6e10d62c6b32db"
+   },
+   {
+    "device": "computer",
+    "joined": {
+     "at": 1793671526
+    },
+    "key": "736aa63190f1f86c6057d781682cae907f8b3e35264728c212cd2b93ad51af1e",
+    "person": "Dee",
+    "person_key": "736aa63190f1f86c6057d781682cae907f8b3e35264728c212cd2b93ad51af1e"
+   },
+   {
+    "device": "computer",
+    "joined": {
+     "at": 1793671510
+    },
+    "key": "90f7b707e0196a740db7bcedf444df4c3c86ba8fc1737011b0ecf2296e27f94f",
+    "person": "Alex",
+    "person_key": "90f7b707e0196a740db7bcedf444df4c3c86ba8fc1737011b0ecf2296e27f94f"
+   },
+   {
+    "device": "computer",
+    "joined": "started",
+    "key": "a267f244b9d293f27419df2c1d31e34fe8c51c8d976057d7ba7c8b2dbabc31cd",
+    "person": "Sam",
+    "person_key": "a267f244b9d293f27419df2c1d31e34fe8c51c8d976057d7ba7c8b2dbabc31cd"
+   }
+  ]
+ },
+ "stopped_end": [
+  {
+   "who": "app-notes",
+   "exit": 0,
+   "ms": 9,
+   "killed": false
+  },
+  {
+   "who": "app-board",
+   "exit": 0,
+   "ms": 9,
+   "killed": false
+  },
+  {
+   "who": "relay",
+   "exit": 0,
+   "ms": 3,
+   "killed": false
+  },
+  {
+   "who": "ana",
+   "exit": 0,
+   "ms": 3121,
+   "killed": false
+  },
+  {
+   "who": "alex",
+   "exit": 0,
+   "ms": 1029,
+   "killed": false
+  },
+  {
+   "who": "sam",
+   "exit": 0,
+   "ms": 1037,
+   "killed": false
+  },
+  {
+   "who": "dee",
+   "exit": 0,
+   "ms": 3119,
+   "killed": false
+  }
+ ],
+ "traces": {
+  "alex-1": {
+   "lines": 148,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 4,
+   "pkarr_failures": 4,
+   "pkarr_fail_ms": [
+    1,
+    1,
+    1,
+    0
+   ],
+   "pkarr_first_failure": "int{id=90f7b707e0}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/1d55qb9ydfi8edpzzus9etg9jo6epqwxaf3zyrpo7u3n15t89f8o): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 4.0,
+   "dns_started": 2,
+   "dns_failures": 2,
+   "dns_fail_ms": [
+    2448,
+    3530
+   ],
+   "dns_first_failure": "tateActor{remote=13bca6219f}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=13bca6219f origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 2,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 1,
+   "rounds": [
+    [
+     [
+      2,
+      0
+     ],
+     1
+    ]
+   ],
+   "n0_words": 54,
+   "warn_error": [
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Resolve failed, ",
+     36
+    ],
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     4
+    ]
+   ]
+  },
+  "alex-2": {
+   "lines": 298,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 8,
+   "pkarr_failures": 8,
+   "pkarr_fail_ms": [
+    9,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1
+   ],
+   "pkarr_first_failure": "int{id=90f7b707e0}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/1d55qb9ydfi8edpzzus9etg9jo6epqwxaf3zyrpo7u3n15t89f8o): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 8.0,
+   "dns_started": 2,
+   "dns_failures": 2,
+   "dns_fail_ms": [
+    2759,
+    2946
+   ],
+   "dns_first_failure": "tateActor{remote=a267f244b9}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=a267f244b9 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 2,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 0,
+   "rounds": [
+    [
+     [
+      2,
+      0
+     ],
+     2
+    ]
+   ],
+   "n0_words": 77,
+   "warn_error": [
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Resolve failed, ",
+     46
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Connection refus",
+     9
+    ],
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     8
+    ],
+    [
+     "iroh::net_report::reportgen: probe failed: Failed to run HTTPS probe: HTTP request failed: error sending reque",
+     3
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Lost connection to relay server: Stream closed by server.",
+     1
+    ]
+   ]
+  },
+  "ana-1": {
+   "lines": 173,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 5,
+   "pkarr_failures": 5,
+   "pkarr_fail_ms": [
+    1,
+    1,
+    1,
+    1,
+    0
+   ],
+   "pkarr_first_failure": "int{id=13bca6219f}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/nq6kcec9bh3ozr4p5idjwyqh9icmd7asya8jj3qmpaepcmdmgmpo): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 5.0,
+   "dns_started": 1,
+   "dns_failures": 1,
+   "dns_fail_ms": [
+    3557
+   ],
+   "dns_first_failure": "tateActor{remote=a267f244b9}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=a267f244b9 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 1,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 0,
+   "rounds": [
+    [
+     [
+      2,
+      0
+     ],
+     2
+    ],
+    [
+     [
+      1,
+      0
+     ],
+     1
+    ]
+   ],
+   "n0_words": 18,
+   "warn_error": [
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     5
+    ]
+   ]
+  },
+  "ana-2": {
+   "lines": 262,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 8,
+   "pkarr_failures": 8,
+   "pkarr_fail_ms": [
+    1,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1
+   ],
+   "pkarr_first_failure": "int{id=13bca6219f}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/nq6kcec9bh3ozr4p5idjwyqh9icmd7asya8jj3qmpaepcmdmgmpo): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 8.0,
+   "dns_started": 2,
+   "dns_failures": 2,
+   "dns_fail_ms": [
+    2410,
+    3304
+   ],
+   "dns_first_failure": "tateActor{remote=a267f244b9}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=a267f244b9 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 2,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 1,
+   "rounds": [
+    [
+     [
+      2,
+      0
+     ],
+     1
+    ]
+   ],
+   "n0_words": 79,
+   "warn_error": [
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Resolve failed, ",
+     47
+    ],
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     8
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Connection refus",
+     8
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Lost connection to relay server: Stream closed by server.",
+     1
+    ]
+   ]
+  },
+  "dee-1": {
+   "lines": 239,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 8,
+   "pkarr_failures": 8,
+   "pkarr_fail_ms": [
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    1,
+    1
+   ],
+   "pkarr_first_failure": "int{id=736aa63190}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/qpikccco68hgaanz46ysomfq1b9asxtir3d1too13wi38mktihxy): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 8.0,
+   "dns_started": 3,
+   "dns_failures": 3,
+   "dns_fail_ms": [
+    3077,
+    3099,
+    3576
+   ],
+   "dns_first_failure": "tateActor{remote=a267f244b9}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=a267f244b9 origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 3,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 2,
+   "rounds": [],
+   "n0_words": 81,
+   "warn_error": [
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Resolve failed, ",
+     46
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Connection refus",
+     9
+    ],
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     8
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Lost connection to relay server: Stream closed by server.",
+     1
+    ]
+   ]
+  },
+  "relay-1": {
+   "lines": 13,
+   "relays_line": [],
+   "egress": [],
+   "pkarr_attempts": 0,
+   "pkarr_failures": 0,
+   "pkarr_fail_ms": [],
+   "pkarr_first_failure": null,
+   "pkarr_retry_after_max": null,
+   "dns_started": 0,
+   "dns_failures": 0,
+   "dns_fail_ms": [],
+   "dns_first_failure": null,
+   "lookup_failed": 0,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 0,
+   "rounds": [],
+   "n0_words": 4,
+   "warn_error": [
+    [
+     "iroh_relay::server::client: actor errored Stream terminated, exiting",
+     3
+    ]
+   ]
+  },
+  "relay-2": {
+   "lines": 13,
+   "relays_line": [],
+   "egress": [],
+   "pkarr_attempts": 0,
+   "pkarr_failures": 0,
+   "pkarr_fail_ms": [],
+   "pkarr_first_failure": null,
+   "pkarr_retry_after_max": null,
+   "dns_started": 0,
+   "dns_failures": 0,
+   "dns_fail_ms": [],
+   "dns_first_failure": null,
+   "lookup_failed": 0,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 0,
+   "rounds": [],
+   "n0_words": 4,
+   "warn_error": [
+    [
+     "iroh_relay::server::client: actor errored Stream terminated, exiting",
+     1
+    ]
+   ]
+  },
+  "sam-1": {
+   "lines": 140,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 5,
+   "pkarr_failures": 5,
+   "pkarr_fail_ms": [
+    1,
+    1,
+    1,
+    1,
+    3
+   ],
+   "pkarr_first_failure": "int{id=a267f244b9}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/wju9rtf34kj9r7y35hsb4cxdj9wck8rp17ofxi74x1f15qihg8go): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 5.0,
+   "dns_started": 2,
+   "dns_failures": 2,
+   "dns_fail_ms": [
+    2900,
+    3392
+   ],
+   "dns_first_failure": "tateActor{remote=13bca6219f}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=13bca6219f origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 2,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 1,
+   "rounds": [
+    [
+     [
+      2,
+      0
+     ],
+     2
+    ],
+    [
+     [
+      1,
+      0
+     ],
+     1
+    ]
+   ],
+   "n0_words": 22,
+   "warn_error": [
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     5
+    ]
+   ]
+  },
+  "sam-2": {
+   "lines": 130,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 2,
+   "pkarr_failures": 2,
+   "pkarr_fail_ms": [
+    1,
+    0
+   ],
+   "pkarr_first_failure": "int{id=a267f244b9}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/wju9rtf34kj9r7y35hsb4cxdj9wck8rp17ofxi74x1f15qihg8go): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 2.0,
+   "dns_started": 2,
+   "dns_failures": 0,
+   "dns_fail_ms": [],
+   "dns_first_failure": null,
+   "lookup_failed": 0,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 1,
+   "rounds": [
+    [
+     [
+      2,
+      0
+     ],
+     1
+    ]
+   ],
+   "n0_words": 46,
+   "warn_error": [
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Resolve failed, ",
+     32
+    ],
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     2
+    ]
+   ]
+  },
+  "sam-3": {
+   "lines": 241,
+   "relays_line": [],
+   "egress": [
+    "n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=[\"http://127.0.0.1:52717/\"]"
+   ],
+   "pkarr_attempts": 8,
+   "pkarr_failures": 8,
+   "pkarr_fail_ms": [
+    1,
+    0,
+    1,
+    0,
+    1,
+    1,
+    1,
+    1
+   ],
+   "pkarr_first_failure": "int{id=a267f244b9}:pkarr_publish: iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request for url (https://dns.iroh.link/pkarr/wju9rtf34kj9r7y35hsb4cxdj9wck8rp17ofxi74x1f15qihg8go): client error (Connect): dns error: Resolve failed, IPv4: Failed to resolve, IPv6: Failed to resolve url=https://dns.iroh.link/pkarr retry_after=1s failed_attempts=1",
+   "pkarr_retry_after_max": 8.0,
+   "dns_started": 3,
+   "dns_failures": 3,
+   "dns_fail_ms": [
+    2723,
+    3060,
+    3599
+   ],
+   "dns_first_failure": "tateActor{remote=13bca6219f}:handle_message{msg=ResolveRemote(..)}:DnsAddressLookup{lookup_id=13bca6219f origin_domain=dns.iroh.link.}: iroh::address_lookup::dns: DNS lookup failed: no calls succeeded: [Failed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT recordFailed to resolve TXT record]",
+   "lookup_failed": 3,
+   "bare_key_dials": [],
+   "bare_key_count": 0,
+   "bare_key_dial_ms": [],
+   "no_relay_named": 0,
+   "datagram_refused": 0,
+   "folder_fetched": 0,
+   "rounds": [
+    [
+     [
+      3,
+      0
+     ],
+     2
+    ],
+    [
+     [
+      2,
+      0
+     ],
+     1
+    ]
+   ],
+   "n0_words": 76,
+   "warn_error": [
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Resolve failed, ",
+     44
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: Connection refus",
+     9
+    ],
+    [
+     "iroh::address_lookup::pkarr: Failed to publish to pkarr err=Error sending http request: error sending request ",
+     8
+    ],
+    [
+     "iroh::net_report::reportgen: probe failed: Failed to run HTTPS probe: HTTP request failed: error sending reque",
+     3
+    ],
+    [
+     "iroh::socket::transports::relay::actor: Lost connection to relay server: Stream closed by server.",
+     1
+    ]
+   ]
+  }
+ },
+ "off_host": [],
+ "end": {
+  "load": 6.33984375,
+  "t": 1793671557.574
+ }
+}

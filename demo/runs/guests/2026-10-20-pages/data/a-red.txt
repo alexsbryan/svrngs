@@ -1,0 +1,101 @@
+
+running 2 tests
+guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium --- FAILED
+guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::webkit --- FAILED
+
+failures:
+
+---- guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium stdout ----
+Bo's home page: {
+  "after": [],
+  "all": [],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+
+thread 'guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium' (69845352) panicked at crates/svrngs-node/tests/browser/guests.rs:257:5:
+Bo's home page lists Sam visiting, Kim's guest, until Thursday: {
+  "after": [],
+  "all": [],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::webkit stdout ----
+Bo's home page: {
+  "after": [],
+  "all": [],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+
+thread 'guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::webkit' (69845353) panicked at crates/svrngs-node/tests/browser/guests.rs:257:5:
+Bo's home page lists Sam visiting, Kim's guest, until Thursday: {
+  "after": [],
+  "all": [],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+
+
+failures:
+    guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium
+    guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::webkit
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 109 filtered out; finished in 9.81s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit 101

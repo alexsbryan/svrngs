@@ -1,0 +1,11 @@
+{
+  "when": "2026-10-22T18:30:05-0700",
+  "host": {
+    "sw_vers": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+    "uname": "Darwin Alexs-MacBook-Pro-4.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:20:40 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6020 arm64",
+    "llama-server": "version: 10180 (11b068d06)\nbuilt with AppleClang 21.0.0.21000101 for Darwin arm64",
+    "node": "v20.20.2",
+    "memory": "68719476736"
+  },
+  "models": []
+}

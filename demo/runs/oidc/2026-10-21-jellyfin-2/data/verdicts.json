@@ -1,0 +1,22 @@
+{
+  "alex": {
+    "verdict": "passed",
+    "why": "sign-in 490 ms after the press, no typing, as Alex-57a5060242a2e5fc, film in 1378 ms"
+  },
+  "bo": {
+    "verdict": "passed",
+    "why": "sign-in 876 ms after the press, no typing, as Bo-c6b4506b0b341c4b, film in 4607 ms"
+  },
+  "apart": {
+    "verdict": "passed",
+    "why": "Alex Alex-57a5060242a2e5fc (Alex-57a5060242a2e5fc by token), Bo Bo-c6b4506b0b341c4b (Bo-c6b4506b0b341c4b by token); distinct users True, distinct tokens True"
+  },
+  "removed": {
+    "verdict": "passed",
+    "why": "refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False"
+  },
+  "planted": {
+    "verdict": "passed",
+    "why": "the code named 'Bo-c6b4506b0b341c4b' ('Bo'), not Alex; a second redemption answered 400 invalid_grant"
+  }
+}

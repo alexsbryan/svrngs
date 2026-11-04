@@ -25,7 +25,7 @@
 //
 //   node people.mjs
 import { createInterface } from 'node:readline';
-import { launch } from '../../../../web/tests/page.mjs';
+import { arrived, inApp, launch } from '../../../../web/tests/page.mjs';
 
 const people = {};
 
@@ -68,7 +68,7 @@ async function shoot(c) {
 
 // The lend's page shown, on a lend's origin, not the group's page.
 async function landed(page, home) {
-  await page.waitForURL((u) => u.hostname.endsWith('.localhost') && u.host !== home, { timeout: 90_000 });
+  await page.waitForURL((u) => (u.hostname.endsWith('.localhost') || inApp(u)) && u.host !== home, { timeout: 90_000 });
   await page.waitForFunction(shown, null, { timeout: 90_000 });
 }
 
@@ -106,7 +106,8 @@ async function act(c) {
       return view(c.who, null, t0);
     }
     if (c.wait) await page.goto('about:blank');
-    const res = await page.goto(c.url, { timeout: 90_000 });
+    // Through an open, where it leads (page.mjs `arrived`), and its answer.
+    const res = (await page.goto(c.url, { timeout: 90_000 }), await arrived(page, 90_000));
     if (c.wait) await page.waitForFunction((w) => document.body?.innerText.includes(w), c.wait, { timeout: 90_000 });
     else if (people[c.who].engine === 'webkit') await page.waitForFunction(shown, null, { timeout: 90_000 }).catch(() => {});
     return view(c.who, res, t0);
@@ -115,7 +116,7 @@ async function act(c) {
     const link = page.getByRole('link', { name: c.link, exact: true });
     if (!(await link.count())) return { absent: true, ms: Date.now() - t0, url: page.url() };
     const href = new URL(await link.first().getAttribute('href'), page.url()).href;
-    const res = await page.goto(href, { timeout: 90_000 });
+    const res = (await page.goto(href, { timeout: 90_000 }), await arrived(page, 90_000));
     if (people[c.who].engine === 'webkit') await page.waitForFunction(shown, null, { timeout: 90_000 }).catch(() => {});
     return { href, ...(await view(c.who, res, t0)) };
   }

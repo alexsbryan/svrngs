@@ -89,5 +89,6 @@ canary changed.
   `who.test.mjs`, `page.test.mjs` (Chromium and WebKit), `canary.test.mjs`.
 
 Under svrngs each person runs their own, on their own computer:
-`{"record": "<their svrngs's api>", "data": "<a folder>"}` as its config.
+`{"record": "<their svrngs's api>", "token": "<the token file beside it>",
+"data": "<a folder>"}` as its config.
 It isn't lent to the group.

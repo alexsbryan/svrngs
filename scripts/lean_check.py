@@ -12,7 +12,8 @@
 4. Lines of code — not blank, not a comment, not a test — stay under the
    caps `BUDGET` holds below, their one home (#197), scripts included. The
    budget counts the product: apps/, installed packages (any
-   node_modules/) and demo/runs/ apart. A recorded run's driver is what ran,
+   node_modules/), demo/runs/ and the pictures' generators
+   (docs/diagrams/src/, docs/brand/src/) apart. A recorded run's driver is what ran,
    kept byte for byte so its data reads against it (ralph/REVIEW_FINDINGS.md
    #61), and no check runs one; code elsewhere under demo/ counts.
 """
@@ -109,8 +110,308 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # on a TV or a projector (home.js `screen`), raised it by 23 to one past
 # where it landed, within the operator's "Yes, up to +30" (2026-10-18), and
 # its founder drawn first by 1 more, 24 of the 30.
-BUDGET = {"crates/svrngs-core": 3009, ".": 16583}
-CODE = {".rs", ".js", ".mjs", ".ts", ".py", ".sh"}
+# guests-economize cut 5, redeem.rs `answer`'s two arms of one refusal, and
+# lowered the repository's to one past where the cut landed; svrngs-core's
+# was already there (demo/runs/economize/2026-10-19-guests/SURVEY.md). The
+# guests rows have +150 over that and svrngs-core +60, at most 16,728 and
+# 3,069 (the operator, 2026-10-18), each raise to one past where it lands.
+# guests-visit (b), a visit folded by svrngs-core beside membership, raised
+# svrngs-core 60 and the repository 60, to one past where it landed: none
+# left under svrngs-core's ceiling, 90 under the repository's. guests-door
+# (b), a visit's key let in at its host's own lends as their guest, raised
+# the repository's 66, to one past where it landed: 24 left under its ceiling.
+# guests-link (b), a visit made by a link in any chat and the guest's page,
+# raised svrngs-core 7 and the repository 143, to one past where it landed,
+# within the operator's "Cover both rows", at most 16,905 and 3,076
+# (2026-10-20; demo/runs/guests/2026-10-19-link/NEEDS_HUMAN.md): none left
+# under svrngs-core's ceiling, 58 under the repository's. guests-pages (a),
+# who is visiting on the home page and its host's Stop, raised the
+# repository's 34, to one past where it landed: 24 left under its ceiling.
+# Its (b), who is visiting on the phone's page, raised it 6, to one past
+# where it landed: 18 left.
+# V1.1.3, within the operator's "Approve, up to +24 each" (2026-10-20): its
+# away page, a lend's computer that did not answer drawn as its person's
+# window, dark, on a computer and a phone, raised it by 20 to one past where it
+# landed, after an economizing pass that cut V1.1.3's own lines and found no
+# fold elsewhere.
+# The phone's lend worker asking for gzip and unpacking it raised it by 3
+# more, to one past where it landed.
+# The phone's sockets coming back with their lender raised it by 1 more, to
+# one past where it landed: the operator's +24, none left.
+# V1.1.3's economizing pass, the page's possessive written in away.html, cut
+# 4 and lowered it to one past where the cut landed.
+# leave-economize cut `Membership::visiting`, which only a test called,
+# and lowered both to one past where the cut landed
+# (demo/runs/economize/2026-10-21-leave/SURVEY.md). The leave rows have at
+# most +25 over that and none in svrngs-core (the operator, 2026-10-21,
+# "Pass first, then raise"): at most 16,929, svrngs-core 3,073.
+# leave-told (b), a cut told with what it covers (#211), raised the
+# repository's 24, to one past where it landed: 1 left under the ceiling.
+# oidc-economize found no cut and the operator set the oidc ceiling at +800
+# repository and +80 svrngs-core over where it left them, at most 17,728 and
+# 3,153 (CHARTER.md, 2026-10-21; demo/runs/economize/2026-10-21-oidc/
+# SURVEY.md, 4239bc7c). oidc-token's token, its key and its JWKS raised both
+# to one past where they landed: svrngs-core 3,152, the repository 17,110.
+# oidc-provider's back channel, its code store, the declaration's client and
+# the code's PKCE method raised the repository 466 to one past where they
+# landed: 17,576 (svrngs-core within the 3,153 it left, its nonce bought by a
+# move that kept behaviour: 0e6257cf). 151 remain under the operator's 17,728.
+# oidc-authorize's front channel raised the repository 149 to one past where
+# it landed: 17,725, after its first draft was cut by 31 counted lines (the
+# ask's map, the PKCE test and the inlined own-address check). svrngs-core
+# stays 3,152 under its 3,153. 2 remain under the operator's 17,728.
+# oidc-hook-cut retired the sign-in hook the operator authorized (CHARTER.md,
+# 2026-10-21): its file and wiring, the helper's steps and the page's
+# signs_in, 523 counted lines, and lowered the repository's to one past where
+# it landed: 17,203. svrngs-core is unchanged at one past its 3,152.
+# oidc-turn-on's switch, its client and its one secret raised the repository
+# 172 to one past where they landed: 17,375 (17,728 is the operator's
+# ceiling). svrngs-core is unchanged at 3,152 under its 3,153.
+# oidc-jellyfin's forwarded origin and its lend-origin redirect raised the
+# repository 46 to one past where they landed: 17,421, inside 17,728. Its
+# phone worker naming the browser's host (the run found it) raised it 2
+# more, to one past where the row closes: 17,423. svrngs-core is unchanged
+# at 3,152 under its 3,153.
+# oidc-retire removed the program per app with the table's helper row and
+# share::At::Helper (the row and enum were counted; apps/ is not): 3 counted
+# lines, and lowered the repository's to one past where the cut landed:
+# 17,419. svrngs-core is unchanged at 3,152 under its 3,153.
+# The operator's three oidc fixes (2026-10-22): one typed person and code
+# (token::Subject, S256Challenge) and the token read back as `Claims` cut
+# 50, the redirect's one type (door::LendPath) spent 5, and the room's
+# scheme 2. Both caps lowered to one past where they landed: 17,376, and
+# svrngs-core's 3,150 over its 3,149.
+# The room's economizing pass (2026-10-22) cut 49 by folds in cli.rs,
+# home.rs, node.rs and group.rs, finding no dead item, and install.sh's
+# PATH line spent 4: the repository's cap lowered to one past where they
+# land, 17,331. svrngs-core is unchanged at 3,149 under its 3,150.
+# The room, the running node's, on per lend on its network (the operator,
+# 2026-10-22, after that pass): raised 231, to one past where it lands,
+# 17,562. svrngs-core is unchanged at 3,149 under its 3,150. Within that
+# landing (the operator, 2026-10-22: room.json unread said, never read as
+# empty), a room that cannot be read said and serving nothing raised it 6,
+# to one past where it lands: 17,568.
+# The network and the room as domains of their own (the operator,
+# 2026-10-22: "Approve all three, +67"): network.rs's move +5, the room's
+# edges in room/ +24, the network's types and the room's pure turn +38.
+# Raised 67, to one past where the series lands: 17,635. svrngs-core is
+# unchanged at 3,149 under its 3,150.
+# capability-economize cut 16 by four folds of a thing said twice (oidc's
+# Key::kid only tests called, the door's Connection names, the page's
+# IndexedDB opener and its computer's key) and lowered the repository's to
+# one past where they land, 17,619; svrngs-core's it left at one past
+# (demo/runs/economize/2026-10-23-capability/SURVEY.md).
+# The operator's ceiling for capability-navigation through capability-what-acts
+# (2026-10-23, "+265 / +3 now"): at most 17,884 and 3,153, each row raising only
+# what it lands, to one past. capability-navigation, a frame's and a form's
+# navigation judged as its page's fetch in origin.rs's app_of, +4: 17,623.
+# capability-scenes' "scenes" step in check.sh (f15184ce) was counted, +5,
+# and broke the budget at 17,627; it was folded to two lines, the
+# conformance canary's emptying joined to could-not-judge's, and door.rs's
+# two rebindings of a parameter and an answer made `mut` where bound, -6:
+# 17,621, the cap lowered to one past. capability-scenes-found (a), a
+# request that failed on a connection kept to a restarted computer sent
+# again once in iroh.rs's fetch, +12: 17,634. capability-scenes-found (e),
+# `new`'s keeping of a group and its first link minted under the Host's one
+# links' sequencer (invite.rs's keep_linked), +27: 17,662; (b), a joiner's
+# device link given the group page's address, +3: 17,665. capability-open,
+# the yes to what an app reads kept in door/choices.rs and judged in
+# surface.rs's reaches, the opens worded from what a lend declares, +54:
+# 17,720, raised by the operator's delegate inside the ceiling, the
+# permission classifier having refused it to the row's session.
+# capability-what-acts, "What acts as you" on both pages, each yes with its
+# Stop (question.js `acts`, home.rs's GET /reaching, app.js's `reads`),
+# +70, at the top of its estimate (+30 to +70): 17,790, inside the ceiling.
+# The operator's ceiling for capability-signed through capability-release
+# (2026-10-24, "+535 / +180"): at most 18,325 and 3,330, each row raising
+# only what it lands, to one past (demo/runs/authorship/2026-10-24/
+# DESIGN.md §14). capability-signed, each device signing its own acts: a
+# holder's pass on its line and Grant judging it, the keeper's cutover, the
+# chained pass (H), /carry, the phone's worker and group page signing,
+# +472 and +144, inside its estimate (+253 to +479, +96 to +168). Its
+# economizing cut 101 and 75 first: RailGap and InviteFault's words by
+# thiserror (-63 core), Device's serde by derive (-12), the runtime's
+# standing_anywhere and removed_anywhere said as visit_anywhere (-23), the
+# lend worker's wasm wait (-3). 18,263 and 3,295. capability-step-limit,
+# each step of check.sh in a process group of its own, ended at a limit of
+# 5 times its slowest passing run here, +6 after its economizing pass
+# folded its own leftover-ending loop to one line (-2): 18,270.
+# capability-keys, consent and authorship by first key: Runs and each
+# act's writer keyed by it in svrngs-core, the carried route asking by it,
+# and the pages telling two people of one name apart (question.js
+# `called`), +14 and +3, under its estimate (+25 to +55, +5 to +10). Its
+# economizing pass folded `written`'s changer to one line (-1); the rest
+# it lands is struct fields rustfmt sets a line each and one JS line a
+# site. 18,284 and 3,298. REVIEW-audit-capability-auto-1 gave /carry one
+# const and its request one statement (-1): 18,283. keys-names, Money and
+# Events by first key (apps/, uncounted), the node's answer naming whom an
+# older act spoke for by key (rail.rs `ops_json`, not the core: the
+# operator, 2026-10-25, "No extra core lines", then "Node"), and the
+# node's lists by key beside the name, +55 and 0; its economizing pass
+# first, chains parenthesized as the house writes them and bindings used
+# once folded, cut 60 in svrngs-core and 31 in the node, so the caps come
+# down to one past where it lands: 18,247 and 3,238. Its gate's fixes put
+# the phone's four "whose computer did not say" sentences in one table, as
+# the home page's (-5 after +1): 18,243. The lint's own line in check.sh
+# (+1), ops_json's own-name guard folded into the name it reads (-2), and
+# the home page drawn from a function its module does not await (-2):
+# 18,240. give-economize's pass (demo/runs/economize/2026-10-25-give/
+# SURVEY.md): the links' sequencer taken in one line (-6), an own pass's
+# reads and the door's "unasked" each said in one statement (-4, -3):
+# 18,227. give-token, the record asking every program for the token in
+# the data dir's `token` file, under the operator's ceiling for give-token
+# through give-play (2026-10-25, ralph/next/give/STATE.md give-economize,
+# "+1,005 repository and +5 svrngs-core", at most 19,233): the token kept
+# as the sign-in key is (`declared::write_secret`), its one check beside
+# `from_this_computer`, `ask_running` and install.sh's curl showing it,
+# +48 and 0, inside its estimate (+45 to +90, SURVEY.md §6), after its
+# own cut of `NotLoopback`'s words to one line (-2): 18,275. give-session,
+# under the same ceiling, its range +110 to +220 (SURVEY.md:222, top
+# 18,495): a browser let in only by an open's session (session.rs, its
+# checks in home.rs and origin.rs), a read's capability (+30), `svrngs
+# open` (+26) and install.sh's opener (+6), after its own cut of `run`'s
+# verbs printing once (-15, 2266a50a): +216 and 0, at 18,491. give-udp,
+# under the same ceiling, its range +135 to +250 and +2 to +5 core
+# (SURVEY.md:223): `Alpn::Port`, a raw `Source`, `--udp`, and the UDP
+# door (door/udp.rs), after its own pass over that file (383 counted at
+# first, 199 at 36471346): +249 and +2, at 18,741 and 3,241. give-tcp,
+# under the same ceiling, its range +60 to +130 and 0 core (SURVEY.md:224):
+# `Raw::Tcp`, `--tcp`, the opening naming how a lend travels, and the TCP
+# door (door/tcp.rs), sharing the UDP door's admission and opening
+# (083cc6b6): +126 and 0, at 18,867. give-play, under the same ceiling,
+# its range +165 to +310 and 0 core (SURVEY.md:225): Play's owner on the
+# room's model (play.rs), sharing the room's store (64b96771) and port,
+# `Offered.raw`, and the home page's row and line, after its own cut of
+# 10: +226 and 0, at 19,094. give-cut, inside what that ceiling left, its
+# range +10 to +40 and 0 core: the lender's sweep closing a raw lend's
+# connection once its dialer no longer stands (door/udp.rs): +16 and 0, at
+# 19,110.
+# The page after joining (the operator, 2026-10-26: the shelf unticked and,
+# just joined, folded; "What acts as you" folded; the group's things
+# first), after its own economizing pass, the page's heading set by one
+# assignment (-3): +1, at 19,108, so the cap lowered to one past it.
+# give-install, after its own economizing pass over install.sh (-7,
+# demo/runs/economize/2026-10-26-give-install/SURVEY.md, 60565068): Give's
+# program as install.sh's --give, fetched, checked, placed and kept at
+# login by the functions svrngs's own steps became, and built beside
+# svrngs in build-release.sh (2d68d696): +13 net and 0, at 19,120
+# (demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md).
+# The diagrams' generator (docs/diagrams/src/), the operator's raise
+# (2026-10-27, "raise the budget for the generator"): its first set, kept so
+# it can be drawn again from that commit (e5daca60), +406 and 0, at 19,523.
+# Its economizing pass, the set cut to one point a picture and the kit to
+# what that set draws: -93, at 19,430, so the cap lowered to one past it.
+# give-redial, the operator's raise (2026-10-27, "30 lines approved", up to
+# +30 and 0 core) on the director's A (demo/runs/redial/2026-10-27/
+# DECISION.md): a request that fails on the connection kept to a computer
+# closes every connection to it, the acceptor's included, before the dial
+# afresh (iroh.rs `close_every`). Its economizing pass, the close folded
+# into the count it traces (-2): +20 and 0, at 19,450.
+# The svrngs mark's generator (docs/brand/src/), the operator's raise
+# (2026-10-27, "Approve +53"): its geometry, three cuts, the lockup and the
+# icon, and the diagrams' foot signed from it. Its economizing pass, one
+# file wrapper for all five files in place of three, and the unused cutFor
+# dropped (-21): +53 and 0, at 19,503. The rest is arcs the diagram kit has
+# no helper for, and a mark the kit's figure frame must not wrap.
+# The favicon, the operator's raise (2026-10-27, "Approve +6"): the mark's
+# small cut as favicon.svg, white ink when the browser is dark, and the home
+# page's route for it (home.rs `ICON`): +6 and 0, at 19,509.
+# Swift on a rung of its own, the operator's (2026-10-30, ralph/next/ios/
+# CHARTER.md): "Swift should count in its own rung. It will now be first
+# party code that we maintain fully so we should account for it. It's not
+# just demo code. But it's not the core core library which we're the utmost
+# precious about". It counts .swift across the repository, and the other two
+# caps count CODE, never Swift. The phone's app is the first; none is product
+# yet, so the cap is one past 0, raised as the core's and the repository's are.
+# The browser rows (svrn-docs rings/current/IN_THE_BROWSER.md, 2026-10-30),
+# after their own economizing pass, the store's, the page's and the index's
+# statements each said once (-56, demo/runs/economize/2026-10-30-browser/
+# SURVEY.md): a lend's address opened cold through the group's page (+16),
+# its alias (+15) and the address to keep (+4), at 19,488, so the cap
+# lowered to one past it; svrngs-core's left at one past, unchanged. Then,
+# from the operator's iPhone: a deep path opened cold by the site's
+# 404.html (+2) and the join's Home Screen line in place of a phone's
+# address to keep (+2), after `hex` said once and the cold guard folded
+# (-4): at 19,488 again, the cap unchanged. The follow-ups after their own
+# pass, uses, el and the worker's small functions each one expression (-28,
+# demo/runs/economize/2026-10-30-browser/SURVEY.md): the alias's day in UTC
+# (0), a computer's cold bookmark by the home page's /to (+8) and a person in
+# two groups (+12), at 19,480, so the cap lowered to one past it.
+# The pictures' generators uncounted, the operator's (2026-10-31, "Don't
+# count diagram code"), when the guide's 15 pictures (docs/diagrams/guide/)
+# came to +486 after their own economizing pass (-87, every SVG byte for
+# byte): docs/diagrams/src/ and docs/brand/src/ draw pictures, not the
+# product, as apps/ is not. The 10-27 raises for them (+406, +53) leave with
+# them: -366 at c0c466fe, at 19,114, so the cap lowered to one past it.
+# The operator's raise (2026-10-31, refuse rather than fall back): an app
+# brought from the shelf lands in the group's own folder, found by the
+# folder's name from the group's seed, and is refused where this computer
+# keeps none (carried.rs `brought`, group.rs `folder_name`): +7, 0 core, at
+# 19,121.
+# The pages' v2 on a rung of its own while it is built beside v1, the
+# operator's (2026-10-31, "Accept", ralph/next/page/STATE.md "Decided before
+# launch" 1): v2's files, its vendored libraries and the parity report count
+# on `v2`, capped at 1,150 (the queue's estimate, +815 to +1,112), and `.`
+# skips them. page-switchover deletes the rung: `.` takes v2 back once v1 is
+# deleted, after its own economizing pass, and asks a raise for what is left.
+# The operator's raise (2026-11-01, "Raise the counts"): page-members to
+# +180, page-join to +165 and page-acts to +190, each past its range after
+# its own economizing pass (demo/runs/page/2026-10-31-members-range,
+# 2026-11-01-join-range, 2026-11-01-acts-range). v2 671 landed and those
+# three tops come to 1,206, so the cap is one past it.
+# The operator's raise for the switchover (2026-11-01, "Yes to both", after
+# page-switchover (a)'s pass, demo/runs/economize/2026-11-01-page-switchover/
+# SURVEY.md): v2's imports in one line from ui/kit.js and one `post` (-71).
+# `.` goes to one past the swap's estimate, 19,418 to 19,446: v2's 1,008 to
+# 1,011 lines that stay count again and v1's 703 go. The swap lowers it to
+# one past where it lands, and deletes `v2` with the rung.
+# The switchover (2026-11-01, page-switchover (b)-(f), the operator's "Yes
+# to both"): the rung and its paths are gone, so `.` counts the pages'
+# flows, ui/ and the vendored Preact and htm again; v1's pages, parity.sh,
+# serve.rs and the switch's hooks went. `.` landed at 19,421, inside the
+# estimate, so its cap is one past it. Merged with main's relay `--at`
+# (227193b1, +14), it lands at 19,435, under the operator's 19,447, so the
+# cap is one past that.
+# The operator's raise for the security work's six parts (2026-11-02, "As
+# recommended": one raise to one past where it lands after the fixes): +843,
+# all outside the core. Part 6, the per-origin browser key, is +675
+# (session.rs +358, origin.rs +101, the three session*.js +188); confined
+# folders +122; advisories.py +33; secrets +13. The pass cut 17 lines: origin.rs's
+# inline tests out, one `host()`, a duplicated holder check, one signer
+# derivation. session.rs's `Onwards` store (+111) is the next pass's first
+# candidate. The seventh part waits on branch security-part7.
+# The seventh part on design D, the operator's (2026-11-02, "as
+# recommended"): +132 in the core (the pass's approver and its second
+# signature check) and +456 in all (with the signer, web/sign.js, and its
+# seal), at 3,373 and 20,734. The pass cut the wasm `approved()`, a second
+# act-kind check in `approving()` and a line of `approval_message`.
+# JavaScript on a rung of its own, the operator's (2026-11-02, ralph/next/js/
+# CHARTER.md, "Answered" 2): "we'll just have a line count jubilee at the
+# end, also I want to track js independently". `js` counts .js and .mjs with
+# the same exclusions, and `.` no longer does: 2,233 of its 20,734 moved and
+# this rung's own 4 came in, so `.` is one past 18,505. `js` stayed uncapped
+# until the queue's jubilee below; its count was always printed.
+# Relay fallbacks in tiers, the operator's raise (2026-11-02, "Approve the
+# raise"; svrn-docs rings/current/GROUP_RELAYS.md §7): +104 in the core (the
+# keeper's `Meets` act and its fold, `MeetsAt`, the two-tier `Meeting`, the
+# two-relay link) and +355 in `.` net, at 3,477 and 18,860 (105df0bf..424d1dfc).
+# The pass cut 17 lines first: a dial's addresses kept once (0f08ee6a), one
+# way to make a contact (c0212347), one reader of a group's page (77768a50);
+# it found nothing said twice in link.rs, relay.rs, membership.rs or
+# register.rs. The rest is new: the tiers module, multi-relay dials and links.
+# js-lint's type-aware lint (ralph/next/js/CHARTER.md "Answered" 4), the
+# operator's raise (2026-11-03, "Approve +1"): +1 in `.`, the gate's `typed
+# lint` step (check.sh, 94192670), at 18,861. The pass found nothing to cut:
+# every check.sh line is a step or a verdict, and no script holds a function
+# never called (ralph/next/js/NEEDS_HUMAN.md, "`.` is at its cap").
+# The js queue's jubilee, preauthorized by CHARTER "Answered" 2: its final
+# 7,338 lines set js's cap one past, 7,339. Removing uncapped mode cuts three
+# Python lines, so . lands at 18,858 and its cap lowers to one past too.
+# The +1 JavaScript plant and the restored count are recorded in
+# demo/runs/economize/2026-11-03-js-read/CLOSE.md.
+BUDGET = {"crates/svrngs-core": 3478, ".": 18859, "js": 7339, "swift": 1}
+CODE = {".rs", ".ts", ".py", ".sh"}
+RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
 
 def files(base):
@@ -126,13 +427,16 @@ def files(base):
     return (ROOT / p for p in r.stdout.decode().split("\0") if p)
 
 
-def code_lines(base):
+def code_lines(base, kinds=CODE):
     n = 0
     for f in files(base):
         rel = f.relative_to(ROOT).as_posix()
-        if (f.suffix not in CODE or not f.is_file() or "/tests/" in f"/{rel}"
+        if (f.suffix not in kinds or not f.is_file() or "/tests/" in f"/{rel}"
                 or "/node_modules/" in f"/{rel}"
-                or rel.startswith(("apps/", "target/", "demo/runs/"))
+                # Preact's and htm's type declarations, vendored for `types`
+                # and never served (ralph/next/js/CHARTER.md, "Answered" 3).
+                or (rel.startswith("web/vendor/") and rel.endswith(".d.ts"))
+                or rel.startswith(("apps/", "target/", "demo/runs/", "docs/diagrams/src/", "docs/brand/src/"))
                 or re.search(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$|\.test\.m?js$", rel)):
             continue
         for line in f.read_text(errors="replace").splitlines():
@@ -173,14 +477,12 @@ def main():
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
-    for path, cap in BUDGET.items():
-        base = ROOT / path
-        n = code_lines(base) if base.exists() else 0
-        print(f"{path:<20} {n:>6} / {cap} lines")
+    for rung, cap in BUDGET.items():
+        n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)
+        print(f"{rung:<20} {n:>6} / {cap} lines")
         if n >= cap:
-            broken.append(f"{path} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
-    for b in broken:
-        print(f"BROKEN  {b}")
+            broken.append(f"{rung} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
+    for b in broken: print(f"BROKEN  {b}")
     return 1 if broken else 0
 
 

@@ -20,9 +20,7 @@ fn a_batch_append_continues_the_counter_contiguously() {
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
     let r = ring();
-    journal
-        .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
-        .unwrap();
+    journal.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap();
     let batch = vec![record("a"), record("b"), record("c")];
     let author = svrngs_core::Author {
         signer: &key(1),
@@ -36,7 +34,7 @@ fn a_batch_append_continues_the_counter_contiguously() {
     assert_eq!(ops.iter().map(|o| o.kind.seq).collect::<Vec<_>>(), [1, 2, 3]);
     assert_eq!(
         journal
-            .append(record("y"), &key(1), &r, None, &Ed25519Verifier)
+            .append(record("y"), &key(1), &r, &Ed25519Verifier)
             .unwrap()
             .kind
             .seq,
@@ -61,9 +59,7 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
     let journal = open(dir.path());
     let r = ring();
     for _ in 0..3 {
-        journal
-            .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap();
+        journal.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap();
     }
     let path = journal.dir().join("ring_oplog.jsonl");
     let raw = std::fs::read_to_string(&path).unwrap();
@@ -75,7 +71,7 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
     drop(f);
     assert_eq!(
         journal
-            .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
+            .append(record("x"), &key(1), &r, &Ed25519Verifier)
             .unwrap()
             .kind
             .seq,
@@ -85,11 +81,11 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
 
     // Another handle on the same file appends: this one's next write sees it.
     let other = open(dir.path());
-    let theirs = other.append(record("y"), &key(2), &r, None, &Ed25519Verifier).unwrap();
+    let theirs = other.append(record("y"), &key(2), &r, &Ed25519Verifier).unwrap();
     assert!(!journal.ingest(&theirs).unwrap(), "held from the tail");
     assert_eq!(
         journal
-            .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
+            .append(record("x"), &key(1), &r, &Ed25519Verifier)
             .unwrap()
             .kind
             .seq,
@@ -103,7 +99,7 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
     let fresh = tempfile::tempdir().unwrap();
     let a = open(fresh.path());
     for _ in 0..4 {
-        a.append(record("x"), &key(1), &r, None, &Ed25519Verifier).unwrap();
+        a.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap();
     }
     let mut lines = a.read().unwrap().0;
     let dropped = lines.remove(0);
@@ -115,10 +111,7 @@ fn a_write_reads_only_what_the_log_gained_since_the_last_one() {
         "an op not in the file renamed over the log is not held, as before the index"
     );
     assert_eq!(
-        a.append(record("x"), &key(1), &r, None, &Ed25519Verifier)
-            .unwrap()
-            .kind
-            .seq,
+        a.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap().kind.seq,
         4
     );
 }
@@ -147,10 +140,10 @@ fn the_digest_is_caught_up_from_the_tail_and_restarts_on_a_replaced_log() {
         (ours, offer)
     };
     for _ in 0..3 {
-        a.append(record("x"), &key(1), &r, None, &Ed25519Verifier).unwrap();
+        a.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap();
     }
     assert_eq!(kept(&a), whole(&a), "its own appends");
-    b.append(record("y"), &key(2), &r, None, &Ed25519Verifier).unwrap();
+    b.append(record("y"), &key(2), &r, &Ed25519Verifier).unwrap();
     assert_eq!(kept(&a), whole(&a), "another handle's append, from the tail");
     let first = a.read().unwrap().0.remove(0);
     crate::oplog::Oplog::<SignedOp>::new(a.dir().to_path_buf())
@@ -178,18 +171,10 @@ fn a_tampered_or_replayed_act_is_still_refused_once_signatures_are_kept() {
     let journal = open(dir.path());
     let r = ring();
     let alex: Vec<_> = (0..3)
-        .map(|_| {
-            journal
-                .append(record("x"), &key(1), &r, None, &Ed25519Verifier)
-                .unwrap()
-        })
+        .map(|_| journal.append(record("x"), &key(1), &r, &Ed25519Verifier).unwrap())
         .collect();
-    journal
-        .append(record("y"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
-    let lacked = journal
-        .append(record("y"), &key(2), &r, None, &Ed25519Verifier)
-        .unwrap();
+    journal.append(record("y"), &key(2), &r, &Ed25519Verifier).unwrap();
+    let lacked = journal.append(record("y"), &key(2), &r, &Ed25519Verifier).unwrap();
     let peer = svrngs_core::digest(&journal.read().unwrap().0[..4], NS, &Ed25519Verifier);
     let mut tampered = alex[1].clone();
     tampered.kind.act = record("words alex never signed");

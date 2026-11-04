@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "1340",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 01:30:32 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Here's a thinking process:\\n\\n1.  **Analyze User Input:** The user says: \\\"Reply with the single word: ok\\\"\\n2.  **Identify Constraint:** The constraint is very strict: \\\"Reply with the single word: ok\\\"\\n3.  **Determine Response:** I must output exactly \\\"ok\\\" and nothing else.\\n4.  **Verify Compliance:** Does \\\"ok\\\" match the requirement? Yes. Is it a single word? Yes. No extra text, punctuation (unless part of the word, but the prompt says \\\"ok\\\"), or formatting.\\n5.  **Output Generation:** ok\\n   *Self-Correction/Refinement during thought:* The prompt says \\\"single word: ok\\\". I will output exactly \\\"ok\\\" without quotes or additional text. Matches constraint perfectly.✅\\n\"}}],\"created\":1792719032,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":175,\"prompt_tokens\":17,\"total_tokens\":192,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-IecSY8J4pCRslDy0DMtO2PX7c7LXNQAa\",\"timings\":{\"cache_n\":0,\"prompt_n\":17,\"prompt_ms\":80.976,\"prompt_per_token_ms\":4.7632941176470585,\"prompt_per_second\":209.93874728314563,\"predicted_n\":175,\"predicted_ms\":2696.548,\"predicted_per_token_ms\":15.408845714285713,\"predicted_per_second\":64.89778783837707}}"
+}

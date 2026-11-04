@@ -1,0 +1,21 @@
+# Give's one fold: who keeps each app, from give's own acts in the record's
+# order (svrn-docs rings/current/GIVE.md §7, §7a decision 2). The keeper
+# program links it (apps/give), and apps/give/build.sh builds it to plain
+# JavaScript for the carried page, as apps/canon/build.sh builds canon-core;
+# cases.json is run against both builds (tests/cases.rs, ../fold.test.mjs).
+#
+# Pure: JSON in, JSON out, no clock, no I/O, so the same bytes decide on a
+# computer and in a page. Its fields are its own, never the workspace's, so
+# give moves out at no cost (../tests/surface.rs).
+[package]
+name = "give-fold"
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[dependencies]
+serde_json = "1"

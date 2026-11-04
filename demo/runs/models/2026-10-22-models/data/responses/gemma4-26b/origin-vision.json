@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "910",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 01:31:27 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"Red\",\"reasoning_content\":\"The user wants to know the color of the provided image.\\nThe image is a solid color square.\\nThe color is red.\\nThe instruction says \\\"Answer with one word\\\".\\n\\nPlan:\\n1. Identify the color of the square in the image.\\n2. Respond with the one-word answer.\"}}],\"created\":1792719087,\"model\":\"ana/vision\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":70,\"prompt_tokens\":78,\"total_tokens\":148,\"prompt_tokens_details\":{\"cached_tokens\":7}},\"id\":\"chatcmpl-lpREcNMTWZCfu56HMiz2rlInmSNfM71R\",\"timings\":{\"cache_n\":7,\"prompt_n\":71,\"prompt_ms\":505.539,\"prompt_per_token_ms\":7.120267605633803,\"prompt_per_second\":140.44415959995172,\"predicted_n\":70,\"predicted_ms\":1520.164,\"predicted_per_token_ms\":21.716628571428572,\"predicted_per_second\":46.04766327843575}}"
+}

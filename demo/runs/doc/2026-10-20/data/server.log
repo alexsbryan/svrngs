@@ -1,0 +1,72 @@
+{"at":"2026-10-20T20:22:45.361Z","what":"lender: asked svrngs this computer's name","names":["Alex"],"lender":"Alex"}
+{"at":"2026-10-20T20:22:45.363Z","what":"server: listening on loopback alone","port":36019,"keep":"/home/alexbryan/doc-run/w/keep"}
+The doc is at http://127.0.0.1:36019/, kept in /home/alexbryan/doc-run/w/keep. Lend it: svrngs share 36019 --name doc --kind doc
+{"at":"2026-10-20T20:22:50.257Z","what":"socket: a page opened","person":"Cy","named":true,"pages":1}
+{"at":"2026-10-20T20:22:51.627Z","what":"socket: a page opened","person":"Bo","named":true,"pages":2}
+{"at":"2026-10-20T20:22:51.785Z","what":"socket: a page opened","person":"Di","named":true,"pages":3}
+{"at":"2026-10-20T20:22:52.448Z","what":"doc: an edit written as its socket's person","seq":1,"person":"Cy","bytes":48}
+{"at":"2026-10-20T20:22:52.476Z","what":"doc: an edit written as its socket's person","seq":2,"person":"Di","bytes":48}
+{"at":"2026-10-20T20:22:52.478Z","what":"doc: an edit written as its socket's person","seq":3,"person":"Cy","bytes":28}
+{"at":"2026-10-20T20:22:52.478Z","what":"doc: an edit written as its socket's person","seq":4,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.479Z","what":"doc: an edit written as its socket's person","seq":5,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.479Z","what":"doc: an edit written as its socket's person","seq":6,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.480Z","what":"doc: an edit written as its socket's person","seq":7,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.481Z","what":"doc: an edit written as its socket's person","seq":8,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.481Z","what":"doc: an edit written as its socket's person","seq":9,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.481Z","what":"doc: an edit written as its socket's person","seq":10,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.482Z","what":"doc: an edit written as its socket's person","seq":11,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.482Z","what":"doc: an edit written as its socket's person","seq":12,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.483Z","what":"doc: an edit written as its socket's person","seq":13,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.483Z","what":"doc: an edit written as its socket's person","seq":14,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.483Z","what":"doc: an edit written as its socket's person","seq":15,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.483Z","what":"doc: an edit written as its socket's person","seq":16,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.484Z","what":"doc: an edit written as its socket's person","seq":17,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.484Z","what":"doc: an edit written as its socket's person","seq":18,"person":"Cy","bytes":18}
+{"at":"2026-10-20T20:22:52.484Z","what":"doc: an edit written as its socket's person","seq":19,"person":"Di","bytes":28}
+{"at":"2026-10-20T20:22:52.485Z","what":"doc: an edit written as its socket's person","seq":20,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.485Z","what":"doc: an edit written as its socket's person","seq":21,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.485Z","what":"doc: an edit written as its socket's person","seq":22,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.485Z","what":"doc: an edit written as its socket's person","seq":23,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.486Z","what":"doc: an edit written as its socket's person","seq":24,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.506Z","what":"doc: an edit written as its socket's person","seq":25,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.506Z","what":"doc: an edit written as its socket's person","seq":26,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.506Z","what":"doc: an edit written as its socket's person","seq":27,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.507Z","what":"doc: an edit written as its socket's person","seq":28,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.507Z","what":"doc: an edit written as its socket's person","seq":29,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.507Z","what":"doc: an edit written as its socket's person","seq":30,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.508Z","what":"doc: an edit written as its socket's person","seq":31,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.508Z","what":"doc: an edit written as its socket's person","seq":32,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.508Z","what":"doc: an edit written as its socket's person","seq":33,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.509Z","what":"doc: an edit written as its socket's person","seq":34,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.509Z","what":"doc: an edit written as its socket's person","seq":35,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.509Z","what":"doc: an edit written as its socket's person","seq":36,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.509Z","what":"doc: an edit written as its socket's person","seq":37,"person":"Di","bytes":18}
+{"at":"2026-10-20T20:22:52.510Z","what":"doc: an edit written as its socket's person","seq":38,"person":"Bo","bytes":48}
+{"at":"2026-10-20T20:22:52.541Z","what":"doc: an edit written as its socket's person","seq":39,"person":"Bo","bytes":28}
+{"at":"2026-10-20T20:22:52.549Z","what":"doc: an edit written as its socket's person","seq":40,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.568Z","what":"doc: an edit written as its socket's person","seq":41,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.575Z","what":"doc: an edit written as its socket's person","seq":42,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.575Z","what":"doc: an edit written as its socket's person","seq":43,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.575Z","what":"doc: an edit written as its socket's person","seq":44,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.575Z","what":"doc: an edit written as its socket's person","seq":45,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.585Z","what":"doc: an edit written as its socket's person","seq":46,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.586Z","what":"doc: an edit written as its socket's person","seq":47,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.586Z","what":"doc: an edit written as its socket's person","seq":48,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.590Z","what":"doc: an edit written as its socket's person","seq":49,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.617Z","what":"doc: an edit written as its socket's person","seq":50,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.618Z","what":"doc: an edit written as its socket's person","seq":51,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.618Z","what":"doc: an edit written as its socket's person","seq":52,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:22:52.625Z","what":"doc: an edit written as its socket's person","seq":53,"person":"Bo","bytes":18}
+{"at":"2026-10-20T20:23:40.134Z","what":"socket: a page closed","person":"Di","pages":2}
+{"at":"2026-10-20T20:23:40.134Z","what":"socket: a page closed","person":"Bo","pages":1}
+{"at":"2026-10-20T20:23:40.135Z","what":"socket: a page closed","person":"Cy","pages":0}
+{"at":"2026-10-20T20:23:40.198Z","what":"socket: a page opened","person":"Cy","named":true,"pages":1}
+{"at":"2026-10-20T20:23:40.201Z","what":"doc: an edit written as its socket's person","seq":54,"person":"Cy","bytes":59}
+{"at":"2026-10-20T20:23:40.418Z","what":"socket: a page opened","person":"Di","named":true,"pages":2}
+{"at":"2026-10-20T20:23:40.498Z","what":"doc: an edit written as its socket's person","seq":55,"person":"Di","bytes":65}
+{"at":"2026-10-20T20:23:43.648Z","what":"socket: a page opened","person":"Bo","named":true,"pages":3}
+{"at":"2026-10-20T20:23:43.803Z","what":"doc: an edit written as its socket's person","seq":56,"person":"Bo","bytes":58}
+{"at":"2026-10-20T20:23:45.364Z","what":"lender: asked svrngs this computer's name","names":["Alex"],"lender":"Alex"}
+{"at":"2026-10-20T20:23:45.757Z","what":"socket: a page opened","person":"Cy","named":true,"pages":4}
+{"at":"2026-10-20T20:23:45.801Z","what":"socket: a page closed","person":"Cy","pages":3}
+{"at":"2026-10-20T20:23:45.959Z","what":"socket: a page closed","person":"Cy","pages":2}

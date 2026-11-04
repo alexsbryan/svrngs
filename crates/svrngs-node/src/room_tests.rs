@@ -3,13 +3,15 @@
 //! cannot show, and the caller let in or refused. The listeners themselves
 //! are judged in `tests/room.rs`.
 
-use std::net::{IpAddr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use axum::extract::ConnectInfo;
 use axum::http::{Request, StatusCode};
 use tower::ServiceExt;
 
-use super::{from_this_network, pick};
+use super::owner::{from_this_network, IN_ROOM};
+use super::{serves, Served};
+use crate::network::{pick, HardwareAddress, Network, Unread};
 
 fn ips(raw: &[&str]) -> Vec<IpAddr> {
     raw.iter().map(|a| a.parse().unwrap()).collect()
@@ -103,4 +105,58 @@ async fn a_caller_off_this_network_is_refused() {
     }
     assert_eq!(answered(None).await, StatusCode::FORBIDDEN, "no address");
     assert_eq!(answered(Some("192.168.1.9:5000")).await, StatusCode::OK);
+}
+
+/// **Served only on the network it was turned on at, and one read** (the
+/// operator: kept across restarts, on the home network alone). Turned on
+/// at home's router: on home's, with an address, served there at its port;
+/// on a café's router, though this computer has the same address there,
+/// not served, `Elsewhere`; with the network unread, not served, `Unread`
+/// (AGENTS 6: never a guess); at home with no private address,
+/// `NoAddress`. Each said in a person's words, the one wording the page
+/// and the command say. Planted, each watched failing: the network not
+/// compared (`now != kept` dropped), and an unread one read as home's.
+#[test]
+fn served_only_on_the_network_it_was_turned_on_at() {
+    let home = Network(HardwareAddress::parse("e4:f4:c6:0a:5e:a1").unwrap());
+    let cafe = Network(HardwareAddress::parse("02:00:5e:00:53:01").unwrap());
+    let at: Ipv4Addr = "192.168.1.4".parse().unwrap();
+    let served = SocketAddr::new(at.into(), 41_234);
+    assert_eq!(
+        serves(&home, Ok(&home), Some(at), 41_234),
+        Served::At(served)
+    );
+    assert_eq!(
+        serves(&home, Ok(&cafe), Some(at), 41_234),
+        Served::Elsewhere
+    );
+    assert_eq!(
+        serves(&home, Err(&Unread::NoHardwareAddress), Some(at), 41_234),
+        Served::Unread
+    );
+    assert_eq!(serves(&home, Ok(&home), None, 41_234), Served::NoAddress);
+    assert!(Served::Elsewhere.said().contains("another WiFi"));
+    assert!(Served::Unread.said().contains("cannot tell which WiFi"));
+    assert!(Served::At(served)
+        .said()
+        .contains("http://192.168.1.4:41234/"));
+}
+
+/// **The room door consents to no entry.** Its one check is the caller's
+/// address, which proves no person, so a lend's answer there naming entries
+/// to write as this computer's person is refused, of every kind, and says
+/// so (`origin::Unconsented::NetworkOnly`). Planted, watched failing: the
+/// room's value set to `Appending::Granted`, what `origin::reach` assumed
+/// when a door named none.
+#[test]
+fn the_room_door_consents_to_no_entry() {
+    use crate::origin::{Appending, Unconsented};
+    for kind in ["events", "Money", "model"] {
+        let kind = crate::lend::Kind::parse(kind).unwrap();
+        assert!(!IN_ROOM.permits(&kind), "{kind:?} written from the room");
+    }
+    assert!(matches!(
+        IN_ROOM,
+        Appending::Denied(Unconsented::NetworkOnly)
+    ));
 }

@@ -1,0 +1,19 @@
+{
+  "demo": "factorio",
+  "date": "2026-10-26",
+  "path": "one-host",
+  "rehearsal": true,
+  "gate": "none: rehearsed before the operator set the bars (demo/factorio.md, 'Gate'), so it passes or fails nothing",
+  "participants": 1,
+  "minutes": 9.0,
+  "desyncs": 0,
+  "drops": 0,
+  "ping_ms": null,
+  "map_bytes": 1168913,
+  "map_download_s": 0.167,
+  "factorio": "2.1.23 (build 87750, mac-arm64, steam)",
+  "assisted": true,
+  "recording": null,
+  "commit": "23dabbd0",
+  "notes": "Both computers on this Mac, svrngs from target/debug at 23dabbd0, each with its own data dir and HOME in a scratch folder; the host made a group and the friend joined it by its link, on n0's relays. The host ran Factorio's server from a copy of the operator's freee.zip, bound to 127.0.0.1:34197, require_user_verification false, and lent it with `svrngs share 34197 --udp --kind factorio --name factorio`. Play was pressed by POST /v1/play on the friend's record API, not the home page's button, and answered 'Connect to 127.0.0.1:42694.'; the operator, told that address, connected from their own Factorio client. From the server's log: the map served at 458.616 s, downloading at 458.663, loading at 458.830, in game at 458.930 (tick 15290), the operator joined at 13:53:50, play until the server was stopped at 999.817 (tick 47741): 32,451 ticks, 540.9 s, so 60 updates a second throughout. No desync and no drop in the log; the svrngs logs held only IPv6 'No route to host' warnings from iroh's probes. The path between the two computers was on this host, so it is neither the direct path between homes nor the relayed one the bars name; ping was not read."
+}

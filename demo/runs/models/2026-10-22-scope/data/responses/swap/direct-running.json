@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+    "Content-Length": "321"
+  },
+  "body": "{\"running\":[{\"model\":\"tiny-0.5b\",\"state\":\"ready\",\"cmd\":\"llama-server --port 5800 -m /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf --jinja --host 127.0.0.1 -c 2048 -ngl 99\\n\",\"proxy\":\"http://localhost:5800\",\"ttl\":0,\"name\":\"\",\"description\":\"\"}]}\n"
+}

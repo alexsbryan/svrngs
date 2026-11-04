@@ -83,6 +83,18 @@ key's relay is its own newest `Relay` act (relay-in-record): the fold
 answers it for a standing key (`Membership::relay`, read by `relay::parse`),
 and `RelayAt` writes it only when the record says otherwise.
 
+`Pass` distinguishes reach from exact-entry approval (`pass.rs`, `grant.rs`):
+the person signs a pass naming its open's `approver`; `approving` names one
+entry's id without its grant (`op`), and the approver signs pass and id
+(`approval`). The holder signs the resulting line; `admit` verifies all
+three. The signer checks expiry by its own clock at approval, so a later
+delivery doesn't trust the holder's clock. `Cutover::Holders` (`register.rs`)
+writes keeper-signed `Holders {through}` tips, freezing broad-grant legacy
+history by ancestry before voids or membership can depend on a rejected
+correction. Both new shapes use line version 13. Nodes run cutover on start,
+group creation and rounds; `/carry` refuses new holder entries without it.
+The node/page protocol is v4.
+
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
 svrngs-node. The journal is crate-private: an adapter reaches a group only
@@ -162,8 +174,8 @@ HTTP/1 server serves on its every bi-stream, each request carrying the verified 
 request head parsed but by hyper. A test drives raw HTTP or a socket at a
 door through a stand-in splice (`node/tests_support.rs`), which the product
 has not; `tests/accept.rs` tests the acceptor.
-iroh is pinned at `=1.0.2`, and its tree locked at upstream's versions, so the
-fork runs on what upstream tested.
+iroh is pinned at `=1.0.2`; transitive lockfile versions include security
+updates rather than retaining vulnerable upstream-era resolutions.
 
 Ring sync came over the same way: `ring_sync.rs` and `ring_sync/journal.rs`
 are `commonwealth-rails`' round, chunked exchange and responder (`answer`),
@@ -292,7 +304,13 @@ The record over loopback (PLAN §4, U3's inventory, the rail.rs row) is
 (`api::router`) by `api::serve`, which refuses any address but loopback
 (`check_loopback`). Then it changed: every request's caller is asked the
 same (`from_this_computer`), so a caller elsewhere, or one whose address is
-unknown, is refused 403 `not_loopback`, naming it. Its edits: the doors read the journals from a `RailApi`
+unknown, is refused 403 `not_loopback`, naming it. Then it changed
+(give-token): loopback is not proof of the person, since a container on a
+Mac running podman reaches it, so every record route also asks a program
+for the token in `<data dir>/token` (`api::TOKEN_FILE`), minted once,
+owner-only, and kept across restarts, shown as `Authorization: Bearer`,
+and refuses one without it 401 `no_token`, naming the file
+(`holds_the_token`). Its edits: the doors read the journals from a `RailApi`
 where upstream's read `RailsDaemon`; the roster they read is the group's
 seed file, since upstream's `RingRail::roster` went in U1, and so the
 not-in-roster sentence is the rail's own, where upstream chose it by the
@@ -317,7 +335,7 @@ in upstream's `api.rs`. Then it changed: the append door's
 attestation branch went with `attest`, and `GuestAttestation` from the
 core in core-0. An append's `on_behalf_of` is the
 person an app names when it serves someone else — whom the member door
-verified (DESIGN §3, "Localhost is the trust boundary") — signed by this
+verified (DESIGN §3, "The person's own programs are the trust boundary") — signed by this
 computer, and refused (`not_a_name`, `not_in_group`) unless it parses as a
 person standing in the group; upstream dropped a bare one.
 The register stands where the roster stood: `journal_of` asks
@@ -341,6 +359,10 @@ Then it changed: a hardening that fails fails the write, where upstream
 ignored it and reported a secret readable by others as stored; the file is
 created 0600; and that a credential is set is traced at debug, since the door
 reads the store on every request.
+`declared::write_secret` also persists the command's identity: a private parent,
+fresh exclusive random partial born 0600, fsync, then rename. `secret_dir` creates
+directories privately and removes group/other rights without broadening existing
+owner rights. Node startup and the command's claim use it before other files.
 
 The door is `door.rs`, new code holding upstream's rules (PLAN §4, U3's
 inventory, its identity and forward_stream rows), merged into the members'
@@ -385,36 +407,68 @@ declarations at each ask, and how many people use each now: `door::Using`,
 a task owning `limit::Counts` and the clock, told by messages, the answer's
 body holding a use until it ends.
 
-A lend may declare a sign-in instead of a secret (mwp-1; DESIGN §3, "The
-room", call 6): `sign_in` in its declaration, the port of a program of the
-lender's, set by `svrngs share --sign-in <port>`; `lend::declare` refuses a
-secret beside it. `door/sign_in.rs` holds it. `SignIns`, one task the door
-holds as it holds `Using`, keeps each person's answer by lend, port and key
-in memory, and on a person's first request asks `POST /` at the sign-in
-with the two identity headers alone, one ask at a time, within 30 s. The
-answer is `200` and `{secret, headers, script}`, every field required and
-none other (`Answer::parse`): a secret of 16 to 512 unreserved bytes; no
-header under `x-svrngs-`, hop-by-hop or `host`; a script holding neither
-the secret nor `</script`. Anything else refuses the request, `502` with
-`kind: "sign-in"`, the reason at warn, and nothing is carried. The answer's
-headers then stand where the one secret would (`rewrite_headers`); the
-stand-in `svrngs-stand-in` in the query and in each header becomes the
-asker's secret; `Accept-Encoding` goes. Outward, every secret held for the
-lend becomes the stand-in in each header, and in a textual body
-(`textual`: text, JSON, XML, a playlist, JavaScript, or no type) as it
-streams (`Swapping`, holding back one byte fewer than the longest secret),
-its length dropped; a textual answer compressed anyway is refused, `502`.
-A `401` to a request signed with a kept answer forgets it. A person's
-script (mwp-2) goes first in each `200` `text/html` answer to their `GET`:
-`tag` wraps it in a `<script>` carrying the nonce of the answer's
-`Content-Security-Policy` when it names one, saying at warn when the policy
-runs no inline script; `Swapping` holds the page back until `first_in`
-finds the place — after the first `<head…>`, else `<html…>`, else
-`<!doctype…>`, else the start, as `web/lend.js` puts its shim — within its
-first 64 KiB. Such a page goes `no-store`, without `ETag` or
-`Last-Modified`, and a request accepting `text/html` from a person with a
-script goes without `If-None-Match` and `If-Modified-Since`. A lend with no
-sign-in is carried as before.
+A lend may be a port, not a page (give-udp, give-tcp): its declaration's
+`"raw": "udp"` or `"raw": "tcp"` makes its source `lend::Source::Raw`, and
+it travels on a protocol of its own, `Alpn::Port` (`svrngs-core`'s
+`alpn.rs`, dispatched in `node.rs`'s accept), never through the door's
+HTTP. `door/udp.rs` holds both halves of the UDP door and what the TCP one
+shares: the member's computer opens one connection for one lend
+(`udp::carried`), and the lender's `serve` lets each use in by the same
+standing and limit (`admitted`) and asks the dialer's standing again every
+sweep, 1 s, closing the connection once they no longer stand (give-cut).
+Each flow is a socket of its own on 127.0.0.1:0, connected to the lent
+port, closed after `IDLE` idle; its packets cross as QUIC datagrams, one
+larger than a datagram cut into a frame of flow, number, index and count
+(`framed`) and made whole on the far side (`take`), a packet with a
+fragment lost lost whole. `door/tcp.rs` carries each TCP connection on a
+QUIC bi-stream of its own on that connection (`tcp::carried`), a side's
+close its stream's finish. Play (`play.rs`, give-play) is the member's
+half on a person's own computer: one owner on the room's model, binding
+`127.0.0.1:<room::port_of(label)>` for each lend whose Play is on, kept in
+`<data dir>/play.json`, while this computer's person and the lender stand
+in a group held here together, read every 5 s; `/v1/play` turns it, for
+the home page's Play and Stop.
+
+Sign in with svrngs (SIGN_IN_WITH_SVRNGS §5, §6; DESIGN §3, "The room",
+call 6): `crates/svrngs-core/src/token.rs` makes an app's claims from the
+door's identity headers, one `token::Subject` that the one-time code holds
+too — `sub` the person's key, `preferred_username` their
+account, `name` their name, `groups` `["member"]` or `["guest"]`, with
+`iss`, `aud`, `exp` and `iat`, and no `email` — their JSON, the
+`{"alg":"ES256","typ":"JWT","kid":…}` header and the base64url signing
+input, pure and `no_std`. `crates/svrngs-node/src/oidc.rs` keeps one ES256
+key per lender's computer at `<data dir>/oidc/key.pk8`, 0600 through
+`declared::write_secret`, signs that input through `ring`, and answers the
+JWKS from the same key pair: the key a client verifies is the key that
+signed. `oidc/provider.rs` answers discovery, the keys, the token and
+userinfo on the record API's listener, its one-time codes kept in this run's
+memory and bound to the person, the client, the redirect, the PKCE challenge
+(S256's alone, its `S256Challenge`, so no method is checked twice) and the
+nonce; `oidc/front.rs` and `door::lend_for` answer the authorize
+path on the lend's own origin, after the asker is known and never carried to
+the service, accepting the app's redirect on its own address or on the
+lend's own origin (the browser's `X-Forwarded-Host`/`-Proto`). What the
+redirect leaves after that origin is a `door::LendPath`, the one parse the
+door's rewrite of a service's own `Location` reads too: the service's hosts
+are `door::OWN_HOSTS` (`localhost`, `127.0.0.1`, `[::1]`), and a rest a
+browser would read as another host's (`//`, `\`) or holding a control byte
+is refused, so the `Location` built from it is a header by construction. The
+door asks a lend's service at the service's own `Host` but tells it the
+browser's origin in those two headers (`door::tell_origin`), displacing any a
+client typed, so a proxy-trusting app builds its pages on the lend's origin.
+The key is never in the record and never synced; a token is on
+no wire but the app's. The sign-in hook a lender's program once answered is
+gone, and no program per app stands beside a lend: the well-known table's
+one `helper` row went with the app it named (`oidc-retire`), and a kind is
+a port or its lender's word, never a program to run.
+Turning it on is the lender's: the home page's `/lent` (its `POST` with
+`to: sign-in`) makes a client id and secret with `oidc::client`, checks
+them against `lend::client_alphabet` (`[A-Za-z0-9-._~]` only), and keeps
+them in the lend's declaration at 0600 through `lend::declare`; the answer
+names the one issuer string and the deviations once, and `GET /lent` says
+only that the lend signs people in. `svrngs share --sign-in-with-svrngs`
+does the same for scripts. A lend declares its own password or this, never
+both.
 
 A lend may ask (sup-2; DESIGN §3, "What an app gets"): `asks` in its
 declaration, its lender's words, set by `svrngs share --ask`, carried in
@@ -427,7 +481,7 @@ lend asking nobody and its own pages, and refuses `unasked` or `stopped`.
 `POST /choices/<lend>` on the members' protocol takes the dialler's person's
 `{app, said}`; with a pass, on either protocol, only `{said: "stop"}` (the
 type `Stopping`). `GET /choices/<lend>` answers the dialler's own. Every
-choice, sign-in answer and count of who uses a lend is keyed by
+choice and count of who uses a lend is keyed by
 `door::PersonKey`, which only the door makes, from the register's person
 key, so a person's devices are one person to each. `lend::withdraw` removes them with the lend.
 
@@ -435,8 +489,27 @@ The home page (`home.rs`, sup-2), `http://svrngs.localhost:<api port>/`, is
 routed by its `Host` (`api::to_a_lend`) beside the lends' origins and
 served only at its exact host and port: a read only from its own origin, a
 typed address or a navigation, a write only from its own origin with its
-exact `Origin` (`only_itself`), every answer `default-src 'self';
-frame-ancestors 'none'`. It serves `home/index.html`, `home/home.js` and
+exact `Origin` (`only_itself`), and only to a browser showing its session
+or a program showing the token, every answer `default-src 'self';
+frame-ancestors 'none'`. `session.rs` holds this computer's opens and
+sessions for the home page and every lend's origin alike: `POST /v1/open`
+behind the token (`svrngs open`), the home page's `/to`, and `/svrngs-open`
+whose bootstrap redeems a one-use code by own-origin POST and imports a
+nonextractable HMAC key into that exact origin/port's IndexedDB. Cookies no
+longer authorize. `home/session.js`, `session-worker.js` and `session-client.js`
+prove each request's host/port, method, path/query, write intent, boot epoch and
+nonce; home writes also bind the body digest before effects. The worker checks
+the browser's actual client, or a navigation's referrer where WebKit shows no
+client or `Origin` (`browserAuthority`), and a proved fetch mints a path-bound
+one-use WebSocket open. A proved request's same-origin redirect keeps the
+onward request for that proof, once, by the method the redirect leaves
+(`session::Onwards`). The separate read credential (`/svrngs-as/<cap>/`, stripped in
+`origin.rs`) grants reach as its named app, never signing a reply. Programs
+must explicitly accept `x-svrngs-append: <kind>` to authorize response entries;
+the token alone does not. Upgrading a cookie-only browser requires a new open.
+It serves `home/index.html`, its root `home/home.js`, the
+modules it imports, `home/page/` at `/page/`, `home/ui/` at `/ui/` and
+`web/vendor/` at `/vendor/`, from one table (`served`), and
 `home/look.css`, the record API's `/v1/groups`, `/v1/lends` and
 `/v1/rail/people` from the same routers, and `/choices`, kept by this
 computer's door for its own lends and dialled to the lender's otherwise
@@ -467,12 +540,22 @@ each hash held on every computer only until `keep` seconds after its put:
 a getter first asks the group's other computers on the members' protocol
 (`GET /internal/ring/blob/<hash>`) who holds it and for how long yet, and
 the provider's one rule (`Folders::serves`) serves a dialer a hash a
-synced folder or an app placed in a group it stands in. Removal as the command asks it (`removal.rs`, U7):
+synced folder or an app placed in a group it stands in.
+
+Incoming synced-folder operations and shelf writes resolve beneath an opened
+`cap_std::fs::Dir` (`folder::confined::Root`), including metadata and deletes;
+symlink parents cannot escape that authority. Blob installation streams into an
+exclusive random partial, checks length, flushes/fsyncs, rechecks expected local
+metadata and renames relative to the root. Failure is not recorded as a completed
+export (`synced.rs`). This is separate from the group's pure `SyncPath` parse.
+
+Removal as the command asks it (`removal.rs`, U7):
 `POST /v1/removals` commits svrngs-core's `Removal` and `POST
 /v1/handovers` its `HandOnTo`, each answering an `Outcome` the command
 words; each written wakes the round (`AskRound::wake`), so every
 computer of the group holds it now, and a cut is told to the computers it
-cut once, one sync request carrying the cut alone (`removal::tell`). `POST
+cut once, with the signer's acts before it and the hand-ons each lacks,
+until each one's digest covers it (`removal::tell`, `ring_routes::told_with`, #211). `POST
 /v1/leaves` commits `Leave`, the person's own `Remove` of each of their
 keys, as `svrngs leave` and the home page's "Leave this group" ask it;
 from then on this computer stands in the group for nobody, and its round
@@ -499,23 +582,54 @@ forked as fixtures. `tests/canaries.rs` stands up Sam's computer and Alex's
 in one group, in one process with no relay, and runs each canary of DESIGN
 §5 under Node against their loopback record APIs; `scripts/check.sh` runs it
 as its own step, and a canary that cannot start fails.
-The room door (`room.rs`, u6-1, new code in the shape of upstream's LAN
-door and `advertised_base`, PLAN §4, U6's inventory) serves the lends a
-person names to this computer's network while the command runs:
-`room::open` asks `Node::lends`, refuses a name nobody lends, and binds
-each named lend alone at `<private address>:<room::port_of(label)>`, a
-port the label decides so it is the same every run, its router the
-origin's body (`origin::reach`, as this computer's person) behind
-`from_this_network`, whose predicate is the door's `limit::guess`. The
-address is `room::pick`'s, over the endpoint's listed addresses and the
-outward route's (`room::route`, a UDP socket connected, nothing sent):
-the route's when private and listed, else the one private one, else
-none. Each served lend's address sits in `Host`'s `room`, a `watch` the
-room alone writes, which `/v1/lends` answers as `room`; dropping the
-`Room` aborts its listeners and clears it. `src/room_tests.rs` plants
-the picker's interface lists and a caller off the network;
-`tests/room.rs` runs Sam's canary through Alex's room door from this
-host's private address.
+The room (`room.rs`, u6-1, new code in the shape of upstream's LAN door
+and `advertised_base`, PLAN §4, U6's inventory) is the running node's.
+`room.rs` is the room as a person turns it, pure: each lend on with the
+network it was turned on at (`room::On`), a turn of them
+(`room::Turn::made`), and whether each is served, `room::serves`: at
+`<private address>:<room::port_of(label)>` only on the network it was
+turned on at, else `Elsewhere`, `Unread` or `NoAddress`; `Taken` when the
+bind fails; each in a person's words, `Served::said`, the one wording the
+page and the command show. Its edges are modules of their own:
+`room/kept.rs`, `<data dir>/room.json`, by key and name with each one's
+network (one that cannot be read answers `/v1/room` 500 with why, serving
+nothing, until a turn writes it over; none there is an empty room);
+`room/owner.rs`, the one task that owns the room (`owner::spawn`, told by
+messages), reading the network every 5 s and at each turn while anything
+is on, and binding each lend's listener by its label alone, its router
+the origin's body (`origin::reach`, as this computer's person) behind
+`from_this_network`, whose predicate is `network::guess`, dropped when the
+decision changes or the node stops; and `room/route.rs`, `/v1/room`
+(`route::router`, in the record's routes and the home page's), where the
+home page's button, in each lend's line below its group's things, and
+`svrngs room` open a lend to this WiFi or close it ("Open it to this
+WiFi", for every lend, any app on a port), which
+translates and decides nothing: a name to the lends of it offered now or
+on already, the network read now to a lend turned on there, the owner's
+answer to JSON or a refusal in its words. `src/room_tests.rs` plants the
+picker's interface lists, the networks and a caller off the network;
+`tests/room.rs` runs Sam's canary through Alex's room from this host's
+private address, with Sam away and back, and on another network;
+`crates/svrngs/tests/share.rs` runs `svrngs room` against svrngs running,
+then the bare command again over the same data, the room open as it
+starts.
+
+Where this computer is, and on which network, is `network.rs`, beside
+the room and the door: `network::HardwareAddress`, six bytes parsed from
+what each platform prints and said padded; `network::Network`, a router's;
+`network::here`, the one read of the world, netdev's default-route
+interface and the router's hardware address from configd's state on
+macOS, `scutil`, since a program not let find devices on the network is
+shown no ARP table there, or from `/proc/net/arp` on Linux
+(`network::hardware_in`, pure), with `network::Unread` saying why not,
+and this computer's address for the devices beside it, `network::pick`'s,
+over the interface's addresses and the outward route's (`network::route`,
+a UDP socket connected, nothing sent): the route's when private and
+listed, else the one private one, else none; `network::now`, the same off
+the async runtime. `network::guess` is a caller's address home or away,
+for the door's count and the room's listeners. `src/network_tests.rs`
+plants configd's state, Linux's ARP table and a hardware address's
+spellings.
 
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
@@ -576,10 +690,10 @@ and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the
 lend through `svrngs_node::lend::declare`, and runs the node unless the
 data dir's lock is held, when it says svrngs is running already and
-leaves. `unshare <name>` withdraws one. `room <name>...` picks this
-computer's private address (`svrngs_node::room::pick`), refusing with
-none (exit 3), opens the room door for the lends named, says who can
-open them and where, and holds it until Ctrl-C. What a verb prints is a
+leaves. `unshare <name>` withdraws one. `room <name>...` asks
+`/v1/room` of svrngs running here to turn the lends named on, as `remove`
+asks, or of the one it starts when none runs, and says who can open them
+and where each is served or why not. What a verb prints is a
 closed `Said`, and refusals a closed `Refusal`, both in a person's words,
 exit 1 for a refusal and 3 for a precondition absent. `tests/new.rs` runs
 one node in process; `tests/join_by_link.rs`, U2's bar, runs Sam and six
@@ -590,7 +704,9 @@ program itself for `share` with svrngs running and not.
 (DESIGN §3, "Joining"; U4): the crate `svrngs-web`, wasm only, in a
 workspace of its own with upstream's measured pins (iroh =1.0.2,
 wasm-bindgen =0.2.128, wasm-bindgen-futures =0.4.78, js-sys =0.3.105) and
-lock, and the static shell beside it — `index.html`, `app.js`,
+lock, and the static shell beside it — `index.html`, its root `app.js`
+and the flows it composes in `page/`, drawn with the home page's `ui/` and
+the vendored Preact and htm (DESIGN §5, "The pages draw one way"),
 `store.js`, `sw.js`, and for a lend's own origin `open.html`, `open.js`,
 `lend.js`, `shim.js`.
 Forked from commonwealth-ai's `sovereign/apps/ring-runtime` at `e1a43bcd2`
@@ -609,8 +725,8 @@ hashing to the group, `seed::answered`) and `redemption`, naming a browser.
 `store.js` (u4-5) is the page's store: IndexedDB `svrngs` v2, a
 non-extractable AES-GCM key under `seal`, and under `groups` each group
 joined — its name, the person's, the link's token, and the person's key
-sealed with the group's id as additional data (call 1). `app.js` reads the
-fragment as the token: a link joined by, or the page alone, is in; a new
+sealed with the group's id as additional data (call 1). The page reads the
+fragment as the token (`page/enter.js`): a link joined by, or the page alone, is in; a new
 link is asked of its issuer, and a group kept already is in; else it asks the
 person's name once, redeems, keeps the group, and lists `GET /people/lends`
 as the bare command prints it ("Sam's shelf"); it keeps the layers on the
@@ -622,7 +738,12 @@ lends it reads, and opens the lend's `open.html` with the pass, the key,
 the lends, the relay (`relay_of`, never the token) and itself in the
 fragment; `open.js` keeps them in that origin's store (`store.js`
 `lendKeep`), registers `lend.js` over the lend's address and hands it the
-pass in memory. `lend.js`, a module, is the runtime: it serves every
+pass in memory. Before state is installed, `open.js` asks the group
+origin's `sign.html` whether this browser's group page issued the open: the
+signer adopts the open's approver from its seal and the page's
+`__Host-svrngs-<label>` cookie, or finds the one it adopted
+(`authority.js`, `sign.js`); the private key separately proves the named
+holder. `lend.js`, a module, is the runtime: it serves every
 request at the lend's address, and at the address of a lend the pass also
 names, by `fetch` over a dial to the lender's door, `/lend/<label>/<path>`,
 on the pass holders' protocol (`holder_endpoint`, `dial_lend`), the pass
@@ -643,7 +764,7 @@ Back skips it (`opening`). A lend that asks is told with its lender's
 words, `asks`, and `ask`, `<this origin>/svrngs-ask?lend=<label>&app=<this
 lend>`, a computer's shape (sup-3); navigated with `&back=<path>`, it
 sends the page to the group's page at `#ask=<lend>&app=<label>&at=<path>`
-(`asking`, through `onward`, as `opening` goes). There `app.js` asks "Let
+(`asking`, through `onward`, as `opening` goes). There the page asks "Let
 Sam's night use Ana's taste?" around the lender's words; Yes posts
 `{app, said: "yes"}` to the lender's door, `POST /choices/<label>`, on a
 dial from `endpoint` as the person; yes or not, it opens the app again at
@@ -653,11 +774,21 @@ app, `POST /svrngs-reads/<label>/svrngs-stop`, which the worker sends to
 that lend's door with the pass, `{said: "stop"}` (`stopping`). The page
 host is told to send `frame-ancestors 'none'` (`web/vercel.json`), which
 a `<meta>` policy cannot, and the tests' server sends `vercel.json`'s
-headers (`web/tests/page.mjs`). With no pass in memory and
+headers (`web/tests/page.mjs`). Its sole exception is `sign.html`, a separate
+page with no app code: `sign.js` takes the app's label from its parent's
+origin, keeps that app's approver in its own store, and calls `approve_line`
+on only a grant the open issued while it is live, signing with a key it
+can't export. `authority::maySign` first checks the actual same-origin
+browser Client, refusing navigation-driven writes. The worker serializes
+appends and receives exact-entry approval through the page's shim and hidden
+signer frame; stable approval storage avoids two ids for one entry across
+refreshed opens. The frame URL derives from the app's own host, never
+handoff data. With no pass in memory and
 none it can read, it sends a navigation to `open.html?for=<label>`, which
 reads the pass and hands it over again. Its look is the home page's
 `look.css`, which `build-web.sh` copies beside it as it copies
-`question.js`. The shell's paths are relative, and
+`question.js`, `ui/` and `vendor/`, each module stamped with the build's
+version, and the worker's shell listed from what it copied. The shell's paths are relative, and
 the CSP admits a relay on 127.0.0.1. `scripts/build-web.sh` (upstream's
 `build-ring-runtime.sh`) builds it into `target/web/site` with Homebrew's
 LLVM on a Mac, and `--lint` holds it to rustfmt and clippy for wasm32.
@@ -695,15 +826,31 @@ self-hosted app leans on, and the checks its page runs (`checks.js`).
 from a computer and from a phone, each at an address of its own (DESIGN
 §7), through `web/tests/conformance.mjs`, and keeps each route's verdict in
 `target/conformance/`, which `scripts/check.sh` prints. Given the lender's
-key, `serve.mjs` keeps accounts, a token each, and `answer.mjs` is the
-lend's sign-in that answers each person's (mwp-4): a second app, after
-Jellyfin's, on the door's sign-in (DESIGN §3, "The room", call 6).
+key, `serve.mjs` keeps accounts and a token each.
 
 **`apps/jellyfin/`**: whatever knows Jellyfin's API (DESIGN §3, "Lent apps",
-call 3): its `nouns.txt`, the sign-in program a lender runs beside it (`mw/`,
-its README), and the drivers of its measured runs (`check/`, `folders/`).
+call 3): its `nouns.txt`, the program the retired sign-in hook ran (`mw/`,
+its README), kept until `oidc-retire` removes it, and the drivers of its
+measured runs (`check/`, `folders/`).
 **`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary PLAN §4 plans,
 after U3, and is not built: nothing runs it (#196).
+**`apps/give/`**: Give (DESIGN §3, "Give"), a crate of the workspace that
+links no svrngs crate (`tests/surface.rs`) and reaches svrngs by the record
+API, `svrngs share` and `unshare`, the synced folder and its carried page
+alone. `src/card.rs` reads a card once, each refusal naming its field;
+its privately constructed `ContainerPath` rejects mount option/source delimiters
+and path traversal. `runtime.rs` emits explicit `--mount type=volume` and a
+`--` separator before the image, so a target cannot become a host mount.
+`src/runtime.rs` starts, checks, snapshots, restores and stops one on
+Podman's command line (`src/podman.rs`, `src/machine.rs` for a Mac's
+machine), naming no svrngs type; `src/check.rs` is `give check`. `fold/`
+is who keeps each app, from give's acts in the record's order, linked by
+the program and built to `page/vendor/fold.js` by `build.sh`, both held to
+`fold/cases.json`. `src/keep.rs` is `give keep`, its `plan` decided apart
+from doing it, over `src/record.rs` and `src/lend.rs`; `src/page.rs` is
+`give page`, which brings `page/` into a group's folder. `web/install.sh
+--give` installs the program, which `scripts/build-release.sh` builds with
+svrngs. Its scenes are svrngs's (`crates/svrngs/tests/scenes/give*.rs`).
 
 **`demo/`**: how a demo is recorded. **`ralph/`**: the work loop. A queue is a
 directory `ralph/next/<queue>/` holding `queue.toml` (models, timeouts, the
@@ -720,5 +867,14 @@ repository standalone and within budget; `vocab_check.py` keeps every app's
 nouns (`apps/<app>/nouns.txt`) out of infra code; `trust_check.py` holds every
 page's policy and every listener to `trust_floor.txt`, their one home, and
 the floor to a reason for each change; `ports.py` lists the fork's pairs;
-`principles_check.py` keeps `docs/principles/` pinned; `build-web.sh` builds
+`principles_check.py` keeps `docs/principles/` pinned; `advisories.py` checks
+both Rust lockfiles against a fresh RustSec database through cargo-deny, missing
+tools reported never-ran. `deny.toml` contains four maintenance-only exceptions
+due for review by 2026-12-01; vulnerability and unsoundness findings remain
+fatal. Pinned, yanked `iroh-blobs 0.103.0` remains a warning, not a fixed finding.
+`build-web.sh` builds
 and lints the page (`web/`).
+
+**`docs/diagrams/`**: the three pictures `docs/OVERVIEW.md` shows, drawn by
+`src/build.mjs` from scenes as data over one kit of shapes (`src/kit.mjs`);
+no check runs it, and oxlint lints it with every other script.

@@ -86,46 +86,66 @@
 //! person, or that they started the group, a seed row's — which the people
 //! list says and a removal or a hand-on may name. [`Membership::one_named`]
 //! answers which person a name and that time name.
+//!
+//! svrngs (guests-visit; svrn-docs `rings/current/GUESTS.md` §3, §5): a
+//! counting [`RailAct::Visit`] is a visit when, at its place in the walk,
+//! its `until` is within [`VISIT_LONGEST`] of its own time, its key was
+//! never a member's or another visit's, and with it the group's guests on
+//! then stay fewer than the people standing and its host's at most
+//! [`GUESTS_PER_HOST`]. Otherwise it counts nowhere, on every copy, and
+//! nothing has to refuse it. A visit ends at its `until`, at its host's
+//! counting `Correct` of it, their Stop, or when the host's key is cut.
+//! [`Guest::live`] answers whether a visit is on when.
 
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::String;
 use alloc::vec::Vec;
 
-use crate::op::Op;
+use crate::{command::AHEAD_SECS, op::Op};
 
-use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp};
+use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp, Visit};
+
+/// How long a visit may be, from its act's own time (GUESTS §3.6): the
+/// house's 48 hours, the starting value `GuestRules` will read (§5).
+pub const VISIT_LONGEST: i64 = 48 * 60 * 60;
+/// How many guests one host may have on at once (GUESTS §3.7): two, the
+/// starting value `GuestRules` will read (§5).
+pub const GUESTS_PER_HOST: usize = 2;
 
 /// Why a redeeming `Admit` does not count — one per condition of the rule
 /// in the module docs.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    thiserror::Error,
+)]
 #[serde(rename_all = "snake_case")]
 pub enum InviteFault {
     /// No `Invite` with that id is held here.
+    #[error("this node does not hold its link")]
     Unheld,
     /// The `Admit`'s signer is not the `Invite`'s.
+    #[error("its link was made by someone else")]
     NotIssuer,
     /// The `Admit` is timed at or after the `Invite`'s `until`.
+    #[error("its link had lapsed")]
     Lapsed,
     /// The admitted key's signature over the redemption does not verify.
+    #[error("the joining key did not sign it")]
     BadCosignature,
     /// The `Invite` did not count before the `Admit` in the rail's order.
+    #[error("its link did not count before it")]
     Uncounted,
     /// The issuer's newer `Invite`, `by`, counted before the `Admit` in the
     /// rail's order and closed this one (u2-4b).
+    #[error("its link was closed by a newer one")]
     Closed { by: OpId },
-}
-
-impl core::fmt::Display for InviteFault {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(match self {
-            Self::Unheld => "this node does not hold its link",
-            Self::NotIssuer => "its link was made by someone else",
-            Self::Lapsed => "its link had lapsed",
-            Self::BadCosignature => "the joining key did not sign it",
-            Self::Uncounted => "its link did not count before it",
-            Self::Closed { .. } => "its link was closed by a newer one",
-        })
-    }
 }
 
 /// When a person joined the group (bash-same-name): they started it, a
@@ -214,6 +234,52 @@ pub struct Membership {
     /// Cumulative as [`Self::bindings`] is; ask [`Self::relay`].
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub relays: BTreeMap<String, String>,
+    /// Each `Visit` that is one, by its id (guests-visit); ask each
+    /// [`Guest::live`] whether it is on. Skipped when empty.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub visits: BTreeMap<OpId, Guest>,
+    /// The keeper's first counting [`RailAct::Signers`], the cutover
+    /// (capability-signed): past what it covers, an act naming another
+    /// person than its signer's counts nowhere (`admit`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signers: Option<OpId>,
+    /// The keeper's first counting [`RailAct::Holders`], the holders'
+    /// cutover: past what it covers, a holder's line counts only with its
+    /// person's approval of its exact content (`admit`). Skipped when
+    /// absent, so a fold with none serialises as before.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub holders: Option<OpId>,
+    /// The relays the keeper's newest counting [`RailAct::Meets`] names, as
+    /// written (relay fallbacks); `None` while the keeper has named none.
+    /// Ask [`Self::meets_at`]. Skipped when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub meets: Option<BTreeSet<String>>,
+}
+
+/// A guest, as a counting [`RailAct::Visit`] names them, hosted by the key
+/// that signed it, from the act's time `at`.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub struct Guest {
+    pub host: String,
+    pub at: i64,
+    pub visit: Visit,
+    /// The time on the host's Stop, if they stopped it.
+    pub stopped: Option<i64>,
+}
+
+impl Guest {
+    /// Whether the visit is on at `at`: begun, and before its `until`, its
+    /// host's Stop and the cut of its host's key, as `cut` holds them. It
+    /// begins when its act is written: a new act is timed at most one past
+    /// a line [`AHEAD_SECS`] ahead of its writer's clock (`command.rs`
+    /// `sign_lines`), so a visit timed that far past `at` is begun
+    /// (guests-first, #214). The walk sorts by time ([`membership`]), so the
+    /// fold, asking at a later Visit's time, counts as it did.
+    pub fn live(&self, cut: &BTreeMap<String, Cut>, at: i64) -> bool {
+        let cut = cut.get(&self.host).map(|c| c.at);
+        let ends = [Some(self.visit.until), self.stopped, cut];
+        self.at <= at.saturating_add(AHEAD_SECS + 1) && ends.iter().flatten().all(|&e| at < e)
+    }
 }
 
 /// One counting cut: the keeper's `Remove`, the acts it names in
@@ -271,9 +337,7 @@ impl Membership {
     /// `Admit`'s time, else they started the group, as a seed row's person
     /// is the one first key with none.
     pub fn joined(&self, first: &str) -> Joined {
-        self.admitted_at
-            .get(first)
-            .map_or(Joined::Started, |t| Joined::At(*t))
+        (self.admitted_at.get(first)).map_or(Joined::Started, |t| Joined::At(*t))
     }
 
     /// Each person's stretch in the group, by their first key: from when
@@ -324,9 +388,7 @@ impl Membership {
         &'a self,
         person: &'p Person,
     ) -> impl Iterator<Item = &'a String> + use<'a, 'p> {
-        self.standing
-            .iter()
-            .filter(move |k| self.bindings.get(*k) == Some(person))
+        (self.standing.iter()).filter(move |k| self.bindings.get(*k) == Some(person))
     }
 
     /// The relay `key` is reached through, if it stands now and the
@@ -335,6 +397,20 @@ impl Membership {
         let said = self.relays.get(key).filter(|_| self.standing.contains(key));
         tracing::debug!(target: "rail:membership", key, ?said, "membership: the relay the record names for a standing key");
         crate::relay::parse(said?).ok()
+    }
+
+    /// The relays the keeper says the group meets at, each read dotless,
+    /// one that reads as no URL left out and said ([`crate::relay::parse`]);
+    /// `None` while the keeper has said none.
+    pub fn meets_at(&self) -> Option<BTreeSet<crate::relay::Url>> {
+        let said = self.meets.as_ref();
+        tracing::debug!(target: "rail:membership", ?said, "membership: the relays the keeper says the group meets at");
+        Some(
+            said?
+                .iter()
+                .filter_map(|r| crate::relay::parse(r).ok())
+                .collect(),
+        )
     }
 
     /// What holds `key`, if it stands now; `None` if it does not.
@@ -405,12 +481,8 @@ pub fn membership<'a>(
     // id → whether the act is a hand-on or follows one, along its chain.
     let mut handed: BTreeMap<&OpId, (bool, bool)> = BTreeMap::new();
     for (id, op) in &by_chain {
-        let after = op
-            .kind
-            .prev
-            .as_ref()
-            .and_then(|p| handed.get(p))
-            .is_some_and(|(is, after)| *is || *after);
+        let parent = (op.kind.prev.as_ref()).and_then(|p| handed.get(p));
+        let after = parent.is_some_and(|(is, after)| *is || *after);
         handed.insert(*id, (matches!(op.kind.act, RailAct::HandOn { .. }), after));
     }
     let kept: BTreeSet<&OpId> = handed
@@ -476,7 +548,7 @@ fn covered(
     for (key, cut) in cuts.iter_mut() {
         let chain: BTreeMap<&OpId, Option<&OpId>> = ops
             .iter()
-            .filter(|(_, op)| &op.actor == key)
+            .filter(|(_, op)| op.stands_as() == key)
             .map(|(id, op)| (*id, op.kind.prev.as_ref()))
             .collect();
         let Some(RailAct::Remove { through, .. }) = ops
@@ -534,11 +606,16 @@ fn walk(
     let mut open: BTreeMap<&str, &OpId> = BTreeMap::new();
     // Each key's hand-ons that moved the keeper so far, which a cut keeps.
     let mut made: BTreeMap<&str, Vec<OpId>> = BTreeMap::new();
+    let mut visits: BTreeMap<OpId, Guest> = BTreeMap::new();
+    let mut signers = None;
+    let mut holders = None;
+    let mut meets = None;
     for (id, op) in order.iter().copied() {
-        if !live.contains_key(&op.actor) {
+        let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
+        if !live.contains_key(op.stands_as()) {
             continue;
         }
-        if covers.get(&op.actor).is_some_and(|c| !c.contains(id)) {
+        if covers.get(op.stands_as()).is_some_and(|c| !c.contains(id)) {
             tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor,
                 "membership: an act of a cut key its cut does not cover counts nowhere");
             continue;
@@ -573,6 +650,27 @@ fn walk(
                 continue;
             }
         }
+        if let RailAct::Visit(v) = &op.kind.act {
+            let at = op.ts_unix;
+            let on: Vec<&Guest> = visits.values().filter(|g| g.live(&cut, at)).collect();
+            let members = live.keys().map(|k| of(k)).collect::<BTreeSet<_>>().len();
+            let theirs = on.iter().filter(|g| of(&g.host) == of(&op.actor)).count();
+            let used =
+                visits.values().any(|g| g.visit.key == v.key) || bindings.contains_key(&v.key);
+            let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
+            let is = !used && timely && on.len() + 1 < members && theirs < GUESTS_PER_HOST;
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, on = on.len(), members, theirs, used, timely, is, "membership: a Visit is one only with its key never used before, within 48 hours, the visits on then fewer than the members and its host's at most two");
+            if !is {
+                continue;
+            }
+            let g = Guest {
+                host: op.actor.clone(),
+                at,
+                visit: v.clone(),
+                stopped: None,
+            };
+            visits.insert(id.clone(), g);
+        }
         counted.insert(id.clone());
         let keeps = keeper.as_deref() == Some(op.actor.as_str()) && kept.contains(id);
         match &op.kind.act {
@@ -604,7 +702,6 @@ fn walk(
                 live.insert(key.clone(), person);
             }
             RailAct::Remove { key, .. } => {
-                let of = |k: &str| String::from(devices.get(k).map_or(k, String::as_str));
                 let alone = live.keys().all(|k| of(k) == of(&op.actor));
                 let leaves = of(key) == of(&op.actor)
                     && (keeper.as_deref().map(of) != Some(of(key)) || alone);
@@ -649,6 +746,25 @@ fn walk(
                     None => relays.remove(&op.actor),
                 };
             }
+            RailAct::Signers { .. } => {
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, keeper = ?keeper, keeps, first = signers.is_none(),
+                    "membership: a Signers is the cutover only as the keeper's, the first");
+                signers = signers.or(keeps.then(|| id.clone()));
+            }
+            RailAct::Holders { .. } => {
+                tracing::debug!(target: "rail:membership", id = %id, keeps, "membership: legacy holder cutover only by the keeper, once");
+                holders = holders.or(keeps.then(|| id.clone()));
+            }
+            RailAct::Meets { relays } => {
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, keeper = ?keeper, keeps, ?relays,
+                    "membership: a Meets says where the group meets only as the keeper's, the newest winning");
+                meets = keeps.then(|| relays.clone()).or(meets);
+            }
+            RailAct::Correct { corrects, .. } => {
+                let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
+                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
+                visit.map(|g| g.stopped.get_or_insert(op.ts_unix));
+            }
             _ => {}
         }
     }
@@ -666,6 +782,10 @@ fn walk(
         cut,
         unsettled: false,
         relays,
+        visits,
+        signers,
+        holders,
+        meets,
     }
 }
 
@@ -680,9 +800,10 @@ impl RailAct {
 
     /// Whether this act moves membership: it binds (`Admit`), cuts or asks
     /// (`Remove`), hands the keeper on (`HandOn`) or opens a link
-    /// (`Invite`); or says where its signer is reached (`Relay`), which the
-    /// register carries beside each key, and which only a newer one
-    /// replaces. A `Correct` does not, since U7: it voids nothing that
+    /// (`Invite`); or says where its signer is reached (`Relay`), or who
+    /// is visiting (`Visit`), or cuts over to each act counting as its
+    /// signer's alone (`Signers`), or where the group meets (`Meets`), each of which the register carries beside
+    /// the keys. A `Correct` does not, since U7: it voids nothing that
     /// moves membership. [`standing_reads`] keeps these, and the acts
     /// of every key a `Remove` names, so the list has one home beside the
     /// fold that reads it, and the match has no wildcard: a new kind of act
@@ -693,7 +814,11 @@ impl RailAct {
             | RailAct::Remove { .. }
             | RailAct::HandOn { .. }
             | RailAct::Invite { .. }
-            | RailAct::Relay { .. } => true,
+            | RailAct::Relay { .. }
+            | RailAct::Visit(_)
+            | RailAct::Signers { .. }
+            | RailAct::Holders { .. }
+            | RailAct::Meets { .. } => true,
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal
@@ -704,14 +829,17 @@ impl RailAct {
 }
 
 /// The acts a fold of standing reads (U7): every act that moves membership,
-/// and every act of a key some `Remove` names, since a cut covers that key's
-/// acts along their chain by `prev`. A caller that folds standing from
-/// fewer acts than it holds (svrngs-runtime's register) keeps these, and
-/// [`RailAct::names`] is how it tells a key named as it goes.
+/// every act of a key some `Remove` names, since a cut covers that key's
+/// acts along their chain by `prev`, and every `Correct`, since one may be
+/// a visit's Stop (guests-visit): whether it is turns on the walk. A
+/// caller that folds standing from fewer acts than it holds
+/// (svrngs-runtime's register) keeps these, and [`RailAct::names`] is how
+/// it tells a key named as it goes.
 pub fn standing_reads(ops: &[Op<SignedOp>]) -> impl Iterator<Item = &Op<SignedOp>> {
     let named: BTreeSet<&str> = ops.iter().filter_map(|op| op.kind.act.names()).collect();
+    let kept = |a: &RailAct| a.moves_membership() || matches!(a, RailAct::Correct { .. });
     ops.iter()
-        .filter(move |op| op.kind.act.moves_membership() || named.contains(op.actor.as_str()))
+        .filter(move |op| kept(&op.kind.act) || named.contains(op.stands_as()))
 }
 
 /// What a redeeming `Admit` says alone: the `Invite` it names, if that is
@@ -748,3 +876,7 @@ mod invite_tests;
 #[cfg(test)]
 #[path = "removal_tests.rs"]
 mod removal_tests;
+
+#[cfg(test)]
+#[path = "visit_tests.rs"]
+mod visit_tests;

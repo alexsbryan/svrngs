@@ -1,0 +1,2 @@
+{"engine":"webkit","version":"26.4","groupPageSees":"p=plain","framedSignerSees":"","sentWithFrameLoad":null}
+{"engine":"chromium","version":"147.0.7727.15","groupPageSees":"__Host-s=hostpfx; p=plain; q=secure","framedSignerSees":"","sentWithFrameLoad":null}

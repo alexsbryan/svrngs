@@ -1,0 +1,4 @@
+$ cargo test -q -p svrngs-node --test door guests
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 35 filtered out; finished in 5.51s
+
+exit 0

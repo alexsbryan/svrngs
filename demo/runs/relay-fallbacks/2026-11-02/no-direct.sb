@@ -1,0 +1,10 @@
+; No direct path between computers on this host (relay-fallbacks, PREDICTIONS.md):
+; everything allowed but UDP sent to any of this host's own addresses, which
+; the profile's "localhost" covers, loopback, LAN and Tailscale alike
+; (demo/runs/mesh-offline/2026-11-01/README.md, finding 4). iroh's direct
+; paths are UDP, its relays TCP, so two computers here reach each other
+; only through a relay; UDP off this host, n0's address discovery among it,
+; still goes. run.py checks it against planted sends first.
+(version 1)
+(allow default)
+(deny network-outbound (remote udp "localhost:*"))

@@ -83,7 +83,6 @@ fn admit_to(node: &Node, ns: &str, person: &str, joining: u8) {
             key: actor_of(&signing(joining)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     node.rail().commit(ns, &fixture).unwrap().unwrap();
 }
@@ -164,6 +163,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
             "http://{}/v1/rail/append?namespace={NS}",
             a.api_addr()
         ))
+        .bearer_auth(a.token())
         .json(&serde_json::json!({ "op": "record", "payload": { "n": 1 } }))
         .send()
         .await
@@ -203,6 +203,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
             "http://{}/v1/rail/append?namespace=elsewhere",
             a.api_addr()
         ))
+        .bearer_auth(a.token())
         .json(&serde_json::json!({ "op": "record", "payload": { "n": 1 } }))
         .send()
         .await
@@ -211,7 +212,10 @@ async fn an_append_naming_a_group_not_held_is_refused() {
     let out: serde_json::Value = answer.json().await.unwrap();
     assert_eq!(out["kind"], "not_held", "{out}");
     assert!(!da.path().join("rings/elsewhere").exists());
-    assert!(svrngs_core::tests_support::wire_ops(&a.rail().admission(NS).unwrap()).is_empty());
+    // No entry written: the keeper's cutover, which a's round writes, is
+    // the record's own, and carries none (capability-signed).
+    let entries = svrngs_core::tests_support::wire_ops(&a.rail().admission(NS).unwrap());
+    assert!(entries.iter().all(|o| o.payload.is_none()), "{entries:?}");
     a.endpoint().close().await;
 }
 
@@ -232,6 +236,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
             "http://{}/v1/rail/people?namespace={NS}",
             a.api_addr()
         ))
+        .bearer_auth(a.token())
         .send()
         .await
         .unwrap()
@@ -259,6 +264,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
 /// listener hands every request its own. The endpoint is kept for the
 /// transport the live lane dials through.
 async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh::Endpoint) {
+    let token = svrngs_node::api::kept_token(dir.path()).unwrap();
     let endpoint = svrngs_node::iroh::build_relayed_endpoint(
         svrngs_node::iroh::SecretKey::from_bytes(&signing(1).to_bytes()),
         Vec::new(),
@@ -275,17 +281,25 @@ async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh:
             nudge: std::sync::Arc::new(tokio::sync::Notify::new()),
             live: Default::default(),
             transport: std::sync::Arc::new(svrngs_node::iroh::IrohTransport::new(endpoint.clone())),
+            build: Vec::new(),
         },
         axum::Router::new(),
         axum::Router::new(),
+        axum::Router::new(),
+        token,
     );
     (router, endpoint)
 }
 
 /// A request to the people door from `caller`, if any; its status and body.
-async fn ask_as(router: axum::Router, caller: Option<SocketAddr>) -> (u16, serde_json::Value) {
+async fn ask_as(
+    router: axum::Router,
+    caller: Option<SocketAddr>,
+    token: &str,
+) -> (u16, serde_json::Value) {
     use tower::ServiceExt;
     let mut request = axum::http::Request::get(format!("/v1/rail/people?namespace={NS}"))
+        .header("authorization", format!("Bearer {token}"))
         .body(axum::body::Body::empty())
         .unwrap();
     if let Some(addr) = caller {
@@ -311,8 +325,9 @@ async fn ask_as(router: axum::Router, caller: Option<SocketAddr>) -> (u16, serde
 async fn a_caller_not_on_loopback_is_refused_by_name() {
     let dir = tempfile::tempdir().unwrap();
     let (router, _endpoint) = api_alone(&dir).await;
+    let token = token_in(dir.path());
     for caller in ["192.168.1.5:50000", "[2001:db8::5]:50000"] {
-        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
+        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap()), &token).await;
         assert_eq!(status, 403, "{caller}: {out}");
         assert_eq!(out["kind"], "not_loopback", "{caller}");
         let named = out["error"].as_str().unwrap();
@@ -321,14 +336,14 @@ async fn a_caller_not_on_loopback_is_refused_by_name() {
             "the refusal names {caller}: {named}"
         );
     }
-    let (status, out) = ask_as(router.clone(), None).await;
+    let (status, out) = ask_as(router.clone(), None, &token).await;
     assert_eq!(
         (status, &out["kind"]),
         (403, &serde_json::json!("not_loopback")),
         "{out}"
     );
     for caller in ["127.0.0.1:50000", "[::ffff:127.0.0.1]:50000", "[::1]:50000"] {
-        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap())).await;
+        let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap()), &token).await;
         assert_eq!(
             (status, &out["kind"]),
             (404, &serde_json::json!("not_held")),
@@ -344,6 +359,7 @@ async fn push(node: &Node, ns: &str, payload: Vec<u8>) -> (u16, serde_json::Valu
             "http://{}/v1/rail/live?namespace={ns}",
             node.api_addr()
         ))
+        .bearer_auth(node.token())
         .body(payload)
         .send()
         .await
@@ -358,6 +374,7 @@ async fn drain(node: &Node, ns: &str) -> serde_json::Value {
             "http://{}/v1/rail/live?namespace={ns}",
             node.api_addr()
         ))
+        .bearer_auth(node.token())
         .send()
         .await
         .unwrap()
@@ -581,6 +598,7 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
     let sign = |name: &str| {
         app()
             .post(format!("http://{}/v1/sign?app={name}", node.api_addr()))
+            .bearer_auth(node.token())
             .body("line 812")
     };
     let answer = sign("notes").send().await.unwrap();
@@ -606,4 +624,127 @@ async fn an_app_has_this_computers_key_sign_its_bytes() {
         403,
         "a page is refused"
     );
+}
+
+/// Every route of the record, as an app asks it: its method and path.
+const RECORD_ROUTES: [(&str, &str); 16] = [
+    ("POST", "/v1/rail/append?namespace=house"),
+    ("GET", "/v1/rail/log?namespace=house"),
+    ("POST", "/v1/rail/live?namespace=house"),
+    ("GET", "/v1/rail/live?namespace=house"),
+    ("GET", "/v1/rail/people?namespace=house"),
+    ("GET", "/v1/groups"),
+    ("GET", "/v1/lends?namespace=house"),
+    ("POST", "/v1/sign?app=x"),
+    ("POST", "/v1/folders"),
+    ("PUT", "/v1/blob?group=house&keep=1"),
+    (
+        "GET",
+        "/v1/blob/0000000000000000000000000000000000000000000000000000000000000000?group=house",
+    ),
+    ("POST", "/v1/removals"),
+    ("POST", "/v1/handovers"),
+    ("POST", "/v1/leaves"),
+    ("GET", "/v1/room"),
+    ("POST", "/v1/room"),
+];
+
+/// `node`'s answer to `method` `path`, showing `token` if any: its status
+/// and its JSON, or `null` for a body that is not.
+async fn asked_with(
+    node: &Node,
+    method: &str,
+    path: &str,
+    token: Option<&str>,
+) -> (u16, serde_json::Value) {
+    let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
+    let mut ask = app()
+        .request(method, format!("http://{}{path}", node.api_addr()))
+        .header("content-type", "application/json")
+        .body("{}");
+    if let Some(token) = token {
+        ask = ask.bearer_auth(token);
+    }
+    let answer = ask.send().await.unwrap();
+    let status = answer.status().as_u16();
+    (
+        status,
+        answer.json().await.unwrap_or(serde_json::Value::Null),
+    )
+}
+
+/// The token `dir`'s node keeps beside its `api` file, as a program on
+/// this computer reads it.
+fn token_in(dir: &std::path::Path) -> String {
+    std::fs::read_to_string(dir.join("token")).expect("the node keeps a token beside its api file")
+}
+
+/// **A program asks with the token** (give-token; svrn-docs GIVE.md §5): a
+/// container on a Mac running podman reaches the Mac's `127.0.0.1` through
+/// gvproxy, so loopback is no proof that the person's own program is
+/// asking. Every route of the record refuses a caller on loopback that
+/// shows no token, or one that is not this computer's, 401 `no_token`,
+/// naming the file that holds it; the same request with the token is
+/// answered as before. Sign-in's routes keep their own client secret and
+/// are not asked for it. The failing input: the check skipped in
+/// `api::router`, every caller on loopback served.
+#[tokio::test]
+async fn a_program_without_the_token_is_refused_on_every_record_route() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(1, &dir).await;
+    hold(&node, NS, 1);
+    let file = dir.path().join("token").display().to_string();
+    for (method, path) in RECORD_ROUTES {
+        for shown in [None, Some("not-this-computers-token")] {
+            let (status, out) = asked_with(&node, method, path, shown).await;
+            assert_eq!(
+                (status, &out["kind"]),
+                (401, &serde_json::json!("no_token")),
+                "{method} {path} showing {shown:?} is refused: {out}"
+            );
+            let said = out["error"].as_str().unwrap();
+            assert!(said.contains(&file), "the refusal names {file}: {said}");
+        }
+    }
+    let token = token_in(dir.path());
+    for (method, path) in RECORD_ROUTES {
+        let (status, out) = asked_with(&node, method, path, Some(&token)).await;
+        assert!(
+            status != 401 && out["kind"] != "no_token",
+            "{method} {path} with the token is answered as before: {status} {out}"
+        );
+    }
+    let (status, _) = asked_with(&node, "GET", "/v1/groups", Some(&token)).await;
+    assert_eq!(status, 200, "the groups are read with the token");
+    let signin = "/oidc/doc/.well-known/openid-configuration";
+    let (status, out) = asked_with(&node, "GET", signin, None).await;
+    assert!(
+        status != 401 && out["kind"] != "no_token",
+        "sign-in's routes keep their own secret: {status} {out}"
+    );
+    node.endpoint().close().await;
+}
+
+/// **The token is the person's alone** (give-token): it is written
+/// beside the `api` file, owner-only (0600), so a program the person runs
+/// reads it as it could read their key, and one meant to be contained, in
+/// a container, cannot. That it is kept across a restart is the command's
+/// test (crates/svrngs/tests/address.rs), which restarts the program over
+/// one data dir. The failing input: no token file.
+#[tokio::test]
+async fn the_token_is_owner_only_beside_the_api_file() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(1, &dir).await;
+    token_in(dir.path());
+    assert!(dir.path().join("api").exists(), "beside the api file");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = std::fs::metadata(dir.path().join("token"))
+            .unwrap()
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600, "the token is the person's alone");
+    }
+    node.endpoint().close().await;
 }

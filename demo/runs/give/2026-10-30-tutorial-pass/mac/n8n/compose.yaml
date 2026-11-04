@@ -1,0 +1,42 @@
+# Derived by hand from the process on 127.0.0.1:5678 (2026-10-30 tutorial pass).
+# `ps` shows only `n8n` (the process retitles itself); its parent is
+# `npm exec n8n`, i.e. `npx n8n`. Its folder, /private/tmp/svrngs-pass/n8n/work,
+# is empty. Its code is the npx folder its native modules were loaded from
+# (lsof txt), n8n 2.45.7 there; its data is ~/.n8n, the folder of the
+# database.sqlite it holds open for writing. HOME stands for the person's home:
+# this run gave the program HOME=/private/tmp/svrngs-pass/n8n/home.
+services:
+  app:
+    # node 24.22.1, the full image: the npm install of the deps is done in it.
+    image: docker.io/library/node:24.22.1@sha256:a217980f5435fcc8e8896361099faecb1c5d7f341cb7a213ff75e986d822473e
+    command: ["/private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314/node_modules/.bin/n8n"]
+    working_dir: /private/tmp/svrngs-pass/n8n/work
+    # n8n finds ~/.n8n through HOME; the person's home path, so ~ is the same path.
+    environment: ["HOME=/private/tmp/svrngs-pass/n8n/home"]
+    volumes:
+      - "code:/private/tmp/svrngs-pass/n8n/work"
+      - "code:/tmp/svrngs-pass/n8n/work"
+      - "data:/private/tmp/svrngs-pass/n8n/home/.n8n"
+      # npm ci, in this image, from the npx folder's own package-lock.json.
+      - "deps:/private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314"
+    ports: ["5678:5678/tcp"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5678/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      retries: 24
+  # It listened on 127.0.0.1 alone, so the pod's door forwards to it. Not 5679:
+  # the original also listens on 127.0.0.1:5679 (its task broker).
+  door:
+    image: docker.io/alpine/socat@sha256:603174b77eebaba25ba8f8ebb15e1234d6600409554e95d6fb203fd106150287
+    command: ["TCP-LISTEN:25678,fork,reuseaddr", "TCP:127.0.0.1:5678"]
+    ports: ["25678:25678/tcp"]
+volumes:
+  code: {}
+  data: {}
+  deps: {}
+x-svrngs:
+  title: n8n
+  about: "npx n8n, given by Alex's computer"
+  door: { port: 25678, protocol: http }
+  state: [code, data, deps]
+  asks: []

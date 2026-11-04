@@ -4,6 +4,7 @@
 //! fold names them, by name and, of two people of one name, by when they
 //! joined ([`crate::Membership::one_named`]).
 
+use alloc::collections::BTreeSet;
 use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
@@ -57,10 +58,7 @@ impl Command for Redeem {
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RedeemRefusal> {
         let register = before.membership();
-        let invite = register
-            .invites
-            .get(&self.invite)
-            .ok_or(RedeemRefusal::NoInvite)?;
+        let invite = (register.invites.get(&self.invite)).ok_or(RedeemRefusal::NoInvite)?;
         if invite.issuer != self.issuer {
             return Err(RedeemRefusal::NotOwn);
         }
@@ -135,6 +133,18 @@ impl Command for MintInvite {
             until: self.until,
             device_of: self.device_of.clone(),
         }])
+    }
+}
+
+/// A host's computer writes the visit a guest's link made (guests-link;
+/// GUESTS §5): the fold, never this, decides whether it is one, so a visit
+/// past a bound is written, seen, and a visit nowhere (§3.7).
+impl Command for crate::Visit {
+    type Refusal = Infallible;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
+        Ok(vec![RailAct::Visit(self.clone())])
     }
 }
 
@@ -238,6 +248,45 @@ fn removes<'a>(before: &Admission, keys: impl Iterator<Item = &'a String>) -> Ve
     acts
 }
 
+/// The keeper freezes legacy authorship or holder authority by the held tips,
+/// not a timestamp a writer can backdate. Each cutover counts only once.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Cutover {
+    Authors,
+    Holders,
+}
+
+impl Cutover {
+    fn written(&self, before: &Admission) -> bool {
+        match self {
+            Self::Authors => before.membership().signers.is_some(),
+            Self::Holders => before.membership().holders.is_some(),
+        }
+    }
+}
+
+impl Command for Cutover {
+    type Refusal = HandOnRefusal;
+    const READS: Reads = Reads::All;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let written = self.written(before);
+        tracing::debug!(target: "register", cutover = ?self, written, "cutover: written once, naming every key's newest acts held");
+        let through = before.tips.values().flatten().cloned().collect();
+        let act = match self {
+            Self::Authors => RailAct::Signers { through },
+            Self::Holders => RailAct::Holders { through },
+        };
+        let signers = (!written).then_some(act);
+        Ok(Vec::from_iter(signers))
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        let written = self.written(after);
+        written.then_some(()).ok_or(HandOnRefusal::NotKeeper)
+    }
+}
+
 /// The keeper hands the group's keeping to `person`'s computer (U7): of
 /// the one person of that name who joined `joined`, when it is asked.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -310,10 +359,34 @@ impl Command for RelayAt {
         tracing::debug!(target: "register", key = %self.key, ?said, url = ?self.url, writes,
             "relay: the record's relay for this computer against the one it is reached through");
         let url = self.url.as_ref().map(ToString::to_string);
-        Ok(writes
-            .then_some(RailAct::Relay { url })
-            .into_iter()
-            .collect())
+        Ok(Vec::from_iter(writes.then_some(RailAct::Relay { url })))
+    }
+}
+
+/// The keeper says the group meets at these relays (relay fallbacks;
+/// svrn-docs `rings/current/GROUP_RELAYS.md` §7): written only when the
+/// record says otherwise, and counted only as the keeper's, so anyone
+/// else's is refused [`HandOnRefusal::NotKeeper`] and nothing is written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MeetsAt(pub BTreeSet<crate::relay::Url>);
+
+impl Command for MeetsAt {
+    type Refusal = HandOnRefusal;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let said = before.membership().meets_at();
+        let writes = said.as_ref() != Some(&self.0);
+        tracing::debug!(target: "register", ?said, asked = ?self.0, writes,
+            "meets: the relays the record says the group meets at against the keeper's");
+        let relays = self.0.iter().map(ToString::to_string).collect();
+        Ok(Vec::from_iter(writes.then_some(RailAct::Meets { relays })))
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        let counted = after.membership().meets_at().as_ref() == Some(&self.0);
+        tracing::debug!(target: "register", counted, "meets: the fold's verdict, which counts only the keeper's");
+        counted.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }
 }
 

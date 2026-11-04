@@ -1,0 +1,9 @@
+test_each_plant_lands_in_its_group (__main__.EachGateOnItsPlant.test_each_plant_lands_in_its_group) ... ok
+test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found (__main__.TheGuestsLinkPark.test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found) ... ok
+test_the_row_as_written_is_flagged_no_estimate_never_defaulted (__main__.TheGuestsLinkPark.test_the_row_as_written_is_flagged_no_estimate_never_defaulted) ... ok
+test_the_row_with_the_parks_own_measure_will_park (__main__.TheGuestsLinkPark.test_the_row_with_the_parks_own_measure_will_park) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.540s
+
+OK

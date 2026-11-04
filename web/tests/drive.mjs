@@ -35,7 +35,10 @@ async function httpChecks(a) {
   const began = performance.now();
   const traced = [];
   const trace = window.__trace;
-  window.__trace = (l) => (traced.push(`+${Math.round(performance.now() - began)} ms ${l}`), trace?.(l));
+  window.__trace = (l) => (
+    traced.push(`+${Math.round(performance.now() - began)} ms ${l}`),
+    trace?.(l)
+  );
   const app = document.querySelector('script[type=module]').src;
   const m = await import(new URL(`./wasm/svrngs_web.js${new URL(app).search}`, app).href);
   await m.default();
@@ -43,15 +46,31 @@ async function httpChecks(a) {
   const ep = await m.endpoint(key, a.token);
   const d = await ep.dial_link();
   const hex = (b) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
+  // What the body being drained has handed the page so far, and when its
+  // last chunk came in the step's time, so a step that times out says where
+  // its body stopped (streaming-stall (a)).
+  let drained = null;
+  let stepAt = 0;
   // A body to its end: how many chunks, the largest, the bytes, the SHA-256.
   async function drain(res) {
     const chunks = [];
+    drained = { chunks: 0, bytes: 0, lastMs: null };
     const reader = res.body.getReader();
-    for (let r = await reader.read(); !r.done; r = await reader.read()) chunks.push(r.value);
+    for (let r = await reader.read(); !r.done; r = await reader.read()) {
+      chunks.push(r.value);
+      drained.chunks += 1;
+      drained.bytes += r.value.length;
+      drained.lastMs = Math.round(performance.now() - stepAt);
+    }
     const whole = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
     chunks.reduce((at, c) => (whole.set(c, at), at + c.length), 0);
     const sha = hex(await crypto.subtle.digest('SHA-256', whole));
-    return { chunks: chunks.length, largest: Math.max(0, ...chunks.map((c) => c.length)), bytes: whole.length, sha };
+    return {
+      chunks: chunks.length,
+      largest: Math.max(0, ...chunks.map((c) => c.length)),
+      bytes: whole.length,
+      sha,
+    };
   }
   const answer = async (res) => ({
     status: res.status,
@@ -61,14 +80,24 @@ async function httpChecks(a) {
   // Each step's answer, or why it failed or hung: one step's failure never
   // keeps the next from being judged. Each with its time, `ms`, so a run
   // shows how near its 60 s it came (v1ui-lend-ask (b)).
-  const step = (run, t = performance.now()) =>
+  // A step whose body began and never ended says what it had drained.
+  const step = (run, t = performance.now()) => (
+    (drained = null),
+    (stepAt = t),
     Promise.race([
       run(),
       new Promise((_, no) => setTimeout(() => no(new Error('no answer within 60 s')), 60_000)),
-    ]).catch((e) => ({ error: String(e) })).then((r) => ({ ...r, ms: Math.round(performance.now() - t) }));
+    ])
+      .catch((e) => ({ error: String(e), ...(drained && { drained: { ...drained } }) }))
+      .then((r) => ({ ...r, ms: Math.round(performance.now() - t) }))
+  );
   const out = {};
-  out.range = await step(async () => answer(await d.fetch('GET', a.range.path, [['range', a.range.header]], null)));
-  out.past = await step(async () => answer(await d.fetch('GET', a.past.path, [['range', a.past.header]], null)));
+  out.range = await step(async () =>
+    answer(await d.fetch('GET', a.range.path, [['range', a.range.header]], null)),
+  );
+  out.past = await step(async () =>
+    answer(await d.fetch('GET', a.past.path, [['range', a.past.header]], null)),
+  );
 
   // A chunked answer that never ends: read until `want` bytes, then leave.
   out.chunked = await step(async () => {
@@ -120,7 +149,10 @@ async function httpChecks(a) {
     },
     { highWaterMark: 0 },
   );
-  const headers = [['content-length', String(size)], ['content-type', 'application/octet-stream']];
+  const headers = [
+    ['content-length', String(size)],
+    ['content-type', 'application/octet-stream'],
+  ];
   out.post = await step(async () => {
     // A stalled body fails the request with hyper's words; the stall's are
     // the reason.
@@ -152,7 +184,9 @@ if (args.older) {
       const body = await json.call(this);
       if (body?.lent && body.unanswered && older === true) delete body.version;
       if (body?.lent && body.unanswered && typeof older === 'string') {
-        body.older = [older];
+        body.older = [
+          { person: older, person_key: body.people?.find((p) => p.person === older)?.person_key },
+        ];
         body.lent = body.lent.filter((l) => l.person !== older);
       }
       return body;
@@ -176,7 +210,13 @@ try {
   } catch (e) {
     throw new Error(`the page, left while it loaded, did not open again: ${e}`);
   }
-  await page.evaluate(hold, { hex: args.key, token: args.token, person: args.person, maker: args.maker, since: args.since });
+  await page.evaluate(hold, {
+    hex: args.key,
+    token: args.token,
+    person: args.person,
+    maker: args.maker,
+    since: args.since,
+  });
   await page.goto('about:blank');
   await page.goto(`${origin}#${args.token}`);
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
@@ -185,11 +225,15 @@ try {
     answer: document.getElementById('response').textContent,
     lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
     removals: [...document.querySelectorAll('#removals li')].map((l) => l.textContent),
+    // Who is visiting now (guests-pages (b)).
+    visiting: [...document.querySelectorAll('.visiting li')].map((l) => l.textContent),
     // The door, each cell's class and words, and the index's rows, each
     // cell's words (v1ui-door (d)).
     drawn: [...document.querySelectorAll('.door li')].map((e) => [e.className, e.textContent]),
     door: document.getElementById('door').textContent,
-    index: [...document.querySelectorAll('#lent tr')].map((r) => [...r.cells].map((c) => c.textContent)),
+    index: [...document.querySelectorAll('#lent tr')].map((r) =>
+      [...r.cells].map((c) => c.textContent),
+    ),
     // Everything the page says, so a test counts how often it says a thing.
     text: document.body.innerText,
     lines: window.__lines,
@@ -198,7 +242,11 @@ try {
     process.stdin.on('data', (line) => {
       if (String(line).includes('go')) page.evaluate(() => window.__release()).catch(() => {});
     });
-    result.http = await page.evaluate(httpChecks, { key: args.key, token: args.token, ...args.http });
+    result.http = await page.evaluate(httpChecks, {
+      key: args.key,
+      token: args.token,
+      ...args.http,
+    });
     result.lines = await page.evaluate(() => window.__lines);
   }
   console.log(JSON.stringify({ ...result, away, logs }));

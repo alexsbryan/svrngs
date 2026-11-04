@@ -7,7 +7,7 @@
 // `engine` (page.mjs), it opens the link and types the name whenever the page asks for
 // one; reads every storage the page can write for the person's key; opens
 // the link again, then the page alone; opens the first lend listed, at its
-// own origin, `<label>.localhost`, which its worker serves (u5-2); and
+// own origin, `<label>.<page host>`, which its worker serves (u5-2); and
 // prints what it saw as one JSON line.
 //
 //   node web/tests/join.mjs '{"engine": "chromium"|"webkit", "site": "<dir>"}'
@@ -15,18 +15,24 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { createInterface } from 'node:readline';
-import { launch, serve } from './page.mjs';
+import { firstLook, inApp, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
-console.log(JSON.stringify({ origin }));
+// The page's origin as `svrngs new --origin` checks it, on `localhost`, a
+// name every name under which this computer answers; the phone reaches the
+// same server at the page's host over TLS (page.mjs `PAGE_HOST`), so the
+// link it opens is the one printed, at that address.
+const checked = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
+console.log(JSON.stringify({ origin: checked }));
 const input = createInterface({ input: process.stdin });
 const told = await new Promise((done) => input.once('line', done));
 input.close();
 // `taken`, when told, is typed first: a name someone in the group goes by,
 // which the page refuses and asks again, saying why (bash-person).
-const { link, name, taken } = JSON.parse(told);
+const { link: printed, name, taken, hint: probe } = JSON.parse(told);
+const link = printed.replace(checked, origin);
 
 // In the page: the person's key as the page's store unseals it, and where
 // else its 32 bytes appear — raw, hex, base64 or as a list of numbers — in
@@ -39,7 +45,12 @@ async function scan() {
   const key = await store.unseal(group);
   const hex = [...key].map((b) => b.toString(16).padStart(2, '0')).join('');
   const b64 = btoa(String.fromCharCode(...key));
-  const spelled = [hex, b64, b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''), key.join(',')];
+  const spelled = [
+    hex,
+    b64,
+    b64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+    key.join(','),
+  ];
   const holds = (bytes) => {
     for (let i = 0; i + key.length <= bytes.length; i++) {
       if (key.every((b, j) => bytes[i + j] === b)) return true;
@@ -55,8 +66,10 @@ async function scan() {
       return holds(new Uint8Array(v.buffer, v.byteOffset, v.byteLength)) && found.push(where);
     }
     if (typeof v === 'string') return spelled.some((s) => v.includes(s)) && found.push(where);
-    if (Array.isArray(v) && v.every((n) => Number.isInteger(n))) return holds(v) && found.push(where);
-    if (v && typeof v === 'object') for (const [k, x] of Object.entries(v)) walk(`${where}.${k}`, x);
+    if (Array.isArray(v) && v.every((n) => Number.isInteger(n)))
+      return holds(v) && found.push(where);
+    if (v && typeof v === 'object')
+      for (const [k, x] of Object.entries(v)) walk(`${where}.${k}`, x);
   };
   const all = (db, name, how) =>
     new Promise((done, fail) => {
@@ -79,7 +92,10 @@ async function scan() {
     }
     db.close();
   }
-  for (const [label, area] of [['localStorage', localStorage], ['sessionStorage', sessionStorage]]) {
+  for (const [label, area] of [
+    ['localStorage', localStorage],
+    ['sessionStorage', sessionStorage],
+  ]) {
     for (let i = 0; i < area.length; i++) {
       const k = area.key(i);
       walk(`${label}[${k}]`, `${k}=${area.getItem(k)}`);
@@ -111,7 +127,9 @@ try {
     await page.goto(url);
     const settled = () =>
       page.waitForFunction(
-        () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
+        () =>
+          !document.getElementById('join').hidden ||
+          /good|bad/.test(document.getElementById('status').className),
         null,
         { timeout: 90_000 },
       );
@@ -133,17 +151,75 @@ try {
       await page.click('#join button');
       await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
     }
-    return page.evaluate(([asked, why]) => ({
-      asked,
-      why,
-      status: document.getElementById('status').textContent,
-      lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
-      answer: document.getElementById('response').textContent,
-      said: window.__said,
-      lines: window.__lines,
-    }), [asked, why]);
+    // What one look takes in once in, in Ana's twenty words
+    // (demo/xenia/people/ana.md), as page.mjs `firstLook` reads it.
+    const look = await firstLook(page, 20);
+    return page.evaluate(
+      ([asked, why, look]) => ({
+        look,
+        // Who made the group and since when, heading its people.
+        whose: document.querySelector('#door > p')?.textContent ?? null,
+        asked,
+        why,
+        status: document.getElementById('status').textContent,
+        // Each row's words, then apart the address it gives to keep
+        // (question.js `keeping`).
+        lent: [...document.querySelectorAll('#lent button')].map((b) =>
+          [...b.parentElement.childNodes]
+            .filter((n) => !n.matches?.('small.keep'))
+            .map((n) => n.textContent)
+            .join('')
+            .trim(),
+        ),
+        kept: [...document.querySelectorAll('#lent small.keep')].map((k) => k.textContent),
+        // What is folded, by its heading, and whether the group's things come
+        // before its people (the operator, 2026-10-26: the page after joining).
+        folded: [...document.querySelectorAll('#shelf details, #acts details')]
+          .filter((d) => !d.open)
+          .map((d) => d.querySelector('summary').textContent),
+        leads: Boolean(
+          document
+            .querySelector('table.index')
+            .compareDocumentPosition(document.getElementById('door')) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+        ),
+        answer: document.getElementById('response').textContent,
+        said: window.__said,
+        lines: window.__lines,
+      }),
+      [asked, why, look],
+    );
   };
 
+  // With `hint` told, for a link that asks a name (a device link joins as
+  // it opens, so is never probed): before the name is asked, the line about
+  // the Home Screen, with navigator.standalone as iPhone Safari says it
+  // (false), a Home Screen web app (true) and every other browser
+  // (undefined), each in a context of its own that joins nothing.
+  const hint = probe ? {} : null;
+  for (const standalone of probe ? [false, true, undefined] : []) {
+    const other = await launch(args.engine);
+    try {
+      await other.context.addInitScript(
+        (s) =>
+          Object.defineProperty(Navigator.prototype, 'standalone', {
+            get: () => s,
+            configurable: true,
+          }),
+        standalone,
+      );
+      const p = await other.context.newPage();
+      await p.goto(link);
+      await p.waitForFunction(() => !document.getElementById('join').hidden, null, {
+        timeout: 90_000,
+      });
+      hint[String(standalone)] = await p.evaluate(() =>
+        ((k) => (k.hidden ? null : k.textContent))(document.getElementById('keep')),
+      );
+    } finally {
+      await other.close();
+    }
+  }
   const first = await opening(link);
   const stored = await page.evaluate(scan);
   const again = await opening(link);
@@ -153,12 +229,17 @@ try {
   // worker serves it from its lender's computer, dialled by key with a pass.
   let opened = null;
   if (alone.lent.length) {
-    const away = (url) => url.hostname.endsWith('.localhost') && url.pathname === '/';
+    const away = (url) => inApp(url) && url.pathname === '/';
     await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.click('#lent button')]);
-    await page.waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 }).catch(() => {});
-    opened = { origin: new URL(page.url()).origin, text: await page.evaluate(() => document.body.innerText) };
+    await page
+      .waitForFunction(() => document.body?.innerText.includes('hi'), null, { timeout: 60_000 })
+      .catch(() => {});
+    opened = {
+      origin: new URL(page.url()).origin,
+      text: await page.evaluate(() => document.body.innerText),
+    };
   }
-  console.log(JSON.stringify({ first, stored, again, alone, opened, lines, logs }));
+  console.log(JSON.stringify({ hint, first, stored, again, alone, opened, lines, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

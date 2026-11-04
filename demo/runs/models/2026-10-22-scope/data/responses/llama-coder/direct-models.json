@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "591"
+  },
+  "body": "{\"models\":[{\"name\":\"ana/coder\",\"model\":\"ana/coder\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder\",\"aliases\":[\"ana/coder\"],\"tags\":[],\"object\":\"model\",\"created\":1792715634,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":152064,\"n_ctx\":4096,\"n_ctx_train\":131072,\"n_embd\":3584,\"n_params\":7615616512,\"size\":4677120000,\"ftype\":\"Q4_K - Medium\"}}]}"
+}

@@ -18,14 +18,18 @@
 //!   begins `<kind>/`, the prefix taken off, and each correction of one —
 //!   as `ops`, in the record's order and the shape `/v1/rail/log` gives
 //!   them, voided ones too, so an app's fold reads them as it reads the
-//!   record; with who asks, `you`, the people in the group now, and
-//!   `spans`, each person's time in it, `{person, joined, left}`, from
-//!   svrngs-core's membership (canon-spans), null while who stands is
-//!   unsettled (#124);
+//!   record; with who asks, `you`, and their first key, `you_key`, which
+//!   the fold keeps them by (keys-names), the people in the group now, and
+//!   `spans`, each person's time in it, `{person, joined, left,
+//!   person_key}`, from svrngs-core's membership (canon-spans), null while
+//!   who stands is unsettled (#124); and `page`, the page the group's https
+//!   links print on (`Host::printed_page`), null where none is kept and
+//!   `{unread}` where it cannot be read (give-page-host);
 //!   `POST {op}` records an act, and `{corrects, op}` corrects one of its
-//!   own, `op` null to void it, and absent never (#165): the prefix put on its kind, and
-//!   `on_behalf_of` the person the door resolved, never a word of the
-//!   body's.
+//!   own, `op` null to void it, and absent never (#165): the prefix put on its kind
+//!   ([`svrngs_core::grant::app_act`]), signed by this computer as its own
+//!   person, and refused for any other device's, which signs its own and
+//!   carries it (`/carry`, capability-signed).
 //!
 //! The route answers every act each time, from no cursor: a round may
 //! place another computer's act before one already read, and a correction
@@ -36,7 +40,6 @@
 //! a frame and a worker load only there.
 
 use std::collections::{BTreeMap, BTreeSet};
-use std::fs::{create_dir_all, write};
 use std::path::Path;
 
 use axum::body::to_bytes;
@@ -46,7 +49,7 @@ use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 use svrngs_core::{Files, Placed, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
@@ -109,7 +112,7 @@ fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withhe
 }
 
 /// A carried app's answer, or why the door gives its own.
-type Served = Result<Response, Withheld>;
+type Given = Result<Response, Withheld>;
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
@@ -147,18 +150,22 @@ pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: T
 /// `asker`, who stands in it: a folder `apps/<name>/` of its files, never
 /// over one there already, which the folder then carries to the group as
 /// it carries any file. Each said, and whether it was there already.
-fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Served {
+fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
     let stands = at.host.rail.standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
     let dirs = dirs_of(&at.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
-    let dir = dirs.first().ok_or(NO_FOLDER)?;
+    let own = crate::surface::seed_of(at, group).map(|s| crate::group::folder_name(&s));
+    let dir = dirs
+        .iter()
+        .find(|d| own == Some(super::synced::folder_of(d, group)));
+    tracing::debug!(target: "folder", group, ?own, ?dir, kept = dirs.len(), "shelf: brought into the group's own folder, never another it shares; refused when this computer keeps none of its own");
+    let dir = dir.ok_or(NO_FOLDER)?;
+    let root = super::confined::Root::open(dir).map_err(|e| traced(group, UNWRITTEN, &e))?;
     let mut said = Vec::new();
     for (name, _, files) in SHELF.iter().filter(|(n, ..)| apps.iter().any(|a| a == n)) {
-        let at = dir.join("apps").join(name);
-        let there = at.join("index.html").exists();
-        let put = |(f, text): &(&str, &str)| {
-            create_dir_all(at.join(f).with_file_name("")).and_then(|()| write(at.join(f), text))
-        };
+        let at = Path::new("apps").join(name);
+        let there = root.metadata(&at.join("index.html")).is_ok();
+        let put = |(f, text): &(&str, &str)| root.write(&at.join(f), text.as_bytes());
         let wrote: Result<(), _> = files.iter().filter(|_| !there).try_for_each(put);
         wrote.map_err(|e| traced(group, UNWRITTEN, &e))?;
         said.push(json!({ "app": name, "already": there }));
@@ -173,28 +180,33 @@ type Yes = Json<(String, String)>;
 type Handled = Result<Response, Response>;
 
 /// `POST /runs`: the asker's yes to the version of an app carried in their
-/// group that its files now are (canon-pin (c)), from the home page or a
-/// phone of the group's dialling it (`by`), written as theirs.
+/// group that its files now are (canon-pin (c)), from the home page,
+/// written as this computer's person; or, to a phone of the group's
+/// dialling it (`by`), the act for the phone to sign with its own key and
+/// carry back ([`crate::rail::carry`]): Decide is the person's own devices
+/// alone (capability-signed).
 pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes) -> Handled {
     let (State(at), Json((group, app))) = (at, a);
-    let asker = by.map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
+    let asker = (by.as_ref()).map_or(at.host.actor.to_string(), |Extension(d)| d.actor());
     let act = says(&at, (&group, &app), &asker);
-    tracing::debug!(target: "folder", group, asker, app, refused = act.as_ref().err().map(|r| r.2), "carried: a yes to an app's files now, or why not");
+    tracing::debug!(target: "folder", group, asker, app, phone = by.is_some(), refused = act.as_ref().err().map(|r| r.2), "carried: a yes to an app's files now, to write here or for a phone to sign, or why not");
     let act = act.map_err(said)?;
+    if by.is_some() {
+        return Ok(Json(json!({ "sign": act })).into_response());
+    }
     at.folders.nudge.notify_one();
     Ok(crate::rail::append_act(&at.host.rail, &group, act).await)
 }
 
-/// The act that says `asker`'s yes to the files of `app` in `group` now,
-/// on behalf of their person.
+/// The act that says `asker`'s yes to the files of `app` in `group` now.
 fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<Value, Withheld> {
     let unread = |e: &dyn std::fmt::Display| traced(group, UNREAD, e);
     let standing = at.host.rail.standing(group).map_err(|e| unread(&e))?;
-    let person = &standing.member(asker).ok_or(NOT_IN)?.person;
+    standing.member(asker).ok_or(NOT_IN)?;
     let read = at.folders.layout(group).map_err(|e| unread(&e))?;
     let files = now(&read.placed, app);
     (!files.is_empty()).then_some(()).ok_or(NOT_HERE)?;
-    Ok(json!({ "op": "runs", "app": app, "files": files, "on_behalf_of": person }))
+    Ok(json!({ "op": "runs", "app": app, "files": files }))
 }
 
 /// The files of the app `kind` that `placed` places now, under its path.
@@ -222,10 +234,7 @@ impl Folders {
         let mut found = BTreeMap::new();
         let syncing = self.syncing.borrow().clone().unwrap_or_default();
         let holds = |group: &String| syncing.keys().any(|(g, _)| g == group);
-        for (group, _) in groups
-            .iter()
-            .filter(|(g, m)| m.contains_key(me) && holds(g))
-        {
+        for (group, _) in (groups.iter()).filter(|(g, m)| m.contains_key(me) && holds(g)) {
             let read = self.layout(group).inspect_err(|why| tracing::warn!(target: "folder", namespace = group, %why, "carried: the group's record cannot be read, so it carries nothing here"));
             let apps = read.iter().flat_map(|r| r.placed.iter().filter_map(app_of));
             let lends = apps.filter_map(|kind| Lend::carried(kind, group));
@@ -237,7 +246,8 @@ impl Folders {
 
     /// Each app carried in `groups` whose files now are not those that run
     /// as the person of the key `asker` there (canon-pin (c)): its group,
-    /// its kind, who changed its files last and when, and its files now,
+    /// its kind, who changed its files last, by name and first key, and
+    /// when, and its files now,
     /// which a yes names; `null` when a group's record cannot be read here,
     /// said at warn, never as nothing changed.
     pub(crate) fn changed(&self, groups: &[(String, People)], asker: &str) -> Value {
@@ -246,11 +256,11 @@ impl Folders {
             let Ok(read) = self.layout(group).map_err(|e| traced(group, UNREAD, &e)) else {
                 return Value::Null;
             };
-            let person = people[asker].person.as_str();
-            let new = |k: &&str| read.runs.of(k, person) != Some(&now(&read.placed, k));
+            let first = people[asker].person_key.as_str();
+            let new = |k: &&str| read.runs.of(k, first) != Some(&now(&read.placed, k));
             for kind in read.placed.iter().filter_map(app_of).filter(new) {
-                let (by, at) = &read.runs.changed[kind];
-                out.push(json!({ "group": group, "app": kind, "by": by, "at": at }));
+                let (key, by, at) = &read.runs.changed[kind];
+                out.push(json!({ "group": group, "app": kind, "by": by, "by_key": key, "at": at }));
             }
         }
         tracing::debug!(target: "folder", asker, changed = out.len(), "carried: the apps whose files now are not those that run as the asker");
@@ -282,14 +292,12 @@ impl Folders {
     /// for a directory's, as the app runs as `asker`'s person
     /// ([`svrngs_core::Runs::of`]), from this computer's store, else
     /// fetched from a computer that stands in the group.
-    async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Served {
+    async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Given {
         let path = format!("apps/{kind}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let files = read.runs.of(kind.as_str(), asker.person.as_str());
-        let at = SyncPath::parse(&path)
-            .ok()
-            .and_then(|p| files?.get(&p).copied());
+        let files = read.runs.of(kind.as_str(), &asker.person_key);
+        let at = (SyncPath::parse(&path).ok()).and_then(|p| files?.get(&p).copied());
         let hash = Hash::from(*at.ok_or(NOT_HERE)?.as_bytes());
         let holders: Vec<_> = self.holders(group).into_iter().flatten().collect();
         let fetched = self.hold(hash, &holders).await;
@@ -305,11 +313,11 @@ impl Folders {
     /// The app `kind`'s route in `group`, for the key `key` of `people`:
     /// its own acts read, or one written as that key's person (the module
     /// docs).
-    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Served {
+    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Given {
         let ((kind, group), (people, key)) = (app, asker);
         let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
         let admission = rail.admission(group).ok();
-        let read = (admission.as_ref()).and_then(|a| serde_json::to_value(a.wire()).ok());
+        let read = admission.as_ref().and_then(crate::rail::ops_json);
         let ops = read.as_ref().and_then(Value::as_array).ok_or(UNREAD)?;
         let own =
             |o: &Value| Some((o["payload"]["kind"].as_str()?.strip_prefix(&prefix)?).to_string());
@@ -328,30 +336,31 @@ impl Folders {
             let (all, ops): (BTreeSet<_>, Vec<_>) =
                 (people.values().map(|m| &m.person).collect(), ops.collect());
             // Who stood when is not judged on unsettled cuts (#124): none, never empty.
-            let register = (admission.as_ref())
-                .map(|a| a.membership())
-                .filter(|m| !m.unsettled);
+            let register = (admission.as_ref().map(|a| a.membership())).filter(|m| !m.unsettled);
             let spans = register.map(|m| m.spans());
             tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
-            let read =
-                json!({ "you": person, "group": group, "people": all, "spans": spans, "ops": ops });
+            // The page the group's https links print on, as `link` prints
+            // them, so Give names it in its install line (give-page-host).
+            let page = (self.host.printed_page(group)).map(|p| p.map(|p| p.as_str().to_owned()));
+            tracing::debug!(target: "folder", group, %kind, ?page, "carried: the page the group's links print on, none, or why it cannot be read");
+            let page = page.map_or_else(|why| json!({ "unread": why }), |p| json!(p));
+            let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": page, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
         }
-        let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
-        let mut body: Map<String, Value> = serde_json::from_slice(&body).map_err(|_| NOT_AN_ACT)?;
-        let mut op = body.remove("op").ok_or(NOT_AN_ACT)?;
-        if let Some(fields) = op.as_object_mut() {
-            let own_kind = (fields.get("kind").and_then(Value::as_str)).ok_or(NOT_AN_ACT)?;
-            fields.insert("kind".into(), format!("{prefix}{own_kind}").into());
+        // A write is its person's own device's (capability-signed): this
+        // computer signs only its own person's, and a phone signs its own
+        // and carries it (`/carry`).
+        let elsewhere = key != self.host.actor;
+        tracing::debug!(target: "folder", group, %kind, %person, elsewhere, "carried: a write as the person, refused from any device but this computer");
+        if elsewhere {
+            let why = format!("Open {kind} from your home page to write in it.");
+            return Ok(Closed.say(StatusCode::FORBIDDEN, why));
         }
-        let mut act = match body.remove("corrects") {
-            None => json!({ "op": "record", "payload": op }),
-            Some(id) if ops.iter().any(|o| o["id"] == id && own(o).is_some()) => {
-                json!({ "op": "correct", "corrects": id, "replacement": op })
-            }
-            Some(_) => return Err(NOT_ITS_OWN),
-        };
-        act["on_behalf_of"] = person.as_str().into();
+        let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
+        let act = svrngs_core::grant::app_act(kind.as_str(), &body).ok_or(NOT_AN_ACT)?;
+        if (act.get("corrects")).is_some_and(|id| !of_kind(ops, kind.as_str(), id)) {
+            return Err(NOT_ITS_OWN);
+        }
         let answer = crate::rail::append_act(rail, group, act).await;
         tracing::debug!(target: "folder", group, %kind, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
@@ -359,6 +368,16 @@ impl Folders {
         }
         Ok(answer)
     }
+}
+
+/// Whether the act `id` among `ops`, a group's acts as the wire spells
+/// them, is of the app `kind`'s own part, `<kind>/…`: what an app's
+/// correction may void, at a carried app's route and in a lent app's
+/// answer alike (capability-signed).
+pub(crate) fn of_kind(ops: &[Value], kind: &str, id: &Value) -> bool {
+    let prefix = format!("{kind}/");
+    let own = |o: &Value| (o["payload"]["kind"].as_str()).is_some_and(|k| k.starts_with(&prefix));
+    ops.iter().any(|o| &o["id"] == id && own(o))
 }
 
 fn content_type(file: &Path) -> &'static str {

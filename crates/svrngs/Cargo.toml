@@ -41,7 +41,14 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 mimalloc = { version = "0.1.52", default-features = false }
 
 [dev-dependencies]
+# The browser tests' relay front ends a page's TLS (tests/browser/harness.rs
+# `relay`): rustls with ring, as the product uses it, and a certificate made
+# there, both already in the lock through iroh-relay.
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
+rcgen = "0.14"
 tempfile = "3"
+# The shared native session protocol fixture computes request proofs.
+ring = "0.17"
 # join_by_link.rs dials as a stranger, as svrngs-node's own tests do.
 reqwest = { version = "0.12", default-features = false }
 svrngs-core = { workspace = true, features = ["test-support"] }
@@ -57,3 +64,34 @@ empty_line_after_doc_comments = "allow"
 cloned_ref_to_slice_refs = "allow"
 explicit_auto_deref = "allow"
 useless_vec = "allow"
+
+# Run once, by name, in scripts/check.sh's own step: a plain `cargo test`
+# skips it, so the gate does not run it twice.
+[[test]]
+name = "join_page"
+test = false
+
+# The demo scenes, played (capability-scenes): run once, by name, in
+# scripts/check.sh's "scenes" step.
+[[test]]
+name = "scenes"
+path = "tests/scenes/main.rs"
+test = false
+
+# The pages' own tests, one module a feature (ralph/next/page/CHARTER.md,
+# "What is settled" 6): run once, by name, in scripts/check.sh's "pages"
+# step.
+[[test]]
+name = "pages"
+path = "tests/pages/main.rs"
+test = false
+
+# The worlds of svrngs's xenia scenes (demo/xenia/README.md): run one at a
+# time, by its scene's command in demo/xenia/; no step of scripts/check.sh
+# runs them, and its clippy step lints them. No harness, so libtest writes
+# nothing on the stdout that carries the scene's line.
+[[test]]
+name = "xenia"
+path = "tests/xenia/main.rs"
+harness = false
+test = false

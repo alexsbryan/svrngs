@@ -1,0 +1,23 @@
+# js-webkit (c)'s plant: two solo traced runs, each `lockf -k /tmp/svrngs-gate.lock cargo test --quiet -p svrngs-node --test browser a_new_version_runs_as_each_person_only_after_their_yes`, load about 7 on 12 cores
+## option-a.diff reverted (bo admitted by computer_on's bare Admit): 2 passed in 49.49 s; 17 dials of bo's key unreachable
+2026-11-03T10:42:34.580740Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=4059
+2026-11-03T10:42:34.584151Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=4061
+2026-11-03T10:42:38.585260Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4004
+2026-11-03T10:42:38.587901Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4003
+2026-11-03T10:42:43.198151Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4008
+2026-11-03T10:42:43.198151Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4008
+2026-11-03T10:42:59.833908Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4004
+2026-11-03T10:43:00.582428Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4007
+2026-11-03T10:43:08.639692Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=4004
+## option-a.diff applied (bo admitted from_a_phone): 2 passed in 26.62 s; 0 dials unreachable
+2026-11-03T10:43:25.486353Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=3 ops_pushed=0 round_ms=21
+2026-11-03T10:43:28.479727Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=44
+2026-11-03T10:43:28.507505Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=44
+2026-11-03T10:43:28.545916Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=11
+2026-11-03T10:43:28.583638Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=11
+2026-11-03T10:43:29.128637Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=27
+2026-11-03T10:43:29.130398Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=29
+2026-11-03T10:43:30.915117Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=7
+2026-11-03T10:43:31.548657Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=10
+2026-11-03T10:43:39.641321Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=8
+2026-11-03T10:43:40.458542Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=8

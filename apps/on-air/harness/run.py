@@ -48,7 +48,8 @@ def wait(cond, bound, every=0.2):
 def http(method, url, body=None, timeout=20):
     """{status, said, bytes, ms} of one request as it came, or status None and why."""
     data = body if isinstance(body, (bytes, type(None))) else body.encode()
-    req = urllib.request.Request(url, method=method, data=data, headers={"content-type": "application/octet-stream"})
+    shows = {"authorization": f"Bearer {token_for(url)}"} if token_for(url) else {}
+    req = urllib.request.Request(url, method=method, data=data, headers={"content-type": "application/octet-stream", **shows})
     t0 = time.time()
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r: status, blob = r.status, r.read()
@@ -69,6 +70,19 @@ def env(who):
 def base(who):
     try: return (W / who / ".svrngs/api").read_text().strip().rstrip("/")
     except Exception: return None
+
+
+def token(who):
+    """The token `who`'s record asks of a program, beside its api file (give-token)."""
+    return W / who / ".svrngs/token"
+
+
+def token_for(url):
+    """What the token file of the computer whose record `url` asks holds, or None."""
+    for d in W.iterdir() if W.exists() else []:
+        if base(d.name) and url.startswith(base(d.name)) and token(d.name).exists():
+            return token(d.name).read_text().strip()
+    return None
 
 
 def api(who, path):
@@ -195,7 +209,7 @@ def main():
     say("group", group=ev["group"], people=keys)
 
     # Bo and Cy listen; the stranger opens the show; Bo says a word on the lane.
-    listeners = {w: node("listen.mjs", "--api", base(w), "--group", ev["group"], "--station", "Ana", "--out", W / w,
+    listeners = {w: node("listen.mjs", "--api", base(w), "--token", token(w), "--group", ev["group"], "--station", "Ana", "--out", W / w,
                          "--for", SECONDS + 40) for w in ("bo", "cy")}
     time.sleep(1)
     tab = strangers([f"{page}#key={ana_key}&show={SHOW}"], SECONDS + 50)
@@ -204,7 +218,7 @@ def main():
 
     # The show.
     t0 = time.time()
-    run = subprocess.run(["node", APP / "station.mjs", "--api", base("ana"), "--group", ev["group"], "--mp3", mp3, "--show", SHOW,
+    run = subprocess.run(["node", APP / "station.mjs", "--api", base("ana"), "--token", token("ana"), "--group", ev["group"], "--mp3", mp3, "--show", SHOW,
                           "--public", public, "--keep", str(KEEP), "--piece", str(PIECE), "--out", W / "station.jsonl"],
                          capture_output=True, text=True, timeout=SECONDS + 60)
     ev["station"] = {"exit": run.returncode, "stderr": run.stderr[-800:], "s": round(time.time() - t0, 1)}
@@ -229,10 +243,10 @@ def main():
 
     # 4.2's plants: no end, Bo's signature, a byte flipped, an act's signature.
     plants = {}
-    recs, code, err = stations("--api", base("ana"), "--group", ev["group"], "--mp3", mp3, "--show", "no-ended", "--public", public,
+    recs, code, err = stations("--api", base("ana"), "--token", token("ana"), "--group", ev["group"], "--mp3", mp3, "--show", "no-ended", "--public", public,
                                "--limit", 2, "--pace", 0, "--no-ended")
     plants["no-ended"] = {"exit": code, "stderr": err, "lines": [r.get("sign") for r in recs if r["event"] == "piece"]}
-    recs, code, err = stations("--api", base("bo"), "--group", ev["group"], "--mp3", mp3, "--show", "bo-signed", "--public", public,
+    recs, code, err = stations("--api", base("bo"), "--token", token("bo"), "--group", ev["group"], "--mp3", mp3, "--show", "bo-signed", "--public", public,
                                "--limit", 2, "--pace", 0)
     plants["bo-signed"] = {"exit": code, "stderr": err, "lines": [r.get("sign") for r in recs if r["event"] in ("piece", "ended")]}
     air = public / "air"

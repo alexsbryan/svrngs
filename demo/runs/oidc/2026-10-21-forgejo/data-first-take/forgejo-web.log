@@ -1,0 +1,51 @@
+2026/10/21 22:48:01 cmd/web.go:250:runWeb() [I] Starting Forgejo on PID: 64347
+2026/10/21 22:48:01 cmd/web.go:114:showWebStartupMessage() [I] Forgejo version: 17.0.0 built with GNU Make 3.81, go1.27.2 : bindata, sqlite, sqlite_unlock_notify
+2026/10/21 22:48:01 cmd/web.go:115:showWebStartupMessage() [I] * RunMode: prod
+2026/10/21 22:48:01 cmd/web.go:116:showWebStartupMessage() [I] * AppPath: /opt/homebrew/opt/forgejo/bin/forgejo
+2026/10/21 22:48:01 cmd/web.go:117:showWebStartupMessage() [I] * WorkPath: /tmp/oidc-forgejo/forgejo
+2026/10/21 22:48:01 cmd/web.go:118:showWebStartupMessage() [I] * CustomPath: /tmp/oidc-forgejo/forgejo/custom
+2026/10/21 22:48:01 cmd/web.go:119:showWebStartupMessage() [I] * ConfigFile: /tmp/oidc-forgejo/forgejo/custom/conf/app.ini
+2026/10/21 22:48:01 cmd/web.go:120:showWebStartupMessage() [I] Prepare to run web server
+2026/10/21 22:48:01 routers/init.go:109:InitWebInstalled() [I] Git version: 2.54.0 (home: /tmp/oidc-forgejo/forgejo/data/home)
+2026/10/21 22:48:01 ...s/storage/storage.go:157:initAttachments() [I] Initialising Attachment storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/attachments
+2026/10/21 22:48:01 ...s/storage/storage.go:147:initAvatars() [I] Initialising Avatar storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/avatars
+2026/10/21 22:48:01 ...s/storage/storage.go:174:initRepoAvatars() [I] Initialising Repository Avatar storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/repo-avatars
+2026/10/21 22:48:01 ...s/storage/storage.go:180:initRepoArchives() [I] Initialising Repository Archive storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/repo-archive
+2026/10/21 22:48:01 ...s/storage/storage.go:190:initPackages() [I] Initialising Packages storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/packages
+2026/10/21 22:48:01 ...s/storage/storage.go:201:initActions() [I] Initialising Actions storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/actions_log
+2026/10/21 22:48:01 ...s/storage/storage.go:205:initActions() [I] Initialising ActionsArtifacts storage with type: local
+2026/10/21 22:48:01 ...les/storage/local.go:33:NewLocalStorage() [I] Creating new Local Storage at /tmp/oidc-forgejo/forgejo/data/actions_artifacts
+2026/10/21 22:48:01 routers/init.go:129:InitWebInstalled() [I] SQLite3 support is enabled
+2026/10/21 22:48:01 routers/common/db.go:23:InitDBEngine() [I] Beginning ORM engine initialization.
+2026/10/21 22:48:01 routers/common/db.go:30:InitDBEngine() [I] ORM engine initialization attempt #1/10...
+2026/10/21 22:48:01 cmd/web.go:202:serveInstalled() [I] PING DATABASE sqlite3
+2026/10/21 22:48:01 routers/init.go:135:InitWebInstalled() [I] ORM engine initialization successful!
+2026/10/21 22:48:01 ...er/issues/indexer.go:80:func1() [I] PID 64347: Initializing Issue Indexer: bleve
+2026/10/21 22:48:01 ...xer/stats/indexer.go:41:populateRepoIndexer() [I] Populating the repo stats indexer with existing repositories
+2026/10/21 22:48:01 routers/init.go:84:syncAppConfForGit() [I] AppPath changed from '' to '/opt/homebrew/opt/forgejo/bin/forgejo'
+2026/10/21 22:48:01 routers/init.go:89:syncAppConfForGit() [I] CustomConf changed from '' to '/tmp/oidc-forgejo/forgejo/custom/conf/app.ini'
+2026/10/21 22:48:01 ...er/issues/indexer.go:160:func2() [I] Issue Indexer Initialization took 18.998125ms
+2026/10/21 22:48:02 ...er/cleanup_sha256.go:27:CleanupSHA256() [I] Start to cleanup dangling images with a sha256:* version
+2026/10/21 22:48:02 ...er/cleanup_sha256.go:106:cleanupSHA256() [I] Nothing to cleanup
+2026/10/21 22:48:02 ...er/cleanup_sha256.go:29:CleanupSHA256() [I] Finished to cleanup dangling images with a sha256:* version
+2026/10/21 22:48:02 cmd/web.go:315:listen() [I] Listen: http://127.0.0.1:18097
+2026/10/21 22:48:02 cmd/web.go:319:listen() [I] AppURL(ROOT_URL): http://localhost:18097/
+2026/10/21 22:48:02 ...s/graceful/server.go:50:NewServer() [I] Starting new Web server: tcp:127.0.0.1:18097 on PID: 64347
+2026/10/21 22:48:02 ...eb/routing/logger.go:109:func1() [I] router: completed GET /api/v1/version for 127.0.0.1:64707, 200 OK in 0.1ms @ misc/version.go:15(misc.Version)
+2026/10/21 22:48:03 ...eb/routing/logger.go:109:func1() [I] router: completed GET /api/v1/version for 127.0.0.1:64709, 200 OK in 0.1ms @ misc/version.go:15(misc.Version)
+2026/10/21 22:48:03 ...eb/routing/logger.go:109:func1() [I] router: completed GET /api/v1/version for 127.0.0.1:64711, 200 OK in 0.0ms @ misc/version.go:15(misc.Version)
+2026/10/21 22:48:27 ...eb/routing/logger.go:109:func1() [I] router: completed GET /user/login for 127.0.0.1:64847, 200 OK in 2.2ms @ auth/auth.go:174(auth.SignIn)
+2026/10/21 22:48:32 ...eb/routing/logger.go:109:func1() [I] router: completed GET / for 127.0.0.1:64921, 200 OK in 0.8ms @ web/home.go:34(web.Home)
+2026/10/21 22:49:36 ...eb/routing/logger.go:109:func1() [I] router: completed GET / for 127.0.0.1:65164, 200 OK in 1.5ms @ web/home.go:34(web.Home)
+2026/10/21 22:49:36 ...eb/routing/logger.go:109:func1() [I] router: completed GET /manifest.json for 127.0.0.1:65170, 200 OK in 0.1ms @ misc/misc.go:33(misc.ManifestJSON)
+2026/10/21 22:50:35 ...odels/user/avatar.go:59:GenerateRandomAvatar() [I] New random avatar created: 1
+2026/10/21 22:50:35 ...eb/routing/logger.go:109:func1() [I] router: completed GET /api/v1/admin/users?limit=50 for 127.0.0.1:65397, 200 OK in 12.5ms @ admin/user.go:403(admin.SearchUsers)
+2026/10/21 22:50:37 ...eb/routing/logger.go:109:func1() [I] router: completed GET /api/v1/admin/users?limit=50 for 127.0.0.1:65397, 200 OK in 4.4ms @ admin/user.go:403(admin.SearchUsers)
+2026/10/21 22:50:37 ...eb/routing/logger.go:109:func1() [I] router: completed GET /planted-callback?code=<redacted>&state=planted for 127.0.0.1:65412, 404 Not Found in 2.0ms @ user/home.go:809(user.UsernameSubRoute)
+2026/10/21 22:50:37 ...eb/routing/logger.go:109:func1() [I] router: completed GET /manifest.json for 127.0.0.1:65416, 200 OK in 0.0ms @ misc/misc.go:33(misc.ManifestJSON)

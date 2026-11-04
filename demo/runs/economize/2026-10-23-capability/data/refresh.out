@@ -1,0 +1,11 @@
+warning: sovereign-cli-dev binary is 6s older than the binary exec'ing it — if you changed its code, rebuild: cargo build -p sovereign-cli-dev  (silence: SOVEREIGN_NO_STALE_WARN=1)
+  ⚠ Daemon nudge failed: 404 Not Found: {"error":"cap-econ-corpus is not registered; run `sovereign project register` first"}
+    Falling back to local in-process rebuild.
+  Refreshing call graph...
+    Exporting rust...          ✓ rust: 19181 symbols, 111317 references    
+    Exporting typescript...          ⚠ typescript: skipped (export failed)    
+    Exporting python...          ⚠ python: skipped (export failed)    
+    ✓ 19181 symbols (+19181)
+    ✓ 111317 edges (+111317)
+    ✓ Done in 101 seconds
+  ✓ LanceDB index current — skipping (pass --rebuild-index to force).

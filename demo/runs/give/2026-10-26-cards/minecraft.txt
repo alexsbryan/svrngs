@@ -1,0 +1,15 @@
+$ target/debug/give check --agree --name svrngs-test-minecraft apps/give/cards/minecraft
+passed  read the card: Minecraft
+passed  its asks: 1 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/itzg/minecraft-server:2026.10.1-java25@sha256:d12aed7e35981dfe259b60fbfee77d23a19b5898a7a31dca298d18b47b7b5776
+passed  start: its door on 127.0.0.1:62535
+passed  healthy
+passed  snapshot: [("world", Reflink)], paused 966.719708ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+Minecraft can go on the shelf.
+exit 0 after 28 s

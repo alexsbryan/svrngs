@@ -277,6 +277,66 @@ fn the_fold_answers_each_keys_relay_its_newest_winning() {
     }
 }
 
+fn meets_act(by: u8, ts: i64, seq: u64, relays: &[&str]) -> Op<SignedOp> {
+    let relays = relays.iter().map(|r| String::from(*r)).collect();
+    signed(&key(by), ts, seq, RailAct::Meets { relays })
+}
+
+/// relay fallbacks: where the group meets is the keeper's newest counting
+/// `Meets`, read dotless, in any arrival order; a member who does not keep
+/// it says nothing, before or after, and a hand-on leaves the old keeper's
+/// list standing until the new keeper writes one. Planted: the fold taking
+/// every `Meets` (`keeps` read as true), and bo's list won.
+#[test]
+fn where_the_group_meets_is_the_keepers_newest_list() {
+    let seed = seed_of(&[(1, "alex")]);
+    let ops = vec![
+        admit_act(1, 100, 0, "bo", 2),
+        meets_act(1, 101, 1, &["http://a.example./", "http://b.example/"]),
+        meets_act(2, 102, 0, &["http://bo.example/"]),
+        signed(
+            &key(1),
+            103,
+            2,
+            RailAct::HandOn {
+                key: actor_of(&key(2)),
+            },
+        ),
+        meets_act(1, 104, 3, &["http://old-keeper.example/"]),
+    ];
+    let base = membership(with_ids(ops.iter()), &seed, NS);
+    let said = |m: &Membership| {
+        m.meets_at()
+            .map(|s| s.iter().map(|u| u.to_string()).collect::<Vec<_>>())
+    };
+    assert_eq!(
+        said(&base),
+        Some(vec!["http://a.example/".into(), "http://b.example/".into()])
+    );
+    for rotation in 1..ops.len() {
+        let mut rotated: Vec<&Op<SignedOp>> = ops.iter().collect();
+        rotated.rotate_left(rotation);
+        assert_eq!(
+            membership(with_ids(rotated), &seed, NS),
+            base,
+            "rotation {rotation}"
+        );
+    }
+    let mut kept = ops.clone();
+    kept.push(meets_act(2, 105, 1, &[]));
+    let now = membership(with_ids(kept.iter()), &seed, NS);
+    assert_eq!(
+        said(&now),
+        Some(vec![]),
+        "the new keeper's empty list: the build's relays alone"
+    );
+    assert_eq!(
+        said(&membership(with_ids(ops[..1].iter()), &seed, NS)),
+        None,
+        "none written"
+    );
+}
+
 /// **Each person's stretch in the group** (canon-spans (b)): alex founds
 /// it with two keys, bo and cy join, alex's second key is cut, cy leaves,
 /// and cy comes back by a new key. alex stands from the seed, the cut of
@@ -316,4 +376,18 @@ fn the_fold_answers_each_persons_stretch_in_the_group() {
         ],
         "{m:?}"
     );
+}
+
+/// **A fold with no holder cutover serialises as before**: `holders`, as
+/// `signers`, is skipped when absent and read as absent when missing, so a
+/// membership an older computer wrote reads the same.
+#[test]
+fn a_fold_with_no_holder_cutover_serialises_as_before() {
+    let seed = seed_of(&[(1, "alex")]);
+    let write = signed(&key(1), 100, 0, record("alex-writes"));
+    let m = membership(with_ids([&write]), &seed, NS);
+    let json = serde_json::to_value(&m).unwrap();
+    assert!(json.get("holders").is_none(), "no cutover, no key: {json}");
+    let read: Membership = serde_json::from_value(json).unwrap();
+    assert_eq!(read, m);
 }

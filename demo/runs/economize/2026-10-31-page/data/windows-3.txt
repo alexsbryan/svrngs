@@ -1,0 +1,5 @@
+scripts/build-web.sh:15 scripts/build-release.sh:21 | set -euo pipefail ⏎ cd "$(dirname "$0")/.." ⏎ OUT="target/web/site"
+scripts/build-web.sh:25 scripts/build-release.sh:24 | while [ $# -gt 0 ]; do ⏎ case "$1" in ⏎ --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
+crates/svrngs/src/cli.rs:1127 crates/svrngs/src/cli.rs:1191 | lend: Lend, ⏎ secret: bool, ⏎ accounts: Option<share::Signs>,
+crates/svrngs/src/cli.rs:1558 crates/svrngs/src/cli.rs:1592 | let page = match origin { ⏎ Some(page) => Some(checked_page(page).await?), ⏎ None => None,
+crates/svrngs/src/cli.rs:1559 crates/svrngs/src/cli.rs:1593 | Some(page) => Some(checked_page(page).await?), ⏎ None => None, ⏎ };

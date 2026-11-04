@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "732"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"No visible visual defects were identified in the provided description. Therefore, no changes are needed.\"}}],\"created\":1792716300,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":19,\"prompt_tokens\":352,\"total_tokens\":371,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-fLVsTUrC4n7UKwCgmYTi6QSQGSBuzGi4\",\"timings\":{\"cache_n\":0,\"prompt_n\":352,\"prompt_ms\":686.866,\"prompt_per_token_ms\":1.9513238636363637,\"prompt_per_second\":512.4725929074958,\"predicted_n\":19,\"predicted_ms\":286.594,\"predicted_per_token_ms\":15.083894736842105,\"predicted_per_second\":66.29587500087231}}"
+}

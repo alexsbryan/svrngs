@@ -10,7 +10,9 @@
 //! page's host>`, whose worker dials its lender's key with a pass (u5-2).
 //! The page's origin is `localhost`, whose every name this computer
 //! answers, as svrnme.sh's are, so `svrngs new` decides that itself, and
-//! nothing more is typed: the bar u5-2 keeps. Everything runs on this
+//! nothing more is typed: the bar u5-2 keeps. The phone opens the link
+//! printed at the same server's TLS name, the tests' page host
+//! (web/tests/page.mjs `PAGE_HOST`), where the group's signer works. Everything runs on this
 //! computer: a relay on 127.0.0.1, plain HTTP, Sam's computer reached only
 //! through it, and the page served on 127.0.0.1. The browser
 //! half is `web/tests/join.mjs`, which fails naming the install command
@@ -19,6 +21,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
 #[macro_use]
+#[allow(unused_macros, dead_code)]
 mod harness;
 mod common;
 
@@ -33,6 +36,11 @@ use svrngs_node::link::Origin;
 use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Device, RailAct, SigningKey};
 use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
+
+/// Sam's shelf as the phone's page offers it, its open and the line beside
+/// it: a port lend writes as the person opening it, said beside its open
+/// (svrngs-node home/question.js `named`, `agreed`).
+const SHELF: &str = "Sam’s shelf It writes what you say there into house’s record, as you.";
 
 /// A service on 127.0.0.1 answering every request `200 hi`.
 async fn service() -> u16 {
@@ -78,17 +86,20 @@ fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
         .collect()
 }
 
-/// Whether the page's heading says the phone is in Sam's house as
-/// `person`: who made the group and since when this phone has held it, as
-/// it kept them when it joined (v1ui-door (d)), the day in the browser's
-/// own words.
-fn in_house(status: &Value, person: &str) -> bool {
-    let status = status.as_str().unwrap_or_default();
-    status.starts_with("You’re in house (Sam’s, since ")
-        && status.ends_with(&format!("), as {person}"))
+/// Whether the page says the phone is in Sam's house as `person`: its
+/// heading that it is in, and above the group's people who made the group
+/// and since when this phone has held it, as it kept them when it joined
+/// (v1ui-door (d)), the day in the browser's own words. Until the fifth
+/// xenia set the heading said both (demo/xenia/findings/
+/// wordy-the-group-s-page.md).
+fn in_house(seen: &Value, person: &str) -> bool {
+    let whose = seen["whose"].as_str().unwrap_or_default();
+    seen["status"] == format!("You’re in house, as {person}")
+        && whose.starts_with("house (Sam’s, since ")
+        && whose.ends_with(')')
 }
 
-in_both_engines!(
+in_webkit!(
     /// Planted: the key stored unsealed beside its seal (store.js `keep`
     /// writing `raw: key`); a second `Admit` on reopening (app.js joining
     /// anew, with a fresh key, on every opening of a link); a taken name
@@ -108,7 +119,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
+        sign_in_with_svrngs: None,
         asks: None,
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
@@ -116,6 +127,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let mut phone = tokio::process::Command::new("node")
         .arg(harness::repo().join("web/tests/join.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
+        .env("SVRNGS_BROWSERS", harness::browsers())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -131,6 +143,13 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     });
     let origin: Value = serde_json::from_str(&first).unwrap();
     let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
+    let port = origin
+        .as_str()
+        .trim_end_matches('/')
+        .rsplit(':')
+        .next()
+        .unwrap()
+        .to_string();
 
     let page = cli::checked_page(origin.clone())
         .await
@@ -140,7 +159,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
-        None,
+        &[],
         &ours,
     )
     .await
@@ -152,7 +171,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         .write_all(
             format!(
                 "{}\n",
-                json!({ "link": link, "name": "Pia", "taken": "sam" })
+                json!({ "link": link, "name": "Pia", "taken": "sam", "hint": true })
             )
             .as_bytes(),
         )
@@ -181,11 +200,59 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         "the page asks a newcomer's name:\n{seen:#}"
     );
     assert_eq!(
-        first["why"], "Someone in house already goes by Sam. If that’s you, open your home page on your computer, press “Make a link to add your phone or another computer of yours”, and open that link here. Else join under another name.",
+        first["why"], "Someone in house already goes by Sam. If that’s you, open your home page on your computer, press “Add your phone or another computer”, and open that link here. Else join under another name.",
         "a name someone goes by is refused, and another asked (bash-person):\n{seen:#}"
     );
-    assert!(in_house(&first["status"], "Pia"), "{seen:#}");
-    assert_eq!(first["lent"], json!(["Sam’s shelf"]), "{seen:#}");
+    assert!(in_house(first, "Pia"), "{seen:#}");
+    assert_eq!(first["lent"], json!([SHELF]), "{seen:#}");
+    // No row says to keep a lend on a phone: a Home Screen web app keeps
+    // a storage of its own, so one added after joining joins again, as
+    // someone new (the operator's iPhone, iOS 18.7, 2026-10-30).
+    assert_eq!(first["kept"], json!([]), "{seen:#}");
+    // So before the name is asked, in iPhone Safari alone, whose
+    // `navigator.standalone` is false, the page says to join from the Home
+    // Screen; in a Home Screen web app (true) and any other browser
+    // (undefined) nothing. Red on c31c666b, which said nothing.
+    assert_eq!(
+        seen["hint"],
+        json!({
+            "false": "To keep house on this phone, add this page to your Home Screen first, and join from there.",
+            "true": null,
+            "undefined": null,
+        }),
+        "{seen:#}"
+    );
+    // Joined, the page asked the browser to keep its storage, or says why
+    // it did not: a Home Screen web app on the operator's iPhone forgot its
+    // person within some ten hours, never asked (iOS 18.7, 2026-10-31;
+    // store.js `persist`). Red on d8821e6a, whose page never asked.
+    let storage = |o: &Value| {
+        (o["lines"].as_array().into_iter().flatten())
+            .filter_map(Value::as_str)
+            .any(|l| l.starts_with("PAGE: ") && l.contains("the page's storage"))
+    };
+    assert!(storage(first), "{seen:#}");
+    // Just joined, the page leads with the group's things, before its
+    // people; the shelf is folded as "Bring more to house", and "What acts
+    // as you" under its heading (the operator, 2026-10-26;
+    // demo/xenia/findings/after-join-reads-as-permissions.md).
+    assert_eq!(first["leads"], true, "{seen:#}");
+    assert_eq!(
+        first["folded"],
+        json!(["Bring more to house", "What acts as you"]),
+        "{seen:#}"
+    );
+    // One look, in Ana's twenty words (demo/xenia/people/ana.md) and in
+    // xenia's order, things to tap first, takes in the open and the line
+    // beside it saying what it does: the fifth set's Ana read 60-70 words
+    // before her first tap there, 6 of 6 accounts (demo/xenia/findings/
+    // wordy-the-group-s-page.md). Planted, watched failing: the page as
+    // 5c6e3b0d left it, its heading naming the maker (`in_house` above).
+    assert_eq!(
+        first["look"],
+        "Sam’s shelf Bring more to house What acts as you You’re in house, as Pia It writes what you say",
+        "{seen:#}"
+    );
 
     // The issuer's journal: one Admit naming a browser's key and that name,
     // and the key the one the page keeps sealed.
@@ -219,31 +286,33 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     for again in ["again", "alone"] {
         let o = &seen[again];
         assert_eq!(o["asked"], false, "{again}: asked again:\n{seen:#}");
-        assert!(in_house(&o["status"], "Pia"), "{again}:\n{seen:#}");
-        assert_eq!(o["lent"], json!(["Sam’s shelf"]), "{again}:\n{seen:#}");
+        assert!(in_house(o, "Pia"), "{again}:\n{seen:#}");
+        assert_eq!(o["lent"], json!([SHELF]), "{again}:\n{seen:#}");
+        // A group opened asks again, unless kept already.
+        assert!(storage(o), "{again}:\n{seen:#}");
+        // In already, the shelf is open as it always was.
+        assert_eq!(
+            o["folded"],
+            json!(["What acts as you"]),
+            "{again}:\n{seen:#}"
+        );
     }
 
-    // A lend opens at an origin of its own, `<label>.localhost`, whose
+    // A lend opens at an origin of its own, `<label>.<page host>`, whose
     // worker serves it from Sam's computer, dialled by Sam's key (u5-2).
     let shelf = svrngs_core::pass::Label::of(
         SigningKey::from_bytes(&[1; 32]).verifying_key().as_bytes(),
         "shelf",
     );
-    let port = origin
-        .as_str()
-        .trim_end_matches('/')
-        .rsplit(':')
-        .next()
-        .unwrap();
     assert_eq!(
         seen["opened"],
-        json!({ "origin": format!("http://{shelf}.localhost:{port}"), "text": "hi" }),
+        json!({ "origin": format!("https://{shelf}.{}:{port}", harness::PAGE_HOST), "text": "hi" }),
         "{seen:#}"
     );
     sam.endpoint().close().await;
 }
 
-in_both_engines!(
+in_webkit!(
     /// **A phone opening a link Sam's computer made for Sam's devices is
     /// added as Sam, asked no name** (bash-devices (d); `svrngs link house
     /// --device`). It reads "Adding this phone to house as Sam’s…", then
@@ -258,6 +327,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
     let mut phone = tokio::process::Command::new("node")
         .arg(harness::repo().join("web/tests/join.mjs"))
         .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
+        .env("SVRNGS_BROWSERS", harness::browsers())
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -278,7 +348,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
         Some(&page),
-        None,
+        &[],
         &ours,
     )
     .await
@@ -323,7 +393,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
             .contains(&json!("Adding this phone to house as Sam’s…")),
         "the phone reads whose it is being added as:\n{seen:#}"
     );
-    assert!(in_house(&first["status"], "Sam"), "{seen:#}");
+    assert!(in_house(first, "Sam"), "{seen:#}");
 
     let key: [u8; 32] = hex::decode(seen["stored"]["key"].as_str().unwrap())
         .unwrap()

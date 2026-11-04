@@ -1,0 +1,143 @@
+# Actual Budget sync-server via npx, 2026-10-30. Raw outputs, trimmed. No environment was read.
+
+## The tutorial step
+npm view @actual-app/sync-server version engines bin -> 26.10.0 { node: '>=22' } { 'actual-server': 'build/bin/actual-server.js' }
+README (npm pack @actual-app/sync-server@26.10.0, package/README.md): 'npm install --location=global @actual-app/sync-server' then 'actual-server'. The task's 'npx @actual-app/sync-server' is the same bin without the global install.
+cd /private/tmp/svrngs-pass/actual/work; HOME=/private/tmp/svrngs-pass/actual/home ACTUAL_HOSTNAME=127.0.0.1 npx --yes @actual-app/sync-server   (node v24.22.1)
+
+## Where its data goes (read in its code, then seen in open files)
+build/chunks/load-config-*.js:39  defaultDataDir = ACTUAL_DATA_DIR ? ... : fs.existsSync('/data') ? '/data' : projectRoot   (the package's own folder)
+build/bin/actual-server.js:47-58  setupDataDir: unless ACTUAL_DATA_DIR is set, ./data if it exists, else ./ -- the bin overrides the config default, so the data is the folder it runs in
+
+## Observation from port 5006
+$ lsof -nP -iTCP:5006 -sTCP:LISTEN
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    12423 alexsbryan   13u  IPv4 0x53292e31b70a96c1      0t0  TCP 127.0.0.1:5006 (LISTEN)
+$ ps -o pid,ppid,lstart,command -p 12423
+  PID  PPID STARTED                      COMMAND
+12423 12025 Fri Oct 30 09:54:03 2026     node /private/tmp/svrngs-pass/actual/home/.npm/_npx/ae37a5acd0f97261/node_modules/.bin/actual-server
+$ ps -o pid,ppid,command -p 12025  (parent)
+  PID  PPID COMMAND
+12025     1 npm exec @actual-app/sync-server   
+$ lsof -a -p 12423 -d cwd
+COMMAND   PID       USER   FD   TYPE DEVICE SIZE/OFF      NODE NAME
+node    12423 alexsbryan  cwd    DIR   1,15      160 339960753 /private/tmp/svrngs-pass/actual/work
+$ lsof -a -p 12423 -d txt
+COMMAND   PID       USER   FD   TYPE DEVICE  SIZE/OFF                NODE NAME
+node    12423 alexsbryan  txt    REG   1,15 122545856           334702024 /Users/alexsbryan/.nvm/versions/node/v24.22.1/bin/node
+node    12423 alexsbryan  txt    REG   1,15     93080           340064190 /private/tmp/svrngs-pass/actual/home/.npm/_npx/ae37a5acd0f97261/node_modules/argon2/prebuilds/darwin-arm64/argon2.armv8.glibc.node
+node    12423 alexsbryan  txt    REG   1,15     88608           340064439 /private/tmp/svrngs-pass/actual/home/.npm/_npx/ae37a5acd0f97261/node_modules/bcrypt/prebuilds/darwin-arm64/bcrypt.node
+node    12423 alexsbryan  txt    REG   1,15   1980736           340071352 /private/tmp/svrngs-pass/actual/home/.npm/_npx/ae37a5acd0f97261/node_modules/better-sqlite3/prebuilds/darwin-arm64.node
+$ lsof -p 12423 | regular files open w/u
+COMMAND   PID       USER   FD     TYPE             DEVICE  SIZE/OFF                NODE NAME
+node    12423 alexsbryan    1w     REG               1,15       501           339986772 /private/tmp/svrngs-pass/actual/actual.log
+node    12423 alexsbryan    2w     REG               1,15       501           339986772 /private/tmp/svrngs-pass/actual/actual.log
+node    12423 alexsbryan   11u     REG               1,15     69632           340100547 /private/tmp/svrngs-pass/actual/work/server-files/account.sqlite
+(txt trimmed: dyld, icu data, timezone, logd plist cache)
+$ lsof -nP -a -p 12423 -iTCP -sTCP:LISTEN
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    12423 alexsbryan   13u  IPv4 0x53292e31b70a96c1      0t0  TCP 127.0.0.1:5006 (LISTEN)
+
+## The folder, the code
+$ ls -la work work/*
+/private/tmp/svrngs-pass/actual/work:
+total 8
+drwxr-xr-x@  5 alexsbryan  wheel  160 Oct 30 09:54 .
+drwxr-xr-x@ 10 alexsbryan  wheel  320 Oct 30 10:07 ..
+-rw-r--r--@  1 alexsbryan  wheel  861 Oct 30 09:54 .migrate
+drwxr-xr-x@  3 alexsbryan  wheel   96 Oct 30 09:58 server-files
+drwxr-xr-x@  2 alexsbryan  wheel   64 Oct 30 09:54 user-files
+
+/private/tmp/svrngs-pass/actual/work/server-files:
+total 136
+drwxr-xr-x@ 3 alexsbryan  wheel     96 Oct 30 09:58 .
+drwxr-xr-x@ 5 alexsbryan  wheel    160 Oct 30 09:54 ..
+-rw-r--r--@ 1 alexsbryan  wheel  69632 Oct 30 09:58 account.sqlite
+
+/private/tmp/svrngs-pass/actual/work/user-files:
+total 0
+drwxr-xr-x@ 2 alexsbryan  wheel   64 Oct 30 09:54 .
+drwxr-xr-x@ 5 alexsbryan  wheel  160 Oct 30 09:54 ..
+$ du -sh ~/.npm/_npx/ae37a5acd0f97261 work
+137M	/private/tmp/svrngs-pass/actual/home/.npm/_npx/ae37a5acd0f97261
+ 72K	/private/tmp/svrngs-pass/actual/work
+$ cat ~/.npm/_npx/ae37a5acd0f97261/package.json
+{
+  "dependencies": {
+    "@actual-app/sync-server": "^26.10.0"
+  },
+  "_npx": {
+    "packages": [
+      "@actual-app/sync-server"
+    ]
+  }
+}
+user-files/ is empty and not open; it came with the folder. Copying only the open file (server-files/account.sqlite) would have dropped .migrate, the record of migrations run.
+
+## Before copying: the original given state
+GET / (original) 200 text/html; charset=utf-8 4256
+POST /account/bootstrap {"password": <not recorded>} -> 200
+
+## Model A: the folder alone
+Not run as a separate start: the folder holds only data (.migrate, server-files/, user-files/, 72K); the program's code is
+~/.npm/_npx/ae37a5acd0f97261 (137M), outside it. Model A has no program to start (as n8n's model A run showed, exit 'Cannot find module').
+
+## Model B: npm ci, in the image, from the npx folder's own lockfile
+$ tar -C ~/.npm/_npx/ae37a5acd0f97261 -cf - package.json package-lock.json | podman volume import svrngs-pass-actual-deps -
+-- slim first (node:24.22.1-slim): FAILED, 4.3 s, twice (second run into a throwaway volume to read the whole error)
+npm-exit=1
+npm error path .../node_modules/better-sqlite3
+npm error command sh -c node-gyp rebuild
+npm error gyp ERR! find Python checking if "python3" can be used
+npm error gyp ERR! find Python - executable path is ""
+npm error gyp ERR! stack Error: Could not find any Python installation to use
+cause: better-sqlite3 13.0.3 ships binding.gyp and no install script ("gypfile": false in its package.json, no
+"hasInstallScript" in the lockfile), yet npm ran its implied `node-gyp rebuild`. It needs python3, make, a compiler.
+The package also ships prebuilds/linux-arm64.node; the Mac ran the same rebuild with its own Xcode tools.
+-- full image (node:24.22.1): passed
+added 209 packages in 7s
+npm-exit=0
+138M	.
+26.10.0
+real 7.69
+(node_modules/better-sqlite3/build/ exists afterwards: the rebuild ran and finished)
+
+## Start test (pod svrngs-pass-actual: 127.0.0.1:15006 -> door 25006 -> 127.0.0.1:5006)
+log: Using default data directory. You can specify a custom config with --config
+     Data directory: /private/tmp/svrngs-pass/actual/work
+     Migrations: DONE
+     Listening on :::5006...      (ACTUAL_HOSTNAME=127.0.0.1 was the original's setting, not carried)
+orig 200 text/html; charset=utf-8 4256
+cont 200 text/html; charset=utf-8 4256
+cmp -> bodies-identical
+GET /account/needs-bootstrap (container) -> {"bootstrapped":true,"loginMethod":"password",...}
+POST /account/login with the original's password -> token (36 chars); GET /account/validate -> 200
+POST /account/change-password -> 200   (the write)
+$ podman restart svrngs-pass-actual-app
+login with the old password -> 400 {"status":"error","reason":"invalid-password"}
+login with the new password -> 200
+original, unchanged: login with the old password -> 200
+
+## give check, from empty
+passed  read the card: actual
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: node:24.22.1@sha256:a217980f..., alpine/socat@sha256:603174b7...
+passed  start: its door on 127.0.0.1:61268
+failed  healthy: app stopped, exit 1. Its last lines:
+left behind: pod svrngs-check-actual, volumes svrngs-check-actual-code, svrngs-check-actual-deps (removed by hand)
+
+## give check, svrngs-check-actual-{code,deps} preloaded
+passed  read the card: actual
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: ...
+passed  start: its door on 127.0.0.1:61314
+passed  healthy
+passed  snapshot: [("code", Reflink), ("deps", Reflink)], paused 2.535274292s
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+actual can go on the shelf.   (33.8 s)

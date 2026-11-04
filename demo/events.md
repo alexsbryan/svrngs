@@ -64,7 +64,7 @@ the app's (`apps/events/nouns.txt`, `scripts/vocab_check.py`).
 on Sam's computer, with Node.js installed. In a terminal, in that copy:
 
 ```
-echo "{\"record\": \"$(cat ~/.svrngs/api)\", \"who\": \"x-svrngs-key\"}" > ~/events.json
+echo "{\"record\": \"$(cat ~/.svrngs/api)\", \"token\": \"$HOME/.svrngs/token\", \"who\": \"x-svrngs-key\"}" > ~/events.json
 node apps/events/server.mjs ~/events.json
 ```
 
@@ -90,7 +90,7 @@ svrngs is running here already, so they can open it now.
 One lend reaches both groups: The House and dWeb each list it as
 **Sam’s events**.
 
-**2. Open it.** On Sam's home page, press **Open Sam’s events**, under
+**2. Open it.** On Sam's home page, press **Sam’s events**, under
 either group (the run opened the address that link opens, the one Sam's
 computer lists for the lend, `home.js:90`). The app's page says
 **Events**, each group with *"Nothing posted yet."*, and **Post an
@@ -131,7 +131,7 @@ Yes and Not now; Bo leaves them ("When something does not work").
 ![The dinner, opened from Bo's home page](runs/events/2026-10-14-links/data/shots/12-bo-L3.png)
 
 The other way, with no link: on the home page, under The House, press
-**Open Sam’s events**, and in the app's list, **Dinner** (the run's shots
+**Sam’s events**, and in the app's list, **Dinner** (the run's shots
 take).
 
 ![Bo's home page, Sam's events under The House](runs/events/2026-10-14/data/shots/03-bo-2w.png)
@@ -201,7 +201,10 @@ she opens it, sees herself under Invited, and presses **I'm coming**.
 - **dWeb**: invited Di, Eve; coming Di; came Di.
 
 Eve is under Invited and nowhere else. Every computer holding each group
-gives the same answers (README, prediction 7).
+gives the same answers (README, prediction 7). Each answer is its own
+person's, signed on their own computer or phone as the app on Sam's
+computer named it, so none says it came through Sam's computer; the
+Events scene holds this on every gate (`crates/svrngs/tests/scenes/events.rs`).
 
 ![Sam's page the next morning](runs/events/2026-10-14/data/shots/28-sam-10.png)
 

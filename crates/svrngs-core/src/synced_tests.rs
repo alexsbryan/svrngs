@@ -128,8 +128,8 @@ fn a_synced_change_ships_at_its_own_line_version() {
     assert_eq!(op.kind.line_version(), SYNCED_LINE_VERSION);
     assert_eq!(
         SignedOp::UNDERSTANDS,
-        crate::RUNS_LINE_VERSION,
-        "this build reads it, and removal's, a device link's, a relay's and a yes to a carried app's version after"
+        crate::MEETS_LINE_VERSION,
+        "this build reads it, and removal's, a device link's, a relay's, a yes to a carried app's version, a visit, a holder's line and the group's relays after"
     );
 }
 
@@ -251,35 +251,114 @@ fn an_app_runs_as_it_was_brought_whoever_changes_it() {
     assert_eq!(runs.brought.len(), 1, "the note is no app's");
 }
 
-/// **A yes is its person's, through whose computer it was written**
-/// (canon-pin (c)): after bo's change, alex says yes to bo's version, and
-/// cy's computer writes bo's yes to it, on bo's behalf, as a phone through
-/// cy's writes. Each runs it as the one who said it, cy as it was brought,
-/// and the app was changed last by bo, when he wrote it. Planted: whose
-/// taken as the writer's alone — cy's yes, not bo's.
+/// The yeses `ops` hold, by kind and first key, each with whether it names
+/// `files`; bo's phone (key 4) stands beside his computer.
+fn said(ops: &[Op<SignedOp>], files: &Files) -> Vec<(String, String, bool)> {
+    let mut seed = ring().members;
+    seed.entry(p("bo")).or_default().push(actor_of(&key(4)));
+    let a = admit(
+        &ActSet::of(ops),
+        &[],
+        &Roster::new(seed),
+        NS,
+        &Ed25519Verifier,
+    );
+    let runs = a.runs().clone();
+    (runs.said.iter())
+        .map(|((k, who), f)| (k.clone(), who.clone(), f == files))
+        .collect()
+}
+
+fn yes(files: &Files) -> RailAct {
+    RailAct::Runs {
+        app: "Money".into(),
+        files: files.clone(),
+    }
+}
+
+/// **Only carry what you signed: a yes counts only from its person's own
+/// device** (capability-signed; svrn-docs `rings/current/
+/// WHAT_CAN_ACT_AS_YOU.md` §3, shortfall 1). After bo's change, alex says
+/// yes to bo's version on his own computer, and cy's computer writes a yes
+/// naming bo, `on_behalf_of` him: a remote computer's word that bo chose
+/// what runs as him. Refused: it counts nowhere, so Money runs as bo as it
+/// was brought, and bo's own yes, signed on his phone and held by any
+/// computer, is his. Planted: whose read from `on_behalf_of` again — cy's
+/// computer chooses for bo.
 #[test]
-fn a_yes_is_its_person_s_through_whose_computer_it_was_written() {
+fn a_yes_another_computer_writes_for_someone_else_counts_nowhere() {
     let mut ops = brought_then_changed();
     let new = money([("index.html", 7), ("app.js", 9)]);
-    let yes = || RailAct::Runs {
-        app: "Money".into(),
-        files: new.clone(),
-    };
     let alex = ops[2].clone();
-    ops.push(after(&key(1), &alex, 1_020, yes()));
-    ops.push(signed_for(NS, &key(3), 1_030, 0, yes(), Some("bo")));
-    let runs = admitted(&ops).runs().clone();
-    let said: Vec<_> = runs
-        .said
-        .keys()
-        .map(|(a, p)| (a.as_str(), p.as_str()))
-        .collect();
-    assert_eq!(said, [("Money", "alex"), ("Money", "bo")]);
-    assert!(runs.said.values().all(|f| *f == new));
+    ops.push(after(&key(1), &alex, 1_020, yes(&new)));
+    ops.push(signed_for(NS, &key(3), 1_030, 0, yes(&new), Some("bo")));
+    let only = |k: u8| (String::from("Money"), actor_of(&key(k)), true);
     assert_eq!(
-        runs.brought["Money"],
-        money([("index.html", 7), ("app.js", 8)])
+        said(&ops, &new),
+        [only(1)],
+        "cy's computer said nothing for bo"
     );
-    let (by, at) = &runs.changed["Money"];
-    assert_eq!((by.as_str(), *at), ("bo", 1_010));
+
+    // Kept: bo's phone signs his own yes; whichever computer carries the
+    // line, it is the phone's person's.
+    ops.push(signed_for(NS, &key(4), 1_040, 0, yes(&new), None));
+    let mut both = [only(1), only(2)];
+    both.sort();
+    assert_eq!(said(&ops, &new), both);
+}
+
+/// **A yes names only files a folder act placed** (shortfall 8; `blob.rs`
+/// fetches any hash a yes names). cy says yes to a Money whose script is
+/// bytes no `Synced` act ever placed at that path: code cy supplied, which
+/// would run as cy on every computer that fetched it. Refused: it counts
+/// nowhere, and Money runs as cy as it was brought. Kept: a yes to the
+/// files the layout places counts. Planted: every file a yes names taken as
+/// placed.
+#[test]
+fn a_yes_naming_files_no_folder_placed_counts_nowhere() {
+    let mut ops = brought_then_changed();
+    let supplied = money([("index.html", 7), ("app.js", 0x70)]);
+    ops.push(signed(&key(3), 1_030, 0, yes(&supplied)));
+    let runs = admitted(&ops).runs().clone();
+    assert_eq!(runs.said.len(), 0, "no folder placed cy's script");
+    assert_eq!(
+        runs.of("Money", &actor_of(&key(3))),
+        Some(&money([("index.html", 7), ("app.js", 8)]))
+    );
+
+    let placed = money([("index.html", 7), ("app.js", 9)]);
+    ops.pop();
+    ops.push(signed(&key(3), 1_030, 0, yes(&placed)));
+    let cy = actor_of(&key(3));
+    assert_eq!(admitted(&ops).runs().of("Money", &cy), Some(&placed));
+}
+
+/// **Two people of one name keep their own yes** (capability-keys; svrn-docs
+/// `rings/current/WHAT_CAN_ACT_AS_YOU.md` §7.4, "Yes, keys everywhere").
+/// After bo's change, alex lets two people in as dee, each by hand, and
+/// the first says yes to bo's version on her own computer. Refused: her
+/// yes running as the other dee, who said nothing. Kept: Money runs as bo
+/// changed it for the first dee and as it was brought for the other, each
+/// asked by their own first key. Red at HEAD: a yes was kept by name, so
+/// asked by key it ran as neither, and asked by name as both.
+#[test]
+fn two_people_of_one_name_keep_their_own_yes() {
+    let mut ops = brought_then_changed();
+    let new = money([("index.html", 7), ("app.js", 9)]);
+    let dee = |k: u8| RailAct::Admit {
+        person: p("dee"),
+        key: actor_of(&key(k)),
+        invite: None,
+    };
+    let first = after(&key(1), &ops[2], 1_011, dee(6));
+    ops.extend([first.clone(), after(&key(1), &first, 1_012, dee(8))]);
+    ops.push(signed(&key(6), 1_020, 0, yes(&new)));
+    let runs = admitted(&ops).runs().clone();
+    let brought = money([("index.html", 7), ("app.js", 8)]);
+    let [one, other] = [6, 8].map(|k| runs.of("Money", &actor_of(&key(k))));
+    assert_eq!(
+        (one, other),
+        (Some(&new), Some(&brought)),
+        "(the first dee's, the other's)"
+    );
 }

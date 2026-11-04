@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "headers": {
+    "date": "Fri, 23 Oct 2026 00:43:49 GMT",
+    "server": "uvicorn",
+    "content-length": "332",
+    "content-type": "application/json"
+  },
+  "body": "{\"object\":\"list\",\"data\":[{\"id\":\"tts-1\",\"object\":\"model\",\"created\":1686935002,\"owned_by\":\"kokoro\"},{\"id\":\"tts-1-hd\",\"object\":\"model\",\"created\":1686935002,\"owned_by\":\"kokoro\"},{\"id\":\"kokoro\",\"object\":\"model\",\"created\":1686935002,\"owned_by\":\"kokoro\"},{\"id\":\"gpt-4o-mini-tts\",\"object\":\"model\",\"created\":1686935002,\"owned_by\":\"kokoro\"}]}"
+}

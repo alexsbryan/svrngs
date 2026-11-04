@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>The house</title>
+<style>
+body{font:16px system-ui;margin:0;background:#faf9f7;color:#222}
+header{background:#24495e;color:#fff;padding:18px 24px;display:flex;gap:18px;align-items:center}
+header a{color:#cfe3ee;text-decoration:none;margin-right:14px}
+main{padding:24px;max-width:1100px}
+.card{background:#fff;border:1px solid #ddd;border-radius:10px;padding:18px;margin:18px 0;position:relative}
+.badge{display:inline-block;background:#ffe9c7;color:#7a4b00;border-radius:6px;padding:3px 8px;
+       font-size:13px;white-space:nowrap;width:86px;overflow:hidden}
+.actions{display:flex;gap:10px;align-items:center;margin-top:12px;position:relative}
+.primary{background:#24495e;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:15px;position:relative;left:26px}
+.ghost{background:#fff;border:1px solid #24495e;color:#24495e;border-radius:8px;padding:10px 16px}
+.tablewrap{width:620px;overflow:hidden;border:1px solid #ddd;border-radius:8px}
+table{border-collapse:collapse;width:900px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid #eee;white-space:nowrap}
+th{background:#f1f5f7}
+.note{color:#666;font-size:14px}
+</style></head><body>
+<header><strong>The house</strong><nav><a href="#">Rings</a><a href="#">Pantry</a><a href="#">People</a></nav></header>
+<main>
+  <div class="card">
+    <h2>Garden room</h2>
+    <span class="badge">Subscription required</span>
+    <p class="note">Booked by Ana for Saturday. The room before it is listed is in the pantry.</p>
+    <div class="actions"><button class="primary">Open the room</button><button class="ghost">Invite someone</button></div>
+  </div>
+  <div class="card">
+    <h2>What the group keeps</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Thing</th><th>Kept by</th><th>Updated</th><th>Status</th></tr>
+      <tr><td>Garden room</td><td>Ana</td><td>Thursday</td><td>Ready</td></tr>
+      <tr><td>Album</td><td>Sam</td><td>Wednesday</td><td>Waiting</td></tr>
+      <tr><td>Money owed</td><td>Bo</td><td>Monday</td><td>Paid</td></tr>
+    </table></div>
+  </div>
+</main></body></html>

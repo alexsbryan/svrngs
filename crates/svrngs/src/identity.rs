@@ -23,7 +23,6 @@
 //! (ARCH 6). Only an absent file mints a key.
 
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use ed25519_dalek::SigningKey;
@@ -56,23 +55,7 @@ fn load_key(data_dir: &Path) -> std::io::Result<Option<SigningKey>> {
 }
 
 fn save_key(data_dir: &Path, key: &SigningKey) -> std::io::Result<()> {
-    fs::create_dir_all(data_dir)?;
-    let target = key_path(data_dir);
-    let tmp = target.with_extension("tmp");
-    {
-        let mut f = fs::File::create(&tmp)?;
-        f.write_all(&key.to_bytes())?;
-        f.sync_all()?;
-    }
-    fs::rename(&tmp, &target)?;
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        // Best-effort: failure doesn't invalidate the write, the
-        // file is just possibly group-readable.
-        let _ = fs::set_permissions(&target, fs::Permissions::from_mode(0o600));
-    }
-    Ok(())
+    svrngs_node::declared::write_secret(&key_path(data_dir), &key.to_bytes()).map_err(|(_, e)| e)
 }
 
 /// Why this computer has no key to run as.

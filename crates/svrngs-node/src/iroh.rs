@@ -33,7 +33,7 @@
 //!   is not dialled. (svrngs: unless the endpoint has an address lookup,
 //!   which resolves it — PLAN §4, U1's "A bare key is dialled".)
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::future::Future;
 use std::net::{IpAddr, SocketAddr};
 
@@ -52,7 +52,9 @@ pub use crate::guest::{build_relayed_endpoint, RelayConfig};
 
 // Re-exported so callers build endpoints without declaring their own iroh
 // dependency — keeps the version pin in exactly one place.
+use iroh::TransportAddr;
 pub use iroh::{Endpoint, EndpointAddr, PublicKey, RelayUrl, SecretKey};
+use svrngs_core::relay::{Meeting, Url};
 // svrngs: iroh's address book in memory, so a test tells a joiner the
 // loopback addresses a link's bare key resolves to (u2-8).
 pub use iroh::address_lookup::MemoryLookup;
@@ -88,34 +90,28 @@ pub fn has_lookup(endpoint: &Endpoint) -> bool {
 pub struct Contact {
     /// The peer's Ed25519 key — what the QUIC handshake verifies.
     pub key: PublicKey,
-    /// The peer's home relay, if known.
-    pub relay_url: Option<String>,
+    /// Every relay the peer may be at: where its group meets, and the
+    /// relay its group's record names for it (relay fallbacks).
+    pub relays: BTreeSet<svrngs_core::relay::Url>,
     /// The peer's iroh UDP socket addresses, if known.
     pub iroh_direct_addrs: Vec<SocketAddr>,
 }
 
 impl Contact {
-    /// A peer known by its key alone, no hint: how svrngs dials a member,
-    /// since nothing gossips addresses (PLAN §4, U1's "A bare key is dialled").
-    pub fn by_key(key: PublicKey) -> Self {
+    /// A member by its key, dialled at every relay its group meets at
+    /// (relay fallbacks; GROUP_RELAYS §7), so a member whose home moved to
+    /// the group's fallback is reached there, and at the relay its group's
+    /// record names for it (relay-in-record; DESIGN §6). With none of
+    /// either its key alone, said: only an address lookup finds it then,
+    /// and with none it is not dialled.
+    pub fn named(key: PublicKey, meeting: &Meeting, recorded: Option<&Url>) -> Self {
+        let relays: BTreeSet<Url> = meeting.relays().chain(recorded).cloned().collect();
+        tracing::debug!(target: "transport", peer = %key.fmt_short(), relays = relays.len(), ?recorded,
+            "transport: a member dialled at every relay its group meets at and the one its record names, its key alone with none");
         Self {
             key,
-            relay_url: None,
+            relays,
             iroh_direct_addrs: Vec::new(),
-        }
-    }
-
-    /// A member by its key and the relay its group's record names for it
-    /// (relay-in-record; DESIGN §6). With none named its key alone, said:
-    /// only an address lookup finds it then, and with none it is not dialled.
-    pub fn named(key: PublicKey, relay: Option<&svrngs_core::relay::Url>) -> Self {
-        if relay.is_none() {
-            tracing::debug!(target: "transport", peer = %key.fmt_short(),
-                "transport: the group names no relay for this computer — its key alone, which only an address lookup finds");
-        }
-        Self {
-            relay_url: relay.map(ToString::to_string),
-            ..Self::by_key(key)
         }
     }
 }
@@ -140,7 +136,14 @@ pub struct IrohTransport {
     /// closes, or fails a request, is let go, so a member that restarted at
     /// another address is dialled anew where its contact says.
     pub(crate) conns: tokio::sync::watch::Sender<Connections>,
+    /// The connections this computer's acceptor took, which [`Self::fetch`]
+    /// closes with those it dialled.
+    pub(crate) accepted: Accepted,
 }
+
+/// The connections an acceptor took, each by the key its handshake verified
+/// ([`Connection::remote_id`]), shared with the transport that closes them.
+pub type Accepted = tokio::sync::watch::Sender<Vec<Connection>>;
 
 /// Each connection kept, by the computer's key and the protocol's bytes.
 pub(crate) type Connections = std::collections::BTreeMap<([u8; 32], &'static [u8]), Connection>;
@@ -152,6 +155,7 @@ impl IrohTransport {
             endpoint,
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             conns: tokio::sync::watch::Sender::new(Connections::new()),
+            accepted: Accepted::default(),
         }
     }
 
@@ -164,8 +168,7 @@ impl IrohTransport {
         within: Duration,
     ) -> Result<Connection, Unsent> {
         let at = (*peer.key.as_bytes(), alpn.bytes());
-        let kept = self.conns.borrow().get(&at).cloned();
-        let kept = kept.filter(|c| c.close_reason().is_none());
+        let kept = self.open(peer, alpn);
         tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), ?alpn, kept = kept.is_some(), "iroh: a request on the connection kept to it, else on one dialled (#178)");
         if let Some(conn) = kept {
             return Ok(conn);
@@ -183,6 +186,13 @@ impl IrohTransport {
         Ok(conn)
     }
 
+    /// The connection kept to `peer` on `alpn`, while it stays open.
+    fn open(&self, peer: &Contact, alpn: Alpn) -> Option<Connection> {
+        let at = (*peer.key.as_bytes(), alpn.bytes());
+        let kept = self.conns.borrow().get(&at).cloned();
+        kept.filter(|c| c.close_reason().is_none())
+    }
+
     /// The connection kept to `peer` on `alpn` let go, a request on it
     /// failed: the next dials afresh.
     pub(crate) fn let_go(&self, peer: &PublicKey, alpn: Alpn) {
@@ -198,8 +208,8 @@ impl IrohTransport {
         }
     }
 
-    /// Build the dial target from the contact's iroh info (relay
-    /// URL + direct addrs), merging any test-seeded `known_addrs`.
+    /// Build the dial target from the contact's iroh info (its relays
+    /// and direct addrs), merging any test-seeded `known_addrs`.
     /// `None` when there's no usable path (no relay AND no address) and the
     /// endpoint has no address lookup to resolve the key. (svrngs: upstream
     /// refused every bare key, since its mesh gossiped addresses; with no
@@ -207,37 +217,25 @@ impl IrohTransport {
     /// relay-in-record, else the endpoint's own lookup — n0's DNS under
     /// `RelayConfig::n0_services` — finds it, PLAN §4, U1's "A bare key is dialled".)
     pub(crate) fn endpoint_addr_for(&self, peer: &Contact) -> Option<iroh::EndpointAddr> {
-        let mut ea = iroh::EndpointAddr::new(peer.key);
-        let mut has_path = false;
-        if let Some(relay) = peer.relay_url.as_deref() {
-            match crate::relay::parse(relay) {
-                Ok(url) => {
-                    ea = ea.with_relay_url(url);
-                    has_path = true;
-                }
-                Err(e) => tracing::warn!(
-                    target: "transport",
-                    transport = "iroh",
-                    relay = %relay,
-                    error = %e,
-                    "iroh: peer relay_url did not parse — ignoring"
-                ),
-            }
-        }
+        // iroh sends a dial's first packets to every address it is given
+        // (iroh-1.0.2 src/socket/remote_map/remote_state.rs:795-842).
+        let relays = peer
+            .relays
+            .iter()
+            .map(|r| TransportAddr::Relay(r.clone().into()));
+        let mut ea = iroh::EndpointAddr::from_parts(peer.key, relays);
         let seeded = self
             .known_addrs
             .lock()
             .ok()
             .and_then(|m| m.get(peer.key.as_bytes()).cloned())
             .unwrap_or_default();
-        let mut seen = std::collections::HashSet::new();
+        // The address set is iroh's `BTreeSet`, so a hint given twice is
+        // one address (iroh-base-1.0.2 `endpoint_addr.rs:118-121`).
         for a in peer.iroh_direct_addrs.iter().copied().chain(seeded) {
-            if seen.insert(a) {
-                ea = ea.with_ip_addr(a);
-                has_path = true;
-            }
+            ea = ea.with_ip_addr(a);
         }
-        if has_path {
+        if !ea.is_empty() {
             return Some(ea);
         }
         let lookup = has_lookup(&self.endpoint);
@@ -269,11 +267,48 @@ impl IrohTransport {
         answered
     }
 
-    /// [`Self::send`], its answer read whole within [`ANSWERED_WITHIN`].
-    pub async fn fetch(&self, peer: &Contact, req: Request) -> Result<Whole, Unsent> {
-        whole(self.send(peer, req)).await
+    /// [`Self::send`] of a request held whole, its answer read whole
+    /// within [`ANSWERED_WITHIN`]; sent again once, on a connection dialled
+    /// afresh, when it failed on one kept. A computer that restarted
+    /// leaves the connection kept to its old self open until it has been
+    /// silent for [`crate::dial::DIAL_WITHIN`], and a request on it fails
+    /// then, though the computer answers a fresh dial (capability-scenes'
+    /// Grapevine scene: the next round was a minute away).
+    pub async fn fetch(&self, peer: &Contact, req: WholeRequest) -> Result<Whole, Unsent> {
+        let kept = self.open(peer, Alpn::Member).is_some();
+        let again = kept.then(|| req.clone());
+        let answered = whole(self.send(peer, req.map(Into::into))).await;
+        let (Err(Unsent::Failed(failed)), Some(again)) = (&answered, again) else {
+            return answered;
+        };
+        tracing::debug!(target: "transport", peer = %peer.key.fmt_short(), failed, "iroh: a request failed on the connection kept to it, as one to a computer that restarted does: sent again, once, on one dialled afresh");
+        self.close_every(&peer.key);
+        whole(self.send(peer, again.map(Into::into))).await
+    }
+
+    /// Every connection to `key` closed, dialled or accepted. iroh 1.0.2
+    /// lets go of the address it sends a key's packets to only when no
+    /// connection to the key is left
+    /// (`src/socket/remote_map/remote_state.rs:486-488`), and a new
+    /// connection's handshake goes to that address alone (`:799-809`). So
+    /// while a restarted computer's dial into this one is open, a dial
+    /// afresh goes to its old self's address, and is not answered
+    /// (demo/runs/redial/2026-10-27). A lend it opened here is cut once.
+    fn close_every(&self, key: &PublicKey) {
+        let (conns, accepted) = (self.conns.borrow(), self.accepted.borrow());
+        let dialled = conns.iter().filter(|((k, _), _)| k == key.as_bytes());
+        let open = (dialled.map(|(_, c)| c))
+            .chain(accepted.iter().filter(|c| c.remote_id() == *key))
+            .filter(|c| c.close_reason().is_none());
+        let closed = open
+            .map(|c| c.close(0u32.into(), b"dialled afresh"))
+            .count();
+        tracing::debug!(target: "transport", peer = %key.fmt_short(), closed, "iroh: every connection to it closed before the dial afresh, so iroh picks its address anew; a lend on one is cut once");
     }
 }
+
+/// A request held whole, so it can be sent again.
+pub type WholeRequest = axum::http::Request<axum::body::Bytes>;
 
 /// How long a request read whole waits for its answer, the dial included:
 /// the ten seconds the round's reqwest client was built with
@@ -379,7 +414,7 @@ pub(crate) async fn on_stream(conn: &Connection, mut req: Request) -> Result<Str
 /// Whether the far end of `conn` closes it as [`NOT_ADMITTED`] within
 /// [`CLOSED_WITHIN`]: it answered, and does not know this computer stands
 /// in any group it holds.
-async fn closed_unadmitted(conn: &Connection) -> bool {
+pub(crate) async fn closed_unadmitted(conn: &Connection) -> bool {
     let closed = timeout(CLOSED_WITHIN, conn.closed()).await.ok();
     let unadmitted = matches!(&closed, Some(iroh::endpoint::ConnectionError::ApplicationClosed(c)) if c.reason.as_ref() == NOT_ADMITTED);
     tracing::debug!(target: "transport", peer = %conn.remote_id().fmt_short(), unadmitted, ?closed, "iroh: whether the peer closes this computer's connection as not admitted");
@@ -397,7 +432,7 @@ const CLOSED_WITHIN: Duration = Duration::from_secs(1);
 
 /// The acceptor's answer to a connection, decided once per connection on its
 /// negotiated ALPN and the key its handshake verified.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Admit {
     /// Serve every bi-stream on the connection with this router: the
     /// routes its protocol reaches, and no others.
@@ -405,6 +440,9 @@ pub enum Admit {
     /// Hand the connection to iroh-blobs' provider (gf-1): a shared
     /// folder's bytes by hash, on its own protocol.
     Blobs(iroh_blobs::BlobsProtocol),
+    /// Hand the connection to the door's raw half (give-udp, give-tcp): a
+    /// lent port's datagrams, or its connections, a stream each.
+    Port(Box<crate::door::Door>),
     /// Close the connection before any stream is read: no HTTP answer.
     Refuse,
 }
@@ -428,7 +466,7 @@ impl Dialer {
 /// reads of the path it travels (svrngs, u3-6). Inserted by
 /// [`IrohAcceptor`] as an extension, as the dialer is.
 #[derive(Debug, Clone)]
-pub struct Via(iroh::endpoint::Connection);
+pub struct Via(pub(crate) iroh::endpoint::Connection);
 
 /// What a connection's selected path looks like now, as iroh's
 /// `Connection::paths()` and `PathStats` report it: use, never capacity
@@ -499,14 +537,15 @@ impl IrohAcceptor {
     /// not a credential; the verified key is the evidence `admit` decides
     /// on. It is called again for every connection, so a decision that
     /// consults live state sees membership change between dials.
-    pub fn spawn<F>(endpoint: iroh::Endpoint, admit: F) -> Self
+    /// Each connection is added to `accepted` ([`IrohTransport::fetch`]).
+    pub fn spawn<F>(endpoint: iroh::Endpoint, accepted: Accepted, admit: F) -> Self
     where
         F: Fn(&[u8], &PublicKey) -> Admit + Send + Sync + 'static,
     {
         let admit = Arc::new(admit);
         let task = tokio::spawn(async move {
             while let Some(incoming) = endpoint.accept().await {
-                let admit = admit.clone();
+                let (admit, accepted) = (admit.clone(), accepted.clone());
                 tokio::spawn(async move {
                     let conn = match incoming.await {
                         Ok(c) => c,
@@ -519,6 +558,10 @@ impl IrohAcceptor {
                             return;
                         }
                     };
+                    accepted.send_modify(|a| {
+                        a.retain(|c| c.close_reason().is_none());
+                        a.push(conn.clone());
+                    });
                     // A fully-accepted connection has a negotiated ALPN and
                     // a verified dialer key (from the peer's TLS
                     // certificate). Admit this connection's streams by both.
@@ -540,6 +583,10 @@ impl IrohAcceptor {
                             tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the blobs provider");
                             blobs.accept(conn).await.ok();
                             return;
+                        }
+                        Admit::Port(door) => {
+                            tracing::debug!(target: "transport", dialer = %dialer.actor(), "iroh acceptor: dialer admitted — its connection handed to the door's raw half, UDP or TCP");
+                            return crate::door::udp::serve(*door, conn).await;
                         }
                         Admit::Serve(router) => {
                             tracing::debug!(

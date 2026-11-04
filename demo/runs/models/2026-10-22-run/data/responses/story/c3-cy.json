@@ -1,0 +1,53 @@
+{
+  "status": 200,
+  "body": {
+    "id": "chatcmpl-agzAsPLcpU8dKt5550bKnB7Nt5ClRsZa",
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "logprobs": null,
+        "message": {
+          "content": "cy",
+          "refusal": null,
+          "role": "assistant",
+          "annotations": null,
+          "audio": null,
+          "function_call": null,
+          "tool_calls": null
+        }
+      }
+    ],
+    "created": 1792727294,
+    "model": "cy-model",
+    "object": "chat.completion",
+    "metadata": null,
+    "moderation": null,
+    "service_tier": null,
+    "system_fingerprint": "b10180-11b068d06",
+    "usage": {
+      "completion_tokens": 2,
+      "prompt_tokens": 19,
+      "total_tokens": 21,
+      "completion_tokens_details": null,
+      "prompt_tokens_details": {
+        "audio_tokens": null,
+        "cache_write_tokens": null,
+        "cached_tokens": 0,
+        "image_tokens": null,
+        "text_tokens": null
+      }
+    },
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 19,
+      "prompt_ms": 173.196,
+      "prompt_per_token_ms": 9.115578947368421,
+      "prompt_per_second": 109.70230259359339,
+      "predicted_n": 2,
+      "predicted_ms": 28.383,
+      "predicted_per_token_ms": 14.1915,
+      "predicted_per_second": 70.46471479406688
+    }
+  }
+}

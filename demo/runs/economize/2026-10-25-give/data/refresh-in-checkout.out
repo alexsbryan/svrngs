@@ -1,0 +1,60 @@
+svrnmesh: bridged 1 legacy SOVEREIGN_* env var(s) to SVRNMESH_* (the SOVEREIGN_* prefix is deprecated — update your scripts)
+                                                        
+  ✓ SCIP graph at HEAD for "svrngs".
+
+  Rebuilding LanceDB corpus index: no existing index at /Users/alexsbryan/.svrnmesh/indexes/svrngs/_corpus_meta.json — first build
+Preserved 8 entries not owned by the ingest (chunk ids are regenerated, so anything keyed to the old ones may now be stale):
+  .rebuild.lock
+  code_index_state.json
+  documents.lance
+  scip_graph.db
+  scip_graph.db.new
+  texts
+  svrngs-partition-local/documents.lance
+  svrngs-partition-local/texts
+Indexing /Users/alexsbryan/dev/svrngs as corpus 'svrngs'
+Index directory: /Users/alexsbryan/.svrnmesh/indexes
+
+corpus-mcp: endpoint candidate ollama http://localhost:11434/v1 — unavailable: GET http://localhost:11434/v1/models: error sending request for url (http://localhost:11434/v1/models)
+corpus-mcp: endpoint candidate llama-server http://localhost:8080/v1 — unavailable: GET http://localhost:8080/v1/models: error sending request for url (http://localhost:8080/v1/models)
+corpus-mcp: endpoint candidate oicp daemon http://localhost:9741 — 5 model(s) listed, first `commonwealth/fast`
+corpus-mcp: host http://localhost:9741: OICP capabilities detected (5 top-level keys)
+corpus-mcp: embeddings via http://localhost:9741/v1/embeddings, model `qwen-embedding-0.6b`, 1024-d (oicp)
+corpus-mcp: embed quirks `Qwen3Embedding` for model stem `qwen-embedding-0.6b` — documents and queries are prepared the way this corpus was built
+[2m2026-10-26T00:19:49.153320Z[0m [33m WARN[0m [2mcorpus_index::index::create[0m[2m:[0m Partial index at '/Users/alexsbryan/.svrnmesh/indexes/svrngs-partition-local' could not be opened (Index not found: Missing metadata at /Users/alexsbryan/.svrnmesh/indexes/svrngs-partition-local/_corpus_meta.json: No such file or directory (os error 2)); starting fresh
+[svrngs] Starting embed+index pipeline (embed_batch=256, index_flush=2000, batch_embed=false)
+[svrngs] 256 embedded (256 buffered) | 256 docs | 20.8 chunks/s | 0m13s
+[svrngs] 512 embedded (512 buffered) | 512 docs | 18.2 chunks/s | 0m27s
+[svrngs] 768 embedded (768 buffered) | 768 docs | 14.8 chunks/s | 0m44s
+[svrngs] 1024 embedded (1024 buffered) | 1024 docs | 11.0 chunks/s | 1m7s
+[svrngs] 1280 embedded (1280 buffered) | 1286 docs | 18.0 chunks/s | 1m22s
+[svrngs] 1536 embedded (1536 buffered) | 1548 docs | 19.8 chunks/s | 1m35s
+[svrngs] 1792 embedded (1792 buffered) | 1804 docs | 23.6 chunks/s | 1m45s
+[svrngs] 2048 embedded (2048 buffered) | 2062 docs | 16.9 chunks/s | 2m0s
+[svrngs] Flushed 2048 chunks to index (193ms) — 2048 total committed
+[svrngs] 2304 embedded (256 buffered) | 2347 docs | 24.7 chunks/s | 2m11s
+[svrngs] 2560 embedded (512 buffered) | 2606 docs | 25.5 chunks/s | 2m21s
+[svrngs] 2816 embedded (768 buffered) | 2862 docs | 20.9 chunks/s | 2m33s
+[svrngs] 3072 embedded (1024 buffered) | 3124 docs | 27.9 chunks/s | 2m42s
+[svrngs] 3328 embedded (1280 buffered) | 3395 docs | 27.8 chunks/s | 2m52s
+[svrngs] 3584 embedded (1536 buffered) | 3659 docs | 26.0 chunks/s | 3m1s
+[svrngs] 3840 embedded (1792 buffered) | 3934 docs | 25.9 chunks/s | 3m11s
+[svrngs] 4096 embedded (2048 buffered) | 4206 docs | 32.4 chunks/s | 3m19s
+[svrngs] Flushed 2048 chunks to index (183ms) — 4096 total committed
+[svrngs] 4352 embedded (256 buffered) | 4464 docs | 28.8 chunks/s | 3m28s
+[svrngs] 4608 embedded (512 buffered) | 4752 docs | 27.0 chunks/s | 3m38s
+[svrngs] 4864 embedded (768 buffered) | 5008 docs | 15.5 chunks/s | 3m54s
+[svrngs] 5120 embedded (1024 buffered) | 5264 docs | 15.7 chunks/s | 4m10s
+[svrngs] 5376 embedded (1280 buffered) | 5522 docs | 26.3 chunks/s | 4m20s
+[svrngs] 5632 embedded (1536 buffered) | 5787 docs | 27.2 chunks/s | 4m29s
+[svrngs] 5888 embedded (1792 buffered) | 6043 docs | 20.4 chunks/s | 4m42s
+[svrngs] 6144 embedded (2048 buffered) | 6299 docs | 17.8 chunks/s | 4m56s
+[svrngs] Flushed 2048 chunks to index (173ms) — 6144 total committed
+[svrngs] 6400 embedded (256 buffered) | 6555 docs | 13.8 chunks/s | 5m15s
+  embed: 6400/0 (13.8/s)
+[svrngs] 6656 embedded (512 buffered) | 6812 docs | 11.7 chunks/s | 5m37s
+[svrngs] 6912 embedded (768 buffered) | 7068 docs | 23.9 chunks/s | 5m47s
+[svrngs] 7168 embedded (1024 buffered) | 7324 docs | 22.3 chunks/s | 5m59s
+[svrngs] 7424 embedded (1280 buffered) | 7580 docs | 17.0 chunks/s | 6m14s
+[svrngs] 7680 embedded (1536 buffered) | 7836 docs | 22.2 chunks/s | 6m25s
+[svrngs] 7936 embedded (1792 buffered) | 8096 docs | 21.0 chunks/s | 6m38s

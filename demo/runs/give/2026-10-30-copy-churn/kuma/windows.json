@@ -1,0 +1,357 @@
+{
+ "copies": [
+  {
+   "tar": "snaps/0.tar",
+   "bytes": 1465344,
+   "sha256": "a7c119e878a22b7821f314bf639acabba59b1c8d437b60e78ec773c34bfe1df0",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1461072,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "snaps/1.tar",
+   "bytes": 1465344,
+   "sha256": "9cda93f5de3937b0e47a5c74378b1af66c09f02e1ce35aa61e76e544fb1f7524",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1461072,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "snaps/2.tar",
+   "bytes": 1465344,
+   "sha256": "ffce576ea1a5d395094c5d4c046998aea0329f8a38257af6af3fecde7635c18f",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1461072,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "snaps/3.tar",
+   "bytes": 1465344,
+   "sha256": "0d758f16851be4ed0e9c04de4e1cfedcd7ae48fed9cc7fb7ade2527fe978da69",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1461072,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "snaps/4.tar",
+   "bytes": 1473536,
+   "sha256": "51611ed9421407d403af1d41d79833592dce0395d4564826cff3ca5dec03f583",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1469264,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "snaps/5.tar",
+   "bytes": 1473536,
+   "sha256": "4a442a487df29c058c25f8e800b2f010c65a536dc3946f2c1afb8e9a28585841",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1469264,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "snaps/6.tar",
+   "bytes": 1477632,
+   "sha256": "71bc53160c38fce6f4599ec0727bc4617dd6039d289ed780b587838f15e16b43",
+   "entries": 6,
+   "files": 3,
+   "file_bytes": 1473360,
+   "manifest_bytes": 293
+  },
+  {
+   "tar": "det/copy-a.tar",
+   "bytes": 248832,
+   "sha256": "f75d25f0bdd6726233473f761ed440ebd23fd6ef6e90321546b4229a0cd7b9cd",
+   "entries": 4,
+   "files": 1,
+   "file_bytes": 245760,
+   "manifest_bytes": 125
+  },
+  {
+   "tar": "det/copy-b.tar",
+   "bytes": 248832,
+   "sha256": "f75d25f0bdd6726233473f761ed440ebd23fd6ef6e90321546b4229a0cd7b9cd",
+   "entries": 4,
+   "files": 1,
+   "file_bytes": 245760,
+   "manifest_bytes": 125
+  },
+  {
+   "tar": "det/export-a.tar",
+   "bytes": 248832,
+   "sha256": "f75d25f0bdd6726233473f761ed440ebd23fd6ef6e90321546b4229a0cd7b9cd",
+   "entries": 4,
+   "files": 1,
+   "file_bytes": 245760,
+   "manifest_bytes": 125
+  },
+  {
+   "tar": "det/export-b.tar",
+   "bytes": 248832,
+   "sha256": "f75d25f0bdd6726233473f761ed440ebd23fd6ef6e90321546b4229a0cd7b9cd",
+   "entries": 4,
+   "files": 1,
+   "file_bytes": 245760,
+   "manifest_bytes": 125
+  }
+ ],
+ "windows": [
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "kuma.db",
+     233472,
+     233472,
+     6
+    ],
+    [
+     "kuma.db-shm",
+     32768,
+     32768,
+     1
+    ],
+    [
+     "kuma.db-wal",
+     1194832,
+     1194832,
+     182
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 1461072,
+   "bytes_changed_blocks": 774144,
+   "window": "0->1",
+   "tar_identical": false
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "kuma.db",
+     233472,
+     233472,
+     6
+    ],
+    [
+     "kuma.db-shm",
+     32768,
+     32768,
+     4
+    ],
+    [
+     "kuma.db-wal",
+     1194832,
+     1194832,
+     171
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 1461072,
+   "bytes_changed_blocks": 741376,
+   "window": "1->2",
+   "tar_identical": false
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "kuma.db",
+     233472,
+     233472,
+     10
+    ],
+    [
+     "kuma.db-shm",
+     32768,
+     32768,
+     4
+    ],
+    [
+     "kuma.db-wal",
+     1194832,
+     1194832,
+     186
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 1461072,
+   "bytes_changed_blocks": 819200,
+   "window": "2->3",
+   "tar_identical": false
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "kuma.db",
+     233472,
+     241664,
+     11
+    ],
+    [
+     "kuma.db-shm",
+     32768,
+     32768,
+     4
+    ],
+    [
+     "kuma.db-wal",
+     1194832,
+     1194832,
+     188
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 1469264,
+   "bytes_changed_blocks": 831488,
+   "window": "3->4",
+   "tar_identical": false
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "kuma.db",
+     241664,
+     241664,
+     8
+    ],
+    [
+     "kuma.db-shm",
+     32768,
+     32768,
+     5
+    ],
+    [
+     "kuma.db-wal",
+     1194832,
+     1194832,
+     169
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 1469264,
+   "bytes_changed_blocks": 745472,
+   "window": "4->5",
+   "tar_identical": false
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [
+    [
+     "kuma.db",
+     241664,
+     245760,
+     11
+    ],
+    [
+     "kuma.db-shm",
+     32768,
+     32768,
+     4
+    ],
+    [
+     "kuma.db-wal",
+     1194832,
+     1194832,
+     184
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 1473360,
+   "bytes_changed_blocks": 815104,
+   "window": "5->6",
+   "tar_identical": false
+  }
+ ],
+ "determinism": [
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "det/export-a.tar vs det/export-b.tar",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "det/copy-a.tar vs det/copy-b.tar",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [],
+   "changed": [],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 0,
+   "bytes_changed_blocks": 0,
+   "pair": "det/export-a.tar vs det/copy-a.tar",
+   "tar_identical": true
+  },
+  {
+   "added": [],
+   "removed": [
+    [
+     "kuma.db-shm",
+     32768
+    ],
+    [
+     "kuma.db-wal",
+     1194832
+    ]
+   ],
+   "changed": [
+    [
+     "kuma.db",
+     245760,
+     245760,
+     8
+    ]
+   ],
+   "header_only": [],
+   "order_changed": false,
+   "bytes_added": 0,
+   "bytes_changed": 245760,
+   "bytes_changed_blocks": 32768,
+   "pair": "snaps/6.tar vs det/export-a.tar",
+   "tar_identical": false
+  }
+ ]
+}

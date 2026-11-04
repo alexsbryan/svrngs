@@ -8,7 +8,7 @@ use super::*;
 /// `files`, each a path under `apps/<app>/` and its bytes, written into
 /// `folder`, a synced folder of house's: the app carried, as the shelf
 /// brings one.
-fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
+pub(super) fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
     let dir = folder.join("apps").join(app);
     std::fs::create_dir_all(&dir).unwrap();
     for (path, bytes) in files {
@@ -18,11 +18,20 @@ fn carry(folder: &Path, app: &str, files: &[(&str, String)]) {
 
 /// Where `at`'s browser opens the app `app` house carries, once its
 /// folder has taken the app and `at` lists it, within 30 s.
-async fn carried_at(at: &Node, app: &str) -> String {
-    let url = format!("http://{}/v1/lends?namespace={NS}", at.api_addr());
+pub(super) async fn carried_at(at: &Node, app: &str) -> String {
+    carried_in(at, app, NS).await
+}
+
+/// [`carried_at`], the app carried by `group`.
+async fn carried_in(at: &Node, app: &str, group: &str) -> String {
+    let url = format!("http://{}/v1/lends?namespace={group}", at.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     for _ in 0..60 {
-        let lends: Value = http.get(&url).send().await.unwrap().json().await.unwrap();
+        let lends: Value = (http.get(&url).bearer_auth(at.token()).send().await)
+            .unwrap()
+            .json()
+            .await
+            .unwrap();
         let listed = lends["lent"].as_array().into_iter().flatten();
         if let Some(l) = listed.into_iter().find(|l| l["kind"] == app) {
             return l["origin"].as_str().unwrap().to_string();
@@ -32,7 +41,7 @@ async fn carried_at(at: &Node, app: &str) -> String {
     panic!("{app} is never listed on the computer");
 }
 
-in_both_engines!(
+in_chromium!(
     /// **A carried page reaches no other host** (V1_UI_BUILD §7, 3.4's
     /// third bar; COMMUNITY_APPS §6.2): Probe, carried in house, opened at
     /// its origin on ada's computer, asks a listener on 127.0.0.1 by a
@@ -106,7 +115,7 @@ Promise.all([
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **An app one computer brought opens and writes on a phone through
     /// another's, with the first stopped** (V1_UI_BUILD §7, 3.4's first
     /// bar, the phone's half): ada's computer made bo's link and brings
@@ -134,7 +143,7 @@ const wrote = await fetch(acts, { method: 'POST', headers: { 'content-type': 'ap
   body: JSON.stringify({ op: { kind: 'expense', amount_cents: 1200, description: 'the bins' } }) });
 const read = wrote.ok ? await (await fetch(acts)).json() : {};
 const ops = read.ops ?? [];
-document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of).join(', ')}`;
+document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.person).join(', ')}`;
 ";
     let page = "<!doctype html><title>Money</title><script type=module src=money.js></script>";
     carry(
@@ -185,10 +194,17 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of).join(
         "{seen:#}"
     );
     // The index draws Money by its own name and as the group's, never by
-    // its lend name or as one person's (v1ui-polish (b)).
+    // its lend name or as one person's (v1ui-polish (b)), its open naming
+    // it, with what it reads and writes beside it (capability-open; the
+    // operator, 2026-10-26).
     assert_eq!(listed["lent"], json!(["Money"]), "{seen:#}");
     let text = listed["text"].as_str().unwrap_or_default();
-    assert!(text.contains("Money\tMoney\thouse\t"), "{seen:#}");
+    assert!(
+        text.contains(
+            "Money Who owes whom, and for what. Opening it lets it read and write that, as you."
+        ),
+        "{seen:#}"
+    );
     assert!(
         !text.contains("Money-") && !text.contains("ada’s Money"),
         "{seen:#}"
@@ -218,7 +234,7 @@ fn files_of<'a>(dir: &str, fold: &'a str) -> Vec<(&'a str, String)> {
     ["index.html", "index.js", fold].map(read).to_vec()
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Money and Events, static pages on the route, their folds
     /// unchanged** (v1ui-shelf (b)): each carried in house from its files
     /// in `apps/`, opened at its origin on ada's computer. On Money, ada
@@ -279,41 +295,96 @@ async fn money_and_events_open_and_write_at_their_origin(engine: Engine) {
     drop(ada);
 }
 
-in_both_engines!(
+in_chromium!(
     /// **An entry another person's computer wrote says whose** (gv-via
-    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): a script on cy's
-    /// computer writes to its loopback API, in bo's name, "bo paid $400 for
-    /// the rent" in Money, and a dinner bo hosts with bo and Maya coming in
-    /// Events. Ada's computer takes cy's record, and on each page opened at
-    /// its origin there each reads as bo's, through cy's computer, in the
-    /// phone's words (web/app.js). Planted: the label left out, as before
-    /// gv-via, and each page says bo's alone.
+    /// (b); `ralph/FINDING_ON_BEHALF_OF.md`'s scene): ada's computer holds,
+    /// before it keeps the group past its cutover, cy's computer's lines as
+    /// an older svrngs wrote them in bo's name, "bo paid $400 for the
+    /// rent" in Money, and a dinner bo hosts with bo and Maya coming in
+    /// Events; a script on cy's computer writing them to its loopback API
+    /// now is refused, `not_yours` (capability-signed). The cutover covers
+    /// them, and on each page opened at ada's origin each old entry reads
+    /// as bo's, through cy's computer, in the phone's words (web/app.js).
+    /// Planted: the label left out, as before gv-via, and each page says
+    /// bo's alone.
     an_entry_another_s_computer_wrote_says_whose
 );
 async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
     let relay = relay().await;
     let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
     let ada = node(dirs[0].path(), &relay, &signing(7)).await;
-    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
     let folder = dirs[0].path().join("house");
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;
     carry(&folder, "Money", &files_of("expenses", "expenses.js"));
     carry(&folder, "Events", &files_of("events", "events.js"));
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let cy_in = svrngs_core::tests_support::Fixture {
+        act: RailAct::Admit {
+            person: Person::parse("cy").unwrap(),
+            key: actor_of(&signing(2)),
+            invite: None,
+        },
+    };
+    ada.rail().commit(NS, &cy_in).unwrap().unwrap();
     let event = "0123456789abcdef";
-    for payload in [
+    let acts = [
         json!({ "kind": "Money/expense", "amount_cents": 40000, "description": "the rent" }),
         json!({ "kind": "Events/event", "event": event, "what": "dinner", "when": "Friday 7", "where": "the house" }),
         json!({ "kind": "Events/coming", "event": event, "guests": ["Maya"] }),
-    ] {
-        let act = json!({ "op": "record", "payload": payload, "on_behalf_of": "bo" });
+    ]
+    .map(|payload| json!({ "op": "record", "payload": payload, "on_behalf_of": "bo" }));
+    // As an older svrngs wrote them: cy's computer's lines naming bo,
+    // held by ada's before the keeper's computer writes its cutover, which
+    // it does once cy's computer first reaches it (node.rs `cut_over`).
+    // Stamped past cy's admission: the walk is by stamp, then key
+    // (membership.rs `membership`), and a line before its key's `Admit` counts
+    // for no one.
+    let held = ada
+        .rail()
+        .ops_missing_from_within(NS, &Default::default(), usize::MAX);
+    let at = held.unwrap().0.iter().map(|o| o.ts_unix).max().unwrap() + 1;
+    let mut prev = None;
+    let older: Vec<_> = (acts.iter().enumerate())
+        .map(|(seq, act)| {
+            let act = RailAct::from_json(act.clone()).unwrap();
+            let op = svrngs_core::sign_act(
+                &signing(2),
+                NS,
+                at,
+                seq as u64,
+                prev.take(),
+                act,
+                Some("bo"),
+                None,
+                None,
+            );
+            prev = Some(op.id.clone());
+            op
+        })
+        .collect();
+    assert_eq!(
+        ada.rail().ingest_all(NS, &older).unwrap(),
+        3,
+        "as an older svrngs wrote them"
+    );
+    let cy = standing(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let cutover = ada.rail().register(NS).unwrap().signers;
+    assert!(
+        cutover.is_some(),
+        "ada's computer keeps the group past its cutover"
+    );
+    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    for act in acts {
         let at = format!("http://{}/v1/rail/append?namespace={NS}", cy.api_addr());
-        let wrote = http.post(at).json(&act).send().await.unwrap();
-        assert!(wrote.status().is_success(), "{:?}", wrote.text().await);
+        let wrote = http
+            .post(at)
+            .bearer_auth(cy.token())
+            .json(&act)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(wrote.status().as_u16(), 422, "a program writes only as cy");
     }
-    let synced = ada.host().sync_with(NS, &cy.endpoint().addr()).await;
-    assert!(synced.stop.is_none(), "ada takes cy's record: {synced:?}");
     for (app, says) in [
         (
             "Money",
@@ -338,12 +409,15 @@ async fn an_entry_another_s_computer_wrote_says_whose(engine: Engine) {
     drop((ada, cy));
 }
 
-in_both_engines!(
+in_chromium!(
     /// **Bring things to the table, on the home page** (v1ui-shelf (c);
-    /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, both
-    /// ticked; one tap brings them, the page says so, and her computer
-    /// lists each as house's. House keeps no seed here, so the page calls
-    /// it "your group". Red before (c): no shelf on the page. Then the
+    /// V1_UI_BUILD §3.4): ada's home page offers Money and Events, each
+    /// unticked, so the button alone brings nothing and says to tick
+    /// something first (the operator, 2026-10-26; demo/xenia/findings/
+    /// after-join-reads-as-permissions.md); she ticks them, one tap brings
+    /// them, the page says so, and her computer lists each as house's, the page calling the group by its
+    /// name. House is a group held from its seed (`house`), so the apps land
+    /// in house's own folder. Red before (c): no shelf on the page. Then the
     /// index, the page opened again, draws each by its kind's own name and
     /// as the group's, no word holding its lend name, `<kind>-<the group's
     /// id>` (v1ui-polish (b); `demo/runs/v1ui/2026-10-15/README.md` finding
@@ -356,34 +430,48 @@ in_both_engines!(
 async fn the_home_page_brings_things_to_the_table(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let (ada, id) = house(dir.path(), &relay, &signing(7)).await;
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
-    keep_folder(&ada, &folder).await;
-    let bring = json!([["text=Bring the ticked ones to your group", null, true]]);
+    keep_folder_in(&ada, &folder, &id).await;
+    let tick = |app: &str| json!([format!("#home label:has-text('{app}') input"), true]);
+    let bring = json!([
+        ["text=Bring the ticked ones to house", null, true],
+        tick("Money"),
+        tick("Events"),
+        tick("House rules"),
+        ["text=Bring the ticked ones to house", null, true]
+    ]);
     let args = json!({ "all": "#home section h3 ~ p", "do": bring });
     let seen = home_page(engine, &ada, args).await;
     eprintln!("the home page's run: {seen:#}");
     let before = seen["all"].to_string();
     assert!(
-        before.contains("Money: who paid for what, and who owes whom."),
+        before.contains("Money: who owes whom, and for what."),
         "{seen:#}"
     );
-    assert!(before.contains("Events: post a get-together"), "{seen:#}");
+    assert!(
+        before.contains("Events: the get-togethers people post"),
+        "{seen:#}"
+    );
     assert!(
         before.contains("House rules: the rules your house agrees"),
         "{seen:#}"
     );
-    let after = seen["after"][0].to_string();
+    let none = seen["after"][0].to_string();
     assert!(
-        after.contains(
-            "You brought Money to your group: everyone in it can open it in a few seconds."
-        ) && after.contains("You brought Events to your group")
-            && after.contains("You brought House rules to your group"),
+        none.contains("Tick something to bring first."),
+        "unticked, the button brings nothing: {seen:#}"
+    );
+    let after = seen["after"][1].to_string();
+    assert!(
+        after.contains("You brought Money to house: everyone in it can open it in a few seconds.")
+            && after.contains("You brought Events to house")
+            && after.contains("You brought House rules to house"),
         "{seen:#}"
     );
     for app in ["Money", "Events", "House-rules"] {
-        carried_at(&ada, app).await;
+        carried_in(&ada, app, &id).await;
         assert!(folder.join("apps").join(app).join("look.css").exists());
     }
     let canon = folder.join("apps/House-rules/vendor/canon.js");
@@ -392,7 +480,7 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         std::fs::read(repo().join("apps/canon/vendor/canon.js")).unwrap(),
         "House rules brings canon's build as vendored"
     );
-    let rules = carried_at(&ada, "House-rules").await;
+    let rules = carried_in(&ada, "House-rules", &id).await;
     let opened = drive(
         engine,
         "carried.mjs",
@@ -405,45 +493,67 @@ async fn the_home_page_brings_things_to_the_table(engine: Engine) {
         said.contains("How does your house decide its rules?"),
         "House rules runs at its origin under the carried policy: {opened:#}"
     );
-    let index = home_page(engine, &ada, json!({ "all": "#home table.index tr" })).await;
+    // The group's things lead its section, right under its heading (the
+    // operator, 2026-10-26: Money found first).
+    let index = home_page(
+        engine,
+        &ada,
+        json!({ "all": "#home section h2 + table.index tr" }),
+    )
+    .await;
     let rows = index["all"].to_string();
-    for app in ["Money", "Events", "House rules"] {
-        let drawn = format!("Open {app}{app}your groupIn a tab");
+    for (app, does) in [
+        ("Money", "Who owes"),
+        ("Events", "The get-togethers"),
+        ("House rules", "The rules"),
+    ] {
+        let open = format!("{app} {does}");
         assert!(
-            rows.contains(&drawn),
-            "{app} the group's, by its name: {index:#}"
+            rows.contains(&open),
+            "{app} by its name, what it does beside it: {index:#}"
         );
     }
+    assert_eq!(
+        rows.matches(".houseIn a tab").count(),
+        3,
+        "each the group's: {index:#}"
+    );
     assert!(
-        !rows.contains(&format!("-{NS}")) && !rows.contains("ada"),
+        !rows.contains(&format!("-{id}")) && !rows.contains("ada"),
         "{index:#}"
     );
     drop(ada);
 }
 
-in_both_engines!(
+in_webkit!(
     /// **Bring things to the table, on a phone** (v1ui-shelf (c)): bo's
-    /// phone, in house through ada's computer, brings the shelf's two apps
-    /// by the one button; the page says so, and ada's computer lists each
-    /// as house's. Red before (c): the page has no shelf.
+    /// phone, in house through ada's computer, finds the shelf's boxes
+    /// unticked (the operator, 2026-10-26), ticks them, and brings the
+    /// shelf's two apps by the one button; the page says so, and ada's computer lists each
+    /// as house's, in house's own folder: house is a group held from its
+    /// seed (`house`). Red before (c): the page has no shelf.
     the_phone_brings_things_to_the_table
 );
 async fn the_phone_brings_things_to_the_table(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let bo = signing(7);
-    let ada = node(dir.path(), &relay, &bo).await;
+    let (ada, id) = house(dir.path(), &relay, &bo).await;
     let folder = dir.path().join("house");
     std::fs::create_dir(&folder).unwrap();
-    keep_folder(&ada, &folder).await;
+    keep_folder_in(&ada, &folder, &id).await;
     let args = json!({
         "site": site(),
         "key": hex::encode(bo.to_bytes()),
         "token": token(&signing(1), &relay),
-        "id": NS,
+        "id": id,
     });
     let seen = drive(engine, "shelf.mjs", args, None).await;
     eprintln!("the phone's run: {seen:#}");
+    assert_eq!(
+        seen["ticked"], 0,
+        "the shelf's boxes start unticked: {seen:#}"
+    );
     let after = seen["after"].as_str().unwrap_or_default();
     assert!(
         after.contains("You brought Money to house: everyone in it can open it in a few seconds.")
@@ -451,7 +561,7 @@ async fn the_phone_brings_things_to_the_table(engine: Engine) {
         "{seen:#}"
     );
     for app in ["Money", "Events"] {
-        carried_at(&ada, app).await;
+        carried_in(&ada, app, &id).await;
     }
     drop(ada);
 }
@@ -474,7 +584,11 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     let relay = relay().await;
     let bo = signing(7);
     let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
-    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let ada = seeded(dirs[0].path(), relay_url(&relay), 1, "ada", 1).await;
+    from_a_phone(&ada, "bo", 7);
+    tokio::time::timeout(Duration::from_secs(20), ada.endpoint().online())
+        .await
+        .unwrap();
     let kim = joined(dirs[1].path(), &relay, &ada, 2, "kim").await;
     let (at_ada, at_kim) = (dirs[0].path().join("house"), dirs[1].path().join("house"));
     for (computer, folder) in [(&ada, &at_ada), (&kim, &at_kim)] {
@@ -518,7 +632,11 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     // Ada's own copy, opened at its origin on her computer.
     let url = format!("http://{}/v1/lends?namespace={NS}", ada.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
-    let lends: Value = http.get(&url).send().await.unwrap().json().await.unwrap();
+    let lends: Value = (http.get(&url).bearer_auth(ada.token()).send().await)
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
     let own = |l: &&Value| l["kind"] == "Money" && l["key"] == actor_of(&signing(1));
     let lent = lends["lent"].as_array().unwrap();
     let money = lent.iter().find(own).expect("ada's Money")["origin"]
@@ -528,15 +646,16 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     let title = |seen: &Value| seen["title"].as_str().unwrap_or_default().to_string();
     let open = || drive(engine, "carried.mjs", json!({ "url": money }), None);
 
-    let yes = json!([["text=Yes, use the new version of Money", null, true]]);
-    let args = json!({ "all": "#home section h3 ~ p", "do": yes });
+    let yes = json!([["text=Open the new version", null, true]]);
+    let args = json!({ "all": "#acts summary, #acts p", "do": yes, "unfold": true });
     let before = open().await;
     let seen = home_page(engine, &ada, args).await;
     let after = open().await;
     eprintln!("ada's home page: {seen:#}\nMoney before: {before:#}\nMoney after: {after:#}");
     let asked = seen["all"].to_string();
     assert!(
-        asked.contains("kim changed Money’s files on") && asked.contains("Open the new version?"),
+        asked.contains("1 app changed. See what’s new")
+            && asked.contains("Money: kim changed its files on"),
         "{seen:#}"
     );
     assert_eq!(
@@ -565,7 +684,10 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     let phone = drive(engine, "runs.mjs", args, None).await;
     eprintln!("bo's phone: {phone:#}");
     let asked = phone["asked"].as_str().unwrap_or_default();
-    assert!(asked.contains("kim changed Money’s files on"), "{phone:#}");
+    assert!(
+        asked.contains("Money: kim changed its files on"),
+        "{phone:#}"
+    );
     assert_eq!(
         phone["before"], brought,
         "bo runs Money as brought, whatever ada said: {phone:#}"
@@ -579,7 +701,7 @@ async fn a_new_version_runs_as_each_person_only_after_their_yes(engine: Engine) 
     drop((ada, kim));
 }
 
-in_both_engines!(
+in_webkit!(
     /// **The phone goes on to a computer that answers** (canon-fix (c),
     /// #205; demo/runs/canon/2026-10-17-house, take 2's step 7-dee): bo's
     /// phone holds cy's link and opens house through cy's computer, which
@@ -630,7 +752,8 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     let mut listed = false;
     for _ in 0..60 {
         let url = format!("http://{}/v1/lends?namespace={NS}", cy.api_addr());
-        let lends: Value = http.get(url).send().await.unwrap().json().await.unwrap();
+        let asked = http.get(url).bearer_auth(cy.token()).send().await;
+        let lends: Value = asked.unwrap().json().await.unwrap();
         let mut lent = lends["lent"].as_array().into_iter().flatten();
         listed = lent.any(|l| l["key"] == ada_key);
         if listed {
@@ -658,7 +781,9 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
     })
     .await
     .expect("the phone opens the group through cy's computer");
-    let leave = http.post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
+    let leave = http
+        .post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()))
+        .bearer_auth(cy.token());
     let left = leave.json(&LeaveAsk { group: NS.into() }).send().await;
     assert_eq!(
         left.unwrap().json::<Outcome>().await.unwrap(),
@@ -687,10 +812,139 @@ async fn the_phone_goes_on_to_a_computer_that_answers(engine: Engine) {
         "{seen:#}"
     );
     assert!(
-        listed["lent"]
-            .as_array()
-            .is_some_and(|l| l.iter().any(|b| b == "House rules")),
+        listed["lent"].as_array().is_some_and(|l| l
+            .iter()
+            .any(|b| b.as_str().is_some_and(|b| b == "House rules"))),
         "{seen:#}"
     );
     drop((ada, cy));
+}
+
+in_both_engines!(
+    /// **An app's entry is approved by the group's signer and carried, the
+    /// whole flow** (svrn-docs rings/current/HOLDER_APPROVAL.md §3.D, §6):
+    /// on the group's page at its TLS name, bo opens Money, which ada's
+    /// computer carries; the page seals the open's approver into the open
+    /// and leaves its key in a cookie, and the group's signer, framed under
+    /// Money, adopts it and deletes the cookie. Money saves an entry, which
+    /// the signer approves and ada's computer takes by `/carry` and counts
+    /// as bo's; again after a reload, and after the browser restarts, from
+    /// Money's address alone. Opened again, Money saves under the newer
+    /// open's approver, and the signer refuses the first open. Notes is
+    /// refused Money's open, as it is and as its own. Walled, whose page
+    /// keeps frames out in its own `<meta>`, is told why it can't save (the
+    /// known gap, DESIGN §3). Money's open, replayed
+    /// in a browser that never opened it, says "Open this app again from
+    /// your group's page." Each of the four entries counts, each approved by
+    /// the approver its own pass names. Planted, watched failing: the
+    /// signer's digest check taken out of `approver` (web/sign.js), and the
+    /// first open is answered as issued.
+    an_app_s_entry_is_approved_by_the_group_s_signer_and_carried
+);
+async fn an_app_s_entry_is_approved_by_the_group_s_signer_and_carried(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let script = "window.save = async (what) => {
+  const r = await fetch('svrngs/acts', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ op: { kind: 'expense', amount_cents: 1, description: what } }) });
+  return { status: r.status, said: await r.text() };
+};
+document.title = 'ready';
+";
+    let page = "<!doctype html><title>…</title><script type=module src=app.js></script>";
+    let walled = "<!doctype html><meta http-equiv=Content-Security-Policy content=\"frame-src 'none'\"><title>…</title><script type=module src=app.js></script>";
+    for (app, page) in [("Money", page), ("Notes", page), ("Walled", walled)] {
+        carry(
+            &folder,
+            app,
+            &[("index.html", page.into()), ("app.js", script.into())],
+        );
+        carried_at(&ada, app).await;
+    }
+    let args = json!({
+        "site": site,
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "profile": dirs[1].path(),
+        "apps": ["Money", "Notes", "Walled"],
+    });
+    let seen = drive(engine, "approve.mjs", args, None).await;
+    eprintln!("the approval run: {seen:#}");
+    let saved = |s: &Value| s["status"] == 200;
+    let logs = seen["logs"].to_string();
+    assert!(
+        logs.contains("SIGN: adopted the approver") && seen["opened"]["cookies"] == 0,
+        "the signer adopts the open's approver and deletes its cookie:\n{seen:#}"
+    );
+    for step in [
+        &seen["opened"]["saved"],
+        &seen["reloaded"],
+        &seen["restarted"],
+        &seen["again"]["saved"],
+    ] {
+        assert!(saved(step), "Money saves: {step}\n{seen:#}");
+    }
+    let again = &seen["again"];
+    let refused = json!({ "opened": false, "error": "Open this app again from your group’s page to write in it." });
+    assert_eq!(
+        (again["newer"]["opened"].clone(), again["newKey"].clone()),
+        (json!(true), json!(true)),
+        "{seen:#}"
+    );
+    assert_eq!(
+        again["older"], refused,
+        "the first open, once a newer is adopted:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["another"]["as"], refused,
+        "Money's open, asked from Notes:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["another"]["relabelled"], refused,
+        "Money's open as Notes':\n{seen:#}"
+    );
+    assert_eq!(
+        seen["replayed"], "Open this app again from your group’s page.",
+        "{seen:#}"
+    );
+    let kept_out = &seen["walled"];
+    let said = kept_out["said"].as_str().unwrap_or_default();
+    assert!(
+        kept_out["status"] == 403 && said.contains("may keep out your group’s signer"),
+        "an app whose page keeps the signer out is told why (DESIGN §3, the known gap):\n{seen:#}"
+    );
+
+    let admitted = ada.rail().admission(NS).unwrap();
+    let ops = svrngs_core::tests_support::wire_ops(&admitted);
+    let money: Vec<_> = ops
+        .iter()
+        .filter(|o| o.payload.is_some() && o.person.as_str() == "bo")
+        .collect();
+    let held = ada
+        .rail()
+        .ops_missing_from_within(NS, &Default::default(), usize::MAX)
+        .unwrap()
+        .0;
+    let approvers: BTreeSet<_> = held
+        .iter()
+        .filter_map(|o| o.kind.grant.as_ref())
+        .inspect(|p| {
+            assert!(
+                p.op.is_some() && p.approval.is_some(),
+                "every entry carried is approved: {p:?}"
+            )
+        })
+        .filter_map(|p| p.approver.clone())
+        .collect();
+    assert_eq!(
+        (money.len(), approvers.len()),
+        (4, 2),
+        "four entries count as bo's, under two opens' approvers: {money:#?}"
+    );
 }

@@ -98,12 +98,24 @@ const NONCE = /^[A-Za-z0-9+/]{32}$/;
 const PUBLIC = /^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$/;
 const isHandle = (s) => typeof s === 'string' && HANDLE.test(s);
 const isPublic = (s) => typeof s === 'string' && PUBLIC.test(s);
-const canonical = (v) => JSON.stringify(v, (_, x) => (isObject(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : x));
+const canonical = (v) =>
+  JSON.stringify(v, (_, x) =>
+    isObject(x)
+      ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+      : x,
+  );
 
 /** A field's type, from a kind's spec of it: `'text'`, `'date'`, `'number'` or `{choice: [...]}`. */
 export function typeOf(spec) {
   if (FIELD_TYPES.includes(spec) && spec !== 'choice') return spec;
-  if (isObject(spec) && Object.keys(spec).length === 1 && Array.isArray(spec.choice) && spec.choice.length && spec.choice.every((c) => typeof c === 'string' && c)) return 'choice';
+  if (
+    isObject(spec) &&
+    Object.keys(spec).length === 1 &&
+    Array.isArray(spec.choice) &&
+    spec.choice.length &&
+    spec.choice.every((c) => typeof c === 'string' && c)
+  )
+    return 'choice';
   return null;
 }
 
@@ -124,15 +136,19 @@ function isDate(s) {
  */
 export function fieldGaps(spec, values) {
   if (!isObject(values)) return ['nothing filled in'];
-  const out = Object.keys(values).filter((k) => !has(spec, k)).map((k) => `${k} is not asked for here`);
+  const out = Object.keys(values)
+    .filter((k) => !has(spec, k))
+    .map((k) => `${k} is not asked for here`);
   for (const [k, s] of Object.entries(spec)) {
     const v = has(values, k) ? values[k] : undefined;
     const type = typeOf(s);
     if (type === 'text' && !(typeof v === 'string' && v.trim())) out.push(`${k} is empty`);
-    else if (type === 'text' && v.length > MAX_TEXT) out.push(`${k} is ${v.length} characters, and the most is ${MAX_TEXT}`);
+    else if (type === 'text' && v.length > MAX_TEXT)
+      out.push(`${k} is ${v.length} characters, and the most is ${MAX_TEXT}`);
     else if (type === 'date' && !isDate(v)) out.push(`${k} is not a date`);
     else if (type === 'number' && !Number.isSafeInteger(v)) out.push(`${k} is not a whole number`);
-    else if (type === 'choice' && !s.choice.includes(v)) out.push(`${k} is not one of ${s.choice.join(', ')}`);
+    else if (type === 'choice' && !s.choice.includes(v))
+      out.push(`${k} is not one of ${s.choice.join(', ')}`);
     else if (type === null) out.push(`${k} has no type this app knows`);
   }
   return out;
@@ -145,31 +161,52 @@ export function fieldGaps(spec, values) {
  */
 export function validate(op, kinds) {
   const gap = (code, message) => [{ code, message }];
-  if (!isObject(op) || op.app !== APP || !has(KEYS, op.type)) return gap('not_grapevine', 'not something grapevine writes');
+  if (!isObject(op) || op.app !== APP || !has(KEYS, op.type))
+    return gap('not_grapevine', 'not something grapevine writes');
   const a = { [ASK]: 'an ask', [CARRY]: 'a carry', [MSG]: 'a message' }[op.type];
   const extra = Object.keys(op).filter((k) => !KEYS[op.type].includes(k));
   const missing = KEYS[op.type].filter((k) => !has(op, k));
   if (extra.length || missing.length) {
-    return gap('unread_field', `${a} saying ${extra.length ? `more than this version reads (${extra.join(', ')})` : `too little (no ${missing.join(', ')})`}, so not counted`);
+    return gap(
+      'unread_field',
+      `${a} saying ${extra.length ? `more than this version reads (${extra.join(', ')})` : `too little (no ${missing.join(', ')})`}, so not counted`,
+    );
   }
-  if (!isHandle(op.handle)) return gap('bad_handle', `${a} that replies could not find their way back to`);
+  if (!isHandle(op.handle))
+    return gap('bad_handle', `${a} that replies could not find their way back to`);
   if (op.type === MSG) {
-    if (op.dir !== 'up' && op.dir !== 'down') return gap('bad_dir', 'a message going neither up nor down');
-    if (!isPublic(op.from) || !isPublic(op.to)) return gap('bad_key', 'a message from no one or to no one');
-    if (typeof op.nonce !== 'string' || !NONCE.test(op.nonce) || typeof op.box !== 'string' || !op.box || op.box.length > ACT_MOST) {
+    if (op.dir !== 'up' && op.dir !== 'down')
+      return gap('bad_dir', 'a message going neither up nor down');
+    if (!isPublic(op.from) || !isPublic(op.to))
+      return gap('bad_key', 'a message from no one or to no one');
+    if (
+      typeof op.nonce !== 'string' ||
+      !NONCE.test(op.nonce) ||
+      typeof op.box !== 'string' ||
+      !op.box ||
+      op.box.length > ACT_MOST
+    ) {
       return gap('bad_box', 'a message with nothing sealed in it');
     }
     return [];
   }
-  if (!has(kinds, op.kind)) return gap('unknown_kind', `an ask of a kind this app does not have (${String(op.kind).slice(0, 40)})`);
-  if (!Number.isSafeInteger(op.hops) || op.hops < 0 || op.hops > MOST_HOPS) return gap('bad_hops', `${a} going a number of rings that is not 0 to ${MOST_HOPS}`);
+  if (!has(kinds, op.kind))
+    return gap(
+      'unknown_kind',
+      `an ask of a kind this app does not have (${String(op.kind).slice(0, 40)})`,
+    );
+  if (!Number.isSafeInteger(op.hops) || op.hops < 0 || op.hops > MOST_HOPS)
+    return gap('bad_hops', `${a} going a number of rings that is not 0 to ${MOST_HOPS}`);
   if (!Number.isSafeInteger(op.expires)) return gap('bad_expires', `${a} with no end`);
   if (!isPublic(op.seal_to)) return gap('bad_key', `${a} that no one could answer`);
   if (op.type === ASK && op.name !== 'withheld') {
     // GRAPEVINE.md §4.1 allows `shown`; here a carry never names its asker
     // and names wait for two yeses, so `shown` would mean nothing. It is
     // refused, never read as withheld.
-    return gap('name_shown', 'an ask that shows its asker\'s name, which this version does not carry');
+    return gap(
+      'name_shown',
+      "an ask that shows its asker's name, which this version does not carry",
+    );
   }
   if (op.type === CARRY && !isKey(op.of)) return gap('no_ask', 'a carry of no ask');
   const bad = fieldGaps(kinds[op.kind].ask.fields, op.fields);
@@ -185,9 +222,14 @@ function bodyGaps(body, kind) {
   if (body.say === 'offer') out.push(...fieldGaps(kind.reply.fields, body.fields));
   if (body.say === 'text' || (body.say === 'offer' && body.text !== undefined)) {
     if (typeof body.text !== 'string' || !body.text.trim()) out.push('its words are empty');
-    else if (body.text.length > MAX_TEXT) out.push(`its words are ${body.text.length} characters, and the most is ${MAX_TEXT}`);
+    else if (body.text.length > MAX_TEXT)
+      out.push(`its words are ${body.text.length} characters, and the most is ${MAX_TEXT}`);
   }
-  if (body.say === 'yes' && !(typeof body.name === 'string' && body.name.trim() && body.name.length <= MAX_NAME)) out.push('a yes with no name');
+  if (
+    body.say === 'yes' &&
+    !(typeof body.name === 'string' && body.name.trim() && body.name.length <= MAX_NAME)
+  )
+    out.push('a yes with no name');
   return out;
 }
 
@@ -203,7 +245,14 @@ export function actsOf(log) {
   if (!Array.isArray(ops)) return null;
   return ops
     .filter((o) => isObject(o) && (o.payload != null || o.corrects != null))
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload ?? null, corrects: o.corrects ?? null }));
+    .map((o) => ({
+      id: o.id,
+      ts: o.ts_unix,
+      by: o.on_behalf_of ?? o.person,
+      via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null,
+      op: o.payload ?? null,
+      corrects: o.corrects ?? null,
+    }));
 }
 
 /**
@@ -215,7 +264,8 @@ function readGroup(g, kinds, gap) {
   const acts = {};
   const order = [];
   const all = actsOf(g.ops);
-  if (all === null) gap('unread', g, null, `${g.name ?? g.id} answered with nothing this app can read`);
+  if (all === null)
+    gap('unread', g, null, `${g.name ?? g.id} answered with nothing this app can read`);
   for (const a of all ?? []) {
     if (!isKey(a.id) || !Number.isSafeInteger(a.ts) || !isKey(a.by) || has(acts, a.id)) {
       gap('not_an_act', g, a?.id, 'an entry with no one or nothing in it');
@@ -235,7 +285,8 @@ function readGroup(g, kinds, gap) {
     if (c.corrects == null) continue;
     const was = has(acts, c.corrects) ? acts[c.corrects] : null;
     if (was?.by === c.by) voided[c.corrects] = true;
-    else if (was) gap('not_theirs', g, id, `${c.by} tried to take back ${was.by}'s, which only ${was.by} can`);
+    else if (was)
+      gap('not_theirs', g, id, `${c.by} tried to take back ${was.by}'s, which only ${was.by} can`);
     else gap('changes_unheld', g, id, `${c.by} changed something this computer does not hold yet`);
   }
   const copies = [];
@@ -255,12 +306,26 @@ function readGroup(g, kinds, gap) {
     }
     const at = { id, group: g.id, by, via, ts, voided: Boolean(voided[id]) };
     if (op.type === MSG) msgs.push({ ...at, op: structuredClone(op) });
-    else copies.push({ ...at, type: op.type, of: op.type === ASK ? id : op.of, kind: op.kind, fields: structuredClone(op.fields), hops: op.hops, expires: op.expires, seal_to: op.seal_to, handle: op.handle });
+    else
+      copies.push({
+        ...at,
+        type: op.type,
+        of: op.type === ASK ? id : op.of,
+        kind: op.kind,
+        fields: structuredClone(op.fields),
+        hops: op.hops,
+        expires: op.expires,
+        seal_to: op.seal_to,
+        handle: op.handle,
+      });
   }
   return { copies, msgs, records };
 }
 
-const byTime = (a, b) => a.ts - b.ts || (a.group < b.group ? -1 : a.group > b.group ? 1 : 0) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+const byTime = (a, b) =>
+  a.ts - b.ts ||
+  (a.group < b.group ? -1 : a.group > b.group ? 1 : 0) ||
+  (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 
 /** Each ask, from its copies, folded by the original ask's id: [{id, copies}], in the order first seen. */
 function byAsk(copies, gap, groupName) {
@@ -273,8 +338,18 @@ function byAsk(copies, gap, groupName) {
       continue;
     }
     const first = out[c.of][0];
-    if (c.kind !== first.kind || c.seal_to !== first.seal_to || c.expires !== first.expires || canonical(c.fields) !== canonical(first.fields)) {
-      gap('copy_differs', { id: c.group, name: groupName(c.group) }, c.id, `${c.by}'s copy of an ask says something other than the ask, so not counted`);
+    if (
+      c.kind !== first.kind ||
+      c.seal_to !== first.seal_to ||
+      c.expires !== first.expires ||
+      canonical(c.fields) !== canonical(first.fields)
+    ) {
+      gap(
+        'copy_differs',
+        { id: c.group, name: groupName(c.group) },
+        c.id,
+        `${c.by}'s copy of an ask says something other than the ask, so not counted`,
+      );
     } else {
       out[c.of].push(c);
     }
@@ -291,8 +366,19 @@ function stateOf(state, gap) {
   }
   const routes = [];
   for (const r of Array.isArray(state?.routes) ? state.routes : []) {
-    if (isObject(r) && isKey(r.down_group) && isKey(r.up_group) && isHandle(r.down_handle) && isHandle(r.up_handle)) {
-      routes.push({ down_group: r.down_group, down_handle: r.down_handle, up_group: r.up_group, up_handle: r.up_handle });
+    if (
+      isObject(r) &&
+      isKey(r.down_group) &&
+      isKey(r.up_group) &&
+      isHandle(r.down_handle) &&
+      isHandle(r.up_handle)
+    ) {
+      routes.push({
+        down_group: r.down_group,
+        down_handle: r.down_handle,
+        up_group: r.up_group,
+        up_handle: r.up_handle,
+      });
     } else {
       gap('bad_state', null, null, 'a route in the state file that is not one');
     }
@@ -314,11 +400,14 @@ function stateOf(state, gap) {
  */
 export function fold({ groups, state, kinds, now }) {
   const gaps = [];
-  const gap = (code, g, id, message) => gaps.push({ code, group: g?.id ?? null, id: typeof id === 'string' ? id : null, message });
+  const gap = (code, g, id, message) =>
+    gaps.push({ code, group: g?.id ?? null, id: typeof id === 'string' ? id : null, message });
   const nameOf = {};
   for (const g of groups) nameOf[g.id] = typeof g.name === 'string' ? g.name : g.id;
   const groupName = (id) => (has(nameOf, id) ? nameOf[id] : id);
-  for (const g of groups) if (g.unread != null && g.me != null) gap('unread', g, null, `${groupName(g.id)} can't be read on this computer right now`);
+  for (const g of groups)
+    if (g.unread != null && g.me != null)
+      gap('unread', g, null, `${groupName(g.id)} can't be read on this computer right now`);
   // Only the person's own groups are read (the law `notice` sees only its person's own).
   const own = groups.filter((g) => g.me != null && g.unread == null);
   const ownIds = own.map((g) => g.id);
@@ -329,7 +418,11 @@ export function fold({ groups, state, kinds, now }) {
   const mine = { records: read.flatMap((r) => r.records) };
 
   // ── asks ──
-  const standing = byAsk(copies.filter((c) => !c.voided), gap, groupName);
+  const standing = byAsk(
+    copies.filter((c) => !c.voided),
+    gap,
+    groupName,
+  );
   const asks = [];
   for (const { id, copies: cs } of standing) {
     const first = cs[0];
@@ -343,22 +436,46 @@ export function fold({ groups, state, kinds, now }) {
       seal_to: first.seal_to,
       hops: Math.max(...cs.map((c) => c.hops)),
       asked: has(keys, first.seal_to),
-      in: cs.map((c) => ({ group: c.group, name: groupName(c.group), act: c.id, by: c.by, via: c.via, handle: c.handle, hops: c.hops, carried: c.type === CARRY, live: c.expires > now })),
+      in: cs.map((c) => ({
+        group: c.group,
+        name: groupName(c.group),
+        act: c.id,
+        by: c.by,
+        via: c.via,
+        handle: c.handle,
+        hops: c.hops,
+        carried: c.type === CARRY,
+        live: c.expires > now,
+      })),
       carriers: [...new Set(cs.filter((c) => c.type === CARRY).map((c) => c.by))].sort(),
       live: live.length > 0,
     };
     try {
       entry.show = String(kind.show(structuredClone(first.fields)));
     } catch (e) {
-      gap('unshown', { id: first.group }, first.id, `the ${first.kind} kind could not show an ask: ${e?.message ?? e}`);
+      gap(
+        'unshown',
+        { id: first.group },
+        first.id,
+        `the ${first.kind} kind could not show an ask: ${e?.message ?? e}`,
+      );
       continue;
     }
     entry.notice = false;
     if (!entry.asked && typeof kind.notice === 'function') {
       try {
-        entry.notice = kind.notice({ kind: first.kind, fields: structuredClone(first.fields) }, structuredClone(mine)) === true;
+        entry.notice =
+          kind.notice(
+            { kind: first.kind, fields: structuredClone(first.fields) },
+            structuredClone(mine),
+          ) === true;
       } catch (e) {
-        gap('notice_failed', { id: first.group }, first.id, `the ${first.kind} kind could not say whether you might help: ${e?.message ?? e}`);
+        gap(
+          'notice_failed',
+          { id: first.group },
+          first.id,
+          `the ${first.kind} kind could not say whether you might help: ${e?.message ?? e}`,
+        );
       }
     }
     asks.push(entry);
@@ -370,19 +487,31 @@ export function fold({ groups, state, kinds, now }) {
     for (const g of groups) {
       const name = groupName(g.id);
       const why =
-        g.unread != null ? 'unread'
-        : g.me == null ? 'not_in_both'
-        : !a.live ? 'expired'
-        : a.in.some((c) => c.group === g.id) ? 'already_held'
-        : a.hops < 1 ? 'no_hops'
-        : a.asked ? 'would_name_asker'
-        : null;
+        g.unread != null
+          ? 'unread'
+          : g.me == null
+            ? 'not_in_both'
+            : !a.live
+              ? 'expired'
+              : a.in.some((c) => c.group === g.id)
+                ? 'already_held'
+                : a.hops < 1
+                  ? 'no_hops'
+                  : a.asked
+                    ? 'would_name_asker'
+                    : null;
       if (why) {
         carriable.not.push({ ask: a.id, group: g.id, why, words: REFUSED[why](name) });
         continue;
       }
       const up = a.in.filter((c) => c.live).reduce((best, c) => (c.hops > best.hops ? c : best));
-      carriable.can.push({ ask: a.id, group: g.id, name, hops: up.hops - 1, up: { group: up.group, handle: up.handle } });
+      carriable.can.push({
+        ask: a.id,
+        group: g.id,
+        name,
+        hops: up.hops - 1,
+        up: { group: up.group, handle: up.handle },
+      });
     }
   }
 
@@ -395,7 +524,11 @@ export function fold({ groups, state, kinds, now }) {
     held.push(m);
   }
   const askBy = {};
-  for (const { id, copies: cs } of byAsk(copies, () => {}, groupName)) askBy[cs[0].seal_to] ??= { id, copy: cs.find((c) => c.type === ASK && ownIds.includes(c.group)) ?? cs[0] };
+  for (const { id, copies: cs } of byAsk(copies, () => {}, groupName))
+    askBy[cs[0].seal_to] ??= {
+      id,
+      copy: cs.find((c) => c.type === ASK && ownIds.includes(c.group)) ?? cs[0],
+    };
   const liveAsk = {};
   for (const a of asks) if (a.live) liveAsk[a.id] = a;
   const threads = [];
@@ -433,12 +566,17 @@ export function fold({ groups, state, kinds, now }) {
         yes: {},
         // Where this end writes: the asker down under their ask's handle;
         // a replier up under the handle they first wrote to.
-        send: asker ? { group: ask.copy.group, handle: ask.copy.handle, dir: 'down', from: me, to: them } : sent ? { group: m.group, handle: op.handle, dir: 'up', from: me, to: them } : null,
+        send: asker
+          ? { group: ask.copy.group, handle: ask.copy.handle, dir: 'down', from: me, to: them }
+          : sent
+            ? { group: m.group, handle: op.handle, dir: 'up', from: me, to: them }
+            : null,
       };
       threads.push(thread[key]);
     }
     const t = thread[key];
-    if (!t.send && sent) t.send = { group: m.group, handle: op.handle, dir: 'up', from: me, to: them };
+    if (!t.send && sent)
+      t.send = { group: m.group, handle: op.handle, dir: 'up', from: me, to: them };
     const said = { at: m.ts, mine: sent, say: body.say };
     if (body.fields !== undefined) said.fields = body.fields;
     if (body.text !== undefined) said.text = body.text;
@@ -447,7 +585,8 @@ export function fold({ groups, state, kinds, now }) {
   }
   for (const t of threads) {
     // Names wait for two yeses.
-    if (t.yes.me !== undefined && t.yes.them !== undefined) t.names = { me: t.yes.me, them: t.yes.them };
+    if (t.yes.me !== undefined && t.yes.them !== undefined)
+      t.names = { me: t.yes.me, them: t.yes.them };
     delete t.yes;
   }
 
@@ -455,11 +594,20 @@ export function fold({ groups, state, kinds, now }) {
   const relay = [];
   // Every live message, its forwarded copies too: what a route has relayed.
   const passing = msgs.filter((m) => !m.voided).sort(byTime);
-  const under = (g, handle, dir) => passing.filter((m) => m.group === g && m.op.handle === handle && (!dir || m.op.dir === dir));
+  const under = (g, handle, dir) =>
+    passing.filter((m) => m.group === g && m.op.handle === handle && (!dir || m.op.dir === dir));
   for (const r of routes) {
-    const [down, up] = [own.find((g) => g.id === r.down_group), own.find((g) => g.id === r.up_group)];
+    const [down, up] = [
+      own.find((g) => g.id === r.down_group),
+      own.find((g) => g.id === r.up_group),
+    ];
     if (!down || !up) {
-      gap('route_closed', { id: (down ? r.up_group : r.down_group) }, null, `a route through ${groupName(down ? r.up_group : r.down_group)}, where you're not now`);
+      gap(
+        'route_closed',
+        { id: down ? r.up_group : r.down_group },
+        null,
+        `a route through ${groupName(down ? r.up_group : r.down_group)}, where you're not now`,
+      );
       continue;
     }
     const upstream = copies.find((c) => c.group === r.up_group && c.handle === r.up_handle);
@@ -468,19 +616,43 @@ export function fold({ groups, state, kinds, now }) {
       .sort(byTime)
       .map((m) => ({ at: m.ts, dir: m.op.dir, size: Math.floor((m.op.box.length * 3) / 4) }));
     if (upstream) {
-      threads.push({ ask: upstream.of, kind: upstream.kind, show: has(liveAsk, upstream.of) ? liveAsk[upstream.of].show : null, live: has(liveAsk, upstream.of), role: 'carrier', from: groupName(r.up_group), to: groupName(r.down_group), passed });
+      threads.push({
+        ask: upstream.of,
+        kind: upstream.kind,
+        show: has(liveAsk, upstream.of) ? liveAsk[upstream.of].show : null,
+        live: has(liveAsk, upstream.of),
+        role: 'carrier',
+        from: groupName(r.up_group),
+        to: groupName(r.down_group),
+        passed,
+      });
     }
-    const there = (g, handle, nonce) => passing.some((m) => m.group === g && m.op.handle === handle && m.op.nonce === nonce);
+    const there = (g, handle, nonce) =>
+      passing.some((m) => m.group === g && m.op.handle === handle && m.op.nonce === nonce);
     for (const m of under(r.down_group, r.down_handle, 'up')) {
-      if (!there(r.up_group, r.up_handle, m.op.nonce)) relay.push({ do: 'forward', group: r.up_group, payload: { ...m.op, handle: r.up_handle } });
+      if (!there(r.up_group, r.up_handle, m.op.nonce))
+        relay.push({ do: 'forward', group: r.up_group, payload: { ...m.op, handle: r.up_handle } });
     }
     // Down only to a replier whose own message came up this way.
     const repliers = under(r.down_group, r.down_handle, 'up').map((m) => m.op.from);
     for (const m of under(r.up_group, r.up_handle, 'down')) {
-      if (repliers.includes(m.op.to) && !there(r.down_group, r.down_handle, m.op.nonce)) relay.push({ do: 'forward', group: r.down_group, payload: { ...m.op, handle: r.down_handle } });
+      if (repliers.includes(m.op.to) && !there(r.down_group, r.down_handle, m.op.nonce))
+        relay.push({
+          do: 'forward',
+          group: r.down_group,
+          payload: { ...m.op, handle: r.down_handle },
+        });
     }
-    const carried = copies.find((c) => c.group === r.down_group && c.handle === r.down_handle && c.type === CARRY && c.by === down.me && !c.voided);
-    if (upstream?.voided && carried) relay.push({ do: 'correct', group: r.down_group, corrects: carried.id });
+    const carried = copies.find(
+      (c) =>
+        c.group === r.down_group &&
+        c.handle === r.down_handle &&
+        c.type === CARRY &&
+        c.by === down.me &&
+        !c.voided,
+    );
+    if (upstream?.voided && carried)
+      relay.push({ do: 'correct', group: r.down_group, corrects: carried.id });
   }
 
   return { asks: asks.filter((a) => a.live), carriable, threads, relay, gaps };
@@ -492,13 +664,19 @@ const FIELD_NAME = /^[a-z][a-z0-9_]{0,39}$/;
 
 /** What is wrong with a kind's `ask`, `reply` or `listing` (`part`), or []. */
 function partGaps(part, v) {
-  if (!isObject(v) || Object.keys(v).join() !== 'fields' || !isObject(v.fields)) return [`its ${part} is not {fields: {...}}`];
+  if (!isObject(v) || Object.keys(v).join() !== 'fields' || !isObject(v.fields))
+    return [`its ${part} is not {fields: {...}}`];
   const names = Object.keys(v.fields);
   const out = [];
-  if (names.length < 1 || names.length > MAX_FIELDS) out.push(`its ${part} has ${names.length} fields, and a kind has 1 to ${MAX_FIELDS}`);
+  if (names.length < 1 || names.length > MAX_FIELDS)
+    out.push(`its ${part} has ${names.length} fields, and a kind has 1 to ${MAX_FIELDS}`);
   for (const n of names) {
-    if (!FIELD_NAME.test(n)) out.push(`its ${part} field ${JSON.stringify(n)} is not a short lower-case name`);
-    else if (typeOf(v.fields[n]) === null) out.push(`its ${part} field ${n} is not one of ${FIELD_TYPES.join(', ')} (a choice is {choice: [...]})`);
+    if (!FIELD_NAME.test(n))
+      out.push(`its ${part} field ${JSON.stringify(n)} is not a short lower-case name`);
+    else if (typeOf(v.fields[n]) === null)
+      out.push(
+        `its ${part} field ${n} is not one of ${FIELD_TYPES.join(', ')} (a choice is {choice: [...]})`,
+      );
   }
   return out;
 }
@@ -517,14 +695,24 @@ export function kindsOf(list) {
     if (!isObject(k)) bad.push('is not an object');
     else {
       const extra = Object.keys(k).filter((x) => !KIND_KEYS.includes(x));
-      if (extra.length) bad.push(`sets ${extra.join(', ')}; a kind writes no routing, scope, handle, sealing, carrying or name, which the app does`);
-      if (typeof k.kind !== 'string' || !/^[a-z][a-z0-9-]{0,30}$/.test(k.kind)) bad.push('has no short lower-case word for `kind`');
+      if (extra.length)
+        bad.push(
+          `sets ${extra.join(', ')}; a kind writes no routing, scope, handle, sealing, carrying or name, which the app does`,
+        );
+      if (typeof k.kind !== 'string' || !/^[a-z][a-z0-9-]{0,30}$/.test(k.kind))
+        bad.push('has no short lower-case word for `kind`');
       bad.push(...partGaps('ask', k.ask), ...partGaps('reply', k.reply));
       if (k.listing !== undefined) bad.push(...partGaps('listing', k.listing));
       if (typeof k.show !== 'function') bad.push('has no `show`');
-      if (k.notice !== undefined && typeof k.notice !== 'function') bad.push('has a `notice` that is not a function');
-      if (k.hops !== undefined && !(Number.isSafeInteger(k.hops) && k.hops >= 0 && k.hops <= MOST_HOPS)) bad.push(`has hops that are not 0 to ${MOST_HOPS}`);
-      if (k.name !== undefined && k.name !== 'withheld') bad.push('has a name other than withheld, the one this version carries');
+      if (k.notice !== undefined && typeof k.notice !== 'function')
+        bad.push('has a `notice` that is not a function');
+      if (
+        k.hops !== undefined &&
+        !(Number.isSafeInteger(k.hops) && k.hops >= 0 && k.hops <= MOST_HOPS)
+      )
+        bad.push(`has hops that are not 0 to ${MOST_HOPS}`);
+      if (k.name !== undefined && k.name !== 'withheld')
+        bad.push('has a name other than withheld, the one this version carries');
     }
     if (!bad.length && has(out, k.kind)) bad.push('is a second kind of that word');
     if (bad.length) throw new Error(`the ${word} kind ${bad.join('; ')}`);
@@ -541,7 +729,9 @@ export function kindsOf(list) {
 export function formGaps(kind, part, values) {
   if (part === 'text') {
     if (typeof values !== 'string' || !values.trim()) return ['your message is empty'];
-    return values.length > MAX_TEXT ? [`your message is ${values.length} characters, and the most is ${MAX_TEXT}`] : [];
+    return values.length > MAX_TEXT
+      ? [`your message is ${values.length} characters, and the most is ${MAX_TEXT}`]
+      : [];
   }
   if (!isObject(kind?.[part])) return [`a ${kind?.kind ?? ''} has no ${part}`];
   return fieldGaps(kind[part].fields, values);
@@ -570,8 +760,23 @@ export function askAct({ kind, fields, hops, expires, seal_to, handle }) {
 export function carryAct(ask, can, handle) {
   return {
     group: can.group,
-    payload: { app: APP, type: CARRY, kind: ask.kind, fields: ask.fields, hops: can.hops, expires: ask.expires, seal_to: ask.seal_to, of: ask.id, handle },
-    route: { down_group: can.group, down_handle: handle, up_group: can.up.group, up_handle: can.up.handle },
+    payload: {
+      app: APP,
+      type: CARRY,
+      kind: ask.kind,
+      fields: ask.fields,
+      hops: can.hops,
+      expires: ask.expires,
+      seal_to: ask.seal_to,
+      of: ask.id,
+      handle,
+    },
+    route: {
+      down_group: can.group,
+      down_handle: handle,
+      up_group: can.up.group,
+      up_handle: can.up.handle,
+    },
   };
 }
 

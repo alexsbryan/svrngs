@@ -1,0 +1,20 @@
+
+running 5 tests
+.... 4/5
+leave_race::a_persons_other_computer_is_told_the_signing_keys_leave --- FAILED
+
+failures:
+
+---- leave_race::a_persons_other_computer_is_told_the_signing_keys_leave stdout ----
+
+thread 'leave_race::a_persons_other_computer_is_told_the_signing_keys_leave' (74521435) panicked at crates/svrngs-node/tests/removal.rs:697:9:
+and the key that signed the leave
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    leave_race::a_persons_other_computer_is_told_the_signing_keys_leave
+
+test result: FAILED. 4 passed; 1 failed; 0 ignored; 0 measured; 4 filtered out; finished in 11.41s
+
+error: test failed, to rerun pass `-p svrngs-node --test removal`

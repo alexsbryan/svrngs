@@ -33,7 +33,7 @@ fn name(s: &str) -> Name {
 /// say.
 async fn home_of(engine: harness::Engine, node: &Node, args: Value) -> Value {
     let page = svrngs_node::home::address(node.api_addr().port());
-    home_page::home_page(engine, &page, args).await
+    home_page::home_page(engine, &page, &node.token(), args).await
 }
 
 /// Every string among `seen[at]`, flattened.
@@ -70,11 +70,11 @@ in_both_engines!(
 );
 async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness::Engine) {
     let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
-    let (trip, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+    let (trip, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes Trip");
     let link = || {
-        let made = sam.host().link(&trip.id(), false, None);
+        let made = sam.host().link(&trip.id(), false, None, None);
         client_link(&made.expect("Sam makes a link to Trip").token)
     };
     let ana_dir = tempfile::tempdir().unwrap();
@@ -128,7 +128,13 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
     let sams = actor_of(&SigningKey::from_bytes(&[6; 32]));
     let notes = svrngs_core::pass::Label::of_hex(&sams, "notes").unwrap();
     let old = svrngs_node::origin::origin(&notes, ana.api_addr().port());
-    let seen = home_page::home_page(engine, &old, json!({ "heading": false, "read": "p" })).await;
+    let seen = home_page::home_page(
+        engine,
+        &old,
+        &ana.token(),
+        json!({ "heading": false, "read": "p" }),
+    )
+    .await;
     eprintln!("Ana's old address of Sam's notes: {seen:#}");
     let said = seen["read"].as_str().unwrap_or_default();
     assert!(said.starts_with("You left Trip on "), "{seen:#}");
@@ -179,7 +185,13 @@ async fn leaving_on_the_home_page_is_said_as_a_leave_everywhere(engine: harness:
 async fn left_on(node: &Node, group: &str) -> bool {
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let url = format!("http://{}/v1/groups", node.api_addr());
-    let held = http.get(url).send().await.unwrap().text().await.unwrap();
+    let held = http
+        .get(url)
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
+    let held = held.text().await.unwrap();
     let held: Value = serde_json::from_str(&held).unwrap();
     let groups = held["groups"].as_array().cloned().unwrap_or_default();
     groups.iter().any(|g| g["id"] == group && g["left"] == true)
@@ -282,7 +294,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
     let mut groups = Vec::new();
     for g in ["Films", "Trip", "Walk"] {
-        let (seed, _) = cli::new_group(&sam, name(g), name("Sam"), None, None, &ours)
+        let (seed, _) = cli::new_group(&sam, name(g), name("Sam"), None, &[], &ours)
             .await
             .expect("Sam makes a group");
         groups.push(seed.id());
@@ -296,7 +308,10 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     let one = computer(one_dir.path(), &one_key, &ours).await;
     let mut two = computer(two_dir.path(), &two_key, &ours).await;
     for g in &groups {
-        let made = sam.host().link(g, false, None).expect("Sam makes a link");
+        let made = sam
+            .host()
+            .link(g, false, None, None)
+            .expect("Sam makes a link");
         let sent = Link::parse(&client_link(&made.token)).unwrap();
         one.host()
             .join(&sent, &name("Ana"))
@@ -304,7 +319,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
             .expect("Ana joins");
         let made = one
             .host()
-            .link(g, true, None)
+            .link(g, true, None, None)
             .expect("Ana makes a link for her devices");
         let sent = Link::parse(&client_link(&made.token)).unwrap();
         two.host()
@@ -336,7 +351,9 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
     // As `svrngs leave` asks: what happened.
     let leave = |g: &str| {
         let ask = reqwest::Client::builder().no_proxy().build().unwrap();
-        let ask = ask.post(format!("http://{}{LEAVES_ROUTE}", one.api_addr()));
+        let ask = ask
+            .post(format!("http://{}{LEAVES_ROUTE}", one.api_addr()))
+            .bearer_auth(one.token());
         let body = serde_json::to_string(&LeaveAsk {
             group: g.to_string(),
         });
@@ -421,7 +438,7 @@ async fn a_leave_reaches_the_leavers_other_computer(engine: harness::Engine) {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     let (_relay, ours, _sam_dir, sam) = common::sams_computer(6).await;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes Trip");
     let trip = seed.id();
@@ -433,7 +450,7 @@ async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     for (who, as_) in [(&bo, "Bo"), (&one, "Ana")] {
         let made = sam
             .host()
-            .link(&trip, false, None)
+            .link(&trip, false, None, None)
             .expect("Sam makes a link");
         let sent = Link::parse(&client_link(&made.token)).unwrap();
         who.host()
@@ -443,7 +460,7 @@ async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     }
     let made = one
         .host()
-        .link(&trip, true, None)
+        .link(&trip, true, None, None)
         .expect("Ana's link for her devices");
     let sent = Link::parse(&client_link(&made.token)).unwrap();
     two.host()
@@ -536,6 +553,7 @@ async fn leave_from(node: &Node, group: &str) -> svrngs_node::removal::Outcome {
     });
     let sent = ask
         .post(format!("http://{}{LEAVES_ROUTE}", node.api_addr()))
+        .bearer_auth(node.token())
         .header("content-type", "application/json")
         .body(body.unwrap())
         .send();
@@ -552,7 +570,7 @@ async fn leave_from(node: &Node, group: &str) -> svrngs_node::removal::Outcome {
 #[tokio::test]
 async fn a_leave_reaches_a_computer_off_as_it_landed() {
     let (_relay, ours, sam_dir, sam) = common::sams_computer(6).await;
-    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, None, &ours)
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &ours)
         .await
         .expect("Sam makes a group");
     let trip = seed.id();
@@ -561,7 +579,7 @@ async fn a_leave_reaches_a_computer_off_as_it_landed() {
     let ana = computer(ana_dir.path(), &ana_key, &ours).await;
     let made = sam
         .host()
-        .link(&trip, false, None)
+        .link(&trip, false, None, None)
         .expect("Sam makes a link");
     let sent = Link::parse(&client_link(&made.token)).unwrap();
     ana.host()

@@ -23,11 +23,16 @@ pub enum Alpn {
     /// A synced folder's bytes by hash (gf-1, sy-1): iroh-blobs' own protocol,
     /// served to a dialer standing in a group held there.
     Blobs,
+    /// A lent port's own bytes, raw (give-udp): UDP datagrams, served to
+    /// a dialer standing in a group held there.
+    Port,
 }
+
+use Alpn::{Blobs, Lend, Member, Port, Redeem};
 
 impl Alpn {
     /// Every protocol, as the endpoint advertises them.
-    pub const ALL: [Alpn; 4] = [Alpn::Member, Alpn::Redeem, Alpn::Lend, Alpn::Blobs];
+    pub const ALL: [Alpn; 5] = [Member, Redeem, Lend, Blobs, Port];
 
     /// The bytes negotiated on the wire.
     pub const fn bytes(self) -> &'static [u8] {
@@ -40,6 +45,7 @@ impl Alpn {
             // iroh-blobs 0.103's `ALPN` (its src/protocol.rs:406), spelled
             // here since the core takes no I/O dependency.
             Alpn::Blobs => b"/iroh-bytes/4",
+            Alpn::Port => b"svrngs/port/0",
         }
     }
 

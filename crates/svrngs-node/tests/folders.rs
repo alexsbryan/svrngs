@@ -69,6 +69,7 @@ impl Group {
 async fn ask(node: &Node, body: serde_json::Value) -> (u16, String) {
     let answer = http()
         .post(format!("http://{}/v1/folders", node.api_addr()))
+        .bearer_auth(node.token())
         .header("content-type", "application/json")
         .body(body.to_string())
         .send()
@@ -326,7 +327,6 @@ async fn a_hash_the_record_stopped_placing_is_refused_at_the_next_get() {
                 base: Some(entry),
             }],
         },
-        on_behalf_of: None,
     };
     group.ana.rail().commit(&ns, &deleted).unwrap().unwrap();
     let second = get(
@@ -822,7 +822,7 @@ async fn a_member_s_act_naming_a_path_outside_the_folder_is_refused_at_admission
         }],
     };
     let held = after_in(&ns, &signing(2), &last, last.ts_unix + 1, act);
-    let body = body_json(&held.kind.act, None, None).replace("PLACEHOLDER", "../outside");
+    let body = body_json(&held.kind.act, None, None, None).replace("PLACEHOLDER", "../outside");
     let prev = held.kind.prev.as_ref();
     let id = act_id(&ns, &ben_key, held.kind.seq, prev, held.ts_unix, &body);
     let line = serde_json::to_string(&held)
@@ -946,6 +946,39 @@ async fn one_directory_keeps_one_group_s_folder() {
     group.close().await;
 }
 
+/// **A group's folder placed beside another's is still everyone's**
+/// (#138's place): Ana's `films` folder is at `~/svrngs/films`, so on a
+/// computer where that place is taken — here Ben's, one `$HOME` for both —
+/// Ben's goes beside it, its id's start after its name; a file Ana puts in
+/// hers reaches his. `$HOME` is this test binary's own, and no other test
+/// here reads it. Planted: the folder named by its directory's last name
+/// alone (`films-<id8>`), which no member's `films` lines up with.
+#[tokio::test]
+async fn a_group_s_folder_placed_beside_another_s_syncs_with_everyone_s() {
+    let home = tempfile::tempdir().unwrap();
+    std::env::set_var("HOME", home.path());
+    let group = Group::new().await;
+    let films = seed("films", 9);
+    let (ana, placed) = group.ana.folders().place(&films);
+    assert_eq!(placed, Ok(()), "Ana's folder placed");
+    let (ben, placed) = group.ben.folders().place(&films);
+    assert_eq!(placed, Ok(()), "Ben's folder placed");
+    let apart = home
+        .path()
+        .join(format!("svrngs/films-{}", &films.id()[..8]));
+    assert_eq!(ben, apart, "Ben's place is Ana's, so his goes beside it");
+
+    let bytes = noise(10_000, b"beside");
+    std::fs::write(ana.join("a.bin"), &bytes).unwrap();
+    let at_ben = || std::fs::read(ben.join("a.bin")).ok() == Some(bytes.clone());
+    assert!(
+        until(&group, at_ben).await,
+        "Ana's file reaches Ben's folder beside hers: {:?}",
+        names(&ben)
+    );
+    group.close().await;
+}
+
 // ── A holder that sends wrong bytes (syp-4 f; gf's row 6) ─────────────
 
 /// The encoding of `bytes` a holder sends for a get of them whole, and
@@ -992,7 +1025,6 @@ impl Asking {
                 key: actor_of(&signing(2)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         ana.rail().commit(&ns, &admit).unwrap().unwrap();
         let relay = RelayConfig {
@@ -1054,10 +1086,7 @@ impl Asking {
                 base: None,
             }],
         };
-        let written = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: None,
-        };
+        let written = svrngs_core::tests_support::Fixture { act };
         ana.rail().commit(&ns, &written).unwrap().unwrap();
         Asking {
             ana,
@@ -1217,6 +1246,7 @@ async fn a_removed_member_gets_nothing_new_from_the_folder_and_keeps_what_they_h
 
     let removed = http()
         .post(format!("http://{}/v1/removals", group.ana.api_addr()))
+        .bearer_auth(group.ana.token())
         .json(&serde_json::json!({ "group": seed("films", 9).id(), "person": "cy" }))
         .send()
         .await
@@ -1252,7 +1282,13 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
         "http://{}/v1/blob?group={group}&keep={keep}",
         node.api_addr()
     );
-    let answer = http().put(url).body(bytes.to_vec()).send().await.unwrap();
+    let answer = http()
+        .put(url)
+        .bearer_auth(node.token())
+        .body(bytes.to_vec())
+        .send()
+        .await
+        .unwrap();
     (answer.status().as_u16(), answer.text().await.unwrap())
 }
 
@@ -1260,7 +1296,12 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
 /// answer names, and its body.
 async fn get_blob(node: &Node, group: &str, hash: &str) -> (u16, Option<String>, Vec<u8>) {
     let url = format!("http://{}/v1/blob/{hash}?group={group}", node.api_addr());
-    let answer = http().get(url).send().await.unwrap();
+    let answer = http()
+        .get(url)
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
     let holder = answer.headers().get("x-svrngs-holder");
     let holder = holder.map(|h| h.to_str().unwrap().to_string());
     (
@@ -1426,7 +1467,9 @@ async fn a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold() {
     assert_eq!(served, Ok(50_000), "control: Ana serves Ben");
 
     let id = seed("films", 9).id();
-    let leave = http().post(format!("http://{}{LEAVES_ROUTE}", group.ben.api_addr()));
+    let leave = http()
+        .post(format!("http://{}{LEAVES_ROUTE}", group.ben.api_addr()))
+        .bearer_auth(group.ben.token());
     let left = leave
         .json(&LeaveAsk { group: id.clone() })
         .send()

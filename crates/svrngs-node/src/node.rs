@@ -64,7 +64,7 @@ use axum::routing::get;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
-use svrngs_core::relay::Url;
+use svrngs_core::relay::{Meeting, Url};
 
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
@@ -72,7 +72,7 @@ use crate::iroh::{
     Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
-use crate::rail::{LiveBuffer, RailApi};
+use crate::rail::{carry, visiting, LiveBuffer, RailApi, CARRY_ROUTE};
 use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
@@ -93,6 +93,8 @@ pub struct Lent {
     /// The key their computer is dialled by, as the record spells an actor.
     pub key: String,
     pub offered: Offered,
+    /// The version its computer's answer carries ([`crate::version`]).
+    pub version: u32,
     /// Where this computer's browser opens it: its origin on this
     /// computer's loopback, `http://<label>.localhost:<api port>/`
     /// ([`crate::origin`], u5-2), where until u5-2 it was the bridge to its
@@ -149,6 +151,14 @@ pub struct Lends {
     pub unlisted: Unlisted,
 }
 
+/// A person by name and by their first key, which tells two of one name
+/// apart (keys-names).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+pub struct Named {
+    pub person: Person,
+    pub person_key: String,
+}
+
 /// The people whose computer did not say what they lend, so it is not
 /// known: absent, which is not lending nothing — each by how it was not
 /// said, so a computer that answered is never said not to have answered
@@ -156,24 +166,24 @@ pub struct Lends {
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize)]
 pub struct Unlisted {
     /// Whose computer did not answer.
-    pub unanswered: Vec<Person>,
+    pub unanswered: Vec<Named>,
     /// Whose computer answered that it has not heard this one is in its
     /// group: it closed the connection as not admitted.
-    pub unheard: Vec<Person>,
+    pub unheard: Vec<Named>,
     /// Whose computer answered with a refusal, or with what is not a list
     /// of lends.
-    pub refused: Vec<Person>,
+    pub refused: Vec<Named>,
     /// Whose computer runs an older svrngs ([`crate::version`]): what it
     /// lends is not read.
-    pub older: Vec<Person>,
+    pub older: Vec<Named>,
 }
 
 impl Unlisted {
-    /// Whether `person`'s computer did not say what they lend, by any of
-    /// the four.
-    pub(crate) fn names(&self, person: &Person) -> bool {
+    /// Whether a computer of the person whose first key is `first` did not
+    /// say what they lend, by any of the four.
+    pub(crate) fn names(&self, first: &str) -> bool {
         let lists = [&self.unanswered, &self.unheard, &self.refused, &self.older];
-        lists.iter().any(|l| l.contains(person))
+        (lists.iter()).any(|l| l.iter().any(|n| n.person_key == first))
     }
 }
 
@@ -189,12 +199,14 @@ pub enum NodeError {
     Endpoint(String),
     #[error(transparent)]
     Api(#[from] crate::api::ApiError),
+    #[error(transparent)]
+    Oidc(#[from] crate::oidc::KeyFailure),
 }
 
 /// A running node. Dropping it stops its round and its accept loop.
 pub struct Node {
     host: Arc<Host>,
-    /// What the room door reaches its lends through ([`crate::room::open`]).
+    /// The state its routers ask, kept for what only a test asks.
     pub(crate) asking: Asking,
     api: crate::api::Serving,
     /// What [`Self::api`] serves, kept so a test can ask it as a caller
@@ -203,6 +215,15 @@ pub struct Node {
     routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
+    /// The room's one owner ([`crate::room::owner::spawn`]), stopped with the node.
+    _room: n0_future::task::AbortOnDropHandle<()>,
+    /// The watch on where this computer meets its groups, which says each
+    /// move ([`Host::moved`]), and the ask of its groups' own relays
+    /// ([`Host::check`]), stopped with the node.
+    _homes: n0_future::task::AbortOnDropHandle<()>,
+    _tiers: n0_future::task::AbortOnDropHandle<()>,
+    /// Play's one owner ([`crate::play::spawn`]), stopped with the node.
+    _play: n0_future::task::AbortOnDropHandle<()>,
 }
 
 /// What the round reads: the journals, the endpoint's transport, and the key
@@ -219,14 +240,20 @@ pub struct Host {
     /// Whether this computer reaches the network through a relay at all
     /// ([`RelayConfig`]): with none, it says so in the record.
     relayed: bool,
-    /// How it reaches the network: the relay a link made on the home page
-    /// carries when none is reached yet ([`crate::invite::carried`]).
-    pub(crate) relay: RelayConfig,
+    /// The build's relays, where it meets every group beside the group's
+    /// own ([`RelayConfig::build`]; relay fallbacks).
+    pub(crate) build: Vec<Url>,
+    /// What its endpoint holds now, at which tier ([`crate::tiers`]).
+    pub(crate) held: tokio::sync::watch::Sender<crate::tiers::Held>,
     /// The record API's port, where each lend has its origin (u5-2).
     pub(crate) api_port: u16,
-    /// Each lend the room door serves, and where (u6-1, [`crate::room`]):
-    /// written by the room alone, read by `/v1/lends`.
-    pub(crate) room: tokio::sync::watch::Sender<BTreeMap<Label, SocketAddr>>,
+    /// Held while a link is minted, and across `new`'s keeping of a group
+    /// and its first link ([`Host::keep_linked`]): an issuer's newer link
+    /// closes their last, so the home page's link, made once the group
+    /// shows, is never minted between the two and closed by `new`'s
+    /// (capability-scenes-found (e)).
+    #[expect(clippy::disallowed_types, reason = "the links' sequencer")]
+    pub(crate) minting: std::sync::Mutex<()>,
 }
 
 impl Node {
@@ -247,6 +274,31 @@ impl Node {
         Self::start_every(data_dir, key, relay, seeds, api, DEFAULT_RING_SYNC_INTERVAL).await
     }
 
+    /// [`Node::start`], its endpoint built with `asked` among its groups'
+    /// own relays, the relays `new --relay` or a link names: a computer in no
+    /// group yet would else start at the build's, and offline wait out a
+    /// report of relays that cannot answer (the run's modem-off rerun, 6.1 s
+    /// for a join, relay fallbacks).
+    pub async fn start_asking(
+        data_dir: PathBuf,
+        key: SigningKey,
+        relay: &RelayConfig,
+        asked: &[Url],
+        seeds: SeedText,
+        api: SocketAddr,
+    ) -> Result<Self, NodeError> {
+        Self::begin(
+            data_dir,
+            key,
+            relay,
+            asked,
+            seeds,
+            api,
+            DEFAULT_RING_SYNC_INTERVAL,
+        )
+        .await
+    }
+
     /// [`Node::start`], with the round every `every` rather than every
     /// [`DEFAULT_RING_SYNC_INTERVAL`]. The scale instrument
     /// (`tests/scale.rs`) passes a day, so that no node's own round runs
@@ -259,7 +311,19 @@ impl Node {
         api: SocketAddr,
         every: Duration,
     ) -> Result<Self, NodeError> {
-        std::fs::create_dir_all(&data_dir).map_err(|source| NodeError::DataDir {
+        Self::begin(data_dir, key, relay, &[], seeds, api, every).await
+    }
+
+    async fn begin(
+        data_dir: PathBuf,
+        key: SigningKey,
+        relay: &RelayConfig,
+        asked: &[Url],
+        seeds: SeedText,
+        api: SocketAddr,
+        every: Duration,
+    ) -> Result<Self, NodeError> {
+        crate::declared::secret_dir(&data_dir).map_err(|source| NodeError::DataDir {
             path: data_dir.clone(),
             source,
         })?;
@@ -275,11 +339,22 @@ impl Node {
         let nudge = Arc::new(Notify::new());
         // One live buffer: the live route fills it, the loopback drain empties it.
         let live = Arc::new(LiveBuffer::default());
+        let token = crate::api::kept_token(&data_dir)?;
         let api = crate::api::bind(api).await?;
+        // Built at the tier its groups' own relays answer at; the first ask
+        // moves it to the build's at once if none does (crate::tiers).
+        let asked: std::collections::BTreeSet<Url> = asked.iter().cloned().collect();
+        let groups = rail.namespaces().unwrap_or_default();
+        let meeting = crate::tiers::everywhere(&rail, &groups, &relay.build(), &asked);
+        let (held, relays) = crate::tiers::Held::built(meeting, asked);
+        let at = RelayConfig {
+            relay_urls: relays.iter().map(ToString::to_string).collect(),
+            ..relay.clone()
+        };
         let endpoint = build_relayed_endpoint(
             secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
-            relay,
+            &at,
         )
         .await
         .map_err(NodeError::Endpoint)?;
@@ -293,44 +368,76 @@ impl Node {
             endpoint: endpoint.clone(),
             actor: actor.clone(),
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
-            relay: relay.clone(),
+            build: relay.build(),
+            held: tokio::sync::watch::Sender::new(held),
             api_port: api.addr().port(),
-            room: tokio::sync::watch::Sender::new(BTreeMap::new()),
+            minting: Default::default(),
         });
+        match rail.namespaces() {
+            Ok(groups) => {
+                for group in groups {
+                    host.cut_over(&group);
+                }
+            }
+            Err(why) => {
+                tracing::warn!(target: "node", %why, "node: groups unreadable at startup; their delegated writes remain closed")
+            }
+        }
+        // Its groups' own relays asked whether they answer, and each move of
+        // this computer's home said (relay fallbacks).
+        let homes = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().moved()));
+        let tiers = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().check()));
         let (folders, blobs) =
             crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())
                 .await
                 .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());
+        // One provider, its key and its code store, shared by the door that
+        // mints a code and the API that redeems it.
+        let oidc = crate::oidc::Provider::new(data_dir.clone(), host.api_port)?;
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
             rail: rail.clone(),
             key: endpoint.id().as_bytes().to_owned(),
             data_dir: data_dir.clone(),
             using: crate::door::Using::spawn(),
-            sign_ins: crate::door::sign_in::SignIns::spawn(),
             choices: crate::door::choices::Choices::spawn(),
             folders: folders.clone(),
+            oidc: oidc.clone(),
         };
+        let (room, owner) = crate::room::owner::Room::new();
+        let (plays, player) = crate::play::Plays::new();
         let asking = Asking {
             host: host.clone(),
             door,
             folders: folders.clone(),
             seeds,
+            oidc,
+            room,
+            plays,
+            sessions: crate::session::Sessions::new(token.clone(), host.api_port),
         };
+        let room = crate::room::owner::spawn(asking.clone(), owner);
+        let play = crate::play::spawn(asking.clone(), player);
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
             rail: rail.clone(),
             nudge: nudge.clone(),
             live: live.clone(),
             transport,
+            build: host.build.clone(),
         };
         let routes = crate::api::router(
             rail_api.clone(),
             crate::surface::router(asking.clone())
                 .merge(crate::folder::router(folders.clone()))
-                .merge(crate::removal::router(asking.clone())),
+                .merge(crate::removal::router(asking.clone()))
+                .merge(crate::room::route::router(asking.clone()))
+                .merge(crate::play::router(asking.clone()))
+                .merge(crate::session::router(asking.sessions.clone())),
+            asking.oidc.clone().router(),
             crate::home::router(asking.clone(), rail_api),
+            token,
         );
         let api = crate::api::serve(routes.clone(), api);
         if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {
@@ -348,8 +455,13 @@ impl Node {
         // The members' protocol serves sync and the live lane, the door to
         // what this computer lends (u3-4), and what the people of a
         // member's groups lend (u4-5).
-        let holders = crate::door::holders_router(asking.door.clone());
-        let room = asking.clone();
+        // A holder carries its phone's own lines too (capability-signed).
+        let carry = axum::Router::new()
+            .route(CARRY_ROUTE, axum::routing::post(carry))
+            .with_state(asking.clone());
+        let holders = crate::door::holders_router(asking.door.clone()).merge(carry);
+        let kept = asking.clone();
+        let udp = asking.door.clone();
         let inbound = RingInbound {
             rail: rail.clone(),
             live,
@@ -359,18 +471,20 @@ impl Node {
             .merge(crate::door::router(asking.door.clone()))
             .merge(people_router(asking))
             .merge(crate::folder::members_router(folders));
-        let redeem = crate::redeem::router(room.clone());
+        let redeem = crate::redeem::router(kept.clone());
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route (U7), and served nothing else but the lines
         // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
         let gone = ring_routes::router(inbound).fallback(|| async { crate::door::gone() });
         let acceptor = IrohAcceptor::spawn(
             endpoint.clone(),
+            host.transport.accepted.clone(),
             move |alpn: &[u8], dialer: &PublicKey| match admit_dialer(&admitting, alpn, dialer) {
                 Some(Alpn::Member) => Admit::Serve(members.clone()),
                 Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                 Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                 Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
+                Some(Alpn::Port) => Admit::Port(Box::new(udp.clone())),
                 None if Alpn::of(alpn) == Some(Alpn::Member)
                     && admitting.removed_anywhere(&key_actor(dialer)).is_some() =>
                 {
@@ -383,12 +497,16 @@ impl Node {
         let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
         Ok(Self {
             host,
-            asking: room,
+            asking: kept,
             api,
             #[cfg(any(test, feature = "test-support"))]
             routes,
             _acceptor: acceptor,
             _round: round,
+            _room: room,
+            _homes: homes,
+            _tiers: tiers,
+            _play: play,
         })
     }
 
@@ -443,7 +561,7 @@ impl Host {
         self.transport.add_known_peer(peer.id, addrs.clone());
         let contact = Contact {
             key: peer.id,
-            relay_url: peer.relay_urls().next().map(|r| r.to_string()),
+            relays: peer.relay_urls().map(|r| r.clone().into()).collect(),
             iroh_direct_addrs: addrs,
         };
         let to = (&*self.transport, &contact);
@@ -466,20 +584,21 @@ impl Host {
     /// says nothing, so a computer starting never withdraws its relay.
     /// Whether anything was written.
     pub fn say_relay(&self) -> bool {
-        let home = self.endpoint.addr().relay_urls().next().cloned();
+        let home = self.home();
         if home.is_none() && self.relayed {
             tracing::debug!(target: "node", "node: no relay reached yet, so the record keeps what it says of this computer");
             return false;
         }
         let at = svrngs_core::RelayAt {
             key: self.actor.clone(),
-            url: home.map(Into::into),
+            url: home,
         };
         let mut wrote = false;
         let held = self.rail.namespaces().inspect_err(|e| {
             tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so this computer's relay is said in none");
         });
         for namespace in held.unwrap_or_default() {
+            self.cut_over(&namespace);
             // The kept register first: a commit reads the whole journal under
             // its lock, which every idle round paid (scale.rs's ceiling, 0.59 s
             // at 42e36ca against 0.02 s before). The core still decides a move.
@@ -503,13 +622,48 @@ impl Host {
         wrote
     }
 
-    /// The contact the computer `actor` is dialled by: its key and the
-    /// relay the groups held name for it ([`relay_of`]); `None` when it
-    /// stands in none, or its key is no iroh key.
+    /// The keeper's cutover in `namespace`, written by this computer when
+    /// it keeps the group and none is written yet, past which a computer's
+    /// act for another person counts nowhere (svrngs-core's `Cutover`;
+    /// capability-signed). Asked of the kept register, as the relay is.
+    pub(crate) fn cut_over(&self, namespace: &str) {
+        let Ok(r) = self.rail.register(namespace) else {
+            return;
+        };
+        let keeps = r.keeper.as_deref() == Some(self.actor.as_str());
+        if keeps && r.signers.is_none() {
+            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover::Authors);
+            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: the keeper's cutover, once per group");
+        }
+        if keeps && r.holders.is_none() {
+            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover::Holders);
+            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: legacy holder history frozen; new entries require exact-content approval");
+        }
+        if keeps && r.meets.is_none() {
+            let own = crate::group::filed(&self.rail, namespace)
+                .into_iter()
+                .collect();
+            let wrote = self.rail.commit(namespace, &svrngs_core::MeetsAt(own));
+            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: the keeper names where an old group meets, from the relay its file keeps, once (relay fallbacks)");
+        }
+    }
+
+    /// The contact the computer `actor` is dialled by: its key, where each
+    /// group held that it stands in meets, and the relay the groups held
+    /// name for it ([`relay_of`]); `None` when it stands in none, or its
+    /// key is no iroh key.
     pub(crate) fn contact(&self, actor: &str) -> Option<Contact> {
         self.rail.standing_anywhere(actor)?;
         let groups = self.standings()?;
-        Some(Contact::named(actor_key(actor)?, relay_of(&groups, actor)))
+        let theirs = groups.iter().filter(|(_, m)| m.contains_key(actor));
+        let meeting = theirs
+            .map(|(ns, _)| self.meeting(ns))
+            .reduce(Meeting::join)?;
+        Some(Contact::named(
+            actor_key(actor)?,
+            &meeting,
+            relay_of(&groups, actor),
+        ))
     }
 
     /// Where this computer's browser opens the lend `name` of the computer
@@ -518,13 +672,6 @@ impl Host {
     pub(crate) fn origin(&self, lender: &str, name: &str) -> Option<String> {
         let label = Label::of_hex(lender, name)?;
         Some(crate::origin::origin(&label, self.api_port))
-    }
-
-    /// Where the room reaches the lend `name` of `lender`, while the room
-    /// door serves it (u6-1).
-    pub(crate) fn room_address(&self, lender: &str, name: &str) -> Option<String> {
-        let at = *self.room.borrow().get(&Label::of_hex(lender, name)?)?;
-        Some(format!("http://{at}/"))
     }
 
     /// This round's members, or `None` when the node has none to round
@@ -536,7 +683,7 @@ impl Host {
         Some(RoundMembers::of(
             peers
                 .into_iter()
-                .map(|(actor, person, contact)| (format!("{person}/{}", &actor[..8]), contact))
+                .map(|(actor, n, contact)| (format!("{}/{}", n.person, &actor[..8]), contact))
                 .collect(),
         ))
     }
@@ -592,17 +739,22 @@ impl Host {
     fn standing_peers(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
-    ) -> Vec<(String, Person, Contact)> {
-        let mut keys: BTreeMap<String, (Person, Contact)> = BTreeMap::new();
+    ) -> Vec<(String, Named, Contact)> {
+        let mut keys: BTreeMap<String, (Named, Contact)> = BTreeMap::new();
         let relay = |a: &str| relay_of(groups, a);
         for (namespace, standing) in groups {
-            for (actor, person, key) in dialled(&self.actor, namespace, standing, relay) {
+            let meeting = self.meeting(namespace);
+            for (actor, person, key) in dialled(&self.actor, namespace, standing, &meeting, relay) {
                 if keys.contains_key(actor) {
                     continue;
                 }
                 let name = format!("{person}/{}", &actor[..8]);
                 tracing::debug!(target: "node", namespace, member = %name, "node: a member stands in the group, to dial");
-                keys.insert(actor.clone(), (person.clone(), key));
+                let named = Named {
+                    person: person.clone(),
+                    person_key: standing[actor].person_key.clone(),
+                };
+                keys.insert(actor.clone(), (named, key));
             }
         }
         keys.into_iter()
@@ -614,7 +766,7 @@ impl Host {
     /// `asker`'s, which knows its own, each computer asked now and all at
     /// once, each for at most [`ANSWER_WITHIN`], and where this computer
     /// reaches each lend. Nothing is kept between asks.
-    async fn lends_in(
+    pub(crate) async fn lends_in(
         &self,
         groups: &[(String, BTreeMap<String, Member>)],
         asker: Option<&str>,
@@ -637,13 +789,14 @@ impl Host {
         let mut lends = Lends::default();
         for ask in asks {
             match ask.await {
-                Ok((person, key, Answered::Lends(answered))) => {
+                Ok((named, key, Answered::Lends(answered, version))) => {
                     for offered in answered {
                         let Some(address) = self.origin(&key, offered.name.as_str()) else {
                             continue;
                         };
                         lends.lent.push(Lent {
-                            person: person.clone(),
+                            version,
+                            person: named.person.clone(),
                             key: key.clone(),
                             offered,
                             address,
@@ -686,8 +839,9 @@ pub(crate) fn relay_of<'a>(
 
 /// The keys standing in `namespace` that this node, `this`, dials: each a
 /// computer's ([`crate::Device::dialled`], u4-1) and an iroh key, with its
-/// person and the relay `relay` gives it — [`relay_of`] the groups held for
-/// the round and [`Node::lends`], the group's own for the live fan-out. The
+/// person, dialled at every relay of `meeting`, the group's, and the relay
+/// `relay` gives it — [`relay_of`] the groups held for the round and
+/// [`Node::lends`], the group's own for the live fan-out. The
 /// one decider the round, [`Node::lends`] and the live fan-out
 /// (`rail.rs`'s `live_peers`) ask, so a browser's key is skipped by all
 /// three or by none.
@@ -695,6 +849,7 @@ pub(crate) fn dialled<'a, 'r>(
     this: &str,
     namespace: &str,
     standing: &'a BTreeMap<String, Member>,
+    meeting: &Meeting,
     relay: impl Fn(&str) -> Option<&'r Url>,
 ) -> Vec<(&'a String, &'a Person, Contact)> {
     let mut out = Vec::new();
@@ -712,15 +867,16 @@ pub(crate) fn dialled<'a, 'r>(
             tracing::warn!(target: "node", namespace, actor, "node: a standing key is not an iroh key, so it is not dialled");
             continue;
         };
-        out.push((actor, person, Contact::named(key, relay(actor))));
+        out.push((actor, person, Contact::named(key, meeting, relay(actor))));
     }
     out
 }
 
 /// How a computer asked what it lends answered: a closed set (AGENTS 9),
 /// one for each of [`Unlisted`]'s lists and the list itself.
-enum Answered {
-    Lends(Vec<Offered>),
+pub(crate) enum Answered {
+    /// What it lends, and the version its answer carries.
+    Lends(Vec<Offered>, u32),
     Unanswered,
     Unheard,
     Refused,
@@ -731,8 +887,12 @@ enum Answered {
 /// one closes the connection as not admitted, read from that same dial
 /// (`demo/runs/first-minute/2026-10-12/`; arch-peer (c), where a second
 /// dial asked it once a request through the bridge had failed).
-async fn ask_lends(transport: &IrohTransport, actor: &str, contact: Contact) -> Answered {
-    let asked = axum::http::Request::get(LENDS_ROUTE).body(axum::body::Body::empty());
+pub(crate) async fn ask_lends(
+    transport: &IrohTransport,
+    actor: &str,
+    contact: Contact,
+) -> Answered {
+    let asked = axum::http::Request::get(LENDS_ROUTE).body(Default::default());
     let asked = asked.expect("a fixed route");
     match transport.fetch(&contact, asked).await {
         Ok(r) if r.status().is_success() => answered(actor, r.body()),
@@ -769,7 +929,7 @@ fn answered(actor: &str, body: &[u8]) -> Answered {
         }
         Ok(lends) => {
             tracing::debug!(target: "node", actor, lends = lends.len(), "node: lends — the computer answered");
-            Answered::Lends(lends)
+            Answered::Lends(lends, version.flatten().unwrap_or_default())
         }
         Err(e) => {
             tracing::debug!(target: "node", actor, error = %e, "node: lends — the answer is not a list of lends, so it is refused");
@@ -791,6 +951,9 @@ pub struct Lending {
     pub person: Person,
     pub key: String,
     pub relay: Option<String>,
+    /// The version its computer's answer carries, so a page opening it
+    /// knows whether its door takes a holder's link ([`crate::version`]).
+    pub version: u32,
     #[serde(flatten)]
     pub offered: Offered,
 }
@@ -810,6 +973,13 @@ pub(crate) struct Asking {
     pub(crate) door: crate::door::Door,
     pub(crate) folders: crate::folder::Folders,
     pub(crate) seeds: SeedText,
+    pub(crate) oidc: crate::oidc::Provider,
+    /// The room's handle: its turns, and what it serves now ([`crate::room`]).
+    pub(crate) room: crate::room::owner::Room,
+    /// Play's handle: its turns, and what it opens now ([`crate::play`]).
+    pub(crate) plays: crate::play::Plays,
+    /// Who opened the home page and each lend's origin ([`crate::session`]).
+    pub(crate) sessions: crate::session::Sessions,
 }
 
 fn people_router(asking: Asking) -> axum::Router {
@@ -817,6 +987,7 @@ fn people_router(asking: Asking) -> axum::Router {
         .route(PEOPLE_LENDS_ROUTE, get(people_lends))
         .route("/shelf", axum::routing::post(crate::folder::bring))
         .route("/runs", axum::routing::post(crate::folder::yes))
+        .route(CARRY_ROUTE, axum::routing::post(carry))
         .with_state(asking)
 }
 
@@ -827,7 +998,8 @@ fn people_router(asking: Asking) -> axum::Router {
 /// dials, which answers what it can see and proxies no lend (DESIGN §3,
 /// call 4). A group the dialer does not stand in adds nothing. Beside them,
 /// every removal and ask to remove in those groups, from each register
-/// (v1-keeper-office (b)): `null` when one cannot be read here; and the
+/// (v1-keeper-office (b)), and who is visiting them now (guests-pages;
+/// [`crate::rail::visiting`]): `null` when one cannot be read here; and the
 /// people standing in them, as `/v1/rail/people` answers them, for the
 /// door (v1ui-door (d)); each carried app whose files changed since the
 /// version that runs as the asker ([`crate::folder::Folders::changed`];
@@ -851,22 +1023,26 @@ async fn people_lends(
         return Err(err(StatusCode::FORBIDDEN, crate::door::LENDS_NOTHING));
     };
     let (lent, unlisted) = at.lent(&groups, &own, Some(&asker)).await?;
-    let removals = groups
+    let registers = groups
         .iter()
         .map(|(namespace, _)| {
-            at.host.rail.register(namespace).map(|r| r.removals).inspect_err(|e| {
-                tracing::warn!(target: "node", asker, namespace, error = %e, "node: people's lends — a group's register is unreadable, so its removals are not known");
+            at.host.rail.register(namespace).inspect_err(|e| {
+                tracing::warn!(target: "node", asker, namespace, error = %e, "node: people's lends — a group's register is unreadable, so its removals and who is visiting are not known");
             })
         })
         .collect::<Result<Vec<_>, _>>()
-        .ok()
-        .map(|each| each.concat());
+        .ok();
+    let (me, rs) = (at.host.actor.as_str(), registers.as_deref());
+    let removals: Option<Vec<_>> =
+        rs.map(|rs| rs.iter().flat_map(|r| r.removals.clone()).collect());
+    let on: Option<Vec<_>> = rs.and_then(|rs| rs.iter().map(|r| visiting(r, me)).collect());
     tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), ?unlisted,
         removals = ?removals.as_ref().map(Vec::len),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
     let mut body = serde_json::json!(unlisted);
     body["lent"] = serde_json::json!(lent);
     body["removals"] = serde_json::json!(removals);
+    body["visiting"] = serde_json::json!(on.map(|each| each.concat()));
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);
     body["shelf"] = crate::folder::shelf();
@@ -890,20 +1066,23 @@ impl Asking {
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
-        let mut lent: Vec<Lending> = offered
-            .into_iter()
-            .map(|offered| Lending {
-                person: own.clone(),
-                relay: relay_of(groups, &self.host.actor).map(ToString::to_string),
-                key: self.host.actor.clone(),
+        let mine = (offered.into_iter()).map(|o| {
+            (
+                own.clone(),
+                self.host.actor.clone(),
+                o,
+                crate::version::VERSION,
+            )
+        });
+        let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered, l.version));
+        let mut lent: Vec<Lending> = (mine.chain(theirs))
+            .map(|(person, key, offered, version)| Lending {
+                relay: relay_of(groups, &key).map(ToString::to_string),
+                version,
+                person,
+                key,
                 offered,
             })
-            .chain(others.lent.into_iter().map(|l| Lending {
-                person: l.person,
-                relay: relay_of(groups, &l.key).map(ToString::to_string),
-                key: l.key,
-                offered: l.offered,
-            }))
             .collect();
         // A carried app only in its own group (COMMUNITY_APPS §7, found
         // 3), each computer's copy listed, so a phone knows every computer
@@ -913,6 +1092,10 @@ impl Asking {
         lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
         });
+        // This computer's own copy of a carried app first, so the one copy
+        // a page opens is the one whose acts this computer signs as its own
+        // person (capability-signed).
+        lent.sort_by_key(|l| l.offered.group.is_some() && l.key != self.host.actor);
         Ok((lent, others.unlisted))
     }
 }
@@ -926,7 +1109,7 @@ impl Asking {
 fn admit_dialer(rail: &RingRail, alpn: &[u8], dialer: &PublicKey) -> Option<Alpn> {
     let actor = key_actor(dialer);
     match Alpn::of(alpn) {
-        Some(Alpn::Member) | Some(Alpn::Blobs) => {}
+        Some(Alpn::Member) | Some(Alpn::Blobs) | Some(Alpn::Port) => {}
         Some(Alpn::Redeem) => {
             tracing::debug!(target: "node", actor, "node: admitted to redeem a link — any dialer may");
             return Some(Alpn::Redeem);

@@ -185,6 +185,29 @@ pub enum Source {
     /// served by each computer holding it, from its store
     /// ([`crate::folder::Folders::carried`]): lent to that group alone.
     Carried(String),
+    /// A port on 127.0.0.1 carried as its own bytes, not a page's
+    /// (give-udp, give-tcp; `svrngs share <port> --udp` or `--tcp`): the
+    /// door's [`crate::alpn::Alpn::Port`], never its HTTP.
+    Raw(Raw, NonZeroU16),
+}
+
+/// How a raw lend's bytes travel, as its declaration says: `"raw": "udp"`
+/// or `"raw": "tcp"`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Raw {
+    Udp,
+    Tcp,
+}
+
+impl Raw {
+    /// Its name as a person reads it, and as the door's opening names it.
+    pub fn said(self) -> &'static str {
+        match self {
+            Raw::Udp => "UDP",
+            Raw::Tcp => "TCP",
+        }
+    }
 }
 
 /// A lend as its declaration says, or as its group's folder carries it:
@@ -208,10 +231,11 @@ pub struct Lend {
     /// a phone's page passes whoever opens it to the group's lends of each
     /// kind too, as that person (DESIGN §3, "Lent apps", call 6).
     pub reads: Vec<Kind>,
-    /// The port on 127.0.0.1 of the lender's program that signs each person
-    /// in (mwp-1, `svrngs share --sign-in`; `crate::door::sign_in`): a lend
-    /// declares it or a secret, never both.
-    pub sign_in: Option<NonZeroU16>,
+    /// Its sign-in with svrngs when it says so (SIGN_IN_WITH_SVRNGS §5,
+    /// "Turning it on"): the client id and secret its lender copies into
+    /// the app's own settings form. This is the one place the provider
+    /// reads them.
+    pub sign_in_with_svrngs: Option<SignInWithSvrngs>,
     /// What an app receives of it, in its lender's words (sup-2, `svrngs
     /// share --ask`): a lend that asks lets an app in only on its person's
     /// yes ([`crate::door::choices`]). svrngs carries the words to every
@@ -226,7 +250,7 @@ impl Lend {
     /// found 2); `None` for a folder's name that is not a kind's, traced
     /// as left out (#167).
     pub fn carried(kind: &str, group: &str) -> Option<Self> {
-        let name = format!("{kind}-{}", group.get(..16).unwrap_or(group));
+        let name = svrngs_core::pass::carried_name(kind, group);
         let (Ok(name), Ok(parsed)) = (LendName::parse(&name), Kind::parse(kind)) else {
             tracing::debug!(target: "folder", kind, group, "carried: left out, a folder under apps/ whose name no app can have");
             return None;
@@ -239,7 +263,7 @@ impl Lend {
             refused: Vec::new(),
             upload: None,
             reads: Vec::new(),
-            sign_in: None,
+            sign_in_with_svrngs: None,
             asks: None,
         })
     }
@@ -259,6 +283,9 @@ impl Lend {
 #[serde(deny_unknown_fields)]
 struct LendFile {
     port: NonZeroU16,
+    /// Absent for a page's port, as every declaration before give-udp is.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    raw: Option<Raw>,
     kind: Kind,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     limit: Option<NonZeroU16>,
@@ -273,9 +300,49 @@ struct LendFile {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     reads: Vec<Kind>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    sign_in: Option<NonZeroU16>,
+    sign_in_with_svrngs: Option<SignInWithSvrngs>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     asks: Option<String>,
+}
+
+/// The characters a sign-in client's id and secret may be made of
+/// (SIGN_IN_WITH_SVRNGS §5a, "Make the client id and secret from
+/// `[A-Za-z0-9-._~]` only, because clients disagree on encoding Basic
+/// credentials"): RFC 3986's unreserved set, and no others.
+pub fn client_alphabet(raw: &str) -> bool {
+    !raw.is_empty()
+        && raw
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
+}
+
+/// A lend's OpenID Connect client, as its lender's declaration keeps it
+/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9): the id and secret the
+/// lender copies into the app's form. A client with no secret asks as a
+/// public client. A field it does not know is refused, as the declaration
+/// refuses one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct SignInWithSvrngs {
+    pub client_id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub client_secret: Option<String>,
+}
+
+impl SignInWithSvrngs {
+    /// The client, when its id and secret are made from
+    /// [`client_alphabet`]'s characters: a declaration hand-edited to
+    /// another spelling is refused, never repaired.
+    pub fn checked(self) -> Result<Self, LendError> {
+        let ok = client_alphabet(&self.client_id)
+            && self.client_secret.as_deref().is_none_or(client_alphabet);
+        if ok {
+            Ok(self)
+        } else {
+            tracing::debug!(target: "lend", "lend: refused — a sign-in client is not made from letters, digits, - . _ and ~");
+            Err(LendError::NotAClient)
+        }
+    }
 }
 
 /// A lend as its lender's computer answers a member who asks what it
@@ -305,16 +372,16 @@ pub struct Offered {
     /// absent when it asks nobody.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub asks: Option<String>,
-    /// Whether its lender's program signs each person in, once (mwp-1,
-    /// `sign_in`): the pages say so of how it opens (v1ui-door (c)). A
-    /// computer that does not say runs an older svrngs, and its lends are
-    /// not read at all ([`crate::version`]).
-    pub signs_in: bool,
     /// The group that carries it, when its group's folder does (v1ui-shelf
     /// (a)): lent to that group alone, and one copy of it shown, whichever
     /// computer answers. Absent for a port's.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
+    /// How its bytes travel when it is a port's own, not a page's
+    /// (give-play): what the home page offers Play for. Absent for a page,
+    /// and from a computer whose svrngs lends no port.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw: Option<Raw>,
 }
 
 impl Offered {
@@ -354,10 +421,12 @@ pub enum LendError {
         path: PathBuf,
         source: serde_json::Error,
     },
-    #[error("{0} declares a secret and a sign-in: a lend declares one or the other")]
-    SecretAndSignIn(LendName),
     #[error("{0} is carried in its group's folder, never declared")]
     Carried(LendName),
+    #[error("a sign-in client's id and secret are made of letters, digits, - . _ and ~ only")]
+    NotAClient,
+    #[error("a lend declares its own password or a sign-in with svrngs, never both")]
+    TwoSecrets,
     #[error("{path} cannot be written: {source}")]
     Unwritable {
         path: PathBuf,
@@ -401,15 +470,19 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         .iter()
         .map(|r| RefusedPath::parse(r))
         .collect::<Result<_, _>>()?;
+    let sign_in_with_svrngs = file
+        .sign_in_with_svrngs
+        .map(SignInWithSvrngs::checked)
+        .transpose()?;
     Ok(Some(Lend {
         name: name.clone(),
-        source: Source::Port(file.port),
+        source: (file.raw).map_or(Source::Port(file.port), |r| Source::Raw(r, file.port)),
         kind: file.kind,
         limit: file.limit,
         refused,
         upload: file.upload,
         reads: file.reads,
-        sign_in: file.sign_in,
+        sign_in_with_svrngs,
         asks: file.asks,
     }))
 }
@@ -445,15 +518,16 @@ pub fn all(data_dir: &Path) -> Result<Vec<Result<Lend, LendError>>, LendError> {
 /// then the declaration, through a file renamed into place, so the door
 /// never reads half of one, nor a new one before its secret. A lend
 /// declared again replaces the last, its secret too: none given removes
-/// the one kept. A secret beside a sign-in is refused, nothing written.
+/// the one kept.
 pub fn declare(
     data_dir: &Path,
     lend: &Lend,
     secret: Option<(&str, &str)>,
 ) -> Result<(), LendError> {
-    if secret.is_some() && lend.sign_in.is_some() {
-        tracing::debug!(target: "lend", lend = %lend.name, "lend: refused — a secret and a sign-in both");
-        return Err(LendError::SecretAndSignIn(lend.name.clone()));
+    if secret.is_some() && lend.sign_in_with_svrngs.is_some() {
+        tracing::debug!(target: "lend", lend = %lend.name,
+            "lend: refused — a lend declares its own password or a sign-in with svrngs, never both");
+        return Err(LendError::TwoSecrets);
     }
     let secrets = secret_dir(data_dir, &lend.name);
     let unwritable = |path: &Path| {
@@ -470,7 +544,7 @@ pub fn declare(
     write(data_dir, lend)?;
     tracing::debug!(target: "lend", lend = %lend.name, source = ?lend.source, kind = %lend.kind,
         limit = ?lend.limit, refused = lend.refused.len(), upload = ?lend.upload.map(Upload::bps),
-        secret = secret.is_some(), sign_in = ?lend.sign_in, asks = lend.asks.is_some(),
+        secret = secret.is_some(), asks = lend.asks.is_some(),
         "lend: declared");
     Ok(())
 }
@@ -494,8 +568,10 @@ pub fn limit(
 
 /// `lend`'s declaration, through a file renamed into place.
 fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
-    let Source::Port(port) = lend.source else {
-        return Err(LendError::Carried(lend.name.clone()));
+    let (port, raw) = match lend.source {
+        Source::Port(port) => (port, None),
+        Source::Raw(raw, port) => (port, Some(raw)),
+        Source::Carried(_) => return Err(LendError::Carried(lend.name.clone())),
     };
     let dir = lends_dir(data_dir);
     std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
@@ -504,17 +580,26 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     })?;
     let file = LendFile {
         port,
+        raw,
         kind: lend.kind.clone(),
         limit: lend.limit,
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
         upload: lend.upload,
         reads: lend.reads.clone(),
-        sign_in: lend.sign_in,
+        sign_in_with_svrngs: lend.sign_in_with_svrngs.clone(),
         asks: lend.asks.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
-    crate::declared::write_whole(&dir.join(format!("{}.json", lend.name)), text.as_bytes())
-        .map_err(|(path, source)| LendError::Unwritable { path, source })
+    let path = dir.join(format!("{}.json", lend.name));
+    // A declaration holding the client secret is written the way this node
+    // writes a secret: 0600, and whole (SIGN_IN_WITH_SVRNGS §5, "Turning it
+    // on"). One with none keeps the ordinary whole write.
+    let write = if lend.sign_in_with_svrngs.is_some() {
+        crate::declared::write_secret(&path, text.as_bytes())
+    } else {
+        crate::declared::write_whole(&path, text.as_bytes())
+    };
+    write.map_err(|(path, source)| LendError::Unwritable { path, source })
 }
 
 /// Take back the lend `name`: its declaration, then its choices, then its

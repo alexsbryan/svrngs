@@ -1,0 +1,24 @@
+# svrngs leave — #211: a leave reaches every copy with the acts it covers (operator, 2026-10-21; demo/runs/leave/2026-10-21/SURVEY.md). Launch, from anywhere, once the tree is clean (one loop per tree):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py supervise --workdir ~/dev/svrngs \
+#     --queue leave --install-launchd -- python3 ~/dev/commonwealth-ai/scripts/ralph.py \
+#     run --workdir ~/dev/svrngs --queue leave --max-stall 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue leave
+#
+# The plist the first command writes carries no CARGO_INCREMENTAL=0. Add it
+# under EnvironmentVariables after any reinstall, because the host's disk is
+# shared.
+label = "svrngs-leave"
+session_timeout = 5400
+# One closing audit for the queue, none inside it (the operator, 2026-10-15 and
+# 2026-10-16: audits at the queue's end). Two units, so a cadence of 3 never
+# comes due inside it, and ralph adds the closing audit at the end.
+audit_every = 3
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "claude-opus-5-5"
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
+variant = "high"

@@ -4,7 +4,7 @@
 // is the app; the runtime folds its acts and has never heard of an expense.
 //
 // `reduce` folds this app's acts as the record orders them on every copy,
-// with voided ones gone: `actsOf` reads them from the record a member's node
+// with the ones their own author corrected gone: `actsOf` reads them from the record a member's node
 // serves over loopback (`GET /v1/rail/log`, DESIGN §3). Each act is
 // `{id, ts, by, via, op}`: `by` is the person the act speaks for — the person an
 // app named when it wrote for someone the door verified, else the person
@@ -22,6 +22,19 @@
 // wrote the expense paid; whoever wrote a share of it was in on it. No one can
 // write an expense in someone else's name, because the op has nowhere to put one.
 //
+// **A person is their first key, never their name** (keys-names; svrn-docs
+// rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4): two people called sam are two
+// balances, and one person's computer and phone are one. The name is for
+// saying, `state.names`; an answer from an older svrngs names no key, and is
+// kept by name, as it always was.
+//
+// **A correction counts only from the person whose act it corrects.** The
+// record voids an act whoever corrects it (svrngs-core admit.rs, `voided`), so
+// `actsOf` reads every act, voided ones too, and decides the voids itself, as
+// Events' fold does (apps/events/events.js, `voids`): Sam can fix the amount
+// he paid, and no one else can erase it. Anyone else's correction is a gap,
+// and changes nothing.
+//
 // **The remainder goes to whoever sorts first.** $10.00 three ways is
 // 334/333/333, never 333/333/333 with a penny evaporating. The rule is
 // arbitrary; what matters is that it is computable from the acts alone.
@@ -29,6 +42,11 @@
 // **Who shares an expense is who confirmed it, never who is in the group.**
 // The moment a split reads "everyone here", the same acts divide differently
 // once someone joins, and a newcomer silently re-divides every old expense.
+// The payer may name who was in on it (`named`, each by name, as the page
+// lists the group's people: `svrngs/acts` gives their names, and keys only
+// of those who acted): a name moves no one's money, and is only who the
+// expense waits on, until each says so themselves (a share) or says not
+// them (`NOT_IN`). The payer names; they never sign for anyone.
 //
 // **The state is JSON and nothing else** (tag e0-bot, DESIGN C4): no Set, no Map, no
 // Date, and nothing kept between calls in a module variable.
@@ -37,6 +55,7 @@ export const EXPENSE = 'expense';
 export const SHARE = 'share';
 export const SETTLE = 'settle';
 export const REMINDED = 'reminded';
+export const NOT_IN = 'not-in';
 const MAX_CENTS = 100_000_000;
 const MAX_WORDS = 100;
 
@@ -51,9 +70,22 @@ export function settleKey(from, to, cents, ts) {
   return JSON.stringify({ from, to, cents, day: Math.floor(ts / 86400) });
 }
 
+/**
+ * `people` in the order of their names, `names` saying each one's, then of
+ * themselves: the order the remainder goes in, so a book by key gives the
+ * penny to whom a book by name gave it. Never `localeCompare`, which a
+ * browser's locale moves.
+ */
+const byName = (people, names = {}) => {
+  const said = (p) => [has(names, p) ? names[p] : p, p];
+  return [...people].sort((a, b) =>
+    said(a)[0] < said(b)[0] ? -1 : said(a)[0] > said(b)[0] ? 1 : a < b ? -1 : a > b ? 1 : 0,
+  );
+};
+
 /** Divide `cents` between `people` (non-empty, no repeats), to the cent. */
-export function splitShares(cents, people) {
-  const sorted = [...people].sort();
+export function splitShares(cents, people, names) {
+  const sorted = byName(people, names);
   const base = Math.trunc(cents / sorted.length);
   const remainder = cents - base * sorted.length;
   return sorted.map((person, i) => [person, base + (i < remainder ? 1 : 0)]);
@@ -79,6 +111,38 @@ const isCents = (c) => Number.isSafeInteger(c) && c > 0 && c <= MAX_CENTS;
 // rather than store a value, and money would vanish from a sum.
 const isKey = (k) => typeof k === 'string' && k.length > 0 && k.length <= 200 && k !== '__proto__';
 const has = (map, k) => typeof k === 'string' && Object.prototype.hasOwnProperty.call(map, k);
+/** Whom an act is by: their first key, else, from an older svrngs, their name. */
+export const who = (act) => act.key ?? act.by;
+
+/**
+ * Whom a settlement pays: `to_key`, else the one person this book holds by
+ * the name `to`, as an older Money wrote it, else that name; null when two
+ * people of the book have it, since which is not said.
+ */
+function payee(state, op) {
+  if (op.to_key !== undefined) return op.to_key;
+  const named = Object.keys(state.names).filter((k) => state.names[k] === op.to);
+  return named.length > 1 ? null : (named[0] ?? op.to);
+}
+
+// A day from seconds, "3 Oct", in this computer's time, as svrngs's own
+// pages say it (crates/svrngs-node/src/home/question.js `day`).
+const day = (t, d = new Date(t * 1000)) =>
+  `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+
+/**
+ * How a page says the person whose first key is `key`, called `name`: by
+ * name, and where another of `spans` (`svrngs/acts`) has it too, with when
+ * they joined, "sam (joined 3 Oct)", as svrngs's own pages tell them apart
+ * (question.js `called`). No spans, from an older svrngs, is the name.
+ */
+export function called(spans, key, name) {
+  const same = (spans ?? []).filter((s) => s.person === name);
+  const s = same.find((x) => x.person_key === key);
+  return same.length > 1 && s
+    ? `${name} (${s.joined == null ? 'started the group' : `joined ${day(s.joined)}`})`
+    : name;
+}
 
 /**
  * Everything wrong with one act, as gaps. **The one validator**, for a writer
@@ -89,6 +153,7 @@ const has = (map, k) => typeof k === 'string' && Object.prototype.hasOwnProperty
  */
 export function validate(state, act) {
   const gap = (code, message) => ({ code, fatal: true, message });
+  if (isObject(act) && isObject(act.uncounted)) return [act.uncounted];
   if (!isObject(act) || !isObject(act.op) || !isKey(act.id) || !Number.isSafeInteger(act.ts)) {
     return [gap('not_an_act', 'an entry with nothing in it')];
   }
@@ -96,48 +161,141 @@ export function validate(state, act) {
   if (op.kind === REMINDED) {
     return isKey(op.due) ? [] : [gap('no_due', 'a reminder for nothing')];
   }
-  if (!isKey(by)) return [gap('no_one', 'an entry that no one in the chat wrote')];
-  if (op.kind === SHARE) {
-    return has(state.expenses, op.expense) ? [] : [gap('no_expense', 'a share of an expense that is not in the book')];
+  if (!isKey(by) || !isKey(who(act)))
+    return [gap('no_one', 'an entry that no one in the chat wrote')];
+  if (op.kind === SHARE || op.kind === NOT_IN) {
+    return has(state.expenses, op.expense)
+      ? []
+      : [gap('no_expense', 'a share of an expense that is not in the book')];
   }
   if (op.kind !== EXPENSE && op.kind !== SETTLE) {
     return [gap('unknown_kind', 'an entry a newer version of Expenses may know how to read')];
   }
   const gaps = [];
   if (!isCents(op.amount_cents)) {
-    gaps.push(gap('bad_amount', 'an amount that is not a whole number of cents between one cent and $1,000,000'));
+    gaps.push(
+      gap(
+        'bad_amount',
+        'an amount that is not a whole number of cents between one cent and $1,000,000',
+      ),
+    );
   }
   if (op.kind === EXPENSE && (typeof op.description !== 'string' || !op.description.trim())) {
     gaps.push(gap('no_description', 'an expense for nothing in particular'));
   }
-  if (op.kind === EXPENSE && typeof op.description === 'string' && op.description.length > MAX_WORDS) {
+  if (
+    op.kind === EXPENSE &&
+    typeof op.description === 'string' &&
+    op.description.length > MAX_WORDS
+  ) {
     gaps.push(gap('long_description', `a description over ${MAX_WORDS} characters`));
   }
-  if (op.kind === SETTLE && (!isKey(op.to) || op.to === by)) {
+  const named =
+    op.kind === EXPENSE && op.named !== undefined
+      ? Array.isArray(op.named)
+        ? op.named
+        : [null]
+      : [];
+  if (named.some((p, i) => !isKey(p) || p === by || named.indexOf(p) !== i))
+    gaps.push(gap('bad_named', 'naming someone who was in on it by no name, twice, or the payer'));
+  if (
+    op.kind === SETTLE &&
+    (!isKey(op.to) ||
+      (op.to_key !== undefined && !isKey(op.to_key)) ||
+      payee(state, op) === who(act))
+  ) {
     gaps.push(gap('bad_settle', 'paying back no one, or yourself'));
+  } else if (op.kind === SETTLE && payee(state, op) === null) {
+    gaps.push(gap('which_payee', `a payment to ${op.to}, and two people are called ${op.to}`));
   }
   return gaps;
 }
 
 /**
  * The acts `reduce` folds, from the record's answer to `GET /v1/rail/log`: its
- * ops in the record's order, less every op a correction voided and every op
- * that carries nothing for an app (the group's own acts, and a correction
- * that only voids). A correction's replacement is an act of its own, under
- * the correction's id. `by` is `on_behalf_of` when the op names one, else
- * its `person`; `via` is the `person` when `on_behalf_of` names another,
- * else null. A log with no list of ops is an error, never an empty book.
+ * ops in the record's order, less every op its own author's correction voided
+ * and every op that carries nothing for an app (the group's own acts, and a
+ * correction that only voids) — the record's `voided` is not read, as it
+ * voids whoever corrects. A correction's replacement is an act of its own,
+ * under the correction's id. A correction that counts for nothing is kept,
+ * carrying as `uncounted` the gap `validate` answers for it, so the page says
+ * so. `by` is `on_behalf_of` when the op names one, else its `person`, and `key`
+ * that person's first key: the writer's, or, when `on_behalf_of` names
+ * another, theirs where the record could say whose (`on_behalf_of_key`), else
+ * null; `via` is the `person` when `on_behalf_of` names another, else null.
+ * A log with no list of ops is an error, never an empty book.
  */
 export function actsOf(log) {
-  if (!Array.isArray(log?.ops)) throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
-  return log.ops
-    .filter((o) => !o.voided && o.payload != null)
-    .map((o) => ({ id: o.id, ts: o.ts_unix, by: o.on_behalf_of ?? o.person, via: o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null, op: o.payload }));
+  if (!Array.isArray(log?.ops))
+    throw new Error(`the record answered no list of acts: ${JSON.stringify(log)}`);
+  const other = (o) => o.on_behalf_of != null && o.on_behalf_of !== o.person;
+  const acts = log.ops
+    .filter((o) => o.payload != null || o.corrects != null)
+    .map((o) => ({
+      id: o.id,
+      ts: o.ts_unix,
+      by: o.on_behalf_of ?? o.person,
+      key: (other(o) ? o.on_behalf_of_key : o.person_key) ?? null,
+      via: other(o) ? o.person : null,
+      op: o.payload ?? null,
+      corrects: o.corrects ?? null,
+    }));
+  const { voided, uncounted } = voids(acts);
+  return acts
+    .filter((a) => !has(voided, a.id) && (a.op != null || has(uncounted, a.id)))
+    .map(({ corrects, ...a }) => (has(uncounted, a.id) ? { ...a, uncounted: uncounted[a.id] } : a));
+}
+
+// The same author, by first key where both acts carry one (capability-keys;
+// svrn-docs rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4), so two people of one
+// name are two and one person's devices one; else by name, as an act written
+// for someone through another's computer, or an older svrngs's, always was.
+const same = (a, b) => (a.key && b.key ? a.key === b.key : a.by === b.by);
+
+/**
+ * The acts voided, each by its own author's correction, and the corrections
+ * that count for nothing, each with its gap: one by someone else, or of an
+ * act this copy does not hold.
+ */
+function voids(acts) {
+  const byId = {};
+  const voided = {};
+  const uncounted = {};
+  for (const c of acts) {
+    if (isKey(c.id) && !has(byId, c.id)) byId[c.id] = c;
+    if (c.corrects == null) continue;
+    const was = has(byId, c.corrects) ? byId[c.corrects] : null;
+    if (was && same(was, c)) {
+      voided[c.corrects] = true;
+    } else {
+      uncounted[c.id] = was
+        ? {
+            code: 'not_theirs',
+            fatal: true,
+            message: `${c.by} tried to change ${was.by}’s entry, which only ${was.by} can change`,
+          }
+        : {
+            code: 'changes_unheld',
+            fatal: true,
+            message: `${c.by} changed an entry this copy does not hold yet`,
+          };
+    }
+  }
+  return { voided, uncounted };
 }
 
 /** The empty book. */
 export function init() {
-  return { balances: {}, expenses: {}, settled: {}, reminded: {}, since: {}, gaps: [], counted: 0 };
+  return {
+    balances: {},
+    expenses: {},
+    settled: {},
+    reminded: {},
+    since: {},
+    names: {},
+    gaps: [],
+    counted: 0,
+  };
 }
 
 /**
@@ -146,38 +304,58 @@ export function init() {
  */
 export function reduce(state, act) {
   const gaps = validate(state, act);
-  for (const g of gaps) state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
+  for (const g of gaps)
+    state.gaps.push({ ...g, id: isObject(act) && typeof act.id === 'string' ? act.id : null });
   if (gaps.length) return state;
   const { op, by, ts, id, via } = act;
+  const me = who(act);
+  if (op.kind !== REMINDED) state.names[me] = by;
   const move = (person, cents) => {
     state.balances[person] = (state.balances[person] || 0) + cents;
     state.since[person] = ts;
   };
   const split = (e, sign) => {
     move(e.payer, sign * e.amount_cents);
-    for (const [person, share] of splitShares(e.amount_cents, e.participants)) move(person, -sign * share);
+    for (const [person, share] of splitShares(e.amount_cents, e.participants, state.names))
+      move(person, -sign * share);
   };
 
   if (op.kind === EXPENSE) {
     // `vias`: whose computer wrote each person's part, where it was someone else's.
-    const e = { payer: by, amount_cents: op.amount_cents, description: op.description.trim(), participants: [by], vias: via ? { [by]: via } : {} };
+    const e = {
+      payer: me,
+      amount_cents: op.amount_cents,
+      description: op.description.trim(),
+      participants: [me],
+      vias: via ? { [me]: via } : {},
+      waiting: {},
+      not: {},
+    };
+    for (const p of op.named ?? []) e.waiting[p] = true;
     state.expenses[id] = e;
     split(e, 1);
   } else if (op.kind === SHARE) {
     const e = state.expenses[op.expense];
+    for (const said of [e.waiting, e.not]) delete said[by];
     // Confirming twice is confirming once.
-    if (e.participants.includes(by)) return state;
+    if (e.participants.includes(me)) return state;
     split(e, -1);
-    e.participants = [...e.participants, by].sort();
-    if (via) e.vias[by] = via;
+    e.participants = byName([...e.participants, me], state.names);
+    if (via) e.vias[me] = via;
     split(e, 1);
+  } else if (op.kind === NOT_IN) {
+    const e = state.expenses[op.expense];
+    if (!has(e.waiting, by)) return state;
+    e.not[by] = true;
+    delete e.waiting[by];
   } else if (op.kind === SETTLE) {
-    const key = settleKey(by, op.to, op.amount_cents, ts);
+    const to = payee(state, op);
+    const key = settleKey(me, to, op.amount_cents, ts);
     if (has(state.settled, key)) return state;
     state.settled[key] = true;
     // `by` hands money over, so their debt shrinks; `to` receives it.
-    move(by, op.amount_cents);
-    move(op.to, -op.amount_cents);
+    move(me, op.amount_cents);
+    move(to, -op.amount_cents);
   } else {
     if (has(state.reminded, op.due)) return state;
     state.reminded[op.due] = true;
@@ -186,17 +364,18 @@ export function reduce(state, act) {
   return state;
 }
 
-/** Who pays whom to settle everything, fewest payments first by size. */
-export function transfers(balances) {
+/** Who pays whom to settle everything, fewest payments first by size, then by name. */
+export function transfers(balances, names) {
+  const order = byName(Object.keys(balances), names);
   const side = (sign) =>
-    Object.entries(balances)
-      .filter(([, c]) => sign * c > 0)
-      .map(([p, c]) => [p, Math.abs(c)])
-      .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1));
+    order
+      .filter((p) => sign * balances[p] > 0)
+      .map((p) => [p, Math.abs(balances[p])])
+      .sort((a, b) => b[1] - a[1] || order.indexOf(a[0]) - order.indexOf(b[0]));
   const owers = side(-1);
   const owed = side(1);
   const out = [];
-  for (let i = 0, j = 0; i < owers.length && j < owed.length; ) {
+  for (let i = 0, j = 0; i < owers.length && j < owed.length;) {
     const cents = Math.min(owers[i][1], owed[j][1]);
     out.push({ from: owers[i][0], to: owed[j][0], cents });
     owers[i][1] -= cents;

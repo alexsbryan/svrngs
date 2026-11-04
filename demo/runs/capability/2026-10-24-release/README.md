@@ -1,0 +1,92 @@
+# capability-release, 2026-10-24
+
+The queue's last row (`ralph/next/capability/STATE.md`): DESIGN's rules this
+queue changed, rewritten in place; PLAN §2's Waits; the demo scenes on
+today's paths; `RELEASES.md`; and the publish, written for the operator in
+`NEEDS_HUMAN.md`, never run.
+
+## What changed, by commit
+
+- 7e2e3408: the trust floor's header and DESIGN §3's containment promise
+  say what the floor keeps out, and what it does not (WHAT_CAN_ACT_AS_YOU
+  §5). Only comment lines in the floor; `scripts/trust_check.py` passed
+  after it.
+- 939b0c46: DESIGN §1, §3 and §6: an entry's author is its signer, the
+  keeper's cutover, a yes by first key, each yes under "What acts as you".
+- 9970903a: PLAN §1 says the queue landed; §2 gains its four Waits, each
+  with its trigger, and loses the phone's-write row it built.
+- b52aac49: `demo/a.md`, `b.md`, `c.md`, `apps/jellyfin/ROOM.md` on
+  today's Jellyfin paths; `demo/events.md` step 12 says why no answer
+  comes "through Sam's computer".
+- a652cc0f: `RELEASES.md`. Its body cites each claim's commit; one
+  citation there is wrong: the trade's claim names "64c4e0e8", which is no
+  commit. It is 7e2e3408 (above).
+
+## Each claim in the release notes, and its row's commit
+
+| The notes say | Row | Commit |
+|---|---|---|
+| the open says what an app does, and is the yes | capability-open | d55b5506 |
+| "Say yes on your home page", one tap there | capability-open | d55b5506 |
+| "What acts as you", each line's Stop, 12 hours on a phone | capability-what-acts | 36aa173f |
+| "1 app changed. See what’s new", "Open the new version" | capability-what-acts | 0573f402, 36aa173f |
+| only your own phone or computer writes as you | capability-signed | 686cc567, 1dac79bf, d7bf8f16 |
+| nobody else's computer chooses what runs as you | capability-signed | dd932d60 |
+| an older svrngs's entries still read "through cy’s computer", and count | capability-signed | 88353ae4, 1dac79bf |
+| a phone may ask once; nobody on a computer is asked | capability-signed | dd932d60, d7bf8f16 |
+| two people of one name stay two, "Ana (joined 3 Oct)" | capability-keys | a809c6d5, f7b28d01 |
+| Money counts a correction only from its author | capability-money, capability-keys | fd3347ac, 1bd20af4 |
+| the phone's key stays where an app's pages can't copy it | capability-signed | 0c9032ed |
+| a frame or a form held to its page's rule | capability-navigation | 8185a48d, c08db75d |
+| what an app you open can do, the trade | capability-release | 7e2e3408 |
+| an older friend's computer: writes wait, and the words | capability-signed | 0c9032ed |
+| update every computer | capability-signed | dcd8c4a3, 3caa06f5 |
+| a phone's House rules agreement signed on the phone | capability-signed | 686cc567 |
+| `person_key`; the record API only as you; `x-svrngs-append` | capability-keys, capability-signed | a809c6d5, 1dac79bf, ca4327a5 |
+| every scene on each check | capability-scenes | f15184ce |
+| the last full check, 838 s | capability-keys | c7e81354 |
+| about 4 ms more on 72 ms per 2,000 entries | capability-signed | 0e20661a (`../../authorship/2026-10-24/COST.md`) |
+
+## The size budget
+
+`python3 scripts/lean_check.py` after the last commit here, inside the
+operator's ceiling of 18,325 and 3,330 (CHARTER): this row changes no
+counted line.
+
+```
+crates/svrngs-core     3298 / 3299 lines
+.                     18284 / 18285 lines
+```
+
+## The close
+
+`scripts/check.sh`, once, at the close: below, from its await log.
+
+`scripts/check.sh` exited 0 at 95a31192 in 845 s
+(`ralph/next/capability/ctl/log/sessions/capability-release-1.await.log`,
+its last line "note took 845 s in all"): the principles, lean and
+RUST_ARCH, the trust floor, rustfmt, clippy and the tests passed, and every
+scene passed in Chromium and WebKit. One WebKit seek through a wildcard
+lend took 5,449 ms of its 5 s ("bo", failed), a rate the gate reports and
+does not fail on; 208 of the 242 runs since 2026-10-22 ended at a load
+above 12 cores.
+
+After the close, the queue's closing audit (76773638) and the note on
+what capability-keys left keyed by name (0c9dc094) landed. Publish from
+0c9dc094: `scripts/check.sh` exited 0 there in 801 s, all 25 steps passed
+and none failed or never ran, run by the director with
+`CARGO_INCREMENTAL=0 scripts/check.sh` in the loops' tree on 2026-10-25.
+
+## Published
+
+V1.2, 25 October 2026, at the operator's word ("Ok release it"), by the
+package's steps: a worktree detached at 0c9dc094, `npm ci --prefix web`,
+`git tag v1.2 0c9dc094` (local), `CARGO_INCREMENTAL=0
+scripts/deploy-page.sh` (exit 0; all four platforms built), deployment
+dpl_Eo4QRxtZYCczyxEnJFCtekznSksc aliased to `group.svrnme.sh`. Read back:
+`curl -fsS https://group.svrnme.sh/get/SHA256SUMS` equals the built
+`get/SHA256SUMS`; the live `index.html` and `app.js` hash as built; the
+darwin-aarch64 tarball fetched hashes to its line; the live
+Content-Security-Policy equals `web/vercel.json`'s. `.vercel` and
+`.env.local` removed from the upload directory, the worktree removed.
+Not pushed: main and the tag `v1.2` are the operator's to push.

@@ -1,0 +1,67 @@
+## plant: the door carrying a guest as its host (GUESTS §7 bar 1)
+crates/svrngs-node/src/door.rs
+-           actor: PersonKey(pass.person.clone()),
+-           device: DeviceKey(pass.person),
+-           group,
+-           person: guest.visit.guest,
+-           host: Some(host),
++           actor: PersonKey(guest.host.clone()),
++           device: DeviceKey(guest.host.clone()),
++           group,
++           person: host,
++           host: None,
+guests::sam_opens_kims_jellyfin_as_kims_guest --- FAILED
+thread 'guests::sam_opens_kims_jellyfin_as_kims_guest' (68493966) panicked at crates/svrngs-node/tests/door/guests.rs:112:5:
+assertion `left == right` failed: GET /whoami HTTP/1.1
+x-svrngs-person: Kim
+x-svrngs-key: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+x-svrngs-user: Kim-8a88e3dd7409f195
+x-svrngs-device: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+x-svrngs-app: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr
+x-svrngs-label: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr
+x-svrngs-pages: house=none
+  left: ["Kim"]
+ right: ["Sam (Kim's guest)"]
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 35 filtered out; finished in 5.18s
+error: test failed, to rerun pass `-p svrngs-node --test door`
+exit 101
+
+## plant: a visit opening a lend of Bo's (bar 2's first half)
+crates/svrngs-node/src/door.rs
+-   let own = guest.host == me && matches!(lend.source, Source::Port(_));
++   let own = true;
+guests::sam_opens_no_lend_of_bos_nor_one_kim_did_not_open --- FAILED
+thread 'guests::sam_opens_no_lend_of_bos_nor_one_kim_did_not_open' (68494772) panicked at crates/svrngs-node/tests/door/guests.rs:136:5:
+assertion `left == right` failed: HTTP/1.1 200 OK
+  left: 200
+ right: 403
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 35 filtered out; finished in 4.59s
+error: test failed, to rerun pass `-p svrngs-node --test door`
+exit 101
+
+## plant: a lapsed visit still opening: the door not asking whether it is live (bar 4)
+crates/svrngs-node/src/door.rs
+-   let live = guest.live(&register.cut, now);
+-       let gone = register.cut.get(&guest.host).is_some_and(|c| c.at <= now);
+-       let stopped = guest.stopped.is_some_and(|s| s <= now);
++   let (live, gone, stopped) = (true, false, false);
+guests::sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave --- FAILED
+thread 'guests::sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave' (68496491) panicked at crates/svrngs-node/tests/door/guests.rs:234:5:
+    "time: wanted \"your visit with Kim is over: its time is up\", got HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:11:22 GMT\r\n\r\nok",
+    "stop: wanted \"Kim ended your visit\", got HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:11:23 GMT\r\n\r\nok",
+    "leave: wanted \"Kim is no longer a member, so your visit ended\", got HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:11:24 GMT\r\n\r\nok",
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 35 filtered out; finished in 5.26s
+error: test failed, to rerun pass `-p svrngs-node --test door`
+exit 101
+
+## plant: the runtime's kept fold of standing keeping no Correct, so a stopped visit reads as live (bar 4, at Kim's Stop)
+crates/svrngs-runtime/src/journal.rs
+-   if read_by_standing(op) || self.named.contains(&op.actor) {
++   if op.kind.act.moves_membership() || self.named.contains(&op.actor) {
+guests::sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave --- FAILED
+thread 'guests::sams_visit_ends_at_its_time_at_kims_stop_and_at_kims_leave' (68498235) panicked at crates/svrngs-node/tests/door/guests.rs:234:5:
+    "stop: wanted \"Kim ended your visit\", got HTTP/1.1 200 OK\r\ncontent-length: 2\r\nconnection: close\r\ndate: Tue, 20 Oct 2026 06:11:56 GMT\r\n\r\nok",
+test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 35 filtered out; finished in 4.61s
+error: test failed, to rerun pass `-p svrngs-node --test door`
+exit 101
+

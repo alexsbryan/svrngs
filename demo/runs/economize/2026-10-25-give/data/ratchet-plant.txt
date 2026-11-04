@@ -1,0 +1,12 @@
+$ printf "x = 1
+" > scripts/plant_ratchet.py; printf "pub const PLANT: u8 = 1;
+" >> crates/svrngs-core/src/alpn.rs; python3 scripts/lean_check.py
+crates/svrngs-core     3239 / 3239 lines
+.                     18229 / 18228 lines
+BROKEN  crates/svrngs-core has 3239 lines of code, budget 3239: raised only by the operator, with the reason in the commit
+BROKEN  . has 18229 lines of code, budget 18228: raised only by the operator, with the reason in the commit
+exit 1
+$ rm scripts/plant_ratchet.py; git checkout crates/svrngs-core/src/alpn.rs; python3 scripts/lean_check.py
+crates/svrngs-core     3238 / 3239 lines
+.                     18227 / 18228 lines
+exit 0

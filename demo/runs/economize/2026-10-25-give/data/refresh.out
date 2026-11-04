@@ -1,0 +1,12 @@
+svrnmesh: bridged 1 legacy SOVEREIGN_* env var(s) to SVRNMESH_* (the SOVEREIGN_* prefix is deprecated — update your scripts)
+  ⚠ Daemon nudge failed: 404 Not Found: {"error":"give-econ-corpus is not registered; run `sovereign project register` first"}
+    Falling back to local in-process rebuild.
+  Refreshing call graph...
+  ⚠ SCIP DB schema v0 is stale (current: v3); resetting.
+    Exporting rust...          ✓ rust: 11926 symbols, 63974 references    
+    Exporting typescript...          ⚠ typescript: skipped (export failed)    
+    Exporting python...          ⚠ python: skipped (export failed)    
+    ✓ 11926 symbols (+11926)
+    ✓ 63974 edges (+63974)
+    ✓ Done in 22 seconds
+  ✓ LanceDB index current — skipping (pass --rebuild-index to force).

@@ -25,7 +25,8 @@
 //! how many it lets in at once, a number or everyone, or no longer lent —
 //! written to its declaration, which the door reads at its next request;
 //! **a link to a group** (`POST /link`, start-home), made as `svrngs
-//! link` makes it, in the group's record; **a group's folder opened**
+//! link` makes it, in the group's record; **a guest's visit stopped** by
+//! its host (`POST /visits`, guests-pages); **a group's folder opened**
 //! in this computer's file browser (`POST /folder`, start-home); and **a
 //! group made** by the svrngs running here, as `svrngs new` makes one
 //! (`POST /group`, start-group; the node's group.rs `Asking::found`);
@@ -36,8 +37,15 @@
 //! (`POST /runs`; canon-pin (c)), each in the group's folder or record; and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
-//! `GET /running` offers, every port that answers here and is not lent,
-//! nor signs people in to a lend ([`share::signs_in`], said once why).
+//! `GET /running` offers, every port that answers here and is not lent;
+//! and **a lend opened to this WiFi, or closed** (`POST /v1/room`, the room's
+//! one route, [`crate::room`], which `svrngs room` asks too); **a port
+//! lent opened on this computer while Play is on, or closed** (`POST
+//! /v1/play`, [`crate::play`]); and **an app
+//! opened by its button, which is the person's yes to it reaching their
+//! friends' lends as them** (`POST /reaching`, a form; capability-open),
+//! **or that yes stopped**, each listed under "What acts as you" (`GET
+//! /reaching`; capability-what-acts).
 //! The person's yes and stop are
 //! kept by this computer's door for its own lend, else dialled to the
 //! lender's door on the members' protocol as this computer's key
@@ -48,9 +56,9 @@ use axum::extract::{rejection::JsonRejection, Query, Request, State};
 use axum::http::header::{self, HeaderValue};
 use axum::http::{Method, StatusCode};
 use axum::middleware::Next;
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::get;
-use axum::{Json, Router};
+use axum::{Form, Json, Router};
 use serde::Deserialize;
 use std::num::NonZeroU16;
 use std::process::Command;
@@ -67,6 +75,9 @@ use crate::share::{self, Share, ShareRefusal};
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
 
+/// What a lend's change that could not be written says.
+const UNCHANGED: &str = "that cannot be changed on this computer";
+
 const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 
 /// When a person joined, as the page says it (home.js `people`) and
@@ -76,25 +87,23 @@ const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
 /// it by hand.
 pub const WHEN: &str = "%Y-%m-%d %H:%M:%S %z";
 
-/// The home page's one module.
-const MODULE: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "text/javascript")],
-    include_str!("home/home.js"),
-);
-
-/// svrngs's question and what apps use, in the one wording the group's page
-/// loads too (`scripts/build-web.sh` gives it the same file).
-const QUESTION: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "text/javascript")],
-    include_str!("home/question.js"),
-);
-
-/// Its look, svrngs's one look, a file of its own since its policy runs no
-/// inline style; the group's page is given the same file (`scripts/build-web.sh`).
-const LOOK: ([(header::HeaderName, &str); 1], &str) = (
-    [(header::CONTENT_TYPE, "text/css")],
-    include_str!("home/look.css"),
-);
+/// The home page's files, as built in: one table of each one's path, type
+/// and body, its root module; svrngs's words, in the one wording the
+/// group's page loads too (`scripts/build-web.sh` gives it the same file);
+/// its look, svrngs's one look, a file of its own since its policy runs no
+/// inline style, which the group's page is given too; and the tab's icon,
+/// the svrngs mark's small cut, from its one home (docs/brand/). Then each
+/// module the root imports, by name under its directory: a flow's at
+/// `/page/`, the parts both pages draw with at `/ui/`, and the vendored
+/// Preact and htm at `/vendor/` (web/vendor/README.md). A path no name
+/// makes is 404, so nothing beside these files is reached
+/// (tests/home.rs, `the_home_page_s_modules_are_served_each_as_its_file`).
+macro_rules! served {
+    ($($path:literal $kind:literal $body:literal)* $(; $at:literal $dir:literal [$($name:literal)*])*) => {
+        Router::new()$(.route($path, get(|| async { ([(header::CONTENT_TYPE, $kind)], include_str!($body)) })))*
+            $($(.route(concat!($at, $name, ".js"), get(|| async { ([(header::CONTENT_TYPE, "text/javascript")], include_str!(concat!($dir, $name, ".js"))) })))*)*
+    };
+}
 
 /// Whether `host` names the home page, at any port: [`only_itself`] holds
 /// it to this listener's.
@@ -120,34 +129,43 @@ pub(crate) fn ask_address(port: u16, lend: &Label, app: &Label) -> String {
 /// is answered here, any other at its lend's origin.
 pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     let page = || async { axum::response::Html(include_str!("home/index.html")) };
-    let home = Router::new()
-        .route("/", get(page))
-        .route("/ask", get(page))
-        .route("/home.js", get(|| async { MODULE }))
-        .route("/question.js", get(|| async { QUESTION }))
-        .route("/look.css", get(|| async { LOOK }))
-        .route("/choices", get(choices).post(choose))
-        .route("/lent", get(lent).post(change))
-        .route("/running", get(running).post(lend_one))
-        .route("/helper/{kind}", get(steps))
-        .route("/link", axum::routing::post(link))
-        .route("/folder", axum::routing::post(open))
-        .route("/shelf", axum::routing::post(crate::folder::bring))
-        .route("/runs", axum::routing::post(crate::folder::yes))
-        .route("/group", get(namesakes).post(found))
-        .route("/join", get(asked).post(join))
-        .with_state(at.clone())
-        .merge(
-            Router::new()
-                .route("/v1/rail/people", get(crate::rail::people))
-                .with_state(rail),
-        )
-        .merge(crate::surface::router(at.clone()))
-        .merge(crate::removal::router(at.clone()))
-        .layer(axum::middleware::from_fn_with_state(
-            at.clone(),
-            only_itself,
-        ));
+    let home = served! {
+        "/home.js" "text/javascript" "home/home.js"
+        "/question.js" "text/javascript" "home/question.js"
+        "/look.css" "text/css" "home/look.css"
+        "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
+        "/page/" "home/page/" ["acting" "acts" "acts-read" "address-copy" "address-copying" "ask" "asked" "asking" "door" "folder" "folders" "found" "group" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "group-told" "groups-left" "home-page" "home-reading" "how-it-opens" "index" "index-rows" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lend-row" "lending" "lent-read" "lent-row" "link-box" "link-copy" "link-said" "links" "make" "make-form" "offered" "on-screen" "open" "open-link" "people" "play" "play-cell" "reach" "removals" "routes" "running" "running-here" "running-look" "screen" "screen-link" "shelf" "signing-on" "since-opened" "stop-visit" "visit" "visits" "what-you-lend" "wifi" "wifi-foot"];
+        "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
+        "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
+    }
+    .route("/", get(page))
+    .route("/ask", get(page))
+    .route("/to", get(to))
+    .route("/choices", get(choices).post(choose))
+    .route("/reaching", get(reached).post(reaching))
+    .route("/lent", get(lent).post(change))
+    .route("/running", get(running).post(lend_one))
+    .route("/link", axum::routing::post(link))
+    .route("/visits", axum::routing::post(stop))
+    .route("/folder", axum::routing::post(open))
+    .route("/shelf", axum::routing::post(crate::folder::bring))
+    .route("/runs", axum::routing::post(crate::folder::yes))
+    .route("/group", get(namesakes).post(found))
+    .route("/join", get(asked).post(join))
+    .with_state(at.clone())
+    .merge(
+        Router::new()
+            .route("/v1/rail/people", get(crate::rail::people))
+            .with_state(rail),
+    )
+    .merge(crate::surface::router(at.clone()))
+    .merge(crate::removal::router(at.clone()))
+    .merge(crate::room::route::router(at.clone()))
+    .merge(crate::play::router(at.clone()));
+    let home = home.layer(axum::middleware::from_fn_with_state(
+        at.clone(),
+        only_itself,
+    ));
     let lends = crate::origin::router(at);
     Router::new().fallback(|req: Request| async move {
         use tower::ServiceExt;
@@ -161,7 +179,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
 }
 
 /// The home page's one rule (the module doc), and its policy on every answer.
-async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Response {
+async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> Response {
     let own = format!("{HOST}:{}", at.host.api_port);
     let ([site, mode, origin, host], own_page) = crate::origin::fetch(req.headers());
     let at_own = host.is_some_and(|h| h.eq_ignore_ascii_case(&own));
@@ -172,12 +190,42 @@ async fn only_itself(State(at): State<Asking>, req: Request, next: Next) -> Resp
         } else {
             site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
-    tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers,
-        "home: answered only from itself, a typed address or, to read, a navigation");
-    let mut answer = if answers {
+    if at_own {
+        if let Some(mut answer) = at.sessions.public(crate::session::HOME, &req) {
+            answer.headers_mut().insert(
+                header::CONTENT_SECURITY_POLICY,
+                HeaderValue::from_static(POLICY),
+            );
+            return answer;
+        }
+    }
+    let shown = at.sessions.shown(&req, crate::session::HOME);
+    let opening = at_own && req.uri().path() == crate::session::OPEN_PATH;
+    tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers, ?shown, opening,
+        "home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation");
+    let intent = req
+        .headers()
+        .get("x-svrngs-intent")
+        .is_some_and(|h| h == "yes");
+    let closed = || LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself");
+    let mut answer = if opening {
+        at.sessions.redeem(crate::session::HOME, &req)
+    } else if shown == crate::session::Shown::Neither {
+        tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — neither its session's proof nor the token");
+        at.sessions.refused("")
+    } else if !answers {
+        tracing::debug!(target: "home", path = %req.uri().path(), ?site, ?origin, "home: refused — not from itself, a typed address or, to read, a navigation");
+        closed()
+    } else if shown == crate::session::Shown::Token || reads {
         next.run(req).await
+    } else if !intent {
+        tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — a write its session proved, without its own page's intent");
+        closed()
+    } else if !at.sessions.body_matches(&mut req).await {
+        tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — a write whose body is not the one its proof signed");
+        closed()
     } else {
-        LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself")
+        next.run(req).await
     };
     answer.headers_mut().insert(
         header::CONTENT_SECURITY_POLICY,
@@ -200,6 +248,63 @@ async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
     say(&at, &c.lend, c.app, c.said, None).await
 }
 
+/// The app the person opens from its button on this page, or stops from
+/// "What acts as you", `said` stop.
+#[derive(Deserialize)]
+struct Opening {
+    app: Label,
+    said: Option<Said>,
+}
+
+/// `POST /reaching`, a form the open button posts in a tab of its own:
+/// the person's yes to the app reaching others' lends as them, kept
+/// ([`crate::door::choices::own_reaching`]), then the app's own page; or
+/// its Stop, then this page again, the stop held from the app's next
+/// request ([`crate::surface::reaches`]).
+async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response {
+    let said = o.said.unwrap_or(Said::Yes);
+    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), said).await;
+    tracing::debug!(target: "home", app = %o.app, ?said, status = kept.status().as_u16(), "home: an app opened from its button or stopped, what was said kept");
+    if !kept.status().is_success() {
+        return kept;
+    }
+    let to = match said {
+        Said::Yes => at.sessions.open(o.app.as_str(), None),
+        Said::Stop => "/".into(),
+    };
+    Redirect::to(&to).into_response()
+}
+
+/// A lend the page opens, at a path there.
+#[derive(Deserialize)]
+struct To {
+    lend: Label,
+    at: Option<String>,
+}
+
+/// `GET /to?lend=&at=`: the lend opened from this page at its origin, with
+/// a code for that origin alone, which becomes its session there
+/// ([`crate::session`]; give-session).
+async fn to(State(at): State<Asking>, Query(t): Query<To>) -> Redirect {
+    Redirect::to(&at.sessions.open(t.lend.as_str(), t.at.as_deref()))
+}
+
+/// `GET /reaching`: what the person said of each app reaching others'
+/// lends as them, and when, for "What acts as you"; nothing on a computer
+/// in no group, which has no person to say it.
+async fn reached(State(at): State<Asking>) -> Response {
+    let kept = crate::door::choices::reachings(&at.door);
+    let answered = match kept {
+        Ok(kept) => Json(kept).into_response(),
+        Err(r) if r.status() == StatusCode::FORBIDDEN => {
+            Json(serde_json::json!({})).into_response()
+        }
+        Err(refused) => refused,
+    };
+    tracing::debug!(target: "home", status = answered.status().as_u16(), "home: what was said of apps reaching others' lends, asked");
+    answered
+}
+
 /// What the person changes of a lend this computer lends.
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -214,16 +319,32 @@ struct Changing {
 #[serde(rename_all = "lowercase")]
 enum LendChange {
     Limit(Option<NonZeroU16>),
+    /// The lender turns on signing people in with svrngs for it.
+    #[serde(rename = "sign-in")]
+    SignIn,
     Stop,
 }
 
 /// `GET /lent`: what this computer lends, each with how many it lets in at
-/// once and how many use it now, as a member asking is told it.
+/// once and how many use it now, as a member asking is told it, and the
+/// lends that sign people in with svrngs: their secret is never in this
+/// answer (SIGN_IN_WITH_SVRNGS §5, "Turning it on").
 async fn lent(State(at): State<Asking>) -> Response {
-    match crate::door::offered(&at.door).await {
-        Ok(lent) => Json(serde_json::json!({ "lent": lent })).into_response(),
-        Err(refused) => refused,
-    }
+    let (lent, all) = match (
+        crate::door::offered(&at.door).await,
+        lend::all(&at.door.data_dir),
+    ) {
+        (Ok(lent), Ok(all)) => (lent, all),
+        (Err(refused), _) => return refused,
+        (_, Err(e)) => return unread("it cannot read what you lend already", &e),
+    };
+    let signing: Vec<String> = all
+        .into_iter()
+        .flatten()
+        .filter(|l| l.sign_in_with_svrngs.is_some())
+        .map(|l| l.name.to_string())
+        .collect();
+    Json(serde_json::json!({ "lent": lent, "signing": signing })).into_response()
 }
 
 /// `POST /lent`: the person's change, written to the lend's declaration.
@@ -232,6 +353,7 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     let done = match c.to {
         LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
         LendChange::Stop => lend::withdraw(dir, &c.lend),
+        LendChange::SignIn => return sign_in(&at, &c.lend).await,
     };
     tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
@@ -241,31 +363,67 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         }
         Err(e) => {
             tracing::warn!(target: "home", lend = %c.lend, error = %e, "home: refused — the lend's declaration cannot be changed");
-            LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "that cannot be changed on this computer",
-            )
+            LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED)
         }
     }
 }
 
-/// A port as the page shows it ([`share::listening`]): the kind the table
-/// knows, how that kind signs each person in and the paths svrngs keeps
-/// back of it, whether its helper answers, if it has one, and its name
-/// once lent.
-fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
-    let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
-    let helper = kind.and_then(share::helper_of).map(share::listens); // whether it answers
-    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "helper": helper })
+/// `POST /lent` with `to: "sign-in"`: a client id and secret for `name`,
+/// kept in its declaration at 0600, answered with the issuer and the
+/// deviations once (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). The
+/// page shows them the once; `GET /lent` says only that it signs people in.
+async fn sign_in(at: &Asking, name: &LendName) -> Response {
+    let dir = &at.door.data_dir;
+    let mut lend = match lend::read(dir, name) {
+        Ok(Some(lend)) => lend,
+        Ok(None) => {
+            tracing::debug!(target: "home", lend = %name, "home: refused — nothing is lent by that name");
+            return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "you lend nothing by that name");
+        }
+        Err(e) => {
+            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be read");
+            return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED);
+        }
+    };
+    if lend.sign_in_with_svrngs.is_some() {
+        tracing::debug!(target: "home", lend = %name, "home: refused — it signs people in with svrngs already");
+        return LendRefusal::Closed.say(
+            StatusCode::CONFLICT,
+            format!("{name} already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."),
+        );
+    }
+    let client = match crate::oidc::client() {
+        Ok(client) => client,
+        Err(e) => {
+            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — no sign-in client can be made");
+            return LendRefusal::Fault.say(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "this computer cannot make a sign-in for it",
+            );
+        }
+    };
+    lend.sign_in_with_svrngs = Some(client.clone());
+    if let Err(e) = lend::declare(dir, &lend, None) {
+        tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be changed");
+        return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED);
+    }
+    let issuer = crate::oidc::issuer(at.host.api_port, name.as_str());
+    tracing::debug!(target: "home", lend = %name, %issuer, "home: it signs people in with svrngs now");
+    Json(serde_json::json!({
+        "issuer": issuer,
+        "client_id": client.client_id,
+        "client_secret": client.client_secret,
+        "deviations": crate::oidc::DEVIATIONS,
+    }))
+    .into_response()
 }
 
-/// `GET /helper/<kind>`: the steps to start the kind's sign-in helper, as
-/// the table names them ([`share::HELPERS`]), for the page to link.
-async fn steps(axum::extract::Path(kind): axum::extract::Path<String>) -> Response {
-    let none = || LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "svrngs knows no helper for that");
-    let steps = share::HELPERS.iter().find(|(k, _)| *k == kind);
-    tracing::debug!(target: "home", kind, found = steps.is_some(), "home: a kind's helper's steps asked, refused where svrngs knows none");
-    steps.map_or_else(none, |(_, s)| s.into_response())
+/// A port as the page shows it ([`share::listening`]): the kind the table
+/// knows, how that kind signs each person in, the paths svrngs keeps back
+/// of it, and its name once lent.
+fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
+    let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
+    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps })
 }
 
 /// Which read failed, said, and traced with its error (#160).
@@ -287,17 +445,15 @@ async fn running(State(at): State<Asking>) -> Response {
     let lent: Vec<_> = all.into_iter().flatten().collect();
     let taken =
         |p: &NonZeroU16| p.get() == at.host.api_port || lent.iter().any(|l| l.source == Port(*p));
-    // A sign-in is left out, the page saying once why (arch-helper (b)).
-    let (signing, found): (Vec<_>, Vec<_>) =
-        (found.into_iter().filter(|p| !taken(p))).partition(|p| share::signs_in(*p, &lent));
     let rows: Vec<_> = (found.into_iter())
+        .filter(|p| !taken(p))
         .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
         .collect();
     let named: Vec<Kind> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
         .map(|(_, kind, _)| kind)
         .collect();
-    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), ?signing, "home: what runs here, offered to lend, sign-ins left out");
-    Json(serde_json::json!({ "running": rows, "named": named, "signing": signing })).into_response()
+    tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), "home: what runs here, offered to lend");
+    Json(serde_json::json!({ "running": rows, "named": named })).into_response()
 }
 
 /// What the person lends from the page: a port, and for one the table
@@ -337,8 +493,6 @@ async fn lend_one(
     let kind = kind.as_deref().map(Kind::parse).transpose();
     let kind = kind.map_err(|e| refused(&format!("Say what it is in {one}"), &e))?;
     let (known, dir) = (share::well_known_kind(port), &at.door.data_dir);
-    let lent = lend::all(dir).map_err(|e| unread("it cannot read what you lend already", &e))?;
-    let lent: Vec<_> = lent.into_iter().flatten().collect();
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
     let unknown = "Give it a name and say what it is first: svrngs does not know what runs there.";
     if known.is_none() && (name.is_none() || kind.is_none()) {
@@ -352,19 +506,16 @@ async fn lend_one(
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
         asks: None,
+        sign_in: false,
+        raw: None,
     };
     // Each of the lend's refusals in a person's words: a kind is known or
-    // given above, and no sign-in asked, so `NoKind` and `NoSignIn` are not met here.
+    // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
-    let no_sign_in = "Nothing answers at its sign-in now: start it, then lend it.";
-    let signs = "It signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead.";
-    let lend = share::lend_of(&asked, share::listens, known, &lent).map_err(|e| match e {
-        ShareRefusal::SignsIn(_) => refused(signs, &e),
+    let lend = share::lend_of(&asked, share::listens, known).map_err(|e| match e {
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
         ShareRefusal::NoKind(_) => refused(unknown, &e),
-        ShareRefusal::NoSignIn(_) => refused(no_sign_in, &e),
     })?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
@@ -383,20 +534,31 @@ async fn lend_one(
 }
 
 /// What the person asks a link for: to invite someone to `group`, or,
-/// with `device`, to add a computer or phone of their own.
+/// with `device`, to add a computer or phone of their own, or, with
+/// `visit`, to have a guest for that many seconds (guests-link).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Linking {
     group: String,
     device: bool,
+    #[serde(default)]
+    visit: Option<i64>,
 }
 
 /// `POST /link`: a link to the group, as `svrngs link` makes it
-/// ([`crate::node::Host::link`]).
+/// ([`crate::node::Host::link`]); a guest's, `<page>#visit=<token>`, so
+/// the page tells it from a join link before it asks anything.
 async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
-    match at.host.link(&l.group, l.device, None) {
+    match at.host.link(&l.group, l.device, None, l.visit) {
         Ok(made) => {
             let https = made.page.map(|p| https_link(&p, &made.token));
+            let https = https.map(|h| {
+                if l.visit.is_some() {
+                    h.replacen('#', "#visit=", 1)
+                } else {
+                    h
+                }
+            });
             Json(serde_json::json!({ "client": client_link(&made.token), "https": https }))
                 .into_response()
         }
@@ -414,6 +576,26 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
                 format!("this computer cannot make a link: {e}"),
             )
         }
+    }
+}
+
+/// `POST /visits`, `[group, visit]`: the host's Stop (guests-pages; GUESTS
+/// §5), a `Correct` of a visit this computer hosts, written as an app's act
+/// is ([`crate::rail::append_act`]), so the fold ends it on every copy;
+/// any other id refused, so a Stop voids nothing else.
+async fn stop(State(at): State<Asking>, Json([group, visit]): Json<[String; 2]>) -> Response {
+    let hosts = (at.host.rail.register(&group)).map(|r| {
+        (r.visits.iter()).any(|(id, g)| id.to_string() == visit && g.host == at.host.actor)
+    });
+    tracing::debug!(target: "home", group, visit, hosts = ?hosts.as_ref().ok(), "home: a visit stopped only by the computer that hosts it");
+    match hosts {
+        Ok(true) => {
+            let act =
+                serde_json::json!({ "op": "correct", "corrects": visit, "replacement": null });
+            crate::rail::append_act(&at.host.rail, &group, act).await
+        }
+        Ok(false) => LendRefusal::Closed.say(StatusCode::FORBIDDEN, "you host no such visit here"),
+        Err(e) => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
     }
 }
 
@@ -580,7 +762,7 @@ async fn at_door(
         });
     let ask = ask.method(method).uri(format!("/choices/{lend}"));
     let ask = ask.header(header::CONTENT_TYPE, "application/json");
-    let ask = ask.body(body.map_or_else(axum::body::Body::empty, |b| b.to_string().into()));
+    let ask = ask.body(body.map_or_else(Default::default, |b| b.to_string().into()));
     let answer = match ask {
         Ok(ask) => (at.host.transport.fetch(&contact, ask).await).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),

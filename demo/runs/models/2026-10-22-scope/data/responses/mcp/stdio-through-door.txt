@@ -1,0 +1,173 @@
+$ mcp_client http://<lend-host>:62076/mcp
+exit 0
+{
+  "initialize": {
+    "meta": null,
+    "protocolVersion": "2025-11-25",
+    "capabilities": {
+      "experimental": {},
+      "logging": null,
+      "prompts": {
+        "listChanged": false
+      },
+      "resources": {
+        "subscribe": false,
+        "listChanged": false
+      },
+      "tools": {
+        "listChanged": false
+      },
+      "completions": {},
+      "tasks": null
+    },
+    "serverInfo": {
+      "name": "scope-echo",
+      "title": null,
+      "version": "1.30.0",
+      "websiteUrl": null,
+      "icons": null
+    },
+    "instructions": null
+  },
+  "tools_list": {
+    "meta": null,
+    "nextCursor": null,
+    "tools": [
+      {
+        "name": "whoami",
+        "title": null,
+        "description": "",
+        "inputSchema": {
+          "properties": {},
+          "title": "whoamiArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "title": "Result",
+              "type": "string"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "whoamiOutput",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": null
+        },
+        "meta": null,
+        "execution": null
+      },
+      {
+        "name": "add",
+        "title": null,
+        "description": "",
+        "inputSchema": {
+          "properties": {
+            "a": {
+              "title": "A",
+              "type": "integer"
+            },
+            "b": {
+              "title": "B",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "a",
+            "b"
+          ],
+          "title": "addArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "title": "Result",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "addOutput",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": true,
+          "destructiveHint": null,
+          "idempotentHint": null,
+          "openWorldHint": null
+        },
+        "meta": null,
+        "execution": null
+      },
+      {
+        "name": "erase",
+        "title": null,
+        "description": "",
+        "inputSchema": {
+          "properties": {
+            "name": {
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "title": "eraseArguments",
+          "type": "object"
+        },
+        "outputSchema": {
+          "properties": {
+            "result": {
+              "title": "Result",
+              "type": "string"
+            }
+          },
+          "required": [
+            "result"
+          ],
+          "title": "eraseOutput",
+          "type": "object"
+        },
+        "icons": null,
+        "annotations": {
+          "title": null,
+          "readOnlyHint": null,
+          "destructiveHint": true,
+          "idempotentHint": null,
+          "openWorldHint": null
+        },
+        "meta": null,
+        "execution": null
+      }
+    ]
+  },
+  "whoami": {
+    "meta": null,
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"env\": {}, \"headers\": {}}",
+        "annotations": null,
+        "meta": null
+      }
+    ],
+    "structuredContent": {
+      "result": "{\"env\": {}, \"headers\": {}}"
+    },
+    "isError": false
+  }
+}

@@ -1,0 +1,20 @@
+
+running 9 tests
+..after Ana removed Kim and three rounds of every computer:
+  Ana  entries ["kim-seen"]; complete true; gaps []
+  Bo   entries ["kim-seen"]; complete true; gaps []
+  Kim  entries ["kim-seen"]; complete true; gaps ["an act by 8139770ea87d… after they were removed from the group does not count"]
+.after Ana's round with Bo:
+  Ana  entries ["kim-paid", "kim-last"]; complete true; gaps []
+  Kim  entries ["kim-paid", "kim-last"]; complete true; gaps []
+.after Kim's leave and three rounds of every computer:
+  Kim  entries ["kim-paid", "kim-last"]; complete true; gaps []
+  Ana  entries ["kim-paid", "kim-last"]; complete true; gaps []
+  Bo   entries ["kim-paid", "kim-last"]; complete true; gaps []
+.after Kim's leave:
+  Kim  entries ["kim-last"]; complete true; gaps []
+  Ana  entries ["kim-last"]; complete true; gaps []
+  Bo   entries ["kim-last", "bo-unsent"]; complete true; gaps []
+....
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.39s
+

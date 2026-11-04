@@ -1,0 +1,9 @@
+   1 group.svrnme.sh /?mode=cookie&go=1&app=https%3A%2F%2Faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa<t><t>11111.group.svrnme.sh%2F 
+   1 group.svrnme.sh /sign.html 
+   2 group.svrnme.sh /sign.html __Host-l=from-group-<t>; __Host-n=from-group-<t>; __Host-s=from-group-<t>
+   5 group.svrnme.sh /sign.html?ask=opener 
+   1 group.svrnme.sh /sign.html?popctl=1 
+   1 group.svrnme.sh /sign.html?popup=click 
+   1 group.svrnme.sh /sign.html?popup=load 
+   1 group.svrnme.sh /sign.html?popup=msg 
+   1 group.svrnme.sh /sign.html?toss=1 tossed=evil-parent; __Host-l=from-group-<t>; __Host-n=from-group-<t>; __Host-s=from-group-<t>

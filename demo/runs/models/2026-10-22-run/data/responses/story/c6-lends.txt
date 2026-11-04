@@ -1,0 +1,38 @@
+{
+  "ana-coder": {
+    "key": "fadf126f9e59e3e7616cea48a0a7f8023411f8e13bcd263933344eb9ae7381dd",
+    "kind": "llama-server",
+    "limit": 1,
+    "name": "ana-coder",
+    "origin": "http://9nsuf568nju8r2np7lfmbl92ak4bd8jbjshvprlwhujnwnwwtjrtkx5cxwm6m6.localhost:54638/",
+    "person": "ana",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+  },
+  "ana-vision": {
+    "key": "fadf126f9e59e3e7616cea48a0a7f8023411f8e13bcd263933344eb9ae7381dd",
+    "kind": "llama-server",
+    "limit": null,
+    "name": "ana-vision",
+    "origin": "http://9nsuf568nju8r2np7lfmbl92ak4bd8jbjshvprlwhujnwnwwtjrtlquv19r39b.localhost:54638/",
+    "person": "ana",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+  },
+  "cy-model": {
+    "key": "ba8b0de0f8b146c06403c2e84c8e35bda22aaa6f14aa9f28e9be1783fecc278b",
+    "kind": "llama-swap",
+    "limit": null,
+    "name": "cy-model",
+    "origin": "http://1mgt52j20gdpa3ad2nxf3duz10uczmwscvzl8mjl12n2j90pf8gtxhq61bal9j.localhost:54638/",
+    "person": "cy",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+  }
+}

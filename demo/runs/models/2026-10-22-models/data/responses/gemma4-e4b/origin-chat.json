@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "615",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 01:31:40 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}],\"created\":1792719100,\"model\":\"ana/vision-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":23,\"total_tokens\":25,\"prompt_tokens_details\":{\"cached_tokens\":18}},\"id\":\"chatcmpl-HlpP3RcVeLZVXmBvTRYbPdtdkrIPh10i\",\"timings\":{\"cache_n\":18,\"prompt_n\":5,\"prompt_ms\":66.204,\"prompt_per_token_ms\":13.240799999999998,\"prompt_per_second\":75.52413751434959,\"predicted_n\":2,\"predicted_ms\":26.6,\"predicted_per_token_ms\":13.3,\"predicted_per_second\":75.18796992481202}}"
+}

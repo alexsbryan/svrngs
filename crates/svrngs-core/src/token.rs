@@ -1,0 +1,152 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//! A sign-in token: what an app is told about the person the door already
+//! knows (SIGN_IN_WITH_SVRNGS §5, "The person's details the app is told").
+//!
+//! The claims are the door's identity headers and nothing else: `sub` the
+//! person's key, `preferred_username` their account, `name` their name,
+//! `groups` `["member"]` or `["guest"]`, and the token's own `iss`, `aud`,
+//! `exp` and `iat`; and the client's `nonce`, when it sent one, which is an
+//! ID token's own (§5a, "Echo a nonce if one is sent, and omit it
+//! otherwise"). There is no `email`: svrngs has none (§8 4). The issuer is
+//! handed in as one string, so every token of a lender's is byte-equal in
+//! `iss` to discovery (§5a, "One issuer string, exact").
+//!
+//! Pure and synchronous (RUST_ARCH §2): this module spells the header, the
+//! claims and the signing input. The node signs the input with the
+//! lender's ES256 key ([`Jwt::signed`]), and the core links no signature
+//! crate.
+
+use alloc::string::String;
+
+use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine as _;
+use serde::{Deserialize, Serialize};
+
+/// The group a person's token names: the door's closed set
+/// (SIGN_IN_WITH_SVRNGS §8 6).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Group {
+    /// A person of the group.
+    Member,
+    /// A visit's guest, named as the guest and never as their host.
+    Guest,
+}
+
+/// The person a token is about, as the door resolved them: their key, the
+/// name it shows, the account an app makes for them, and their group. The
+/// one spelling of the person a code is minted for and a token is made for
+/// (`Subject`, not `Person`: [`crate::Person`] is a name in the record).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Subject {
+    /// The person's key, the same from every device: `x-svrngs-key`.
+    pub sub: String,
+    /// Their name: `x-svrngs-person`.
+    pub name: String,
+    /// Their account, unique by key: `x-svrngs-user`.
+    pub username: String,
+    /// A member, or a visit's guest.
+    pub group: Group,
+}
+
+/// What a sign-in token says about the person, by the claims' own names:
+/// the one home of the token's format, written by [`Jwt::signing_input`]
+/// and read back by the node's key when it verifies one. Built only by
+/// [`Claims::new`], from the door's [`Subject`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Claims {
+    /// The lender's one issuer string, exact.
+    pub iss: String,
+    /// The person's key, the same from every device: `x-svrngs-key`.
+    pub sub: String,
+    /// The lend's client id.
+    pub aud: String,
+    /// Seconds since the epoch, after which the token is refused.
+    pub exp: i64,
+    /// Seconds since the epoch when it was made.
+    pub iat: i64,
+    /// The person's name: `x-svrngs-person`.
+    pub name: String,
+    /// Their account, unique by key: `x-svrngs-user`.
+    pub preferred_username: String,
+    /// One group: `["member"]` or `["guest"]`.
+    pub groups: [Group; 1],
+    /// The client's nonce, echoed in an ID token when one was sent, and
+    /// absent otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub nonce: Option<String>,
+}
+
+impl Claims {
+    /// The claims for `who`, made by `issuer` for `audience` at `issued_at`,
+    /// live for `lifetime` seconds. Nothing else is added, so an app is told
+    /// no more than the door already sends it. The person's fields are
+    /// copied in, not a flattened [`Subject`], which would move `sub` after
+    /// `iat` in the token's JSON.
+    pub fn new(issuer: &str, audience: &str, who: Subject, issued_at: i64, lifetime: i64) -> Self {
+        tracing::debug!(target: "oidc", iss = issuer, sub = who.sub, aud = audience, group = ?who.group, iat = issued_at, exp = issued_at.saturating_add(lifetime), "oidc: the claims a token will carry");
+        Self {
+            iss: issuer.into(),
+            sub: who.sub,
+            aud: audience.into(),
+            exp: issued_at.saturating_add(lifetime),
+            iat: issued_at,
+            name: who.name,
+            preferred_username: who.username,
+            groups: [who.group],
+            nonce: None,
+        }
+    }
+}
+
+/// The JOSE header's fixed fields: ES256, a JWT, and the lender's key id.
+#[derive(Serialize)]
+struct Header<'a> {
+    alg: &'static str,
+    typ: &'static str,
+    kid: &'a str,
+}
+
+/// A token before its signature: the claims, and the key id that will
+/// verify it. [`Self::signing_input`] is the bytes the node's ES256 key
+/// signs, and [`Self::signed`] is the token an app receives.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Jwt {
+    /// What the app is told about the person.
+    pub claims: Claims,
+    kid: String,
+}
+
+impl Jwt {
+    /// The claims, to be signed by the key `kid` names.
+    pub fn new(claims: Claims, kid: &str) -> Self {
+        tracing::debug!(target: "oidc", kid, sub = %claims.sub, aud = %claims.aud, "oidc: a token, before its signature");
+        Self {
+            claims,
+            kid: kid.into(),
+        }
+    }
+
+    /// `base64url(header) || "." || base64url(claims)`: what the key signs.
+    /// The header is `{"alg":"ES256","typ":"JWT","kid":…}`, In declaration
+    /// order, so a client sees the key the JWKS lists.
+    pub fn signing_input(&self) -> String {
+        let header = Header {
+            alg: "ES256",
+            typ: "JWT",
+            kid: &self.kid,
+        };
+        let header = URL_SAFE_NO_PAD
+            .encode(serde_json::to_string(&header).expect("a header of strings serializes"));
+        let payload = URL_SAFE_NO_PAD.encode(
+            serde_json::to_string(&self.claims).expect("claims of strings and integers serialize"),
+        );
+        alloc::format!("{header}.{payload}")
+    }
+
+    /// The token, with the ES256 signature over [`Self::signing_input`].
+    pub fn signed(&self, signature: &[u8]) -> String {
+        let input = self.signing_input();
+        alloc::format!("{input}.{}", URL_SAFE_NO_PAD.encode(signature))
+    }
+}

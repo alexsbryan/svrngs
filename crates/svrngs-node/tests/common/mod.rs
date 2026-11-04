@@ -36,9 +36,8 @@ pub fn never_answers() -> (std::net::UdpSocket, Vec<SocketAddr>) {
 }
 
 /// A port nothing listens on, as a stopped program's: bound, read and let
-/// go, so a connection to it is refused. One copy, where home.rs, door's
-/// sign_in.rs (twice) and lend_origin.rs each wrote it out
-/// (REVIEW-audit-v1ui-auto-3).
+/// go, so a connection to it is refused. One copy, where home.rs and
+/// lend_origin.rs each wrote it out (REVIEW-audit-v1ui-auto-3).
 #[allow(
     dead_code,
     reason = "each test binary compiles this file; only some stop a program"
@@ -148,4 +147,242 @@ pub fn heard(filter: &str) -> (Said, (tracing::subscriber::DefaultGuard, tracing
     let guard = tracing::subscriber::set_default(subscriber);
     let two = tracing::Dispatch::new(tracing::subscriber::NoSubscriber::default());
     (said, (guard, two))
+}
+
+/// Protocol fixture: enroll an origin key and prove each request, or use an
+/// independent read capability when another app is named. Browser-client
+/// eligibility is tested in JavaScript; these tests exercise the node's checks.
+#[allow(
+    dead_code,
+    clippy::disallowed_types,
+    reason = "each test binary compiles this file; only some model a browser, whose enrolled keys one test's lock keeps"
+)]
+pub struct Browser<'a> {
+    node: &'a svrngs_node::node::Node,
+    api: SocketAddr,
+    token: String,
+    held: std::sync::Mutex<std::collections::HashMap<String, Vec<u8>>>,
+}
+
+#[allow(
+    dead_code,
+    clippy::disallowed_types,
+    reason = "each test binary compiles this file; only some model a browser, whose enrolled keys one test's lock keeps"
+)]
+impl<'a> Browser<'a> {
+    pub fn of(node: &'a svrngs_node::node::Node) -> Self {
+        let (api, token) = (node.api_addr(), node.token().trim().to_string());
+        let held = std::sync::Mutex::default();
+        Self {
+            node,
+            api,
+            token,
+            held,
+        }
+    }
+
+    /// The listener it asks.
+    pub fn api(&self) -> SocketAddr {
+        self.api
+    }
+
+    /// The token's line, which a program on this computer sends.
+    pub fn bearer(&self) -> String {
+        format!("Authorization: Bearer {}\r\n", self.token)
+    }
+
+    pub async fn shown(
+        &self,
+        method: &str,
+        host: &str,
+        path: &str,
+        extra: &str,
+        body: &str,
+    ) -> String {
+        match extra.contains("Sec-Fetch-Site") {
+            true => self.proof(method, host, path, extra, body).await,
+            false => self.bearer(),
+        }
+    }
+
+    /// Exercise reads with their own credential, never the target's origin key.
+    pub fn path(&self, host: &str, path: &str, extra: &str) -> String {
+        use svrngs_core::pass::Label;
+        let target = host
+            .split_once(".localhost")
+            .and_then(|(n, _)| Label::parse(n));
+        let framed = extra.contains("Sec-Fetch-Dest: iframe");
+        let header = if framed { "referer" } else { "origin" };
+        let from = extra
+            .lines()
+            .filter_map(|l| l.split_once(':'))
+            .find(|(n, _)| n.eq_ignore_ascii_case(header));
+        let from = from.and_then(|(_, v)| reqwest::Url::parse(v.trim()).ok());
+        let app = from
+            .filter(|u| u.scheme() == "http" && u.port() == Some(self.api.port()))
+            .and_then(|u| Label::parse(u.host_str()?.strip_suffix(".localhost")?));
+        match (app, target) {
+            (Some(app), Some(target)) if app != target => format!(
+                "/svrngs-as/{}{path}",
+                self.node.read_capability(&app, &target)
+            ),
+            _ => path.into(),
+        }
+    }
+
+    pub async fn proof(
+        &self,
+        method: &str,
+        host: &str,
+        path: &str,
+        extra: &str,
+        body: &str,
+    ) -> String {
+        let name = host.split_once(".localhost").map(|(n, _)| n);
+        let Some(name) =
+            name.filter(|_| extra.contains("Sec-Fetch-Site") && !path.starts_with("/svrngs-as/"))
+        else {
+            return String::new();
+        };
+        let held = self.held.lock().unwrap().get(name).cloned();
+        let key = match held {
+            Some(c) => c,
+            None => {
+                let lend = Some(name).filter(|n| *n != "svrngs");
+                let c = opened_at(self.api, &self.token, lend).await;
+                self.held.lock().unwrap().insert(name.into(), c.clone());
+                c
+            }
+        };
+        let navigate = extra.contains("Sec-Fetch-Mode: navigate");
+        prove(self.api, &key, method, host, path, body, navigate).await
+    }
+}
+
+/// The headers home/session-worker.js adds to a request from `host` (a
+/// `<name>.localhost:<port>` origin) whose enrolled key is `key`, as it
+/// computes them (session.js `proof`): the boot challenge read from
+/// `/svrngs-session-epoch`, a timestamp and single-use nonce, the body's
+/// SHA-256, and the write intent, `no` for a tab's navigation. The one
+/// copy every Rust test that models a browser without one uses (the node's
+/// tests here, and the scenes' people.rs by path).
+#[allow(
+    dead_code,
+    clippy::disallowed_methods,
+    reason = "each test binary compiles this file; a protocol-test adapter draws a fresh nonce and reads the clock"
+)]
+pub async fn prove(
+    api: SocketAddr,
+    key: &[u8],
+    method: &str,
+    host: &str,
+    path: &str,
+    body: &str,
+    navigate: bool,
+) -> String {
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    let client = reqwest::Client::builder().no_proxy().build().unwrap();
+    let epoch = client
+        .get(format!("http://{api}/svrngs-session-epoch"))
+        .header("host", host)
+        .send()
+        .await
+        .unwrap()
+        .text()
+        .await
+        .unwrap();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let mut nonce = [0; 16];
+    getrandom::fill(&mut nonce).unwrap();
+    let stamp = format!("{now}.{}", hex::encode(nonce));
+    let digest = hex::encode(ring::digest::digest(&ring::digest::SHA256, body.as_bytes()).as_ref());
+    let intent = if navigate { "no" } else { "yes" };
+    let message = format!("{host}\n{method}\n{path}\n{stamp}\n{digest}\n{intent}\n{epoch}");
+    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, key);
+    let tag = URL_SAFE_NO_PAD.encode(ring::hmac::sign(&key, message.as_bytes()));
+    format!("X-Svrngs-Browser: {stamp}.{tag}\r\nX-Svrngs-Body: {digest}\r\nX-Svrngs-Intent: {intent}\r\n")
+}
+
+/// [`prove`]'s lines as a reqwest caller sends them.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some send by reqwest"
+)]
+pub fn headers(proof: &str) -> reqwest::header::HeaderMap {
+    let mut headers = reqwest::header::HeaderMap::new();
+    for (name, value) in proof.lines().filter_map(|l| l.split_once(':')) {
+        headers.insert(
+            reqwest::header::HeaderName::from_bytes(name.as_bytes()).unwrap(),
+            value.trim().parse().unwrap(),
+        );
+    }
+    headers
+}
+
+/// A proved own-origin request, including its body digest, for reqwest callers.
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some model a browser"
+)]
+pub async fn proved(
+    node: &svrngs_node::node::Node,
+    lend: Option<&str>,
+    method: &str,
+    path: &str,
+    body: &str,
+) -> reqwest::header::HeaderMap {
+    let browser = Browser::of(node);
+    let host = format!(
+        "{}.localhost:{}",
+        lend.unwrap_or("svrngs"),
+        node.api_addr().port()
+    );
+    let proof = browser
+        .proof(method, &host, path, "Sec-Fetch-Site: same-origin\r\n", body)
+        .await;
+    headers(&proof)
+}
+
+/// The key an open enrolls at the home page (`lend` none) or the lend
+/// `lend`'s origin: `/v1/open`, asked with the token as `svrngs open` asks
+/// it, its code redeemed by a POST from that origin, as home/session.js
+/// redeems it (session.rs `redeem`).
+#[allow(
+    dead_code,
+    reason = "each test binary compiles this file; only some model a browser"
+)]
+pub async fn opened_at(api: SocketAddr, token: &str, lend: Option<&str>) -> Vec<u8> {
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    let client = reqwest::Client::builder().no_proxy();
+    let client = client.redirect(reqwest::redirect::Policy::none());
+    let client = client.build().unwrap();
+    let body = lend.map_or(serde_json::json!({}), |l| serde_json::json!({ "lend": l }));
+    let open = client.post(format!("http://{api}/v1/open"));
+    // By hand, not reqwest's `json`, which the command's tests (scenes,
+    // people.rs) build without, since they include this file by path.
+    let open = open
+        .bearer_auth(token)
+        .header("content-type", "application/json");
+    let open = open.body(body.to_string()).send().await.unwrap();
+    let open: serde_json::Value = serde_json::from_slice(&open.bytes().await.unwrap()).unwrap();
+    let url = open["open"].as_str().expect("an open's address");
+    let (host, path) = url.trim_start_matches("http://").split_once('/').unwrap();
+    let redeem = client.post(format!("http://{api}/{path}"));
+    let redeem = redeem
+        .header("host", host)
+        .header("origin", format!("http://{host}"))
+        .header("sec-fetch-site", "same-origin");
+    let answer = redeem.send().await.unwrap();
+    assert!(
+        answer.status().is_success(),
+        "enrollment answered {}",
+        answer.status()
+    );
+    let answer: serde_json::Value = serde_json::from_slice(&answer.bytes().await.unwrap()).unwrap();
+    URL_SAFE_NO_PAD
+        .decode(answer["key"].as_str().expect("enrollment's origin key"))
+        .unwrap()
 }

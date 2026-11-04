@@ -7,17 +7,18 @@
 //!
 //! ```text
 //! svrngs                                   run for every group this computer holds
-//! svrngs new <name> [--as N] [--origin U] [--relay R]
+//! svrngs new <name> [--as N] [--origin U] [--relay R]...
 //!                                          make a group, print its link, run
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--sign-in S] [--ask W]
+//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name>                    stop lending it
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
-//! svrngs room <name>...                    serve lends to this computer's network, run
+//! svrngs room <name>...                    open lends to this computer's WiFi,
+//!                                          asked of svrngs running here, else run
 //! svrngs remove <name> --group <group> [--joined W]
 //!                                          remove someone from a group, or ask it,
 //!                                          asked of svrngs running here
@@ -46,15 +47,15 @@
 //! is lent with none, and its lender told how to make each person one
 //! (u5-4, [`share::accounts_of`]); one that takes each person from the
 //! door's header, none, and its lender told what to set in it
-//! (bash-person (d)); one with a sign-in, none either, each person signed
-//! in by it (mwp-1). The bare command prints what the people
+//! (bash-person (d)). The bare command prints what the people
 //! of this computer's groups lend, asked of their computers as it starts.
 //!
-//! `room` serves the lends it names to this computer's own network while
-//! it runs, as this computer's person (u6-1, `svrngs_node::room`), so a
-//! device in the room reaches each with the lend's own app: it says who
-//! can open them, and
-//! refuses when this computer has no private address to serve them on.
+//! `room` turns the lends it names on for the room, served to this
+//! computer's own network as this computer's person by svrngs running
+//! here, which keeps them on across restarts on that network
+//! (`svrngs_node::room`): asked as the home page asks it, of svrngs running
+//! here, else of the svrngs it starts, so the room has one decider. It says
+//! who can open them, and where each is served or why not.
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -95,8 +96,10 @@ use svrngs_node::home::WHEN;
 use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{Entered, NotJoined};
-use svrngs_node::lend::{self, Kind, Lend, LendName, RefusedPath, Source, Upload};
-use svrngs_node::node::{Lends, Lent, Node, NodeError};
+use svrngs_node::lend::{
+    self, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
+};
+use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
@@ -116,7 +119,7 @@ svrngs — keep what your group shares on your own computers.
   svrngs
       Run for every group you are in. Leave it running.
 
-  svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]
+  svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]...
       Make a group called <name> and print its link: send it to the people
       you want in it. It works for a day, while this computer is on. The
       group's folder is put at ~/svrngs/<name>.
@@ -127,8 +130,9 @@ svrngs — keep what your group shares on your own computers.
       an address of its own under that page's host, which must serve the
       page at every name under it, as group.svrnme.sh does.
       --relay meets the group at your own relay, `svrngs relay <name> --open`
-      (else newcomers are refused it), in place of the one svrngs uses: every computer
-      its links let in meets it there too.
+      (else newcomers are refused it), and at the one svrngs uses whenever
+      yours does not answer: every computer its links let in meets it there
+      too. Give it again for each relay the group may meet at.
 
   svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
@@ -145,7 +149,7 @@ svrngs — keep what your group shares on your own computers.
       --device makes it a link for another computer or phone of yours: it
       joins as you, asked no name.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--sign-in <port>] [--ask <words>]
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in your groups:
       each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
@@ -162,15 +166,23 @@ svrngs — keep what your group shares on your own computers.
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
       --reads lets it open, as whoever opens it, what your groups lend of
-      <kind>; say it again for more. --sign-in names the port of your
-      program that signs each person in to it as themselves; then no
-      password is asked, and nobody types one. --ask says, in your words,
+      <kind>; say it again for more. --ask says, in your words,
       what an app receives from it: then an app uses it only once the
       person it acts for says yes, on their own home page, and stops when
-      they say stop.
+      they say stop. --sign-in-with-svrngs lets an app that speaks OpenID
+      Connect sign each person in as themselves, with nothing typed: it
+      prints the issuer, a client id and a secret for the app's own
+      settings, and keeps the secret on this computer.
+      --udp or --tcp lends a port that speaks UDP or TCP as it is, not
+      as a page: it takes a --kind, and --name and --limit as any lend
+      does.
 
   svrngs unshare <name>
       Stop lending <name>.
+
+  svrngs open
+      Open your home page in your browser, as svrngs in your Applications
+      (on Linux, your applications menu) does.
 
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder
@@ -180,8 +192,10 @@ svrngs — keep what your group shares on your own computers.
       takes it.
 
   svrngs room <name>...
-      Let anyone on this computer's network (its WiFi) open what your groups
-      lend as <name>, as you, while this runs.
+      Open the lends named <name> to this computer's WiFi, so a TV, a phone
+      or another computer here can open them as you. They stay open on that
+      WiFi until you close them on your home page. Works whether or not
+      svrngs is already running.
 
   svrngs remove <name> --group <group> [--joined <when>]
       Remove <name> from <group>: every computer and phone of theirs. One
@@ -263,9 +277,9 @@ pub enum Verb {
         person: Option<Name>,
         /// `None` prints the client's link alone.
         origin: Option<Origin>,
-        /// `--relay`: where this group is met, in place of where the build
-        /// meets its groups ([`SHIPPED`]).
-        relay: Option<RelayUrl>,
+        /// `--relay`, once for each: where this group meets, beside where
+        /// the build meets every group ([`SHIPPED`]; relay fallbacks).
+        relays: Vec<RelayUrl>,
     },
     Join {
         link: Box<Link>,
@@ -305,6 +319,8 @@ pub enum Verb {
     /// `leave` (groups-leave), asked of svrngs running here: the group
     /// as typed.
     Leave(String),
+    /// `open` (give-session): the home page, in this computer's browser.
+    Open,
     Relay(Relay),
     Help,
 }
@@ -331,16 +347,17 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     };
     let mut positional: Option<String> = None;
     let mut person = None;
-    let (mut origin, mut relay) = (None, None);
+    let (mut origin, mut relays) = (None, Vec::new());
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
-    let mut sign_in = None;
     let (mut folder, mut group) = (None, None);
     let mut asks = None;
+    let mut sign_in = false;
+    let mut carries = None;
     let mut run = true;
     let mut device = false;
-    let (mut open, mut staging) = (false, false);
+    let (mut open, mut staging, mut here) = (false, false, None);
     let mut joined = None;
     let mut more = Vec::new();
     while let Some(arg) = it.next() {
@@ -350,6 +367,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         // are a pattern the compiler holds, never text split (#147).
         let valued = match arg.as_str() {
             "--relay" => verb == "new",
+            "--at" => verb == "relay",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
             "--as" | "--origin" | "--name" | "--kind" | "--limit" | "--refuse" | "--upload"
             | "--reads" | "--sign-in" | "--folder" | "--group" | "--ask" => true,
@@ -371,8 +389,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--relay" if valued => {
                 let url = format!("{}{raw}", if raw.contains("://") { "" } else { "https://" });
-                relay =
-                    Some(svrngs_node::relay::parse(&url).map_err(|_| not("a relay's address"))?);
+                relays.push(svrngs_node::relay::parse(&url).map_err(|_| not("a relay's address"))?);
             }
             "--name" => name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?),
             "--kind" => kind = Some(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
@@ -389,8 +406,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--reads" => reads.push(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
             "--sign-in" => {
-                sign_in =
-                    Some(share::resolve_target(&raw).map_err(|why| format!("--sign-in {why}"))?)
+                return Err("--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own".into())
             }
             "--folder" => folder = Some(raw),
             "--group" => group = Some(raw),
@@ -403,8 +419,22 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--joined" if valued => joined = Some(joined_of(&raw)?),
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
+            "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
+            "--udp" | "--tcp" if verb == "share" => {
+                let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
+                if carries.replace(said).is_some() {
+                    return Err("a port is lent as UDP or as TCP: give one of --udp and --tcp".into());
+                }
+            }
             "--open" if verb == "relay" => open = true,
             "--staging" if verb == "relay" => staging = true,
+            // Unlisted in USAGE: plain HTTP, no certificate, for a relay on
+            // a local network with no internet, where Let's Encrypt cannot
+            // reach a name (`relay::At::Here`).
+            "--at" if valued => {
+                let what = "an address and port of this computer's, as 10.42.3.20:3340";
+                here = Some(raw.parse::<SocketAddr>().map_err(|_| not(what))?);
+            }
             "-h" | "--help" => return Ok(Verb::Help),
             other if other.starts_with('-') => return Err(format!("unknown argument `{other}`")),
             other if positional.is_none() => positional = Some(other.to_string()),
@@ -424,12 +454,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || !refused.is_empty()
         || upload.is_some()
         || !reads.is_empty()
-        || sign_in.is_some()
-        || asks.is_some())
+        || asks.is_some()
+        || sign_in)
         && verb != "share"
     {
         return Err(
-            "--name, --kind, --limit, --refuse, --upload, --reads, --sign-in and --ask are `share` flags"
+            "--name, --kind, --limit, --refuse, --upload, --reads, --ask and --sign-in-with-svrngs are `share` flags"
                 .into(),
         );
     }
@@ -473,7 +503,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 name,
                 person,
                 origin,
-                relay,
+                relays,
             })
         }
         "join" => {
@@ -493,17 +523,22 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             device,
         }),
         "share" => {
-            let raw = positional.ok_or("share wants a port: `svrngs share <port>`")?;
+            let page = !refused.is_empty() || upload.is_some() || !reads.is_empty();
+            if carries.is_some() && (page || asks.is_some() || sign_in) {
+                return Err("--udp and --tcp lend a port as it is, with no paths, upload, reads, ask or sign-in: those are a page's".into());
+            }
+            let port = positional.ok_or("share wants a port: `svrngs share <port>`")?;
             Ok(Verb::Share(Share {
-                port: share::resolve_target(&raw)?,
+                port: share::resolve_target(&port)?,
                 name,
                 kind,
                 limit,
                 refused,
                 upload,
                 reads,
-                sign_in,
                 asks,
+                sign_in,
+                raw: carries,
             }))
         }
         "leave" => Ok(Verb::Leave(
@@ -521,12 +556,18 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             Ok(Verb::Room(names.collect::<Result<_, _>>()?))
         }
         "relay" => {
-            let raw =
-                positional.ok_or("relay wants the name it is reached at: `svrngs relay <name>`")?;
-            let name = relay::name(&raw)?;
-            let at = relay::At::Name { name, staging };
+            let at = match (here, positional) {
+                (Some(_), _) if staging => return Err("--staging asks Let's Encrypt for a name's certificate, and a relay --at an address has none".into()),
+                (Some(_), Some(raw)) => return Err(format!("a relay is at a name or --at an address, not both: `{raw}`")),
+                (Some(addr), None) => relay::At::Here(addr),
+                (None, raw) => {
+                    let raw = raw.ok_or("relay wants the name it is reached at: `svrngs relay <name>`")?;
+                    relay::At::Name { name: relay::name(&raw)?, staging }
+                }
+            };
             Ok(Verb::Relay(Relay { at, open }))
         }
+        "open" => Ok(Verb::Open),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -581,18 +622,21 @@ pub enum Refusal {
     Prompt(std::io::Error),
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     KeepLend(LendName),
+    #[error("cannot make a sign-in for it on this computer: {0}")]
+    SignIn(#[from] svrngs_node::oidc::KeyFailure),
     #[error("cannot read what you lend on this computer: {0}")]
     Lends(lend::LendError),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
     NoAppAddress(String),
-    #[error("this computer has no address on a home network, so nothing near it can reach it: join its WiFi or plug it in, then run this again")]
-    NoRoomAddress,
-    #[error(transparent)]
-    Room(#[from] svrngs_node::room::RoomError),
-    #[error("svrngs is not running on this computer, and only it syncs a folder: start it, then run this again")]
+    /// `room` refused by svrngs running here, in its words.
+    #[error("{0}")]
+    Room(String),
+    #[error("svrngs is not running on this computer: start it, then run this again")]
     NotRunning,
+    #[error("svrngs running here did not open your home page: {0}")]
+    Unopened(String),
     #[error("the folder was refused: {0}")]
     Folder(String),
     #[error("cannot ask svrngs running here: no HTTP client ({0})")]
@@ -657,10 +701,11 @@ impl Refusal {
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
             | Refusal::KeepLend(_)
+            | Refusal::SignIn(_)
             | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
-            | Refusal::NoRoomAddress
             | Refusal::NotRunning
+            | Refusal::Unopened(_)
             | Refusal::NoClient(_)
             | Refusal::Unchanged(_)
             | Refusal::RelayStart(_)
@@ -686,7 +731,7 @@ pub fn data_dir() -> Result<PathBuf, Refusal> {
 /// Hold `<root>/lock` for as long as the file lives: one svrngs per data
 /// dir, so each group's record has one writer (RUST_ARCH 3).
 pub fn claim(root: &Path) -> Result<File, Refusal> {
-    std::fs::create_dir_all(root).map_err(|e| Refusal::DataDir(root.to_path_buf(), e))?;
+    svrngs_node::declared::secret_dir(root).map_err(|e| Refusal::DataDir(root.to_path_buf(), e))?;
     let path = root.join("lock");
     let file = File::create(&path).map_err(|e| Refusal::DataDir(path.clone(), e))?;
     match file.try_lock() {
@@ -701,52 +746,25 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
     }
 }
 
-/// How this computer reaches the network to do `command` over `root`: at
-/// the relay `new --relay` names or a link it joins carries, and each
-/// group's it holds — the one the group keeps, else where `at` meets the
-/// groups that keep none: at [`MeetAt::N0`], n0's relays with n0's lookup
-/// on, beside any kept, since a non-empty list replaces n0's
-/// (`svrngs_node::guest::RelayConfig`); at [`MeetAt::Svrngs`],
-/// [`DEFAULT_RELAY`] and no lookup, n0 none of the path. A computer
-/// holding only groups that keep their own relays meets them there alone,
-/// as iroh makes the nearest of its relays its home. A kept relay unread
-/// is refused.
-pub fn reach(root: &Path, command: &Verb, at: MeetAt) -> Result<RelayConfig, Refusal> {
-    let asked = match command {
-        Verb::New { relay, .. } => relay.clone(),
-        Verb::Join { link, .. } => link.token.relay.clone().map(RelayUrl::from),
-        _ => None,
+/// How this computer reaches the network: at the build's relays, where it
+/// meets every group beside the group's own (relay fallbacks; svrn-docs
+/// `rings/current/GROUP_RELAYS.md` §7), which the node joins to them
+/// (svrngs-node group.rs `meeting`). At [`MeetAt::N0`], n0's relays with
+/// n0's lookup; at [`MeetAt::Svrngs`], [`DEFAULT_RELAY`] and no lookup, n0
+/// none of the path.
+pub fn reach(at: MeetAt) -> RelayConfig {
+    let relay_urls = match at {
+        MeetAt::N0 => (n0_relays().urls::<Vec<RelayUrl>>().iter())
+            .map(ToString::to_string)
+            .collect(),
+        MeetAt::Svrngs => vec![DEFAULT_RELAY.to_string()],
     };
-    let mut relay_urls: Vec<String> = asked.iter().map(ToString::to_string).collect();
-    let mut unkept = false;
-    for seed in group::groups(root) {
-        let unread = |e: &dyn std::fmt::Display| keep_refused(&seed, &e.to_string());
-        let dir = svrngs_node::group_dir_in(root, &seed.id()).map_err(|e| unread(&e))?;
-        let Some(kept) = group::read_relay(&dir).map_err(|e| unread(&e))? else {
-            tracing::debug!(target: "cli", group = %seed.id(), ?at, "cli: the group keeps no relay — met where the build meets its groups");
-            unkept = true;
-            continue;
-        };
-        relay_urls.push(kept.to_string());
-    }
-    if unkept || relay_urls.is_empty() {
-        relay_urls.extend(match at {
-            MeetAt::N0 => n0_relays()
-                .urls::<Vec<RelayUrl>>()
-                .iter()
-                .map(ToString::to_string)
-                .collect(),
-            MeetAt::Svrngs => vec![DEFAULT_RELAY.to_string()],
-        });
-    }
-    let mut seen = std::collections::BTreeSet::new();
-    relay_urls.retain(|url| seen.insert(url.clone()));
-    tracing::debug!(target: "cli", ?at, unkept, ?relay_urls, "cli: the relays this computer meets its groups at");
-    Ok(RelayConfig {
+    tracing::debug!(target: "cli", ?at, ?relay_urls, "cli: the build's relays, where this computer meets every group beside the group's own");
+    RelayConfig {
         relay_urls,
         n0_services: at == MeetAt::N0,
         loopback_only: false,
-    })
+    }
 }
 
 /// The whole program, `Help` apart: claim the data dir, load this
@@ -754,20 +772,12 @@ pub fn reach(root: &Path, command: &Verb, at: MeetAt) -> Result<RelayConfig, Ref
 /// `share` declares its lend first, and runs only when svrngs is not
 /// running here already; `unshare` only withdraws one.
 pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
-    let command = match command {
-        Verb::Help => {
-            println!("{USAGE}");
-            return Ok(());
-        }
+    let said = match command {
+        Verb::Help => format!("{USAGE}\n"),
         Verb::Relay(asked) => return relay::run(asked, &root).await,
-        Verb::Unshare(name) => {
-            print!("{}", unshare(&root, &name)?);
-            return Ok(());
-        }
-        Verb::Folder { dir, group } => {
-            println!("{}", folder(&root, dir, &group).await?);
-            return Ok(());
-        }
+        Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
+        Verb::Open => open(&root).await?,
+        Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
         Verb::Remove {
             kind,
             person,
@@ -778,68 +788,82 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 RemoveKind::Remove => REMOVALS_ROUTE,
                 RemoveKind::Handover => HANDOVERS_ROUTE,
             };
-            print!("{}", removal(&root, route, person, joined, &group).await?);
-            return Ok(());
+            // Asked of svrngs running here at `route`, for the group named
+            // as `link` names it: what happened, in a person's words.
+            let seed = group_named(&root, &group)?;
+            let asked = RemovalAsk {
+                group: seed.id(),
+                person: person.as_str().to_string(),
+                joined,
+            };
+            let (_, text) = ask_running(&root, route, &asked).await?;
+            let group = seed.name().clone();
+            said(&seed, &text, |outcome| Said::Removal {
+                group,
+                person,
+                outcome,
+            })?
+            .to_string()
         }
         Verb::Leave(group) => {
             let seed = group_named(&root, &group)?;
             let (_, text) =
                 ask_running(&root, LEAVES_ROUTE, &LeaveAsk { group: seed.id() }).await?;
             let group = seed.name().clone();
-            print!(
-                "{}",
-                said(&seed, &text, |outcome| Said::Left { group, outcome })?
-            );
-            return Ok(());
+            said(&seed, &text, |outcome| Said::Left { group, outcome })?.to_string()
         }
+        Verb::Room(names) => match claim(&root) {
+            Err(Refusal::Busy(lock)) => {
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
+                room(&root, names).await?.to_string()
+            }
+            claimed => return start(Verb::Room(names), root, relay, claimed?, None).await,
+        },
         Verb::Share(asked) => {
-            let lent = lend::all(&root).map_err(Refusal::Lends)?;
-            let (known, lent) = (share::well_known_kind(asked.port), lent.into_iter());
-            let lent: Vec<_> = lent.flatten().collect();
-            let lend = share::lend_of(&asked, share::listens, known, &lent)?;
-            let accounts = share::accounts_of(&lend.kind).filter(|_| lend.sign_in.is_none());
-            let secret = match accounts {
-                _ if lend.sign_in.is_some() => {
-                    tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its sign-in signs each person in");
-                    None
-                }
-                Some(share::Signs::Accounts(_)) => {
+            let known = share::well_known_kind(asked.port);
+            let mut lend = share::lend_of(&asked, share::listens, known)?;
+            let accounts = share::accounts_of(&lend.kind);
+            let client = asked.sign_in.then(svrngs_node::oidc::client).transpose()?;
+            if let Some(client) = &client {
+                tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
+                lend.sign_in_with_svrngs = Some(client.clone());
+            }
+            let raw = matches!(lend.source, Source::Raw(..));
+            let secret = match (client.is_some() || raw, accounts) {
+                (true, _) => None,
+                (false, Some(share::Signs::Accounts(_))) => {
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes");
                     None
                 }
-                Some(share::Signs::Header(_)) => {
+                (false, Some(share::Signs::Header(_))) => {
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: it takes each person from the door's header");
                     None
                 }
-                None => prompt_secret(&lend.name)?,
+                (false, None) => prompt_secret(&lend.name)?,
             };
             share_lend(&root, &lend, secret.as_deref())?;
-            let claimed = match claim(&root) {
+            let sharing = Sharing {
+                lend,
+                secret: secret.is_some(),
+                accounts,
+                client,
+            };
+            match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
-                    None
+                    let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+                    sharing.said(api).to_string()
                 }
-                claimed => Some(claimed?),
-            };
-            print!(
-                "{}",
-                Said::Shared {
-                    lend,
-                    secret: secret.is_some(),
-                    accounts,
-                    running: claimed.is_none()
-                }
-            );
-            let Some(claimed) = claimed else {
-                return Ok(());
-            };
-            println!();
-            return start(Verb::Run, root, relay, claimed).await;
+                claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
+            }
         }
-        other => other,
+        other => {
+            let claimed = claim(&root)?;
+            return start(other, root, relay, claimed, None).await;
+        }
     };
-    let claimed = claim(&root)?;
-    start(command, root, relay, claimed).await
+    print!("{said}");
+    Ok(())
 }
 
 /// `share --folder --group`, asked of the node running here
@@ -854,29 +878,18 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
     ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
 }
 
-/// `remove` and `handover` (U7), asked of svrngs running here at `route`
-/// for the group `reference` names, as `link` names it: what happened, in
-/// a person's words, or the refusal.
-async fn removal(
-    root: &Path,
-    route: &str,
-    person: Name,
-    joined: Option<Joined>,
-    reference: &str,
-) -> Result<Said, Refusal> {
-    let seed = group_named(root, reference)?;
-    let asked = RemovalAsk {
-        group: seed.id(),
-        person: person.as_str().to_string(),
-        joined,
-    };
-    let (_, text) = ask_running(root, route, &asked).await?;
-    let group = seed.name().clone();
-    said(&seed, &text, |outcome| Said::Removal {
-        group,
-        person,
-        outcome,
-    })
+/// `svrngs room`: the lends `names` names turned on for the room by
+/// svrngs running here, asked as its home page asks it
+/// ([`room::ROUTE`]), and the room as it stands then; else its refusal,
+/// in its words.
+async fn room(root: &Path, names: Vec<LendName>) -> Result<Said, Refusal> {
+    let (ok, text) = ask_running(root, room::ROUTE, &room::RoomAsk::Names(names)).await?;
+    let on = serde_json::from_str(&text).ok().filter(|_| ok);
+    tracing::debug!(target: "cli", ok, text, "cli: room — svrngs running here answered");
+    let refused = serde_json::from_str::<serde_json::Value>(&text).ok();
+    let refused = refused.and_then(|r| Some(r["error"].as_str()?.to_string()));
+    on.map(Said::Room)
+        .ok_or(Refusal::Room(refused.unwrap_or(text)))
 }
 
 /// What svrngs running here answered a removal, hand-on or leave in the
@@ -896,23 +909,45 @@ fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<S
     }
 }
 
-/// POST `body` to `route` of svrngs running here, at the API it wrote:
-/// whether it answered success, and its body.
+/// `svrngs open`: an address with a code that opens the home page once,
+/// as its session there (give-session), asked of svrngs running here and
+/// opened in this computer's browser, else said to open there.
+async fn open(root: &Path) -> Result<String, Refusal> {
+    let (ok, text) = ask_running(root, "/v1/open", &serde_json::json!({})).await?;
+    let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
+    let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
+    let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
+    let opener = if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
+    let opened = std::process::Command::new(opener).arg(&at).status();
+    tracing::debug!(target: "cli", opener, ?opened, "cli: open — the home page, with a code for its session, given to the browser");
+    Ok(match opened {
+        Ok(s) if s.success() => "Your home page is open in your browser.\n".into(),
+        _ => format!("Open this in your browser within a minute: {at}\n"),
+    })
+}
+
+/// POST `body` to `route` of svrngs running here, at the API it wrote,
+/// showing the token it keeps beside it: whether it answered success, and
+/// its body.
 async fn ask_running(
     root: &Path,
     route: &str,
     body: &impl serde::Serialize,
 ) -> Result<(bool, String), Refusal> {
-    let api = std::fs::read_to_string(root.join(svrngs_node::api::API_FILE)).unwrap_or_default();
+    let read = |file| std::fs::read_to_string(root.join(file)).unwrap_or_default();
+    let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
     let body = serde_json::to_string(body).expect("an ask is JSON");
     let to = format!("{}{route}", api.trim());
-    let client = http()
-        .and_then(|b| b.build().map_err(|e| e.to_string()))
-        .map_err(|error| {
+    let client = http().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
             Refusal::NoClient(error)
         })?;
     let sent = client.post(to).header("content-type", "application/json");
+    let sent = sent.bearer_auth(token.trim());
     let answer = sent.body(body).send().await.map_err(|e| {
         tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
         Refusal::NotRunning
@@ -926,7 +961,7 @@ async fn ask_running(
 /// The command's one HTTP client, iroh's reqwest 0.13: its
 /// `rustls-no-provider` brings no TLS provider, and a client built without
 /// one panics, so its TLS is given ring and this computer's verifier here.
-fn http() -> Result<reqwest13::ClientBuilder, String> {
+fn http() -> Result<reqwest13::Client, String> {
     let ring = std::sync::Arc::new(rustls::crypto::ring::default_provider());
     rustls::ClientConfig::builder_with_provider(ring)
         .with_safe_default_protocol_versions()
@@ -935,6 +970,7 @@ fn http() -> Result<reqwest13::ClientBuilder, String> {
             reqwest13::Client::builder().tls_backend_preconfigured(tls.with_no_client_auth())
         })
         .map_err(|e| e.to_string())
+        .and_then(|b| b.build().map_err(|e| e.to_string()))
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -944,22 +980,41 @@ async fn start(
     root: PathBuf,
     relay: &RelayConfig,
     _claimed: File,
+    sharing: Option<Sharing>,
 ) -> Result<(), Refusal> {
     let key = identity::load_or_generate_node_key(&root)?;
     // Where the API, the home page and each lend's address here listened
     // last, so a bookmark and a program's address survive a restart
     // (start-address, demo/runs/start/2026-10-13/README.md §4).
     let api = svrngs_node::api::kept_address(&root)?.unwrap_or(API);
-    let node = Node::start(root.clone(), key.clone(), relay, group::seed_text, api)
-        .await
-        .map_err(|e: NodeError| {
-            tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
-            match e {
-                NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),
-                NodeError::Api(e) => Refusal::Api(e),
-                _ => Refusal::Start,
-            }
-        })?;
+    // The relays `new --relay` or a link names, given the endpoint as it is
+    // built, so it does not first wait on the build's (relay fallbacks).
+    let asked: Vec<_> = match &command {
+        Verb::New { relays, .. } => relays.iter().cloned().map(Into::into).collect(),
+        Verb::Join { link, .. } => link.token.relays.clone(),
+        _ => Vec::new(),
+    };
+    let node = Node::start_asking(
+        root.clone(),
+        key.clone(),
+        relay,
+        &asked,
+        group::seed_text,
+        api,
+    )
+    .await
+    .map_err(|e: NodeError| {
+        tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
+        match e {
+            NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),
+            NodeError::Api(e) => Refusal::Api(e),
+            _ => Refusal::Start,
+        }
+    })?;
+    if let Some(sharing) = sharing {
+        print!("{}", sharing.said(node.api_addr()));
+        println!();
+    }
     let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
@@ -998,19 +1053,15 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
         return Err(no());
     };
     let unjudged = || Refusal::CannotCheck(page.as_str().into());
-    let client = http()
-        .and_then(|b| {
-            let b = b.timeout(std::time::Duration::from_secs(10));
-            b.build().map_err(|e| e.to_string())
-        })
-        .map_err(|error| {
+    let client = http().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
             unjudged()
         })?;
     let get = |url: String| {
         let client = &client;
         async move {
-            let got = match client.get(&url).send().await {
+            let ask = client.get(&url).timeout(Duration::from_secs(10));
+            let got = match ask.send().await {
                 Ok(r) if r.status().is_success() => r.bytes().await.map_err(|e| format!("{e:?}")),
                 Ok(r) => Err(r.status().to_string()),
                 Err(e) => Err(format!("{e:?}")),
@@ -1069,6 +1120,34 @@ impl std::fmt::Display for Printed {
     }
 }
 
+/// What `share` says once the node it started knows where its API listens:
+/// the lend it declared and the sign-in it made, if any
+/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
+struct Sharing {
+    lend: Lend,
+    secret: bool,
+    accounts: Option<share::Signs>,
+    client: Option<SignInWithSvrngs>,
+}
+
+impl Sharing {
+    /// The words for the API at `api`: the one issuer string is made from
+    /// its port, the same string the door and discovery say.
+    fn said(&self, api: SocketAddr) -> Said {
+        Said::Shared {
+            lend: self.lend.clone(),
+            secret: self.secret,
+            accounts: self.accounts,
+            running: true,
+            issuer: self
+                .client
+                .as_ref()
+                .map(|_| svrngs_node::oidc::issuer(api.port(), self.lend.name.as_str())),
+            client: self.client.clone(),
+        }
+    }
+}
+
 /// What a verb tells the person, in DESIGN §1's words alone.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Said {
@@ -1113,11 +1192,16 @@ pub enum Said {
         secret: bool,
         accounts: Option<share::Signs>,
         running: bool,
+        /// The client its lender copies into the app's form, when it signs
+        /// people in with svrngs: shown once, then never again.
+        client: Option<SignInWithSvrngs>,
+        /// The issuer that client names, when it has one.
+        issuer: Option<String>,
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
-    /// `room`: each lend served to this computer's network, and where.
-    Room(Vec<(Lent, SocketAddr)>),
+    /// `room`: each lend on for the room, and where it is served or why not.
+    Room(Vec<room::InRoom>),
     /// `remove` or `handover` (U7): what happened to `person` in `group`.
     Removal {
         group: Name,
@@ -1159,24 +1243,18 @@ impl std::fmt::Display for Said {
             Said::AlreadyIn(seed) => {
                 writeln!(f, "You're in {} already, on this computer.", seed.name())
             }
-            Said::Folder {
-                group,
-                dir,
-                placed: Ok(()),
-            } => writeln!(
-                f,
-                "{group}'s folder is {}: what anyone in {group} puts there reaches this computer, and what you put there reaches theirs.",
-                dir.display()
-            ),
-            Said::Folder {
-                group,
-                dir,
-                placed: Err(why),
-            } => writeln!(
-                f,
-                "{group}'s folder is not at {}: {why}. `svrngs share --folder <dir> --group {group}` keeps it where you choose.",
-                dir.display()
-            ),
+            Said::Folder { group, dir, placed } => match placed {
+                Ok(()) => writeln!(
+                    f,
+                    "{group}'s folder is {}: what anyone in {group} puts there reaches this computer, and what you put there reaches theirs.",
+                    dir.display()
+                ),
+                Err(why) => writeln!(
+                    f,
+                    "{group}'s folder is not at {}: {why}. `svrngs share --folder <dir> --group {group}` keeps it where you choose.",
+                    dir.display()
+                ),
+            },
             Said::Running { groups, api, lends } => {
                 if groups.is_empty() {
                     writeln!(
@@ -1203,7 +1281,7 @@ impl std::fmt::Display for Said {
                     (&u.older, "runs an older svrngs, so what they lend is not listed"),
                 ] {
                     for person in people {
-                        writeln!(f, "{person}'s computer {why}.")?;
+                        writeln!(f, "{}'s computer {why}.", person.person)?;
                     }
                 }
                 Ok(())
@@ -1213,15 +1291,19 @@ impl std::fmt::Display for Said {
                 secret,
                 accounts,
                 running,
+                client,
+                issuer,
             } => {
                 // `share` lends a port; a group's folder carries an app.
-                let (name, Source::Port(port)) = (&lend.name, &lend.source) else {
-                    return writeln!(f, "{} is carried in its group's folder.", lend.name);
+                let (name, (port, raw)) = match &lend.source {
+                    Source::Port(port) => (&lend.name, (port, String::new())),
+                    Source::Raw(raw, port) => (&lend.name, (port, format!("{} ", raw.said()))),
+                    Source::Carried(_) => return writeln!(f, "{} is carried in its group's folder.", lend.name),
                 };
                 match lend.limit {
-                    Some(n) => writeln!(f, "You lend {name} (port {port}) to everyone in your groups, up to {n} {} at once.",
+                    Some(n) => writeln!(f, "You lend {name} ({raw}port {port}) to everyone in your groups, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,
-                    None => writeln!(f, "You lend {name} (port {port}) to everyone in your groups, as many at once as want it. \
+                    None => writeln!(f, "You lend {name} ({raw}port {port}) to everyone in your groups, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --limit <number>`.")?,
                 }
                 match accounts {
@@ -1236,12 +1318,6 @@ impl std::fmt::Display for Said {
                         lend.name, lend.kind
                     )?,
                     None => {}
-                }
-                if let Some(port) = lend.sign_in {
-                    writeln!(
-                        f,
-                        "Each person is signed in to it as themselves by what answers on port {port}, with nothing typed."
-                    )?;
                 }
                 let table = share::kept_of(&lend.kind);
                 let (kept, typed): (Vec<_>, Vec<_>) = lend.refused.iter().partition(|p| table.contains(p));
@@ -1276,6 +1352,11 @@ impl std::fmt::Display for Said {
                         f,
                         "Its password stays on this computer; nobody you lend it to receives it."
                     )?;
+                }
+                if let (Some(client), Some(issuer)) = (client, issuer) {
+                    writeln!(f, "It signs people in with svrngs. In the app's own settings, choose OpenID Connect, and fill in: issuer {issuer}, client id {}, client secret {}.",
+                        client.client_id, client.client_secret.as_deref().unwrap_or_default())?;
+                    writeln!(f, "{} Copy the secret now: it is not shown again.", svrngs_node::oidc::DEVIATIONS)?;
                 }
                 if *running {
                     writeln!(
@@ -1322,10 +1403,11 @@ impl std::fmt::Display for Said {
                 // Fault, and what the leave route never answers.
                 _ => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
             },
-            Said::Room(served) => {
-                writeln!(f, "Anyone on this computer's network (its WiFi) can open these, as you, while this runs; nobody off it can:")?;
-                for (lent, at) in served {
-                    writeln!(f, "{}'s {}: http://{at}/", lent.person, lent.offered.name)?;
+            Said::Room(on) => {
+                writeln!(f, "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you close it to this WiFi on your home page.")?;
+                for l in on {
+                    let whose = l.person.as_ref().map_or(String::new(), |p| format!("{p}'s "));
+                    writeln!(f, "{whose}{}: {}", l.name, l.said)?;
                 }
                 Ok(())
             }
@@ -1462,26 +1544,24 @@ async fn serve(
     key: &SigningKey,
     relay: &RelayConfig,
 ) -> Result<(), Refusal> {
-    let _room;
     let stays = !matches!(command, Verb::Join { run: false, .. });
     let said = match command {
         Verb::New {
             name,
             person,
             origin,
-            relay: kept,
+            relays: kept,
         } => {
-            let person = match person {
-                Some(p) => p,
-                None => user_name().ok_or_else(|| Refusal::NoName(name.clone()))?,
-            };
+            let person = person
+                .or_else(user_name)
+                .ok_or_else(|| Refusal::NoName(name.clone()))?;
             let page = match origin {
                 Some(page) => Some(checked_page(page).await?),
                 None => None,
             };
             // The one rule for a name, asked before the group is kept (#138).
             let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
-            let (seed, link) = new_group(node, name, person, page.as_ref(), kept, relay).await?;
+            let (seed, link) = new_group(node, name, person, page.as_ref(), &kept, relay).await?;
             println!(
                 "{}",
                 Said::Made {
@@ -1496,10 +1576,7 @@ async fn serve(
             folder_at_join(node, &seed)
         }
         Verb::Join { link, person, .. } => {
-            let person = match person {
-                Some(p) => p,
-                None => user_name().ok_or(Refusal::NoNameToJoin)?,
-            };
+            let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
             let joined = join_group(node, key, &link, &person).await?;
             print!("{joined}");
             let (Said::Joined { seed, .. } | Said::AlreadyIn(seed)) = joined else {
@@ -1520,19 +1597,15 @@ async fn serve(
             Said::Linked { seed, link, device }
         }
         Verb::Run => running(root, node).await,
-        Verb::Room(names) => {
-            let listed: Vec<_> = node.endpoint().addr().ip_addrs().map(|a| a.ip()).collect();
-            let at = room::pick(&listed, room::route()).ok_or(Refusal::NoRoomAddress)?;
-            _room = room::open(node, at, &names).await?;
-            Said::Room(_room.served.clone())
-        }
+        Verb::Room(names) => room(root, names).await?,
         Verb::Help
         | Verb::Share(_)
         | Verb::Unshare(_)
         | Verb::Relay(_)
         | Verb::Folder { .. }
         | Verb::Remove { .. }
-        | Verb::Leave(_) => {
+        | Verb::Leave(_)
+        | Verb::Open => {
             unreachable!("answered in `run`")
         }
     };
@@ -1565,7 +1638,8 @@ pub async fn join_group(
     // there and the issuer can dial it back; else not before its first
     // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
     // so a relay that does not answer is named before the issuer is dialled.
-    let carried: Vec<String> = link.token.relay.iter().map(ToString::to_string).collect();
+    let carried: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
+    node.host().meet_at(&link.token.relays).await;
     wait_online(node, &carried).await;
     match node.host().join(link, person).await {
         Ok(Entered::In { seed, person }) => Ok(Said::Joined { seed, person }),
@@ -1623,16 +1697,16 @@ fn full_name(user: &str) -> Option<String> {
 
 /// `svrngs new`: a seed drawn for `name`, founded by this computer's key
 /// as `person`, written beside the group's record with `page`, when
-/// given, kept as its https links' page, and `kept`, when given, as where
-/// it is met (`new --relay`), else the relay a group made on the home page
-/// keeps ([`svrngs_node::node::Host::made_relay`]), once this computer has
-/// reached one; and its first link.
+/// given, kept as its https links' page, and `kept`, when any, as the
+/// relays it meets at (`new --relay`), else the relay this computer is met
+/// at once it has reached one, as a group made on the home page keeps it
+/// ([`svrngs_node::node::Host::keep_group`]); and its first link.
 pub async fn new_group(
     node: &Node,
     name: Name,
     person: Name,
     page: Option<&Origin>,
-    kept: Option<RelayUrl>,
+    kept: &[RelayUrl],
     relay: &RelayConfig,
 ) -> Result<(Seed, Printed), Refusal> {
     // The founder is the key this computer signs and dials with (PLAN
@@ -1641,13 +1715,16 @@ pub async fn new_group(
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);
     let id = seed.id();
+    let mut kept: Vec<_> = kept.iter().cloned().map(Into::into).collect();
+    node.host().meet_at(&kept).await;
     wait_online(node, &relay.relay_urls).await;
-    let asked = kept.is_some();
-    let kept = kept.or_else(|| node.host().made_relay());
-    let keep = node.host().keep_group(&seed, page, kept.as_ref());
-    keep.map_err(|why| keep_refused(&seed, &why))?;
+    let asked = !kept.is_empty();
+    if !asked {
+        kept = node.host().made_at();
+    }
+    let keep = node.host().keep_linked(&seed, page, &kept);
+    let made = keep.map_err(|why| keep_refused(&seed, &why))?;
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
-    let made = node.host().link(&id, false, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
     Ok((seed, Printed::of(&made)))
 }
@@ -1689,7 +1766,7 @@ pub async fn link_to(
 ) -> Result<(Seed, Printed, Option<Person>), Refusal> {
     let seed = group_named(node.rail().root(), reference)?;
     wait_online(node, &relay.relay_urls).await;
-    let made = node.host().link(&seed.id(), device, page);
+    let made = node.host().link(&seed.id(), device, page, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
     Ok((seed, Printed::of(&made), made.device))
 }

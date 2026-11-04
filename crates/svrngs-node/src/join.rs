@@ -5,12 +5,13 @@
 //! [`addr`] its issuer.rs, which iroh dials and the core cannot name. The
 //! command keeps what is its own: the wait for a relay, and its words.
 
-use crate::group::{self, kept_relay, Name, Seed};
-use crate::iroh::{EndpointAddr, PublicKey, RelayUrl};
+use crate::group::{self, Name, Seed};
+use crate::iroh::{EndpointAddr, PublicKey};
 use crate::link::{Link, Token};
 use crate::node::Host;
 use crate::redeem::{ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed};
 use crate::{register::Standing, Device, Person};
+use iroh::TransportAddr;
 
 /// The issuer's computer, as iroh names it.
 pub fn key(token: &Token) -> PublicKey {
@@ -18,14 +19,14 @@ pub fn key(token: &Token) -> PublicKey {
         .expect("the token's key was checked as iroh checks one (iroh-base key.rs:122-127)")
 }
 
-/// How the issuer's computer is dialled: its key, and its relay when
-/// the token carries one.
+/// How the issuer's computer is dialled: its key, and every relay the
+/// token carries (relay fallbacks).
 pub fn addr(token: &Token) -> EndpointAddr {
-    let addr = EndpointAddr::new(key(token));
-    match &token.relay {
-        Some(relay) => addr.with_relay_url(RelayUrl::from(relay.clone())),
-        None => addr,
-    }
+    let relays = token
+        .relays
+        .iter()
+        .map(|r| TransportAddr::Relay(r.clone().into()));
+    EndpointAddr::from_parts(key(token), relays)
 }
 
 /// A join that let this computer in, or found it in already.
@@ -43,7 +44,7 @@ pub enum Entered {
 pub enum NotJoined {
     #[error("This link lets nobody new in: ask whoever sent it for a new one.")]
     LinkRefused,
-    #[error("Someone in {group} already goes by {holder}, so you were not let in as them. If that’s you, press “Make a link to add your phone or another computer of yours” on a computer already in {group}, and paste that link here. Else join under another name.")]
+    #[error("Someone in {group} already goes by {holder}, so you were not let in as them. If that’s you, press “Add your phone or another computer” on a computer already in {group}, and paste that link here. Else join under another name.")]
     NameTaken { holder: Name, group: Name },
     #[error("The computer that sent this link cannot be reached. It may be off: try again later.")]
     IssuerAway,
@@ -61,6 +62,7 @@ impl Host {
     /// group named (`group::answered`). The home page says it before it
     /// joins.
     pub async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
+        self.meet_at(&link.token.relays).await;
         let request = AskRequest::sign(&link.token.key(), self.rail.signer());
         let asked = ask(&self.endpoint, addr(&link.token), &request).await;
         let asked = asked.map_err(|e| not_let_in(e, None))?;
@@ -112,12 +114,9 @@ impl Host {
             .await
             .map_err(|e| not_let_in(e, Some(seed.name())))?;
         tracing::debug!(target: "join", group = %id, redeemed = ?redeemed, "join: let in");
-        // An address lookup is n0's, built only with `n0_services` (svrngs-node
-        // guest.rs `relayed_endpoint_builder`): this computer meets its groups at n0's.
-        let n0 = crate::iroh::has_lookup(&self.endpoint);
-        let relay = kept_relay(link.token.relay.clone().map(RelayUrl::from), n0);
-        // Kept as the node keeps a group, as `new` keeps it (Host::keep_group).
-        let kept = self.keep_group(&seed, link.origin.as_ref(), relay.as_ref());
+        // Kept as the node keeps a group, as `new` keeps it (Host::keep_group),
+        // the link's relays where an old group meets until its keeper names them.
+        let kept = self.keep_group(&seed, link.origin.as_ref(), &link.token.relays);
         kept.map_err(|why| {
             tracing::debug!(target: "join", group = %id, why, "join: refused — the group cannot be kept here");
             NotJoined::Keep(seed.name().clone())
@@ -126,6 +125,12 @@ impl Host {
             tracing::debug!(target: "join", group = %id, "join: a client's link, so no origin is kept");
         }
         let synced = self.sync_with(&id, &issuer).await;
+        // Where the group meets, from the record the sync brought, decided
+        // now: until then this computer knew only the link's relays, and
+        // its next round is a minute away (the run's take 2, relay
+        // fallbacks).
+        self.refresh();
+        self.decide(None).await;
         match &synced.stop {
             None => {
                 tracing::debug!(target: "join", group = %id, pulled = synced.pulled, "join: synced once from the issuer")

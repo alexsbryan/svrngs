@@ -104,29 +104,47 @@ else
   echo "wasm-opt: not on PATH (binaryen) — shipping the unoptimized module"
 fi
 
-# The version is the content hash of the module and of the page's own files,
-# stamped into every shell URL and the service-worker cache name, so a rebuild
-# invalidates a guest's cache instead of serving a stale runtime (web/sw.js).
-# The page's files are in it since u4-10, which changed only them: hashing the
-# module alone gave that build u4-9's version, which a host may have cached
-# for good (demo/u4.md).
-# sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
-if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
-# The home page's files (crates/svrngs-node/src/home/) given to the group's
-# page too: question.js, svrngs's question and what apps use, so both ask in
-# one wording (#110), and look.css, svrngs's one look, so both look one way.
-SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css)
-PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js)
-VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${PAGE[@]/#/$APP/}" "${SHARED[@]}" | $SHA_CMD | cut -c1-12)"
-cp "${SHARED[@]}" "$OUT/"
+# The page's own files, its flows (web/page/), the parts both pages draw
+# with (crates/svrngs-node/src/home/ui/) and the vendored Preact and htm
+# (web/vendor/), each at its path, and the home page's files given to the
+# group's page too: question.js, svrngs's words, so both say a thing in
+# one wording (#110), look.css, svrngs's one look, so both look one way,
+# and away.html, a lend's computer that did not answer, so both say it
+# one way; and the tab's icon and the Home Screen's, the svrngs mark from
+# its one home (docs/brand/).
+SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css crates/svrngs-node/src/home/away.html docs/brand/favicon.svg docs/brand/apple-touch-icon.png)
+PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js authority.js sign.html sign.js)
+mkdir -p "$OUT/page" "$OUT/ui" "$OUT/vendor"
+cp "${SHARED[@]}" "${PAGE[@]/#/$APP/}" "$OUT/"
+cp "$APP"/page/*.js "$OUT/page/"
+cp crates/svrngs-node/src/home/ui/*.js "$OUT/ui/"
+cp "$APP"/vendor/*.js "$OUT/vendor/"
 # install.sh, the line a computer pastes, served at the page's address with
 # what scripts/build-release.sh puts under get/ (DESIGN §7).
 cp "$APP/install.sh" "$OUT/"
-for f in "${PAGE[@]}"; do
-  cp "$APP/$f" "$OUT/"
-  sed -i.bak "s/__VERSION__/${VERSION}/g" "$OUT/$f"
-  rm -f "$OUT/$f.bak"
-done
+MODULES=($(cd "$OUT" && echo page/*.js ui/*.js vendor/*.js))
+# The worker's SHELL, the build's: every module the page loads, from what
+# was copied, so a new flow is kept offline with no edit (web/sw.js). They go
+# first, right after the line's `[`, so the list may sit on one line or many.
+sed "s#^const SHELL = \[#const SHELL = [$(printf "'./%s?v=__VERSION__', " app.js store.js authority.js sign.js question.js "${MODULES[@]}")#" "$APP/sw.js" >"$OUT/sw.js"
+grep -q "'./ui/view.js?v=" "$OUT/sw.js" || { echo "build-web: web/sw.js has no line starting \`const SHELL = [\`, so the page's modules would not be kept offline" >&2; exit 1; }
+# The version is the content hash of the module and of every file stamped,
+# stamped into every shell URL and the service-worker cache name, so a
+# rebuild invalidates a guest's cache instead of serving a stale runtime
+# (web/sw.js). The page's files are in it since u4-10, which changed only
+# them: hashing the module alone gave that build u4-9's version, which a
+# host may have cached for good (demo/u4.md).
+# sha256sum is GNU coreutils; stock macOS has only shasum. Either works.
+if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
+STAMPED=("${PAGE[@]}" question.js "${MODULES[@]}")
+VERSION="$(cat "$OUT/wasm/svrngs_web_bg.wasm" "$OUT/wasm/svrngs_web.js" "${STAMPED[@]/#/$OUT/}" "${SHARED[@]}" | $SHA_CMD | cut -c1-12)"
+for f in "${STAMPED[@]}"; do sed "s/__VERSION__/${VERSION}/g" "$OUT/$f" >"$OUT/$f.v" && mv "$OUT/$f.v" "$OUT/$f"; done
+left="$(grep -rl __VERSION__ "$OUT" --include='*.js' --include='*.html' || true)"
+[ -z "$left" ] || { echo "build-web: the site still says __VERSION__ in:" $left "— each file served is stamped, so add it to STAMPED" >&2; exit 1; }
+# 404.html, what a static host serves for a path it has no file for, such as
+# a lend's own deep path where its worker is not (DESIGN §3, "Lent apps",
+# call 1): the page, from the root, with its policy, marked `missing`.
+sed -e 's#="\./#="/#g' -e 's#<body>#<body id="missing">#' "$OUT/index.html" >"$OUT/404.html"
 
 echo
 echo "built: $OUT  (version ${VERSION})"

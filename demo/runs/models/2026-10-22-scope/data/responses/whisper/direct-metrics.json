@@ -1,0 +1,12 @@
+{
+  "status": 404,
+  "headers": {
+    "Keep-Alive": "timeout=5, max=100",
+    "Content-Length": "25",
+    "Content-Type": "text/plain",
+    "Access-Control-Allow-Headers": "content-type, authorization",
+    "Server": "whisper.cpp",
+    "Access-Control-Allow-Origin": "*"
+  },
+  "body": "File Not Found (/metrics)"
+}

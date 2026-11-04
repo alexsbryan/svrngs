@@ -29,9 +29,7 @@ pub struct NotAnApp;
 
 impl App {
     pub fn parse(raw: &str) -> Result<Self, NotAnApp> {
-        let closed = raw
-            .bytes()
-            .all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'-'));
+        let closed = (raw.bytes()).all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'-'));
         ((1..=64).contains(&raw.len()) && closed)
             .then(|| Self(raw.into()))
             .ok_or(NotAnApp)

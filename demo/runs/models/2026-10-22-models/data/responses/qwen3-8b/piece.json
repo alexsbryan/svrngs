@@ -1,0 +1,124 @@
+{
+  "key": "qwen3-8b",
+  "role": "code",
+  "when": "2026-10-22T18:30:36-0700",
+  "repo": "unsloth/Qwen3-8B-GGUF",
+  "revision": "a6adef130ffb23ddaf1a62fec9dced968c9bc482",
+  "file": "Qwen3-8B-Q4_K_M.gguf",
+  "local": "Qwen3-8B-Q4_K_M.gguf",
+  "expected_sha256": "120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4",
+  "port": 8202,
+  "alias": "ana/coder-small",
+  "sha256": "120307ba529eb2439d6c430d94104dabd578497bc7bfe7e322b5d9933b449bd4",
+  "sha256_ok": true,
+  "serve": [
+    "llama-server",
+    "-m",
+    "/Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3-8B-Q4_K_M.gguf",
+    "--jinja",
+    "--alias",
+    "ana/coder-small",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "8202",
+    "-c",
+    "8192",
+    "-ngl",
+    "99",
+    "--metrics"
+  ],
+  "load_seconds": 2.1,
+  "models_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "614"
+    },
+    "body": "{\"models\":[{\"name\":\"ana/coder-small\",\"model\":\"ana/coder-small\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder-small\",\"aliases\":[\"ana/coder-small\"],\"tags\":[],\"object\":\"model\",\"created\":1792719041,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":151936,\"n_ctx\":8192,\"n_ctx_train\":40960,\"n_embd\":4096,\"n_params\":8190735360,\"size\":5021827072,\"ftype\":\"Q4_K - Medium\"}}]}"
+  },
+  "props_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "6911"
+    },
+    "body": "{\"default_generation_settings\":{\"params\":{\"seed\":4294967295,\"temperature\":0.800000011920929,\"dynatemp_range\":0.0,\"dynatemp_exponent\":1.0,\"top_k\":40,\"top_p\":0.949999988079071,\"min_p\":0.05000000074505806,\"top_n_sigma\":-1.0,\"xtc_probability\":0.0,\"xtc_threshold\":0.10000000149011612,\"typical_p\":1.0,\"repeat_last_n\":64,\"repeat_penalty\":1.0,\"presence_penalty\":0.0,\"frequency_penalty\":0.0,\"dry_multiplier\":0.0,\"dry_base\":1.75,\"dry_allowed_length\":2,\"dry_penalty_last_n\":-1,\"mirostat\":0,\"mirostat_tau\":5.0,\"mirostat_eta\":0.10000000149011612,\"adaptive_target\":-1.0,\"adaptive_decay\":0.8999999761581421,\"max_tokens\":-1,\"n_predict\":-1,\"n_keep\":0,\"n_discard\":0,\"ignore_eos\":false,\"stream\":false,\"n_probs\":0,\"min_keep\":0,\"chat_format\":\"Content-only\",\"reasoning_format\":\"none\",\"reasoning_in_content\":false,\"generation_prompt\":\"\",\"samplers\":[\"penalties\",\"dry\",\"top_n_sigma\",\"top_k\",\"typ_p\",\"top_p\",\"min_p\",\"xtc\",\"temperature\"],\"speculative.types\":\"none\",\"timings_per_token\":false,\"post_sampling_probs\":false,\"backend_sampling\":false,\"lora\":[]},\"n_ctx\":8192},\"total_slots\":4,\"model_alias\":\"ana/coder-small\",\"model_ftype\":\"Q4_K - Medium\",\"model_path\":\"/Users/alexsbryan/dev/svrngs/target/models/curated/Qwen3-8B-Q4_K_M.gguf\",\"modalities\":{\"vision\":false,\"video\":false,\"audio\":false},\"media_marker\":\"<__media_G19E08J9gZ4jwnYFvQdwu1G9cXtlRRB1__>\",\"endpoint_slots\":true,\"endpoint_props\":false,\"endpoint_metrics\":true,\"ui\":true,\"ui_settings\":{},\"chat_template\":\"{%- if tools %}\\n    {{- '<|im_start|>system\\\\n' }}\\n    {%- if messages[0].role == 'system' %}\\n        {{- messages[0].content + '\\\\n\\\\n' }}\\n    {%- endif %}\\n    {{- \\\"# Tools\\\\n\\\\nYou may call one or more functions to assist with the user query.\\\\n\\\\nYou are provided with function signatures within <tools></tools> XML tags:\\\\n<tools>\\\" }}\\n    {%- for tool in tools %}\\n        {{- \\\"\\\\n\\\" }}\\n        {{- tool | tojson }}\\n    {%- endfor %}\\n    {{- \\\"\\\\n</tools>\\\\n\\\\nFor each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\\\\n<tool_call>\\\\n{\\\\\\\"name\\\\\\\": <function-name>, \\\\\\\"arguments\\\\\\\": <args-json-object>}\\\\n</tool_call><|im_end|>\\\\n\\\" }}\\n{%- else %}\\n    {%- if messages[0].role == 'system' %}\\n        {{- '<|im_start|>system\\\\n' + messages[0].content + '<|im_end|>\\\\n' }}\\n    {%- endif %}\\n{%- endif %}\\n{%- set ns = namespace(multi_step_tool=true, last_query_index=messages|length - 1) %}\\n{%- for forward_message in messages %}\\n    {%- set index = (messages|length - 1) - loop.index0 %}\\n    {%- set message = messages[index] %}\\n    {%- set current_content = message.content if message.content is defined and message.content is not none else '' %}\\n    {%- set tool_start = '<tool_response>' %}\\n    {%- set tool_start_length = tool_start|length %}\\n    {%- set start_of_message = current_content[:tool_start_length] %}\\n    {%- set tool_end = '</tool_response>' %}\\n    {%- set tool_end_length = tool_end|length %}\\n    {%- set start_pos = (current_content|length) - tool_end_length %}\\n    {%- if start_pos < 0 %}\\n        {%- set start_pos = 0 %}\\n    {%- endif %}\\n    {%- set end_of_message = current_content[start_pos:] %}\\n    {%- if ns.multi_step_tool and message.role == \\\"user\\\" and not(start_of_message == tool_start and end_of_message == tool_end) %}\\n        {%- set ns.multi_step_tool = false %}\\n        {%- set ns.last_query_index = index %}\\n    {%- endif %}\\n{%- endfor %}\\n{%- for message in messages %}\\n    {%- if (message.role == \\\"user\\\") or (message.role == \\\"system\\\" and not loop.first) %}\\n        {{- '<|im_start|>' + message.role + '\\\\n' + message.content + '<|im_end|>' + '\\\\n' }}\\n    {%- elif message.role == \\\"assistant\\\" %}\\n        {%- set m_content = message.content if message.content is defined and message.content is not none else '' %}\\n        {%- set content = m_content %}\\n        {%- set reasoning_content = '' %}\\n        {%- if message.reasoning_content is defined and message.reasoning_content is not none %}\\n            {%- set reasoning_content = message.reasoning_content %}\\n        {%- else %}\\n            {%- if '</think>' in m_content %}\\n                {%- set content = (m_content.split('</think>')|last).lstrip('\\\\n') %}\\n                {%- set reasoning_content = (m_content.split('</think>')|first).rstrip('\\\\n') %}\\n                {%- set reasoning_content = (reasoning_content.split('<think>')|last).lstrip('\\\\n') %}\\n            {%- endif %}\\n        {%- endif %}\\n        {%- if loop.index0 > ns.last_query_index %}\\n            {%- if loop.last or (not loop.last and (not reasoning_content.strip() == '')) %}\\n                {{- '<|im_start|>' + message.role + '\\\\n<think>\\\\n' + reasoning_content.strip('\\\\n') + '\\\\n</think>\\\\n\\\\n' + content.lstrip('\\\\n') }}\\n            {%- else %}\\n                {{- '<|im_start|>' + message.role + '\\\\n' + content }}\\n            {%- endif %}\\n        {%- else %}\\n            {{- '<|im_start|>' + message.role + '\\\\n' + content }}\\n        {%- endif %}\\n        {%- if message.tool_calls %}\\n            {%- for tool_call in message.tool_calls %}\\n                {%- if (loop.first and content) or (not loop.first) %}\\n                    {{- '\\\\n' }}\\n                {%- endif %}\\n                {%- if tool_call.function %}\\n                    {%- set tool_call = tool_call.function %}\\n                {%- endif %}\\n                {{- '<tool_call>\\\\n{\\\"name\\\": \\\"' }}\\n                {{- tool_call.name }}\\n                {{- '\\\", \\\"arguments\\\": ' }}\\n                {%- if tool_call.arguments is string %}\\n                    {{- tool_call.arguments }}\\n                {%- else %}\\n                    {{- tool_call.arguments | tojson }}\\n                {%- endif %}\\n                {{- '}\\\\n</tool_call>' }}\\n            {%- endfor %}\\n        {%- endif %}\\n        {{- '<|im_end|>\\\\n' }}\\n    {%- elif message.role == \\\"tool\\\" %}\\n        {%- if loop.first or (messages[loop.index0 - 1].role != \\\"tool\\\") %}\\n            {{- '<|im_start|>user' }}\\n        {%- endif %}\\n        {{- '\\\\n<tool_response>\\\\n' }}\\n        {{- message.content }}\\n        {{- '\\\\n</tool_response>' }}\\n        {%- if loop.last or (messages[loop.index0 + 1].role != \\\"tool\\\") %}\\n            {{- '<|im_end|>\\\\n' }}\\n        {%- endif %}\\n    {%- endif %}\\n{%- endfor %}\\n{%- if add_generation_prompt %}\\n    {{- '<|im_start|>assistant\\\\n' }}\\n    {%- if enable_thinking is defined and enable_thinking is false %}\\n        {{- '<think>\\\\n\\\\n</think>\\\\n\\\\n' }}\\n    {%- endif %}\\n{%- endif %}\",\"chat_template_caps\":{\"supports_object_arguments\":true,\"supports_parallel_tool_calls\":true,\"supports_preserve_reasoning\":false,\"supports_string_content\":true,\"supports_system_role\":true,\"supports_tool_calls\":true,\"supports_tools\":true,\"supports_typed_content\":false},\"bos_token\":\",\",\"eos_token\":\"<|im_end|>\",\"build_info\":\"b10180-11b068d06\",\"is_sleeping\":false,\"cors_proxy_enabled\":false}"
+  },
+  "chat_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "1218"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Okay, the user wants me to reply with the single word \\\"ok\\\". Let me make sure I understand the request correctly. They specified that the response should be just \\\"ok\\\" and nothing else. I need to check if there are any hidden instructions or if they want a more elaborate response. But since they clearly said \\\"single word: ok\\\", I should stick to that. No need to add anything extra. Just confirm the response is exactly \\\"ok\\\". Alright, that's straightforward. Let me make sure there's no confusion. Yep, the answer is simple. I'll respond with \\\"ok\\\".\\n\"}}],\"created\":1792719044,\"model\":\"ana/coder-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":127,\"prompt_tokens\":15,\"total_tokens\":142,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-6HQJQPbMVY9g2LrXQQUhfOh72ZxxiVBW\",\"timings\":{\"cache_n\":0,\"prompt_n\":15,\"prompt_ms\":54.527,\"prompt_per_token_ms\":3.6351333333333335,\"prompt_per_second\":275.0930731564179,\"predicted_n\":127,\"predicted_ms\":2272.834,\"predicted_per_token_ms\":17.896330708661417,\"predicted_per_second\":55.87737599842312}}"
+  },
+  "tools_direct": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json; charset=utf-8",
+      "Keep-Alive": "timeout=5, max=100",
+      "Server": "llama.cpp",
+      "Access-Control-Allow-Origin": "",
+      "Content-Length": "1256"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"Okay, the user is asking about the weather in Paris. I need to use the weather tool they provided. Let me check the function signature again. The function is called \\\"weather\\\" and requires a \\\"city\\\" parameter. The city in this case is Paris. So I should structure the tool call with the city name. I'll make sure to format it correctly in JSON inside the tool_call tags. No other parameters are needed, just the city. Alright, that should do it.\\n\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\": \\\"Paris\\\"}\"},\"id\":\"tbVOg0TMJ7kPn0rSFi5z6DLetCukX1mS\"}]}}],\"created\":1792719046,\"model\":\"ana/coder-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":121,\"prompt_tokens\":159,\"total_tokens\":280,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-CHawN6UvUzKffpxy90TKUoJ7KJqbZaJw\",\"timings\":{\"cache_n\":0,\"prompt_n\":159,\"prompt_ms\":275.672,\"prompt_per_token_ms\":1.7337861635220126,\"prompt_per_second\":576.7723961809687,\"predicted_n\":121,\"predicted_ms\":2126.725,\"predicted_per_token_ms\":17.576239669421486,\"predicted_per_second\":56.89499112485159}}"
+  },
+  "tool_calls": 1,
+  "lend": {
+    "key": "f326622d07ab57fafa9658736944840e66f9e3384075ccdcdcb2859b15b24e2c",
+    "kind": "llama-server",
+    "limit": null,
+    "name": "qwen3-8b",
+    "origin": "http://8pwhfnkjzqn9z8x0nb30vuffb3wsw232kb4631h60mc30gqvl20a96npkrkq6k.localhost:63191/",
+    "person": "Bo",
+    "reads": [],
+    "relay": "https://usw1-1.relay.n0.iroh.link/",
+    "upload_bps": null,
+    "using": 0
+  },
+  "models_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "614",
+      "server": "llama.cpp",
+      "access-control-allow-origin": "",
+      "date": "Fri, 23 Oct 2026 01:30:46 GMT"
+    },
+    "body": "{\"models\":[{\"name\":\"ana/coder-small\",\"model\":\"ana/coder-small\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/coder-small\",\"aliases\":[\"ana/coder-small\"],\"tags\":[],\"object\":\"model\",\"created\":1792719046,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":151936,\"n_ctx\":8192,\"n_ctx_train\":40960,\"n_embd\":4096,\"n_params\":8190735360,\"size\":5021827072,\"ftype\":\"Q4_K - Medium\"}}]}"
+  },
+  "chat_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "909",
+      "server": "llama.cpp",
+      "access-control-allow-origin": "",
+      "date": "Fri, 23 Oct 2026 01:30:47 GMT"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Okay, the user wants me to reply with the single word \\\"ok\\\". Let me check the instructions again. They said to reply with just \\\"ok\\\" and nothing else. I need to make sure I don't add any extra text or explanations. Alright, I'll respond with \\\"ok\\\" as requested.\\n\"}}],\"created\":1792719047,\"model\":\"ana/coder-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":68,\"prompt_tokens\":15,\"total_tokens\":83,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-q4pXPxzxDUvUiUo5tPH1ycxnTYtIhePb\",\"timings\":{\"cache_n\":0,\"prompt_n\":15,\"prompt_ms\":49.342,\"prompt_per_token_ms\":3.2894666666666668,\"prompt_per_second\":304.0006485347169,\"predicted_n\":68,\"predicted_ms\":1211.862,\"predicted_per_token_ms\":17.8215,\"predicted_per_second\":56.111999551104}}"
+  },
+  "tools_origin": {
+    "status": 200,
+    "headers": {
+      "content-type": "application/json; charset=utf-8",
+      "content-length": "1141",
+      "server": "llama.cpp",
+      "access-control-allow-origin": "",
+      "date": "Fri, 23 Oct 2026 01:30:49 GMT"
+    },
+    "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"Okay, the user is asking about the weather in Paris. I need to use the weather tool they provided. Let me check the function details. The function requires a city parameter, and Paris is the city mentioned. So I should call the weather function with city set to Paris. I'll make sure to format the tool call correctly in JSON inside the XML tags.\\n\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\": \\\"Paris\\\"}\"},\"id\":\"gRsUzdJi3evL7tHxa5XCiQBCJ9ndR2r2\"}]}}],\"created\":1792719049,\"model\":\"ana/coder-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":96,\"prompt_tokens\":159,\"total_tokens\":255,\"prompt_tokens_details\":{\"cached_tokens\":158}},\"id\":\"chatcmpl-xf08nqC7nezUAGW6yJGgbXIZRwgzF03y\",\"timings\":{\"cache_n\":158,\"prompt_n\":1,\"prompt_ms\":18.552,\"prompt_per_token_ms\":18.552,\"prompt_per_second\":53.90254420008625,\"predicted_n\":96,\"predicted_ms\":1998.605,\"predicted_per_token_ms\":20.818802083333335,\"predicted_per_second\":48.0335033685996}}"
+  },
+  "tool_calls_origin": 1,
+  "unshared": true
+}

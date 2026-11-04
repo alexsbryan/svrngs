@@ -19,7 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 UPSTREAM = Path(os.environ.get("COMMONWEALTH_AI", Path.home() / "dev" / "commonwealth-ai"))
 MARK = re.compile(r"ported from commonwealth-ai (\S+)@([0-9a-f]{7,40})")
-SKIP = ("docs/", "target/", "node_modules/", ".git/", "scripts/ports.py")
+SKIP = ("docs/", "target/", "node_modules/", ".git/", "ralph/", "scripts/ports.py")
 
 
 def git(*args, cwd=UPSTREAM):

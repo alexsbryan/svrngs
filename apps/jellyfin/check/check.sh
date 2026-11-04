@@ -14,6 +14,7 @@
 # in Jellyfin's own pages by the line `share` printed (lender.mjs).
 #
 #   check.sh films <dir> <seconds>                 Sam's three films, that long, made in <dir> unless there
+#   check.sh jellyfin <scratch> <out>              Sam's Jellyfin alone, its films and Sam's account; <scratch>/env names them
 #   check.sh up    <scratch> <out>                 all of the above; with MEDIA=<dir>, Sam's library is <dir>'s
 #                                                  films; PEOPLE names who the lender makes accounts for (else
 #                                                  ana ben; empty, nobody); SHARE_FLAGS is what share is given (else --limit 8);
@@ -69,7 +70,17 @@ STEP="$1"; R="$2"; OUT="$3"
 HERE="$(cd "$(dirname "$0")" && pwd)"; REPO="$(cd "$HERE/../../.." && pwd)"
 B="$REPO/target/debug/svrngs"
 JF_APP="${JF_APP:-/Applications/Jellyfin.app/Contents}"
-O=http://127.0.0.1:8096
+# Jellyfin's server, its ffmpeg and its pages: in macOS's app, or where
+# Jellyfin's own Linux packages put them (jellyfin-server, jellyfin-web,
+# jellyfin-ffmpeg8; scripts/gate/Containerfile installs them).
+if [ "$(uname -s)" = Darwin ]; then
+  JF_BIN="$JF_APP/MacOS/jellyfin"; JF_FFMPEG="$JF_APP/MacOS/ffmpeg"; JF_WEB="$JF_APP/Resources/jellyfin-web"
+else
+  JF_BIN=/usr/lib/jellyfin/bin/jellyfin; JF_FFMPEG=/usr/lib/jellyfin-ffmpeg/ffmpeg; JF_WEB=/usr/share/jellyfin/web
+fi
+# Jellyfin's port: its own, unless JF_PORT names another (each engine's
+# films scene runs a Jellyfin of its own at once).
+JF_PORT="${JF_PORT:-8096}"; O="http://127.0.0.1:$JF_PORT"
 SECRETS="$R/secrets"; [ "$STEP" = films ] || mkdir -p "$OUT"
 # Who the lender makes accounts for, and what share is told: u5-4's pair
 # unless a run says otherwise (Demo A's, `trio`).
@@ -95,7 +106,7 @@ down() {
 # the engines that cannot open Matroska. A 1,200 s one took 5.5 min at a
 # load of 65 here (2026-10-05), so Demo A's are made once, by `films`.
 films() {
-  local dir="$1" len="$2" ff="$JF_APP/MacOS/ffmpeg"
+  local dir="$1" len="$2" ff="$JF_FFMPEG"
   mkdir -p "$dir"
   # Each written aside and moved in whole, so a film cut short is made again.
   make() {
@@ -114,13 +125,18 @@ films() {
   done
 }
 
-up() {
+# Sam's Jellyfin alone, its films and the lender's own account: up's
+# first half, which the films scene runs (crates/svrngs/tests/scenes/films.rs).
+jellyfin() {
+  # This computer's having no Jellyfin is said apart, exit 4, so the films
+  # scenes are never-ran and not failed (films.rs `Jellyfin::up`).
+  [ -x "$JF_BIN" ] || { echo "Jellyfin is not installed on this computer ($JF_BIN)" >&2; exit 4; }
   down; rm -rf "$R"; mkdir -p "$R"/jf/{data,config,cache,log,media} "$R"/sam "$R"/alex "$OUT"
   (umask 077; mkdir -p "$SECRETS")
   : >"$OUT/steps.log"
 
   # --- Sam's Jellyfin, its films made here, or MEDIA's (`films`) ----------
-  local ff="$JF_APP/MacOS/ffmpeg" lib="${MEDIA:-$R/jf/media}"
+  local ff="$JF_FFMPEG" lib="${MEDIA:-$R/jf/media}"
   [ -n "${MEDIA:-}" ] || films "$lib" 120
   # Sam's home videos, a library Sam may keep back (the mw README §7, item 5).
   if [ -n "${KEEP_BACK:-}" ]; then
@@ -128,16 +144,17 @@ up() {
     "$ff" -v error -y -f lavfi -i "testsrc2=size=640x360:rate=24" -t 20 -c:v libx264 -preset veryfast \
       -pix_fmt yuv420p "$R/jf/kept/Picnic.mp4"
   fi
-  cat >"$R/jf/config/network.xml" <<'EOF'
+  cat >"$R/jf/config/network.xml" <<EOF
 <?xml version="1.0" encoding="utf-8"?>
 <NetworkConfiguration xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <InternalHttpPort>$JF_PORT</InternalHttpPort>
   <EnableIPv6>false</EnableIPv6>
   <LocalNetworkAddresses><string>127.0.0.1</string></LocalNetworkAddresses>
   <EnableRemoteAccess>false</EnableRemoteAccess>
 </NetworkConfiguration>
 EOF
-  nohup "$JF_APP/MacOS/jellyfin" -d "$R/jf/data" -c "$R/jf/config" -C "$R/jf/cache" -l "$R/jf/log" \
-    -w "$JF_APP/Resources/jellyfin-web" --ffmpeg "$ff" --nonetchange >"$R/jf/stdout.log" 2>&1 &
+  nohup "$JF_BIN" -d "$R/jf/data" -c "$R/jf/config" -C "$R/jf/cache" -l "$R/jf/log" \
+    -w "$JF_WEB" --ffmpeg "$ff" --nonetchange >"$R/jf/stdout.log" 2>&1 &
   echo $! >"$R/jf.pid"
   local ok=0 info
   for _ in $(seq 1 90); do
@@ -177,6 +194,10 @@ EOF
   THREE="$(api GET "/Items?Recursive=true&IncludeItemTypes=Movie&SearchTerm=Three" | field '["Items"][0]["Id"]')"
   users >"$OUT/users-before.json"
   say "films: $n; users: $(cat "$OUT/users-before.json")"
+}
+
+up() {
+  jellyfin
 
   # --- the page: a hosted one when PAGE names it, as for real phones (the
   # operator's Demo B, https://group.svrnme.sh/); else web/ served on
@@ -462,6 +483,7 @@ mw2() {
 
 case "$STEP" in
   films) films "$R" "$OUT" ;;
+  jellyfin) jellyfin; printf 'SERVER=%s\nONE=%s\nTWO=%s\nTHREE=%s\n' "$SERVER" "$ONE" "$TWO" "$THREE" >"$R/env" ;;
   up) up ;;
   pair) pair "$4" "$5" ;;
   trio) trio ;;
@@ -470,5 +492,5 @@ case "$STEP" in
   plant) plant "$4" "$5" ;;
   judge) shift 3; python3 "$HERE/scan.py" "$R" "$OUT" >/dev/null; python3 "$HERE/judge.py" "$OUT" "$@" | tee -a "$OUT/steps.log" ;;
   down) TOKEN="$(cat "$SECRETS/admin_token")"; users >"$OUT/users-after.json" 2>/dev/null || true; down ;;
-  *) echo "usage: check.sh films|up|pair|trio|plant|mw|mw2|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
+  *) echo "usage: check.sh films|jellyfin|up|pair|trio|plant|mw|mw2|judge|down <scratch> <out> [way engine | plant engine | run...]" >&2; exit 2 ;;
 esac

@@ -55,6 +55,8 @@ pub struct Addr {
     pub id: String,
     pub sockets: Vec<std::net::SocketAddr>,
     pub api: std::net::SocketAddr,
+    /// The token its record asks of a program (give-token).
+    pub token: String,
 }
 
 pub async fn node() {
@@ -99,7 +101,6 @@ pub async fn node() {
                     key: actor_of(&signing(i)),
                     invite: None,
                 },
-                on_behalf_of: None,
             };
             node.rail().commit(&id, &admit).unwrap().unwrap();
         }
@@ -115,6 +116,7 @@ pub async fn node() {
         id: node.endpoint().id().to_string(),
         sockets: loopback_sockets(node.endpoint()),
         api: node.api_addr(),
+        token: node.token(),
     };
     let at = dir.join("addr.json");
     std::fs::write(at.with_extension("tmp"), serde_json::to_vec(&addr).unwrap()).unwrap();

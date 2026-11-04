@@ -77,9 +77,17 @@ pub mod surface;
 /// The home page at `svrngs.localhost` (sup-2).
 pub mod home;
 pub mod origin;
-// The room door, u6-1's (docs/DESIGN.md §3, "The room"): the lends a
-// person names, served to this computer's network while the command runs.
+// A browser told from a program at both: an open's session, or the token.
+mod session;
+// Where this computer is, and on which network: the router's hardware
+// address, this computer's address there, a caller's (the room; the door).
+pub mod network;
+// The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
+// turns on, served by the running node on the network each was turned on at.
 pub mod room;
+// Play, give-play's (svrn-docs rings/current/GIVE.md §6): a port a member
+// lends, opened on this computer's 127.0.0.1 while its person has Play on.
+pub mod play;
 // What a lend is decided from: the probe, the well-known table (v1ui-lend (a)).
 pub mod share;
 
@@ -96,10 +104,14 @@ pub mod lend;
 pub mod folder;
 // A group's seed kept on this computer, and the group kept (start-group).
 pub mod group;
+// Where this computer meets its groups, in tiers (relay fallbacks).
 pub mod invite;
+pub mod tiers;
 // Joining a group by its link (arch-command (a)).
 pub mod join;
 pub mod node;
+// Sign in with svrngs: the lender's ES256 key and the tokens it signs.
+pub mod oidc;
 // Removal as this computer's person asks it (U7, DESIGN §6).
 pub mod removal;
 // This build's version, which every answer a page reads carries, and the

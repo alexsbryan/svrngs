@@ -86,6 +86,7 @@ mod admit;
 pub mod alpn;
 pub mod app;
 mod command;
+pub mod grant;
 mod hash;
 pub mod joining;
 pub mod link;
@@ -101,9 +102,10 @@ pub mod seed;
 mod sig;
 mod sync;
 mod synced;
+pub mod token;
 mod view;
 
-use alloc::collections::BTreeMap;
+use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
@@ -119,17 +121,17 @@ use serde::{Deserialize, Serialize};
 pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
-pub use membership::{membership, standing_reads, Cut, InviteFault, Invited, Joined, Membership};
+pub use membership::*;
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    HandOnRefusal, HandOnTo, Leave, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
-    RemovalRefusal,
+    Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt,
+    Removal, RemovalRefusal,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
-    sign_message, sign_ring_op, verify_hex,
+    sign_message, sign_ring_op, unsigned_act, verify_hex,
 };
 pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};
@@ -426,6 +428,43 @@ pub enum RailAct {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         url: Option<String>,
     },
+    /// A member's computer says: this person is my guest, until then
+    /// (guests-visit; svrn-docs `rings/current/GUESTS.md` §5). It is a visit
+    /// only within the bounds the fold keeps ([`Guest::live`]),
+    /// and the host's [`Self::Correct`] of it is their Stop. It binds
+    /// nothing, so a guest's key never stands. Carries no [`Payload`].
+    Visit(Visit),
+    /// The keeper's cutover (capability-signed; DESIGN §1, "An entry's
+    /// author is its signer"): each key's newest acts the keeper's computer
+    /// held when it wrote this, so an act naming another person than its
+    /// signer's counts only where this covers it, by ancestry, as a cut
+    /// covers. Counts only as the keeper's, the first. Carries no
+    /// [`Payload`].
+    Signers { through: Vec<OpId> },
+    /// The keeper freezes legacy holder entries by ancestry; new entries bind
+    /// their person's approval of exact content, not a writer-chosen clock.
+    Holders { through: Vec<OpId> },
+    /// The keeper says: the group meets at these relays (relay fallbacks;
+    /// svrn-docs `rings/current/GROUP_RELAYS.md` §7). Counts only as the
+    /// keeper's, as a cut does, its newest winning
+    /// ([`Membership::meets_at`]); a computer joins the build's relays to
+    /// them, which the record never names ([`relay::Meeting`]). As written:
+    /// the fold reads each dotless. Carries no [`Payload`].
+    Meets { relays: BTreeSet<String> },
+}
+
+/// What a [`RailAct::Visit`] says: the guest's name, the key they made for
+/// this visit, the lends it opens and until when.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Visit {
+    pub guest: Person,
+    pub key: String,
+    /// Each lender's key, and the lends of theirs the visit opens: the
+    /// host's own; a lend whose lender welcomes guests, which waits (GUESTS
+    /// §8), fits here with no new act.
+    pub opens: BTreeMap<String, BTreeSet<String>>,
+    /// Unix seconds, within [`VISIT_LONGEST`] of the act's own time.
+    pub until: i64,
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -450,20 +489,20 @@ pub struct Redemption {
     /// reads as [`Device::Computer`]; and skipped for a computer, so a
     /// computer's redemption keeps the bytes, id and signature version 3
     /// gave it (`fixtures/redemption_before_browsers.jsonl`).
-    #[serde(
-        default = "Device::before_browsers",
-        skip_serializing_if = "Device::is_computer"
-    )]
+    #[serde(default, skip_serializing_if = "Device::dialled")]
     pub device: Device,
 }
 
 /// What holds a standing key (u4-1; DESIGN §3 "Joining", call 2): the
 /// register answers it for each standing key ([`Membership::device`]), and
 /// whether the key is dialled is [`Device::dialled`]'s alone.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Device {
-    /// A computer: it holds a copy of the record and is dialled.
+    /// A computer: it holds a copy of the record and is dialled. The
+    /// default, as a key admitted before a redemption could name a device
+    /// was a computer, the only device that could join.
+    #[default]
     Computer,
     /// A browser: it dials and is never dialled. Its endpoint lives only
     /// while its page runs, so a round dialling it would wait out a dial
@@ -473,21 +512,9 @@ pub enum Device {
 
 impl Device {
     /// Whether the round, the live fan-out and the list of what members
-    /// lend dial a key this device holds.
-    pub const fn dialled(self) -> bool {
-        match self {
-            Device::Computer => true,
-            Device::Browser => false,
-        }
-    }
-
-    /// The device of a key admitted before a redemption could name one:
-    /// a computer, the only device that could join.
-    const fn before_browsers() -> Self {
-        Device::Computer
-    }
-
-    const fn is_computer(&self) -> bool {
+    /// lend dial a key this device holds: a computer's, the one a
+    /// redemption's line leaves unwritten.
+    pub const fn dialled(&self) -> bool {
         matches!(self, Device::Computer)
     }
 
@@ -527,6 +554,15 @@ impl Redemption {
 }
 
 impl RailAct {
+    /// The app's act it states: a record's, or a correction's replacement.
+    pub fn payload(&self) -> Option<&Payload> {
+        match self {
+            RailAct::Record { payload } => Some(payload),
+            RailAct::Correct { replacement, .. } => replacement.as_ref(),
+            _ => None,
+        }
+    }
+
     /// Read an act from an app's request body, with refusals a person can
     /// act on.
     ///
@@ -545,12 +581,7 @@ impl RailAct {
             let raw = e.to_string();
             // serde appends " at line 0 column 0" to a `from_value` failure,
             // which is a position in a document that does not exist.
-            let cleaned = raw
-                .split(" at line ")
-                .next()
-                .unwrap_or(&raw)
-                .trim()
-                .to_string();
+            let cleaned = String::from(raw.split(" at line ").next().unwrap_or(&raw).trim());
             RailError::Rejected(if cleaned.is_empty() { raw } else { cleaned })
         })
     }
@@ -620,6 +651,15 @@ pub struct SignedOp {
     /// above).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub view: Option<crate::Digest>,
+    /// The pass that lets this line's signer, a holder, act as the person
+    /// who signed it (capability-signed; DESIGN §1, "An entry's author is
+    /// its signer"): a phone's act in an app it opened, signed on the phone.
+    /// Inside the id, so inside the signature: no carrier can move a line to
+    /// another person's pass. LAST and skipped when absent, so every line
+    /// without one keeps its bytes, its id and its signature (the golden
+    /// test's first case).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub grant: Option<crate::pass::Pass>,
 }
 
 /// The line format version the membership act cohort ships at
@@ -669,15 +709,34 @@ pub const RELAY_LINE_VERSION: u32 = 9;
 /// names it `NewerVersionLine`, so it serves the app as it was brought.
 pub const RUNS_LINE_VERSION: u32 = 10;
 
+/// The line format version a guest's visit ships at (guests-visit): a
+/// [`RailAct::Visit`]. A build at [`RUNS_LINE_VERSION`] names it
+/// `NewerVersionLine`, so it holds no visit and lets no guest in.
+pub const VISIT_LINE_VERSION: u32 = 11;
+
+/// The line format version a holder's line ships at (capability-signed): a
+/// [`SignedOp`] carrying a `grant`, and the keeper's [`RailAct::Signers`].
+/// A build at [`VISIT_LINE_VERSION`] names it `NewerVersionLine`, so it
+/// counts the line as nobody's, never as the person of a key that did not
+/// sign it, and says its answer covers a subset.
+pub const AUTHORSHIP_LINE_VERSION: u32 = 12;
+pub const APPROVAL_LINE_VERSION: u32 = 13;
+
+/// The line format version the group's relays ship at (relay fallbacks):
+/// the keeper's [`RailAct::Meets`]. A build at [`APPROVAL_LINE_VERSION`]
+/// names it `NewerVersionLine`, so it meets the group where it did before,
+/// at the relay its group's file keeps.
+pub const MEETS_LINE_VERSION: u32 = 14;
+
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
     const ID_PREFIX: &'static str = "ring";
     const LABEL: &'static str = "ring_rail";
     /// This build reads the membership cohort's, the link's, a browser's
-    /// redemption's, a folder's, removal's, a device link's, a relay's and
-    /// a yes to a carried app's version's lines too (see
-    /// [`Self::line_version`]).
-    const UNDERSTANDS: u32 = RUNS_LINE_VERSION;
+    /// redemption's, a folder's, removal's, a device link's, a relay's, a
+    /// yes to a carried app's version's, a visit's, a holder's and the
+    /// group's relays' lines too (see [`Self::line_version`]).
+    const UNDERSTANDS: u32 = MEETS_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -686,6 +745,10 @@ impl Journaled for SignedOp {
     /// before.
     fn line_version(&self) -> u32 {
         match self.act {
+            RailAct::Meets { .. } => MEETS_LINE_VERSION,
+            _ if self.grant.as_ref().is_some_and(|p| p.op.is_some()) => APPROVAL_LINE_VERSION,
+            RailAct::Holders { .. } => APPROVAL_LINE_VERSION,
+            _ if self.grant.is_some() => AUTHORSHIP_LINE_VERSION,
             RailAct::Admit {
                 invite:
                     Some(Redemption {
@@ -706,6 +769,8 @@ impl Journaled for SignedOp {
             RailAct::Synced { .. } => SYNCED_LINE_VERSION,
             RailAct::Relay { .. } => RELAY_LINE_VERSION,
             RailAct::Runs { .. } => RUNS_LINE_VERSION,
+            RailAct::Visit(_) => VISIT_LINE_VERSION,
+            RailAct::Signers { .. } => AUTHORSHIP_LINE_VERSION,
             _ => Self::VERSION,
         }
     }
@@ -824,6 +889,12 @@ mod tests;
 
 #[cfg(test)]
 mod tests_sealing;
+
+#[cfg(test)]
+mod tests_grant;
+
+#[cfg(test)]
+mod tests_cutover;
 
 /// The rail's ONE set of op fixtures.
 ///

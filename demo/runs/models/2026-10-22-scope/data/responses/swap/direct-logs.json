@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "text/plain",
+    "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+    "Content-Length": "252"
+  },
+  "body": "[INFO] llama-swap listening on http://127.0.0.1:8105\n[INFO] using ioreg for GPU monitoring\n[INFO] <tiny-0.5b> Health check passed on http://localhost:5800/health\n[WARN] non-200 response, recording partial metrics: status=404, path=/v1/chat/completions\n"
+}

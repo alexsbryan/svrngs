@@ -1,0 +1,223 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// The phone's edge: the runtime, the page's own trace, and every dial the
+// page makes as the person. Each flow's `io` comes here to reach a
+// computer, and no step does: a step answers an effect as data, and its
+// flow's `io` runs it (ui/machine.js `machine`).
+//
+// The group's key and its one endpoint live here, never in state. One
+// endpoint serves every dial, since the relay keeps one per key, so a
+// second endpoint of the key would displace the first.
+import { whoseComputer } from '../question.js?v=__VERSION__';
+/** @import { Group, Computer } from '../store.js?v=__VERSION__' */
+/** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
+/** @import { Dialled, Endpoint } from '../wasm/svrngs_web.js?v=__VERSION__' */
+/** @import { Lent } from './enter.js?v=__VERSION__' */
+
+// How long a dial waits for a computer to answer, in milliseconds.
+export const PATIENCE = 60_000;
+const PEOPLE_LENDS = '/people/lends';
+
+// The runtime by its one URL, imported only once app.js has run its init.
+export const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
+
+// The page's own lines, to the sink ui/trace.js sets on `window`. It is
+// read from `globalThis` and not imported, so the laws can import a flow
+// in node, which has no `window`.
+export const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
+
+// An error in words the page says to the person, as a failed message's
+// `said`.
+export const saying = (/** @type {string} */ words) =>
+  Object.assign(new Error(words), { said: words });
+
+/**
+ * What `dialling` answers, or an error once PATIENCE has passed with no
+ * answer.
+ * @template T
+ * @param {Promise<T>} dialling
+ * @returns {Promise<T>}
+ */
+export const patiently = (dialling) =>
+  Promise.race([
+    dialling,
+    /** @type {Promise<never>} */ (
+      new Promise((_, reject) => setTimeout(() => reject(new Error('no answer')), PATIENCE))
+    ),
+  ]);
+
+/**
+ * `bytes` posted as JSON at `path` through `connection`, or `path` read
+ * when there are none. The answer is read whole before the connection
+ * closes, since a close cuts off a body not yet read.
+ * @param {Dialled} connection
+ * @param {string} path
+ * @param {Uint8Array<ArrayBuffer>} [bytes]
+ * @returns {Promise<[ok: boolean, status: number, text: string]>}
+ */
+export const exchange = (connection, path, bytes) =>
+  connection
+    .fetch(
+      bytes ? 'POST' : 'GET',
+      path,
+      bytes
+        ? [
+            ['content-type', 'application/json'],
+            ['content-length', String(bytes.length)],
+          ]
+        : [['accept', 'application/json']],
+      bytes ? new Blob([bytes]).stream() : null,
+    )
+    // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
+    .then(
+      async (/** @type {Response} */ answer) =>
+        /** @satisfies {[boolean, number, string]} */ ([
+          answer.ok,
+          answer.status,
+          await answer.text(),
+        ]),
+    )
+    .finally(() => connection.close());
+
+// Each typed apart, as JSDoc types only the first of several declared at once.
+// The group's key, set by enter.js's `open`, which comes before every read.
+/** @type {Uint8Array<ArrayBuffer>} */
+let key;
+/** @type {Promise<Endpoint> | null} */
+let bound;
+
+/**
+ * The group's key, unsealed as it opens. The endpoint of the key before it
+ * is let go, so the next dial binds one of this key.
+ * @param {Uint8Array<ArrayBuffer>} unsealed
+ */
+export const hold = (unsealed) => {
+  key = unsealed;
+  bound = null;
+};
+
+/**
+ * This page's key as the record spells it: public, as the record's rows
+ * name it, never the key itself.
+ * @param {typeof Wasm} core
+ */
+export const actor = (core) => core.actor(key);
+
+/**
+ * The one endpoint, bound as the person on the first dial.
+ * @param {typeof Wasm} core
+ * @param {Group} group
+ */
+const endpoint = (core, group) => (bound ??= core.endpoint(key, group.token));
+
+/**
+ * `group` dialled through the first to answer of its link's computer and
+ * each computer its last read named, all at once.
+ * @param {typeof Wasm} core
+ * @param {Group} group
+ * @param {string[]} tried the computers asked already, by key
+ * @returns {Promise<[Dialled, Computer | undefined]>} and the computer that answered, none when the link's did
+ */
+async function reach(core, group, tried) {
+  if (!core.relay_of(group.token))
+    throw saying('This link was made by an older svrngs. Ask whoever sent it for a new one.');
+  const issuer = core.issuer_of(group.token);
+  const link = group.computers?.find((one) => one.key === issuer);
+  const linked = !tried.includes(issuer);
+  const others = (group.computers ?? []).filter((one) => one !== link && !tried.includes(one.key));
+  trace(
+    `PAGE: dialling ${linked ? "the link's computer and " : ''}${others.length} other computer(s) at once`,
+  );
+  const tries = [
+    ...(linked
+      ? [
+          endpoint(core, group)
+            .then((dialer) => dialer.dial_link())
+            .then((reached) => /** @satisfies {[Dialled]} */ ([reached])),
+        ]
+      : []),
+    ...others.map((other) =>
+      endpoint(core, group)
+        .then((dialer) => dialer.dial(other.key, other.relay))
+        .then((reached) => /** @satisfies {[Dialled, Computer]} */ ([reached, other])),
+    ),
+  ];
+  const asked = [...(linked ? [link] : []), ...others];
+  const away = `${asked.map((one) => `${whoseComputer(one)} did not answer.`).join(' ')} Try again later.`;
+  const [dialled, computer] = await patiently(Promise.any(tries)).catch((error) => {
+    trace(`PAGE: the dial failed: ${error}`);
+    return Promise.reject(saying(away));
+  });
+  trace(
+    `PAGE: reached ${group.name} through ${computer ? `${computer.person}'s` : "the link's"} computer`,
+  );
+  // A computer that answered after the first is closed, so it holds
+  // nothing open at the relay.
+  for (const attempt of tries)
+    attempt.then(
+      ([answered]) => {
+        if (answered === dialled) return;
+        trace('PAGE: a computer answered late, so closed');
+        void answered.close();
+      },
+      () => {},
+    );
+  return [dialled, computer];
+}
+
+/**
+ * The group's lends, asked of the next computer to answer when an answer
+ * fails, and the connection it came through, still open.
+ * @param {typeof Wasm} core
+ * @param {Group} group
+ * @param {string[]} tried
+ * @returns {Promise<[Dialled, Computer | undefined, Response]>}
+ */
+export const lends = (core, group, tried) =>
+  reach(core, group, tried).then(([dialled, via]) =>
+    dialled.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then(
+      (res) => [dialled, via, res],
+      (error) => {
+        trace(
+          `PAGE: ${PEOPLE_LENDS} failed through ${whoseComputer(via)}, so the next to answer is asked: ${error}`,
+        );
+        void dialled.close();
+        return lends(core, group, [...tried, via?.key ?? core.issuer_of(group.token)]).catch(() =>
+          Promise.reject(error),
+        );
+      },
+    ),
+  );
+
+/**
+ * One lender's computer, `lend`, dialled as the person through the one
+ * endpoint, within PATIENCE: what apps use, and the ask's yes, posted to
+ * its door's /choices (uses.js).
+ * @param {Group} group
+ * @param {Lent} lend
+ */
+export const dialled = (group, lend) =>
+  wasm().then((core) =>
+    patiently(
+      Promise.resolve(endpoint(core, group)).then((dialer) =>
+        dialer.dial(lend.key, lend.relay ?? null),
+      ),
+    ),
+  );
+
+/**
+ * A write through the computer the page reaches: `body` posted with the
+ * group's id, as JSON, and its answer read, or the computer's refusal in
+ * its own words.
+ * @param {Group} group
+ * @param {string} path
+ * @param {unknown} body
+ */
+export const through = (group, path, body) =>
+  wasm().then(async (core) => {
+    const [connection] = await reach(core, group, []);
+    const bytes = new TextEncoder().encode(JSON.stringify([group.id, body]));
+    const [ok, status, text] = await exchange(connection, path, bytes);
+    if (ok) return JSON.parse(text);
+    trace(`PAGE: ${path} answered ${status}: ${text}`);
+    return Promise.reject(new Error(JSON.parse(text).error));
+  });

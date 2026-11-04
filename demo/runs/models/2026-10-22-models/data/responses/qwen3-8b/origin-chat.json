@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "909",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 01:30:47 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\",\"reasoning_content\":\"Okay, the user wants me to reply with the single word \\\"ok\\\". Let me check the instructions again. They said to reply with just \\\"ok\\\" and nothing else. I need to make sure I don't add any extra text or explanations. Alright, I'll respond with \\\"ok\\\" as requested.\\n\"}}],\"created\":1792719047,\"model\":\"ana/coder-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":68,\"prompt_tokens\":15,\"total_tokens\":83,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-q4pXPxzxDUvUiUo5tPH1ycxnTYtIhePb\",\"timings\":{\"cache_n\":0,\"prompt_n\":15,\"prompt_ms\":49.342,\"prompt_per_token_ms\":3.2894666666666668,\"prompt_per_second\":304.0006485347169,\"predicted_n\":68,\"predicted_ms\":1211.862,\"predicted_per_token_ms\":17.8215,\"predicted_per_second\":56.111999551104}}"
+}

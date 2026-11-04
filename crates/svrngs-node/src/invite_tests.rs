@@ -11,7 +11,7 @@ fn issuer() -> PublicKey {
 /// A client's link with no relay is short: at most 90 characters.
 #[test]
 fn a_clients_link_with_no_relay_is_at_most_90_characters() {
-    let link = client_link(&draw(issuer(), None));
+    let link = client_link(&draw(issuer(), Vec::new()));
     eprintln!("a client's link, {} characters: {link}", link.len());
     assert!(link.len() <= 90, "{} characters: {link}", link.len());
 }
@@ -21,7 +21,7 @@ fn a_clients_link_with_no_relay_is_at_most_90_characters() {
 #[test]
 fn a_minted_token_spells_no_kept_word() {
     for _ in 0..10_000 {
-        let token = draw(issuer(), None);
+        let token = draw(issuer(), Vec::new());
         assert!(!token.spells_a_kept_word(), "{}", token.encode());
     }
 }

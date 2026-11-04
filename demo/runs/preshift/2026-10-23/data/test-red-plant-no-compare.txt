@@ -1,0 +1,18 @@
+test_each_plant_lands_in_its_group (__main__.EachGateOnItsPlant.test_each_plant_lands_in_its_group) ... ok
+test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found (__main__.TheGuestsLinkPark.test_the_ceiling_is_read_and_its_headroom_is_what_the_park_found) ... ok
+test_the_row_as_written_is_flagged_no_estimate_never_defaulted (__main__.TheGuestsLinkPark.test_the_row_as_written_is_flagged_no_estimate_never_defaulted) ... ok
+test_the_row_with_the_parks_own_measure_will_park (__main__.TheGuestsLinkPark.test_the_row_with_the_parks_own_measure_will_park) ... FAIL
+
+======================================================================
+FAIL: test_the_row_with_the_parks_own_measure_will_park (__main__.TheGuestsLinkPark.test_the_row_with_the_parks_own_measure_will_park)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/alexsbryan/dev/svrngs/demo/runs/preshift/2026-10-23/test_preshift.py", line 79, in test_the_row_with_the_parks_own_measure_will_park
+    self.assertEqual(len(over), 2, link)  # 118 over 24, and 7 over 0
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : {'id': 'guests-link', 'line': 67, 'in_flight': False, 'group': 'clear', 'findings': [{'kind': 'within-headroom', 'group': None, 'say': 'estimates 118 repository lines, within the 24 left', 'evidence': ['/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp5wcc_v4j/STATE.md:67']}, {'kind': 'within-headroom', 'group': None, 'say': 'estimates 7 svrngs-core lines, within the 0 left', 'evidence': ['/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp5wcc_v4j/STATE.md:67']}]}
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.591s
+
+FAILED (failures=1)

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en-US" data-theme="forgejo-auto">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<title>Sign in - Forgejo</title>
+	<link rel="manifest" href="/manifest.json">
+	<meta name="author" content="Forgejo – Beyond coding. We forge.">
+	<meta name="description" content="Forgejo is a self-hosted lightweight software forge. Easy to install and low maintenance, it just does the job.">
+	<meta name="keywords" content="git,forge,forgejo">
+	<meta name="referrer" content="same-origin">
+
+
+	<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+	<link rel="alternate icon" href="/assets/img/favicon.png" type="image/png">
+
+	
+<script>
+	
+	window.addEventListener('error', function(e) {window._globalHandlerErrors=window._globalHandlerErrors||[]; window._globalHandlerErrors.push(e);});
+	window.addEventListener('unhandledrejection', function(e) {window._globalHandlerErrors=window._globalHandlerErrors||[]; window._globalHandlerErrors.push(e);});
+	window.config = {
+		appUrl: 'http:\/\/localhost:18097\/',
+		appSubUrl: '',
+		assetVersionEncoded: encodeURIComponent('17.0.0'), 
+		assetUrlPrefix: '\/assets',
+		runModeIsProd:  true ,
+		customEmojis: new Set(["git","gitea","codeberg","gitlab","github","gogs","forgejo"]),
+		pageData: {"DATETIMESTRINGS":{"FUTURE":"in future","NOW":"now","relativetime.1day":"yesterday","relativetime.1month":"last month","relativetime.1week":"last week","relativetime.1year":"last year"},"PLURALSTRINGS_FALLBACK":{},"PLURALSTRINGS_LANG":{"relativetime.days":["%d day ago","%d days ago"],"relativetime.duration.days":["%d day","%d days"],"relativetime.duration.hours":["%d hour","%d hours"],"relativetime.duration.mins":["%d minute","%d minutes"],"relativetime.duration.months":["%d month","%d months"],"relativetime.duration.secs":["%d second","%d seconds"],"relativetime.duration.weeks":["%d week","%d weeks"],"relativetime.duration.years":["%d year","%d years"],"relativetime.hours":["%d hour ago","%d hours ago"],"relativetime.mins":["%d minute ago","%d minutes ago"],"relativetime.months":["%d month ago","%d months ago"],"relativetime.weeks":["%d week ago","%d weeks ago"],"relativetime.years":["%d year ago","%d years ago"]},"PLURAL_RULE_FALLBACK":0,"PLURAL_RULE_LANG":0},
+		notificationSettings: {"EventSourceUpdateTime":10000,"MaxTimeout":60000,"MinTimeout":10000,"TimeoutStep":10000}, 
+		enableTimeTracking:  true ,
+		
+		mermaidMaxSourceCharacters:  50000 ,
+		
+		i18n: {
+			copy_success: "Copied!",
+			copy_error: "Copy failed",
+			error_occurred: "An error occurred",
+			network_error: "Network error",
+			remove_label_str: "Remove item \"%s\"",
+			modal_confirm: "Confirm",
+			modal_cancel: "Cancel",
+			more_items: "More items",
+			incorrect_root_url: "This Forgejo instance is configured to be served on \"http://localhost:18097/\". You are currently viewing Forgejo through a different URL, which may cause parts of the application to break. The canonical URL is controlled by Forgejo admins via the ROOT_URL setting in the app.ini.",
+		},
+	};
+	
+	window.config.pageData = window.config.pageData || {};
+</script>
+<script src="/assets/js/webcomponents.js?v=17.0.0"></script>
+
+	
+
+	
+	<meta property="og:title" content="Sign in">
+
+
+	<meta property="og:url" content="http://localhost:18097//user/login">
+
+
+	<meta property="og:type" content="website">
+
+
+		<meta property="og:image" content="/assets/img/logo.png">
+
+<meta property="og:site_name" content="Forgejo">
+
+	<link rel="stylesheet" href="/assets/css/index.css?v=17.0.0">
+<link rel="stylesheet" href="/assets/css/theme-forgejo-auto.css?v=17.0.0">
+
+	
+</head>
+<body class="no-js" hx-swap="outerHTML" hx-ext="morph" hx-push-url="false">
+	
+
+	<div class="full height">
+		<noscript>
+			<div class="tw-ml-2 tw-mr-2 tw-text-center tw-text-text-light-2">This website requires JavaScript.</div>
+		</noscript>
+
+		
+
+		
+			
+
+
+<nav id="navbar" aria-label="Navigation bar">
+	<div class="navbar-left ui secondary menu">
+		
+		<a class="item" id="navbar-logo" href="/" aria-label="Home">
+			<img width="30" height="30" src="/assets/img/logo.svg" alt="Logo" aria-hidden="true">
+		</a>
+
+		
+		<div class="ui secondary menu item navbar-mobile-right only-mobile">
+			
+			<button class="item tw-w-auto ui icon mini button tw-p-2 tw-m-0" id="navbar-expand-toggle" aria-label="Toggle menu"><svg viewBox="0 0 16 16" class="svg octicon-three-bars" aria-hidden="true" width="16" height="16"><path d="M1 2.75A.75.75 0 0 1 1.75 2h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 2.75m0 5A.75.75 0 0 1 1.75 7h12.5a.75.75 0 0 1 0 1.5H1.75A.75.75 0 0 1 1 7.75M1.75 12h12.5a.75.75 0 0 1 0 1.5H1.75a.75.75 0 0 1 0-1.5"/></svg></button>
+		</div>
+
+		
+		
+			<a class="item" href="/explore/repos">Explore</a>
+		
+
+		
+
+		
+			<a class="item" target="_blank" rel="noopener noreferrer" href="https://forgejo.org/docs/v17.0/">Help</a>
+		
+	</div>
+
+	
+	<div class="navbar-right ui secondary menu">
+		
+		
+			
+				<a class="item" href="/user/sign_up">
+					<svg viewBox="0 0 16 16" class="tw-mr-1 svg octicon-person" aria-hidden="true" width="16" height="16"><path d="M10.561 8.073a6 6 0 0 1 3.432 5.142.75.75 0 1 1-1.498.07 4.5 4.5 0 0 0-8.99 0 .75.75 0 0 1-1.498-.07 6 6 0 0 1 3.431-5.142 3.999 3.999 0 1 1 5.123 0M10.5 5a2.5 2.5 0 1 0-5 0 2.5 2.5 0 0 0 5 0"/></svg>
+					<span>Register</span>
+				</a>
+			
+			<a class="item active" rel="nofollow" href="/user/login">
+				<svg viewBox="0 0 16 16" class="tw-mr-1 svg octicon-sign-in" aria-hidden="true" width="16" height="16"><path d="M2 2.75C2 1.784 2.784 1 3.75 1h2.5a.75.75 0 0 1 0 1.5h-2.5a.25.25 0 0 0-.25.25v10.5c0 .138.112.25.25.25h2.5a.75.75 0 0 1 0 1.5h-2.5A1.75 1.75 0 0 1 2 13.25Zm6.56 4.5h5.69a.75.75 0 0 1 0 1.5H8.56l1.97 1.97a.749.749 0 0 1-.326 1.275.75.75 0 0 1-.734-.215L6.22 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.749.749 0 0 1 1.275.326.75.75 0 0 1-.215.734Z"/></svg>
+				<span>Sign in</span>
+			</a>
+		
+	</div>
+</nav>
+
+		
+
+
+
+<div role="main" aria-label="Sign in" class="page-content user signin">
+	<div class="ui middle very relaxed page grid">
+		<div class="column tw-flex tw-flex-col tw-gap-4 tw-max-w-2xl tw-m-auto">
+			<div class="ui container fluid">
+	
+	
+
+
+
+
+	<div id="flash-message" hx-swap-oob="true"></div>
+
+
+	
+	<h4 class="ui top attached header center">
+		
+			Sign in
+		
+	</h4>
+	<div class="ui attached segment">
+		
+		<form class="ui form tw-mb-4" action="/user/login" method="post">
+			<div class="required field ">
+				<label for="user_name">Username or email address</label>
+				<input id="user_name" type="text" name="user_name" value="" autofocus required autocorrect="off" autocapitalize="none">
+			</div>
+			
+			<div class="required field ">
+				<label for="password">Password</label>
+				<input id="password" name="password" type="password" value="" autocomplete="current-password" required>
+			</div>
+			
+			
+			<div class="inline field">
+				<div class="ui checkbox">
+					<label>Remember this device</label>
+					<input name="remember" type="checkbox">
+				</div>
+			</div>
+			
+
+			
+
+
+			<div class="field">
+				<button class="ui primary button tw-w-full">
+					
+						Sign in
+					
+				</button>
+			</div>
+		</form>
+		
+
+		
+
+
+		
+
+	<div class="divider divider-text">
+		or
+	</div>
+
+<div id="oauth2-login-navigator" class="tw-py-1">
+	<div class="tw-flex tw-flex-col tw-justify-center">
+		<div id="oauth2-login-navigator-inner" class="tw-flex tw-flex-col tw-flex-wrap tw-items-center tw-gap-2">
+			
+				<a class="openidConnect ui button tw-flex tw-items-center tw-justify-center tw-py-2 tw-w-full oauth-login-link" href="/user/oauth2/svrngs">
+					<svg viewBox="0 0 2400 2400" class="tw-mr-2 svg gitea-openid" aria-hidden="true" width="28" height="28"><path fill="#ff7c00" d="m1270 218.3-173.1 84.3-.7 981.8c-.3 540 .2 981.4 1.1 981l174.5-81.8 172.3-80.8v-984.4c0-541.7-.2-984.7-.4-984.4z"/><path fill="#aaa" d="M981.9 785.5c-425.3 63.2-766.5 264.1-889 523a491.5 491.5 0 0 0-43.6 146c-4.2 29.2-4.7 95-1.2 124 19 152.6 115.2 299.9 273.2 418.8 147.7 111 350.5 196.5 568.6 239.7 59 11.6 179 29 200.5 29 2.3 0 3-23.2 3-109.1v-109.2l-5.1-1-37.9-6a1182 1182 0 0 1-305.4-90.6c-122.2-55.7-225.1-137.7-284.6-226.4-107.5-160.5-81.3-344.3 70-491.3 57-55.5 115.4-95.2 199.5-136.1a1112.6 1112.6 0 0 1 269.4-89.2l29.7-6c3.7-1.2 4-8.6 4-111.5V779.5l-6.3.2a823 823 0 0 0-44.8 5.8m525 104c0 103 .2 110.4 4.1 111.6l29.5 6a1221.6 1221.6 0 0 1 207.7 61.3A1088 1088 0 0 1 1862 1123c4.6 3.7 1.4 5.8-88 56-51.1 28.5-93 52.7-93 53.4 0 1.9 671.6 146.8 673.2 145.2 1.2-1.2-45.5-496-47-497.6-.2-.2-38.5 21-85 47.2l-89.6 50.2c-4.2 2-8.8.2-27.9-10.7-130.8-75-289.6-132.2-460.8-166.1a1871 1871 0 0 0-132.9-21.1c-4 0-4.2 6.7-4.2 110z"/><path fill="#cbaa7c" d="M1094.5 2156.9c0 60.6.3 85.5.5 55 .5-30.2.5-79.9 0-110.3-.2-30.2-.5-5.3-.5 55.3"/></svg>
+					Sign in with svrngs
+				</a>
+			
+			
+		</div>
+	</div>
+</div>
+
+
+	</div>
+</div>
+
+
+<div class="ui container fluid">
+	<div id="webauthn-error" class="ui negative message tw-hidden">
+	<div class="header">Could not read your security key.</div>
+	<div id="webauthn-error-msg" class="tw-pt-2"></div>
+	<div class="tw-hidden">
+		<div data-webauthn-error-msg="browser">Your browser does not currently support WebAuthn.</div>
+		<div data-webauthn-error-msg="unknown">An unknown error occurred. Please retry.</div>
+		<div data-webauthn-error-msg="insecure">WebAuthn only supports secure connections. For testing over HTTP, you can use the origin "localhost" or "127.0.0.1"</div>
+		<div data-webauthn-error-msg="unable-to-process">The server could not process your request.</div>
+		<div data-webauthn-error-msg="duplicated">The security key is not permitted for this request. Please make sure that the key is not already registered.</div>
+		<div data-webauthn-error-msg="empty">You must set a name for this key.</div>
+		<div data-webauthn-error-msg="timeout">Timeout reached before your key could be read. Please reload this page and retry.</div>
+	</div>
+</div>
+
+
+		<div class="ui attached segment header top tw-max-w-2xl tw-m-auto tw-flex tw-flex-col tw-items-center">
+			
+			<div class="field">
+				Need an account? <a href="/user/sign_up">Register now.</a>
+				<br>
+			</div>
+			
+			<div class="field">
+				<a href="/user/forgot_password">Forgot password?</a>
+			</div>
+		</div>
+</div>
+
+
+
+		</div>
+	</div>
+</div>
+
+
+	
+
+	</div>
+
+	
+
+	<footer class="page-footer" role="group" aria-label="Footer">
+	<div class="left-links" role="contentinfo" aria-label="About this software">
+		
+			<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org">Powered by Forgejo</a>
+		
+		
+			Version:
+			
+				17.0.0
+			
+		
+		
+			Page: <strong>1ms</strong>
+			Template: <strong>1ms</strong>
+		
+	</div>
+	<div class="right-links" role="group" aria-label="Links">
+		<div class="ui dropdown upward language">
+			<span class="flex-text-inline"><svg viewBox="0 0 16 16" class="svg octicon-globe" aria-hidden="true" width="14" height="14"><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0M5.78 8.75a9.64 9.64 0 0 0 1.363 4.177q.383.64.857 1.215c.245-.296.551-.705.857-1.215A9.64 9.64 0 0 0 10.22 8.75Zm4.44-1.5a9.64 9.64 0 0 0-1.363-4.177c-.307-.51-.612-.919-.857-1.215a10 10 0 0 0-.857 1.215A9.64 9.64 0 0 0 5.78 7.25Zm-5.944 1.5H1.543a6.51 6.51 0 0 0 4.666 5.5q-.184-.271-.352-.552c-.715-1.192-1.437-2.874-1.581-4.948m-2.733-1.5h2.733c.144-2.074.866-3.756 1.58-4.948q.18-.295.353-.552a6.51 6.51 0 0 0-4.666 5.5m10.181 1.5c-.144 2.074-.866 3.756-1.58 4.948q-.18.296-.353.552a6.51 6.51 0 0 0 4.666-5.5Zm2.733-1.5a6.51 6.51 0 0 0-4.666-5.5q.184.272.353.552c.714 1.192 1.436 2.874 1.58 4.948Z"/></svg> English</span>
+			<div class="menu language-menu">
+				
+					<a lang="id-ID" data-url="/?lang=id-ID" class="item ">Bahasa Indonesia</a>
+				
+					<a lang="da" data-url="/?lang=da" class="item ">Dansk</a>
+				
+					<a lang="de-DE" data-url="/?lang=de-DE" class="item ">Deutsch</a>
+				
+					<a lang="en-US" data-url="/?lang=en-US" class="item active selected">English</a>
+				
+					<a lang="es-ES" data-url="/?lang=es-ES" class="item ">Español</a>
+				
+					<a lang="eo" data-url="/?lang=eo" class="item ">Esperanto</a>
+				
+					<a lang="fil" data-url="/?lang=fil" class="item ">Filipino</a>
+				
+					<a lang="fr-FR" data-url="/?lang=fr-FR" class="item ">Français</a>
+				
+					<a lang="it-IT" data-url="/?lang=it-IT" class="item ">Italiano</a>
+				
+					<a lang="lv-LV" data-url="/?lang=lv-LV" class="item ">Latviešu</a>
+				
+					<a lang="hu-HU" data-url="/?lang=hu-HU" class="item ">Magyar nyelv</a>
+				
+					<a lang="nl-NL" data-url="/?lang=nl-NL" class="item ">Nederlands</a>
+				
+					<a lang="nds" data-url="/?lang=nds" class="item ">Plattdüütsch</a>
+				
+					<a lang="pl-PL" data-url="/?lang=pl-PL" class="item ">Polski</a>
+				
+					<a lang="pt-PT" data-url="/?lang=pt-PT" class="item ">Português de Portugal</a>
+				
+					<a lang="pt-BR" data-url="/?lang=pt-BR" class="item ">Português do Brasil</a>
+				
+					<a lang="sl" data-url="/?lang=sl" class="item ">Slovenščina</a>
+				
+					<a lang="fi-FI" data-url="/?lang=fi-FI" class="item ">Suomi</a>
+				
+					<a lang="sv-SE" data-url="/?lang=sv-SE" class="item ">Svenska</a>
+				
+					<a lang="tr-TR" data-url="/?lang=tr-TR" class="item ">Türkçe</a>
+				
+					<a lang="cs-CZ" data-url="/?lang=cs-CZ" class="item ">Čeština</a>
+				
+					<a lang="el-GR" data-url="/?lang=el-GR" class="item ">Ελληνικά</a>
+				
+					<a lang="bg" data-url="/?lang=bg" class="item ">Български</a>
+				
+					<a lang="ru-RU" data-url="/?lang=ru-RU" class="item ">Русский</a>
+				
+					<a lang="uk-UA" data-url="/?lang=uk-UA" class="item ">Українська</a>
+				
+					<a lang="fa-IR" data-url="/?lang=fa-IR" class="item ">فارسی</a>
+				
+					<a lang="ja-JP" data-url="/?lang=ja-JP" class="item ">日本語</a>
+				
+					<a lang="zh-CN" data-url="/?lang=zh-CN" class="item ">简体中文</a>
+				
+					<a lang="zh-TW" data-url="/?lang=zh-TW" class="item ">繁體中文（台灣）</a>
+				
+					<a lang="zh-HK" data-url="/?lang=zh-HK" class="item ">繁體中文（香港）</a>
+				
+					<a lang="ko-KR" data-url="/?lang=ko-KR" class="item ">한국어</a>
+				
+			</div>
+		</div>
+		<a href="/assets/licenses.txt">Licenses</a>
+		<a href="/api/swagger">API</a>
+		
+	</div>
+</footer>
+
+
+	<script src="/assets/js/index.js?v=17.0.0" onerror="alert('Failed to load asset files from {path}. Please make sure the asset files can be accessed.'.replace('{path}', this.src))"></script>
+
+	
+</body>
+</html>
+

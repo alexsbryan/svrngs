@@ -1,0 +1,11 @@
+; Modem off (demo/runs/mesh-offline/2026-11-01/PREDICTIONS.md): everything
+; allowed but outbound network; outbound allowed to loopback, and to unix
+; sockets other than the resolver's, so a name lookup and a connection off
+; this host each fail at once, as on a mesh whose gateway withdrew its
+; default route. run.py checks it against planted fetches before trusting it.
+(version 1)
+(allow default)
+(deny network-outbound)
+(allow network-outbound (remote ip "localhost:*"))
+(allow network-outbound (remote unix-socket))
+(deny network-outbound (remote unix-socket (path-literal "/private/var/run/mDNSResponder")))

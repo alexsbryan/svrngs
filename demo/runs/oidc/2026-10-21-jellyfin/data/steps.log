@@ -1,0 +1,26 @@
+04:30:57 host: arm64 27.0.1, load load averages: 3.47 3.77 3.72
+04:30:57 svrngs a6403b64, ffmpeg version 9.0.2 Copyright (c) 2000-2026 the FFmpeg developers
+04:30:59 pinned: Jellyfin.Server 10.11.11.0, SSO-Auth 4.0.0.4
+04:31:06 jellyfin up: 10.11.11, a6e761c5cb7f46a8a696dd30dd70305d
+04:31:10 film: 4a20130f18706d8b336c728a8df00127
+04:31:10 the plugin's key: made
+04:31:15 the page: http://localhost:61814/
+04:31:16 kim: On a phone, each app opens at an address of its own under localhost:61814, which can see which app is opened.
+04:31:18 Alex: 2026-10-22T04:31:16.827907Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=19603b1b50b57163d7525c7a3db3fdc5fdd7df26d7f1292788138387887acb6c
+04:31:19 Bo: 2026-10-22T04:31:18.027745Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=c4b05374b122cfa91d1e8877b0debd74bc96037f1df25790d5c8da07f2bbe41d
+04:31:20 Cy: 2026-10-22T04:31:19.228989Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=83eec7372ffde1776f8be08c0f3fa2fdf2bc5c128e1ecf2f73d869418d18fab1
+04:31:20 kim: You lend jellyfin (port 18096) to everyone in your groups, up to 8 people at once.
+04:31:20 the app's settings: issuer http://127.0.0.1:61815/oidc/jellyfin, client id 0-H7kAdosoIBuPd0vlQMRcu7Wi17Qbs-, a secret of 43 characters
+04:31:21 Alex's computer opens it at http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61841/
+04:31:23 Cy's computer opens it at http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61873/
+04:31:25 bo's phone opens http://localhost:61814/#AsSwU3SxIs-pHR6Id7DevXS8lgN_HfJXkNXI2gfyu-QdBqa9s_RJXH3EgVFSvBpffGh0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8
+04:31:25 bo's computer's door is at http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61860/
+04:31:25 the plugin is told: {"svrngs":{"OidEndpoint":"http://127.0.0.1:61815/oidc/jellyfin","OidClientId":"0-H7kAdosoIBuPd0vlQMRcu7Wi17Qbs-","OidSecret":"A81ICg7zTvaEUdFAfTzDs0QUNE3v_XMsex9_GJN5f1g","Enabled":true,"EnableAuthorization":true,"EnableAllFolders":true,"EnabledFolders":[],"AdminRoles":[],"Roles":[],"EnableFolderRol
+04:31:25 jellyfin's login page offers: Sign in with SSO
+04:31:25 load at the drive's start: load averages: 3.52 3.77 3.73
+04:33:34 load at the drive's end: load averages: 1.76 3.15 3.49
+alex     failed           no sign-in: page.waitForFunction: Timeout 60000ms exceeded.; the page says: Logging in...; the account is None, not Alex-*; the film did not play: None
+bo       failed           no sign-in: page.waitForFunction: Timeout 60000ms exceeded.; the page says: Logging in... ; the account is None, not Bo-*; the film did not play: None
+apart    failed           Alex None (None by token), Bo None (None by token); distinct users False, distinct tokens False
+removed  passed           refused in the door's words: 'You are no longer in this group, so nothing of it is open to you.'; no Cy- user; code minted: False
+planted  passed           the code named 'Bo-c4b05374b122cfa9' ('Bo'), not Alex; a second redemption answered 400 invalid_grant

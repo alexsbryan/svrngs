@@ -1,0 +1,58 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// The pages' one way to draw: Preact and htm, vendored
+// (web/vendor/README.md), imported here and nowhere else, each at the one
+// URL its version is stamped in (web/tests/specifiers.test.mjs), since two
+// URLs load Preact twice and its hooks then fail. Served at /ui/ beside
+// /vendor/ on each page.
+import { h, render } from '../vendor/preact.js?v=__VERSION__';
+import { useEffect, useLayoutEffect, useState } from '../vendor/hooks.js?v=__VERSION__';
+import htm from '../vendor/htm.js?v=__VERSION__';
+/** @import { Store } from './machine.js?v=__VERSION__' */
+/** @import { ComponentChildren, TargetedEvent } from '../vendor/preact.js?v=__VERSION__' */
+
+/**
+ * What a view draws, as Preact takes it: vnodes, words, or nothing.
+ * @typedef {ComponentChildren} Drawn
+ */
+
+/**
+ * What a handler a view sets is handed, as Preact types it: the DOM's
+ * notice, its `currentTarget` the element the handler is on.
+ * @template {EventTarget} Target
+ * @typedef {TargetedEvent<Target>} Targeted
+ */
+
+export const html = htm.bind(h);
+export { render, useEffect };
+
+// A machine's state (ui/machine.js), the view drawn again on each change.
+// `useSyncExternalStore` is preact/compat's alone, so it is `useState` with
+// the subscription in `useLayoutEffect`, read again as it subscribes, so a
+// change between the draw and the subscription is not missed.
+/**
+ * @template State
+ * @template Message
+ * @param {Store<State, Message>} store
+ * @returns {State}
+ */
+export function useStore(store) {
+  const [state, set] = useState(store.get);
+  useLayoutEffect(() => {
+    set(store.get());
+    return store.subscribe(() => set(store.get()));
+  }, [store]);
+  return state;
+}
+
+// A machine of a part's own, made once as the part is mounted: its state
+// and its `dispatch`.
+/**
+ * @template State
+ * @template Message
+ * @param {() => Store<State, Message>} make
+ * @returns {[State, Store<State, Message>['dispatch']]}
+ */
+export function useMachine(make) {
+  const [store] = useState(make);
+  return [useStore(store), store.dispatch];
+}

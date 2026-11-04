@@ -1,0 +1,6 @@
+{"kase":"enter-first, at once, on an empty doc","paragraphs":["","line B","","line A","","line C"],"same":true}
+{"kase":"typing first, at once, on an empty doc","paragraphs":["line B","line A","line C"],"same":true}
+{"kase":"one first line, then enter-first, at once","paragraphs":["Friday","line C","line A","line B"],"same":true}
+{"kase":"enter-first, at once, on an empty doc","paragraphs":["","line Alline Bl","","","",""],"same":true}
+{"kase":"typing first, at once, on an empty doc","paragraphs":["line C","line B","line A"],"same":true}
+{"kase":"one first line, then enter-first, at once","paragraphs":["Friday","line B","line C","line A"],"same":true}

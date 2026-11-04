@@ -1,0 +1,227 @@
+[
+ {
+  "bar": 1,
+  "verdict": "passed",
+  "read": {
+   "bo_ms": 2247,
+   "di_ms": 2461,
+   "cy_ms": 334,
+   "failed": []
+  }
+ },
+ {
+  "bar": 2,
+  "verdict": "passed",
+  "read": {
+   "named_ms": [
+    46,
+    3,
+    3
+   ],
+   "everyone_ms": [
+    10,
+    2,
+    1
+   ],
+   "you": [
+    "You’re Bo. Everyone here writes in it at once.",
+    "You’re Cy. Everyone here writes in it at once.",
+    "You’re Di. Everyone here writes in it at once."
+   ],
+   "here": [
+    "Here now: Bo, Cy, Di",
+    "Here now: Bo, Cy, Di",
+    "Here now: Bo, Cy, Di"
+   ]
+  }
+ },
+ {
+  "bar": 3,
+  "verdict": "passed",
+  "read": [
+   {
+    "reader": "bo",
+    "ms_after_last_other_keystroke": 96
+   },
+   {
+    "reader": "cy",
+    "ms_after_last_other_keystroke": 117
+   },
+   {
+    "reader": "di",
+    "ms_after_last_other_keystroke": 116
+   }
+  ]
+ },
+ {
+  "bar": 4,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "paragraphs": [
+     "",
+     "Bo brings chips",
+     "",
+     "Cy brings drinks",
+     "",
+     "Di brings a speaker"
+    ],
+    "notes": [
+     "last edited by Bo 0s ago",
+     "last edited by Bo 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Di 0s ago",
+     "last edited by Di 0s ago"
+    ],
+    "paired": true,
+    "right": true,
+    "names": true,
+    "waited_ms": 70,
+    "filled": 3
+   },
+   {
+    "who": "cy",
+    "paragraphs": [
+     "",
+     "Bo brings chips",
+     "",
+     "Cy brings drinks",
+     "",
+     "Di brings a speaker"
+    ],
+    "notes": [
+     "last edited by Bo 0s ago",
+     "last edited by Bo 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Di 0s ago",
+     "last edited by Di 0s ago"
+    ],
+    "paired": true,
+    "right": true,
+    "names": true,
+    "waited_ms": 1,
+    "filled": 3
+   },
+   {
+    "who": "di",
+    "paragraphs": [
+     "",
+     "Bo brings chips",
+     "",
+     "Cy brings drinks",
+     "",
+     "Di brings a speaker"
+    ],
+    "notes": [
+     "last edited by Bo 0s ago",
+     "last edited by Bo 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Di 0s ago",
+     "last edited by Di 0s ago"
+    ],
+    "paired": true,
+    "right": true,
+    "names": true,
+    "waited_ms": 53,
+    "filled": 3
+   }
+  ]
+ },
+ {
+  "bar": 5,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "ms_after_lid": 4579,
+    "words": "☾ Goodnight from Alex’s doc\nAlex’s computer isn’t answering right now. You can keep writing: what you write stays in this browser, and joins everyone’s writing when Alex’s computer answers again.\n\n"
+   },
+   {
+    "who": "cy",
+    "ms_after_lid": 4645,
+    "words": "☾ Goodnight from Alex’s doc\n\nAlex’s computer isn’t answering right now. You can keep writing: what you write stays in this browser, and joins everyone’s writing when Alex’s computer answers again."
+   },
+   {
+    "who": "di",
+    "ms_after_lid": 4645,
+    "words": "☾ Goodnight from Alex’s doc\n\nAlex’s computer isn’t answering right now. You can keep writing: what you write stays in this browser, and joins everyone’s writing when Alex’s computer answers again."
+   }
+  ]
+ },
+ {
+  "bar": 6,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "own_ms": 1,
+    "said_ms": 1,
+    "kept": "What you’ve written since is kept here."
+   },
+   {
+    "who": "cy",
+    "own_ms": 1,
+    "said_ms": 2,
+    "kept": "What you’ve written since is kept here."
+   },
+   {
+    "who": "di",
+    "own_ms": 1,
+    "said_ms": 1,
+    "kept": "What you’ve written since is kept here."
+   }
+  ]
+ },
+ {
+  "bar": 7,
+  "verdict": "passed",
+  "read": {
+   "joined": [
+    {
+     "who": "bo",
+     "goodnight_gone_ms": 3679,
+     "all_six_ms": 3731
+    },
+    {
+     "who": "cy",
+     "goodnight_gone_ms": 72,
+     "all_six_ms": 3719
+    },
+    {
+     "who": "di",
+     "goodnight_gone_ms": 332,
+     "all_six_ms": 3719
+    }
+   ],
+   "one_doc": true,
+   "paragraphs": [
+    "",
+    "Bo brings chips",
+    "",
+    "Cy brings drinks",
+    "",
+    "Di brings a speaker",
+    "Bo, away: ice",
+    "Cy, away: cups",
+    "Di, away: a playlist"
+   ]
+  }
+ },
+ {
+  "bar": 8,
+  "verdict": "passed",
+  "read": {
+   "fresh_ms": 7,
+   "acts": 56,
+   "persons": [
+    "Cy",
+    "Di",
+    "Bo"
+   ]
+  }
+ }
+]

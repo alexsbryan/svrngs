@@ -1,0 +1,166 @@
+{
+ "1": {
+  "verdict": "passed",
+  "length": {
+   "chosen": "48 hours",
+   "offered": [
+    "48 hours",
+    "24 hours",
+    "6 hours"
+   ]
+  },
+  "on_page": true,
+  "made_ms": 222
+ },
+ "2": {
+  "verdict": "passed",
+  "status": "You’re Kim’s guest until 10/22/2026, 11:14:53 AM",
+  "listed": [
+   "Kim’s jellyfin"
+  ],
+  "length_s": 172800,
+  "film_ms": 6129,
+  "in_ms": 1951,
+  "opened_ms": 1762,
+  "played": {
+   "ms": 2416,
+   "at": 0.27158712493999304
+  },
+  "requests": 16,
+  "told": [
+   "Sam (Kim's guest)"
+  ],
+  "users": [
+   "Sam-6158c7419894e5b6.guest"
+  ]
+ },
+ "3": {
+  "verdict": "passed",
+  "bo_holds_sam_ms": 45095,
+  "said": "Jellyfin is not Kim's to open to you.",
+  "video": 0,
+  "bo_requests": 0
+ },
+ "4": {
+  "verdict": "failed",
+  "all_ms": 53660,
+  "until_on": {
+   "ana": 1792692893,
+   "kim": 1792692893,
+   "bo": 1792692893
+  },
+  "said": {
+   "ana": "Sam, Kim’s guest, until Thursday 11:14 AM",
+   "kim": "Sam, Kim’s guest, until Thursday 11:14 AM",
+   "bo": "Sam, Kim’s guest, until Thursday 11:14 AM"
+  }
+ },
+ "5": {
+  "verdict": "passed",
+  "offered": {
+   "chosen": "48 hours",
+   "offered": [
+    "48 hours",
+    "24 hours",
+    "6 hours"
+   ]
+  },
+  "length_s": 21600,
+  "played": {
+   "ms": 1351,
+   "at": 0.319028
+  },
+  "home_s": {
+   "ana": 2.9,
+   "kim": 3.1,
+   "bo": 3.3
+  }
+ },
+ "6": {
+  "verdict": "failed",
+  "ana_holds_jo_ms": 2,
+  "status": "This link lets nobody in. Ask for a new one.",
+  "written": {
+   "key": "8ddc02761d3d2923db9ee6ca1d13c0ad8ed93170a99466b800fb043065d698f3",
+   "id": "fd7e2779e7c65a5b33667e1fde53a90e36db05540657abeab630bfdb8fd95d00",
+   "until": "1792692954",
+   "counted": "false"
+  },
+  "held_ms": {
+   "ana": 4,
+   "kim": 56380,
+   "bo": 5
+  },
+  "listed_max": [
+   "at the end ana",
+   "at the end bo"
+  ],
+  "pages_showing_max": [
+   "9-ana",
+   "9-bo"
+  ]
+ },
+ "7": {
+  "verdict": "failed",
+  "ms": {
+   "ana": 58970,
+   "kim": 4,
+   "bo": 3
+  },
+  "on": {
+   "ana": [
+    "Jo"
+   ],
+   "kim": [
+    "Jo"
+   ],
+   "bo": [
+    "Jo"
+   ]
+  },
+  "sam_said": "Kim ended your visit."
+ },
+ "8": {
+  "verdict": "never-ran",
+  "why": "TRIAL"
+ },
+ "9": {
+  "verdict": "failed",
+  "ms": {
+   "ana": 5,
+   "bo": 4
+  },
+  "on": {
+   "ana": [
+    "Max"
+   ],
+   "bo": [
+    "Max"
+   ]
+  },
+  "lee_said": "Kim is no longer a member, so your visit ended.",
+  "visiting_said": {
+   "ana": [
+    "Max, Ana’s guest, until Thursday 11:15 AM"
+   ],
+   "bo": [
+    "Max, Ana’s guest, until Thursday 11:15 AM"
+   ]
+  }
+ },
+ "10": {
+  "verdict": "passed",
+  "reads": 61,
+  "said": []
+ },
+ "11": {
+  "verdict": "passed",
+  "steps": 31,
+  "failed": [],
+  "errors": []
+ },
+ "12": {
+  "verdict": "never-ran",
+  "why": "the operator's measure, set before it (STATE.md, \"The measure\")"
+ }
+}

@@ -1,0 +1,1331 @@
+note       open files: 1048576, raised to 10240
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     rustfmt (1 s)
+passed     clippy (16 s)
+passed     tests (289 s)
+passed     canaries (4 s)
+passed     ceiling canary (38 s)
+           CEILING idle round at 25 x 10,000: 0.0234 s of processor, the median of [0.19359700000000046, 0.0184230000000003, 0.02344100000000182], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.02344100000000182,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.003692}
+passed     web rustfmt and clippy (3 s)
+failed     browser (319 s)
+           
+           running 123 tests
+           i 1/123
+           a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium --- FAILED
+           a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::chromium --- FAILED
+           a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit --- FAILED
+           a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit --- FAILED
+           a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::chromium --- FAILED
+           a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium --- FAILED
+           a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+           a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+           a_link_naming_no_relay_is_refused_and_n0_never_reached::chromium --- FAILED
+           a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium --- FAILED
+           a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::chromium --- FAILED
+           a_link_naming_no_relay_is_refused_and_n0_never_reached::webkit --- FAILED
+           a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit --- FAILED
+           a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::webkit --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::chromium --- FAILED
+           a_phone_opens_a_lend_that_answers_only_in_gzip::chromium --- FAILED
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           a_phone_opens_a_lend_that_answers_only_in_gzip::webkit --- FAILED
+           .. 21/123
+           an_older_computer_is_said_as_that_on_both_pages::chromium --- FAILED
+           an_older_computer_is_said_as_that_on_both_pages::webkit --- FAILED
+           carried::a_new_version_runs_as_each_person_only_after_their_yes::chromium --- FAILED
+           carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+           ..... 30/123
+           carried::the_phone_brings_things_to_the_table::chromium --- FAILED
+           carried::the_phone_brings_things_to_the_table::webkit --- FAILED
+           ....test a_computer_that_did_not_answer_is_named_by_its_person::chromium has been running for over 60 seconds
+           test a_computer_that_did_not_answer_is_named_by_its_person::webkit has been running for over 60 seconds
+           ..test a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::chromium has been running for over 60 seconds
+           test a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::webkit has been running for over 60 seconds
+           test a_phone_s_socket_opens_again_once_its_lender_answers_again::chromium has been running for over 60 seconds
+           test a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit has been running for over 60 seconds
+           test carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium has been running for over 60 seconds
+           test carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit has been running for over 60 seconds
+           test carried::the_phone_goes_on_to_a_computer_that_answers::chromium has been running for over 60 seconds
+           test carried::the_phone_goes_on_to_a_computer_that_answers::webkit has been running for over 60 seconds
+           test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium has been running for over 60 seconds
+           test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit has been running for over 60 seconds
+            38/123
+           a_computer_that_did_not_answer_is_named_by_its_person::chromium --- FAILED
+           a_computer_that_did_not_answer_is_named_by_its_person::webkit --- FAILED
+           guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium --- FAILED
+           guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::webkit --- FAILED
+           guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium --- FAILED
+           i 44/123
+           a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::chromium --- FAILED
+           a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::webkit --- FAILED
+           a_phone_s_socket_opens_again_once_its_lender_answers_again::chromium --- FAILED
+           a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit --- FAILED
+           tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium --- FAILED
+           tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+           guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit --- FAILED
+           the_group_s_page_shows_every_removal_and_ask::chromium --- FAILED
+           . 53/123
+           the_group_s_page_draws_the_door_and_the_index::chromium --- FAILED
+           . 55/123
+           the_group_s_page_draws_the_door_and_the_index::webkit --- FAILED
+           carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium --- FAILED
+           the_group_s_page_shows_every_removal_and_ask::webkit --- FAILED
+           carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit --- FAILED
+           the_group_s_page_tells_a_removed_person::chromium --- FAILED
+           the_group_s_page_says_a_refusal_apart_from_no_answer::chromium --- FAILED
+           the_group_s_page_tells_a_removed_person::webkit --- FAILED
+           ..... 67/123
+           the_group_s_page_says_a_refusal_apart_from_no_answer::webkit --- FAILED
+           .................... 88/123
+           carried::the_phone_goes_on_to_a_computer_that_answers::chromium --- FAILED
+           . 90/123
+           carried::the_phone_goes_on_to_a_computer_that_answers::webkit --- FAILED
+           ........................test the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::chromium has been running for over 60 seconds
+           test the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit has been running for over 60 seconds
+           test the_page_opened_with_no_link_offers_a_founder_s_line::chromium has been running for over 60 seconds
+           test the_page_opened_with_no_link_offers_a_founder_s_line::webkit has been running for over 60 seconds
+           test the_phone_goes_through_the_link_s_computer_while_it_answers::chromium has been running for over 60 seconds
+           test the_phone_goes_through_the_link_s_computer_while_it_answers::webkit has been running for over 60 seconds
+           test the_phone_reaches_whoever_s_awake::chromium has been running for over 60 seconds
+           test the_phone_reaches_whoever_s_awake::webkit has been running for over 60 seconds
+            115/123
+           the_page_opened_with_no_link_offers_a_founder_s_line::chromium --- FAILED
+           the_page_opened_with_no_link_offers_a_founder_s_line::webkit --- FAILED
+           the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::chromium --- FAILED
+           the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit --- FAILED
+           the_phone_goes_through_the_link_s_computer_while_it_answers::chromium --- FAILED
+           the_phone_goes_through_the_link_s_computer_while_it_answers::webkit --- FAILED
+           the_phone_reaches_whoever_s_awake::chromium --- FAILED
+           the_phone_reaches_whoever_s_awake::webkit --- FAILED
+           
+           failures:
+           
+           ---- a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium stdout ----
+           
+           thread 'a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium' (293130525) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:60730/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::chromium stdout ----
+           
+           thread 'a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::chromium' (293130523) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:60813/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit stdout ----
+           
+           thread 'a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit' (293130526) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:60733/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit stdout ----
+           
+           thread 'a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit' (293130524) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:60812/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::chromium stdout ----
+           
+           thread 'a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::chromium' (293130529) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           {}
+           error: Refused to apply style from 'http://localhost:60879/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium stdout ----
+           
+           thread 'a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium' (293130531) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:60885/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit stdout ----
+           
+           thread 'a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit' (293130530) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           {}
+           error: Did not parse stylesheet at 'http://localhost:60883/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit stdout ----
+           
+           thread 'a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit' (293130532) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:60886/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_link_naming_no_relay_is_refused_and_n0_never_reached::chromium stdout ----
+           
+           thread 'a_link_naming_no_relay_is_refused_and_n0_never_reached::chromium' (293133826) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:60889/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:60889/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:60889/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:60889/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium stdout ----
+           
+           thread 'a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium' (293130527) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:60942/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::chromium stdout ----
+           
+           thread 'a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::chromium' (293134218) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:60944/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:60944/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:60944/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:60944/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_link_naming_no_relay_is_refused_and_n0_never_reached::webkit stdout ----
+           
+           thread 'a_link_naming_no_relay_is_refused_and_n0_never_reached::webkit' (293134143) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:60925/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:60925/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:60925/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:60925/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit stdout ----
+           
+           thread 'a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit' (293130528) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:60933/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::webkit stdout ----
+           
+           thread 'a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::webkit' (293134316) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:60970/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:60970/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:60970/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:60970/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::chromium stdout ----
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::chromium' (293134934) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:61058/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:61058/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:61058/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:61058/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_phone_opens_a_lend_that_answers_only_in_gzip::chromium stdout ----
+           
+           thread 'a_phone_opens_a_lend_that_answers_only_in_gzip::chromium' (293135427) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61077/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::webkit stdout ----
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (293134980) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:61078/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:61078/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:61078/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:61078/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_phone_opens_a_lend_that_answers_only_in_gzip::webkit stdout ----
+           
+           thread 'a_phone_opens_a_lend_that_answers_only_in_gzip::webkit' (293135701) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61091/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- an_older_computer_is_said_as_that_on_both_pages::chromium stdout ----
+           the home page's run: {
+             "after": [],
+             "all": [
+               "bo's computer did not answer, so what they lend is not listed.",
+               "cy's computer runs an older svrngs, so what they lend is not listed."
+             ],
+             "clipboard": null,
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [
+               {
+                 "href": "http://svrngs.localhost:61034/?screen=house",
+                 "target": "_blank",
+                 "text": "Show this group on a screen"
+               }
+             ],
+             "logs": [],
+             "opened": null,
+             "opens": [],
+             "read": null,
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/look.css",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/home.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/question.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/v1/room",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/lent",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61034/v1/lends?namespace=house",
+                 ""
+               ]
+             ],
+             "text": null,
+             "timed": {}
+           }
+           
+           thread 'an_older_computer_is_said_as_that_on_both_pages::chromium' (293136214) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:61251/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:61251/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:61251/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:61251/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- an_older_computer_is_said_as_that_on_both_pages::webkit stdout ----
+           the home page's run: {
+             "after": [],
+             "all": [
+               "bo's computer did not answer, so what they lend is not listed.",
+               "cy's computer runs an older svrngs, so what they lend is not listed."
+             ],
+             "clipboard": null,
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [
+               {
+                 "href": "http://svrngs.localhost:61036/?screen=house",
+                 "target": "_blank",
+                 "text": "Show this group on a screen"
+               }
+             ],
+             "logs": [],
+             "opened": null,
+             "opens": [],
+             "read": null,
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/look.css",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/home.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/question.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/v1/room",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/lent",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61036/v1/lends?namespace=house",
+                 ""
+               ]
+             ],
+             "text": null,
+             "timed": {}
+           }
+           
+           thread 'an_older_computer_is_said_as_that_on_both_pages::webkit' (293136240) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:61267/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:61267/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:61267/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:61267/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- carried::a_new_version_runs_as_each_person_only_after_their_yes::chromium stdout ----
+           ada's home page: {
+             "after": [
+               [
+                 "Money is on the table.",
+                 "These come with svrngs. Bring one, and everyone in your group opens it on their own computer or phone, while any computer in your group is on.",
+                 " Events: post a get-together, and see who’s coming.",
+                 " House rules: the rules your house agrees, and how you agree them.",
+                 "Bring the ticked ones to your group",
+                 "Money opens at its new version for you now."
+               ]
+             ],
+             "all": [
+               "Money is on the table.",
+               "These come with svrngs. Bring one, and everyone in your group opens it on their own computer or phone, while any computer in your group is on.",
+               " Events: post a get-together, and see who’s coming.",
+               " House rules: the rules your house agrees, and how you agree them.",
+               "Bring the ticked ones to your group",
+               "kim changed Money’s files on 23 Oct. Open the new version? Yes, use the new version of Money"
+             ],
+             "clipboard": "",
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [
+               {
+                 "href": "http://svrngs.localhost:61130/?screen=house",
+                 "target": "_blank",
+                 "text": "Show this group on a screen"
+               },
+               {
+                 "href": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawbqadkt3k0.localhost:61130/",
+                 "target": "_blank",
+                 "text": "Open Money"
+               }
+             ],
+             "logs": [],
+             "opened": null,
+             "opens": [],
+             "read": null,
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/look.css",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/home.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/question.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/v1/room",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/lent",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61130/v1/lends?namespace=house",
+                 ""
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:61130/runs",
+                 "[\"house\",\"Money\"]"
+               ]
+             ],
+             "text": null,
+             "timed": {}
+           }
+           Money before: {
+             "after": [],
+             "logs": [],
+             "said": "",
+             "title": "Money as brought"
+           }
+           Money after: {
+             "after": [],
+             "logs": [],
+             "said": "",
+             "title": "Money as kim changed it"
+           }
+           
+           thread 'carried::a_new_version_runs_as_each_person_only_after_their_yes::chromium' (293136742) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61358/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit stdout ----
+           ada's home page: {
+             "after": [
+               [
+                 "Money is on the table.",
+                 "These come with svrngs. Bring one, and everyone in your group opens it on their own computer or phone, while any computer in your group is on.",
+                 " Events: post a get-together, and see who’s coming.",
+                 " House rules: the rules your house agrees, and how you agree them.",
+                 "Bring the ticked ones to your group",
+                 "Money opens at its new version for you now."
+               ]
+             ],
+             "all": [
+               "Money is on the table.",
+               "These come with svrngs. Bring one, and everyone in your group opens it on their own computer or phone, while any computer in your group is on.",
+               " Events: post a get-together, and see who’s coming.",
+               " House rules: the rules your house agrees, and how you agree them.",
+               "Bring the ticked ones to your group",
+               "kim changed Money’s files on 23 Oct. Open the new version? Yes, use the new version of Money"
+             ],
+             "clipboard": null,
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "links": [
+               {
+                 "href": "http://svrngs.localhost:61150/?screen=house",
+                 "target": "_blank",
+                 "text": "Show this group on a screen"
+               },
+               {
+                 "href": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawbqadkt3k0.localhost:61150/",
+                 "target": "_blank",
+                 "text": "Open Money"
+               }
+             ],
+             "logs": [],
+             "opened": null,
+             "opens": [],
+             "read": null,
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/look.css",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/home.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/question.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/v1/room",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/lent",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61150/v1/lends?namespace=house",
+                 ""
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:61150/runs",
+                 "[\"house\",\"Money\"]"
+               ]
+             ],
+             "text": null,
+             "timed": {}
+           }
+           Money before: {
+             "after": [],
+             "logs": [],
+             "said": "",
+             "title": "Money as brought"
+           }
+           Money after: {
+             "after": [],
+             "logs": [],
+             "said": "",
+             "title": "Money as kim changed it"
+           }
+           
+           thread 'carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit' (293136807) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61390/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- carried::the_phone_brings_things_to_the_table::chromium stdout ----
+           
+           thread 'carried::the_phone_brings_things_to_the_table::chromium' (293139991) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61566/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- carried::the_phone_brings_things_to_the_table::webkit stdout ----
+           
+           thread 'carried::the_phone_brings_things_to_the_table::webkit' (293140449) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61603/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_computer_that_did_not_answer_is_named_by_its_person::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293130536) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:60882/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'a_computer_that_did_not_answer_is_named_by_its_person::chromium' (293130521) panicked at crates/svrngs-node/tests/browser/main.rs:3454:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- a_computer_that_did_not_answer_is_named_by_its_person::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293130652) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:60884/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'a_computer_that_did_not_answer_is_named_by_its_person::webkit' (293130522) panicked at crates/svrngs-node/tests/browser/main.rs:3454:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium stdout ----
+           
+           thread 'guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium' (293145519) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:62453/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62453/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62453/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62453/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::webkit stdout ----
+           
+           thread 'guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::webkit' (293145544) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:62454/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62454/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62454/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62454/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium stdout ----
+           
+           thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' (293141999) panicked at crates/svrngs-node/tests/browser/guests.rs:100:5:
+           the browser half failed (exit status: 1):
+           the visit did not finish: TimeoutError: page.waitForSelector: Timeout 90000ms exceeded.
+           Call log:
+             - waiting for locator('#status.good, #status.bad, #join:not([hidden])') to be visible
+           
+           ana error: Refused to apply style from 'http://localhost:61803/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           ana pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293135368) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61181/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::chromium' (293135359) panicked at crates/svrngs-node/tests/browser/main.rs:3894:6:
+           the phone opens cy's shelf while cy's computer answers: Elapsed(())
+           
+           ---- a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293135378) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61182/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::webkit' (293135375) panicked at crates/svrngs-node/tests/browser/main.rs:3894:6:
+           the phone opens cy's shelf while cy's computer answers: Elapsed(())
+           
+           ---- a_phone_s_socket_opens_again_once_its_lender_answers_again::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293135743) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61197/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'a_phone_s_socket_opens_again_once_its_lender_answers_again::chromium' (293135733) panicked at crates/svrngs-node/tests/browser/main.rs:4040:10:
+           the phone writes its file: Elapsed(())
+           
+           ---- a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293135932) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61202/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit' (293135923) panicked at crates/svrngs-node/tests/browser/main.rs:4040:10:
+           the phone writes its file: Elapsed(())
+           
+           ---- tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium stdout ----
+           
+           thread 'tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium' (293145960) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the tabs did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           {"asks":[]}
+           error: Refused to apply style from 'http://localhost:62535/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit stdout ----
+           
+           thread 'tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit' (293146149) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the tabs did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           {"asks":[]}
+           error: Did not parse stylesheet at 'http://localhost:62548/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit stdout ----
+           
+           thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit' (293142397) panicked at crates/svrngs-node/tests/browser/guests.rs:100:5:
+           the browser half failed (exit status: 1):
+           the visit did not finish: TimeoutError: page.waitForSelector: Timeout 90000ms exceeded.
+           Call log:
+             - waiting for locator('#status.good, #status.bad, #join:not([hidden])') to be visible
+           
+           ana error: Did not parse stylesheet at 'http://localhost:61841/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           ana pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- the_group_s_page_shows_every_removal_and_ask::chromium stdout ----
+           
+           thread 'the_group_s_page_shows_every_removal_and_ask::chromium' (293146765) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:62644/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62644/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62644/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62644/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- the_group_s_page_draws_the_door_and_the_index::chromium stdout ----
+           
+           thread 'the_group_s_page_draws_the_door_and_the_index::chromium' (293146435) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:62659/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62659/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62659/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62659/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- the_group_s_page_draws_the_door_and_the_index::webkit stdout ----
+           
+           thread 'the_group_s_page_draws_the_door_and_the_index::webkit' (293146476) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:62676/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62676/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62676/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62676/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293137570) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61392/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium' (293137558) panicked at crates/svrngs-node/tests/browser/carried.rs:176:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- the_group_s_page_shows_every_removal_and_ask::webkit stdout ----
+           
+           thread 'the_group_s_page_shows_every_removal_and_ask::webkit' (293146877) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:62703/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62703/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62703/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62703/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293137942) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61430/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit' (293137940) panicked at crates/svrngs-node/tests/browser/carried.rs:176:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- the_group_s_page_tells_a_removed_person::chromium stdout ----
+           
+           thread 'the_group_s_page_tells_a_removed_person::chromium' (293147057) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:62768/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62768/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62768/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62768/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- the_group_s_page_says_a_refusal_apart_from_no_answer::chromium stdout ----
+           
+           thread 'the_group_s_page_says_a_refusal_apart_from_no_answer::chromium' (293146504) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           away: 
+           error: Refused to apply style from 'http://127.0.0.1:62789/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62789/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62789/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://127.0.0.1:62789/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- the_group_s_page_tells_a_removed_person::webkit stdout ----
+           
+           thread 'the_group_s_page_tells_a_removed_person::webkit' (293147324) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:62779/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62779/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62779/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62779/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- the_group_s_page_says_a_refusal_apart_from_no_answer::webkit stdout ----
+           
+           thread 'the_group_s_page_says_a_refusal_apart_from_no_answer::webkit' (293146642) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           away: 
+           error: Did not parse stylesheet at 'http://127.0.0.1:62855/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62855/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62855/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://127.0.0.1:62855/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- carried::the_phone_goes_on_to_a_computer_that_answers::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293140617) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:61709/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'carried::the_phone_goes_on_to_a_computer_that_answers::chromium' (293140616) panicked at crates/svrngs-node/tests/browser/carried.rs:660:6:
+           the phone opens the group through cy's computer: Elapsed(())
+           
+           ---- carried::the_phone_goes_on_to_a_computer_that_answers::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293140821) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:61721/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'carried::the_phone_goes_on_to_a_computer_that_answers::webkit' (293140811) panicked at crates/svrngs-node/tests/browser/carried.rs:660:6:
+           the phone opens the group through cy's computer: Elapsed(())
+           
+           ---- the_page_opened_with_no_link_offers_a_founder_s_line::chromium stdout ----
+           
+           thread 'the_page_opened_with_no_link_offers_a_founder_s_line::chromium' (293154616) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForSelector: Timeout 90000ms exceeded.
+           Call log:
+             - waiting for locator('#status.good, #status.bad, #join:not([hidden])') to be visible
+           
+           Desktop Chrome error: Refused to apply style from 'http://localhost:65199/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           Desktop Chrome pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- the_page_opened_with_no_link_offers_a_founder_s_line::webkit stdout ----
+           
+           thread 'the_page_opened_with_no_link_offers_a_founder_s_line::webkit' (293154787) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForSelector: Timeout 90000ms exceeded.
+           Call log:
+             - waiting for locator('#status.good, #status.bad, #join:not([hidden])') to be visible
+           
+           Desktop Safari error: Did not parse stylesheet at 'http://localhost:65219/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           Desktop Safari pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::chromium stdout ----
+           
+           thread 'the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::chromium' (293154544) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForSelector: Timeout 90000ms exceeded.
+           Call log:
+             - waiting for locator('#status.good, #status.bad, #join:not([hidden])') to be visible
+           
+           Desktop Chrome error: Refused to apply style from 'http://localhost:65280/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           Desktop Chrome pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit stdout ----
+           
+           thread 'the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit' (293154557) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForSelector: Timeout 90000ms exceeded.
+           Call log:
+             - waiting for locator('#status.good, #status.bad, #join:not([hidden])') to be visible
+           
+           Desktop Safari error: Did not parse stylesheet at 'http://localhost:65279/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           Desktop Safari pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- the_phone_goes_through_the_link_s_computer_while_it_answers::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293154952) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:65413/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'the_phone_goes_through_the_link_s_computer_while_it_answers::chromium' (293154941) panicked at crates/svrngs-node/tests/browser/main.rs:3454:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- the_phone_goes_through_the_link_s_computer_while_it_answers::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293154978) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:65430/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'the_phone_goes_through_the_link_s_computer_while_it_answers::webkit' (293154974) panicked at crates/svrngs-node/tests/browser/main.rs:3454:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- the_phone_reaches_whoever_s_awake::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (293155621) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:65439/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           thread 'the_phone_reaches_whoever_s_awake::chromium' (293155618) panicked at crates/svrngs-node/tests/browser/main.rs:3454:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           ---- the_phone_reaches_whoever_s_awake::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (293155997) panicked at crates/svrngs-node/tests/browser/main.rs:292:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:65449/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           thread 'the_phone_reaches_whoever_s_awake::webkit' (293155989) panicked at crates/svrngs-node/tests/browser/main.rs:3454:6:
+           the phone opens the group while ada's computer answers: Elapsed(())
+           
+           
+           failures:
+               a_computer_that_did_not_answer_is_named_by_its_person::chromium
+               a_computer_that_did_not_answer_is_named_by_its_person::webkit
+               a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::chromium
+               a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit
+               a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::chromium
+               a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone::webkit
+               a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::chromium
+               a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::webkit
+               a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::chromium
+               a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit
+               a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::chromium
+               a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit
+               a_link_naming_no_relay_is_refused_and_n0_never_reached::chromium
+               a_link_naming_no_relay_is_refused_and_n0_never_reached::webkit
+               a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::chromium
+               a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends::webkit
+               a_page_speaks_http_through_the_door_streaming_both_ways::chromium
+               a_page_speaks_http_through_the_door_streaming_both_ways::webkit
+               a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::chromium
+               a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark::webkit
+               a_phone_opens_a_lend_that_answers_only_in_gzip::chromium
+               a_phone_opens_a_lend_that_answers_only_in_gzip::webkit
+               a_phone_s_socket_opens_again_once_its_lender_answers_again::chromium
+               a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit
+               an_older_computer_is_said_as_that_on_both_pages::chromium
+               an_older_computer_is_said_as_that_on_both_pages::webkit
+               carried::a_new_version_runs_as_each_person_only_after_their_yes::chromium
+               carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit
+               carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::chromium
+               carried::an_app_one_computer_brought_opens_and_writes_on_a_phone_through_another_s::webkit
+               carried::the_phone_brings_things_to_the_table::chromium
+               carried::the_phone_brings_things_to_the_table::webkit
+               carried::the_phone_goes_on_to_a_computer_that_answers::chromium
+               carried::the_phone_goes_on_to_a_computer_that_answers::webkit
+               guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium
+               guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit
+               guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium
+               guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::webkit
+               tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium
+               tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit
+               the_group_s_page_draws_the_door_and_the_index::chromium
+               the_group_s_page_draws_the_door_and_the_index::webkit
+               the_group_s_page_says_a_refusal_apart_from_no_answer::chromium
+               the_group_s_page_says_a_refusal_apart_from_no_answer::webkit
+               the_group_s_page_shows_every_removal_and_ask::chromium
+               the_group_s_page_shows_every_removal_and_ask::webkit
+               the_group_s_page_tells_a_removed_person::chromium
+               the_group_s_page_tells_a_removed_person::webkit
+               the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::chromium
+               the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit
+               the_page_opened_with_no_link_offers_a_founder_s_line::chromium
+               the_page_opened_with_no_link_offers_a_founder_s_line::webkit
+               the_phone_goes_through_the_link_s_computer_while_it_answers::chromium
+               the_phone_goes_through_the_link_s_computer_while_it_answers::webkit
+               the_phone_reaches_whoever_s_awake::chromium
+               the_phone_reaches_whoever_s_awake::webkit
+           
+           test result: FAILED. 65 passed; 56 failed; 2 ignored; 0 measured; 0 filtered out; finished in 314.78s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+failed     joining in a browser (124 s)
+           
+           running 4 tests
+           test a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::chromium has been running for over 60 seconds
+           test a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::webkit has been running for over 60 seconds
+           test a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::chromium has been running for over 60 seconds
+           test a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::webkit has been running for over 60 seconds
+           a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::chromium --- FAILED
+           a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::chromium --- FAILED
+           a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::webkit --- FAILED
+           a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::webkit --- FAILED
+           
+           failures:
+           
+           ---- a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::chromium stdout ----
+           
+           thread 'a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::chromium' (293165140) panicked at crates/svrngs/tests/join_page.rs:310:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForFunction: Timeout 90000ms exceeded.
+           error: Refused to apply style from 'http://localhost:49633/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::chromium stdout ----
+           the link printed: http://localhost:49630/#AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29c_gaC_TnwvxSRbJ20TkFCbmh0dHA6Ly8xMjcuMC4wLjE6NDk1ODYv
+           
+           thread 'a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::chromium' (293165138) panicked at crates/svrngs/tests/join_page.rs:171:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForFunction: Timeout 90000ms exceeded.
+           error: Refused to apply style from 'http://localhost:49630/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           
+           ---- a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::webkit stdout ----
+           
+           thread 'a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::webkit' (293165142) panicked at crates/svrngs/tests/join_page.rs:310:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForFunction: Timeout 90000ms exceeded.
+           error: Did not parse stylesheet at 'http://localhost:49632/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           ---- a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::webkit stdout ----
+           the link printed: http://localhost:49631/#AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cvnSP1vaMNcM49fyhiK4YSGh0dHA6Ly8xMjcuMC4wLjE6NDk1ODMv
+           
+           thread 'a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::webkit' (293165139) panicked at crates/svrngs/tests/join_page.rs:171:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: TimeoutError: page.waitForFunction: Timeout 90000ms exceeded.
+           error: Did not parse stylesheet at 'http://localhost:49631/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           
+           failures:
+               a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::chromium
+               a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking::webkit
+               a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::chromium
+               a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name::webkit
+           
+           test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 0 filtered out; finished in 120.63s
+           
+           error: test failed, to rerun pass `-p svrngs --test join_page`
+failed     conformance canary (84 s)
+           
+           running 8 tests
+           i... 4/8
+           on_a_phone_with_the_wildcard::chromium --- FAILED
+           on_a_phone_with_the_wildcard::webkit --- FAILED
+           .test on_a_computer::webkit has been running for over 60 seconds
+           .
+           failures:
+           
+           ---- on_a_phone_with_the_wildcard::chromium stdout ----
+           
+           thread 'on_a_phone_with_the_wildcard::chromium' (293172325) panicked at crates/svrngs-node/tests/conformance.rs:521:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Identifier 'opened' has already been declared
+           error: Refused to apply style from 'http://localhost:50169/look.css?v=94d2f926e2da' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           pageerror: SyntaxError: Identifier 'opened' has already been declared
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- on_a_phone_with_the_wildcard::webkit stdout ----
+           
+           thread 'on_a_phone_with_the_wildcard::webkit' (293172326) panicked at crates/svrngs-node/tests/conformance.rs:521:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           error: Did not parse stylesheet at 'http://localhost:50168/look.css?v=94d2f926e2da' because non CSS MIME types are not allowed in strict mode.
+           pageerror: SyntaxError: Cannot declare an async function that shadows a let/const/class/function variable 'opened'.
+           
+           
+           
+           failures:
+               on_a_phone_with_the_wildcard::chromium
+               on_a_phone_with_the_wildcard::webkit
+           
+           test result: FAILED. 5 passed; 2 failed; 1 ignored; 0 measured; 0 filtered out; finished in 78.86s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test conformance`
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	360	passed	4151	passed
+           computer	bo	360	passed	2256	passed
+           of 158 here since 2026-10-22T17:12:29Z: 0 missed 5 s through a lend, 28 straight; 132 ended at a load above 12 cores
+passed     app laws (41 s)
+note       took 919 s in all

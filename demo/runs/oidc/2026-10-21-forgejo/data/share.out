@@ -1,0 +1,5 @@
+You lend forgejo (port 18097) to everyone in your groups, up to 8 people at once.
+It signs people in with svrngs. In the app's own settings, choose OpenID Connect, and fill in: issuer http://127.0.0.1:51314/oidc/forgejo, client id X7-pSH_e9oPljOAJ3V-MeZqfn4sYYbfC, client secret <redacted>.
+It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none. Copy the secret now: it is not shown again.
+svrngs is running here already, so they can open it now.
+`svrngs unshare forgejo` stops lending it.

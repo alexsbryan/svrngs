@@ -136,14 +136,14 @@ fn a_seal_held_retires_nothing_and_claims_nothing_complete() {
 fn an_act_naming_nobody_signs_the_bytes_it_always_did() {
     let act = record("milk");
     assert_eq!(
-        body_json(&act, None, None),
+        body_json(&act, None, None, None),
         serde_json::to_string(&act).unwrap(),
         "an absent name must not reach the signed bytes"
     );
     assert!(
-        body_json(&act, Some("dee"), None).ends_with(r#","on_behalf_of":"dee"}"#),
+        body_json(&act, Some("dee"), None, None).ends_with(r#","on_behalf_of":"dee"}"#),
         "a stated name goes last: {}",
-        body_json(&act, Some("dee"), None)
+        body_json(&act, Some("dee"), None, None)
     );
 }
 
@@ -175,24 +175,53 @@ fn the_signed_body_golden_vectors() {
 
     // The bytes every pre-view op on every replica signed.
     assert_eq!(
-        body_json(&act, None, None),
+        body_json(&act, None, None, None),
         serde_json::to_string(&act).unwrap()
     );
     // The view goes last and is skipped when absent.
     assert_eq!(
-        body_json(&act, None, Some(&view)),
+        body_json(&act, None, Some(&view), None),
         format!(
             r#"{{"op":"record","payload":{{"kind":"thing","what":"milk"}},"view":{view_json}}}"#
         ),
         "an act with a view signs it, last"
     );
     assert_eq!(
-        body_json(&act, Some("dee"), Some(&view)),
+        body_json(&act, Some("dee"), Some(&view), None),
         format!(
             r#"{{"op":"record","payload":{{"kind":"thing","what":"milk"}},"on_behalf_of":"dee","view":{view_json}}}"#
         ),
         "name before view, both after the act"
     );
+}
+
+/// **A holder's pass is inside its line's id** (capability-signed), so no
+/// carrier can move a phone's line to another person's pass; and the line
+/// ships at its own version, which an older build names `NewerVersionLine`
+/// rather than count it as anyone's.
+#[test]
+fn a_holder_s_pass_is_inside_its_line_s_id() {
+    use crate::pass::{Label, Pass};
+    let holder = key(9);
+    let app = Label::of(&[1; 32], "money");
+    let pass = |by: u8| Pass::sign(&key(by), &actor_of(&holder), (app.clone(), vec![]), 2_000);
+    let held = sign_act(
+        &holder,
+        NS,
+        100,
+        0,
+        None,
+        record("milk"),
+        None,
+        None,
+        Some(pass(2)),
+    );
+    assert_eq!(held.v, AUTHORSHIP_LINE_VERSION);
+    let mut moved = held.clone();
+    moved.kind.grant = Some(pass(3));
+    let derived = derive_id(&moved, NS);
+    assert_ne!(derived, held.id, "another person's pass is another act");
+    assert!(!Ed25519Verifier.verify(&moved.actor, &derived, &moved.kind.sig));
 }
 
 /// **The view is inside the signature.** A stamp a peer could rewrite in
@@ -202,7 +231,7 @@ fn the_signed_body_golden_vectors() {
 fn a_view_rewritten_after_signing_is_refused() {
     let act = record("milk");
     let view = claimed_view('a');
-    let op = sign_act(&key(1), NS, 100, 0, None, act, None, Some(view));
+    let op = sign_act(&key(1), NS, 100, 0, None, act, None, Some(view), None);
     assert!(
         admitted(std::slice::from_ref(&op)).gaps().is_empty(),
         "the honest op verifies"
@@ -230,7 +259,17 @@ fn an_equivocation_carries_two_claimed_views() {
     let (view_a, view_b) = (claimed_view('a'), claimed_view('b'));
     let build = |act: RailAct, view: &crate::Digest| {
         let prev = Some(absent_parent());
-        sign_act(&key(1), NS, 102, 2, prev, act, None, Some(view.clone()))
+        sign_act(
+            &key(1),
+            NS,
+            102,
+            2,
+            prev,
+            act,
+            None,
+            Some(view.clone()),
+            None,
+        )
     };
     let left = build(record("left"), &view_a);
     let right = build(record("right"), &view_b);
@@ -311,7 +350,8 @@ fn the_membership_acts_ship_at_a_bumped_line_version() {
 /// as it did before membership existed. Frozen from this fixture's first
 /// post-landing fold (RFC style — generated once, then pinned); every field
 /// of the Admission is in the string, so any drift in the no-act path is a
-/// diff here rather than an invisible behaviour change.
+/// diff here rather than an invisible behaviour change. Each act's
+/// `person_key` added with capability-keys, its writer's first key.
 #[test]
 fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
     let ops: Vec<Op<SignedOp>> = include_str!("fixtures/rail_ops_before_on_behalf_of.jsonl")
@@ -322,7 +362,7 @@ fn a_ring_with_no_membership_acts_admits_exactly_as_before() {
     let f = admitted(&ops);
     assert_eq!(
         serde_json::to_string(&(&f.ops(), &f.gaps())).unwrap(),
-        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","seq":0,"ts_unix":1700000002,"voided":false}],[]]"#,
+        r#"[[{"id":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","actor":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","person":"alex","person_key":"8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","seq":0,"ts_unix":1700000000,"voided":true,"payload":{"kind":"thing","what":"milk"}},{"id":"e754694b85150ea490f4c305099f4d26142f95c8a031134e172500abc1983fc4","actor":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","person":"bo","person_key":"8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","seq":0,"ts_unix":1700000001,"corrects":"6efe8a46f81d82df03b43ed537f3d50b854c24f8810a4b4aac58c61629d2c840","voided":false},{"id":"0ce63175592c0b3b80fb1cff79983bbd42610fede6f73e3bb2610808f171a711","actor":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","person":"cy","person_key":"ed4928c628d1c2c6eae90338905995612959273a5c63f93636c14614ac8737d1","seq":0,"ts_unix":1700000002,"voided":false}],[]]"#,
         "a ring with no membership act folds byte-identically to the build before"
     );
 }
@@ -405,6 +445,7 @@ fn a_correction_with_no_replacement_still_names_the_guest() {
             replacement: None,
         },
         Some("dee"),
+        None,
         None,
     );
     let f = admitted(&[first, retraction]);

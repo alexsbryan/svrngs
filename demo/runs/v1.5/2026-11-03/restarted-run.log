@@ -1,0 +1,25 @@
+deploy-page: this build meets its groups at n0's relays, until the switch to svrngs's (PLAN §2)
+building web for wasm32-unknown-unknown (release)…
+macOS: using /opt/homebrew/opt/llvm/bin/clang for the wasm C sources (Apple clang cannot target wasm32)
+    Finished `release` profile [optimized] target(s) in 0.52s
+wasm-opt: -Oz applied
+
+built: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.lft32SKfO9/site  (version 6a3a8c04fa55)
+  size: 3.9M wasm
+  1. upload that directory to the guest runtime's static origin
+     (today svrnme.sh, beside the landing page and installers)
+  2. point a grant at it:
+       svrn mesh grant --all-apps --ttl 2h --url https://<origin>/ --qr-svg wall-qr.svg
+       (--model may be omitted: it defaults to the daemon's primary slot)
+  Serve it with gzip/brotli on (the wasm compresses well) and, if the
+  host allows, the headers index.html's meta tags ask for — a CDN gives
+  both; nothing here depends on them.
+build-release: darwin-aarch64 (aarch64-apple-darwin) by cargo build…
+    Finished `release` profile [optimized] target(s) in 0.54s
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+    Finished `release` profile [optimized] target(s) in 0.43s
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.39s

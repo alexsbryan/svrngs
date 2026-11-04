@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "headers": {
+    "date": "Fri, 23 Oct 2026 00:55:58 GMT",
+    "server": "uvicorn",
+    "content-length": "206",
+    "content-type": "application/json",
+    "x-process-time": "0.022967",
+    "vary": "Origin"
+  },
+  "body": "{\"id\":\"chatcmpl-standin\",\"object\":\"chat.completion\",\"created\":0,\"model\":\"ana/coder\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"content\":\"stand-in answered for ana/coder\"}}]}"
+}

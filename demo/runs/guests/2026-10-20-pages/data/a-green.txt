@@ -1,0 +1,11 @@
+
+running 2 tests
+..
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 109 filtered out; finished in 9.09s
+
+exit 0
+crates/svrngs-core     3075 / 3076 lines
+.                     16880 / 16847 lines
+BROKEN  . has 16880 lines of code, budget 16847: raised only by the operator, with the reason in the commit
+73 app nouns, 0 in infra code
+trust floor: 7 policies, 8 listeners, 8 gates

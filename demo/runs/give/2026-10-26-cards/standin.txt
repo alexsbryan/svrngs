@@ -1,0 +1,15 @@
+$ target/debug/give check  --name svrngs-test-standin apps/give/tests/standin
+passed  read the card: Stand-in
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/library/busybox:1.37.0@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+passed  start: its door on 127.0.0.1:62420
+passed  healthy
+passed  snapshot: [("data", Reflink)], paused 957.916833ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+Stand-in can go on the shelf.
+exit 0 after 25 s

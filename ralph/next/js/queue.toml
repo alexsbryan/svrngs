@@ -1,0 +1,28 @@
+# svrngs js — the pages' JavaScript formatted, typed in JSDoc and checked by tsc, linted for structure, and read; no build step (the operator, 2026-11-02: "Let's write that up for the next queue"). Four rows and the operator's go. Not launched until HUMAN-js-agreed is ticked and the security work is on main.
+#
+# Default, a pool of one lane, so the main checkout stays free for other
+# sessions (CHARTER, "Answered" 5):
+#
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py pool --workdir ~/dev/svrngs \
+#     --queue js --lanes 1 --install-launchd --max-lane-failures 3
+#   python3 ~/dev/commonwealth-ai/scripts/ralph.py start --workdir ~/dev/svrngs --queue js
+#
+# Add CARGO_INCREMENTAL=0 under EnvironmentVariables in the plist after any
+# reinstall (plutil -insert EnvironmentVariables.CARGO_INCREMENTAL -string 0
+# <plist>).
+label = "svrngs-js"
+# One session must carry its largest part to a commit: js-format (b), the
+# whole tree reformatted with the browser tests run under the gate lock,
+# which can wait 15 to 30 min at the lock first.
+session_timeout = 7200
+# One closing audit for the queue, none inside it: five rows, so a cadence
+# of 10 never comes due.
+audit_every = 10
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "openai/gpt-6.1-sol"
+review = "openai/gpt-6.1-sol"
+resolve = "openai/gpt-6.1-sol"
+variant = "medium"

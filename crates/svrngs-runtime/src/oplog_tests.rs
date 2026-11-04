@@ -289,3 +289,47 @@ fn read_since_reads_the_tail_and_restarts_on_a_replace() {
     assert!(again.restarted, "a replaced file voids the cursor");
     assert_eq!(again.ops, vec![c]);
 }
+
+/// relay fallbacks, the soft path (the operator, 2026-11-02): a build of
+/// V1.4, which reads up to the holders' line version, names the keeper's
+/// `Meets` a newer line and reads every other act as it did, so it keeps
+/// meeting its group at the relay its group's file keeps. Planted: `Meets`
+/// shipped at `APPROVAL_LINE_VERSION`, and V1.4 read it as Malformed.
+#[test]
+fn a_build_before_the_groups_relays_names_their_act_a_newer_line() {
+    use svrngs_core::{sign_act, RailAct, SignedOp, APPROVAL_LINE_VERSION};
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[serde(transparent)]
+    struct BeforeMeets(SignedOp);
+    impl Journaled for BeforeMeets {
+        const FILE: &'static str = SignedOp::FILE;
+        const ID_PREFIX: &'static str = SignedOp::ID_PREFIX;
+        const LABEL: &'static str = SignedOp::LABEL;
+        const UNDERSTANDS: u32 = APPROVAL_LINE_VERSION;
+    }
+    let (dir, keeper) = (
+        tempfile::tempdir().unwrap(),
+        svrngs_core::SigningKey::from_bytes(&[1; 32]),
+    );
+    let act = |seq, act| sign_act(&keeper, "house", 100, seq, None, act, None, None, None);
+    let relays = ["http://10.0.0.2:3340/".to_string()].into();
+    let lines = [
+        act(
+            0,
+            RailAct::Relay {
+                url: Some("http://10.0.0.2:3340/".into()),
+            },
+        ),
+        act(1, RailAct::Meets { relays }),
+    ];
+    Oplog::<SignedOp>::new(dir.path()).append_all(&lines).unwrap();
+    let (read, skipped) = Oplog::<BeforeMeets>::new(dir.path()).read_all_with_skips().unwrap();
+    assert_eq!(
+        read.iter().map(|op| &op.kind.0.act).collect::<Vec<_>>(),
+        [&lines[0].kind.act]
+    );
+    assert!(
+        matches!(skipped.as_slice(), [SkippedLine::NewerVersion { v: 14, .. }]),
+        "the group's relays named a newer line, never Malformed: {skipped:?}"
+    );
+}

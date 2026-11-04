@@ -1,0 +1,2 @@
+2026-10-27T06:34:34.994900Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=svrngs/port/0 dialer=326c3679829e064ad91608ad8055d9dd173d0af39152b551e3f03608d34e1e2c
+2026-10-27T06:34:44.575803Z  WARN transport: iroh acceptor: dialer not admitted — closing connection alpn=svrngs/port/0 dialer=326c3679829e064ad91608ad8055d9dd173d0af39152b551e3f03608d34e1e2c

@@ -10,13 +10,9 @@ impl RingJournal {
         act: RailAct,
         signer: &SigningKey,
         roster: &Roster,
-        on_behalf_of: Option<&str>,
         verifier: &dyn RingVerifier,
     ) -> Result<Op<SignedOp>, RailError> {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act,
-            on_behalf_of: on_behalf_of.map(str::to_string),
-        };
+        let fixture = svrngs_core::tests_support::Fixture { act };
         let author = svrngs_core::Author {
             signer,
             roster,

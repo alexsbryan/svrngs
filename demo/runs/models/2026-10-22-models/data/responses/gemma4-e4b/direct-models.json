@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "632"
+  },
+  "body": "{\"models\":[{\"name\":\"ana/vision-small\",\"model\":\"ana/vision-small\",\"modified_at\":\"\",\"size\":\"\",\"digest\":\"\",\"type\":\"model\",\"description\":\"\",\"tags\":[\"\"],\"capabilities\":[\"completion\",\"multimodal\"],\"parameters\":\"\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"\",\"families\":[\"\"],\"parameter_size\":\"\",\"quantization_level\":\"\"}}],\"object\":\"list\",\"data\":[{\"id\":\"ana/vision-small\",\"aliases\":[\"ana/vision-small\"],\"tags\":[],\"object\":\"model\",\"created\":1792719100,\"owned_by\":\"llamacpp\",\"meta\":{\"vocab_type\":2,\"n_vocab\":262144,\"n_ctx\":8192,\"n_ctx_train\":131072,\"n_embd\":2560,\"n_params\":7518069290,\"size\":5465970856,\"ftype\":\"Q5_K - Medium\"}}]}"
+}

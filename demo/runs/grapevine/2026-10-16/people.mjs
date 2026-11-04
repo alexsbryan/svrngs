@@ -4,7 +4,8 @@
 // own start line printed. It prints `{"ready": true}`, then reads one JSON
 // command a line on stdin and prints one JSON answer a line:
 //
-//   {"do": "open", "who"}                     the person's browser
+//   {"do": "open", "who", "engine"?}          the person's browser, Chromium
+//                                             unless `engine` names another
 //   {"do": "goto", "who", "url"}              open their page
 //   {"do": "press", "who", "within", "fill", "select", "button"}
 //       within the part of the page `within` names, a list of
@@ -23,7 +24,7 @@
 //
 //   node people.mjs
 import { createInterface } from 'node:readline';
-import { launch } from '../../../../web/tests/page.mjs';
+import { arrived, launch } from '../../../../web/tests/page.mjs';
 
 const people = {};
 
@@ -50,7 +51,7 @@ const has = (text, words, gone) => words.every((w) => text.includes(w)) && !gone
 async function act(c) {
   const t0 = Date.now();
   if (c.do === 'open') {
-    const { context, close } = await launch('chromium');
+    const { context, close } = await launch(c.engine ?? 'chromium');
     const page = await context.newPage();
     const logs = [];
     page.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`.slice(0, 300)));
@@ -59,7 +60,8 @@ async function act(c) {
   }
   const { page } = people[c.who];
   if (c.do === 'goto') {
-    const res = await page.goto(c.url, { timeout: 30_000 });
+    // Through an open, where it leads (page.mjs `arrived`), and its answer.
+    const res = (await page.goto(c.url, { timeout: 30_000 }), await arrived(page));
     return { status: res?.status() ?? null, ...(await view(c.who, t0)) };
   }
   if (c.do === 'press') {

@@ -54,12 +54,14 @@ use axum::{Extension, Json};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
+use crate::invite::Unminted;
 use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
 use crate::node::Asking;
 use crate::register::Standing;
 use crate::ring_routes::err;
-use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail};
-use svrngs_core::{RedeemRefusal, Refused as CommitRefused};
+use crate::{actor_of, Name, NotAName, OpId, Person, RailError, RingRail, Visit};
+use std::collections::BTreeMap;
+use svrngs_core::RedeemRefusal;
 
 pub use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
 
@@ -68,6 +70,9 @@ const ROUTE: &str = "/redeem";
 
 /// The ask's path.
 const ASK_ROUTE: &str = "/ask";
+
+/// A guest's link's path (guests-link).
+const VISIT_ROUTE: &str = "/visit";
 
 /// How the issuer's node reads a group's seed, in the group's directory,
 /// to answer an ask: `Ok(None)` when it keeps none there. The command's
@@ -111,6 +116,19 @@ enum NotAdmitted {
     Decided(RedeemRefusal),
     /// This node could not read its own journal.
     Unjudged(RailError),
+    /// The `Visit` is written, and the fold counts it nowhere: it is past
+    /// a bound (GUESTS §3.7).
+    Uncounted,
+}
+
+/// What a guest's page presents (guests-link; GUESTS §5): the link's ask,
+/// which proves the page holds the link and dials as the key it names,
+/// made fresh for this visit, and the name the guest gives.
+#[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct VisitRequest {
+    pub ask: AskRequest,
+    pub guest: String,
 }
 
 /// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
@@ -118,6 +136,7 @@ pub(crate) fn router(at: Asking) -> axum::Router {
     axum::Router::new()
         .route(ASK_ROUTE, post(ask_route))
         .route(ROUTE, post(redeem_route))
+        .route(VISIT_ROUTE, post(visit_route))
         .with_state(at)
 }
 
@@ -148,6 +167,67 @@ async fn redeem_route(
     answer("redeem", &req.key, redeemed)
 }
 
+async fn visit_route(
+    State(at): State<Asking>,
+    dialer: Option<Extension<Dialer>>,
+    Json(req): Json<VisitRequest>,
+) -> Response {
+    let visited = serve_visit(&at, dialer.map(|Extension(d)| d.actor()), &req);
+    answer("visit", &req.ask.key, visited)
+}
+
+/// A guest's link redeemed (guests-link): judged as an ask is, and the
+/// name as a joiner's; the link claimed, once; then the `Visit` written,
+/// opening each lend this computer declares, until the link's length
+/// from now, when the guest opened it. Whether it is a visit is the
+/// fold's alone: one past a bound is written, seen, and refused here as
+/// none. Answered the host, until when, and the lends the visit opens, on
+/// this computer, which the page dials by the link, each by name and kind.
+fn serve_visit(
+    at: &Asking,
+    dialer: Option<String>,
+    req: &VisitRequest,
+) -> Result<serde_json::Value, NotAdmitted> {
+    parse_ask(dialer.as_deref(), &req.ask)?;
+    let guest = Name::kept(req.guest.clone()).map_err(NotAdmitted::NotAName)?;
+    let unjudged = |e: &dyn std::fmt::Display| NotAdmitted::Unjudged(RailError::Io(e.to_string()));
+    let now = (crate::door::unix_now()).ok_or(NotAdmitted::Unjudged(RailError::Clock))?;
+    let (group, length, _) =
+        (at.host.claim_visit(&req.ask.link, now)).ok_or(NotAdmitted::NoInvite)?;
+    let (rail, group) = (&at.host.rail, group.as_str());
+    let host = match at.host.own_person(group) {
+        Ok((_, host)) => host,
+        Err(Unminted::NotIn) => return Err(NotAdmitted::NotHeld),
+        Err(e) => return Err(unjudged(&e)),
+    };
+    let lends = crate::lend::all(&at.door.data_dir).map_err(|e| unjudged(&e))?;
+    let lent: BTreeMap<String, String> = (lends.into_iter().flatten())
+        .map(|l| (l.name.as_str().to_string(), l.kind.as_str().to_string()))
+        .collect();
+    let me = actor_of(rail.signer());
+    let visit = Visit {
+        guest: Person::from(guest),
+        key: req.ask.key.clone(),
+        opens: [(me, lent.keys().cloned().collect())].into(),
+        until: now + length,
+    };
+    let recorded = rail
+        .commit_said(group, &visit)
+        .map_err(NotAdmitted::Unjudged)?;
+    let Ok(recorded) = recorded;
+    let id = recorded.lines()[0].id.clone();
+    let register = rail.register(group).map_err(NotAdmitted::Unjudged)?;
+    let counted = register.visits.contains_key(&id);
+    tracing::debug!(target: "redeem", group, key = %req.ask.key, %id, until = visit.until, counted, ?lent,
+        "redeem: a guest's link redeemed and its Visit written, a visit only as the fold counts it");
+    let until = counted
+        .then_some(visit.until)
+        .ok_or(NotAdmitted::Uncounted)?;
+    // Its version, so a guest's page knows this door takes a holder's link.
+    let version = crate::version::VERSION;
+    Ok(serde_json::json!({ "host": host, "until": until, "lent": lent, "version": version }))
+}
+
 /// A decision as the wire carries it: what was done, [`UNJUDGED`], or the
 /// one [`REFUSAL`].
 fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>) -> Response {
@@ -173,14 +253,9 @@ fn answer<T: Serialize>(route: &str, key: &str, decided: Result<T, NotAdmitted>)
                 "redeem: refused — a standing person goes by the name; answered 409 with theirs");
             err(StatusCode::CONFLICT, holder.to_string())
         }
-        Err(NotAdmitted::Decided(why)) => {
-            tracing::debug!(target: "redeem", route, key, why = ?why,
-                "redeem: the decider refused, answered in the one sentence every refusal shares");
-            err(StatusCode::FORBIDDEN, REFUSAL)
-        }
         Err(why) => {
             tracing::debug!(target: "redeem", route, key, why = ?why,
-                "redeem: refused, in the one sentence every refusal shares");
+                "redeem: refused, by the decider (`Decided`) or before it, in the one sentence every refusal shares");
             err(StatusCode::FORBIDDEN, REFUSAL)
         }
     }
@@ -257,7 +332,7 @@ fn serve_redeem(
         issuer: actor_of(rail.signer()),
     };
     match rail
-        .commit(group, &command)
+        .commit_said(group, &command)
         .map_err(NotAdmitted::Unjudged)?
     {
         Ok(recorded) if recorded.is_empty() => {
@@ -271,14 +346,7 @@ fn serve_redeem(
                 "redeem: admitted — the Admit is written, naming the device the request named");
             Ok(Redeemed::Admitted(admit))
         }
-        Err(CommitRefused::NoStanding) => Err(NotAdmitted::Unjudged(RailError::NotInRoster {
-            actor: actor_of(rail.signer()),
-            namespace: group.to_string(),
-        })),
-        Err(CommitRefused::Unsettled) => Err(NotAdmitted::Unjudged(RailError::Unsettled(
-            group.to_string(),
-        ))),
-        Err(CommitRefused::Command(why)) => Err(NotAdmitted::Decided(why)),
+        Err(why) => Err(NotAdmitted::Decided(why)),
     }
 }
 

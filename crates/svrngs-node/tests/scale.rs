@@ -657,6 +657,15 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     for w in writes {
         w.await.unwrap();
     }
+    // The keeper's two cutovers, of authorship and of holders, and where
+    // the group meets (relay fallbacks), which its computer writes on its
+    // first round (node.rs `cut_over`), written here so the rounds measured
+    // below are a group's past its first: none of them writes or moves any.
+    for cutover in [svrngs_core::Cutover::Authors, svrngs_core::Cutover::Holders] {
+        nodes[0].rail().commit(GROUP, &cutover).unwrap().unwrap();
+    }
+    let meets = svrngs_core::MeetsAt(Default::default());
+    nodes[0].rail().commit(GROUP, &meets).unwrap().unwrap();
     converge(&nodes).await;
     let digest = nodes[0].rail().digest(GROUP).unwrap();
     for node in &nodes[1..] {
@@ -896,27 +905,32 @@ async fn the_account_matches_a_hand_count() {
     //   fold: node 0 finds the six acts held, once per reached member
     //   (`ingest_all`); each reached member catches up before and after
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
-    //   = 29; and every register read below catches up first
-    //   (journal.rs `RingJournal::standing`), 11: 40.
+    //   = 29; every register read below catches up first
+    //   (journal.rs `RingJournal::folded`), 11; node 0's question of
+    //   whether its cutover is written (node.rs `cut_over`), 1; and its two
+    //   questions of where the group meets (group.rs `meeting`), once for
+    //   its endpoint at the round's start and once to dial it (relay
+    //   fallbacks), 2: 43.
     // - register: node 0 asks whether its group already names its relay
     //   before it dials (ring_sync.rs `run_one_round`, `Host::say_relay`:
     //   it does, so no `RelayAt` is committed), lists its members (node.rs
     //   `standings`) and then offers the group to them (`run_one_round`);
     //   each member admits node 0's one connection (node.rs `admit_dialer`)
     //   and checks each of 3 posts (ring_routes.rs `standing_asker`):
-    //   3 + (1 + 3) x 2 = 11. Each node's first read folds (nothing asked
-    //   its register before the round) and the rest are kept: the two acts
-    //   node 0 pushes are records, which move no membership: kept 2 + 3 x
-    //   2, rebuilt 3.
+    //   3 + (1 + 3) x 2 = 11. Each member's first read folds (nothing asked
+    //   its register before the round), and node 0's was folded before its
+    //   first by `cut_over`'s read of the whole register, which traces no
+    //   line counted here; the rest are kept: the two acts node 0 pushes are
+    //   records, which move no membership: kept 3 + 3 x 2, rebuilt 2.
     let hand = serde_json::json!({
         "dialled": 3, "reached": 2, "asleep": 1, "refused": 0,
         "acts_moved": 4,
         "cpu_s": null, "wall_s": null,
         "folds": {
-            "write_index": {"kept": 40, "rebuilt": 0},
+            "write_index": {"kept": 43, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
-            "register": {"kept": 8, "rebuilt": 3},
+            "register": {"kept": 9, "rebuilt": 2},
         },
     });
     assert_eq!(account, hand, "the round's account against the hand count");

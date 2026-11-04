@@ -9,7 +9,7 @@
 //     ask, carry, reply, yes, no, withdraw, list
 //                     what the page's routes do, each refused in its words
 //   heldIn(store, name)       file mode: the groups `name` stands in
-//   heldBy(api, store)        record mode: each group's "me" as svrngs answers it
+//   heldBy(api, token, store) record mode: each group's "me" as svrngs answers it
 //   loop(people)              each person's pass every RELAY_EVERY
 //
 // **The loop** (§5), every RELAY_EVERY for each person: read each of their
@@ -32,14 +32,27 @@ import { randomBytes } from 'node:crypto';
 import { readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { performance } from 'node:perf_hooks';
 
-import { MAX_NAME, MOST_HOPS, askAct, carryAct, fold, formGaps, listingAct, msgAct, validate } from './grapevine.js';
+import {
+  MAX_NAME,
+  MOST_HOPS,
+  askAct,
+  carryAct,
+  fold,
+  formGaps,
+  listingAct,
+  msgAct,
+  validate,
+} from './grapevine.js';
 import { keyPair, seal } from './seal.mjs';
 
 /** How often each person's loop reads and relays, in ms (GRAPEVINE_DEMO §5). */
 export const RELAY_EVERY = 5_000;
 
 /** Every decision branch, at debug (AGENTS.md 1), when GRAPEVINE_DEBUG is set. */
-export const debug = process.env.GRAPEVINE_DEBUG ? (what, fields) => console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields })) : () => {};
+export const debug = process.env.GRAPEVINE_DEBUG
+  ? (what, fields) =>
+      console.error(JSON.stringify({ at: new Date().toISOString(), what, ...fields }))
+  : () => {};
 
 /** A new handle: 16 random bytes, base64. */
 export const newHandle = () => randomBytes(16).toString('base64');
@@ -62,7 +75,10 @@ export function stateFile(path) {
   try {
     state = JSON.parse(readFileSync(path, 'utf8'));
   } catch (e) {
-    if (e.code !== 'ENOENT') throw new Error(`${path} does not read, and it holds this person's keys, so nothing was replaced: ${e.message}`);
+    if (e.code !== 'ENOENT')
+      throw new Error(
+        `${path} does not read, and it holds this person's keys, so nothing was replaced: ${e.message}`,
+      );
     state = { keys: {}, routes: [] };
   }
   return {
@@ -79,7 +95,8 @@ export function heldIn(store, name) {
   return async () => {
     const out = [];
     for (const g of await store.groups()) {
-      if ((await store.people(g.id)).some((p) => p.name === name)) out.push({ id: g.id, name: g.name, me: name });
+      if ((await store.people(g.id)).some((p) => p.name === name))
+        out.push({ id: g.id, name: g.name, me: name });
     }
     return out;
   };
@@ -91,23 +108,31 @@ export function heldIn(store, name) {
  * against the group's people; null where it answers none (§13.3). Never a
  * name from the config.
  */
-export function heldBy(api, store, trace = debug) {
+export function heldBy(api, token, store, trace = debug) {
   return async () => {
     let groups;
     try {
-      const res = await fetch(`${api}/v1/groups`);
+      const res = await fetch(`${api}/v1/groups`, {
+        headers: { authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error(`${res.status}`);
       ({ groups } = await res.json());
     } catch (e) {
       trace('refused: svrngs did not say who is here', { error: e.message });
-      throw new Refused("svrngs on this computer isn't answering, so this page can't say who you are.", 502);
+      throw new Refused(
+        "svrngs on this computer isn't answering, so this page can't say who you are.",
+        502,
+      );
     }
     const out = [];
     for (const g of groups) {
       let me = typeof g.person === 'string' ? g.person : null;
       if (me !== null) {
         const people = await store.people(g.id).catch((e) => {
-          trace("the group's people can't be read, so svrngs's answer stands unchecked", { group: g.id, error: e.message });
+          trace("the group's people can't be read, so svrngs's answer stands unchecked", {
+            group: g.id,
+            error: e.message,
+          });
           return null;
         });
         if (people && !people.some((p) => p.name === me)) {
@@ -156,14 +181,28 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
       }
     }
     const v = fold({ groups, state: state.state, kinds, now: unix() });
-    trace('folded', { person: id, groups: groups.length, asks: v.asks.length, can: v.carriable.can.length, threads: v.threads.length, relay: v.relay.length, gaps: v.gaps.map((g) => g.code) });
+    trace('folded', {
+      person: id,
+      groups: groups.length,
+      asks: v.asks.length,
+      can: v.carriable.can.length,
+      threads: v.threads.length,
+      relay: v.relay.length,
+      gaps: v.gaps.map((g) => g.code),
+    });
     return { ...v, groups, reads };
   }
 
   /** The group `group` as the person stands in it, or refused. */
   const standing = (v, group) => {
     const g = v.groups.find((x) => x.id === group && x.me != null && x.unread == null);
-    if (!g) throw new Refused(v.groups.some((x) => x.id === group && x.unread != null) ? "That group can't be read on this computer right now." : "You're not in that group.", 403);
+    if (!g)
+      throw new Refused(
+        v.groups.some((x) => x.id === group && x.unread != null)
+          ? "That group can't be read on this computer right now."
+          : "You're not in that group.",
+        403,
+      );
     return g;
   };
 
@@ -195,7 +234,8 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
     }
   };
   const kindOf = (word) => {
-    if (typeof word !== 'string' || !Object.prototype.hasOwnProperty.call(kinds, word)) throw new Refused('This app has no ask of that kind.');
+    if (typeof word !== 'string' || !Object.prototype.hasOwnProperty.call(kinds, word))
+      throw new Refused('This app has no ask of that kind.');
     return kinds[word];
   };
   const askOf = (v, ask) => {
@@ -215,7 +255,16 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
     return t;
   };
   /** A sealed message in thread `t`, from this end's own key. */
-  const say = (v, t, body, what) => write(v, t.send.group, { op: 'record', payload: msgAct(t.send, seal(body, t.send.to, state.state.keys[t.send.from])) }, what);
+  const say = (v, t, body, what) =>
+    write(
+      v,
+      t.send.group,
+      {
+        op: 'record',
+        payload: msgAct(t.send, seal(body, t.send.to, state.state.keys[t.send.from])),
+      },
+      what,
+    );
 
   return {
     id,
@@ -236,22 +285,44 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
           try {
             if (r.do === 'forward') {
               await store.append(r.group, { op: 'record', payload: r.payload }, g.me);
-              trace('relay: forwarded', { person: id, group: r.group, dir: r.payload.dir, size: Math.floor((r.payload.box.length * 3) / 4) });
+              trace('relay: forwarded', {
+                person: id,
+                group: r.group,
+                dir: r.payload.dir,
+                size: Math.floor((r.payload.box.length * 3) / 4),
+              });
               done.forwarded++;
             } else if (r.do === 'correct') {
-              await store.append(r.group, { op: 'correct', corrects: r.corrects, replacement: null }, g.me);
-              trace('relay: corrected a carry whose ask was withdrawn', { person: id, group: r.group, carry: r.corrects });
+              await store.append(
+                r.group,
+                { op: 'correct', corrects: r.corrects, replacement: null },
+                g.me,
+              );
+              trace('relay: corrected a carry whose ask was withdrawn', {
+                person: id,
+                group: r.group,
+                carry: r.corrects,
+              });
               done.corrected++;
             } else {
               trace('relay: an entry this loop does not do', { person: id, do: r.do });
               done.failed++;
             }
           } catch (e) {
-            trace('relay: could not write, again next turn', { person: id, group: r.group, do: r.do, error: e.message });
+            trace('relay: could not write, again next turn', {
+              person: id,
+              group: r.group,
+              do: r.do,
+              error: e.message,
+            });
             done.failed++;
           }
         }
-        trace('a pass', { person: id, ...done, reads: v.reads.map((x) => ({ group: x.group, ms: Math.round(x.ms), ops: x.ops })) });
+        trace('a pass', {
+          person: id,
+          ...done,
+          reads: v.reads.map((x) => ({ group: x.group, ms: Math.round(x.ms), ops: x.ops })),
+        });
         return { ...done, reads: v.reads };
       }),
 
@@ -262,13 +333,30 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
         const v = await view();
         standing(v, group);
         fields(k, 'ask', values);
-        if (!Number.isSafeInteger(hops) || hops < 0 || hops > MOST_HOPS) throw new Refused(`How far it may go is 0 to ${MOST_HOPS} rings away.`);
-        if (!Number.isSafeInteger(expires) || expires <= unix()) throw new Refused('It has to end after now.');
+        if (!Number.isSafeInteger(hops) || hops < 0 || hops > MOST_HOPS)
+          throw new Refused(`How far it may go is 0 to ${MOST_HOPS} rings away.`);
+        if (!Number.isSafeInteger(expires) || expires <= unix())
+          throw new Refused('It has to end after now.');
         const key = keyPair();
         state.state.keys[key.public] = key.secret;
         state.save();
         trace('asking', { person: id, kind, group, hops });
-        return write(v, group, { op: 'record', payload: askAct({ kind, fields: values, hops, expires, seal_to: key.public, handle: newHandle() }) }, 'ask');
+        return write(
+          v,
+          group,
+          {
+            op: 'record',
+            payload: askAct({
+              kind,
+              fields: values,
+              hops,
+              expires,
+              seal_to: key.public,
+              handle: newHandle(),
+            }),
+          },
+          'ask',
+        );
       }),
 
     /** One tap, one carry: what `carriable` allows, or its refusal said. */
@@ -279,7 +367,12 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
         const can = v.carriable.can.find((c) => c.ask === ask && c.group === group);
         if (!can) {
           const not = v.carriable.not.find((c) => c.ask === ask && c.group === group);
-          trace('refused: not carriable', { person: id, ask, group, why: not?.why ?? 'no_such_group' });
+          trace('refused: not carriable', {
+            person: id,
+            ask,
+            group,
+            why: not?.why ?? 'no_such_group',
+          });
           throw new Refused(not ? `It can't go there: ${not.words}.` : "You're not in that group.");
         }
         const { payload, route } = carryAct(a, can, newHandle());
@@ -308,13 +401,25 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
         state.state.keys[key.public] = key.secret;
         state.save();
         trace('replying', { person: id, ask, group });
-        return write(v, group, { op: 'record', payload: msgAct({ handle: copy.handle, dir: 'up', from: key.public, to: a.seal_to }, seal(body, a.seal_to, key.secret)) }, 'reply');
+        return write(
+          v,
+          group,
+          {
+            op: 'record',
+            payload: msgAct(
+              { handle: copy.handle, dir: 'up', from: key.public, to: a.seal_to },
+              seal(body, a.seal_to, key.secret),
+            ),
+          },
+          'reply',
+        );
       }),
 
     /** Yes, with the name the other end sees once both have said it. */
     yes: ({ ask, them, name }) =>
       serial(async () => {
-        if (typeof name !== 'string' || !name.trim() || name.length > MAX_NAME) throw new Refused(`Say the name they'll see, up to ${MAX_NAME} letters.`);
+        if (typeof name !== 'string' || !name.trim() || name.length > MAX_NAME)
+          throw new Refused(`Say the name they'll see, up to ${MAX_NAME} letters.`);
         const v = await view();
         return say(v, threadOf(v, ask, them), { say: 'yes', name: name.trim() }, 'yes');
       }),
@@ -330,10 +435,17 @@ export function person({ id, store, held, kinds, state, trace = debug, timed = (
       serial(async () => {
         const v = await view();
         const a = askOf(v, ask);
-        const own = a.asked && a.in.find((c) => !c.carried && v.groups.some((g) => g.id === c.group && g.me === c.by));
+        const own =
+          a.asked &&
+          a.in.find((c) => !c.carried && v.groups.some((g) => g.id === c.group && g.me === c.by));
         if (!own) throw new Refused('Only the person who asked can take it back.', 403);
         trace('withdrawing', { person: id, ask, group: own.group });
-        return write(v, own.group, { op: 'correct', corrects: own.act, replacement: null }, 'withdraw');
+        return write(
+          v,
+          own.group,
+          { op: 'correct', corrects: own.act, replacement: null },
+          'withdraw',
+        );
       }),
 
     /** A listing: a plain record in the person's own group, never carried. */

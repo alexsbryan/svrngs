@@ -57,7 +57,7 @@ use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
 use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
-use svrngs_core::{Append, AppendRefusal, Refused as CommitRefused};
+use svrngs_core::{Admission, Append, AppendRefusal};
 
 /// What the doors read: the journals, the nudge that wakes the round
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
@@ -71,6 +71,9 @@ pub struct RailApi {
     pub live: Arc<LiveBuffer>,
     /// The node's dial-by-key transport, the live lane's fan-out rides it.
     pub transport: Arc<IrohTransport>,
+    /// The build's relays, where every group meets beside its own
+    /// (`RelayConfig::build`): the fan-out dials a group's whole meeting.
+    pub build: Vec<svrngs_core::relay::Url>,
 }
 
 // ── The doors ────────────────────────────────────────────────
@@ -184,29 +187,40 @@ pub(crate) fn standing_json(s: &BTreeMap<String, Member>) -> serde_json::Value {
     people_json(rows.map(|(k, m)| (k, &m.person, m.person_key.as_str(), m.joined, m.device)))
 }
 
+/// Who is visiting `r`'s group now, by this computer's clock, from the
+/// fold's visits alone (svrngs-core's `Guest::live`), as the pages show
+/// them (guests-pages; GUESTS §5 "The pages"): the visit's id, which its
+/// host's Stop names; the guest; their host by name and by first key,
+/// which tells two of one name apart (keys-names); until when; and
+/// whether `me` hosts them, so may stop it. `None` when the clock cannot
+/// be read, never read as nobody.
+pub(crate) fn visiting(r: &crate::register::Register, me: &str) -> Option<Vec<serde_json::Value>> {
+    let now = crate::door::unix_now()?;
+    let live = (r.visits.iter()).filter(|(_, g)| g.live(&r.cut, now));
+    let on: Vec<_> = live.map(|(id, g)| { let host = r.members.get(&g.host); serde_json::json!({ "id": id, "guest": g.visit.guest, "host": host.map(|m| &m.person), "host_key": host.map(|m| &m.person_key), "until": g.visit.until, "yours": g.host == me }) }).collect();
+    tracing::debug!(target: "rails", visits = r.visits.len(), on = on.len(), "rail: who is visiting now, the fold's visits live at this computer's time");
+    Some(on)
+}
+
 /// POST /v1/rail/append — sign and append one act to the named namespace.
 ///
 /// The body is the act alone. `seq`, the signature, the timestamp and the id
 /// are all this daemon's to assign; an app that could choose its own sequence
 /// number or actor could write as somebody else.
 ///
-/// (svrngs: upstream dropped a bare `on_behalf_of`, since a caller could
-/// stamp only with a signed `GuestAttestation`, which went with `attest`,
-/// and from the core in core-0.
-/// Here an app serving someone else names them, and the act is signed as
-/// this computer with `on_behalf_of` naming that person — whom the member
-/// door verified (DESIGN §3, "Localhost is the trust boundary"). The
-/// name must parse as a person and be a person standing in the group;
-/// anything else is refused and nothing is written, never dropped.)
+/// (svrngs: a program on this computer writes as this computer's own person,
+/// "your computer is you" (svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`
+/// §4): a body naming that person in `on_behalf_of` is its own act, the name
+/// dropped, and a body naming anyone else is refused, `not_yours`, since
+/// another person's entry is signed on their own device (capability-signed).)
 pub(crate) async fn append_act(
     rail: &RingRail,
     namespace: &str,
     body: serde_json::Value,
 ) -> Response {
-    let stamp = match stamp(namespace, &body) {
-        Ok(stamp) => stamp,
-        Err(refusal) => return refusal,
-    };
+    if let Err(refusal) = stamp(rail, namespace, &body) {
+        return refusal;
+    }
     // Taken as a `Value` and converted here rather than as `Json<RailAct>`,
     // so a refusal is the rail's own sentence instead of axum's rejection
     // prose (ARCH §10.6).
@@ -216,26 +230,10 @@ pub(crate) async fn append_act(
     };
     // A seal is an act like any other here: `Append` refuses it as not an
     // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
-    let append = Append {
-        act,
-        on_behalf_of: stamp,
-    };
-    let appended = match rail.commit(namespace, &append) {
+    let append = Append { act };
+    let appended = match rail.commit_said(namespace, &append) {
         Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
-        Ok(Err(CommitRefused::NoStanding)) => Err(RailError::NotInRoster {
-            actor: actor_of(rail.signer()),
-            namespace: namespace.to_string(),
-        }),
-        Ok(Err(CommitRefused::Unsettled)) => Err(RailError::Unsettled(namespace.to_string())),
-        Ok(Err(CommitRefused::Command(AppendRefusal::NotInGroup(person)))) => {
-            tracing::debug!(target: "rails", namespace, %person, "rail: refused — on_behalf_of names nobody in the group");
-            return refused(
-                namespace,
-                "not_in_group",
-                format!("{person} is not in {namespace}"),
-            );
-        }
-        Ok(Err(CommitRefused::Command(AppendRefusal::NotAnAppAct))) => {
+        Ok(Err(AppendRefusal::NotAnAppAct)) => {
             tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
             return refused(
                 namespace,
@@ -292,29 +290,95 @@ pub(crate) async fn append_act(
     }
 }
 
-/// The person an append is on behalf of, parsed: `None` when the body names
-/// nobody. Whether that person stands is `Append`'s to decide, under the
-/// write lock.
-fn stamp(namespace: &str, body: &serde_json::Value) -> Result<Option<Person>, Response> {
+/// Whether the body names only this computer's own person, if anyone: a
+/// name that is not one is `not_a_name`, and anyone else's `not_yours`.
+fn stamp(rail: &RingRail, namespace: &str, body: &serde_json::Value) -> Result<(), Response> {
     let raw = match body.get("on_behalf_of") {
-        None | Some(serde_json::Value::Null) => {
-            tracing::debug!(target: "rails", namespace, "rail: the act is this computer's own — it names nobody");
-            return Ok(None);
-        }
+        None | Some(serde_json::Value::Null) => return Ok(()),
         Some(serde_json::Value::String(raw)) => raw,
         Some(other) => {
             tracing::debug!(target: "rails", namespace, named = %other, "rail: refused — on_behalf_of is not text");
-            return Err(refused(
-                namespace,
-                "not_a_name",
-                "on_behalf_of names a person, as text".into(),
-            ));
+            let why = "on_behalf_of names a person, as text".into();
+            return Err(refused(namespace, "not_a_name", why));
         }
     };
-    Person::parse(raw).map(Some).map_err(|why| {
+    let named = Person::parse(raw).map_err(|why| {
         tracing::debug!(target: "rails", namespace, raw, why = %why, "rail: refused — on_behalf_of is not a name");
         refused(namespace, "not_a_name", format!("on_behalf_of is not a name: {why}"))
-    })
+    })?;
+    let read = rail.admission(namespace).ok();
+    let me = actor_of(rail.signer());
+    let own = (read.as_ref()).and_then(|a| Some(a.membership().person_of(&me)?.1.clone()));
+    tracing::debug!(target: "rails", namespace, %named, own = ?own, "rail: a program here writes as this computer's own person, or nobody's");
+    match own {
+        Some(own) if own == named => Ok(()),
+        own => Err(refused(namespace, "not_yours", format!(
+            "This computer writes only as {}. Another person's entry is signed on their own phone or computer.",
+            own.as_ref().map_or("its own person", Person::as_str)
+        ))),
+    }
+}
+
+/// Where a device's own line is carried ([`carry`]), on the members' and
+/// the holders' protocols, and asked by [`crate::origin`]'s holder write.
+pub(crate) const CARRY_ROUTE: &str = "/carry";
+
+/// `POST /carry`, `[group, line]`: a line a device of the group signed
+/// itself, a phone's own act, carried unchanged into this computer's copy
+/// as the round stores a peer's (capability-signed; DESIGN.md §3, "The
+/// computer's part"). It writes no line of its own. Refused, in words, when
+/// the line does not verify, or whose standing it counts under
+/// ([`svrngs_core::Op::stands_as`]: its signer's, or a holder's pass's
+/// signer's, that pass theirs and naming the holder) stands nowhere in the
+/// group; answered with whether the fold counts it now. Members' and
+/// holders' protocols both serve it.
+pub(crate) async fn carry(
+    State(at): State<crate::node::Asking>,
+    by: Option<axum::Extension<crate::iroh::Dialer>>,
+    Json((group, line)): Json<(String, svrngs_core::Op<svrngs_core::SignedOp>)>,
+) -> Response {
+    use svrngs_core::RingVerifier;
+    let rail = &at.host.rail;
+    let id = svrngs_core::derive_id(&line, &group);
+    let signed =
+        id == line.id && svrngs_core::Ed25519Verifier.verify(&line.actor, &id, &line.kind.sig);
+    let read = rail.admission(&group).ok();
+    let held = (line.kind.grant.as_ref()).is_none_or(|p| p.holder == line.actor && p.signed());
+    let stands =
+        (read.as_ref()).is_some_and(|a| a.membership().standing.contains(line.stands_as()));
+    tracing::debug!(target: "rails", group, %id, signer = %line.actor, as_ = line.stands_as(), by = ?by.map(|d| d.actor()), signed, held, stands, "rail: a line a device signed, carried here unchanged, or why not");
+    if !(signed && held && stands) {
+        let why = format!("This entry was not signed by anyone in {group}.");
+        return refused(&group, "not_signed", why);
+    }
+    if line.kind.grant.as_ref().is_some_and(|p| p.op.is_none())
+        && read.as_ref().is_none_or(|a| !a.membership().counts(&id))
+    {
+        tracing::debug!(target: "rails", group, %id, signer = %line.actor, "rail: refused — a holder's line naming no approved content, which the group's copy here does not already count");
+        return refused(
+            &group,
+            "not_approved",
+            "An app's new entry needs its person's approval of that exact content.".into(),
+        );
+    }
+    if line.kind.grant.is_some()
+        && read
+            .as_ref()
+            .is_none_or(|a| a.membership().holders.is_none())
+    {
+        tracing::debug!(target: "rails", group, %id, signer = %line.actor, "rail: refused — a holder's line in a group whose keeper has written no holder cutover, so legacy holder authority is still open");
+        return refused(
+            &group,
+            "upgrade_keeper",
+            "The group's keeper needs to open the new svrngs before apps can save entries.".into(),
+        );
+    }
+    if let Err(e) = rail.ingest_all(&group, std::slice::from_ref(&line)) {
+        return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
+    }
+    at.folders.nudge.notify_one();
+    let counted = (rail.admission(&group)).is_ok_and(|a| a.membership().counts(&id));
+    Json(serde_json::json!({ "id": id, "counted": counted })).into_response()
 }
 
 /// A typed refusal: the sentence, its `kind`, and the group.
@@ -324,6 +388,34 @@ fn refused(namespace: &str, kind: &str, why: String) -> Response {
         Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
     )
         .into_response()
+}
+
+/// `admission`'s ops as the wire spells them, each an older computer wrote
+/// for another person (`on_behalf_of`) with `on_behalf_of_key`: the first
+/// key of the one person of that name who had joined by its time, cut or
+/// standing, so an app keeps what was written for them with what they
+/// wrote (keys-names); none where two had, and an app reads it by name.
+/// The log's and a carried app's route alike; `None` when the ops cannot
+/// be written out, which each route refuses, never an empty list.
+pub(crate) fn ops_json(admission: &Admission) -> Option<serde_json::Value> {
+    let m = admission.membership();
+    let mut ops = serde_json::to_value(admission.wire()).ok()?;
+    for o in ops.as_array_mut().into_iter().flatten() {
+        let other = o["on_behalf_of"].as_str().filter(|n| o["person"] != *n);
+        let (Some(named), Some(ts)) = (other, o["ts_unix"].as_i64()) else {
+            continue;
+        };
+        let firsts =
+            (m.bindings.iter()).filter(|(k, p)| p.as_str() == named && !m.devices.contains_key(*k));
+        let mut by = firsts.filter(|(k, _)| !matches!(m.joined(k), Joined::At(t) if t > ts));
+        let (one, two) = (by.next(), by.next());
+        let one = one.filter(|_| two.is_none()).map(|(k, _)| k.clone());
+        tracing::debug!(target: "rails", named, ts, ?one, "rail: whom an act for another spoke for, the one person of that name joined by then, or none");
+        if let Some(k) = one {
+            o["on_behalf_of_key"] = k.into();
+        }
+    }
+    Some(ops)
 }
 
 /// GET /v1/rail/log — the namespace's acts, in one order, and its gaps:
@@ -338,6 +430,13 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
     let admission = match rail.admission(namespace) {
         Ok(a) => a,
         Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    };
+    let Some(ops) = ops_json(&admission) else {
+        tracing::warn!(target: "rails", namespace, "rail: the log refused — its acts could not be written out");
+        return err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "the group's acts could not be written out",
+        );
     };
     let gaps: Vec<serde_json::Value> = admission
         .gaps()
@@ -359,7 +458,7 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         .collect();
     Json(serde_json::json!({
         "namespace": namespace,
-        "ops": admission.wire(),
+        "ops": ops,
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),
@@ -460,10 +559,7 @@ impl LiveBuffer {
     /// Take one arrived payload for `namespace`. Evicts that namespace's
     /// oldest when full.
     pub fn push(&self, namespace: &str, payload: Live) {
-        let mut buffers = self
-            .inner
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut buffers = (self.inner.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         let inner = buffers.entry(namespace.to_string()).or_default();
         if inner.payloads.len() == LIVE_BUFFER_CAPACITY {
             inner.payloads.pop_front();
@@ -483,10 +579,7 @@ impl LiveBuffer {
     /// Empty `namespace`'s buffer, returning what was in it and how many
     /// were lost. Every other namespace's buffer is untouched.
     pub(crate) fn drain(&self, namespace: &str) -> (Vec<Live>, usize) {
-        let mut buffers = self
-            .inner
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut buffers = (self.inner.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         match buffers.remove(namespace) {
             Some(inner) => (inner.payloads.into(), inner.dropped),
             None => (Vec::new(), 0),
@@ -538,7 +631,8 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
         Ok(people) => people,
         Err(refusal) => return refusal,
     };
-    let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing);
+    let meeting = crate::group::meeting(&api.rail, namespace, &api.build);
+    let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing, &meeting);
     let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
     let delivered = peers.iter().filter(|p| p.delivered).count();
     tracing::debug!(
@@ -562,10 +656,15 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
 /// group names (relay-in-record), named by its person: the keys the round dials ([`crate::node::dialled`]), so neither
 /// a browser's key (u4-1) nor one that is not an iroh key is offered it.
 /// New (u3-3): upstream walked the mesh's Online members.
-fn live_peers(this: &str, namespace: &str, standing: &BTreeMap<String, Member>) -> Vec<LivePeer> {
+fn live_peers(
+    this: &str,
+    namespace: &str,
+    standing: &BTreeMap<String, Member>,
+    meeting: &svrngs_core::relay::Meeting,
+) -> Vec<LivePeer> {
     let mut peers = Vec::new();
     let relay = |a: &str| standing.get(a)?.relay.as_ref();
-    for (actor, person, contact) in dialled(this, namespace, standing, relay) {
+    for (actor, person, contact) in dialled(this, namespace, standing, meeting, relay) {
         tracing::debug!(target: "rails", namespace, actor, %person, "rail live: a person stands in the group, to offer the payload");
         peers.push(LivePeer {
             node: actor.clone(),

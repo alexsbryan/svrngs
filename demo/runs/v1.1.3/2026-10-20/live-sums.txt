@@ -1,0 +1,11 @@
+svrngs-darwin-aarch64.tar.gz: OK
+svrngs-darwin-x86_64.tar.gz: OK
+svrngs-linux-aarch64.tar.gz: OK
+svrngs-linux-x86_64.tar.gz: OK
+same as the build: install.sh
+same as the build: index.html
+same as the build: app.js
+same as the build: lend.js
+same as the build: away.html
+same as the build: look.css
+same as the build: question.js

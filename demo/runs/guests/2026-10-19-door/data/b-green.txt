@@ -1,0 +1,14 @@
+$ cargo test -q -p svrngs-node --test door guests
+...
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 35 filtered out; finished in 5.18s
+
+exit 0
+$ cargo test -q -p svrngs-node --test door
+......................................
+test result: ok. 38 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.25s
+
+exit 0
+$ cargo test -q -p svrngs-runtime
+test result: ok. 46 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.81s
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+exit 0

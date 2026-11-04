@@ -74,6 +74,271 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   at their host's own lends, and every home page shows who's visiting.
   Then a run on one host, and the queue stops for a visit with real people,
   whose bars the operator sets before it. GUESTS's later parts wait in §2.
+- then the models queue (`ralph/next/models/`, written and held for the
+  operator's launch, 2026-10-22: "still held"): the pantry's minimum, from
+  svrn-docs `rings/current/MODELS_ON_THE_RING.md` and far smaller, an app
+  in `apps/pantry/` and no platform line. The operator: "What is the
+  absolute minimum we can offer that makes it near obvious for the
+  community to extend and add what they want near trivially to the
+  architecture? That's the main point for this." A lend that speaks OpenAI's
+  API is a model and one that speaks MCP is a tool. `pantry list` shows them,
+  and `pantry serve` gives one local address that routes each request by
+  its `model` to the friend who lends it. Behaviour beyond that is an
+  OpenAI-in, OpenAI-out adapter; the vision bridge is the worked example.
+  Its first row measures the story's open servers here and stops for the
+  operator to choose. Its story, "Your friends' local AI, in the app you
+  already use", is a screenshot fixed by a coder that cannot see, voice in
+  and out, and a friend's tool, run on one host against bars C1 to C7. No
+  Ollama ("Fully open and high integrity software only"). The queue landed:
+  `apps/pantry/` lists every lend that answers `/v1/models` or MCP's
+  `initialize`, and `pantry serve` gives one OpenAI-compatible address
+  routed by `model`, with the vision bridge as the worked example of an
+  adapter. Its run (`demo/runs/models/2026-10-22-run/`) met C1 to C7 on one
+  host; C7's limit is could-not-judge there because every path ends in the
+  lender's home, and the door's own tests prove it. What the run taught
+  waits in §2. The queue now stops for a run with real people, whose bars
+  the operator sets before it.
+- the stall queue (`ralph/next/stall/`), run alone (the operator,
+  2026-10-23: "Now, alone"), closed on evidence the same day: the streaming
+  test's 9 MB range held still after its 206 in all six of models-fresh's
+  closing gates, and made no red in a battery of 13 runs nor in the gate's own
+  command, under loads to 132, so load does not make it. The cause is
+  could-not-judge; a step that times out now says what its body had drained
+  (54844461), and the row reopens at the next red in a gate;
+- the capability queue (`ralph/next/capability/`), one deliverable and one
+  release (the operator, 2026-10-23: "I'd like to bundle it all in with"
+  svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md`), built 2026-10-23 to
+  2026-10-24. The security fixes that note found: a navigation judged as a
+  fetch (c08db75d), Money's corrections only from their author (fd3347ac),
+  and a phone's holder a key its pages cannot copy (0c9032ed). Consent you
+  can see: the open says what an app does and is the yes (d55b5506), and
+  "What acts as you" (36aa173f). Authorship by signature (capability-signed,
+  ab98bda1), which built what §2 held as "a phone's write signed by the
+  phone's own key", and keys everywhere (capability-keys, c7e81354). Its
+  release, with House rules, is V1.2, published 25 October 2026 from
+  `0c9dc094`, tagged `v1.2` (the operator: "Ok release it";
+  `demo/runs/capability/2026-10-24-release/README.md`); what it left
+  waits in §2, each with its trigger;
+- then what the capability queue left keyed by name, the first row after
+  its release (the operator, 2026-10-25: "Record now, fix after release";
+  "Just knock it out here"), landed 2026-10-25 (keys-names, 4a723d38 to
+  249823cb): Money's balances and Events' who is coming keep each person
+  by first key and say them by name, "sam (joined 3 Oct)"; an act an older
+  computer wrote for someone is theirs by key where one person of that
+  name had joined by then, from the node's answer (`rail.rs` `ops_json`;
+  the operator chose the node over the core and the apps, "Node"); and
+  the door's "did not answer" rows, the removals and guest hosts name each
+  by key beside the name. The grapevine still judges a correction, a
+  person's own records and who carried an ask by name
+  (`apps/grapevine/grapevine.js:237`, `:248`, `:482`): a row of its own;
+- the give queue (`ralph/next/give/`; the operator, 2026-10-25; svrn-docs
+  `rings/current/GIVE.md`): any port through the door, raw UDP and TCP, so
+  "if you can run it on localhost, you can share it" holds past HTTP; a
+  caller check on the record API, since a container on a Mac reaches its
+  loopback (GIVE.md §5); then Give, in `apps/give/`, a group keeping an
+  app in rootless podman, on svrngs's public surface alone. Its
+  economizing pass cut 13 lines (3acd44aa, 842f9da3, 36f58a12; the cap
+  18,228, 85a1817b) and estimated the svrngs rows at +2 to +5 core and
+  +515 to +1,000 library (`demo/runs/economize/2026-10-25-give/SURVEY.md`
+  §6). The operator answered its `NEEDS_HUMAN.md` (a7865e6e): the ceiling
+  +1,005 and +5, at most 19,233 and 3,244. Landed, give-token: every record
+  route asks a program for the token in the data dir's `token` file and
+  refuses one without it, 401 `no_token` naming the file; the command,
+  install.sh and every app that asks the record show it; +48 library, 0
+  core, the cap 18,276 (662803be; `crates/svrngs-node/tests/record_api.rs`,
+  `a_program_without_the_token_is_refused_on_every_record_route`).
+  Landed, give-session: the home page and each lend's origin answer a
+  browser only with a session an open made (`svrngs open`, install.sh's
+  opener, the home page's `/to`) and a program only with the token; a
+  lend's page reads another at a capability in its read address, the
+  director's decision (`demo/runs/give/2026-10-26-session/DECISION.md`); a
+  container on a Mac is refused (`demo/runs/give/2026-10-26-container/`);
+  +216 library after its own cut of 15, 0 core, the cap 18,492.
+  Landed, give-udp: `svrngs share <port> --udp` lends a UDP port, its
+  packets carried as QUIC datagrams on `Alpn::Port` and reassembled whole
+  past `max_datagram_size`, a stranger and a person past the limit refused
+  (`crates/svrngs/tests/udp.rs`, `crates/svrngs-node/src/door/udp/tests.rs`);
+  +249 library, +2 core, 0 `apps/`, +1 surface (a lend may be UDP), the
+  caps 18,742 and 3,242.
+  Landed, give-tcp: `svrngs share <port> --tcp` lends a TCP port, each
+  connection a QUIC stream of its own on the lend's one connection, one
+  stalled connection holding back neither another nor the record, a
+  half-close carried, a stranger and a person past the limit refused
+  (`crates/svrngs/tests/tcp.rs`); +126 library, 0 core, 0 `apps/`, 0
+  surface (the same item, a lend may be TCP), the cap 18,868, its raise
+  landed for the operator (c0d3b829; "Go for both", give-play's too).
+  Landed, give-play: a member presses Play on a raw lend's row, and the
+  lend opens on `127.0.0.1` at its kept port, UDP or TCP as it is, the same
+  after a restart, gone on Stop and when the member stops standing, and
+  listed under "What acts as you" with its Stop
+  (`crates/svrngs/tests/play.rs`, `crates/svrngs-node/tests/browser/play.rs`);
+  +226 library, 0 core, 0 `apps/`, +2 surface (a lend's `raw`, and
+  `/v1/play` answering a program holding the token), the cap 19,095, its
+  raise landed for the operator (2f454259).
+  Landed, give-play-scene: the gate's "scenes" step plays two lent ports,
+  a UDP and a TCP echo program, each person pressing Play on the other's
+  row and their bytes crossing (`crates/svrngs/tests/scenes/ports.rs`,
+  b9fbd681), red on a listener unbound behind its row; the run-of-shows
+  `demo/factorio.md` and `demo/minecraft.md`, written before any run; 0
+  in each ledger. The two-home sessions they describe wait for the
+  operator, who set no bars ("we can do the two-home session another
+  time", 2026-10-26), and are never-ran until played. Beside them stands a
+  rehearsal on one host, Factorio 2.1.23 through a UDP port lent and Play:
+  9 minutes, no desync, no drop, its path neither of the two the bars
+  would name (`demo/runs/factorio/2026-10-26-rehearsal.json`, d5f65cdb).
+  Not carried: the jellyfin, movie-night and taste `check.sh` runs,
+  outside the gate, which open a lend's origin bare. The operator, "Let's do
+  half the rows": the loop stopped after the svrngs half, at
+  give-play-scene, until the operator said Give's half goes, after
+  give-cut (HUMAN-give-half, 2026-10-26). Landed, give-cut: the lender
+  asks a raw lend's dialer's standing again every sweep, 1 s, and closes
+  the connection once they no longer stand, so a removed member's open
+  TCP connection or UDP flow ends on the lender's side, not their own
+  (`crates/svrngs/tests/tcp.rs`, `udp.rs`,
+  `a_member_no_longer_standing_is_cut`; 662e30be); +16 library, 0 core, 0
+  `apps/`, 0 surface, the cap 19,111, its raise landed for the operator
+  (6019879b). Landed, give-app-runtime: `apps/give`, a crate linking no
+  svrngs crate (`tests/surface.rs`), with a card read once and refused by
+  field, a runtime naming no svrngs type that starts, checks, snapshots,
+  restores and stops a card in rootless podman, and `give check`; the
+  Minecraft and Factorio cards pass it on this Mac and on Linux
+  (`demo/runs/give/2026-10-26-cards/`), a plain copy and a Mac's new
+  machine never-ran there; 0 core, 0 library, `apps/` about 1,430 lines
+  of Rust by lean_check's rule and 68 of YAML, past GIVE.md §9's 460 to
+  860 for these pieces, and Give's surface its five `x-svrngs` fields and
+  `give check`. Landed, give-app-keep: the keeper fact's one fold
+  (`apps/give/fold`), linked by Give's program and built to JavaScript for
+  its page (`apps/give/build.sh`), both held to `fold/cases.json`; `give
+  keep`, which lends an app only while the record names its computer,
+  copies it to the group's folder every 5 minutes and as it stops, each
+  copy naming its card version, and stops it when another computer keeps
+  it; `give page` and the carried page, with "Start it for the group" and
+  "kept by"; and scene 1 with the stand-in, in the gate's scenes
+  (`crates/svrngs/tests/scenes/give.rs`). 0 core, 0 library, `apps/`
+  about 1,160 lines by lean_check's rule (the fold 249, the program's
+  record, lending, shelf, page and keeping 619, its commands +116, the
+  runtime and card +24, the page 93, the build 50), against GIVE.md §9's
+  80 to 150 for the fold and 500 to 950 for supervision and snapshots;
+  Give's surface gains `give keep` and `give page`. Any member may keep,
+  the operator's answer to `demo/runs/give/2026-10-26-keep/QUESTION.md`
+  (2026-10-26: "The first is fine"); a successor the house names waits
+  for a group that asks. Landed, give-app-move: "Move it to…" on Give's
+  page offers an app to another computer that can keep, and its person is
+  asked with the card's asks; a no leaves it as it was, and on a yes the
+  keeper unlends it, takes a last snapshot, writes the move naming it and
+  its sum, and stops it, and the receiver starts only from a copy that
+  sums the same (`apps/give/tests/keep.rs`
+  `a_move_starts_the_computer_offered_from_the_last_copy`). The fold
+  refuses a move with no yes. 0 core, 0 library, `apps/` +303 lines by
+  lean_check's rule (the fold +165, keeping +85, the runtime +28, the page
+  +25), and Give's surface unchanged. Landed, give-app-takeover: a
+  keeper says each copy in the record (`copied`), and a member whose
+  computer can keep is offered "Keep it here?" with the newest copy once
+  the keeper has not answered for three copies' intervals (fifteen
+  minutes, the fold's `GONE`). A copy that does not start, or exits
+  within a minute, is said (`failed`) and the copy before it offered. A
+  returning keeper copies what it had, listed to "Start instead"; nothing
+  is merged or removed (`apps/give/tests/keep.rs`
+  `the_keeper_gone_then_back`, fold/cases.json 27 to 41 cases, the page's
+  third test). The cost is one record act per kept app every five
+  minutes. 0 core, 0 library, `apps/` +406 lines by lean_check's rule
+  (the fold +144, keeping +201, the runtime +18, the page +43), and Give's
+  surface unchanged. Landed, give-app-scenes: the gate's "scenes" step
+  plays Give's scenes 3, 4 and 5 with the stand-in, beside scene 1
+  (`crates/svrngs/tests/scenes/give_move.rs`, `give_gone.rs`), each
+  never-ran without podman. The first run found that a computer back
+  after losing power lent the app again, because svrngs keeps a lend
+  across its restart; Give now unlends it there (4fa9003a). The people
+  runs, a Factorio world kept through a move and a takeover and a
+  newcomer's fluency, are `demo/give.md`, their bars the operator's
+  (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`, "Go with those"):
+  both wait for another time, as the game sessions do, never-ran until
+  played. The scenes name their pods by scene and person, since the
+  gate plays two at once and scenes 3 and 4 each have a Bo. 0 core, 0 library,
+  `apps/` +7, and Give's surface unchanged. Landed, give-install: svrngs's
+  line takes `--give`, which gets Give's program from the same page's
+  `get/`, checked by the same `SHA256SUMS` before anything is installed,
+  and keeps `give keep` running at login beside svrngs, waited for as it
+  stops (`web/install.sh`; `crates/svrngs/tests/install.rs`, the line
+  without then with it, and its sum refused); `scripts/build-release.sh`
+  builds Give beside svrngs, a coupling of distribution, not code. Give's
+  page gives that line, from the page svrngs is published at. The machine
+  Give makes has Rosetta on; where a machine has it off, a card that runs
+  an amd64 build, as Factorio's does, is refused before it starts on a Mac
+  with Apple silicon and the page says to turn it on (`apps/give/src/
+  machine.rs`), making such machines never-ran here. 0 core, +13 library
+  after its pass's -7, `apps/` +101, and the line one option more,
+  the cap's raise to 19,121 the operator's
+  (`demo/runs/give/2026-10-26-install/NEEDS_HUMAN.md`). Landed,
+  give-page-host: Give's install line names the page this computer's
+  group links are on, ours where it keeps none, from `page` beside the
+  group on the carried route `svrngs/acts`, which `Host::printed_page`
+  (`invite.rs`) decides for `svrngs link` too (db1130b3, 527db088;
+  `crates/svrngs-node/tests/carried.rs` `an_app_is_told_the_page`,
+  `apps/give/page.test.mjs` test 6); 0 core, +4 library after its pass's
+  -7, the cap lowered to 19,118 (2ba463a5), `apps/` about +30, one
+  surface item. Landed, give-docs: DESIGN §1, §3 and §7, ARCHITECTURE,
+  the README and `RELEASES.md` say the queue, and the release is
+  prepared for the operator to publish
+  (`demo/runs/give/2026-10-26-release/`). Landed, give-redial: a computer
+  that restarts is reached again in about 4 s, where the connection kept
+  to its old self held a dead path (bd344e4d;
+  `demo/runs/redial/2026-10-27/`), +20 library inside the operator's +30.
+  Its release is V1.3, published 27 October 2026 from `d21578a6`, tagged
+  `v1.3` (the operator: "Let's fix the grapevine bug then release", "minor
+  version bump, push main + the tag to github"). What the queue left waits
+  in §2, each with its trigger;
+- the page queue (`ralph/next/page/`, its `CHARTER.md`; the operator,
+  2026-10-31; svrn-docs `rings/current/PAGE_STATE.md`): on the operator's
+  iPhone a bring's answer replaced the words above it, a second tap posted
+  twice, and the group's list did not show it, since both pages draw each
+  part once and the home page redraws by reloading. So a second UI of
+  both pages, Preact 11.1.1 and htm 3.1.1 vendored with no build step and
+  one machine per page, was built beside the first, which stayed live and
+  byte-frozen, every browser test run against both by one switch. Once
+  the whole gate passed on it, one commit, page-switchover's, made it the
+  pages and deleted the first, the switch, its parity report and its rung
+  with it (DESIGN §5, "The pages draw one way"). `.` took its lines back at
+  the operator's raise, 19,447, after the pass
+  (`demo/runs/economize/2026-11-01-page-switchover/SURVEY.md`), and the
+  cap went to one past where the swap landed. Its demo, on an iPhone the
+  bring's answer beside its button, a second tap refused, and what was
+  brought in the group's list with no reload, is the operator's play on
+  the live page once it is deployed;
+- the JavaScript queue (`ralph/next/js/`, its `CHARTER.md`; the operator,
+  2026-11-02 to 03), completed at 25056eec: the formatter, JSDoc types and
+  structural lint, then named components and separate machines and edges.
+  The focused closing review found no blocking defect; semantic-clone and
+  cross-repository noun analyses were explicitly deferred by the operator.
+  The final runtime is the full gate's tested tree, with the later budget
+  jubilee verified by its failing plant; the doc scene passed its focused
+  rerun. Its evidence is `demo/runs/economize/2026-11-03-js-read/CLOSE.md`
+  and `ralph/REVIEW_FINDINGS.md`. V1.5 is published from 5a4cb567 with these
+  changes, the relay fallbacks and the loading, Stop and binary-message
+  fixes (`RELEASES.md`; `demo/runs/v1.5/2026-11-03/README.md`);
+- a phone's write reaching the group's other computers at once (the
+  operator, 2026-11-03, "A now, B as a row"; `ralph/next/js/NEEDS_HUMAN.md`,
+  "A phone's write waits out a round's slowest dial"): a write nudged while
+  a round runs wakes only the next round (`crates/svrngs-node/src/
+  ring_sync.rs` `spawn_ring_sync_loop`), and a round holds for its slowest
+  dial, so in a group with one computer asleep a yes carried from a phone
+  reaches the others up to 4 s late: rounds of 4,003-4,054 ms, against
+  18 ms with none running (`demo/runs/webkit-wall/2026-11-03/
+  carried-trace.txt`). Such a write goes out without waiting for that
+  round. Its test: a group with one computer asleep, a phone's yes, and
+  the app opened at once on another computer;
+- welcoming a room of laptop users, after the JavaScript queue closes
+  (the operator, 2026-11-03: "let's document the plan"; `ONBOARDING.md`):
+  a member makes and closes a public, temporary, easy-to-type address from
+  their group page. Each person gives their name once, installs svrngs and
+  opens the actual shared folder to contribute a text file, with a haiku as
+  an optional welcome prompt. This is a self-service feature, not an address
+  an operator deploys per gathering. Its source survey estimates +215 to
+  +386 non-JavaScript and +330 to +560 JavaScript lines, with any +0 to +16
+  core lines included in the former. Neither the caps nor the durable
+  resolver's hosting/storage choice is approved by this plan. Reuse and
+  economize first; its acceptance scene is `ONBOARDING.md` §6;
+- sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
 `SHIPPED` to svrngs's relay for production (§2; DESIGN §7), #134 and #135
@@ -86,16 +351,36 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | Waits | Trigger |
 |---|---|
 | an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`); and the runner that would carry an app's function to a person's data, its yes to that code at a version — scoped use's spike served its operation from a program its owner runs, as the survey orders (`rings/current/ACL_AND_SCOPED_USE.md` §4: "a subsequent convenience to earn with a real distributed app"; `demo/runs/su/2026-10-09/` §7) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices, or an app sends its function to run beside a person's data |
-| a native phone app, and groups of phones only; first, phones as replicas of the group (operator, 2026-10-07): a member's phone holds the group's record and the files it shares, and syncs with whoever it reaches through a relay, so the group stays reachable while every computer sleeps (DESIGN §8, risk 1) — a replica, not a relay in iroh's sense, since a phone on cellular sits behind its carrier's NAT. The phone's OS decides it: a page cannot listen and a browser's iroh is relay-only (DESIGN §3, "The room", call 2), iOS suspends an app soon after it leaves the screen, and a network extension (the VPN slot) runs in the background under a memory cap. The spike, on iOS first and no larger than proves it: an iPhone app whose network extension holds an iroh endpoint with a member's key and answers a computer's dial by key every few minutes for 24 hours, the phone locked in a pocket; recorded, answered of dialled, memory against the cap, battery and data, against bars the operator sets before it runs. The record on the phone follows only if the endpoint stays reachable; Android after iOS | after Demo C, or the operator moves it in (operator, 2026-10-10: "I don't want to distract us from the core right now, but wanna keep it on the back burner"; its design, deferred, svrn-docs `rings/current/PHONE_REPLICA.md`); or the browser cannot keep what a group needs — its key, or a copy — measured |
+| the phone's app, built: the ios queue (`ralph/next/ios/`, its `CHARTER.md` and `STATE.md`), designed in DESIGN §7 and parked after its design. The demo it would move: Ana taps the chat link on her iPhone, types her name and presses Continue once; Jellyfin's app then plays Sam's film over cellular with nothing to turn on, and a stranger's key is refused. Its observations are `demo/runs/ios/2026-10-30-observe/README.md`; a TestFlight build of the spike installs from an individual's team. Until it is built, a phone is the group's page in its browser, and a lend stops when the browser leaves the screen | the operator resources it (the operator, 2026-10-30: "we aren't shipping a mobile app until 2027"; "finish the iOS design then park it until we can resource it") |
+| the replica on the charger: a member's phone keeps the group's record passing between computers awake at different hours while it charges on WiFi, one line on the app's This phone, off by default (svrn-docs `rings/current/ROAD_TO_IOS_GA.md` §2.3; its design `rings/current/PHONE_REPLICA.md`). Its spike answered 98.9% of dials through a day and 99.8% overnight, and with iroh's reports off link changes cost 1.1 to 1.3 MB an hour (`demo/runs/phone-replica/2026-10-27/README.md`, the ladder). It left the ios queue because no one in xenia's cast feels it working or missing (ROAD_TO_IOS_GA §2.1); groups of phones only follow it | a group finds an act late because the computers that hold it were never awake at once, counted; or the operator moves it in |
+| "Ask the house": an App Intent in the phone's app, from Siri, Shortcuts and the Action button, to a model the group lends at the phone's loopback (ROAD_TO_IOS_GA §7, steps 3 and 4) | the ios queue's recorded run passes, and a group that lends a model asks for it on a phone, counted |
+| a yes given in the phone's app, for a lend that asks one: until then its line on House says the app can't give the yes yet and where it can be given, and never opens it without the yes (DESIGN §3, "Asking for a yes"; `ralph/next/ios/CHARTER.md`, "Decide") | a person in a group stops at that line, counted |
+| the packet path: the phone's lends at tunnel addresses in place of a listener on the phone's 127.0.0.1, which Apple's TN3120 rules out for a packet tunnel (ROAD_TO_IOS_GA §4, item 5) | App Review asks for it |
+| on-demand by domain: the phone's tunnel up only while an app asks a lend's address, so iOS's one VPN slot is free between uses (ROAD_TO_IOS_GA §2.3, the sheet's other-VPN line) | several in a group already run a VPN on their phone (the house's answers to HUMAN-ios-observe check 5, `demo/runs/ios/2026-10-30-observe/README.md`, "Left"), counted |
+| the phone's app on the App Store: an organization's developer account, since guideline 5.4 holds a VPN app to one, its data declaration, and TestFlight's external review first (ROAD_TO_IOS_GA §5, §6 v1 and GA); until then the house gets it by TestFlight's internal testers or an ad hoc build | the organization's enrollment (D-U-N-S) completes and the ios queue's recorded run passes |
+| Android: `VpnService`, a foreground service, Doze (svrn-docs `rings/current/PHONE_REPLICA.md` §6) | a group asks for it, counted, once the iPhone app is on the App Store |
 | a chat's own door: a package that posts a group's link for a person, names a group for its channel, or follows a channel's members (E0's, at tag `e0-bot`, DESIGN §3) | a group asks for one that a pasted link cannot answer, counted |
 | Windows | a group asks |
+| automatic failover for an app Give keeps: today a takeover is always a person's yes, offered once the keeper has not copied the app for fifteen minutes (`apps/give/fold`, `GONE`); a house rule in canon would let the group say when a computer takes it over unasked (svrn-docs `rings/current/GIVE.md` §10) | a group asks for it, as a house rule |
+| shipping a kept app's write-ahead log: a copy is minutes old, every 5 minutes and one at each clean stop (`apps/give/src/keep.rs`, `EVERY`), so a takeover loses what was written since the last | a group loses data it cared about to a takeover, counted |
+| members carrying an app's image: a takeover pulls the card's pinned digest from its registry, and members carry state only (GIVE.md §10) | a takeover fails because the registry was down, counted |
+| holders of a kept app's copies who opt in: every member holds every copy, through the group's folder | a kept app's state too large for every member to hold |
+| a player's real address passed to a lent port (HAProxy's PROXY protocol): every player arrives from 127.0.0.1, so bans and limits by address cannot tell them apart (GIVE.md §6) | a group asks |
+| LAN discovery, consoles and Bedrock through a lent port | a group asks, counted |
+| a successor the house names, who keeps: today any member whose computer has Podman and Give's program may (the operator, 2026-10-26, "The first is fine"; `demo/runs/give/2026-10-26-keep/QUESTION.md`) | a group asks |
+| a size cap on Give's own lines, `apps/give/` beside the repository's and the core's: lean_check counts no `apps/` and the queue reported it each row (PLAN §1, give-app-runtime to give-page-host) | Give has landed, so the trigger has come; the cap is the operator's to set (`demo/runs/give/2026-10-26-release/NEEDS_HUMAN.md`) |
+| Give's people runs, `demo/give.md`: a Factorio world kept through a move and a takeover against the bars the operator chose, and a newcomer's fluency counted, once with Podman installed and once without. Never-ran (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`, "Go with those") | the operator names who and plays them |
+| the two-home game sessions of `demo/factorio.md` and `demo/minecraft.md`: each game 30 minutes between two homes, once on a direct path and once with the relay forced, desyncs, drops and the game's ping counted per path. Never-ran: no bars are set, and the one rehearsal (`demo/runs/factorio/2026-10-26-rehearsal.json`) ran both computers on one host, so neither path | the operator sets the bars and plays them (2026-10-26: "we can do the two-home session another time"), or a group playing through a lent port reports a desync or a drop |
 | the switch to svrngs's relay, parked at the gate (relay-park; §3, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (DESIGN §7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it; with it, #134 and #135 (`ralph/REVIEW_FINDINGS.md`), whose moment is the switch | V1 released on n0's relays (§1, "V1"; §3, 2026-10-15), and the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production") |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (DESIGN §3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (DESIGN §3, "The room", call 2) | a group with no computer in the room asks, counted |
 | a relay at a bare address, no name needed (svrn-docs `rings/current/GROUP_RELAYS.md` §4.4): a six-day Let's Encrypt certificate for the address, its `shortlived` profile, which tokio-rustls-acme 0.9.1, iroh-relay's ACME client, cannot ask — its `Identifier` is `Dns` alone and its order names no profile (`acme.rs:129-130`, `:301-303`); no second ACME client beside it (`ralph/next/relay/CHARTER.md`) | iroh-relay's ACME client asks for an address, or a member who would relay has no name to give it, counted |
 | a relay for a group's own refusing a newcomer whose key does not yet stand (`GROUP_RELAYS.md` §4.3): a link's issuer whose relay is `svrngs relay` without `--open` would refuse the joiner dialling it there before its `Admit` is written — read from `relay.rs`'s admission, not run; since relay-default `new --relay` names a group's own in its links, so that relay runs `--open` until this lands (`svrngs help`) | a group runs its own relay and names it in its links, counted |
 | watching together from different homes: one transcode, shared, in step | a group asks to watch the same film apart at the same time |
-| sealing in the infra | two apps need the same seal |
+| sealing in the infra: an entry sealed to some keys, shown beside it before it is written, "Only Priya sees who chipped in" (svrn-docs `rings/current/WHAT_CAN_ACT_AS_YOU.md` §9, §10 row 4: +130 to +260 repository, +60 to +120 svrngs-core). Open before it can be sized firmly: a phone's lend origin holds only a holder key (DESIGN §3, "Lent apps", call 6), so a carried app on a phone cannot yet open a sealed entry. Its queue is written at its trigger, from that table and what the capability queue found | two apps need the same seal (lending, Tap) |
+| an app declaring what it reaches, so lending it says "Reel opens your friends' Reel as whoever opens it" and the lender only agrees, in place of typing `svrngs share --reads <kind>` (WHAT_CAN_ACT_AS_YOU §11): today the lender declares it, and the open says it from what they declared (DESIGN §3, "Lent apps", call 6) | the first app outside svrngs's own that needs `--reads` (the operator, 2026-10-23: "Wait, with a trigger") |
+| a sandboxed carried page: a framed page with its links brokered, so an app cannot send out what it reads. Today the floor keeps out foreign code and reach nobody chose, and a carried app is trusted with what it reads because its people chose it, its files pinned and each version their yes (DESIGN §3, "Or a folder the group carries"; `scripts/trust_floor.txt`'s header; WHAT_CAN_ACT_AS_YOU §5) | code arriving from outside a person's rings: apps carried beyond the people who know who wrote them |
+| the capability core as a move of its own: one `may` in svrngs-core deciding every capability, Know, Reach, Read, Append and Decide, over `Grant`s and a `Standing` (WHAT_CAN_ACT_AS_YOU §10, its target shape). Sized 2026-10-22 at +160 to +250 svrngs-core and +140 to +270 repository, removing 15 to 25 lines, since the deciders are mostly single-sited already (`Pass::check`, `Append::decide`, `Runs`, `Guest::live`, `reaches`); the log side's `Grant` and `Capability` came with authorship (`crates/svrngs-core/src/grant.rs`), and reach keeps `Pass::check` | a third change touching those sites (WHAT_CAN_ACT_AS_YOU §10, 2) |
 | group compute: asks leased by members' computers and answered as acts; and peer inference, a source's excerpts released to another member's computer for a job (`rings/current/ACL_AND_SCOPED_USE.md` §5), out of scoped use's spike (`demo/runs/su/2026-10-09/` §7) | Ask is next, or an owner's operation needs inference their own computer cannot run |
 | files beside the record; the live channel beyond what U3 carries | the reference app that needs each |
 | a second chat adapter, and the trait it earns | a group on another chat asks |
@@ -107,7 +392,7 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | exporting a group as one document (upstream's checkpoint route), checking the asker is in that group | a group refounds from a copy, or someone asks to export one |
 | the endpoint's self-heal (upstream's `self_heal.rs`, `iroh_watchdog.rs`) | a node's endpoint wedges in a recorded run |
 | skipping a round's members known offline. Dialling them at once landed (asleep-1, `ring_sync::run_one_round`), so an asleep one holds only its own dial; the round still ends when that dial gives up, about 4 s since events-wait (`dial::DIAL_WITHIN`; 2 s at events-asleep, 10 s before), and a door's ask begun meanwhile waits for the next round (DESIGN §3, "Joining") | a round's measured time nears its interval, or a newcomer is refused while a round waits on an asleep computer, counted |
-| a phone making a device link (phase 2 of svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3). Since bash-devices a computer makes one (`svrngs link <group> --device`), and a phone or another computer opening it joins as that computer's person, asked no name (DESIGN §3, "Joining"); a phone cannot make one, since only a computer redeems a link (the row "any member's node redeeming a link", below), so a person whose only device in a group is a phone adds no second one as themselves | a person whose devices in a group are phones alone asks to add another as themselves, counted; or any member's node redeeming a link lands |
+| a phone making a device link (phase 2 of svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3). Since bash-devices a computer makes one (`svrngs link <group> --device`), and a phone or another computer opening it joins as that computer's person, asked no name (DESIGN §3, "Joining"); a phone cannot make one, since only a computer redeems a link (the row "any member's node redeeming a link", below), so a person whose only device in a group is a phone adds no second one as themselves, and a person already in through the page who joins from the phone's app is in twice, told apart by when each joined (DESIGN §3, "Joining") | a person whose devices in a group are phones alone asks to add another as themselves, counted; or any member's node redeeming a link lands |
 | a device link apart from its issuer's one open link: a computer has one open link (DESIGN §6, "A link admits each person once"), so making a link for its person's devices closes the link they sent a friend, and the other way about; the command says so as it does for any link (bash-devices; `demo/runs/devices/2026-10-12/README.md`, finding 3, not measured) | a person's link to a friend is closed by their device link, or the other way, counted |
 | joining two people of one name into one person: a group from before bash-devices where a person's second device joined under their own name holds them as two people, not migrated (svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3), and a race or a member's hand can give two people one name; since bash-same-name the keeper removes either by when they joined (DESIGN §6), but making one a device of the other is a change to who a person is beyond phase 1, the operator's (ralph/next/bash/CHARTER.md, "Leave for the operator"), never built by that row | a person standing as two people of their own name in a group asks to be one, counted |
 | removing one lost device of a person: a `Remove` is per key already, and the person's other devices keep standing (svrn-docs `rings/current/ONE_PERSON_MANY_DEVICES.md` §3, "Removal"), but `svrngs remove` names a person and takes every device of theirs (bash-devices); naming one device — by the person from another of theirs, or by the keeper — is a change to who a person is beyond phase 1, the operator's (ralph/next/bash/CHARTER.md). Until then a lost phone's key stands as its person until the keeper removes the person | a person loses a device that stands in a group, counted |
@@ -117,7 +402,8 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | a link's life set per link, other than a day | a newcomer meets a lapsed link, counted |
 | measuring a lender's upload rather than taking the figure they declare (BBR3's pacing estimate, or a timed saturating pull) | a declared figure is wrong by enough to stall a viewer in a recorded run |
 | a per-process tie between a node and the services it lends (upstream's `mint_tie`). A middleware believes loopback: a process on the lender's computer naming a person's key at its port was answered as them (`demo/runs/mw/2026-10-08/mw-1/`), which is the lender's own (DESIGN §3, "The room", call 6); and a request at a lend's origin with no `Sec-Fetch-Site` is taken for that lend's own page (sup-1, `origin.rs` `app_of`), which neither widens nor narrows what a process could reach before | an app's act is written under a person by a process the lender did not run, or one computer is shared by people who do not trust each other |
-| a phone's write signed by the phone's own key. A phone's write reaches the record through a computer: the act is that computer's, signed by its key, naming the phone's person in `on_behalf_of` (`carried.rs`, `acts`; `rail.rs`, `append_act`), so a copy can check only which computer carried it, and any program on that computer may name anyone standing in the group. The scene (`ralph/FINDING_ON_BEHALF_OF.md`, dbbf4ab4): a script on Cy's laptop posts "Bo paid $400" in Bo's name to Cy's loopback API, and every copy's Money said "bo paid $400.00" with nothing to tell it from Bo's own (`crates/svrngs-node/tests/browser/carried.rs`, `an_entry_another_s_computer_wrote_says_whose`, its red). V1's answer is to show it: each app's fold keeps `via`, and each page says "bo, through cy’s computer" (gv-via; the operator, 2026-10-16: "Not for V1; showing it is V1's answer"). The structural answer: the phone signs its own write with the key that stands in the register as that person's (a phone keeps one per group, `web/store.js`) and the computer carries it unchanged, so every copy checks who wrote it, never only the computer that carried it. Weighed and left: `append` refusing an `on_behalf_of` the door did not resolve in that request. It narrows the scene to a page someone opened, but no other copy can check it after the fact; lent apps that run as their own process write for whoever the door named to them, in a request of their own (Events' server, `apps/events/server.mjs` with `store.mjs`'s `record`); and DESIGN §3's "Localhost is the trust boundary" says the boundary is the computer, and any program on it is the person | after V1 (the operator, 2026-10-16): a write in someone's name that they did not make, or one through another's computer that they dispute, seen in a group, counted |
+| svrngs as an OpenID Connect provider for its lends, in place of a sign-in program per app: a lender's app with a stock "Sign in with OpenID" setting (Immich, Audiobookshelf, Grafana, Forgejo, Jellyfin's SSO plugin) names svrngs as its issuer, and the lender's door completes the login for whoever opened the lend, asked no password. Then `apps/jellyfin/mw/` and the well-known table's `helper` line retire (`crates/svrngs-node/src/well_known.txt`). Its design began 2026-10-20, svrn-docs `rings/current/SIGN_IN_WITH_SVRNGS.md`. The operator, of `jellyfin-mw`: "If it's not something anyone in the room can run off the shelf I'm pretty turned off by idiosyncratic tweaks for specific apps"; then "if there's something that solves a general svrngs problem and the n+1 use case for it is now easier then we can do it" | the demo evening is over (operator, 2026-10-20: "let's add the OIDC trial"); the trial is two apps, Immich or Audiobookshelf first, then Jellyfin's SSO plugin |
+| getting the latest svrngs from the home page (svrn-docs `rings/current/UPDATES.md`): a version svrngs knows, and the page's Update, which takes `install.sh`'s steps and check — fetch, `SHA256SUMS`, swap, restart — so nobody pastes the line again; the Linux unit restarting always, as macOS's does. Today an update is `install.sh` run again (`web/install.sh:67-69`). The operator: "We should have a better upgrade story than just running an install script again", then of a first draft with a release key, the group carrying versions and versioned phone pages: "Feels a little overcomplicated on the release work; people just need to be able to get the latest code simply" | the demo evening is over |
 | a synced folder's later parts, each with its trigger. A mounted folder: every file of a group's folder listed from the record's layout and fetched on open, by verified range, as group folders' streamed spike fetched (`demo/runs/gf/2026-10-09/`, its endpoint dropped at syp-1; `demo/runs/sy/2026-10-09/README.md` §9, "A mounted folder") — a file system of svrngs's (macFUSE, or Apple's File Provider), a dependency and a process apart. Its streamed spike's rows that only a folder not on the viewer's disk needs — a stub that reaches its viewer, who the endpoint answers, stubs in step with the record (that README's §9, rows 1, 3 and 4) — wait with it. A version as its blocks: a file a hash sequence of its 1 MiB blocks (iroh-blobs' `HashSeq`), the record's entry naming the sequence, so an edit moves only the blocks it changed — a 1 MiB edit inside 100 MiB moved all 104,857,600 bytes to each member on every path, before perf-2 and after it, in 1.9 s on loopback, and again on production in 7.04 s through n0's (syp-5, `demo/runs/syp/2026-10-10/rerun/README.md` §5), and what an entry's hash names would change in the record and in what a store keeps (perf-1, `demo/runs/perf/2026-10-10/README.md` §9 T4, §10 candidate 8; perf-2, `demo/runs/perf/2026-10-10-make-it-fast/README.md` §3 T4; the operator, "Wait, revisit after the rerun", §3). A file past one holder's upload: a 100 MiB file reached each of two members at 83 MB/s at once, about 167 MB/s from its one holder, where one member alone took it at 139 MB/s, a bare iroh-blobs get's rate (that README §4) — a member fetching from another that holds the file is unmeasured. A joining member's wait to stand: its share refused until the round admits it, 54-58 s of the round's 60 s, where its every file then arrived in 1.7 s of 10,000 and 61.5 s of 100,000 (that README §5) — perf-2's harness's, members started apart; a member joining by `join` stood before its share, and held 1,000 files 0.53 s after it (syp-5's rerun, §5). Dialling direct before a relay: no gain measured, iroh having moved every connection on all three paths direct before its first fetch, in perf-1 and perf-2 alike (perf-1's README §9; perf-2's §3) | the mounted folder: a member whose disk cannot hold the group's folder, counted. The blocks: a member waiting on a large file moved whole for a small edit, counted, or the operator queues T4. A file past one holder: a member waiting on a large file several fetch at once, counted between computers. The wait to stand: a newcomer's folder waiting on the round past a bar the operator sets. The dial: a fetch measured through a relay between two members a direct path reaches |
 | a fetched hash's tree of hashes left on disk after its bytes are dropped: iroh-blobs 0.103 writes a fetched blob's tree (`<hash>.obao4`) while the blob is partial, and when it completes with a tree small enough to keep inline (a blob over 16 KiB and up to about 4 MiB) copies it into its database and leaves the file (`store/fs/bao_file.rs:215-224`); a drop of the entry then removes the database's row alone (`store/fs/meta.rs:594-596`). No byte of the content stays, but the file's name is the hash: each of the 10 pieces Bo and Cy carried left 192 bytes after its lapse (`demo/runs/onair/2026-10-13-blob/`, `stores-after.txt`), and a group's folder's fetches leave the same. Not fixed beside the store: the file is the store's, and only iroh-blobs knows when it is free | a person asks that what lapsed or was dropped leave no name on their disk, or a store's directory is counted to grow by it past what matters, or iroh-blobs removes it upstream |
 | a person who only searches counted apart from one who watches: the door counts each on a lend for `WINDOW`, 30 s, after their last request (`crates/svrngs-node/src/door/limit.rs:17-19`), a search as a film — Movie Night's searcher was counted on both Jellyfins 26.3 and 26.5 s after one search and not at 36.2 and 36.4 s, the most at once 2, nobody refused (`demo/runs/mn/2026-10-08/doors.json`, `limit`) | a lend at its limit refuses someone while those it counts only searched, counted |
@@ -125,8 +411,40 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | WebKit's closed-range seeking through a lend: its seeks back to back, taken in serial 64 KiB reads of each short part, a round trip each, missed 5 s in 1 of 8 tries after u5-11, where straight at the canary over the same link they missed in none (`demo/runs/u5/2026-10-06-seek-stall/`; DESIGN §8, risk 4); a rate in `scripts/check.sh`, not a gate. And Chromium's on a loaded host: its seeks are a gate, but sup-4's check, sy-1's three on the branch `folders` and REVIEW-audit-sup-auto-2's each missed only them, at load averages of about 40-130 on this host's 12 cores, with nothing near them changed, and passed alone; since chk-1 a miss past 3 a core is could-not-judge, never passed (operator, 2026-10-10), the bar's one home `crates/svrngs-node/tests/browser/load.rs` (`BUSY`), which the browser tests' film reads too since bash-film-load — its Chromium seek, after the worker's stop, missed at 11.4 s in one check and stayed under 3 s in 29 runs at loads to 19 a core (`demo/runs/film-load/2026-10-12/`) | Demo A's real-phone sessions miss the seek bar in Safari more often than WebKit straight at the server on the same link; or Chromium's seeks are could-not-judge in more `scripts/check.sh` runs than they are judged, counted |
 | a page whose film never starts once its relay socket breaks: in bash-devices-1's `scripts/check.sh` WebKit's film played nothing in 45 s in its first browser (`crates/svrngs-node/tests/browser/main.rs`, "the film must play"), its group's page having logged "WebSocket connection to … /relay failed … Socket is not connected" before it opened the lend, and played in 0.6 s once the browser was opened again; the film's worker, whose console Playwright cannot read, logged nothing. Not seen in 29 runs an engine at loads to 19 a core (`demo/runs/film-load/2026-10-12/`), so whether it was the harness or a worker that stops for good is not known; every browser run keeps the relay's and the doors' lines in `target/traces/browser.log` since bash-film-load | the film fails to play again in a `scripts/check.sh` run, read with that trace; or a phone's page stops answering after its relay socket breaks in a recorded run |
 | the floor: every app under `/l/<label>/` of one address apart from the page's, on any static host, the link carrying that address after its token (a second address given to `svrngs new`, u5-2; dropped by u6-00). Its cost was one origin for every app, so a lent page could read what another kept and use another's pass while it lasted, and its every app lost its root: the catalogue run lent five self-hosted apps on it in Chromium and WebKit and none got past its sign-in, each asking for `/`-absolute paths the floor's host answered 404, and Paperless's post refused by its own origin check (`demo/runs/catalogue/2026-10-05/RESULTS.md`, "The floor"; `003e0d5`) | a group whose host answers no name nobody made asks for an app that keeps to relative paths, counted |
+| nextest for `scripts/check.sh`'s `tests` step, each test its own process and the binaries at once, as commonwealth-ai runs its suite (its `scripts/sovereign-test.sh:52-62`, `.config/nextest.toml`; test execution 90.5 s to about 19 s over 178 binaries, its `ci.yml:465`). Here the step is about 200 s of serial running and 70 s of compiling (`8142dc03`); 40-70 s of running is an estimate, door's 34 s binary its floor. What it needs, read and not run (the survey of 2026-10-22): browser, conformance and join_page stay on `cargo test`, as their own steps (browser's `JELLYFIN` lock on port 8096 and its `PATH_SET`, `crates/svrngs-node/tests/browser/main.rs:3364`, `:3608-3651`; the harness's `site()` would rebuild `target/web/site` once per test; `traced()` truncates its log once per test); a test group of one thread for peer, leave_page and home_group, which drive Playwright through `web/tests/*.mjs`, as commonwealth-ai's `daemon-boot` group; home.rs's `/running` test alone, since `share::listening()` connects to every port from 1024 to 49151 (`crates/svrngs-node/src/share.rs:196`); a step of its own for the doctests, which nextest does not run and svrngs-core's `compile_fail` proofs need (`admit.rs:365`, `command.rs:28`); `--no-tests=fail`, and never-ran when nextest is missing, never `cargo test` in its place; a `slow-timeout` from the slowest test measured, so a hang is a named failure. On Linux the room's ports (40000-48999, `room.rs` `port_of`) sit inside the ephemeral range, where another test's socket can take one. No retries: a retry that passes is a substituted verdict. Two timed runs before and two after, so the gain is a measured one | `scripts/check.sh` is the longest wait in a row's close, or a row skips it for its time, counted; or the operator moves it in (2026-10-22: "We can put the nextest ideas in some TODO doc") |
+
+| `pantry up`, one command to serve and lend | a provider asks for one after the run, counted |
+| the design's card, facts and matcher (MODELS_ON_THE_RING §3, §6) | a person cannot choose among their friends' lends by the model picker alone, counted |
+| need acts, standing in the record (§2 of that design) | a person asks the group for a model nobody lends, counted |
+| one MCP address gathering every friend's tools | a person adds more than a handful of tool lends and asks for one, counted |
+| several models behind one lend through llama-swap (MIT; measured clean at models-scope, but it writes a file path as `model` and adds a supervisor) | a provider wants several models behind one address, counted |
+| a stdio MCP server that knows who is calling: `mcp-proxy` passes none of the door's headers, so a bridge that maps them is needed (`demo/runs/models/2026-10-22-scope/data/responses/mcp/stdio-through-door.txt`) | a lent stdio tool must act per person, counted |
+| per-person permission on a tool beyond the door's who and how many | a lender asks to let one friend use a tool that writes and not another, counted |
+| a pipeline lent to others, reaching lends on someone else's behalf | the operator, since it crosses DESIGN §3, "The room" |
+| phones: the pantry's address is on the person's loopback; a phone reaches it through the room or a carried page | a person asks, counted |
+| a pantry page on the home page | a provider or consumer who does not use a terminal asks, counted |
+| the deterministic spread by the person's key (MODELS_ON_THE_RING §3, 5) | two consumers' loads collide on one provider while another sits idle, counted |
+| a wire other than OpenAI's or MCP's (ComfyUI's, SearXNG's own): reachable today at its lend's own address | through the pantry when one is asked for, counted |
+| weights over the ring, budgets, A2A, card signatures, and the rest of MODELS_ON_THE_RING §12 | each with its trigger there |
+| a view of what is lent as last seen, with when, so freshness has one decider (lends are live-only, so a routing app pays a dial per friend) | a second app must show a lend that is asleep without dialling every friend, counted |
+| a readable handle that tells two people of one name apart, so apps stop inventing one (the pantry's `handles` is private to `apps/pantry/`) | a second app must name a person whose name is not unique, counted |
+| a server app carried from group to group as a pinned recipe, run on a person's computer only after their yes, never supervised by svrngs ("how will we solve the distribution problem if say someone writes a cool app for their neighborhood"; v1 is to clone and run it) | a group asks for a second app that runs as each of its people, counted |
 
 ## 3. Decisions
+
+By the operator, 2026-11-02, on a group's relays with fallbacks, after the
+hack night with a laptop's relay on a Lightning Mesh (svrn-docs
+`rings/demo/MESH_HACKNIGHT.md`): "group record, start with keeper only,
+there is always a batteries included fallback (now n0, next
+relay.svrnme.sh), let iroh pick by speed". So a group's relays become a
+list in its record that only the keeper sets; each computer adds the
+build's relays (`cli::SHIPPED`) to every group's list; iroh makes the
+fastest its home; and a member is dialled at every relay it might be on.
+This changes the relay-park decision below: n0 is now the fallback when a
+group's relays fail, said on the home page, never silent. The design and
+its invariants, to be agreed before code: svrn-docs
+`rings/current/GROUP_RELAYS.md` §7. DESIGN §3's "never a fallback" sentence
+changes in the commit that builds it.
 
 By the operator, 2026-10-10 and 2026-10-11, on the scene v1 answers to
 (`demo/c.md`):
@@ -553,7 +871,7 @@ sizes are lines of code, as the survey counted them.
 | `mesh-join-vocab/src/deep_link.rs:228-300` | the https link's build and parse, never reading left of the `#` | forked already (U2): `crates/svrngs/src/link.rs`; u4-2 moved the token's parse, now `crates/svrngs-core/src/link.rs`, and the signing of the ask and the redemption into svrngs-core (call 5), leaving the command `issuer.rs`: the issuer as iroh dials it; a fresh token's secret, drawn there until start-home moved it beside the link's `Invite` into the node (`crates/svrngs-node/src/invite.rs`), where `svrngs link` and the home page both make a link |
 | `sovereign/crates/sovereign-contracts/src/guest_pages/ring_shim.js:1-171` (105), with `shim.rs` and `guest_pages.rs` | `window.ring` over plain `fetch` to a LAN door: the bearer from `location.hash` (`:5`); a name claimed by `window.prompt` and `POST /v1/guest/session`, its handle kept in `localStorage` (`:30-61`) | not forked: a guest on a LAN door, which never dials iroh and for whom the host signs. svrngs's phone is a person with a key in the register. Both retire on svrngs's bar (`docs/RING_SPEC.md:26`) |
 | `sovereign/crates/sovereign-daemon/src/guest_door.rs:617-729` (104) | the LAN door's proxy: the request body buffered to 16 MiB (`:619`, `:646`); headers forwarded but `host`, `connection`, `content-length` and `accept-encoding` (`:659-667`); the response buffered whole (`:689`) and only its status, `content-type` and body returned (`:681-696`) | not forked: it drops `Content-Range` and streams nothing. The other end of a phone's streams is U3's door (`crates/svrngs-node/src/door.rs`) |
-| `sovereign-mobile/src-tauri/src/iroh_bridge.rs:14-17`; `scripts/ring-room-phone/phone.mjs` | a native Tauri app's iroh, its key "ephemeral (fresh key per app run)"; a Node stand-in for a phone browser, with a fake `location`, `localStorage` and `fetch` | not forked: a native phone app waits (§2). The browser tests drive real engines with Playwright, Chromium and WebKit with iPhone emulation (u4-7) |
+| `sovereign-mobile/src-tauri/src/iroh_bridge.rs:14-17`; `scripts/ring-room-phone/phone.mjs` | a native Tauri app's iroh, its key "ephemeral (fresh key per app run)"; a Node stand-in for a phone browser, with a fake `location`, `localStorage` and `fetch` | not forked: the phone's app is the ios queue's, parked (§2), its key kept in the Keychain. The browser tests drive real engines with Playwright, Chromium and WebKit with iPhone emulation (u4-7) |
 | nothing | an HTTP client over iroh in wasm; fetch interception; byte ranges in a browser; request bodies; a key a browser keeps; redemption from a browser; a dial by bare key from wasm; any measurement on a phone (the survey searched every `.js`, `.ts`, `.html` and `.rs` file for each) | built new: the client (u4-4), the key and joining (u4-5), the runtime (u4-6), the measurement and the operator's package (u4-8) |
 
 Seven facts follow. *The page holds the key's bytes* (call 1): iroh's

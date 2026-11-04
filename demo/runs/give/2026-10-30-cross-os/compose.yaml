@@ -1,0 +1,31 @@
+# Derived by hand, as derive.rs would, from the process on 127.0.0.1:7333:
+# `node server.mjs` in /private/tmp/canon-term, node v24.22.1 (2026-10-28 spike); the
+# node pin corrected to its index digest for a Linux keeper (2026-10-30 cross-os).
+services:
+  app:
+    # node 24.22.1, the full image: the slim one has no python3, which it spawns.
+    # Pinned to the index (amd64, arm64, ppc64le), not the arm64 manifest the
+    # spike pinned (a217980f…), which pulls on x86_64 and fails to exec.
+    image: docker.io/library/node:24.22.1@sha256:d862bb5d082c5ae0210ac07e8c0344cb8cf7bef6d78e9b8c50c179da923108ea
+    command: ["node", "server.mjs"]
+    working_dir: /private/tmp/canon-term
+    # The folder at the path it ran at, and at /tmp, which is /private/tmp on a Mac.
+    volumes: ["code:/private/tmp/canon-term", "code:/tmp/canon-term"]
+    ports: ["7333:7333/tcp"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:7333/').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 5s
+      retries: 6
+  # It listens on 127.0.0.1 alone, so the pod's door forwards to it.
+  door:
+    image: docker.io/alpine/socat@sha256:603174b77eebaba25ba8f8ebb15e1234d6600409554e95d6fb203fd106150287
+    command: ["TCP-LISTEN:7334,fork,reuseaddr", "TCP:127.0.0.1:7333"]
+    ports: ["7334:7334/tcp"]
+volumes:
+  code: {}
+x-svrngs:
+  title: canon-term
+  about: "node server.mjs, given by Alex's computer"
+  door: { port: 7334, protocol: http }
+  state: [code]
+  asks: []

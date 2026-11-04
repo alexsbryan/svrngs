@@ -1,0 +1,11 @@
+{
+  "status": 403,
+  "headers": {
+    "Connection": "close",
+    "Content-Type": "application/json; charset=utf-8",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "74"
+  },
+  "body": "{\"error\":{\"message\":\"this feature is disabled\",\"type\":\"feature_disabled\"}}"
+}

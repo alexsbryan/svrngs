@@ -149,9 +149,7 @@ impl<'de> Deserialize<'de> for Digest {
             }
             Some(v) => Err(D::Error::custom(format!(
                 "digest v{} is not spoken here (this node speaks v{DIGEST_V})",
-                v.as_u64()
-                    .map(|n| n.to_string())
-                    .unwrap_or_else(|| v.to_string())
+                v.as_u64().map_or_else(|| v.to_string(), |n| n.to_string())
             ))),
             None if raw.as_object().is_some_and(|o| {
                 !o.is_empty() && o.values().all(serde_json::Value::is_u64)

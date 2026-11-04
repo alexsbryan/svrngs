@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "headers": {
+    "content-type": "application/json",
+    "x-svrngs-refused": "path",
+    "content-length": "60",
+    "date": "Fri, 23 Oct 2026 00:39:52 GMT"
+  },
+  "body": "{\"error\":\"ana-router is lent without /models\",\"kind\":\"path\"}"
+}

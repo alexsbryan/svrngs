@@ -46,9 +46,7 @@ curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- 'https://group.svrnme.s
 ![The page with no link](runs/start/2026-10-13-story/data/shots/sam-page.png)
 
 Above the line the page says, in red, *"Open this page from your group’s
-link."*, and below it shows a name box, **Join**, **Yes** and **Not now**.
-Leave them: they are for a phone with a link, and show here by mistake
-(the run's finding, its §4). Press **Copy**.
+link."*: it is for a phone, which joins only from a link. Press **Copy**.
 
 **3. Paste that line in a terminal.** Within a few seconds (1.4 s in the
 run) it says:
@@ -70,21 +68,21 @@ one below, …"*.
 **4. Make the group, then a link.** Under **Make a group**, type a name
 for the group in *"A name for the group"* (the run: `Lab`) and your own
 name in *"Your name in it"* (`Sam`), and press **Make a group**. The page
-says *"You made Lab. Make a link below to invite someone to it."*, and
+says *"You made Lab. Invite someone to it below."*, and
 where the group's folder is on this computer.
 
 ![Sam's home page, the group made](runs/start/2026-10-13-story/data/shots/sam-home-made.png)
 
 Under Lab, below the table of what's lent, the home page shows **Bring
 things to the table**: Money, Events and House rules, which come with
-svrngs, each ticked. This walk doesn't need them, so leave them. Pressing
-**Bring the ticked ones to Lab** brings them, and everyone in Lab can open
+svrngs, each with a box to tick. This walk doesn't need them, so leave them. Ticking one
+and pressing **Bring the ticked ones to Lab** brings it, and everyone in Lab can open
 them. House rules is where a group agrees on its rules: someone proposes, the
 rest agree or object, and canon, the library under it, decides when a rule
 holds (`../RELEASES.md`, "Next"). (Not in the run, which came before House
 rules.)
 
-Press **Make a link to invite someone to Lab**. The page says *"Send this
+Press **Invite someone to Lab**. The page says *"Send this
 link to the person you are inviting: …"* with **Copy the link**. Send it
 to Bo however you two talk — a chat, a message, an email. It works for a
 day, while Sam's computer is on.
@@ -135,8 +133,9 @@ Bo to use it.
 **6. Open Sam's link** in a browser on Bo's computer. Within a second it
 says *"On this computer, paste this line in a terminal: it gets svrngs,
 joins you, and opens your home page, with the group’s folder on your
-disk."*, with the line and **Copy**. (The same name box and buttons show
-below it as in step 2; leave them.)
+disk."*, with the line and **Copy**. (Below it, a name box and **Join**
+join this browser as a phone would; leave them: the line is what makes
+Bo's computer one of the group's.)
 
 If svrngs is on Bo's computer already, from another group, Bo needs no
 terminal: on Bo's home page, under **Join a group from a link**, paste
@@ -154,7 +153,7 @@ run) it says *"You're in Lab, as Bo."*, where Lab's folder is, and last
 Bo's home page's address, and opens it. svrngs names Bo by the name the
 computer knows them by; nothing to type.
 
-**8. Open Sam's model.** On Bo's home page, under Lab, press **Open Sam’s
+**8. Open Sam's model.** On Bo's home page, under Lab, press **Sam’s
 llama-server**. llama-server's chat page opens in a tab of its own. Type a
 question in *"Type a message…"* (the run: `Name three rivers in Spain.`)
 and press Enter. The answer appears as it is written (its first words
@@ -166,16 +165,19 @@ that is the model, not svrngs.
 
 **9. A program on Bo's computer** — a chat app, an editor's assistant, a
 script — can ask Sam's model too. Press **Copy its address for a
-program**, beside **Open Sam’s llama-server**: the page says *"Copied:"*
+program**, beside **Sam’s llama-server**: the page says *"Copied:"*
 and the address. Paste it where the program asks for an address (often
 called its *base URL*, or *OpenAI-compatible API*). The address stays the
-same when svrngs or the computer starts again. Many programs also ask for
-a key: type anything, such as `none` — svrngs asks for none. The run's
-program, in Python:
+same when svrngs or the computer starts again. For its key, give it Bo's
+svrngs token, the text in `~/.svrngs/token`: since V1.3 a program on Bo's
+computer reaches a lend only with it (`crates/svrngs-node/src/session.rs`),
+and it goes no further than Bo's computer. The run, before V1.3, passed
+`none`. Its program, in Python, with the token:
 
 ```python
-import openai
-client = openai.OpenAI(base_url="<the address you copied>", api_key="none")
+import openai, pathlib
+token = pathlib.Path("~/.svrngs/token").expanduser().read_text().strip()
+client = openai.OpenAI(base_url="<the address you copied>", api_key=token)
 for chunk in client.chat.completions.create(model="any", stream=True,
         messages=[{"role": "user", "content": "Name three rivers in Spain."}]):
     print(chunk.choices[0].delta.content or "", end="") if chunk.choices else None
@@ -186,9 +188,8 @@ for chunk in client.chat.completions.create(model="any", stream=True,
 Each of these is something the run met, or words svrngs says, with what to
 do.
 
-- **"Open this page from your group’s link."**, in red, with a name box,
-  **Join**, **Yes** and **Not now**, beside the line (steps 2 and 6). A
-  mistake of the page's: the line is what you need. Copy it and go on.
+- **"Open this page from your group’s link."**, in red, beside the line
+  (step 2). It is for a phone: the line is what you need. Copy it and go on.
 - **`svrngs: command not found`**, or *"To run svrngs yourself, type …"*
   after step 3 or 7. Type svrngs where it was put,
   `~/.local/bin/svrngs`, as in step 5.
@@ -198,13 +199,10 @@ do.
   llama-server` at its end.
 - **The terminal waits after `svrngs share`**, its last line asking
   about a password. Press Enter.
-- **On a phone, Sam's llama-server opens to "Error: gzip is not supported
-  by this browser."** A phone cannot open llama-server's chat page through
-  svrngs yet (the run's finding: llama-server answers a phone's page with
-  nothing it can show). Use a computer: steps 6 to 8.
 - **A program says "Missing credentials. Please pass an `api_key`"**
-  (Python's `openai`). It wants a key before it asks anything. Give it any
-  key, such as `none` (step 9).
+  (Python's `openai`), or a page saying *"Open svrngs from your
+  computer"*. Give it the svrngs token, the text in `~/.svrngs/token`, as
+  its key (step 9).
 - **A program gets `{"error":"this page answers only itself"}`.** It was
   given the home page's address. Give it the address **Copy its address
   for a program** copies instead (step 9).
@@ -230,7 +228,7 @@ do.
 
 ## Serving the page from a checkout
 
-`https://group.svrnme.sh/` serves the published build (V1.1.2, aacb3fe5, 18 Oct
+`https://group.svrnme.sh/` serves the published build (V1.3.1, 086e216b, 31 Oct
 2026). To try a build of your own checkout instead, serve the page from it,
 on the computer Sam and Bo can reach, as the run did:
 
@@ -286,8 +284,8 @@ the only thing typed but the question; a program given the address the
 home page copies answered, and answered again at that address after
 svrngs starts again; nobody made an account, nothing asked anyone for a
 key or a password but a program's own key field, answered with anything.
-A phone from the link to an answer within two minutes waits on the
-phone's page asking for gzip (above).
+A phone from the link to an answer within two minutes waited on the
+phone's page asking for gzip, which it does from V1.1.3.
 
 The run, every person a program, one host, not a rate (AGENTS.md 7): the
 founder's line 1.4 s; the group made 0.3 s after the press; the share

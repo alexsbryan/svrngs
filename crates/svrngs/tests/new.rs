@@ -6,6 +6,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 use svrngs::cli::{self, Printed, Refusal, Verb};
 use svrngs::group::{self, Name};
+use svrngs_core::relay::Meeting;
 use svrngs_node::invite::{kept_page, LINK_LIFE_SECS};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join as issuer;
@@ -86,7 +87,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
     let mut ids = Vec::new();
     for _ in 0..2 {
         let (seed, printed) =
-            cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+            cli::new_group(&node, name("house"), name("Sam"), None, &[], &no_relay())
                 .await
                 .expect("new makes a group");
         let id = seed.id();
@@ -104,7 +105,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
             node.endpoint().id(),
             "the link dials this computer"
         );
-        assert_eq!(link.token.relay, None, "no relay to carry");
+        assert!(link.token.relays.is_empty(), "no relay to carry");
         let invites = invites(&node, &id);
         assert_eq!(invites.len(), 1, "{invites:?}");
         assert_eq!(
@@ -134,6 +135,63 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
     assert!(held.iter().all(|s| s.name().as_str() == "house"));
 }
 
+/// **A link made the moment a new group shows lets its joiner in**
+/// (capability-scenes-found (e)): an issuer's newer `Invite` closes their
+/// last (`membership`, "their one open link"), so `new`'s first link,
+/// minted after the group was kept, closed one the home page made in
+/// between, and its joiner was refused "this link lets nobody new in"
+/// (capability-pass-key-4's Grapevine scene). Here the home page's link is
+/// asked with no pause from the instant the group is held, as `new` runs,
+/// for a run of groups: each time, the last link this computer made, the
+/// one its record holds open, is the home page's. Kept: `new`'s own first
+/// link is in the record, for a group nobody pressed Invite in.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_link_made_as_soon_as_a_new_group_shows_is_the_open_one() {
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(&dir).await;
+    let runs = 30;
+    tokio::task::block_in_place(|| {
+        for run in 0..runs {
+            let before = node.rail().namespaces().unwrap();
+            let (made, home) = std::thread::scope(|s| {
+                let home = s.spawn(|| loop {
+                    let held = node.rail().namespaces().unwrap();
+                    let Some(id) = held.into_iter().find(|g| !before.contains(g)) else {
+                        continue;
+                    };
+                    if let Ok(linked) = node.host().link(&id, false, None, None) {
+                        break (id, actor_of(&linked.token.key()));
+                    }
+                });
+                let made = tokio::runtime::Handle::current().block_on(cli::new_group(
+                    &node,
+                    name("house"),
+                    name("Sam"),
+                    None,
+                    &[],
+                    &no_relay(),
+                ));
+                (made.expect("new makes a group"), home.join().unwrap())
+            });
+            let (seed, printed) = made;
+            assert_eq!(home.0, seed.id());
+            let keys: Vec<String> = invites(&node, &seed.id())
+                .into_iter()
+                .map(|i| i.0)
+                .collect();
+            assert!(
+                keys.contains(&key_of(&printed)),
+                "run {run}: new's own link is kept: {keys:?}"
+            );
+            assert_eq!(
+                keys.last(),
+                Some(&home.1),
+                "run {run}: the home page's link, made once the group showed, is closed by new's: {keys:?}"
+            );
+        }
+    });
+}
+
 /// `link` appends a new `Invite` to the group its name names, in any case,
 /// and prints a link to it; two groups of one name are told apart by the start of
 /// their id, and a name no group has is refused.
@@ -141,7 +199,7 @@ async fn new_twice_with_one_name_makes_two_groups_with_two_ids() {
 async fn link_mints_a_new_link_to_the_group_it_names() {
     let dir = tempfile::tempdir().unwrap();
     let node = start(&dir).await;
-    let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, None, &no_relay())
+    let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     let (again, second, _) = cli::link_to(&node, "house", None, &no_relay(), false)
@@ -159,7 +217,7 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
         cli::link_to(&node, "work", None, &no_relay(), false).await,
         Err(Refusal::NoGroup(_))
     ));
-    let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+    let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     assert!(matches!(
@@ -191,7 +249,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         name("house"),
         name("Sam"),
         Some(&x),
-        None,
+        &[],
         &no_relay(),
     )
     .await
@@ -218,7 +276,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         "{after}"
     );
 
-    let (work, plain) = cli::new_group(&node, name("work"), name("Sam"), None, None, &no_relay())
+    let (work, plain) = cli::new_group(&node, name("work"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     assert_eq!(https(&plain), "", "no origin, no https link: {plain}");
@@ -240,59 +298,62 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
 
 /// A link carries its issuer's home relay, with address lookup or without
 /// it (relay-park (c)), so a phone's page, which asks no lookup, opens it:
-/// its home relay, or the first one configured while it reports none, read
+/// its home relay, or the build's first while it reports none, read
 /// without the root's dot (u4-9, svrngs_node::relay); with neither, the key
-/// alone. Planted: the key alone from a computer with lookup, as before.
+/// alone (relay fallbacks: `Meeting::carried`, of a group naming none).
+/// Planted: the key alone from a computer with lookup, as before.
 #[test]
 fn a_link_carries_its_issuer_s_relay_with_lookup_or_without() {
-    let ours: RelayUrl = "https://relay.example./".parse().unwrap();
-    let home: RelayUrl = "https://home.example./".parse().unwrap();
-    let dotless: RelayUrl = "https://relay.example/".parse().unwrap();
-    assert_ne!(ours, dotless, "control: the operator wrote the dot");
+    let url = |u: &str| svrngs_core::relay::Url::parse(u).unwrap();
+    let home = url("https://relay.example/");
     for n0_services in [true, false] {
         let relay = RelayConfig {
-            relay_urls: vec![ours.to_string()],
+            relay_urls: vec!["https://relay.example./".into()],
             n0_services,
             loopback_only: false,
         };
         let said = format!("n0_services {n0_services}");
-        let carried = svrngs_node::invite::carried(&relay, Some(home.clone()));
-        assert_eq!(carried, Some(home.clone()), "{said}: its home relay");
-        let carried = svrngs_node::invite::carried(&relay, None);
+        let meeting = Meeting::of([], &relay.build());
         assert_eq!(
-            carried,
-            Some(dotless.clone()),
-            "{said}: the first configured"
+            meeting.carried(Some(&home)),
+            [home.clone()],
+            "{said}: its home relay"
+        );
+        assert_eq!(
+            meeting.carried(None),
+            [home.clone()],
+            "{said}: the build's first, dotless"
+        );
+    }
+    assert!(Meeting::of([], &no_relay().build())
+        .carried(None)
+        .is_empty());
+}
+
+/// The build's relays, which no group's record names and a joiner's file
+/// keeps none of (`Host::keep_group`), so none outlasts the operator's
+/// switch (relay-park (c)): n0's four at n0's, svrngs's own at svrngs's,
+/// none without either. Planted: `RelayConfig::build` answering the
+/// configured URLs alone, and n0's four were missing at n0's.
+#[test]
+fn the_build_s_relays_are_n0_s_at_n0_s_and_svrngs_s_at_svrngs_s() {
+    let n0: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
+    assert_eq!(n0.len(), 4, "control: n0's four, {n0:?}");
+    let at_n0 = RelayConfig {
+        relay_urls: Vec::new(),
+        ..cli::reach(cli::MeetAt::N0)
+    };
+    for config in [cli::reach(cli::MeetAt::N0), at_n0] {
+        assert_eq!(
+            config.build(),
+            n0.iter().cloned().map(Into::into).collect::<Vec<_>>()
         );
     }
     assert_eq!(
-        svrngs_node::invite::carried(&RelayConfig::default(), None),
-        None
+        cli::reach(cli::MeetAt::Svrngs).build(),
+        [cli::DEFAULT_RELAY.parse().unwrap()]
     );
-    assert_eq!(svrngs_node::invite::carried(&no_relay(), None), None);
-}
-
-/// A joiner keeps the relay its link carried, where it meets the group —
-/// at n0's, unless it is one of n0's, where the issuer's build met its
-/// groups and not the group's own, so none outlasts the operator's switch
-/// (relay-park (c)). At svrngs's every relay is kept, as before. Planted:
-/// every relay kept.
-#[test]
-fn a_joiner_at_n0_s_keeps_its_link_s_relay_unless_it_is_n0_s() {
-    let own: RelayUrl = "https://relay.example/".parse().unwrap();
-    let n0: Vec<RelayUrl> = svrngs_node::relay::n0_relays().urls();
-    assert_eq!(n0.len(), 4, "control: n0's four, {n0:?}");
-    for at_n0 in [true, false] {
-        assert_eq!(
-            group::kept_relay(Some(own.clone()), at_n0),
-            Some(own.clone())
-        );
-        assert_eq!(group::kept_relay(None, at_n0), None);
-    }
-    for url in n0 {
-        assert_eq!(group::kept_relay(Some(url.clone()), true), None, "{url}");
-        assert_eq!(group::kept_relay(Some(url.clone()), false), Some(url));
-    }
+    assert!(no_relay().build().is_empty());
 }
 
 /// One svrngs per data dir: a second claim is refused while the first is
@@ -341,7 +402,7 @@ fn the_verbs_parse() {
             name: name("house"),
             person: Some(name("Sam")),
             origin: None,
-            relay: None,
+            relays: Vec::new(),
         }
     );
     // --relay: the group's own, a name read as its https address
@@ -351,17 +412,22 @@ fn the_verbs_parse() {
         ("https://relay.example.org./", "https://relay.example.org/"),
         ("http://127.0.0.1:3340", "http://127.0.0.1:3340/"),
     ] {
-        let Verb::New { relay, .. } =
+        let Verb::New { relays, .. } =
             cli::parse(argv(&format!("new house --relay {typed}"))).unwrap()
         else {
             panic!("new");
         };
-        assert_eq!(
-            relay.map(|r| r.to_string()).as_deref(),
-            Some(url),
-            "{typed}"
-        );
+        let said: Vec<String> = relays.iter().map(ToString::to_string).collect();
+        assert_eq!(said, [url], "{typed}");
     }
+    // Once for each relay the group meets at (relay fallbacks).
+    let Verb::New { relays, .. } = cli::parse(argv(
+        "new house --relay http://10.0.0.2:3340 --relay http://10.0.0.3:3340",
+    ))
+    .unwrap() else {
+        panic!("new");
+    };
+    assert_eq!(relays.len(), 2);
     assert!(cli::parse(argv("new house --relay ::")).is_err());
     assert!(cli::parse(argv("join x --relay relay.example.org")).is_err());
     assert_eq!(
@@ -465,6 +531,7 @@ async fn the_bare_command_prints_where_apps_reach_the_record() {
         .build()
         .unwrap()
         .get(format!("http://{url}/v1/rail/people?namespace=elsewhere"))
+        .bearer_auth(std::fs::read_to_string(dir.path().join("token")).unwrap())
         .send()
         .await
         .expect("the printed address answers");
@@ -589,7 +656,7 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
         name("house"),
         name("Sam"),
         Some(&ours),
-        None,
+        &[],
         &no_relay(),
     )
     .await
@@ -626,7 +693,8 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
 
 /// **`room` names lends, and says who can open them in a person's words**
 /// (u6-1): one name or more, each a lend's; with none, or one that is not
-/// a name, an error. What it prints and its refusals use no word DESIGN §1
+/// a name, an error. Each lend on is said with where the room serves it,
+/// in the one wording the home page says too (room.rs `Served::said`). What it prints and its refusals use no word DESIGN §1
 /// keeps from people.
 #[test]
 fn room_names_lends_and_says_who_can_open_them() {
@@ -643,27 +711,26 @@ fn room_names_lends_and_says_who_can_open_them() {
     ] {
         assert!(cli::parse(argv(wrong)).is_err(), "{wrong}");
     }
-    let offered = serde_json::from_value(serde_json::json!({
-        "name": "jellyfin", "kind": "jellyfin", "limit": 3, "using": 0, "upload_bps": null,
-        "reads": [], "signs_in": false
-    }))
-    .unwrap();
-    let lent = svrngs_node::node::Lent {
-        person: svrngs_node::Person::parse("sam").unwrap(),
+    let served: svrngs_node::room::Served =
+        serde_json::from_value(serde_json::json!({ "at": "192.168.1.4:45053" })).unwrap();
+    let on = svrngs_node::room::InRoom {
+        person: Some(svrngs_node::Person::parse("sam").unwrap()),
         key: "ab".repeat(32),
-        offered,
-        address: "http://x.localhost:1/".into(),
+        name: lend("jellyfin"),
+        served,
+        said: served.said(),
     };
-    let said = cli::Said::Room(vec![(lent, "192.168.1.4:45053".parse().unwrap())]).to_string();
+    let said = cli::Said::Room(vec![on]).to_string();
     assert!(
-        said.contains("sam's jellyfin: http://192.168.1.4:45053/"),
+        said.contains(
+            "sam's jellyfin: Open to this WiFi: type http://192.168.1.4:45053/ into an app or a browser on a device here"
+        ),
         "{said}"
     );
     println!("{said}");
-    let refusals = [
-        Refusal::NoRoomAddress,
-        Refusal::Room(svrngs_node::room::RoomError::NotLent(lend("jellyfin"))),
-    ];
+    let refusals = [Refusal::Room(
+        "nobody in your groups lends jellyfin to this computer now".into(),
+    )];
     for line in refusals.iter().map(ToString::to_string).chain([said]) {
         let lower = line.to_lowercase();
         for word in ["ring", "member", "key", "sync", "journal", "node", "relay"] {

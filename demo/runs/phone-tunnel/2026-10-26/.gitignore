@@ -1,0 +1,9 @@
+# The tunnel key's directory, and the key as the extension's build embeds it.
+data/
+ios/Extension/Key.generated.swift
+# Built: by build-xcframework.sh, xcodegen and xcodebuild.
+ios/Tunnel.xcframework/
+ios/PhoneTunnel.xcodeproj/
+tunnel/target/
+build/
+DerivedData/

@@ -1,0 +1,47 @@
+== run1: cargo test --quiet --workspace --test browser (lockf -k /tmp/svrngs-gate.lock)
+the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+the_phone_goes_through_the_link_s_computer_while_it_answers::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+test result: FAILED. 90 passed; 4 failed; 2 ignored; 0 measured; 0 filtered out; finished in 267.70s
+== run2: cargo test --quiet --workspace --test browser (lockf -k /tmp/svrngs-gate.lock)
+the_page_offers_a_computer_one_line_and_sends_the_token_nowhere::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+the_phone_goes_through_the_link_s_computer_while_it_answers::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+test result: FAILED. 90 passed; 4 failed; 2 ignored; 0 measured; 0 filtered out; finished in 231.99s
+== run3: cargo test --quiet --workspace --test browser -- webkit (lockf -k /tmp/svrngs-gate.lock)
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+test result: FAILED. 32 passed; 5 failed; 0 ignored; 0 measured; 59 filtered out; finished in 136.23s
+== run4: cargo test --quiet --workspace --test browser -- webkit (lockf -k /tmp/svrngs-gate.lock)
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+the_phone_goes_through_the_link_s_computer_while_it_answers::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+test result: FAILED. 31 passed; 6 failed; 0 ignored; 0 measured; 59 filtered out; finished in 177.91s
+== run5: cargo test --quiet --workspace --test browser -- webkit --skip an_app_s_entry_is_approved (lockf -k /tmp/svrngs-gate.lock)
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+test result: FAILED. 32 passed; 4 failed; 0 ignored; 0 measured; 60 filtered out; finished in 138.85s
+== run6: cargo test --quiet --workspace --test browser -- webkit (lockf -k /tmp/svrngs-gate.lock)
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+test result: FAILED. 32 passed; 5 failed; 0 ignored; 0 measured; 59 filtered out; finished in 136.70s
+== run7: cargo test --quiet --workspace --test browser -- webkit (lockf -k /tmp/svrngs-gate.lock)
+carried::a_new_version_runs_as_each_person_only_after_their_yes::webkit --- FAILED
+navigations::a_navigation_from_another_lend_s_page_is_judged_as_its_fetch::webkit --- FAILED
+carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit --- FAILED
+tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit --- FAILED
+the_phone_reaches_whoever_s_awake::webkit --- FAILED
+test result: FAILED. 32 passed; 5 failed; 0 ignored; 0 measured; 59 filtered out; finished in 179.81s

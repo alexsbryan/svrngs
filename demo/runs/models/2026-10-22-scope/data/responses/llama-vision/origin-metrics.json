@@ -1,0 +1,10 @@
+{
+  "status": 403,
+  "headers": {
+    "content-type": "application/json",
+    "x-svrngs-refused": "path",
+    "content-length": "61",
+    "date": "Fri, 23 Oct 2026 00:33:57 GMT"
+  },
+  "body": "{\"error\":\"ana-vision is lent without /metrics\",\"kind\":\"path\"}"
+}

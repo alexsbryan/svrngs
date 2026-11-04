@@ -1,0 +1,13 @@
+2026-10-27T06:34:34.357990Z DEBUG tunnel: traced: a second start in one process keeps the first start's file first=true
+2026-10-27T06:34:34.359173Z DEBUG tunnel: start: a runtime on a thread of its own plant=Stranger lender=b8109133b834b277d63de0d4a132e5638624f14e448891676b2b78fe2ba76abe lend=jellyfin port=8096
+2026-10-27T06:34:34.361253Z DEBUG tunnel: the endpoint's key: the seed's, or under stranger one no group holds key=326c3679829e064ad91608ad8055d9dd173d0af39152b551e3f03608d34e1e2c plant=Stranger
+2026-10-27T06:34:34.418384Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:34:34.418422Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=false
+2026-10-27T06:34:35.039937Z DEBUG door: raw: the lend opened, or refused lend=jellyfin refused=Some(NotAdmitted)
+2026-10-27T06:34:35.040179Z DEBUG tunnel: the lend opened on 127.0.0.1 and carried to its lender, or not lend=jellyfin port=8096 refused=Some(NotAdmitted)
+2026-10-27T06:34:44.421695Z DEBUG tunnel: sampled, or the sample not written error=None
+2026-10-27T06:34:44.422042Z DEBUG tunnel: the lend open, or opened again now: a lender closing it or not yet up is tried each sample open=false
+2026-10-27T06:34:44.618717Z DEBUG door: raw: the lend opened, or refused lend=jellyfin refused=Some(NotAdmitted)
+2026-10-27T06:34:44.619082Z DEBUG tunnel: the lend opened on 127.0.0.1 and carried to its lender, or not lend=jellyfin port=8096 refused=Some(NotAdmitted)
+2026-10-27T06:34:50.074759Z DEBUG tunnel: stop: the runtime told to stop and joined, if one ran running=true
+2026-10-27T06:34:50.135826Z DEBUG tunnel: stopped: the lend dropped and the endpoint closed

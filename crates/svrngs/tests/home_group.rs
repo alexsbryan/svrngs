@@ -106,7 +106,9 @@ async fn run(home: &Path) -> (tokio::process::Child, String) {
         loop {
             let api = std::fs::read_to_string(home.join(".svrngs/api")).unwrap_or_default();
             let api = api.trim().to_string();
-            if http.get(format!("{api}/v1/groups")).send().await.is_ok() {
+            let token = std::fs::read_to_string(home.join(".svrngs/token")).unwrap_or_default();
+            let asked = http.get(format!("{api}/v1/groups")).bearer_auth(token);
+            if asked.send().await.is_ok() {
                 break api;
             }
             tokio::time::sleep(Duration::from_millis(100)).await;
@@ -141,15 +143,22 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let second =
         format!("You’re already in Lab (yours, since {today}). This is a second group called lab.");
     assert!(said.contains(&second), "{said:#?}");
-    // Its folder its own: this disk may ignore case, so lab beside Lab is
-    // the place's name and its id's start.
+    // Its folder its own. On a disk that ignores case (macOS's), Lab's
+    // folder answers to LAB, a spelling neither group has, and lab's place
+    // is Lab's, so lab goes beside it, its id's start after its name; on
+    // one that keeps case (Linux's), lab's place is free, and lab's.
     let held = svrngs::group::groups(&home.path().join(".svrngs"));
     let lab = held
         .iter()
         .find(|s| s.name().as_str() == "lab")
         .expect("lab held");
     let id = &lab.id()[..8];
-    let apart = home.path().join(format!("svrngs/lab-{id}"));
+    assert!(home.path().join("svrngs/Lab").is_dir(), "Lab's folder");
+    let ignores_case = home.path().join("svrngs/LAB").exists();
+    let apart = match ignores_case {
+        true => home.path().join(format!("svrngs/lab-{id}")),
+        false => home.path().join("svrngs/lab"),
+    };
     assert!(
         (said.iter()).any(|l| l.starts_with(&format!("lab's folder is {}: ", apart.display()))),
         "{said:#?}"
@@ -165,17 +174,21 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
 
     let (mut running, page) = run(home.path()).await;
 
-    let all = "#home section h2, #home section p, #home > p";
+    let all = "#home section h2, #home section p, #home > p, #home summary";
     let seen = home_page(
         engine,
         &page,
+        &std::fs::read_to_string(home.path().join(".svrngs/token")).unwrap(),
         json!({
             "all": all,
             "do": [
                 ["#make input[name=name]", "Trip"],
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
-                ["#home section button:has-text('Make a link to invite someone to Trip')", null, true],
+                // Until the link is shown: the group made, its keeper's
+                // cutovers written at once (node.rs `cut_over`), the page
+                // may draw again before it (part 7, 2026-11-02).
+                ["#home section button:text-is('Invite someone to Trip')", null, true, "Send this link"],
                 ["#make input[name=name]", "trip", true],
                 ["#make input[name=person]", "Dee"],
                 ["#make button:has-text('Make a group')", null],
@@ -267,21 +280,22 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
         Name::parse("Trip").unwrap(),
         Name::parse("Sam").unwrap(),
         None,
-        None,
+        &[],
         &ours,
     )
     .await
     .expect("Sam makes Trip");
-    let made = (sam.host().link(&trip.id(), false, None)).expect("Sam makes a link to Trip");
+    let made = (sam.host().link(&trip.id(), false, None, None)).expect("Sam makes a link to Trip");
     let link = svrngs_node::link::client_link(&made.token);
 
     let home = tempfile::tempdir().unwrap();
     new(home.path(), "Lab", &harness::relay_url(&relay)).await;
     let (mut running, page) = run(home.path()).await;
-    let all = "#home section h2, #home section p, #home > p";
+    let all = "#home section h2, #home section p, #home > p, #home summary";
     let seen = home_page(
         engine,
         &page,
+        &std::fs::read_to_string(home.path().join(".svrngs/token")).unwrap(),
         json!({
             "all": all,
             "do": [
@@ -310,6 +324,14 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
             "{group}: {seen:#}"
         );
     }
+    // Just joined Trip, its shelf is folded as "Bring more to Trip"; Lab's,
+    // a group Dee was in already, is not (the operator, 2026-10-26;
+    // demo/xenia/findings/after-join-reads-as-permissions.md).
+    let summaries: Vec<_> = (seen["after"][1].as_array().into_iter().flatten())
+        .filter_map(Value::as_str)
+        .filter(|h| h.starts_with("Bring more to"))
+        .collect();
+    assert_eq!(summaries, ["Bring more to Trip"], "{seen:#}");
     let place = home.path().join("svrngs/Trip");
     assert!(
         joined.contains(&format!(

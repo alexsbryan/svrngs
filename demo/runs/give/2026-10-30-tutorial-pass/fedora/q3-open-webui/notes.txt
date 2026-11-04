@@ -1,0 +1,90 @@
+Q3: Open WebUI by the uv tutorial line, on the box, 2026-10-30. Full outputs
+in raw.txt; this is the trimmed record each README claim cites.
+
+== The install
+README (main) shows `pip install open-webui; open-webui serve` and asks for
+Python 3.12; the brief's tutorial line was used as given:
+  cd ~/svrngs-pass/q3/run && uvx --python 3.11 open-webui@latest serve --host 127.0.0.1 --port 18080
+  (no DATA_DIR set). pypi: open-webui 0.12.5, requires_python <3.13.0a1,>=3.11
+started 09:52:48; uv: "Installed 261 packages in 953ms"; listening by ~10:05
+(the first start also fetched sentence-transformers/all-MiniLM-L6-v2 from
+huggingface.co, 30 files, 2m09s).
+
+== Observation (../q2-observe/observe.sh 18080)
+LISTEN 127.0.0.1:18080 users:(("python",pid=2267527,fd=33))
+cmdline  .../.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python .../bin/open-webui serve --host 127.0.0.1 --port 18080
+cwd      /home/alexbryan/svrngs-pass/q3/run
+exe      ~/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/bin/python3.11
+parent   2226395 uv (cmd: uv tool uvx --python 3.11 open-webui@latest serve ...) <- systemd
+cgroup   0::/user.slice/user-1000.slice/session-1381.scope   (no unit)
+open for writing (fdinfo acc 1/2):
+  .../NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data/webui.db{,-wal,-shm}
+  .../open_webui/data/vector_db/chroma.sqlite3
+  ~/.cache/huggingface/xet/logs/xet_...log
+  (stdout/stderr: my log file)
+mmapped: ~/.cache/huggingface/hub/blobs/78/789fdf16...  (the embedding model, in the
+  operator's shared HF cache, which predates this run: birth 2026-04-23)
+NOT seen by fds: ~/svrngs-pass/q3/run/.webui_secret_key (32 B, written once at
+  10:02:45 by `serve`, open_webui/__init__.py:14 KEY_FILE = Path.cwd() / '.webui_secret_key')
+
+== Where the code and data are
+pyvenv.cfg: home = ~/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu/bin, uv = 0.11.7, relocatable = true
+du: env 6.9G; open_webui/data 988K; ls run/ -> .webui_secret_key only
+env.py:228  DATA_DIR = Path(os.getenv('DATA_DIR', BACKEND_DIR / 'data')).resolve()
+env.py:230-250  if FROM_INIT_PY (set by `serve`): NEW_DATA_DIR = OPEN_WEBUI_DIR / 'data';
+   if BACKEND_DIR/'data' exists, copy2 each item into it, zip it as
+   open_webui_data.zip, rmtree it; DATA_DIR = OPEN_WEBUI_DIR / 'data'.
+=> confirmed: the data defaults INSIDE the package, in uv's cache:
+   ~/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data
+
+== envdiff.py (installed files vs the env's own RECORDs)
+listed: 51040 present: 50976
+removed since install: ['data/readme.txt']
+not in any RECORD: ['_virtualenv.pth', '_virtualenv.py', 'open_webui/data/vector_db/chroma.sqlite3', 'open_webui/data/webui.db', 'open_webui/data/webui.db-shm', 'open_webui/data/webui.db-wal', 'open_webui_data.zip'] count 7
+RECORD of open_webui-0.12.5.dist-info: line 2 data/readme.txt (50 B), line 17 open_webui/data/readme.txt
+
+== Model A: the folder it ran in, on python:3.11.15-slim (model-a.txt)
+Error: crun: executable file `.../NGaSzeqy18D22xuYLd6WR/bin/python` not found  exit=127
+sh: 1: open-webui: not found  exit=127
+ls of the copied folder: .webui_secret_key, owned 1000:1000 inside the container
+
+== Model B: reinstall pinned into a deps volume (install.log, model-b.txt)
+uv pip freeze --python <env>/bin/python -> 261 lines, open-webui==0.12.5, torch==2.15.0, 0 URL/git pins
+inside python:3.11.15-slim@sha256:78b39ef1 (python3 -V: 3.11.15), deps volume at the env's own path:
+  Resolved 261 packages in 3.91s / Prepared 261 packages in 13m 30s / Installed 261 packages in 4.24s
+  real 13m44.945s ; deps volume 7.093 GB
+first start: exited. PermissionError: [Errno 13] Permission denied: '.../open_webui/data/readme.txt'
+  at env.py:242 shutil.copy2 -> copystat -> _copyxattr; both files carry ['security.selinux'];
+  getenforce: Enforcing. In the reinstalled env site-packages/data/readme.txt exists again
+  (root:root 17:20); in the original it is gone (envdiff "removed since install").
+  The failed start had already overwritten readme.txt in the state copy (mtime 17:20).
+fix: rm -r <env>/lib/python3.11/site-packages/data in the deps volume (replaying the removal),
+  a fresh copy of the data dir, start again -> "up after 116s, running=true"
+  (fetched the embedding models into the hf volume: 931.2 MB)
+log: Loading WEBUI_SECRET_KEY from /home/alexbryan/svrngs-pass/q3/run/.webui_secret_key
+
+== Route C: ghcr.io/open-webui/open-webui:v0.12.5 (model-c.txt)
+image inspect: amd64 manifest sha256:0caf3d68…, index sha256:03443b8d… (amd64, arm64), 4.64 GB,
+  wd=/app/backend cmd=[bash start.sh] user=0:0 ports 8080, Python 3.12.16, no healthcheck
+  env: PORT=8080, HF_HOME=SENTENCE_TRANSFORMERS_HOME=/app/backend/data/cache/embedding/models,
+  RAG_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2, WEBUI_SECRET_KEY= (empty)
+start.sh:31 KEY_FILE="${WEBUI_SECRET_KEY_FILE:-.webui_secret_key}"  (cwd /app/backend: outside the volume)
+start.sh:34 HOST="${HOST:-0.0.0.0}"
+run: -e WEBUI_SECRET_KEY_FILE=/app/backend/data/.webui_secret_key -v data:/app/backend/data,
+  the original's data dir + its key file copied in.
+  log: Loading WEBUI_SECRET_KEY from /app/backend/data/.webui_secret_key ; alembic SQLiteImpl
+  data volume afterwards: 932.3 MB (models fetched into data/cache)
+
+== GET / compared (h*.txt, b*.html)
+port 18080 (original):  http=200 type=text/html; charset=utf-8 size=11775
+port 18081 (B):         http=200 type=text/html; charset=utf-8 size=11775   cmp: bodies identical
+port 18082 (C):         http=200 type=text/html; charset=utf-8 size=11775   bodies identical (diff empty)
+headers differ only in last-modified/etag (the file's mtime: 17:02:44 GMT original install,
+  17:20:53 GMT the reinstall, Thu 29 Oct 09:19:40 GMT the image build) and x-process-time.
+/api/version on all three: {"version":"0.12.5"}
+
+== One write, then podman restart (write-b.txt, write-c.txt; q3-write.sh)
+B: signup role: admin; chat created; in svrngs-pass-owui-data: users with that email: 1,
+   chats titled svrngs-pass chat: 1; after restart: signin ok, chats: ['svrngs-pass chat']
+C: the same lines, in svrngs-pass-owui-c-data.
+original afterwards: /api/config onboarding: True (still no user; the copies never wrote back)

@@ -39,7 +39,7 @@ pub(super) fn body_of_size(target: usize) -> Payload {
     let mut filler = target.saturating_sub(40);
     loop {
         let p = Payload::new(serde_json::json!({ "b": "x".repeat(filler) })).unwrap();
-        let n = body_json(&RailAct::Record { payload: p.clone() }, None, None).len();
+        let n = body_json(&RailAct::Record { payload: p.clone() }, None, None, None).len();
         if n >= target {
             return p;
         }
@@ -58,7 +58,7 @@ fn signed_after(
     act: RailAct,
 ) -> Op<SignedOp> {
     let ts = 1_700_000_000i64 + seq as i64;
-    sign_act(key, ns, ts, seq, prev, act, None, None)
+    sign_act(key, ns, ts, seq, prev, act, None, None, None)
 }
 
 /// The act `key` signs after `prev`: one seq on, naming it.
@@ -517,7 +517,7 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
         crate::iroh::IrohTransport::new(crate::iroh::tests::hermetic_endpoint(9, vec![]).await);
     let dead = crate::iroh::Contact {
         key: crate::iroh::SecretKey::from_bytes(&[8; 32]).public(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: vec!["127.0.0.1:1".parse().unwrap()],
     };
     let out = exchange((&nobody, &dead), rail.as_ref(), NS).await;

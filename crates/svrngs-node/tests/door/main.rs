@@ -17,10 +17,11 @@
 mod choices;
 #[path = "../common/mod.rs"]
 mod common;
+mod guests;
 mod limit;
 mod newcomer;
+mod oidc;
 mod origins;
-mod sign_in;
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -93,14 +94,13 @@ impl Pair {
                 key: actor_of(&signing(2)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         a.rail().commit(NS, &fixture).unwrap().unwrap();
         let base = b
             .transport()
             .spliced(&Contact {
                 key: a.endpoint().id(),
-                relay_url: None,
+                relays: Default::default(),
                 iroh_direct_addrs: loopback_sockets(a.endpoint()),
             })
             .await
@@ -777,7 +777,6 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
             key: actor_of(&signing(9)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
     let seed = Roster::new(
@@ -795,9 +794,10 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     assert!(synced.stop.is_none(), "{synced:?}");
 
     let lends = pair.b.lends().await;
+    let unanswered = lends.unlisted.unanswered.iter().map(|n| &n.person);
     assert_eq!(
-        lends.unlisted.unanswered,
-        vec![Person::parse("cy").unwrap()]
+        unanswered.collect::<Vec<_>>(),
+        [&Person::parse("cy").unwrap()]
     );
     assert_eq!(lends.lent.len(), 1, "{lends:?}");
     let shelf = &lends.lent[0];
@@ -818,8 +818,10 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
         .resolve(&host, pair.b.api_addr())
         .build()
         .unwrap();
+    // As a program on B asks it, with B's token (give-session).
     let reply = http
         .get(format!("{}whoami", shelf.address))
+        .bearer_auth(pair.b.token().trim())
         .send()
         .await
         .unwrap();
@@ -862,7 +864,6 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
             key: actor_of(&signing(seed)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(ns, &admit).unwrap().unwrap();
     pair.a
@@ -893,7 +894,6 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
             key: actor_of(&signing(9)),
             invite: None,
         },
-        on_behalf_of: None,
     };
     pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
     // Ada's relay in the record, with the root's dot (relay-in-record).
@@ -928,7 +928,9 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
         ],
         "{doc:#}"
     );
-    assert_eq!(doc["unanswered"], serde_json::json!(["dan"]), "{doc:#}");
+    // Each by name and first key (keys-names), dan's computer his first.
+    let dan = serde_json::json!([{ "person": "dan", "person_key": actor_of(&signing(9)) }]);
+    assert_eq!(doc["unanswered"], dan, "{doc:#}");
     // Each lend with the relay its group names for its lender, dotless;
     // `null`, said, for cy's, whose computer names none.
     let relays: Vec<&serde_json::Value> = doc["lent"]
@@ -972,7 +974,6 @@ async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
                 key: actor_of(&signing(me)),
                 invite: None,
             },
-            on_behalf_of: None,
         };
         pair.a.rail().commit("work", &admit).unwrap().unwrap();
     }
@@ -985,7 +986,7 @@ async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
     pair.a.rail().ingest_all("work", &[said]).unwrap();
 
     let cy_key = actor_of(&signing(3));
-    let want = Some(relay.to_string());
+    let want = vec![relay.to_string()];
     let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
     assert_eq!(reply.status, 200, "{}", reply.text);
     let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
@@ -1221,6 +1222,89 @@ async fn a_pass_opens_only_the_lend_it_names_to_the_key_holding_it() {
     pair.close().await;
 }
 
+/// A pass carried by a link (capability-signed (H); DESIGN §3): a phone's
+/// worker dials with an endpoint key of its own, presenting bo's pass to
+/// its holder and the link the holder signed to that endpoint. It is let
+/// in as bo, the service told neither the pass nor the link. Refused
+/// `pass`: the pass alone, which names another key than the one dialling;
+/// a link naming a lend the pass does not; one signed by another key than
+/// the pass's holder; one that does not read. Planted, each watched
+/// failing: the door reading no link (the pass checked against the
+/// dialer alone); the door taking any link that reads.
+#[tokio::test]
+async fn a_link_carries_a_pass_to_the_key_dialling_and_no_further() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (pair, heads) = lending_heads().await;
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, elsewhere) = (Label::of(&a, "shelf"), Label::of(&a, "other"));
+    let (holder, endpoint) = (signing(9), signing(10));
+    let bridge = bridge_as(&endpoint, &pair.a, Alpn::Lend).await;
+    let ask = |pass: &Pass, link: Option<String>| {
+        let link = link.map_or(String::new(), |l| format!("x-svrngs-link: {l}\r\n"));
+        raw_to(
+            bridge.local_addr(),
+            format!(
+                "GET /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\n{link}Connection: close\r\n\r\n",
+                pass.encode()
+            ),
+        )
+    };
+    let until = unix_now() + 3600;
+    let bos = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (shelf.clone(), vec![]),
+        until,
+    );
+    let signed = |by: &svrngs_node::SigningKey, mut link: Pass| {
+        link.sig = svrngs_core::sign_message(by, &link.message());
+        Some(link.encode())
+    };
+    let link = bos.link(&actor_of(&endpoint));
+
+    let opened = ask(&bos, signed(&holder, link.clone())).await;
+    assert_eq!(opened.status, 200, "{}", opened.text);
+    let head = last(&heads);
+    assert_eq!(
+        header_values(&head, "x-svrngs-person"),
+        vec!["bo"],
+        "{head}"
+    );
+    assert!(header_values(&head, "x-svrngs-link").is_empty(), "{head}");
+    assert!(header_values(&head, "x-svrngs-pass").is_empty(), "{head}");
+
+    let mut wider = link.clone();
+    wider.reads.push(elsewhere);
+    for (why, link) in [
+        ("the pass alone, its holder not the dialer", None),
+        (
+            "a link naming a lend the pass does not",
+            signed(&holder, wider),
+        ),
+        (
+            "a link signed by another key than the holder",
+            signed(&signing(8), link),
+        ),
+        ("a link that does not read", Some("not-a-link".to_string())),
+    ] {
+        let refused = ask(&bos, link).await;
+        assert_eq!(refused.status, 403, "{why}: {}", refused.text);
+        assert!(
+            refused.text.contains(r#""kind":"pass""#),
+            "{why}: {}",
+            refused.text
+        );
+    }
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        1,
+        "only the opened request reached shelf"
+    );
+    pair.close().await;
+}
+
 /// The app a pass's holder asks for (su-1, `demo/runs/su/2026-10-09/`
 /// §5; sup-1): the service is told `x-svrngs-app`, the pass's `app` — the
 /// lend the person's page opened — whichever lend is asked, and the
@@ -1351,6 +1435,85 @@ async fn the_service_is_asked_on_its_own_address_and_its_redirect_comes_back_a_p
         "{}",
         reply.text
     );
+    pair.close().await;
+}
+
+/// A redirect from the service that a browser would read as another
+/// host's — `//` or `/\` after the service's own address — is left as the
+/// service sent it, never answered as a path, which would send the browser
+/// off the lend's origin. Red at 3f313267: the door answered
+/// `Location: //evil.example/cb` and `/\evil.example/cb` (door.rs:817-834,
+/// `as_path`).
+#[tokio::test]
+async fn a_services_redirect_off_its_own_origin_is_never_made_a_path() {
+    let pair = Pair::new().await;
+    let port = origins::host_origin().await.port();
+    pair.lend("guarded", port, &[]);
+    for (path, sent) in [
+        ("/lend/guarded/away", "//evil.example/cb"),
+        ("/lend/guarded/away-back", "/\\evil.example/cb"),
+    ] {
+        let reply = pair.get(path, "").await;
+        assert_eq!(reply.status, 302, "{path}: {}", reply.text);
+        let left = format!("http://localhost:{port}{sent}");
+        assert_eq!(
+            header_values(&reply.text, "location"),
+            vec![left.as_str()],
+            "{path}: {}",
+            reply.text
+        );
+    }
+    pair.close().await;
+}
+
+/// The browser's own origin is told to the service as a reverse proxy tells
+/// it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
+/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host (or an
+/// address, `the_scheme_told_is_the_one_the_browser_used`) and `https`
+/// otherwise; a value the client typed is displaced, and `Host` is still the
+/// service's own address. Planted: the door before this row, which sent
+/// neither and let a client's through.
+#[tokio::test]
+async fn the_browser_origin_is_told_to_the_service_as_forwarded_headers() {
+    use svrngs_core::pass::Label;
+
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    pair.lend("shelf", origin.port(), &[]);
+    let own = format!("localhost:{}", origin.port());
+    let label = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    for (host, proto) in [
+        (format!("{label}.localhost:6473"), "http"),
+        (format!("{label}.svrngs.example"), "https"),
+    ] {
+        let reply = pair
+            .raw(
+                format!(
+                    "GET /lend/shelf/whoami HTTP/1.1\r\nHost: {host}\r\n\
+                     x-forwarded-host: evil.example\r\nX-Forwarded-Proto: https\r\n\
+                     Connection: close\r\n\r\n"
+                )
+                .as_bytes(),
+            )
+            .await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        assert_eq!(
+            header_values(&head, "x-forwarded-host"),
+            vec![host.as_str()],
+            "the browser's host is not the one the service is told: {head}"
+        );
+        assert_eq!(
+            header_values(&head, "x-forwarded-proto"),
+            vec![proto],
+            "the scheme is not the browser's: {head}"
+        );
+        assert_eq!(
+            header_values(&head, "host"),
+            vec![own.as_str()],
+            "the service's own Host changed: {head}"
+        );
+    }
     pair.close().await;
 }
 

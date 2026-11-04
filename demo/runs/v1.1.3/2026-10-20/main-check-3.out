@@ -1,0 +1,295 @@
+note       open files: 1048576, raised to 10240
+passed     principles pinned
+passed     lean and RUST_ARCH
+passed     trust floor
+passed     app nouns gate
+passed     app nouns
+passed     rustfmt
+passed     clippy
+failed     tests
+           
+           running 13 tests
+           .............
+           test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.22s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.18s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.45s
+           
+           
+           running 8 tests
+           ......Running for trip.
+           Apps on this computer reach your groups at http://127.0.0.1:62818.
+           Your home page, the same address each time svrngs starts: http://svrngs.localhost:62818/
+           
+           Leave this running; Ctrl-C stops it.
+           ..
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.99s
+           
+           
+           running 11 tests
+           ...........
+           test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.32s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 20.35s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.25s
+           
+           
+           running 3 tests
+           iii
+           test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.42s
+           
+           
+           running 14 tests
+           ..............
+           test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.05s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: sam_through_a_relay_on_this_computer, ignore_message: U4's dry run, run by demo/runs/u4/2026-10-05/dry.sh
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.05s
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.37s
+           
+           
+           running 9 tests
+           .........
+           test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.06s
+           
+           
+           running 190 tests
+           .................i..................................................................... 87/190
+           .....................................................................................i. 174/190
+           ...i............
+           test result: ok. 187 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 1.81s
+           
+           
+           running 98 tests
+           ....................................................................................... 87/98
+           ...........
+           test result: ok. 98 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.47s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.05s
+           
+           
+           running 119 tests
+           i..........................................i........................................... 87/119
+           .............................test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium has been running for over 60 seconds
+           test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::chromium has been running for over 60 seconds
+           test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit has been running for over 60 seconds
+            116/119
+           guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium --- FAILED
+           ..
+           failures:
+           
+           ---- guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium stdout ----
+           
+           thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' (72734049) panicked at crates/svrngs-node/tests/browser/guests.rs:100:5:
+           the browser half failed (exit status: 1):
+           the visit did not finish: TimeoutError: page.waitForSelector: Timeout 60000ms exceeded.
+           Call log:
+           [2m  - waiting for locator('video') to be visible[22m
+           [2m    - waiting for" http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:49214/" navigation to finish...[22m
+           [2m    - navigated to "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:49214/"[22m
+           
+           ana error: Refused to apply style from 'http://localhost:49214/look.css?v=552d51773200' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           ana debug: PAGE: asking the person's name to join the group you’re visiting
+           ana debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+           ana debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           ana debug: LAYER key: ok — the key cb6a1654cc9dbc8cdb60431318cd3d738f18f0529eb6b4b64db9afd0b1f98836
+           ana debug: LAYER parse: ok — relay http://127.0.0.1:65457/
+           ana debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…
+           ana debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint cb6a1654cc9dbc8cdb60431318cd3d738f18f0529eb6b4b64db9afd0b1f98836 bound
+           ana debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           ana debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           ana debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's
+           ana debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol through a relay…
+           ana debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol
+           ana debug: LAYER tls/alpn: negotiated ALPN = "svrngs/redeem/0"
+           ana debug: JOIN: asking the issuer what the link is for, as cb6a1654cc9dbc8cdb60431318cd3d738f18f0529eb6b4b64db9afd0b1f98836
+           ana debug: HTTP: POST /visit — a bi-stream opened
+           ana debug: HTTP: POST /visit answered 403
+           ana debug: HTTP: the response has ended; finishing the request's send half
+           ana debug: HTTP: POST /visit — the stream is done
+           ana debug: PAGE: /visit answered 403: {"error":"this link lets nobody in"}
+           ana error: Said: This link lets nobody in. Ask for a new one.
+               at post (http://localhost:49214/app.js?v=552d51773200:141:9)
+               at async visit (http://localhost:49214/app.js?v=552d51773200:236:20)
+               at async opening (http://localhost:49214/app.js?v=552d51773200:562:47)
+           sam error: Refused to apply style from 'http://localhost:49214/look.css?v=552d51773200' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           sam debug: STORE: the sealing key absent: making one
+           sam error: TypeError: Failed to fetch
+               at Module.runtime (http://localhost:49214/store.js?v=552d51773200:213:21)
+               at async __wbg_init (http://localhost:49214/wasm/svrngs_web.js?v=552d51773200:1668:51)
+               at async opening (http://localhost:49214/app.js?v=552d51773200:561:5)
+           sam error: Refused to apply style from 'http://localhost:49214/look.css?v=552d51773200' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.
+           sam debug: PAGE: asking the person's name to join the group you’re visiting
+           sam debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+           sam debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           sam debug: LAYER key: ok — the key b0bd5e307b8f516bf9f939cc8114167fa73b39dd893a3b95895bf50857bda176
+           sam debug: LAYER parse: ok — relay http://127.0.0.1:65457/
+           sam debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…
+           sam debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint b0bd5e307b8f516bf9f939cc8114167fa73b39dd893a3b95895bf50857bda176 bound
+           sam debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           sam debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           sam debug: LAYER parse: the group names no relay for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c, so it is dialled through the link's
+           sam debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol through a relay…
+           sam debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol
+           sam debug: LAYER tls/alpn: negotiated ALPN = "svrngs/redeem/0"
+           sam debug: JOIN: asking the issuer what the link is for, as b0bd5e307b8f516bf9f939cc8114167fa73b39dd893a3b95895bf50857bda176
+           sam debug: HTTP: POST /visit — a bi-stream opened
+           sam debug: HTTP: POST /visit answered 200
+           sam debug: HTTP: the response has ended; finishing the request's send half
+           sam debug: HTTP: POST /visit — the stream is done
+           sam debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt
+           sam debug: PAGE: a guest of Kim until 1792707051, opening jellyfin
+           sam debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr at http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:49214/open.html?v=552d51773200, a pass to 1 lend(s) until 1792750251
+           sam debug: RUNTIME: this run of the worker begins
+           sam debug: RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr, 1 lend(s)
+           sam debug: RUNTIME: opening the endpoint as the pass's holder
+           sam debug: RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c as the pass's holder
+           sam debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           sam debug: LAYER key: ok — the key 5c446db1c252fed41492c66c1a597c6f7a9cb173b3c863def4e4b02061e1c83a
+           sam debug: LAYER parse: ok — relay http://127.0.0.1:65457/
+           sam debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…
+           sam debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 5c446db1c252fed41492c66c1a597c6f7a9cb173b3c863def4e4b02061e1c83a bound
+           sam debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           sam debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           sam debug: LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:65457/
+           sam debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol through a relay…
+           sam debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol
+           sam debug: LAYER tls/alpn: negotiated ALPN = "svrngs/lend/0"
+           sam debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr/ — a bi-stream opened
+           sam debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr/ answered 403
+           sam debug: HTTP: the response has ended; finishing the request's send half
+           sam debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr/ — the stream is done
+           sam error: Failed to load resource: the server responded with a status of 403 (Forbidden)
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium
+           
+           test result: FAILED. 116 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 115.59s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+passed     canaries
+failed     ceiling canary
+           
+           running 1 test
+           CEILING idle round at 25 x 10,000: 0.3319 s of processor, the median of [0.6707929999999962, 0.33193499999999787, 0.09373799999999832], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.09373799999999832,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.010570167}
+           
+           thread 'an_idle_round_is_under_the_ceiling' (72767985) panicked at crates/svrngs-node/tests/scale.rs:719:5:
+           an idle round at 25 x 10,000 cost 0.33193499999999787 s of processor, over the ceiling of 0.1 s: [0.6707929999999962, 0.33193499999999787, 0.09373799999999832]
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           an_idle_round_is_under_the_ceiling --- FAILED
+           
+           failures:
+           
+           failures:
+               an_idle_round_is_under_the_ceiling
+           
+           test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 3.25s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test scale`
+           CEILING idle round at 25 x 10,000: 0.3319 s of processor, the median of [0.6707929999999962, 0.33193499999999787, 0.09373799999999832], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.09373799999999832,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":123,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.010570167}
+passed     web rustfmt and clippy
+passed     browser
+passed     joining in a browser
+passed     conformance canary
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  Host check, absolute redirect      passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  signed in by the lend, as themselves passed
+           computer  WebSocket echo, OPEN read          passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  signed in by the lend, as themselves passed
+           wildcard  WebSocket echo, OPEN read          passed
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	389	passed	2014	passed
+           computer	bo	358	passed	3671	passed
+           wildcard	sam	383	passed	3574	passed
+           wildcard	bo	409	passed	4081	passed
+           of 16 here since 2026-10-20T21:24:46Z: 0 missed 5 s through a lend, 1 straight; 16 ended at a load above 12 cores
+passed     app laws
+check.sh exit 1

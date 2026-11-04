@@ -15,11 +15,11 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
-import { held, launch, serve } from './page.mjs';
+import { held, launch, pageAt, serve, unfold } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 const { context, close } = await launch(args.engine);
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
@@ -41,11 +41,23 @@ const said = (page) =>
 // null when the tab shows no such list.
 async function asked(page) {
   if (await page.locator('#uses').isHidden()) return null;
+  await unfold(page);
   await page.evaluate(() => (document.getElementById('uses').open = false));
   await page.waitForTimeout(200);
-  await page.evaluate(() => document.getElementById('used').replaceChildren());
+  // The lines it showed, held here and never written in the page: what is
+  // read is an answer drawn after the click, every line a new one, as v1
+  // draws it (app.js `uses` empties #used and asks again) and as v2 does
+  // (its asking draws #used empty).
+  const before = await page.$$('#used li');
   await page.locator('#uses summary').click();
-  await page.waitForSelector('#used li', { timeout: 30_000 });
+  await page.waitForFunction(
+    (old) =>
+      ((li) => li.length > 0 && li.every((e) => !old.includes(e)))([
+        ...document.querySelectorAll('#used li'),
+      ]),
+    before,
+    { timeout: 30_000 },
+  );
   return page.locator('#used').innerText();
 }
 
@@ -61,7 +73,10 @@ try {
   const began = Date.now();
   out.two = await said(two);
   while (Date.now() - began < args.for) {
-    for (const [tab, page] of [['one', one], ['two', two]]) {
+    for (const [tab, page] of [
+      ['one', one],
+      ['two', two],
+    ]) {
       const at = Date.now() - began;
       const words = await asked(page).catch((e) => `no line: ${e}`);
       out.asks.push({ tab, at, ms: Date.now() - began - at, words });
@@ -75,11 +90,26 @@ try {
   const here = two.locator('#door button', { hasText: 'Open it here' });
   if (await here.isVisible()) {
     await here.click();
-    await two.waitForSelector('#status.good:has-text("You’re in"), #status.bad', { timeout: 90_000 });
-    await one.waitForFunction(() => /another tab/.test(document.getElementById('status')?.textContent), null, { timeout: 30_000 }).catch(() => {});
-    out.taken = { one: await said(one), two: await said(two), ask: await asked(two).catch((e) => `no line: ${e}`) };
+    await two.waitForSelector('#status.good:has-text("You’re in"), #status.bad', {
+      timeout: 90_000,
+    });
+    await one
+      .waitForFunction(
+        () => /another tab/.test(document.getElementById('status')?.textContent),
+        null,
+        { timeout: 30_000 },
+      )
+      .catch(() => {});
+    out.taken = {
+      one: await said(one),
+      two: await said(two),
+      ask: await asked(two).catch((e) => `no line: ${e}`),
+    };
   }
-  out.lines = { one: await one.evaluate(() => window.__lines), two: await two.evaluate(() => window.__lines) };
+  out.lines = {
+    one: await one.evaluate(() => window.__lines),
+    two: await two.evaluate(() => window.__lines),
+  };
   console.log(JSON.stringify({ ...out, logs }));
 } catch (e) {
   console.error(`the tabs did not finish: ${e}\n${JSON.stringify(out)}\n${logs.join('\n')}`);

@@ -1,0 +1,145 @@
+{
+  "at": "2026-10-22T04:31:25.290Z",
+  "people": {
+    "alex": {
+      "lend_ms": 127,
+      "login_page_ms": 313,
+      "sso_offered": true,
+      "typed": true,
+      "stopped": "page.waitForFunction: Timeout 60000ms exceeded.; the page says: Logging in...",
+      "url": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61841/sso/OID/redirect/svrngs?code=_UhbukOLfJyPTBTNO6MZAcNZ-rsNLWlyl8ANjvQ03UE&state=_Nufywi7eBAa0osUA5BUSw",
+      "callback": {
+        "url": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61841/sso/OID/redirect/svrngs?code=_UhbukOLfJyPTBTNO6MZAcNZ-rsNLWlyl8ANjvQ03UE&state=_Nufywi7eBAa0osUA5BUSw",
+        "origin": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61841",
+        "iframe": "http://localhost:18096/web/index.html",
+        "stored": [
+          "_deviceId2"
+        ],
+        "credentials": null,
+        "absolute": [
+          "http://localhost:18096/sso/OID/Link/svrngs/",
+          "http://localhost:18096/web/index.html",
+          "http://localhost:18096/sso/OID/Auth/svrngs"
+        ],
+        "base": [
+          "iframe-main').src = 'http://localhost:18096/web/index.html'",
+          "var data = '_Nufywi7eBAa0osUA5BUSw'",
+          "location.replace('http://localhost:18096/web/index.html'"
+        ]
+      },
+      "engine": "chromium 147.0.7727.15",
+      "logs": [],
+      "jellyfin_name": null
+    },
+    "bo": {
+      "joined_ms": 2219,
+      "listed": [
+        "Kim’s jellyfin"
+      ],
+      "lend_ms": 4204,
+      "login_page_ms": 1311,
+      "sso_offered": true,
+      "typed": true,
+      "stopped": "page.waitForFunction: Timeout 60000ms exceeded.; the page says: Logging in... ",
+      "url": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61814/sso/OID/redirect/svrngs?code=bnq0WxyT24qX8iSs85ANuyBMCzsX5h99l0CT22P_rTw&state=_OadgeT5X6ZKtfiYzYFELg",
+      "callback": {
+        "url": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61814/sso/OID/redirect/svrngs?code=bnq0WxyT24qX8iSs85ANuyBMCzsX5h99l0CT22P_rTw&state=_OadgeT5X6ZKtfiYzYFELg",
+        "origin": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61814",
+        "iframe": "http://localhost:18096/web/index.html",
+        "stored": [
+          "_deviceId2"
+        ],
+        "credentials": null,
+        "absolute": [
+          "http://localhost:18096/sso/OID/Link/svrngs/",
+          "http://localhost:18096/web/index.html",
+          "http://localhost:18096/sso/OID/Auth/svrngs"
+        ],
+        "base": [
+          "iframe-main').src = 'http://localhost:18096/web/index.html'",
+          "var data = '_OadgeT5X6ZKtfiYzYFELg'",
+          "location.replace('http://localhost:18096/web/index.html'"
+        ]
+      },
+      "engine": "webkit 26.4",
+      "logs": [
+        "console: Did not parse stylesheet at 'http://localhost:61814/look.css?v=6e7047e56f42' because non CSS MIME types are not allowed in strict mode.",
+        "failed: https://usw1-1.relay.n0.iroh.link/ping: cancelled",
+        "console: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+        "console: WebSocket connection to 'wss://usw1-1.relay.n0.iroh.link/relay' failed: The operation couldn’t be completed. Socket is not connected",
+        "http 404 GET http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61860/planted-callback?code=j45hfUhOoXZSrueFxPK8PfTKVdkXVAXJPT24efGZEhc&state=pl",
+        "console: Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "jellyfin_name": null
+    },
+    "cy": {
+      "open_ms": 5,
+      "words": "You are no longer in this group, so nothing of it is open to you.",
+      "url": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61873/",
+      "sso_offered": false,
+      "logs": [
+        "http 403 GET http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61873/",
+        "console: Failed to load resource: the server responded with a status of 403 (Forbidden)"
+      ],
+      "jellyfin_users_after": [
+        "kim"
+      ],
+      "new_users": [],
+      "kim_log_lines_before": 2926,
+      "kim_log_lines_after": 2929,
+      "kim_authorize_answers_after": 2
+    }
+  },
+  "jellyfin": {
+    "users": [
+      {
+        "id": "03cdc3b535ab4b51aca450f0707229f8",
+        "name": "kim"
+      }
+    ]
+  },
+  "bars": {
+    "apart": {
+      "distinct_users": false,
+      "distinct_tokens": false,
+      "alex": null,
+      "bo": null
+    },
+    "planted": {
+      "ask": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61860/.svrngs/oidc/authorize?response_type=code&client_id=0-H7kAdosoIBuPd0vlQMRcu7Wi17Qbs-&redirect_uri=http%3A%2F%2Flocalhost%3A18096%2Fplanted-callback&scope=openid%20profile&state=planted&nonce=n-planted&sub=alex",
+      "forged": {
+        "key": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "person": "alex"
+      },
+      "status": 404,
+      "url": "http://ztjq4h1p54fshgkba6443m72kkknnhhqjkafvp89v7287jp08azabbq3n1prdr.localhost:61860/planted-callback?code=j45hfUhOoXZSrueFxPK8PfTKVdkXVAXJPT24efGZEhc&state=planted",
+      "body": "",
+      "captured": null,
+      "code": "j45hfUhOoXZSrueFxPK8PfTKVdkXVAXJPT24efGZEhc",
+      "first_status": 200,
+      "claims": {
+        "iss": "http://127.0.0.1:61815/oidc/jellyfin",
+        "sub": "c4b05374b122cfa91d1e8877b0debd74bc96037f1df25790d5c8da07f2bbe41d",
+        "aud": "0-H7kAdosoIBuPd0vlQMRcu7Wi17Qbs-",
+        "exp": 1792644213,
+        "iat": 1792643613,
+        "name": "Bo",
+        "preferred_username": "Bo-c4b05374b122cfa9",
+        "groups": [
+          "member"
+        ],
+        "nonce": "n-planted"
+      },
+      "second_status": 400,
+      "second_error": "invalid_grant"
+    }
+  },
+  "cy_before": {
+    "kim_log_lines": 2926,
+    "users": [
+      "kim"
+    ],
+    "kim_authorize_answers": 2
+  },
+  "cy_removed": true
+}

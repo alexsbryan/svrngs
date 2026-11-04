@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": "1141",
+    "server": "llama.cpp",
+    "access-control-allow-origin": "",
+    "date": "Fri, 23 Oct 2026 01:30:49 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"Okay, the user is asking about the weather in Paris. I need to use the weather tool they provided. Let me check the function details. The function requires a city parameter, and Paris is the city mentioned. So I should call the weather function with city set to Paris. I'll make sure to format the tool call correctly in JSON inside the XML tags.\\n\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\": \\\"Paris\\\"}\"},\"id\":\"gRsUzdJi3evL7tHxa5XCiQBCJ9ndR2r2\"}]}}],\"created\":1792719049,\"model\":\"ana/coder-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":96,\"prompt_tokens\":159,\"total_tokens\":255,\"prompt_tokens_details\":{\"cached_tokens\":158}},\"id\":\"chatcmpl-xf08nqC7nezUAGW6yJGgbXIZRwgzF03y\",\"timings\":{\"cache_n\":158,\"prompt_n\":1,\"prompt_ms\":18.552,\"prompt_per_token_ms\":18.552,\"prompt_per_second\":53.90254420008625,\"predicted_n\":96,\"predicted_ms\":1998.605,\"predicted_per_token_ms\":20.818802083333335,\"predicted_per_second\":48.0335033685996}}"
+}

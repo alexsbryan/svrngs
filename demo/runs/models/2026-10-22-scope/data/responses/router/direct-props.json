@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "239"
+  },
+  "body": "{\"role\":\"router\",\"max_instances\":2,\"models_autoload\":true,\"model_alias\":\"llama-server\",\"model_path\":\"none\",\"default_generation_settings\":{\"params\":null,\"n_ctx\":0},\"ui_settings\":{},\"build_info\":\"b10180-11b068d06\",\"cors_proxy_enabled\":false}"
+}

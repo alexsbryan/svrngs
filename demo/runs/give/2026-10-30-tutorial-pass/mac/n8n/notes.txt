@@ -1,0 +1,174 @@
+# n8n via npx, 2026-10-30. Raw outputs, trimmed. No environment was read.
+
+## The tutorial step
+npm view n8n version engines  ->  2.45.7  { node: '>=24.0.0' }   (so node v24.22.1 via nvm, not 20)
+cd /private/tmp/svrngs-pass/n8n/work; HOME=/private/tmp/svrngs-pass/n8n/home N8N_LISTEN_ADDRESS=127.0.0.1 N8N_DIAGNOSTICS_ENABLED=false npx --yes n8n
+(HOME stands in for the person's home, so the real ~/.npm and ~ stay untouched; the two N8N_ settings are the only way to make it listen on loopback and not phone home)
+
+## Observation from port 5678
+$ lsof -nP -iTCP:5678 -sTCP:LISTEN
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    15851 alexsbryan   15u  IPv4 0x2e60075b39bddcaa      0t0  TCP 127.0.0.1:5678 (LISTEN)
+$ ps -o pid,ppid,lstart,command -p 15851
+  PID  PPID STARTED                      COMMAND
+15851  9941 Fri Oct 30 09:54:35 2026     n8n 
+$ ps -o pid,ppid,command -p 9941  (parent)
+  PID  PPID COMMAND
+ 9941     1 npm exec n8n   
+$ lsof -a -p 15851 -d cwd
+COMMAND   PID       USER   FD   TYPE DEVICE SIZE/OFF      NODE NAME
+node    15851 alexsbryan  cwd    DIR   1,15       64 339960750 /private/tmp/svrngs-pass/n8n/work
+$ lsof -a -p 15851 -d txt
+COMMAND   PID       USER   FD   TYPE DEVICE  SIZE/OFF                NODE NAME
+node    15851 alexsbryan  txt    REG   1,15 122545856           334702024 /Users/alexsbryan/.nvm/versions/node/v24.22.1/bin/node
+node    15851 alexsbryan  txt    REG   1,15     32768           340318030 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite-shm
+node    15851 alexsbryan  txt    REG   1,15     61872           340317316 /private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314/node_modules/cpu-features/build/Release/cpufeatures.node
+node    15851 alexsbryan  txt    REG   1,15    113856           340316608 /private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314/node_modules/ssh2/lib/protocol/crypto/build/Release/sshcrypto.node
+node    15851 alexsbryan  txt    REG   1,15    770336           340132752 /private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314/node_modules/isolated-vm/prebuilds/darwin-arm64/isolated-vm.abi137.node
+node    15851 alexsbryan  txt    REG   1,15   2037662           340313396 /private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314/node_modules/sqlite3/build/Release/node_sqlite3.node
+$ lsof -p 15851 | regular files open w/u
+COMMAND   PID       USER   FD      TYPE             DEVICE  SIZE/OFF                NODE NAME
+node    15851 alexsbryan    1w      REG               1,15     69812           339960866 /private/tmp/svrngs-pass/n8n/n8n.log
+node    15851 alexsbryan    2w      REG               1,15     69812           339960866 /private/tmp/svrngs-pass/n8n/n8n.log
+node    15851 alexsbryan   13u      REG               1,15   2469888           340318027 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite
+node    15851 alexsbryan   17u      REG               1,15   4136512           340318029 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite-wal
+node    15851 alexsbryan   18u      REG               1,15     32768           340318030 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite-shm
+node    15851 alexsbryan   19u      REG               1,15   4136512           340318029 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite-wal
+node    15851 alexsbryan   26u      REG               1,15   4136512           340318029 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite-wal
+node    15851 alexsbryan   28u      REG               1,15   4136512           340318029 /private/tmp/svrngs-pass/n8n/home/.n8n/database.sqlite-wal
+(txt trimmed: dyld, icu data, timezone, logd plist cache)
+$ lsof -nP -a -p 15851 -iTCP -sTCP:LISTEN
+COMMAND   PID       USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    15851 alexsbryan   15u  IPv4 0x2e60075b39bddcaa      0t0  TCP 127.0.0.1:5678 (LISTEN)
+node    15851 alexsbryan   20u  IPv4 0xa7068bd86e35b027      0t0  TCP 127.0.0.1:5679 (LISTEN)
+child: 15871 'n8n task-runner' (its retitled command line runs into its environment block; cut there, not recorded)
+
+## The folder, the code, the data
+$ ls -la work
+total 0
+drwxr-xr-x@  2 alexsbryan  wheel   64 Oct 30 09:52 .
+drwxr-xr-x@ 14 alexsbryan  wheel  448 Oct 30 10:04 ..
+$ ls -la ~/.n8n
+total 14056
+drwxr-xr-x@ 9 alexsbryan  wheel      288 Oct 30 09:54 .
+drwxr-xr-x@ 6 alexsbryan  wheel      192 Oct 30 09:54 ..
+-rw-------@ 1 alexsbryan  wheel       56 Oct 30 09:54 config
+-rw-r--r--@ 1 alexsbryan  wheel  2469888 Oct 30 09:54 database.sqlite
+-rw-r--r--@ 1 alexsbryan  wheel    32768 Oct 30 09:54 database.sqlite-shm
+-rw-r--r--@ 1 alexsbryan  wheel  4136512 Oct 30 09:57 database.sqlite-wal
+-rw-r--r--@ 1 alexsbryan  wheel      530 Oct 30 09:54 n8nEventLog.log
+drwxr-xr-x@ 3 alexsbryan  wheel       96 Oct 30 09:54 nodes
+drwxr-xr-x@ 2 alexsbryan  wheel       64 Oct 30 09:54 storage
+$ du -sh ~/.n8n ~/.npm/_npx/a8a7eec953f1f314 ~/.npm/_cacache ~/.cache ~/Library
+6.9M	/private/tmp/svrngs-pass/n8n/home/.n8n
+2.9G	/private/tmp/svrngs-pass/n8n/home/.npm/_npx/a8a7eec953f1f314
+1.3G	/private/tmp/svrngs-pass/n8n/home/.npm/_cacache
+ 47M	/private/tmp/svrngs-pass/n8n/home/.cache
+ 64M	/private/tmp/svrngs-pass/n8n/home/Library
+$ ls ~/.npm/_npx/a8a7eec953f1f314; cat package.json
+node_modules
+package-lock.json
+package.json
+{
+  "dependencies": {
+    "n8n": "^2.45.7"
+  },
+  "_npx": {
+    "packages": [
+      "n8n"
+    ]
+  }
+}
+$ grep version node_modules/n8n/package.json
+  "version": "2.45.7",
+$ grep -c resolved package-lock.json
+2439
+~/.cache/n8n/public (47M, the editor's static files) and ~/Library/Caches/node-gyp (64M, macOS headers) were not copied: caches.
+~/.n8n/config (56 bytes, mode 0600) holds the instance's encryption key; it is not held open, so copying only the open files would have lost it. The folder of the open database was copied whole.
+
+## Images
+node:24.22.1-slim  docker.io/library/node@sha256:932a44adcdb8f5dfbf00f00eb38da8d22b450b2ad258b6d1b2319beca823bfbd  254536377
+node:24.22.1       docker.io/library/node@sha256:a217980f5435fcc8e8896361099faecb1c5d7f341cb7a213ff75e986d822473e 1159744199
+
+## Before copying: the original given state (POST /rest/owner/setup -> 200, an owner account; password not recorded)
+GET / (original) 200 text/html; charset=utf-8 1708
+
+## Model A: the folder it ran in, run as ps shows it
+$ COPYFILE_DISABLE=1 tar --no-xattrs --no-mac-metadata -C work -cf - . | podman volume import svrngs-pass-n8n-code -
+$ podman run --rm -v svrngs-pass-n8n-code:$W -w $W node:24.22.1-slim n8n
+Error: Cannot find module '/private/tmp/svrngs-pass/n8n/work/n8n'
+$ ... sh -c 'ls -la; command -v n8n'
+total 0   (the folder is empty)      n8n: not on PATH
+
+## Model B: npm ci, in the image, from the npx folder's own lockfile, into a volume at the npx folder's path
+$ tar -C ~/.npm/_npx/a8a7eec953f1f314 -cf - package.json package-lock.json | podman volume import svrngs-pass-n8n-deps -
+$ /usr/bin/time -p podman run --rm -v svrngs-pass-n8n-deps:$X -w $X node:24.22.1 sh -c 'npm ci --no-audit --no-fund; du -sh .; node -p version'
+added 2209 packages in 55s
+2.7G	.
+2.45.7
+real 55.74
+(slim was not tried for n8n; the full image was used directly after Actual's slim install failed the same way, see actual/notes.txt.
+ NOT verified that slim fails for n8n.)
+
+## Start test, first try: door on 5679
+pod svrngs-pass-n8n, publish 127.0.0.1:15678 -> door 5679 -> 127.0.0.1:5678
+container log: n8n ready on ::, port 5678
+               n8n Task Broker's port 5679 is already in use. Do you have another instance of n8n running already?
+cause: the original's process also listens on 127.0.0.1:5679 (its task broker, lsof above); the door took that port in the shared pod loopback.
+
+## Start test, second try: door on 25678
+container env: HOME=/private/tmp/svrngs-pass/n8n/home (the person's home path); volumes data at ~/.n8n, deps at the npx folder, code at work and /tmp/svrngs-pass/n8n/work
+log: ... Version: 2.45.7 ... Editor is now accessible via: http://localhost:5678   (3 s; no "Generated new ... key" lines, which the original printed on its first start)
+log (difference): n8n ready on ::, port 5678   -- N8N_LISTEN_ADDRESS was the original's setting, never read, so it listens on every interface in the container
+log (difference): Telemetry event "Instance started" ...  -- N8N_DIAGNOSTICS_ENABLED=false was the original's setting, not carried, so telemetry is on in the container
+orig 200 text/html; charset=utf-8 1708
+cont 200 text/html; charset=utf-8 1708
+diff (nonce="..." removed) -> identical-but-nonce   (5 lines differ only by the per-response CSP nonce)
+$ POST /rest/login (the owner made on the original)  -> 200
+$ POST /rest/workflows {"name":"written-in-container",...} -> 200
+$ podman restart svrngs-pass-n8n-app
+  first POST /rest/login 2 s after /healthz answered 200 -> 404 (REST routes not mounted yet); after "Editor is now accessible" -> 200
+  GET /rest/workflows -> ['written-in-container']
+$ (sqlite3 on the volume's database.sqlite) select name from workflow_entity -> [('written-in-container',)]
+
+## give check, from empty (no preload), twice
+passed  read the card: n8n
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: node:24.22.1@sha256:a217980f..., alpine/socat@sha256:603174b7...
+passed  start: its door on 127.0.0.1:60137
+failed  healthy: app stopped, exit 1. Its last lines:
+(the log lines are not printed; RUST_LOG=debug shows them: Error: Cannot find module '/private/tmp/s...)
+LEFT BEHIND, both times: pod svrngs-check-n8n (door still running), volumes svrngs-check-n8n-{code,data,deps}
+RUST_LOG=debug:
+  podman command="pod stop --time 0 svrngs-check-n8n" status=0
+  podman command="pod rm svrngs-check-n8n" status=125 stderr="Error: not all containers could be removed from pod ...:
+    * a container that depends on container 7ab97e71... could not be stopped: container state improper
+    * cannot remove container e65800ef... as it is running - running or paused containers cannot be removed without force"
+  (runtime.rs:610-629 remove() returns at pod rm, before the volumes; check.rs:96-99 returns the run's failure first, so this error is never printed)
+removed by hand: podman pod rm -f svrngs-check-n8n; podman volume rm svrngs-check-n8n-{code,data,deps}
+
+## give check, the three check volumes preloaded from svrngs-pass-n8n-{code,data,deps} (26 s to export/import 2.7 GB)
+passed  read the card: n8n
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: ...
+passed  start: its door on 127.0.0.1:60444
+passed  healthy
+passed  snapshot: [("code", Reflink), ("data", Reflink), ("deps", Reflink)], paused 12.343094083s
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+n8n can go on the shelf.   (1:38.85)
+
+## Afterwards: slim, tried so the image choice rests on a run
+$ npm ci in node:24.22.1-slim, the same lockfile, a throwaway volume -> npm-exit=0 (no node-gyp failure, unlike Actual)
+$ started on slim with no data (HOME=/root): migrations ran, then
+  "Failed to start Python task runner in internal mode. because Python 3 is missing from this system."
+The original on the Mac and the full-image container print the same failure for another reason:
+  "Failed to start Python task runner in internal mode. because its virtual environment is missing from this system."
+So the Python runner runs nowhere, and slim serves n8n as well as the full image: "slim first" would have chosen slim.
+The card keeps the full image only because it is the one give check passed on. (slim GET / answered 404 when read
+too early, as the REST 404 above; not read again.)

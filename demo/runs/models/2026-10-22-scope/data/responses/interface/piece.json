@@ -1,0 +1,200 @@
+{
+  "piece": "interface",
+  "when": "2026-10-22T17:55:16-0700",
+  "candidates": [
+    {
+      "name": "Open WebUI",
+      "licence": "BSD-3 + 2025 branding clause",
+      "pinned": "ghcr.io/open-webui/open-webui:v0.12.3",
+      "measured": true
+    },
+    {
+      "name": "LibreChat",
+      "licence": "MIT",
+      "pinned": "not measured: Mongo + Meilisearch stack",
+      "measured": false,
+      "why": "could-not-judge inside this run's budget"
+    },
+    {
+      "name": "AnythingLLM",
+      "licence": "MIT",
+      "pinned": "not measured",
+      "measured": false,
+      "why": "judged from its docs: no one-address STT/TTS + MCP"
+    },
+    {
+      "name": "Jan",
+      "licence": "Apache-2.0",
+      "pinned": "not measured",
+      "measured": false,
+      "why": "a desktop app, not an address"
+    }
+  ],
+  "image": "ghcr.io/open-webui/open-webui:v0.12.3",
+  "standin": "0.0.0.0:8111, reached from a container at host.containers.internal, OpenAI only, every request logged",
+  "digest": "sha256:bd153a1fd2ea21c991e693b485573ec104058e58781ccb3580acaa873fd60887",
+  "standin_reachable_at": "host.containers.internal:8111",
+  "settings": {
+    "chat": "OPENAI_API_BASE_URL=http://host.containers.internal:8111/v1",
+    "speech to text": "AUDIO_STT_OPENAI_API_BASE_URL=http://host.containers.internal:8111/v1",
+    "speech": "AUDIO_TTS_OPENAI_API_BASE_URL=http://host.containers.internal:8111/v1",
+    "note": "three separate settings, all pointed at one address"
+  },
+  "health": {
+    "status": 200,
+    "headers": {
+      "date": "Fri, 23 Oct 2026 00:55:57 GMT",
+      "server": "uvicorn",
+      "content-length": "15",
+      "content-type": "application/json",
+      "x-process-time": "0.001491",
+      "vary": "Origin"
+    },
+    "body": "{\"status\":true}"
+  },
+  "signed_up": true,
+  "models": {
+    "status": 200,
+    "headers": {
+      "date": "Fri, 23 Oct 2026 00:55:58 GMT",
+      "server": "uvicorn",
+      "content-length": "784",
+      "content-type": "application/json",
+      "vary": "Accept-Encoding, Origin",
+      "x-process-time": "0.041215"
+    },
+    "body": "{\"data\":[{\"id\":\"ana/coder\",\"object\":\"model\",\"owned_by\":\"openai\",\"connection_type\":\"external\",\"name\":\"ana/coder\",\"openai\":{\"id\":\"ana/coder\",\"object\":\"model\",\"owned_by\":\"standin\",\"connection_type\":\"external\"},\"provider\":\"\",\"urlIdx\":0,\"actions\":[],\"filters\":[],\"tags\":[]},{\"id\":\"sam/stt\",\"object\":\"model\",\"owned_by\":\"openai\",\"connection_type\":\"external\",\"name\":\"sam/stt\",\"openai\":{\"id\":\"sam/stt\",\"object\":\"model\",\"owned_by\":\"standin\",\"connection_type\":\"external\"},\"provider\":\"\",\"urlIdx\":0,\"actions\":[],\"filters\":[],\"tags\":[]},{\"id\":\"sam/voice\",\"object\":\"model\",\"owned_by\":\"openai\",\"connection_type\":\"external\",\"name\":\"sam/voice\",\"openai\":{\"id\":\"sam/voice\",\"object\":\"model\",\"owned_by\":\"standin\",\"connection_type\":\"external\"},\"provider\":\"\",\"urlIdx\":0,\"actions\":[],\"filters\":[],\"tags\":[]}]}"
+  },
+  "chat": {
+    "status": 200,
+    "headers": {
+      "date": "Fri, 23 Oct 2026 00:55:58 GMT",
+      "server": "uvicorn",
+      "content-length": "206",
+      "content-type": "application/json",
+      "x-process-time": "0.022967",
+      "vary": "Origin"
+    },
+    "body": "{\"id\":\"chatcmpl-standin\",\"object\":\"chat.completion\",\"created\":0,\"model\":\"ana/coder\",\"choices\":[{\"index\":0,\"finish_reason\":\"stop\",\"message\":{\"role\":\"assistant\",\"content\":\"stand-in answered for ana/coder\"}}]}"
+  },
+  "transcription": {
+    "status": 200,
+    "headers": {
+      "date": "Fri, 23 Oct 2026 00:55:58 GMT",
+      "server": "uvicorn",
+      "content-length": "99",
+      "content-type": "application/json",
+      "x-process-time": "0.162504",
+      "vary": "Origin"
+    },
+    "body": "{\"text\":\"stand-in heard the quick brown fox\",\"filename\":\"2f4b4348-85ae-489a-8fbe-033df9c6ee66.wav\"}"
+  },
+  "speech": {
+    "status": 200,
+    "headers": {
+      "date": "Fri, 23 Oct 2026 00:55:58 GMT",
+      "server": "uvicorn",
+      "content-type": "audio/mpeg",
+      "accept-ranges": "bytes",
+      "content-length": "1503",
+      "last-modified": "Fri, 23 Oct 2026 00:55:58 GMT",
+      "etag": "\"6c8838c1ad9903b658822f4377fc57d6\"",
+      "x-process-time": "0.011624",
+      "vary": "Origin"
+    },
+    "body": "ID3stand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speechstand-in-speech"
+  },
+  "mcp_grep": [
+    "/app/backend/open_webui/main.py",
+    "/app/backend/open_webui/utils/mcp/client.py",
+    "/app/backend/open_webui/env.py",
+    "/app/backend/open_webui/main.py",
+    "/app/backend/open_webui/models/files.py",
+    "/app/backend/open_webui/routers/auths.py",
+    "/app/backend/open_webui/routers/configs.py",
+    "/app/backend/open_webui/routers/tools.py",
+    "/app/backend/open_webui/static/swagger-ui/swagger-ui.css",
+    "/app/backend/open_webui/utils/mcp/client.py",
+    "/app/backend/open_webui/utils/middleware.py",
+    "/app/backend/open_webui/utils/misc.py",
+    "/app/backend/open_webui/utils/oauth.py",
+    "/app/backend/open_webui/utils/tools.py"
+  ],
+  "requests_to_standin": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "headers": {
+        "Host": "127.0.0.1:8111",
+        "Accept-Encoding": "identity"
+      },
+      "body": ""
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "headers": {
+        "Accept-Encoding": "identity",
+        "Host": "host.containers.internal:8111",
+        "User-Agent": "Python-urllib/3.12",
+        "Connection": "close"
+      },
+      "body": ""
+    },
+    {
+      "method": "GET",
+      "path": "/v1/models",
+      "headers": {
+        "Host": "host.containers.internal:8111",
+        "Authorization": "Bearer sk-scope",
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": "Python/3.11 aiohttp/3.14.3"
+      },
+      "body": ""
+    },
+    {
+      "method": "POST",
+      "path": "/v1/chat/completions",
+      "headers": {
+        "Host": "host.containers.internal:8111",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer sk-scope",
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": "Python/3.11 aiohttp/3.14.3",
+        "Content-Length": "76"
+      },
+      "body": "{\"model\":\"ana/coder\",\"messages\":[{\"role\":\"user\",\"content\":\"Say one word.\"}]}"
+    },
+    {
+      "method": "POST",
+      "path": "/v1/audio/transcriptions",
+      "headers": {
+        "Host": "host.containers.internal:8111",
+        "Authorization": "Bearer sk-scope",
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": "Python/3.11 aiohttp/3.14.3",
+        "Content-Type": "multipart/form-data; boundary=3a3eee2cf98a4404a44fb48c1d44366a",
+        "Transfer-Encoding": "chunked"
+      },
+      "body": ""
+    },
+    {
+      "method": "POST",
+      "path": "/v1/audio/speech",
+      "headers": {
+        "Host": "host.containers.internal:8111",
+        "Content-Type": "application/json",
+        "Authorization": "Bearer sk-scope",
+        "Accept": "*/*",
+        "Accept-Encoding": "gzip, deflate, br",
+        "User-Agent": "Python/3.11 aiohttp/3.14.3",
+        "Content-Length": "57"
+      },
+      "body": "{\"model\": \"tts-1\", \"input\": \"hello\", \"voice\": \"af_heart\"}"
+    }
+  ],
+  "could_not_judge": null
+}

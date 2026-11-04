@@ -126,7 +126,7 @@ fn an_older_copy_is_never_sent_below_the_floor_it_claims() {
 /// verifies it. `act_id` is the same derivation the honest fixtures use,
 /// so the id is self-consistent and only the signature gives it away.
 fn spoofed(signer: u8, claimed: u8, seq: u64, ts: i64, act: RailAct) -> Op<SignedOp> {
-    let body = crate::body_json(&act, None, None);
+    let body = crate::body_json(&act, None, None, None);
     let id = crate::act_id(
         crate::tests_support::NS,
         &actor(claimed),
@@ -148,6 +148,7 @@ fn spoofed(signer: u8, claimed: u8, seq: u64, ts: i64, act: RailAct) -> Op<Signe
             act,
             on_behalf_of: None,
             view: None,
+            grant: None,
         },
     }
 }

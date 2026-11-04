@@ -73,7 +73,8 @@ export function membership(call, group, spans) {
   const lines = [mint({ op: 'grant', holder: actor, scope: ROOT }, HOUSE_AT)];
   for (const s of spans) {
     lines.push(mint({ op: 'grant', holder: human(s.person), scope: ROOT }, s.joined ?? FOUNDED_AT));
-    if (s.left != null) lines.push(mint({ op: 'withdraw', holder: human(s.person), scope: ROOT }, s.left));
+    if (s.left != null)
+      lines.push(mint({ op: 'withdraw', holder: human(s.person), scope: ROOT }, s.left));
   }
   const key = (l) => {
     const a = JSON.parse(l);
@@ -89,12 +90,16 @@ export function membership(call, group, spans) {
  * person `by`, its time `ts`, its `act`, and the ids of the house's acts. */
 function refused(by, ts, act, ours) {
   if (typeof by !== 'string' || !by) return 'nobody is named as having written it';
-  if (act === null || typeof act !== 'object' || Array.isArray(act) || typeof act.op !== 'string') return 'this version of House rules can’t read it';
-  if ('actor' in act && act.actor !== human(by)) return `it speaks as ${act.actor}, not as ${by}, who wrote it`;
+  if (act === null || typeof act !== 'object' || Array.isArray(act) || typeof act.op !== 'string')
+    return 'this version of House rules can’t read it';
+  if ('actor' in act && act.actor !== human(by))
+    return `it speaks as ${act.actor}, not as ${by}, who wrote it`;
   if (!(ts > FOUNDED_AT)) return 'it is dated before your house began';
   if (act.op === 'key') return 'it binds a key to a name, which House rules never does';
-  if ((act.op === 'grant' || act.op === 'withdraw') && act.scope === ROOT) return 'it gives or takes a say in the house, which only joining or leaving it does';
-  if (act.op === 'revert' && (act.targets ?? []).some((t) => ours.has(t))) return 'it undoes who is in your house, which only joining or leaving it does';
+  if ((act.op === 'grant' || act.op === 'withdraw') && act.scope === ROOT)
+    return 'it gives or takes a say in the house, which only joining or leaving it does';
+  if (act.op === 'revert' && (act.targets ?? []).some((t) => ours.has(t)))
+    return 'it undoes who is in your house, which only joining or leaving it does';
   return null;
 }
 
@@ -109,9 +114,19 @@ export function recorded(read, ours = new Set()) {
     const by = o.on_behalf_of ?? o.person;
     const via = o.on_behalf_of != null && o.on_behalf_of !== o.person ? o.person : null;
     const p = o.payload;
-    const why = p.kind !== 'act' || p.app !== 'canon' ? 'this version of House rules can’t read it' : refused(by, o.ts_unix, p.act, ours);
+    const why =
+      p.kind !== 'act' || p.app !== 'canon'
+        ? 'this version of House rules can’t read it'
+        : refused(by, o.ts_unix, p.act, ours);
     if (why) dropped.push({ id: o.id, by, via, why });
-    else kept.push({ id: o.id, ts: o.ts_unix, by, via, act: Object.fromEntries(Object.entries(p.act).filter(([k]) => !ENVELOPE.includes(k))) });
+    else
+      kept.push({
+        id: o.id,
+        ts: o.ts_unix,
+        by,
+        via,
+        act: Object.fromEntries(Object.entries(p.act).filter(([k]) => !ENVELOPE.includes(k))),
+      });
   }
   return { kept, dropped };
 }
@@ -128,7 +143,10 @@ export function recorded(read, ours = new Set()) {
  * (ratify.rs:345-350, :525-528). Never a count of the house on the day it
  * chose, which outlives the house when it shrinks. */
 export const CHOICES = Object.freeze({
-  consent: { words: 'Anyone proposes a rule, and it holds after two days unless someone objects', rule: { rule: 'consent', days: 2 } },
+  consent: {
+    words: 'Anyone proposes a rule, and it holds after two days unless someone objects',
+    rule: { rule: 'consent', days: 2 },
+  },
   most: { words: 'Most of you agree', rule: { rule: 'majority' } },
   everyone: { words: 'Everyone agrees', rule: { rule: 'unanimous' } },
 });
@@ -165,10 +183,19 @@ export function payload(act) {
  * (crates/svrngs-core/src/command.rs:243-250), so one written in the second
  * of another is ahead of the browser's clock, and canon asked before it
  * says it passed a change yet keeps the old rule (#206). One answer, one
- * clock. `{unsettled}` when svrngs cannot say who stood when (#124), never
- * an empty house. */
-export function fold(call, read, asked) {
-  if (!Array.isArray(read.spans)) return { unsettled: true };
+ * clock. An act dated past where svrngs times one (AHEAD_SECS on, :238)
+ * moves it too: only a changed svrngs writes one, canon still judges each
+ * act at its own time, and the move is traced as `canon asked`; bounding it
+ * here would be AHEAD_SECS's second home (#207, closed). `{unsettled}` when svrngs cannot say who stood when (#124), its
+ * `spans` null, never an empty house; an answer with no `spans` at all is
+ * not one svrngs gives, and is said as unread, never as unsettled (#209).
+ * Each decision is handed to `trace`, `(what, fields)`, at debug (AGENTS.md
+ * 1; #210): what isn't counted and why, canon's own error beside the page's
+ * words when canon would not build an act, the time canon is asked at. */
+export function fold(call, read, asked, trace = () => {}) {
+  if (read.spans === null) return (trace('unsettled', { group: read.group }), { unsettled: true });
+  if (!Array.isArray(read.spans))
+    throw new Error('this computer’s answer doesn’t say who is in your house');
   const members = membership(call, read.group, read.spans);
   const ours = new Set(members.map((l) => JSON.parse(l).id));
   const { kept, dropped } = recorded(read, ours);
@@ -178,26 +205,71 @@ export function fold(call, read, asked) {
     let line;
     try {
       line = call({ call: 'act', kind: r.act, ts_unix: r.ts, actor: human(r.by) }).trim();
-    } catch {
-      dropped.push({ id: r.id, by: r.by, via: r.via, why: 'this version of House rules can’t read it' });
+    } catch (e) {
+      dropped.push({
+        id: r.id,
+        by: r.by,
+        via: r.via,
+        why: 'this version of House rules can’t read it',
+        canon: e.message,
+      });
       continue;
     }
     who[JSON.parse(line).id] = { by: r.by, via: r.via };
     lines.push(line);
   }
   const acts = [...members, ...lines].join('\n');
-  const now = Math.max(asked, ...[...members, ...lines].map((l) => JSON.parse(l).ts_unix));
+  const newest = Math.max(...[...members, ...lines].map((l) => JSON.parse(l).ts_unix));
+  const now = Math.max(asked, newest);
+  for (const d of dropped) trace('not counted', d);
+  trace('canon asked', { asked, at: now, newest });
   // canon leaves an empty list out of its answer.
-  const canon = { commitments: [], ratifications: [], positions: [], unattended: [], bootstrap: [], ungoverned: [], ...call({ call: 'derive', acts, now }) };
+  const canon = {
+    commitments: [],
+    ratifications: [],
+    positions: [],
+    unattended: [],
+    bootstrap: [],
+    ungoverned: [],
+    ...call({ call: 'derive', acts, now }),
+  };
   const whose = (id) => who[id] ?? null;
   const people = (pairs) => pairs.filter((id) => whose(Array.isArray(id) ? id[0] : id));
-  const decided = canon.ratifications.some((r) => r.scope == null && r.verdict.verdict === 'ratified');
+  const decided = canon.ratifications.some(
+    (r) => r.scope == null && r.verdict.verdict === 'ratified',
+  );
   const standing = read.spans.filter((s) => s.left == null).map((s) => s.person);
-  const said = (id) => canon.positions.filter((p) => p.about === id && whose(p.act)).map((p) => ({ ...whose(p.act), agrees: p.position.pull === 'toward', why: p.position.because, at: p.at }));
-  const entry = (c) => ({ id: c.id, text: c.text, status: c.status, at: c.asserted_at, ...whose(c.id), said: said(c.id) });
-  const changes = canon.ratifications.filter((r) => r.scope == null && whose(r.act)).map((r) => ({ id: r.act, rule: r.rule, verdict: r.verdict, at: r.at, ...whose(r.act), said: said(r.act) }));
+  const said = (id) =>
+    canon.positions
+      .filter((p) => p.about === id && whose(p.act))
+      .map((p) => ({
+        ...whose(p.act),
+        agrees: p.position.pull === 'toward',
+        why: p.position.because,
+        at: p.at,
+      }));
+  const entry = (c) => ({
+    id: c.id,
+    text: c.text,
+    status: c.status,
+    at: c.asserted_at,
+    ...whose(c.id),
+    said: said(c.id),
+  });
+  const changes = canon.ratifications
+    .filter((r) => r.scope == null && whose(r.act))
+    .map((r) => ({
+      id: r.act,
+      rule: r.rule,
+      verdict: r.verdict,
+      at: r.at,
+      ...whose(r.act),
+      said: said(r.act),
+    }));
+  const rule = decided ? call({ call: 'rule', acts, now }).rule : null;
+  trace('how the house decides', { rule });
   return {
-    rule: decided ? call({ call: 'rule', acts, now }).rule : null,
+    rule,
     rules: canon.commitments.filter((c) => whose(c.id)).map(entry),
     changes,
     deciding: standing.filter((p) => call({ call: 'seat', acts, actor: human(p), now }) === 'held'),

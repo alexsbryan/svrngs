@@ -1,0 +1,11 @@
+{
+  "$schema": "./web/node_modules/oxfmt/configuration_schema.json",
+  "printWidth": 100,
+  "singleQuote": true,
+  // Off, so the text of a template literal is never touched: under "auto" oxfmt
+  // 0.75.0 rewrites the html`...` templates of 37 files, and a test pins the
+  // whitespace a template draws (ralph/next/js/CHARTER.md, "Answered" 1).
+  "embeddedLanguageFormatting": "off",
+  // As .oxlintrc.json's ignorePatterns: what is vendored or recorded.
+  "ignorePatterns": ["**/vendor/**", "apps/on-air/vendored.mjs", "demo/runs/**"]
+}

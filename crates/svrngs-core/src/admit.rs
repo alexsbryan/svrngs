@@ -59,6 +59,7 @@
 //! total with complete confidence, which is the failure ARCH §18.3 names.
 
 use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::format;
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
@@ -78,27 +79,50 @@ use crate::{Person, RailAct, RingVerifier, Roster, SignedOp};
 ///
 /// Ordered and sorted before admission returns, so two nodes holding the same
 /// ops produce a byte-identical report and not merely an equal set of acts.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
+///
+/// Its `Display` is one sentence a person can act on: **the one renderer**
+/// (ARCH §10.6). A gap is shown in three places — the `svrn ring log`
+/// table, a ring app's own page, and the refusal the append door returns —
+/// and each writing its own prose is how three of them end up saying
+/// different things about the same condition. Before this existed the door
+/// returned a serde dump (`{"gap":"bad_signature",…}`) straight at a
+/// housemate.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    serde::Serialize,
+    serde::Deserialize,
+    thiserror::Error,
+)]
 #[serde(tag = "gap", rename_all = "snake_case")]
 pub enum RailGap {
     /// A journal line this build could not parse. From
     /// [`SkippedLine::Malformed`](crate::op::SkippedLine) — a torn
     /// write, or a payload that has no canonical form (see
     /// [`Payload`](crate::Payload)).
+    #[error("journal line {line} could not be read")]
     MalformedLine { line: u64, error: String },
     /// A journal line written by a NEWER build. Reading it would be guessing;
     /// counting the rest and saying nothing would be worse (ARCH §18.3), so
     /// an un-upgraded node reports that its answer covers a strict subset.
+    #[error("journal line {line} was written by a newer build — upgrade to read it")]
     NewerVersionLine { line: u64, v: u32 },
     /// The signature does not verify under the public key the line names.
     /// The op is not admitted.
+    #[error("an op whose signature does not verify ({})", crate::short_id(&.id.to_string()))]
     BadSignature { id: OpId, actor: String },
     /// The signature verifies, but no one in the roster signs with that key.
     /// Self-certifying is not the same as being a member. Not admitted.
+    #[error("an op signed by {}… — nobody in the roster claims that key", crate::actor_prefix(.actor))]
     UnknownSigner { id: OpId, actor: String },
     /// The `id` on the line is not the id its content derives. Admission uses
     /// the derived id, so this changes no outcome — it is reported because a
     /// peer writing lines whose id has been rewritten is a fact worth seeing.
+    #[error("a journal line whose id ({}) does not match its content", crate::short_id(&.claimed.to_string()))]
     TamperedId { claimed: OpId, derived: OpId },
     /// This actor's ops jump over sequence numbers, `from` to `to` (both
     /// missing). Something they wrote has not reached us — the one condition
@@ -107,11 +131,13 @@ pub enum RailGap {
     /// (arch-seal). One gap a run, not a seq: a seq is what a line claims,
     /// and a gap each let one line far past its chain cost every copy that
     /// many (#187).
+    #[error("{}", hole(.actor, .from, .to))]
     SequenceHole { actor: String, from: u64, to: u64 },
     /// One actor used one sequence number for two different ops. Equivocation
     /// or a lost counter after a restart. Both count, each weighed as itself:
     /// forks void nothing (svrngs, U7; DESIGN §6), since excluding both let an
     /// author take back their own act on every copy by signing a second.
+    #[error("{}… used one sequence number twice (#{seq}) — both acts count", crate::actor_prefix(.actor))]
     SequenceFork {
         actor: String,
         seq: u64,
@@ -125,20 +151,24 @@ pub enum RailGap {
     /// this gap names the exact op to ask for. It is the ask, not silence,
     /// and a typo'd citation must not flip every node's completeness bit
     /// forever (ROOT_CAUSE_FIXES A2).
+    #[error("a correction of {}, which this node does not hold", crate::short_id(&.missing.to_string()))]
     DanglingCorrection { by: OpId, missing: OpId },
     /// The signer is bound in the record but held no standing at this act's
     /// position — before their own [`Admit`](crate::RailAct::Admit) in the
     /// order (an act of a key the keeper cut is [`Self::Removed`]). The act
     /// counts for nothing and is named rather than dropped: it may be real
     /// data under an `Admit` this copy does not hold yet.
+    #[error("an op by actor {actor} was written while they held no standing in the ring")]
     NotAMember { id: OpId, actor: String },
     /// The signer was cut by the group's keeper, and the cut does not cover
     /// this act (svrngs, U7; DESIGN §6): written after the removal, or
     /// beside or above the acts the removal names. Nothing undoes a cut, so
     /// the act is refused for good.
+    #[error("an act by {}… after they were removed from the group does not count", crate::actor_prefix(.actor))]
     Removed { id: OpId, actor: String },
     /// A counting cut names an act of the removed key this copy does not
     /// hold, so the acts it covers cannot all be told yet (U7).
+    #[error("a removal names an act ({}) this node does not hold yet", crate::short_id(&.missing.to_string()))]
     UnheldCut { by: OpId, missing: OpId },
     /// The act's `prev` is not the id of its author's act at `seq − 1`: it
     /// names a parent at seq 0, names none above it, or names one other than
@@ -146,12 +176,14 @@ pub enum RailGap {
     /// admitted — it follows a history this copy does not hold, and may be
     /// real data on another branch. Judged against an act at `seq − 1` only
     /// when one is held; a parent not yet here is the [`Self::SequenceHole`].
+    #[error("an act from {}… does not follow the one before it (#{seq})", crate::actor_prefix(.actor))]
     WrongPrevious { id: OpId, actor: String, seq: u64 },
     /// A standing member's [`Admit`](crate::RailAct::Admit) that redeems an
     /// [`Invite`](crate::RailAct::Invite), refused for the named fault
     /// (svrngs, U2; DESIGN §6 "A link admits each person once"). It gives
     /// its key no standing; it may be real data under an `Invite` this copy
     /// does not yet hold.
+    #[error("a joining by link admitted by {}… does not count — {fault}", crate::actor_prefix(.actor))]
     RefusedRedemption {
         id: OpId,
         actor: String,
@@ -159,7 +191,36 @@ pub enum RailGap {
     },
     /// The keeper's cuts did not settle to one answer (#124): who stands,
     /// and so which acts count, cannot be judged on this copy.
+    #[error("the removals do not come to one answer, so who is in cannot be told")]
     Unsettled,
+    /// A holder's line its pass does not grant (capability-signed; DESIGN
+    /// §1): written outside its app's own part, after its pass lapsed, as a
+    /// decision, or under a pass its person did not sign or that names
+    /// another key. It counts as nobody's act.
+    #[error("an entry an app wrote as {}… does not count — {why}", crate::actor_prefix(.actor))]
+    Ungranted {
+        id: OpId,
+        actor: String,
+        why: crate::grant::Why,
+    },
+    /// An act naming another person than its signer's, `named`, written
+    /// past what the keeper's cutover covers (capability-signed; DESIGN
+    /// §1): a computer's word for someone else, which counts as nobody's.
+    #[error("an entry {}… wrote as {named} does not count — only their own phone or computer writes as them", crate::actor_prefix(.actor))]
+    CarriedForAnother {
+        id: OpId,
+        actor: String,
+        named: String,
+    },
+}
+
+/// A [`RailGap::SequenceHole`]'s words: one act missing, or a run of them.
+fn hole(actor: &str, from: &u64, to: &u64) -> String {
+    let who = crate::actor_prefix(actor);
+    match from == to {
+        true => format!("an op from {who}… has not reached this node yet (#{from})"),
+        false => format!("ops from {who}… have not reached this node yet (#{from} to #{to})"),
+    }
 }
 
 /// What a gap means for the fold's answer — the one classification (ARCH
@@ -205,95 +266,17 @@ impl RailGap {
             | Self::WrongPrevious { .. }
             | Self::RefusedRedemption { .. }
             | Self::Unsettled
+            | Self::Ungranted {
+                why: crate::grant::Why::Unheld,
+                ..
+            }
             | Self::SequenceHole { .. } => GapClass::Absence,
             Self::TamperedId { .. }
             | Self::DanglingCorrection { .. }
             | Self::SequenceFork { .. }
+            | Self::Ungranted { .. }
+            | Self::CarriedForAnother { .. }
             | Self::Removed { .. } => GapClass::Contradiction,
-        }
-    }
-}
-
-/// One sentence a person can act on.
-///
-/// **The one renderer** (ARCH §10.6). A gap is shown in three places — the
-/// `svrn ring log` table, a ring app's own page, and the refusal the append
-/// door returns — and each writing its own prose is how three of them end up
-/// saying different things about the same condition. Before this existed the
-/// door returned a serde dump (`{"gap":"bad_signature",…}`) straight at a
-/// housemate.
-impl core::fmt::Display for RailGap {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Self::MalformedLine { line, .. } => {
-                write!(f, "journal line {line} could not be read")
-            }
-            Self::NewerVersionLine { line, .. } => write!(
-                f,
-                "journal line {line} was written by a newer build — upgrade to read it"
-            ),
-            Self::BadSignature { id, .. } => write!(
-                f,
-                "an op whose signature does not verify ({})",
-                crate::short_id(&id.to_string())
-            ),
-            Self::NotAMember { actor, .. } => write!(
-                f,
-                "an op by actor {actor} was written while they held no standing in the ring"
-            ),
-            Self::Removed { actor, .. } => write!(
-                f,
-                "an act by {}… after they were removed from the group does not count",
-                crate::actor_prefix(actor)
-            ),
-            Self::UnheldCut { missing, .. } => write!(
-                f,
-                "a removal names an act ({}) this node does not hold yet",
-                crate::short_id(&missing.to_string())
-            ),
-            Self::UnknownSigner { actor, .. } => write!(
-                f,
-                "an op signed by {}… — nobody in the roster claims that key",
-                crate::actor_prefix(actor)
-            ),
-            Self::TamperedId { claimed, .. } => write!(
-                f,
-                "a journal line whose id ({}) does not match its content",
-                crate::short_id(&claimed.to_string())
-            ),
-            Self::SequenceHole { actor, from, to } if from == to => write!(
-                f,
-                "an op from {}… has not reached this node yet (#{from})",
-                crate::actor_prefix(actor)
-            ),
-            Self::SequenceHole { actor, from, to } => write!(
-                f,
-                "ops from {}… have not reached this node yet (#{from} to #{to})",
-                crate::actor_prefix(actor)
-            ),
-            Self::WrongPrevious { actor, seq, .. } => write!(
-                f,
-                "an act from {}… does not follow the one before it (#{seq})",
-                crate::actor_prefix(actor)
-            ),
-            Self::RefusedRedemption { actor, fault, .. } => write!(
-                f,
-                "a joining by link admitted by {}… does not count — {fault}",
-                crate::actor_prefix(actor)
-            ),
-            Self::SequenceFork { actor, seq, .. } => write!(
-                f,
-                "{}… used one sequence number twice (#{seq}) — both acts count",
-                crate::actor_prefix(actor)
-            ),
-            Self::DanglingCorrection { missing, .. } => write!(
-                f,
-                "a correction of {}, which this node does not hold",
-                crate::short_id(&missing.to_string())
-            ),
-            Self::Unsettled => {
-                f.write_str("the removals do not come to one answer, so who is in cannot be told")
-            }
         }
     }
 }
@@ -322,6 +305,12 @@ pub struct AdmittedOp {
     /// refused every key the roster does not know, so an app never has to
     /// render a balance against `node-44a1b3e8`.
     pub person: Person,
+    /// That person's first key ([`crate::Membership::person_of`]), the same
+    /// from each of their devices: who wrote it, where `person` is a name
+    /// two people may share (capability-keys). `None` only in an answer
+    /// from an older svrngs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub person_key: Option<String>,
     pub seq: u64,
     pub ts_unix: i64,
     /// What this op voids, when it is a correction. The void is **already
@@ -375,7 +364,7 @@ pub struct Admission {
     pub(crate) synced: crate::synced::Written,
     /// Each actor's newest acts held: chained, and named as `prev` by no
     /// other act of theirs. What a removal names (U7).
-    tips: BTreeMap<String, Vec<OpId>>,
+    pub(crate) tips: BTreeMap<String, Vec<OpId>>,
 }
 
 impl Admission {
@@ -430,8 +419,23 @@ impl Admission {
 /// actually uses.
 struct Candidate<'a> {
     id: OpId,
+    first: String,
     person: Person,
     op: &'a Op<SignedOp>,
+}
+
+fn cutoff(acts: &BTreeMap<OpId, &Op<SignedOp>>, by: &OpId) -> BTreeSet<OpId> {
+    let mut pending = match acts.get(by).map(|op| &op.kind.act) {
+        Some(RailAct::Signers { through } | RailAct::Holders { through }) => through.clone(),
+        _ => Vec::new(),
+    };
+    let mut seen = BTreeSet::new();
+    while let Some(id) = pending.pop() {
+        if let Some(op) = acts.get(&id).filter(|_| seen.insert(id.clone())) {
+            pending.extend(op.kind.prev.clone());
+        }
+    }
+    seen
 }
 
 /// Turn a bag of journal lines into the order every node applies them in.
@@ -499,6 +503,75 @@ pub fn admit(
         authentic.insert(derived, op);
     }
 
+    // ── a holder: what the pass on its line grants (capability-signed) ──
+    //
+    // Judged before the chain and the walk, so a line its pass does not
+    // grant is nobody's act, and the walk counts a granted one under its
+    // pass's signer's standing ([`Op::stands_as`]). Each distinct pass is
+    // verified once, however many lines carry it.
+    let mut signed: BTreeMap<&crate::pass::Pass, bool> = BTreeMap::new();
+    let mut ungranted = Vec::new();
+    for (id, op) in &authentic {
+        use crate::grant::{Capability::*, Grant, Why};
+        let Some(pass) = &op.kind.grant else {
+            continue;
+        };
+        let app = |id| (authentic.get(id)).map(|t| t.kind.act.payload().map_or("", Payload::app));
+        let may = |cap| Grant(pass, namespace).may(&op.actor, cap, op.ts_unix);
+        let verdict = match &op.kind.act {
+            _ if !*signed.entry(pass).or_insert_with(|| pass.signed()) => Err(Why::Unsigned),
+            _ if pass
+                .op
+                .as_ref()
+                .is_some_and(|id| *id != crate::grant::bare_id(op, namespace)) =>
+            {
+                Err(Why::Unapproved)
+            }
+            RailAct::Record { payload } => may(Append(payload.app())),
+            RailAct::Correct {
+                corrects,
+                replacement,
+            } => match app(corrects) {
+                Some(k) if replacement.as_ref().is_none_or(|r| r.app() == k) => may(Append(k)),
+                held => Err(held.map_or(Why::Unheld, |_| Why::OtherKind)),
+            },
+            _ => may(Decide),
+        };
+        if let Err(why) = verdict {
+            tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, person = %pass.person, %why,
+                "admit refused — a holder's line its pass does not grant");
+            ungranted.push((id.clone(), op.actor.clone(), why));
+        }
+    }
+    for (id, actor, why) in ungranted {
+        authentic.remove(&id);
+        gaps.push(RailGap::Ungranted { id, actor, why });
+    }
+
+    // The signed cutover names old history by hash, never by a forgeable clock.
+    // Apply it before membership/voids so a rejected correction has no effect.
+    if authentic
+        .values()
+        .any(|o| matches!(o.kind.act, RailAct::Holders { .. }))
+    {
+        let first = crate::membership::membership(
+            authentic.iter().map(|(id, op)| (id, *op)),
+            roster,
+            namespace,
+        );
+        if let Some(cut) = first.holders.as_ref() {
+            let covered = cutoff(&authentic, cut);
+            authentic.retain(|id, op| {
+                let allowed = op.kind.grant.as_ref().is_none_or(|p| p.op.is_some() || covered.contains(id));
+                if !allowed {
+                    tracing::debug!(target: "rail:admit", %id, "grant: rejected legacy holder authority outside its signed cutoff");
+                    gaps.push(RailGap::Ungranted { id: id.clone(), actor: op.actor.clone(), why: crate::grant::Why::Unapproved });
+                }
+                allowed
+            });
+        }
+    }
+
     // ── the chain: each act names its author's act at seq − 1 ─────────
     //
     // svrngs (U2, DESIGN §6). Judged over every authentic act at once, before
@@ -552,7 +625,8 @@ pub fn admit(
     let mut tips: BTreeMap<String, Vec<OpId>> = BTreeMap::new();
     for (id, op) in &authentic {
         if !parents.contains(&(op.actor.as_str(), id)) {
-            tips.entry(op.actor.clone()).or_default().push(id.clone());
+            let key = op.stands_as().to_string();
+            tips.entry(key).or_default().push(id.clone());
         }
     }
 
@@ -583,20 +657,19 @@ pub fn admit(
     // chain is held, so it is reported as what it is and never also as a
     // hole (U7; DESIGN §6). Before, the audit counted admitted acts only.
     let mut seqs: BTreeMap<&str, BTreeMap<u64, Vec<OpId>>> = BTreeMap::new();
-    for (id, op) in authentic
-        .iter()
-        .filter(|(_, op)| m.person_of(&op.actor).is_some())
-    {
-        let op: &Op<SignedOp> = op;
-        seqs.entry(op.actor.as_str())
-            .or_default()
-            .entry(op.kind.seq)
-            .or_default()
-            .push(id.clone());
+    for (id, op) in (authentic.iter()).filter(|(_, op)| m.person_of(op.stands_as()).is_some()) {
+        let of = seqs.entry(op.actor.as_str()).or_default();
+        of.entry(op.kind.seq).or_default().push(id.clone());
     }
+    // ── the keeper's cutover (capability-signed; DESIGN §1) ──────────
+    //
+    // An act naming another person than its signer's counts only where the
+    // keeper's `Signers` covers it, by ancestry as a cut covers; until the
+    // keeper writes one, as before.
+    let cover = m.signers.as_ref().map(|by| cutoff(&authentic, by));
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
-        let Some((_, person)) = m.person_of(&op.actor) else {
+        let Some((first, person)) = m.person_of(op.stands_as()) else {
             gaps.push(RailGap::UnknownSigner {
                 id,
                 actor: op.actor.clone(),
@@ -613,16 +686,32 @@ pub fn admit(
         }
         if !m.counted.contains(&id) && !m.voided.contains(&id) {
             let actor = op.actor.clone();
-            gaps.push(match m.cut.contains_key(&actor) {
+            gaps.push(match m.cut.contains_key(op.stands_as()) {
                 true => RailGap::Removed { id, actor },
                 false => RailGap::NotAMember { id, actor },
             });
             continue;
         }
+        let named = (op.kind.on_behalf_of.as_deref()).filter(|n| *n != person.as_str());
+        let past = cover.as_ref().is_some_and(|c| !c.contains(&id));
+        if let Some(named) = named {
+            tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, named, cutover = cover.is_some(), past,
+                "admit: an act naming another person counts only where the keeper's cutover covers it, and as before until there is one");
+            if past {
+                let actor = op.actor.clone();
+                gaps.push(RailGap::CarriedForAnother {
+                    id,
+                    actor,
+                    named: named.into(),
+                });
+                continue;
+            }
+        }
         admitted.insert(
             id.clone(),
             Candidate {
                 id,
+                first: first.into(),
                 person: person.clone(),
                 op,
             },
@@ -674,10 +763,7 @@ pub fn admit(
     // nothing (arch-seal; svrn-docs A_RECORD_FOR_YEARS §6 q2): an older
     // build's seal set a floor that hid the holes below it, and here it
     // hides none, so a copy an older build pruned says what it is missing.
-    let seals = admitted
-        .values()
-        .filter(|c| matches!(c.op.kind.act, RailAct::Seal));
-    for c in seals {
+    for c in (admitted.values()).filter(|c| matches!(c.op.kind.act, RailAct::Seal)) {
         tracing::debug!(namespace, id = %c.id, actor = %crate::actor_prefix(&c.op.actor), seq = c.op.kind.seq,
             "ring rail: a seal is held and retires nothing — an older build's act, read as one that does nothing");
     }
@@ -724,33 +810,24 @@ pub fn admit(
         ))
     });
 
-    let synced = crate::synced::written(order.iter().map(|a| (&a.person, a.op)));
+    let synced = crate::synced::written(order.iter().map(|a| (a.first.as_str(), &a.person, a.op)));
     let out: Vec<AdmittedOp> = order
         .into_iter()
         .map(|a| {
-            let (corrects, payload) = match &a.op.kind.act {
-                RailAct::Record { payload } => (None, Some(payload.clone())),
-                RailAct::Correct {
-                    corrects,
-                    replacement,
-                } => (Some(corrects.clone()), replacement.clone()),
-                // A seal does nothing (arch-seal): it voids nothing and
-                // carries nothing, so `applies()` is false and no reducer
-                // sees it. Admit/Remove carry meaning to the MEMBERSHIP
-                // function and never to an app (no-re-division).
-                RailAct::Seal
-                | RailAct::Admit { .. }
-                | RailAct::Remove { .. }
-                | RailAct::HandOn { .. }
-                | RailAct::Invite { .. }
-                | RailAct::Synced { .. }
-                | RailAct::Runs { .. }
-                | RailAct::Relay { .. } => (None, None),
+            // Only a record or a correction carries an app's act: a seal
+            // does nothing (arch-seal), so `applies()` is false and no
+            // reducer sees it, and the register's acts carry meaning to
+            // the MEMBERSHIP function and never to an app (no-re-division).
+            let corrects = match &a.op.kind.act {
+                RailAct::Correct { corrects, .. } => Some(corrects.clone()),
+                _ => None,
             };
+            let payload = a.op.kind.act.payload().cloned();
             AdmittedOp {
                 id: a.id.clone(),
                 actor: a.op.actor.clone(),
                 person: a.person.clone(),
+                person_key: Some(a.first.clone()),
                 seq: a.op.kind.seq,
                 ts_unix: a.op.ts_unix,
                 corrects,
@@ -764,13 +841,12 @@ pub fn admit(
     gaps.sort();
     gaps.dedup();
 
-    let applied = out.iter().filter(|o| o.applies()).count();
     tracing::debug!(
         namespace,
         verifier = verifier.name(),
         held = acts.len(),
         admitted = out.len(),
-        applied,
+        applied = out.iter().filter(|o| o.applies()).count(),
         voided = voided.len(),
         gaps = gaps.len(),
         "ring rail: admission"
@@ -800,7 +876,7 @@ pub fn admit(
 /// The body the id covers — the act, in declaration order, with
 /// its payload canonical (see [`Payload`](crate::Payload)), followed by
 /// `on_behalf_of` when the writer stated one, followed by `view` when the
-/// writer committed to one.
+/// writer committed to one, followed by `grant` when a holder signed it.
 ///
 /// The name is inside the signature because a stamp a peer could strip or
 /// rewrite in flight would attribute an act to whoever last handled it. The
@@ -813,6 +889,7 @@ pub fn body_json(
     act: &RailAct,
     on_behalf_of: Option<&str>,
     view: Option<&crate::Digest>,
+    grant: Option<&crate::pass::Pass>,
 ) -> String {
     // A borrowing mirror of `SignedOp`'s signed half rather than a second
     // spelling of the rule: the act flattens in exactly as it serialises
@@ -825,11 +902,14 @@ pub fn body_json(
         on_behalf_of: Option<&'a str>,
         #[serde(skip_serializing_if = "Option::is_none")]
         view: Option<&'a crate::Digest>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        grant: Option<&'a crate::pass::Pass>,
     }
     serde_json::to_string(&Body {
         act,
         on_behalf_of,
         view,
+        grant,
     })
     // A `RailAct` failing to serialise is unreachable; silent `""` would be
     // catastrophic — empty bytes on the signature path (ROOT_CAUSE_FIXES C4,

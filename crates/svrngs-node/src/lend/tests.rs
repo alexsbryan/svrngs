@@ -94,7 +94,7 @@ fn lend(name: &str, port: u16) -> Lend {
         refused: vec![refused("/admin")],
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
+        sign_in_with_svrngs: None,
         asks: None,
     }
 }
@@ -137,24 +137,26 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     );
 }
 
-/// A sign-in (mwp-1) is kept in the declaration and read back; with a
-/// secret beside it, refused and nothing written; and a lend with none is
-/// written with no word of it, as before.
+/// A declaration holding a sign-in of the lender's own is refused as a
+/// field this svrngs does not know, never ignored: the hook it named is
+/// gone, and sign-in with svrngs is the door's own (SIGN_IN_WITH_SVRNGS
+/// §5, §8 9). Red at HEAD, where the field was read and kept.
 #[test]
-fn a_sign_in_is_declared_alone_and_a_lend_without_one_as_before() {
+fn an_old_declaration_s_sign_in_is_refused_not_ignored() {
     let root = tempfile::tempdir().unwrap();
-    let mut signed = lend("signed", 8096);
-    signed.sign_in = NonZeroU16::new(9000);
-    assert!(matches!(
-        declare(root.path(), &signed, Some(("authorization", "s3cret"))),
-        Err(LendError::SecretAndSignIn(_))
-    ));
-    assert_eq!(read(root.path(), &signed.name).unwrap(), None);
-    declare(root.path(), &signed, None).unwrap();
-    assert_eq!(read(root.path(), &signed.name).unwrap(), Some(signed));
-    declare(root.path(), &lend("pad", 9001), None).unwrap();
-    let text = std::fs::read_to_string(lends_dir(root.path()).join("pad.json")).unwrap();
-    assert!(!text.contains("sign_in"), "{text}");
+    let name = LendName::parse("signed").unwrap();
+    std::fs::create_dir_all(lends_dir(root.path())).unwrap();
+    let file = lends_dir(root.path()).join("signed.json");
+    for unknown in [
+        r#"{"port": 8096, "kind": "k", "sign_in": 9000}"#,
+        r#"{"port": 8096, "kind": "k", "sign_in_with_svrngs": {}, "bogus": true}"#,
+    ] {
+        std::fs::write(&file, unknown).unwrap();
+        match read(root.path(), &name) {
+            Err(LendError::Malformed { .. }) => {}
+            other => panic!("a declaration holding an unknown field is read: {other:?}"),
+        }
+    }
 }
 
 /// A lend's upload is its lender's to state: absent is none declared, never
@@ -194,7 +196,8 @@ fn an_upload_is_declared_or_absent_never_defaulted() {
 /// held as itself, never as a number.
 #[test]
 fn a_limit_declared_is_kept_and_one_absent_is_none() {
-    use crate::door::limit::{Counts, Verdict, Whereabouts};
+    use crate::door::limit::{Counts, Verdict};
+    use crate::network::Whereabouts;
     #[expect(
         clippy::disallowed_methods,
         reason = "the time is the counts' argument"
@@ -219,28 +222,44 @@ fn a_limit_declared_is_kept_and_one_absent_is_none() {
     assert!(matches!(fourth(unnamed), Verdict::In { .. }));
 }
 
-/// **A lender's computer that says nothing of signing in is not read as
-/// no** (v1ui-findings (a); #159; arch-version (b)): a lend with no
-/// `signs_in` is no lend at all, never one read as `false`; one that says
-/// no is kept as no. A computer that says nothing runs an older svrngs, and
-/// is named so by the one version check (`node.rs` `answered`), where
-/// v1ui-findings (a) carried the absence on to the pages as `null`.
-/// Planted, watched failing: `#[serde(default)]` back on `signs_in`, a
-/// bool, which read the absence as no.
+/// A sign-in client is made from the allowed characters, kept in the
+/// declaration at 0600, refused on read when it is not, and never kept
+/// beside a lend's own password (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
+#[cfg(unix)]
 #[test]
-fn a_lend_whose_computer_says_nothing_of_signing_in_is_not_read_as_no() {
-    let read = |signs_in: Option<bool>| {
-        let mut answer = serde_json::json!({
-            "name": "shelf", "kind": "k", "limit": null, "using": 0, "upload_bps": null, "reads": [],
-        });
-        if let Some(s) = signs_in {
-            answer["signs_in"] = s.into();
-        }
-        serde_json::from_value::<Offered>(answer)
-            .ok()
-            .map(|o| o.signs_in)
+fn a_sign_in_client_is_checked_written_owner_only_and_never_both() {
+    use std::os::unix::fs::PermissionsExt;
+    let root = tempfile::tempdir().unwrap();
+    let mut shelf = lend("shelf", 8096);
+    let client = SignInWithSvrngs {
+        client_id: "abc.DEF-1_~".into(),
+        client_secret: Some("s3cret-._~".into()),
     };
-    assert_eq!(read(None), None);
-    assert_eq!(read(Some(false)), Some(false));
-    assert_eq!(read(Some(true)), Some(true));
+    shelf.sign_in_with_svrngs = Some(client.clone());
+    declare(root.path(), &shelf, None).unwrap();
+    assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
+    let file = lends_dir(root.path()).join("shelf.json");
+    assert_eq!(
+        std::fs::metadata(&file).unwrap().permissions().mode() & 0o777,
+        0o600,
+        "the declaration holding a secret is owner-only"
+    );
+
+    std::fs::write(
+        &file,
+        r#"{"port":8096,"kind":"k","sign_in_with_svrngs":{"client_id":"a b","client_secret":"x"}}"#,
+    )
+    .unwrap();
+    assert!(
+        matches!(read(root.path(), &shelf.name), Err(LendError::NotAClient)),
+        "a client outside the alphabet is refused, never repaired"
+    );
+
+    assert!(
+        matches!(
+            declare(root.path(), &shelf, Some(("authorization", "s3cret"))),
+            Err(LendError::TwoSecrets)
+        ),
+        "a lend declares its own password or a sign-in, never both"
+    );
 }

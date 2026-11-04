@@ -75,43 +75,48 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
 
 const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
 
-/// An app serving someone else names them (svrngs, DESIGN §3): the act is
-/// signed as this computer with `on_behalf_of` naming that person, when
-/// they stand in the group. A name of nobody in it, a name that is not one,
-/// and a name that is not text are each refused by kind, and write nothing.
-/// The failing input: `on_behalf_of` dropped, as upstream's session-less
-/// door dropped it.
+/// **Only carry what you signed: the record API writes only as this
+/// computer's own person** (capability-signed; svrn-docs `rings/current/
+/// WHAT_CAN_ACT_AS_YOU.md` §3, shortfall 2). A program on this computer
+/// is this computer's person ("your computer is you", §4), so a body
+/// naming alex, whose computer this is, is written as alex's own act, the
+/// name dropped. A body naming halo, who stands in the group, would be
+/// alex's computer's word for halo: refused, `not_yours`, in words, and
+/// nothing written; so is a name of nobody in it. Planted: a standing
+/// person's name taken as the door's word again — halo's entry written.
 #[tokio::test]
-async fn an_append_names_the_person_an_app_serves() {
+async fn an_append_writes_only_as_this_computer_s_own_person() {
     let (_dir, rail) = rail_with(GUESTS);
     group_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = |named: serde_json::Value| serde_json::json!({ "op": "record", "payload": { "amount": 4 }, "on_behalf_of": named });
     for (named, kind) in [
-        (serde_json::json!("beefy"), "not_in_group"),
+        (serde_json::json!("halo"), "not_yours"),
+        (serde_json::json!("beefy"), "not_yours"),
         (serde_json::json!(" "), "not_a_name"),
         (serde_json::json!("a\u{1b}[2J"), "not_a_name"),
         (serde_json::json!(7), "not_a_name"),
     ] {
         let resp = append_act(&rail, journal, body(named.clone())).await;
         assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY, "{named}");
-        assert_eq!(body_of(resp).await["kind"], kind, "{named}");
+        let said = body_of(resp).await;
+        assert_eq!(said["kind"], kind, "{named}");
+        assert!(
+            said["error"].as_str().is_some_and(|e| !e.is_empty()),
+            "{named}: said in words"
+        );
     }
     assert!(
         svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap()).is_empty(),
         "a refusal writes nothing"
     );
 
-    let resp = append_act(&rail, journal, body(serde_json::json!("halo"))).await;
+    // Kept: a local program appends as this computer's own person.
+    let resp = append_act(&rail, journal, body(serde_json::json!("alex"))).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    assert_eq!(
-        body_of(resp).await["actor"],
-        actor_of(&key(7)),
-        "this computer signs"
-    );
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
-    assert_eq!(ops.len(), 1);
-    assert_eq!(ops[0].on_behalf_of.as_deref(), Some("halo"));
+    assert_eq!((ops.len(), ops[0].person.as_str()), (1, "alex"));
+    assert_eq!(ops[0].on_behalf_of, None, "its own act names nobody");
 }
 
 /// An unstamped append is unchanged: signed as the node, no name on it.
@@ -214,6 +219,71 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     );
 }
 
+/// **Whom an old act spoke for is told by key too** (keys-names): alex's
+/// computer wrote records for others, as it wrote a phone's before
+/// capability-signed: one for bo; one for dee before a second dee was let
+/// in, and one after; one for eve, who never stood. The log names, as
+/// `on_behalf_of_key`, the first key of the one person of that name who
+/// had joined by each act's time, so an app keeps bo's old entries and his
+/// own together; the second dee's none, since the record cannot say which
+/// dee, nor eve's, and an app reads those by name as before. An act naming
+/// its signer's own person names no second key. Red at 0c9dc094: an act
+/// for another named only the name.
+#[tokio::test]
+async fn the_log_names_whom_an_act_for_another_spoke_for_by_the_one_person_of_that_name_then() {
+    use svrngs_core::{sign_act, Op, RailAct, SignedOp};
+    let (_dir, rail) = rail_with(&[("alex", 1), ("bo", 2)]);
+    let dee = |k: u8| RailAct::Admit {
+        person: Person::parse("dee").unwrap(),
+        key: actor_of(&key(k)),
+        invite: None,
+    };
+    let record = |what: &str| RailAct::Record {
+        payload: svrngs_core::Payload::new(serde_json::json!({ "kind": "thing", "what": what }))
+            .unwrap(),
+    };
+    let acts = [
+        (100, dee(6), None),
+        (101, record("for bo"), Some("bo")),
+        (102, record("for dee"), Some("dee")),
+        (200, dee(8), None),
+        (201, record("dee again"), Some("dee")),
+        (202, record("for eve"), Some("eve")),
+        (300, record("own"), Some("alex")),
+    ];
+    let mut ops: Vec<Op<SignedOp>> = Vec::new();
+    for (ts, act, named) in acts {
+        let (seq, prev) = ops
+            .last()
+            .map_or((0, None), |o| (o.kind.seq + 1, Some(o.id.clone())));
+        ops.push(sign_act(
+            &key(1),
+            "ledger",
+            ts,
+            seq,
+            prev,
+            act,
+            named,
+            None,
+            None,
+        ));
+    }
+    rail.ingest_all("ledger", &ops).unwrap();
+    let out = body_of(super::log_answer(&rail, "ledger").await).await;
+    let whose = |what: &str| {
+        let op = (out["ops"].as_array().unwrap().iter()).find(|o| o["payload"]["what"] == what);
+        op.map(|o| o["on_behalf_of_key"].clone())
+    };
+    let said = ["for bo", "for dee", "dee again", "for eve", "own"].map(whose);
+    let null = Some(serde_json::Value::Null);
+    let first = |k: u8| Some(serde_json::json!(actor_of(&key(k))));
+    assert_eq!(
+        said,
+        [first(2), first(6), null.clone(), null.clone(), null],
+        "{out:#}"
+    );
+}
+
 /// An app's `{"op":"seal"}` is refused as not an app's to write, and retires
 /// nothing (arch-seal (b); WHO_KNOWS_WHOM §3, bar 10): the journal holds both
 /// records after it, and no seal. The failing input: the route seals, as it
@@ -257,10 +327,7 @@ async fn the_people_door_answers_the_register_with_keys() {
         key: actor_of(&key(3)),
         invite: None,
     };
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: admit_bo,
-        on_behalf_of: None,
-    };
+    let fixture = svrngs_core::tests_support::Fixture { act: admit_bo };
     rail.commit(journal, &fixture).unwrap().unwrap();
     let invite = svrngs_core::tests_support::Fixture {
         act: crate::RailAct::Invite {
@@ -268,7 +335,6 @@ async fn the_people_door_answers_the_register_with_keys() {
             until: i64::MAX,
             device_of: None,
         },
-        on_behalf_of: None,
     };
     let invite = rail.commit(journal, &invite).unwrap().unwrap().lines()[0]
         .id
@@ -285,10 +351,7 @@ async fn the_people_door_answers_the_register_with_keys() {
         person: cy,
         key: actor_of(&key(4)),
     };
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: admit_cy,
-        on_behalf_of: None,
-    };
+    let fixture = svrngs_core::tests_support::Fixture { act: admit_cy };
     rail.commit(journal, &fixture).unwrap().unwrap();
     let out = body_of(super::people_answer(&rail, "ledger")).await;
     // When bo joined: the time on the `Admit` this computer stamped
@@ -361,6 +424,7 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
         nudge: Arc::new(tokio::sync::Notify::new()),
         live: Arc::new(LiveBuffer::default()),
         transport: Arc::new(crate::iroh::IrohTransport::new(endpoint.clone())),
+        build: Vec::new(),
     };
     let oversize = vec![b'x'; 4097];
     let resp = push_answer(&api, "ledger", oversize.into()).await;
@@ -412,7 +476,12 @@ fn the_live_fan_out_never_offers_a_browser() {
     .into_iter()
     .map(|(k, m)| (actor_of(&key(k)), m))
     .collect();
-    let peers = super::live_peers(&actor_of(&key(7)), "ledger", &standing);
+    let peers = super::live_peers(
+        &actor_of(&key(7)),
+        "ledger",
+        &standing,
+        &svrngs_core::relay::Meeting::of([], &[]),
+    );
     let named: Vec<_> = peers.iter().map(|p| p.name.as_deref()).collect();
     assert_eq!(named, [Some("bo")]);
 }

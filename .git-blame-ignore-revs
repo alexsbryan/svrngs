@@ -1,0 +1,4 @@
+# Commits that only change how code is laid out, which `git blame` skips
+# once you run `git config blame.ignoreRevsFile .git-blame-ignore-revs`.
+# format(b): every JavaScript file as oxfmt lays it out (js-format, 2026-11-02)
+733bda711ea94ff6626c9ddaab899e9c8bc433de

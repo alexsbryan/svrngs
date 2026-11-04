@@ -1,0 +1,155 @@
+{
+  "queue": "guests",
+  "state": "ralph/next/guests/STATE.md",
+  "charter": "ralph/next/guests/CHARTER.md",
+  "queue_findings": [],
+  "rows": [
+    {
+      "id": "guests-link",
+      "line": 67,
+      "in_flight": false,
+      "group": "could-not-judge",
+      "findings": [
+        {
+          "kind": "no-estimate",
+          "group": "could-not-judge",
+          "say": "no estimate stated; 24 left under repository's ceiling, 0 left under svrngs-core's ceiling; any line in svrngs-core exceeds it",
+          "evidence": [
+            "ralph/next/guests/STATE.md:67",
+            "demo/runs/preshift/2026-10-23/fixtures/lean-65c7fbb3.txt",
+            "ralph/next/guests/CHARTER.md:79",
+            "scripts/lean_check.py@93d17fe79 BUDGET (guests-economize)"
+          ]
+        }
+      ]
+    }
+  ],
+  "fences": [
+    {
+      "line": 79,
+      "text": "**the budget:** past \"+150 repo, +60 core\", or a raise without the pass first;",
+      "terms": [],
+      "checked": "by the ceiling"
+    },
+    {
+      "line": 81,
+      "text": "**a wait built early:** the welcome, `GuestRules`, House rules' say over it, the grapevine's path, or the words for people (STATE.md, \"Waits\");",
+      "terms": [
+        "GuestRules",
+        "grapevine's path",
+        "wait built early",
+        "welcome"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 83,
+      "text": "**the trust floor:** any widening of a page's policy or a listener;",
+      "terms": [
+        "listener",
+        "page's policy",
+        "trust floor"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 84,
+      "text": "**canon's repository:** anything canon-core needs;",
+      "terms": [
+        "anything canon-core needs",
+        "canon's repository"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 85,
+      "text": "**existing groups:** a change that alters what a computer holds or makes a member someone new;",
+      "terms": [
+        "existing groups"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 87,
+      "text": "**a new office or policy** in svrngs past GUESTS \u00a73 and \u00a75;",
+      "terms": [
+        "new office",
+        "policy"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 88,
+      "text": "**dependencies and tools:** a new crate in the svrngs workspace;",
+      "terms": [
+        "dependencies and tools"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 89,
+      "text": "**outward-facing steps:** publishing, `sudo`, a system service, a port on this host's network;",
+      "terms": [
+        "outward-facing steps",
+        "publishing",
+        "sudo",
+        "system service"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 91,
+      "text": "**git:** pushing, history rewrites, `--no-verify`;",
+      "terms": [
+        "--no-verify",
+        "history rewrites",
+        "pushing"
+      ],
+      "checked": "by its terms"
+    },
+    {
+      "line": 92,
+      "text": "**anything whose evidence you could not reproduce.**",
+      "terms": [],
+      "checked": "not checked: a judgment, no word to match"
+    }
+  ],
+  "ceiling": {
+    "at": "ralph/next/guests/CHARTER.md:79",
+    "text": "**the budget:** past \"+150 repo, +60 core\", or a raise without the pass first;",
+    "qualifier": "",
+    "kind": "relative",
+    "delta": {
+      ".": 150,
+      "crates/svrngs-core": 60
+    },
+    "base": "pass"
+  },
+  "headroom": {
+    ".": {
+      "count": 16703,
+      "cap": 16704,
+      "evidence": [
+        "ralph/next/guests/CHARTER.md:79",
+        "demo/runs/preshift/2026-10-23/fixtures/lean-65c7fbb3.txt",
+        "scripts/lean_check.py@93d17fe79 BUDGET (guests-economize)"
+      ],
+      "ceiling": 16728,
+      "reading": "16578 + 150 over scripts/lean_check.py@93d17fe79 BUDGET (guests-economize)",
+      "left": 24
+    },
+    "crates/svrngs-core": {
+      "count": 3068,
+      "cap": 3069,
+      "evidence": [
+        "ralph/next/guests/CHARTER.md:79",
+        "demo/runs/preshift/2026-10-23/fixtures/lean-65c7fbb3.txt",
+        "scripts/lean_check.py@93d17fe79 BUDGET (guests-economize)"
+      ],
+      "ceiling": 3069,
+      "reading": "3009 + 60 over scripts/lean_check.py@93d17fe79 BUDGET (guests-economize)",
+      "left": 0
+    }
+  },
+  "exit": 4
+}

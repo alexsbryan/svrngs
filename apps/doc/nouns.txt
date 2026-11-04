@@ -1,0 +1,6 @@
+# The doc's nouns. The infra may not use them (scripts/vocab_check.py).
+paragraph
+paragraphs
+caret
+carets
+goodnight

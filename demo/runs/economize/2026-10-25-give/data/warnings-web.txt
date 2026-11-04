@@ -1,0 +1,25 @@
+crates/svrngs-core/src/admit.rs:190: type `membership::InviteFault` is more private than the item `RailGap::RefusedRedemption::fault`
+crates/svrngs-core/src/admit.rs:204: type `Why` is more private than the item `RailGap::Ungranted::why`
+crates/svrngs-core/src/command.rs:40: type `Reads` is more private than the item `Command::READS`
+crates/svrngs-core/src/grant.rs:26: variant `Read` is never constructed
+crates/svrngs-core/src/lib.rs:132: unused import: `command::Reads`
+crates/svrngs-core/src/lib.rs:139: unused import: `payload::PayloadError`
+crates/svrngs-core/src/lib.rs:155: unused import: `sig::act_id`
+crates/svrngs-core/src/lib.rs:159: unused import: `sig::redemption_message`
+crates/svrngs-core/src/lib.rs:173: unused import: `synced::NotASyncPath`
+crates/svrngs-core/src/lib.rs:180: unused import: `view::DIGEST_V`
+crates/svrngs-core/src/lib.rs:366: type `Payload` is more private than the item `RailAct::Record::payload`
+crates/svrngs-core/src/lib.rs:375: type `Payload` is more private than the item `RailAct::Correct::replacement`
+crates/svrngs-core/src/lib.rs:410: type `Redemption` is more private than the item `RailAct::Admit::invite`
+crates/svrngs-core/src/record.rs:27: type `Reads` is more private than the item `<record::Append as Command>::READS`
+crates/svrngs-core/src/register.rs:127: type `Reads` is more private than the item `<MintInvite as Command>::READS`
+crates/svrngs-core/src/register.rs:143: type `Reads` is more private than the item `register::<impl Command for Visit>::READS`
+crates/svrngs-core/src/register.rs:182: type `Reads` is more private than the item `<Removal as Command>::READS`
+crates/svrngs-core/src/register.rs:222: type `Reads` is more private than the item `<Leave as Command>::READS`
+crates/svrngs-core/src/register.rs:258: type `Reads` is more private than the item `<Cutover as Command>::READS`
+crates/svrngs-core/src/register.rs:311: type `Reads` is more private than the item `<HandOnTo as Command>::READS`
+crates/svrngs-core/src/register.rs:338: type `Reads` is more private than the item `<RelayAt as Command>::READS`
+crates/svrngs-core/src/register.rs:42: type `membership::InviteFault` is more private than the item `RedeemRefusal::Fault::0`
+crates/svrngs-core/src/register.rs:56: type `Reads` is more private than the item `<Redeem as Command>::READS`
+crates/svrngs-core/src/synced.rs:131: type `Reads` is more private than the item `<SyncFolder as Command>::READS`
+build-finished success: True

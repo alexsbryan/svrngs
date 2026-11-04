@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "headers": {
+    "date": "Fri, 23 Oct 2026 00:55:58 GMT",
+    "server": "uvicorn",
+    "content-length": "784",
+    "content-type": "application/json",
+    "vary": "Accept-Encoding, Origin",
+    "x-process-time": "0.041215"
+  },
+  "body": "{\"data\":[{\"id\":\"ana/coder\",\"object\":\"model\",\"owned_by\":\"openai\",\"connection_type\":\"external\",\"name\":\"ana/coder\",\"openai\":{\"id\":\"ana/coder\",\"object\":\"model\",\"owned_by\":\"standin\",\"connection_type\":\"external\"},\"provider\":\"\",\"urlIdx\":0,\"actions\":[],\"filters\":[],\"tags\":[]},{\"id\":\"sam/stt\",\"object\":\"model\",\"owned_by\":\"openai\",\"connection_type\":\"external\",\"name\":\"sam/stt\",\"openai\":{\"id\":\"sam/stt\",\"object\":\"model\",\"owned_by\":\"standin\",\"connection_type\":\"external\"},\"provider\":\"\",\"urlIdx\":0,\"actions\":[],\"filters\":[],\"tags\":[]},{\"id\":\"sam/voice\",\"object\":\"model\",\"owned_by\":\"openai\",\"connection_type\":\"external\",\"name\":\"sam/voice\",\"openai\":{\"id\":\"sam/voice\",\"object\":\"model\",\"owned_by\":\"standin\",\"connection_type\":\"external\"},\"provider\":\"\",\"urlIdx\":0,\"actions\":[],\"filters\":[],\"tags\":[]}]}"
+}

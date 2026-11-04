@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The infra never learns an app's nouns (docs/DESIGN.md §5). Exit 0 holds, 1 broken.
 
-Every app lists its nouns in apps/<app>/nouns.txt, one per line, `#` for a
+Every app lists its nouns in a nouns.txt under apps/, one per line, `#` for a
 comment. Each is refused, as a whole word in any case, in infra code: every
 .rs file under crates/ and web/src/, comments and tests apart (test files by
 name; an item `#[cfg(test)]` gates, to its `;` or closing brace: it once
@@ -21,7 +21,7 @@ TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 
 def nouns(root):
     out = {}
-    for f in sorted((root / "apps").glob("*/nouns.txt")):
+    for f in sorted((root / "apps").glob("**/nouns.txt")):
         for line in f.read_text().splitlines():
             w = line.split("#", 1)[0].strip().lower()
             if w:

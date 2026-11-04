@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "1232"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"tool_calls\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"\",\"reasoning_content\":\"Thinking Process:\\n1.  **Identify User Intent**: The user wants to know the current weather in Paris.\\n2.  **Check Constraints**: The user explicitly states \\\"You must call the weather tool.\\\"\\n3.  **Identify Required Tool**: `weather` function.\\n4.  **Extract Parameters**: `city` = \\\"Paris\\\".\\n5.  **Construct Tool Call**: Call `weather` with `city: \\\"Paris\\\"`.\\n6.  **Execute/Wait for Response**: Proceed with the tool call.✅\\n\",\"tool_calls\":[{\"type\":\"function\",\"function\":{\"name\":\"weather\",\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\"},\"id\":\"cs72wic4cm8XpbBK0k6medTzOCEMPKrP\"}]}}],\"created\":1792719030,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":142,\"prompt_tokens\":280,\"total_tokens\":422,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-krJlPF9W1W2wBZWcKHob4PLc9GwYn362\",\"timings\":{\"cache_n\":0,\"prompt_n\":280,\"prompt_ms\":393.702,\"prompt_per_token_ms\":1.4060785714285715,\"prompt_per_second\":711.1978095107468,\"predicted_n\":142,\"predicted_ms\":2330.493,\"predicted_per_token_ms\":16.411922535211268,\"predicted_per_second\":60.93131367483189}}"
+}

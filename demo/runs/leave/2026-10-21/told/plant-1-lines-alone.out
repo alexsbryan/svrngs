@@ -1,0 +1,38 @@
+
+running 5 tests
+.. 2/5
+leave_race::a_leave_reaches_every_copy_with_the_acts_it_covers --- FAILED
+leave_race::a_leave_takes_nothing_more_of_the_group --- FAILED
+.
+failures:
+
+---- leave_race::a_leave_reaches_every_copy_with_the_acts_it_covers stdout ----
+after Kim's leave and three rounds of every computer:
+  Kim  entries ["kim-paid", "kim-last"]; complete true; gaps []
+  Ana  entries []; complete false; gaps ["an op from 8139770ea87d… has not reached this node yet (#1)", "an act by 8139770ea87d… after they were removed from the group does not count", "a removal names an act (6fe62dcaad57…) this node does not hold yet"]
+  Bo   entries []; complete false; gaps ["an op from 8139770ea87d… has not reached this node yet (#1)", "an act by 8139770ea87d… after they were removed from the group does not count", "a removal names an act (6fe62dcaad57…) this node does not hold yet"]
+
+thread 'leave_race::a_leave_reaches_every_copy_with_the_acts_it_covers' (74512876) panicked at crates/svrngs-node/tests/removal.rs:555:9:
+assertion `left == right` failed: Ana's copy agrees with Kim's
+  left: []
+ right: ["kim-paid", "kim-last"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- leave_race::a_leave_takes_nothing_more_of_the_group stdout ----
+after Kim's leave:
+  Kim  entries ["kim-last"]; complete true; gaps []
+  Ana  entries []; complete false; gaps ["an op from 8139770ea87d… has not reached this node yet (#0)", "a removal names an act (08d0e920870a…) this node does not hold yet"]
+
+thread 'leave_race::a_leave_takes_nothing_more_of_the_group' (74512917) panicked at crates/svrngs-node/tests/removal.rs:629:9:
+assertion `left == right` failed
+  left: []
+ right: ["kim-last"]
+
+
+failures:
+    leave_race::a_leave_reaches_every_copy_with_the_acts_it_covers
+    leave_race::a_leave_takes_nothing_more_of_the_group
+
+test result: FAILED. 3 passed; 2 failed; 0 ignored; 0 measured; 4 filtered out; finished in 11.25s
+
+error: test failed, to rerun pass `-p svrngs-node --test removal`

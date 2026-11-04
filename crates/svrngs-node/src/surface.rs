@@ -12,14 +12,13 @@
 //!   person in it, and whether its keeper removed this computer (U7),
 //!   `null` when its register cannot be read here; and every removal and
 //!   ask to remove in it, who of whom and when (v1-keeper-office (b)),
-//!   `null` likewise.
+//!   `null` likewise; and beside them this computer's key.
 //! - `GET /v1/lends?namespace=<id>` — what the group's people lend now,
 //!   this computer's own lends among them, each with its lender's person
 //!   and key, its name, kind, limit, how many use it and its declared
 //!   upload (`upload_bps`, `null` when its lender states none), and where
 //!   this computer's browser opens it, its `origin` (u5-2,
-//!   [`crate::origin`]), and its `room` address while the room door serves
-//!   it (u6-1, [`crate::room`]); and the people whose computer did not say
+//!   [`crate::origin`]); and the people whose computer did not say
 //!   what they lend, named in [`crate::node::Unlisted`]'s four lists by how:
 //!   `unanswered` within [`crate::node::ANSWER_WITHIN`], `unheard`,
 //!   `refused` and `older` — their lends absent rather than stale. The body [`crate::node`]'s `GET /people/lends`
@@ -42,6 +41,7 @@ use serde::{Deserialize, Serialize};
 use svrngs_core::app::App;
 use svrngs_core::pass::Label;
 
+use crate::door::choices::{self, Said};
 use crate::door::LendRefusal;
 use crate::group::Namesake;
 use crate::node::{Asking, Lending, Unlisted};
@@ -111,6 +111,15 @@ struct Held {
     /// the home page says so. `null` when the list cannot be read here,
     /// said at warn, never read as none.
     folders: Option<Vec<std::path::PathBuf>>,
+    /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
+    /// beside `removed`'s, or when this computer's clock cannot be read.
+    visiting: Option<Vec<serde_json::Value>>,
+    /// Why this computer meets the group at the build's relay now, when the
+    /// group names relays of its own and none of them is this computer's
+    /// home: none answers, or another group held names none (relay
+    /// fallbacks). The home page says so in a person's words; `null` when
+    /// it meets the group at its own.
+    fallback: Option<svrngs_core::relay::Tier>,
 }
 
 /// `GET /v1/groups`.
@@ -134,8 +143,9 @@ async fn groups(State(at): State<Asking>) -> Response {
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let (person, removed, removals, left, keeps) = match rail.register(&id) {
+        let (person, removed, removals, left, keeps, visiting) = match rail.register(&id) {
             Ok(r) => {
+                let visiting = crate::rail::visiting(&r, me);
                 let person_of = |k: &str| r.members.get(k).map(|m| &m.person_key);
                 let keeps = r
                     .keeper
@@ -150,11 +160,12 @@ async fn groups(State(at): State<Asking>) -> Response {
                     Some(r.removals),
                     Some(left),
                     Some(keeps),
+                    visiting,
                 )
             }
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None, None, None, None)
+                (None, None, None, None, None, None)
             }
         };
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
@@ -163,6 +174,7 @@ async fn groups(State(at): State<Asking>) -> Response {
         tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps,
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
+            fallback: at.host.at_fallback(&id),
             id,
             name,
             made,
@@ -172,9 +184,12 @@ async fn groups(State(at): State<Asking>) -> Response {
             left,
             keeps,
             folders,
+            visiting,
         });
     }
-    Json(serde_json::json!({ "groups": held })).into_response()
+    // This computer's key, so its home page tells its own devices from
+    // others' among a group's people (capability-what-acts).
+    Json(serde_json::json!({ "groups": held, "key": me })).into_response()
 }
 
 /// `POST /v1/sign?app=<app>`'s query: an app's name, refused unless it is
@@ -256,12 +271,8 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
         .into_iter()
         .filter_map(|l| {
             let origin = host.origin(&l.key, l.offered.name.as_str())?;
-            let room = host.room_address(&l.key, l.offered.name.as_str());
             let mut l = serde_json::to_value(l).ok()?;
             l["origin"] = origin.into();
-            if let Some(room) = room {
-                l["room"] = room.into();
-            }
             Some(l)
         })
         .collect();
@@ -299,7 +310,7 @@ async fn read_by(
     };
     let (lent, unlisted) = at.lent(&groups, &own, None).await?;
     let silent: Vec<String> = (groups.iter().flat_map(|(_, s)| s.iter()))
-        .filter(|(_, m)| unlisted.names(&m.person))
+        .filter(|(_, m)| unlisted.names(&m.person_key))
         .map(|(actor, _)| actor.clone())
         .collect();
     let Some(reading) = lent.iter().find(|l| named(l).as_ref() == Some(app)) else {
@@ -323,12 +334,27 @@ fn named(l: &Lending) -> Option<Label> {
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`
-/// ([`crate::origin`]): `label` among what it reads ([`read_by`]); a lend
-/// whose lender did not say is could-not-judge, refused `away`.
+/// ([`crate::origin`]): `label` among what it reads ([`read_by`]), and,
+/// for another computer's app, its reach the person's yes, which opening
+/// it from the home page says (capability-open; [`choices::reaching`]):
+/// this computer's own app reads what its person declared. A lend whose
+/// lender did not say is could-not-judge, refused `away`.
 pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
     let (read, unlisted, silent) = read_by(at, app).await?;
     if read.iter().any(|l| named(l).as_ref() == Some(label)) {
-        tracing::debug!(target: "surface", %app, %label, "surface: the page reads the lend's kind, so it reaches it");
+        let own = app.lender() == at.door.key;
+        let said = if own {
+            None
+        } else {
+            choices::reaching(&at.door, app)?
+        };
+        tracing::debug!(target: "surface", %app, %label, own, ?said, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person said yes to it");
+        if !own && said != Some(Said::Yes) {
+            return Err(LendRefusal::Unasked.say(
+                StatusCode::FORBIDDEN,
+                "Say yes on your home page: open this app from there.",
+            ));
+        }
         return Ok(());
     }
     if silent.contains(&hex::encode(label.lender())) {
@@ -355,10 +381,11 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
     let (lent, Unlisted { unanswered, .. }, _) = read_by(at, label).await?;
     let read: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
-            let address = host.origin(&l.key, l.offered.name.as_str())?;
+            let lend = named(l)?;
+            let address = crate::origin::origin(&lend, host.api_port) + &crate::session::AS_PATH[1..];
+            let address = address + &at.sessions.cap(label, &lend) + "/";
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
             if let Some(words) = &l.offered.asks {
-                let lend = named(l)?;
                 read["asks"] = words.as_str().into();
                 read["ask"] = crate::home::ask_address(host.api_port, &lend, label).into();
                 let page = crate::origin::origin(label, host.api_port);
@@ -369,5 +396,7 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
         .collect();
     tracing::debug!(target: "surface", %label, read = read.len(), unanswered = unanswered.len(),
         "surface: reads — answered a lent page the lends of the kinds it reads, each at its origin here");
+    // A lent page is told each lender by name, as it always was.
+    let unanswered: Vec<_> = unanswered.iter().map(|n| &n.person).collect();
     Ok(Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response())
 }

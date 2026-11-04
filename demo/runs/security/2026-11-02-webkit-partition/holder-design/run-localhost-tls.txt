@@ -1,0 +1,4 @@
+{"engine":"webkit","group":"localhost","groupPageSees":"__Host-s=hostpfx","framedSignerSees":""}
+{"engine":"webkit","group":"page.localhost","groupPageSees":"__Host-s=hostpfx","framedSignerSees":""}
+{"engine":"chromium","group":"localhost","groupPageSees":"__Host-s=hostpfx","framedSignerSees":""}
+{"engine":"chromium","group":"page.localhost","groupPageSees":"__Host-s=hostpfx","framedSignerSees":"__Host-s=hostpfx"}

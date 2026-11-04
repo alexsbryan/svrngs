@@ -1,0 +1,19 @@
+$ share 8105 --kind llama-swap --name sam-swap --refuse /ui --refuse /logs --refuse /running --refuse /unload --refuse /metrics
+exit 0
+You lend sam-swap (port 8105) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8105 --limit <number>`.
+They cannot open /ui.
+They cannot open /logs.
+They cannot open /running.
+They cannot open /unload.
+They cannot open /metrics.
+svrngs is running here already, so they can open it now.
+`svrngs unshare sam-swap` stops lending it.
+2026-10-23T00:39:55.106779Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/svrngs"
+2026-10-23T00:39:55.107465Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=168528d0a67bc9774e1313394b2f557aaddae79101e583d01b8fee1a64b2585e at=N0
+2026-10-23T00:39:55.107486Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=309bb54e3c8e600f00a2346b372da2e9dd09a494315af1e3edcbc09d84412545 at=N0
+2026-10-23T00:39:55.107683Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+If sam-swap takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+2026-10-23T00:39:55.108057Z DEBUG cli: cli: share — the password asked for lend=sam-swap given=false terminal=false
+2026-10-23T00:39:55.108366Z DEBUG lend: lend: declared lend=sam-swap source=Port(8105) kind=llama-swap limit=None refused=5 upload=None secret=false asks=false
+2026-10-23T00:39:55.108424Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/svrngs/lock error=lock acquisition failed because the operation would block
+2026-10-23T00:39:55.108433Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/svrngs/lock

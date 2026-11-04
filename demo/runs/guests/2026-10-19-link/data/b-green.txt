@@ -1,0 +1,13 @@
+$ CARGO_INCREMENTAL=0 cargo test -q -p svrngs-node --test browser guests::   # (b), Chromium and WebKit
+running 2 tests
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 107 filtered out; finished in 43.22s
+
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3075 / 3076 lines
+.                     16846 / 16847 lines
+
+$ python3 scripts/trust_check.py
+trust floor: 7 policies, 8 listeners, 8 gates
+
+$ python3 scripts/vocab_check.py
+73 app nouns, 0 in infra code

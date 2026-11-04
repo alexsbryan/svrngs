@@ -1,0 +1,15 @@
+$ target/debug/give check  --name svrngs-test-factorio apps/give/cards/factorio
+passed  read the card: Factorio
+passed  its asks: 0 agreed
+passed  podman's machine
+passed  pull by digest: docker.io/factoriotools/factorio:2.1.23-rootless@sha256:a88410c4ef8685bf754256c6076b87ad185596544f4d53a6145ebcf671dd2f92
+passed  start: its door on 127.0.0.1:58620
+passed  healthy
+passed  snapshot: [("world", Reflink)], paused 903.262833ms
+passed  stop
+passed  restore: the state is the snapshot's
+passed  start again
+passed  healthy again
+passed  remove what the check made
+Factorio can go on the shelf.
+exit 0 after 16 s

@@ -1,0 +1,152 @@
+plant 1: the visit kept off the record, so only its host's computer lists it (GUESTS §7 bar 7)
+195c195
+<     let live = (r.visits.iter()).filter(|(_, g)| g.live(&r.cut, now));
+---
+>     let live = (r.visits.iter()).filter(|(_, g)| g.live(&r.cut, now) && g.host == me);
+
+running 1 test
+guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium --- FAILED
+
+failures:
+
+---- guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium stdout ----
+Bo's home page: {
+  "after": [],
+  "all": [],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+
+thread 'guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium' (69866322) panicked at crates/svrngs-node/tests/browser/guests.rs:259:5:
+Bo's home page lists Sam visiting, Kim's guest, until Thursday: {
+  "after": [],
+  "all": [],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 110 filtered out; finished in 6.87s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit 101
+
+plant 2: Stop taking the row off Kim's page alone
+111c111,112
+<     const stop = (v, li = el('li', `${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `)) => (li.append(button(`Stop ${v.guest}’s visit`, () => post('/visits', [g.id, v.id]).then((a) => setTimeout(() => location.reload(), a.ts_unix * 1000 - Date.now()), (e) => li.append(` ${e.message}`)))), li);
+---
+>     const stop = (v, li = el('li', `${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `)) => (li.append(button(`Stop ${v.guest}’s visit`, () => (localStorage.setItem(v.id, 'stopped'), location.reload()))), li);
+>     g.visiting = g.visiting?.filter((v) => !localStorage.getItem(v.id));
+
+running 1 test
+guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium --- FAILED
+
+failures:
+
+---- guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium stdout ----
+Bo's home page: {
+  "after": [],
+  "all": [
+    "Sam, Kim’s guest, until Thursday 1:19 AM"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+Kim's home page: {
+  "after": [
+    []
+  ],
+  "all": [
+    "Sam, until Thursday 1:19 AM. Stop ends the visit now: what you lend stops opening to Sam, and everyone in this group sees it ended. Stop Sam’s visit",
+    "Sam, Kim’s guest, until Thursday 1:19 AM"
+  ],
+  "clipboard": null,
+  "drawn": null,
+  "heading": "A group whose name this computer cannot read",
+  "links": [
+    {
+      "target": "_blank",
+      "text": "Show this group on a screen"
+    }
+  ],
+  "logs": [],
+  "opened": null,
+  "opens": [],
+  "read": null,
+  "text": null,
+  "timed": {}
+}
+
+thread 'guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium' (69892084) panicked at crates/svrngs-node/tests/browser/guests.rs:277:5:
+Kim's Stop is in Kim's record: {
+    OpId(
+        ContentHash(5620bc2c72f54064),
+    ): Guest {
+        host: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+        at: 1792513149,
+        visit: Visit {
+            guest: Person(
+                Name(
+                    "Sam",
+                ),
+            ),
+            key: "43a72e714401762df66b68c26dfbdf2682aaec9f2474eca4613e424a0fbafd3c",
+            opens: {},
+            until: 1792657149,
+        },
+        stopped: None,
+    },
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 110 filtered out; finished in 7.32s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit 101

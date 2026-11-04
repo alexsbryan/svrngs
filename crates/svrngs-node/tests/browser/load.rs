@@ -1,7 +1,8 @@
 //! The host's load, and the bar past which a seek that missed is not
 //! judged: one home for the two binaries that time seeks, the conformance
-//! canary (crates/svrngs-node/tests/conformance.rs) and the browser tests
-//! (bash-film-load; AGENTS.md 8), each including this file by path.
+//! canary (crates/svrngs-node/tests/conformance.rs), the browser tests
+//! (bash-film-load; AGENTS.md 8) and the films scene
+//! (crates/svrngs/tests/scenes/films.rs), each including this file by path.
 
 /// The load per core past which a seek that missed is not judged (chk-1;
 /// operator, 2026-10-10, "Could-not-judge above a load bar"): sup-4's
@@ -41,4 +42,27 @@ pub fn past_busy(load: &str, cores: usize) -> Option<String> {
         .and_then(|(_, a)| a.split([' ', ',']).next()?.parse::<f64>().ok())?;
     (first > BUSY * cores as f64)
         .then(|| format!("could-not-judge, load {first} on {cores} cores, past {BUSY} a core"))
+}
+
+/// Demo A's seek bar on the film's seeks, each playing again within five
+/// seconds, judged as the conformance canary judges it (`past_busy`): `Ok(None)`
+/// when each did; when one missed, on a host whose load at the run's start
+/// was past `load::BUSY` a core, `Ok(Some(could-not-judge …))`, never a
+/// pass; and on a host under it, `Err` naming the misses, which fails.
+pub fn seeks_judged(
+    seeks: &[serde_json::Value],
+    load: &str,
+    cores: usize,
+) -> Result<Option<String>, String> {
+    let missed: Vec<String> = seeks
+        .iter()
+        .filter(|s| s["ms"].as_u64().is_none_or(|ms| ms > 5_000))
+        .map(serde_json::Value::to_string)
+        .collect();
+    if missed.is_empty() {
+        return Ok(None);
+    }
+    past_busy(load, cores)
+        .map(Some)
+        .ok_or_else(|| missed.join(", "))
 }

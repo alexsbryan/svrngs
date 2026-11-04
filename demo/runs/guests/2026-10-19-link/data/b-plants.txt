@@ -1,0 +1,45 @@
+guests-link (b): each plant red, then green. Each plant applied alone to the (b) tree, run as
+  CARGO_INCREMENTAL=0 cargo test -q -p svrngs-node --test browser 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium'
+and reverted (/tmp/gl/plant.sh). The panicking line is crates/svrngs-node/tests/browser/guests.rs's before rustfmt;
+"now" is the same assertion at the committed file's line.
+
+== offers-72: home.js: the lengths [48, 72, 24, 6], 48 still first. Red on the lengths offered, none past 48 hours (now :118).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:117:5:
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 58.03s
+
+== fold-holds-72: membership.rs: `timely` up to 3 * VISIT_LONGEST. Red: Ana, at the 72-hour link, let in (`anaLong`, now :169).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:168:5:
+  left: String("You’re Kim’s guest until 10/23/2026, 7:47:13 AM")
+ right: "This link lets nobody in. Ask for a new one."
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 81.32s
+
+== default-24: home.js: the lengths [24, 48, 6]. Red: the length kept with none chosen is 24 hours (now :115).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:114:5:
+  left: String("24 hours")
+ right: "48 hours"
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 73.76s
+
+== key-of-own-group: app.js: the visit's key the key of the first group the page keeps. Red: the visit's key Sam's own group's (GUESTS §7 bar 8; now :189).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:188:5:
+  left: "fd1724385aa0c75b64fb78cd602fa1d991fdebf76b13c58ed702eac835e9f618"
+ right: "fd1724385aa0c75b64fb78cd602fa1d991fdebf76b13c58ed702eac835e9f618"
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 48.92s
+
+== kept-as-group: store.js: `keepVisit` keeping the visit as a group too. Red: it appears in the page's groups beside Sam's own (now :180).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:179:5:
+  left: Array [String("AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29c0ZmzNRXoAxQKtAm1grRY7mh0dHA6Ly8xMjcuMC4wLjE6NDkyOTkv"), String("own")]
+ right: Array [String("own")]
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 47.14s
+
+== claimed-twice: invite.rs: `claim_visit` keeping the link it claims. Red: Ana, at Sam's link after Sam, let in as a second guest (`anaAgain`, now :170).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:169:5:
+  left: String("You’re Kim’s guest until 10/22/2026, 7:54:52 AM")
+ right: "This link lets nobody in. Ask for a new one."
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 47.86s
+
+== secret-in-query: home.rs: the link `<page>?visit=<token>#visit=<token>`. Red: the secret in a request's URL before the fragment (`secretAsked`, now :122).
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' panicked at crates/svrngs-node/tests/browser/guests.rs:121:5:
+  left: Array [String("http://localhost:50345/?visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cqRlYGr8qkb9g0W5n6KGRFWh0dHA6Ly8xMjcuMC4wLjE6NTAyNTYv"), String("http://localhost:50345/?visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cqRlYGr8qkb9g0W5n6KGRFWh0d
+ right: Array []
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 108 filtered out; finished in 28.62s
+

@@ -18,8 +18,8 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use svrngs_node::actor_of;
 use svrngs_node::node::Node;
+use svrngs_node::{actor_of, RailAct};
 
 /// Ana's, Ben's and Cy's computers, each knowing where the others listen.
 async fn computers() -> (Vec<Node>, Vec<tempfile::TempDir>) {
@@ -35,10 +35,15 @@ async fn computers() -> (Vec<Node>, Vec<tempfile::TempDir>) {
 /// `who` syncs a directory of its own under `root` in `group`, as
 /// `share --folder` asks it: the directory.
 async fn synced_in(who: &Node, root: &Path, group: &str) -> PathBuf {
-    let dir = root.join("Shared");
+    synced_at(who, root.join("Shared"), group).await
+}
+
+/// `who` syncs `dir` in `group`, as `share --folder` asks it: the directory.
+async fn synced_at(who: &Node, dir: PathBuf, group: &str) -> PathBuf {
     std::fs::create_dir_all(&dir).unwrap();
     let said = http()
         .post(format!("http://{}/v1/folders", who.api_addr()))
+        .bearer_auth(who.token())
         .json(&json!({ "dir": dir, "group": group }))
         .send()
         .await
@@ -61,7 +66,12 @@ fn carry(dir: &Path, name: &str) {
 /// What `node` lends its browser in `group` now (`GET /v1/lends`).
 async fn lends(node: &Node, group: &str) -> Value {
     let url = format!("http://{}/v1/lends?namespace={group}", node.api_addr());
-    let answer = http().get(url).send().await.unwrap();
+    let answer = http()
+        .get(url)
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
     assert!(answer.status().is_success(), "{:?}", answer.text().await);
     answer.json().await.unwrap()
 }
@@ -73,7 +83,7 @@ fn of_kind<'a>(lends: &'a Value, kind: &str) -> Vec<&'a Value> {
 }
 
 /// `path` asked at the origin `origin` on `node`'s listener, as a
-/// program on that computer asks it: the answer.
+/// program on that computer asks it, with its token: the answer.
 async fn at(
     node: &Node,
     origin: &str,
@@ -85,7 +95,8 @@ async fn at(
     let url = format!("http://{}{path}", node.api_addr());
     let ask = http()
         .request(method.parse().unwrap(), url)
-        .header("host", host);
+        .header("host", host)
+        .bearer_auth(node.token().trim());
     let ask = match body {
         Some(b) => ask.json(&b),
         None => ask,
@@ -94,14 +105,19 @@ async fn at(
 }
 
 /// The ops of an app's route's answer that a fold counts, each `[by, op]`:
-/// not voided, and stating something.
+/// not voided, and stating something. `by` as the apps read it
+/// (`apps/expenses/expenses.js`): `on_behalf_of` when the op names one,
+/// else its `person`.
 fn live(read: &Value) -> Vec<Value> {
     let ops = read["ops"].as_array().expect("the route answers its ops");
     let counted = ops
         .iter()
         .filter(|o| o["voided"] == false && !o["payload"].is_null());
     counted
-        .map(|o| json!([o["on_behalf_of"], o["payload"]]))
+        .map(|o| {
+            let by = Some(&o["on_behalf_of"]).filter(|b| !b.is_null());
+            json!([by.unwrap_or(&o["person"]), o["payload"]])
+        })
         .collect()
 }
 
@@ -488,16 +504,19 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
     let group = found("house", 9, ana, &[]);
     round(ana).await;
     let root = tempfile::tempdir().unwrap();
-    let folder = synced_in(ana, root.path(), &group).await;
+    let folder = synced_at(ana, root.path().join("house"), &group).await;
     std::fs::set_permissions(&folder, std::fs::Permissions::from_mode(0o555)).unwrap();
     let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let body = json!([group, ["Money"]]).to_string();
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
+        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
-        .json(&json!([group, ["Money"]]))
+        .header("content-type", "application/json")
+        .body(body)
         .send()
         .await
         .unwrap();
@@ -515,6 +534,76 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
         traced.lines().any(why),
         "the write's error traced:\n{traced}"
     );
+    ana.endpoint().close().await;
+}
+
+/// **An app brought from the shelf lands in the group's own folder**
+/// (docs/guide/folders.md, "The apps you bring from your home page live
+/// here too, under `apps/`"): Ana keeps `house`'s folder and shares
+/// another, `drop`, in it; Money brought lands in `house/apps/`, never in
+/// `drop/`. Planted: the app written into the group's first folder by
+/// name, `drop`.
+#[tokio::test]
+async fn an_app_brought_lands_in_the_group_s_own_folder() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let own = synced_at(ana, root.path().join("house"), &group).await;
+    let drop = synced_at(ana, root.path().join("drop"), &group).await;
+    let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let body = json!([group, ["Money"]]).to_string();
+    let answer = http()
+        .post(format!("http://{}/shelf", ana.api_addr()))
+        .header("host", &home)
+        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .header("content-type", "application/json")
+        .body(body)
+        .send()
+        .await
+        .unwrap();
+    let status = answer.status();
+    assert_eq!(status, 200, "{}", answer.text().await.unwrap());
+    let money = |dir: &Path| dir.join("apps/Money/index.html").is_file();
+    assert!(money(&own), "Money in house's own folder");
+    assert!(!money(&drop), "Money not in the folder shared beside it");
+    ana.endpoint().close().await;
+}
+
+/// **A group's own folder placed apart takes what is brought** (group.rs
+/// `apart`): where `house` was taken, Ana's folder of the group is
+/// `house-<id8>`; Money brought lands there. Planted: the folder matched
+/// by its directory's name alone, which refused it 409.
+#[tokio::test]
+async fn an_app_brought_lands_in_the_group_s_own_folder_placed_apart() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let placed = root.path().join(format!("house-{}", &group[..8]));
+    let own = synced_at(ana, placed, &group).await;
+    let home = format!("svrngs.localhost:{}", ana.api_addr().port());
+    let body = json!([group, ["Money"]]).to_string();
+    let answer = http()
+        .post(format!("http://{}/shelf", ana.api_addr()))
+        .header("host", &home)
+        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .header("content-type", "application/json")
+        .body(body)
+        .send()
+        .await
+        .unwrap();
+    let status = answer.status();
+    assert_eq!(status, 200, "{}", answer.text().await.unwrap());
+    assert!(own.join("apps/Money/index.html").is_file());
     ana.endpoint().close().await;
 }
 
@@ -685,7 +774,9 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     }
     let root = tempfile::tempdir().unwrap();
     carry(&synced_in(ana, root.path(), &group).await, "Money");
-    let leave = http().post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()));
+    let leave = http()
+        .post(format!("http://{}{LEAVES_ROUTE}", cy.api_addr()))
+        .bearer_auth(cy.token());
     let ask = leave
         .json(&LeaveAsk {
             group: group.clone(),
@@ -762,6 +853,408 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     );
     assert_eq!(spans.len(), 3, "{read:#}");
     for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A line a device signed is carried unchanged, and only one its signer
+/// stands to sign** (capability-signed; `demo/runs/authorship/2026-10-24/
+/// DESIGN.md` §3, "The computer's part"): Ben's phone carries lines to
+/// Ana's computer by `/carry`. A line a stranger's key signed, and Ben's
+/// line with another act put under his signature, are each refused,
+/// `not_signed`, "This entry was not signed by anyone in …", and Ana's copy
+/// holds neither. Kept: Ben's own line is stored as he signed it, its
+/// bytes, its actor and its person his, and counts, and Ana's computer
+/// writes no line of its own for it. Planted: the signature's check left
+/// out — the tampered line is stored.
+#[tokio::test]
+async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 11, ana, &[(ben, 2)]);
+    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
+        let at = format!("http://{}/carry", bridge.local_addr());
+        http().post(at).json(&json!([group, line])).send()
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 1;
+    let act = |n: u32| {
+        RailAct::from_json(
+            json!({ "op": "record", "payload": { "kind": "Money/expense", "n": n } }),
+        )
+        .unwrap()
+    };
+    let line = |k: u8, n: u32| {
+        svrngs_core::sign_act(&signing(k), &group, now, 0, None, act(n), None, None, None)
+    };
+    let mut tampered = line(2, 1);
+    tampered.kind.act = act(2);
+    for refused in [line(99, 1), tampered] {
+        let answer = carry(&refused).await.unwrap();
+        assert_eq!(answer.status(), 422, "{}", refused.actor);
+        let said: Value = answer.json().await.unwrap();
+        assert_eq!(said["kind"], "not_signed", "{said}");
+        assert!(
+            said["error"]
+                .as_str()
+                .unwrap()
+                .starts_with("This entry was not signed by anyone in"),
+            "{said}"
+        );
+    }
+    let held = || {
+        let a = ana.rail().admission(&group).unwrap();
+        let ops = svrngs_core::tests_support::wire_ops(&a);
+        ops.into_iter()
+            .filter(|o| o.payload.is_some())
+            .collect::<Vec<_>>()
+    };
+    // Every line but the keeper's two cutovers, of authorship and of
+    // holders, and where the group meets, which ana's computer, keeping the
+    // group, writes once each on a round of its own (capability-signed;
+    // HOLDER_APPROVAL §5; relay fallbacks).
+    let all = || {
+        let (mut ops, _) = ana
+            .rail()
+            .ops_missing_from_within(&group, &Default::default(), usize::MAX)
+            .unwrap();
+        use svrngs_core::RailAct::{Holders, Meets, Signers};
+        ops.retain(|o| !matches!(o.kind.act, Signers { .. } | Holders { .. } | Meets { .. }));
+        ops
+    };
+    let anas = || {
+        all()
+            .iter()
+            .filter(|o| o.actor == actor_of(&signing(1)))
+            .count()
+    };
+    assert!(held().is_empty(), "neither is held");
+    let before = (all().len(), anas());
+
+    let own = line(2, 1);
+    let answer = carry(&own).await.unwrap();
+    assert_eq!(answer.status(), 200);
+    let said: Value = answer.json().await.unwrap();
+    assert_eq!(
+        (said["id"].as_str(), said["counted"].as_bool()),
+        (Some(own.id.to_string().as_str()), Some(true)),
+        "{said}"
+    );
+    let ops = held();
+    assert_eq!(
+        (all().len(), anas()),
+        (before.0 + 1, before.1),
+        "ana's computer wrote no line of its own"
+    );
+    assert_eq!(
+        (ops.len(), ops[0].actor.as_str(), ops[0].person.as_str()),
+        (1, own.actor.as_str(), "ben")
+    );
+    let stored = all().into_iter().find(|o| o.id == own.id).unwrap();
+    assert_eq!(
+        serde_json::to_string(&stored).unwrap(),
+        serde_json::to_string(&own).unwrap(),
+        "carried unchanged"
+    );
+}
+
+/// **A phone's act in an app is signed on the phone, and any computer
+/// carries it as that phone's person's** (capability-signed; `demo/runs/
+/// authorship/2026-10-24/DESIGN.md` §3, §4): the holder Ben's phone keeps
+/// for Money, its pass on each line, carries a line to Ana's computer by
+/// `/carry` on the holders' protocol, which any key may speak. Kept: the
+/// line is stored unchanged and counts, its actor the holder and its person
+/// Ben, once the approver Ben's pass names approved its exact content
+/// (HOLDER_APPROVAL §3.D). Refused, `not_signed`, and not held: a holder
+/// line under a pass a stranger signed, and one under Ben's pass with its
+/// person rewritten to Ana's key; `not_approved`: Ben's line its approver
+/// never approved; `upgrade_keeper`: the approved line before the keeper,
+/// Ana, wrote the holders' cutover.
+#[tokio::test]
+async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
+    use svrngs_core::pass::{Label, Pass};
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 11, ana, &[(ben, 2)]);
+    let holder = signing(9);
+    let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
+        let at = format!("http://{}/carry", bridge.local_addr());
+        http().post(at).json(&json!([group, line])).send()
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 1;
+    let app = Label::carried(&signing(1).verifying_key().to_bytes(), "Money", &group);
+    let approver = signing(8);
+    let pass = |by: u8| {
+        let lends = (app.clone(), vec![]);
+        Pass::approvable(
+            &signing(by),
+            &actor_of(&holder),
+            lends,
+            now + 600,
+            Some(actor_of(&approver)),
+        )
+    };
+    let act = json!({ "op": "record", "payload": { "kind": "Money/expense", "n": 1 } });
+    let line = |pass: Pass| {
+        let act = RailAct::from_json(act.clone()).unwrap();
+        svrngs_core::sign_act(&holder, &group, now, 0, None, act, None, None, Some(pass))
+    };
+    let mut renamed = pass(2);
+    renamed.person = actor_of(&signing(1));
+    for refused in [line(pass(99)), line(renamed)] {
+        let answer = carry(&refused).await.unwrap();
+        assert_eq!(answer.status(), 422);
+        let said: Value = answer.json().await.unwrap();
+        assert_eq!(said["kind"], "not_signed", "{said}");
+    }
+    let unapproved = carry(&line(pass(2))).await.unwrap();
+    assert_eq!(unapproved.status(), 422);
+    let said: Value = unapproved.json().await.unwrap();
+    assert_eq!(said["kind"], "not_approved", "{said}");
+    let approved = pass(2)
+        .approve(&approver, &line(pass(2)), &group, now)
+        .unwrap();
+    let own = line(approved);
+    let said: Value = carry(&own).await.unwrap().json().await.unwrap();
+    assert_eq!(
+        said["kind"], "upgrade_keeper",
+        "not before the keeper's holders cutover: {said}"
+    );
+    ana.rail()
+        .commit(&group, &svrngs_core::Cutover::Holders)
+        .unwrap()
+        .unwrap();
+    let said: Value = carry(&own).await.unwrap().json().await.unwrap();
+    assert_eq!(said["counted"], true, "{said}");
+    let a = ana.rail().admission(&group).unwrap();
+    let ops: Vec<_> = (svrngs_core::tests_support::wire_ops(&a).into_iter())
+        .filter(|o| o.payload.is_some())
+        .collect();
+    assert_eq!(ops.len(), 1, "only Ben's phone's own line is held: {ops:?}");
+    assert_eq!(
+        (ops[0].actor.as_str(), ops[0].person.as_str()),
+        (own.actor.as_str(), "ben")
+    );
+}
+
+/// **A member's home page opens this computer's own copy, and another
+/// computer never writes as them** (capability-signed; DESIGN.md §7 beside
+/// `demo/runs/authorship/2026-10-24/`, the case the scenes found, c7452b2c):
+/// Ana carries Money and it reaches Cy's computer, both on. Cy's list names
+/// both copies, Cy's own first, so the page's one copy (question.js `once`)
+/// is Cy's, whose acts Cy's computer signs. Refused: a write from Cy's
+/// computer reaching Ana's copy, which Ana's computer would sign
+/// `on_behalf_of` Cy: 403, "Open Money from your home page to write in
+/// it.", and nothing written; Ana's copy still answers Cy's reads. Kept:
+/// Cy's write on Cy's own copy is Cy's. Planted: the list sorted by person
+/// alone, as before, and Ana's copy is first.
+#[tokio::test]
+async fn a_member_writes_on_their_own_computer_s_copy_alone() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 12, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let at_ana = synced_in(ana, roots[0].path(), &group).await;
+    let at_cy = synced_in(cy, roots[1].path(), &group).await;
+    carry(&at_ana, "Money");
+    let script = at_cy.join("apps/Money/app.js");
+    assert!(
+        until(&[ana, cy], || script.exists()).await,
+        "Money reaches Cy's folder"
+    );
+    let mut listed = lends(cy, &group).await;
+    for _ in 0..30 {
+        if of_kind(&listed, "Money").len() == 2 {
+            break;
+        }
+        round(cy).await;
+        listed = lends(cy, &group).await;
+    }
+    let money = of_kind(&listed, "Money");
+    let keys: Vec<_> = money.iter().map(|m| m["key"].as_str().unwrap()).collect();
+    let (anas, cys) = (actor_of(&signing(1)), actor_of(&signing(3)));
+    assert_eq!(
+        keys,
+        [cys.as_str(), anas.as_str()],
+        "Cy's own copy first:\n{listed:#}"
+    );
+
+    let expense = json!({ "op": { "kind": "expense", "amount_cents": 1 } });
+    let theirs = money[1]["origin"].as_str().unwrap();
+    let wrote = at(cy, theirs, "POST", "/svrngs/acts", Some(expense.clone())).await;
+    assert_eq!(wrote.status(), 403, "Ana's computer writes nothing as Cy");
+    let said: Value = wrote.json().await.unwrap();
+    assert_eq!(
+        said["error"],
+        "Open Money from your home page to write in it."
+    );
+    let read = at(cy, theirs, "GET", "/svrngs/acts", None).await;
+    assert_eq!(read.status(), 200, "Ana's copy still answers Cy's reads");
+    let ops = read.json::<Value>().await.unwrap()["ops"]
+        .as_array()
+        .unwrap()
+        .len();
+    assert_eq!(ops, 0, "nothing written");
+
+    let own = money[0]["origin"].as_str().unwrap();
+    let wrote = at(cy, own, "POST", "/svrngs/acts", Some(expense)).await;
+    assert!(wrote.status().is_success(), "Cy writes on Cy's own copy");
+    let op: Value = wrote.json().await.unwrap();
+    assert_eq!(op["actor"], cys.as_str(), "{op:#}");
+}
+
+/// **A phone's write in an app is the phone's own: the computer it reaches
+/// writes nothing as its person** (capability-signed; `demo/runs/
+/// authorship/2026-10-24/DESIGN.md` §3, §5): Bo stands in house from a
+/// phone, and Bo's holder, under Bo's pass for Money, posts an expense to
+/// Money's route on Ana's computer, as a phone's worker did before it
+/// signed its own lines. Refused, 403, and nothing written: Ana's computer
+/// would sign it `on_behalf_of` Bo, which no copy can tell from a forgery;
+/// Bo's phone signs its own and carries it (`/carry`). Kept: the holder's
+/// read of the route.
+#[tokio::test]
+async fn a_computer_writes_nothing_as_a_phone_s_person() {
+    use svrngs_core::pass::{Label, Pass};
+    use svrngs_node::{Device, Person, Redemption};
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 13, ana, &[]);
+    let append = |act| {
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        ana.rail()
+            .commit(&group, &fixture)
+            .unwrap()
+            .unwrap()
+            .lines()[0]
+            .clone()
+    };
+    let link = signing(8);
+    let invite = append(RailAct::Invite {
+        key: actor_of(&link),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let bo = Person::parse("bo").unwrap();
+    let redeemed = Redemption::sign(&signing(7), &group, &invite.id, &bo, Device::Browser);
+    append(RailAct::Admit {
+        invite: Some(redeemed),
+        person: bo,
+        key: actor_of(&signing(7)),
+    });
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Money");
+    let mut origin = None;
+    for _ in 0..30 {
+        let seen = lends(ana, &group).await;
+        origin = (of_kind(&seen, "Money").first()).map(|l| l["origin"].to_string());
+        if origin.is_some() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    let origin = origin.expect("Money is listed");
+    let label = origin.trim_matches('"').trim_start_matches("http://");
+    let label = label.split('.').next().unwrap();
+    let holder = signing(9);
+    let until = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 600;
+    let app = (Label::parse(label).unwrap(), vec![]);
+    let pass = Pass::sign(&signing(7), &actor_of(&holder), app, until).encode();
+    let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let route = format!("http://{}/lend/{label}/svrngs/acts", bridge.local_addr());
+    let expense = json!({ "op": { "kind": "expense", "amount_cents": 1 } });
+    let wrote = (http().post(&route).header("x-svrngs-pass", &pass))
+        .json(&expense)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(wrote.status(), 403, "{:?}", wrote.text().await);
+    let read = http()
+        .get(&route)
+        .header("x-svrngs-pass", &pass)
+        .send()
+        .await;
+    let read = read.unwrap();
+    assert_eq!(read.status(), 200, "Bo's phone still reads Money");
+    let read: Value = read.json().await.unwrap();
+    assert_eq!(live(&read), Vec::<Value>::new(), "nothing written as bo");
+}
+
+/// **An app is told the page its group's https links print on**
+/// (give-page-host (a)): Give's install line names the page this
+/// computer's svrngs came from, not always ours, so the carried route says
+/// beside its group the page `link` prints on: none while neither the group
+/// nor the computer keeps one; this computer's once install.sh has kept it;
+/// the group's own once a link names one (`link --origin`). Red at
+/// 47d46706: the route answered no `page`. Planted: the computer's page
+/// alone, never the group's — the third read is the computer's.
+#[tokio::test]
+async fn an_app_is_told_the_page_its_group_s_links_print_on() {
+    use svrngs_core::link::Origin;
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 9, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    carry(&synced_in(ana, root.path(), &group).await, "Money");
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let origin = of_kind(&seen, "Money")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let page = || async {
+        let read: Value = at(ana, &origin, "GET", "/svrngs/acts", None)
+            .await
+            .json()
+            .await
+            .unwrap();
+        read.get("page")
+            .cloned()
+            .unwrap_or_else(|| panic!("no page beside the group:\n{read:#}"))
+    };
+    let printed = |given: Option<&Origin>| {
+        let made = ana.host().link(&group, false, given, None).expect("a link");
+        made.page.map(|p| p.as_str().to_string())
+    };
+    assert_eq!(page().await, Value::Null, "neither keeps a page");
+    assert_eq!(printed(None), None);
+
+    let ours = "https://computers.example.org/";
+    std::fs::write(ana.rail().root().join("origin"), ours).unwrap();
+    assert_eq!(page().await, ours, "the page this computer came from");
+    assert_eq!(printed(None).as_deref(), Some(ours));
+
+    let theirs = Origin::parse("https://links.example.org/our/house/").unwrap();
+    assert_eq!(printed(Some(&theirs)).as_deref(), Some(theirs.as_str()));
+    assert_eq!(
+        page().await,
+        theirs.as_str(),
+        "the group's own, once a link names it"
+    );
+    for node in &nodes {
         node.endpoint().close().await;
     }
 }

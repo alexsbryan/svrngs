@@ -31,14 +31,29 @@ export function watch() {
     if (w.seen.has(v)) return;
     w.seen.add(v);
     w.events.push({ e: 'element', t: performance.now() });
-    for (const e of ['emptied', 'loadstart', 'waiting', 'stalled', 'error', 'ended', 'seeking', 'seeked'])
+    for (const e of [
+      'emptied',
+      'loadstart',
+      'waiting',
+      'stalled',
+      'error',
+      'ended',
+      'seeking',
+      'seeked',
+    ])
       v.addEventListener(e, () => w.events.push({ e, t: performance.now(), ct: v.currentTime }));
   };
   const sample = () => {
     const v = document.querySelector('video');
     if (!v) return w.samples.push({ t: performance.now(), none: true });
     bind(v);
-    w.samples.push({ t: performance.now(), ct: v.currentTime, paused: v.paused, seeking: v.seeking, rs: v.readyState });
+    w.samples.push({
+      t: performance.now(),
+      ct: v.currentTime,
+      paused: v.paused,
+      seeking: v.seeking,
+      rs: v.readyState,
+    });
   };
   // The element playing now is bound before any phase begins: only one
   // put in its place later counts.
@@ -52,18 +67,40 @@ export function judge(since) {
   const w = window.__w;
   const s = w.samples.filter((x) => x.t >= since);
   const ev = w.events.filter((x) => x.t >= since);
-  let back = 0, still = 0, run = 0;
+  let back = 0,
+    still = 0,
+    run = 0;
   for (let i = 1; i < s.length; i++) {
-    const a = s[i - 1], b = s[i];
-    if (a.none || b.none) { run += b.t - a.t; still = Math.max(still, run); continue; }
+    const a = s[i - 1],
+      b = s[i];
+    if (a.none || b.none) {
+      run += b.t - a.t;
+      still = Math.max(still, run);
+      continue;
+    }
     back = Math.max(back, a.ct - b.ct);
-    if (b.ct > a.ct) run = 0; else { run += b.t - a.t; still = Math.max(still, run); }
+    if (b.ct > a.ct) run = 0;
+    else {
+      run += b.t - a.t;
+      still = Math.max(still, run);
+    }
   }
   const count = (e) => ev.filter((x) => x.e === e).length;
   return {
-    samples: s.length, emptied: count('emptied'), loadstart: count('loadstart'), element: count('element'),
-    waiting: count('waiting'), error: count('error'), back_s: +back.toFixed(2), still_ms: Math.round(still),
-    left_alone: count('emptied') === 0 && count('loadstart') === 0 && count('element') === 0 && back <= 2 && still < 5000,
+    samples: s.length,
+    emptied: count('emptied'),
+    loadstart: count('loadstart'),
+    element: count('element'),
+    waiting: count('waiting'),
+    error: count('error'),
+    back_s: +back.toFixed(2),
+    still_ms: Math.round(still),
+    left_alone:
+      count('emptied') === 0 &&
+      count('loadstart') === 0 &&
+      count('element') === 0 &&
+      back <= 2 &&
+      still < 5000,
   };
 }
 
@@ -72,7 +109,11 @@ export function judge(since) {
 export async function seek(pct) {
   const s = document.querySelector('.osdPositionSlider');
   const v0 = document.querySelector('video');
-  if (!s || !v0) return { ms: null, error: `no seek bar or no video; the page says ${document.body.innerText.slice(0, 160)}` };
+  if (!s || !v0)
+    return {
+      ms: null,
+      error: `no seek bar or no video; the page says ${document.body.innerText.slice(0, 160)}`,
+    };
   const target = (v0.duration * pct) / 100;
   const t0 = performance.now();
   s.value = String(pct);
@@ -87,16 +128,31 @@ export async function seek(pct) {
       if (moving && from === null) from = v.currentTime;
       if (!moving) from = null;
       if (moving && from !== null && v.currentTime > from + 0.3) {
-        return done({ pct, ms: Math.round(t), at: +v.currentTime.toFixed(2), target: +target.toFixed(2) });
+        return done({
+          pct,
+          ms: Math.round(t),
+          at: +v.currentTime.toFixed(2),
+          target: +target.toFixed(2),
+        });
       }
-      if (t > 30_000) return done({ pct, ms: null, at: v?.currentTime ?? null, paused: v?.paused, seeking: v?.seeking, rs: v?.readyState, error: v?.error?.message ?? null });
+      if (t > 30_000)
+        return done({
+          pct,
+          ms: null,
+          at: v?.currentTime ?? null,
+          paused: v?.paused,
+          seeking: v?.seeking,
+          rs: v?.readyState,
+          error: v?.error?.message ?? null,
+        });
       setTimeout(check, 20);
     };
     setTimeout(check, 50);
   });
 }
 
-export const shown = (page) => page.evaluate(() => document.body.innerText.slice(0, 200).replace(/\s+/g, ' ')).catch(() => '?');
+export const shown = (page) =>
+  page.evaluate(() => document.body.innerText.slice(0, 200).replace(/\s+/g, ' ')).catch(() => '?');
 export async function timed(person, what, step) {
   const t0 = Date.now();
   try {
@@ -115,7 +171,15 @@ export function record(context, page, user, { DUMP, T0 }) {
   fs.mkdirSync(dir, { recursive: true });
   const index = fs.openSync(`${dir}/index.jsonl`, 'w');
   let n = 0;
-  const tally = { responses: 0, bodies: 0, body_bytes: 0, no_body: 0, from_worker: 0, sockets: [], frames: 0 };
+  const tally = {
+    responses: 0,
+    bodies: 0,
+    body_bytes: 0,
+    no_body: 0,
+    from_worker: 0,
+    sockets: [],
+    frames: 0,
+  };
   context.on('response', async (r) => {
     const i = n++;
     tally.responses++;
@@ -131,7 +195,11 @@ export function record(context, page, user, { DUMP, T0 }) {
       tally.no_body++;
     }
     const headers = await r.allHeaders().catch(() => r.headers());
-    fs.writeSync(index, JSON.stringify({ i, ms: Date.now() - T0, url: r.url(), status: r.status(), headers, file }) + '\n');
+    fs.writeSync(
+      index,
+      JSON.stringify({ i, ms: Date.now() - T0, url: r.url(), status: r.status(), headers, file }) +
+        '\n',
+    );
   });
   page.on('websocket', (ws) => {
     tally.sockets.push(ws.url().replace(/ApiKey=[^&]+/, 'ApiKey=<its token>'));
@@ -154,29 +222,58 @@ export async function enter(p, run) {
   person.tally = record(context, page, p.user, run);
   const logs = (person.logs = []);
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-  page.on('console', (m) => { if (/^play\(\)/.test(m.text())) logs.push(`console.${m.type()}: ${m.text().slice(0, 200)}`); });
-  page.on('requestfailed', (r) => logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`));
-  page.on('response', (r) => { if (r.status() >= 400) logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`); });
+  page.on('console', (m) => {
+    if (/^(play\(\)|OPEN|SIGN)/.test(m.text()))
+      logs.push(`console.${m.type()}: ${m.text().slice(0, 200)}`);
+  });
+  page.on('requestfailed', (r) =>
+    logs.push(`failed: ${r.url().slice(0, 120)}: ${r.failure()?.errorText}`),
+  );
+  page.on('response', (r) => {
+    if (r.status() >= 400)
+      logs.push(`http ${r.status()} ${r.request().method()} ${r.url().slice(0, 140)}`);
+  });
   person.browser = context.browser()?.version() ?? null;
   // Every play() the page asks, and how the browser answers it: WebKit
   // refuses one asked too long after a tap, and jellyfin-web says nothing.
   // PLAY_WATCH=0 leaves play() alone, to see the watch change nothing.
-  if (process.env.PLAY_WATCH !== '0') await context.addInitScript(() => {
-    const play = HTMLMediaElement.prototype.play;
-    HTMLMediaElement.prototype.play = function () {
-      const p = play.call(this);
-      p?.then(() => console.log('play() played'), (e) => console.log(`play() refused: ${e?.name}: ${e?.message}`));
-      return p;
-    };
-  });
+  if (process.env.PLAY_WATCH !== '0')
+    await context.addInitScript(() => {
+      const play = HTMLMediaElement.prototype.play;
+      HTMLMediaElement.prototype.play = function () {
+        const p = play.call(this);
+        p?.then(
+          () => console.log('play() played'),
+          (e) => console.log(`play() refused: ${e?.name}: ${e?.message}`),
+        );
+        return p;
+      };
+    });
   if (p.seed) {
-    await context.addInitScript(([user, server]) => {
-      if (localStorage.getItem('jellyfin_credentials')) return;
-      localStorage.setItem('jellyfin_credentials', JSON.stringify({ Servers: [{
-        ManualAddress: location.origin, LocalAddress: location.origin, LastConnectionMode: 2, ManualAddressOnly: true,
-        Name: 'jellyfin', Id: server, DateLastAccessed: Date.now(), UserId: user, AccessToken: 'door',
-      }] }));
-    }, [p.seed, args.server]);
+    await context.addInitScript(
+      ([user, server]) => {
+        if (localStorage.getItem('jellyfin_credentials')) return;
+        localStorage.setItem(
+          'jellyfin_credentials',
+          JSON.stringify({
+            Servers: [
+              {
+                ManualAddress: location.origin,
+                LocalAddress: location.origin,
+                LastConnectionMode: 2,
+                ManualAddressOnly: true,
+                Name: 'jellyfin',
+                Id: server,
+                DateLastAccessed: Date.now(),
+                UserId: user,
+                AccessToken: 'door',
+              },
+            ],
+          }),
+        );
+      },
+      [p.seed, args.server],
+    );
   }
 
   if (args.way === 'phone') {
@@ -185,14 +282,23 @@ export async function enter(p, run) {
     person.list_ms = await timed(person, 'the list', async () => {
       await page.goto(at);
       await page.waitForFunction(
-        () => !document.getElementById('join').hidden || /good|bad/.test(document.getElementById('status').className),
-        null, { timeout: 120_000 });
-      await page.fill('#name', p.name);
-      await page.click('#join button');
+        () =>
+          !document.getElementById('join').hidden ||
+          /good|bad/.test(document.getElementById('status').className),
+        null,
+        { timeout: 120_000 },
+      );
+      // A link for a person's own devices asks no name (web/app.js `join`).
+      if (await page.locator('#join').isVisible()) {
+        await page.fill('#name', p.name);
+        await page.click('#join button');
+      }
       await page.waitForSelector('#status.good', { timeout: 120_000 });
     });
     if (person.list_ms === null) return person;
-    person.listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
+    person.listed = await page.evaluate(() =>
+      [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+    );
     person.open_ms = await timed(person, 'the lend', async () => {
       await page.locator('#lent button', { hasText: args.lend ?? 'jellyfin' }).click();
       await page.waitForURL((u) => u.pathname.startsWith('/web/'), { timeout: 90_000 });
@@ -204,35 +310,54 @@ export async function enter(p, run) {
   person.at = new URL(page.url()).host.replace(/^[a-z0-9]{20,}\./, '<label>.');
 
   // What jellyfin-web shows someone who never used it: a sign-in, or home.
-  person.shown_ms = await timed(person, 'a sign-in or home', () => page.waitForSelector('#txtManualName, .manualLoginForm, .btnManual, .card', { timeout: 60_000 }));
+  person.shown_ms = await timed(person, 'a sign-in or home', () =>
+    page.waitForSelector('#txtManualName, .manualLoginForm, .btnManual, .card', {
+      timeout: 60_000,
+    }),
+  );
   if (person.shown_ms === null) return person;
   await page.waitForTimeout(1500);
-  person.asked = await page.locator('#txtManualName:visible, .manualLoginForm:visible, .btnManual:visible').count() > 0;
+  person.asked =
+    (await page
+      .locator('#txtManualName:visible, .manualLoginForm:visible, .btnManual:visible')
+      .count()) > 0;
   person.shown = await shown(page);
   if (args.mw && person.asked) {
     person.stopped = `asked to sign in, with nothing to type; the page says: ${person.shown}`;
     person.signed_in_ms = null;
     return person;
   }
-  person.signed_in_ms = person.asked ? await timed(person, 'signed in', async () => {
-    const pw = fs.readFileSync(`${SECRETS}/${person.account}_pw`, 'utf8').trim();
-    const manual = page.locator('.btnManual:visible');
-    if (await manual.count()) await manual.first().click();
-    await page.fill('#txtManualName', person.account);
-    await page.fill('#txtManualPassword', pw);
-    await page.locator('.manualLoginForm button[type=submit]').click();
-    await page.waitForSelector('.card', { timeout: 30_000 });
-  }) : 0;
+  person.signed_in_ms = person.asked
+    ? await timed(person, 'signed in', async () => {
+        const pw = fs.readFileSync(`${SECRETS}/${person.account}_pw`, 'utf8').trim();
+        const manual = page.locator('.btnManual:visible');
+        if (await manual.count()) await manual.first().click();
+        await page.fill('#txtManualName', person.account);
+        await page.fill('#txtManualPassword', pw);
+        await page.locator('.manualLoginForm button[type=submit]').click();
+        await page.waitForSelector('.card', { timeout: 30_000 });
+      })
+    : 0;
   if (person.signed_in_ms === null) return person;
-  const stored = JSON.parse((await page.evaluate(() => localStorage.getItem('jellyfin_credentials'))) ?? '{}');
+  const stored = JSON.parse(
+    (await page.evaluate(() => localStorage.getItem('jellyfin_credentials'))) ?? '{}',
+  );
   person.token = stored.Servers?.[0]?.AccessToken ?? null;
   person.device = await page.evaluate(() => localStorage.getItem('_deviceId2'));
   if (args.mw) {
     // What the middleware's page wrote: whose account, and a token that is
     // the stand-in or not; scan.py judges what the bytes hold.
     const s = stored.Servers?.[0] ?? {};
-    person.stored = { user: s.UserId ?? null, address: s.ManualAddress ?? null,
-      token: s.AccessToken == null ? null : s.AccessToken === 'svrngs-stand-in' ? 'the stand-in' : 'not the stand-in' };
+    person.stored = {
+      user: s.UserId ?? null,
+      address: s.ManualAddress ?? null,
+      token:
+        s.AccessToken == null
+          ? null
+          : s.AccessToken === 'svrngs-stand-in'
+            ? 'the stand-in'
+            : 'not the stand-in',
+    };
   } else if (person.token && person.token !== 'door') {
     // A token Jellyfin handed this browser is theirs; the placeholder is none.
     fs.writeFileSync(`${DUMP}/${p.user}/token`, person.token);
@@ -240,7 +365,12 @@ export async function enter(p, run) {
   // Signed in, with no film to play: a phone used as a remote (u6-2).
   if (!p.film) return person;
 
-  await page.evaluate(([id, s]) => { location.hash = `#/details?id=${id}&serverId=${s}`; }, [p.film, args.server]);
+  await page.evaluate(
+    ([id, s]) => {
+      location.hash = `#/details?id=${id}&serverId=${s}`;
+    },
+    [p.film, args.server],
+  );
   person.play_from = Date.now() - T0;
   person.play_ms = await timed(person, 'playing', async () => {
     const play = page.locator('.mainDetailButtons .btnPlay:visible');
@@ -252,29 +382,56 @@ export async function enter(p, run) {
     const t0 = Date.now();
     let heldSince = null;
     while (Date.now() - t0 < 30_000) {
-      const v = await page.evaluate(() => { const v = document.querySelector('video'); return v && { ct: v.currentTime, paused: v.paused, rs: v.readyState }; });
+      const v = await page.evaluate(() => {
+        const v = document.querySelector('video');
+        return v && { ct: v.currentTime, paused: v.paused, rs: v.readyState };
+      });
       if (v && v.ct > 0.5 && !v.paused) return;
       const held = v && v.paused && v.rs >= 3 && v.ct < 0.5;
-      heldSince = held ? heldSince ?? Date.now() : null;
+      heldSince = held ? (heldSince ?? Date.now()) : null;
       if (held && !person.second_tap && Date.now() - heldSince >= 3000) {
         person.second_tap = Date.now() - t0;
         await page.tap('video').catch(() => page.mouse.click(200, 300));
-        await page.locator('.videoOsdBottom .btnPause').click({ timeout: 5000 }).catch((e) => logs.push(`the second tap missed: ${String(e).split('\n')[0]}`));
+        await page
+          .locator('.videoOsdBottom .btnPause')
+          .click({ timeout: 5000 })
+          .catch((e) => logs.push(`the second tap missed: ${String(e).split('\n')[0]}`));
       }
       await page.waitForTimeout(250);
     }
-    throw new Error(`not playing 30 s after play${person.second_tap ? `, a second tap given at ${person.second_tap} ms` : ''}`);
+    throw new Error(
+      `not playing 30 s after play${person.second_tap ? `, a second tap given at ${person.second_tap} ms` : ''}`,
+    );
   });
   if (person.play_ms === null) {
-    person.video = await page.evaluate(() => {
-      const v = document.querySelector('video');
-      if (!v) return null;
-      const b = [...Array(v.buffered.length).keys()].map((i) => [+v.buffered.start(i).toFixed(1), +v.buffered.end(i).toFixed(1)]);
-      return { ct: v.currentTime, paused: v.paused, rs: v.readyState, ns: v.networkState, buffered: b, error: v.error?.message ?? null };
-    }).catch((e) => String(e));
+    person.video = await page
+      .evaluate(() => {
+        const v = document.querySelector('video');
+        if (!v) return null;
+        const b = [...Array(v.buffered.length).keys()].map((i) => [
+          +v.buffered.start(i).toFixed(1),
+          +v.buffered.end(i).toFixed(1),
+        ]);
+        return {
+          ct: v.currentTime,
+          paused: v.paused,
+          rs: v.readyState,
+          ns: v.networkState,
+          buffered: b,
+          error: v.error?.message ?? null,
+        };
+      })
+      .catch((e) => String(e));
   }
   if (person.play_ms !== null) {
-    person.playing = await page.evaluate(() => { const v = document.querySelector('video'); return { src: v.currentSrc.replace(/ApiKey=[^&]+/, 'ApiKey=<its token>').slice(0, 220), w: v.videoWidth, h: v.videoHeight }; });
+    person.playing = await page.evaluate(() => {
+      const v = document.querySelector('video');
+      return {
+        src: v.currentSrc.replace(/ApiKey=[^&]+/, 'ApiKey=<its token>').slice(0, 220),
+        w: v.videoWidth,
+        h: v.videoHeight,
+      };
+    });
     await page.evaluate(watch);
   }
   return person;
@@ -285,8 +442,12 @@ export async function enter(p, run) {
 // live socket carried it.
 export const lender = (JF, ADMIN) => async (method, path, body) => {
   const r = await fetch(`${JF}${path}`, {
-    method, body: body && JSON.stringify(body),
-    headers: { 'content-type': 'application/json', authorization: `MediaBrowser Client="u5-4 check", Device="Sam computer", DeviceId="u5-4-setup", Version="1", Token="${ADMIN}"` },
+    method,
+    body: body && JSON.stringify(body),
+    headers: {
+      'content-type': 'application/json',
+      authorization: `MediaBrowser Client="u5-4 check", Device="Sam computer", DeviceId="u5-4-setup", Version="1", Token="${ADMIN}"`,
+    },
   });
   return r.status === 204 ? null : r.json();
 };
@@ -295,10 +456,27 @@ export async function socket(jf, person) {
   const sessions = all.filter((s) => s.DeviceId === person.device);
   // None of this browser's own: Jellyfin sees the device whoever signed in
   // with, as on a lend carrying a token.
-  if (!sessions.length) return { session: false, theirs_by_device: all.filter((s) => s.UserName === person.account).map((s) => s.DeviceId) };
+  if (!sessions.length)
+    return {
+      session: false,
+      theirs_by_device: all.filter((s) => s.UserName === person.account).map((s) => s.DeviceId),
+    };
   const text = `a message for ${person.user} ${Math.random().toString(36).slice(2, 8)}`;
   const t0 = Date.now();
-  await jf('POST', `/Sessions/${sessions[0].Id}/Message`, { Header: 'Sam', Text: text, TimeoutMs: 15000 });
-  const shownIn = await person.page.waitForFunction((t) => document.body.innerText.includes(t), text, { timeout: 10_000 }).then(() => Date.now() - t0, () => null);
-  return { session: true, remote_control: sessions[0].SupportsRemoteControl, message_shown_ms: shownIn };
+  await jf('POST', `/Sessions/${sessions[0].Id}/Message`, {
+    Header: 'Sam',
+    Text: text,
+    TimeoutMs: 15000,
+  });
+  const shownIn = await person.page
+    .waitForFunction((t) => document.body.innerText.includes(t), text, { timeout: 10_000 })
+    .then(
+      () => Date.now() - t0,
+      () => null,
+    );
+  return {
+    session: true,
+    remote_control: sessions[0].SupportsRemoteControl,
+    message_shown_ms: shownIn,
+  };
 }

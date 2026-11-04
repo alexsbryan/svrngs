@@ -11086,7 +11086,7 @@ the run is `demo/runs/canon/2026-10-17-house/` (README.md, "What it found").
 |---|---|---|---|---|
 | 205 | 6 | web/app.js:322-334 (`reachGroup`, the first computer to answer), :392 (`enter`, one computer's `/people/lends`), :97 (`failed`'s words) | fixed in 3666d2a4 (browser carried.rs `the_phone_goes_on_to_a_computer_that_answers`, red at HEAD in both engines, 2606e527, with cy's computer made the first to answer; red again on a plant, the first computer's failure ending the reach) | **Run.** After Bo left Elm, Dee's phone reached Elm through Bo's computer, which still runs svrngs and answers the dial. Its `/people/lends` failed ("the computer's answer is not HTTP: connection error"), and the page said "This browser could not open the page." without trying Ana's computer, which was on. House rules was listed only when the page was opened again, 10,937 ms later (`data/takes/2/summary.json`, step 7-dee, its console). The trial takes met it after both leaves, for 52.7 s and 134.1 s (2b2107aa's body). It is a race: takes 1 and 3 never met it. `enter` could go on to the next computer that answers when one fails, or drop a computer whose person the group's last answer said left. |
 | 206 | 8 | apps/canon/index.js:53 (`fold` asked at `Date.now()`); crates/svrngs-core/src/command.rs:243-250 (a new act timed after every act held) | fixed in 5eb3d563 (laws.test.mjs `one answer has one clock`, red at HEAD, 5af576d4; red again on a plant, `fold` asked at `Date.now()` alone) | **Run, and reproduced.** Right after the Agree that passed a change (the clean take's steps 8 and 10), Ana's page said the old rule with nothing proposed; opened again, the new rule. An agreement written in the second of the proposal is timed a second ahead of the browser's clock, and canon asked before that second calls the change ratified and keeps the old rule in force (`same_second.mjs` there: "asked at 2099: the change ratified since 2100; the rule in force majority"). The page has two clocks for one answer. Asking canon at no earlier than the newest act's time would give it one. |
-| 207 | 6 | apps/canon/house.js `fold` (canon asked at the newest act it is handed, #206's fix); crates/svrngs-core/src/command.rs:238-250 (`reach`, AHEAD_SECS) | not fixed (a follow-up: none is written by svrngs) | **Read, and run under node.** Since 5eb3d563 an act dated ahead moves the page's clock with it. svrngs signs none more than AHEAD_SECS past the newest act it follows, so only a changed svrngs writes one. With one, a house deciding "unless someone objects" sees a proposal as holding before its two days are out: a proposal at 2000 and an act dated three days on, asked at 2200, read `active`; with bo's objection at 2100, `refused`, as canon judges by the acts' own times (a scratch script over `fold` and the vendored build, 2026-10-17). Bounding the clock at AHEAD_SECS in the page would be that threshold's second home; svrngs telling the page the time it would give a new act would keep one. |
+| 207 | 6 | apps/canon/house.js `fold` (canon asked at the newest act it is handed, #206's fix); crates/svrngs-core/src/command.rs:238-250 (`reach`, AHEAD_SECS) | closed, not fixed (guests-fixes (d), with why: the row below in REVIEW-audit-canon-auto-1's findings) | **Read, and run under node.** Since 5eb3d563 an act dated ahead moves the page's clock with it. svrngs signs none more than AHEAD_SECS past the newest act it follows, so only a changed svrngs writes one. With one, a house deciding "unless someone objects" sees a proposal as holding before its two days are out: a proposal at 2000 and an act dated three days on, asked at 2200, read `active`; with bo's objection at 2100, `refused`, as canon judges by the acts' own times (a scratch script over `fold` and the vendored build, 2026-10-17). Bounding the clock at AHEAD_SECS in the page would be that threshold's second home; svrngs telling the page the time it would give a new act would keep one. |
 
 ## REVIEW-audit-canon-auto-1 (2026-10-17, range ac5d2d0f..59ddb5b2)
 
@@ -11362,13 +11362,13 @@ all 15 steps passed, principles pinned to app laws
 
 | # | principle | path:line | fixed in | finding |
 |---|---|---|---|---|
-| 208 | 8 | apps/canon/canon.test.mjs:12-29 (`pins`, `unpinned`); apps/grapevine/grapevine.test.mjs:19-36 | not fixed (a move across apps, with #150) | How a vendored file is pinned — vendor/README.md's `\| \`file\` \| \`sha256\` \|` table, and each file's hash against it — is read by two copies, byte for byte (dry-report 1.000; line-window span). A change to the table's form in one app's README passes the other's test unread. With #150's shared module: one reader both apps' tests import. |
-| 209 | 6 | apps/canon/index.js:49 (`r.json().catch(() => ({}))`), apps/canon/house.js:171 (`spans` absent is unsettled); apps/expenses/index.js:26, apps/events/index.js:31 (the pattern) | not fixed (changes what the page says; red first) | An OK answer whose body is not JSON is read as `{}`, and House rules says the house's membership is unsettled, "Open this page again in a minute", where it could not read the answer at all (`fold(call, {}, …)` is `{"unsettled":true}`, run under node). In Expenses and Events the same `{}` folds as a group with nothing in it. A body that cannot be read is said as that. |
-| 210 | 1 | apps/canon/house.js:181 (bare `catch`), apps/canon/index.js (no trace anywhere) | not fixed (a page's trace, as grapevine's `GRAPEVINE_DEBUG` and web/app.js's `trace` do it; red first) | canon's page makes every decision a person can see — an act dropped and why, the rule asked of canon at which time — and traces none. An act canon refuses to build is said "this version of House rules can't read it", and canon's own error is lost. |
-| 150 | 8 | as recorded, and apps/canon/canon.test.mjs:12-29 | not fixed: a move across apps | A fourth app's tests now copy a third helper (#208). |
+| 208 | 8 | apps/canon/canon.test.mjs:12-29 (`pins`, `unpinned`); apps/grapevine/grapevine.test.mjs:19-36 | fixed in aa70a97c (moved to apps/pinned.mjs, behaviour kept, # pass 24 before and after; red in both apps on a plant, `unpinned` filtering nothing out) | How a vendored file is pinned — vendor/README.md's `\| \`file\` \| \`sha256\` \|` table, and each file's hash against it — is read by two copies, byte for byte (dry-report 1.000; line-window span). A change to the table's form in one app's README passes the other's test unread. With #150's shared module: one reader both apps' tests import. |
+| 209 | 6 | apps/canon/index.js:49 (`r.json().catch(() => ({}))`), apps/canon/house.js:171 (`spans` absent is unsettled); apps/expenses/index.js:26, apps/events/index.js:31 (the pattern) | fixed in a9543849 for House rules (laws.test.mjs `an answer the page could not read is said as unread …`, red at HEAD, 0bb7a0cb; red again on a plant, the old `!Array.isArray(read.spans)`); Expenses' and Events' pages keep the pattern, not this row's | An OK answer whose body is not JSON is read as `{}`, and House rules says the house's membership is unsettled, "Open this page again in a minute", where it could not read the answer at all (`fold(call, {}, …)` is `{"unsettled":true}`, run under node). In Expenses and Events the same `{}` folds as a group with nothing in it. A body that cannot be read is said as that. |
+| 210 | 1 | apps/canon/house.js:181 (bare `catch`), apps/canon/index.js (no trace anywhere) | fixed in 278c7cbb (laws.test.mjs `every decision the glue makes is traced …`, red at HEAD, e001cb06; red again on two plants: the catch without canon's error, and index.js handing `fold` no trace, page.test.mjs red in both engines) | canon's page makes every decision a person can see — an act dropped and why, the rule asked of canon at which time — and traces none. An act canon refuses to build is said "this version of House rules can't read it", and canon's own error is lost. |
+| 150 | 8 | as recorded, and apps/canon/canon.test.mjs:12-29 | not fixed: a move across apps | A fourth app's tests now copy a third helper (#208). **The third helper is one since aa70a97c** (apps/pinned.mjs); the five laws' harness and the canary's wait stay copied in events, expenses and grapevine, a move each app's laws re-prove red, not small. |
 | 80 | — | scripts/lean_check.py:105 BUDGET, :173 `n >= cap` | not fixed (operator's) | 16,563 / 16,564 and 3,008 / 3,009 after this audit: +213 and +16 over the range, the CHARTER's +150 spent to the line, 23 of core's +40 left unraised. |
 | 205, 206 | as recorded | as recorded | fixed (canon-fix; 3666d2a4, 5eb3d563) | Not reached by this range's findings. |
-| 207 | as recorded | as recorded | not fixed | Still open; read above under "One decider". |
+| 207 | 6 | as recorded | closed, not fixed (guests-fixes (d)) | **Closed with why.** Re-run under node at 278c7cbb (/tmp/gf207/ahead.mjs, the finding's case over `fold`): a consent house, ana proposing at 2000, asked at 2200 — `proposed`, canon asked at 2200; with kim's agreement dated three days on, `active`, canon asked at 261200; with bo's objection at 2100 as well, `refused`. (1) svrngs signs no act past AHEAD_SECS on its clock (command.rs:238-250), so only a changed svrngs writes one. (2) canon judges each act at its own time, so the act moves when the page says a proposal holds, never what the house decided: an objection inside the proposal's days still refuses it. (3) Since 278c7cbb the move is traced: `canon asked` gives the page's clock beside the act that set it (`{asked: 2200, at: 261200, newest: 261200}`). Said and never followed needs the bound in the page, AHEAD_SECS's second home (principle 8), or svrngs telling every carried app the time it would give a new act, a new field in each app's `svrngs/acts` answer (carried.rs:336-337) and counted lines in svrngs-node at 16,582 / 16,583 (`scripts/lean_check.py`). Reopen it when a carried page is handed svrngs's clock for its own sake, as a guest's visit ending on time may want. |
 
 ### Problems in the commonwealth-ai instrument (reported, not fixed here)
 
@@ -11379,3 +11379,1746 @@ all 15 steps passed, principles pinned to app laws
 | I8 | 6 | dry-report scope | Still present: register_tests.rs and `*.test.mjs` reported as production. |
 | I32 | 7 | dry-report's near tier, nested spans | Still present: canon.test.mjs `pins` over `unpinned`. |
 | I34 | 6 | `converge noun`, `refresh` | New: a Rust crate outside the Cargo workspace is not exported, so its nouns are absent with nothing said: apps/canon/build/src/lib.rs:84's `enum Request`, which `git grep` finds, is not among `Request`'s definitions. |
+
+## guests-run (2026-10-20): a visit on one host
+
+Opened by its row (`ralph/next/guests/STATE.md`), not a `REVIEW-audit-` row:
+the run is `demo/runs/guests/2026-10-20-run/` (README.md, "What it found").
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 211 | 6 | crates/svrngs-node/src/removal.rs:211-222 (a leave told as the Remove alone); crates/svrngs-core/src/membership.rs:515-556 (`covered`, a `prev` chain the copy does not hold), :590 (an uncovered act of a cut key counts nowhere), :626-633 (a Visit judged against the visits then counted) | fixed in c599547e (leave-told): a cut told with what it covers, `ring_routes::told_with` the one selection the at-once tell and `told_cut` make; reproduced by the survey (demo/runs/leave/2026-10-21/SURVEY.md, 503b891c), its test red at 153ce69d in 4220c342 (tests/removal.rs `a_leave_reaches_every_copy_with_the_acts_it_covers`, Ana's copy `[]` against Kim's `["kim-paid", "kim-last"]`), green with four plants each red (demo/runs/leave/2026-10-21/told/): the tell's acts the lines alone, `told_with` keeping only the `Remove`s, the tell keeping its first answer, the signer's first `Remove` for its highest. A copy that already holds a lone leave is not healed (the survey's A+, not built: nobody has left a real group, the operator, 2026-10-21) | **Run, five takes.** Kim's computer wrote Lee's visit 2.7 to 4.0 s before Kim left. The leave reached Ana's and Bo's computers in 3 to 15 ms; Lee's visit, the leave's `prev`, never did on Ana's in any take, nor on Bo's in three. On such a copy the leave covers only itself, so four of Kim's acts, Sam's and Jo's visits among them, are said to come "after they were removed from the group", with an `unheld_cut` naming Lee's visit (each take's `summary.json`, `end_record`). With Kim's visits gone from that fold, Max's visit, refused at Ana's link as past the house's bound (`counted=false`), counts, and the home page says "Max, Ana’s guest" — on the copies without Lee's visit alone, so the copies disagree. Any act a leaver makes within a round of leaving does the same to their earlier acts elsewhere; a Visit is where the run met it. |
+| 212 | 10 | crates/svrngs-node/src/redeem.rs:157-166 (a join wakes the round), :186-226 (a Visit does not); crates/svrngs-node/src/home.rs:437-451 (a Stop does not); crates/svrngs-node/src/ring_sync.rs:107 (every 60 s) | open | **Run, five takes.** Bo's computer held Sam's visit 49.3 to 50.9 s after Sam got in, and Kim's Stop reached Ana's computer after 51.8 to 59.5 s, against GUESTS §3.2's "everyone in the house can see who's visiting". Each writer of an act others wait for remembers to wake the round, and these two do not. The doors are not late: each asks its own copy (door.rs:979-981), and Kim's computer dropped Sam in 2 to 4 ms. |
+| 213 | 6 | crates/svrngs-core/src/admit.rs:134 (`NotAMember`); crates/svrngs-core/src/membership.rs:633-637 (a Visit past a bound `continue`s, so is never `counted`) | open | **Run, five takes.** Max's visit is Ana's act, a member's. From the moment it is written, every computer's sync warns "this answer covers a subset — the rail could not account for every op … NotAMember" of it, 7 to 19 times in each computer's kept log in each take, and 0 to 2 in the `count` plant's, where the visit counts. Bo's `/v1/rail/log` names it a `not_a_member` gap (`data/plants/host/summary.json`, `end_record`). GUESTS §3.7: a visit past a bound is "simply not a visit"; the record says its signer is no member. |
+
+## guests-first (2026-10-20): a guest's first request
+
+Opened by its row (`ralph/next/guests/STATE.md`), not a `REVIEW-audit-` row:
+svrngs-bb's V1.1.3 check runs met it
+(`demo/runs/v1.1.3/2026-10-20/main-check-1.out:148-221`, `main-check-3.out:142`).
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 214 | 8 | crates/svrngs-core/src/membership.rs:252-263 (`Guest::live`, a visit begun only at its own time); crates/svrngs-core/src/command.rs:238-250 (a new act timed after every line held up to AHEAD_SECS ahead); crates/svrngs-node/src/door.rs:1030 (the door asks at now) | fixed in 86a3bd08 (door `guests::sam_is_let_in_at_once_though_kims_visit_is_timed_ahead_of_the_clock`, red at bb0f1a1f five of five, b37bc81c; red again on a plant, the visit begun only at its own time; core `a_visit_is_on_from_when_its_act_is_written_and_no_earlier`, red on two plants, begun only at its own time and begun at any time) | **Run, and reproduced.** In 2 of 5 of the V1.1.3 checks' runs, Sam's `POST /visit` answered 200 and Sam's first `GET /lend/<label>/` 403, the page waiting on a film that never came (`crates/svrngs-node/tests/browser/guests.rs:100`). Those runs kept the page's trace, not the door's. With an act of Bo's held 60 s ahead of Kim's clock, Kim's `Visit` is timed after it, and the door refused Sam on every run, its trace `live=false own=true named=true`, `ended`, "its time is up": the act's clock and the door's, two clocks for one answer, as #206 met them in House rules. A visit is now on from its writer's clock as it was written, at most AHEAD_SECS + 1 before its own time, and never earlier, so no clock far ahead lengthens it. The door, the pages and the fold still ask `Guest::live` alone, and the fold's walk sorts by time (membership.rs:411), so its counting is unchanged. After the fix the browser film test passed 5 of 5 alone, in Chromium and in WebKit (`cargo test -q -p svrngs-node --test browser guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest`, 2 passed each run). Those runs show the film test still passing; the door test, red before and green after, is what shows the fix. |
+
+## REVIEW-audit-guests-auto-1 (2026-10-20, range 34d6e287..beb20b68)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-canon-auto-1, its hash
+34d6e287 (ralph/next/canon/STATE.md:72); none ran in this queue before
+this one. The range ends at beb20b68, the commit that made this row:
+`git rev-list --count 34d6e287..beb20b68` is 117, none a merge
+(`--merges`: 0). Beside the guests rows it holds what main took between
+them: DESIGN distilled and §8-§10 moved to PLAN (f7508c19, adee4194),
+the 25-computer run and Linux's allocator fix (V1.1.1), a group on a
+screen (V1.1.2), apps/doc, V1.1.3, and PLAN §2's notes. The row reads
+`docs/ARCH_PRINCIPLES.md`, which is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli`, which is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 7b86f7bf…
+(`shasum -a 256`), rebuilt since canon-auto-1's 7230170e…. The state
+file is left as it is; the loop owns the row. Every file named /tmp/
+below is under /tmp/guestsaudit/.
+
+This audit's own commit before this section: c91069af, the browser
+tests' two node starters made one (below, "Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+34d6e287..beb20b68` (ledger.raw), summed by canon-auto-1's ledger.py
+with this range's units (scripts/ledger.py; each commit's unit in
+ledger.commits). A subject's scope, `kind(scope)`, names its unit; the
+work main took between rows is grouped by its scope: `docs`, `design`,
+`citations` and `deploy-page` as design-to-plan; `twentyfive`, `leak`,
+`door` (23c182ae) and `svrngs` (61a06614) as twentyfive-leak; `home` and
+`screen` as screen (V1.1.2); `releases` with v1.1.3; `§2` as plan §2. A
+commit naming none counts toward the next that does: the guests queue's
+own drafts (203ac18b, 4f93ff76, cc8a2ebe) and V1.1.1's notes (dc1781ef)
+fall to screen, with no product line; eae4c386 to guests-pages,
+f3b2faa9 to guests-first. The lines are raw, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps src net | apps test net | apps vendor | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-canon-auto-1 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| design-to-plan | 4 | 86 | 86 | **+0** | 35 | 35 | +0 | 0 | +0 (+9 −9) | 0 | 0 | +0 (+11 −11) |
+| twentyfive-leak | 7 | 23 | 14 | **+9** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | +4 (+9 −5) |
+| screen (V1.1.2) | 10 | 68 | 20 | **+48** | 128 | 2 | +126 | +31 | 0 | 0 | 0 | +5 (+11 −6) |
+| guests-fixes | 8 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +47 (+63 −16) | +12 (+50 −38) | 0 | 0 |
+| guests-economize | 5 | 1 | 6 | **−5** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | +5 (+6 −1) |
+| guests-visit | 7 | 127 | 17 | **+110** | 267 | 5 | +262 | 0 | 0 | 0 | 0 | +3 (+4 −1) |
+| guests-door | 6 | 114 | 15 | **+99** | 325 | 0 | +325 | 0 | 0 | 0 | 0 | +2 (+4 −2) |
+| guests-link | 7 | 250 | 35 | **+215** | 363 | 25 | +338 | 0 | 0 | 0 | 0 | +5 (+6 −1) |
+| guests-pages | 11 | 89 | 18 | **+71** | 176 | 8 | +168 | +2 (+4 −2) | 0 | 0 | 0 | +4 (+7 −3) |
+| guests-run | 11 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| doc | 15 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +1075 (+1898 −823) | +402 (+1036 −634) | +117 (+34815 −34698) | 0 |
+| plan §2 | 3 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| v1.1.3 | 14 | 50 | 14 | **+36** | 453 | 5 | +448 | +28 (+33 −5) | 0 | 0 | 0 | +12 (+18 −6) |
+| guests-first | 7 | 8 | 3 | **+5** | 60 | 0 | +60 | 0 | 0 | 0 | 0 | 0 |
+| REVIEW-audit-guests-auto-1 (its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 117 | 816 | 228 | **+588** | 1807 | 80 | +1727 | +61 (+68 −7) | +1122 (+1970 −848) | +414 (+1086 −672) | +117 (+34815 −34698) | +40 (+76 −36) |
+
+The guests rows' src is +495 raw of the range's +588: guests-link's
+redemption, the visit link and the guest's page (redeem.rs +102 −20,
+invite.rs +55 −4, web/app.js, web/store.js), guests-visit's fold
+(membership.rs, lib.rs `Visit`), guests-door's `guest_of` (door.rs) and
+the runtime's `visit_anywhere`, guests-pages' **Your guests** and
+**Visiting now** (home.js, question.js, surface.rs, rail.rs `visiting`).
+apps/doc is commonwealth-ai's ring-doc forked (bfe715a6), its expense
+book dropped (909eff3b) and its own server added (server.mjs, ws.mjs);
+its vendored bundle went from ring-doc-bundle.js (34,698 lines) to
+doc-bundle.js, built by bundle/build.sh.
+
+What the budget counts, by HEAD's scripts/lean_check.py over a `git
+archive` tree of each end and each unit's last commit (lean-<hash>.out).
+Main's work and the guests rows interleave, so a row's `done` holds
+what main took before it:
+
+| at | svrngs-core | repository | counted net |
+|---|---:|---:|---:|
+| 34d6e287, range start | 3008 | 16563 | |
+| 0cea24ff, twentyfive-leak | 3008 | 16561 | −2 |
+| d64c19d6, screen (V1.1.2) | 3008 | 16582 | +21 |
+| 1eeb092b, guests-fixes done | 3008 | 16582 | 0 |
+| e36dee5b, guests-economize done | 3008 | 16577 | −5 |
+| bc4b588d, guests-visit done | 3068 | 16637 | +60 |
+| 90f8dcdd, guests-door done | 3068 | 16703 | +66 |
+| 7ee8b565, guests-link done | 3075 | 16846 | +143 |
+| 91b71e28, guests-pages done | 3075 | 16886 | +40 |
+| 05504007, doc's last | 3075 | 16886 | 0 |
+| 793a6e88, v1.1.3's last | 3075 | 16906 | +20 |
+| 1ad20b9d, guests-run done | 3075 | 16906 | 0 |
+| f13e7d06, guests-first done | 3075 | 16906 | 0 |
+| beb20b68, range end | **3075** | **16906** | **+343** |
+
+The guests rows counted +304 in the repository and +67 in svrngs-core
+(16,582 → 16,886 and 3,008 → 3,075 over guests-fixes..guests-pages,
+guests-first's +5 raw all comment); main's work +39 (twentyfive-leak
+−2, screen +21, V1.1.3 +20).
+
+The caps (`git log 34d6e287..beb20b68 -- scripts/lean_check.py`, BUDGET
+at each):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| 34d6e287, range start | 16,564 | 3,009 | |
+| 61a06614, b7be71c3 | → 16,559 | 3,009 | the door's one dialer guard (23c182ae, −3) less mimalloc's one line, then the home page's one reader, each ratcheted |
+| 7a385472, 2bebba22 | → 16,583 | 3,009 | a group on a screen, its founder first |
+| 50071696, guests-economize (c) | → 16,578 | 3,009 | the cut, ratcheted |
+| d31f39e1, guests-visit (b) | → 16,638 | → 3,069 | a visit folded beside membership |
+| efd32fba, guests-door (b) | → 16,704 | 3,069 | a visit's key let in at its host's own lends |
+| ad4eac42, guests-link (b) | → 16,847 | → 3,076 | a visit made by a link, the operator's raise (eae4c386) |
+| 0b884151, 5732cc5c, guests-pages | → 16,887 | 3,076 | who is visiting, on the home page and the phone's |
+| f0849b8c, 32398138, 423d28c5, v1.1.3 | → 16,911 | 3,076 | V1.1.3's own +24 |
+| a620548e, v1.1.3's economizing | → 16,907 | 3,076 | its cut, ratcheted |
+
+The guests ceiling is 16,925 and 3,076 (CHARTER.md, "2026-10-20,
+later"). The range closes at 16,906 / 16,907 and 3,075 / 3,076: no
+counted line left under either cap (lean_check.py:173, `n >= cap`), and
+18 of the repository's ceiling unraised. c91069af is test code and moves
+no counted line.
+
+### The instrument
+
+The corpus is beb20b68's crates/, web/, scripts/, apps/, Cargo.toml and
+Cargo.lock by `git archive`, every `vendor/` and `node_modules/` left
+out (388 files).
+- `code index . --corpus-id guests-beb20b68`: 4147 chunks in 527 s
+  (index.out). Its embedder is the daemon on 127.0.0.1:9741, which
+  commonwealth-ai's session held its restart for.
+- `refresh`, in the corpus: rust 18452 symbols and 107366 edges;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, svrngs-runtime, svrngs-node and
+svrngs, web, scripts, and apps/canon, doc, events, expenses, grapevine,
+jellyfin, taste and web-conformance (`git diff --stat 34d6e287 beb20b68
+-- crates web scripts apps`, vendor/ apart). Each crate, web/, scripts/,
+apps/canon and apps/doc was reported at 0.95 and 0.90, and apps/ whole,
+so a clone across apps is seen (clean-*.md). Whether a side was added
+in the range is `git blame` at beb20b68 over each side's lines against
+34d6e287 (130 sides, cluster-sides.txt; blame-clusters.out). Its
+controls are in the same run: apps/pinned.mjs:9-18 blames to aa70a97c,
+in the range, and apps/events/canary.mjs:42-52 to f1df40f1, before.
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 11 | 0 |
+| crates/svrngs-runtime/ | 1 | 0 | 0 | 0 |
+| crates/svrngs-node/ | 1 | 1 | 8 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | — |
+| web/ | could-not-judge (I4) | 0 | 2 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | — |
+| apps/canon/ | could-not-judge (I4) | 0 | 0 | — |
+| apps/doc/ | could-not-judge (I4) | 1 | 2 | 2 clusters, 4 sides |
+| apps/ whole | could-not-judge (I4) | 24 | 35 | 3 clusters, 6 sides |
+
+The clusters with a side the range added:
+
+| cosine | range side | other side | read |
+|---|---|---|---|
+| 0.965 | apps/doc/doc.test.mjs:66-74 `send` (e6da8ce6) | :69-79 `close` (e6da8ce6) | Not a clone: two neighbouring methods of the test's socket, padded to overlap (I32). |
+| 0.929 | apps/doc/ws.mjs:108-116 `send` (e6da8ce6) | :112-122 `close` (e6da8ce6) | The same, in the server's socket. |
+| 0.925 | apps/pinned.mjs:9-18 `pins` (aa70a97c) | :15-23 `unpinned` (aa70a97c) | The same; #208's one reader, now one file. |
+
+Every other cluster's sides blame to commits before 34d6e287. No side
+of guests-visit's, guests-door's, guests-link's or guests-pages' Rust
+is in any cluster.
+
+**The line-window pass.** canon-auto-1's windows.py over every code
+file at beb20b68, vendor/ and node_modules/ apart (323 files,
+windows.files): **263 window hits, 58 spans, 6 new** (windows.spans;
+windows.verdicts, newspans.sh's blame against 34d6e287; 52 old). Its
+positive control, the old span apps/events/store.mjs:17-100 ==
+apps/grapevine/store.mjs:17-100, is among the 52.
+
+| new span | read |
+|---|---|
+| crates/svrngs-node/tests/browser/main.rs:115-130 == :196-211 | `computer_on` and `standing_on` (c488f080, f7bf1a79), one node start and seed but the founder's key. **Fixed in c91069af.** |
+| crates/svrngs-node/tests/browser/main.rs:3244-3255 == :3749-3760, and :3263-3271 == :3761-3769 | V1.1.3's phone test (9de18ec0) copies `with_stopped`'s house: ada, cy and cy's shelf, and the driver's args. #217. |
+| crates/svrngs-node/tests/browser/main.rs:3670-3679 == :3810-3819 | V1.1.3's two stand-in servers, `gzip_only` (fa2e9078) and `socket_page` (f7bf1a79), read a request's head by the same hand. #217. |
+| crates/svrngs-node/tests/browser/guests.rs:83-92 == crates/svrngs/tests/join_page.rs:292-301 | guests-link's test (65c7fbb3) tells a browser driver its JSON line and reads its last line as join_page.rs does, in another crate's tests. #217. |
+| web/tests/carried.mjs:17-25 == web/tests/screen.mjs:13-21 | The screen's driver (e522374c) opens a context and keeps its console as carried.mjs's does; page.mjs's `launch` is the shared part. #217. |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges 34d6e287..beb20b68 -- crates
+apps web scripts` (vendor/ and node_modules/ apart), matched against
+`(struct|enum|trait|type|class) +[A-Z]\w*` (new-types.out), give nine:
+`Visit`, `Guest`, `Visiting`, `VisitLink`, `VisitRequest`, `Dark`,
+`House`, `Refusal`, `Peer`. Removed (removed-types.out): none.
+
+`converge noun <Name> --corpus-id guests-beb20b68` over each
+(nouns.out):
+
+| noun | definitions | read |
+|---|---|---|
+| `Refusal` | 2: crates/svrngs/src/cli.rs:537 (b08defef), door/sign_in.rs:132 (8572711e) | Neither is the range's. The range's is `type Refusal = Infallible` on `impl Command for Visit` (svrngs-core register.rs:145, 7754eb7a), the trait's associated type, no noun (as judged at the U7, v1 and canon audits). |
+| `House` | 0 seen | Tests are out of the instrument's scope. By `git grep`, two test fixtures in two test binaries: crates/svrngs-node/tests/door/guests.rs:18 (Kim's house of three, 795ae01d, in range) and tests/surface.rs:108 (Alex and Sam, 1c61b377). Two houses, two binaries; not a finding. |
+| `Peer` | 0 seen | apps/doc/ws.mjs:85, `class Peer`, by `git grep` the only one; JavaScript is not exported (I4). |
+| `Visit`, `Guest`, `Visiting`, `VisitLink`, `VisitRequest`, `Dark` | 1 each | lib.rs:440, membership.rs:243, svrngs-runtime register.rs:86, invite.rs:38, redeem.rs:129, door.rs:286 (the instrument says each one line early, I1). |
+
+### Reading the range
+
+The guests rows' src was read hunk by hunk (`git diff 34d6e287 beb20b68
+-- crates/svrngs-core/src/{membership,lib,register}.rs
+crates/svrngs-node/src/{door,redeem,invite,home,surface,rail}.rs
+crates/svrngs-runtime/src/{register,journal,lib}.rs web/app.js
+web/store.js crates/svrngs-node/src/home/{home,question}.js`), and the
+range's web/lend.js, svrngs main.rs and home.js for silent defaults
+(`catch`, `?? `, `|| []`), each hit read. #211-#214 were opened and
+watched by their own rows; they are not judged again here.
+
+- **A visit's key admitted after it stands as a member while the fold
+  still says it is visiting** (GUESTS §3.8, §3.9). The walk refuses a
+  Visit whose key was bound (membership.rs:635-636, `used`), but an
+  Admit binds a key with no word of the visits (:654-678). Run in a
+  scratch test beside visit_tests.rs (then removed): Kim's visit of
+  key 9 at Friday, alex's Admit of key 9 as "sam" an hour later; the
+  fold says "key 9 stands: true; visiting at FRI+2h: [("sam", <kim's
+  key>, 1172800)]; gaps []" (scratch-admit.out). The door asks standing
+  first (door.rs:989-990), so from the Admit Sam is carried as a
+  member. #215.
+- **A guest's link this computer cannot read said as one it never
+  made** (principle 6). `claim_visit` reads the kept link with
+  `std::fs::read(&at).ok()` and parses it with `.ok()`
+  (invite.rs:232-233), so an unreadable or unparseable link, already
+  removed, is traced `held = false` (:235) as a link never made or
+  claimed already, and the guest is told the refusal every link shares
+  (redeem.rs:83). #216.
+- **One decider** (fence 4, principle 8). The two bounds are each one
+  constant (membership.rs `VISIT_LONGEST`, `GUESTS_PER_HOST`); the
+  door, the pages and the fold ask `Guest::live` alone (door.rs
+  `guest_of`, rail.rs `visiting`, membership.rs `visiting`). The page's
+  "Your visit … ended" (web/app.js `visit`) reads `until` from the
+  host's answer and only words it; the door's refusal stays the
+  decider.
+- **Never silently substitute** (AGENTS.md 6). `visiting` answers
+  `null` when this computer's clock cannot be read, and both pages say
+  so ("This computer cannot say who is visiting …", home.js:110; "…
+  cannot be read just now.", web/app.js). `visit_anywhere` says an
+  unreadable register at warn. lend.js's `away` traces an away page it
+  could not fetch before saying svrngs's words.
+- **Glassbox** (principle 1). Each new branch in the fold, the door's
+  `guest_of`, the redemption, the link's claim and the host's Stop
+  traces at debug, each refusal with the fact that refused it.
+- **Forked code** (AGENTS.md 11). apps/doc is the range's one fork:
+  four files carry their `ported from` line (adapter.js,
+  adapter.test.mjs, app.js, index.html), `scripts/ports.py` lists them;
+  the two the port brought and 909eff3b dropped (expenses.js and its
+  test) went with their marks. 68 files carried a mark at 34d6e287 and
+  71 at beb20b68; docs/DESIGN.md's mention went with adee4194's rewrite.
+
+### Fixed here
+
+- c91069af: the browser tests' `computer_on` and `standing_on` start
+  and seed a node through one `seeded`, copies 2 → 1. `cargo test -p
+  svrngs-node --test browser --
+  a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark`,
+  which starts nodes through both, 2 passed; red on a plant (the
+  founder given `signing(me)` whatever is asked), 2 failed at
+  main.rs:292 and :3768.
+
+Not fixed here: #215 changes what the fold counts, and #216 what a
+trace says, each in counted code with no line left under its cap; #217
+is V1.1.3's tests and two crates' drivers, a move larger than this row.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 215 | GUESTS §3.8, §3.9; 6 | crates/svrngs-core/src/membership.rs:635-636 (a Visit's key never bound before), :654-678 (an `Admit` binds with no word of the visits); crates/svrngs-node/src/door.rs:989-990 (standing asked before a visit) | not fixed (changes the fold; red first, and svrngs-core has no line left under 3,076) | **Read, and run in a scratch test.** A visit's key admitted after its visit stands, and the visit stays live: "key 9 stands: true; visiting at FRI+2h: [("sam", …)]". The door then carries the guest as a member. svrngs's own pages never offer a visit's key to a join (web/app.js makes it fresh and keeps it apart, store.js `keepVisit`), so only a changed client or an `Admit` by hand writes one; the fold, not the page, is where "a visit never becomes membership" holds. An `Admit` of a key some counting Visit holds could count nowhere, as a Visit of a bound key does. |
+| 216 | 6, 1 | crates/svrngs-node/src/invite.rs:232-235 (`claim_visit`: `read(..).ok()`, `from_slice(..).ok()`, `held = kept.is_some()`); crates/svrngs-node/src/redeem.rs:196 (`NoInvite`) | not fixed (a trace's words in counted code, no line left under 16,907) | **Read.** A guest's link this computer made, whose kept file it cannot read or parse, is removed and traced as one never made or claimed already, `held=false`; whoever reads the log cannot tell a broken file from a second redemption. The person's words are rightly the one refusal every link shares. The trace could say which of the three it was. |
+| 217 | 8 | crates/svrngs-node/tests/browser/main.rs:3244-3271 (`with_stopped`) and :3749-3769 (`a_phone_is_shown_…`); :3670-3679 (`gzip_only`) and :3810-3819 (`socket_page`); crates/svrngs-node/tests/browser/guests.rs:83-92 and crates/svrngs/tests/join_page.rs:292-301; web/tests/carried.mjs:17-25 and web/tests/screen.mjs:13-21 | not fixed (test code; a move across V1.1.3's tests and two crates) | The line-window pass's new spans in tests: V1.1.3's phone test sets up `with_stopped`'s house by hand, its two stand-in servers read a head by the same hand, a browser driver is told and read the same way in two crates' tests, and the screen's driver opens its context as carried.mjs's does. A change to one, such as a driver's line format, passes the other unread. |
+| 80 | — | scripts/lean_check.py:105 BUDGET, :173 `n >= cap` | not fixed (operator's) | 16,906 / 16,907 and 3,075 / 3,076 after this audit: +343 and +67 over the range, the guests rows' +304 and +67 among them. 18 of the repository's ceiling (16,925) unraised, none of svrngs-core's. |
+| 211-213 | as recorded | as recorded | not fixed | Open since guests-run; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: lib.rs:439 for :440, membership.rs:242 for :243, door.rs:285 for :286, cli.rs:537 for :538. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)". web/'s, scripts/' and apps/' exact tiers could not judge, and `converge noun` sees no JS class (`Peer`). |
+| I32 | 7 | dry-report's near tier, nested spans | Still present: three of the three clusters with a side in this range are neighbours padded to overlap. |
+
+## REVIEW-audit-leave-auto-1 (2026-10-21, range e5fdc353..123ba07b)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-guests-auto-1, its hash
+e5fdc353 (ralph/next/guests/STATE.md:72); none ran in this queue before
+this one. The range ends at 123ba07b, the commit that made this row:
+`git rev-list --count e5fdc353..123ba07b` is 16, none a merge
+(`--merges`: 0). Its first commit, db1ab12e, is the loop's `done` for
+that row and touches only its state file; blame and windows below are
+taken against db1ab12e, which holds the same code. The range is the leave
+queue alone: the survey of #211 (503b891c), leave-economize and
+leave-told. The row reads `docs/ARCH_PRINCIPLES.md`, which is
+docs/principles/ARCH_PRINCIPLES.md, and `target/debug/sovereign-cli`,
+which is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+22c48619… (`shasum -a 256`), rebuilt since guests-auto-1's 7b86f7bf….
+The state file is left as it is; the loop owns the row. Every file named
+/tmp/ below is under /tmp/leaveaudit/.
+
+This audit's own commit before this section: d1ab28b9, the removal
+tests' two three-node starters made one (below, "Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%h %s' --no-merges
+e5fdc353..123ba07b` (ledger.raw), summed by guests-auto-1's ledger.py
+with this range's units (scripts/ledger.py; each commit's unit in
+ledger.commits). The survey's scope `leave` is its own row; the queue's
+draft (39f39a59), naming no unit, counts toward leave-economize. Raw
+lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | markup net | apps | scripts net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-guests-auto-1 (its `done`) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| survey (leave) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| leave-economize | 6 | 4 | 9 | **−5** | 3 | 2 | +1 | 0 | 0 | +5 (+6 −1) |
+| leave-told | 7 | 99 | 56 | **+43** | 355 | 19 | +336 | 0 | 0 | +2 (+3 −1) |
+| REVIEW-audit-leave-auto-1 (its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 16 | 103 | 65 | **+38** | 358 | 21 | +337 | 0 | 0 | +7 (+9 −2) |
+
+leave-economize's src is `Membership::visiting` cut (membership.rs +3
+−8, lib.rs's doc link); leave-told's is removal.rs +61 −36 (`tell`,
+`told`), ring_routes.rs +32 −18 (`told_with`, `told_cut`) and
+ring_sync.rs +6 −2 (`leave_told`'s doc and call) (`git diff --numstat
+153ce69d..747744ee -- crates`). The survey's .rs files are under
+demo/runs/, outside product code.
+
+What the budget counts, by HEAD's scripts/lean_check.py over a `git
+archive` tree of each end and each unit's last commit (lean-<hash>.out):
+
+| at | svrngs-core | repository | counted net |
+|---|---:|---:|---:|
+| db1ab12e, range start | 3075 | 16906 | |
+| 153ce69d, leave-economize done | 3072 | 16903 | −3 |
+| 747744ee, leave-told done | 3072 | 16927 | +24 |
+| 123ba07b, range end | **3072** | **16927** | **+21** |
+
+The caps (`git log e5fdc353..123ba07b -- scripts/lean_check.py`, BUDGET
+at each):
+
+| commit | the repository's cap | svrngs-core's | for |
+|---|---|---|---|
+| e5fdc353, range start | 16,907 | 3,076 | |
+| 00f8a82d, leave-economize (c) | → 16,904 | → 3,073 | the cut, ratcheted |
+| 62945f12, leave-told (b) | → 16,928 | 3,073 | #211's fix, +24 over the pass's cap |
+
+The raise is +24 of the charter's +25 (CHARTER.md, "Pass first, then
+raise") and svrngs-core's cap unchanged, as fence 7 asks. The range
+closes at 16,927 / 16,928 and 3,072 / 3,073: no counted line left under
+either cap (lean_check.py:217, `n >= cap`). d1ab28b9 is test code and
+moves no counted line (`lean_check.py` after it: 16927 and 3072).
+
+### The instrument
+
+The corpus is 123ba07b's crates/, scripts/, Cargo.toml and Cargo.lock by
+`git archive` (200 files). The range touched nothing in web/ or apps/
+(`git diff --stat e5fdc353 123ba07b -- web apps`: empty), so they are
+left out.
+- `code index . --corpus-id leave-123ba07b`: 3090 chunks in 271 s
+  (index.out), the embedder the daemon on 127.0.0.1:9741.
+- `refresh`, in the corpus: rust 18575 symbols and 108114 edges;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node and scripts/
+(`git diff --stat e5fdc353 123ba07b -- crates web scripts apps`). Each
+was reported at 0.95 and 0.90 (clean-*.md). Whether a side was added in
+the range is `git blame -s db1ab12e..123ba07b` over each side's lines,
+a line before the range carrying `^` (38 sides, cluster-sides.txt;
+blame-clusters.out). Its controls in the same run: removal.rs:267-272
+(`told`, c599547e) 6 of 6 lines new; api.rs:1-6 0 of 6.
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 11 | 0 |
+| crates/svrngs-node/ | 1 | 1 | 8 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | — |
+
+No side of `tell`, `told`, `told_with`, `told_cut` or `leave_told` is in
+any cluster; every side blames to a commit before the range.
+
+**The line-window pass.** canon-auto-1's windows.py over every code
+file at 123ba07b, vendor/ and node_modules/ apart (321 files,
+windows.files): **228 window hits, 57 spans, 1 new** (windows.spans;
+windows.verdicts, newspans.sh's blame against db1ab12e; 56 old). Its
+positive control, the old span apps/events/store.mjs:17-100 ==
+apps/grapevine/store.mjs:17-100, is among the 56.
+
+| new span | read |
+|---|---|
+| crates/svrngs-node/tests/removal.rs:117-133 == :415-431 | leave-told (a)'s `oak` (4220c342, the survey's test) seeds, admits, wires and rounds three nodes as the file's `three` does. **Fixed in d1ab28b9.** |
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git log -p --no-merges e5fdc353..123ba07b -- crates
+apps web scripts`, matched against `(struct|enum|trait|type|class)
++[A-Z]\w*` (types-diff.out): **none**. Over the whole range, demo/
+included (types-all.out), every hit is a line of
+demo/runs/economize/2026-10-21-leave/data/demoted.diff, the pass's
+record of `pub` demoted and rebuilt, not a type the range defines. So no
+noun is run. The instrument still answers (nouns-control.out): `Said`, 2
+definitions, crates/svrngs/src/cli.rs:1073 and door/choices.rs:42, both
+older (u2-auto-2's list, :484 above), and `Digest`, 1, view.rs:108;
+each one line early (I1: :1074, :43, :109).
+
+### Reading the range
+
+leave-told's src was read hunk by hunk (`git diff e5fdc353 123ba07b --
+crates/svrngs-node/src crates/svrngs-core/src`), against the charter's
+fences and principles 1, 6 and 8.
+
+- **A cut told late to a removed computer counts through the keeper's
+  later `Remove`s** (fence 4; CHARTER.md "anything beyond the record";
+  DESIGN §6). Ran a scratch test (below), with its control. #218.
+- **One decider** (principle 8, fence 3). `told_with` (ring_routes.rs:137)
+  is the one selection; `told` (removal.rs:285) and `told_cut`
+  (ring_routes.rs:163) call it, and nothing else retains a cut's chain
+  (`git grep -n "ops.retain" -- crates/svrngs-node/src`: ring_routes.rs:141
+  alone).
+- **Never silently substitute** (principle 6, fence 5). `told` returns
+  an `Err` for an unreadable digest, an unread lack and a digest that
+  did not move, and `tell` says each at warn, "asked again, never sent the
+  cut alone" (removal.rs:251); `leave_told` keeps only the computers that
+  answered `Ok` (ring_sync.rs:443-448). A refusal is `Ok("it refused this
+  computer")`, an answer, as #190 asked.
+- **Glassbox** (principle 1). Each pass of `told`'s loop traces at debug
+  (`sent`), its two ends by `tell`'s `how`; `told_with` traces its `seq`
+  and `more`; `told_cut` its asker and signer.
+- `told_with` is `pub` (ring_routes.rs:137) though only svrngs-node calls
+  it (`git grep -n told_with -- '*.rs'`: removal.rs and ring_routes.rs,
+  tests in comments only), where leave-economize's survey demoted such
+  items. As `pub(crate)` rustfmt wraps its signature to 5 lines: tried,
+  `lean_check.py` 16931 / 16928, so reverted. Not a finding; it costs
+  lines the cap does not have.
+
+### Fixed here
+
+- d1ab28b9: the removal tests' `three` and leave_race's `oak` seed, admit,
+  wire and round through one `knit`, copies 2 → 1. `cargo test -q -p
+  svrngs-node --test removal`, 9 passed (knit-green.out); red on a plant
+  (`knit` admitting only the first of the two), 5 failed, two through
+  `three` (removal.rs:154, :259) and three through `oak` (:422, :527,
+  :576) (knit-plant.out). The window pass over the file after: 0 spans.
+
+Not fixed here: #218 changes what a removed computer is sent, counted
+code with one line left under its cap, and its fix is a choice the
+charter leaves to the operator ("anything beyond the record").
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 218 | 6; fence 4 | crates/svrngs-node/src/ring_routes.rs:139 (`told_with`: the signer's **highest** `Remove`), :161-163 (`told_cut` finds the `Remove` naming the asker, then passes only its signer); at e5fdc353 ring_routes.rs:146-149 (`told_cut` counted through the `Remove` naming the asker) | not fixed (what a removed computer is sent; the charter's "anything beyond the record" is the operator's) | **Run, with its control.** A scratch test beside leave_race (then removed): Oak, Ana keeping it; Ana's computer cannot reach Kim's, so Kim's is off as far as Ana can tell. Ana removes Kim, writes `ana-after-kims-cut`, then removes Bo. Kim's round asks; Kim's copy holds "key 2 cut: true, key 3 cut: true, entries ["ana-after-kims-cut"]". Without Bo's removal (the control): "key 2 cut: true, key 3 cut: false, entries []" (scratch-later-remove.out). So a computer told its cut late takes the keeper's acts after its cut, through the keeper's latest `Remove` of anyone, and the record of who was removed after it, DESIGN §6 says that selection as the code makes it, "the signer's acts through its highest `Remove`" (docs/DESIGN.md:999-1000), so the doc and the code agree; what they disagree with is the charter, which sends a removal "with only the keeper's acts before it and the hand-ons" (fence 4) and leaves "any act sent that is not the cut's signer's before it, or a hand-on" to the operator, and `told_cut` before c599547e, which counted through the `Remove` naming the asker. The leave case `told_with`'s `.max()` was chosen for (a person's other computer told the signing key's leave, which `Leave` writes last in one batch, tests/removal.rs:614-625) does not need a later batch's `Remove`; the bound that serves both is the operator's to choose. The at-once tell meets it only if the keeper writes a later `Remove` while `told` is still sending (removal.rs:267-290, `ops_missing_from_within` read again each pass, :284); a leave never, since the leaver signs nothing after it. |
+| 80 | — | scripts/lean_check.py:149 BUDGET, :217 `n >= cap` | not fixed (operator's) | 16,927 / 16,928 and 3,072 / 3,073 after this audit: +21 and −3 over the range, leave-told's +24 the raise of 62945f12. |
+| 211 | 6 | as recorded | fixed in c599547e | Not judged again; #218 is a reach of its fix this range adds. |
+| 212-217 | as recorded | as recorded | as recorded | Open since guests-auto-1; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: cli.rs:1073 for :1074, choices.rs:42 for :43, view.rs:108 for :109. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/' exact tier could not judge. |
+
+## REVIEW-audit-oidc-auto-1 (2026-10-21, range 718e08f2e..4daea9eb)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-leave-auto-1, its hash
+718e08f2e (ralph/next/leave/STATE.md:20); none ran in this queue before
+this one. The range ends at 4daea9eb, the commit that made this row:
+`git rev-list --count 718e08f2e..4daea9eb` is 72, none a merge
+(`--merges`: 0). Its first commit, cefff1b5, is the loop's `done` for
+that row and touches only its state file. The range is the oidc queue:
+its setup, the economizing pass and the nine units. The row reads
+`docs/ARCH_PRINCIPLES.md`, which is docs/principles/ARCH_PRINCIPLES.md,
+and `target/debug/sovereign-cli`, which is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+22c48619… (`shasum -a 256`). The corpus is `svrngs`, last indexed at
+b404da38 (`scip_meta`), the code HEAD after the range's last code commit
+337a7c63; rust and python exported, typescript skipped (I4, I34). The
+state file is left as it is; the loop owns the row. Every file named
+/tmp/ below is under /tmp/oidcaudit/.
+
+This audit's own commit before this section: dd4b8ef2, the sign-in
+token's and its key error's names made one (below, "Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%s' --no-merges
+718e08f2e..4daea9eb` (log.txt), summed by unit id (ledger.py). Product
+code is the lean_check.py definition: `.rs`, `.js`, `.mjs`, `.ts`,
+`.py` and `.sh` under `crates/`, `web/` and `scripts/`, tests apart
+(`*/tests/*`, `*_tests.rs`, `tests_support.rs`, `*.test.mjs`). `apps/`
+(charter fence 9), `demo/runs/` (recorded drivers), `ralph/`, `docs/`,
+the lockfiles and the `.opencode/` config are out. Raw lines, comments
+and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| queue (state and charter) | 4 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-setup | 3 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-economize | 3 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-token | 7 | 348 | 40 | **+308** | 223 | 4 | +219 |
+| oidc-provider | 8 | 618 | 19 | **+599** | 625 | 44 | +581 |
+| oidc-authorize | 5 | 195 | 4 | **+191** | 471 | 19 | +452 |
+| oidc-hook-cut | 4 | 64 | 802 | **−738** | 91 | 1296 | −1205 |
+| oidc-turn-on | 6 | 266 | 40 | **+226** | 297 | 6 | +291 |
+| oidc-jellyfin | 17 | 96 | 22 | **+74** | 169 | 4 | +165 |
+| oidc-forgejo | 8 | 0 | 0 | **0** | 0 | 0 | 0 |
+| oidc-retire | 6 | 12 | 12 | **0** | 34 | 10 | +24 |
+| REVIEW-audit-oidc-auto-1 (its row) | 1 | 0 | 0 | **0** | 0 | 0 | 0 |
+| total | 72 | 1599 | 939 | **+660** | 1910 | 1383 | +527 |
+
+The six units with no product line are their demo data, recorded run
+drivers and state/charter edits; oidc-retire's −1,106 lines of
+`apps/jellyfin/mw/` are `apps/`, outside the budget, and its product
+change is share.rs's helper row and well_known.txt's line. oidc-hook-cut
+is the operator-authorized retirement of the sign-in hook (CHARTER.md,
+2026-10-21), its 523 counted lines and its 1,028 test lines going.
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end:
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 718e08f2e, range start | 3072 | 16927 |
+| 4daea9eb, range end | **3152** | **17418** |
+| net | **+80** | **+491** |
+
+The operator's ceiling was +800 and +80 over the pass's 16,928 and 3,073
+(CHARTER.md, 2026-10-21): 309 of the repository's raise is unspent, and
+svrngs-core is at the line (3,152 / 3,153). oidc-retire's cut lowered the
+repository's cap to 17,419, one past where it landed. This audit's
+rename moves no counted line (17,418 / 17,419 and 3,152 / 3,153 after
+dd4b8ef2).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs
+and web/ (`git diff --stat 718e08f2e 4daea9eb -- crates web`). Each was
+reported at 0.95 and 0.90 (dry-*.md). Whether a side was added in the
+range is `git blame --porcelain` over each side's lines (blame_sides.py;
+a line's commit in `git rev-list 718e08f2e..4daea9eb` is new). Its
+controls in the same run: token.rs:39-50 (`Claims`) 12 of 12 lines new
+(7b9b4ad2); removal.rs:267-272 (`told`, c599547e) 0 of 6.
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 12 | 0 |
+| crates/svrngs-node/ | 1 | 0 | 8 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| web/ | could-not-judge (I34) | 0 | 1 | 0 |
+
+No side of any clone is new: every side blames to a commit before
+718e08f2e, except the node's `of`/`forget` pair, which is in
+`door/sign_in.rs`, deleted by this range (d78ec302) and still in the
+graph (I35). The exact clones are `as_str` (link.rs:186, synced.rs:67),
+`lines` (command.rs:87, :105), `signed_by_link` (joining.rs:56, :148),
+`is_empty` (act_set.rs:40, command.rs:109) and `addr` (api.rs:212, :228),
+all older. The near 0.90 clusters are the older test and helper pairs in
+removal/register/membership tests, origin.rs/surface.rs, synced.rs,
+redeem.rs, choices.rs, rail.rs, lend.rs and web/lend.js.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 718e08f2e..4daea9eb -- crates web`,
+matched against `(struct|enum|trait|type) +[A-Z]\w*`: 14 definitions
+(types-diff). Each noun, as the corpus at b404da38 answers:
+
+| noun | definitions | site(s) | after |
+|---|---:|---|---|
+| Group | 3 | token.rs:28; two `demo/runs/perf/*/run.py` drivers | one product noun; the demo pair is recorded drivers, not product |
+| Claims | 1 | token.rs:38 | — |
+| Header | 1 | token.rs:94 | — |
+| Token | **2** | link.rs:85, token.rs:104 | **1**, token.rs's is `Jwt` (dd4b8ef2) |
+| SignInWithSvrngs | 1 | lend.rs:299 | — |
+| KeyError | **2** | svrngs/src/identity.rs:79, oidc.rs:61 | **1**, oidc.rs's is `KeyFailure` (dd4b8ef2) |
+| Key | 1 | oidc.rs:73 | — |
+| Signer | 1 | oidc/front.rs:30 | — |
+| Provider | 1 | oidc/provider.rs:81 | — |
+| Code | 1 | oidc/provider.rs:152 | — |
+| Codes | 1 | oidc/provider.rs:206 | — |
+| TokenForm | 1 | oidc/provider.rs:286 | — |
+| House | 0 | test-only (tests/door/oidc.rs:438, tests/*/…) | — |
+| Sharing | 1 | svrngs/src/cli.rs:1082 | — |
+
+The two nouns with more than one product definition, as the tool printed
+them (before dd4b8ef2):
+
+```
+noun: Token
+definitions (2), first-party production:
+  svrngs-core                    crates/svrngs-core/src/link.rs:85
+  svrngs-core                    crates/svrngs-core/src/token.rs:104
+
+noun: KeyError
+definitions (2), first-party production:
+  svrngs                         crates/svrngs/src/identity.rs:79
+  svrngs-node                    crates/svrngs-node/src/oidc.rs:61
+```
+
+`Token`'s two are a join link's token and a sign-in JWT; `KeyError`'s are
+this computer's identity key file and the sign-in key. Both are distinct
+concepts under one name (ARCH_PRINCIPLES §8), so the later definition of
+each takes its own name. `Group`'s third and fourth definitions are in
+recorded run drivers under `demo/runs/perf/` (`run.py:81` and `:68`),
+data outside the budget, and `House` is defined only in test code; the
+tool's line numbers are one early (I1).
+
+### Reading the range
+
+The OIDC code was read hunk by hunk (`git diff 718e08f2e 4daea9eb --
+crates/svrngs-core/src crates/svrngs-node/src web/src`), against the
+charter's fences and principles 1, 6 and 8.
+
+- **One issuer, one key, one client** (fence 7). `provider::issuer` is
+  the one string discovery, the token and userinfo call
+  (provider.rs:63); `Key::jwks` and `Key::token` read the same pair
+  (oidc.rs:160-201); the client comes from the declaration's
+  `SignInWithSvrngs` (lend.rs:299), not a second copy. `told_as`
+  (door.rs:158) is one helper for the headers and the claims.
+- **Nothing leaves the lender's computer** (fence 3). The key is
+  written through `declared::write_secret` (oidc.rs:101-104); the code
+  store is `Codes`' map in memory (provider.rs:206-246); no token is
+  written or traced. `verified` checks the signature, `iss`, `aud` and
+  `exp` (oidc.rs:143-190).
+- **Only people the door would carry** (fence 4). The authorize branch
+  sits after the asker is resolved and before the path refusals and the
+  limit (door.rs:1225), and a removed member is refused before it. A
+  stopped app is not, though; #221.
+- **Glassbox** (principle 1). Every refusal in `front::authorize`,
+  `Provider::declared`, `token`, `userinfo` and `Codes` traces at debug
+  with the fact; the success paths do too. The one silent branch is
+  #220's RNG.
+- **The clock has two homes** (principle 8): `door::unix_now`
+  (door.rs:972) refuses a pre-1970 clock and warns; `provider::now`
+  (provider.rs:72) reads the same clock and returns 0. #219.
+
+### Fixed here
+
+- dd4b8ef2: `Token` → `Jwt` (crates/svrngs-core/src/token.rs:105) and
+  `KeyError` → `KeyFailure` (crates/svrngs-node/src/oidc.rs:62), with
+  their references in the core's token test and oidc.rs, provider.rs,
+  node.rs and cli.rs. Behaviour kept: the JSON, the wire forms, the
+  error text and every test are unchanged; `cargo test -p svrngs-core
+  --test token` 4 passed and `cargo test -p svrngs-node --lib oidc` 4
+  passed.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 219 | 6, 8 | crates/svrngs-node/src/oidc/provider.rs:72-77 (`now`: `unwrap_or(0)`); crates/svrngs-node/src/door.rs:972-985 (`unix_now`/`unix_secs`: `None`, said at warn) | not fixed (the fix propagates `None` through `Code::new`, `token` and `userinfo`; the repository has 1 line left under 17,419) | **Read.** The provider is a second home of the clock, and it silently substitutes 0 for a time before 1970 where the door refuses and warns — the exact shape #203 fixed at door.rs. A code then expires at 60 and a token is minted `iat=0, exp=600`, already lapsed: safe in direction, but an absence defaulted, never reported (AGENTS.md 6). One reader, one verdict, would be `unix_now`'s. |
+| 220 | 6 | crates/svrngs-node/src/oidc/provider.rs:227 (`let _ = self.rng.fill(&mut bytes)`); the good twin at crates/svrngs-node/src/oidc.rs:43 (`map_err(KeyFailure::Random)`) | not fixed (a `Result` from `mint` reaches `front::authorize` and adds lines; the cap has 1) | **Read.** The code store swallows the system RNG's failure, leaving `bytes` all zero: every mint then inserts the same 43-character code, so a client that presents it redeems the last minted person's code. The key's draw maps the same failure to a refusal; the code's does not. A failure that cannot happen on this platform is still an `Err` collapsed into a value (principle 6), and the value is predictable. |
+| 221 | 8; fence 4 | crates/svrngs-node/src/door.rs:1225-1256 (the authorize branch returns before `own_app` at :1262 and `choices::check` at :1265); crates/svrngs-node/src/door/choices.rs:17-18 ("A stop refuses every request the door receives after it"), :126-160 (`check`) | not fixed (the front channel's ask names no app, so the per-app choice cannot be asked; giving the sign-in the app's identity or a per-lend choice is the design's and the operator's) | **Run.** A scratch test beside tests/door/oidc.rs (then removed; /tmp/oidcaudit/scratch-stop.out): bo stops `media` for the app's label — `POST /choices/media` 200, body `{"app":"umfr…","choice":{"at":…,"said":"stop"}}` — and the authorize ask with that app's pass still answers `302 … Location: /signin-oidc?code=…`. A lend that asks refuses the same app's ordinary page `stopped` (tests/door/choices.rs:146-160), but the sign-in still mints a code, so the door's one choice decider does not reach the front channel. A stop is not one of the design's path refusals (SIGN_IN_WITH_SVRNGS §5), and the app's authorize request on a computer carries no app label; that is why the branch cannot simply move below `choices::check`. |
+| 80 | — | scripts/lean_check.py:149 BUDGET, :217 `n >= cap` | not fixed (operator's) | 17,418 / 17,419 and 3,152 / 3,153 after this audit: +491 and +80 over the range, inside the operator's +800 and +80; 309 of the repository's raise unspent, none of svrngs-core's. oidc-retire's cut lowered the repository's cap to one past where it landed. |
+| 211-218 | as recorded | as recorded | as recorded | Open since the leave and guests queues; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: Token at link.rs:85 for :86 and token.rs:104 for :105; KeyError at identity.rs:79 for :80 and oidc.rs:61 for :62; Group at token.rs:28 for :29. |
+| I4 | 6 | `refresh` | Still present: typescript "skipped (export failed)"; web/'s, scripts/' and apps/' exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: the core's removal_tests.rs, register_tests.rs, membership_invite_tests.rs, tests_support.rs and node's ring_sync/tests.rs are reported as production clones. |
+| I34 | 6 | `converge noun`, `refresh` | Still present: a Rust crate outside the Cargo workspace is not exported, so `web`'s Rust (`web/src/join.rs:52`'s `Group`, `http.rs`) is absent; web/'s exact tier could-not-judge. |
+| I35 | 6 | `refresh`, SCIP graph | New: a file deleted in the range is still in the graph. `door/sign_in.rs` went at d78ec302, the meta's `last_indexed_head` is b404da38 (after it) and `stale_files` is empty, but `scip_graph.db` still holds 591-line `sign_in.rs` symbols, and dry-report reports `of`/`forget` at door/sign_in.rs:336 and :353 as a near clone. A cluster in deleted code reads as live until the corpus is rebuilt. |
+
+## REVIEW-audit-models-auto-1 (2026-10-23, range 29ecf59a..076f057a)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-oidc-auto-1, its hash
+29ecf59a0 (ralph/next/oidc/STATE.md:56), the latest of the 21 rows' hashes
+by commit date; none ran in the models queue before this one. The range
+ends at 076f057a, the commit that made this row: `git rev-list --count
+29ecf59a..076f057a` is 90, none a merge (`--merges`: 0). It holds the oidc
+follow-ups, the room and network work, the check.sh timings, the install
+PATH line and the models queue, most under subjects that name an area,
+not a row id, so the ledger sums by that area. The principles are
+docs/principles/ARCH_PRINCIPLES.md; the instrument is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 22c48619…
+(130ea275). Every file named /tmp/ below is under /tmp/modelsaudit/.
+
+This audit's own commits before this section: 2783605e, 4f4fd5d9,
+b988beee, 2953e104 and a136834a ("Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --numstat --format='@@%s' --no-merges
+29ecf59a..076f057a` (log.txt), summed by the subject's unit (py/ledger.py).
+Product code is the lean_check.py definition: `.rs`, `.js`, `.mjs`,
+`.ts`, `.py` and `.sh` under `crates/`, `web/` and `scripts/`, tests apart
+(`*/tests/*`, `*_tests.rs`, `tests_support.rs`, `*.test.mjs`). `apps/`
+is outside the budget (CHARTER.md, "The budget") and is given in its own
+columns, since the models queue's code is all there; `demo/runs/`,
+`ralph/`, `docs/` and the lockfiles are out. Raw lines, comments and
+blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps/ net | apps/ test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ralph (loop marks, settings) | 6 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| oidc | 8 | 322 | 215 | **+107** | 111 | 17 | +94 | 0 | 0 |
+| install | 2 | 14 | 2 | **+12** | 82 | 5 | +77 | 0 | 0 |
+| room | 15 | 1005 | 601 | **+404** | 603 | 174 | +429 | 0 | 0 |
+| network | 2 | 304 | 202 | **+102** | 73 | 34 | +39 | 0 | 0 |
+| check | 3 | 19 | 14 | **+5** | 0 | 0 | 0 | 0 | 0 |
+| queue, plan, design | 23 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| svrngs (tests' `Program`) | 1 | 0 | 0 | **0** | 18 | 5 | +13 | 0 | 0 |
+| models-scope | 5 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| models-pantry | 7 | 0 | 0 | **0** | 0 | 0 | 0 | +512 | +441 |
+| models-bridge | 5 | 0 | 0 | **0** | 0 | 0 | 0 | +165 | +249 |
+| models-run | 10 | 0 | 0 | **0** | 0 | 0 | 0 | +132 | +265 |
+| models-fresh | 3 | 0 | 0 | **0** | 0 | 0 | 0 | +53 | +58 |
+| total | 90 | 1664 | 1034 | **+630** | 887 | 235 | +652 | +862 | +1013 |
+
+The models queue moved no counted line, as its charter holds. Room and
+network are the operator's two raises in the range, 3a669f6d (+231) and
+a9e82b9a (+67), each after an economizing pass (68e8424d, dd3baad1).
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end (tree-*/):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 29ecf59a, range start | 3152 (cap 3153) | 17418 (cap 17419) |
+| 076f057a, range end | **3149** (cap 3150) | **17634** (cap 17635) |
+| net | **−3** | **+216** |
+
+This audit's commits move no counted line: 3149 / 3150 and 17634 / 17635
+at a136834a. The pantry's two renames and the `modelId` move are in
+`apps/`.
+
+### The instrument
+
+The `svrngs` corpus could not be used: its chunk index is gone (I36), so
+dry-report said "no chunk index … run `svrn project init` first". The
+corpus is a136834a's crates/, scripts/, web/, apps/pantry/, Cargo.toml
+and Cargo.lock by `git archive` (258 files, models-a136834a/).
+- `code index . --corpus-id models-a136834a`: 3572 chunks in 583 s
+  (index3.out).
+- `refresh`, in the corpus: rust 19181 symbols and 111317 references;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs,
+scripts/, web/ (install.sh) and apps/pantry (`git diff --stat 29ecf59a
+076f057a -- crates web scripts apps`). Each was reported at 0.95 and 0.90
+(dry-*.md). Whether a side was added in the range is `git blame
+--porcelain` over each side's lines at HEAD (blame_sides.py; a line's
+commit in `git rev-list 29ecf59a..HEAD` is new). Its control in the same
+run: room/owner.rs:36-46, 11 of 11 lines new (fe2eb813, a136834a).
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 11 | 0 |
+| crates/svrngs-node/ | 1 | 0 | 8 | 0 |
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| web/ | could-not-judge (I4, I34) | 0 | 2 | 0 |
+| apps/pantry/ | could-not-judge (I4) | 0 | 0 | 0; `examples/` never judged (I37) |
+
+No side of any clone is new. The exact clones are the older `is_empty`
+(act_set.rs:40, command.rs:109), `lines` (command.rs:87, :105),
+`signed_by_link` (joining.rs:56, :148), `as_str` (link.rs:186,
+synced.rs:67) and `addr` (api.rs:212, :228), each 0 of 3 lines new. One
+near pair has new lines inside older symbols: home.rs `lent` and `change`
+(:227-270), 2 of 44 lines from ea8b1e2a, the room's pass folding the
+`SignIn` return and the `UNCHANGED` text into them; neither symbol was
+added. The rest are the older test pairs (I8), door.rs/surface.rs
+`lends`, home.js, synced.rs, choices.rs, rail.rs, lend.rs and web's
+app.js and lend.js, every one 0 lines new.
+
+What the instrument could not see in apps/pantry was read by hand
+(below): `modelId` and the probe time.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 29ecf59a 076f057a -- crates web scripts
+apps`, matched against `(struct|enum|trait|type|class) +[A-Z]\w*`: 13
+structs and enums and 4 private aliases (`type Error` is an associated
+type), and in `demo/runs/` 5 Python classes. Each noun, as the corpus
+answers (noun-*.out; the `svrngs` corpus's graph at 76422139 for the
+before, nouns.out):
+
+| noun | definitions | site(s) | after |
+|---|---:|---|---|
+| Subject | 1 | token.rs:40 | — |
+| LendPath | 1 | door.rs:841 | — |
+| HardwareAddress | 1 | network.rs:34 | — |
+| Network | 1 | network.rs:71 | — |
+| Unread | 2 | network.rs:76; demo/runs/canon/2026-10-17-house/judge.py:20 | one product noun; the other is a recorded run's judge |
+| Whereabouts | 1 | network.rs:191 | — |
+| S256Challenge | 1 | oidc/provider.rs:165 | — |
+| Served | **2** | room.rs:73, carried.rs:111 | **1**, carried.rs's is `Given` (2783605e) |
+| On | 1 | room.rs:122 | — |
+| InRoom | 1 | room.rs:132 | — |
+| RoomAsk | 1 | room.rs:143 | — |
+| Turn | 1 | room.rs:156 | — |
+| Room | 1 | room/owner.rs:45 | — |
+| Asked | **2** | svrngs-core joining.rs:64, room/owner.rs:35 | **1**, owner.rs's is `TurnAsk` (a136834a) |
+| Asks | 1 | room/owner.rs:38 | — |
+| Listening | 1 | room/owner.rs:41 | — |
+| Svrngs | 2 | demo/runs/models/2026-10-22-models/drive.py:166, …-scope/drive.py:112 | recorded drivers, not product |
+| MCPClient, H, OAuthTokenAuth | ≤1 | demo/runs/models/ drivers | — |
+
+The two nouns with more than one product definition, as the tool printed
+them before the renames:
+
+```
+noun: Served
+definitions (2), first-party production:
+  svrngs-node                    crates/svrngs-node/src/carried.rs:111
+  svrngs-node                    crates/svrngs-node/src/room.rs:73
+
+noun: Asked
+definitions (2), first-party production:
+  svrngs-core                    crates/svrngs-core/src/joining.rs:64
+  svrngs-node                    crates/svrngs-node/src/room/owner.rs:35
+```
+
+After, in models-a136834a: `Served` 1 (room.rs:73), `Given` 1
+(carried.rs:111), `Asked` 1 (joining.rs:64), `TurnAsk` 1
+(room/owner.rs:35). `Asked` is the shape 0213ebbc fixed in blob.rs, made
+again by the room's owner. Line numbers are one early (I1).
+
+### Reading the range
+
+apps/pantry (pantry.mjs, mcp.mjs, the bridge) was read whole against
+the queue's fences and principles 1, 6 and 8, since the instrument does
+not judge it (I4, I37).
+
+- **One home per threshold** (principle 8). The probe's 4 s lived twice,
+  pantry.mjs:36 and mcp.mjs's own `TIMEOUT`; one now (4f4fd5d9).
+  `FOUND_FOR` and `LENDS_FOR` are named once with their reasons
+  (pantry.mjs:24, :31).
+- **One form of a model's id** (principle 8). `list` and `serve` each
+  wrote `<handle>/<model>` and `<handle>/<lend>/<model>`; a test first
+  (b988beee, its plant named), then one `modelId` (2953e104).
+- **The kept answer outlives nothing for a lend that hangs** (principle 6;
+  models-run (0) (iii)). #222.
+- **Glassbox** (principle 1). Every probe, keep, skip and route is a
+  `note` under `PANTRY_LOG=debug` (pantry.mjs:221, :226, :315).
+
+### Fixed here
+
+- 2783605e: carried.rs's private `Served` → `Given`.
+- 4f4fd5d9: mcp.mjs's `TIMEOUT` → the caller's `DISCOVERY_TIMEOUT`.
+- b988beee, 2953e104: one person's two lends of one model id, tested,
+  then one `modelId` for `list` and `serve`.
+- a136834a: room/owner.rs's private `Asked` → `TurnAsk`.
+
+Behaviour kept: `cargo check -p svrngs-node --tests` and `cargo fmt
+--check` clean; `node --test` over apps/pantry's test files, 19 passed.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 222 | 6; models-run (0) (iii) | apps/pantry/pantry.mjs:218 (`const now = clock()` before the probe), :225 (`discovered.set(origin, { at: now, … })`); :24 (`FOUND_FOR = 4000`) against :182 and :203 (two probes of `DISCOVERY_TIMEOUT`, 4 s each, one after the other) | not fixed (a change of behaviour, red first; a row's) | **Run.** A lend that accepts and never answers is probed for 8 s, and its answer is stamped with the time before the probe, so it is kept already 8 s old against a 4 s `FOUND_FOR`: never reused. Every `/v1/models` waits on it again. scratch/hung2.mjs, one hung lend beside one that answers, two rounds 5 s apart (scratch/hung2.out): `/v1/models 0: 8054 ms`, `/v1/models 1: 8011 ms`, while `chat ana/coder` took 13 and 8 ms. `modelsNow` asks lends one after another (:309), so each such lend adds its 8 s. The could-not-judge is said, but the cost models-fresh removed for an asleep record ask returns for a hung lend. |
+| 80 | — | scripts/lean_check.py:198 BUDGET | not fixed (operator's) | 3149 / 3150 and 17634 / 17635 after this audit: −3 and +216 over the range, both raises the operator's (3a669f6d, a9e82b9a). |
+| 211-221 | as recorded | as recorded | as recorded | Open; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun` | Still one line early: Asked at owner.rs:35 for :36, Room at :45 for :46, Subject at token.rs:40 for :41. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/', web/'s and apps/pantry's exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: removal_tests.rs, register_tests.rs, membership_tests.rs, membership_invite_tests.rs, tests_support.rs and ring_sync/tests.rs reported as production clones. |
+| I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported. |
+| I36 | 6 | `code index --full` | New: a full rebuild that does not finish leaves no index. This audit's first session ran `code index ~/dev/svrngs --corpus-id svrngs --full` (index2.out); its last line is "Training IVF centroids (~44032 vectors, 753s elapsed)", no completion, the session ended under it. ~/.svrnmesh/indexes/svrngs then held `scip_graph.db`, `documents.lance` and `texts` but no `chunks.lance`, and dry-report errors. The old index went before the new one was whole. |
+| I37 | 6 | dry-report scope | New: the `examples` segment is excluded as non-production, so apps/pantry/examples/bridge, the queue's worked example and code people copy, is never judged; the report says 42 reps for apps/pantry and names no exclusion that hit. |
+
+## REVIEW-audit-capability-auto-1 (2026-10-25, range 8c21c4b5..510ebdef)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-models-auto-1, its hash
+8c21c4b5f (ralph/next/models/STATE.md), the latest of the rows' hashes by
+commit date; none ran in the capability queue before this one. The range
+ends at 510ebdef, the commit that made this row: `git rev-list --count
+8c21c4b5..510ebdef` is 158, none a merge (`--merges`: 0). It holds the
+stall queue, the preshift review and the capability queue's thirteen
+rows. The principles are docs/principles/ARCH_PRINCIPLES.md; the
+instrument is ~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256
+6d95a261… (d35f1d45). Every file named below is under target/capaudit/.
+
+This audit's own commits before this section: d35f1d45, 503f62ac,
+4d8245c8, 7ec64382, eda37591 and ee89f674 ("Fixed here").
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --no-merges --numstat --format='@@%h %s'
+8c21c4b5..510ebdef`, summed by the subject's unit, the id inside its
+parentheses or else the word before its colon (ledger.py, ledger.out).
+Product code is lean_check.py's: `.rs`, `.js`, `.mjs`, `.ts`, `.py` and
+`.sh` under `crates/`, `web/` and `scripts/`, tests apart (`*/tests/*`,
+`*_tests.rs`, `tests_*.rs`, `tests.rs`, `*.test.mjs`); `apps/` is outside
+the budget and given in its own columns; `demo/runs/`, `ralph/`, `docs/`
+and the lockfiles are out. Raw lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps/ net | apps/ test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ralph (loop marks) | 12 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| stall, streaming-stall | 8 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| browser (54844461) | 1 | 0 | 0 | **0** | 20 | 3 | +17 | 0 | 0 |
+| capability (queue), design, preshift, canon | 21 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| capability-economize | 9 | 42 | 48 | **−6** | 3 | 3 | 0 | 0 | 0 |
+| capability-navigation | 2 | 28 | 15 | **+13** | 237 | 15 | +222 | 0 | 0 |
+| capability-money | 2 | 0 | 0 | **0** | 0 | 0 | 0 | +41 | +38 |
+| capability-scenes | 16 | 32 | 18 | **+14** | 2810 | 88 | +2722 | +14 | 0 |
+| load (ece3d2ed) | 1 | 0 | 0 | **0** | 28 | 21 | +7 | 0 | 0 |
+| capability-pass-key | 2 | 5 | 1 | **+4** | 0 | 0 | 0 | 0 | 0 |
+| capability-scenes-found | 7 | 107 | 27 | **+80** | 336 | 92 | +244 | 0 | 0 |
+| capability-open | 5 | 131 | 26 | **+105** | 239 | 21 | +218 | 0 | 0 |
+| check (600f6154) | 1 | 7 | 6 | **+1** | 0 | 0 | 0 | 0 | 0 |
+| test (13f6f8c8) | 1 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +2 |
+| capability-what-acts | 5 | 202 | 80 | **+122** | 366 | 29 | +337 | 0 | 0 |
+| capability-authorship | 2 | 0 | 0 | **0** | 331 | 0 | +331 | 0 | 0 |
+| capability-signed | 45 | 1316 | 498 | **+818** | 1924 | 547 | +1377 | +24 | 0 |
+| capability-step-limit | 4 | 26 | 4 | **+22** | 0 | 0 | 0 | 0 | +8 |
+| capability-keys | 7 | 90 | 45 | **+45** | 172 | 10 | +162 | +14 | +34 |
+| capability-release | 7 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | 0 |
+| total | 158 | 1986 | 768 | **+1218** | 6466 | 829 | +5637 | +93 | +82 |
+
+capability-signed is two thirds of the range's product lines, inside the
+operator's "+535 / +180" (9b9201d9); every raise in the range is a row's
+own, inside a ceiling the operator set (e47f5109, 70a5abd5, bb334fc6,
+bb2353c5), each after its economizing pass (lean_check.py:199-245).
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end (tree-*/, run with `GIT_DIR=/nonexistent` so it walks the tree,
+since git cannot list a tree under target/):
+
+| at | svrngs-core | repository |
+|---|---:|---:|
+| 8c21c4b5, range start | 3149 (cap 3150) | 17634 (cap 17635) |
+| 510ebdef, range end | **3298** (cap 3299) | **18284** (cap 18285) |
+| net | **+149** | **+650** |
+
+This audit's commits: svrngs-core unmoved, the repository 18,284 to
+18,283 (eda37591), and the cap ratcheted to 18,284 (ee89f674).
+
+### The instrument
+
+The `svrngs` corpus still has no chunk index (I36), so the corpus is
+d35f1d45's crates/, scripts/, web/, the four apps the range touched
+(events, expenses, grapevine, jellyfin), Cargo.toml and Cargo.lock by
+`git archive` (349 files, cap-d35f1d45/); d35f1d45 changes only
+STATE.md over 510ebdef.
+- `code index . --corpus-id cap-d35f1d45`: 4287 chunks in 523 s
+  (index.out).
+- `refresh`, in the corpus with `GIT_CEILING_DIRECTORIES` at
+  target/capaudit/: rust 21184 symbols and 122368 references; typescript
+  and python "skipped (export failed)" (I4) (refresh2.out). Without the
+  fence it refreshed the `svrngs` corpus instead (I38).
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs-core, crates/svrngs-node, crates/svrngs,
+crates/svrngs-runtime, scripts/, web/ and apps/events, expenses,
+grapevine and jellyfin (`git diff --stat 8c21c4b5 510ebdef -- crates web
+scripts apps`). Each was reported at 0.95 and 0.90 (dry-*.md). Whether a
+side was added in the range is `git blame --porcelain` at d35f1d45 over
+each side's lines (sides.py, sides.out; a line's commit in `git rev-list
+8c21c4b5..d35f1d45` is new). Its control in the same run: register.rs
+`Cutover::decide`, :260-275, 16 of 16 new (4c71ec70).
+
+| scope | exact | near 0.95 | near 0.90 | with a side added in the range |
+|---|---|---:|---:|---|
+| crates/svrngs-core/ | 4 | 0 | 12 | 2 |
+| crates/svrngs-node/ | 1 | 0 | 8 | 1 |
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| crates/svrngs-runtime/ | 1 | 0 | 0 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| web/ | could-not-judge (I4, I34) | 0 | 3 | 1 |
+| apps/events/ | could-not-judge (I4) | 0 | 1 | 0 |
+| apps/expenses/ | could-not-judge (I4) | 0 | 0 | 0 |
+| apps/grapevine/ | could-not-judge (I4) | 1 | 3 | 0 |
+| apps/jellyfin/ | could-not-judge (I4) | 2 | 4 | 0 |
+
+76 sides; 7 have a line from the range, in four clusters, every one at
+0.90 and none exact:
+
+```
+- **2 symbols** · ~16 lines · cosine 0.913–0.913
+  - `decide` — crates/svrngs-core/src/register.rs:260–275 (16 lines)     16/16 new  4c71ec70
+  - `decide` — crates/svrngs-core/src/register.rs:320–330 (11 lines)
+- **3 symbols** · ~13 lines · cosine 0.917–0.929
+  - `decide` — crates/svrngs-core/src/record.rs:26–38 (13 lines)         1/13 new   a32299c1
+  - `decide` — crates/svrngs-core/src/tests_support.rs:275–283 (9 lines)
+  - `decide` — crates/svrngs-core/src/tests_support.rs:287–295 (9 lines)
+- **3 symbols** · ~13 lines · cosine 0.903–0.905
+  - `load` — crates/svrngs-node/src/door/choices.rs:89–101 (13 lines)    2/13 new   d55b5506
+  - `file` — crates/svrngs-node/src/door/choices.rs:98–106 (9 lines)     5/9 new    d55b5506
+  - `read` — crates/svrngs-node/src/door/choices.rs:103–114 (12 lines)   3/12 new   d55b5506
+- **2 symbols** · ~10 lines · cosine 0.913–0.913
+  - pub `holder` — web/store.js:132–139 (8 lines)                        6/8 new    0c9032ed
+  - pub `groups` — web/store.js:136–145 (10 lines)                       2/10 new   0c9032ed
+```
+
+None repeats a decision, read at HEAD:
+- register.rs: `Cutover::decide` (:262) and `HandOnTo::decide` (:322) are
+  two `Command`s, the trait's shape; one writes the keeper's cutover once,
+  the other a hand-on to a named computer.
+- record.rs `decide` (:26) gained one line in a32299c1 (on_behalf_of cut);
+  its pair is the tests' own `decide`s (I8).
+- choices.rs: `load`, `file` and `read` are three steps, each calling the
+  next (:92, :101, :106); the spans overlap (I1).
+- store.js: `holder` (:135) reads or writes one key of the `seal` store;
+  `groups` (:139) lists the `groups` store. Both go through `run`.
+
+The exact clones are the older `signed_by_link` (joining.rs:56, :148),
+`lines` (command.rs:82, :100), `is_empty` (act_set.rs:40, command.rs:104),
+`as_str` (link.rs:186, synced.rs:67), `addr` (api.rs:212, :228) and the
+runtime tests' `open` (tests.rs:19, tests_write_index.rs:12; I8), each 0
+lines new.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 8c21c4b5 510ebdef -- crates web scripts
+apps`, matched against `(struct|enum|trait|class) +[A-Z]\w*` and `type
+[A-Z]\w* =` (nouns-added.txt): 16, of which `Answered` (node.rs:757) was
+there before, made `pub(crate)`. Each, in cap-d35f1d45 (noun-*.out), and
+in the `svrngs` graph the unfenced refresh rebuilt at ee89f674, after
+this audit's renames (noun-*.after.out; I38):
+
+| noun | definitions | site(s) | after |
+|---|---:|---|---|
+| Capability | 1 | grant.rs:25 | — |
+| Why | 1 | grant.rs:36 | — |
+| Grant | 1 | grant.rs:57 | — |
+| Cutover | 1 | register.rs:257 | — |
+| Opening | 1 | home.rs:214 | — |
+| Unwritten | 1 | origin.rs:262 | — |
+| Asked | **2** | svrngs-core joining.rs:65; svrngs-node iroh.rs:298 (`pub type`, 22d90090) | **1**, iroh.rs's is `WholeRequest` (503f62ac) |
+| At | **2** seen, 3 | relay.rs:57, share.rs:65; web/src/lib.rs:474 (private `type`, 0c9032ed), unseen (I34) | the two seen are as adjudicated before (line 10175 above); web's is `Stamp` (4d8245c8) |
+| Person | 1 product, 2 | svrngs-core lib.rs:243; the scenes' tests/scenes/people.rs:281 | the second is a test harness's, not product |
+| Chains, Jellyfin, Unjudged, Scene, Browsers | 0 | tests (golden.rs, tests/scenes/) | tests are out of the tool's scope |
+
+The two nouns with more than one product definition, as the tool printed
+them before the renames:
+
+```
+noun: Asked
+
+definitions (2), first-party production:
+  svrngs-core                    crates/svrngs-core/src/joining.rs:64
+  svrngs-node                    crates/svrngs-node/src/iroh.rs:297
+
+noun: At
+
+definitions (2), first-party production:
+  svrngs                         crates/svrngs/src/relay.rs:56
+  svrngs-node                    crates/svrngs-node/src/share.rs:64
+```
+
+After: `Asked` 1 (joining.rs:64), `WholeRequest` 1 (iroh.rs:297). `Asked`
+is the third time this name was made again beside joining.rs's (0213ebbc
+in blob.rs, a136834a in room/owner.rs). Line numbers are one early (I1).
+
+### Reading the range
+
+The range's product code was read against the queue's fences and
+principles 1, 6 and 8 where the instrument does not judge it (JS, web's
+Rust, check.sh).
+
+- **One home per threshold** (principle 8). The phone's two Stop lines
+  typed "within 12 hours" beside `PASS_LIFE` (web/app.js:85, :503, :525);
+  said from it now (7ec64382).
+- **One accessor per path** (principle 8). "/carry" was typed at both
+  routers and at the computer posting to the asker's own (node.rs:373,
+  :866; origin.rs:331); one `rail::CARRY_ROUTE` now (eda37591). "/shelf"
+  and "/runs" are older and still typed twice (#223).
+- **One act shape** (principle 8). `grant::app_act` (grant.rs:95) is the
+  one shaping of an app's write, for the door and the phone's worker
+  alike; `Grant::may` (:63) traces every verdict (principle 1).
+- **One way of telling namesakes apart.** question.js `called` (:110) is
+  the pages' one; the door's `--joined` form goes through it (`people`,
+  :139), and it cites the command's (cli.rs:1410 `joined_said`), across
+  the language line.
+- **A step's limit** (scripts/check.sh:15-38). Each limit is 5 times one
+  table, `slowest`, with its reason beside it; a step not named has 300 s,
+  as the comment says.
+
+### Fixed here
+
+- d35f1d45: the row's two paths, the principles and the instrument.
+- 503f62ac: iroh.rs's `pub type Asked` → `WholeRequest`.
+- 4d8245c8: web/src/lib.rs's private `type At` → `Stamp`.
+- 7ec64382: the phone's Stop lines say `PASS_LIFE`'s hours.
+- eda37591: `rail::CARRY_ROUTE` for the carry route's three sites.
+- ee89f674: the repository's cap to 18,284, one past where eda37591 lands.
+
+Behaviour kept: `cargo check -p svrngs-node --tests`, the web crate's
+check for wasm32 and `cargo fmt --check` on both clean; `cargo test -p
+svrngs-node --test carried`, 13 passed; the words of 7ec64382 are the
+same string (`node -e`), which tests/browser/acts.rs:209 and :226 read.
+
+`scripts/check.sh` at 2f51f88e, the audit's close: exit 0 in 16 min 54 s,
+every gate passed, principles pinned through app laws, the nine scenes
+in chromium and webkit among them
+(ralph/next/capability/ctl/log/sessions/REVIEW-audit-capability-auto-1-1.await.log).
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 223 | 8 | crates/svrngs-node/src/home.rs:142-143 and crates/svrngs-node/src/node.rs:863-864 (`.route("/shelf", …bring)`, `.route("/runs", …yes)`); the clients crates/svrngs-node/src/home/home.js:174, :176, web/app.js:499, :512 | not fixed (older than the range; a const each is +2 counted lines and the cap has 1) | **Read.** The home page's router and the people's router each type the two folder routes, as "/carry" was before eda37591. A path changed at one router and not the other is a 404 the page reads as a failed bring or yes. |
+| 80 | — | scripts/lean_check.py:246 BUDGET | not fixed (operator's) | 3298 / 3299 and 18283 / 18284 after this audit: +149 and +650 over the range, each raise a row's own inside the operator's ceilings. |
+| 211-222 | as recorded | as recorded | as recorded | Open; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: Asked at iroh.rs:297 for :298 and joining.rs:64 for :65, Grant at grant.rs:56 for :57, Cutover at register.rs:256 for :257. choices.rs's `load`/`file`/`read` spans overlap the next symbol. |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/', web/'s and the four apps' exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: removal_tests.rs, register_tests.rs, membership_tests.rs, membership_invite_tests.rs, tests_support.rs and svrngs-runtime's tests.rs and tests_write_index.rs reported as production clones. |
+| I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported; `type At` at web/src/lib.rs:474 was found by hand. |
+| I36 | 6 | `code index --full` | Still present: ~/.svrnmesh/indexes/svrngs holds no `chunks.lance`. |
+| I38 | 6 | `refresh`, which corpus | New: run in a directory under a git work tree, `refresh` takes the tree's repository as the corpus, not the directory or the corpus indexed there. In cap-d35f1d45/ (under ~/dev/svrngs/target/) it printed "✓ SCIP graph at HEAD for "svrngs"" and "Indexing /Users/alexsbryan/dev/svrngs as corpus 'svrngs'", and began re-embedding the whole repository (10240 chunks at 8m46s, refresh.out); it was stopped, leaving the `svrngs` corpus as I36 left it, with its SCIP graph at ee89f674. With `GIT_CEILING_DIRECTORIES=target/capaudit` it refreshed cap-d35f1d45 (refresh2.out). The previous audits ran in /tmp, outside any tree. |
+
+## REVIEW-audit-give-auto-1 (2026-10-27, range 32e33a9b..e38f497e)
+
+The previous `REVIEW-audit-` row is REVIEW-audit-capability-auto-1, its
+hash 32e33a9b8 (ralph/next/capability/STATE.md:68), the latest of every
+queue's audit hashes by commit date (2026-10-25 00:22). The range ends at
+e38f497e, the commit that made this row: `git rev-list --count
+32e33a9b..e38f497e` is 226, none a merge (`--merges`: 0). It holds the
+capability release, keys-names, the xenia and phone-tunnel work, and the
+give queue's seventeen rows. The principles are
+docs/principles/ARCH_PRINCIPLES.md; the instrument is
+~/dev/commonwealth-ai/target/debug/sovereign-cli, sha256 6d95a261b48fcbab…,
+the binary d35f1d45 named (890aa3ee). Every file named below is under
+target/giveaudit/.
+
+This audit's commits before this section: 890aa3ee, 2867e25c, f457ded8,
+f31ac956, 37d108d9 and a8dd8302 ("Fixed here"). e5daca60 and 0a55c0a0,
+between them, are another session's docs work, not this audit's.
+
+### (1) Net lines per unit, product code
+
+`git log --reverse -M --no-merges --numstat --format='@@%h %s'
+32e33a9b..e38f497e`, summed by the subject's unit (ledger.py,
+ledger.out): the give queue's row id where the subject names one
+anywhere (the give rows wrote `give: … (give-app-keep a)`), else the id
+inside its parentheses, else the word before its colon. Product code is
+lean_check.py's: `.rs`, `.js`, `.mjs`, `.ts`, `.py` and `.sh` under
+`crates/`, `web/` and `scripts/`, tests apart (`*/tests/*`, `*_tests.rs`,
+`tests_*.rs`, `tests.rs`, `*.test.mjs`). `apps/` is outside the budget
+and given in its own columns, with `vendor/` left out:
+apps/give/page/vendor/fold.js, +20,109, is apps/give/build.sh's output
+from fold/src/lib.rs. `demo/runs/`, `ralph/`, `docs/` and the lockfiles
+are out. Raw lines, comments and blanks in:
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps/ net | apps/ test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| ralph, capability, capability-release, release, give, gate, readme, factorio, phone-tunnel, give-docs, this row (no product lines) | 50 | 0 | 0 | **0** | 0 | 0 | 0 | 0 | +10 |
+| keys-names | 17 | 202 | 211 | **−9** | 162 | 20 | +142 | +130 | +130 |
+| lint | 2 | 9 | 1 | **+8** | 0 | 0 | 0 | 0 | 0 |
+| home | 5 | 45 | 30 | **+15** | 121 | 84 | +37 | 0 | 0 |
+| browsers | 1 | 10 | 5 | **+5** | 173 | 83 | +90 | 0 | 0 |
+| build | 1 | 5 | 2 | **+3** | 0 | 0 | 0 | 0 | 0 |
+| give-economize | 8 | 10 | 20 | **−10** | 0 | 0 | 0 | 0 | 0 |
+| give-token | 4 | 110 | 23 | **+87** | 306 | 61 | +245 | +71 | +9 |
+| give-session | 26 | 422 | 66 | **+356** | 1257 | 160 | +1097 | +10 | 0 |
+| tests | 3 | 0 | 0 | **0** | 18 | 3 | +15 | 0 | 0 |
+| films | 1 | 0 | 0 | **0** | 16 | 20 | −4 | +11 | 0 |
+| cli | 1 | 22 | 37 | **−15** | 0 | 0 | 0 | 0 | 0 |
+| give-udp | 6 | 409 | 33 | **+376** | 396 | 45 | +351 | 0 | 0 |
+| give-tcp | 7 | 249 | 66 | **+183** | 346 | 12 | +334 | 0 | 0 |
+| give-play | 8 | 377 | 23 | **+354** | 470 | 13 | +457 | 0 | 0 |
+| give-play-scene | 6 | 0 | 0 | **0** | 203 | 0 | +203 | 0 | 0 |
+| ports | 1 | 1 | 1 | **0** | 0 | 0 | 0 | 0 | 0 |
+| give-cut | 7 | 31 | 4 | **+27** | 179 | 4 | +175 | 0 | 0 |
+| give-app-runtime | 7 | 2 | 2 | **0** | 0 | 0 | 0 | +1744 | +616 |
+| give-app-keep | 8 | 0 | 0 | **0** | 313 | 0 | +313 | +1553 | +1011 |
+| give-app-move | 6 | 0 | 0 | **0** | 0 | 0 | 0 | +373 | +377 |
+| give-app-takeover | 8 | 0 | 0 | **0** | 0 | 0 | 0 | +563 | +574 |
+| xenia | 19 | 0 | 0 | **0** | 584 | 61 | +523 | 0 | 0 |
+| lean | 1 | 1 | 2 | **−1** | 0 | 0 | 0 | 0 | 0 |
+| web | 1 | 1 | 4 | **−3** | 0 | 0 | 0 | 0 | 0 |
+| pages | 3 | 32 | 20 | **+12** | 135 | 29 | +106 | 0 | 0 |
+| money | 2 | 0 | 0 | **0** | 37 | 2 | +35 | +30 | +41 |
+| give-app-scenes | 11 | 0 | 0 | **0** | 694 | 100 | +594 | +14 | +18 |
+| give-page-down | 4 | 0 | 0 | **0** | 0 | 0 | 0 | +17 | +111 |
+| give-install | 10 | 91 | 51 | **+40** | 187 | 14 | +173 | +151 | +105 |
+| give-page-host | 10 | 25 | 20 | **+5** | 63 | 0 | +63 | +13 | +51 |
+| total | 226 | 2054 | 621 | **+1433** | 5660 | 711 | +4949 | +4680 | +3053 |
+
+give-udp, give-play, give-session and give-tcp are 88% of the range's
+product lines (1,269 of 1,433), each inside the operator's ceiling for
+give-token through give-play (ralph/next/give/STATE.md, give-economize,
+"THE OPERATOR DECIDED"). Give itself is apps/: +4,680 and +3,053 in
+tests, give-app-keep's the most, the fold and the keeper program.
+
+What lean_check.py counts, HEAD's script over a `git archive` tree of
+each end (tree-*/, `GIT_DIR=/nonexistent`), in the four ledgers of
+GIVE.md §9:
+
+| ledger | 32e33a9b, range start | e38f497e, range end | net |
+|---|---:|---:|---:|
+| core (crates/svrngs-core) | 3298 | **3241** (cap 3242) | **−57** |
+| library (the repository less core) | 14985 | **15876** | **+891** |
+| repository | 18283 | **19117** (cap 19118) | **+834** |
+| app (apps/, raw, not counted) | — | — | +4680, tests +3053 |
+| surface items | — | — | +8: the `token` file (api.rs:57), `POST /v1/open` (session.rs:222), `/v1/play` (play.rs:43), home's `GET /to` (home.rs), `play.json` (play.rs:46), `svrngs share --udp`/`--tcp` (cli.rs), install.sh `--give`, the raw `Alpn::Port` |
+
+The start's tree read by HEAD's script breaks the core cap it has now
+(3298 ≥ 3242); give-economize's cuts took it down before any row raised.
+This audit's commits move neither count: 3241 / 3242 and 19430 / 19431
+at a8dd8302, the repository's rise since e38f497e being e5daca60 and
+0a55c0a0's (`git log -3 -- scripts/lean_check.py`).
+
+### The instrument
+
+The `svrngs` corpus still has no chunk index (I36: ~/.svrnmesh/indexes/
+svrngs holds `documents.lance`, `scip_graph.db` and `texts`, no
+`chunks.lance`), so the corpus is 890aa3ee's crates/, scripts/, web/,
+the ten apps the range touched (doc, events, expenses, give, grapevine,
+jellyfin, movie-night, on-air, pantry, taste), Cargo.toml and Cargo.lock
+by `git archive` (give-890aa3ee/); 890aa3ee changes only STATE.md over
+e38f497e. Every `vendor/` directory and apps/give/fold/cases.json were
+taken out (458 files): dry-report excludes `vendor` from what it judges,
+and the first index failed on one (I39).
+- `code index . --corpus-id give-890aa3ee`, fenced with
+  `GIT_CEILING_DIRECTORIES` at target/giveaudit (I38): failed at 4608
+  chunks (index.out, I39); run again, 5317 chunks in 783 s
+  (index2.out).
+- `refresh`, fenced the same: rust 25748 symbols and 146790 references;
+  typescript and python "skipped (export failed)" (I4) (refresh.out).
+  apps/give and apps/give/fold are workspace members (Cargo.toml:5), so
+  their Rust is in the graph.
+
+### (2) Clones (`code dry-report`)
+
+The range touched crates/svrngs, svrngs-core, svrngs-node and
+svrngs-runtime, scripts/, web/ and the ten apps (`git diff --name-only
+32e33a9b e38f497e -- crates web scripts apps`). Each was reported at 0.95
+and 0.90 (dry-*.md). Whether a side was added in the range is `git blame
+--porcelain` at e38f497e over each side's lines (sides.py, sides.out; a
+line whose commit is in `git rev-list 32e33a9b..e38f497e` is new).
+
+| scope | exact | near 0.95 | near 0.90 | clusters with a side added in the range |
+|---|---|---:|---:|---:|
+| crates/svrngs/ | 0 | 0 | 0 | 0 |
+| crates/svrngs-core/ | 4 | 4 | 12 | 1 |
+| crates/svrngs-node/ | 2 | 2 | 10 | 3 |
+| crates/svrngs-runtime/ | 1 | 1 | 0 | 0 |
+| scripts/ | could-not-judge (I4) | 0 | 0 | 0 |
+| web/ | could-not-judge (I4, I34) | 0 | 3 | 0 |
+| apps/give/ | 1 (Rust); JS could-not-judge (I4) | 2 | 7 | 8 |
+| apps/on-air/ | could-not-judge (I4) | 0 | 1 | 1 |
+| apps/doc/, events/, grapevine/, jellyfin/, movie-night/ | could-not-judge (I4) | 4 | 11 | 0 |
+| apps/expenses/, pantry/, taste/ | could-not-judge (I4) | 0 | 0 | 0 |
+
+106 sides; 23 have a line from the range, in 13 clusters:
+
+```
+apps/give (0.90)
+- exact · 2 copies × 3 lines
+  - `as_str` — apps/give/src/card.rs:119                       3/3 new    2444d4cd
+  - `as_str` — apps/give/src/runtime.rs:67                     3/3 new    2444d4cd
+- **2 symbols** · ~13 lines · cosine 0.918
+  - pub `data_dir` — apps/give/src/record.rs:55–65 (11 lines)  11/11 new  cf5903e9
+  - `read` — apps/give/src/record.rs:61–73 (13 lines)          13/13 new  cf5903e9
+- **2 symbols** · ~13 lines · cosine 0.908
+  - `press` — apps/give/page.test.mjs:103–115 (13 lines)       13/13 new  4c087103 9ab61bf5
+  - `press` — apps/give/page.test.mjs:202–213 (12 lines)       12/12 new  aed586a8
+- **2 symbols** · ~12 lines · cosine 0.996
+  - `as` — apps/give/page.test.mjs:97–108 (12 lines)           12/12 new  4c087103 9ab61bf5
+  - `as` — apps/give/page.test.mjs:196–207 (12 lines)          12/12 new  aed586a8
+- **2 symbols** · ~11 lines · cosine 0.922
+  - `answer` — apps/give/page/index.js:104–111 (8 lines)       8/8 new    3d700b44 aed586a8 cf5903e9
+  - `take` — apps/give/page/index.js:108–118 (11 lines)        11/11 new  3d700b44 aed586a8
+- **2 symbols** · ~11 lines · cosine 0.922
+  - `mapping` — apps/give/src/card.rs:548–556 (9 lines)        9/9 new    2444d4cd
+  - `keys` — apps/give/src/card.rs:552–562 (11 lines)          11/11 new  2444d4cd
+- **2 symbols** · ~10 lines · cosine 0.930
+  - `last` — apps/give/page.test.mjs:209–218 (10 lines)        10/10 new  aed586a8
+  - `last` — apps/give/page.test.mjs:315–324 (10 lines)        10/10 new  3d700b44
+- **2 symbols** · ~9 lines · cosine 0.901
+  - `chosen` — apps/give/src/machine.rs:105–113 (9 lines)      9/9 new    2444d4cd 8402864a
+  - `gb` — apps/give/src/machine.rs:109–117 (9 lines)          9/9 new    2444d4cd 8402864a
+apps/on-air (0.90)
+- **2 symbols** · ~12 lines · cosine 0.912
+  - pub `token` — apps/on-air/harness/run.py:72–80 (9 lines)   6/9 new    662803be
+  - pub `token_for` — apps/on-air/harness/run.py:77–88 (12 lines) 11/12 new 662803be
+crates/svrngs-core (0.90)
+- **2 symbols** · ~13 lines · cosine 0.916
+  - `decide` — crates/svrngs-core/src/register.rs:257–269 (13 lines) 3/13 new 51337c91
+  - `decide` — crates/svrngs-core/src/register.rs:310–320 (11 lines)
+crates/svrngs-node (0.90)
+- exact · 2 copies × 3 lines
+  - `listed` — crates/svrngs-node/src/play.rs:269              3/3 new    86dd073d
+  - `listed` — crates/svrngs-node/src/room/route.rs:29
+- **2 symbols** · ~18 lines · cosine 0.936
+  - `made` — crates/svrngs-node/src/play.rs:119–136 (18 lines) 18/18 new  86dd073d
+  - `made` — crates/svrngs-node/src/room.rs:163–180 (18 lines)
+- **2 symbols** · ~17 lines · cosine 0.934
+  - pub `carried` — crates/svrngs-node/src/door/tcp.rs:73–89   17/17 new  0847c192
+  - pub `carried` — crates/svrngs-node/src/door/udp.rs:296–312 17/17 new  083cc6b6 0847c192 36471346
+```
+
+Read at HEAD:
+- page.test.mjs `as`, `press`, `last`: one driver typed in three tests,
+  four helpers each. One `drive` now (a8dd8302).
+- play.rs `made` and `listed` against room.rs and room/route.rs: Play
+  is a second owner on the room's model (86dd073d's body says so), and
+  its turn's rule, one lend on once, keyed by (key, name), is typed
+  twice. Recorded, #224.
+- tcp.rs and udp.rs `carried`: each member's half opens through the one
+  `udp::opening` (udp.rs:313) and spawns its own loop over its own
+  socket type; the 3 shared lines are the shape, not a decision.
+- card.rs and runtime.rs `as_str`: two newtypes' `&self.0`.
+- record.rs `data_dir`/`read`, index.js `answer`/`take`, card.rs
+  `mapping`/`keys`, machine.rs `chosen`/`gb`, run.py `token`/`token_for`:
+  each pair's spans overlap, one calling or following the next (I1).
+- register.rs `decide`: 3 of 13 lines re-laid by 51337c91 (keys-names,
+  behaviour kept); the pair is the two `Command`s REVIEW-audit-
+  capability-auto-1 read.
+
+The other exact clones, `is_empty`, `signed_by_link`, `lines` and
+`as_str` in svrngs-core and `addr` in api.rs, are 0 lines new.
+
+### (3) Duplicate type names (`code converge noun`)
+
+The added lines of `git diff 32e33a9b e38f497e -- crates web scripts
+apps`, vendor/ apart, matched against `(struct|enum|trait|class)
++[A-Z]\w*` and `type [A-Z]\w* =` (nouns-added.txt): 85 lines, 79 names,
+of which `Via` (iroh.rs) and `Codes` (oidc/provider.rs) were there
+before. Each, in give-890aa3ee (noun-*.out): 46 have one product
+definition, 5 none (tests: Places, Removed, Got, Browser, House), and 28
+more than one:
+
+```
+Answer      give-fold lib.rs:113; svrngs-node node.rs:822
+App         give runtime.rs:119; svrngs-core app.rs:21
+Asks        svrngs-node play.rs:140; svrngs-node room/owner.rs:38
+Carried     svrngs-node blob.rs:38; svrngs-node door/udp.rs:289
+Copy        give runtime.rs:85; give-fold lib.rs:176
+Door        give card.rs:40; svrngs-node door.rs:361
+Failed      give check.rs:53; give-fold lib.rs:169
+Group       give record.rs:34; svrngs-core token.rs:28
+Groups      give record.rs:44; svrngs-node node.rs:85
+Health      give card.rs:133; give runtime.rs:106
+Held        give keep.rs:84; svrngs-node surface.rs:83, synced.rs:135; svrngs-runtime journal.rs:92
+Kept        give-fold lib.rs:342; svrngs-node door/choices.rs:69
+LendError   give lend.rs:13; svrngs-node lend.rs:406
+Name        give runtime.rs:50; svrngs-core lib.rs:185
+On          svrngs-node play.rs:50; svrngs-node room.rs:122
+Opened      svrngs-node door/udp.rs:292; svrngs-node play.rs:144
+Opening     svrngs-node home.rs:223; svrngs-node session.rs:205
+Refusal     give-fold lib.rs:204; svrngs cli.rs:565
+Refused     give card.rs:151; give-fold lib.rs:261; svrngs-core command.rs:61
+Step        give check.rs:17; give keep.rs:92
+To          svrngs-node home.rs:249; svrngs-node ring_sync.rs:492
+Token       svrngs-core link.rs:83; svrngs-node api.rs:60
+Turn        svrngs-node play.rs:113; svrngs-node room.rs:156
+TurnAsk     svrngs-node play.rs:137; svrngs-node room/owner.rs:35
+Whole       svrngs-node door/udp.rs:85; svrngs-node iroh.rs:309
+```
+
+(the tool's lines, one early, I1). Adjudicated:
+
+- **Across the system line** (App, Door, Group, Groups, Held's give
+  side, LendError, Name, Answer, Kept, Refusal, Refused's svrngs-core
+  side): Give links no svrngs crate (apps/give/Cargo.toml,
+  tests/surface.rs; fence 4), so a name on each side is a fork across
+  two systems, not two deciders in one (AGENTS.md 8). Not findings.
+  `Made`, f31ac956's new name, is one of these too (svrngs-node
+  group.rs:260).
+- **Token**, both in svrngs-node's reach: join.rs:10 and invite.rs:14
+  import `link::Token` beside api.rs's. The newer is `Bearer`
+  (2867e25c).
+- **Whole**, both in svrngs-node: udp.rs's, the newer, is `Fragments`
+  (f457ded8).
+- **Copy**, in Give, also shadowing std's `Copy` trait inside
+  runtime.rs: runtime.rs's is `Made` (f31ac956).
+- **Health**, both in the give crate, runtime.rs reading the card's
+  beside its own: card.rs's is `Healthcheck` (37d108d9).
+- **On, Turn, TurnAsk, Asks**: Play's owner on the room's model, #224.
+- **Opened, Opening, Carried, To** in svrngs-node, and **Failed,
+  Refused, Step** in Give: each module's own, never imported beside its
+  namesake. #225 and #226.
+
+After, by grep for the definitions (the corpus was not rebuilt; I36):
+`Token` 1 (link.rs:84), `Bearer` 1 (api.rs:61), `Whole` 1 (iroh.rs:310),
+`Fragments` 1 (udp.rs:86), `Copy` 1 (fold lib.rs:177), `Health` 1
+(runtime.rs:107), `Healthcheck` 1 (card.rs:134).
+
+### Reading the range
+
+The range's svrngs product code was read against the queue's fences
+and principles 1, 6 and 8, where the instrument does not judge.
+
+- **Every refusal traced** (principle 1). api.rs `holds_the_token`
+  (:224), `from_this_computer` (:244) and `not_from_a_page` (:210);
+  session.rs `redeem` (:150); origin.rs (:173); home.rs (:189): each
+  traces at debug before it refuses, naming the fact.
+- **One decider for an open** (principle 8). home.rs `GET /to` (a page)
+  and session.rs `POST /v1/open` (a program) take two wire shapes and
+  both mint through `Sessions::open` (session.rs:131), the one place a
+  path is judged. That place substitutes, #227.
+- **One home per threshold** (principle 8). play.rs re-derives the
+  room's `LOOK_EVERY` (play.rs:39, room/owner.rs:32); give's keep.rs
+  takes `EVERY` and `KEEP` from the fold (keep.rs:47, :51; b031afac),
+  which the page also runs.
+- **A surface, not a link** (fence 4). apps/give/src/record.rs:75 reads
+  the `api` and `token` files by name, as every app does (events,
+  grapevine and doc's servers); svrngs's names are api.rs:57 and :116.
+  This is the published contract, one name on each side of it.
+
+### Fixed here
+
+- 890aa3ee: the row's two paths, the principles and the instrument.
+- 2867e25c: api.rs's `Token` → `Bearer`.
+- f457ded8: door/udp.rs's `Whole` → `Fragments`.
+- f31ac956: give runtime.rs's `Copy` → `Made`.
+- 37d108d9: give card.rs's `Health` → `Healthcheck`.
+- a8dd8302: page.test.mjs's driver, one `drive`.
+
+Behaviour kept, each in its commit: `cargo check -p svrngs-node --tests`
+and `cargo fmt --check` clean; `cargo test -p svrngs-node --lib
+door::udp`, 3 passed; `cargo test -p give`, every suite passed (45
+tests, check and keep against podman, no `svrngs-test-*` container
+left: `podman ps -a`); `node --test apps/give/page.test.mjs`, 6 of 6.
+
+### Findings
+
+| # | principle | path:line | fixed in | finding |
+|---|---|---|---|---|
+| 224 | 8 | crates/svrngs-node/src/play.rs:111-134 (`Turn`, `made`), :138-141 (`TurnAsk`, `Asks`), :262-271 (`router`, `listed`), and crates/svrngs-node/src/room.rs:154-178, room/owner.rs:36-39, room/route.rs:22-31 | not fixed (one turn over both `On`s is a parameter through two owners, past small; it would lower the count) | **Collapse the drive.** Play is a second owner on the room's model: the rule of a turn, a lend on once and keyed by (key, name), with off by the same key and a read changing nothing, is typed in each `made`. A change to one (say, a lend's identity gaining its group) and not the other leaves Play and the room disagreeing about what is on, with nothing red. |
+| 225 | 8 | crates/svrngs-node: `Opened` door/udp.rs:293 and play.rs:145; `Opening` home.rs:224 and session.rs:206; `Carried` blob.rs:39 and door/udp.rs:290; `To` home.rs:250 and ring_sync.rs:493 | not fixed (each pair module-scoped; none imported beside its namesake) | **One name, two things, one crate.** Each added in the range on one side. A reader grepping a name finds two meanings; renaming the newer of each costs no counted line, and is the next audit's to weigh against the churn. |
+| 226 | 8 | apps/give: `Failed` src/check.rs:54 and fold/src/lib.rs:170; `Refused` src/card.rs:152 and fold/src/lib.rs:262; `Step` src/check.rs:18 and src/keep.rs:93 | not fixed (never imported together: keep.rs:35 takes only `Keeping`, `Kept` from the fold, main.rs:16 only `check::Step`; a fold rename rebuilds page/vendor/fold.js and its pins) | **One name, two things, one system.** As #225, inside Give. |
+| 227 | 6, 1 | crates/svrngs-node/src/session.rs:131-134 (`Sessions::open`) | not fixed (+1 counted line; the cap has none: 19430 / 19431) | **A path refused is opened as `/`, and traced as none asked.** An `at` not starting with `/`, starting with `//`, or holding a backslash is filtered to `None`, and the open goes to the home or lend's `/`; the trace shows the filtered `at`, so a refused path and no path read alike. Tell the two apart in the trace, and say it to the asker (`svrngs open`, home's `/to`). |
+| 228 | 3 | crates/svrngs-node/src/door/udp.rs:150 | not fixed (+1 counted line for a const; the cap has none) | **An unnamed wait.** `Duration::from_secs(5)`: how long the lender holds a refused raw connection open for the member to read the words. No comment says why 5; iroh.rs:418's `CLOSED_WITHIN` is the other side's 1 s, a different wait. |
+| 80 | — | scripts/lean_check.py:303 BUDGET | not fixed (operator's) | 3241 / 3242 and 19430 / 19431 after this audit. Over the range: core −57, the repository +834, every raise a row's own inside the operator's ceiling. |
+| 211-223 | as recorded | as recorded | as recorded | Open; this range adds nothing to them. |
+
+### Problems in the commonwealth-ai instrument (reported, not fixed here)
+
+| # | principle | site | finding |
+|---|---|---|---|
+| I1 | 7 | `code converge noun`, dry-report spans | Still one line early: Copy at runtime.rs:85 for :86, Health at card.rs:133 for :134, Token at api.rs:60 for :61, Whole at udp.rs:85 for :86. Overlapping spans pair a symbol with its neighbour (record.rs, index.js, card.rs, machine.rs, run.py above). |
+| I4 | 6 | `refresh` | Still present: typescript and python "skipped (export failed)"; scripts/', web/'s and the apps' JS exact tiers could not judge. |
+| I8 | 6 | dry-report scope | Still present: removal_tests.rs, register_tests.rs, membership_tests.rs, membership_invite_tests.rs, tests_support.rs, ring_sync/tests.rs, and now `*.test.mjs` (apps/give/page.test.mjs, apps/doc/doc.test.mjs) reported as production. Here it served: the page tests' driver was worth one. |
+| I34 | 6 | `refresh` | Still present: web's Rust is outside the workspace and not exported. |
+| I36 | 6 | `code index --full` | Still present: ~/.svrnmesh/indexes/svrngs holds no `chunks.lance`. |
+| I38 | 6 | `refresh`, which corpus | Still present; fenced with `GIT_CEILING_DIRECTORIES` here, as before. |
+| I39 | 6 | `code index` | New: one chunk past the embedder's context fails the whole run. With apps/doc/vendor/doc-bundle.js (449,565 bytes, minified) in the corpus, `code index` stopped at 4608 chunks: "request (27950 tokens) exceeds the available context size (8192 tokens)" (index.out:34), exit 1. dry-report excludes `vendor` from what it judges, but the indexer embeds it anyway. With every `vendor/` out, the run resumed and finished, 5317 chunks (index2.out). A chunk too long to embed should be cut or skipped and said, not end the index. |
+
+## REVIEW-audit-js-auto-1 (2026-11-03, partial; range 50dd06f1..07f4b7a5)
+
+**Not a completed audit.** The required clone and noun instrument is absent.
+Decision package: `ralph/next/js/REVIEW_AUDIT_NEEDS_HUMAN.md`.
+
+### (1) Net lines per unit, product code
+
+No earlier audit exists in this queue. Start is its creation, 50dd06f1
+(`git log --reverse --format='%h %s' -- ralph/next/js/CHARTER.md`), rather
+than its later launch after security. End is the assigned row's HEAD,
+07f4b7a5. This includes intervening security and relay work.
+
+Run: `git log --reverse --no-merges --numstat --format='@@%h %s'
+50dd06f1..07f4b7a5`, exit 0. Sum by the subject's unit: `format(letter)`
+is js-format, `types(letter)` is js-types, and js-read/js-lint/js-webkit
+keep their ids. Other subjects group by the text before their colon.
+Merge commits are excluded so branch changes are counted once.
+193 non-merge commits; rows with zero source, test and app changes are
+omitted below, except test(grapevine), whose app changes net to zero.
+
+Source is `.rs`, `.js`, `.mjs`, `.cjs`, `.ts`, `.py`, `.sh` under crates/,
+web/, scripts/. Tests are tests/ or fixtures/ path segments, tests.rs,
+tests_*.rs, *_tests.rs and *.test.mjs. Apps use the same classification in
+separate columns. vendor/ is excluded. Lockfiles, manifests, docs and runs
+are excluded. Raw lines include comments and blanks, unlike lean_check's
+executable-line counts. Renames use the destination path.
+
+| unit | commits | src + | src − | src net | test + | test − | test net | apps src net | apps test net |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| lean | 4 | 38 | 6 | 32 | 0 | 0 | 0 | 0 | 0 |
+| give | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 44 | 20 |
+| pantry | 1 | 0 | 0 | 0 | 10 | 4 | 6 | 48 | 37 |
+| secrets | 1 | 55 | 37 | 18 | 0 | 0 | 0 | 0 | 0 |
+| advisories | 1 | 41 | 0 | 41 | 18 | 0 | 18 | 0 | 0 |
+| folders | 1 | 159 | 22 | 137 | 79 | 0 | 79 | 0 | 0 |
+| session | 1 | 974 | 176 | 798 | 887 | 593 | 294 | 0 | 0 |
+| security(7) | 1 | 653 | 52 | 601 | 743 | 118 | 625 | 0 | 0 |
+| dev | 1 | 0 | 0 | 0 | 53 | 2 | 51 | 0 | 0 |
+| economize | 3 | 15 | 33 | −18 | 3 | 1 | 2 | 0 | 0 |
+| fix(pantry) | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 5 |
+| record(relay fallbacks) | 1 | 81 | 7 | 74 | 148 | 2 | 146 | 0 | 0 |
+| relays | 1 | 705 | 245 | 460 | 545 | 214 | 331 | 0 | 0 |
+| fix(relays) | 4 | 88 | 26 | 62 | 12 | 3 | 9 | 0 | 0 |
+| js-format | 3 | 4065 | 827 | 3238 | 2754 | 610 | 2144 | 3306 | 2353 |
+| check | 1 | 76 | 80 | −4 | 0 | 0 | 0 | 0 | 0 |
+| test(grapevine) | 2 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+| build-web | 1 | 4 | 3 | 1 | 0 | 0 | 0 | 0 | 0 |
+| trust_check | 1 | 6 | 5 | 1 | 0 | 0 | 0 | 0 | 0 |
+| js-types | 54 | 5241 | 962 | 4279 | 0 | 0 | 0 | 0 | 0 |
+| types | 1 | 13 | 2 | 11 | 0 | 0 | 0 | 0 | 0 |
+| js-webkit | 12 | 0 | 0 | 0 | 79 | 14 | 65 | 0 | 0 |
+| js-lint | 23 | 5052 | 3909 | 1143 | 4 | 5 | −1 | 0 | 0 |
+| lend | 2 | 17 | 14 | 3 | 112 | 1 | 111 | 0 | 0 |
+| shim | 1 | 6 | 2 | 4 | 87 | 0 | 87 | 0 | 0 |
+| js-read | 42 | 7276 | 5589 | 1687 | 49 | 32 | 17 | 0 | 0 |
+| home | 3 | 25 | 16 | 9 | 183 | 14 | 169 | 0 | 0 |
+| total (including no-code commits) | 193 | 24590 | 12013 | 12577 | 5766 | 1613 | 4153 | 3398 | 2415 |
+
+Independent endpoint sum using `git diff --numstat 50dd06f1 07f4b7a5`
+and the same classification, exit 0:
+
+```text
+Endpoint net [src, tests, apps src, apps tests]: [12577, 4153, 3398, 2415]
+```
+
+Before and after this audit's documentation-only edits,
+`python3 scripts/lean_check.py`, exit 0, unchanged:
+
+```text
+crates/svrngs-core     3477 / 3478 lines
+.                     18861 / 18862 lines
+js                     7338 lines, no cap until the js queue's jubilee
+swift                     0 / 1 lines
+```
+
+### (2) Clones: never-ran
+
+Every touched crate was attempted: crates/svrngs/, crates/svrngs-core/,
+crates/svrngs-node/, crates/svrngs-runtime/, apps/give/; web/ was attempted
+too. Each `target/debug/sovereign-cli code dry-report --scope <dir>`
+failed to launch with `[Errno 2] No such file or directory:
+'target/debug/sovereign-cli'`. The upstream binary used by prior audits,
+`/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli`, also
+does not exist. No zero-clone conclusion follows from these failures.
+
+### (3) Nouns: never-ran; lexical inventory only
+
+Added declaration lines in `git diff --unified=0 50dd06f1 07f4b7a5 --
+'*.rs'` give these 17 candidates (rewritten declarations included):
+Appending, BeforeMeets, Browser, ContainerPath, Cutover, Edited, Held,
+Meeting, MeetsAt, Nonces, Onward, Onwards, Root, Spent, Tier, Unconsented,
+Unproven. Each `target/debug/sovereign-cli code converge noun <Name>`
+was attempted; all failed to launch with the same missing-file error.
+
+A lexical `git grep -n -E '(struct|enum|trait) (Appending|BeforeMeets|Browser|ContainerPath|Cutover|Edited|Held|Meeting|MeetsAt|Nonces|Onward|Onwards|Root|Spent|Tier|Unconsented|Unproven)[ <{(;]' HEAD -- '*.rs'`
+found two repeated spellings. This is not a substitute for convergence or
+an architectural verdict:
+
+| candidate | definitions at 07f4b7a5 | disposition |
+|---|---|---|
+| Held | apps/give/src/keep.rs:85; crates/svrngs-node/src/surface.rs:84, src/synced.rs:139, src/tiers.rs:45; crates/svrngs-runtime/src/journal.rs:93 | New tiers::Held holds endpoint relay state; surface::Held is a serialized group. Distinct meanings, not proven duplicate implementations. Naming review remains owed. |
+| Browser | crates/svrngs-node/tests/common/mod.rs:160; crates/svrngs-node/tests/peer.rs:241 | Test helper and test enum. Convergence and disposition remain owed. |
+
+### Checks and remaining work
+
+`npm ci --prefix web`, exit 0: 11 packages added, 12 audited, zero
+vulnerabilities. `web/node_modules/.bin/oxlint`, exit 0, no output.
+`web/node_modules/.bin/oxfmt --check '**/*.{js,mjs,cjs}'`, exit 0:
+“All matched files use the correct format”, 281 files.
+
+No product changes, new gates, or tests in this partial audit. The
+required instrument checks, full architectural review, any resulting
+small fixes, and the final locked scripts/check.sh remain owed. Resume
+with the instrument restored; do not treat the ledger or the lexical
+inventory as proof that those checks passed.
+
+### (4) Focused closing review completed, 2026-11-03
+
+**Disposition: the operator-approved focused review is complete.** This
+supersedes the remaining-work instruction above, not its historical runs.
+The acceptance criterion is `ralph/next/js/STATE.md:134-166`, approved in
+54693711 and confirmed by the director in 0dd390d2. Semantic-clone analysis
+and cross-repository noun convergence are **explicitly deferred, not
+passed**. Their original attempts in (2) and (3) remain **never-ran**;
+neither the lexical inventory nor this source review substitutes for them.
+
+Review range: **18bc628f..0dd390d2**, the queue's launch through this
+review's starting tree. The broader creation-to-07f4b7a5 ledger in (1)
+is historical evidence, not an attribution of security or relay work to
+the JavaScript queue. The review read CHARTER whole, DESIGN §5, both
+principle pins, svrn-docs `rings/current/PAGE_STATE.md` §3 and the director's
+disposition. No product code, test, gate, policy or budget changes here.
+
+#### Source conclusions
+
+Below, `home/` abbreviates `crates/svrngs-node/src/home/`; an unqualified
+filename in a table cell is beside the preceding qualified file. Browser
+test paths are under `crates/svrngs-node/tests/`, page test paths under
+`crates/svrngs/tests/`, and driver paths under `web/tests/`.
+
+| Area | Reviewed sites and conclusion |
+|---|---|
+| Pure steps and trace | `home/ui/machine.js:104-154,167-246` keeps state replacement, refusals, read serials and effect execution in one implementation. `dispatch` checks closed regions before publishing state or running effects, and traces both accepted and refused steps. `home/page/home-reading.js:165-211`, `group-reading.js:81-118`, `join.js:74-143` and `acts-read.js:88-205` separate their synchronous decisions from route calls in `io`. `web/page/enter.js:294-430` and `acts.js:104-132` return data; their storage, clock and network calls are in the edge below. |
+| Exhaustiveness and ownership | The phone uses typed `Takes`, not a switch per flow (`ui/machine.js:41-59`); `web/page/page.js:237-345` composes the closed tables and refuses duplicate ownership and foreign field/region writes. HOME's switch delegates feature messages to `offered.js:25-37`; the other home machines end in `assertNever` or the typed delegate. These are the implemented forms, not a claim that every step is literally a switch. `web/app.js:42-66` and `home/home.js:19-31` own the page stores; mounted parts own their local machines, as PAGE_STATE's per-mount rule permits (`ui/shelf.js:200-209`, `home/page/group-read.js:38-42`). |
+| Edge and key ownership | `web/page/dial.js:81-110` owns the private key and endpoint, while state carries public identity and group metadata. Its shared `exchange`, `reach`, `lends` and `through` keep body reads before close and the next-computer retry (`:57-79,120-189,215-223`). `home/page/routes.js:34-65` owns HTTP and refusal wording. Extracted views dispatch messages; they do not acquire signing keys or call those network helpers. Lifecycle bridges such as `group-read.js:42` send a message, rather than performing a read themselves. |
+| Named views and readable templates | `web/page/shelf.js:19-36`, `name-form.js:30-48`, `lend-line.js:39-50`, `home/page/home-page.js:46-97`, `group.js:140-152` and `asked.js:16-37` show the extracted, named, typed components and named conditions. Templates retain explicit significant spaces, e.g. `lend-line.js:41-42`; the parts' byte-for-byte laws still compare against the earlier page. The parts preserve their public law-imported APIs. Residual boundaries are recorded below rather than claiming universal literal compliance. |
+| Layers and module URLs | `ui/kit.js` is deleted; imports name their owning modules. `.oxlintrc.json:118-182` enforces page/ui/vendor direction, and `web/tests/specifiers.test.mjs:27-56` checks versioned imports and the single vendor door. Current lint, typed lint and specifier laws pass. The `import/no-cycle` rule remains enabled. |
+| Build, serve and types | `scripts/build-web.sh:115-143` copies named root files and only `.js` modules, includes copied modules in the shell and version hash, and stamps URLs. `home.rs:132-140` serves the new components and omits the removed barrel; it serves no `.d.ts`. No type/lint/format transform was added to build or deploy. `scripts/types.mjs:46-55,75-121` resolves served URLs, requires the built wasm declaration and refuses `@ts-nocheck`; `typed-lint.mjs:75-98,119-139` checks separate page/worker copies, never shipped bytes. `jsconfig.json:7-34` keeps strict/noEmit and the two served roots. |
+| Names and comments | The flow names and helper names identify the thing drawn or decided; comments on the moved roots and edges explain lifetimes, stale-answer rules and the test that constrains an unusual shape. `home/home.js:15-18` explains the no-top-level-await constraint; `name-form.js:2-11` explains storage and remount behavior. No formatting-ignore escape was found in the reviewed page source. Existing app-worker execution is retained, not introduced by this review; the policy and trust-floor files are unchanged. |
+
+#### Tests and instrument coverage
+
+`git diff 8e085041 HEAD -- web/tests/parts.test.mjs
+web/tests/machine.test.mjs web/tests/one-ui.test.mjs
+web/tests/specifiers.test.mjs web/tests/pages` leaves only the later
+`pages/index.mjs` held-request instrumentation. The part, machine,
+composition, shelf, membership and versioned-import laws have no further
+changes after formatting. The launch-to-finished diff preserves their
+assertions, expected words, ids and element kinds.
+
+The two source-reading browser tests now read every `.js` in each page's
+`page/` directory (`tests/browser/main.rs:67-84,507-524` and
+`opens.rs:138-162`), following the moved row rather than the former file.
+They still forbid local fullness/sign-in wording and require `opens` and
+`agreed`. Removing the `agreed` test's dependence on the parameter spelling
+`l` does not remove its call assertion. a68d2919 records the red controls in the moved
+`web/page/lend-line.js`: a local `using >=` comment and renaming `agreed`
+both failed their respective checks; restored, both passed. e3c3eb08 only
+moves the reader into the binary that uses it, fixing clippy's unused
+helper error in conformance.
+
+The other queue test-wiring changes preserve the behavioral assertions:
+`browser/carried.rs:587-594` admits Bo as a phone, consistent with its
+fixture's role; `web/tests/page.mjs:201-213` and `webkit.sh` change macOS
+WebKit startup, not page expectations; `home.mjs:121-153` waits and samples
+the words in the same settled frame. The held reads added to
+`pages/index.mjs:40-50,101-119` support the separate, operator-approved
+loading test in `crates/svrngs/tests/pages/join.rs:231-310`, not an assertion
+removed to make the refactor pass. The added refused-Stop test in
+`pages/acts.rs:215-259` likewise strengthens coverage of an interleaved
+home-page fix. Those product changes are included in the closing full gate.
+
+#### Recorded limitations and follow-ups
+
+| # | Principle | Sites | Disposition |
+|---|---|---|---|
+| JS1 | 9, 10 | `home/ui/machine.js:20-22,191-202`; `web/page/page.js:50-58,112-121`; `home/page/asked.js:24-27` | The types check declared message tables and switches, but do not encode every state's field-presence relationship or prove that an effect's `failed` string constructs a complete Message. Casts and the dynamic composition boundary remain. Current failure/stale-answer laws pass; this is a static-guarantee limit, not a newly observed runtime failure. A state/effect type redesign is a separate refactor; no new guarantee is inferred from zero type errors. |
+| JS2 | 3, 12 | `home/ui/shelf.js:102-178,200-281`, `home/ui/parts.js`; `web/page/acts.js:134-142` | Machine/view separation and one named component per file are not literal everywhere: shared UI modules keep the APIs the existing laws import, and this phone flow still has a small anonymous slot adapter around its named extracted component. Record the residue; reorganizing the shared APIs and remaining adapters is deferred to a dedicated behavior-preserving part, not silently reported as a complete separation. |
+| JS3 | 7 | `web/tests/home.mjs:133-147`; `home/page/group-read.js:39-40` | The rest sampler keys the latest trace by machine name; multiple mounted GROUP machines share that name. It is a readiness heuristic plus word assertions, not proof that every group's effects have finished. The held-request loading test covers its named case independently. Per-instance trace/readiness instrumentation is a follow-up; no failing run was found in this review. |
+
+No newly observed behavior regression or acceptance-blocking defect was
+found. These source/instrument limits do not turn the deferred semantic
+clone or noun analyses into passing checks.
+
+#### Validation of the finished tree
+
+The raw closing log was read at
+`ralph/next/js/ctl/log/sessions/js-read-16.await.log:1-72`, not just its
+summary. Its `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh` run at
+8e00b6e8 exited 0 in 1,384 seconds as recorded in
+`demo/runs/economize/2026-11-03-js-read/CLOSE.md:37-100`. Browser, joining,
+pages, types, typed lint and conformance passed. The doc scene's
+**could-not-judge** at log line 27 remains that run's verdict. The separate
+locked doc-scene rerun at 35bd78e6 passed **1 of 1**, exit 0
+(`CLOSE.md:137-153`); it does not rewrite the abstention.
+
+Coverage comparison, run here at 0dd390d2:
+
+```text
+$ git diff --stat 8e00b6e8 HEAD
+ demo/runs/economize/2026-11-03-js-read/CLOSE.md | 153 ++++++++++++++++++++++++
+ ralph/REVIEW_FINDINGS.md                        | 116 ++++++++++++++++++
+ ralph/next/js/NEEDS_HUMAN.md                    |  53 ++++++++
+ ralph/next/js/REVIEW_AUDIT_NEEDS_HUMAN.md       | 123 +++++++++++++++++++
+ ralph/next/js/STATE.md                          |  36 +++++-
+ scripts/lean_check.py                           |  15 +--
+ 6 files changed, 488 insertions(+), 8 deletions(-)
+exit 0
+```
+
+`git diff --exit-code 8e00b6e8 HEAD -- crates web apps scripts/check.sh
+scripts/build-web.sh scripts/deploy-page.sh scripts/types.mjs
+scripts/typed-lint.mjs jsconfig.json jsconfig.workers.json .oxlintrc.json
+.oxfmtrc.json scripts/trust_floor.txt` exited 0, no output. The only
+executable delta is the jubilee's removal of uncapped mode and lowered
+caps in `scripts/lean_check.py`, reviewed via `git diff`. Its actual +1
+JavaScript plant failed at 7,339 / 7,339, then removal restored the passing
+7,338 / 7,339 (`CLOSE.md:102-135`, commit 35bd78e6). Runtime, tests and gate
+wiring remain covered. This review adds only this Markdown record, so the
+row's condition for another full gate is not triggered.
+
+Current fast checks, all run here with exit 0:
+
+```text
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3477 / 3478 lines
+.                     18858 / 18859 lines
+js                     7338 / 7339 lines
+swift                     0 / 1 lines
+
+$ node --test web/tests/*.test.mjs web/tests/pages/*.test.mjs
+1..85
+# tests 106
+# pass 106
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+
+$ web/node_modules/.bin/oxfmt --check "**/*.{js,mjs,cjs}"
+All matched files use the correct format.
+Finished in 172ms on 281 files using 12 threads.
+
+$ web/node_modules/.bin/oxlint
+[no output]
+
+$ node scripts/types.mjs
+types: 0 errors in 127 files
+
+$ node scripts/typed-lint.mjs
+typed lint, jsconfig.json: 123 files, exit 0
+typed lint, jsconfig.workers.json: 3 files, exit 0
+
+$ git diff --check
+[no output]
+```
+
+The page-law run includes `parts.test.mjs` and all page subdirectory laws;
+Node printed module-type reparsing warnings, not failed or skipped tests.
+No new check was added, so no new plant is claimed. Before and after this
+documentation-only part, lean printed the same four readings above and
+exited 0; the after-edit `git diff --check` also exited 0. The recorded full gate, focused doc rerun and
+current fast checks satisfy the revised row's acceptance evidence.

@@ -1,0 +1,6 @@
+docker-tls/ dir
+kuma.db 233472 a7e89de5be0eaa00b40fbdb70d38b372698eb029dd6701f9db0ee1866938ef63
+kuma.db-shm 32768 63157bcab56f7724f6e65593986b40c10ccf7a3c3a80eaf9bdf9d8526e05f672
+kuma.db-wal 1194832 3793a6700a52a382d8556dbce8cadcc6bd5aa444409cc3ec0d432b016f748e7e
+screenshots/ dir
+upload/ dir

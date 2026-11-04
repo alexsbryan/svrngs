@@ -49,8 +49,9 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         refused: Vec::new(),
         upload: None,
         reads: Vec::new(),
-        sign_in: None,
         asks: None,
+        sign_in: false,
+        raw: None,
     }
 }
 
@@ -166,7 +167,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         name("house"),
         name("Sam"),
         None,
-        None,
+        &[],
         &no_relay(),
     )
     .await
@@ -181,19 +182,16 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
     let (origin, heads) = service().await;
     let asked = share_of(origin, "pad");
-    let lend = share::lend_of(
-        &asked,
-        share::listens,
-        share::well_known_kind(asked.port),
-        &[],
-    )
-    .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
+        .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
     let mut said = vec![Said::Shared {
         lend: lend.clone(),
         secret: true,
         accounts: None,
         running: true,
+        client: None,
+        issuer: None,
     }
     .to_string()];
 
@@ -220,6 +218,8 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         .unwrap();
     let answer = http
         .get(format!("{address}notes?x=1"))
+        // A program Alex runs, which shows his token (give-session).
+        .bearer_auth(alex.node.token().trim())
         .header("x-svrngs-person", "Sam")
         .send()
         .await
@@ -289,7 +289,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 #[tokio::test(flavor = "multi_thread")]
 async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
     let sam = computer(3).await;
-    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, None, &no_relay())
+    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
         .await
         .expect("Sam makes Lab");
     let alex = computer(4).await;
@@ -301,19 +301,16 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
 
     let (origin, heads) = service().await;
     let asked = share_of(origin, "llama-server");
-    let lend = share::lend_of(
-        &asked,
-        share::listens,
-        share::well_known_kind(asked.port),
-        &[],
-    )
-    .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
+        .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
     let shared = Said::Shared {
         lend: lend.clone(),
         secret: false,
         accounts: None,
         running: true,
+        client: None,
+        issuer: None,
     }
     .to_string();
 
@@ -336,6 +333,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
     let ask = |method: &str, path: &str| {
         let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
         http.request(method, format!("{}{}", address.trim_end_matches('/'), path))
+            .bearer_auth(alex.node.token().trim())
             .send()
     };
 
@@ -457,13 +455,38 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(reads, ["films", "music"]);
     assert!(cli::parse(argv(&["share", "8096", "--reads", "a/b"])).is_err());
     assert!(cli::parse(argv(&["new", "x", "--reads", "films"])).is_err());
-    // Its sign-in's port (mwp-1), a port as the lend's is.
-    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--sign-in", "9000"])) else {
-        panic!("share parses a sign-in");
-    };
-    assert_eq!(asked.sign_in.map(|p| p.get()), Some(9000));
-    assert!(cli::parse(argv(&["share", "8096", "--sign-in", "0"])).is_err());
+    // The hook's `--sign-in` is gone; `share_refuses_a_sign_in_the_lender_ran_itself` holds it.
     assert!(cli::parse(argv(&["room", "x", "--sign-in", "9000"])).is_err());
+}
+
+/// **A sign-in of the lender's own is refused** (oidc-hook-cut; the
+/// operator, 2026-10-21): `share --sign-in <port>` named the hook a lend
+/// declared, which sign-in with svrngs makes userless. It is refused in a
+/// person's words, and the flag still reads its value, so `--sign-in` alone
+/// says it wants one. Red at HEAD, where it lent the port. Planted: the arm
+/// removed, so the flag is unknown rather than gone.
+#[test]
+fn share_refuses_a_sign_in_the_lender_ran_itself() {
+    let argv = |rest: &[&str]| {
+        std::iter::once("svrngs".to_string())
+            .chain(rest.iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    let gone = "--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own";
+    assert_eq!(
+        cli::parse(argv(&["share", "8096", "--sign-in", "9000"])).err(),
+        Some(gone.to_string())
+    );
+    assert_eq!(
+        cli::parse(argv(&["share", "8096", "--sign-in"])).err(),
+        Some("--sign-in wants a value".to_string()),
+        "the retired flag still reads its value"
+    );
+    assert_eq!(
+        cli::parse(argv(&["share", "8096", "--sign-in", "0"])).err(),
+        Some(gone.to_string()),
+        "the value is never read as a port"
+    );
 }
 
 /// **A lend that asks** (sup-2 (a)): `share --ask "<words>"` keeps its
@@ -491,7 +514,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     }
     assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
     let dir = tempfile::tempdir().unwrap();
-    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap()), &[]).unwrap();
+    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap())).unwrap();
     cli::share_lend(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
@@ -505,6 +528,8 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         secret: false,
         accounts: None,
         running: false,
+        client: None,
+        issuer: None,
     };
     assert!(said.to_string().contains(words), "{said}");
     cli::unshare(dir.path(), &name).unwrap();
@@ -571,7 +596,16 @@ impl Program {
         while let Ok(l) = self.lines.recv_timeout(Duration::from_secs(5)) {
             self.seen.push(l);
         }
-        (status.code().unwrap_or(-1), self.seen)
+        (status.code().unwrap_or(-1), std::mem::take(&mut self.seen))
+    }
+}
+
+/// Dropped, the program is stopped: a test that fails before it stops one
+/// would otherwise leave it running, orphaned, holding its port.
+impl Drop for Program {
+    fn drop(&mut self) {
+        let _ = self.child.kill();
+        let _ = self.child.wait();
     }
 }
 
@@ -709,6 +743,166 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     drop((first, second));
 }
 
+/// What svrngs running over `dir` answers `GET /v1/room`, at the API it
+/// wrote, as the home page reads it.
+fn room_of(dir: &Path) -> serde_json::Value {
+    let api = std::fs::read_to_string(dir.join("api")).unwrap();
+    let token = std::fs::read_to_string(dir.join("token")).unwrap();
+    let mut sock = std::net::TcpStream::connect(api.trim().trim_start_matches("http://")).unwrap();
+    let ask = format!("GET /v1/room HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {token}\r\nConnection: close\r\n\r\n");
+    sock.write_all(ask.as_bytes()).unwrap();
+    let mut answer = String::new();
+    sock.read_to_string(&mut answer).unwrap();
+    let body = answer.split("\r\n\r\n").nth(1).unwrap_or_default();
+    serde_json::from_str(body).unwrap_or_else(|_| panic!("the room said {answer:?}"))
+}
+
+/// **`svrngs room` asks the svrngs running here, and the room stays on
+/// across a restart** (the room's report, 1 and 2: on a computer
+/// install.sh set up, its LaunchAgent runs svrngs and holds the data dir,
+/// so `room` refused, Busy; and the room lived only while `room` ran).
+/// With `svrngs share` running and lending `pad`, `svrngs room pad` turns
+/// it on there, says who can open it and where, and leaves, exit 0,
+/// running nothing. That svrngs stops, and the bare command starts over
+/// the same data, as login starts it: asked nothing, its room serves `pad`
+/// where it said, on the same network (`/v1/room`, and its address takes a
+/// connection). With nothing running, `svrngs room pad` runs svrngs and
+/// says the same. Planted, watched failing: cli.rs as e01c070a left it,
+/// which claimed the data dir first and refused, "svrngs is already
+/// running on this computer".
+#[cfg(unix)]
+#[test]
+fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let pad = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = pad.local_addr().unwrap().port().to_string();
+    let argv = ["share", port.as_str(), "--kind", "pad"];
+    let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "pads\n");
+    running.until("Leave this running");
+    let told = "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you close it to this WiFi on your home page.";
+
+    let (code, said) =
+        Program::start(dir.path(), &logs.path().join("room"), &["room", "pad"], "").ends();
+    eprintln!("svrngs room pad, svrngs running: {said:#?}");
+    assert_eq!(code, 0, "{said:?}");
+    assert!(said.iter().any(|l| l.starts_with(told)), "{said:?}");
+    let line = said
+        .iter()
+        .find(|l| l.starts_with("pad: "))
+        .expect("pad said");
+    assert!(
+        !said.iter().any(|l| l.contains("Leave this running")),
+        "{said:?}"
+    );
+    let room = room_of(dir.path());
+    assert_eq!(room[0]["name"], "pad", "{room}");
+    assert_eq!(&room[0]["said"], &line["pad: ".len()..], "{room}");
+    let _ = running.child.kill();
+    running.ends();
+
+    let mut again = Program::start(dir.path(), &logs.path().join("again"), &[], "");
+    again.until("Leave this running");
+    // Its owner reads the network as it starts, the moment after.
+    let mut kept = room_of(dir.path());
+    for _ in 0..50 {
+        if kept[0]["served"] == room[0]["served"] {
+            break;
+        }
+        std::thread::sleep(Duration::from_millis(100));
+        kept = room_of(dir.path());
+    }
+    assert_eq!(kept[0]["served"], room[0]["served"], "{kept}");
+    if let Some(at) = room[0]["served"]["at"].as_str() {
+        let at: std::net::SocketAddr = at.parse().unwrap();
+        assert!(
+            std::net::TcpStream::connect_timeout(&at, Duration::from_secs(5)).is_ok(),
+            "not served again at {at}"
+        );
+    }
+    let _ = again.child.kill();
+    again.ends();
+
+    let mut alone = Program::start(dir.path(), &logs.path().join("alone"), &["room", "pad"], "");
+    alone.until("Leave this running");
+    assert!(
+        alone.seen.iter().any(|l| l.starts_with(told)),
+        "{:?}",
+        alone.seen
+    );
+    assert!(alone.seen.iter().any(|l| l == line), "{:?}", alone.seen);
+    let _ = alone.child.kill();
+    alone.ends();
+    drop(pad);
+}
+
+/// **`share --sign-in-with-svrngs` turns it on for scripts** (SIGN_IN_WITH_
+/// SVRNGS §5 "Turning it on", §8 9): the command makes a client id and
+/// secret from the allowed alphabet, keeps them in the lend's declaration
+/// at 0600, prints the issuer, the client and the deviations once, and
+/// asks no password. Planted, watched failing: the flag not known.
+#[cfg(unix)]
+#[test]
+fn share_turns_on_signing_people_in_with_svrngs() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = stand_in.local_addr().unwrap().port().to_string();
+    let argv = [
+        "share",
+        port.as_str(),
+        "--kind",
+        "pad",
+        "--sign-in-with-svrngs",
+    ];
+    let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "");
+    running.until("Leave this running");
+    let _ = running.child.kill();
+    let (_, seen) = running.ends();
+
+    let name = LendName::parse("pad").unwrap();
+    let declared = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
+    let client = declared
+        .sign_in_with_svrngs
+        .expect("the declaration holds the client");
+    let id = client.client_id;
+    let secret = client.client_secret.expect("a secret");
+    for made in [&id, &secret] {
+        assert!(
+            made.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b)),
+            "{made:?} is made from the allowed alphabet"
+        );
+    }
+    let wrote = seen
+        .iter()
+        .find(|l| l.contains("issuer http://127.0.0.1:") && l.contains("/oidc/pad"))
+        .unwrap_or_else(|| panic!("the issuer is not printed: {seen:?}"));
+    assert!(wrote.contains(&id) && wrote.contains(&secret), "{wrote}");
+    assert!(
+        seen.iter()
+            .any(|l| l.contains("plain http") && l.contains("ES256") && l.contains("no email")),
+        "the deviations are in the lender's words: {seen:?}"
+    );
+    assert!(
+        !seen.iter().any(|l| l.contains("Its password stays")),
+        "no password was asked: {seen:?}"
+    );
+    let file = dir.path().join("lends/pad.json");
+    assert_eq!(mode(&file), 0o600, "the declaration holding a secret");
+    assert_eq!(
+        holding(dir.path(), secret.as_bytes(), &file),
+        Vec::<String>::new(),
+        "the secret is in no file but its declaration"
+    );
+    assert_eq!(
+        holding(logs.path(), secret.as_bytes(), Path::new("")),
+        Vec::<String>::new(),
+        "the secret is in no log line"
+    );
+    drop(stand_in);
+}
+
 /// A service that keeps its own accounts, on a port of a stand-in (u5-4;
 /// DESIGN §3, "Lent apps", call 4): `share` asks no password, keeps none
 /// though one is typed, and tells its lender how to make each person an
@@ -816,55 +1010,6 @@ fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() {
     drop(stand_in);
 }
 
-/// **A sign-in is never lent by the command** (arch-helper (b);
-/// REVIEW_FINDINGS #174): `share 8097`, the port the table
-/// names jellyfin's helper at, and `share <port>` of a port a lend here
-/// names its sign-in, are each refused, saying why, declaring nothing, and
-/// traced. Red at 2ab2522, the plant: 8097 refused only as not answering,
-/// and the other lent. Nothing listens at 8097
-/// here: the table refuses it whether or not its helper runs, and the
-/// tests beside this one lend jellyfin with nothing there.
-#[cfg(unix)]
-#[test]
-fn share_refuses_a_port_that_signs_people_in_to_a_lend() {
-    let (dir, logs) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let signer = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let port = signer.local_addr().unwrap().port();
-    let lends = dir.path().join("lends");
-    std::fs::create_dir_all(&lends).unwrap();
-    let shelf = serde_json::json!({ "port": 1, "kind": "k", "sign_in": port });
-    std::fs::write(lends.join("shelf.json"), shelf.to_string()).unwrap();
-    for asked in [8097, port] {
-        let log = logs.path().join(asked.to_string());
-        let args = ["share", &asked.to_string(), "--kind", "helper"];
-        let mut running = Program::start(dir.path(), &log, &args, "\n");
-        let deadline = std::time::Instant::now() + Duration::from_secs(30);
-        let code = loop {
-            match running.child.try_wait().unwrap() {
-                Some(status) => break status.code(),
-                None if std::time::Instant::now() > deadline => {
-                    let _ = running.child.kill();
-                    break None;
-                }
-                None => std::thread::sleep(Duration::from_millis(100)),
-            }
-        };
-        let log = std::fs::read_to_string(&log).unwrap();
-        let said: Vec<&str> = log.lines().filter(|l| l.starts_with("svrngs: ")).collect();
-        let why = format!("svrngs: port {asked} signs people in to something you lend, and only svrngs on this computer asks it: lend what it signs them in to instead");
-        assert_eq!(
-            (code, said, lends.join("helper.json").exists()),
-            (Some(1), vec![why.as_str()], false),
-            "share {asked}: {:?}",
-            running.seen
-        );
-        assert!(
-            log.contains("share: whether the port signs people in to a lend"),
-            "traced: {log}"
-        );
-    }
-}
-
 /// **A folder is synced by asking svrngs running here, in one group**
 /// (gf-1, sy-1, syp-4): `share --folder <dir> --group <group>` takes the
 /// folder's absolute path and the group as typed, and only `share` takes
@@ -913,7 +1058,7 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     )
     .await
     .unwrap();
-    cli::new_group(&node, name("house"), name("Sam"), None, None, &no_relay())
+    cli::new_group(&node, name("house"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     let nope = ask("nope").await;

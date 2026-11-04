@@ -1,0 +1,48 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": {
+    "external_directory": {
+      "~/dev/svrn-docs/**": "allow",
+      "~/dev/commonwealth-ai/**": "allow",
+      "~/.svrnmesh/**": "allow",
+      "/tmp/**": "allow",
+      "/private/tmp/**": "allow",
+      "/run/**": "allow"
+    },
+    "edit": {
+      "*": "allow",
+      "~/dev/svrn-docs/**": "deny",
+      "~/dev/commonwealth-ai/**": "deny"
+    },
+    "shell": {
+      "*": "allow",
+      "git push*": "deny",
+      "git reset --hard*": "deny",
+      "git rebase*": "deny",
+      "git commit --amend*": "deny",
+      "git filter-*": "deny",
+      "* --no-verify*": "deny",
+      "sudo *": "deny",
+      "rm -rf /": "deny",
+      "rm -rf /*": "deny",
+      "rm -rf ~": "deny",
+      "rm -rf ~/*": "deny",
+      "rm -rf $HOME*": "deny",
+      "git add -A*": "deny",
+      "git add --all*": "deny",
+      "git add -u*": "deny",
+      "git add .": "deny",
+      "git add . *": "deny",
+      "git add :/*": "deny",
+      "git commit -a*": "deny",
+      "git commit --all*": "deny",
+      "docker*": "deny",
+      "* docker *": "deny",
+      "orb*": "deny"
+    },
+    "webfetch": "deny",
+    "websearch": "deny",
+    "task": "deny",
+    "question": "deny"
+  }
+}

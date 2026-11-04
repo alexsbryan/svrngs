@@ -1,0 +1,8 @@
+$ python3 scripts/vocab_check.py   # at ea4c6aba
+BROKEN  crates/svrngs-core/src/membership.rs:634: `guests` is events's noun
+BROKEN  crates/svrngs-core/src/membership.rs:634: `guests` is events's noun
+73 app nouns, 2 in infra code
+exit 1
+$ python3 scripts/vocab_check.py   # the trace field and its words renamed
+73 app nouns, 0 in infra code
+exit 0

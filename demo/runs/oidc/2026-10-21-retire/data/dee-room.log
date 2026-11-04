@@ -1,0 +1,546 @@
+2026-10-22T06:29:23.121902Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-22T06:29:23.171974Z  INFO folder: folder: the store is open untagged=0
+2026-10-22T06:29:23.172065Z  INFO folder: synced: the directory kept in step with the group's folder namespace="816493b61ecdad9223c36b65b94207c47ab0b8a213ddc738428f8fd18a7a58d5" folder="House-816493b6" dir=/Users/alexsbryan/svrngs/House-816493b6
+2026-10-22T06:29:23.173913Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:59081
+2026-10-22T06:29:23.174459Z  INFO node: node: endpoint bound with the signing key actor="da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e" data_dir=/tmp/oidc-retire-2026-10-21/dee dial=Some("da2a77c1cb7bb2382d73bbb9c914e5c5f14caf5ce64722c4b115a25ce72cf24e@192.168.1.11:50495") api=127.0.0.1:59081
+2026-10-22T06:29:23.174878Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-22T06:29:23.175046Z DEBUG room: room: the address picked — the route's if private and listed, else the one private, else none listed=[192.168.1.11] route=Some(192.168.1.11) private=[192.168.1.11] picked=Some(192.168.1.11)
+2026-10-22T06:29:23.176130Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Sam/a4f9a101"] skipped_offline=[]
+2026-10-22T06:29:23.462578Z  INFO room: room: serving a lend to this computer's network addr=192.168.1.11:43900 person=Sam lend=jellyfin
+2026-10-22T06:29:23.548028Z  INFO endpoint{id=da2a77c1cb}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-10-22T06:29:25.465440Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:26.551988Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:26.723660Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/
+2026-10-22T06:29:26.727981Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/
+2026-10-22T06:29:26.736827Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/runtime.bundle.js
+2026-10-22T06:29:26.737471Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40jellyfin.sdk.bundle.js
+2026-10-22T06:29:26.740349Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/1133.03edf3bb7ee048ee10be.css
+2026-10-22T06:29:26.740737Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.material.bundle.js
+2026-10-22T06:29:26.740820Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/main.jellyfin.62ea10d695d4592fccae.css
+2026-10-22T06:29:26.742687Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.icons-material.bundle.js
+2026-10-22T06:29:26.743401Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.system.bundle.js
+2026-10-22T06:29:26.748743Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.utils.bundle.js
+2026-10-22T06:29:26.748877Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40tanstack.query-core.bundle.js
+2026-10-22T06:29:26.749080Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.lodash-es.bundle.js
+2026-10-22T06:29:26.750854Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40tanstack.react-query.bundle.js
+2026-10-22T06:29:26.753008Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/banner-light.b113d4d1c6c07fcb73f0.png
+2026-10-22T06:29:26.755585Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.date-fns.esm.bundle.js
+2026-10-22T06:29:26.755729Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-transition-group.bundle.js
+2026-10-22T06:29:26.755729Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.core-js.bundle.js
+2026-10-22T06:29:26.756360Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40popperjs.core.bundle.js
+2026-10-22T06:29:26.757323Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.axios.bundle.js
+2026-10-22T06:29:26.758596Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-dom.bundle.js
+2026-10-22T06:29:26.760541Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.jquery.bundle.js
+2026-10-22T06:29:26.762205Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.webcomponents.js.bundle.js
+2026-10-22T06:29:26.765309Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.resize-observer-polyfill.bundle.js
+2026-10-22T06:29:26.768141Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.intersection-observer.bundle.js
+2026-10-22T06:29:26.768265Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.regenerator-runtime.bundle.js
+2026-10-22T06:29:26.768320Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.jellyfin-apiclient.bundle.js
+2026-10-22T06:29:26.769371Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.history.bundle.js
+2026-10-22T06:29:26.770189Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.dompurify.bundle.js
+2026-10-22T06:29:26.770551Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-router.bundle.js
+2026-10-22T06:29:26.772760Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-router-dom.bundle.js
+2026-10-22T06:29:26.772917Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40remix-run.router.bundle.js
+2026-10-22T06:29:26.773216Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.abortcontroller-polyfill.bundle.js
+2026-10-22T06:29:26.774283Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/1133.bundle.js
+2026-10-22T06:29:26.774655Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/serviceworker.js
+2026-10-22T06:29:26.774670Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/main.jellyfin.bundle.js
+2026-10-22T06:29:26.826607Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/59258.69a271cacc58351d3b48.chunk.js
+2026-10-22T06:29:26.827303Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:26.859692Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.usehooks-ts.23c13898b44dada8d387.chunk.js
+2026-10-22T06:29:26.860119Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/78701.1521101b7f45094b7ce3.css
+2026-10-22T06:29:26.860144Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/8463.5024adce4ba13b0c6c59.chunk.js
+2026-10-22T06:29:26.860600Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/78701.d06a72f873e03eaaa404.chunk.js
+2026-10-22T06:29:26.861273Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:26.861984Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:26.876582Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:26.882519Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/en-us-json.45f09214281c189457b1.chunk.js
+2026-10-22T06:29:26.890098Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/25348.10043daf2671fc8859af.css
+2026-10-22T06:29:26.890463Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/25348.a5fe264650ffc6a300ef.chunk.js
+2026-10-22T06:29:26.890720Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/73560.49e7c92878ed0bb4fad6.css
+2026-10-22T06:29:26.890893Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/73560.06bbc42902b173550f1b.chunk.js
+2026-10-22T06:29:26.891092Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/playAccessValidation-plugin.4bb58f8d0bccba4cc775.chunk.js
+2026-10-22T06:29:26.891404Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/experimentalWarnings-plugin.6570756915b50aa277bc.chunk.js
+2026-10-22T06:29:26.893621Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/comicsPlayer-plugin.376225a6806c59455f1c.css
+2026-10-22T06:29:26.894191Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/bookPlayer-plugin.5bd6d63bbfdacc895e23.css
+2026-10-22T06:29:26.894625Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/pdfPlayer-plugin.812f879bb0acfa8ae50f.css
+2026-10-22T06:29:26.895127Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/htmlAudioPlayer-plugin.561e4ddec4927f9c3017.chunk.js
+2026-10-22T06:29:26.896490Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/htmlVideoPlayer-plugin.75e5631714895cbf4ff3.chunk.js
+2026-10-22T06:29:26.901998Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/comicsPlayer-plugin.c358c35860fc41e92b05.chunk.js
+2026-10-22T06:29:26.902078Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/photoPlayer-plugin.6ab734fd7db4c18bddd6.chunk.js
+2026-10-22T06:29:26.902159Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/bookPlayer-plugin.c83d5c43401890557a8f.chunk.js
+2026-10-22T06:29:26.904423Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/youtubePlayer-plugin.fa67b1ec7d5bcf80338c.chunk.js
+2026-10-22T06:29:26.905951Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/backdropScreensaver-plugin.30324a9a65cdda6a4623.chunk.js
+2026-10-22T06:29:26.907638Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/pdfPlayer-plugin.0e5794750bc919e9fcd7.chunk.js
+2026-10-22T06:29:26.908795Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/logoScreensaver-plugin.897823f6a7747f6cf262.chunk.js
+2026-10-22T06:29:26.909111Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/sessionPlayer-plugin.785a05db0609955aefb8.chunk.js
+2026-10-22T06:29:26.910159Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/chromecastPlayer-plugin.22f3e0fb29fa08af7bd7.chunk.js
+2026-10-22T06:29:26.910609Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/stillWatching-plugin.460e0919aaaffdf99811.chunk.js
+2026-10-22T06:29:26.912928Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-core-PlaybackCore.696ea54abe46142ab186.chunk.js
+2026-10-22T06:29:26.913787Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-core-Manager.b0d0a1522cc038dfa8b2.chunk.js
+2026-10-22T06:29:26.914033Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/19907.48d4af89f0a3b0cee021.chunk.js
+2026-10-22T06:29:26.914571Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-ui-players-NoActivePlayer.03a6368ee2ea0e2c68da.chunk.js
+2026-10-22T06:29:26.914874Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-plugin.3080c44da0c3f4cb9f9c.chunk.js
+2026-10-22T06:29:26.924665Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/55802.52fbf988646b0db27075.chunk.js
+2026-10-22T06:29:26.924685Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/12011.59d68def33f006b4d5b5.chunk.js
+2026-10-22T06:29:26.925133Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/14245.f517756c675c2040ffba.css
+2026-10-22T06:29:26.925192Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/57949.890260722af4eefd0e71.chunk.js
+2026-10-22T06:29:26.925464Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/14245.d5294b1bf572bcb9edd7.chunk.js
+2026-10-22T06:29:26.926043Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/91737.46d2c499ae1164063e43.css
+2026-10-22T06:29:26.927825Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/28567.6db9992959ca2eff26e4.chunk.js
+2026-10-22T06:29:26.928528Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/91737.a37aaa8ddbabd2fe49c4.chunk.js
+2026-10-22T06:29:26.931975Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/22424.f9d25ef5836602c49805.chunk.js
+2026-10-22T06:29:26.932244Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/44184.df7109074c49b4219abf.chunk.js
+2026-10-22T06:29:26.945271Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/noto-sans-latin-400-normal.a368ce60930bda733d39.woff2
+2026-10-22T06:29:26.972039Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/themes/dark/theme.css
+2026-10-22T06:29:26.972502Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/45568.f61f61377609c9922e8a.chunk.js
+2026-10-22T06:29:26.972788Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/73233.98e0cdb3f30f44fc6339.chunk.js
+2026-10-22T06:29:26.973144Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/32721.bfde69083a6ae513ba97.css
+2026-10-22T06:29:26.973269Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/32721.fad93419ec89a0acfbfd.chunk.js
+2026-10-22T06:29:26.973471Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/68603.bfde69083a6ae513ba97.css
+2026-10-22T06:29:26.978096Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/68603.6c4daa3c063b03183af4.chunk.js
+2026-10-22T06:29:26.987656Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/4113.d72f956477d42e4f9e3f.chunk.js
+2026-10-22T06:29:26.990476Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/11851.ed201579e96d780f36b3.chunk.js
+2026-10-22T06:29:26.992032Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/home.193c6fa7a64e52078d35.css
+2026-10-22T06:29:26.997878Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/home.6f5c86d430f38b204798.chunk.js
+2026-10-22T06:29:26.999073Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/icon-transparent.baba78f2a106d9baee83.png
+2026-10-22T06:29:26.999387Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:27.004318Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/blurhash.worker.bundle.js
+2026-10-22T06:29:27.009401Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:27.013780Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/69881.85d5c8ac3936b68e702e.css
+2026-10-22T06:29:27.013900Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/69881.b4b69df4c7e59204a533.chunk.js
+2026-10-22T06:29:27.018582Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/76542.033e6959b8ca2bb863d3.css
+2026-10-22T06:29:27.019411Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/76542.4486f56001630eca65e3.chunk.js
+2026-10-22T06:29:27.131826Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:27.139980Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:27.140467Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:27.149785Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.markdown-it.577ee674061f4f85a169.chunk.js
+2026-10-22T06:29:27.150226Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.linkify-it.266387235d0d805c1962.chunk.js
+2026-10-22T06:29:27.150282Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.entities.de723355ea92068aa757.chunk.js
+2026-10-22T06:29:27.150734Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/70712.9c36c0bc25d212f7dfd1.chunk.js
+2026-10-22T06:29:27.150848Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/session-login.872eaba65c6e2216aba6.css
+2026-10-22T06:29:27.151266Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/session-login.cb3c7c6a0f3396901580.chunk.js
+2026-10-22T06:29:27.154001Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/session-login-index-html.748f2ea433c30fd200a8.chunk.js
+2026-10-22T06:29:27.162761Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/47472.ead193e1e4096120377c.css
+2026-10-22T06:29:27.163083Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/47472.73de9f0f9c4dd7c901a4.chunk.js
+2026-10-22T06:29:27.163371Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/users/public
+2026-10-22T06:29:27.163415Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Enabled
+2026-10-22T06:29:27.166885Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Branding/Configuration
+2026-10-22T06:29:27.167159Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Branding/Configuration
+2026-10-22T06:29:27.175595Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/noto-sans-latin-700-normal.0ff35ccfee89234e6883.woff2
+2026-10-22T06:29:27.186152Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/MaterialIcons-Regular.2d8017489da689caedc1.woff2
+2026-10-22T06:29:27.647350Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:28.306091Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:28.780412Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/authenticatebyname
+2026-10-22T06:29:28.793813Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:28.877191Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Sessions/Capabilities/Full
+2026-10-22T06:29:28.878141Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:28.878480Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/DisplayPreferences/usersettings
+2026-10-22T06:29:28.889323Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/10a9c9846f3b4be1a6b45e142844cac8
+2026-10-22T06:29:28.893204Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info
+2026-10-22T06:29:28.907878Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Enabled
+2026-10-22T06:29:28.908244Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/SyncPlay/List
+2026-10-22T06:29:28.908307Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/UserViews
+2026-10-22T06:29:28.910880Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/10a9c9846f3b4be1a6b45e142844cac8
+2026-10-22T06:29:28.912631Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/10a9c9846f3b4be1a6b45e142844cac8
+2026-10-22T06:29:28.913029Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.sortablejs.da8670ce4017345f437e.chunk.js
+2026-10-22T06:29:28.914749Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/hometab.ac4b35033c3d056870e5.css
+2026-10-22T06:29:28.916568Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/24468.66747b7d9d4daeea7960.chunk.js
+2026-10-22T06:29:28.917496Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/65126.a9d00b7e98ab700bf1ef.chunk.js
+2026-10-22T06:29:28.919599Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/hometab.0ec3d9a22cad691c217e.chunk.js
+2026-10-22T06:29:28.941917Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/84158.b965d0fbed7b231d8996.css
+2026-10-22T06:29:28.942361Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/49275.fcf2b77489e84c80e220.chunk.js
+2026-10-22T06:29:28.942375Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/84158.4141819ca8b5f6555c12.chunk.js
+2026-10-22T06:29:28.942381Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/49275.667e823ce6c9b896cd5b.css
+2026-10-22T06:29:28.942475Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/35308.9bf57cfbd84387e3793e.css
+2026-10-22T06:29:28.942679Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/35308.0b1567d9abe0bdae4331.chunk.js
+2026-10-22T06:29:28.945357Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/LiveTv/Programs/Recommended
+2026-10-22T06:29:28.947003Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/f137a2dd21bbc1b99aa5c0f6bf02a805/Images/Primary
+2026-10-22T06:29:28.963231Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/UserItems/Resume
+2026-10-22T06:29:28.963660Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/UserItems/Resume
+2026-10-22T06:29:28.963699Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/UserItems/Resume
+2026-10-22T06:29:28.964028Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Shows/NextUp
+2026-10-22T06:29:28.964668Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/Latest
+2026-10-22T06:29:28.965027Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/f137a2dd21bbc1b99aa5c0f6bf02a805/Images/Primary
+2026-10-22T06:29:28.967202Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/Me
+2026-10-22T06:29:28.999625Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/itemDetails.c8609767f06ba1b9d6a9.css
+2026-10-22T06:29:29.000412Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/itemDetails-index-html.fc20dbd21fff214b6611.chunk.js
+2026-10-22T06:29:29.000416Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/6940.f9e479afc2ca4df4354f.chunk.js
+2026-10-22T06:29:29.000416Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/itemDetails.247c5672436c37e44fe6.chunk.js
+2026-10-22T06:29:29.002127Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/Ancestors
+2026-10-22T06:29:29.011042Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/10a9c9846f3b4be1a6b45e142844cac8/Items/4e4285ee380f2be75b46c5dd67dedf89
+2026-10-22T06:29:29.011467Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89
+2026-10-22T06:29:29.091056Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/ThemeMedia
+2026-10-22T06:29:29.096155Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:29.096543Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:29.096573Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:29.097037Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:29.097350Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:29.098753Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:29.100797Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/Similar
+2026-10-22T06:29:29.101105Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/Collections
+2026-10-22T06:29:29.106452Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/Images/Primary
+2026-10-22T06:29:29.122772Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/Images/Primary
+2026-10-22T06:29:29.187183Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/10a9c9846f3b4be1a6b45e142844cac8/Items/4e4285ee380f2be75b46c5dd67dedf89/Intros
+2026-10-22T06:29:29.204136Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Endpoint
+2026-10-22T06:29:29.213965Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Endpoint
+2026-10-22T06:29:29.220977Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Playback/BitrateTest
+2026-10-22T06:29:29.239823Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Playback/BitrateTest
+2026-10-22T06:29:29.268931Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Playback/BitrateTest
+2026-10-22T06:29:29.448821Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Users/10a9c9846f3b4be1a6b45e142844cac8/Items/4e4285ee380f2be75b46c5dd67dedf89
+2026-10-22T06:29:29.465114Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/PlaybackInfo
+2026-10-22T06:29:29.530346Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/htmlVideoPlayer-style-scss.6919e19d581252e83cdd.css
+2026-10-22T06:29:29.530874Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/htmlVideoPlayer-style-scss.ec2cfc8eec2032e63451.chunk.js
+2026-10-22T06:29:29.535470Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Items/4e4285ee380f2be75b46c5dd67dedf89/Images/Primary
+2026-10-22T06:29:29.783980Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Videos/4e4285ee380f2be75b46c5dd67dedf89/stream.mp4
+2026-10-22T06:29:29.811296Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:29.833580Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Sessions/Playing
+2026-10-22T06:29:29.844078Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/playback-video.5ba31de903ff90ae4dc0.css
+2026-10-22T06:29:29.844139Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/playback-video.7de109744f4737bdf440.chunk.js
+2026-10-22T06:29:29.844203Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/playback-video-index-html.abb07b3cc445e060d9d2.chunk.js
+2026-10-22T06:29:30.099463Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Sessions/Playing/Progress
+2026-10-22T06:29:30.477979Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Videos/4e4285ee380f2be75b46c5dd67dedf89/stream.mp4
+2026-10-22T06:29:30.481604Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/66884.1cd569ac04ac2a6cd721.css
+2026-10-22T06:29:30.497004Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Sessions/Playing/Progress
+2026-10-22T06:29:30.838562Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:31.877408Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:32.963151Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:33.860966Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Videos/4e4285ee380f2be75b46c5dd67dedf89/stream.mp4
+2026-10-22T06:29:33.881791Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Sessions/Playing/Progress
+2026-10-22T06:29:34.021009Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:34.904188Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Endpoint
+2026-10-22T06:29:34.918428Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Playback/BitrateTest
+2026-10-22T06:29:34.938240Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Playback/BitrateTest
+2026-10-22T06:29:34.966324Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Playback/BitrateTest
+2026-10-22T06:29:35.029814Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:36.113250Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:37.201307Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:37.232458Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Videos/4e4285ee380f2be75b46c5dd67dedf89/stream.mp4
+2026-10-22T06:29:37.250789Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Sessions/Playing/Progress
+2026-10-22T06:29:38.240290Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:39.348327Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:40.416350Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:40.637316Z DEBUG door: door: an upgraded connection ended lend="xw64camd1qzxrg6j7rcknnd4uh4f6g2k36kmd7xb5rv156jrasdabbq3n1prdr" up=41 down=741
+2026-10-22T06:29:41.529328Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:42.610171Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:43.096890Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/
+2026-10-22T06:29:43.100946Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/
+2026-10-22T06:29:43.108492Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/runtime.bundle.js
+2026-10-22T06:29:43.108889Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40jellyfin.sdk.bundle.js
+2026-10-22T06:29:43.112792Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/main.jellyfin.62ea10d695d4592fccae.css
+2026-10-22T06:29:43.113097Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/1133.03edf3bb7ee048ee10be.css
+2026-10-22T06:29:43.113404Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.material.bundle.js
+2026-10-22T06:29:43.113666Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.icons-material.bundle.js
+2026-10-22T06:29:43.113843Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.system.bundle.js
+2026-10-22T06:29:43.119099Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40mui.utils.bundle.js
+2026-10-22T06:29:43.121104Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.lodash-es.bundle.js
+2026-10-22T06:29:43.121567Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40tanstack.react-query.bundle.js
+2026-10-22T06:29:43.121659Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40tanstack.query-core.bundle.js
+2026-10-22T06:29:43.123218Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.date-fns.esm.bundle.js
+2026-10-22T06:29:43.125501Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-transition-group.bundle.js
+2026-10-22T06:29:43.126891Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/banner-light.b113d4d1c6c07fcb73f0.png
+2026-10-22T06:29:43.128313Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.core-js.bundle.js
+2026-10-22T06:29:43.131320Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40popperjs.core.bundle.js
+2026-10-22T06:29:43.131347Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.axios.bundle.js
+2026-10-22T06:29:43.131500Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-dom.bundle.js
+2026-10-22T06:29:43.133577Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.jquery.bundle.js
+2026-10-22T06:29:43.134223Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.webcomponents.js.bundle.js
+2026-10-22T06:29:43.137557Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.resize-observer-polyfill.bundle.js
+2026-10-22T06:29:43.137962Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.regenerator-runtime.bundle.js
+2026-10-22T06:29:43.139184Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.jellyfin-apiclient.bundle.js
+2026-10-22T06:29:43.141550Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.intersection-observer.bundle.js
+2026-10-22T06:29:43.142105Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.history.bundle.js
+2026-10-22T06:29:43.142566Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.dompurify.bundle.js
+2026-10-22T06:29:43.142868Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-router.bundle.js
+2026-10-22T06:29:43.142985Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.react-router-dom.bundle.js
+2026-10-22T06:29:43.144014Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.%40remix-run.router.bundle.js
+2026-10-22T06:29:43.146245Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/1133.bundle.js
+2026-10-22T06:29:43.146342Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.abortcontroller-polyfill.bundle.js
+2026-10-22T06:29:43.147347Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/main.jellyfin.bundle.js
+2026-10-22T06:29:43.147702Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/serviceworker.js
+2026-10-22T06:29:43.199147Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/59258.69a271cacc58351d3b48.chunk.js
+2026-10-22T06:29:43.199742Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:43.231546Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.usehooks-ts.23c13898b44dada8d387.chunk.js
+2026-10-22T06:29:43.231923Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/8463.5024adce4ba13b0c6c59.chunk.js
+2026-10-22T06:29:43.232179Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/78701.1521101b7f45094b7ce3.css
+2026-10-22T06:29:43.232436Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/78701.d06a72f873e03eaaa404.chunk.js
+2026-10-22T06:29:43.233237Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:43.233643Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:43.247679Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:43.253492Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/en-us-json.45f09214281c189457b1.chunk.js
+2026-10-22T06:29:43.261067Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/25348.10043daf2671fc8859af.css
+2026-10-22T06:29:43.261435Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/25348.a5fe264650ffc6a300ef.chunk.js
+2026-10-22T06:29:43.261738Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/73560.06bbc42902b173550f1b.chunk.js
+2026-10-22T06:29:43.261770Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/73560.49e7c92878ed0bb4fad6.css
+2026-10-22T06:29:43.262046Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/playAccessValidation-plugin.4bb58f8d0bccba4cc775.chunk.js
+2026-10-22T06:29:43.262667Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/experimentalWarnings-plugin.6570756915b50aa277bc.chunk.js
+2026-10-22T06:29:43.264660Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/bookPlayer-plugin.5bd6d63bbfdacc895e23.css
+2026-10-22T06:29:43.264777Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/comicsPlayer-plugin.376225a6806c59455f1c.css
+2026-10-22T06:29:43.266186Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/pdfPlayer-plugin.812f879bb0acfa8ae50f.css
+2026-10-22T06:29:43.266702Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/htmlAudioPlayer-plugin.561e4ddec4927f9c3017.chunk.js
+2026-10-22T06:29:43.267931Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/htmlVideoPlayer-plugin.75e5631714895cbf4ff3.chunk.js
+2026-10-22T06:29:43.270437Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/photoPlayer-plugin.6ab734fd7db4c18bddd6.chunk.js
+2026-10-22T06:29:43.272210Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/comicsPlayer-plugin.c358c35860fc41e92b05.chunk.js
+2026-10-22T06:29:43.273711Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/youtubePlayer-plugin.fa67b1ec7d5bcf80338c.chunk.js
+2026-10-22T06:29:43.273722Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/bookPlayer-plugin.c83d5c43401890557a8f.chunk.js
+2026-10-22T06:29:43.274672Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/backdropScreensaver-plugin.30324a9a65cdda6a4623.chunk.js
+2026-10-22T06:29:43.276072Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/pdfPlayer-plugin.0e5794750bc919e9fcd7.chunk.js
+2026-10-22T06:29:43.278865Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/logoScreensaver-plugin.897823f6a7747f6cf262.chunk.js
+2026-10-22T06:29:43.278947Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/sessionPlayer-plugin.785a05db0609955aefb8.chunk.js
+2026-10-22T06:29:43.279084Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/chromecastPlayer-plugin.22f3e0fb29fa08af7bd7.chunk.js
+2026-10-22T06:29:43.281077Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/stillWatching-plugin.460e0919aaaffdf99811.chunk.js
+2026-10-22T06:29:43.283799Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/19907.48d4af89f0a3b0cee021.chunk.js
+2026-10-22T06:29:43.283853Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-core-PlaybackCore.696ea54abe46142ab186.chunk.js
+2026-10-22T06:29:43.284576Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-core-Manager.b0d0a1522cc038dfa8b2.chunk.js
+2026-10-22T06:29:43.284954Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-ui-players-NoActivePlayer.03a6368ee2ea0e2c68da.chunk.js
+2026-10-22T06:29:43.285308Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/syncPlay-plugin.3080c44da0c3f4cb9f9c.chunk.js
+2026-10-22T06:29:43.295095Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/12011.59d68def33f006b4d5b5.chunk.js
+2026-10-22T06:29:43.295442Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/57949.890260722af4eefd0e71.chunk.js
+2026-10-22T06:29:43.295457Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/55802.52fbf988646b0db27075.chunk.js
+2026-10-22T06:29:43.295536Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/14245.f517756c675c2040ffba.css
+2026-10-22T06:29:43.295726Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/28567.6db9992959ca2eff26e4.chunk.js
+2026-10-22T06:29:43.295735Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/14245.d5294b1bf572bcb9edd7.chunk.js
+2026-10-22T06:29:43.297849Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/91737.46d2c499ae1164063e43.css
+2026-10-22T06:29:43.300065Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/91737.a37aaa8ddbabd2fe49c4.chunk.js
+2026-10-22T06:29:43.300255Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/22424.f9d25ef5836602c49805.chunk.js
+2026-10-22T06:29:43.300350Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/44184.df7109074c49b4219abf.chunk.js
+2026-10-22T06:29:43.341826Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/themes/dark/theme.css
+2026-10-22T06:29:43.342353Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/73233.98e0cdb3f30f44fc6339.chunk.js
+2026-10-22T06:29:43.342382Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/noto-sans-latin-400-normal.a368ce60930bda733d39.woff2
+2026-10-22T06:29:43.342427Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/45568.f61f61377609c9922e8a.chunk.js
+2026-10-22T06:29:43.342610Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/32721.bfde69083a6ae513ba97.css
+2026-10-22T06:29:43.342952Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/32721.fad93419ec89a0acfbfd.chunk.js
+2026-10-22T06:29:43.344714Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/68603.bfde69083a6ae513ba97.css
+2026-10-22T06:29:43.358409Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/68603.6c4daa3c063b03183af4.chunk.js
+2026-10-22T06:29:43.359714Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/home.193c6fa7a64e52078d35.css
+2026-10-22T06:29:43.364363Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/home.6f5c86d430f38b204798.chunk.js
+2026-10-22T06:29:43.364414Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/11851.ed201579e96d780f36b3.chunk.js
+2026-10-22T06:29:43.364458Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/4113.d72f956477d42e4f9e3f.chunk.js
+2026-10-22T06:29:43.365382Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/config.json
+2026-10-22T06:29:43.376078Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/icon-transparent.baba78f2a106d9baee83.png
+2026-10-22T06:29:43.382546Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/69881.85d5c8ac3936b68e702e.css
+2026-10-22T06:29:43.387717Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/76542.033e6959b8ca2bb863d3.css
+2026-10-22T06:29:43.388066Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/blurhash.worker.bundle.js
+2026-10-22T06:29:43.388162Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:43.389357Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/69881.b4b69df4c7e59204a533.chunk.js
+2026-10-22T06:29:43.390530Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/76542.4486f56001630eca65e3.chunk.js
+2026-10-22T06:29:43.506893Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:43.515281Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/System/Info/Public
+2026-10-22T06:29:43.515940Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:43.527966Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.markdown-it.577ee674061f4f85a169.chunk.js
+2026-10-22T06:29:43.528416Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.linkify-it.266387235d0d805c1962.chunk.js
+2026-10-22T06:29:43.528429Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/node_modules.entities.de723355ea92068aa757.chunk.js
+2026-10-22T06:29:43.529011Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/70712.9c36c0bc25d212f7dfd1.chunk.js
+2026-10-22T06:29:43.529364Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/session-login.872eaba65c6e2216aba6.css
+2026-10-22T06:29:43.529716Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/session-login.cb3c7c6a0f3396901580.chunk.js
+2026-10-22T06:29:43.532417Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/session-login-index-html.748f2ea433c30fd200a8.chunk.js
+2026-10-22T06:29:43.543019Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/47472.ead193e1e4096120377c.css
+2026-10-22T06:29:43.543375Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Enabled
+2026-10-22T06:29:43.543386Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/47472.73de9f0f9c4dd7c901a4.chunk.js
+2026-10-22T06:29:43.543457Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/users/public
+2026-10-22T06:29:43.547177Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Branding/Configuration
+2026-10-22T06:29:43.547532Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/Branding/Configuration
+2026-10-22T06:29:43.556150Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/noto-sans-latin-700-normal.0ff35ccfee89234e6883.woff2
+2026-10-22T06:29:43.566931Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/web/MaterialIcons-Regular.2d8017489da689caedc1.woff2
+2026-10-22T06:29:43.708759Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:44.674360Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:44.796044Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:45.135577Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Initiate
+2026-10-22T06:29:45.878976Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:46.313543Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:46.961435Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:48.054989Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:48.711776Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:49.138951Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:50.228686Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:50.296729Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:29:51.297143Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:52.252446Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:52.402342Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:53.447231Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:54.571726Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:55.297055Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:29:55.661079Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:56.764320Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:57.498465Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:29:57.847055Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:29:58.940494Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:00.024686Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:00.293119Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:01.100868Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:02.203193Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:03.278498Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:04.414112Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:05.257501Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:05.263744Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:30:05.527046Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:06.615655Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:07.707161Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:08.798423Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:09.882588Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:10.300409Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:10.967034Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:12.005340Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:13.144499Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:14.236606Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:15.260854Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:15.326039Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:16.410361Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:16.929958Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:30:17.489015Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:18.574139Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:19.676477Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:20.259384Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:20.806172Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:21.912823Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:22.954708Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:23.467945Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Sam/a4f9a101"] skipped_offline=[]
+2026-10-22T06:30:24.087724Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:25.181198Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:25.290330Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:26.255735Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:27.358499Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:28.446210Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:29.529410Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:30.286069Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:30.571916Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:31.698808Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:32.795492Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:33.878863Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:34.281365Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:30:34.952450Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:35.303375Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:36.048960Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:37.196142Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:38.293336Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:39.387529Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:40.301435Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:40.477116Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:41.530797Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:42.638581Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:43.717493Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:44.818936Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:45.302626Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:45.896604Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:46.996348Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:48.077874Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:49.170385Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:50.254508Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:50.296463Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:51.347047Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:52.447458Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:53.597284Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:54.683049Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:55.294988Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:30:55.761643Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:56.852383Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:57.950189Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:30:59.034277Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:00.126434Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:00.239236Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:31:00.242530Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:01.206127Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:02.297106Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:03.385883Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:04.467089Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:05.288022Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:05.560230Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:06.650210Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:07.720642Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:08.822625Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:09.973446Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:10.301551Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:11.064697Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:12.157863Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:13.242407Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:14.322580Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:15.296175Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:15.415554Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:16.507138Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:17.595276Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:18.663497Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:19.768797Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:20.289492Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:20.852538Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:21.946942Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:23.038638Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:23.476259Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Sam/a4f9a101"] skipped_offline=[]
+2026-10-22T06:31:24.114467Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:25.206277Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:25.285919Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:26.355465Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:27.449527Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:28.532653Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:29.614211Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:30.287728Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:30.717658Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:31.801118Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:32.892151Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:33.967399Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:35.052521Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:35.186899Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:36.158192Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:37.213618Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:38.332221Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:39.044975Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/socket
+2026-10-22T06:31:39.423491Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:40.298436Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:40.508509Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:41.594963Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:42.734421Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:43.824066Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:44.923229Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:45.303629Z DEBUG room: room: a caller on this network caller=Some(192.168.1.11) path=/QuickConnect/Connect
+2026-10-22T06:31:45.996449Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:47.094682Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:48.185296Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:49.242207Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:50.352164Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:51.431832Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:52.535805Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:53.605851Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:54.715746Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:55.804852Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:56.861952Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:57.979431Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:31:59.119213Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:00.199061Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:01.303797Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:02.396709Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:03.443297Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:04.573121Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:05.655222Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:06.666457Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:07.768422Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:08.860936Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:09.950921Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:11.035888Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:12.123653Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:13.171861Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:14.299199Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:15.323854Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:16.413920Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:17.437628Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:18.485461Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:19.584151Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:20.702535Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:21.777424Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:22.875879Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:23.483742Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Alex/7b5a4c1e", "Sam/a4f9a101"] skipped_offline=[]
+2026-10-22T06:32:23.959557Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:25.051826Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:26.142475Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:27.217235Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:28.316271Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:29.396966Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:30.491139Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:31.579277Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:32.664747Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:33.758330Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:34.823308Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:35.881077Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:36.920779Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:38.028091Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:39.128794Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:40.213921Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-10-22T06:32:41.305740Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort

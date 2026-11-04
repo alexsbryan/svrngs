@@ -1,0 +1,517 @@
+plant 1: the visit kept off the record, so only its host's computer lists it (GUESTS §7 bar 7)
+195c195
+<     let live = (r.visits.iter()).filter(|(_, g)| g.live(&r.cut, now));
+---
+>     let live = (r.visits.iter()).filter(|(_, g)| g.live(&r.cut, now) && g.host == me);
+
+running 1 test
+guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium --- FAILED
+
+failures:
+
+---- guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium stdout ----
+Ana's phone: {
+  "answer": "Nobody in house lends anything yet.",
+  "away": [],
+  "door": "Kim on nowbo on nowAna on now",
+  "drawn": [
+    [
+      "on",
+      "Kim on now"
+    ],
+    [
+      "on",
+      "bo on now"
+    ],
+    [
+      "on",
+      "Ana on now"
+    ]
+  ],
+  "index": [
+    [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+    ]
+  ],
+  "lent": [],
+  "lines": [
+    "PAGE: the line offered, for a computer: joins",
+    "PAGE: this tab holds held",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "LAYER parse: ok — relay http://127.0.0.1:52845/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "PAGE: reached house through the link's computer",
+    "HTTP: GET /people/lends — a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends — the stream is done",
+    "PAGE: /people/lends answered, at version 1"
+  ],
+  "logs": [
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:52899/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:52899/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:52899/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:52899/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:52899/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:52899/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:52899/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:52899/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:52899/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: Said: Open this page from your group’s link.\n    at opening (http://127.0.0.1:52899/app.js?v=3646130c003a:573:23)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: PAGE: this tab holds held",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:52845/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1"
+  ],
+  "removals": [],
+  "status": "You’re in house, as Ana",
+  "text": "You’re in house, as Ana\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.\n\ncurl -fsSL http://127.0.0.1:52899/install.sh | sh -s -- 'http://127.0.0.1:52899/#AupKbGPinFIKvvVQexMuxfmVR3auvr57kkIe6mkURtIsAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTI4NDUv'\nCopy\nKim on now\nbo on now\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to house\n\nNobody in house lends anything yet.",
+  "visiting": []
+}
+
+thread 'guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium' (69926625) panicked at crates/svrngs-node/tests/browser/guests.rs:342:5:
+Ana's phone lists Sam visiting, Kim's guest, until Thursday: {
+  "answer": "Nobody in house lends anything yet.",
+  "away": [],
+  "door": "Kim on nowbo on nowAna on now",
+  "drawn": [
+    [
+      "on",
+      "Kim on now"
+    ],
+    [
+      "on",
+      "bo on now"
+    ],
+    [
+      "on",
+      "Ana on now"
+    ]
+  ],
+  "index": [
+    [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+    ]
+  ],
+  "lent": [],
+  "lines": [
+    "PAGE: the line offered, for a computer: joins",
+    "PAGE: this tab holds held",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "LAYER parse: ok — relay http://127.0.0.1:52845/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "PAGE: reached house through the link's computer",
+    "HTTP: GET /people/lends — a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends — the stream is done",
+    "PAGE: /people/lends answered, at version 1"
+  ],
+  "logs": [
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:52899/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:52899/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:52899/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:52899/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:52899/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:52899/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:52899/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:52899/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:52899/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: Said: Open this page from your group’s link.\n    at opening (http://127.0.0.1:52899/app.js?v=3646130c003a:573:23)",
+    "error: Refused to apply style from 'http://127.0.0.1:52899/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: PAGE: this tab holds held",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:52845/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1"
+  ],
+  "removals": [],
+  "status": "You’re in house, as Ana",
+  "text": "You’re in house, as Ana\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.\n\ncurl -fsSL http://127.0.0.1:52899/install.sh | sh -s -- 'http://127.0.0.1:52899/#AupKbGPinFIKvvVQexMuxfmVR3auvr57kkIe6mkURtIsAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTI4NDUv'\nCopy\nKim on now\nbo on now\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to house\n\nNobody in house lends anything yet.",
+  "visiting": []
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 112 filtered out; finished in 14.74s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit 101
+
+plant 2: Stop taking the row off Kim's page alone
+111c111,112
+<     const stop = (v, li = el('li', `${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `)) => (li.append(button(`Stop ${v.guest}’s visit`, () => post('/visits', [g.id, v.id]).then((a) => setTimeout(() => location.reload(), a.ts_unix * 1000 - Date.now()), (e) => li.append(` ${e.message}`)))), li);
+---
+>     const stop = (v, li = el('li', `${v.guest}, until ${until(v)}. Stop ends the visit now: what you lend stops opening to ${v.guest}, and everyone in ${name} sees it ended. `)) => (li.append(button(`Stop ${v.guest}’s visit`, () => (localStorage.setItem(v.id, 'stopped'), location.reload()))), li);
+>     g.visiting = g.visiting?.filter((v) => !localStorage.getItem(v.id));
+
+running 1 test
+guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium --- FAILED
+
+failures:
+
+---- guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium stdout ----
+Ana's phone: {
+  "answer": "Nobody in house lends anything yet.",
+  "away": [],
+  "door": "Kim on nowbo on nowAna on now",
+  "drawn": [
+    [
+      "on",
+      "Kim on now"
+    ],
+    [
+      "on",
+      "bo on now"
+    ],
+    [
+      "on",
+      "Ana on now"
+    ]
+  ],
+  "index": [
+    [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+    ]
+  ],
+  "lent": [],
+  "lines": [
+    "PAGE: the line offered, for a computer: joins",
+    "PAGE: this tab holds held",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "LAYER parse: ok — relay http://127.0.0.1:52975/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "PAGE: reached house through the link's computer",
+    "HTTP: GET /people/lends — a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends — the stream is done",
+    "PAGE: /people/lends answered, at version 1"
+  ],
+  "logs": [
+    "error: Refused to apply style from 'http://127.0.0.1:53016/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: Refused to apply style from 'http://127.0.0.1:53016/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53016/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:53016/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:53016/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:53016/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53016/store.js?v=3646130c003a:209:57)\n    at opening (http://127.0.0.1:53016/app.js?v=3646130c003a:561:40)\n    at http://127.0.0.1:53016/app.js?v=3646130c003a:579:1",
+    "error: Refused to apply style from 'http://127.0.0.1:53016/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: Said: Open this page from your group’s link.\n    at opening (http://127.0.0.1:53016/app.js?v=3646130c003a:573:23)",
+    "error: Refused to apply style from 'http://127.0.0.1:53016/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: PAGE: this tab holds held",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:52975/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1"
+  ],
+  "removals": [],
+  "status": "You’re in house, as Ana",
+  "text": "You’re in house, as Ana\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.\n\ncurl -fsSL http://127.0.0.1:53016/install.sh | sh -s -- 'http://127.0.0.1:53016/#AupKbGPinFIKvvVQexMuxfmVR3auvr57kkIe6mkURtIsAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTI5NzUv'\nCopy\nKim on now\nbo on now\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to house\n\nVisiting now\nSam, Kim’s guest, until Thursday 1:25 AM\nNobody in house lends anything yet.",
+  "visiting": [
+    "Sam, Kim’s guest, until Thursday 1:25 AM"
+  ]
+}
+Ana's phone: {
+  "answer": "Nobody in house lends anything yet.",
+  "away": [],
+  "door": "Kim on nowbo on nowAna on now",
+  "drawn": [
+    [
+      "on",
+      "Kim on now"
+    ],
+    [
+      "on",
+      "bo on now"
+    ],
+    [
+      "on",
+      "Ana on now"
+    ]
+  ],
+  "index": [
+    [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+    ]
+  ],
+  "lent": [],
+  "lines": [
+    "PAGE: the line offered, for a computer: joins",
+    "PAGE: this tab holds held",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "LAYER parse: ok — relay http://127.0.0.1:52975/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "PAGE: reached house through the link's computer",
+    "HTTP: GET /people/lends — a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends — the stream is done",
+    "PAGE: /people/lends answered, at version 1"
+  ],
+  "logs": [
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53031/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:53031/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:53031/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53031/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:53031/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:53031/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53031/store.js?v=3646130c003a:209:57)\n    at opening (http://127.0.0.1:53031/app.js?v=3646130c003a:561:40)\n    at http://127.0.0.1:53031/app.js?v=3646130c003a:579:1",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: Said: Open this page from your group’s link.\n    at opening (http://127.0.0.1:53031/app.js?v=3646130c003a:573:23)",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: PAGE: this tab holds held",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:52975/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1"
+  ],
+  "removals": [],
+  "status": "You’re in house, as Ana",
+  "text": "You’re in house, as Ana\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.\n\ncurl -fsSL http://127.0.0.1:53031/install.sh | sh -s -- 'http://127.0.0.1:53031/#AupKbGPinFIKvvVQexMuxfmVR3auvr57kkIe6mkURtIsAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTI5NzUv'\nCopy\nKim on now\nbo on now\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to house\n\nVisiting now\nSam, Kim’s guest, until Thursday 1:25 AM\nNobody in house lends anything yet.",
+  "visiting": [
+    "Sam, Kim’s guest, until Thursday 1:25 AM"
+  ]
+}
+
+thread 'guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium' (69928409) panicked at crates/svrngs-node/tests/browser/guests.rs:353:5:
+assertion `left == right` failed: {
+  "answer": "Nobody in house lends anything yet.",
+  "away": [],
+  "door": "Kim on nowbo on nowAna on now",
+  "drawn": [
+    [
+      "on",
+      "Kim on now"
+    ],
+    [
+      "on",
+      "bo on now"
+    ],
+    [
+      "on",
+      "Ana on now"
+    ]
+  ],
+  "index": [
+    [
+      "What",
+      "What it is",
+      "Whose",
+      "How it opens",
+      "Now"
+    ]
+  ],
+  "lent": [],
+  "lines": [
+    "PAGE: the line offered, for a computer: joins",
+    "PAGE: this tab holds held",
+    "STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "LAYER parse: ok — relay http://127.0.0.1:52975/",
+    "LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "PAGE: reached house through the link's computer",
+    "HTTP: GET /people/lends — a bi-stream opened",
+    "HTTP: GET /people/lends answered 200",
+    "HTTP: the response has ended; finishing the request's send half",
+    "HTTP: GET /people/lends — the stream is done",
+    "PAGE: /people/lends answered, at version 1"
+  ],
+  "logs": [
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53031/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:53031/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:53031/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53031/store.js?v=3646130c003a:213:21)\n    at async __wbg_init (http://127.0.0.1:53031/wasm/svrngs_web.js?v=3646130c003a:1668:51)\n    at async opening (http://127.0.0.1:53031/app.js?v=3646130c003a:561:5)",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "error: TypeError: Failed to fetch\n    at Module.runtime (http://127.0.0.1:53031/store.js?v=3646130c003a:209:57)\n    at opening (http://127.0.0.1:53031/app.js?v=3646130c003a:561:40)\n    at http://127.0.0.1:53031/app.js?v=3646130c003a:579:1",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: the line offered, for a computer: founds",
+    "error: Said: Open this page from your group’s link.\n    at opening (http://127.0.0.1:53031/app.js?v=3646130c003a:573:23)",
+    "error: Refused to apply style from 'http://127.0.0.1:53031/look.css?v=3646130c003a' because its MIME type ('application/octet-stream') is not a supported stylesheet MIME type, and strict MIME checking is enabled.",
+    "debug: PAGE: the line offered, for a computer: joins",
+    "debug: PAGE: this tab holds held",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:52975/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 66be7e332c7a453332bd9d0a7f7db055f5c5ef1a06ada66d98b39fb6810c473a bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: the group names no relay for ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c, so it is dialled through the link's",
+    "debug: LAYER tls/alpn+relay: dialing ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol through a relay…",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: /people/lends answered, at version 1"
+  ],
+  "removals": [],
+  "status": "You’re in house, as Ana",
+  "text": "You’re in house, as Ana\n\nOn this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.\n\ncurl -fsSL http://127.0.0.1:53031/install.sh | sh -s -- 'http://127.0.0.1:53031/#AupKbGPinFIKvvVQexMuxfmVR3auvr57kkIe6mkURtIsAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTI5NzUv'\nCopy\nKim on now\nbo on now\nAna on now\nWhat\tWhat it is\tWhose\tHow it opens\tNow\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in house opens it on their own computer or phone, while any computer in house is on.\n\n Money: who paid for what, and who owes whom.\n\n Events: post a get-together, and see who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to house\n\nVisiting now\nSam, Kim’s guest, until Thursday 1:25 AM\nNobody in house lends anything yet.",
+  "visiting": [
+    "Sam, Kim’s guest, until Thursday 1:25 AM"
+  ]
+}
+  left: Array [String("Sam, Kim’s guest, until Thursday 1:25 AM")]
+ right: Array []
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 112 filtered out; finished in 16.66s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit 101

@@ -1,0 +1,6 @@
+$ cargo test -p svrngs-core --lib visit_tests   # at e36dee5b, the test alone added
+error[E0599]: no variant named `Visit` found for enum `RailAct`
+   --> crates/svrngs-core/src/visit_tests.rs:33:14
+error[E0599]: no method named `visiting` found for reference `&membership::Membership` in the current scope
+  --> crates/svrngs-core/src/visit_tests.rs:44:21
+error: could not compile `svrngs-core` (lib test) due to 2 previous errors

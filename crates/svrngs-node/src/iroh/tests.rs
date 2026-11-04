@@ -46,7 +46,9 @@ impl OnStream {
 pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> (String, OnStream) {
     let served = hermetic_endpoint(0xEE, vec![ALPN.to_vec()]).await;
     let addrs = loopback_sockets(&served);
-    let acceptor = IrohAcceptor::spawn(served.clone(), move |_, _| Admit::Serve(router.clone()));
+    let acceptor = IrohAcceptor::spawn(served.clone(), Default::default(), move |_, _| {
+        Admit::Serve(router.clone())
+    });
     let dialling = EndpointBuilder::empty()
         .crypto_provider(ring_crypto_provider())
         .secret_key(dialer)
@@ -56,7 +58,7 @@ pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> 
     let transport = IrohTransport::new(dialling);
     let contact = Contact {
         key: served.id(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: addrs,
     };
     let base = transport
@@ -126,7 +128,7 @@ async fn build_sovereign_endpoint_binds_without_n0() {
 fn contact_for(server: &Endpoint, addrs: Vec<SocketAddr>) -> Contact {
     Contact {
         key: server.id(),
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: addrs,
     }
 }
@@ -195,7 +197,7 @@ async fn served(seed: u8, admits: bool) -> (Endpoint, Arc<std::sync::atomic::Ato
     let endpoint = hermetic_endpoint(seed, vec![ALPN.to_vec()]).await;
     let asked = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let counted = asked.clone();
-    let acceptor = IrohAcceptor::spawn(endpoint.clone(), move |_, _| {
+    let acceptor = IrohAcceptor::spawn(endpoint.clone(), Default::default(), move |_, _| {
         counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         if admits {
             Admit::Serve(router.clone())
@@ -207,10 +209,8 @@ async fn served(seed: u8, admits: bool) -> (Endpoint, Arc<std::sync::atomic::Ato
     (endpoint, asked)
 }
 
-fn get(path: &str) -> Request {
-    axum::http::Request::get(path)
-        .body(axum::body::Body::empty())
-        .unwrap()
+fn get<B: Default>(path: &str) -> axum::http::Request<B> {
+    axum::http::Request::get(path).body(B::default()).unwrap()
 }
 
 /// **A request on the stream** (arch-peer (b)): [`IrohTransport::fetch`]
@@ -271,7 +271,7 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
     let transport = IrohTransport::new(hermetic_endpoint(46, vec![]).await);
     let contact = Contact {
         key,
-        relay_url: None,
+        relays: Default::default(),
         iroh_direct_addrs: vec![asleep.local_addr().unwrap()],
     };
     let said = tokio::time::timeout(
@@ -283,7 +283,12 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
         matches!(&said, Ok(Err(e @ Unsent::Asleep(_))) if e.to_string().starts_with("not answered within 4s")),
         "{said:?}"
     );
-    let said = transport.send(&Contact::by_key(key), get("/who")).await;
+    let said = transport
+        .send(
+            &Contact::named(key, &svrngs_core::relay::Meeting::of([], &[]), None),
+            get("/who"),
+        )
+        .await;
     assert!(matches!(said, Err(Unsent::NoPath)), "{said:?}");
 }
 

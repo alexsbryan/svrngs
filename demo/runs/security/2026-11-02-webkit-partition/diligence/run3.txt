@@ -1,0 +1,3 @@
+# webkit 26.4
+app1.group.svrnme.sh {"saa":"granted","idb":null,"idbFresh":true,"key":null,"ls":"written-group.svrnme.sh","hasStorageAccess":true}
+app.other.sh {"saa":"granted","idb":null,"idbFresh":true,"key":null,"ls":"written-group.svrnme.sh","hasStorageAccess":true}

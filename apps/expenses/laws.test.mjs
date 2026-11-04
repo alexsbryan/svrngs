@@ -30,9 +30,17 @@ const JOURNAL = [
   act('a10', 3010, DI, { kind: 'share', expense: 'a9' }),
   act('a11', 3020, SAM, { kind: 'expense', amount_cents: -5, description: 'nothing' }),
   act('a12', 9 * DAY, null, { kind: 'reminded', due: `remind:${BO}:1050` }),
+  act('a13', 9 * DAY + 10, BO, {
+    kind: 'expense',
+    amount_cents: 900,
+    description: 'chips',
+    named: [AMA, CY],
+  }),
+  act('a14', 9 * DAY + 20, AMA, { kind: 'share', expense: 'a13' }),
+  act('a15', 9 * DAY + 30, CY, { kind: 'not-in', expense: 'a13' }),
 ];
 /** Acts a duplicate of which must change nothing: the kinds Expenses keys. */
-const KEYED = new Set(['share', 'settle', 'reminded']);
+const KEYED = new Set(['share', 'settle', 'reminded', 'not-in']);
 
 const clone = (v) => structuredClone(v);
 const fold = (app, acts) => acts.reduce((s, a) => app.reduce(s, clone(a)), app.init());
@@ -44,7 +52,11 @@ const differ = (a, b, what) => (isDeepStrictEqual(a, b) ? null : `${what} differ
 
 /** Run `fn` with the clock, the dice and the locale all changed. */
 function elsewhere(fn) {
-  const saved = { Date: globalThis.Date, random: Math.random, compare: String.prototype.localeCompare };
+  const saved = {
+    Date: globalThis.Date,
+    random: Math.random,
+    compare: String.prototype.localeCompare,
+  };
   const RealDate = saved.Date;
   const at = 4_102_444_800_000; // 2100-01-01
   globalThis.Date = class extends RealDate {
@@ -73,11 +85,18 @@ export const LAWS = {
   determinism(app) {
     const once = answers(app);
     const exact = JSON.parse(JSON.stringify(once.state));
-    return differ(once, answers(app), 'two folds of one journal') ?? differ(once.state, exact, 'the state and its JSON');
+    return (
+      differ(once, answers(app), 'two folds of one journal') ??
+      differ(once.state, exact, 'the state and its JSON')
+    );
   },
   /** The same answers under another clock, random seed and locale. */
   'environment independence'(app) {
-    return differ(answers(app), elsewhere(() => answers(app)), 'answers here and elsewhere');
+    return differ(
+      answers(app),
+      elsewhere(() => answers(app)),
+      'answers here and elsewhere',
+    );
   },
   /** One group's fold does not reach another's: no shared object between folds, and no act changed. */
   'non-interference'(app) {
@@ -85,27 +104,64 @@ export const LAWS = {
     fold(app, JOURNAL);
     const acts = clone(JOURNAL);
     acts.reduce((s, a) => app.reduce(s, a), app.init());
-    return differ(alone, answers(app, JOURNAL.slice(0, 6)), 'a fold alone and after another') ?? differ(acts, JOURNAL, 'the acts before and after a fold');
+    return (
+      differ(alone, answers(app, JOURNAL.slice(0, 6)), 'a fold alone and after another') ??
+      differ(acts, JOURNAL, 'the acts before and after a fold')
+    );
   },
   /** A second act of a keyed kind, with the same author, op and day, changes nothing. */
   idempotence(app) {
     for (const [i, a] of JOURNAL.entries()) {
       if (!KEYED.has(a.op.kind)) continue;
-      const doubled = [...JOURNAL.slice(0, i + 1), { ...a, id: `${a.id}-again`, ts: a.ts + 1 }, ...JOURNAL.slice(i + 1)];
-      const why = differ(fold(app, JOURNAL), fold(app, doubled), `the fold with ${a.id} once and twice`);
+      const doubled = [
+        ...JOURNAL.slice(0, i + 1),
+        { ...a, id: `${a.id}-again`, ts: a.ts + 1 },
+        ...JOURNAL.slice(i + 1),
+      ];
+      const why = differ(
+        fold(app, JOURNAL),
+        fold(app, doubled),
+        `the fold with ${a.id} once and twice`,
+      );
       if (why) return why;
     }
     return null;
   },
   /** No act makes `reduce` throw, and the state stays exactly JSON. */
   totality(app) {
-    const ops = [null, 1, 'x', [], {}, { kind: 'expense' }, { kind: 'toString' }, { kind: '__proto__' },
-      { kind: 'expense', amount_cents: 1.5, description: 'x' }, { kind: 'expense', amount_cents: 1e300, description: 'x' },
-      { kind: 'expense', amount_cents: 5, description: 7 }, { kind: 'share', expense: '__proto__' },
-      { kind: 'share', expense: 'constructor' }, { kind: 'share', expense: ['a1'] }, { kind: 'settle', to: null, amount_cents: 5 },
-      { kind: 'settle', to: '__proto__', amount_cents: 5 }, { kind: 'reminded' }, { kind: 'reminded', due: {} }];
+    const ops = [
+      null,
+      1,
+      'x',
+      [],
+      {},
+      { kind: 'expense' },
+      { kind: 'toString' },
+      { kind: '__proto__' },
+      { kind: 'expense', amount_cents: 1.5, description: 'x' },
+      { kind: 'expense', amount_cents: 1e300, description: 'x' },
+      { kind: 'expense', amount_cents: 5, description: 7 },
+      { kind: 'share', expense: '__proto__' },
+      { kind: 'share', expense: 'constructor' },
+      { kind: 'share', expense: ['a1'] },
+      { kind: 'settle', to: null, amount_cents: 5 },
+      { kind: 'settle', to: '__proto__', amount_cents: 5 },
+      { kind: 'reminded' },
+      { kind: 'reminded', due: {} },
+      { kind: 'expense', amount_cents: 5, description: 'x', named: ['__proto__'] },
+      { kind: 'expense', amount_cents: 5, description: 'x', named: {} },
+      { kind: 'not-in', expense: '__proto__' },
+      { kind: 'not-in', expense: 'a13' },
+    ];
     const bys = [null, '', 42, '__proto__', 'constructor', SAM];
-    const acts = [null, 7, [], {}, { id: 5, ts: 'now', by: SAM, op: {} }, { id: '__proto__', ts: 1, by: SAM, op: JOURNAL[0].op }];
+    const acts = [
+      null,
+      7,
+      [],
+      {},
+      { id: 5, ts: 'now', by: SAM, op: {} },
+      { id: '__proto__', ts: 1, by: SAM, op: JOURNAL[0].op },
+    ];
     for (const op of ops) for (const by of bys) acts.push(act(`x${acts.length}`, 1, by, op));
     let state = fold(app, JOURNAL);
     try {
@@ -121,7 +177,11 @@ export const LAWS = {
     const first = app.reduce(clone(before), clone(JOURNAL[3]));
     fold(app, JOURNAL);
     fold(app, JOURNAL);
-    return differ(first, app.reduce(clone(before), clone(JOURNAL[3])), 'one reduce before and after other folds');
+    return differ(
+      first,
+      app.reduce(clone(before), clone(JOURNAL[3])),
+      'one reduce before and after other folds',
+    );
   },
 };
 
@@ -142,16 +202,22 @@ test('each law catches the reducer planted to break it', () => {
   const shared = init();
   const planted = {
     determinism: { reduce: (s, a) => Object.assign(reduce(s, a), { gone: new Set([a.id]) }) },
-    'environment independence': { reduce: (s, a) => Object.assign(reduce(s, a), { at: Date.now() }) },
+    'environment independence': {
+      reduce: (s, a) => Object.assign(reduce(s, a), { at: Date.now() }),
+    },
     'non-interference': { init: () => shared },
     idempotence: {
-      reduce: (s, a) => (a?.op?.kind === 'share' ? Object.assign(s, { counted: s.counted + 1 }) : reduce(s, a)),
+      reduce: (s, a) =>
+        a?.op?.kind === 'share' ? Object.assign(s, { counted: s.counted + 1 }) : reduce(s, a),
     },
     totality: { reduce: (s, a) => (a.op.kind === 'expense' ? reduce(s, a) : reduce(s, a)) },
     'no module globals': { reduce: (s, a) => Object.assign(reduce(s, a), { calls: ++calls }) },
   };
   for (const [law, override] of Object.entries(planted)) {
     const laws = broken({ ...expenses, ...override }).map(([l]) => l);
-    assert.ok(laws.includes(law), `a reducer planted to break ${law} broke only ${JSON.stringify(laws)}`);
+    assert.ok(
+      laws.includes(law),
+      `a reducer planted to break ${law} broke only ${JSON.stringify(laws)}`,
+    );
   }
 });

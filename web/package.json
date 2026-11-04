@@ -1,8 +1,12 @@
 {
   "name": "svrngs-web-tests",
   "private": true,
-  "description": "The page's browser tests: Playwright drives Chromium (u4-3) and WebKit (u4-7).",
+  "description": "The page's browser tests: Playwright drives Chromium (u4-3) and WebKit (u4-7); and oxlint, check.sh's lint of every JavaScript file but what is vendored or recorded; and oxfmt, the formatter of those same files (.oxfmtrc.json); and TypeScript, which checks the pages' JSDoc types and emits nothing (jsconfig.json, scripts/types.mjs); and oxlint-tsgolint, which lets oxlint run the rules that read those types (scripts/typed-lint.mjs).",
   "devDependencies": {
-    "playwright": "1.59.1"
+    "oxfmt": "0.75.0",
+    "oxlint": "1.89.0",
+    "oxlint-tsgolint": "7.0.2005",
+    "playwright": "1.59.1",
+    "typescript": "6.0.3"
   }
 }

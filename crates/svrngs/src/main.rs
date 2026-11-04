@@ -51,10 +51,7 @@ fn main() -> ExitCode {
             return ExitCode::from(3);
         }
     };
-    let relay = match cli::reach(&root, &command, cli::SHIPPED) {
-        Ok(r) => r,
-        Err(e) => return refuse(e),
-    };
+    let relay = cli::reach(cli::SHIPPED);
     match runtime.block_on(cli::run(command, root, &relay)) {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => refuse(e),

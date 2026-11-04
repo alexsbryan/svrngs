@@ -1,0 +1,114 @@
+$ share 8101 --kind llama-server --name ana/coder --refuse /slots --refuse /v1/stream --refuse /v1/streams --refuse /v1/chat/completions/control --refuse /lora-adapters --refuse /metrics --refuse /tools --refuse /cors-proxy --refuse /models
+exit 1
+2026-10-23T00:33:09.727434Z DEBUG lend: lend: not a lend's name raw="ana/coder"
+svrngs: --name `ana/coder` is not a name: letters, digits, - and _ only
+
+svrngs — keep what your group shares on your own computers.
+
+  svrngs
+      Run for every group you are in. Leave it running.
+
+  svrngs new <name> [--as <your name>] [--origin <url>] [--relay <name>]
+      Make a group called <name> and print its link: send it to the people
+      you want in it. It works for a day, while this computer is on. The
+      group's folder is put at ~/svrngs/<name>.
+      --as is the name the group knows you by; else your full name as this
+      computer shows it, or its user name.
+      --origin also prints its links on a page address, from now on, for
+      people who open them in a browser. On a phone each app then opens at
+      an address of its own under that page's host, which must serve the
+      page at every name under it, as group.svrnme.sh does.
+      --relay meets the group at your own relay, `svrngs relay <name> --open`
+      (else newcomers are refused it), in place of the one svrngs uses: every computer
+      its links let in meets it there too.
+
+  svrngs join <link> [--as <your name>] [--no-run]
+      Join the group a link you were sent is for. The computer that sent it
+      must be on. --as is the name the group knows you by; else your full
+      name as this computer shows it, or its user name. The group's folder is put at ~/svrngs/<group>.
+      --no-run stops once you are in, rather than
+      run: for a computer where svrngs runs at login, as install.sh keeps it.
+
+  svrngs link <group> [--device] [--origin <url>]
+      Print a new link to <group>. Any link you sent before stops letting
+      anyone new in; everyone it let in stays. <group> is its name, or the
+      first 8 letters of its id when two groups share a name. --origin
+      also prints it on a page address, from now on, as `new` does.
+      --device makes it a link for another computer or phone of yours: it
+      joins as you, asked no name.
+
+  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs]
+      Lend what runs on <port> on this computer to everyone in your groups:
+      each reaches it through this computer, as themselves. It asks for the
+      password the service takes on each request, if any; that stays on
+      this computer, and nobody you lend it to receives it. For a service
+      it knows keeps its own accounts it asks none, and says how to make
+      each person an account there: each signs in once. For one it knows
+      takes each person from svrngs (Navidrome on 4533, Calibre-Web on
+      8083) it asks none, and says what to set in it. --name is what
+      they see it as; else its kind. --kind says what it is, when svrngs
+      does not know the port; without it, svrngs says the kinds it knows.
+      Of a kind it knows, it keeps back, and says, what shows one person's
+      use of it to the others or changes it for everyone. --limit is how
+      many people may use it at once; else everyone in your groups. --refuse keeps a path of it from them; say it again
+      for more. --upload is this computer's upload, in Mbit/s, as a speed
+      test states it: each person using it is told their share of it.
+      --reads lets it open, as whoever opens it, what your groups lend of
+      <kind>; say it again for more. --ask says, in your words,
+      what an app receives from it: then an app uses it only once the
+      person it acts for says yes, on their own home page, and stops when
+      they say stop. --sign-in-with-svrngs lets an app that speaks OpenID
+      Connect sign each person in as themselves, with nothing typed: it
+      prints the issuer, a client id and a secret for the app's own
+      settings, and keeps the secret on this computer.
+
+  svrngs unshare <name>
+      Stop lending <name>.
+
+  svrngs share --folder <dir> --group <group>
+      Keep <dir> the same on every computer in <group> that shares a folder
+      of its name, whenever svrngs runs here, from now on: anyone in it may
+      add, change and delete in it, and nobody outside it receives a byte.
+      <group> is its name, or the first 8 letters of its id, as `link`
+      takes it.
+
+  svrngs room <name>...
+      Open the lends named <name> to this computer's WiFi, so a TV, a phone
+      or another computer here can open them as you. They stay open on that
+      WiFi until you close them on your home page. Works whether or not
+      svrngs is already running.
+
+  svrngs remove <name> --group <group> [--joined <when>]
+      Remove <name> from <group>: every computer and phone of theirs. One
+      person decides who is removed — whoever made the group, until they
+      hand that on — so from anyone else this asks them, and says who.
+      What <name> already has stays with them; nothing new reaches them.
+      Asked of svrngs running here. --joined says which of two people
+      called <name> you mean: when they joined, as svrngs says it.
+
+  svrngs handover <name> --group <group> [--joined <when>]
+      Let <name> decide who is removed from <group> from now on, instead
+      of you. Asked of svrngs running here. --joined as for remove.
+
+  svrngs leave <group>
+      Leave <group> from every computer and phone of yours. What you have
+      of it stays here; nothing new reaches you, nor what you lend them.
+      Rejoining needs a new invitation, and not from this computer yet.
+      If you decide who is removed, hand that on first.
+
+  svrngs relay <name> [--open] [--staging]
+      Relay at https://<name>/ for the computers and phones of the groups
+      this computer is in, beside svrngs: a phone reaches a computer only
+      through a relay. <name> must lead to this computer, which must take
+      connections on TCP ports 80 and 443 and UDP port 7842. Its
+      certificate is asked of Let's Encrypt, and kept in the data below.
+      The group's page's install line, with --relay <name> after the
+      page's address, keeps it running.
+      --open relays for every computer and phone that reaches it, as
+      svrngs's own relay does, each held to the most a phone was measured
+      drawing through a relay in a second; it says how much as it starts.
+      --staging asks Let's Encrypt's trial service, whose certificates no
+      browser trusts: to try <name> first.
+
+Data:    $SVRNGS_DIR, else ~/.svrngs.
+Logging: RUST_LOG, default `error`.

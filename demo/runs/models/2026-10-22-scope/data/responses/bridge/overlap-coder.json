@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "969"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"```css\\n.main-content {\\n  display: flex;\\n  flex-direction: column;\\n  align-items: center;\\n  justify-content: space-between;\\n  height: 100vh;\\n}\\n\\n.first-section, .second-section {\\n  width: 80%;\\n  margin: 10px;\\n  padding: 20px;\\n  border: 1px solid #ccc;\\n  border-radius: 5px;\\n  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);\\n}\\n```\"}}],\"created\":1792716309,\"model\":\"ana/coder\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":118,\"prompt_tokens\":584,\"total_tokens\":702,\"prompt_tokens_details\":{\"cached_tokens\":79}},\"id\":\"chatcmpl-lpIZinVu4J6u96q10ha5ddXwwlGjxY0x\",\"timings\":{\"cache_n\":79,\"prompt_n\":505,\"prompt_ms\":845.398,\"prompt_per_token_ms\":1.6740554455445544,\"prompt_per_second\":597.351779871729,\"predicted_n\":118,\"predicted_ms\":1987.926,\"predicted_per_token_ms\":16.846830508474575,\"predicted_per_second\":59.35834633683548}}"
+}

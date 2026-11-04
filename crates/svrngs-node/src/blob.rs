@@ -114,7 +114,10 @@ impl Folders {
         let relay = |a: &str| people.get(a)?.relay.as_ref();
         let path = format!("{}?group={group}", ASKED.replace("{hash}", &hash.to_hex()));
         let (mut actors, mut asks) = (Vec::new(), Vec::new());
-        for (actor, _, contact) in crate::node::dialled(&self.host.actor, group, people, relay) {
+        let meeting = self.host.meeting(group);
+        for (actor, _, contact) in
+            crate::node::dialled(&self.host.actor, group, people, &meeting, relay)
+        {
             let (host, path) = (self.host.clone(), path.clone());
             actors.push(actor.clone());
             asks.push(tokio::spawn(async move {
@@ -152,7 +155,7 @@ type Replies = Vec<(String, Result<Holds, String>)>;
 /// `path` asked of the computer at `contact`: what it holds, or why
 /// there is no answer.
 async fn ask(host: &Host, contact: Contact, path: &str) -> Result<Holds, String> {
-    let asked = axum::http::Request::get(path).body(axum::body::Body::empty());
+    let asked = axum::http::Request::get(path).body(Default::default());
     let asked = asked.map_err(|e| format!("the ask: {e}"))?;
     let answer = host.transport.fetch(&contact, asked).await;
     let answer = answer.map_err(|e| format!("the ask: {e}"))?;

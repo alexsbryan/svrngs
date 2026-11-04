@@ -304,8 +304,12 @@ pub async fn run_one_round(
         return outcome;
     }
     // Where this computer is reached, said before it dials, so a move goes
-    // out in this round (relay-in-record).
+    // out in this round (relay-in-record); and where its groups meet read
+    // again, so a keeper's new list is met from this round on (relay
+    // fallbacks).
     host.say_relay();
+    host.refresh();
+    host.decide(None).await;
 
     // With no members, no group is offered, and a group this computer left
     // is still read below, for its leave (#190).
@@ -416,7 +420,11 @@ pub type LeavesTold = std::collections::BTreeSet<(String, String)>;
 /// A group this computer left stands for nobody here, so no exchange
 /// carries its leave: told, each round, from the standing the round read,
 /// to each computer the copy says stands and has not answered (#190), at
-/// once with the round's dials; `None` with nobody, or nothing, to tell.
+/// once with the round's dials, with the leaver's acts before it that each
+/// lacks (`removal.rs` `tell`, #211); `None` with nobody, or nothing, to
+/// tell. A computer is answered once its digest covers the leave, or it
+/// refuses this one, so a chain past one exchange's budget is told again
+/// until it all arrives, never taken for told.
 fn leave_told<'a>(
     host: &'a Host,
     ns: &'a str,
@@ -436,7 +444,7 @@ fn leave_told<'a>(
     debug!(namespace = ns, untold = computers.len(), lines = lines.len(), "ring sync: a group this computer left — its leave told to each computer standing that has not answered; none when it was removed");
     let due = !computers.is_empty() && !lines.is_empty();
     due.then_some(async move {
-        let answered = crate::removal::tell(host, ns, computers, &lines).await;
+        let answered = crate::removal::tell(host, ns, computers).await;
         answered
             .into_iter()
             .map(|actor| (ns.to_string(), actor))
@@ -671,7 +679,7 @@ pub(crate) async fn post(
     let sent_bytes = payload.len();
     let request = axum::http::Request::post(SYNC_ROUTE)
         .header(axum::http::header::CONTENT_TYPE, "application/json")
-        .body(axum::body::Body::from(payload))
+        .body(payload.into())
         .expect("a fixed route and header");
     let resp = to.0.fetch(to.1, request).await;
     let resp = resp.map_err(|e| ExchangeStop::Failed(e.to_string()))?;

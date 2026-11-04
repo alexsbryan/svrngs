@@ -1,0 +1,16 @@
+{
+  "jellyfin": {
+    "version": "10.11.11",
+    "tar": "https://repo.jellyfin.org/files/server/macos/stable/v10.11.11/arm64/jellyfin_10.11.11-arm64.tar.xz",
+    "sha256": "27c0bcbeac7a698cf0fd034e347f124f69083bc4463816099b52bebead614a47"
+  },
+  "plugin": {
+    "name": "SSO-Auth",
+    "version": "4.0.0.4",
+    "zip": "https://github.com/9p4/jellyfin-plugin-sso/releases/download/v4.0.0.4/sso-authentication_4.0.0.4.zip",
+    "sha256": "c09f16ba31059a434ddd7f811e4f9608d4b4c4514cc80a5bf1ca33bee61e1107"
+  },
+  "trust_floor": "unchanged",
+  "lean": "crates/svrngs-core     3152 / 3153 lines\n.                     17374 / 17375 lines\n",
+  "plugin_settings_sha256": "994cb6b806b993352b6db4cf75b89c89f7f1f42216e3fe901f134577f9c60a17"
+}

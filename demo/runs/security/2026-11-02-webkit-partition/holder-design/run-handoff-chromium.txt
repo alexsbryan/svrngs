@@ -1,0 +1,30 @@
+# chromium 147.0.7727.15 (2026-11-02T19:34:59.643Z)
+{"engine":"chromium","step":"H1 first ask under the app: adopt, then delete the cookie","visible":[],"cookieSeen":1,"adopted":true,"cookieAfterDelete":false,"ok":true,"keyExtractable":false}
+{"engine":"chromium","step":"H1 a signature with the adopted key verifies under the open's public key","verifies":true}
+{"engine":"chromium","step":"H1 after the delete: group page's document.cookie, the browser's jar","groupPage":[],"jar":0}
+{"engine":"chromium","step":"H2 app reloaded, no cookie","visible":["aaaa…"],"cookieSeen":0,"ok":true,"keyExtractable":false,"verifies":true,"signHtmlCookieOnWire":[[]]}
+{"engine":"chromium","step":"H2 browser restarted, app from a bookmark","visible":["aaaa…"],"cookieSeen":0,"ok":true,"keyExtractable":false,"verifies":true}
+{"engine":"chromium","step":"H3 second open of the same app: adopt the new one","visible":["aaaa…"],"cookieSeen":1,"adopted":true,"cookieAfterDelete":false,"ok":true,"keyExtractable":false}
+{"engine":"chromium","step":"H3 new open signs under its own key","newKey":true,"verifies":true}
+{"engine":"chromium","step":"H3 the page still holding the first open asks again","visible":["aaaa…"],"cookieSeen":0,"ok":false,"why":"not the open this signer adopted"}
+{"engine":"chromium","step":"H3 entry-1, approved under the first open, still verifies","verifies":true}
+{"engine":"chromium","step":"H4 another app presents the first app's open","visible":["aaaa…"],"ok":false,"why":"an open for another app"}
+{"engine":"chromium","step":"H4 another app presents it relabelled as its own","visible":["aaaa…"],"cookieSeen":0,"ok":false,"why":"no approver stored for this app"}
+{"engine":"chromium","step":"H5 two tabs, one cookie, at once, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":9,"adopted + adopted | both verify: true | jar after: 0":1}}
+{"engine":"chromium","step":"H5 two tabs, one cookie, 30 ms apart, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":10}}
+{"engine":"chromium","step":"H5 two tabs, one cookie, second after the first settled, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":10}}
+# chromium-part 147.0.7727.15 (2026-11-02T19:35:09.364Z)
+{"engine":"chromium-part","step":"H1 first ask under the app: adopt, then delete the cookie","visible":[],"cookieSeen":1,"adopted":true,"cookieAfterDelete":false,"ok":true,"keyExtractable":false}
+{"engine":"chromium-part","step":"H1 a signature with the adopted key verifies under the open's public key","verifies":true}
+{"engine":"chromium-part","step":"H1 after the delete: group page's document.cookie, the browser's jar","groupPage":[],"jar":0}
+{"engine":"chromium-part","step":"H2 app reloaded, no cookie","visible":["aaaa…"],"cookieSeen":0,"ok":true,"keyExtractable":false,"verifies":true,"signHtmlCookieOnWire":[[]]}
+{"engine":"chromium-part","step":"H2 browser restarted, app from a bookmark","visible":["aaaa…"],"cookieSeen":0,"ok":true,"keyExtractable":false,"verifies":true}
+{"engine":"chromium-part","step":"H3 second open of the same app: adopt the new one","visible":["aaaa…"],"cookieSeen":1,"adopted":true,"cookieAfterDelete":false,"ok":true,"keyExtractable":false}
+{"engine":"chromium-part","step":"H3 new open signs under its own key","newKey":true,"verifies":true}
+{"engine":"chromium-part","step":"H3 the page still holding the first open asks again","visible":["aaaa…"],"cookieSeen":0,"ok":false,"why":"not the open this signer adopted"}
+{"engine":"chromium-part","step":"H3 entry-1, approved under the first open, still verifies","verifies":true}
+{"engine":"chromium-part","step":"H4 another app presents the first app's open","visible":["aaaa…"],"ok":false,"why":"an open for another app"}
+{"engine":"chromium-part","step":"H4 another app presents it relabelled as its own","visible":["aaaa…"],"cookieSeen":0,"ok":false,"why":"no approver stored for this app"}
+{"engine":"chromium-part","step":"H5 two tabs, one cookie, at once, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":2,"adopted + adopted | both verify: true | jar after: 0":8}}
+{"engine":"chromium-part","step":"H5 two tabs, one cookie, 30 ms apart, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":10}}
+{"engine":"chromium-part","step":"H5 two tabs, one cookie, second after the first settled, 10 rounds","tally":{"adopted + reused | both verify: true | jar after: 0":10}}

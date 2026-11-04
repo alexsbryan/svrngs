@@ -1,0 +1,28 @@
+# Route C: Open WebUI's own image at the version observed, with the observed
+# data dir as state. Hand-run equivalent: q3c-run.sh (svrngs-pass-owui-c),
+# which answered GET / byte-for-byte as the original and kept an account and
+# a chat across `podman restart`. NOT run through give check.
+services:
+  app:
+    # ghcr.io/open-webui/open-webui:v0.12.5, the multi-arch index (amd64,
+    # arm64); the run used its amd64 manifest, 0caf3d68….
+    image: ghcr.io/open-webui/open-webui@sha256:03443b8de6b617da9d900edd09b4bf1cb0ddbfdcba6afb42c548336a0b821ded
+    environment:
+      # start.sh keeps the key in /app/backend (its cwd), outside any volume;
+      # pointing it into the state keeps sessions across a move.
+      WEBUI_SECRET_KEY_FILE: /app/backend/data/.webui_secret_key
+    volumes: ["data:/app/backend/data"]
+    # The image listens on 0.0.0.0:8080 (start.sh HOST/PORT defaults): no forwarder.
+    ports: ["8080:8080/tcp"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request as u,sys; sys.exit(0 if u.urlopen('http://127.0.0.1:8080/health').status==200 else 1)"]
+      interval: 5s
+      retries: 60
+volumes:
+  data: {}   # the observed data dir + the key from the folder it ran in; 932 MB once the models are fetched into it
+x-svrngs:
+  title: open-webui
+  about: "Open WebUI 0.12.5 on its own image, with the data of the box's uvx install"
+  door: { port: 8080, protocol: http }
+  state: [data]
+  asks: []

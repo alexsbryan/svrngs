@@ -1,0 +1,7 @@
+exit 0
+You no longer lend ana-router.
+2026-10-23T00:39:52.419365Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/svrngs"
+2026-10-23T00:39:52.419890Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=168528d0a67bc9774e1313394b2f557aaddae79101e583d01b8fee1a64b2585e at=N0
+2026-10-23T00:39:52.419910Z DEBUG cli: cli: the group keeps no relay — met where the build meets its groups group=309bb54e3c8e600f00a2346b372da2e9dd09a494315af1e3edcbc09d84412545 at=N0
+2026-10-23T00:39:52.420097Z DEBUG cli: cli: the relays this computer meets its groups at at=N0 unkept=true relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-10-23T00:39:52.420231Z DEBUG lend: lend: withdrawn lend=ana-router declared=true

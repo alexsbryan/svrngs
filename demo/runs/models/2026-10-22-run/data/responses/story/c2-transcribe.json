@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "body": {
+    "text": " The quick brown fox jumps over the lazy dog.\n",
+    "languages": null,
+    "logprobs": null,
+    "usage": null
+  }
+}

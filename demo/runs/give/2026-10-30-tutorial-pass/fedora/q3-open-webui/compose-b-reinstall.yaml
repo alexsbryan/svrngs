@@ -1,0 +1,40 @@
+# Route B, derived by hand from the process on 127.0.0.1:18080 (uvx open-webui
+# 0.12.5 on CPython 3.11.15). Hand-run equivalent: q3b-install.sh + the
+# envdiff replay + q3b-run.sh (pod svrngs-pass-owui-b), which answered GET /
+# byte-for-byte as the original and kept an account and a chat across
+# `podman restart`. NOT run through give check (no apps/give on the box).
+# The deps volume holds x86_64 CUDA wheels: this card runs on amd64 only.
+services:
+  app:
+    # python:3.11.15-slim, the multi-arch index (the run used its amd64
+    # manifest, 78b39ef1…, which `podman image inspect .Digest` reports).
+    image: docker.io/library/python@sha256:90744cff8f32887f075c47d747a173ff333e9e98801667af93c357fa9f5e28ff
+    command: ["/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python", "/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/open-webui", "serve", "--host", "127.0.0.1", "--port", "18080"]
+    # The folder it ran in: `serve` reads .webui_secret_key from its cwd.
+    working_dir: /home/alexbryan/svrngs-pass/q3/run
+    volumes:
+      - "deps:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR"
+      - "data:/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/lib/python3.11/site-packages/open_webui/data"
+      - "home:/home/alexbryan/svrngs-pass/q3/run"
+      - "hf:/root/.cache/huggingface"
+    ports: ["18080:18080/tcp"]
+    healthcheck:
+      test: ["CMD", "/home/alexbryan/.cache/uv/archive-v0/NGaSzeqy18D22xuYLd6WR/bin/python", "-c", "import urllib.request as u,sys; sys.exit(0 if u.urlopen('http://127.0.0.1:18080/health').status==200 else 1)"]
+      interval: 5s
+      retries: 60   # a first start fetched ~930 MB of models before it listened (116 s)
+  # It listens on 127.0.0.1 alone, so the pod's door forwards to it (Q1).
+  door:
+    image: docker.io/alpine/socat@sha256:603174b77eebaba25ba8f8ebb15e1234d6600409554e95d6fb203fd106150287
+    command: ["TCP-LISTEN:18090,fork,reuseaddr", "TCP:127.0.0.1:18080"]
+    ports: ["18090:18090/tcp"]
+volumes:
+  deps: {}   # 7.2 GB: the reinstalled env. A keeper has no install step, so it travels as state.
+  data: {}   # 1 MB: webui.db, vector_db, uploads
+  home: {}   # 32 B: .webui_secret_key
+  hf: {}     # 931 MB: the embedding models, fetched at first start; a cache, not state
+x-svrngs:
+  title: open-webui
+  about: "uvx open-webui 0.12.5, reinstalled pinned, given by the box"
+  door: { port: 18090, protocol: http }
+  state: [deps, data, home]
+  asks: []

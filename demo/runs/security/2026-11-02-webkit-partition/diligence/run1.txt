@@ -1,0 +1,19 @@
+# webkit 26.4
+{"engine":"webkit","layout":"same-origin control (.sh)","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"webkit","layout":"same-site  .sh (prod shape)","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"YES","hasStorageAccess":false}
+{"engine":"webkit","layout":"cross-site .sh control","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"no","hasStorageAccess":false}
+{"engine":"webkit","layout":"same-site  .co.uk","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"YES","hasStorageAccess":false}
+{"engine":"webkit","layout":"same-site  .test","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"YES","hasStorageAccess":false}
+{"engine":"webkit","layout":"cross-site .test control","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"no","hasStorageAccess":false}
+{"engine":"webkit","layout":"localhost: localhost / app.localhost","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"no","hasStorageAccess":false}
+{"engine":"webkit","layout":"localhost: page.localhost / app.page.localhost","idb":"no (fresh db)","ls":"YES","key":"no","cookie":"no","hasStorageAccess":false}
+# chromium 147.0.7727.15
+{"engine":"chromium","layout":"same-origin control (.sh)","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"chromium","layout":"same-site  .sh (prod shape)","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"chromium","layout":"cross-site .sh control","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"chromium","layout":"same-site  .co.uk","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"chromium","layout":"same-site  .test","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"chromium","layout":"cross-site .test control","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+{"engine":"chromium","layout":"localhost: localhost / app.localhost","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"no","hasStorageAccess":true}
+{"engine":"chromium","layout":"localhost: page.localhost / app.page.localhost","idb":"YES","ls":"YES","key":"signed 64B, extractable=false","cookie":"YES","hasStorageAccess":true}
+# proxy saw: CONNECT group.svrnme.sh:443, CONNECT app1.group.svrnme.sh:443, CONNECT app.other.sh:443, CONNECT group.svrnme.co.uk:443, CONNECT app1.group.svrnme.co.uk:443, CONNECT group.svrnme.test:443, CONNECT app1.group.svrnme.test:443, CONNECT app.other.test:443

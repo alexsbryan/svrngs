@@ -53,11 +53,8 @@ pub struct Invites(Vec<(OpId, Invited)>);
 impl Invites {
     /// The newest `Invite` `issuer` wrote naming `key`.
     pub fn newest(&self, issuer: &str, key: &str) -> Option<&OpId> {
-        self.0
-            .iter()
-            .rev()
-            .find(|(_, i)| i.issuer == issuer && i.key == key)
-            .map(|(id, _)| id)
+        let (id, _) = (self.0.iter().rev()).find(|(_, i)| i.issuer == issuer && i.key == key)?;
+        Some(id)
     }
 }
 

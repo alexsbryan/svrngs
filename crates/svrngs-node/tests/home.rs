@@ -14,10 +14,9 @@ mod origins;
 #[path = "common/pair.rs"]
 mod pair;
 
-use std::net::SocketAddr;
 use std::time::Duration;
 
-use common::{heard, loopback_sockets};
+use common::{heard, loopback_sockets, Browser};
 use pair::{alex_lets_sam_in, signing, start, NS};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -64,18 +63,21 @@ impl Got {
     }
 }
 
-/// One request to `api` at `host`, `extra` its other header lines.
+/// One request from `browser` at `host`, `extra` its other header lines,
+/// with the session svrngs opened there when `extra` is a page's.
 async fn ask(
-    api: SocketAddr,
+    browser: &Browser<'_>,
     method: &str,
     host: &str,
     path: &str,
     extra: &str,
     body: &str,
 ) -> Got {
-    let mut sock = tokio::net::TcpStream::connect(api).await.unwrap();
+    let mut sock = tokio::net::TcpStream::connect(browser.api()).await.unwrap();
+    let path = browser.path(host, path, extra);
+    let proof = browser.proof(method, host, &path, extra, body).await;
     let request = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}{proof}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
         body.len()
     );
     sock.write_all(request.as_bytes()).await.unwrap();
@@ -142,6 +144,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         heads.insert((who, name), kept);
     }
     let api = alex.api_addr();
+    let browser = &Browser::of(&alex);
     let port = api.port();
     let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
     let (night, alexs, sams) = (label(1, "night"), label(1, "taste"), label(2, "taste"));
@@ -155,12 +158,23 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         at(&night)
     );
 
-    let page = ask(api, "GET", &home, "/", typed, "").await;
+    let page = ask(browser, "GET", &home, "/", typed, "").await;
     assert_eq!(page.status, 200, "{}", page.body);
     assert!(page.body.contains(r#"src="/home.js""#), "{}", page.body);
+    // oidc-retire: the kind-keyed sign-in helper route is gone, so Jellyfin
+    // answers as any kind with none (SIGN_IN_WITH_SVRNGS §7 3). A planted
+    // `/helper/{kind}` route made this red before it passed.
+    let jellyfin = ask(browser, "GET", &home, "/helper/jellyfin", typed, "").await;
+    let any = ask(browser, "GET", &home, "/helper/unheard-of", typed, "").await;
+    assert_eq!(jellyfin.status, 404, "{}", jellyfin.body);
+    assert_eq!(
+        jellyfin.status, any.status,
+        "a helper is no kind of its own: {} / {}",
+        jellyfin.body, any.body
+    );
     for got in [
         &page,
-        &ask(api, "GET", &home, "/v1/groups", &from_night, "").await,
+        &ask(browser, "GET", &home, "/v1/groups", &from_night, "").await,
     ] {
         assert_eq!(
             got.header("content-security-policy"),
@@ -169,17 +183,34 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             got.head
         );
     }
-    let module = ask(api, "GET", &home, "/home.js", &own, "").await;
+    let module = ask(browser, "GET", &home, "/home.js", &own, "").await;
     assert_eq!(
         (module.status, module.header("content-type")),
         (200, Some("text/javascript"))
+    );
+    // The tab's icon, which the page links: the mark's small cut, from its
+    // own origin, as its policy allows. Red with the route planted out.
+    let icon = ask(browser, "GET", &home, "/favicon.svg", typed, "").await;
+    assert_eq!(
+        (icon.status, icon.header("content-type")),
+        (200, Some("image/svg+xml"))
+    );
+    assert!(
+        page.body.contains(r#"href="/favicon.svg""#),
+        "{}",
+        page.body
+    );
+    assert!(
+        icon.body.contains(r#"aria-label="svrngs""#),
+        "{}",
+        icon.body
     );
     let navigated = format!(
         "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\nOrigin: http://{}\r\n",
         at(&night)
     );
     let asking = ask(
-        api,
+        browser,
         "GET",
         &home,
         &format!("/ask?lend={sams}&app={night}&back=/x"),
@@ -192,9 +223,9 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         "a lend's page sends its person to ask: {}",
         asking.body
     );
-    let elsewhere = ask(api, "GET", "svrngs.localhost:1", "/", typed, "").await;
+    let elsewhere = ask(browser, "GET", "svrngs.localhost:1", "/", typed, "").await;
     assert_eq!(
-        elsewhere.status, 403,
+        elsewhere.status, 401,
         "only at its own port: {}",
         elsewhere.body
     );
@@ -203,14 +234,15 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         "/v1/groups".to_string(),
         format!("/v1/lends?namespace={NS}"),
     ] {
-        let shown = ask(api, "GET", &home, &path, &own, "").await;
-        let answered = ask(api, "GET", "127.0.0.1", &path, "", "").await;
+        let shown = ask(browser, "GET", &home, &path, &own, "").await;
+        let program = format!("Authorization: Bearer {}\r\n", alex.token());
+        let answered = ask(browser, "GET", "127.0.0.1", &path, &program, "").await;
         assert_eq!(
             (shown.status, shown.json()),
             (answered.status, answered.json()),
             "{path}: one decider"
         );
-        let read = ask(api, "GET", &home, &path, &from_night, "").await;
+        let read = ask(browser, "GET", &home, &path, &from_night, "").await;
         assert_eq!(
             (read.status, read.header("x-svrngs-refused")),
             (403, Some("closed")),
@@ -219,7 +251,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         );
     }
     let shown = ask(
-        api,
+        browser,
         "GET",
         &home,
         &format!("/v1/lends?namespace={NS}"),
@@ -237,7 +269,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
 
     let fetch = |l: &Label| {
         let (host, extra) = (at(l), from_night.clone());
-        async move { ask(api, "GET", &host, "/x", &extra, "").await }
+        async move { ask(browser, "GET", &host, "/x", &extra, "").await }
     };
     let refused = |got: &Got| {
         (
@@ -263,9 +295,9 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             "its own origin with no Origin",
             "Sec-Fetch-Site: same-origin\r\n".into(),
         ),
-        ("a program", String::new()),
+        ("a program, with the token", browser.bearer()),
     ] {
-        let posted = ask(api, "POST", &home, "/choices", &extra, &yes(&alexs)).await;
+        let posted = ask(browser, "POST", &home, "/choices", &extra, &yes(&alexs)).await;
         assert_eq!(
             refused(&posted),
             (403, Some("closed".into())),
@@ -280,7 +312,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     );
 
     for l in [&alexs, &sams] {
-        let said = ask(api, "POST", &home, "/choices", &own, &yes(l)).await;
+        let said = ask(browser, "POST", &home, "/choices", &own, &yes(l)).await;
         assert_eq!(said.status, 200, "the person's yes at {l}: {}", said.body);
         let carried = fetch(l).await;
         assert_eq!(
@@ -291,7 +323,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         );
     }
     let kept = ask(
-        api,
+        browser,
         "GET",
         &home,
         &format!("/choices?lend={sams}"),
@@ -306,7 +338,8 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         kept.body
     );
 
-    let reads = ask(api, "GET", &at(&night), "/svrngs-reads", "", "")
+    let page = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
+    let reads = ask(browser, "GET", &at(&night), "/svrngs-reads", page, "")
         .await
         .json();
     for l in [&alexs, &sams] {
@@ -314,7 +347,12 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
             .as_array()
             .unwrap()
             .iter()
-            .find(|r| r["address"] == format!("http://{}/", at(l)));
+            // Its origin, with the capability night's page shows there
+            // (give-session; tests/session.rs).
+            .find(|r| {
+                (r["address"].as_str().unwrap_or_default())
+                    .starts_with(&format!("http://{}/svrngs-as/", at(l)))
+            });
         let one = one.unwrap_or_else(|| panic!("{reads:#}"));
         assert_eq!(one["asks"], WORDS);
         assert_eq!(
@@ -331,7 +369,7 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
     for l in [&alexs, &sams] {
         let stop = ask(
-            api,
+            browser,
             "POST",
             &at(&night),
             &format!("/svrngs-reads/{l}/svrngs-stop"),
@@ -389,21 +427,21 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
             .map(|l| l.limit.map(|n| n.get()))
     };
     let typed = "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n";
-    let open = |node: &Node| {
-        let api = node.api_addr();
-        let host = format!("{shelf}.localhost:{}", api.port());
-        async move { ask(api, "GET", &host, "/x", typed, "").await }
-    };
-    let (api, home) = (
-        sam.api_addr(),
+    async fn open(node: &Node, shelf: &Label, typed: &str) -> Got {
+        let browser = Browser::of(node);
+        let host = format!("{shelf}.localhost:{}", node.api_addr().port());
+        ask(&browser, "GET", &host, "/x", typed, "").await
+    }
+    let (browser, home) = (
+        &Browser::of(&sam),
         format!("svrngs.localhost:{}", sam.api_addr().port()),
     );
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
 
-    let sams = open(&sam).await;
+    let sams = open(&sam, &shelf, typed).await;
     assert_eq!(sams.status, 200, "Sam, the first: {}", sams.body);
-    let alexs = open(&alex).await;
+    let alexs = open(&alex, &shelf, typed).await;
     assert_eq!(
         (alexs.status, alexs.header("x-svrngs-refused")),
         (503, Some("full")),
@@ -422,16 +460,16 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     for (row, extra) in [
         (
             "shelf's page",
-            format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{shelf}.localhost:{}\r\n", api.port()),
+            format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{shelf}.localhost:{}\r\n", browser.api().port()),
         ),
         (
             "the home page's Origin, from another site",
             format!("Sec-Fetch-Site: same-site\r\nOrigin: http://{home}\r\n"),
         ),
         ("its own origin with no Origin", "Sec-Fetch-Site: same-origin\r\n".into()),
-        ("a program", String::new()),
+        ("a program, with the token", browser.bearer()),
     ] {
-        let posted = ask(api, "POST", &home, "/lent", &extra, everyone).await;
+        let posted = ask(browser, "POST", &home, "/lent", &extra, everyone).await;
         assert_eq!(
             (posted.status, posted.header("x-svrngs-refused")),
             (403, Some("closed")),
@@ -441,26 +479,26 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     }
     assert_eq!(limit(), Some(Some(1)), "no refused change was kept");
 
-    let changed = ask(api, "POST", &home, "/lent", &own, everyone).await;
+    let changed = ask(browser, "POST", &home, "/lent", &own, everyone).await;
     assert_eq!(changed.status, 204, "Sam's own change: {}", changed.body);
-    let listed = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(listed["lent"][0]["name"], "shelf", "{listed:#}");
     assert_eq!(
         listed["lent"][0]["limit"],
         serde_json::Value::Null,
         "{listed:#}"
     );
-    let alexs = open(&alex).await;
+    let alexs = open(&alex, &shelf, typed).await;
     assert_eq!(alexs.status, 200, "Alex, with no restart: {}", alexs.body);
 
     let two = r#"{"lend":"shelf","to":{"limit":2}}"#;
     assert_eq!(
-        ask(api, "POST", &home, "/lent", &own, two).await.status,
+        ask(browser, "POST", &home, "/lent", &own, two).await.status,
         204
     );
     assert_eq!(limit(), Some(Some(2)));
     let none = ask(
-        api,
+        browser,
         "POST",
         &home,
         "/lent",
@@ -476,13 +514,99 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     );
     let stop = r#"{"lend":"shelf","to":"stop"}"#;
     assert_eq!(
-        ask(api, "POST", &home, "/lent", &own, stop).await.status,
+        ask(browser, "POST", &home, "/lent", &own, stop)
+            .await
+            .status,
         204
     );
     assert_eq!(limit(), None, "no longer lent");
-    let listed = ask(api, "GET", &home, "/lent", &own, "").await.json();
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(listed["lent"], serde_json::json!([]), "{listed:#}");
     sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}
+
+/// **A lender turns on signing people in with svrngs from the home page**
+/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). Alex lends `shelf` with
+/// no sign-in. `GET /lent` says so; `POST /lent` with `to: sign-in` makes a
+/// client id and secret from the allowed alphabet, keeps them in the
+/// declaration at 0600, and answers the issuer, the client and the
+/// deviations in words once. After that `GET /lent` says the lend signs
+/// people in, and never shows the secret again. Planted, watched failing:
+/// the page's answer offering a client while the declaration holds none.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let (shelf_at, _kept) = origins::head_origin().await;
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books" });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let name = lend::LendName::parse("shelf").unwrap();
+    let api = alex.api_addr();
+    let browser = &Browser::of(&alex);
+    let home = format!("svrngs.localhost:{}", api.port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let alphabet = |s: &str| {
+        !s.is_empty()
+            && s.bytes()
+                .all(|b| b.is_ascii_alphanumeric() || b"-._~".contains(&b))
+    };
+
+    let before = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(
+        before["signing"],
+        serde_json::json!([]),
+        "nothing signs people in yet: {before:#}"
+    );
+
+    let turned = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        r#"{"lend":"shelf","to":"sign-in"}"#,
+    )
+    .await;
+    assert_eq!(turned.status, 200, "turning it on: {}", turned.body);
+    let shown = turned.json();
+    let issuer = format!("http://127.0.0.1:{}/oidc/shelf", api.port());
+    assert_eq!(shown["issuer"], issuer.as_str(), "{shown:#}");
+    let id = shown["client_id"].as_str().expect("a client id");
+    let secret = shown["client_secret"].as_str().expect("a secret");
+    assert!(
+        alphabet(id) && alphabet(secret),
+        "the client is made from the allowed alphabet: {shown:#}"
+    );
+    let deviations = shown["deviations"].as_str().expect("the deviations");
+    for word in ["plain http", "ES256", "no email"] {
+        assert!(deviations.contains(word), "{deviations}");
+    }
+
+    let declared = lend::read(dir.path(), &name).unwrap().unwrap();
+    let client = declared
+        .sign_in_with_svrngs
+        .expect("the declaration holds the client");
+    assert_eq!(client.client_id, id);
+    assert_eq!(client.client_secret.as_deref(), Some(secret));
+    let file = lends.join("shelf.json");
+    assert_eq!(
+        std::fs::metadata(&file).unwrap().permissions().mode() & 0o777,
+        0o600,
+        "the declaration holding a secret is owner-only"
+    );
+
+    let after = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(after["signing"], serde_json::json!(["shelf"]), "{after:#}");
+    assert!(
+        !after.to_string().contains(secret),
+        "the secret is never shown again: {after:#}"
+    );
     alex.endpoint().close().await;
 }
 
@@ -506,11 +630,11 @@ async fn groups_that_cannot_be_read_are_said_so() {
     let rings = dir.path().join("rings");
     std::fs::set_permissions(&rings, std::fs::Permissions::from_mode(0o000)).unwrap();
     let got = ask(
-        alex.api_addr(),
+        &Browser::of(&alex),
         "GET",
         &format!("{night}.localhost:{}", alex.api_addr().port()),
         "/svrngs-reads",
-        "",
+        "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n",
         "",
     )
     .await;
@@ -569,6 +693,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
         .unwrap();
     }
     let api = alex.api_addr();
+    let browser = &Browser::of(&alex);
     let port = api.port();
     let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
     let night = label(1, "night");
@@ -599,7 +724,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     let unread = |status: u16, kind: Option<&str>| (status, kind.map(str::to_string), None, None);
     let night_at = |l: Label, path: &'static str| {
         let (host, extra) = (at(&l), from(&page));
-        async move { ask(api, "GET", &host, path, &extra, "").await }
+        async move { ask(browser, "GET", &host, path, &extra, "").await }
     };
     let rows = [
         (
@@ -654,13 +779,13 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
     let same = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
     let telly = label(1, "telly");
     let stop = format!("/svrngs-reads/{telly}/svrngs-stop");
-    let stopped = ask(api, "POST", &at(&night), &stop, same, "").await;
+    let stopped = ask(browser, "POST", &at(&night), &stop, same, "").await;
     assert_eq!(stopped.status, 200, "night stops itself: {}", stopped.body);
     let got = night_at(telly.clone(), "/x").await;
     assert_eq!(read(&got), readable(403, "stopped"), "{}", got.body);
 
     let from_home = ask(
-        api,
+        browser,
         "GET",
         &at(&telly),
         "/x",
@@ -673,7 +798,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
         unread(403, Some("closed")),
         "the home page's fetch"
     );
-    let at_home = ask(api, "GET", &home, "/v1/lends", &from(&page), "").await;
+    let at_home = ask(browser, "GET", &home, "/v1/lends", &from(&page), "").await;
     assert_eq!(
         read(&at_home),
         unread(403, Some("closed")),
@@ -698,7 +823,7 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
     let body = r#"{"group":"elsewhere","device":false}"#;
-    let got = ask(alex.api_addr(), "POST", &home, "/link", &own, body).await;
+    let got = ask(&Browser::of(&alex), "POST", &home, "/link", &own, body).await;
     assert_eq!(
         (got.status, got.header("x-svrngs-refused")),
         (403, Some("closed")),
@@ -765,7 +890,7 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
         ),
     ];
     for (body, words) in &asked {
-        let got = ask(alex.api_addr(), "POST", &home, "/running", &own, body).await;
+        let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, body).await;
         assert_eq!(
             (got.status, got.json()["error"].as_str()),
             (400, Some(*words)),
@@ -801,7 +926,7 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
     std::fs::write(&lends, "not a directory").unwrap();
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
     let own = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
-    let got = ask(alex.api_addr(), "GET", &home, "/running", own, "").await;
+    let got = ask(&Browser::of(&alex), "GET", &home, "/running", own, "").await;
     assert_eq!(
         (got.status, got.json()["error"].as_str()),
         (500, Some("it cannot read what you lend already")),
@@ -819,75 +944,59 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
     alex.endpoint().close().await;
 }
 
-/// **The page offers a kind's sign-in helper** (v1ui-polish (d);
-/// `demo/runs/v1ui/2026-10-15/README.md` finding 3). Alex lends a
-/// jellyfin from the page. With nothing at its helper's port (8097, the
-/// table's), it is lent with no sign-in, as before, and the page is told
-/// the helper does not answer, and is given its steps. With a stand-in
-/// helper listening there, it is lent signed in by it, as `svrngs share
-/// <port> --sign-in 8097` lends it, and the page is told so. Planted:
-/// HEAD, the page lending with no sign-in beside the helper. Its steps
-/// asked, and a kind with none refused, each traced (#173; red at 9543e52,
-/// untraced).
+/// **The home page's modules are served, each as its file, and no other**
+/// (home.rs `served`; page-scaffold (g), page-switchover). Every `.js` in
+/// src/home/page/, src/home/ui/ and web/vendor/, read from the tree as
+/// this test runs, is answered at `/page/`, `/ui/` and `/vendor/` with its
+/// bytes, as JavaScript, under the page's one policy, so a module the
+/// table leaves out fails here and not as a page that never draws. A name
+/// not there, another case, another kind, and a `../` up to a file that is
+/// there are each 404. Red on the plant: `served`'s table without `"wifi"`,
+/// whose `/page/wifi.js` was 404.
 #[tokio::test]
-async fn the_page_lends_a_kind_beside_its_helper_signed_in_by_it() {
-    let (said, _heard) = heard("home=debug");
+async fn the_home_page_s_modules_are_served_each_as_its_file_and_no_other() {
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
-    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
-    let own =
-        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
-    let service = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let port = service.local_addr().unwrap().port();
-    let lent = |name: &str| {
-        let name = lend::LendName::parse(name).unwrap();
-        lend::read(dir.path(), &name)
-            .unwrap()
-            .expect("lent")
-            .sign_in
-    };
-    let helper =
-        std::net::TcpListener::bind("127.0.0.1:8097").expect("the helper's port is free here");
-    let body = format!(r#"{{"port":{port},"name":"beside","kind":"jellyfin"}}"#);
-    let got = ask(alex.api_addr(), "POST", &home, "/running", &own, &body).await;
-    assert_eq!(got.status, 200, "{}", got.body);
-    assert_eq!(
-        lent("beside").map(|p| p.get()),
-        Some(8097),
-        "signed in by its helper"
-    );
-    assert_eq!(
-        got.json()["helper"],
-        serde_json::json!(true),
-        "{}",
-        got.body
-    );
-    drop(helper);
-
-    let body = format!(r#"{{"port":{port},"name":"alone","kind":"jellyfin"}}"#);
-    let got = ask(alex.api_addr(), "POST", &home, "/running", &own, &body).await;
-    assert_eq!(got.status, 200, "{}", got.body);
-    assert_eq!(lent("alone"), None, "no helper answers, so lent as before");
-    assert_eq!(
-        got.json()["helper"],
-        serde_json::json!(false),
-        "{}",
-        got.body
-    );
-    let steps = ask(alex.api_addr(), "GET", &home, "/helper/jellyfin", &own, "").await;
-    assert_eq!(steps.status, 200, "{}", steps.body);
-    let words = "--listen 127.0.0.1:8097";
-    assert!(steps.body.contains(words), "its steps: {}", steps.body);
-    let none = ask(alex.api_addr(), "GET", &home, "/helper/navidrome", &own, "").await;
-    assert_eq!(none.status, 404, "{}", none.body);
-    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
-    let traced = |what: &str| {
-        (log.lines()).any(|l| l.contains("home: a kind's helper's steps asked") && l.contains(what))
-    };
-    assert!(
-        traced("kind=\"jellyfin\" found=true") && traced("kind=\"navidrome\" found=false"),
-        "{log}"
-    );
-    drop(service);
-    alex.endpoint().close().await;
+    let node = start(1, dir.path()).await;
+    let (browser, port) = (&Browser::of(&node), node.api_addr().port());
+    let home = format!("svrngs.localhost:{port}");
+    let own = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
+    let root = env!("CARGO_MANIFEST_DIR");
+    let mut served = 0;
+    for (at, kept) in [
+        ("page", "src/home/page"),
+        ("ui", "src/home/ui"),
+        ("vendor", "../../web/vendor"),
+    ] {
+        for f in std::fs::read_dir(format!("{root}/{kept}")).unwrap() {
+            let name = f.unwrap().file_name().into_string().unwrap();
+            if !name.ends_with(".js") {
+                continue;
+            }
+            let got = ask(browser, "GET", &home, &format!("/{at}/{name}?v=x"), own, "").await;
+            let file = std::fs::read_to_string(format!("{root}/{kept}/{name}")).unwrap();
+            assert_eq!(
+                (got.status, got.header("content-type"), &got.body),
+                (200, Some("text/javascript"), &file),
+                "/{at}/{name}"
+            );
+            assert_eq!(
+                got.header("content-security-policy"),
+                Some("default-src 'self'; frame-ancestors 'none'"),
+                "/{at}/{name}"
+            );
+            served += 1;
+        }
+    }
+    assert!(served >= 30, "the page's modules, each read: {served}");
+    for path in [
+        "/page/../home.js",
+        "/ui/../question.js",
+        "/page/Home.js",
+        "/page/home.mjs",
+        "/ui/gone.js",
+    ] {
+        let got = ask(browser, "GET", &home, path, own, "").await;
+        assert_eq!(got.status, 404, "{path}: {}", got.body);
+    }
+    node.endpoint().close().await;
 }

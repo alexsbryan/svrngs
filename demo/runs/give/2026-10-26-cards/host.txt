@@ -1,0 +1,11 @@
+$ git rev-parse --short HEAD
+ae481b71
+$ podman version --format '{{.Client.Version}} {{.Server.Version}}'
+6.0.1 6.0.1
+$ podman info --format '{{.Host.Arch}} {{.Host.ServiceIsRemote}} rootless={{.Host.Security.Rootless}} {{.Store.GraphDriverName}}'
+arm64 true rootless=true overlay
+$ podman machine list --format '{{.Name}} {{.VMType}} {{.Running}} {{.CPUs}} {{.Memory}}'
+podman-machine-default* applehv true 8 24GiB
+$ sw_vers -productVersion; uname -m
+27.0.1
+arm64

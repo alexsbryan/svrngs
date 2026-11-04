@@ -1,0 +1,41 @@
+{"t": 1793671490.512, "event": "start", "build": "98e3712e", "build_tree_clean": true, "bin_sha256": "569f836d8d22bd047e7d771179b6ff0e16834d9f6ce84892d8bb72f852c68c03", "load": 6.05419921875, "cores": 12, "macos": "27.0.1"}
+{"t": 1793671500.219, "event": "instrument", "held": {"curl a name": true, "curl an address": true, "dig": true, "host": true, "udp to this host's resolver": true, "curl loopback (control)": true, "outside": true}}
+{"t": 1793671500.227, "event": "started", "who": "relay", "n": 1, "args": ["relay", "--at", "127.0.0.1:52717", "--open"], "pid": 77544}
+{"t": 1793671500.331, "event": "relay", "at": "http://127.0.0.1:52717", "first": {"said": "Relaying at http://127.0.0.1:52717/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running.", "ms": 104}}
+{"t": 1793671500.334, "event": "started", "who": "sam", "n": 1, "args": ["new", "mesh", "--as", "Sam", "--relay", "http://127.0.0.1:52717"], "pid": 77547}
+{"t": 1793671503.443, "event": "made", "link_ms": 3109, "said": "Ly8xMjcuMC4wLjE6NTI3MTcv\n\nmesh's folder is /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/sam/svrngs/mesh: what anyone in mesh puts there reaches this computer, and what you put there reaches theirs.\n\nLeave this running; Ctrl-C stops it.\n"}
+{"t": 1793671503.45, "event": "started", "who": "ana", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Ana"], "pid": 77688}
+{"t": 1793671506.557, "event": "joined", "who": "ana", "joined_ms": 3106, "said": "You're in mesh, as Ana.", "folder": true}
+{"t": 1793671506.56, "event": "started", "who": "alex", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Alex"], "pid": 77696}
+{"t": 1793671509.667, "event": "joined", "who": "alex", "joined_ms": 3107, "said": "You're in mesh, as Alex.", "folder": true}
+{"t": 1793671509.883, "event": "file-before", "sam": 207, "alex": 210}
+{"t": 1793671509.901, "event": "share", "who": "ana", "name": "notes", "exit": 0, "ms": 18, "said": "You lend notes (port 52678) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 52678 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it.", "trace": "share \u2014 the password asked for lend=notes given=false terminal=false\n2026-11-03T02:05:09.900146Z DEBUG cli: cli: refused \u2014 another svrngs holds the data dir lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/ana/.svrngs/lock error=lock acquisition failed because the operation would block\n2026-11-03T02:05:09.900156Z DEBUG cli: cli: share \u2014 svrngs runs here already, and reads the lend from its declaration lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/ana/.svrngs/lock"}
+{"t": 1793671509.91, "event": "notes-before", "ana": {"listed_ms": 4, "fetched_ms": 6, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "sam": {"listed_ms": 3, "fetched_ms": 7, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "alex": {"listed_ms": 4, "fetched_ms": 7, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}}
+{"t": 1793671514.915, "event": "stopped", "who": "sam", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793671514.919, "event": "stopped", "who": "ana", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793671514.922, "event": "stopped", "who": "alex", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793671514.924, "event": "stopped", "who": "relay", "exit": 0, "ms": 1, "killed": false}
+{"t": 1793671517.93, "event": "started", "who": "relay", "n": 2, "args": ["relay", "--at", "127.0.0.1:52717", "--open"], "pid": 78406}
+{"t": 1793671518.035, "event": "relay-again", "said": "Relaying at http://127.0.0.1:52717/ for every computer and phone that reaches it, each sending at most 70 Mbit/s. Leave this running.", "ms": 105}
+{"t": 1793671518.038, "event": "started", "who": "sam", "n": 2, "args": [], "pid": 78409}
+{"t": 1793671518.04, "event": "started", "who": "ana", "n": 2, "args": [], "pid": 78410}
+{"t": 1793671518.043, "event": "started", "who": "alex", "n": 2, "args": [], "pid": 78411}
+{"t": 1793671518.149, "event": "restart-api", "sam": 111, "ana": 108, "alex": 105}
+{"t": 1793671518.157, "event": "restart-notes", "sam": {"listed_ms": 116, "fetched_ms": 118, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "alex": {"listed_ms": 108, "fetched_ms": 111, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}}
+{"t": 1793671518.37, "event": "restart-file", "sam": 206, "ana": 205}
+{"t": 1793671519.379, "event": "restart-rounds", "both": {"sam": 1090, "ana": 108, "alex": 104}, "any": {"sam": 1090, "ana": 108, "alex": 104}}
+{"t": 1793671519.396, "event": "share", "who": "alex", "name": "board", "exit": 0, "ms": 17, "said": "You lend board (port 52681) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 52681 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare board` stops lending it.", "trace": "are \u2014 the password asked for lend=board given=false terminal=false\n2026-11-03T02:05:19.395628Z DEBUG cli: cli: refused \u2014 another svrngs holds the data dir lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/alex/.svrngs/lock error=lock acquisition failed because the operation would block\n2026-11-03T02:05:19.395636Z DEBUG cli: cli: share \u2014 svrngs runs here already, and reads the lend from its declaration lock=/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/75ef9c09-f2da-4830-8de7-1470f7e169ec/scratchpad/mo-run2/alex/.svrngs/lock"}
+{"t": 1793671519.404, "event": "board", "sam": {"listed_ms": 3, "fetched_ms": 6, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "ana": {"listed_ms": 3, "fetched_ms": 6, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}}
+{"t": 1793671520.436, "event": "stopped", "who": "sam", "exit": 0, "ms": 1032, "killed": false}
+{"t": 1793671520.44, "event": "started", "who": "sam", "n": 3, "args": ["link", "mesh"], "pid": 78422}
+{"t": 1793671523.535, "event": "link-again", "ms": 3095, "said": "A new link to mesh. Any link you sent before stops letting anyone new in; everyone it let in stays.\nIt works for a day, while this computer is on:\n\n  svrngs://join/<the token>\n\nLeave this running; Ctrl-C stops it.\n"}
+{"t": 1793671523.539, "event": "started", "who": "dee", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Dee"], "pid": 78598}
+{"t": 1793671526.696, "event": "dee", "joined_ms": 3125, "said": "You're in mesh, as Dee.", "notes": {"listed_ms": 18, "fetched_ms": 21, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "board": {"listed_ms": 18, "fetched_ms": 21, "unlisted": {"unanswered": [], "unheard": [], "refused": [], "older": []}}, "files": {"before.bin": 33, "after.bin": 33}}
+{"t": 1793671546.712, "event": "stopped", "who": "app-notes", "exit": 0, "ms": 9, "killed": false}
+{"t": 1793671546.721, "event": "stopped", "who": "app-board", "exit": 0, "ms": 9, "killed": false}
+{"t": 1793671546.725, "event": "stopped", "who": "relay", "exit": 0, "ms": 3, "killed": false}
+{"t": 1793671549.846, "event": "stopped", "who": "ana", "exit": 0, "ms": 3121, "killed": false}
+{"t": 1793671550.875, "event": "stopped", "who": "alex", "exit": 0, "ms": 1029, "killed": false}
+{"t": 1793671551.912, "event": "stopped", "who": "sam", "exit": 0, "ms": 1037, "killed": false}
+{"t": 1793671555.032, "event": "stopped", "who": "dee", "exit": 0, "ms": 3119, "killed": false}
+{"t": 1793671557.574, "event": "end", "off_host": 0, "lsof_samples": 27}

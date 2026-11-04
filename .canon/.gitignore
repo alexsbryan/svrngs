@@ -1,0 +1,10 @@
+# The canon itself is meant to be committed. These are not:
+# `seen` is this machine's ingest state, `draft-runs/` is the
+# evidence from its model runs, and `config` is the endpoint and
+# model name on ONE machine — a fresh clone should say "no endpoint
+# configured", not fail against a port on somebody else's laptop.
+# None of them is an act.
+seen
+draft-runs/
+config
+lineages/

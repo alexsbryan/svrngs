@@ -73,6 +73,23 @@ impl Default for RelayConfig {
     }
 }
 
+impl RelayConfig {
+    /// The relays an endpoint is built with: the build's, where this
+    /// computer meets every group beside the group's own (relay fallbacks;
+    /// svrngs's `cli::reach`), as [`relayed_endpoint_builder`] chooses them.
+    pub fn build(&self) -> Vec<svrngs_core::relay::Url> {
+        let map = match parse_relay_mode(&self.relay_urls) {
+            Some(mode) => mode.relay_map(),
+            None if self.n0_services => relay::n0_relays(),
+            None => iroh::RelayMap::empty(),
+        };
+        map.urls::<Vec<RelayUrl>>()
+            .into_iter()
+            .map(Into::into)
+            .collect()
+    }
+}
+
 /// Build an iroh endpoint from a node identity, serving `alpns`, per a
 /// [`RelayConfig`]. With `n0_services` it starts from `presets::N0`
 /// (n0 relays + n0 DNS/pkarr lookup); without it, from `presets::Minimal`

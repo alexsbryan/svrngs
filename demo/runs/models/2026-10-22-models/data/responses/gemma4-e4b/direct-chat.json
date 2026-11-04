@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json; charset=utf-8",
+    "Keep-Alive": "timeout=5, max=100",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "619"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"ok\"}}],\"created\":1792719100,\"model\":\"ana/vision-small\",\"system_fingerprint\":\"b10180-11b068d06\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":2,\"prompt_tokens\":23,\"total_tokens\":25,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-JtMJpp7emoBYG1SCYZeyW8UMs93KLazx\",\"timings\":{\"cache_n\":0,\"prompt_n\":23,\"prompt_ms\":151.625,\"prompt_per_token_ms\":6.592391304347826,\"prompt_per_second\":151.69002473206925,\"predicted_n\":2,\"predicted_ms\":26.534,\"predicted_per_token_ms\":13.267,\"predicted_per_second\":75.37499057812619}}"
+}

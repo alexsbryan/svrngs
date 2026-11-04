@@ -3,8 +3,6 @@
 //! files read into the binary from apps/ at build, written to
 //! `$OUT_DIR/shelf.rs` as the list carried.rs's `SHELF` is, so svrngs's own
 //! code names no app (scripts/vocab_check.py) and the shelf stays data.
-//! So too each sign-in helper's steps well_known.txt names (v1ui-polish
-//! (d)), as share.rs's `HELPERS`.
 
 use std::path::Path;
 
@@ -31,14 +29,4 @@ fn main() {
     }
     let out = Path::new(&std::env::var("OUT_DIR").expect("cargo sets OUT_DIR")).join("shelf.rs");
     std::fs::write(&out, shelf + "]").expect("the shelf is written");
-    // Each sign-in helper's steps well_known.txt names, `helper <kind> <port> <steps>`.
-    let table = std::fs::read_to_string(here.join("src/well_known.txt")).expect("the table");
-    println!("cargo::rerun-if-changed=src/well_known.txt");
-    let (root, mut helpers) = (here.join("../.."), String::from("&["));
-    for l in table.lines() {
-        if let ["helper", kind, _, steps] = l.split_whitespace().collect::<Vec<_>>()[..] {
-            helpers += &format!("({kind:?}, include_str!({:?})),", root.join(steps));
-        }
-    }
-    std::fs::write(out.with_file_name("helpers.rs"), helpers + "]").expect("helpers.rs");
 }

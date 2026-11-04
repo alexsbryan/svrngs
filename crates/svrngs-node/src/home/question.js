@@ -1,166 +1,407 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// svrngs's question, what apps use, who was removed from the group, who is
-// on now and what is in it (the door and the index's rows, v1ui-door), in
-// one wording for the two pages
-// that ask a person: the home page on a computer (home.js, served by
-// home.rs) and the group's page on a phone (web/app.js, which
-// scripts/build-web.sh gives this file). Its words are DESIGN §1's, a lend
-// named as the bare command names it (svrngs cli.rs `lends`); each page
-// keeps only how it asks a lend's choices and posts a yes or a stop
-// (REVIEW_FINDINGS #110, #113).
+// svrngs's words: its question, what apps use, who was removed from the
+// group, who is visiting, who is on now and what is in it, in
+// one wording for the two pages that ask a person, the home page on a
+// computer (home.rs serves this file) and the group's page on a phone
+// (scripts/build-web.sh gives it this file). Its words are DESIGN §1's, a
+// lend named as the bare command names it (svrngs cli.rs `lends`). Words
+// only: the parts in ui/ draw them, and each page keeps how it
+// asks a lend's choices and posts a yes or a stop (REVIEW_FINDINGS #110,
+// #113).
+
+/**
+ * A lend, as a computer's node lists it to either page (/people/lends,
+ * /v1/rail/lends): whose computer lends it, its name and kind, and what it
+ * declares. `group` is the group's id, for an app the group carries
+ * (lend.rs `carried`); `called` is `apart`'s.
+ * @typedef {object} Lend
+ * @property {string} key the lending computer's key
+ * @property {string | null} [relay]
+ * @property {string} name
+ * @property {string} kind
+ * @property {string} person the lender's name
+ * @property {string | null} [group]
+ * @property {string} [asks] the lender's words, asking for a yes
+ * @property {string[]} [reads] the kinds it opens as you (`--reads`)
+ * @property {number | null} [version] the lending computer's svrngs
+ * @property {number} [limit] how many may have it open at once
+ * @property {number} [using] how many have it open now
+ * @property {string} [called] its lender, as `called` tells namesakes apart
+ */
+
+/**
+ * When someone joined: the group's maker started it, everyone else joined
+ * at `at`, in seconds.
+ * @typedef {'started' | { at: number }} Joined
+ */
+
+/**
+ * A person, as `called` tells them apart: their name, their first key, and
+ * when they joined.
+ * @typedef {{ person: string, person_key: string, joined: Joined }} Named
+ */
+
+/**
+ * A people row (/v1/rail/people): one key of a person's, a device's, `key`,
+ * and the person it is a key of.
+ * @typedef {Named & { key: string, device?: 'computer' | 'browser' }} PeopleRow
+ */
+
+/**
+ * A removal, a leave or an ask to remove, by whom and of whom, each by
+ * name, key and when they joined, and when, in seconds.
+ * @typedef {object} Removal
+ * @property {string} said 'left', 'removed', or else an ask to remove
+ * @property {string} by
+ * @property {string} by_key
+ * @property {Joined} by_joined
+ * @property {string} of
+ * @property {string} of_key
+ * @property {Joined} of_joined
+ * @property {number} at
+ */
+
+/**
+ * An app on the group's shelf, by its kind, and the shelf's words for what
+ * it is.
+ * @typedef {{ name: string, words?: string }} Shelved
+ */
 
 // A lend as a person reads it: "Ana’s taste", and "Sam’s tonights-picks
 // (movie-night)" when its name and kind differ; an app the group carries
 // by its kind alone, "Money", its lend name holding the group's id
-// (lend.rs `carried`) and its copies everyone's (v1ui-polish (b)), a `-`
-// in it said as a space: a kind is one word (declared.rs
-// `valid_header_name`), and "House-rules" reads "House rules" (canon-house).
+// (lend.rs `carried`) and its copies everyone's, a `-` in it said as a
+// space: a kind is one word (declared.rs `valid_header_name`), and
+// "House-rules" reads "House rules".
+/** @param {string} kind */
 export const spoken = (kind) => kind.replaceAll('-', ' ');
-export const named = (l) => (l.group ? spoken(l.kind) : `${l.person}’s ${l.name === l.kind ? l.name : `${l.name} (${l.kind})`}`);
+// A lend's label, the first name of its origin here: what /to, /choices
+// and /reaching name it by. A split answers one part at least, so its
+// first is there.
+/**
+ * @param {{ origin: string }} lend
+ * @returns {string}
+ */
+export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
+/** @param {Lend} lend */
+export const named = (lend) => {
+  if (lend.group) return spoken(lend.kind);
+  const name = lend.name === lend.kind ? lend.name : `${lend.name} (${lend.kind})`;
+  return `${lend.called ?? lend.person}’s ${name}`;
+};
 
-// Whose a lend is on group `g`'s index: its lender's, or the group's for an
+// What opening `lend` in `group` agrees to, said beside its open on
+// both pages. The open names the app, and pressing it is the yes
+// (svrn-docs WHAT_CAN_ACT_AS_YOU §9); said on the button,
+// these words read as a grant asked of the person, Ana's 5 of 5 times
+// (demo/xenia/findings/first-set/after-join-reads-as-permissions.md; the
+// operator, 2026-10-26). An app the group carries reads and writes what the
+// shelf, `shelf`, says it is, else its own part of the group's record; an
+// app on a port writes what you say there as you, by naming it
+// (capability-signed's F1); a lend declared to read kinds (`--reads`) opens
+// your friends' lends of them as you. Made from what the lend declares,
+// never its kind of app. A carried app's says what it is for first, then
+// what opening it lets it do: led by "It reads and writes", Ana read it as
+// done on her behalf without her yes ("Money can read and write who owes
+// whom on my behalf, and I never agreed to that", the fifth set, `together`
+// run 1; demo/xenia/findings/said-too-much-the-group-s-page.md).
+/**
+ * @param {string} kind
+ * @param {Shelved[]} shelf
+ */
+const does = (kind, shelf) =>
+  shelf.find((app) => app.name === kind)?.words ?? 'its own part of the group’s record.';
+/**
+ * @param {Lend} lend
+ * @param {Shelved[]} shelf
+ * @param {{ name?: string | null }} group
+ */
+export const agreed = (lend, shelf, group) => {
+  if (lend.group) {
+    const words = does(lend.kind, shelf);
+    // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
+    // sentence for the app, or its own.
+    const first = /** @type {string} */ (words[0]).toUpperCase();
+    return `${first}${words.slice(1)} Opening it lets it read and write that, as you.`;
+  }
+  const reads = lend.reads ?? [];
+  const also =
+    reads.length > 0
+      ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you.`
+      : '';
+  return `It writes what you say there into ${group.name ?? 'your group'}’s record, as you.${also}`;
+};
+
+// Until when a guest visits (svrn-docs GUESTS §5 "The pages"), as
+// every member's page shows them (ui/visitors.js): a day and an hour.
+/** @param {{ until: number }} visit */
+export const until = (visit) =>
+  new Date(visit.until * 1000).toLocaleString([], {
+    weekday: 'long',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+// Whose a lend is on `group`'s index: its lender's, or the group's for an
 // app the group carries, whichever computer's copy is listed (`once`).
-export const owner = (l, g) => (l.group ? (g.name ?? 'your group') : l.person);
+/**
+ * @param {Lend} lend
+ * @param {{ name?: string | null }} group
+ */
+export const owner = (lend, group) =>
+  lend.group ? (group.name ?? 'your group') : (lend.called ?? lend.person);
 
 // One copy of each app a group carries, the first listed, and every other
 // lend as it is: each computer holding the app lends its copy
-// (COMMUNITY_APPS §7, found 4; v1ui-shelf (a)).
-export const once = (lent) => lent.filter((l, i) => !l.group || lent.findIndex((o) => o.group === l.group && o.kind === l.kind) === i);
+// (svrn-docs COMMUNITY_APPS §7, found 4).
+/**
+ * @template {Lend} L
+ * @param {L[]} lent
+ */
+export const once = (lent) =>
+  lent.filter(
+    (lend, i) =>
+      !lend.group ||
+      lent.findIndex((other) => other.group === lend.group && other.kind === lend.kind) === i,
+  );
 
 // svrngs's question: may the app lent as `app` use the lend `lend`?
+/**
+ * @param {Lend} app
+ * @param {Lend} lend
+ */
 export const question = (app, lend) => `Let ${named(app)} use ${named(lend)}?`;
 
 // A removal, a leave or an ask to remove, as everyone in the group is
-// shown it (v1-keeper-office (b); groups-leave): "cy asked to remove dee on
+// shown it: "cy asked to remove dee on
 // 12 Oct 2026, 14:03", "ana left on …", the time in the browser's own words.
-export const removal = (r) =>
-  `${r.said === 'left' ? `${r.of} left` : `${r.by} ${r.said === 'removed' ? 'removed' : 'asked to remove'} ${r.of}`} on ${new Date(r.at * 1000).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}`;
+// Each is told apart among the people rows and the two the removal names.
+/**
+ * @param {Removal} gone
+ * @param {Named[]} [rows]
+ */
+export const removal = (gone, rows = []) => {
+  const all = [
+    ...rows,
+    { person: gone.by, person_key: gone.by_key, joined: gone.by_joined },
+    { person: gone.of, person_key: gone.of_key, joined: gone.of_joined },
+  ];
+  const of = called(all, gone.of_key) ?? gone.of;
+  const at = new Date(gone.at * 1000).toLocaleString([], {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+  if (gone.said === 'left') return `${of} left on ${at}`;
+  const by = called(all, gone.by_key) ?? gone.by;
+  const did = gone.said === 'removed' ? 'removed' : 'asked to remove';
+  return `${by} ${did} ${of} on ${at}`;
+};
 
 // The line said when what apps use of `lend` cannot be asked of its
 // lender's computer.
-export const unasked = (lend) => `${lend.person}’s computer cannot say now what apps use ${named(lend)}.`;
+/** @param {Lend} lend */
+export const unasked = (lend) =>
+  `${lend.person}’s computer cannot say now what apps use ${named(lend)}.`;
 
 // The line said when an ask names an app or a lend not lent, or not
 // asking, on the page asked: the home page all your groups', the group's
-// page its group's (onair-economize (d), REVIEW_FINDINGS #113).
+// page its group's (REVIEW_FINDINGS #113).
 export const unlent = 'That app, or what it asks to use, is not lent here now.';
 
-// What apps use of each lend of `lent` that asks, from its lender's
-// choices, `choicesOf(l)`, each page asking by its own transport: a line
-// each, made by `line(words)`, the app named when `lent` lists it by
-// `labelOf`, each yes with Stop, which calls `stop(l, app, line)`; a lend
-// whose choices cannot be asked said so, with why.
-export async function uses(lent, labelOf, choicesOf, line, stop) {
-  for (const l of lent.filter((o) => o.asks)) {
-    let choices;
-    try {
-      choices = await choicesOf(l);
-    } catch (e) {
-      line(`${unasked(l)} ${e.message ?? ''}`.trim());
-      continue;
-    }
-    for (const [app, c] of Object.entries(choices)) {
-      const by = lent.find((o) => labelOf(o) === app);
-      const item = line(`${by ? named(by) : 'An app'} ${c.said === 'yes' ? 'uses' : 'was stopped using'} ${named(l)}. `);
-      if (c.said !== 'yes') continue;
-      const button = Object.assign(document.createElement('button'), { textContent: 'Stop' });
-      button.onclick = () => stop(l, app, item);
-      item.append(button);
-    }
-  }
-}
+const MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 
-// An element: `tag`, its words and then `kids`.
-export const el = (tag, text, ...kids) => {
-  const e = document.createElement(tag);
-  e.append(text ?? '', ...kids);
-  return e;
+// A day, from seconds, in this computer's or phone's time, or in UTC when
+// `utc`: its number and its month's first three letters, "3 Oct", as the
+// command says it (chrono's `%-d %b`, cli.rs `namesakes_said`), never the
+// browser's locale, which differs from it (#157).
+/**
+ * @param {number} seconds
+ * @param {boolean} [utc]
+ */
+export const day = (seconds, utc) => {
+  const date = new Date(seconds * 1000);
+  const month = utc ? date.getUTCMonth() : date.getMonth();
+  return `${utc ? date.getUTCDate() : date.getDate()} ${MONTHS[month]}`;
 };
 
-// A day, from seconds, in this computer's or phone's time: its number and
-// its month's first three letters, "3 Oct", as the command says it
-// (chrono's `%-d %b`, cli.rs `namesakes_said`), never the browser's
-// locale, which differs from it (#157).
-const day = (t, d = new Date(t * 1000)) => `${d.getDate()} ${'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ')[d.getMonth()]}`;
+// When someone joined, as both pages tell two of one name apart: its day
+// in UTC, one for everyone, as a lend's alias carries it from one person's
+// browser to another's (`alias`), where two browsers' own days near
+// midnight differ, one at UTC+14 and one at UTC-11 always. So the name the
+// page shows beside a lend and the alias it gives to keep say one day.
+/** @param {Joined} joined */
+const joinedSaid = (joined) =>
+  joined === 'started' ? 'started the group' : `joined ${day(joined.at, true)}`;
+
+// The person whose first key is `key`, as the people rows `rows`
+// (/v1/rail/people) name them (svrn-docs WHAT_CAN_ACT_AS_YOU §9): their name, and where someone else in `rows`
+// shares it, when they joined, `when` saying it, "ada (joined 3 Oct)" (its
+// day in UTC, `joinedSaid`), as the command tells them apart (cli.rs
+// `joined_said`); undefined for a key no row holds. Who did something is
+// told by key, never by name.
+/**
+ * @param {Named[]} rows
+ * @param {string | undefined} key
+ * @param {(joined: Joined) => string} [when]
+ */
+export const called = (rows, key, when = joinedSaid) => {
+  const person = rows.find((row) => row.person_key === key);
+  if (!person) return undefined;
+  const namesake = rows.some((row) => row.person === person.person && row.person_key !== key);
+  return namesake ? `${person.person} (${when(person.joined)})` : person.person;
+};
+
+// Each of `lent` given `called`, its lender as `called` says them by the
+// key of the computer lending it, so `named` and `owner` tell two lenders
+// of one name apart.
+/**
+ * @param {Lend[]} lent
+ * @param {PeopleRow[]} rows
+ */
+export const apart = (lent, rows) => {
+  for (const lend of lent) {
+    const computer = rows.find((row) => row.key === lend.key);
+    lend.called = called(rows, computer?.person_key);
+  }
+};
+
+// A lend's alias (svrn-docs rings/current/IN_THE_BROWSER.md, "Decided";
+// DESIGN §3, "Lent apps", call 1), what the group's page opens by name at
+// `#open=<alias>`: its name at whose it is, "films@Sam", whose as `apart`
+// says it, so two lenders of one name are told apart by when each joined,
+// "films@Sam (joined 24 Oct)", and two computers of one person lending one
+// name by when each computer joined, "films@Sam (computer joined 25 Oct)";
+// an app the group carries by its kind, "Money", as `once` lists one copy.
+// Every page reads the same record, so an alias names the same lend on
+// each, its day in UTC (`joinedSaid`) whatever the browser's time zone.
+// `rows` the people rows.
+/**
+ * @param {Lend} lend
+ * @param {Lend[]} lent
+ * @param {PeopleRow[]} rows
+ */
+export const alias = (lend, lent, rows) => {
+  const at = (/** @type {Lend} */ one) => `${one.name}@${one.called ?? one.person}`;
+  const computer = rows.find((row) => row.key === lend.key);
+  if (lend.group) return lend.kind;
+  const shared = lent.some(
+    (other) => !other.group && other.key !== lend.key && at(other) === at(lend),
+  );
+  if (shared && computer) return `${at(lend)} (computer ${joinedSaid(computer.joined)})`;
+  return at(lend);
+};
+
+// The lends of `lent` the alias `wanted` names: one, else none or more than
+// one, which the page says, never a nearest match.
+/**
+ * @template {Lend} L
+ * @param {string} wanted
+ * @param {L[]} lent
+ * @param {PeopleRow[]} rows
+ */
+export const aliased = (wanted, lent, rows) =>
+  once(lent).filter((lend) => alias(lend, lent, rows) === wanted);
 
 // Who made a group and since when this computer or phone has held it, so
 // two of one name are told apart (#138): "sam’s, since 14 Oct".
-export const whose = (g) => `${g.maker ? `${g.maker}’s` : 'yours'}${g.since ? `, since ${day(g.since)}` : ''}`;
+/** @param {{ maker?: string | null, since?: number | null }} group */
+export const whose = (group) => {
+  const maker = group.maker ? `${group.maker}’s` : 'yours';
+  const since = group.since != null && group.since > 0 ? `, since ${day(group.since)}` : '';
+  return `${maker}${since}`;
+};
+
+// A group's name, and whose it is when someone else made it, as the phone
+// titles it.
+/** @param {{ name: string, maker?: string | null, since?: number | null }} group */
+export const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)})` : ''}`;
+
+// The computer a dial went through, or the link's when none is named.
+/** @param {{ person: string } | undefined} computer */
+export const whoseComputer = (computer) =>
+  computer ? `${computer.person}’s computer` : 'The computer that sent your link';
 
 // The groups a new one shares its name with (/group, the node's one rule;
 // #138), each said as `whose`, in the command's words (cli.rs
 // `namesakes_said`): `verb` says it before the group is made or after.
-export const namesakes = (n, name, verb) => (n.length ? `You’re already in ${n.map((g) => `${g.name} (${whose(g)})`).join(' and ')}. ${verb} ${n.length > 1 ? 'another' : 'a second'} group called ${name}.` : '');
+/**
+ * @param {{ name: string, maker?: string, since?: number }[]} same
+ * @param {string} name
+ * @param {string} verb
+ */
+export const namesakes = (same, name, verb) => {
+  if (!same.length) return '';
+  const groups = same.map((group) => `${group.name} (${whose(group)})`).join(' and ');
+  const which = same.length > 1 ? 'another' : 'a second';
+  return `You’re already in ${groups}. ${verb} ${which} group called ${name}.`;
+};
 
-// Each person once, of the rows /v1/rail/people gives a key each; two of
-// one name told apart by when each joined (bash-same-name), in the form
-// `svrngs remove --joined` takes (home.rs `WHEN`): this computer's time as
-// the `sv-SE` locale writes it, then its offset as ±hhmm, so a fall-back
-// night's repeated hour reads back to one instant (#126).
-// Each with what holds their keys, `device` (v1ui-door (c)). In the order
-// they joined, whoever started the group first, so a newcomer's window comes
-// last and no window moves as people arrive (the screen, home.js `screen`;
-// the Draft 2 canvas's frames 8-10): one order for every door. `started`
-// is a string, whose `.at` is a method, so it is asked by name.
-function people(rows) {
-  const since = (p) => (p.joined === 'started' ? 0 : p.joined.at);
-  const each = [...new Map(rows.map((r) => [r.person_key, r])).values()].sort((a, b) => since(a) - since(b));
-  const at = (d, m = -d.getTimezoneOffset()) => `${d.toLocaleString('sv-SE')} ${m < 0 ? '-' : '+'}${String(Math.trunc(Math.abs(m) / 60) * 100 + (Math.abs(m) % 60)).padStart(4, '0')}`;
-  const when = (j) => (j === 'started' ? 'started the group' : `joined ${at(new Date(j.at * 1000))}`);
-  return each.map((p) => [p, each.filter((q) => q.person === p.person).length > 1 ? `${p.person} (${when(p.joined)})` : p.person, rows.filter((r) => r.person_key === p.person_key).map((r) => r.device)]);
-}
+// An app the group carries, as "What acts as you" says it: what it reads
+// and writes, the shelf's words, and no Stop, as it runs only when opened.
+/**
+ * @param {string} kind
+ * @param {Shelved[]} shelf
+ */
+export const carrying = (kind, shelf) =>
+  `${spoken(kind)} reads and writes ${does(kind, shelf).replace(/\.$/, '')}, when you open it.`;
 
-// The door (V1_UI_BUILD §3.1): each person once, a cell in a grid, unjudged
-// until the group's computers have answered or not, within one round
-// (/v1/lends, `judge`): then lit, "on now", while their computer answers;
-// drawn off when it did not, never lit and never left out; and one in only
-// from a phone, which nobody asks, marked so with no presence claimed.
-// Presence is only "on now", never when last seen. Given `lent`, as the
-// screen gives it (home.js `screen`), each person's own lends in their
-// window, a link each by its name, opened in a tab as this computer's
-// person; an app the group carries is the group's, in nobody's window.
-export function door(rows, lent = []) {
-  const theirs = (p) => lent.filter((l) => !l.group && l.person === p.person).flatMap((l) => [' ', Object.assign(el('a', l.name), { href: l.origin, target: '_blank' })]);
-  const cells = people(rows).map(([p, name, devices]) => [p, devices, el('li', '', el('strong', name), ...theirs(p), ' ', el('small', 'asking…'))]);
-  const judge = (lends) => cells.forEach(([p, devices, li]) => {
-    const phone = devices.includes('browser') ? (devices.includes('computer') ? ', a phone too' : 'in from a phone') : '';
-    const [drawn, words] = !devices.includes('computer') ? ['phone', ''] : !lends ? ['', 'not known now'] : lends.unanswered.includes(p.person) ? ['off', 'did not answer'] : ['on', 'on now'];
-    [li.className, li.lastChild.textContent] = [drawn, words + phone];
-  });
-  return [Object.assign(el('ul', '', ...cells.map((c) => c[2])), { className: 'door' }), judge];
-}
+// What the person said, `said`, of `lend` opening their friends' lends of
+// the kinds it reads as them, since or on its day; `lend`
+// undefined when it is not lent now.
+/**
+ * @param {(Lend & { reads: string[] }) | undefined} lend
+ * @param {{ said: string, at: number }} said
+ */
+export const reading = (lend, said) => {
+  const who = lend ? named(lend) : 'An app not lent now';
+  const what = lend
+    ? `your friends’ ${lend.reads.map(spoken).join(' and ')}`
+    : 'your friends’ things';
+  if (said.said === 'yes') return `${who} opens ${what} as you. Since ${day(said.at)}. `;
+  return `${who} stopped opening ${what} as you on ${day(said.at)}. Opening it again says yes again.`;
+};
 
-// "Bring things to the table" (V1_UI_BUILD §3.4; v1ui-shelf (c)): the
-// shelf, svrngs's own apps as `lends.shelf` lists them, each not on group
-// `g`'s table yet ticked, and one button bringing the ticked ones, by
-// `bring(names)`, which answers each `{app, already}`; then what happened
-// said. One already on the table is said so. A group whose name cannot be
-// read is "your group". Then each app on the table whose files someone
-// changed since the version that runs as you (`lends.changed`; canon-pin
-// (c); svrn-docs WHAT_RUNS_AS_YOU §3): who and when, and a button saying
-// yes to it by `yes(app)`. Until you do, the version you said yes to, or
-// the one brought, runs as you, on your computers and phones alike.
-export function table(g, lends, bring, yes) {
-  const name = g.name ?? 'your group';
-  const on = (a) => lends.lent.some((l) => l.group === g.id && l.kind === a.name);
-  const ticks = lends.shelf.filter((a) => !on(a)).map((a) => [a.name, Object.assign(el('input'), { type: 'checkbox', checked: true })]);
-  const said = el('p', ticks.length ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.` : '');
-  const s = el('section', '', el('h3', 'Bring things to the table'), ...lends.shelf.filter(on).map((a) => el('p', `${spoken(a.name)} is on the table.`)), said);
-  for (const [name, tick] of ticks) s.append(el('p', '', el('label', '', tick, ` ${spoken(name)}: ${lends.shelf.find((a) => a.name === name).words}`)));
-  const done = (r) => (r.already ? `${spoken(r.app)} is on the table already.` : `You brought ${spoken(r.app)} to ${name}: everyone in it can open it in a few seconds.`);
-  const go = () => bring(ticks.filter(([, t]) => t.checked).map(([n]) => n)).then((b) => said.replaceChildren(b.map(done).join(' ') || 'Tick something to bring first.'), (e) => said.replaceChildren(`Nothing was brought: ${e.message}`));
-  if (ticks.length) s.append(el('p', '', Object.assign(el('button', `Bring the ticked ones to ${name}`), { onclick: go })));
-  if (lends.changed === null) s.append(el('p', `This computer can’t say whether anyone changed an app in ${name}.`));
-  for (const c of (lends.changed ?? []).filter((c) => c.group === g.id)) {
-    const p = s.appendChild(el('p', `${c.by === g.person ? 'You' : c.by} changed ${spoken(c.app)}’s files on ${new Date(c.at * 1000).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}. Open the new version? `));
-    p.append(Object.assign(el('button', `Yes, use the new version of ${spoken(c.app)}`), { onclick: () => yes(c.app).then(() => p.replaceChildren(`${spoken(c.app)} opens at its new version for you now.`), (e) => p.append(` ${e.message}`)) }));
-  }
-  return s;
-}
+// Who can decide for you (§4): the devices holding a key of the person
+// whose device key is `me`, of the people rows, this one, a `here`, first
+// and nobody else's, a namesake's included, by key, never by name.
+/**
+ * @param {PeopleRow[]} rows
+ * @param {string} me
+ * @param {'computer' | 'browser'} here
+ */
+export const deciders = (rows, me, here) => {
+  const first = rows.find((row) => row.key === me)?.person_key;
+  /** @param {'computer' | 'browser'} device */
+  const own = (device) =>
+    rows.filter((row) => row.person_key === first && row.key !== me && row.device === device)
+      .length;
+  /**
+   * @param {number} count
+   * @param {'computer' | 'browser'} device
+   * @param {string} one
+   */
+  const said = (count, device, one) =>
+    count ? [`your ${here === device ? 'other ' : ''}${count > 1 ? `${count} ${one}s` : one}`] : [];
+  return [
+    `This ${here === 'computer' ? 'computer' : 'phone'}`,
+    ...said(own('computer'), 'computer', 'computer'),
+    ...said(own('browser'), 'browser', 'phone'),
+  ]
+    .join(', ')
+    .replace(/, ([^,]*)$/, ', and $1');
+};
 
-// How lend `l` opens, `where`, and whether it is full now: the index's row
+// How `lend` opens, `where`, and whether it is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).
-export const opens = (l, where) => [`${where}${l.signs_in ? ', signing you in once' : ''}`, l.limit && l.using >= l.limit ? 'full' : 'on'];
-
-// A row of the index; `tag` th for its head.
-export const row = (cells, tag = 'td') => el('tr', '', ...cells.map((c) => el(tag, '', c)));
+// A lend with no count of who is using it is not full: `undefined >=` is
+// false. Nor is one with no limit (`null` on the wire; never 0, lend.rs
+// `Offered::limit` is a `NonZeroU16`): none reaches `Infinity`.
+/**
+ * @param {Lend} lend
+ * @param {string} [where]
+ * @returns {[string | undefined, 'full' | 'on']}
+ */
+export const opens = (lend, where) => [
+  where,
+  /** @type {number} */ (lend.using) >= (lend.limit ?? Infinity) ? 'full' : 'on',
+];

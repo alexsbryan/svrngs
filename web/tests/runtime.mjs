@@ -26,7 +26,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { held, launch, play, serve } from './page.mjs';
+import { held, inApp, launch, pageAt, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -40,7 +40,12 @@ async function range({ lend, path, range }) {
     const sha = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
       .map((x) => x.toString(16).padStart(2, '0'))
       .join('');
-    return { status: res.status, contentRange: res.headers.get('content-range'), bytes: bytes.length, sha };
+    return {
+      status: res.status,
+      contentRange: res.headers.get('content-range'),
+      bytes: bytes.length,
+      sha,
+    };
   } catch (e) {
     return { error: String(e) };
   }
@@ -55,10 +60,11 @@ async function refusal({ lend, path }) {
 }
 
 const server = await serve(args.site);
-const origin = `http://localhost:${server.address().port}/`;
+const origin = pageAt(server);
 // WebKit's context keeps a profile, so the browser can be closed and
 // opened again on it; Chromium's is stopped through DevTools.
-const profile = args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
+const profile =
+  args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
 let { context, close } = await launch(args.engine, { profile });
 const logs = [];
 const watch = (context) => context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
@@ -67,9 +73,11 @@ try {
   let page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await held(page, origin, args);
-  const listed = await page.evaluate(() => [...document.querySelectorAll('#lent button')].map((b) => b.textContent));
+  const listed = await page.evaluate(() =>
+    [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
+  );
   const button = page.locator('#lent button', { hasText: args.open });
-  const away = (url) => url.hostname.endsWith('.localhost');
+  const away = inApp;
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
   await page.waitForSelector('video', { timeout: 60_000 });
   const opened = page.url();
@@ -84,7 +92,8 @@ try {
 
   const first = await page.evaluate(play, { at: null, within: 15_000 });
   const seeks = [];
-  for (const at of args.seeks.slice(0, -1)) seeks.push(await page.evaluate(play, { at, within: 15_000 }));
+  for (const at of args.seeks.slice(0, -1))
+    seeks.push(await page.evaluate(play, { at, within: 15_000 }));
   // The browser stops the worker mid-play; the next range must still
   // answer. Chromium stops it through DevTools, the page left playing.
   // Playwright cannot reach WebKit's worker, so WebKit's browser is closed
@@ -96,7 +105,8 @@ try {
   if (cdp) {
     await cdp.send('ServiceWorker.stopAllWorkers');
     const stopped = Date.now();
-    while (!runs.includes('stopped') && Date.now() - stopped < 10_000) await new Promise((r) => setTimeout(r, 50));
+    while (!runs.includes('stopped') && Date.now() - stopped < 10_000)
+      await new Promise((r) => setTimeout(r, 50));
   } else {
     await close();
     ({ context, close } = await launch(args.engine, { profile }));
@@ -115,7 +125,20 @@ try {
   const refusals = [];
   for (const r of args.refusals ?? []) refusals.push(await page.evaluate(refusal, r));
   console.log(
-    JSON.stringify({ listed, opened, reopened, replayed, first, seeks, runsAtStop, runs, other, openEnded, refusals, logs }),
+    JSON.stringify({
+      listed,
+      opened,
+      reopened,
+      replayed,
+      first,
+      seeks,
+      runsAtStop,
+      runs,
+      other,
+      openEnded,
+      refusals,
+      logs,
+    }),
   );
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

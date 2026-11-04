@@ -1,0 +1,62 @@
+2026-10-27T15:18:02.207365Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=["http://127.0.0.1:37485/"]
+2026-10-27T15:18:02.229365Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:46729
+2026-10-27T15:18:02.229753Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-10-27T15:18:08.366636Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_message{msg=AddConnection(139927215975968)}:select_path: iroh::_events::path::selected: remote=fa1ab24603 network_path=Relay(http://127.0.0.1:37485/, fa1ab24603) prev_network_path=None
+2026-10-27T15:18:08.366733Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89
+2026-10-27T15:18:08.367656Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_path_event{conn_id=ConnId(139927215975968) event=Ok(Established { id: PathId(1) })}:select_path: iroh::_events::path::selected: remote=fa1ab24603 network_path=Ip(192.168.1.12->192.168.1.12:53435) prev_network_path=Relay(http://127.0.0.1:37485/, fa1ab24603)
+2026-10-27T15:18:08.369097Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}: iroh::_events::conn::closed: conn_id=139927215975968 remote_id=fa1ab24603 reason=ApplicationClosed(ApplicationClose { error_code: 0, reason: b"" })
+2026-10-27T15:18:08.370008Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_message{msg=AddConnection(139927350161856)}:select_path: iroh::_events::path::selected: remote=fa1ab24603 network_path=Ip(192.168.1.12->192.168.1.12:53435) prev_network_path=None
+2026-10-27T15:18:08.370040Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=svrngs/redeem/0 dialer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89
+2026-10-27T15:18:08.374237Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:18:08.374345Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}: iroh::_events::conn::closed: conn_id=139927350161856 remote_id=fa1ab24603 reason=ApplicationClosed(ApplicationClose { error_code: 0, reason: b"" })
+2026-10-27T15:18:08.374772Z DEBUG transport: transport: the group names no relay for this computer — its key alone, which only an address lookup finds peer=fa1ab24603
+2026-10-27T15:18:08.374832Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/fa1ab246"] skipped_offline=[]
+2026-10-27T15:18:08.374862Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" offered_to=["Jo/fa1ab246"] skipped_not_standing=[]
+2026-10-27T15:18:08.374989Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=false
+2026-10-27T15:18:08.375036Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=fa1ab24603 alpn=Member known=["Relay(http://127.0.0.1:37485/) Active", "Ip(192.168.1.12:53435) Active"]
+2026-10-27T15:18:08.375048Z DEBUG transport: iroh: a bare key — dialled through the endpoint's address lookup when it has one transport="iroh" peer=fa1ab246 lookup=true
+2026-10-27T15:18:08.375574Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_message{msg=AddConnection(139928893742752)}:select_path: iroh::_events::path::selected: remote=fa1ab24603 network_path=Ip(192.168.1.12->192.168.1.12:53435) prev_network_path=None
+2026-10-27T15:18:08.375682Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89
+2026-10-27T15:18:08.376053Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_message{msg=AddConnection(139928893733024)}:do_holepunching: iroh::_events::qnt::init: remote=fa1ab24603 local_candidates={192.168.1.12:40346} remote_candidates={}
+2026-10-27T15:18:08.376121Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=fa1ab24603 within=Some(4s) error=None
+2026-10-27T15:18:08.376325Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:do_holepunching: iroh::_events::qnt::init: remote=fa1ab24603 local_candidates={192.168.1.12:40346} remote_candidates={192.168.1.12:53435}
+2026-10-27T15:18:08.378363Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" peer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89 chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-27T15:18:08.378396Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=4
+2026-10-27T15:18:08.382863Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:18:08.383410Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/fa1ab246"] skipped_offline=[]
+2026-10-27T15:18:08.383439Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" offered_to=["Jo/fa1ab246"] skipped_not_standing=[]
+2026-10-27T15:18:08.383536Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=true
+2026-10-27T15:18:08.384142Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" peer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89 chunk=1 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-27T15:18:08.384168Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=1
+2026-10-27T15:18:08.477795Z  INFO rails: ring sync: an append woke the round
+2026-10-27T15:18:08.477913Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:18:08.478098Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/fa1ab246"] skipped_offline=[]
+2026-10-27T15:18:08.478121Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" offered_to=["Jo/fa1ab246"] skipped_not_standing=[]
+2026-10-27T15:18:08.478216Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=true
+2026-10-27T15:18:08.481194Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=true
+2026-10-27T15:18:08.482905Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" peer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89 chunk=1 pulled=0 pushed=1 peer_sent=5 offered=1 more_for_peer=false
+2026-10-27T15:18:08.482987Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=true
+2026-10-27T15:18:08.483666Z DEBUG svrngs_node::ring_sync: ring sync: chunk namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" peer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89 chunk=2 pulled=0 pushed=0 peer_sent=0 offered=0 more_for_peer=false
+2026-10-27T15:18:08.483720Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=1 peers_unreachable=0 peers_refused=0 ops_pulled=0 ops_pushed=1 round_ms=5
+2026-10-27T15:18:08.556055Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}: transport: relay: a lookup's answer, its relays read dotless peer=fa1ab24603 relays=["http://127.0.0.1:37485/"]
+2026-10-27T15:18:08.614041Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89
+2026-10-27T15:18:08.614189Z DEBUG transport: iroh acceptor: dialer admitted — serving its streams alpn=cwth/http/0 dialer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89
+2026-10-27T15:18:08.615002Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}: iroh::_events::conn::closed: conn_id=139928088364496 remote_id=fa1ab24603 reason=ApplicationClosed(ApplicationClose { error_code: 0, reason: b"" })
+2026-10-27T15:18:08.693501Z  INFO rails: ring sync: an append woke the round
+2026-10-27T15:18:08.693584Z DEBUG svrngs_node::ring_sync: ring sync: woken by a local write rather than the interval
+2026-10-27T15:18:08.693806Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=["Jo/fa1ab246"] skipped_offline=[]
+2026-10-27T15:18:08.693834Z DEBUG svrngs_node::ring_sync: ring sync: namespace register namespace="09090dd32c4e61ce9ce744a59e473d71b78dba9ffea9a01645aaeef9a07f18e3" offered_to=["Jo/fa1ab246"] skipped_not_standing=[]
+2026-10-27T15:18:08.693973Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=true
+2026-10-27T15:18:12.410809Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}: iroh::_events::conn::closed: conn_id=139928893742752 remote_id=fa1ab24603 reason=TimedOut
+2026-10-27T15:18:12.711207Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}: iroh::_events::conn::closed: conn_id=139928893733024 remote_id=fa1ab24603 reason=TimedOut
+2026-10-27T15:18:12.711424Z DEBUG transport: iroh: whether the peer closes this computer's connection as not admitted peer=fa1ab24603 unadmitted=false closed=Some(TimedOut)
+2026-10-27T15:18:12.711462Z DEBUG transport: iroh: a request had no answer peer=fa1ab24603 unadmitted=false failed="connection error"
+2026-10-27T15:18:12.711655Z DEBUG transport: iroh: a request failed on the connection kept to it, as one to a computer that restarted does: sent again, once, on one dialled afresh peer=fa1ab24603 failed="connection error"
+2026-10-27T15:18:12.711692Z DEBUG transport: iroh: a request on the connection kept to it, else on one dialled (#178) peer=fa1ab24603 alpn=Member kept=false
+2026-10-27T15:18:12.711829Z DEBUG transport: iroh: dialled by key, iroh holding these addresses for it peer=fa1ab24603 alpn=Member known=["Ip(192.168.1.12:40313) Active", "Relay(http://127.0.0.1:37485/) Active", "Ip(192.168.1.12:53435) Active"]
+2026-10-27T15:18:16.712772Z DEBUG transport: iroh: a dial, answered or not; one not answered in time is a computer taken as asleep peer=fa1ab24603 within=Some(4s) error=Some(Asleep(4s))
+2026-10-27T15:18:16.712854Z DEBUG svrngs_node::ring_sync: ring sync: exchange failed, so the member is unreachable this round peer=fa1ab24603f9cf5a1e1d71ca074555879a62ecf7557dce4c0cbe7826233dec89 detail="not answered within 4s"
+2026-10-27T15:18:16.712895Z DEBUG svrngs_node::ring_sync: ring sync: round namespaces=1 peers_reached=0 peers_unreachable=1 peers_refused=0 ops_pulled=0 ops_pushed=0 round_ms=8019
+2026-10-27T15:18:23.616755Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_path_event{conn_id=ConnId(139927148936240) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 15990 } })}: iroh::_events::path::abandoned: remote=fa1ab24603 conn_id=139927148936240 path_id=1 network_path=Ip(192.168.1.12->192.168.1.12:40313) reason=RemoteAbandoned { error_code: 15990 }
+2026-10-27T15:18:23.616783Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_path_event{conn_id=ConnId(139927148936240) event=Ok(Abandoned { id: PathId(1), reason: RemoteAbandoned { error_code: 15990 } })}:select_path: iroh::_events::path::selected: remote=fa1ab24603 network_path=Relay(http://127.0.0.1:37485/, fa1ab24603) prev_network_path=Ip(192.168.1.12->192.168.1.12:53435)
+2026-10-27T15:19:08.614183Z DEBUG endpoint{id=d945857115}:RemoteStateActor{remote=fa1ab24603}:handle_path_event{conn_id=ConnId(139927148936240) event=Ok(Established { id: PathId(2) })}:select_path: iroh::_events::path::selected: remote=fa1ab24603 network_path=Ip(192.168.1.12->192.168.1.12:40313) prev_network_path=Relay(http://127.0.0.1:37485/, fa1ab24603)

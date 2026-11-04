@@ -1,0 +1,9 @@
+# Factorio's words. svrngs's code never uses them (scripts/vocab_check.py).
+factorio
+wube
+factory
+factories
+world
+worlds
+game
+games

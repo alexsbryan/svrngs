@@ -1,0 +1,7 @@
+models:
+  "tiny-1.5b":
+    cmd: |
+      llama-server --port ${PORT} -m /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf --jinja --host 127.0.0.1 -c 2048 -ngl 99
+  "tiny-0.5b":
+    cmd: |
+      llama-server --port ${PORT} -m /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/weights/router/qwen2.5-coder-0.5b-instruct-q4_k_m.gguf --jinja --host 127.0.0.1 -c 2048 -ngl 99

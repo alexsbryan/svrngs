@@ -1,0 +1,24 @@
+# The row's Podman premise on this Mac, 2026-10-21
+# A probe answer on this Mac's 127.0.0.1, asked three ways.
+
+## this Mac: curl http://127.0.0.1:18779/
+probe
+
+## podman --network=host: its 127.0.0.1 is the Podman machine's, not this Mac's
+wget: can't connect to remote host (127.0.0.1): Connection refused
+refused
+
+## podman, bridged: host.containers.internal reaches this Mac's loopback
+probe
+
+# The provider's one issuer string is http://127.0.0.1:<api port>/oidc/<lend>
+# (crates/svrngs-node/src/oidc/provider.rs:62-65), which a container's
+# 127.0.0.1 cannot name, so Forgejo runs outside a container, as
+# SIGN_IN_WITH_SVRNGS §8 8 says a Mac's app does.
+
+## the API itself, from podman --network=host at 127.0.0.1:<api>
+wget: can't connect to remote host (127.0.0.1): Connection refused
+refused
+
+## the API itself, bridged, by host.containers.internal:<api>
+{"authorization_endpoint":"http://localhost:18097/.svrngs/oidc/authorize","claims_supported":["sub","iss","aud","exp","iat","name","preferred_username","groups"],"code_challenge_methods_supported":["S256"],"grant_types_supported":["authorization_code"],"id_token_signing_alg_values_supported":["ES256"],"issuer":"http://127.0.0.1:51314/oidc/forgejo","jwks_uri":"http://127.0.0.1:51314/oidc/forgejo/keys","response_types_supported":["code"],"scopes_supported":["openid","profile","groups"],"subject_types_supported":["public"],"token_endpoint":"http://127.0.0.1:51314/oidc/forgejo/token","token_endpoint_auth_methods_supported":["client_secret_basic","client_secret_post","none"],"userinfo_endpoint":"http://127.0.0.1:51314/oidc/forgejo/userinfo"}

@@ -1,0 +1,6 @@
+Tue Nov  3 01:42:27 PST 2026
+(no defaults): 11 threads in NSAnimation _runBlocking after 10 pages, 11 15 s later
+-NSAutomaticWindowAnimationsEnabled NO: 0 threads in NSAnimation _runBlocking after 10 pages, 0 15 s later
+-NSScrollAnimationEnabled NO: 11 threads in NSAnimation _runBlocking after 10 pages, 11 15 s later
+-NSAutomaticWindowAnimationsEnabled -NO: 11 threads in NSAnimation _runBlocking after 10 pages, 11 15 s later
+-NSAutomaticWindowAnimationsEnabled -0: 11 threads in NSAnimation _runBlocking after 10 pages, 11 15 s later

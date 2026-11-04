@@ -1,0 +1,30 @@
+== svrngs 6189d90f, podman 6.0.1, macOS 27.0.1
+svrngs answers on the Mac at http://127.0.0.1:60596
+ == 1. The container asks, as any program in it can
+the record, its groups: GET 127.0.0.1:60596/v1/groups -> 401 {"error":"send this computer's token, which /Users/alexsbryan/dev/svrngs/target/give-container/data/token holds, as `Authorization: Bearer <token>`: the record 
+an open, minted for it: POST 127.0.0.1:60596/v1/open -> 401 {"error":"send this computer's token, which /Users/alexsbryan/dev/svrngs/target/give-container/data/token holds, as `Authorization: Bearer <token>`: the record 
+the home page, typed: GET svrngs.localhost:60596/ -> 401 <!doctype html><meta charset="utf-8"><title>Open svrngs from your computer</title><h1>Open svrngs from your computer</h1><p>This page opens only from svrngs on 
+the home page, its yes: POST svrngs.localhost:60596/choices -> 401 <!doctype html><meta charset="utf-8"><title>Open svrngs from your computer</title><h1>Open svrngs from your computer</h1><p>This page opens only from svrngs on 
+ == 2. The person opens the home page from their computer: svrngs open
+Your home page is open in your browser.
+the browser was handed: http://svrngs.localhost:60596/svrngs-open?code=…
+redeemed: HTTP/1.1 303 See Other; location: /; set-cookie: 1
+the home page, with its session: 200, <title>Your groups</title>
+the same code again: 401
+ == svrngs's traces of the container's asks and the open (target/give-container/svrngs.log)
+DEBUG rails: api: whether the caller showed this computer's token holds=false path=/v1/groups
+DEBUG rails: api: whether the caller showed this computer's token holds=false path=/v1/open
+DEBUG session: session: what the caller showed, the token, this host's session, or neither name="svrngs" shown=Neither
+DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/ method=GET at_own=true site=Some("none") mode=Some("navigate") origin=None answers=true shown=Neither opening=fal
+DEBUG session: session: what the caller showed, the token, this host's session, or neither name="svrngs" shown=Neither
+DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/choices method=POST at_own=true site=Some("same-origin") mode=None origin=Some("http://svrngs.localhost:60596") an
+DEBUG rails: api: whether the caller showed this computer's token holds=true path=/v1/open
+DEBUG session: session: an open minted, single-use name="svrngs" at=None
+DEBUG session: session: what the caller showed, the token, this host's session, or neither name="svrngs" shown=Neither
+DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/svrngs-open method=GET at_own=true site=None mode=None origin=None answers=false shown=Neither opening=true
+DEBUG session: session: opened, its cookie set name="svrngs" at="/"
+DEBUG session: session: what the caller showed, the token, this host's session, or neither name="svrngs" shown=Session
+DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/ method=GET at_own=true site=Some("none") mode=Some("navigate") origin=None answers=true shown=Session opening=fal
+DEBUG session: session: what the caller showed, the token, this host's session, or neither name="svrngs" shown=Neither
+DEBUG home: home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation path=/svrngs-open method=GET at_own=true site=None mode=None origin=None answers=false shown=Neither opening=true
+DEBUG session: session: refused — no open, or one minted for another host, and spent name="svrngs" other=Err("that code was already redeemed")

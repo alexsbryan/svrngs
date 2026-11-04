@@ -26,18 +26,40 @@ const NAMES = ['Sam Reyes', 'Kim Okafor'];
 function town(mod) {
   const dir = mkdtempSync(join(tmpdir(), 'grapevine-relay-'));
   const path = join(dir, 'town.json');
-  writeFileSync(path, JSON.stringify({ groups: { page: { name: '1400 Page', people: ['sam', 'jo'] }, waller: { name: 'Waller block', people: ['jo', 'kim'] } } }));
+  writeFileSync(
+    path,
+    JSON.stringify({
+      groups: {
+        page: { name: '1400 Page', people: ['sam', 'jo'] },
+        waller: { name: 'Waller block', people: ['jo', 'kim'] },
+      },
+    }),
+  );
   const store = file(path);
   const traced = [];
   const trace = (what, fields) => traced.push(JSON.stringify({ what, ...fields }));
   const p = {};
-  for (const id of ['sam', 'jo', 'kim']) p[id] = mod.person({ id, store, held: mod.heldIn(store, id), kinds: KINDS, state: mod.stateFile(join(dir, `${id}.json`)), trace });
+  for (const id of ['sam', 'jo', 'kim'])
+    p[id] = mod.person({
+      id,
+      store,
+      held: mod.heldIn(store, id),
+      kinds: KINDS,
+      state: mod.stateFile(join(dir, `${id}.json`)),
+      trace,
+    });
   return { p, store, traced, dir };
 }
 
 /** Sam asks, Jo carries, Kim offers, both say yes; each message relayed by Jo's loop. */
 async function scene({ p }) {
-  const ask = await p.sam.ask({ kind: 'tool', fields: TILE_SAW, group: 'page', hops: 1, expires: Math.floor(Date.now() / 1000) + 3600 });
+  const ask = await p.sam.ask({
+    kind: 'tool',
+    fields: TILE_SAW,
+    group: 'page',
+    hops: 1,
+    expires: Math.floor(Date.now() / 1000) + 3600,
+  });
   const carry = await p.jo.carry({ ask, group: 'waller' });
   await p.kim.reply({ ask, group: 'waller', fields: OFFER });
   await p.jo.pass();
@@ -52,15 +74,19 @@ async function scene({ p }) {
 
 const LAWS = {
   /** Bar 5: Sam withdraws, and one pass of Jo's loop corrects the carry in Waller. */
-  async 'bar 5: a withdrawn ask\'s carry is corrected within one loop'(mod) {
+  async "bar 5: a withdrawn ask's carry is corrected within one loop"(mod) {
     const t = town(mod);
     const { ask, carry } = await scene(t);
     if (!(await t.p.kim.view()).asks.some((a) => a.id === ask)) return 'Kim never saw the ask';
     await t.p.sam.withdraw({ ask });
     await t.p.jo.pass();
-    const corrected = (await t.store.log('waller')).ops.some((o) => o.corrects === carry && o.person === 'jo');
+    const corrected = (await t.store.log('waller')).ops.some(
+      (o) => o.corrects === carry && o.person === 'jo',
+    );
     const still = (await t.p.kim.view()).asks.length;
-    return corrected && !still ? null : `one pass of Jo's loop after Sam withdrew: the carry ${corrected ? 'corrected' : 'not corrected'}, Kim sees ${still} asks`;
+    return corrected && !still
+      ? null
+      : `one pass of Jo's loop after Sam withdrew: the carry ${corrected ? 'corrected' : 'not corrected'}, Kim sees ${still} asks`;
   },
   /** Sealed means sealed: nothing the loop or the person traces holds a message's words or a secret key. */
   async 'no plaintext or secret in any trace'(mod) {
@@ -73,10 +99,15 @@ const LAWS = {
         return [];
       }
     });
-    if (secrets.length < 2) return `${secrets.length} secret keys kept, not one each for Sam and Kim`;
+    if (secrets.length < 2)
+      return `${secrets.length} secret keys kept, not one each for Sam and Kim`;
     const all = t.traced.join('\n');
     const leak = [...Object.values(OFFER), ...NAMES, ...secrets].find((s) => all.includes(s));
-    return leak ? `a trace holds ${JSON.stringify(leak.slice(0, 20))}` : t.traced.length ? null : 'nothing was traced';
+    return leak
+      ? `a trace holds ${JSON.stringify(leak.slice(0, 20))}`
+      : t.traced.length
+        ? null
+        : 'nothing was traced';
   },
 };
 
@@ -99,15 +130,24 @@ async function planted(from, to) {
   const src = readFileSync(join(HERE, 'relay.mjs'), 'utf8');
   assert.equal(src.split(from).length, 2, `the plant no longer applies to relay.mjs: ${from}`);
   const copy = join(mkdtempSync(join(tmpdir(), 'grapevine-plant-')), 'relay.mjs');
-  writeFileSync(copy, src.replace(from, to).replaceAll("from './", `from '${pathToFileURL(HERE).href}`));
+  writeFileSync(
+    copy,
+    src.replace(from, to).replaceAll("from './", `from '${pathToFileURL(HERE).href}`),
+  );
   return import(pathToFileURL(copy).href);
 }
 
 const PLANTS = {
   // the loop skips its step 3
-  "bar 5: a withdrawn ask's carry is corrected within one loop": ["} else if (r.do === 'correct') {", "} else if (r.do === 'correct' && false) {"],
+  "bar 5: a withdrawn ask's carry is corrected within one loop": [
+    "} else if (r.do === 'correct') {",
+    "} else if (r.do === 'correct' && false) {",
+  ],
   // GRAPEVINE_DEBUG printing the opened body
-  'no plaintext or secret in any trace': ["trace('folded', { person: id,", "trace('folded', { opened: v.threads, person: id,"],
+  'no plaintext or secret in any trace': [
+    "trace('folded', {",
+    "trace('folded', { opened: v.threads,",
+  ],
 };
 
 test('the loop holds its laws', async () => {
@@ -123,14 +163,24 @@ test("each of the loop's laws catches the change planted to break it", async () 
 });
 
 test("a group whose people can't be read keeps svrngs's answer, and says so", async () => {
-  const api = http.createServer((req, res) => res.end(JSON.stringify({ groups: [{ id: 'page', name: '1400 Page', person: 'Jo' }] })));
+  const api = http.createServer((req, res) =>
+    res.end(JSON.stringify({ groups: [{ id: 'page', name: '1400 Page', person: 'Jo' }] })),
+  );
   await new Promise((done) => api.listen(0, '127.0.0.1', done));
   const traced = [];
   const store = { people: () => Promise.reject(new Error('the record is away')) };
   try {
-    const held = await relay.heldBy(`http://127.0.0.1:${api.address().port}`, store, (what, fields) => traced.push({ what, ...fields }))();
+    const held = await relay.heldBy(
+      `http://127.0.0.1:${api.address().port}`,
+      'the-token',
+      store,
+      (what, fields) => traced.push({ what, ...fields }),
+    )();
     assert.deepEqual(held, [{ id: 'page', name: '1400 Page', me: 'Jo' }]);
-    assert.ok(traced.some((t) => t.group === 'page' && t.error === 'the record is away'), JSON.stringify(traced));
+    assert.ok(
+      traced.some((t) => t.group === 'page' && t.error === 'the record is away'),
+      JSON.stringify(traced),
+    );
   } finally {
     api.close();
   }

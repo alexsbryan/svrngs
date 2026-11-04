@@ -1,0 +1,9 @@
+{
+  "status": 404,
+  "headers": {
+    "Content-Type": "application/json",
+    "Date": "Fri, 23 Oct 2026 00:39:55 GMT",
+    "Content-Length": "135"
+  },
+  "body": "{\"src\":\"llama-swap\",\"error\":{\"message\":\"no router for requested model\",\"type\":\"invalid_request_error\",\"param\":null,\"code\":\"not_found\"}}"
+}

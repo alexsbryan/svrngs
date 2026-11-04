@@ -1,0 +1,28 @@
+<!doctype html>
+<!--
+  What a person's tab is shown where the computer lending something did not
+  answer: their window on the door, unlit. On a computer, svrngs's door
+  draws it (crates/svrngs-node/src/door.rs `paged`); on a phone, the lend's
+  worker (web/lend.js `away`), to which scripts/build-web.sh copies this
+  file. Each fills in {who}, the lender's name, and {what}, what could
+  not open, each with `<` escaped. It says only that the
+  computer did not answer, as the door does: never that it sleeps, nor
+  since when (DESIGN §3, "Who went off is never a line"). A program is
+  given svrngs's JSON instead, `away`.
+-->
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<title>{who}’s window is dark</title>
+<style>
+  body { margin: 0; min-height: 100vh; box-sizing: border-box; padding: 8vmin; background: midnightblue; color: lavender; font: 1.25rem/1.45 system-ui, sans-serif; }
+  h1 { margin: 0 0 1.5rem; color: gold; font-size: clamp(2.5rem, 10vw, 5.5rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.04em; }
+  p { max-width: 34rem; margin: 0 0 1rem; }
+  a { color: gold; }
+</style>
+<h1>☾ {who}’s window is dark</h1>
+<p>{who}’s computer didn’t answer, so {what} can’t open right now. It opens again once that computer answers.</p>
+<p><a href="">Try again</a></p>
+<p>Goodnight from {who}.</p>
+</html>

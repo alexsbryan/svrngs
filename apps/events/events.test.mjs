@@ -4,62 +4,263 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { actsOf, answers, fold, hosted, init, ownActs, reduce, validate } from './events.js';
+import {
+  actsOf,
+  answers,
+  called,
+  fold,
+  hosted,
+  init,
+  ownActs,
+  reduce,
+  validate,
+} from './events.js';
 
 const act = (id, ts, by, op, corrects = null) => ({ id, ts, by, op, corrects });
 const dinner = (id, by, more = {}) =>
-  act(id, 1000, by, { kind: 'event', event: 'e1', what: 'dinner', when: 'Friday 7', where: 'the house', ...more });
-const coming = (id, by, guests) => act(id, 1100, by, { kind: 'coming', event: 'e1', ...(guests && { guests }) });
-const came = (id, by, guest) => act(id, 1200, by, { kind: 'came', event: 'e1', ...(guest && { guest }) });
+  act(id, 1000, by, {
+    kind: 'event',
+    event: 'e1',
+    what: 'dinner',
+    when: 'Friday 7',
+    where: 'the house',
+    ...more,
+  });
+const coming = (id, by, guests) =>
+  act(id, 1100, by, { kind: 'coming', event: 'e1', ...(guests && { guests }) });
+const came = (id, by, guest) =>
+  act(id, 1200, by, { kind: 'came', event: 'e1', ...(guest && { guest }) });
 const one = (acts) => fold(acts).events.e1;
 const codes = (acts) => fold(acts).gaps.map((g) => g.code);
 
-test('an event is its host\'s post, and who is coming is who said so, guests by name', () => {
-  const e = one([dinner('a', 'sam'), coming('b', 'bo', ['Maya', ' Maya ', 'Jo']), coming('c', 'cy')]);
+test("an event is its host's post, and who is coming is who said so, guests by name", () => {
+  const e = one([
+    dinner('a', 'sam'),
+    coming('b', 'bo', ['Maya', ' Maya ', 'Jo']),
+    coming('c', 'cy'),
+  ]);
   assert.deepEqual(e, {
-    host: 'sam', what: 'dinner', when: 'Friday 7', where: 'the house', at: 1000,
-    coming: { bo: ['Jo', 'Maya'], cy: [] }, came: [], guests_came: {},
+    host: 'sam',
+    what: 'dinner',
+    when: 'Friday 7',
+    where: 'the house',
+    at: 1000,
+    coming: { bo: ['Jo', 'Maya'], cy: [] },
+    came: [],
+    guests_came: {},
     via: { host: null, coming: {}, came: {}, guests_came: {} },
   });
 });
 
-test('who came is the came acts: a member\'s own, and the guests they brought, under them', () => {
-  const e = one([dinner('a', 'sam'), coming('b', 'bo', ['Maya']), came('c', 'bo'), came('d', 'bo', 'Maya'), came('e', 'cy', 'Maya')]);
+test("who came is the came acts: a member's own, and the guests they brought, under them", () => {
+  const e = one([
+    dinner('a', 'sam'),
+    coming('b', 'bo', ['Maya']),
+    came('c', 'bo'),
+    came('d', 'bo', 'Maya'),
+    came('e', 'cy', 'Maya'),
+  ]);
   assert.deepEqual(e.came, ['bo']);
   // Cy's "Maya" is Cy's guest, not Bo's: no one can say Bo's guest came but Bo.
   assert.deepEqual(e.guests_came, { bo: ['Maya'], cy: ['Maya'] });
 });
 
 test('changing your mind is a correction of your own act', () => {
-  const e = one([dinner('a', 'sam'), coming('b', 'bo', ['Maya']), act('c', 1300, 'bo', { kind: 'coming', event: 'e1' }, 'b')]);
+  const e = one([
+    dinner('a', 'sam'),
+    coming('b', 'bo', ['Maya']),
+    act('c', 1300, 'bo', { kind: 'coming', event: 'e1' }, 'b'),
+  ]);
   assert.deepEqual(e.coming, { bo: [] });
-  assert.deepEqual(one([dinner('a', 'sam'), coming('b', 'bo'), act('c', 1300, 'bo', null, 'b')]).coming, {});
+  assert.deepEqual(
+    one([dinner('a', 'sam'), coming('b', 'bo'), act('c', 1300, 'bo', null, 'b')]).coming,
+    {},
+  );
 });
 
-test('a correction of someone else\'s answer counts for nothing, and says so', () => {
-  const acts = [dinner('a', 'sam'), coming('b', 'bo'), act('c', 1300, 'cy', null, 'b'), act('d', 1300, 'cy', { kind: 'coming', event: 'e1', guests: ['X'] }, 'b')];
+test("a correction of someone else's answer counts for nothing, and says so", () => {
+  const acts = [
+    dinner('a', 'sam'),
+    coming('b', 'bo'),
+    act('c', 1300, 'cy', null, 'b'),
+    act('d', 1300, 'cy', { kind: 'coming', event: 'e1', guests: ['X'] }, 'b'),
+  ];
   assert.deepEqual(one(acts).coming, { bo: [] });
   assert.deepEqual(codes(acts), ['not_theirs', 'not_theirs']);
 });
 
-test('the record\'s voided flag is not this fold\'s: a voided act by another\'s correction still counts', () => {
+// Two people of one name are two authors (capability-keys; svrn-docs
+// rings/current/WHAT_CAN_ACT_AS_YOU.md §7.4): the record says each op's
+// writer by their first key, `person_key`, beside the name two may share.
+test("a correction from another person of the same name counts for nothing; one from the author's other device counts", () => {
+  const log = {
+    ops: [
+      {
+        id: 'a',
+        ts_unix: 1000,
+        person: 'sam',
+        person_key: 'p1',
+        voided: false,
+        payload: dinner('a', 'sam').op,
+      },
+      { id: 'b', ts_unix: 1100, person: 'sam', person_key: 'p2', voided: false, corrects: 'a' },
+      {
+        id: 'c',
+        ts_unix: 1200,
+        person: 'sam',
+        person_key: 'p1',
+        voided: false,
+        corrects: 'a',
+        payload: { ...dinner('c', 'sam').op, where: 'the yard' },
+      },
+    ],
+  };
+  const state = fold(actsOf(log));
+  assert.deepEqual(
+    state.gaps.map((g) => g.code),
+    ['not_theirs'],
+  );
+  assert.equal(
+    state.events.e1.where,
+    'the yard',
+    "the first Sam's own change, from her phone, is hers",
+  );
+});
+
+// Each person is their first key (keys-names): two people of one name come
+// as two, and one person's devices, and the old answers a computer wrote
+// for them, as one.
+const keyed = (id, ts, person, key, payload, more = {}) => ({
+  id,
+  ts_unix: ts,
+  person,
+  person_key: key,
+  voided: false,
+  payload,
+  ...more,
+});
+
+test("two people of one name come as two; one person's devices and the old answers a computer wrote for them as one", () => {
+  const log = {
+    ops: [
+      keyed('a', 1000, 'sam', 'p1', dinner('a', 'sam').op),
+      keyed('b', 1100, 'bo', 'pb', coming('b', 'bo', ['Maya']).op),
+      keyed('c', 1100, 'bo', 'pb2', coming('c', 'bo').op),
+      // Cy's computer wrote the first Bo's "I came", as a phone's was before capability-signed.
+      keyed('d', 1200, 'cy', 'pc', came('d', 'bo').op, {
+        on_behalf_of: 'bo',
+        on_behalf_of_key: 'pb',
+      }),
+      keyed('e', 1200, 'bo', 'pb', came('e', 'bo', 'Maya').op),
+    ],
+  };
+  const {
+    events: { e1 },
+    names,
+  } = fold(actsOf(log));
+  assert.deepEqual(
+    [e1.host, e1.coming, e1.came, e1.guests_came],
+    ['p1', { pb: ['Maya'], pb2: [] }, ['pb'], { pb: ['Maya'] }],
+  );
+  assert.deepEqual(e1.via.came, { pb: ['cy'] });
+  assert.deepEqual(names, { p1: 'sam', pb: 'bo', pb2: 'bo' }, 'cy only carried an answer');
+});
+
+test("the host is who posted it, by key: another of their name is not the host, nor shown the host's view", () => {
+  const log = (second) => ({
+    ops: [
+      keyed('a', 1000, 'sam', 'p1', dinner('a', 'sam').op),
+      keyed('b', 1100, 'sam', second, dinner('b', 'sam', { what: 'mine' }).op),
+    ],
+  });
+  assert.deepEqual(
+    fold(actsOf(log('p2'))).gaps.map((g) => g.code),
+    ['not_the_host'],
+  );
+  assert.deepEqual(
+    fold(actsOf(log('p1'))).gaps.map((g) => g.code),
+    ['posted_twice'],
+  );
+  const house = fold(actsOf(log('p2')));
+  assert.deepEqual(hosted('e1', [{ group: 'house', answers: house, me: 'p2' }]), []);
+  assert.deepEqual(
+    hosted('e1', [{ group: 'house', answers: house, me: 'p1' }]).map((g) => g.group),
+    ['house'],
+  );
+});
+
+test("what changing your mind corrects is your own answers, by key, never another's of your name", () => {
+  const log = {
+    ops: [
+      keyed('a', 1000, 'sam', 'p1', dinner('a', 'sam').op),
+      keyed('b', 1100, 'bo', 'pb', coming('b', 'bo').op),
+      keyed('c', 1100, 'bo', 'pb2', coming('c', 'bo').op),
+    ],
+  };
+  const state = actsOf(log).reduce(reduce, init());
+  assert.deepEqual(
+    [ownActs(state, 'pb', 'e1', 'coming'), ownActs(state, 'pb2', 'e1', 'coming')],
+    [['b'], ['c']],
+  );
+});
+
+test('a person is said by name, and where two share it, with when each joined', () => {
+  const spans = [
+    { person: 'bo', person_key: 'pb', joined: null, left: null },
+    { person: 'bo', person_key: 'pb2', joined: Date.UTC(2026, 9, 3, 12) / 1000, left: null },
+    { person: 'cy', person_key: 'pc', joined: 100, left: null },
+  ];
+  assert.deepEqual(
+    [called(spans, 'pb', 'bo'), called(spans, 'pb2', 'bo'), called(spans, 'pc', 'cy')],
+    ['bo (started the group)', 'bo (joined 3 Oct)', 'cy'],
+  );
+  assert.equal(called(undefined, 'bo', 'bo'), 'bo', 'an older svrngs names no stretch');
+});
+
+test("the record's voided flag is not this fold's: a voided act by another's correction still counts", () => {
   const log = {
     ops: [
       { id: 'a', ts_unix: 1000, person: 'sam', voided: false, payload: dinner('a', 'sam').op },
-      { id: 'b', ts_unix: 1100, person: 'sam', on_behalf_of: 'bo', voided: true, payload: coming('b', 'bo').op },
+      {
+        id: 'b',
+        ts_unix: 1100,
+        person: 'sam',
+        on_behalf_of: 'bo',
+        voided: true,
+        payload: coming('b', 'bo').op,
+      },
       { id: 'c', ts_unix: 1200, person: 'cy', voided: false, corrects: 'b' },
       { id: 'd', ts_unix: 1200, person: 'cy', voided: false },
     ],
   };
-  assert.deepEqual(actsOf(log).map((a) => [a.id, a.by]), [['a', 'sam'], ['b', 'bo'], ['c', 'cy']]);
+  assert.deepEqual(
+    actsOf(log).map((a) => [a.id, a.by]),
+    [
+      ['a', 'sam'],
+      ['b', 'bo'],
+      ['c', 'cy'],
+    ],
+  );
   assert.deepEqual(fold(actsOf(log)).events.e1.coming, { bo: [] });
   assert.throws(() => actsOf({ error: 'no' }), /no list of acts/);
 });
 
 test('only the host changes the event, and no one else can post it again', () => {
-  const moved = act('c', 1300, 'sam', { kind: 'event', event: 'e1', what: 'dinner', when: 'Friday 8', where: 'the yard' }, 'a');
+  const moved = act(
+    'c',
+    1300,
+    'sam',
+    { kind: 'event', event: 'e1', what: 'dinner', when: 'Friday 8', where: 'the yard' },
+    'a',
+  );
   assert.equal(one([dinner('a', 'sam'), moved]).where, 'the yard');
-  const taken = act('c', 1300, 'cy', { kind: 'event', event: 'e1', what: 'mine', when: '', where: '' }, 'a');
+  const taken = act(
+    'c',
+    1300,
+    'cy',
+    { kind: 'event', event: 'e1', what: 'mine', when: '', where: '' },
+    'a',
+  );
   assert.equal(one([dinner('a', 'sam'), taken]).host, 'sam');
   assert.deepEqual(codes([dinner('a', 'sam'), dinner('b', 'cy')]), ['not_the_host']);
   // The host withdrawing it leaves no event, and the answers to it said as answers to none.
@@ -68,29 +269,53 @@ test('only the host changes the event, and no one else can post it again', () =>
 });
 
 test('nothing records "no": no act for it, and an answer that tries is not counted at all', () => {
-  for (const op of [{ kind: 'not_coming', event: 'e1' }, { kind: 'declined', event: 'e1' }, { kind: 'coming', event: 'e1', coming: false }, { kind: 'came', event: 'e1', came: false }]) {
-    assert.deepEqual(one([dinner('a', 'sam'), act('b', 1100, 'bo', op)]), one([dinner('a', 'sam')]), JSON.stringify(op));
+  for (const op of [
+    { kind: 'not_coming', event: 'e1' },
+    { kind: 'declined', event: 'e1' },
+    { kind: 'coming', event: 'e1', coming: false },
+    { kind: 'came', event: 'e1', came: false },
+  ]) {
+    assert.deepEqual(
+      one([dinner('a', 'sam'), act('b', 1100, 'bo', op)]),
+      one([dinner('a', 'sam')]),
+      JSON.stringify(op),
+    );
   }
-  assert.deepEqual(validate(act('b', 1, 'bo', { kind: 'coming', event: 'e1', coming: false })).map((g) => g.code), ['unread_field']);
+  assert.deepEqual(
+    validate(act('b', 1, 'bo', { kind: 'coming', event: 'e1', coming: false })).map((g) => g.code),
+    ['unread_field'],
+  );
 });
 
 test('a correction of an act this copy does not hold yet is said, and changes nothing', () => {
-  assert.deepEqual(codes([dinner('a', 'sam'), act('c', 1300, 'bo', null, 'zz')]), ['changes_unheld']);
+  assert.deepEqual(codes([dinner('a', 'sam'), act('c', 1300, 'bo', null, 'zz')]), [
+    'changes_unheld',
+  ]);
 });
 
-test('a correction ordered before its act, as one second\'s acts from two computers may be, still counts', () => {
-  assert.deepEqual(one([dinner('a', 'sam'), act('c', 1100, 'bo', null, 'b'), coming('b', 'bo')]).coming, {});
+test("a correction ordered before its act, as one second's acts from two computers may be, still counts", () => {
+  assert.deepEqual(
+    one([dinner('a', 'sam'), act('c', 1100, 'bo', null, 'b'), coming('b', 'bo')]).coming,
+    {},
+  );
 });
 
-test('a person\'s own live answers, newest first, are what changing their mind corrects', () => {
-  const state = [dinner('a', 'sam'), coming('b', 'bo'), coming('c', 'bo', ['Maya']), coming('d', 'cy'), came('e', 'bo', 'Maya'), act('f', 1300, 'bo', null, 'b')].reduce(reduce, init());
+test("a person's own live answers, newest first, are what changing their mind corrects", () => {
+  const state = [
+    dinner('a', 'sam'),
+    coming('b', 'bo'),
+    coming('c', 'bo', ['Maya']),
+    coming('d', 'cy'),
+    came('e', 'bo', 'Maya'),
+    act('f', 1300, 'bo', null, 'b'),
+  ].reduce(reduce, init());
   assert.deepEqual(ownActs(state, 'bo', 'e1', 'coming'), ['c']);
   assert.deepEqual(ownActs(state, 'bo', 'e1', 'came', 'Maya'), ['e']);
   assert.deepEqual(ownActs(state, 'bo', 'e1', 'came'), []);
   assert.deepEqual(ownActs(state, 'cy', 'e1', 'coming', null), ['d']);
 });
 
-test('the host\'s view joins each group where they host the event; an unread group is said as unread', () => {
+test("the host's view joins each group where they host the event; an unread group is said as unread", () => {
   const house = fold([dinner('a', 'sam'), coming('b', 'bo', ['Maya'])]);
   const dweb = fold([dinner('x', 'sam'), coming('y', 'cy')]);
   const other = fold([dinner('z', 'di')]);
@@ -100,13 +325,21 @@ test('the host\'s view joins each group where they host the event; an unread gro
     { group: 'club', answers: other, me: 'sam' },
     { group: 'far', unread: 'its record did not answer' },
   ]);
-  assert.deepEqual(view.map((g) => [g.group, g.event ? Object.keys(g.event.coming) : g.unread]), [
-    ['house', ['bo']], ['dweb', ['cy']], ['far', 'its record did not answer'],
-  ]);
+  assert.deepEqual(
+    view.map((g) => [g.group, g.event ? Object.keys(g.event.coming) : g.unread]),
+    [
+      ['house', ['bo']],
+      ['dweb', ['cy']],
+      ['far', 'its record did not answer'],
+    ],
+  );
 });
 
-test('an answer to another group\'s event is an answer to none here: each record holds its own', () => {
-  assert.deepEqual(fold([coming('b', 'bo')]).gaps.map((g) => g.code), ['no_event']);
+test("an answer to another group's event is an answer to none here: each record holds its own", () => {
+  assert.deepEqual(
+    fold([coming('b', 'bo')]).gaps.map((g) => g.code),
+    ['no_event'],
+  );
 });
 
 test('which computer wrote it is kept: `via` is its person when it wrote for another, else null; the answers unchanged', () => {
@@ -124,11 +357,30 @@ test('which computer wrote it is kept: `via` is its person when it wrote for ano
     ],
   };
   const acts = actsOf(log);
-  assert.deepEqual(acts.map((a) => [a.id, a.by, a.via]), [['a', 'sam', 'cy'], ['b', 'bo', 'cy'], ['c', 'bo', null], ['d', 'bo', 'cy'], ['e', 'ama', null], ['f', 'ama', 'cy']]);
+  assert.deepEqual(
+    acts.map((a) => [a.id, a.by, a.via]),
+    [
+      ['a', 'sam', 'cy'],
+      ['b', 'bo', 'cy'],
+      ['c', 'bo', null],
+      ['d', 'bo', 'cy'],
+      ['e', 'ama', null],
+      ['f', 'ama', 'cy'],
+    ],
+  );
   const state = acts.reduce(reduce, init());
   assert.equal(state.acts.f.via, 'cy');
   const e = answers(state).events.e1;
   const untold = fold(acts.map(({ via, ...a }) => a)).events.e1;
-  assert.deepEqual([e.host, e.coming, e.came, e.guests_came], [untold.host, untold.coming, untold.came, untold.guests_came], 'via changes no answer');
-  assert.deepEqual(e.via, { host: 'cy', coming: { bo: ['cy'] }, came: {}, guests_came: { bo: { Maya: ['cy'] } } });
+  assert.deepEqual(
+    [e.host, e.coming, e.came, e.guests_came],
+    [untold.host, untold.coming, untold.came, untold.guests_came],
+    'via changes no answer',
+  );
+  assert.deepEqual(e.via, {
+    host: 'cy',
+    coming: { bo: ['cy'] },
+    came: {},
+    guests_came: { bo: { Maya: ['cy'] } },
+  });
 });

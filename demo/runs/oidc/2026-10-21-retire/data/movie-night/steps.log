@@ -1,0 +1,10 @@
+06:33:11 sam's jellyfin up at 8296: {"LocalAddress":"http://127.0.0.1:8296","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"78dd561ed86f476d96f425a0c784df66","StartupWizardCompleted":false}
+06:33:15 sam's films: [["Alien", 1979, {"Imdb": "tt0078748", "Tmdb": "348"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}], ["Brazil", 1985, {"Imdb": "tt0088846", "Tmdb": "68"}]]
+06:33:27 sam's middleware: 
+06:33:34 dee's jellyfin up at 8396: {"LocalAddress":"http://127.0.0.1:8396","ServerName":"Alexs-MacBook-Pro-4","Version":"12.0.0","ProductName":"Jellyfin Server","OperatingSystem":"","Id":"4ce1588709464779bacfdf5b161e1ff0","StartupWizardCompleted":false}
+06:33:38 dee's films: [["Arrival", 2016, {"Imdb": "tt2543164", "Tmdb": "329865"}], ["Blade Runner", 1982, {"Imdb": "tt0083658", "Tmdb": "78"}]]
+06:33:50 dee's middleware: 
+06:33:55 the page: http://localhost:60461/
+06:33:57 dee: You're in House, as Dee.
+06:33:58 cy: You're in House, as Cy.
+06:33:59 alex: You're in House, as Alex.

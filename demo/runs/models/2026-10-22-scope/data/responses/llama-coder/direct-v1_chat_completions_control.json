@@ -1,0 +1,11 @@
+{
+  "status": 404,
+  "headers": {
+    "Connection": "close",
+    "Content-Type": "application/json; charset=utf-8",
+    "Server": "llama.cpp",
+    "Access-Control-Allow-Origin": "",
+    "Content-Length": "74"
+  },
+  "body": "{\"error\":{\"message\":\"File Not Found\",\"type\":\"not_found_error\",\"code\":404}}"
+}

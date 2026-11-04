@@ -1,0 +1,23 @@
+{"t": 1792533946.613, "event": "new-start", "who": "ada"}
+{"t": 1792533950.054, "event": "founded", "who": "ada", "gid": "5dec71ff27d1aa6f803da1dd0fc4fdd78bdffca5397a3eca06f1fccd32beafb3", "link": true}
+{"t": 1792533950.054, "event": "join-start", "who": "cy"}
+{"t": 1792533953.683, "event": "joined", "who": "cy"}
+{"t": 1792533953.683, "event": "join-start", "who": "lee"}
+{"t": 1792533957.11, "event": "joined", "who": "lee"}
+{"t": 1792533957.116, "event": "shared", "who": "cy", "lend": "shelf", "kind": "shelf", "code": 0, "said": "hange it on your home page, or `svrngs share 18088 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare shelf` stops lending it.\nIf shelf takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"}
+{"t": 1792533957.117, "event": "llama-server-health", "ok": true}
+{"t": 1792533957.121, "event": "shared", "who": "lee", "lend": "llama", "kind": "llama-server", "code": 0, "said": " show one person's use of it to the others or change it for everyone.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare llama` stops lending it.\nIf llama takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):"}
+{"t": 1792533957.123, "event": "up", "lends_status": 200}
+{"t": 1792533969.637, "event": "freeze", "who": "cy", "pid": 2139125}
+{"t": 1792533974.198, "event": "thaw", "who": "cy", "pid": 2139125}
+{"t": 1792533974.962, "event": "freeze", "who": "cy", "pid": 2139125}
+{"t": 1792533987.357, "event": "freeze", "who": "ada", "pid": 2138873}
+{"t": 1792533992.08, "event": "thaw", "who": "cy", "pid": 2139125}
+{"t": 1792533992.559, "event": "thaw", "who": "ada", "pid": 2138873}
+{"t": 1792534016.862, "event": "freeze", "who": "cy", "pid": 2139125}
+{"t": 1792534021.572, "event": "thaw", "who": "cy", "pid": 2139125}
+{"t": 1792534022.341, "event": "freeze", "who": "cy", "pid": 2139125}
+{"t": 1792534026.988, "event": "freeze", "who": "ada", "pid": 2138873}
+{"t": 1792534045.126, "event": "thaw", "who": "cy", "pid": 2139125}
+{"t": 1792534045.748, "event": "thaw", "who": "ada", "pid": 2138873}
+{"t": 1792534061.427, "event": "down"}

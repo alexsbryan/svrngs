@@ -1,0 +1,15 @@
+[package]
+name = "replica-dialer"
+version = "0.0.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The replica spike's dialer (../DESIGN.md): the phone's key dialled each minute, beside a control dial through a relay."
+
+# Its own workspace, outside the gate, as the tunnel's is.
+[workspace]
+
+[dependencies]
+iroh = "=1.0.2"
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "macros", "io-util", "fs", "signal"] }

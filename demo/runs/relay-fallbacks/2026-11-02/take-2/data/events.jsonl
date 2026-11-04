@@ -1,0 +1,30 @@
+{"t": 1793670280.08, "event": "start", "build": "c0487881", "build_tree_clean": true, "bin_sha256": "8e352b5505620553dca2f8ff8ec3cfaa6e90751b6402d06de3ef3a8b1a31083f", "load": 35.93798828125, "cores": 12}
+{"t": 1793670280.75, "event": "instrument", "probes": {"udp to 100.104.36.28": "PermissionError(1, 'Operation not permitted')", "udp to 127.0.0.1": "PermissionError(1, 'Operation not permitted')", "udp to 192.168.1.11": "PermissionError(1, 'Operation not permitted')", "udp to ::1": "PermissionError(1, 'Operation not permitted')", "udp to fd7a:115c:a1e0::a3a:241c": "PermissionError(1, 'Operation not permitted')", "udp to 1.1.1.1 (control)": "sent", "tcp to loopback (control)": "200", "https to n0 (control)": "200"}, "held": {"udp to 100.104.36.28": true, "udp to 127.0.0.1": true, "udp to 192.168.1.11": true, "udp to ::1": true, "udp to fd7a:115c:a1e0::a3a:241c": true, "udp to 1.1.1.1 (control)": true, "tcp to loopback (control)": true, "https to n0 (control)": true}}
+{"t": 1793670280.753, "event": "started", "who": "relayA", "n": 1, "args": ["relay", "--at", "127.0.0.1:61327", "--open"], "pid": 95487}
+{"t": 1793670281.517, "event": "started", "who": "relayB", "n": 1, "args": ["relay", "--at", "127.0.0.1:61328", "--open"], "pid": 95493}
+{"t": 1793670281.772, "event": "relays", "A": {"url": "http://127.0.0.1:61327/", "up": [{"ms": 761, "t": 1793670280.753}]}, "B": {"url": "http://127.0.0.1:61328/", "up": [{"ms": 255, "t": 1793670281.517}]}}
+{"t": 1793670281.776, "event": "started", "who": "sam", "n": 1, "args": ["new", "house", "--as", "Sam", "--relay", "http://127.0.0.1:61327", "--relay", "http://127.0.0.1:61328"], "pid": 95620}
+{"t": 1793670285.327, "event": "made", "link_ms": 3551}
+{"t": 1793670285.333, "event": "started", "who": "ana", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Ana"], "pid": 95900}
+{"t": 1793670289.907, "event": "joined", "who": "ana", "joined_ms": 4575}
+{"t": 1793670289.91, "event": "started", "who": "alex", "n": 1, "args": ["join", "svrngs://join/<the token>", "--as", "Alex"], "pid": 96051}
+{"t": 1793670294.485, "event": "joined", "who": "alex", "joined_ms": 4574}
+{"t": 1793670294.505, "event": "share", "who": "ana", "exit": 0, "ms": 20, "said": "You lend notes (port 61319) to everyone in your groups, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 61319 --limit <number>`.\nsvrngs is running here already, so they can open it now.\n`svrngs unshare notes` stops lending it."}
+{"t": 1793670294.815, "event": "before", "homes": {"sam": "http://127.0.0.1:61328/", "ana": "http://127.0.0.1:61327/", "alex": "https://use1-1.relay.n0.iroh.link/"}, "tiers": {"sam": "Own", "ana": "Own", "alex": "Own"}, "works": {"sam": 0, "alex": 0}}
+{"t": 1793670294.815, "event": "stopped", "who": "relayA", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793670351.753, "event": "one-stopped", "stopped": "A", "lend": {"sam": {"works_ms": 4, "fetches": [[4, true, 66]]}, "alex": {"works_ms": 4512, "fetches": [[4, false, 4003], [4512, true, 181]]}}, "home_moved_ms": {"sam": null, "ana": 51949, "alex": 56426}, "homes": {"sam": "http://127.0.0.1:61328/", "ana": "http://127.0.0.1:61328/", "alex": "http://127.0.0.1:61328/"}, "tiers": {"sam": [], "ana": ["Unanswered"], "alex": ["Unanswered"]}}
+{"t": 1793670351.757, "event": "started", "who": "relayA", "n": 2, "args": ["relay", "--at", "127.0.0.1:61327", "--open"], "pid": 97232}
+{"t": 1793670442.037, "event": "one-back", "returned_ms": {"sam": null, "ana": 6622, "alex": null}, "homes": {"sam": "http://127.0.0.1:61328/", "ana": "http://127.0.0.1:61327/", "alex": "http://127.0.0.1:61328/"}, "lend_works": {"sam": true, "alex": true}}
+{"t": 1793670442.037, "event": "stopped", "who": "relayA", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793670442.041, "event": "stopped", "who": "relayB", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793670453.22, "event": "both-stopped", "stopped": [{"who": "relayA", "exit": 0, "ms": 4, "killed": false, "t": 1793670442.037}, {"who": "relayB", "exit": 0, "ms": 4, "killed": false, "t": 1793670442.041}], "lend": {"sam": {"works_ms": 8, "fetches": [[8, true, 95]]}, "alex": {"works_ms": 8, "fetches": [[8, true, 95]]}}, "tier_ms": {"sam": 9780, "ana": 3339, "alex": 7909}, "home_n0_ms": {"sam": 11007, "ana": 4633, "alex": 9076}, "homes": {"sam": "https://usw1-1.relay.n0.iroh.link/", "ana": "https://usw1-1.relay.n0.iroh.link/", "alex": "https://usw1-1.relay.n0.iroh.link/"}}
+{"t": 1793670453.225, "event": "started", "who": "relayA", "n": 3, "args": ["relay", "--at", "127.0.0.1:61327", "--open"], "pid": 99093}
+{"t": 1793670453.484, "event": "started", "who": "relayB", "n": 2, "args": ["relay", "--at", "127.0.0.1:61328", "--open"], "pid": 99095}
+{"t": 1793670468.904, "event": "both-back", "tier_ms": {"sam": 8334, "ana": 1893, "alex": 6462}, "home_own_ms": {"sam": 741, "ana": 4896, "alex": 9464}, "homes": {"sam": "http://127.0.0.1:61328/", "ana": "http://127.0.0.1:61327/", "alex": "http://127.0.0.1:61328/"}, "lend_works": {"sam": true, "alex": true}}
+{"t": 1793670468.904, "event": "stopped", "who": "app-notes", "exit": 0, "ms": 9, "killed": false}
+{"t": 1793670468.913, "event": "stopped", "who": "sam", "exit": 0, "ms": 17, "killed": false}
+{"t": 1793670468.93, "event": "stopped", "who": "ana", "exit": 0, "ms": 17, "killed": false}
+{"t": 1793670468.948, "event": "stopped", "who": "alex", "exit": 0, "ms": 4, "killed": false}
+{"t": 1793670468.952, "event": "stopped", "who": "relayA", "exit": 0, "ms": 1, "killed": false}
+{"t": 1793670468.954, "event": "stopped", "who": "relayB", "exit": 0, "ms": 1, "killed": false}
+{"t": 1793670468.965, "event": "end"}

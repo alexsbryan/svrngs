@@ -37,6 +37,7 @@
 use alloc::format;
 use alloc::string::{String, ToString};
 use alloc::vec;
+use alloc::vec::Vec;
 
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
@@ -64,20 +65,26 @@ pub enum Format {
     Bare,
     /// The issuer's key, the secret and its relay's URL.
     Relayed,
+    /// The issuer's key, the secret and two of the group's relays, the
+    /// issuer's home first, apart by a space, which no URL holds unescaped
+    /// (relay fallbacks). A build before it refuses the link by this byte.
+    Met,
 }
 
 impl Format {
+    /// Each format, at the number of relays it carries.
+    const BY_RELAYS: [Format; 3] = [Format::Bare, Format::Relayed, Format::Met];
+
     const fn byte(self) -> u8 {
         match self {
             Format::Bare => 1,
             Format::Relayed => 2,
+            Format::Met => 3,
         }
     }
 
     fn of(byte: u8) -> Option<Self> {
-        [Format::Bare, Format::Relayed]
-            .into_iter()
-            .find(|f| f.byte() == byte)
+        (Self::BY_RELAYS.into_iter()).find(|f| f.byte() == byte)
     }
 }
 
@@ -88,9 +95,10 @@ pub struct Token {
     pub issuer: PublicKey,
     /// The secret the link's signing key is derived from.
     pub secret: [u8; SECRET_LEN],
-    /// The issuer's relay, carried with lookup or without it; as decoded,
+    /// The group's relays the link carries, at most two, the issuer's
+    /// home first ([`crate::relay::Meeting::carried`]); as decoded, each
     /// without its host's trailing dot ([`crate::relay`]).
-    pub relay: Option<RelayUrl>,
+    pub relays: Vec<RelayUrl>,
 }
 
 impl Token {
@@ -100,18 +108,20 @@ impl Token {
         SigningKey::from_bytes(&blake3::derive_key(LINK_KEY_CONTEXT, &self.secret))
     }
 
-    /// `format || issuer[32] || secret[16] || relay?`, base64url unpadded.
+    /// `format || issuer[32] || secret[16] || relays`, the first two
+    /// relays apart by a space, base64url unpadded.
     pub fn encode(&self) -> String {
-        let format = match self.relay {
-            Some(_) => Format::Relayed,
-            None => Format::Bare,
-        };
+        let relays: Vec<String> = self
+            .relays
+            .iter()
+            .take(2)
+            .map(ToString::to_string)
+            .collect();
+        let format = Format::BY_RELAYS[relays.len()];
         let mut bytes = vec![format.byte()];
         bytes.extend_from_slice(self.issuer.as_bytes());
         bytes.extend_from_slice(&self.secret);
-        if let Some(relay) = &self.relay {
-            bytes.extend_from_slice(relay.to_string().as_bytes());
-        }
+        bytes.extend_from_slice(relays.join(" ").as_bytes());
         URL_SAFE_NO_PAD.encode(bytes)
     }
 
@@ -129,26 +139,22 @@ impl Token {
         };
         const FIXED: usize = 1 + 32 + SECRET_LEN;
         let rest = bytes.get(FIXED..);
-        let relay = match (format, rest) {
-            (Format::Bare, Some([])) => None,
-            (Format::Relayed, Some(rest)) if !rest.is_empty() => {
-                // Read without the root's dot, as WebKit reaches it
-                // (crate::relay): a computer of an earlier build carried
-                // n0's relay as iroh spells it.
-                let parsed = core::str::from_utf8(rest)
-                    .ok()
-                    .and_then(|raw| crate::relay::parse(raw).ok());
-                if parsed.is_none() {
-                    tracing::debug!(target: "link", "link: refused — the relay is not a URL");
-                    return None;
-                }
-                parsed
-            }
-            _ => {
-                tracing::debug!(target: "link", ?format, len = bytes.len(), "link: refused — the token is not its format's length");
-                return None;
-            }
+        // As many relays as the format says, each read without the root's
+        // dot, as WebKit reaches it (crate::relay): a computer of an earlier
+        // build carried n0's relay as iroh spells it.
+        let said: Vec<&str> = match rest.map(core::str::from_utf8) {
+            Some(Ok("")) => Vec::new(),
+            Some(Ok(raw)) => raw.split(' ').collect(),
+            _ => Vec::from([""]),
         };
+        let relays: Vec<RelayUrl> = said
+            .iter()
+            .filter_map(|r| crate::relay::parse(r).ok())
+            .collect();
+        if relays.len() != said.len() || Format::BY_RELAYS.get(said.len()) != Some(&format) {
+            tracing::debug!(target: "link", ?format, len = bytes.len(), relays = said.len(), "link: refused — the token is not its format's length, or a relay it carries is not a URL");
+            return None;
+        }
         let issuer: [u8; 32] = bytes[1..33].try_into().expect("checked above");
         let Ok(issuer) = PublicKey::from_bytes(&issuer) else {
             tracing::debug!(target: "link", "link: refused — the issuer's key is no key");
@@ -158,7 +164,7 @@ impl Token {
         Some(Self {
             issuer,
             secret,
-            relay,
+            relays,
         })
     }
 

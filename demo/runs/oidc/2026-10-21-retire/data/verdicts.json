@@ -1,0 +1,53 @@
+{
+ "a": {
+  "at_room": 194,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "typed_once": {
+   "verdict": "passed",
+   "why": "signed in 240 ms, playing 1475 ms, seeks [380, 362, 375] ms, bar 5,000 each"
+  },
+  "every_request_at_room": {
+   "verdict": "failed",
+   "why": "0 to Sam's Jellyfin another way, 1 elsewhere"
+  },
+  "play_method": "DirectPlay"
+ },
+ "b": {
+  "at_room": 143,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [
+   "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+  ],
+  "quick_connect": {
+   "verdict": "failed",
+   "why": "offered True (enabled as it came: True), approved on the phone in None ms, the screen signed in None ms after, as None, nothing typed on it"
+  }
+ },
+ "control": {
+  "at_room": null,
+  "to_sam_another_way": [],
+  "elsewhere_not_sam": [],
+  "set": {
+   "verdict": "passed",
+   "why": "'Allow remote control of other users': False then True"
+  }
+ },
+ "logs": {
+  "room_door": {
+   "taken": 351,
+   "refused": 0,
+   "callers": [
+    "192.168.1.11"
+   ]
+  },
+  "sams_door_jellyfin_by_person": {
+   "\"Dee\"": 351
+  },
+  "sessions_remote_end": [
+   "sam:Sam computer:127.0.0.1"
+  ]
+ }
+}

@@ -1,0 +1,346 @@
+[
+ {
+  "bar": 1,
+  "verdict": "passed",
+  "read": {
+   "bo_ms": 2303,
+   "di_ms": 2252,
+   "cy_ms": 167,
+   "failed": []
+  }
+ },
+ {
+  "bar": 2,
+  "verdict": "passed",
+  "read": {
+   "named_ms": [
+    1,
+    2,
+    0
+   ],
+   "everyone_ms": [
+    1,
+    1,
+    55
+   ],
+   "you": [
+    "You’re Bo. Everyone here writes in it at once.",
+    "You’re Cy. Everyone here writes in it at once.",
+    "You’re Di. Everyone here writes in it at once."
+   ],
+   "here": [
+    "Here now: Bo, Cy, Di",
+    "Here now: Bo, Cy, Di",
+    "Here now: Bo, Cy, Di"
+   ]
+  }
+ },
+ {
+  "bar": 3,
+  "verdict": "passed",
+  "read": [
+   {
+    "reader": "bo",
+    "ms_after_last_other_keystroke": 108
+   },
+   {
+    "reader": "cy",
+    "ms_after_last_other_keystroke": 68
+   },
+   {
+    "reader": "di",
+    "ms_after_last_other_keystroke": 110
+   }
+  ]
+ },
+ {
+  "bar": 4,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "paragraphs": [
+     "Friday: movie night at 8",
+     "Di brings a speaker",
+     "Cy brings drinks",
+     "Bo brings chips"
+    ],
+    "notes": [
+     "last edited by Bo 0s ago",
+     "last edited by Di 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Bo 0s ago"
+    ],
+    "paired": true,
+    "right": true,
+    "names": true,
+    "waited_ms": 1,
+    "filled": 4
+   },
+   {
+    "who": "cy",
+    "paragraphs": [
+     "Friday: movie night at 8",
+     "Di brings a speaker",
+     "Cy brings drinks",
+     "Bo brings chips"
+    ],
+    "notes": [
+     "last edited by Bo 2s ago",
+     "last edited by Di 2s ago",
+     "last edited by Cy 2s ago",
+     "last edited by Bo 2s ago"
+    ],
+    "paired": true,
+    "right": true,
+    "names": true,
+    "waited_ms": 2,
+    "filled": 4
+   },
+   {
+    "who": "di",
+    "paragraphs": [
+     "Friday: movie night at 8",
+     "Di brings a speaker",
+     "Cy brings drinks",
+     "Bo brings chips"
+    ],
+    "notes": [
+     "last edited by Bo 0s ago",
+     "last edited by Di 0s ago",
+     "last edited by Cy 0s ago",
+     "last edited by Bo 0s ago"
+    ],
+    "paired": true,
+    "right": true,
+    "names": true,
+    "waited_ms": 2,
+    "filled": 4
+   }
+  ]
+ },
+ {
+  "bar": 5,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "ms_after_lid": 4451,
+    "words": "☾ Alex’s window is dark\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nGoodnight from Alex’s.\n\n"
+   },
+   {
+    "who": "cy",
+    "ms_after_lid": 4294,
+    "words": "☾ Alex’s window is dark\n\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nGoodnight from Alex’s."
+   },
+   {
+    "who": "di",
+    "ms_after_lid": 4701,
+    "words": "☾ Alex’s window is dark\n\nAlex’s computer didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.\n\nGoodnight from Alex’s."
+   }
+  ]
+ },
+ {
+  "bar": 6,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "own_ms": 0,
+    "said_ms": 0,
+    "kept": "What you’ve written since is kept here."
+   },
+   {
+    "who": "cy",
+    "own_ms": 1,
+    "said_ms": 0,
+    "kept": "What you’ve written since is kept here."
+   },
+   {
+    "who": "di",
+    "own_ms": 1,
+    "said_ms": 1,
+    "kept": "What you’ve written since is kept here."
+   }
+  ]
+ },
+ {
+  "bar": 7,
+  "verdict": "passed",
+  "read": {
+   "joined": [
+    {
+     "who": "bo",
+     "goodnight_gone_ms": 3570,
+     "all_six_ms": 3623
+    },
+    {
+     "who": "cy",
+     "goodnight_gone_ms": 2299,
+     "all_six_ms": 3602
+    },
+    {
+     "who": "di",
+     "goodnight_gone_ms": 374,
+     "all_six_ms": 3602
+    }
+   ],
+   "one_doc": true,
+   "paragraphs": [
+    "Friday: movie night at 8",
+    "Di brings a speaker",
+    "Cy brings drinks",
+    "Bo brings chips",
+    "Di, away: a playlist",
+    "Cy, away: cups",
+    "Bo, away: ice"
+   ]
+  }
+ },
+ {
+  "bar": 8,
+  "verdict": "passed",
+  "read": {
+   "fresh_ms": 8,
+   "acts": 80,
+   "persons": [
+    "Bo",
+    "Cy",
+    "Di"
+   ]
+  }
+ },
+ {
+  "bar": 9,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "paragraphs": [
+     "Friday: movie night at 8",
+     "Di brings a speaker",
+     "Cy brings drinks",
+     "Bo brings chips",
+     "Di, away: a playlist",
+     "Cy, away: cups",
+     "Bo, away: ice"
+    ],
+    "blank": 0
+   },
+   {
+    "who": "cy",
+    "paragraphs": [
+     "Friday: movie night at 8",
+     "Di brings a speaker",
+     "Cy brings drinks",
+     "Bo brings chips",
+     "Di, away: a playlist",
+     "Cy, away: cups",
+     "Bo, away: ice"
+    ],
+    "blank": 0
+   },
+   {
+    "who": "di",
+    "paragraphs": [
+     "Friday: movie night at 8",
+     "Di brings a speaker",
+     "Cy brings drinks",
+     "Bo brings chips",
+     "Di, away: a playlist",
+     "Cy, away: cups",
+     "Bo, away: ice"
+    ],
+    "blank": 0
+   }
+  ]
+ },
+ {
+  "bar": 10,
+  "verdict": "passed",
+  "read": [
+   {
+    "who": "bo",
+    "ok": true,
+    "placed": [
+     {
+      "note": "last edited by Bo 52s ago",
+      "block": 0,
+      "paragraph": "Friday: movie night at 8"
+     },
+     {
+      "note": "last edited by Di 51s ago",
+      "block": 1,
+      "paragraph": "Di brings a speaker"
+     },
+     {
+      "note": "last edited by Cy 51s ago",
+      "block": 2,
+      "paragraph": "Cy brings drinks"
+     },
+     {
+      "note": "last edited by Bo 51s ago",
+      "block": 3,
+      "paragraph": "Bo brings chips"
+     },
+     {
+      "note": "last edited by Di 3s ago",
+      "block": 4,
+      "paragraph": "Di, away: a playlist"
+     },
+     {
+      "note": "last edited by Cy 2s ago",
+      "block": 5,
+      "paragraph": "Cy, away: cups"
+     },
+     {
+      "note": "last edited by Bo 0s ago",
+      "block": 6,
+      "paragraph": "Bo, away: ice"
+     }
+    ]
+   },
+   {
+    "who": "di",
+    "ok": true,
+    "placed": [
+     {
+      "note": "last edited by Bo 52s ago",
+      "block": 0,
+      "paragraph": "Friday: movie night at 8"
+     },
+     {
+      "note": "last edited by Di 51s ago",
+      "block": 1,
+      "paragraph": "Di brings a speaker"
+     },
+     {
+      "note": "last edited by Cy 51s ago",
+      "block": 2,
+      "paragraph": "Cy brings drinks"
+     },
+     {
+      "note": "last edited by Bo 51s ago",
+      "block": 3,
+      "paragraph": "Bo brings chips"
+     },
+     {
+      "note": "last edited by Di 3s ago",
+      "block": 4,
+      "paragraph": "Di, away: a playlist"
+     },
+     {
+      "note": "last edited by Cy 2s ago",
+      "block": 5,
+      "paragraph": "Cy, away: cups"
+     },
+     {
+      "note": "last edited by Bo 0s ago",
+      "block": 6,
+      "paragraph": "Bo, away: ice"
+     }
+    ]
+   }
+  ]
+ }
+]

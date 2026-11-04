@@ -53,7 +53,7 @@ async fn spawn_a(admitted: PublicKey) -> (Endpoint, IrohAcceptor, Arc<AtomicUsiz
             Admit::Refuse
         }
     };
-    let acceptor = IrohAcceptor::spawn(a.clone(), admit);
+    let acceptor = IrohAcceptor::spawn(a.clone(), Default::default(), admit);
     (a, acceptor, served)
 }
 
@@ -64,7 +64,7 @@ async fn dial(seed: u8, a: &Endpoint) -> (IrohTransport, String) {
     let base = transport
         .spliced(&Contact {
             key: a.id(),
-            relay_url: None,
+            relays: Default::default(),
             iroh_direct_addrs: loopback_sockets(a),
         })
         .await

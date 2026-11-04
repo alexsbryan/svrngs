@@ -36,14 +36,6 @@
 //! **The secret never goes back.** A response header holding the lend's
 //! secret is dropped, named at warn by its header, never its value.
 //!
-//! **A lend's sign-in** (mwp-1, [`sign_in`]): a lend declaring one has no
-//! one secret; the door asks the lender's program on each person's first
-//! request, sets that person's headers on each of their requests, and swaps
-//! a stand-in for their secret both ways, and puts their script first in
-//! each page answered to them (mwp-2). A request it cannot sign in is
-//! refused, `502`, never carried unsigned: as the lend not answering when
-//! the sign-in or the lend's port did not answer, else as a sign-in's no.
-//!
 //! **How many at once, and each one's share** (u3-6; DESIGN §3, "Many
 //! people, one library"): before a request is carried, the door asks
 //! [`limit`] whether its person is let in — counted while a request of
@@ -72,7 +64,8 @@
 //! held here ([`svrngs_core::pass::Pass::check`]); then it is that person's
 //! request, counted, told its share and carried as any member's. A lend is
 //! named by its name or by its label ([`find`]), which names this
-//! computer's key.
+//! computer's key. A pass a guest's visit key signed lets its holder in as
+//! that guest, their host's, never as the host ([`guest_of`], guests-door).
 //!
 //! **What the door refuses**, by name: a request not on an iroh stream; a
 //! dialer standing in no group this computer holds; a path that can step
@@ -102,15 +95,17 @@ use tokio::sync::{mpsc, oneshot};
 use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered, Source};
+use crate::network::Whereabouts;
 use crate::ring_routes::err;
-use crate::{Person, RingRail};
-use limit::{Counts, Verdict, Whereabouts};
+use crate::{register::Visiting, Person, RingRail};
+use limit::{Counts, Verdict};
 use svrngs_core::pass::{Label, Pass};
+use svrngs_core::token::Group;
 
 pub mod choices;
 pub mod limit;
-pub mod sign_in;
-use sign_in::Signing;
+pub mod tcp;
+pub mod udp;
 
 /// svrngs's own header prefix: every header under it on a request through
 /// the door is the door's. A client's is stripped whole.
@@ -141,7 +136,7 @@ pub const DEVICE_HEADER: &str = "x-svrngs-device";
 /// [`user_name`]'s, unique by their key.
 pub const USER_HEADER: &str = "x-svrngs-user";
 
-/// What the door tells a lend, and its sign-in, of who asks.
+/// What the door tells a lend of who asks.
 pub type Identity = [(HeaderName, HeaderValue); 4];
 
 /// The account name for `person` asking with `key`: their name kept to
@@ -157,6 +152,16 @@ pub fn user_name(person: &Person, key: &str) -> String {
         .collect();
     let kept = if kept.is_empty() { "person" } else { &kept };
     format!("{kept}-{}", &key[..key.len().min(16)])
+}
+
+/// The name and account the door tells a lend about `person` asking with
+/// `actor`: a guest as their host's guest, with an account of their own
+/// ([`user_name`], then `.guest`) (GUESTS §3.5). One string beside the
+/// headers and the sign-in with svrngs' claims.
+fn told_as(person: &Person, host: Option<&Person>, actor: &str) -> (String, String) {
+    let told = host.map_or(person.to_string(), |h| format!("{person} ({h}'s guest)"));
+    let user = user_name(person, actor) + if host.is_some() { ".guest" } else { "" };
+    (told, user)
 }
 
 /// The app asking: the label of the pass's `app`, the lend whose pages
@@ -189,6 +194,11 @@ pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
 /// protocol (u5-2): [`Pass::encode`]'s form. Under [`IDENTITY_PREFIX`], so
 /// no service ever receives it.
 pub const PASS_HEADER: &str = "x-svrngs-pass";
+/// The link a phone's worker presents beside its pass (capability-signed;
+/// DESIGN §3): its holder, a key no page can copy, carrying the pass to
+/// the endpoint key the worker dials with ([`Pass::carries`]). A pass with
+/// none is held by the dialer itself, as an older page's is.
+pub const LINK_HEADER: &str = "x-svrngs-link";
 
 /// On every answer svrngs makes in a lend's place, never on the lend's
 /// own (a service's is dropped, [`forward`]): which of [`LendRefusal`] it is,
@@ -217,8 +227,6 @@ pub enum LendRefusal {
     Path,
     /// As many people as the lend's limit are using it.
     Full,
-    /// The lend's sign-in did not sign the person in, or its answer cannot be read.
-    SignIn,
     /// The computer that lends it cannot read its own state.
     Fault,
     /// The lend asks, and its person said no yes to the app asking (sup-2).
@@ -227,6 +235,9 @@ pub enum LendRefusal {
     Stopped,
     /// The asker was removed from the group (U7; DESIGN §6).
     Removed,
+    /// The asker's visit has ended: at its time, by its host's Stop, or as
+    /// its host left (guests-door).
+    Ended,
 }
 
 impl LendRefusal {
@@ -238,11 +249,11 @@ impl LendRefusal {
             LendRefusal::Unlent => "unlent",
             LendRefusal::Path => "path",
             LendRefusal::Full => "full",
-            LendRefusal::SignIn => "sign-in",
             LendRefusal::Fault => "fault",
             LendRefusal::Unasked => "unasked",
             LendRefusal::Stopped => "stopped",
             LendRefusal::Removed => "removed",
+            LendRefusal::Ended => "ended",
         }
     }
 
@@ -275,19 +286,30 @@ const ASK_WITHIN: Duration = Duration::from_secs(10);
 #[derive(Clone)]
 struct Words(String);
 
+/// Whose computer did not answer, kept on an answer `away` for [`paged`],
+/// which draws their window on the door, dark: home/away.html.
+#[derive(Clone)]
+pub(crate) struct Dark(pub(crate) Person);
+const AWAY: &str = include_str!("home/away.html");
+
 /// svrngs's answer drawn as a page when a browser's tab asked for one, by
 /// `Accept`; a program asking anything else is given its JSON (v1ui-polish
 /// (a)): the routes a person's tab reaches a lend by are layered by it.
 pub(crate) async fn paged(req: Request, next: axum::middleware::Next) -> Response {
-    let tab = sign_in::a_tab(req.headers());
+    let accept = req.headers().get(header::ACCEPT).map(HeaderValue::as_bytes);
+    let tab = accept.is_some_and(|a| String::from_utf8_lossy(a).contains("text/html"));
     let mut answer = next.run(req).await;
+    let dark = answer.extensions_mut().remove::<Dark>();
     let Some(Words(words)) = answer.extensions_mut().remove::<Words>().filter(|_| tab) else {
         return answer;
     };
-    tracing::debug!(target: "door", words, "door: svrngs's own answer to a browser's tab, drawn as a page");
+    tracing::debug!(target: "door", words, dark = ?dark.as_ref().map(|Dark(p)| p.as_str()), "door: svrngs's own answer to a browser's tab, drawn as a page: whose window is dark, when a computer did not answer");
     // The words, a sentence begun lower-case, are drawn as one, with nothing in them markup.
     let words = words.trim_end_matches('.').replace('<', "&lt;");
-    let page = format!("<!doctype html><meta charset=utf-8><meta name=viewport content=width=device-width><style>p::first-letter{{text-transform:uppercase}}</style><p>{words}.");
+    let page = match dark {
+        Some(Dark(p)) => AWAY.replace("{who}", &p.as_str().replace('<', "&lt;")).replace("{what}", "this"),
+        None => format!("<!doctype html><meta charset=utf-8><meta name=viewport content=width=device-width><style>p::first-letter{{text-transform:uppercase}}</style><p>{words}."),
+    };
     let (mut parts, _) = answer.into_parts();
     parts.headers.remove(header::CONTENT_TYPE);
     (parts, axum::response::Html(page)).into_response()
@@ -345,11 +367,14 @@ pub struct Door {
     pub key: [u8; 32],
     pub data_dir: PathBuf,
     pub using: Using,
-    pub sign_ins: sign_in::SignIns,
     /// Each person's yes and stop to an app, written through one task.
     pub choices: choices::Choices,
     /// The groups' folders, which carry apps ([`Source::Carried`]).
     pub folders: crate::folder::Folders,
+    /// The lender's sign-in key and the codes this run minted, shared with
+    /// the provider on the record API ([`crate::oidc`]): one key, one code
+    /// store, whichever channel asks.
+    pub(crate) oidc: crate::oidc::Provider,
 }
 
 /// The door's routes, for the members' protocol's router: a lend, every
@@ -553,10 +578,13 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             upload: lend.upload,
             reads: lend.reads,
             asks: lend.asks,
-            signs_in: lend.sign_in.is_some(),
-            group: match lend.source {
-                Source::Carried(group) => Some(group),
-                Source::Port(_) => None,
+            group: match &lend.source {
+                Source::Carried(group) => Some(group.clone()),
+                Source::Port(_) | Source::Raw(..) => None,
+            },
+            raw: match lend.source {
+                Source::Raw(raw, _) => Some(raw),
+                _ => None,
             },
         });
     }
@@ -591,13 +619,7 @@ fn split_lend(path: &str) -> Option<(&str, String)> {
 /// Remove the hop-by-hop headers from `headers`, and any its `Connection`
 /// names; answer how many went.
 pub(crate) fn strip_hop_by_hop(headers: &mut HeaderMap) -> usize {
-    let named: Vec<String> = headers
-        .get_all(header::CONNECTION)
-        .iter()
-        .filter_map(|v| v.to_str().ok())
-        .flat_map(|v| v.split(','))
-        .map(compare_name)
-        .collect();
+    let named: Vec<String> = connection(headers).collect();
     remove_counted(headers, |name| {
         HOP_BY_HOP.contains(&name) || named.iter().any(|n| n == name)
     })
@@ -624,13 +646,15 @@ fn remove_counted(headers: &mut HeaderMap, goes: impl Fn(&str) -> bool) -> usize
 /// headers go, so the door carries a WebSocket's upgrade (u5-2), where it
 /// stripped `Upgrade` with the rest.
 pub(crate) fn upgrade_of(headers: &HeaderMap) -> Option<HeaderValue> {
-    let named = headers
-        .get_all(header::CONNECTION)
-        .iter()
-        .filter_map(|v| v.to_str().ok())
-        .flat_map(|v| v.split(','))
-        .any(|t| compare_name(t) == "upgrade");
+    let named = connection(headers).any(|t| t == "upgrade");
     named.then(|| headers.get(header::UPGRADE).cloned())?
+}
+
+/// Each name a message's `Connection` lists, as [`compare_name`] reads it.
+fn connection(headers: &HeaderMap) -> impl Iterator<Item = String> + '_ {
+    let values = headers.get_all(header::CONNECTION).iter();
+    let tokens = values.filter_map(|v| v.to_str().ok());
+    tokens.flat_map(|v| v.split(',')).map(compare_name)
 }
 
 /// Ask for `protocol` again on a head whose hop-by-hop headers went.
@@ -720,13 +744,68 @@ fn secret_headers(door: &Door, lend: &LendName) -> Vec<(HeaderName, HeaderValue)
 /// `localhost:<its port>` (u5-2). Every lend has an origin of its own, which
 /// the service cannot know, so an app that refuses a `Host` it does not
 /// know — as one guarding against DNS rebinding does — answers as it would
-/// its lender on that computer; and [`as_path`] turns a redirect to this
+/// its lender on that computer; and [`LendPath`] turns a redirect to this
 /// address back into a path the browser reads on the lend's origin. Until
 /// u5-2 the door passed the browser's `Host`, so the service built its
 /// links for the address the browser used, one `<lender's bridge>/lend/<name>/`
 /// for every lend.
 fn own_address(port: NonZeroU16) -> HeaderValue {
     HeaderValue::from_str(&format!("localhost:{port}")).expect("a host and a port are a header")
+}
+
+/// The scheme the browser reached a lend with, from the `Host` it asked:
+/// `http` for a `*.localhost` host or an address, `https` for any other
+/// name. svrngs serves a lend itself only in plain http: at
+/// `<label>.localhost` on a computer ([`crate::origin`]) and at the room's
+/// `http://<private address>:<port>/`, the device's `Host` passed through
+/// ([`crate::room`]). https reaches a lend only at a page host, a name
+/// (`web/store.js`, `lendOrigin`). It is what the door tells a service as
+/// `X-Forwarded-Proto` ([`tell_origin`]) and what the front channel reads
+/// back as the lend's own origin (oidc-jellyfin).
+pub(crate) fn scheme_of(host: &str) -> &'static str {
+    // The host without its `:<port>`, which an IPv6 address's last colon,
+    // inside its `[]`, never is.
+    let unported = host.trim_end_matches(|c: char| c.is_ascii_digit());
+    let name = unported.strip_suffix(':').unwrap_or(host);
+    let address = name.trim_matches(['[', ']']).parse::<std::net::IpAddr>();
+    if address.is_ok() || name.to_ascii_lowercase().ends_with(".localhost") {
+        "http"
+    } else {
+        "https"
+    }
+}
+
+/// Tell the service the origin the browser used, as a reverse proxy does
+/// (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked and
+/// `X-Forwarded-Proto` its scheme ([`scheme_of`]). Any of either a client
+/// typed is displaced, so only the door's reach the service. The service is
+/// still asked at its own address ([`own_address`]); this is the one fact
+/// it may need to build a page on the lend's own origin, as the Jellyfin
+/// SSO plugin's callback does when `KnownProxies` names this computer
+/// (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
+fn tell_origin(headers: &mut HeaderMap) {
+    let (forwarded_host, forwarded_proto) = (
+        HeaderName::from_static("x-forwarded-host"),
+        HeaderName::from_static("x-forwarded-proto"),
+    );
+    headers.remove(&forwarded_host);
+    headers.remove(&forwarded_proto);
+    let Some(host) = headers
+        .get(header::HOST)
+        .and_then(|h| h.to_str().ok())
+        .map(str::to_owned)
+    else {
+        tracing::debug!(target: "door", "door: the browser's Host cannot be read, so the service is told no forwarded origin");
+        return;
+    };
+    let Ok(value) = HeaderValue::from_str(&host) else {
+        return;
+    };
+    let scheme = scheme_of(&host);
+    tracing::debug!(target: "door", forwarded_host = %host, forwarded_proto = scheme,
+        "door: the browser's origin, told to the service as a proxy's forwarded headers");
+    headers.insert(forwarded_host, value);
+    headers.insert(forwarded_proto, HeaderValue::from_static(scheme));
 }
 
 /// An `Origin` that is the lend's own — its first name the lend's label, as
@@ -752,22 +831,68 @@ fn own_origin(headers: &mut HeaderMap, label: &Label, (lend, port): (&Lend, NonZ
     headers.insert(header::ORIGIN, own);
 }
 
-/// `location` with the service's own address taken off, so `http://localhost:<port>/x`
-/// is `/x`, read on whatever origin the asker reached the lend at; `None`
-/// when it points anywhere else, which is left as it is.
-fn as_path(location: &str, port: NonZeroU16) -> Option<String> {
-    let rest = ["localhost", "127.0.0.1", "[::1]"]
-        .iter()
-        .find_map(|host| {
-            let own = format!("http://{host}:{port}");
-            let head = location.get(..own.len())?;
-            head.eq_ignore_ascii_case(&own)
-                .then(|| &location[own.len()..])
-        })?;
-    match rest.chars().next() {
-        None => Some("/".into()),
-        Some('/' | '?' | '#') => Some(rest.into()),
-        Some(_) => None,
+/// The hosts a service answers at on its own computer: the one set by which
+/// a URL on the service's own address is read as a path on the lend
+/// ([`LendPath`]).
+const OWN_HOSTS: [&str; 3] = ["localhost", "127.0.0.1", "[::1]"];
+
+/// A path on a lend's own origin: what is left of a URL on the service's
+/// own address (`http://<one of OWN_HOSTS>:<port>`) or on the browser's
+/// origin for the lend once that is taken off, case ignored, `/` for
+/// nothing. Parsed once, so a `Location` built from it is read on whatever
+/// origin the browser reached the lend at, and never as another host's: it
+/// starts with `/`, `?` or `#` but not `//`, and holds no `\`, which a
+/// browser reads as `/`. It holds no control byte either, so it is a
+/// header. The door's answer to a service's redirect ([`lend_for`]) and the
+/// front channel's to an app's ([`crate::oidc::authorize`]) are built from
+/// one.
+pub(crate) struct LendPath(String);
+
+impl LendPath {
+    /// `url` as a path on the lend whose service is at `port`, its browser
+    /// at the origin `browser`; else why not, worded to follow the URL's
+    /// name, as the front channel says it: "the redirect_uri {why}".
+    pub(crate) fn parse(
+        url: &str,
+        port: NonZeroU16,
+        browser: Option<&str>,
+    ) -> Result<Self, &'static str> {
+        let own = OWN_HOSTS.map(|host| format!("http://{host}:{port}"));
+        let rest = (own.iter().map(String::as_str).chain(browser))
+            .find_map(|origin| {
+                let rest = url
+                    .get(..origin.len())?
+                    .eq_ignore_ascii_case(origin)
+                    .then(|| &url[origin.len()..])?;
+                (rest.is_empty() || rest.starts_with(['/', '?', '#'])).then_some(rest)
+            })
+            .ok_or("is not on this lend's own address")?;
+        if rest.starts_with("//") || rest.contains('\\') {
+            return Err("would send you to another address");
+        }
+        if rest.contains(|c: char| c.is_ascii_control()) {
+            return Err("holds a character no address holds");
+        }
+        Ok(Self(if rest.is_empty() { "/" } else { rest }.into()))
+    }
+
+    /// The `Location` that sends the browser here, `query`'s pairs added
+    /// form-encoded. It is a header by construction: the path holds no
+    /// control byte, the only bytes a header refuses, and form-encoding
+    /// writes none.
+    pub(crate) fn location<'a>(
+        mut self,
+        query: impl IntoIterator<Item = (&'a str, &'a str)>,
+    ) -> HeaderValue {
+        let pairs = form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(query)
+            .finish();
+        if !pairs.is_empty() {
+            self.0.push(if self.0.contains('?') { '&' } else { '?' });
+            self.0.push_str(&pairs);
+        }
+        HeaderValue::from_str(&self.0)
+            .expect("a path with no control byte, and form-encoded pairs, are a header")
     }
 }
 
@@ -815,8 +940,7 @@ pub(crate) enum Who {
 /// same from every device of theirs (bash-devices), whether a member's
 /// dialler or a pass's signer asks. Made only here ([`PersonKey::resolved`]),
 /// so nothing kept about a person — a lend's count, a choice — is keyed by
-/// the raw key a request came with; a sign-in's answer is kept a
-/// [`DeviceKey`].
+/// the raw key a request came with.
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
 )]
@@ -836,8 +960,8 @@ svrngs_core::text_newtype!(PersonKey);
 
 /// The device a request for a lend comes from ([`DEVICE_HEADER`]): the key
 /// that stands in a group held here — a member's dialler's, a pass's
-/// signer's, this computer's at its own origin. A sign-in's answer is kept
-/// a device ([`sign_in`]), as an app may hold what it signs in to one
+/// signer's, this computer's at its own origin; told to the lend so an app
+/// may hold what it signs in to one
 /// (demo/runs/two-at-once/2026-10-12/README.md, finding 1).
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DeviceKey(String);
@@ -851,6 +975,9 @@ struct Asker {
     person: Person,
     /// The pass's app; none for a key of the group's with no pass.
     app: Option<Label>,
+    /// Whose guest they are, for a visit's key ([`guest_of`]); none for a
+    /// person of the group.
+    host: Option<Person>,
 }
 
 /// Who asks, decided before the lend is found or after: a member by the
@@ -957,7 +1084,15 @@ async fn holder_of(
     let Some(now) = unix_now() else {
         return Err(refused("this computer's clock cannot be read"));
     };
-    if let Err(fault) = pass.check(&key, &label, now) {
+    let checked = match headers
+        .get(LINK_HEADER)
+        .map(|v| v.to_str().ok().and_then(Pass::decode))
+    {
+        None => pass.check(&key, &label, now),
+        Some(Some(link)) => pass.carries(&link, &key, &label, now),
+        Some(None) => return Err(refused("a link that does not read")),
+    };
+    if let Err(fault) = checked {
         return Err(refused(&fault.to_string()));
     }
     let mut standing = PersonKey::resolved(door, &pass.person);
@@ -969,6 +1104,9 @@ async fn holder_of(
         return Err(gone());
     }
     if standing.is_none() {
+        if let Some(visit) = door.rail.visit_anywhere(&pass.person) {
+            return guest_of(&hex::encode(door.key), visit, pass, lend, now);
+        }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no group held here, so the group's ring is asked once first");
         let known = || door.rail.standing_anywhere(&pass.person).is_some();
@@ -988,6 +1126,51 @@ async fn holder_of(
         actor,
         group,
         person,
+        host: None,
+    })
+}
+
+/// The guest whose visit's key signed `pass` (guests-door; GUESTS §3.4-§3.6,
+/// §5 "The door"): let in as themselves, their host's guest, only while the
+/// fold says the visit is live ([`svrngs_core::Guest::live`]) and it names
+/// this lend, its host's, this computer's own, and never a carried app, the
+/// group's. Each refusal says which of those refused it: `ended` for the
+/// visit's end, `closed` for the rest. A visit begun later than now, which
+/// only this computer's clock stepping back makes, is said as one ended.
+fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<Asker, Response> {
+    let ((group, register, guest), name) = (v, lend.name.as_str());
+    let host = register.members.get(&guest.host).map(|m| &m.person);
+    let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
+        tracing::debug!(target: "door", guest = pass.person, host = guest.host, "door: refused — a visit whose host is bound to nobody here");
+        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nobody here hosts your visit"));
+    };
+    let live = guest.live(&register.cut, now);
+    let gone = register.cut.get(&guest.host).is_some_and(|c| c.at <= now);
+    let stopped = guest.stopped.is_some_and(|s| s <= now);
+    // A carried app is its group's, never its host's own.
+    let own = guest.host == me && matches!(lend.source, Source::Port(_));
+    let named = guest.visit.opens.get(me).is_some_and(|l| l.contains(name));
+    let ended = |w| Some((LendRefusal::Ended, w));
+    let closed = |w| Some((LendRefusal::Closed, w));
+    let refused = match () {
+        _ if gone => ended(format!("{host} is no longer a member, so your visit ended")),
+        _ if stopped => ended(format!("{host} ended your visit")),
+        _ if !live => ended(format!("your visit with {host} is over: its time is up")),
+        _ if !own => closed(format!("{name} is not {host}'s to open to you")),
+        _ if !named => closed(format!("{host} did not open {name} to you")),
+        _ => None,
+    };
+    tracing::debug!(target: "door", guest = pass.person, %host, lend = name, live, own, named, ?refused, "door: a visit's key — let in as its host's guest only while the visit is live and names this lend, its host's own, never a carried app");
+    if let Some((kind, words)) = refused {
+        return Err(kind.say(StatusCode::FORBIDDEN, words));
+    }
+    Ok(Asker {
+        app: Some(pass.app),
+        actor: PersonKey(pass.person.clone()),
+        device: DeviceKey(pass.person),
+        group,
+        person: guest.visit.guest,
+        host: Some(host),
     })
 }
 
@@ -1084,6 +1267,7 @@ pub(crate) async fn lend_for(
                     Who::Own(app) => Some(app.clone()),
                     _ => None,
                 },
+                host: None,
             })
         }
         Who::Holder(dialer) => Pending::Pass(*dialer),
@@ -1095,6 +1279,7 @@ pub(crate) async fn lend_for(
         group,
         person,
         mut app,
+        host,
     } = match pending {
         Pending::Known(asker) => asker,
         Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
@@ -1107,7 +1292,49 @@ pub(crate) async fn lend_for(
             let opened = (door.folders).open(&lend, (group, device.as_str(), &service_path), req);
             return Ok(opened.await);
         }
+        Source::Raw(..) => {
+            tracing::debug!(target: "door", actor, lend = %lend.name, "door: refused — a raw port, which a page never opens");
+            let words = format!("{} is lent as a port, not a page", lend.name);
+            return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, words));
+        }
     };
+    if service_path == crate::oidc::AUTHORIZE_PATH {
+        let Some(client) = lend.sign_in_with_svrngs.as_ref() else {
+            tracing::debug!(target: "door", actor, lend = %lend.name, "door: refused — the authorize path on a lend that does not sign people in with svrngs");
+            return Err(LendRefusal::Unlent.say(
+                StatusCode::NOT_FOUND,
+                format!("{} does not sign people in with svrngs", lend.name),
+            ));
+        };
+        let (name, username) = told_as(&person, host.as_ref(), actor);
+        let group = if host.is_some() {
+            Group::Guest
+        } else {
+            Group::Member
+        };
+        let who = svrngs_core::token::Subject {
+            sub: actor.to_string(),
+            name,
+            username,
+            group,
+        };
+        tracing::debug!(target: "door", actor, lend = %lend.name, ?group,
+            "door: the authorize path on the lend's own origin, answered by the door and never carried");
+        let browser = req
+            .headers()
+            .get(header::HOST)
+            .and_then(|h| h.to_str().ok())
+            .map(|host| format!("{}://{host}", scheme_of(host)));
+        return Ok(crate::oidc::authorize(
+            &door.oidc,
+            &lend,
+            client,
+            port,
+            browser.as_deref(),
+            who,
+            req.uri().query(),
+        ));
+    }
     if let Who::Member(dialer) = &who {
         app = own_app(door, dialer, req.headers(), &lend)?;
     }
@@ -1126,13 +1353,10 @@ pub(crate) async fn lend_for(
     if observed.is_none() {
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
-    let whereabouts = limit::guess(observed.and_then(|o| o.addr));
+    let whereabouts = crate::network::guess(observed.and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
-        return Err(LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "the computer that lends this cannot count who is using it now, so it lets nobody in",
-        ));
+        return Err(LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCOUNTED));
     };
     let (relayed, rtt_ms, sent, received) = observed.map_or((None, None, None, None), |o| {
         (
@@ -1163,19 +1387,24 @@ pub(crate) async fn lend_for(
             share
         }
     };
-    tracing::debug!(target: "door", actor, person = person.as_str(), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
-        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none");
+    tracing::debug!(target: "door", actor, person = person.as_str(), host = ?host.as_ref().map(Person::as_str), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
+        method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none");
     let told = Told { share, held };
     forward(
         door,
         (&lend, port),
         (&whose, &device, &person, app.as_ref()),
+        host.as_ref(),
         service_path,
         req,
         told,
     )
     .await
 }
+
+/// The words a person is told when the count of who uses a lend is gone.
+const UNCOUNTED: &str =
+    "the computer that lends this cannot count who is using it now, so it lets nobody in";
 
 /// What the door decided for a request let in: the share it is told, and
 /// the use it holds until its answer is whole or abandoned (none for a
@@ -1190,23 +1419,26 @@ struct Told {
 /// they can change (bash-limit) — and the figures, for an app to turn into
 /// a choice (DESIGN §3, "Too many at once").
 fn busy(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> Response {
+    let body = serde_json::json!({ "error": busy_words(lend, using, limit), "using": using, "limit": limit });
+    LendRefusal::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
+}
+
+/// [`busy`]'s reason, which the UDP door tells a flow it refuses too.
+fn busy_words(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> String {
     let people = |n: u32| if n == 1 { "person" } else { "people" };
     let limit = limit.get();
-    let reason = format!(
+    format!(
         "{} is lent to {limit} {} at once, and {using} {} using it now: try again when one stops. \
         That number is the choice of the person who lends it, and they can change it.",
         lend.name,
         people(u32::from(limit)),
         if using == 1 { "is" } else { "are" },
-    );
-    let body = serde_json::json!({ "error": reason, "using": using, "limit": limit });
-    LendRefusal::Full.said(StatusCode::SERVICE_UNAVAILABLE, body)
+    )
 }
 
 /// A connection to `to`, `lend`'s service, when it takes one within
 /// [`CONNECT_WITHIN`]; `None`, named at warn with why, when it does not —
-/// what [`send_to`] carries a request on, and how `forward` tells a lend
-/// not answering behind its sign-in (REVIEW_FINDINGS #171).
+/// what [`send_to`] carries a request on.
 async fn connected(to: std::net::SocketAddr, lend: &str) -> Option<tokio::net::TcpStream> {
     match tokio::time::timeout(CONNECT_WITHIN, tokio::net::TcpStream::connect(to)).await {
         Ok(Ok(tcp)) => Some(tcp),
@@ -1327,12 +1559,12 @@ async fn forward(
     door: &Door,
     (lend, port): (&Lend, NonZeroU16),
     (whose, device, person, app): (&PersonKey, &DeviceKey, &Person, Option<&Label>),
+    host: Option<&Person>,
     path: String,
-    req: Request,
+    mut req: Request,
     Told { share, held }: Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
-    let mut req = req;
     let range = req.headers().get(header::RANGE);
     let mut carriage = Carriage {
         lend: lend.name.to_string(),
@@ -1345,11 +1577,13 @@ async fn forward(
     let upgrade = upgrade_of(req.headers());
     let asker_side = upgrade.as_ref().map(|_| hyper::upgrade::on(&mut req));
     let (mut parts, body) = req.into_parts();
-    let get = parts.method == axum::http::Method::GET;
+    // A guest is told as their host's guest, with an account of their own: a
+    // member's ends in 16 hex ([`user_name`]), and `.guest` in none (GUESTS §3.5).
+    let (told, user) = told_as(person, host, actor);
     let (Ok(person_value), Ok(key_value), Ok(user_value), Ok(device_value)) = (
-        HeaderValue::from_bytes(person.as_str().as_bytes()),
+        HeaderValue::from_bytes(told.as_bytes()),
         HeaderValue::from_str(actor),
-        HeaderValue::from_str(&user_name(person, actor)),
+        HeaderValue::from_str(&user),
         HeaderValue::from_str(device.as_str()),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
@@ -1372,27 +1606,11 @@ async fn forward(
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
-    let signing = match lend.sign_in {
-        None => Signing::Secret(secret_headers(door, &lend.name)),
-        Some(helper) => match door
-            .sign_ins
-            .of(&lend.name, helper, device, identity.clone())
-            .await
-        {
-            Ok(signed) => Signing::Person(helper, signed),
-            Err(why) => {
-                let up = connected(origin, lend.name.as_str()).await.is_some();
-                tracing::warn!(target: "door", actor, lend = %lend.name, %why, up,
-                    "door: refused — the lend's sign-in did not sign the person in, so the request is not carried; away when it or the lend did not answer");
-                if matches!(why, sign_in::Refusal::Unanswered) || !up {
-                    return Err(unanswered());
-                }
-                let words = format!("{} could not sign you in", lend.name);
-                return Err(LendRefusal::SignIn.say(StatusCode::BAD_GATEWAY, words));
-            }
-        },
-    };
-    let (target, secret) = signing.inward(&mut parts.headers, path, parts.uri.query());
+    let secret = secret_headers(door, &lend.name);
+    let target = parts
+        .uri
+        .query()
+        .map_or(path.clone(), |q| format!("{path}?{q}"));
     let displaced = rewrite_headers(&mut parts.headers, identity, &secret);
     if let Some(app) = app {
         let app = HeaderValue::from_str(app.as_str()).expect("a label is base32, so a header");
@@ -1409,6 +1627,7 @@ async fn forward(
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
+    tell_origin(&mut parts.headers);
     parts.headers.insert(header::HOST, own_address(port));
     own_origin(&mut parts.headers, &label, (lend, port));
     if let Some(protocol) = upgrade.clone() {
@@ -1435,12 +1654,11 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let Some(answer) = send_to(origin, request, lend.name.as_str()).await else {
+    let Some(mut answer) = send_to(origin, request, lend.name.as_str()).await else {
         let unanswered = unanswered();
         carriage.answered = Some((unanswered.status().as_u16(), None));
         return Err(unanswered);
     };
-    let mut answer = answer;
     let switched =
         upgrade_of(answer.headers()).filter(|_| answer.status() == StatusCode::SWITCHING_PROTOCOLS);
     let service_side = switched.as_ref().map(|_| hyper::upgrade::on(&mut answer));
@@ -1455,14 +1673,17 @@ async fn forward(
         }
         _ => held,
     };
-    let own = parts
-        .headers
-        .get(header::LOCATION)
-        .and_then(|l| l.to_str().ok())
-        .and_then(|l| as_path(l, port));
-    if let Some(path) = own.and_then(|p| HeaderValue::from_str(&p).ok()) {
-        tracing::debug!(target: "door", lend = %lend.name, ?path, "door: a redirect to the service's own address, answered as a path");
-        parts.headers.insert(header::LOCATION, path);
+    let sent = (parts.headers.get(header::LOCATION)).and_then(|l| l.to_str().ok());
+    match sent.map(|l| LendPath::parse(l, port, None)) {
+        Some(Ok(path)) => {
+            let path = path.location([]);
+            tracing::debug!(target: "door", lend = %lend.name, ?path, "door: a redirect to the service's own address, answered as a path");
+            parts.headers.insert(header::LOCATION, path);
+        }
+        Some(Err(why)) => {
+            tracing::debug!(target: "door", lend = %lend.name, location = sent, why, "door: the service's redirect, left as it sent it: the address")
+        }
+        None => {}
     }
     // The share on the answer is the door's, and so is a refusal's mark: a
     // service's own of either is displaced.
@@ -1475,7 +1696,11 @@ async fn forward(
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
-    let swapping = signing.outward(&mut parts, get, &door.sign_ins, (&lend.name, device))?;
+    let echoed = drop_echoed_secret(&mut parts.headers, &secret);
+    if !echoed.is_empty() {
+        tracing::warn!(target: "door", lend = %lend.name, headers = ?echoed,
+            "door: the lend's service answered with its secret in a header — dropped, never sent on");
+    }
     carriage.answered = Some((parts.status.as_u16(), length));
     tracing::debug!(target: "carriage", lend = %lend.name, range = ?carriage.range, status = parts.status.as_u16(),
         content_range = ?parts.headers.get(header::CONTENT_RANGE), ms = carriage.began.elapsed().as_millis(), "door: answered");
@@ -1485,11 +1710,7 @@ async fn forward(
         carried.sent += frame.data_ref().map_or(0, |d| d.len() as u64);
         frame
     });
-    let body = match swapping {
-        Some((secrets, script)) => Body::new(sign_in::Swapping::new(body, secrets, script)),
-        None => Body::new(body),
-    };
-    let mut response = Response::new(body);
+    let mut response = Response::new(Body::new(body));
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;
     Ok(response.into_response())

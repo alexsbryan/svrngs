@@ -1,0 +1,40 @@
+$ CARGO_INCREMENTAL=0 cargo test -q -p svrngs-node --test browser guests::   # at 90f8dcdd, with this test
+
+running 2 tests
+guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium --- FAILED
+guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit --- FAILED
+
+failures:
+
+---- guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium stdout ----
+
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium' (68706062) panicked at crates/svrngs-node/tests/browser/guests.rs:66:5:
+the browser half failed (exit status: 1):
+the visit did not finish: TimeoutError: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#home section').filter({ has: locator('button').filter({ hasText: 'Have a guest' }) }).first().locator('button').filter({ hasText: 'Have a guest' })
+
+
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit stdout ----
+
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit' (68706063) panicked at crates/svrngs-node/tests/browser/guests.rs:66:5:
+the browser half failed (exit status: 1):
+the visit did not finish: TimeoutError: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#home section').filter({ has: locator('button').filter({ hasText: 'Have a guest' }) }).first().locator('button').filter({ hasText: 'Have a guest' })
+
+
+
+
+
+failures:
+    guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::chromium
+    guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 107 filtered out; finished in 57.08s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit 101

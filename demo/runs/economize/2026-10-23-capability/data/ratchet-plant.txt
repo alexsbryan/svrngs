@@ -1,0 +1,10 @@
+$ echo "PLANTED = 1" >> scripts/ports.py; echo "const _PLANTED: u8 = 1;" >> crates/svrngs-core/src/record.rs; python3 scripts/lean_check.py
+crates/svrngs-core     3150 / 3150 lines
+.                     17620 / 17619 lines
+BROKEN  crates/svrngs-core has 3150 lines of code, budget 3150: raised only by the operator, with the reason in the commit
+BROKEN  . has 17620 lines of code, budget 17619: raised only by the operator, with the reason in the commit
+exit 1
+$ git checkout scripts/ports.py crates/svrngs-core/src/record.rs; python3 scripts/lean_check.py
+crates/svrngs-core     3149 / 3150 lines
+.                     17618 / 17619 lines
+exit 0

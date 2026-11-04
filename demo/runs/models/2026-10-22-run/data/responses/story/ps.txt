@@ -1,0 +1,10 @@
+39019 /Users/alexsbryan/.nvm/versions/node/v20.20.2/bin/node /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/dee.mjs http://127.0.0.1:8280 8282
+42748 /Users/alexsbryan/.nvm/versions/node/v20.20.2/bin/node /Users/alexsbryan/dev/svrngs/apps/pantry/examples/bridge/server.mjs --upstream http://127.0.0.1:8280 --vision ana/vision --port 8281
+56681 /Users/alexsbryan/dev/svrngs/target/debug/svrngs new Pantry Run --as ana
+66669 /Users/alexsbryan/dev/svrngs/target/debug/svrngs join svrngs://join/AvrfEm-eWePnYWzqSKCn-AI0EfjhO80mOTM0Trmuc4HduJz10Q-7H0E1D7u5nYWaK2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 --as bo
+71708 /Users/alexsbryan/dev/svrngs/target/debug/svrngs join svrngs://join/AvrfEm-eWePnYWzqSKCn-AI0EfjhO80mOTM0Trmuc4HduJz10Q-7H0E1D7u5nYWaK2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 --as cy
+76501 /Users/alexsbryan/dev/svrngs/target/debug/svrngs join svrngs://join/AvrfEm-eWePnYWzqSKCn-AI0EfjhO80mOTM0Trmuc4HduJz10Q-7H0E1D7u5nYWaK2h0dHBzOi8vdXN3MS0xLnJlbGF5Lm4wLmlyb2gubGluay8 --as dee
+81452 whisper-server -m /Users/alexsbryan/dev/svrngs/target/models/run-whisper/ggml-base.en.bin --host 127.0.0.1 --port 8206 -l en
+81469 /Library/Frameworks/Python.framework/Versions/3.13/Resources/Python.app/Contents/MacOS/Python /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/tool.py
+81505 /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-scope/data/bin/llama-swap --config /Users/alexsbryan/dev/svrngs/demo/runs/models/2026-10-22-run/data/llama-swap.yaml --listen 127.0.0.1:8209
+87422 /Users/alexsbryan/.nvm/versions/node/v20.20.2/bin/node /Users/alexsbryan/dev/svrngs/apps/pantry/pantry.mjs serve

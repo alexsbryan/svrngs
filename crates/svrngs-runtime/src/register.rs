@@ -17,8 +17,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    actor_of, admit, ring_dir, valid_namespace, Device, Joined, Membership, Op, Person, RailAct, RailError,
-    RingJournal, RingRail, RingVerifier, Roster, SignedOp,
+    actor_of, admit, ring_dir, valid_namespace, Cut, Device, Guest, Joined, Membership, Op, OpId, Person, RailAct,
+    RailError, RingJournal, RingRail, RingVerifier, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -42,23 +42,40 @@ pub enum Standing {
 
 /// One fold of a group's register (U7): who stands, each key the group's
 /// keeper cut with the person it was bound to, the keeper's key, and every
-/// removal and ask to remove, shown to everyone in the group.
+/// removal and ask to remove, shown to everyone in the group; and each
+/// visit the fold counts, by its id, with each cut, which ends its host's
+/// (guests-door): [`Guest::live`] reads the two.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Register {
     pub members: BTreeMap<String, Member>,
     pub removed: BTreeMap<String, Person>,
     pub keeper: Option<String>,
     pub removals: Vec<Removing>,
+    pub visits: BTreeMap<OpId, Guest>,
+    pub cut: BTreeMap<String, Cut>,
+    /// The keeper's cutover, once written (capability-signed;
+    /// `Membership::signers`).
+    pub signers: Option<OpId>,
+    pub holders: Option<OpId>,
+    /// The relays the keeper says the group meets at, `None` while the
+    /// keeper has said none (relay fallbacks; `Membership::meets_at`).
+    pub meets: Option<std::collections::BTreeSet<svrngs_core::relay::Url>>,
 }
 
 /// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
-/// who signed it, whom it names, when it is timed, and whether it was the
-/// keeper's cut, a leave or an ask, as `membership` judged it; and the key
-/// it names, which the page is not sent.
+/// who signed it, whom it names, each by name, by their first key and by
+/// when they joined, which tell two of one name apart where one is no
+/// longer standing (keys-names), when it is timed, and
+/// whether it was the keeper's cut, a leave or an ask, as `membership`
+/// judged it; and the key it names, which the page is not sent.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct Removing {
     pub by: Person,
+    pub by_key: String,
+    pub by_joined: Joined,
     pub of: Person,
+    pub of_key: String,
+    pub of_joined: Joined,
     pub at: i64,
     pub said: RemovalSaid,
     #[serde(skip)]
@@ -76,6 +93,10 @@ pub enum RemovalSaid {
     /// Anyone else's, or one that cut nobody: an ask.
     Asked,
 }
+
+/// A visit as the door reads it ([`RingRail::visit_anywhere`]): its group,
+/// that group's register and the visit.
+pub type Visiting = (String, Register, Guest);
 
 /// One key standing in a group: the person it is bound to, by name and by
 /// their first key in the group (bash-devices), what holds it ([`Device`],
@@ -149,11 +170,17 @@ pub(crate) fn register_in(
         .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
         .collect();
     let removals = removals_in(ops, &m, namespace);
+    let meets = m.meets_at();
     Ok(Register {
         members,
         removed,
         keeper: m.keeper,
         removals,
+        visits: m.visits,
+        cut: m.cut,
+        meets,
+        signers: m.signers,
+        holders: m.holders,
     })
 }
 
@@ -174,7 +201,7 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
                 tracing::debug!(target: "register", namespace, id = %id, key, "register: a removal the fold does not count is not shown");
                 return None;
             }
-            let (Some(by), Some(of)) = (m.bindings.get(&op.actor), m.bindings.get(key)) else {
+            let (Some((by_key, by)), Some((of_key, of))) = (m.person_of(&op.actor), m.person_of(key)) else {
                 tracing::debug!(target: "register", namespace, id = %id, actor = %op.actor, key, "register: a removal whose signer or named key is bound to nobody is not shown");
                 return None;
             };
@@ -184,7 +211,9 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
                 None => RemovalSaid::Asked,
             };
             tracing::debug!(target: "register", namespace, id = %id, by = %by, of = %of, ?said, "register: a removal shown to the group");
-            Some(Removing { by: by.clone(), of: of.clone(), at: op.ts_unix, said, key: key.clone() })
+            let (by_joined, of_joined) = (m.joined(by_key), m.joined(of_key));
+            let (by_key, of_key) = (by_key.into(), of_key.into());
+            Some(Removing { by: by.clone(), by_key, by_joined, of: of.clone(), of_key, of_joined, at: op.ts_unix, said, key: key.clone() })
         })
         .collect();
     out.sort_by_key(|r| r.at);
@@ -295,34 +324,34 @@ impl RingRail {
     /// group whose register is unreadable vouches for nobody, and groups
     /// that cannot be listed vouch for nobody at all.
     pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Member)> {
-        let namespaces = match self.namespaces() {
-            Ok(n) => n,
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
+        let held = held.ok()?;
+        let found = held.iter().find_map(|ns| match self.standing(ns) {
+            Ok(Standing::Members(m)) => Some((ns.clone(), m.get(actor)?.clone())),
+            Ok(_) => None,
             Err(e) => {
-                tracing::warn!(target: "register", actor, error = %e,
-                    "register: cannot list the groups held, so nobody can be shown to stand in one");
-                return None;
+                tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
+                None
             }
-        };
-        for namespace in &namespaces {
-            match self.standing(namespace) {
-                Ok(Standing::Members(m)) => {
-                    if let Some(member) = m.get(actor) {
-                        tracing::debug!(target: "register", actor, namespace, person = %member.person,
-                            person_key = member.person_key, device = ?member.device,
-                            "register: the key stands in a group held here");
-                        return Some((namespace.clone(), member.clone()));
-                    }
-                }
-                Ok(_) => {}
-                Err(e) => {
-                    tracing::warn!(target: "register", actor, namespace, error = %e,
-                        "register: a group's register is unreadable, so it vouches for nobody");
-                }
-            }
-        }
-        tracing::debug!(target: "register", actor, groups = namespaces.len(),
-            "register: the key stands in no group held here");
-        None
+        });
+        tracing::debug!(target: "register", actor, groups = held.len(), found = ?found, "register: the group held here the key stands in, and as whom, or none");
+        found
+    }
+
+    /// The first group held here a visit the fold counts is `key`'s in, its
+    /// register and the visit, live or not (guests-door): whom the door lets
+    /// in as a guest, asking the visit's liveness of [`Guest::live`]. `None`
+    /// when no group held here has one; groups that cannot be listed, and a
+    /// group whose register is unreadable, have none, said at warn.
+    pub fn visit_anywhere(&self, key: &str) -> Option<Visiting> {
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", key, error = %e, "register: cannot list the groups held, so no visit can be shown"));
+        let found = held.ok()?.into_iter().find_map(|ns| {
+            let register = self.register(&ns).inspect_err(|e| tracing::warn!(target: "register", key, namespace = ns, error = %e, "register: a group's register is unreadable, so it shows no visit")).ok()?;
+            let guest = register.visits.values().find(|g| g.visit.key == key)?.clone();
+            Some((ns, register, guest))
+        });
+        tracing::debug!(target: "register", key, group = ?found.as_ref().map(|f| &f.0), "register: whether a visit held here is the key's");
+        found
     }
 
     /// The first group held here whose keeper cut `actor`, or `None` (U7):
@@ -332,15 +361,8 @@ impl RingRail {
     /// unreadable, show nobody removed: said at warn, as
     /// [`Self::standing_anywhere`] says them.
     pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
-        let namespaces = match self.namespaces() {
-            Ok(n) => n,
-            Err(e) => {
-                tracing::warn!(target: "register", actor, error = %e,
-                    "register: cannot list the groups held, so nobody can be shown to have been removed from one");
-                return None;
-            }
-        };
-        let found = namespaces.into_iter().find(|ns| match self.register(ns) {
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to have been removed from one"));
+        let found = held.ok()?.into_iter().find(|ns| match self.register(ns) {
             Ok(r) => r.removed.contains_key(actor),
             Err(e) => {
                 tracing::warn!(target: "register", actor, namespace = ns, error = %e,
