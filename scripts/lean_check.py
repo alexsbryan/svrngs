@@ -420,8 +420,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # beside them in the files the route joins — node.rs, api.rs, surface.rs,
 # home.rs, group.rs, folder.rs, removal.rs — and found none: each holds
 # one decider the design names, and nothing is said twice across them.
-# The raise is the operator's to veto: 18,859 -> 19,054.
-BUDGET = {"crates/svrngs-core": 3478, ".": 19054, "js": 7339, "swift": 1}
+# The raise is the operator's: approved 2026-11-03, "Approve raise to
+# 19,100", from 18,859.
+BUDGET = {"crates/svrngs-core": 3478, ".": 19100, "js": 7339, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
