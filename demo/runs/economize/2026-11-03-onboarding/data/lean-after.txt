@@ -1,0 +1,7 @@
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3477 / 3478 lines
+.                     19441 / 19442 lines
+js                     7499 / 7500 lines
+swift                     0 / 1 lines
+
+exit: 0
