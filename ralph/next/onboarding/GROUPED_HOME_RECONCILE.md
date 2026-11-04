@@ -118,3 +118,53 @@ unplanted result; a red-then-green sequence and the full closing gate are owed.
 No option is applied by this report. The active owner's full-gate log is
 `demo/runs/economize/2026-11-04-grouped-home/check.log`; at inspection its
 lean step had reproduced the same shortfall and its later steps were running.
+
+## Resumed evidence, 2026-11-04 (base `4deb7594`)
+
+The loop's awaited unplanted browser run completed after the red plant above:
+
+```text
+lockf -k /tmp/svrngs-gate.lock cargo test -p svrngs-node --test browser grouped_home_keeps_capabilities_and_group_identity -- --nocapture
+grouped home: {
+  "groupControls": [23, 23, 23],
+  "homeControls": {"acts": 6, "join": 2, "lent": 5, "make": 3, "open": 2, "running": 1},
+  "navigation": true
+}
+test grouped::grouped_home_keeps_capabilities_and_group_identity::chromium ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 99 filtered out; finished in 9.78s
+```
+
+Its raw log is
+`ctl/log/sessions/onboarding-grouped-home-reconcile-1.await.log:1-23`.
+This discharges the focused red-then-green sequence owed above, not the full gate.
+
+The owner's full run has now finished (`check.log:1-1087`, 1,432 seconds).
+It reports the lean failure and one browser failure, with 97 browser tests
+passed and 2 ignored; all other gate steps passed. The failed browser test
+was the named lending-redraw flake. The required single-test rerun was run
+in the foreground with the gate lock and returned exit 0:
+
+```text
+lockf -k /tmp/svrngs-gate.lock cargo test -p svrngs-node --test browser the_home_page_lends_what_runs_here -- --nocapture
+test the_home_page_lends_what_runs_here::chromium ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 99 filtered out; finished in 9.15s
+```
+
+Fresh locked `python3 scripts/lean_check.py` still exits 1 with exactly
+3,486/3,494 core, 19,790/19,833 non-JS and 8,187/8,090 JS, including the
+same `BROKEN` diagnostic pasted above. The minimum passing JS cap remains
+8,188 (+98); no cap changed and no additional supported cut was established.
+The review of `grouped.js:11-122` confirms the existing report's inventory:
+native links, original mounted components, context/refusal messages and version
+review compose the remaining presentation; deleting those would change B.
+
+`commons_work` still reports owner claim `ring-32fb4a66f5b1a57a` active.
+The reconciliation claim is `ring-21c27db019f9909c`; no owner release or
+handback was observed. The row explicitly prohibits competing edits and
+repeated checkpoints while that ownership is active (`STATE.md:361-365`).
+This worker therefore commits only this evidence update, leaving the inherited
+product, DESIGN/PLAN edits, economy artifacts and forbidden V1.6 publish
+artifacts intact. The operator budget fork above remains necessary. After
+that decision and owner handback, commit the scoped product and run a fresh
+locked full gate to exit 0 before closing the row; the failed run plus focused
+reruns do not constitute that closure.
