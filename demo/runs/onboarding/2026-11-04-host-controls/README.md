@@ -104,7 +104,90 @@ $ cargo clippy --quiet -p svrngs-node --test browser -- -D warnings
 exit 0 (no output)
 ```
 
-The full closing gate is owed. The session hands its single run to the loop
-with `ralph-result await`, under `lockf -k /tmp/svrngs-gate.lock`, because the
-previous row's recorded full gate took 19m22s. Its resumed session must record
-the actual result here, handle any failure and commit before reporting done.
+## Full closing gate
+
+The loop ran the single closing gate against implementation `96f40310` and
+resumed this unit with exit **0**, after **1,290 seconds**. The complete output
+is `ralph/next/onboarding/ctl/log/sessions/onboarding-host-controls-1.await.log`.
+Pasted run:
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+note       open files: 256, raised to 10240
+note       kept awake while this runs (caffeinate, pid 96876)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (1 s)
+passed     advisories (1 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (17 s)
+passed     rustfmt (0 s)
+passed     clippy (11 s)
+passed     tests (550 s)
+passed     canaries (8 s)
+passed     ceiling canary (34 s)
+           CEILING idle round at 25 x 10,000: 0.0267 s of processor, the median of [0.1866140000000005, 0.026660999999998936, 0.022576999999998293], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.022576999999998293,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.003233208}
+passed     web rustfmt and clippy (8 s)
+passed     browser (159 s)
+passed     types (1 s)
+passed     typed lint (1 s)
+passed     joining in a browser (44 s)
+passed     pages (62 s)
+passed     scenes (241 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (111 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	392	passed	3600	passed
+           computer	bo	410	passed	4152	passed
+           wildcard	sam	384	passed	3719	passed
+           wildcard	bo	385	passed	20380	failed
+           of 492 here since 2026-10-22T17:12:29Z: 2 missed 5 s through a lend, 80 straight; 326 ended at a load above 12 cores
+passed     app laws (41 s)
+note       took 1290 s in all
+exit 0
+```
+
+The rate observation includes one straight-canary miss (20,380 ms); every
+through-lend observation passed. The gate reports that rate separately from
+its passing conformance checks. This local gate does not judge the real-laptop
+welcome scene in ONBOARDING §6.
