@@ -142,8 +142,10 @@ const reading = (state, message) => {
  * @param {Location} location
  * @returns {State}
  */
-export const first = ({ pathname, search, origin }) => {
+export const first = ({ pathname, search, origin, hash }) => {
   const query = Object.fromEntries(new URLSearchParams(search));
+  if (pathname === '/' && !query.screen && hash.startsWith('#group-'))
+    query.welcome = hash.slice(7);
   const done = /** @type {const} */ (['made', 'joined', 'left']).find((said) => said in query);
   return {
     at: { groups: 'reading', said: done ?? 'none' },

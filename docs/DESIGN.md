@@ -802,10 +802,19 @@ membership. The canonical page supplies the installer and the saved page origin.
 The installer keeps the existing identity and join idempotence, restores a
 previously stopped service on failure or interruption, and retains its refusal
 exit status. Its optional `--at` is carried by `svrngs open <local destination>`
-to the existing `/v1/open {at}` boundary. The authenticated local page focuses
-the group's section and shows the node's actual folder paths and existing
-**Open this folder** buttons, including nondefault destinations. Proofs are in
-`demo/runs/onboarding/2026-11-04-arrival/README.md`; no resolver is deployed.
+to the existing `/v1/open {at}` boundary. At `/#group-<id>`, HOME reads the
+stable id once and draws a focused **Welcome to <group>**, the node's actual
+folder paths and existing **Open this folder** controls, including nondefault
+destinations. It explains how files reach the group and suggests a first hello;
+the host's optional `WELCOME.txt` stays ordinary group content, never presumed
+present. Other groups and management controls wait behind **All your groups**,
+an ordinary navigation to `/` that clears the arrival destination. Refresh
+preserves that choice, and subsequent group reads cannot reenter the welcome.
+Loading, unread groups, an unavailable target and unknown/absent folders say
+what is missing with refresh/help guidance; names never select a substitute.
+Ordinary `/` retains the full home page. Proofs are in
+`demo/runs/onboarding/2026-11-04-arrival/README.md` and
+`demo/runs/onboarding/2026-11-04-welcome/README.md`; no resolver is deployed.
 
 *The phone's app joins by the same link* (designed, not built; §7). On our
 page host the chat link is a universal link, so with the app installed it

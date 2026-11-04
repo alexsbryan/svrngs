@@ -6,6 +6,7 @@
 // (PLACES), and the page's address last.
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { Group } from './group.js?v=__VERSION__';
+import { Folder } from './group-folder.js?v=__VERSION__';
 /** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Group as Held } from './group.js?v=__VERSION__' */
 /** @import { Flows, Message, Places, Said, State } from './home-reading.js?v=__VERSION__' */
@@ -40,19 +41,56 @@ const saidOnce = (state) => {
  * @property {Places} places
  */
 
-// Past its first two `return`s, the groups are read, so `state.groups` is
-// read then.
+/** @param {Held} group */
+function welcomeFolders(group) {
+  if (group.folders === null)
+    return html`<p>This computer cannot say where the shared folder is. Try refreshing this page.</p>`;
+  if (group.folders.length === 0)
+    return html`<p>This group has no shared folder on this computer yet. Ask the person who invited you for help.</p>`;
+  return group.folders.map((dir) => html`<${Folder} key=${dir} g=${group} dir=${dir} />`);
+}
+
+/** @param {{ state: State }} props */
+function Arrival({ state }) {
+  const target = state.q.welcome;
+  const welcome = state.groups?.find(
+    (group) => group.id === target && !group.left && !group.removed,
+  );
+  useEffect(() => {
+    if (target)
+      globalThis.__trace?.(
+        `HOME: welcome ${target}: ${state.at.groups}, ${welcome ? 'found' : 'unavailable'}`,
+      );
+  }, [target, state.at.groups, welcome]);
+  const back = html`<p><a href="/">All your groups</a></p>`;
+  if (state.at.groups === 'reading') return html`<p class="said">Reading your groups…</p>${back}`;
+  if (state.at.groups === 'unread')
+    return html`<p>This computer cannot read your groups: ${state.why}. Try refreshing this page.</p>${back}`;
+  return html`
+    <section id=${`group-${target}`}>
+      <h2>${welcome ? `Welcome to ${welcome.name ?? 'your group'}` : 'This group is not available on this computer'}</h2>
+      ${
+        welcome
+          ? html`
+        <p>Start with your shared folder. What you put there reaches everyone in this group, and what they add reaches you.</p>
+        ${welcomeFolders(welcome)}
+        <p>Open the folder to get started. If there is a WELCOME.txt, read it for your host’s welcome. Add a small text file named after you to say hello.</p>
+      `
+          : html`<p>Try refreshing this page, or ask the person who invited you for help.</p>`
+      }
+      ${back}
+    </section>
+  `;
+}
+
 /** @param {HomeProps} props */
 export function Home({ store, flows, places }) {
   const state = useStore(store);
-  useEffect(() => {
-    if (state.at.groups === 'read' && location.hash.startsWith('#group-'))
-      document.getElementById(location.hash.slice(1))?.scrollIntoView();
-  }, [state.at.groups]);
   const query = state.q;
   const home = store.dispatch;
   /** @param {string} place */
   const Place = (place) => places[place] && html`<${places[place]} s=${state} home=${home} />`;
+  if (query.welcome) return html`<${Arrival} state=${state} />`;
   if (state.at.groups === 'reading') return html`<p class="said">Reading your groups…</p>`;
   if (state.at.groups === 'unread')
     return html`<p>This computer cannot read your groups: ${state.why}</p>`;

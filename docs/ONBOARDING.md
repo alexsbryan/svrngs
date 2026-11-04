@@ -32,6 +32,13 @@ FEDORA.md`). Installation plus an anchor to a group does not meet this bar.
 The `onboarding-welcome` correction gives native arrival a focused welcome
 to that group and its real folder, with a way back to all groups. The haiku
 invitation remains optional host-written content in `WELCOME.txt`.
+HOME now reads the existing `#group-<id>` destination once: the welcome hides
+other groups and management controls, explains sharing and offers the existing
+folder opener. **All your groups** navigates to `/`; refreshing that page or
+rereading groups does not return to the welcome. Missing/unread targets and
+unknown/absent folders give explicit recovery guidance. The local browser
+proof and matching-build retry procedure are in
+`../demo/runs/onboarding/2026-11-04-welcome/README.md`.
 
 This is a general, self-service feature. Making the next invitation needs
 no deployment, hosting credentials, configuration edit, or developer.
