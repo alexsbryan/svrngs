@@ -78,3 +78,27 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; fini
 
 The full locked gate must complete with exit 0 before this row is done.
 Use `ralph-result await` to give it the necessary budget and preserve its log.
+
+## Resumed closing gate
+
+The loop-managed full gate completed with exit 1 in 788 seconds. Its log is
+`ralph/next/onboarding/ctl/log/sessions/onboarding-portal-reminder-1.await.log`.
+Every stage except `tests` passed, including all browser, page, scene,
+conformance and app-law stages. This time Give's
+`a_snapshot_of_another_card_version_is_refused` failed at
+`apps/give/tests/check.rs:140` on Podman's container startup, status 126:
+`Error: starting some containers: internal libpod error`.
+
+The same test passed unchanged in isolation on resumption:
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock cargo test -p give --test check a_snapshot_of_another_card_version_is_refused -- --exact --nocapture
+running 1 test
+test a_snapshot_of_another_card_version_is_refused ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 12.79s
+```
+
+This establishes a passing isolated rerun, not a passing full gate or a
+diagnosis of Podman's internal error. The next full gate runs under the
+loop's await budget because the completed run exceeded the foreground
+tool's ten-minute timeout. No product or test changes were made for this retry.
