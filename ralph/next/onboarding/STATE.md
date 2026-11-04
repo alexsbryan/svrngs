@@ -101,18 +101,32 @@ swift                     0 / 1 lines
     rate and abuse limits, with the arithmetic shown. Write the
     recommendation and exact choices in `NEEDS_HUMAN.md`, then stop for the
     operator's answer. No adapter or deployment before that answer.
+  - **(e) Graceful failure at every limit.** The operator's answer, 2026-11-04:
+    "We should fail gracefully in the case we hit any of those limits." Define
+    the resolver's policy for commands/day/month, bandwidth, storage, request
+    size, rate limits, timeouts and provider 5xx/429: the host and attendee see
+    "joining is temporarily unavailable" with retry guidance, never an ended
+    invitation; existing members are unaffected; no partial publication or
+    close; no paid upgrade or automatic retry storm; the host's pending receipt
+    and the underlying invitation remain recoverable. The policy handles any
+    non-success, so it does not depend on undocumented provider codes.
   - **Check:** every claim cites a URL or a local run; the atomic test's red
     and green pasted; no product lines; `scripts/check.sh` unchanged and not
     required for this row.
+  - **Operator decision, 2026-11-04:** option A chosen ("Let's go with A")
+    and the paired phrase/limits approved ("The rest is reasonable too").
+    The row's remaining stop is the official provider answer on recovery and
+    bandwidth, not the phrase/limits. Do not build the adapter before that
+    answer. `NEEDS_HUMAN.md` holds the exact inquiry to send.
   - **Director disposition (2026-11-04 UTC): held for the operator.** Local
     red/red/green proof reproduced; it does not certify hosted recovery.
-    The paired phrase/limits answer is still required by CHARTER §3 and (d).
-    Before this row can pass, resolve the selected Free endpoint's durable
+    The paired phrase/limits answer is now given by the operator. Before this
+    row can pass, resolve the selected Free endpoint's durable
     reservation/closure recovery and bandwidth-exhaustion behavior, as required
     by ONBOARDING §5. Options, costs and exact provider questions are in
-    `NEEDS_HUMAN.md` under “Director decision”. No adapter until that proof
-    and the operator's paired answer; the row and source order stay open.
-- [ ] onboarding-native-publication — depends [onboarding-store-proof] — ONE
+    `NEEDS_HUMAN.md` under “Director decision”. No adapter until that proof;
+    the row stays parked while native publication proceeds independently.
+- [ ] onboarding-native-publication — depends [onboarding-economize] — ONE
   ROW, red first, and `scripts/check.sh` once, at the close (ONBOARDING §3,
   "Short addresses over existing invitations"):
   - **(a) Tests: A HOST PUBLISHES AND CLOSES.** These fail at HEAD:
@@ -127,16 +141,25 @@ swift                     0 / 1 lines
       each recover; network requests stay outside the native invitation
       lock; a late response rechecks the current invitation before it is
       treated as current.
+    - **A limit or provider error fails gracefully.** A resolver answer of
+      429, 5xx, timeout, quota/bandwidth/storage exhaustion or an
+      unreadable body leaves the invitation valid and the receipt pending,
+      says "joining is temporarily unavailable" with retry guidance, and
+      never looks like an ended invitation or a closed publication.
   - **(b) The change.** Extend `Host::link`/`MintInvite` and the home page's
     authenticated route; keep the receipt with `declared::write_secret`.
     Reuse `svrngs_node::http::client()`; do not add a second HTTPS client.
     The browser gets no cross-origin access to the resolver and no record
-    API bearer token.
+    API bearer token. The publication client treats any non-success as the
+    graceful failure above; it never retries in a tight loop and never
+    upgrades a plan.
   - **Check:** (a) red first on each named plant; the existing invitation,
       join and home-page tests unchanged by name; `scripts/check.sh` once.
-- [ ] onboarding-resolver — depends [onboarding-native-publication] — ONE ROW,
-  red first, and `scripts/check.sh` once, at the close (ONBOARDING §3):
-  - **(a) Tests: THE RESOLVER IS REPLAY-SAFE.** These fail at HEAD:
+- [ ] onboarding-resolver — depends [onboarding-store-proof,
+  onboarding-native-publication] — ONE ROW, red first, and `scripts/check.sh`
+  once, at the close (ONBOARDING §3):
+  - **(a) Tests: THE RESOLVER IS REPLAY-SAFE AND FAILS GRACEFULLY.** These
+    fail at HEAD:
     - An unlisted random phrase maps to an ordinary invitation and its
       expiry; no public directory is offered.
     - Publication and closure are authenticated by the host's existing key
@@ -148,16 +171,24 @@ swift                     0 / 1 lines
       that keep those properties remain.
     - Expired and closed addresses say the invitation ended and how an
       existing member reopens svrngs.
+    - **Every provider limit fails gracefully.** Commands/day/month,
+      bandwidth, storage, request size, rate limits, timeouts and 5xx/429
+      return one person's "joining is temporarily unavailable" answer with
+      retry guidance; no partial write, no reopened address, no lost
+      reservation, no paid upgrade and no tight retry loop. A limit is
+      never said as "ended" or "not found".
   - **(b) The change.** Build the resolver handler against Upstash Redis
     Free's REST semantics proven by `onboarding-store-proof`; keep it
     replaceable and hold no group record or shared files. No provider
     framework, no deployment. The adapter uses the phrase space and limits
-    the operator approved.
+    the operator approved and the graceful-failure policy above.
   - **Check:** (a) red first on each plant, including a retry that reopens a
-      closed address and an old phrase reused for a later invitation;
-      `scripts/check.sh` once; no network deployment.
-- [ ] onboarding-host-controls — depends [onboarding-resolver] — ONE ROW,
-  red first, and `scripts/check.sh` once, at the close (ONBOARDING §2):
+      closed address, an old phrase reused for a later invitation, and a
+      simulated 429/quota/bandwidth answer; `scripts/check.sh` once; no
+      network deployment.
+- [ ] onboarding-host-controls — depends [onboarding-native-publication] —
+  ONE ROW, red first, and `scripts/check.sh` once, at the close
+  (ONBOARDING §2):
   - **(a) Tests: THE HOST'S CONTROLS.** These fail at HEAD:
     - A group's home page offers **Invite people here**; its result shows a
       large, copyable short address, when it ends, and that this computer
@@ -165,14 +196,17 @@ swift                     0 / 1 lines
     - **Close joining** ends admission through that invitation; a refusal
       says why and offers retry.
     - The address and controls survive reloading and restarting.
+    - A resolver limit or failure is shown as "joining is temporarily
+      unavailable" with a retry, never as an ended invitation; the
+      underlying invitation stays usable.
   - **(b) The change.** Extend the home page's typed machine and view. Use
     the existing `Copy` and group-link components; no new page and no
     cross-origin browser access to the resolver.
   - **Check:** (a) red first; Chromium browser tests; `scripts/check.sh`
       once.
-- [ ] onboarding-native-arrival — depends [onboarding-host-controls] — ONE
-  ROW, red first, and `scripts/check.sh` once, at the close (ONBOARDING §2,
-  §3 "Extend the native arrival"):
+- [ ] onboarding-native-arrival — depends [onboarding-resolver,
+  onboarding-host-controls] — ONE ROW, red first, and `scripts/check.sh` once,
+  at the close (ONBOARDING §2, §3 "Extend the native arrival"):
   - **(a) Tests: A PERSON ARRIVES ONCE.** These fail at HEAD:
     - Typing the short address shows who invited them and which group it
       is; the name is asked once and quoted literally in the installation
@@ -186,11 +220,15 @@ swift                     0 / 1 lines
       `~/svrngs/<name>`.
     - The short address is never the installer's download source or the
       group's saved page origin; `/v1/open {at}` focuses the group.
+    - A resolver limit or failure says "joining is temporarily unavailable"
+      with retry guidance, and the attendee is never told the invitation
+      ended.
   - **(b) The change.** Extend `web/page/name-form.js`, `join.js`,
     `computer.js`, `web/install.sh` and the existing folder opener. No
     second identity for the browser and no second folder API.
-  - **Check:** (a) red first, including a literal shell name and a failed
-      join followed by a restart; `scripts/check.sh` once.
+  - **Check:** (a) red first, including a literal shell name, a failed join
+      followed by a restart, and a simulated resolver limit;
+      `scripts/check.sh` once.
 - [ ] onboarding-scene — depends [onboarding-native-arrival] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write

@@ -4,10 +4,17 @@ Before the row, read this queue's `CHARTER.md` whole, `STATE.md`'s opening,
 and `docs/ONBOARDING.md` whole. Use `docs/PLAN.md` §1 for priority.
 
 The current-base economizing pass is complete. The operator approved its
-upper estimate (3,494 core, 19,833 `.`, 8,090 `js`) and chose Upstash Redis
-Free with no paid overage for the planned resolver. Do not start the adapter
-until the `onboarding-store-proof` row verifies free-tier cost controls,
-atomic reservation/closure, and the self-hosting path.
+upper estimate (3,494 core, 19,833 `.`, 8,090 `js`), chose Upstash Redis
+Free with no paid overage, approved the paired phrase/limits, and chose
+option A on 2026-11-04: obtain official written answers on durable recovery
+and bandwidth exhaustion before the resolver adapter. The exact inquiry is
+`ralph/next/onboarding/PROVIDER_INQUIRY.md`; the adapter stays held.
+
+Every provider limit or failure must fail gracefully: "joining is temporarily
+unavailable" with retry guidance, never an ended invitation; existing members
+keep working; no partial publication or close, no paid upgrade, and no tight
+retry loop. Native publication and host controls may proceed independently
+against the documented contract and a fake resolver.
 
 The operator deferred publication of recent multi-ring join-flow fixes to
 start this queue. Do not deploy Upstash or Vercel, publish, push, or modify

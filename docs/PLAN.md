@@ -328,11 +328,14 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   selects no product cut; the revised estimate is +230 to +391
   non-JavaScript and +345 to +590 JavaScript lines, with any +0 to +16
   core lines included in the former. The operator approved the upper estimate
-  on 2026-11-03 (ceilings 3,494 core, 19,833 `.`, 8,090 `js`) and chose
-  Upstash Redis Free as the planned resolver store, with no paid overage and
-  no deployment now (`ralph/next/onboarding/NEEDS_HUMAN.md`). Prove its
-  free-tier cost controls, atomic reservation/closure and self-hosting path
-  before an adapter. Its acceptance scene is `ONBOARDING.md` §6;
+  on 2026-11-03 (ceilings 3,494 core, 19,833 `.`, 8,090 `js`), chose Upstash
+  Redis Free as the planned resolver store, and on 2026-11-04 chose option A
+  (obtain official recovery/bandwidth answers before the adapter) with the
+  paired phrase/limits approved. Any provider limit or failure says "joining
+  is temporarily unavailable", never an ended invitation; existing members
+  keep working. No paid overage or deployment now
+  (`ralph/next/onboarding/NEEDS_HUMAN.md`). Its acceptance scene is
+  `ONBOARDING.md` §6;
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; kept behind onboarding by the
   operator's reprioritization; `ralph/next/js/NEEDS_HUMAN.md`, "A phone's

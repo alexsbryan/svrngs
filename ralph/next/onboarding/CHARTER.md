@@ -25,17 +25,27 @@ must be chosen together; publication and closure must be replay-safe, and a
 closed phrase must never name a later invitation. Admission remains the
 issuing computer's existing `Invite` and redemption rules.
 
-## The operator's decisions, 2026-11-03
+## The operator's decisions, 2026-11-03 and 2026-11-04
 
 - **Budget:** the upper current-base estimate is approved: ceilings 3,494
   core, 19,833 `.`, and 8,090 `js` (`scripts/lean_check.py`). Each landing
   raises only to where it lands.
 - **Resolver plan:** Upstash Redis Free, with no paid overage authorized.
-  Deployment is not authorized now. Before an adapter, prove the free-tier
-  cost controls, atomic reservation/closure operations and a self-hosting
-  path in `onboarding-store-proof`.
-- **Phrase space and request limits:** still paired; choose them after the
-  storage behavior is understood.
+  Deployment is not authorized now. The operator chose option A on
+  2026-11-04: retain Free and obtain official written answers on durable
+  recovery and bandwidth exhaustion before the adapter. The exact inquiry is
+  in `NEEDS_HUMAN.md`; the adapter waits on that answer.
+- **Phrase space and request limits:** approved as proposed ("The rest is
+  reasonable too"): EFF Short Wordlist 1, five words, 51.69 bits; 30/min and
+  300/day per IP, 20k/month global; 100 active secrets; 100k reservations or
+  100 MB; 8 KiB bodies; one-day invitations. Shorter phrases or higher limits
+  require the probability recalculated together.
+- **Limits fail gracefully** (2026-11-04: "We should fail gracefully in the
+  case we hit any of those limits"): every provider limit or error is shown
+  as "joining is temporarily unavailable" with retry guidance, never as an
+  ended invitation; existing members are unaffected; no partial publication
+  or close, no paid upgrade, no tight retry loop, and the host's pending
+  receipt and underlying invitation stay recoverable.
 
 No Upstash/Vercel deployment, purchase or release is authorized now. The
 economizing pass found no supported product cut; its candidates, instruments
@@ -59,8 +69,10 @@ installer or folder owner.
   completed JavaScript queue and later join/update work, so only the
   current-base survey and estimate govern the approved budget.
 - Keep behavior-preserving moves separate from behavior changes.
-- Do not build the adapter until `onboarding-store-proof` verifies the chosen
-  free-tier plan's cost boundary, atomic operations and self-hosting path.
+- Do not build the resolver adapter until the official provider answer in
+  `NEEDS_HUMAN.md` resolves durable recovery and bandwidth exhaustion. Native
+  publication and the host controls may proceed independently against the
+  documented contract and a fake resolver.
 - No deployment or paid usage in this queue without a new operator decision.
 - The people scene is not judged by a simulated run. Record the laptop scene
   from `docs/ONBOARDING.md` §6; one run is not a rate.

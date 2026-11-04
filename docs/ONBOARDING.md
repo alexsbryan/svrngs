@@ -91,6 +91,15 @@ The resolver holds invitation capability and is part of its trust boundary.
 It holds no group record or shared files. Its unavailability affects new
 short-address arrivals, not an installed member's continued participation.
 
+**A limit or provider failure is said as itself.** Commands/day/month,
+bandwidth, storage, request size, rate limits, timeouts and provider 5xx/429
+all produce one person's answer, "joining is temporarily unavailable", with
+retry guidance. Existing members keep working, the host's pending receipt and
+the underlying invitation stay recoverable, and no partial publication or
+close is written. A limit is never shown as an ended or missing invitation,
+never triggers a paid upgrade, and never causes a tight retry loop. The policy
+handles any non-success, so it does not depend on undocumented provider codes.
+
 ### Extend the native arrival
 
 Reuse the existing name form, copy control and installation command. A
@@ -223,8 +232,12 @@ on Free unsettled. The exact Free bandwidth-exhaustion response and actual
 account/hosting controls are also unobserved. These are explicit remaining
 proof obligations, not assumed passes. The self-hosting path is documented,
 including the handler transport change required by ordinary Redis.
-The paired five-word phrase and abuse-limit recommendation awaits the
-operator in `ralph/next/onboarding/NEEDS_HUMAN.md`; the adapter remains held.
+The paired five-word phrase and abuse-limit recommendation was approved by
+the operator on 2026-11-04 ("The rest is reasonable too"), together with
+option A ("Let's go with A") and the graceful-failure requirement ("We should
+fail gracefully in the case we hit any of those limits"). The exact inquiry
+to send for the remaining recovery and bandwidth answers is
+`ralph/next/onboarding/PROVIDER_INQUIRY.md`; the adapter remains held.
 
 ## 6. Order and proof
 

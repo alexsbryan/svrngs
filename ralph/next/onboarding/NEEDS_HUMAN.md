@@ -1,12 +1,35 @@
 # Onboarding's operator decisions
 
-## Store proof — awaiting the operator
+## Store proof — option A chosen; official provider answer pending
 
 `onboarding-store-proof`, read on **2026-11-04 UTC / 2026-11-03 local**.
 The assigned row requires a stop here before an adapter. Local proof committed
 in `0f72a101`; source excerpts, uncertainty and arithmetic:
 `demo/runs/onboarding/2026-11-04-store/README.md`. Actual planted-red and
 atomic-green runs: that directory's `ATOMIC.md`. No product lines changed.
+
+### The operator's answers, 2026-11-04
+
+The operator: "Let's go with A. The rest is reasonable too" and "We should
+fail gracefully in the case we hit any of those limits."
+
+1. **Option A.** Retain Upstash Redis Free and obtain the official written
+   answers below before the adapter. No provisioning or payment is needed for
+   the inquiry. The adapter stays held; native publication and host controls
+   may proceed independently.
+2. **The paired values are approved as proposed** under “Exact proposed
+   choices”: EFF Short Wordlist 1, five words (51.69 bits), 30/min and
+   300/day per IP, 20k/month global, 100 active secrets, 100k reservations or
+   100 MB, 8 KiB bodies, one-day invitations.
+3. **Every limit fails gracefully.** Commands/day/month, bandwidth, storage,
+   request size, rate limits, timeouts and 5xx/429 show “joining is
+   temporarily unavailable” with retry guidance; they never look like an ended
+   invitation. Existing members are unaffected, no partial publication or
+   close, no paid upgrade, no tight retry loop, and the host's pending receipt
+   and underlying invitation stay recoverable. The policy handles any
+   non-success, so it does not depend on undocumented provider codes.
+
+The exact inquiry to send is `ralph/next/onboarding/PROVIDER_INQUIRY.md`.
 
 ### Director decision — operator fork, not approval
 
