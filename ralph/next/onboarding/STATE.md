@@ -253,3 +253,22 @@ swift                     0 / 1 lines
     the operator's people bar.
   - **Check:** predictions committed before data; `scripts/check.sh` exit 0
       before the scene; no deployment or publish.
+  - **Staging, 2026-11-04 (supervisor on the operator's behalf):** use the
+    live Upstash Free database (`https://true-pheasant-225442.upstash.io`;
+    key in Keychain service `svrngs-upstash`, account `alexsbryan`; never
+    print or commit it). Run the resolver handler locally with a small
+    adapter on this Mac; build and serve the canonical page and matching
+    Mac/Linux downloads locally from the scene commit; use the LAN/tailnet
+    address for the attendee laptops. No public deployment, publish or push.
+    The operator supplies the host plus two attendee laptops, one fresh
+    install, and is present for the run. If they are not present, prepare and
+    verify the staging, record the people step as never-ran, and stop; never
+    simulate the welcome.
+  - **People bar (provisional, supervisor on the operator's behalf; the
+    operator may revise):** each attendee joins from the typed address
+    without verbal help; each reaches the correct folder and adds a text
+    file; no second name prompt, duplicate membership or wrong folder; one
+    interrupted join retains identity; closing refuses a new arrival through
+    both the short address and a copied ordinary invitation while existing
+    members still exchange files. Record assistance and time; one run is not
+    a rate. The operator judges the human welcome from the record.
