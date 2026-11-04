@@ -338,7 +338,13 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   unavailable", never an ended invitation; existing members keep working. No
   paid overage or public deployment now
   (`ralph/next/onboarding/NEEDS_HUMAN.md`). Its acceptance scene is
-  `ONBOARDING.md` §6;
+  `ONBOARDING.md` §6. The 2026-11-04 bug bash also exposed all-groups lending
+  expanding on a new join. Before the remaining scene, the queue runs a fresh
+  scoped-lending economizing pass and one end-to-end implementation row
+  (`docs/LENDING_SCOPE.md`; `ralph/next/onboarding/STATE.md`). The operator
+  preapproved only the minimum necessary actual line growth after the pass,
+  with zero additional core product lines and incremental measured cap
+  adjustments, not an advance allocation of the estimate's upper bounds;
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; kept behind onboarding by the
   operator's reprioritization; `ralph/next/js/NEEDS_HUMAN.md`, "A phone's

@@ -67,12 +67,51 @@ home page's invite and name forms, `web/install.sh`, and folder/open
 surfaces. Extend them; do not make a parallel invitation, HTTPS client,
 installer or folder owner.
 
+## Selected-ring lending — preapproval, 2026-11-04
+
+After the source survey in `docs/LENDING_SCOPE.md`, the operator said:
+"Ok I approve the minimum amount of lines as pre approval. Let's add the
+rows to the queue (as few as necessary)". Two rows follow the current
+welcome/portal/OIDC fixes: `onboarding-scope-economize`, then
+`onboarding-scoped-lending`. The people scene remains after them.
+
+- Reuse the current stack: an explicit stable-group-ID audience on the
+  lender's existing declaration, shared lender-side enforcement, no automatic
+  audience expansion when joining a group, and legacy lends paused until
+  explicit selection. Preserve owner access, other selected groups,
+  credentials and unrelated traffic. Implement the recommended bounded
+  HTTP/WebSocket/raw withdrawal as well as denial of new requests.
+- **Zero additional core product lines.** This is node-local lending policy,
+  not a new membership/grant rule. No new dependency, hosted service, policy
+  database, ACL framework, per-ring endpoint or signed reach-pass format.
+- The fresh economizing pass comes first. Each supported cut is its own
+  behavior-preserving commit; lower caps to where cuts land and prove the
+  ratchet on its plant. The pass records the minimal remaining work and
+  revised measurements; it does not park for the budget already preapproved.
+- **Only necessary actual growth is preapproved.** Use available headroom;
+  when a cap adjustment is required, apply only the increment needed to put
+  the measured landing one line below its cap. Do not raise all caps to the
+  survey's upper estimate in advance. Each adjustment cites this decision,
+  the fresh pass, its cuts (or none established), why the remainder is new
+  work, and its failing budget plant before the passing recount.
+- The survey's +700 non-JS / +235 JS upper bounds over the pass's baseline
+  are review guardrails, not a spending target. More than those, any core
+  growth, a new dependency or a wider design requires another operator
+  decision. Give's app-only growth is separately reported, not hidden in
+  platform savings. If the harness refuses an authorized cap edit, provide
+  the supervisor its ready diff rather than bypass permissions.
+- The implementation updates DESIGN in place when behavior changes and
+  proves the House-versus-Trip scene with real node processes. Automated
+  proof does not substitute for the remaining people welcome.
+
 ## Director
 
 The director may split or re-scope a row that cannot execute, keeping every
-check and the row's demo. It may not weaken a check, raise a budget, or
-authorize a deployment, purchase, publish or push. A row that leaves tracked
-changes uncommitted is checkpointed as `WIP: <row>` before any later row runs;
+check and the row's demo. It may apply only the incremental scoped-lending
+budget adjustments explicitly preapproved above; other raises remain the
+operator's. It may not weaken a check or authorize a deployment, purchase,
+publish or push. A row that leaves tracked changes uncommitted is
+checkpointed as `WIP: <row>` before any later row runs;
 never discard it.
 
 ## Stop lines

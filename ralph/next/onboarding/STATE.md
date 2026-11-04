@@ -325,7 +325,78 @@ swift                     0 / 1 lines
     full gate if product behavior changes. No unsolicited installation or
     changes to the operator's Jellyfin server; the real configuration walk
     is brokered separately with the operator. Stay within approved budgets.
-- [ ] onboarding-scene — depends [onboarding-oidc-setup-help] — ONE ROW
+- [ ] onboarding-scope-economize — depends [onboarding-oidc-setup-help] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
+  - **Survey first.** Read `docs/LENDING_SCOPE.md`, its cited local/upstream
+    surfaces and the current tree after the preceding fixes. Record product
+    counts by core/non-JS/JS and Give, candidates with exact sites, and the
+    smallest implementation in `demo/runs/economize/<date>-lend-scope/`.
+    Recheck the membership witness, wire-version fence, full declaration
+    mutation serialization, legacy migration and all current share callers.
+    Existing stack/primitives outrank inventing a new store or policy engine.
+    An unavailable instrument is could-not-judge, not zero duplicates.
+  - **Cut only supported waste.** Commit the survey before any cut; each
+    behavior-preserving cut is separate from policy changes. Lower caps to
+    where cuts land, with a named red/green budget plant. Never meet a budget
+    by packed code, renamed identifiers or relocating tests out of the count.
+  - **Resolve the minimum design.** Prototype bounded body/WebSocket/raw
+    withdrawal using current ownership/cancellation primitives, in scratch,
+    before its production implementation. State its tested bound and update
+    the source-grounded estimate/baseline. Need no extra core product lines,
+    new dependency, service, ACL framework or reach-pass signature format.
+  - **Close.** Existing tests unchanged for cuts, lean before/after, and the
+    locked full gate if product code changed; document-only survey uses the
+    recorded product evidence plus current fast checks. Report actual cuts,
+    minimal remaining additions and the proposed incremental cap treatment.
+    The budget is already conditionally preapproved: complete this row and
+    continue to implementation without a redundant operator budget stop.
+    Exceeding the survey's +700 non-JS / +235 JS guardrails, core growth or
+    a wider design remains a new operator decision.
+- [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — ONE ROW, implement selected-ring lending end to end from `docs/LENDING_SCOPE.md`; minimal necessary actual growth preapproved, zero additional core product lines:
+  - **Policy and migration.** Persist explicit stable group IDs on the
+    existing lend declaration; no selection means no group access. New
+    joins never widen an existing audience. Pause/stamp legacy declarations
+    until explicit selection, fail closed on migration/read errors and keep
+    old binaries from silently ignoring scoped grants. Preserve carried
+    apps' intrinsic group ownership and the existing `Offered.group` marker.
+    Audience-only edits preserve secrets, OIDC client and choices; serialize
+    the entire read/modify/write across audience, limit and sign-in writers.
+  - **One authorization.** Resolve the verified device/pass through an
+    allowed shared-group membership witness and carry that identity through
+    the decision. Handle overlapping groups and conflicting person keys
+    explicitly. Enforce before HTTP forwarding/OIDC authorize, raw admission,
+    choices and secret injection. Scope OIDC code provenance/redemption,
+    discovery (including relayed lists), app reads, append context and page
+    headers. Filter disclosure to appropriate shared groups. Add the small
+    mixed-version discovery fence; a response-version bump alone is not
+    enough because old clients accept newer messages. The fence is not an
+    authorization credential. Keep existing reach-pass signatures.
+  - **Withdrawal and interfaces.** Implement the fresh pass's measured
+    bounded cut of affected HTTP bodies/WebSockets and raw connections;
+    never close the whole shared transport or unrelated traffic. Keep owner
+    administration and deliberate WiFi delegation explicit. Add group
+    selections and audience-only edits to existing typed UI/CLI, with current
+    name/ID disambiguation. Update Give's known-group share call sites and
+    the current scripts. Do not silently reset credentials on a scope edit.
+  - **Red-first proof.** House-only member succeeds; Trip-only member can
+    neither discover nor contact the upstream lend. Try direct/copied URLs,
+    stale passes, forged group headers, OIDC, TCP and UDP; prove absence of
+    upstream contact. Cover overlap/order/identity, duplicate group names,
+    joining a third group, current membership, concurrent narrowing versus
+    other edits, restart, legacy/malformed scope and both old/new protocol
+    directions. Prove active-stream withdrawal within the measured bound
+    while another lend and group sync stay connected. Recheck carried apps,
+    guests, app reads/writes, owner access, WiFi/Play and Give. Plant each
+    guard's old broad behavior before the passing run; use existing harnesses.
+  - **Landing.** Behavior-preserving moves and each behavior change are
+    separate commits within this row. Update DESIGN in place with the
+    implemented policy, migration and exact withdrawal semantics. Recount
+    after each part. Only raise a cap when required, one past the actual
+    count, under CHARTER's preapproval and with the fresh pass/plant cited;
+    no up-front upper-bound raise and no core growth. Close with the locked
+    full gate and a recorded real-node House/Trip scene; do not claim the
+    people welcome from automated evidence. No live personal-data migration,
+    public deployment, service spend or push as a side effect of this row.
+- [ ] onboarding-scene — depends [onboarding-scoped-lending] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write
     `demo/runs/onboarding/2026-11-04-scene/PREDICTIONS.md` before any run.

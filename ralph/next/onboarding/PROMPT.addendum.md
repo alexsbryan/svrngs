@@ -22,6 +22,13 @@ short-address service rather than reuse the URL namespace. Native publication
 and host controls may proceed independently against the documented contract
 and a fake resolver.
 
+For `onboarding-scope-economize` and `onboarding-scoped-lending`, read
+`docs/LENDING_SCOPE.md` and CHARTER's "Selected-ring lending" section. The
+operator preapproved only necessary actual line growth after the fresh pass,
+not an advance raise to the estimate's upper caps. Core growth is zero. Do
+not park merely to re-ask for that approval; preserve the stated guardrails,
+name each budget plant, and report actual counts/cuts with each landing.
+
 The operator deferred publication of recent multi-ring join-flow fixes to
 start this queue. Do not deploy Upstash or Vercel, publish, push, or modify
 the V1.6 publish artifacts `demo/runs/v1.6/2026-11-03/publish.json` and
