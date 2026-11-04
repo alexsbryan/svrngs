@@ -49,7 +49,7 @@ js                     8066 / 8090 lines
 swift                     0 / 1 lines
 ```
 
-## Closing gate still owed
+## Initial closing gate attempt
 
 `lockf -k /tmp/svrngs-gate.lock scripts/check.sh` ran in the foreground
 with the required 600000 ms tool timeout. It reached that timeout before
@@ -125,3 +125,47 @@ test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; fini
 This is an isolated pass, not a diagnosis of the earlier CPU reading and not
 a passing full gate. No product code, test, threshold or budget was changed.
 The full locked gate remains owed and runs again under the loop's await budget.
+
+## Final resumed closing gate — passed
+
+The loop reports exit **0** for the unchanged locked full gate at HEAD
+`86802901`. Its complete log is
+`ralph/next/onboarding/ctl/log/sessions/onboarding-portal-reminder-3.await.log`.
+The following output is pasted from that run (the scene and conformance
+detail is retained in the complete log):
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     clippy (1 s)
+passed     tests (525 s)
+passed     canaries (1 s)
+passed     ceiling canary (4 s)
+passed     web rustfmt and clippy (8 s)
+passed     browser (156 s)
+passed     types (2 s)
+passed     typed lint (0 s)
+passed     joining in a browser (41 s)
+passed     pages (61 s)
+passed     scenes (235 s)
+passed     conformance canary (95 s)
+passed     app laws (41 s)
+note       took 1189 s in all
+```
+
+The ceiling's median was 0.0301 seconds against 0.1 seconds. The conformance
+log also retains its rate observations: two direct-to-canary WebKit seeks
+missed five seconds; all four through-lend seeks passed. Its stage verdict
+was passed. No implementation, test, threshold or budget changed during
+these retries. This completed full gate closes the obligation recorded by
+the earlier attempts; the real-process red/green and affected CLI proofs
+above establish the row's behavior.
