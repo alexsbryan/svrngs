@@ -297,7 +297,35 @@ swift                     0 / 1 lines
     the changed behavior and run affected CLI checks plus the locked full
     gate. Stay within the approved budget and preserve the active welcome
     worker's work. No deployment or push.
-- [ ] onboarding-scene — depends [onboarding-portal-reminder] — ONE ROW
+- [ ] onboarding-oidc-setup-help — depends [onboarding-portal-reminder] — ONE ROW, the operator's Jellyfin setup feedback (2026-11-04): the page prints issuer/client credentials but gives no actionable way to configure Jellyfin.
+  - **Observed gap.** "Signing people in with svrngs. In the app's own
+    settings, choose OpenID Connect" implies a completed setup and a stock
+    settings form. Turning the switch on only creates the provider/client;
+    Jellyfin needs its SSO-Auth plugin and app-side configuration. Never
+    include the operator's pasted client secret in evidence or a commit.
+  - **Reuse and evidence.** Read `apps/jellyfin/README.md` and the successful
+    `demo/runs/oidc/2026-10-21-jellyfin-2/` trial before changing guidance.
+    It used Jellyfin 10.11.11 / SSO-Auth 4.0.0.4, DisableHttps,
+    DoNotValidateEndpoints (issuer validation kept), preferred_username,
+    a Branding login button, and KnownProxies=127.0.0.1. The issuer is reached
+    by the app server on the lender, not on the attendee's localhost; a
+    container's loopback is different. Verify current upstream instructions
+    and compatibility; upstream currently marks the plugin archived.
+  - **Correction.** Make the generic UI/CLI wording distinguish credentials
+    created from app configured, and explain the next step clearly. Put
+    Jellyfin-specific prerequisite, install/configuration navigation,
+    field mapping, login-button setup and an end-to-end verification path
+    in its app-owned guide. Reuse existing guidance/data surfaces; keep app
+    integration code out of the core/node and avoid a new setup framework.
+    Do not silently enable all libraries or grant administrator permissions.
+  - **Proof/close.** Pin the truthful setup state and actionable next-step
+    wording in the existing page/CLI checks, watching the new check fail
+    first. Do not claim a user is signed in because a toggle generated
+    credentials. Update affected docs, run affected checks and the locked
+    full gate if product behavior changes. No unsolicited installation or
+    changes to the operator's Jellyfin server; the real configuration walk
+    is brokered separately with the operator. Stay within approved budgets.
+- [ ] onboarding-scene — depends [onboarding-oidc-setup-help] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write
     `demo/runs/onboarding/2026-11-04-scene/PREDICTIONS.md` before any run.
