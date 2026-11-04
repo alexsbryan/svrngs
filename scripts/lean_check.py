@@ -444,7 +444,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # semantic clone analysis could-not-judge because the tool was absent. Each
 # landing still raises only to where it lands
 # (ralph/next/onboarding/NEEDS_HUMAN.md).
-BUDGET = {"crates/svrngs-core": 3494, ".": 19833, "js": 8090, "swift": 1}
+# Grouped-home B, operator-approved measured remainder (2026-11-04): js
+# 8,187 needs the exclusive cap 8,188, +98; core and non-JS caps unchanged.
+# The pass established no preserving cut: it reuses existing components,
+# machines, folder opener, native links and version data. What remains is
+# the requested navigation/context/disclosure presentation; deleting it
+# drops B behavior or the A/B comparison (ralph/next/onboarding/
+# GROUPED_HOME_RECONCILE.md). This spends no lending approval.
+BUDGET = {"crates/svrngs-core": 3494, ".": 19833, "js": 8188, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 

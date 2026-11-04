@@ -106,6 +106,14 @@ welcome/portal/OIDC fixes: `onboarding-scope-economize`, then
 
 ## Director
 
+Grouped-home B's measured remainder was separately approved by the operator
+on 2026-11-04: JS cap **8,090 to 8,188 (+98)** at 8,187 counted lines after
+the preserving-economy review; no core or non-JS increase. This is not paid
+from lending's preapproval. The owner released claim
+`ring-32fb4a66f5b1a57a`; reconciliation may land the scoped product and its
+evidence, remeasure, and run a fresh locked gate. A higher remainder needs a
+new decision; do not re-ask for the approved 98.
+
 The director may split or re-scope a row that cannot execute, keeping every
 check and the row's demo. It may apply only the incremental scoped-lending
 budget adjustments explicitly preapproved above; other raises remain the

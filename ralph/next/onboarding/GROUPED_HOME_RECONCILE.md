@@ -1,5 +1,21 @@
 # Grouped-home reconciliation — measured budget decision
 
+## Operator answer and owner handback, 2026-11-04
+
+The operator approved the measured **+98 JS cap**, 8,090 to 8,188, after the
+economy review below. Fresh recount confirms 8,187 JS lines; no core or
+non-JS raise is needed. `scripts/lean_check.py` now holds the approved cap,
+with boundary proof in
+`demo/runs/economize/2026-11-04-grouped-home/BUDGET.md`. This uses no
+selected-ring lending approval.
+
+The original owner released claim `ring-32fb4a66f5b1a57a`; its scoped
+changes and evidence can now be landed by the reconciliation worker.
+Do not wait again for the old ownership/budget holds. Final recount above
+8,188 needs a new decision; a fresh full locked gate on the committed
+reconciled product still must exit 0. The report below is retained historical
+evidence, not a statement that approval/handback is still absent.
+
 2026-11-04, `onboarding-grouped-home-reconcile`, base `d206e79e`.
 
 ## Ownership and scope
