@@ -109,6 +109,8 @@ const BACKUP = {
  * @property {Home} home
  * @property {string} me
  * @property {string} [joined]
+ * @property {boolean} [grouped]
+ * @property {boolean} [hidden]
  */
 
 // The colour a group is drawn in on every page, one of look.css's twelve
@@ -143,7 +145,7 @@ export function Group({ g: group, ...props }) {
   const made = group.made && html`<small> (${whose(group.made)})</small>`;
   const backup = group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`;
   return html`
-    <section id=${`group-${group.id}`} data-colour=${colour(group.id)}>
+    <section id=${`group-${group.id}`} data-colour=${colour(group.id)} hidden=${props.hidden}>
       <h2>${heading}${made}</h2>
       ${backup}
       ${below(group, name, props)}

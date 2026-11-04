@@ -10,6 +10,7 @@ import { machine } from './ui/machine.js?v=__VERSION__';
 import { FILES, HOME, first } from './page/home-reading.js?v=__VERSION__';
 import { Home } from './page/home-page.js?v=__VERSION__';
 import { GroupsLeft } from './page/groups-left.js?v=__VERSION__';
+import { address } from './page/grouped.js?v=__VERSION__';
 /** @import { Effect, Flows } from './page/home-reading.js?v=__VERSION__' */
 
 // Never awaited at the module's top, as the phone's web/app.js is not: a
@@ -32,9 +33,17 @@ Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
     // What was done here is said once: the address forgets it, so a
     // reload, or the page opened again, says it no more.
     const said = store.get().at.said;
+    const query = store.get().q;
+    const grouped = query.ui === 'b';
+    document.body.classList.toggle('layout-b', grouped);
+    trace(`HOME: layout ${grouped ? 'b' : 'a'}`);
     if (said !== 'none') {
       trace(`HOME: ${said} said, once`);
-      history.replaceState(null, '', location.pathname);
+      history.replaceState(
+        null,
+        '',
+        grouped ? address(query.view, query.group) : location.pathname,
+      );
     }
     // home/index.html holds #home, as it does where its files fail below.
     render(

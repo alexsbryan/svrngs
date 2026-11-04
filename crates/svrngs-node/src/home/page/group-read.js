@@ -6,6 +6,7 @@
 import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { GROUP } from './group-reading.js?v=__VERSION__';
+import { GroupPlaces } from './grouped.js?v=__VERSION__';
 /** @import { GroupProps } from './group.js?v=__VERSION__' */
 
 // Each place of a group's section, in the order it draws them: the index,
@@ -35,7 +36,7 @@ export const PLACES = /** @type {const} */ ([
 // should show as loading until they're loaded"; demo/runs/webkit-wall/
 // 2026-11-03/home-group-gate-2.txt). Read again, it keeps what it drew.
 /** @param {GroupProps} props */
-export function GroupRead({ g: group, round, places, flows, home, me, joined }) {
+export function GroupRead({ g: group, round, places, flows, home, me, joined, grouped }) {
   const [state, send] = useMachine(() =>
     machine('GROUP', GROUP(flows), { at: { people: 'reading', lends: 'reading' }, id: group.id }),
   );
@@ -43,16 +44,18 @@ export function GroupRead({ g: group, round, places, flows, home, me, joined }) 
   const name = group.name ?? 'this group';
   const first = state.at.people === 'reading' && !state.people;
   const unread = state.at.people === 'unread' || state.at.lends === 'unread';
-  const drawn = PLACES.map((place) => {
-    const Place = places[place];
-    if (!Place) return null;
-    return html`
+  /** @param {readonly PlaceName[]} names */
+  const drawn = (names) =>
+    names.map((place) => {
+      const Place = places[place];
+      if (!Place) return null;
+      return html`
       <${Place} g=${group} s=${state} send=${send} home=${home} me=${me} joined=${joined} />
     `;
-  });
+    });
   return html`
     ${first && html`<p class="said">Reading ${name}…</p>`}
-    ${drawn}
+    ${grouped ? html`<${GroupPlaces} draw=${drawn} />` : drawn(PLACES)}
     ${unread && html`<p>This computer cannot read what ${name} lends: ${state.why}</p>`}
   `;
 }

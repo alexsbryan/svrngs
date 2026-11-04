@@ -37,6 +37,7 @@ mod navigations;
 mod opens;
 // What acts as you, and its Stop (capability-what-acts).
 mod acts;
+mod grouped;
 // A lent port opened on this computer while Play is on (give-play).
 mod native_arrival;
 mod play;

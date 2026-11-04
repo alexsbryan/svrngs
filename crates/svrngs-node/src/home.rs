@@ -137,6 +137,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         "/look.css" "text/css" "home/look.css"
         "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
         "/page/" "home/page/" ["acting" "acts" "acts-read" "address-copy" "address-copying" "ask" "asked" "asking" "door" "folder" "folders" "found" "group" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "group-told" "groups-left" "home-page" "home-reading" "how-it-opens" "index" "index-rows" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lend-row" "lending" "lent-read" "lent-row" "link-box" "link-copy" "link-said" "links" "make" "make-form" "offered" "on-screen" "open" "open-link" "people" "play" "play-cell" "reach" "removals" "routes" "running" "running-here" "running-look" "screen" "screen-link" "shelf" "signing-on" "since-opened" "stop-visit" "update" "update-line" "visit" "visits" "what-you-lend" "wifi" "wifi-foot"];
+        "/page/" "home/page/" ["grouped"];
         "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
         "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
     }

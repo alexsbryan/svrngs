@@ -7,6 +7,7 @@
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { Group } from './group.js?v=__VERSION__';
 import { Folder } from './group-folder.js?v=__VERSION__';
+import { address, ArrivalLinks, Choices, exposes } from './grouped.js?v=__VERSION__';
 /** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Group as Held } from './group.js?v=__VERSION__' */
 /** @import { Flows, Message, Places, Said, State } from './home-reading.js?v=__VERSION__' */
@@ -18,7 +19,7 @@ const PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
 const SAID = {
   none: () => '',
   made: (query, invite) =>
-    `You made ${query.made}. ${query.also ? `${query.also} ` : ''}${invite}Invite someone to it below.`,
+    `You made ${query.made}. ${query.also ? `${query.also} ` : ''}${invite}${query.ui === 'b' ? 'Open its group to invite someone.' : 'Invite someone to it below.'}`,
   joined: (query, invite) =>
     `You’re in ${query.joined}${query.person ? `, as ${query.person}.` : ' already.'} ${invite}`,
   left: (query) =>
@@ -62,7 +63,7 @@ function Arrival({ state }) {
         `HOME: welcome ${target}: ${state.at.groups}, ${welcome ? 'found' : 'unavailable'}`,
       );
   }, [target, state.at.groups, welcome]);
-  const back = html`<p><a href="/">All your groups</a></p>`;
+  const back = html`<${ArrivalLinks} s=${state} g=${welcome} />`;
   if (state.at.groups === 'reading') return html`<p class="said">Reading your groups…</p>${back}`;
   if (state.at.groups === 'unread')
     return html`<p>This computer cannot read your groups: ${state.why}. Try refreshing this page.</p>${back}`;
@@ -87,6 +88,7 @@ function Arrival({ state }) {
 export function Home({ store, flows, places }) {
   const state = useStore(store);
   const query = state.q;
+  const grouped = query.ui === 'b';
   const home = store.dispatch;
   /** @param {string} place */
   const Place = (place) => places[place] && html`<${places[place]} s=${state} home=${home} />`;
@@ -118,6 +120,8 @@ export function Home({ store, flows, places }) {
           places=${places}
           flows=${flows}
           home=${home}
+          grouped=${grouped}
+          hidden=${grouped && query.group !== group.id}
         />
       `,
     );
@@ -125,7 +129,10 @@ export function Home({ store, flows, places }) {
   // above it, so the two never trade places as they load.
   const after = PLACES.map((place) => {
     const waiting = place === 'lent' && flows.acts.holds(state);
-    return !waiting && Place(place);
+    const drawn = !waiting && Place(place);
+    return grouped
+      ? html`<div data-home-place=${place} hidden=${!exposes(state, place)}>${drawn}</div>`
+      : drawn;
   });
   // The page's address is drawn last, once no feature's file `holds` it
   // while it reads: a driver reads the whole page once it is there
@@ -135,9 +142,9 @@ export function Home({ store, flows, places }) {
     ${update}
     ${said !== '' && html`<p>${said}</p>`}
     ${state.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}
-    ${groups.length === 0 && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}
+    <${Choices} s=${state} />
     ${sections}
     ${after}
-    ${!held && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}/</p>`}
+    ${!held && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}${grouped ? address(query.view, query.group) : '/'}</p>`}
   `;
 }

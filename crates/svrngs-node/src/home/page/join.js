@@ -140,4 +140,5 @@ export const JOIN = (home) => ({
  * @param {Taken} message
  * @returns {Step<HOME.State, HOME.Effect>}
  */
-export const take = (state, message) => go(state, { said: 'joined' }, { q: message.q });
+export const take = (state, message) =>
+  go(state, { said: 'joined' }, { q: { ...state.q, ...message.q } });
