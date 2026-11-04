@@ -34,9 +34,11 @@ non-JS and +345–590 JS, with possible +0–16 core included in non-JS.
 `NEEDS_HUMAN.md` prepares the operator's budget/storage questions. The
 full closing gate first failed (`4555a32e`, `data/check-first.txt`): Podman
 was unavailable and Chromium's final lending redraw assertion failed.
-Podman is now started and the isolated browser retry passed without edits;
-the full retry and committed exit-0 evidence remain owed before the pass is
-complete. Its driver is `measure.py close` in that run directory.
+Podman was started and the isolated browser retry passed without edits.
+The unchanged full retry then passed in 1,141 seconds, exit 0, recorded in
+`data/check.txt` by `measure.py close`. The pass is complete; the next step
+is the operator's budget ceiling and resolver storage/provider decision in
+`NEEDS_HUMAN.md`.
 
 ## Rows
 

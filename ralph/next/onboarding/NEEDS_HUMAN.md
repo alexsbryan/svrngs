@@ -1,10 +1,10 @@
 # Onboarding's budget and resolver decision
 
-Status: survey and revised estimate recorded; **first full closing gate
-failed**, retained in `4555a32e`. Podman is now started and the isolated
-browser retry passed; the unchanged full gate must pass before this package
-claims that `onboarding-economize` passed. Commit its output and exit code
-here before returning the unit's needs-human result.
+Status: economizing pass complete; survey, revised estimate and **passing
+full closing gate** recorded. The unchanged retry passed in 1,141 seconds,
+exit 0 (`demo/runs/economize/2026-11-03-onboarding/data/check.txt`). The
+first failure remains retained in `4555a32e`. Awaiting the operator's budget
+ceiling and resolver storage/provider choice before feature work.
 
 ## Questions, in order
 
@@ -85,7 +85,7 @@ The original count and all run files are under
 `demo/runs/economize/2026-11-03-onboarding/data/`. The survey driver reuses
 the earlier instruments unchanged; no new gate was added.
 
-### Closing gate — first failure retained, full retry owed
+### Closing gate — first failure retained, unchanged full retry passed
 
 The first `measure.py close` completed in 602 seconds, exit 1. Its complete
 output is `demo/runs/economize/2026-11-03-onboarding/data/check-first.txt`
@@ -123,18 +123,47 @@ All three commands exited 0. The isolated retry's trace completed with
 `LENDING: answered (2 lent)` and the chores row present. One passing retry
 does not resolve the initial failure or replace the full gate.
 
-Retry through the queue's await facility (do not background it):
+The full retry ran through the queue's await facility:
 
 ```sh
 python3 -I demo/runs/economize/2026-11-03-onboarding/measure.py close
 ```
 
-The driver runs `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh`,
-preserving its output and exit code in `data/check.txt`, and records the
-final recount in `data/lean-after.txt`. After exit 0, paste the verdicts
-here, commit the logs and this package, and report needs-human for the two
-operator decisions above. If it fails, preserve its actual failure and
-resolve that before reporting a passing pass.
+The driver ran `lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh`,
+preserving its complete output and exit code in `data/check.txt`, and
+recorded the unchanged final recount in `data/lean-after.txt` (exit 0).
+The loop reported the driver exited 0 after 19m01s; its session log is
+`ctl/log/sessions/onboarding-economize-2.await.log`. Actual gate output
+(`data/check.txt:4-40,71-74`, selected verdicts):
+
+```text
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (1 s)
+passed     tests (493 s)
+passed     ceiling canary (4 s)
+passed     browser (156 s)
+passed     types (2 s)
+passed     typed lint (1 s)
+passed     joining in a browser (43 s)
+passed     pages (61 s)
+passed     scenes (234 s)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     conformance canary (91 s)
+passed     app laws (41 s)
+note       took 1141 s in all
+
+exit: 0
+```
+
+Every gate passed, including all Give scenes. No product or test edits were
+made between the failed gate and this retry. This closes the economizing
+pass; it does not establish the cause of the first browser failure or judge
+the future real-laptop onboarding scene. The two operator decisions above
+remain the stop line.
 
 ## Storage evidence and remaining confirmation
 

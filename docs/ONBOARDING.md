@@ -174,9 +174,11 @@ Remeasured after the survey at `194aa994`: core **3,477/3,478**, `.`
 supported product cut was found: already-shared primitives cannot be saved
 twice, test relocation removes no implementation, and the remaining similar
 flows have different behavior. The clone instrument is could-not-judge,
-not a zero-clone result. The full closing gate and the budget/storage
-questions are tracked in `ralph/next/onboarding/NEEDS_HUMAN.md`. A budget
-increase requires that gate and the operator's explicit approval.
+not a zero-clone result. The unchanged full closing gate passed in 1,141
+seconds, exit 0 (`demo/runs/economize/2026-11-03-onboarding/data/check.txt`).
+The retained first failure, recovery and budget/storage questions are in
+`ralph/next/onboarding/NEEDS_HUMAN.md`. A budget increase still requires the
+operator's explicit approval.
 
 ## 5. Hosting remains a decision
 

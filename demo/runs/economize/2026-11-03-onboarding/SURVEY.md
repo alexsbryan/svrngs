@@ -136,5 +136,9 @@ gate was added and no plant is owed for a new check. No caps change.
 
 Remeasure and the revised per-row estimate belong in `docs/ONBOARDING.md`
 §4, with the operator's questions in `ralph/next/onboarding/NEEDS_HUMAN.md`.
-The full unchanged `scripts/check.sh` must run once at the close. Until
-its exit-0 log is committed, this survey is complete but the unit is not.
+The unchanged full `scripts/check.sh` retry passed in 1,141 seconds, exit 0
+(`data/check.txt`), after the first failure retained in `data/check-first.txt`.
+The final recount in `data/lean-after.txt` is unchanged from the baseline.
+No product cut was selected and existing tests were unchanged. The pass
+stops for the operator's budget ceiling and resolver storage/provider choice;
+the commands, failure recovery and passing verdicts are in that package.
