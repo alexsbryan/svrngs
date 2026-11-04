@@ -8,6 +8,10 @@
 
 /// The client both callers use, or why this computer cannot make one.
 pub fn client() -> Result<reqwest13::Client, String> {
+    builder()?.build().map_err(|e| e.to_string())
+}
+
+pub(crate) fn builder() -> Result<reqwest13::ClientBuilder, String> {
     // reqwest's `rustls-no-provider` asks the process for one when it
     // builds; a command that only checks a page may not have installed one.
     let _ = rustls::crypto::ring::default_provider().install_default();
@@ -19,7 +23,6 @@ pub fn client() -> Result<reqwest13::Client, String> {
             reqwest13::Client::builder().tls_backend_preconfigured(tls.with_no_client_auth())
         })
         .map_err(|e| e.to_string())
-        .and_then(|b| b.build().map_err(|e| e.to_string()))
 }
 
 #[cfg(test)]
