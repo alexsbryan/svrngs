@@ -224,7 +224,7 @@ in_chromium!(
     /// **The secret stays shown when the page is read again** (page-index
     /// (e)). Ada turns on signing people in with svrngs for `shelf`; its
     /// secret is shown in the row, then the page is hidden and shown, and
-    /// read again: the row now says it signs people in, its button gone,
+    /// read again: the row keeps the app-setup reminder, its button gone,
     /// and still shows the secret, which no request, link or trace line
     /// carries. Watched failing on v1 (`UI` flipped), which never reads
     /// again on coming back.
@@ -255,9 +255,9 @@ async fn the_secret_stays_shown_when_the_page_is_read_again(engine: Engine) {
             "read again on coming back",
         ),
         (
-            !later.contains("Signs people in with svrngs.")
+            !later.contains("Sign-in credentials created; app setup still required.")
                 || later.contains("Sign people in with svrngs"),
-            "said as on, its button gone",
+            "credentials created, app setup still required, its button gone",
         ),
         (!later.contains(&secret), "the secret still shown"),
         (

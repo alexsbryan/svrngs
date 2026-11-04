@@ -772,7 +772,8 @@ fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
 /// SVRNGS §5 "Turning it on", §8 9): the command makes a client id and
 /// secret from the allowed alphabet, keeps them in the lend's declaration
 /// at 0600, prints the issuer, the client and the deviations once, and
-/// asks no password. Planted, watched failing: the flag not known.
+/// asks no password. Planted, watched failing: the flag not known;
+/// setup-help: the old wording claiming credentials completed app setup.
 #[cfg(unix)]
 #[test]
 fn share_turns_on_signing_people_in_with_svrngs() {
@@ -810,6 +811,13 @@ fn share_turns_on_signing_people_in_with_svrngs() {
         .iter()
         .find(|l| l.contains("issuer http://127.0.0.1:") && l.contains("/oidc/pad"))
         .unwrap_or_else(|| panic!("the issuer is not printed: {seen:?}"));
+    assert!(
+        wrote.contains("Sign-in credentials created; app setup still required.")
+            && wrote.contains("install any required OpenID Connect plugin")
+            && wrote.contains("from the app server on this computer"),
+        "credential creation must explain the remaining app setup"
+    );
+    assert!(!wrote.contains("It signs people in with svrngs."));
     assert!(wrote.contains(&id) && wrote.contains(&secret), "{wrote}");
     assert!(
         seen.iter()

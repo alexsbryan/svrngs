@@ -45,7 +45,7 @@ export function Lent({ l: lend, signs, home }) {
       />
     `;
   const signIn = signs
-    ? 'Signs people in with svrngs. '
+    ? html`Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide, then test sign-in through your group’s app list. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>. `
     : html`
         <${Act}
           words="Sign people in with svrngs"

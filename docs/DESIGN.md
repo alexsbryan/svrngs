@@ -1220,13 +1220,21 @@ assume no screen, a TV one device among others.
      each code in this run's memory and used once, and a token is on no
      wire but the app's and in no record.
    - *Turning it on* is the lender's: the home page, or `svrngs share`,
-     prints the issuer, a client id and a secret for the app's form, and
+     creates credentials, not the app's configuration: it prints the issuer,
+     a client id and a secret for the app's form, and
      the deviations in the lender's words (plain http on this computer,
      ES256, no email yet). A lend declares its one secret or its sign-in
      with svrngs, never two; a declaration's unknown field is refused,
      never ignored. The client id and secret are made from
      `[A-Za-z0-9-._~]` only, the declaration holding the secret is written
      0600, and the page shows it once (`lend::declare`, `oidc::client`).
+     The page and command say app setup is still required, direct the lender
+     to the app's OpenID Connect guide and any required plugin, and ask for
+     a sign-in test through the group's app list. The issuer is reached by
+     the app server on the lender, never the attendee's localhost; a container
+     has its own loopback. App-specific setup stays in `apps/`, including
+     Jellyfin's plugin fields and login button in `apps/jellyfin/README.md`.
+     A saved client proves no successful app configuration or sign-in.
    - An app whose page script navigates to the authorize address itself is
      not served (SIGN_IN_WITH_SVRNGS §8 10): the address would be the
      viewer's own machine. No program per app stands beside a lend: the one

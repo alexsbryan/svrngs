@@ -2485,9 +2485,10 @@ in_chromium!(
     /// says what it does before she presses it, then shows the issuer, a
     /// client id and a secret and the deviations in her words. The secret
     /// leaves the page for no address and no link, and read again the page
-    /// says the lend signs people in without showing it. Planted, watched
+    /// keeps the app-setup reminder without showing it. Planted, watched
     /// failing: a page offering the sign-in while the declaration holds
-    /// none.
+    /// none. Setup-help plant: the old wording claimed sign-in was working
+    /// merely because credentials were created; the setup checks reject it.
     the_home_page_turns_on_signing_people_in_with_svrngs
 );
 async fn the_home_page_turns_on_signing_people_in_with_svrngs(engine: Engine) {
@@ -2529,6 +2530,12 @@ async fn the_home_page_turns_on_signing_people_in_with_svrngs(engine: Engine) {
         .expect("a secret");
     assert!(words.contains("issuer http://127.0.0.1:"), "{seen:#}");
     assert!(
+        words.contains("Sign-in credentials created; app setup still required.")
+            && words.contains("install any required OpenID Connect plugin")
+            && words.contains("from the app server on this computer"),
+        "credential creation must explain the remaining app setup"
+    );
+    assert!(
         words.contains("client id ") && words.contains("client secret "),
         "{seen:#}"
     );
@@ -2551,7 +2558,8 @@ async fn the_home_page_turns_on_signing_people_in_with_svrngs(engine: Engine) {
         "it is on, so the button is gone: {again:#}"
     );
     assert!(
-        repeated.contains("Signs people in with svrngs."),
+        repeated.contains("Sign-in credentials created; app setup still required.")
+            && repeated.contains("app’s OpenID Connect setup guide"),
         "{again:#}"
     );
     drop(ada);

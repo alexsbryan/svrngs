@@ -181,8 +181,8 @@ svrngs — keep what your group shares on your own computers.
       person it acts for says yes, on their own home page, and stops when
       they say stop. --sign-in-with-svrngs lets an app that speaks OpenID
       Connect sign each person in as themselves, with nothing typed: it
-      prints the issuer, a client id and a secret for the app's own
-      settings, and keeps the secret on this computer.
+      creates credentials, not the app's configuration. Follow the app's
+      OpenID Connect setup guide; the secret stays on this computer.
       --udp or --tcp lends a port that speaks UDP or TCP as it is, not
       as a page: it takes a --kind, and --name and --limit as any lend
       does.
@@ -1406,9 +1406,9 @@ impl std::fmt::Display for Said {
                     )?;
                 }
                 if let (Some(client), Some(issuer)) = (client, issuer) {
-                    writeln!(f, "It signs people in with svrngs. In the app's own settings, choose OpenID Connect, and fill in: issuer {issuer}, client id {}, client secret {}.",
+                    writeln!(f, "Sign-in credentials created; app setup still required. Follow the app's OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer {issuer}, client id {}, client secret {}. Reach the issuer from the app server on this computer, not the attendee's computer; a container has its own loopback. Test sign-in through your group's app list after setup.",
                         client.client_id, client.client_secret.as_deref().unwrap_or_default())?;
-                    writeln!(f, "{} Copy the secret now: it is not shown again.", svrngs_node::oidc::DEVIATIONS)?;
+                    writeln!(f, "{} Copy the secret now: it is not shown again. App setup guides: https://github.com/alexsbryan/svrngs/tree/main/apps", svrngs_node::oidc::DEVIATIONS)?;
                 }
                 if *running {
                     writeln!(

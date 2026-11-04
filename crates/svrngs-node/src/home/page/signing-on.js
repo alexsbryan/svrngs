@@ -12,5 +12,5 @@ import { html } from '../ui/view.js?v=__VERSION__';
 /** @param {{ c: Signed }} props */
 export function SigningOn({ c: fill }) {
   const after = `. ${fill.deviations} Copy the secret now: it is not shown again. `;
-  return html`<p>Signing people in with svrngs. In the app’s own settings, choose OpenID Connect, and fill in: issuer <code>${fill.issuer}</code>, client id <code>${fill.client_id}</code>, client secret <code>${fill.client_secret}</code>${after}</p>`;
+  return html`<p>Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer <code>${fill.issuer}</code>, client id <code>${fill.client_id}</code>, client secret <code>${fill.client_secret}</code>. Reach the issuer from the app server on this computer, not the attendee’s computer; a container has its own loopback. Test sign-in through the group’s app list after setup. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>${after}</p>`;
 }
