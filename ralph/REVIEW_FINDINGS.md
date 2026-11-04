@@ -13410,7 +13410,57 @@ $ command -v LINT ralph-result
 ```
 
 The shell has no LINT command; the concrete lint/format commands above ran.
-The locked full closing gate remains to be recorded before completion.
+The locked full closing gate passed at e625f27b, exit 0, in 1,269 seconds.
+The loop resumed this unit with the completed run's exit status; its log is
+`ralph/next/onboarding/ctl/log/sessions/REVIEW-audit-onboarding-auto-2-1.await.log`.
+Actual gate output (the per-browser rate observations are in that log):
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (1 s)
+passed     advisories (1 s)
+passed     app nouns gate (0 s)
+passed     app nouns (1 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     clippy (1 s)
+passed     tests (563 s)
+passed     canaries (3 s)
+passed     ceiling canary (4 s)
+passed     web rustfmt and clippy (10 s)
+passed     browser (164 s)
+passed     types (2 s)
+passed     typed lint (1 s)
+passed     joining in a browser (50 s)
+passed     pages (64 s)
+passed     scenes (252 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (94 s)
+passed     app laws (41 s)
+note       took 1269 s in all
+```
+
+On resumption, `git diff --numstat b463b29b HEAD -- crates web resolver
+scripts apps` again exited 0 with no output, confirming that the audit's
+own commit did not introduce product subjects. Only this closing evidence
+is added after the full gate; no implementation or check changed.
 This audit's own changes are evidence and the assigned row's path correction;
 they add no product/test code and do not change the empty subject inventories.
 The pre-existing V1.6 publish artifacts were inspected and left untouched.
