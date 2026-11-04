@@ -1,4 +1,117 @@
-# Onboarding's budget and resolver decision
+# Onboarding's operator decisions
+
+## Store proof — awaiting the operator
+
+`onboarding-store-proof`, read on **2026-11-04 UTC / 2026-11-03 local**.
+The assigned row requires a stop here before an adapter. Local proof committed
+in `0f72a101`; source excerpts, uncertainty and arithmetic:
+`demo/runs/onboarding/2026-11-04-store/README.md`. Actual planted-red and
+atomic-green runs: that directory's `ATOMIC.md`. No product lines changed.
+
+### Questions, in order
+
+1. **Approve the paired phrase/abuse recommendation below, or give revised
+   values?** This is the choice intentionally left open by CHARTER:37-38 and
+   the assigned row:99-103. Shorter phrases or higher guess/active limits need
+   the probability recalculated together, not independently.
+2. **How should the remaining provider proof be obtained before the adapter?**
+   Official EVAL docs promise a global atomic lock; official consistency docs
+   say eventual consistency/LWW and deprecate strong mode. Free redundancy
+   statements conflict. The local crash proof cannot certify that a hosted
+   acknowledged reservation/close is never lost at recovery. The exact Free
+   bandwidth-exhaustion response is also undocumented in the pages read.
+   Recommend obtaining official confirmation for the chosen Free endpoint
+   and its no-reuse recovery semantics, plus bandwidth-limit behavior, before
+   lifting the existing store-proof stop line. If those guarantees cannot
+   be supplied, storage needs a new operator decision. This is not a request
+   to weaken never-reuse or to provision a database for experimentation.
+
+### Exact proposed choices — no answer yet
+
+- **Words:** EFF Short Wordlist 1, CC BY 4.0, source and hash in the survey;
+  exclude only `yo-yo`, leaving **1,295** words. **Five** independent uniform
+  CSPRNG samples, rejection sampling, hyphen joined; **51.69 bits**, at most
+  **29** path characters. No fuzzy lookup or human-picked phrase.
+- **Lifetime:** existing **one day** for invitation secrets, absolute expiry,
+  no refresh on retry. Reservations **permanent for the URL namespace**;
+  no TTL/eviction/reuse, including after reset/archival/restore.
+- **Lookup attempts:** per trusted ingress IP **30/minute, 300/day**; global
+  **1,000/day and 20,000/calendar month**, including misses/status reads.
+- **Host attempts:** authenticated; **5 new publications/owner/day**,
+  **10 mutations/owner/minute, 60/hour**; global **100 new/day**, **3,000
+  admitted mutations/month** including retries/closes. Prioritize closure
+  over creation; a failed withdrawal stays visibly pending.
+- **Capacity:** **100 active secrets**; stop new allocation at **100,000
+  permanent reservations or 100 MB data**, whichever comes first. Keep old
+  reservations intact. HTTP request/response bodies at most **8 KiB** each.
+- **Command envelope:** prove **at most 16 metered commands/admitted request**
+  including Lua internals and shared atomic limit bookkeeping, or revisit
+  the paired limits. `(20000+3000)*16 = 368000` leaves **132000/month** for
+  refusals/recovery/operations; those reserves can still exhaust under attack.
+- **Proposed tradeoff:** direct Upstash **Free with no payment method**, no
+  eviction/paid upgrade; new short-link arrivals become unavailable on quota
+  exhaustion, existing native members continue. Global quotas and cheap edge
+  rejection are required, not process-local counters. Free is a spend boundary,
+  not an availability guarantee. Actual account settings, hosted recovery
+  semantics and Vercel's separate no-paid-usage boundary remain predeployment
+  proof obligations; no deployment is authorized.
+
+At these limits, `20000*100/1295^5 = 5.49e-10` is the monthly union bound
+for guessing any live phrase, conditional on uniform generation and enforced
+global limits. Provider official billing counts EVAL **plus its inner
+commands**. Storage and bandwidth estimates in the survey are planning
+estimates, not provider measurements.
+
+### What ran and what remains unknown
+
+```text
+python3 -I demo/runs/onboarding/2026-11-04-store/proof.py plant-create
+create race: ['created', 'created']
+failed: create-if-absent acknowledged two owners
+exit: 1
+
+python3 -I demo/runs/onboarding/2026-11-04-store/proof.py plant-close
+close race: retry=replayed, state=open, secret_present=True
+failed: delayed non-atomic retry reopened closed phrase
+exit: 1
+
+python3 -I demo/runs/onboarding/2026-11-04-store/proof.py atomic
+create race: ['conflict', 'created']
+close race: retry=closed, state=closed, secret_present=False
+passed: idempotent create, immutable binding, no TTL refresh, compare-and-close
+passed: actual TTL expiry erases secret; permanent reservation refuses replay/reuse
+passed: close-before-create, duplicate close, stale close vs newer invitation, late expiry
+passed: AOF reload after SIGKILL retains expired and closed reservations
+sample reservation MEMORY USAGE: 136 bytes
+passed: local atomic store proof
+exit: 0
+```
+
+`ATOMIC.md` pastes complete version/hash-prefixed outputs and named plants.
+Redis was already installed; one owned child with Unix socket only, AOF
+`appendfsync always`, no eviction, stopped before each foreground run returned.
+Official install and persistence URLs establish the self-hosting path; a
+self-hosted handler still needs TLS, auth, private Redis, durable volume,
+backups/restore protection and an operating owner. Ordinary Redis is not an
+Upstash REST endpoint, so this is not a URL-only migration promise.
+
+Official pricing/billing/monthly-error/eviction sources were read successfully
+via web-reader or `curl` of official Markdown. They establish **500K
+commands/month, 10 GB/month, conservatively 250 MB** (some pages say 256 MB),
+no-card Free and command-limit refusal. No account settings, real quota event
+or hosted failover was inspected. Specific guessed bandwidth troubleshooting
+pages returned 404; Free bandwidth error/status/reset remains could-not-judge.
+The survey names all URLs and access failures rather than treating a failed
+read as confirmation. No Upstash or Vercel resources were created.
+
+`python3 scripts/lean_check.py`: exit 0, unchanged **3,477 core / 19,441 `.` /
+7,499 `js`**. `git diff -- scripts/check.sh`: no output. The assigned
+row:104-106 explicitly does not require the full gate for this survey; it was
+not run. The inherited V1.6 `publish.json` and `publish.log` were inspected,
+are inconclusive about completion, and remain untouched/untracked by explicit
+instruction. No checkbox, publication, push, product file or budget changed.
+
+## Economizing pass — answered previously
 
 Status: **answered by the operator on 2026-11-03.** The economizing pass is
 complete; survey, revised estimate and passing full closing gate are recorded.

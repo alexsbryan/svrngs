@@ -206,6 +206,26 @@ is an external integration, not an already provisioned store here.
 The free-tier-only plan is not proof of a zero bill. The provider-proof row
 must establish how use stays within the allowance before any deployment.
 
+The store survey on **2026-11-04 UTC / 2026-11-03 local** is recorded in
+`demo/runs/onboarding/2026-11-04-store/README.md`, with official URLs, access
+failures and local red/green transcripts in `ATOMIC.md`. Current official
+billing docs say **250 MB, 500K commands/month and 10 GB/month**; some older
+tables say 256 MB. They require no card for Free and say adding a payment
+method upgrades all free resources to paid. Monthly command exhaustion
+returns an error; eviction must remain off to preserve reservations. EVAL
+and each inner Redis call are metered separately.
+
+The local EVAL proof passes creation races, compare-and-close, replay,
+actual secret expiry and permanent reservations after SIGKILL/AOF recovery.
+It does not prove hosted failover semantics: official EVAL atomic-lock docs
+and eventual-consistency/replication docs leave acknowledged-write recovery
+on Free unsettled. The exact Free bandwidth-exhaustion response and actual
+account/hosting controls are also unobserved. These are explicit remaining
+proof obligations, not assumed passes. The self-hosting path is documented,
+including the handler transport change required by ordinary Redis.
+The paired five-word phrase and abuse-limit recommendation awaits the
+operator in `ralph/next/onboarding/NEEDS_HUMAN.md`; the adapter remains held.
+
 ## 6. Order and proof
 
 After the JavaScript queue closes, work follows `PLAN.md` §1. Keep any
