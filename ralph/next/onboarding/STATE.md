@@ -240,7 +240,7 @@ swift                     0 / 1 lines
   - **Check:** (a) red first, including a literal shell name, a failed join
       followed by a restart, and a simulated resolver limit;
       `scripts/check.sh` once.
-- [ ] onboarding-welcome — depends [onboarding-native-arrival] — ONE ROW, the operator's real Fedora feedback (2026-11-04; `demo/runs/onboarding/2026-11-04-scene/FEDORA.md`), red first:
+- [x] onboarding-welcome 4764c59e9 — depends [onboarding-native-arrival] — ONE ROW, the operator's real Fedora feedback (2026-11-04; `demo/runs/onboarding/2026-11-04-scene/FEDORA.md`), red first:
   - **The observed miss.** Installation appeared to work, but arrival at the
     home page with three groups overwhelmed the operator and gave no sense
     of welcome or invitation to contribute. `home-page.js` scrolls to an
