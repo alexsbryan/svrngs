@@ -1,0 +1,64 @@
+{
+  "source": "4e790771d7f26cae8aa39042d3d6b49f46ac8069",
+  "started": "2026-11-04T16:24:39.350868+00:00",
+  "steps": [
+    {
+      "name": "build-web",
+      "command": [
+        "lockf",
+        "-k",
+        "/tmp/svrngs-gate.lock",
+        "scripts/build-web.sh",
+        "--out",
+        "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"
+      ],
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "build-downloads",
+      "command": [
+        "lockf",
+        "-k",
+        "/tmp/svrngs-gate.lock",
+        "scripts/build-release.sh",
+        "--out",
+        "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"
+      ],
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "checksum-red",
+      "command": [
+        "node",
+        "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs",
+        "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site",
+        "--plant-checksum"
+      ],
+      "exit": 1,
+      "expected": 1
+    },
+    {
+      "name": "staging-green",
+      "command": [
+        "node",
+        "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs",
+        "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"
+      ],
+      "exit": 0,
+      "expected": 0
+    },
+    {
+      "name": "check",
+      "command": [
+        "lockf",
+        "-k",
+        "/tmp/svrngs-gate.lock",
+        "scripts/check.sh"
+      ],
+      "exit": 0,
+      "expected": 0
+    }
+  ]
+}

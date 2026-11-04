@@ -1,0 +1,75 @@
+source: 4e790771d7f26cae8aa39042d3d6b49f46ac8069
+command: ["lockf", "-k", "/tmp/svrngs-gate.lock", "scripts/check.sh"]
+note       open files: 256, raised to 10240
+note       kept awake while this runs (caffeinate, pid 75808)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     clippy (1 s)
+passed     tests (510 s)
+passed     canaries (2 s)
+passed     ceiling canary (4 s)
+           CEILING idle round at 25 x 10,000: 0.0230 s of processor, the median of [0.18689, 0.022971000000000075, 0.021051999999999182], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.021051999999999182,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.003026166}
+passed     web rustfmt and clippy (8 s)
+passed     browser (161 s)
+passed     types (2 s)
+passed     typed lint (0 s)
+passed     joining in a browser (46 s)
+passed     pages (62 s)
+passed     scenes (249 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (98 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	528	passed	3864	passed
+           computer	bo	369	passed	3959	passed
+           wildcard	sam	408	passed	4248	passed
+           wildcard	bo	388	passed	3984	passed
+           of 500 here since 2026-10-22T17:12:29Z: 2 missed 5 s through a lend, 82 straight; 326 ended at a load above 12 cores
+passed     app laws (41 s)
+note       took 1204 s in all
+
+exit: 0

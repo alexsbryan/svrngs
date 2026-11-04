@@ -1,0 +1,28 @@
+source: 4e790771d7f26cae8aa39042d3d6b49f46ac8069
+command: ["lockf", "-k", "/tmp/svrngs-gate.lock", "scripts/build-release.sh", "--out", "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"]
+build-release: darwin-aarch64 (aarch64-apple-darwin) by cargo build…
+    Finished `release` profile [optimized] target(s) in 0.26s
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+    Finished `release` profile [optimized] target(s) in 0.24s
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.23s
+build-release: linux-aarch64 (aarch64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `aarch64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.23s
+
+built: /Users/alexsbryan/dev/svrngs/target/onboarding-scene/site/get
+bb10def9decb9234babd88eba3ae00e0eec9421df94e64541070087921685a19  svrngs-darwin-aarch64.tar.gz
+3b40c03bf06159c4626b0ad749de5eb153447eacb044c660e191a70b93478ed8  svrngs-darwin-x86_64.tar.gz
+f66d41c0296791a90ef0f7d338cdcff92cd3eaab5919f93bc512fa17ebae350f  svrngs-linux-aarch64.tar.gz
+6e6b2caf841d0bc341ef2551866aa21a090cd2bf41c2635078b9b67e1e843dda  svrngs-linux-x86_64.tar.gz
+f658dd7644d91d99d136a83a5065abe2f92696a6f3b1056c59de033e0dbc22fe  give-darwin-aarch64.tar.gz
+c14be7ca7315fe3b461ac2d81b38ae85586833831e350ae52fd3fb2075374c2b  give-darwin-x86_64.tar.gz
+a51db0b87a5a838c1b0a1279214e64b6265380f6df1b2501ba896d4cbb06de05  give-linux-aarch64.tar.gz
+88c6a72267aaf4712f48cc99d979b29a9d0ea2c79dd846f8af94b04c39fe60ad  give-linux-x86_64.tar.gz
+
+exit: 0

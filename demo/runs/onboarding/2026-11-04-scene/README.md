@@ -46,10 +46,38 @@ admission. Temporary listeners and certificate files were removed on exit;
 no trust store was changed. This is a local transport proof, not a judgment
 of the people welcome or cross-laptop reachability.
 
+## Completed pre-scene preparation at the committed staging source
+
+The full preparation resumed by the loop used committed source
+`4e790771d7f26cae8aa39042d3d6b49f46ac8069`. Its complete command/exit record
+is `data/4e790771d7f2/prepare.json`; artifact hashes are in that directory's
+`artifacts.json`. The earlier evidence above remains the initial instrument run.
+
+```text
+$ python3 demo/runs/onboarding/2026-11-04-scene/prepare.py
+build-web: running (expected exit 0)
+build-web: exit 0
+build-downloads: running (expected exit 0)
+build-downloads: exit 0
+checksum-red: running (expected exit 1)
+checksum-red: exit 1
+staging-green: running (expected exit 0)
+staging-green: exit 0
+check: running (expected exit 0)
+check: exit 0
+Requested preparation steps passed; people scene never-ran. Servers stopped. Operator judgment owed.
+```
+
+All logs are under `data/4e790771d7f2/`. `checksum-red.txt:8-24` records the
+named all-zero checksum plant failing, exit 1; `staging-green.txt:3-9` records
+the clean HTTPS/live-generation probe passing, exit 0. `check.txt:1-75`
+records `lockf -k /tmp/svrngs-gate.lock scripts/check.sh` **passed**, exit 0,
+in 1,204 seconds. Both build logs record exit 0. No people scene started.
+
 ## Owed before people
 
-- This source's full `scripts/check.sh`: **never-ran** at this checkpoint.
-  The next preparation run must record exit 0 before the scene.
+- The full gate and builds above cover source `4e790771`; later source changes
+  require preparation again as `STAGING.md` specifies.
 - Attendee-trusted HTTPS and cross-laptop reachability: **never-ran**.
   `STAGING.md` explains the certificate input and LAN/tailnet setup. The Mac
   has Tailscale running but no advertised certificate domains; the worker
@@ -58,6 +86,9 @@ of the people welcome or cross-laptop reachability.
   contributions, closure through short and copied ordinary links, and continued
   file exchange: **never-ran**. No participants are present in this shell session.
 - Operator's human-welcome judgment: **could-not-judge**, observations absent.
+
+`PEOPLE_HANDOFF.md` is the current operator package; the original
+`NEEDS_HUMAN.md` is retained as historical decision context.
 
 No times, assistance counts or success rates are inferred. Follow
 `demo/onboarding-room.md` when the operator and laptops are present. The

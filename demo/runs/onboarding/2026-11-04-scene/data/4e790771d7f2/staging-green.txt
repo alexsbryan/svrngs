@@ -1,0 +1,9 @@
+source: 4e790771d7f26cae8aa39042d3d6b49f46ac8069
+command: ["node", "/Users/alexsbryan/dev/svrngs/demo/runs/onboarding/2026-11-04-scene/verify.mjs", "/Users/alexsbryan/dev/svrngs/target/onboarding-scene/site"]
+passed: HTTPS adapter preserves exact body and uses socket IP, ignoring forwarded IP
+passed: built canonical shell, installer, wasm and all matching download checksums served over HTTPS
+staging: request unavailable
+passed: absent/outside static paths do not expose files
+passed: local HTTPS resolver reaches live Free store with its generation guard; absent-address guidance; no publication
+
+exit: 0
