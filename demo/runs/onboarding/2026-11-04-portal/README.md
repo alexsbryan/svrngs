@@ -102,3 +102,26 @@ This establishes a passing isolated rerun, not a passing full gate or a
 diagnosis of Podman's internal error. The next full gate runs under the
 loop's await budget because the completed run exceeded the foreground
 tool's ten-minute timeout. No product or test changes were made for this retry.
+
+## Second resumed closing gate
+
+The next loop-managed gate completed with exit 1 in 1,187 seconds. Its log is
+`ralph/next/onboarding/ctl/log/sessions/onboarding-portal-reminder-2.await.log`.
+Every stage except the ceiling canary passed, including `tests` (520 seconds),
+all browser/page/scene stages, conformance and app laws. The ceiling reported
+a median of 0.3883 seconds against its unchanged 0.1-second CPU limit, from
+rounds `[0.7030590000000032, 0.3883379999999974, 0.05959900000000218]`.
+
+The unchanged canary passed in isolation on resumption:
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock cargo test --release --quiet -p svrngs-node --test scale -- --ignored --exact an_idle_round_is_under_the_ceiling --nocapture
+running 1 test
+CEILING idle round at 25 x 10,000: 0.0318 s of processor, the median of [0.21965099999999893, 0.03178200000000331, 0.029434999999999434], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.029434999999999434,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.004558375}
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 3.41s
+```
+
+This is an isolated pass, not a diagnosis of the earlier CPU reading and not
+a passing full gate. No product code, test, threshold or budget was changed.
+The full locked gate remains owed and runs again under the loop's await budget.
