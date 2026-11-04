@@ -76,7 +76,7 @@ swift                     0 / 1 lines
   - **Check:** survey committed before a cut; `python3 scripts/lean_check.py`
     before and after each cut; existing tests unchanged by name; full
     `scripts/check.sh` once at the close of the pass.
-- [ ] onboarding-store-proof — depends [onboarding-economize] — ONE ROW, a
+- [x] onboarding-store-proof 67731737b — depends [onboarding-economize] — ONE ROW, a
   survey, a local proof and a live Free proof, no product code and no public
   deployment (the operator, 2026-11-03: "we can plan on a free tier upstash
   deploy (but again we don't deploy now)"; 2026-11-04: "I just want us to move
