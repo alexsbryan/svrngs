@@ -187,5 +187,55 @@ exit 0
 
 ## Closing gate
 
-The full locked `scripts/check.sh` run is owed after the feature commit.
-The row's marker is left to the loop.
+The full gate ran after feature commit `3f29ba16`. The loop resumed this unit
+with exit **0**; its log is
+`ralph/next/onboarding/ctl/log/sessions/onboarding-native-arrival-1.await.log`.
+Pasted closing output (the detailed conformance rows remain in that log):
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (1 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     clippy (0 s)
+passed     tests (575 s)
+passed     canaries (13 s)
+passed     ceiling canary (34 s)
+passed     web rustfmt and clippy (9 s)
+passed     browser (161 s)
+passed     types (1 s)
+passed     typed lint (1 s)
+passed     joining in a browser (45 s)
+passed     pages (65 s)
+passed     scenes (236 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (105 s)
+passed     app laws (41 s)
+note       took 1306 s in all
+exit 0
+```
+
+The conformance log also reports its existing comparative WebKit rate sample:
+both wildcard straight-to-canary samples missed 5 seconds, while all four
+through-lend samples passed. The gate's verdict is passed; these rate samples
+are not a native-arrival people scene. The row's marker is left to the loop.
