@@ -27,6 +27,9 @@ use svrngs_node::{actor_of, Person, Roster};
 
 const WORDS: &str = "the app receives ranked suggestions; your history stays where it is";
 
+#[path = "home/publication.rs"]
+mod publication;
+
 fn declare(
     dir: &std::path::Path,
     name: &str,

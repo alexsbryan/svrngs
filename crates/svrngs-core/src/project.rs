@@ -30,6 +30,17 @@ use crate::{Admission, AdmittedOp, Invited, OpId};
 pub struct Wire<'a>(&'a [AdmittedOp]);
 
 impl Admission {
+    /// The issuer's last counting invitation, even when it has expired.
+    pub fn current_invite(&self, issuer: &str) -> Option<(OpId, Invited)> {
+        let m = self.membership();
+        let found = self.ops().iter().rev().find_map(|op| {
+            let i = m.invites.get(&op.id)?;
+            (i.issuer == issuer && m.counts(&op.id)).then(|| (op.id.clone(), i.clone()))
+        });
+        tracing::debug!(target: "rail:membership", issuer, id = ?found.as_ref().map(|i| &i.0), "invites: last counting invitation");
+        found
+    }
+
     /// Every `Invite` held, in the record's order.
     pub fn invites(&self) -> Invites {
         let held = &self.membership().invites;

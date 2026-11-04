@@ -108,6 +108,7 @@ pub mod folder;
 pub mod group;
 // Where this computer meets its groups, in tiers (relay fallbacks).
 pub mod invite;
+mod publication;
 pub mod tiers;
 // Joining a group by its link (arch-command (a)).
 pub mod join;

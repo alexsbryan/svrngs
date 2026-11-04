@@ -20,7 +20,7 @@ the record to the computer's apps over loopback (U3, `rail.rs`).
 `Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Invite`, `Synced`, `Relay`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), whose state leaves the core
-only as a fold made there (`Admission::membership`, `Admission::invites`
+only as a fold made there (`Admission::membership`, `Admission::invites`, `Admission::current_invite`
 in `project.rs`) or as
 `Wire`, the acts serialized for an app to fold, membership (`membership.rs`), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
@@ -98,7 +98,7 @@ The node/page protocol is v4.
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
 (`RingRail`) and the register's standing (`register.rs`), split out of
 svrngs-node. The journal is crate-private: an adapter reaches a group only
-through `RingRail`'s queries (`admission`, `standing`, `invite_for`,
+through `RingRail`'s queries (`admission`, `standing`, `invite_for`, `current_invite`,
 `group_dir`), its `commit`, `set_seed`, and the replication port
 (`digest`, `ops_missing_from_within`, `ingest_all`). What follows
 about the journal describes this crate.
@@ -517,6 +517,19 @@ computer's door for its own lends and dialled to the lender's otherwise
 /svrngs-reads/<label>/svrngs-stop`, carried the same way with the pass its
 origin signs. `/svrngs-reads` gives each asked lend's `asks` and its `ask`
 address there.
+
+Native short-invitation publication (`publication.rs`) is routed under that
+same home-page guard, at `/publication` and `/publication/close`. A receipt
+beside the group's journal is kept atomically owner-only by
+`declared::write_secret`; its pending/open/closing/closed lifecycle survives
+restarts. Resolver I/O uses the shared `http::builder` outside the invitation
+sequencer, with no redirect or automatic retry. `RingRail::current_invite`
+rechecks the issuer's current invitation before a response is accepted or
+a close supersedes it. The resolver mutation protocol and executable
+fake-resolver proof are recorded in
+`demo/runs/onboarding/2026-11-04-native/README.md`; the hosted adapter and
+the home page's controls remain queued in `docs/ONBOARDING.md`.
+
 `Node::lends` asks every other computer's key standing in a group held, at once, and
 answers each lend with whose it is and where this computer reaches it, its
 origin here (`origin.rs`); a computer that does not answer is named, and

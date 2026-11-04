@@ -21,3 +21,45 @@ fn the_newest_invite_is_the_last_in_the_records_order() {
     assert_eq!(invites.newest(&actor_of(&key(1)), &link), Some(&second.id));
     assert_eq!(invites.newest(&actor_of(&key(1)), &actor_of(&key(8))), None);
 }
+
+#[test]
+fn current_invite_is_per_issuer_not_per_old_link_or_arrival_order() {
+    let first = signed(
+        &key(1),
+        100,
+        0,
+        RailAct::Invite {
+            key: actor_of(&key(9)),
+            until: 1_000,
+            device_of: None,
+        },
+    );
+    let newer = after(
+        &key(1),
+        &first,
+        101,
+        RailAct::Invite {
+            key: actor_of(&key(8)),
+            until: 102,
+            device_of: Some(actor_of(&key(1))),
+        },
+    );
+    let theirs = signed(
+        &key(2),
+        103,
+        0,
+        RailAct::Invite {
+            key: actor_of(&key(7)),
+            until: 2_000,
+            device_of: None,
+        },
+    );
+    let a = admitted(&[theirs.clone(), newer.clone(), first.clone()]);
+    assert_eq!(a.current_invite(&actor_of(&key(1))).unwrap().0, newer.id);
+    assert_eq!(a.current_invite(&actor_of(&key(2))).unwrap().0, theirs.id);
+    assert_eq!(a.current_invite(&actor_of(&key(3))), None);
+    assert_eq!(
+        a.invites().newest(&actor_of(&key(1)), &actor_of(&key(9))),
+        Some(&first.id)
+    );
+}

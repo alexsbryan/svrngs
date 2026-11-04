@@ -148,6 +148,8 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .route("/lent", get(lent).post(change))
     .route("/running", get(running).post(lend_one))
     .route("/link", axum::routing::post(link))
+    .route("/publication", get(crate::publication::status).post(crate::publication::publish))
+    .route("/publication/close", axum::routing::post(crate::publication::close))
     .route("/visits", axum::routing::post(stop))
     .route("/folder", axum::routing::post(open))
     .route("/update", get(update_check).post(update_apply))

@@ -246,6 +246,18 @@ impl RingRail {
         Ok(None)
     }
 
+    /// This computer's current invitation, not the newest for an old link key.
+    pub fn current_invite(&self, namespace: &str) -> Result<Option<(OpId, svrngs_core::Invited)>, RailError> {
+        let journal = self.journal(namespace)?;
+        let (ops, _) = journal.read()?;
+        let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
+        let a = admit(&register, &[], &journal.roster_file()?, namespace, &Ed25519Verifier);
+        if a.membership().unsettled {
+            return Err(RailError::Unsettled(namespace.into()));
+        }
+        Ok(a.current_invite(&actor_of(self.signer())))
+    }
+
     /// The `Remove` acts this computer signed in `namespace`: its leave, once
     /// it left (#190).
     pub fn own_removes(&self, namespace: &str) -> Result<Vec<Op<SignedOp>>, RailError> {

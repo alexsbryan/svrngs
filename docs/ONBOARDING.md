@@ -1,6 +1,8 @@
 # Welcoming people into a group
 
-Status: planned, not launched. Asked for after the JavaScript queue closes,
+Status: native publication/recovery is built against a fake resolver
+(`crates/svrngs-node/src/publication.rs`); the welcome is not launched.
+Asked for after the JavaScript queue closes,
 then moved ahead of the phone-write row by the operator on 2026-11-03 while
 publication of the recent multi-ring join-flow fixes is deferred. `PLAN.md`
 §1 holds the order of work. This records the feature, its estimate and the
@@ -136,12 +138,19 @@ Existing pieces to extend:
 
 - `Host::link`, `MintInvite` and redemption: multi-person invitations,
   expiry and admission; no new membership act or rule.
+- Native publication extends those in `publication.rs`, retaining a 0600
+  `publication.json` beside the journal. `RingRail::current_invite` asks the
+  core for this issuer's last counting invitation; publication never mistakes
+  the last invitation for an old link key for the current one. The native
+  HTTP contract and fake-resolver red/green runs are in
+  `../demo/runs/onboarding/2026-11-04-native/README.md`.
 - `svrngs_core::app::App`: domain-separated publication signatures.
 - `svrngs_node::http::client()`: one TLS client is already shared by
   `checked_page` and the node's updater (`crates/svrngs-node/src/http.rs`,
   `crates/svrngs/src/cli.rs:1096`, `crates/svrngs-node/src/update.rs:86`,
-  landed in `467d5d16`). Reuse it; no extraction or second HTTPS client is
-  needed.
+  landed in `467d5d16`). Its shared `http::builder()` now also supplies
+  publication's client, with redirects and automatic retries disabled for
+  signed mutations; TLS construction stays in one place.
 - `declared::write_secret`: owner-only, atomic local receipt storage.
 - The home page's invitation flow, the group's `NameForm`, and `Copy`.
 - `web/install.sh`: platform selection, checksum verification, per-user

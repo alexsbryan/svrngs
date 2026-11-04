@@ -189,7 +189,7 @@ impl Host {
 
     /// [`Host::link`], its sequencer held.
     #[expect(clippy::disallowed_methods, reason = "a link's life starts now")]
-    fn link_held(
+    pub(crate) fn link_held(
         &self,
         group: &str,
         device: bool,

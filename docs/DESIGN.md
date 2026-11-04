@@ -736,6 +736,31 @@ already in the group on its own stays as it joined, and a phone that lost
 its key joins again by a device link. Only a computer makes one, as only a
 computer redeems a link.
 
+*Native short-invitation publication* (`crates/svrngs-node/src/publication.rs`)
+uses the home page's existing origin-proof boundary: `GET /publication?group=…`,
+`POST /publication {group,id?}` and `POST /publication/close {group,id}`.
+The host keeps `publication.json` owner-only beside the group's journal,
+before any resolver request, and reads status locally after reload or restart.
+An explicit retry reuses its invitation, id and expiry. A replacement needs
+the old id; a close names exactly the publication it closes. After the resolver
+acknowledges closure, the host supersedes that invitation with an undisclosed
+ordinary invitation before reporting closed, leaving earlier admissions intact.
+A stale close never supersedes a newer ordinary or device invitation.
+
+Network I/O holds no invitation lock. A late response rechecks both the
+receipt and `RingRail::current_invite`, whose core projection reads the last
+counting invitation by this issuer rather than the last for an old link key.
+Any resolver refusal, unreadable answer or timeout leaves a recoverable
+pending publication or withdrawal and says "joining is temporarily
+unavailable" with retry guidance. The shared HTTP/TLS builder is used with
+redirects and automatic retries disabled, a ten-second whole-response bound
+and an 8 KiB response ceiling. The browser receives neither the invitation
+secret nor the record API token. The resolver's native mutation contract and
+fake-resolver proof are in `demo/runs/onboarding/2026-11-04-native/README.md`.
+The resolver endpoint is read from the host's `join-resolver` file for this
+boundary; hosted provisioning and the page's controls remain the onboarding
+queue's work (`ONBOARDING.md`).
+
 *The phone's app joins by the same link* (designed, not built; §7). On our
 page host the chat link is a universal link, so with the app installed it
 opens in the app in place of the page, by the
