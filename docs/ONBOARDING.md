@@ -1,7 +1,9 @@
 # Welcoming people into a group
 
-Status: native publication/recovery is built against a fake resolver
-(`crates/svrngs-node/src/publication.rs`); the welcome is not launched.
+Status: native publication/recovery (`crates/svrngs-node/src/publication.rs`)
+and the authenticated Upstash resolver (`resolver/`) are built. The resolver
+has local failure-injection and live isolated-fixture proofs; it is not
+deployed, and the welcome is not launched.
 Asked for after the JavaScript queue closes,
 then moved ahead of the phone-write row by the operator on 2026-11-03 while
 publication of the recent multi-ring join-flow fixes is deferred. `PLAN.md`
@@ -157,7 +159,7 @@ Existing pieces to extend:
   installation, joining, startup and opening the home page.
 - The folder listing and `/folder`, `/v1/open {at}`, and group screen.
 
-No hosted short-address resolver was found in this repository or the
+The original survey found no hosted short-address resolver in this repository or the
 checked commonwealth ring surfaces at `e1a43bcd2`. Upstream's current
 `clients/desktop/src-tauri/src/friendly_names.rs` has 64 adjectives and 34
 nouns, only 2,176 combinations: display names, not bearer credentials.
@@ -184,9 +186,10 @@ not a completed implementation measurement. `home/` is
 
 Combined estimate: **575–981 product lines**, midpoint about 780.
 Allow roughly 450–800 test lines, markup/configuration and wordlist data
-besides. Resolver storage semantics can revise the provisional resolver
-range; the planned store's proof is recorded in §5. Its adapter remains
-unbuilt and must prove the failure/commit behavior described there.
+besides. The store's proof is recorded in §5. Its concrete adapter is now in
+`resolver/`: one generation-checked EVAL, shared limits, pending reservations,
+absolute secret expiry and final commit markers. Its failure/commit and live
+adapter evidence is in `../demo/runs/onboarding/2026-11-04-resolver/README.md`.
 
 Remeasured after the survey at `194aa994`: core **3,477/3,478**, `.`
 **19,441/19,442**, `js` **7,499/7,500**, unchanged from its base. No
@@ -200,10 +203,9 @@ On 2026-11-03 the operator approved the upper estimate: ceilings are **3,494
 core**, **19,833 `.`** and **8,090 `js`**, recorded in
 `scripts/lean_check.py` and `ralph/next/onboarding/NEEDS_HUMAN.md`. Each
 landing raises only to where it lands. The operator chose Upstash Redis Free
-for the planned resolver, with no paid overage and no deployment now. Before
-an adapter, verify free-tier cost controls, atomic reservation/closure and
-the self-hosting path; the queue's `onboarding-store-proof` row holds that
-work.
+for the resolver, with no paid overage and no deployment now. The queue's
+`onboarding-store-proof` row records the free-tier cost boundary, atomic
+reservation/closure and self-hosting path; §5 retains their limits.
 
 ## 5. Hosting plan and its proof
 
@@ -257,9 +259,13 @@ publication, status and close without writes or automatic reseeding. A
 sentinel cannot detect selective reservation loss or an old snapshot retaining
 it: known/suspected rollback still requires operator reconciliation or URL
 namespace retirement. The precise error/retry and uncertain-mutation contract
-is in `../demo/runs/onboarding/2026-11-04-store/FAILURES.md`. The adapter must
-prove no partial publication/close under injected failures; script isolation
-is not rollback of Redis writes after runtime errors.
+is in `../demo/runs/onboarding/2026-11-04-store/FAILURES.md`. The adapter's
+`web/tests/resolver.test.mjs` injects errors before and after every lifecycle
+write and a lost commit reply. Pending capabilities stay invisible; interrupted
+close is unavailable until reconciled. Script isolation is not rollback of
+Redis writes after runtime errors. The hosting edge must supply its trusted
+ingress IP; caller-supplied forwarding headers are never a fallback. No handler
+is publicly mounted. `resolver/README.md` names its Fetch-API boundary.
 The paired five-word phrase and abuse-limit recommendation was approved by
 the operator on 2026-11-04 ("The rest is reasonable too"), together with the
 graceful-failure requirement ("We should fail gracefully in the case we hit

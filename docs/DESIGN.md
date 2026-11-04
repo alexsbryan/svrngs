@@ -761,6 +761,25 @@ The resolver endpoint is read from the host's `join-resolver` file for this
 boundary; hosted provisioning and the page's controls remain the onboarding
 queue's work (`ONBOARDING.md`).
 
+*The short-address resolver* (`resolver/handler.mjs`, not deployed) maps five
+independently sampled EFF words to that ordinary invitation. Native mutations
+verify the existing key's `svrngs-app:onboarding:` signature over exact bytes;
+the hosting edge supplies the trusted ingress IP. There is no directory or
+forwarded-header fallback. One Upstash Redis EVAL owns generation checking,
+shared quotas, immutable owner/id/phrase reservations and closure. A pending
+reservation fixes the binding before a capacity slot and expiring secret are
+written; only the final open marker exposes the capability. Closure deletes
+the secret before its final closed marker. Interrupted operations are unavailable
+until an explicit retry reconciles the same binding, never falsely ended or
+reopened. Absolute expiry erases secrets; reservations remain without TTL.
+Missing/mismatched generation refuses every operation without reseeding.
+The approved paired phrase/limits are in `ONBOARDING.md` §5 and held in
+`resolver/store.mjs`; new allocation stops conservatively on capacity, and
+leaves two mutation attempts per active-secret slot for close/recovery near the
+monthly ceiling. Provider errors and limits produce 503 with retry guidance.
+No installed member operation depends on the resolver. Its JSON lookup is the
+boundary for the onboarding arrival UI; hosting and that UI are still queued.
+
 *The phone's app joins by the same link* (designed, not built; §7). On our
 page host the chat link is a universal link, so with the app installed it
 opens in the app in place of the page, by the

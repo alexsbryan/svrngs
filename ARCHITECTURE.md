@@ -826,6 +826,18 @@ group's page's Yes, "What apps use" and its Stop, the page's own stop,
 the group's page framed by the lent page, and the page's pass and holder
 key handed to the test, which posts a yes with them at the lender's door.
 
+**`resolver/`**: the short-invitation resolver, a Node Fetch-API handler without
+a public deployment or listener. `handler.mjs` verifies the host's existing
+domain-separated Ed25519 signature, samples the attributed EFF wordlist and
+uses one concrete Upstash REST transport. `store.mjs` owns the generation pin,
+atomic reservation/commit/close lifecycle and shared request/capacity limits.
+Redis holds TTL-bound capabilities and permanent digest-bound reservations,
+never a group record or shared file. The hosting adapter must provide a trusted
+IP; missing configuration and every provider refusal return unavailable with
+retry guidance. `web/tests/resolver.test.mjs` is included by the existing page
+laws gate; it owns a local Unix-socket Redis child and plants errors around
+every write. `resolver/README.md` names the native/arrival HTTP contract.
+
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts
 `actsOf` reads from the record's log, `by` the person an app wrote for, else
