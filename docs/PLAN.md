@@ -327,11 +327,12 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   an operator deploys per gathering. Its current-base survey (`194aa994`)
   selects no product cut; the revised estimate is +230 to +391
   non-JavaScript and +345 to +590 JavaScript lines, with any +0 to +16
-  core lines included in the former. Neither the caps nor the durable
-  resolver's hosting/storage choice is approved by this plan. Reuse and
-  economize first; the budget/storage decision is
-  `ralph/next/onboarding/NEEDS_HUMAN.md`, and its acceptance scene is
-  `ONBOARDING.md` §6;
+  core lines included in the former. The operator approved the upper estimate
+  on 2026-11-03 (ceilings 3,494 core, 19,833 `.`, 8,090 `js`) and chose
+  Upstash Redis Free as the planned resolver store, with no paid overage and
+  no deployment now (`ralph/next/onboarding/NEEDS_HUMAN.md`). Prove its
+  free-tier cost controls, atomic reservation/closure and self-hosting path
+  before an adapter. Its acceptance scene is `ONBOARDING.md` §6;
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; kept behind onboarding by the
   operator's reprioritization; `ralph/next/js/NEEDS_HUMAN.md`, "A phone's

@@ -25,19 +25,23 @@ must be chosen together; publication and closure must be replay-safe, and a
 closed phrase must never name a later invitation. Admission remains the
 issuing computer's existing `Invite` and redemption rules.
 
-## Decisions that remain with the operator
+## The operator's decisions, 2026-11-03
 
-- A budget ceiling, after the current-base economizing pass and estimate.
-- Resolver storage/provider, after confirming operating cost, atomic
-  operations and a self-hosting path. No adapter or hosting purchase before
-  that choice.
-- The phrase space and request limits, chosen together after the resolver's
+- **Budget:** the upper current-base estimate is approved: ceilings 3,494
+  core, 19,833 `.`, and 8,090 `js` (`scripts/lean_check.py`). Each landing
+  raises only to where it lands.
+- **Resolver plan:** Upstash Redis Free, with no paid overage authorized.
+  Deployment is not authorized now. Before an adapter, prove the free-tier
+  cost controls, atomic reservation/closure operations and a self-hosting
+  path in `onboarding-store-proof`.
+- **Phrase space and request limits:** still paired; choose them after the
   storage behavior is understood.
 
-Starting this queue approves none of those decisions, a deployment, or a
-release. Do not edit `scripts/lean_check.py`'s budgets. A budget ask comes
-only after the economizing pass, names its cuts and explains why no further
-ones were found.
+No Upstash/Vercel deployment, purchase or release is authorized now. The
+economizing pass found no supported product cut; its candidates, instruments
+and could-not-judge clone result are recorded in
+`demo/runs/economize/2026-11-03-onboarding/SURVEY.md` and
+`ralph/next/onboarding/NEEDS_HUMAN.md`.
 
 ## Reuse
 
@@ -51,11 +55,13 @@ installer or folder owner.
 
 ## Stop lines
 
-- The first row is a current-base survey and behavior-preserving cuts only.
-  Its source survey at `dece85b1` predates the completed JavaScript queue and
-  later join/update work; do not treat its estimates as the current budget.
+- The economizing pass is complete; its survey at `dece85b1` predates the
+  completed JavaScript queue and later join/update work, so only the
+  current-base survey and estimate govern the approved budget.
 - Keep behavior-preserving moves separate from behavior changes.
-- Stop after the estimate for the operator's ceiling and resolver decision.
+- Do not build the adapter until `onboarding-store-proof` verifies the chosen
+  free-tier plan's cost boundary, atomic operations and self-hosting path.
+- No deployment or paid usage in this queue without a new operator decision.
 - The people scene is not judged by a simulated run. Record the laptop scene
   from `docs/ONBOARDING.md` §6; one run is not a rate.
 - The operator owns publish and push.

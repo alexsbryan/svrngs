@@ -3,8 +3,8 @@
 Status: planned, not launched. Asked for after the JavaScript queue closes,
 then moved ahead of the phone-write row by the operator on 2026-11-03 while
 publication of the recent multi-ring join-flow fixes is deferred. `PLAN.md`
-§1 holds the order of work. This records the feature and its estimate; it
-approves neither a budget increase nor a hosting purchase. `DESIGN.md`
+§1 holds the order of work. This records the feature, its estimate and the
+operator's budget/storage decisions; it authorizes no hosting purchase. `DESIGN.md`
 describes what exists today.
 
 ## 1. The outcome
@@ -167,7 +167,8 @@ not a completed implementation measurement. `home/` is
 Combined estimate: **575–981 product lines**, midpoint about 780.
 Allow roughly 450–800 test lines, markup/configuration and wordlist data
 besides. Resolver storage semantics can revise the provisional resolver
-range; choosing that adapter is still the operator's decision.
+range; the planned store is chosen, but its adapter waits on
+`onboarding-store-proof`.
 
 Remeasured after the survey at `194aa994`: core **3,477/3,478**, `.`
 **19,441/19,442**, `js` **7,499/7,500**, unchanged from its base. No
@@ -176,17 +177,25 @@ twice, test relocation removes no implementation, and the remaining similar
 flows have different behavior. The clone instrument is could-not-judge,
 not a zero-clone result. The unchanged full closing gate passed in 1,141
 seconds, exit 0 (`demo/runs/economize/2026-11-03-onboarding/data/check.txt`).
-The retained first failure, recovery and budget/storage questions are in
-`ralph/next/onboarding/NEEDS_HUMAN.md`. A budget increase still requires the
-operator's explicit approval.
 
-## 5. Hosting remains a decision
+On 2026-11-03 the operator approved the upper estimate: ceilings are **3,494
+core**, **19,833 `.`** and **8,090 `js`**, recorded in
+`scripts/lean_check.py` and `ralph/next/onboarding/NEEDS_HUMAN.md`. Each
+landing raises only to where it lands. The operator chose Upstash Redis Free
+for the planned resolver, with no paid overage and no deployment now. Before
+an adapter, verify free-tier cost controls, atomic reservation/closure and
+the self-hosting path; the queue's `onboarding-store-proof` row holds that
+work.
 
-The estimate assumes existing Vercel hosting plus one durable transactional
-key-value store. The provider is not chosen. Confirm its operational cost,
-atomic operations and self-hosting path before committing to its adapter;
+## 5. Hosting plan and its proof
+
+The operator chose Upstash Redis Free for the planned resolver and authorized
+no paid overage or deployment now. Vercel remains the hosting assumption for
+the handler, not a deployment authorization. Confirm that the free tier's
+limits and account controls prevent paid use, and verify durable atomic
+reservation/closure and a self-hosting path before committing to the adapter;
 do not build a provider framework. Persistent storage is a new operational
-dependency, even if its first bill is zero.
+dependency, even when the planned allowance is free.
 
 Pricing checked on 2026-11-03: [Upstash Redis](https://upstash.com/pricing/redis)
 offers one free database, 250 MB and 500,000 commands/month. Usage-based
@@ -194,7 +203,8 @@ commands are $0.20 per 100,000; function execution and bandwidth are separate
 Vercel usage. These are published prices, not a measurement or a promise
 about this account's bill. [Redis on Vercel](https://vercel.com/docs/redis)
 is an external integration, not an already provisioned store here.
-Use a free allowance or an explicit spending cap if that option is chosen.
+The free-tier-only plan is not proof of a zero bill. The provider-proof row
+must establish how use stays within the allowance before any deployment.
 
 ## 6. Order and proof
 

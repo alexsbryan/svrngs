@@ -1,12 +1,30 @@
 # Onboarding's budget and resolver decision
 
-Status: economizing pass complete; survey, revised estimate and **passing
-full closing gate** recorded. The unchanged retry passed in 1,141 seconds,
-exit 0 (`demo/runs/economize/2026-11-03-onboarding/data/check.txt`). The
-first failure remains retained in `4555a32e`. Awaiting the operator's budget
-ceiling and resolver storage/provider choice before feature work.
+Status: **answered by the operator on 2026-11-03.** The economizing pass is
+complete; survey, revised estimate and passing full closing gate are recorded.
+The unchanged retry passed in 1,141 seconds, exit 0
+(`demo/runs/economize/2026-11-03-onboarding/data/check.txt`). The first
+failure remains retained in `4555a32e`.
 
-## Questions, in order
+## The operator's answers
+
+The operator: "Budget approved and we can plan on a free tier upstash deploy
+(but again we don't deploy now)".
+
+1. **Budget ceiling: approved at the upper estimate.** The caps are now
+   3,494 core, 19,833 `.` and 8,090 `js`, landed in `scripts/lean_check.py`
+   from the operator seat. Each future landing still raises only to where it
+   lands.
+2. **Resolver plan: Upstash Redis Free.** No paid overage is authorized, and
+   nothing is deployed now. Before an adapter, `onboarding-store-proof`
+   verifies that the free tier's limits and account controls prevent paid
+   use, that reservation/closure are durable and atomic, and that a
+   self-hosting path exists. The adapter is not built until that row passes.
+
+Phrase-space size and request limits remain a paired decision after storage
+behavior is understood (CHARTER:37-38); this answer does not choose them.
+
+## The questions as asked
 
 1. **What budget ceiling may onboarding spend?** The current-base survey
    (`194aa994`, `demo/runs/economize/2026-11-03-onboarding/SURVEY.md`)
@@ -23,9 +41,6 @@ ceiling and resolver storage/provider choice before feature work.
    closure operations and self-hosting path. Alternatively name the chosen
    self-hosted transactional store and where the resolver will run. No
    provider abstraction or adapter has been built.
-
-Phrase-space size and request limits remain a paired decision after storage
-behavior is understood (CHARTER:28-35); this package does not choose them.
 
 ## What was tried and why it did not pay for the feature
 
@@ -163,7 +178,7 @@ Every gate passed, including all Give scenes. No product or test edits were
 made between the failed gate and this retry. This closes the economizing
 pass; it does not establish the cause of the first browser failure or judge
 the future real-laptop onboarding scene. The two operator decisions above
-remain the stop line.
+are answered; storage proof remains the adapter's stop line.
 
 ## Storage evidence and remaining confirmation
 

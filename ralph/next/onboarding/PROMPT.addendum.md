@@ -3,15 +3,16 @@ This queue starts the self-service room welcome in `docs/ONBOARDING.md`.
 Before the row, read this queue's `CHARTER.md` whole, `STATE.md`'s opening,
 and `docs/ONBOARDING.md` whole. Use `docs/PLAN.md` §1 for priority.
 
-The first row is only the current-base economizing pass. Do not start feature
-implementation before its survey, any supported behavior-preserving cuts,
-and the revised estimate. Stop for the operator's budget ceiling and resolver
-storage/provider decision; this request authorizes neither a budget raise nor
-a hosting purchase or deployment.
+The current-base economizing pass is complete. The operator approved its
+upper estimate (3,494 core, 19,833 `.`, 8,090 `js`) and chose Upstash Redis
+Free with no paid overage for the planned resolver. Do not start the adapter
+until the `onboarding-store-proof` row verifies free-tier cost controls,
+atomic reservation/closure, and the self-hosting path.
 
 The operator deferred publication of recent multi-ring join-flow fixes to
-start this queue. Do not publish, push, or modify the V1.6 publish artifacts
-`demo/runs/v1.6/2026-11-03/publish.json` and `publish.log`.
+start this queue. Do not deploy Upstash or Vercel, publish, push, or modify
+the V1.6 publish artifacts `demo/runs/v1.6/2026-11-03/publish.json` and
+`publish.log`.
 
 Keep the phone-write sync row after onboarding as `docs/PLAN.md` says. Preserve
 existing behavior in every economizing cut, and keep each behavior-preserving

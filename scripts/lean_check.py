@@ -436,7 +436,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the operator approved both caps 2026-11-03 ("Approve both"): `.` to
 # 19,442 and `js` to 7,500, the js overage the page's stale-worker fix
 # added (d6d2a120, 15 over its 7,484).
-BUDGET = {"crates/svrngs-core": 3478, ".": 19442, "js": 7500, "swift": 1}
+# Onboarding's upper estimate, the operator's approval (2026-11-03, "Budget
+# approved"): +16 core, +391 `.` and +590 `js` over those caps, so 3,494,
+# 19,833 and 8,090. Its current-base pass found no supported
+# behavior-preserving product cut (the public/dead-code, test-cfg,
+# line-window and page-structure instruments left no deletion to fund);
+# semantic clone analysis could-not-judge because the tool was absent. Each
+# landing still raises only to where it lands
+# (ralph/next/onboarding/NEEDS_HUMAN.md).
+BUDGET = {"crates/svrngs-core": 3494, ".": 19833, "js": 8090, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
