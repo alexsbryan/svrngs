@@ -13280,3 +13280,137 @@ production counts exclude the test declarations, which are present in the
 graph. These are provisional inventory observations, not accepted noun
 findings: the separate planted control remains owed. Source/principle
 review and the locked full gate also remain owed.
+
+## REVIEW-audit-onboarding-auto-2 (2026-11-04, range b463b29b..c053e586)
+
+### Scope and premise correction
+
+`git show --format=fuller --stat b463b29b` identifies b463b29b as the commit
+that introduced the previous audit row, with a one-line STATE.md addition.
+This audit uses that conservative boundary, including all subsequent audit
+work through its starting HEAD c053e586. Using the previous audit worker's
+later checkpoint instead would only shorten this documentation-only range.
+The earlier product range 194aa994..b463b29b is still owed by the parked
+auto-1; this section does not complete, supersede or waive that audit.
+
+The assigned auto-2 row repeated two obsolete paths. Its principle path is
+corrected to the pin named at AGENTS.md:9-12; its executable is corrected to
+the developer binary specified at
+ralph/next/onboarding/PROMPT.addendum.md:51-57. No check, scope condition or
+row status is changed. Both pinned principle documents were read in full.
+
+### (1) Net lines per unit, product code
+
+Actual complete run, exit 0:
+
+```text
+$ git log --numstat --format=%s b463b29b..HEAD
+ralph: audit due after 9 units — REVIEW-audit-onboarding-auto-2
+
+1       0       ralph/next/onboarding/STATE.md
+REVIEW-audit-onboarding-auto-1: record local preparation blockers
+
+169     0       demo/runs/onboarding/2026-11-04-audit-preparation/NEEDS_HUMAN.md
+85      0       demo/runs/onboarding/2026-11-04-audit-preparation/coverage.txt
+283     0       demo/runs/onboarding/2026-11-04-audit-preparation/preparation.txt
+69      0       demo/runs/onboarding/2026-11-04-audit-preparation/prepare.py
+28      0       ralph/REVIEW_FINDINGS.md
+onboarding: direct audit through the existing developer instrument
+
+8       0       ralph/next/onboarding/PROMPT.addendum.md
+96      1       ralph/next/onboarding/REVIEW_AUDIT_NEEDS_HUMAN.md
+31      1       ralph/next/onboarding/STATE.md
+REVIEW-audit-onboarding-auto-1: record ledger and missing instruments
+
+130     0       ralph/REVIEW_FINDINGS.md
+75      0       ralph/next/onboarding/REVIEW_AUDIT_NEEDS_HUMAN.md
+1       1       ralph/next/onboarding/STATE.md
+```
+
+HEAD in that run is c053e586. The subject without a unit ID is director
+preparation for auto-1 (029d4b84). All its changes are queue instructions
+and the decision package. Source/test classification is the same as auto-1:
+executable code under crates/, web/, resolver/, scripts/ and apps/;
+tests/fixtures segments, tests.rs, *_tests.rs and *.test.mjs are tests.
+Recorded-run drivers are evidence, not product code. The only Python
+addition above is such a driver, demo/runs/.../prepare.py (+69).
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| REVIEW-audit-onboarding-auto-1 (including director preparation) | 0 | 0 | 0 | 0 | 0 | 0 |
+| REVIEW-audit-onboarding-auto-2 (row insertion) | 0 | 0 | 0 | 0 | 0 | 0 |
+| total | 0 | 0 | 0 | 0 | 0 | 0 |
+
+Independent endpoint check, exit 0, no output:
+
+```text
+$ git diff --numstat b463b29b c053e586 -- crates web resolver scripts apps
+```
+
+The full endpoint stat is eight evidence/instruction files, +974/−1.
+The per-commit counts are +976/−3; their net agrees at +973. These are raw
+documentation/evidence lines, not product growth or lean savings.
+
+### (2) Clone subjects and (3) new nouns
+
+Actual inventory runs, each exit 0 with no output:
+
+```text
+$ git diff --name-only b463b29b c053e586 -- 'crates/**' 'apps/**/Cargo.toml' 'web/**' 'resolver/**'
+$ git diff --unified=0 b463b29b c053e586 -- '*.rs'
+```
+
+There are no touched crate directories, added product symbols or new Rust
+struct/enum/trait declarations in this range. Thus the row's per-touched-crate
+dry-report and per-new-noun query lists are empty. No clone/noun invocation,
+corpus preparation or positive control is claimed for auto-2; no zero-clone
+or one-definition result is inferred from an unrun instrument. This is an
+empty subject inventory, not a lexical substitute or the JavaScript queue's
+focused-review exception.
+
+The director's preparation procedure was read at
+ralph/next/onboarding/REVIEW_AUDIT_NEEDS_HUMAN.md:64-88, along with its
+recorded execution and failure package in
+demo/runs/onboarding/2026-11-04-audit-preparation/. Those attempts belong to
+auto-1's nonempty subject inventory and remain blocked there; preparing a
+corpus for auto-2 would supply no subjects to either required command loop.
+
+### Principle review and verification
+
+Reviewed the changed decision package, prompt addendum, recorded preparation
+driver, failure package and findings. The driver records each subprocess's
+actual return code (prepare.py:18-26); its own exit is explicitly described
+as capture completion, not a passed audit (NEEDS_HUMAN.md:40-43). Missing
+embeddings, skipped exports and unvalidated noun counts are reported rather
+than silently passed (principles 5–7). Paths are aligned on one isolated
+data root and explicit corpus (prepare.py:14-15,37-44; principle 8). No
+product boundary, dependency, threshold, store or core ownership changed.
+No small behavior-preserving product fix is applicable, and no new check
+or budget raise was introduced.
+
+Actual fast checks, all exit 0:
+
+```text
+$ git diff --check b463b29b c053e586
+[no output]
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3486 / 3494 lines
+.                     19789 / 19833 lines
+js                     8066 / 8090 lines
+swift                     0 / 1 lines
+$ web/node_modules/.bin/oxlint
+[no output]
+$ web/node_modules/.bin/oxfmt --check '**/*.{js,mjs,cjs}'
+Checking formatting...
+
+All matched files use the correct format.
+Finished in 40ms on 291 files using 12 threads.
+$ command -v LINT ralph-result
+/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-bin/ralph-result
+```
+
+The shell has no LINT command; the concrete lint/format commands above ran.
+The locked full closing gate remains to be recorded before completion.
+This audit's own changes are evidence and the assigned row's path correction;
+they add no product/test code and do not change the empty subject inventories.
+The pre-existing V1.6 publish artifacts were inspected and left untouched.
