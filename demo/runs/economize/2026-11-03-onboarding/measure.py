@@ -92,9 +92,19 @@ def public():
 
 def close():
     run('lean-after.txt', ['python3', 'scripts/lean_check.py'])
-    result = run('check.txt', ['lockf', '-k', '/tmp/svrngs-gate.lock', 'bash', 'scripts/check.sh'])
-    print((DATA / 'check.txt').read_text())
-    sys.exit(result.returncode)
+    command = ['lockf', '-k', '/tmp/svrngs-gate.lock', 'bash', 'scripts/check.sh']
+    env = dict(os.environ, CARGO_INCREMENTAL='0')
+    # Keep partial evidence if the enclosing await budget ends this run.
+    with (DATA / 'check.txt').open('w', buffering=1) as log:
+        log.write('$ ' + ' '.join(command) + '\n')
+        with subprocess.Popen(command, cwd=ROOT, env=env, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT) as process:
+            for line in process.stdout:
+                log.write(line)
+                print(line, end='', flush=True)
+            status = process.wait()
+        log.write(f'\nexit: {status}\n')
+    sys.exit(status)
 
 
 def compact():

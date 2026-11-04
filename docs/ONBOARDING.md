@@ -110,13 +110,15 @@ not a guessed `~/svrngs/<name>` path.
 
 Installer recovery includes restarting an existing svrngs after a failed
 join; the current installer stops it before joining and can exit before
-the restart (`web/install.sh:114,149-151,191` at `dece85b1`).
+the restart (`web/install.sh:113-116,154-158,197` at `75f9fd3b`).
 
 ## 4. Reuse and estimate
 
-The original survey was read-only at `dece85b1`; no cuts were landed or
-subtracted. Its current-base follow-up is open in
-`demo/runs/economize/2026-11-03-onboarding/SURVEY.md`. Counts use
+The original survey was read-only at `dece85b1`. The current-base survey
+at `75f9fd3b` is committed in `194aa994`, with candidates, dispositions,
+instrument output and reused-file counts in
+`demo/runs/economize/2026-11-03-onboarding/SURVEY.md`. It selected no
+behavior-preserving product cuts; no saving is subtracted. Counts use
 `scripts/lean_check.py`: nonblank, noncomment product lines, with tests,
 apps and recorded-run drivers excluded. JavaScript has its own counter; the
 core is a subset of the non-JavaScript total.
@@ -143,30 +145,38 @@ checked commonwealth ring surfaces at `e1a43bcd2`. Upstream's current
 nouns, only 2,176 combinations: display names, not bearer credentials.
 OIDC `Codes` is also unsuitable: in-memory, single-use and minute-long.
 
-| Work | Non-JS LoC added | JS LoC added |
-|---|---:|---:|
-| Native publication, persistent receipt, status, guarded close and recovery | 160–260 | — |
-| Shared HTTPS client reuse (already landed) | 0 | — |
-| Installer recovery and focused local opening | 35–65 | — |
-| Small authoritative current-invitation query, if needed | 0–16 | — |
-| Hosted resolver, durable storage operations, authentication and limits | — | 220–360 |
-| Host controls and short-address presentation | — | 55–90 |
-| Name-once native installation flow | — | 35–65 |
-| Clear local folder arrival | — | 15–30 |
-| Deployment, checking and type-check wiring | 15–30 | 5–15 |
-| **Total** | **210–371** | **330–560** |
+The revised ranges below use the current flow/component split, rather than
+the pre-JavaScript-queue files. They are estimates of added counted lines,
+not a completed implementation measurement. `home/` is
+`crates/svrngs-node/src/home/`; Rust node paths are under
+`crates/svrngs-node/src/` unless qualified.
 
-Combined estimate: **about 540–930 product lines**, midpoint about 735.
-The possible 0–16 core lines are included above, not added again. Allow
-roughly 450–800 test lines, markup/configuration and wordlist data besides.
-The JavaScript queue has closed, but the current-base economizing pass is
-still open; remeasure after its cuts before asking for any budget.
+| Work | Non-JS LoC added | JS LoC added | Current basis and what remains |
+|---|---:|---:|---|
+| Native publication, persistent receipt, status, guarded close and recovery | 180–280 | — | `invite.rs:101-159,190-247`, `declared.rs:136-161`, `home.rs:597-628`. Reuse minting and secret storage; add receipt lifecycle and recovery around network I/O outside the lock. +20 at both ends explicitly allows the late-response/current-invite guard and persisted pending/closed state absent from today's link endpoint. |
+| Shared HTTPS client reuse (already landed) | 0 | — | `http.rs:10-23`, `update.rs:86`; the extraction in `467d5d16` is already counted. |
+| Installer recovery and focused local opening | 35–65 | — | `web/install.sh:113-158,160-229`, `session.rs:650-665`. Preserve release-hash writes and restart a stopped installation on refusal; use the existing local `at` destination. Range unchanged. |
+| Small authoritative current-invitation query, if needed | 0–16 | — | `svrngs-runtime/src/lib.rs:227-247` and `svrngs-core/src/project.rs:32-58`. `invite_for` is newest **for a key**, not a proof that it is the issuer's current open invitation. A small query may avoid a second fold in the adapter; no new membership rule. Range unchanged, core included here. |
+| Hosted resolver, durable storage operations, authentication and limits | — | 220–360 | `svrngs-core/src/app.rs:30-53` supplies the signature contract, not the store. OIDC's `Codes` (`oidc/provider.rs:191-240`) is memory-only. The provider-dependent reservation/tombstone transaction is new; retain this range provisionally until provider semantics are chosen. |
+| Host controls and short-address presentation | — | 65–110 | `home/page/group-link.js:58-94`, `group-links.js:23-70`, `home/ui/copy.js:47-72`. Extend the typed machine plus its view with persisted status/close/retry answers; today's last link is component state only. Up from 55–90 to cover that state/edge/view work. |
+| Name-once native installation flow | — | 45–80 | `web/page/name-form.js:30-48`, `join.js:96-142`, `computer.js:39-72`. Reuse views; add native-mode messages/effects, literal shell quoting and separate distribution origin without redeeming a browser identity. Up from 35–65 for the current typed flow and its native-mode handoff. |
+| Clear local folder arrival | — | 10–25 | `surface.rs:171-186`, `home/page/group-folder.js:15-27`, `folder.js:52-77`. Exact path and guarded opener already exist; only arrival focus/presentation remains. Down from 15–30; no second folder API. |
+| Deployment, checking and type-check wiring | 15–30 | 5–15 | `scripts/check.sh:58-69,104-108`, `scripts/types.mjs`, `scripts/build-web.sh:115-143`, `web/vercel.json`. Existing gates cover static pages; a resolver handler needs explicit checking and eventual deployment wiring after approval. Ranges unchanged. |
+| **Total** | **230–391** | **345–590** | Core's possible +0–16 is a subset of non-JS, not another addition. |
 
-No credible large deletion was found in this scope. Correcting the stale
-sovereign grant instructions at `scripts/build-web.sh:149-159` could remove
-about eight counted lines, but changes terminal output and is a separate
-corrective change, not a banked saving. A cap increase follows a verified
-economizing pass and the operator's approval.
+Combined estimate: **575–981 product lines**, midpoint about 780.
+Allow roughly 450–800 test lines, markup/configuration and wordlist data
+besides. Resolver storage semantics can revise the provisional resolver
+range; choosing that adapter is still the operator's decision.
+
+Remeasured after the survey at `194aa994`: core **3,477/3,478**, `.`
+**19,441/19,442**, `js` **7,499/7,500**, unchanged from its base. No
+supported product cut was found: already-shared primitives cannot be saved
+twice, test relocation removes no implementation, and the remaining similar
+flows have different behavior. The clone instrument is could-not-judge,
+not a zero-clone result. The full closing gate and the budget/storage
+questions are tracked in `ralph/next/onboarding/NEEDS_HUMAN.md`. A budget
+increase requires that gate and the operator's explicit approval.
 
 ## 5. Hosting remains a decision
 

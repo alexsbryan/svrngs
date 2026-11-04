@@ -324,11 +324,14 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   their group page. Each person gives their name once, installs svrngs and
   opens the actual shared folder to contribute a text file, with a haiku as
   an optional welcome prompt. This is a self-service feature, not an address
-  an operator deploys per gathering. Its source survey estimates +210 to
-  +371 non-JavaScript and +330 to +560 JavaScript lines, with any +0 to +16
+  an operator deploys per gathering. Its current-base survey (`194aa994`)
+  selects no product cut; the revised estimate is +230 to +391
+  non-JavaScript and +345 to +590 JavaScript lines, with any +0 to +16
   core lines included in the former. Neither the caps nor the durable
   resolver's hosting/storage choice is approved by this plan. Reuse and
-  economize first; its acceptance scene is `ONBOARDING.md` §6;
+  economize first; the budget/storage decision is
+  `ralph/next/onboarding/NEEDS_HUMAN.md`, and its acceptance scene is
+  `ONBOARDING.md` §6;
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; kept behind onboarding by the
   operator's reprioritization; `ralph/next/js/NEEDS_HUMAN.md`, "A phone's

@@ -26,6 +26,15 @@ The installer recovery gap described in `docs/ONBOARDING.md` §3 remains:
 `web/install.sh` stops the running node before joining, and a failed join
 exits before the later `keep` call restarts it.
 
+The current-base survey is committed in `194aa994`, at
+`demo/runs/economize/2026-11-03-onboarding/SURVEY.md`. It selected no
+product cut; the clone instrument is could-not-judge, not a zero-clone
+finding. The revised estimate in `docs/ONBOARDING.md` §4 is +230–391
+non-JS and +345–590 JS, with possible +0–16 core included in non-JS.
+`NEEDS_HUMAN.md` prepares the operator's budget/storage questions. The
+full closing gate and its committed exit-0 evidence are still owed before
+the pass is complete; its driver is `measure.py close` in that run directory.
+
 ## Rows
 
 - [ ] onboarding-economize — depends [] — ONE ROW, the pass before any
