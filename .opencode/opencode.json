@@ -5,6 +5,7 @@
       "~/dev/svrn-docs/**": "allow",
       "~/dev/commonwealth-ai/**": "allow",
       "~/.svrnmesh/**": "allow",
+      "~/.cargo/registry/src/**": "allow",
       "/tmp/**": "allow",
       "/private/tmp/**": "allow",
       "/run/**": "allow"
