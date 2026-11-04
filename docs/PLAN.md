@@ -329,11 +329,14 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   non-JavaScript and +345 to +590 JavaScript lines, with any +0 to +16
   core lines included in the former. The operator approved the upper estimate
   on 2026-11-03 (ceilings 3,494 core, 19,833 `.`, 8,090 `js`), chose Upstash
-  Redis Free as the planned resolver store, and on 2026-11-04 chose option A
-  (obtain official recovery/bandwidth answers before the adapter) with the
-  paired phrase/limits approved. Any provider limit or failure says "joining
-  is temporarily unavailable", never an ended invitation; existing members
-  keep working. No paid overage or deployment now
+  Redis Free as the planned resolver store, and on 2026-11-04 provided the
+  live Free database with its key in Keychain, approving the paired
+  phrase/limits and asking to move forward. The live atomic proof is in
+  `demo/runs/onboarding/2026-11-04-store/live.txt`; a permanent generation key
+  makes a reset store refuse short-address service rather than reuse the
+  namespace. Any provider limit or failure says "joining is temporarily
+  unavailable", never an ended invitation; existing members keep working. No
+  paid overage or public deployment now
   (`ralph/next/onboarding/NEEDS_HUMAN.md`). Its acceptance scene is
   `ONBOARDING.md` §6;
 - a phone's write reaching the group's other computers at once (the

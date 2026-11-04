@@ -199,12 +199,18 @@ work.
 ## 5. Hosting plan and its proof
 
 The operator chose Upstash Redis Free for the planned resolver and authorized
-no paid overage or deployment now. Vercel remains the hosting assumption for
-the handler, not a deployment authorization. Confirm that the free tier's
-limits and account controls prevent paid use, and verify durable atomic
-reservation/closure and a self-hosting path before committing to the adapter;
-do not build a provider framework. Persistent storage is a new operational
-dependency, even when the planned allowance is free.
+no paid overage or public deployment now. On 2026-11-04 the operator provided
+the live Free database `https://true-pheasant-225442.upstash.io` with its key
+in Keychain (service `svrngs-upstash`, account `alexsbryan`) and asked to move
+forward. The live smoke test in
+`demo/runs/onboarding/2026-11-04-store/live.txt` passed: one owner from a
+concurrent create-if-absent, one close from a compare-and-close, a refused
+retry, a permanent reservation, and an error the client can map to
+"temporarily unavailable". Vercel remains the hosting assumption for the
+handler, not a deployment authorization. The written-answer gate is
+superseded by a permanent generation key: if the store looks reset, the
+resolver refuses short-address service rather than reuse the URL namespace.
+Do not build a provider framework.
 
 Pricing checked on 2026-11-03: [Upstash Redis](https://upstash.com/pricing/redis)
 offers one free database, 250 MB and 500,000 commands/month. Usage-based
@@ -226,18 +232,20 @@ and each inner Redis call are metered separately.
 
 The local EVAL proof passes creation races, compare-and-close, replay,
 actual secret expiry and permanent reservations after SIGKILL/AOF recovery.
-It does not prove hosted failover semantics: official EVAL atomic-lock docs
-and eventual-consistency/replication docs leave acknowledged-write recovery
-on Free unsettled. The exact Free bandwidth-exhaustion response and actual
-account/hosting controls are also unobserved. These are explicit remaining
-proof obligations, not assumed passes. The self-hosting path is documented,
-including the handler transport change required by ordinary Redis.
+The live proof adds the same atomic create/close races and a permanent
+reservation on the actual Free database. Neither proves hosted failover
+semantics: official EVAL atomic-lock docs and eventual-consistency/replication
+docs leave acknowledged-write recovery on Free unsettled, and the exact Free
+bandwidth-exhaustion response is undocumented in the pages read. The resolver
+therefore keeps a permanent generation key and refuses all short-address
+service if it is missing, rather than reuse the URL namespace. The
+self-hosting path is documented, including the handler transport change
+required by ordinary Redis.
 The paired five-word phrase and abuse-limit recommendation was approved by
-the operator on 2026-11-04 ("The rest is reasonable too"), together with
-option A ("Let's go with A") and the graceful-failure requirement ("We should
-fail gracefully in the case we hit any of those limits"). The exact inquiry
-to send for the remaining recovery and bandwidth answers is
-`ralph/next/onboarding/PROVIDER_INQUIRY.md`; the adapter remains held.
+the operator on 2026-11-04 ("The rest is reasonable too"), together with the
+graceful-failure requirement ("We should fail gracefully in the case we hit
+any of those limits"). The adapter uses those values and the reset guard; no
+public deployment or paid usage is authorized.
 
 ## 6. Order and proof
 

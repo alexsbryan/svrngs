@@ -1,5 +1,9 @@
 # Inquiry to Upstash — Free Redis, direct REST
 
+**Superseded by the live database on 2026-11-04.** The operator provided the
+Free database and asked to move forward; the resolver uses it with a reset
+guard. Keep this as the exact question set if Upstash support is consulted.
+
 Send this to Upstash support from the account that will own the planned
 resolver. Ask for a dated written answer for the **Free plan, direct REST
 database, no payment method**. Do not provision a database to ask.

@@ -1,6 +1,6 @@
 # Onboarding's operator decisions
 
-## Store proof — option A chosen; official provider answer pending
+## Store proof — live Free database provided; reset guard required
 
 `onboarding-store-proof`, read on **2026-11-04 UTC / 2026-11-03 local**.
 The assigned row requires a stop here before an adapter. Local proof committed
@@ -8,15 +8,37 @@ in `0f72a101`; source excerpts, uncertainty and arithmetic:
 `demo/runs/onboarding/2026-11-04-store/README.md`. Actual planted-red and
 atomic-green runs: that directory's `ATOMIC.md`. No product lines changed.
 
+### The operator's live database, 2026-11-04
+
+The operator provided the Free database at
+`https://true-pheasant-225442.upstash.io` and stored the key in Keychain
+(service `svrngs-upstash`, account `alexsbryan`; never printed or committed).
+The live proof in `demo/runs/onboarding/2026-11-04-store/live.txt` passed:
+PING, one owner from a concurrent create-if-absent, one close from a
+compare-and-close, a refused retry, a permanent reservation (TTL -1), and an
+error the client can map to “temporarily unavailable”. The operator said
+“I just want us to move forward with this.”
+
+The official written answer is no longer a gate: use the live Free database.
+It still does not prove failover or partition recovery, so the resolver must
+keep a permanent generation key and refuse all short-address service when the
+store looks reset, rather than reuse the URL namespace. The client must treat
+every non-success as the graceful “joining is temporarily unavailable”
+answer. No public deployment, paid usage or automatic upgrade is authorized.
+
 ### The operator's answers, 2026-11-04
+
+These were given before the live database above. The live database supersedes
+option A's written-answer wait; the paired values and graceful-failure rule
+stand.
 
 The operator: "Let's go with A. The rest is reasonable too" and "We should
 fail gracefully in the case we hit any of those limits."
 
-1. **Option A.** Retain Upstash Redis Free and obtain the official written
-   answers below before the adapter. No provisioning or payment is needed for
-   the inquiry. The adapter stays held; native publication and host controls
-   may proceed independently.
+1. **Option A, since superseded by the live database.** Retain Upstash Redis
+   Free and obtain the official written answers before the adapter. The
+   operator then provided the live Free database and asked to move forward;
+   the reset guard below replaces the written-answer gate.
 2. **The paired values are approved as proposed** under “Exact proposed
    choices”: EFF Short Wordlist 1, five words (51.69 bits), 30/min and
    300/day per IP, 20k/month global, 100 active secrets, 100k reservations or
@@ -29,9 +51,10 @@ fail gracefully in the case we hit any of those limits."
    and underlying invitation stay recoverable. The policy handles any
    non-success, so it does not depend on undocumented provider codes.
 
-The exact inquiry to send is `ralph/next/onboarding/PROVIDER_INQUIRY.md`.
+`ralph/next/onboarding/PROVIDER_INQUIRY.md` is kept as the exact question set
+if Upstash support is consulted; it no longer gates the adapter.
 
-### Director decision — operator fork, not approval
+### Director decision — operator fork, since answered
 
 Reviewed on **2026-11-04 UTC**, against `fad8d8a8`, the assigned row and
 `ctl/log/sessions/onboarding-store-proof-1.out:3278-3320`. **Keep the store
@@ -46,6 +69,8 @@ no source-order change is needed. This unit remains incomplete.
 under “Exact proposed choices” only after the storage questions are answered.
 The arithmetic is reproduced, but it is conditional on enforcement, not a
 hosted-store or usability result. Do not waive never-reuse to close the row.
+The operator has since provided the live Free database; the remaining
+requirement is the reset guard, not the written answer.
 
 | Operator option | Cost and consequence |
 |---|---|

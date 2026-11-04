@@ -32,9 +32,13 @@ issuing computer's existing `Invite` and redemption rules.
   raises only to where it lands.
 - **Resolver plan:** Upstash Redis Free, with no paid overage authorized.
   Deployment is not authorized now. The operator chose option A on
-  2026-11-04: retain Free and obtain official written answers on durable
-  recovery and bandwidth exhaustion before the adapter. The exact inquiry is
-  in `NEEDS_HUMAN.md`; the adapter waits on that answer.
+  2026-11-04, then provided the live Free database
+  `https://true-pheasant-225442.upstash.io` with its key in Keychain (service
+  `svrngs-upstash`, account `alexsbryan`) and asked to move forward. The live
+  atomic proof is in `demo/runs/onboarding/2026-11-04-store/live.txt`. The
+  written-answer gate is superseded by a permanent generation key: if the
+  store looks reset, the resolver refuses short-address service rather than
+  reuse the URL namespace.
 - **Phrase space and request limits:** approved as proposed ("The rest is
   reasonable too"): EFF Short Wordlist 1, five words, 51.69 bits; 30/min and
   300/day per IP, 20k/month global; 100 active secrets; 100k reservations or
@@ -69,10 +73,10 @@ installer or folder owner.
   completed JavaScript queue and later join/update work, so only the
   current-base survey and estimate govern the approved budget.
 - Keep behavior-preserving moves separate from behavior changes.
-- Do not build the resolver adapter until the official provider answer in
-  `NEEDS_HUMAN.md` resolves durable recovery and bandwidth exhaustion. Native
-  publication and the host controls may proceed independently against the
-  documented contract and a fake resolver.
+- Do not build the resolver adapter until the live Free database, the reset
+  guard and the graceful-failure tests pass. The operator provided the live
+  database and asked to move forward; the written-answer gate is superseded.
+  Native publication and the host controls may proceed independently.
 - No deployment or paid usage in this queue without a new operator decision.
 - The people scene is not judged by a simulated run. Record the laptop scene
   from `docs/ONBOARDING.md` §6; one run is not a rate.

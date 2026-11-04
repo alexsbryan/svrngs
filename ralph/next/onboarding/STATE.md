@@ -77,30 +77,33 @@ swift                     0 / 1 lines
     before and after each cut; existing tests unchanged by name; full
     `scripts/check.sh` once at the close of the pass.
 - [ ] onboarding-store-proof — depends [onboarding-economize] — ONE ROW, a
-  survey and a local proof, no product code and no deployment (the operator,
-  2026-11-03: "we can plan on a free tier upstash deploy (but again we don't
-  deploy now)"):
-  - **(a) The free tier's boundary.** From Upstash's official pages, record
-    the current Free plan's limits (commands/month, storage, bandwidth),
-    how a database stays free (no card, a spending cap, or pausing at the
-    limit), and what the account sees when the limit is reached. Cite each
-    URL and the date read. A page that cannot be read is could-not-judge,
-    never assumed.
-  - **(b) Atomic operations, locally.** Verify the exact primitives the
-    resolver needs against a locally installed Redis (or an in-repo test
-    double only where the row says why): create-if-absent, compare-and-close,
-    and a tombstone that survives expiry. A test script under
-    `demo/runs/onboarding/2026-11-04-store/` runs red on a non-atomic
-    create/close and green on the chosen primitives. No Upstash database is
-    provisioned.
+  survey, a local proof and a live Free proof, no product code and no public
+  deployment (the operator, 2026-11-03: "we can plan on a free tier upstash
+  deploy (but again we don't deploy now)"; 2026-11-04: "I just want us to move
+  forward with this"):
+  - **(a) The free tier's boundary.** From Upstash's official pages and the
+    operator-provided live database (`https://true-pheasant-225442.upstash.io`,
+    key in Keychain service `svrngs-upstash`, account `alexsbryan`), record the
+    Free plan's limits (commands/month, storage, bandwidth), how a database
+    stays free, and what the account sees when a limit is reached. Cite each
+    URL or live run. A page that cannot be read is could-not-judge, never
+    assumed. The live key is never printed or committed.
+  - **(b) Atomic operations, locally and live.** Verify create-if-absent,
+    compare-and-close and a tombstone that survives expiry against a locally
+    installed Redis and the live Free database. `proof.py`/`ATOMIC.md` hold the
+    local red/green plants; `live.py`/`live.txt` hold the live smoke test
+    (exactly one owner, exactly one close, a refused retry, a permanent
+    reservation, and an error the client can map to unavailable). No public
+    deployment.
   - **(c) Self-hosting.** Record the official Redis install path and what a
     self-hosted resolver would still need (TLS, auth, persistence, backup,
     an operator). This proves a path exists; it does not build one.
-  - **(d) Phrase space and limits, together.** Propose the wordlist (source
-    and licence), phrase length, entropy, reservation lifetime, request
-    rate and abuse limits, with the arithmetic shown. Write the
-    recommendation and exact choices in `NEEDS_HUMAN.md`, then stop for the
-    operator's answer. No adapter or deployment before that answer.
+  - **(d) Phrase space and limits, together.** The operator approved the
+    proposal on 2026-11-04 ("The rest is reasonable too"): EFF Short Wordlist
+    1, five words (51.69 bits), 30/min and 300/day per IP, 20k/month global,
+    100 active secrets, 100k reservations or 100 MB, 8 KiB bodies, one-day
+    invitations. Record the values in `NEEDS_HUMAN.md`; no adapter before the
+    reset guard below.
   - **(e) Graceful failure at every limit.** The operator's answer, 2026-11-04:
     "We should fail gracefully in the case we hit any of those limits." Define
     the resolver's policy for commands/day/month, bandwidth, storage, request
@@ -110,22 +113,19 @@ swift                     0 / 1 lines
     close; no paid upgrade or automatic retry storm; the host's pending receipt
     and the underlying invitation remain recoverable. The policy handles any
     non-success, so it does not depend on undocumented provider codes.
-  - **Check:** every claim cites a URL or a local run; the atomic test's red
-    and green pasted; no product lines; `scripts/check.sh` unchanged and not
-    required for this row.
-  - **Operator decision, 2026-11-04:** option A chosen ("Let's go with A")
-    and the paired phrase/limits approved ("The rest is reasonable too").
-    The row's remaining stop is the official provider answer on recovery and
-    bandwidth, not the phrase/limits. Do not build the adapter before that
-    answer. `NEEDS_HUMAN.md` holds the exact inquiry to send.
-  - **Director disposition (2026-11-04 UTC): held for the operator.** Local
-    red/red/green proof reproduced; it does not certify hosted recovery.
-    The paired phrase/limits answer is now given by the operator. Before this
-    row can pass, resolve the selected Free endpoint's durable
-    reservation/closure recovery and bandwidth-exhaustion behavior, as required
-    by ONBOARDING §5. Options, costs and exact provider questions are in
-    `NEEDS_HUMAN.md` under “Director decision”. No adapter until that proof;
-    the row stays parked while native publication proceeds independently.
+  - **(f) A reset guard.** Keep a permanent generation key in the live store.
+    If the key is missing, or the store otherwise looks reset, refuse all
+    short-address publication and lookup with "joining is temporarily
+    unavailable" until the operator reconciles; never reuse the URL namespace.
+    A test proves a missing generation refuses service rather than reopening a
+    phrase.
+  - **Check:** every claim cites a URL or a local/live run; the atomic tests'
+    red and green pasted; the reset guard red on a missing generation; no
+    product lines; `scripts/check.sh` unchanged and not required for this row.
+  - **Operator decision, 2026-11-04:** the operator provided the live Free
+    database and said "I just want us to move forward with this." The official
+    written-answer gate is superseded by the live proof and the reset guard.
+    The paired phrase/limits are approved. No public deployment or paid usage.
 - [ ] onboarding-native-publication — depends [onboarding-economize] — ONE
   ROW, red first, and `scripts/check.sh` once, at the close (ONBOARDING §3,
   "Short addresses over existing invitations"):
@@ -176,15 +176,22 @@ swift                     0 / 1 lines
       retry guidance; no partial write, no reopened address, no lost
       reservation, no paid upgrade and no tight retry loop. A limit is
       never said as "ended" or "not found".
-  - **(b) The change.** Build the resolver handler against Upstash Redis
-    Free's REST semantics proven by `onboarding-store-proof`; keep it
-    replaceable and hold no group record or shared files. No provider
-    framework, no deployment. The adapter uses the phrase space and limits
-    the operator approved and the graceful-failure policy above.
+    - **A reset store is refused.** A missing or mismatched permanent
+      generation key makes every short-address publication and lookup answer
+      "joining is temporarily unavailable" until the operator reconciles;
+      the resolver never reuses the URL namespace after a reset.
+  - **(b) The change.** Build the resolver handler against the live Upstash
+    Redis Free database (`https://true-pheasant-225442.upstash.io`; key from
+    Keychain service `svrngs-upstash`, account `alexsbryan`, never printed or
+    committed) and the atomic semantics proven by `onboarding-store-proof`.
+    Keep it replaceable and hold no group record or shared files. No provider
+    framework, no public deployment. The adapter uses the phrase space and
+    limits the operator approved, the graceful-failure policy above and the
+    generation/reset guard.
   - **Check:** (a) red first on each plant, including a retry that reopens a
-      closed address, an old phrase reused for a later invitation, and a
-      simulated 429/quota/bandwidth answer; `scripts/check.sh` once; no
-      network deployment.
+      closed address, an old phrase reused for a later invitation, a
+      simulated 429/quota/bandwidth answer, and a missing generation key;
+      `scripts/check.sh` once; no public deployment.
 - [ ] onboarding-host-controls — depends [onboarding-native-publication] —
   ONE ROW, red first, and `scripts/check.sh` once, at the close
   (ONBOARDING §2):
