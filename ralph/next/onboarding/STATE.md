@@ -357,7 +357,27 @@ swift                     0 / 1 lines
     the source/principle review, LINT and the locked full `scripts/check.sh`
     gate. All checks remain required; no focused-review exception applies.
 - [x] REVIEW-audit-onboarding-auto-2 da503bace — depends [onboarding-oidc-setup-help] — audit the commits since the previous `REVIEW-audit-` row's hash (since this queue started if there is none) against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA: (1) paste a per-unit net-line ledger for product code over that range — `git log --numstat --format=%s <hash>..HEAD`, summed by the subject's unit id, src apart from tests; (2) run `/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code dry-report --scope <dir>` for each crate dir the range touched and paste every exact or near clone with a side that is a symbol ADDED in the range; (3) for every new `struct`/`enum`/`trait` in the range, `/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun <Name>`, and paste any noun with more than one definition; fix here what is behaviour-preserving and small, record the rest in `ralph/REVIEW_FINDINGS.md` with both file:line sites — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
-- [ ] onboarding-scope-economize — depends [onboarding-oidc-setup-help] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
+- [ ] onboarding-grouped-home-reconcile — depends [onboarding-oidc-setup-help] — ONE ROW, close the inherited grouped-home checkpoint with its active owner before lending's closing measurement (director, 2026-11-04; `SCOPE_DIRECTOR.md`):
+  - **Ownership first.** Coordinate with the existing grouped-home owner
+    (`ring-32fb4a66f5b1a57a`); this row reconciles `c3fa0ef7` and subsequent
+    owner edits, not a new presentation design. Preserve active work and
+    commit by explicit pathspec. Do not run competing product edits or
+    repeatedly checkpoint files while their owner is changing them.
+  - **Gates and budget.** The owner finishes formatting and the existing
+    checks, including the opt-in B browser/parity proof. Survey the actual
+    grouped-home growth for supported behavior-preserving savings under the
+    existing caps; do not pack code, move tests to evade counting, weaken a
+    check or remove capabilities to fit. Commit supported cuts separately,
+    lower caps where required and name their red/green budget plants. This
+    row authorizes no cap raise. If necessary growth still exceeds a cap
+    after that pass, present the operator the measured remainder, cuts,
+    options/costs and recommendation; lending's approval cannot pay for it.
+  - **Close.** Land the owner's reconciled product tree and record counts,
+    affected checks and a foreground full `scripts/check.sh` exit 0 under
+    `lockf -k /tmp/svrngs-gate.lock`. No closure on a WIP checkpoint or prior
+    product evidence. No deployment, publish or push. Then resume the
+    existing lending survey; its scratch proof need not be invented again.
+- [ ] onboarding-scope-economize — depends [onboarding-grouped-home-reconcile] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
   - **Survey first.** Read `docs/LENDING_SCOPE.md`, its cited local/upstream
     surfaces and the current tree after the preceding fixes. Record product
     counts by core/non-JS/JS and Give, candidates with exact sites, and the
@@ -383,6 +403,13 @@ swift                     0 / 1 lines
     continue to implementation without a redundant operator budget stop.
     Exceeding the survey's +700 non-JS / +235 JS guardrails, core growth or
     a wider design remains a new operator decision.
+  - **Resume after reconciliation.** Remeasure the landed prerequisite,
+    update `docs/LENDING_SCOPE.md` baseline/headroom and recheck the cited
+    lending seams against it. Keep the original survey and scratch proof as
+    historical evidence. Run current fast checks and retain the required
+    locked full-gate evidence for the final product tree; no earlier passing
+    run covers the unfinished grouped-home checkpoint. Do not restart the
+    completed prototype or request lending budget approval again.
 
   Pass evidence: `demo/runs/economize/2026-11-04-lend-scope/` (`SURVEY.md`,
   `PROTOTYPE.md`, `CLOSE.md`). Survey committed before the prototype; no

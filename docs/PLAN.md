@@ -339,8 +339,11 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   paid overage or public deployment now
   (`ralph/next/onboarding/NEEDS_HUMAN.md`). Its acceptance scene is
   `ONBOARDING.md` §6. The 2026-11-04 bug bash also exposed all-groups lending
-  expanding on a new join. Before the remaining scene, the queue runs a fresh
-  scoped-lending economizing pass and one end-to-end implementation row
+  expanding on a new join. Before closing the scoped-lending economizing
+  pass, the active grouped-home owner must reconcile the inherited prototype's
+  gates and budget (`onboarding-grouped-home-reconcile`); that presentation
+  growth is outside lending's approval. The queue then closes the fresh
+  scoped-lending economizing pass and runs one end-to-end implementation row
   (`docs/LENDING_SCOPE.md`; `ralph/next/onboarding/STATE.md`). The operator
   preapproved only the minimum necessary actual line growth after the pass,
   with zero additional core product lines and incremental measured cap
