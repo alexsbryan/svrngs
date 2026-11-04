@@ -13,7 +13,13 @@
 // The app-shell cache. Cache-first, one version: __VERSION__ is the runtime's
 // content hash, stamped at build time, so a rebuild replaces the cache rather
 // than serving a stale runtime (the failure this exists to avoid is a guest
-// stuck on last week's wasm). The version is also on every shell URL.
+// stuck on last week's wasm). The version is also on every shell URL, and
+// `answered` matches it exactly: a worker left in place while a newer build
+// deploys must miss, never answer the newer build's request with its own
+// cached wasm. An update also reloads the open pages (`activated`), since a
+// page takes its shell from the cache before the browser checks for a new
+// worker: a phone left open for weeks never navigates, so it would otherwise
+// run the build it opened with until someone reloaded it by hand.
 import * as store from './store.js?v=__VERSION__';
 
 // `self` as a service worker's: the worker's lib names it a
@@ -43,12 +49,25 @@ async function installed() {
   await scope.skipWaiting();
 }
 
-// Every older version's cache gone, and the open pages served from here.
+// Every older version's cache gone, and the open pages served from here: an
+// update navigates them onto the build it just kept, since the page a person
+// is looking at was loaded from the old cache before this worker was found.
+// Only an update does: a first install has no older cache, and reloading the
+// page a person is just opening would take the link's first screen away.
 async function activated() {
   const names = await caches.keys();
   const older = names.filter((name) => name !== store.CACHE);
   await Promise.all(older.map((name) => caches.delete(name)));
   await scope.clients.claim();
+  if (older.length === 0) return;
+  const pages = await scope.clients.matchAll({ type: 'window' });
+  await Promise.all(
+    pages.map((page) =>
+      page
+        .navigate(page.url)
+        .catch((error) => console.debug(`SW: a page was not moved to this build: ${error}`)),
+    ),
+  );
 }
 
 scope.addEventListener('install', (installing) => installing.waitUntil(installed()));
@@ -62,9 +81,15 @@ scope.addEventListener('fetch', (fetchEvent) => {
   fetchEvent.respondWith(answered(fetchEvent.request));
 });
 
-// `request` from the shell's cache, whatever its version query, else the network.
+// `request` from this build's cache, else the network. The URL is matched
+// exactly, its version query too, so a worker whose cache is an older build
+// cannot answer a newer build's request with last week's module or wasm.
 /** @param {Request} request */
 async function answered(request) {
-  const hit = await caches.match(request, { ignoreSearch: true });
+  const hit = await caches.match(request);
   return hit ?? fetch(request);
 }
+
+// For the page's laws (web/tests/worker.test.mjs): the two decisions above,
+// which a browser would otherwise be needed to judge.
+export { activated, answered };
