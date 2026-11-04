@@ -7,6 +7,7 @@
       "/Users/alexsbryan/Library/Application Support/jellyfin",
       "/Users/alexsbryan/.cache/huggingface",
       "/Users/alexsbryan/.cache/llama.cpp",
+      "/Users/alexsbryan/.cargo/registry/src",
       "/Users/alexsbryan/.config/opencode"
     ],
     "allow": [
