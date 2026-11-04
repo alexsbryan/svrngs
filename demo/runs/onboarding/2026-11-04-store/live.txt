@@ -1,0 +1,32 @@
+Live Upstash Free smoke test, 2026-11-04 UTC.
+
+Endpoint: https://true-pheasant-225442.upstash.io (operator-provided Free database).
+Token: Keychain generic password, service svrngs-upstash, account alexsbryan.
+The token is read by live.py and never printed; this transcript has no secret.
+
+$ python3 demo/runs/onboarding/2026-11-04-store/live.py
+ping: PONG
+create race: [0, 1]
+close race before create: [0, 0]
+close race: [0, 1]
+permanent TTL: -1
+retry after close: refused
+unknown command status: 400 error: True
+live proof passed
+cleaned up
+
+What this establishes on the live Free database:
+- The REST endpoint answers and the Keychain key authenticates.
+- Two concurrent EVAL create-if-absent calls acknowledge exactly one owner.
+- Compare-and-close acknowledges exactly one close; a retry is refused.
+- A reservation with no TTL reports TTL -1 (permanent).
+- An unknown command is a non-200 error the client can map to
+  "joining is temporarily unavailable".
+
+What it does not establish:
+- A hosted crash, failover or partition test. The resolver therefore keeps a
+  generation key and refuses short-address service when the store looks reset,
+  rather than reusing the URL namespace.
+- Command or bandwidth exhaustion. The client treats any non-success as the
+  graceful "temporarily unavailable" answer; no paid upgrade and no tight
+  retry loop.
