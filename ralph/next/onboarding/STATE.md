@@ -240,7 +240,39 @@ swift                     0 / 1 lines
   - **Check:** (a) red first, including a literal shell name, a failed join
       followed by a restart, and a simulated resolver limit;
       `scripts/check.sh` once.
-- [ ] onboarding-scene — depends [onboarding-native-arrival] — ONE ROW
+- [ ] onboarding-welcome — depends [onboarding-native-arrival] — ONE ROW, the operator's real Fedora feedback (2026-11-04; `demo/runs/onboarding/2026-11-04-scene/FEDORA.md`), red first:
+  - **The observed miss.** Installation appeared to work, but arrival at the
+    home page with three groups overwhelmed the operator and gave no sense
+    of welcome or invitation to contribute. `home-page.js` scrolls to an
+    anchor while still rendering every group and management place.
+  - **The correction.** Give the native-install arrival an explicit, focused
+    welcome to the joined group, identified by its stable id, not its name.
+    Lead with "Welcome to <group>", the actual shared folder, what sharing
+    there means, and one obvious **Open this folder** action. Keep unrelated
+    groups and management controls behind an explicit way back to all groups.
+    Ordinary home-page use still offers all groups. Reuse the existing typed
+    page machine, session/open destination and folder opener; do not add an
+    onboarding identity, folder API, or general tour.
+  - **The host's welcome.** The optional haiku invitation stays in ordinary
+    group-owned `WELCOME.txt`, as ONBOARDING §2 says; never hard-code a haiku
+    requirement or group content into the platform. Make the first step
+    toward the shared folder and its welcome note clear. Do not claim a
+    welcome note exists if it has not been read or established.
+  - **Proof.** Reproduce the current three-group arrival in a browser test
+    before the change. Afterward it leads with only the intended welcome,
+    exposes the correct path/opener, and has a working way back to all groups.
+    Cover same-name groups, loading/unread/missing target, explicit navigation
+    away and refresh, and the ordinary non-arrival home page. No polling read
+    may throw someone back into the welcome after they chose all groups.
+    Keep identity, retry and existing-install behavior. Trace decisions and
+    refusals. Tests must fail on the old all-groups arrival, not merely check
+    for the new heading. Update DESIGN/ONBOARDING with the implementation.
+  - **Close.** Stay within the approved budget; run the affected page/installer
+    checks and locked full gate. Prepare matching local scene artifacts and
+    give the supervisor the minimum Fedora retry instructions. No public
+    deployment, push, or unsolicited change to Fedora's personal data. The
+    scene remains open for the operator's actual observations.
+- [ ] onboarding-scene — depends [onboarding-welcome] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write
     `demo/runs/onboarding/2026-11-04-scene/PREDICTIONS.md` before any run.

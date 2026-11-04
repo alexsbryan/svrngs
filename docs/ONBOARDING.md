@@ -25,6 +25,14 @@ question, and let the host and software carry the awkwardness. Someone
 should know what to do next even when a step fails. Explain installation,
 running at login, and which folder is shared before they proceed.
 
+The first Mac–Fedora attempt exposed an arrival failure: the operator reached
+a home page with three groups and found it overwhelming, without a welcome
+or a clear invitation to contribute (`demo/runs/onboarding/2026-11-04-scene/
+FEDORA.md`). Installation plus an anchor to a group does not meet this bar.
+The `onboarding-welcome` correction gives native arrival a focused welcome
+to that group and its real folder, with a way back to all groups. The haiku
+invitation remains optional host-written content in `WELCOME.txt`.
+
 This is a general, self-service feature. Making the next invitation needs
 no deployment, hosting credentials, configuration edit, or developer.
 An operator-provisioned address per demo was considered and rejected.
