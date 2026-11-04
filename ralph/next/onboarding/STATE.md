@@ -297,7 +297,7 @@ swift                     0 / 1 lines
     the changed behavior and run affected CLI checks plus the locked full
     gate. Stay within the approved budget and preserve the active welcome
     worker's work. No deployment or push.
-- [ ] onboarding-oidc-setup-help — depends [onboarding-portal-reminder] — ONE ROW, the operator's Jellyfin setup feedback (2026-11-04): the page prints issuer/client credentials but gives no actionable way to configure Jellyfin.
+- [x] onboarding-oidc-setup-help 7a621499f — depends [onboarding-portal-reminder] — ONE ROW, the operator's Jellyfin setup feedback (2026-11-04): the page prints issuer/client credentials but gives no actionable way to configure Jellyfin.
   - **Observed gap.** "Signing people in with svrngs. In the app's own
     settings, choose OpenID Connect" implies a completed setup and a stock
     settings form. Turning the switch on only creates the provider/client;
