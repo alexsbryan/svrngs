@@ -129,7 +129,7 @@ swift                     0 / 1 lines
     database and said "I just want us to move forward with this." The official
     written-answer gate is superseded by the live proof and the reset guard.
     The paired phrase/limits are approved. No public deployment or paid usage.
-- [ ] onboarding-native-publication — depends [onboarding-economize] — ONE
+- [x] onboarding-native-publication b3f8c45ff — depends [onboarding-economize] — ONE
   ROW, red first, and `scripts/check.sh` once, at the close (ONBOARDING §3,
   "Short addresses over existing invitations"):
   - **(a) Tests: A HOST PUBLISHES AND CLOSES.** These fail at HEAD:
