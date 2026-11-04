@@ -13122,3 +13122,133 @@ No new check was added, so no new plant is claimed. Before and after this
 documentation-only part, lean printed the same four readings above and
 exited 0; the after-edit `git diff --check` also exited 0. The recorded full gate, focused doc rerun and
 current fast checks satisfy the revised row's acceptance evidence.
+
+## REVIEW-audit-onboarding-auto-1 (2026-11-04, partial; range 194aa994..b463b29b)
+
+**Not a completed audit.** The required clone/noun executable is absent.
+Decision package: `ralph/next/onboarding/REVIEW_AUDIT_NEEDS_HUMAN.md`.
+No previous audit exists in this queue: `git log --reverse --format='%h %s'
+-- ralph/next/onboarding/STATE.md` starts at 194aa994, its creation/survey.
+The endpoint is the assigned row's starting HEAD, b463b29b. Only that row
+was opened. Its nonexistent principle path is corrected to the pin named
+by `AGENTS.md:9-12`; no acceptance check is changed.
+
+### (1) Net lines per unit, product code
+
+Run: `git log --reverse --no-merges --numstat --format='@@%h %s'
+194aa994..b463b29b -- crates web resolver scripts apps`, exit 0.
+Raw source lines include comments/blanks; these are not lean's counted
+product lines. Included extensions: `.rs`, `.js`, `.mjs`, `.cjs`, `.ts`,
+`.py`, `.sh` under those five roots, excluding vendor. Tests are paths
+with a tests/fixtures segment, `tests.rs`, `*_tests.rs`, or `*.test.mjs`.
+Lockfiles, manifests, wordlist data, docs and recorded-run drivers are
+excluded. No app source or test code changed in this range.
+
+Subjects use `onboarding:` instead of unit IDs for feature commits, so
+attribution is explicit: a13f027e = native-publication; 61ea3533 and
+9ab84b4f = resolver; 96f40310 = host-controls; 3f29ba16 = native-arrival;
+26fa9693 = welcome; c2dd5081 = portal-reminder; 39638b89 and f43684f1 =
+oidc-setup-help. e1aa600b is the separate behavior-preserving HTTP move
+used by native-publication. fb0e3e8b carries its own economize ID.
+Commits without source/test changes contribute zero and are omitted.
+
+| unit | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|
+| onboarding-economize | 9 | 1 | 8 | 0 | 0 | 0 |
+| onboarding-native-publication: shared HTTP move | 4 | 1 | 3 | 0 | 0 | 0 |
+| onboarding-native-publication | 332 | 1 | 331 | 618 | 0 | 618 |
+| onboarding-resolver | 346 | 1 | 345 | 631 | 0 | 631 |
+| onboarding-host-controls | 142 | 9 | 133 | 197 | 0 | 197 |
+| onboarding-native-arrival | 182 | 47 | 135 | 339 | 0 | 339 |
+| onboarding-welcome | 47 | 7 | 40 | 90 | 0 | 90 |
+| onboarding-portal-reminder | 11 | 0 | 11 | 77 | 0 | 77 |
+| onboarding-oidc-setup-help | 8 | 8 | 0 | 23 | 7 | 16 |
+| total | 1081 | 75 | 1006 | 1975 | 7 | 1968 |
+
+Independent endpoint sum: `git diff --numstat 194aa994 b463b29b`, same
+classification, exit 0: source net **1006**, tests net **1968**. These
+match the per-commit ledger. `resolver/words.txt` adds 36 raw data lines,
+excluded above rather than hidden in executable growth.
+
+### (2) Required clone instrument: never-ran
+
+All four touched crate directories were individually attempted through
+Python subprocess calls. Actual commands and errors:
+
+```text
+$ target/debug/sovereign-cli code dry-report --scope crates/svrngs-core/
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code dry-report --scope crates/svrngs-node/
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code dry-report --scope crates/svrngs-runtime/
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code dry-report --scope crates/svrngs/
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+```
+
+No exact/near-clone conclusion follows. The prior upstream binary is also
+absent; see the package for the actual `ls` result. No replacement clone
+instrument was selected and no external corpus was changed.
+
+### (3) Required noun instrument: never-ran; lexical inventory only
+
+Added declaration lines from `git diff --unified=0 194aa994 b463b29b --
+'*.rs'` yield seven candidates, including test declarations. Each was
+individually attempted, with the following actual results:
+
+```text
+$ target/debug/sovereign-cli code converge noun Call
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code converge noun Fault
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code converge noun Phase
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code converge noun Receipt
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code converge noun Request
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code converge noun Resolver
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+$ target/debug/sovereign-cli code converge noun Welcome
+[Errno 2] No such file or directory: 'target/debug/sovereign-cli' (never-ran)
+```
+
+A repository lexical scan found one repeated spelling among those names:
+
+| candidate | both sites | disposition |
+|---|---|---|
+| Request | `crates/svrngs-node/src/publication.rs:44`; `apps/canon/build/src/lib.rs:84` | Publication HTTP request versus House rules build request. This is an inventory observation, not a duplicate-implementation finding or a substitute for cross-repository convergence. Convergence and disposition remain owed. |
+
+The other declarations are publication.rs:22 (Phase), :32 (Receipt),
+:52 (Fault), redeem.rs:160 (Welcome), and
+`crates/svrngs-node/tests/home/publication.rs:8,13` (Call, Resolver).
+
+### Current checks and remaining work
+
+Actual runs, exit 0:
+
+```text
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3486 / 3494 lines
+.                     19789 / 19833 lines
+js                     8066 / 8090 lines
+swift                     0 / 1 lines
+
+$ web/node_modules/.bin/oxlint
+[no output]
+$ web/node_modules/.bin/oxfmt --check '**/*.{js,mjs,cjs}'
+Checking formatting...
+
+All matched files use the correct format.
+Finished in 34ms on 291 files using 12 threads.
+
+$ git diff --check
+[no output]
+```
+
+`command -v LINT ralph-result` found only ralph-result; the available
+JavaScript lint/format checks above are named explicitly, not reported as
+a run of an absent LINT alias. No product changes, new checks, plants,
+budget raises or tests in this partial audit. Full architecture review,
+clone/noun results, any resulting small fixes, and the locked full closing
+gate remain owed. The V1.6 publish artifacts remain untracked and untouched.
