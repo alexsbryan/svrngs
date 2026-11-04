@@ -23,11 +23,24 @@ the operator reported:
 > any of that sense of omotenashi / welcome to your ring, add a haiku vibe
 
 This establishes an observed arrival/orientation failure with three groups.
-It does not yet establish file arrival, exact membership count, interrupted
-recovery or closure: those observations were not supplied. The existing
-home-page implementation scrolls to `#group-<id>` after reading the groups
+The existing home-page implementation scrolls to `#group-<id>` after reading the groups
 (`home/page/home-page.js:48-51`), then renders all group sections and the
 management places (`:70-103`). An anchor is not a focused welcome.
+
+The operator then clarified:
+
+> But it's worth stating that the file sync did work (I ended up adding the
+> haiku via cli)
+
+The Mac's shared folder contains `alex_file.txt`, with the operator's
+three-line contribution. Its observed SHA-256 is
+`38b734f1fb7c8bf5b582eda83191628245858193f472ca71ba6174c2544941bf`
+(`shasum -a 256` on that file, exit 0). This corroborates the operator's
+report that the Fedora contribution arrived on the Mac. **File sync worked;
+the arrival/welcome experience fell short.** Creating the contribution via
+CLI is not evidence of an unassisted browser-to-folder welcome. No transfer
+latency or success rate is inferred. Exact membership count, interrupted
+recovery and closure are still unobserved in this two-machine run.
 
 The next correction is `onboarding-welcome` in the queue. Keep the original
 scene predictions intact; this observation is evidence against treating the
