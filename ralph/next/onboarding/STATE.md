@@ -216,7 +216,7 @@ swift                     0 / 1 lines
     cross-origin browser access to the resolver.
   - **Check:** (a) red first; Chromium browser tests; `scripts/check.sh`
       once.
-- [ ] onboarding-native-arrival — depends [onboarding-resolver, onboarding-host-controls] — ONE ROW, red first, and `scripts/check.sh` once,
+- [x] onboarding-native-arrival c0b58cd14 — depends [onboarding-resolver, onboarding-host-controls] — ONE ROW, red first, and `scripts/check.sh` once,
   at the close (ONBOARDING §2, §3 "Extend the native arrival"):
   - **(a) Tests: A PERSON ARRIVES ONCE.** These fail at HEAD:
     - Typing the short address shows who invited them and which group it
