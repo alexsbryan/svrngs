@@ -54,7 +54,7 @@ swift                     0 / 1 lines
 
 ## Rows
 
-- [ ] onboarding-economize — depends [] — ONE ROW, the pass before any
+- [x] onboarding-economize fb0e3e8b2 — depends [] — ONE ROW, the pass before any
   feature code or budget ask (AGENTS.md "Done"):
   - **(a) Current-base survey, nothing to product.** Start from the count at
     `75f9fd3b`, compare the onboarding source survey at `dece85b1` with the
