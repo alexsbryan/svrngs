@@ -256,10 +256,60 @@ swift                     0 / 1 lines
 exit 0
 ```
 
-Targeted resolver laws, lint and the live adapter proof have passed. The full
-closing `scripts/check.sh` is still owed, to run once under
-`lockf -k /tmp/svrngs-gate.lock`. It will be handed to the loop as a foreground
-awaited command after this implementation/evidence commit; no gate success is
-claimed here. The loop must resume this same unit, record its actual exit/log,
-rerun either named known flake alone if needed, commit the closing evidence,
-then report done. No other queue row was opened or checkbox edited.
+Targeted resolver laws, lint and the live adapter proof passed above. The loop
+then ran the full closing gate against `9ab84b4f` and resumed this unit with
+exit **0**, elapsed **19m22s**. Its log is
+`ralph/next/onboarding/ctl/log/sessions/onboarding-resolver-1.await.log`.
+Actual gate output below omits only the detailed ceiling/conformance samples:
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+note       open files: 256, raised to 10240
+note       kept awake while this runs (caffeinate, pid 34736)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (17 s)
+passed     rustfmt (0 s)
+passed     clippy (1 s)
+passed     tests (503 s)
+passed     canaries (1 s)
+passed     ceiling canary (4 s)
+passed     web rustfmt and clippy (7 s)
+passed     browser (153 s)
+passed     types (2 s)
+passed     typed lint (0 s)
+passed     joining in a browser (41 s)
+passed     pages (61 s)
+passed     scenes (234 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (94 s)
+passed     app laws (41 s)
+note       took 1162 s in all
+exit 0
+```
+
+Both named flaky checks passed within the gate; no rerun was needed. The
+conformance log also records one straight-path WebKit seek sample missing 5 s
+(15,480 ms); all four through-lend samples passed. Its rate verdicts and full
+sample history remain in the source log, not treated as a new resolver result.
+No product changes followed the gate. No other queue row was opened or checkbox
+edited, and no deployment, publication or push was performed.
