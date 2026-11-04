@@ -225,3 +225,53 @@ The failure did not reproduce in this isolated run. This is not a diagnosis
 of the timing difference or a passing full gate. A fresh locked full gate is
 still owed and is handed to the loop with `ralph-result await`. The protected
 V1.6 publish artifacts remain untracked and untouched.
+
+## Completed closing gate
+
+The loop's third locked full gate at `2ab07496` exited **0** after **1,240
+seconds**. Read the complete output in
+`ralph/next/onboarding/ctl/log/sessions/onboarding-oidc-setup-help-3.await.log`.
+Every stage passed, including the previously failing ceiling canary. No
+product, check or threshold changed between the second and third runs.
+Actual output below omits only detailed ceiling accounting, individual scene
+and conformance rows, and the historical seek-rate table; those remain in
+the complete log.
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+note       open files: 256, raised to 10240
+note       kept awake while this runs (caffeinate, pid 64165)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (1 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (1 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     clippy (1 s)
+passed     tests (514 s)
+passed     canaries (2 s)
+passed     ceiling canary (5 s)
+passed     web rustfmt and clippy (10 s)
+passed     browser (168 s)
+passed     types (2 s)
+passed     typed lint (2 s)
+passed     joining in a browser (51 s)
+passed     pages (63 s)
+passed     scenes (262 s)
+passed     conformance canary (99 s)
+passed     app laws (41 s)
+note       took 1240 s in all
+exit 0
+```
+
+The ceiling median was **0.0307 s** against **0.1 s** (samples
+`[0.19298200000000065, 0.030742000000000047, 0.022975000000000634]`).
+Together with the named red plants and focused green runs above, this
+completes the row's automated proof. The operator's real Jellyfin
+configuration walk remains separate, as the row requires. The inherited
+V1.6 publish artifacts were inspected again and remain untouched and
+unstaged.
