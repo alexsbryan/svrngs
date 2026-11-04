@@ -325,7 +325,24 @@ swift                     0 / 1 lines
     full gate if product behavior changes. No unsolicited installation or
     changes to the operator's Jellyfin server; the real configuration walk
     is brokered separately with the operator. Stay within approved budgets.
-- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-oidc-setup-help] — audit the commits since the previous `REVIEW-audit-` row's hash (since this queue started if there is none) against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-grouped-home-reconcile] — audit the commits since the previous `REVIEW-audit-` row's hash (since this queue started if there is none) against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+  - **Supervisor resume context, 2026-11-04.** The last director ended on a
+    rejected home-wide model search, not a completed analysis. The operator
+    confirms main models live under `commonwealth-ai/sovereign/models`.
+    The existing embedding model is
+    `/Users/alexsbryan/dev/commonwealth-ai/sovereign/models/qwen-embedding-0.6b.gguf`
+    (verified present, 1,197,629,632 bytes). `llama-server` is installed at
+    `/opt/homebrew/bin/llama-server`. Use that existing model to start an
+    owned loopback-only embedding process (for example `--embeddings
+    --pooling last --host 127.0.0.1 --port 8080`); verify real embeddings and
+    compatibility with the existing ingestor before the required controls.
+    Stop only the process you started. No download, paid service or broad
+    home-directory Glob is needed. Keep preparation in the isolated corpus
+    already described below and read existing exporter controls for coverage.
+    Reconciliation is now a prerequisite so the corpus/gate measure its
+    committed product, rather than competing with an unfinished UI owner.
+    Preserve all audit requirements; report results through `ralph-result`
+    rather than ending on a rejected tool call.
   - **(0) Prepare the existing instrument.** Director decision, 2026-11-04:
     use `/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev`
     (below, `AUDIT`), the existing owner of both audit verbs, instead of the
@@ -369,9 +386,12 @@ swift                     0 / 1 lines
     existing caps; do not pack code, move tests to evade counting, weaken a
     check or remove capabilities to fit. Commit supported cuts separately,
     lower caps where required and name their red/green budget plants. This
-    row authorizes no cap raise. If necessary growth still exceeds a cap
-    after that pass, present the operator the measured remainder, cuts,
-    options/costs and recommendation; lending's approval cannot pay for it.
+    row's measured JS remainder was separately approved by the operator on
+    2026-11-04: cap 8,090 to 8,188 (+98), at 8,187 lines. No core/non-JS
+    increase and no lending approval spent. The owner has released claim
+    `ring-32fb4a66f5b1a57a`; finish the scoped handback/landing rather than
+    wait for that historical hold. If a final recount needs more than 8,188,
+    present only the additional measured remainder and supported options.
   - **Close.** Land the owner's reconciled product tree and record counts,
     affected checks and a foreground full `scripts/check.sh` exit 0 under
     `lockf -k /tmp/svrngs-gate.lock`. No closure on a WIP checkpoint or prior

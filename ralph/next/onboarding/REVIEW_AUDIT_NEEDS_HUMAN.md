@@ -1,5 +1,25 @@
 # REVIEW-audit-onboarding-auto-1 — instrument preparation
 
+## Supervisor resume context, 2026-11-04
+
+The last director stopped after a rejected home-wide search for an embedding
+model. The operator confirms `commonwealth-ai/sovereign/models` is the main
+model directory; a bounded check verified
+`/Users/alexsbryan/dev/commonwealth-ai/sovereign/models/qwen-embedding-0.6b.gguf`
+exists at 1,197,629,632 bytes. `/opt/homebrew/bin/llama-server --version`
+reports 10180 (11b068d06). No model download or upstream source change is
+needed. Start an owned loopback-only embedding process from this cached
+model, verify the existing ingestor's discovery/model configuration and real
+embedding output, then continue the required scratch controls and reports.
+No home-wide Glob or broad permission change is needed. A loopback probe at
+9741 currently refuses connection; that daemon is not a prerequisite when
+the existing local embedding server can be started directly.
+
+The audit now depends on grouped-home reconciliation so it measures the
+committed owner handback and approved budget, not a changing WIP baseline.
+No clone/noun, source-review, lint or full-gate criterion is waived. The
+earlier evidence below remains historical.
+
 ## Director decision, 2026-11-04
 
 **Continue with local instrument preparation as part of the audit.**
