@@ -12,6 +12,8 @@
     ],
     "allow": [
       "Read", "Edit", "Write", "MultiEdit", "Glob", "Grep", "TodoWrite",
+      "Read(/Users/alexsbryan/.cargo/registry/src/**)",
+      "Grep(/Users/alexsbryan/.cargo/registry/src/**)",
       "Bash(git status*)", "Bash(git diff*)", "Bash(git log*)", "Bash(git show*)",
       "Bash(git grep*)", "Bash(git rev-parse*)", "Bash(git ls-files*)",
       "Bash(git -C ~/dev/commonwealth-ai show *)", "Bash(git -C /Users/alexsbryan/dev/commonwealth-ai show *)",
