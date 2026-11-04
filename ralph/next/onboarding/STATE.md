@@ -104,6 +104,14 @@ swift                     0 / 1 lines
   - **Check:** every claim cites a URL or a local run; the atomic test's red
     and green pasted; no product lines; `scripts/check.sh` unchanged and not
     required for this row.
+  - **Director disposition (2026-11-04 UTC): held for the operator.** Local
+    red/red/green proof reproduced; it does not certify hosted recovery.
+    The paired phrase/limits answer is still required by CHARTER §3 and (d).
+    Before this row can pass, resolve the selected Free endpoint's durable
+    reservation/closure recovery and bandwidth-exhaustion behavior, as required
+    by ONBOARDING §5. Options, costs and exact provider questions are in
+    `NEEDS_HUMAN.md` under “Director decision”. No adapter until that proof
+    and the operator's paired answer; the row and source order stay open.
 - [ ] onboarding-native-publication — depends [onboarding-store-proof] — ONE
   ROW, red first, and `scripts/check.sh` once, at the close (ONBOARDING §3,
   "Short addresses over existing invitations"):

@@ -8,6 +8,76 @@ in `0f72a101`; source excerpts, uncertainty and arithmetic:
 `demo/runs/onboarding/2026-11-04-store/README.md`. Actual planted-red and
 atomic-green runs: that directory's `ATOMIC.md`. No product lines changed.
 
+### Director decision — operator fork, not approval
+
+Reviewed on **2026-11-04 UTC**, against `fad8d8a8`, the assigned row and
+`ctl/log/sessions/onboarding-store-proof-1.out:3278-3320`. **Keep the store
+stop line.** The charter supplied to the director reserves phrase space and
+request limits to the operator; the current `CHARTER.md:33-38,62-64` likewise
+requires storage proof before an adapter, and STATE's (d) explicitly requires
+the operator's answer. The earlier Free planning approval does not supply that
+answer or establish hosted recovery. No false ordering premise was found;
+no source-order change is needed. This unit remains incomplete.
+
+**Recommendation:** choose option A below and approve the exact paired values
+under “Exact proposed choices” only after the storage questions are answered.
+The arithmetic is reproduced, but it is conditional on enforcement, not a
+hosted-store or usability result. Do not waive never-reuse to close the row.
+
+| Operator option | Cost and consequence |
+|---|---|
+| **A — retain Free, obtain official clarification first (recommended)** | No provisioning or payment is needed for a documentation/support inquiry. Costs operator coordination and an unknown wait; adapter work remains held. Ask the operator to obtain or authorize obtaining the written answers below. Approval of the paired values alone does not lift the store stop. |
+| **B — choose a self-hosted authoritative store instead** | Requires a new provider/operating-cost decision, an operating owner, durable storage, recovery protection and handler transport work. The survey §2 lists those obligations; no monetary estimate or deployment is approved. Re-prove the chosen boundary before its adapter. |
+| **C — hold onboarding pending evidence** | No new service spend or implementation; delays the welcoming-room demo. Existing storage and paired-choice questions remain open. |
+
+For A, obtain a dated official response or documentation for the **planned
+direct no-payment Free REST database configuration**, not paid/Prod Pack:
+
+1. Does successful EVAL acknowledgment mean both reservation and close state
+   survive supported crash, failover and partition recovery? Can concurrent
+   REST EVALs ever acknowledge incompatible owners, or recovery/LWW roll back
+   a close/reservation? Specify the authoritative endpoint/read operation and
+   required configuration. Per-script locking alone does not answer this.
+2. What happens at **10 GB/month Free bandwidth**: Redis error and REST HTTP
+   status/body, affected operations (including close), reset period/timezone,
+   and whether any charge or automatic plan change can occur without a payment
+   method? The inspected billing page lists the allowance but not these details.
+3. How are permanent reservations recovered after archival/restore? If any
+   acknowledged state can be lost, serving the same URL namespace cannot resume
+   until complete reconciliation; otherwise retire it permanently. A new blank
+   database is not recovery. An answer inconsistent with never-reuse requires
+   option B or C, not an adapter built on that assumption.
+
+**Director reproduction:** foreground runs of `python3 -I
+demo/runs/onboarding/2026-11-04-store/proof.py` with `plant-create`,
+`plant-close`, then `atomic` returned **1, 1, 0**. Outputs matched the transcript
+below, including the 136-byte sample and AOF reload assertions; Redis **7.2.4**,
+create SHA-256 `c6856e3d9e0bded82774dda871ef81aba0392e1c0514bf9b1957f256b2f1d119`,
+close SHA-256 `946d932e04057095828876e64756c4bb7393e30d6ab4192e10ae2cb99192e3a5`.
+All owned Redis children exited before the commands returned.
+
+Re-read with `curl -fsSL --max-time 45` (all exit 0):
+`https://upstash.com/docs/redis/commands/scripting/eval.md` (single atomic step,
+global lock), `/docs/redis/features/consistency.md` (asynchronous propagation,
+eventual consistency, LWW and deprecated strong mode),
+`/docs/redis/features/durability.md` (persistent storage; extra replication
+excludes Free), `/docs/redis/features/replication.md` (paid replication versus
+“all subscription plans” HA), and `/docs/redis/overall/billing.md` (250 MB,
+500K commands, 10 GB; no card required; adding payment upgrades Free; EVAL plus
+inner calls metered). Paths after the first URL use the same Upstash origin.
+These reproduce the recovery ambiguity; they do not establish a hosted failure
+or guarantee. Free bandwidth response remains **could-not-judge** in these
+sources. Neither account inspection nor hosted testing was performed.
+
+Downloaded the EFF source URL in the survey with Python `urllib.request` and
+recomputed SHA-256/count/math (exit 0): **13,660 bytes**, hash
+`8f5ca830b8bffb6fe39c9736c024a00a6a6411adb3f83a9be8bfeeb6e067ae69`,
+**1,296 unique words**, excluding only `yo-yo` leaves **1,295**, lengths **3–5**;
+`1295**5 = 3642074641559375`, entropy **51.69368191286958** bits,
+`20000*100/1295**5 = 5.491375649411975e-10`, command envelope **368000**,
+reserve **132000**. This reproduces the numerical recommendation only;
+account settings and the implementation's command envelope still need proof.
+
 ### Questions, in order
 
 1. **Approve the paired phrase/abuse recommendation below, or give revised
