@@ -1,6 +1,7 @@
 # Welcoming people into a group
 
-Status: native publication/recovery (`crates/svrngs-node/src/publication.rs`)
+Status: native publication/recovery (`crates/svrngs-node/src/publication.rs`),
+the home page's host controls (`home/page/group-link.js`, `group-links.js`),
 and the authenticated Upstash resolver (`resolver/`) are built. The resolver
 has local failure-injection and live isolated-fixture proofs; it is not
 deployed, and the welcome is not launched.

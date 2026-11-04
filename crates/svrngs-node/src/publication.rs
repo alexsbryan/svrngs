@@ -101,8 +101,17 @@ impl Receipt {
             self.phase
         };
         tracing::debug!(target: "publication", group, ?state, current, "publication: local status; no resolver request");
+        let address = self
+            .phrase
+            .as_ref()
+            .map(|phrase| {
+                reqwest13::Url::parse(&self.resolver)
+                    .map(|url| format!("{}/{phrase}", url.origin().ascii_serialization()))
+                    .map_err(|e| Fault::from(&e))
+            })
+            .transpose()?;
         Ok(
-            serde_json::json!({"id": self.id, "state": state, "phrase": self.phrase, "until": self.until}),
+            serde_json::json!({"id": self.id, "state": state, "phrase": self.phrase, "address": address, "until": self.until}),
         )
     }
 }

@@ -758,8 +758,16 @@ and an 8 KiB response ceiling. The browser receives neither the invitation
 secret nor the record API token. The resolver's native mutation contract and
 fake-resolver proof are in `demo/runs/onboarding/2026-11-04-native/README.md`.
 The resolver endpoint is read from the host's `join-resolver` file for this
-boundary; hosted provisioning and the page's controls remain the onboarding
-queue's work (`ONBOARDING.md`).
+boundary. The native status includes the short address at that resolver's
+origin; the browser never constructs a distribution origin from it. The
+group's existing link machine and view (`home/page/group-link.js` and
+`group-links.js`) offer **Invite people here**, the large copyable address,
+expiry, reachability guidance and **Close joining**. They read the local
+receipt on mount and after an uncertain mutation; pending publication and
+closure offer explicit retries, with no automatic network retry. Ordinary
+and device links reread publication status because they supersede it. Reload
+and restart recover these controls from the native receipt. Hosted provisioning
+and the attendee welcome remain the onboarding queue's work (`ONBOARDING.md`).
 
 *The short-address resolver* (`resolver/handler.mjs`, not deployed) maps five
 independently sampled EFF words to that ordinary invitation. Native mutations

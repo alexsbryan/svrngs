@@ -39,6 +39,7 @@ mod opens;
 mod acts;
 // A lent port opened on this computer while Play is on (give-play).
 mod play;
+mod publication;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;

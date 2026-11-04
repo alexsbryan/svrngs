@@ -34,7 +34,10 @@ The existing authenticated home origin serves:
   id is refused without changing the newer invitation. Duplicate completed
   close is local and writes no new invitation.
 
-Success returns `{id,state,phrase,until}`. `state` is `pending`, `open`,
+Success returns `{id,state,phrase,address,until}` (`address` added by the host
+controls row). `address` is null until a phrase is known, then the resolver's
+origin plus `/<phrase>`; it is not the group's canonical page origin.
+`state` is `pending`, `open`,
 `closing`, `closed`, or `ended`; `phrase` is null until publication succeeds.
 `ended` means the native invitation was superseded or its expiry reached,
 never that the resolver failed. A provider failure is HTTP 503:
