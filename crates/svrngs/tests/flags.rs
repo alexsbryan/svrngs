@@ -40,3 +40,11 @@ fn each_flag_taking_a_value_wants_one_and_no_other_argument_takes_one() {
     let said = cli::parse(argv(&["share", "", "x"]));
     assert_eq!(said.err(), Some("unexpected argument `x`".to_string()));
 }
+
+#[test]
+fn update_is_a_verb_of_its_own_and_says_which_verdict_it_reached() {
+    assert_eq!(cli::parse(argv(&["update"])), Ok(cli::Verb::Update));
+    use svrngs_node::update::UpdateError;
+    assert_eq!(cli::Refusal::Update(UpdateError::NoPage).exit_code(), 3);
+    assert_eq!(cli::Refusal::Update(UpdateError::Mismatch).exit_code(), 1);
+}

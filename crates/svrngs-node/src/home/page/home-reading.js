@@ -114,6 +114,7 @@ export const FILES = /** @type {const} */ ([
   'wifi',
   'wifi-foot',
   'play',
+  'update-line',
 ]);
 
 // After a write here (`again`), the groups drawn stay, said as read again

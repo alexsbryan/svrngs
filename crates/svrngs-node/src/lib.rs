@@ -96,7 +96,9 @@ pub mod share;
 // and the lender's secret for its own service, kept on its own computer
 // (`commonwealth-media`'s `declared.rs`).
 pub mod declared;
+// The one HTTP client the command's page check and the update share.
 pub mod door;
+pub mod http;
 pub mod lend;
 
 // The node, U1's (docs/PLAN.md §4): the rail, the endpoint, the accept loop
@@ -117,3 +119,6 @@ pub mod removal;
 // This build's version, which every answer a page reads carries, and the
 // one check made of it (arch-version); the page compiles it too.
 pub mod version;
+// The newest svrngs from the page this computer came from, and the home
+// page's update button (PLAN §1, the update row).
+pub mod update;

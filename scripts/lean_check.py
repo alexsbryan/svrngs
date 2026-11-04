@@ -409,7 +409,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Python lines, so . lands at 18,858 and its cap lowers to one past too.
 # The +1 JavaScript plant and the restored count are recorded in
 # demo/runs/economize/2026-11-03-js-read/CLOSE.md.
-BUDGET = {"crates/svrngs-core": 3478, ".": 18859, "js": 7339, "swift": 1}
+# The operator's raise for the home page's own svrngs (2026-11-03, "Let's
+# do core + surface 1"): +388 in `.` and +145 in `js` over the js jubilee's
+# one-past caps. The pass cut 44 first: the update's thirteen error variants
+# folded to seven, the identical-binary re-compare dropped, the update's
+# place one fixed directory, and the page this computer came from read by
+# invite.rs `kept_page` (the command's HTTP client moved to the node's one
+# home, net +3). What remains is each decision the gate names: the page's
+# checksum, verified download, unpack, regular-file guard, swap and three
+# verdicts, each traced; the home page's machine and view; and the one
+# release hash install.sh keeps. No line is said twice in the touched files,
+# and the rest cannot be cut without dropping one of those checks or a
+# verdict.
+BUDGET = {"crates/svrngs-core": 3478, ".": 19247, "js": 7484, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 

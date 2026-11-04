@@ -89,7 +89,9 @@ get() {
   tar -xzf "$tmp/$tarball" -C "$tmp" "$1" && chmod 755 "$tmp/$1"
 }
 # Both are checked before either is installed, so a refusal installs nothing.
-for p in svrngs $give; do get "$p"; done
+get svrngs
+svrngs_sum="$want"
+[ -z "$give" ] || get give
 
 dir="${SVRNGS_DIR:-$HOME/.svrngs}"
 bin="$HOME/.local/bin"
@@ -121,7 +123,11 @@ put() {
   if [ -e "$bin/$1" ]; then done="Updated"; else done="Installed"; fi
   mv -f "$tmp/$1" "$bin/$1" && say "$done $1 in $bin."
 }
-for p in svrngs $give; do put "$p"; done
+put svrngs
+# What this computer installed, for the home page's update (svrngs-node
+# update.rs `RELEASE_FILE`; tests/install.rs reads it by that constant).
+printf '%s' "$svrngs_sum" >"$dir/release"
+[ -z "$give" ] || put give
 # Where the person's terminal looks for programs gets $bin, once: the profile
 # their login shell ($SHELL) reads in a new window, as rustup and uv add
 # theirs; any other shell is told the whole path. A `|` keeps $SHELL's part

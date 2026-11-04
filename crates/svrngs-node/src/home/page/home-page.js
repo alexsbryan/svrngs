@@ -54,6 +54,9 @@ export function Home({ store, flows, places }) {
     return html`<p>This computer cannot read your groups: ${state.why}</p>`;
   if (state.ask) return Place('ask');
   if (query.screen) return Place('screen');
+  // The page's own svrngs, above the groups: it says nothing while it is
+  // current or still asking, so the page's top stays what the person has.
+  const update = Place('update');
   // What was done here drawn, or nothing, never '': Preact 11.1.1 draws ''
   // as words, and those words turned into a <p> mounted each group's
   // section again, its GROUP new and its places gone until read again
@@ -87,6 +90,7 @@ export function Home({ store, flows, places }) {
   // (web/tests/home.mjs `all`, web/tests/acts.mjs `loaded`).
   const held = Object.values(flows).some((flow) => flow.holds?.(state));
   return html`
+    ${update}
     ${said !== '' && html`<p>${said}</p>`}
     ${state.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}
     ${groups.length === 0 && html`<p class="none">You’re in no group yet. Join one below from the link someone sent you, or make your own.</p>`}

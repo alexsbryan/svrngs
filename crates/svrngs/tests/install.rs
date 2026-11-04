@@ -30,6 +30,7 @@ use std::time::Duration;
 use svrngs::cli;
 use svrngs::group::Name;
 use svrngs_node::invite::ORIGIN_FILE;
+use svrngs_node::update::RELEASE_FILE;
 // Only the macOS tests' (the_line_run_twice_…): unused, and so clippy's
 // error, where they are not built.
 #[cfg(target_os = "macos")]
@@ -488,6 +489,16 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
         // install.sh spells the file in shell, so it is pinned here.
         let origin = std::fs::read_to_string(data.join(ORIGIN_FILE)).unwrap();
         assert_eq!(origin, page, "the page svrngs came from, kept");
+        // What the home page’s update reads: the hash install.sh checked.
+        let sums = std::fs::read_to_string(site.path().join("get/SHA256SUMS")).unwrap();
+        let name = tarball();
+        let want = sums
+            .lines()
+            .find(|line| line.ends_with(&name))
+            .and_then(|line| line.split_whitespace().next())
+            .unwrap();
+        let release = std::fs::read_to_string(data.join(RELEASE_FILE)).unwrap();
+        assert_eq!(release, want, "what this computer installed, kept");
     }
 }
 

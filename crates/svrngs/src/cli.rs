@@ -184,6 +184,10 @@ svrngs — keep what your group shares on your own computers.
       Open your home page in your browser, as svrngs in your Applications
       (on Linux, your applications menu) does.
 
+  svrngs update
+      Get the newest svrngs from the page this computer was installed
+      from, if this computer's is not it. Restart svrngs to use it.
+
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder
       of its name, whenever svrngs runs here, from now on: anyone in it may
@@ -321,6 +325,8 @@ pub enum Verb {
     Leave(String),
     /// `open` (give-session): the home page, in this computer's browser.
     Open,
+    /// `update`: the newest svrngs from the page this computer came from.
+    Update,
     Relay(Relay),
     Help,
 }
@@ -568,6 +574,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             Ok(Verb::Relay(Relay { at, open }))
         }
         "open" => Ok(Verb::Open),
+        "update" => Ok(Verb::Update),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -648,6 +655,9 @@ pub enum Refusal {
     Removal(String),
     #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
     Unchanged(Name),
+    /// `update` could not judge the page, or refused what it offered.
+    #[error(transparent)]
+    Update(#[from] svrngs_node::update::UpdateError),
     #[error("you are in no group on this computer, so a relay for your groups would let nobody through: join one first, or say --open to relay for everyone")]
     RelayForNobody,
     #[error("the groups this computer is in cannot be read on it ({0}), so a relay for them could not tell whom to let through")]
@@ -676,6 +686,13 @@ impl Refusal {
     /// 1 for a refusal, 3 for a precondition absent (the module docs).
     pub fn exit_code(&self) -> u8 {
         match self {
+            Refusal::Update(e) => {
+                if e.judged() {
+                    1
+                } else {
+                    3
+                }
+            }
             Refusal::NoName(_)
             | Refusal::NoNameToJoin
             | Refusal::LinkRefused
@@ -777,6 +794,19 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
         Verb::Open => open(&root).await?,
+        Verb::Update => {
+            return match svrngs_node::update::apply(&root).await {
+                Ok(svrngs_node::update::Outcome::Current) => {
+                    println!("This computer has the latest svrngs.");
+                    Ok(())
+                }
+                Ok(svrngs_node::update::Outcome::Updated) => {
+                    println!("Updated svrngs. Restart it to use it.");
+                    Ok(())
+                }
+                Err(e) => Err(Refusal::Update(e)),
+            };
+        }
         Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -942,7 +972,7 @@ async fn ask_running(
     let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
     let body = serde_json::to_string(body).expect("an ask is JSON");
     let to = format!("{}{route}", api.trim());
-    let client = http().map_err(|error| {
+    let client = svrngs_node::http::client().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
             Refusal::NoClient(error)
         })?;
@@ -956,21 +986,6 @@ async fn ask_running(
     let text = answer.text().await.unwrap_or_default();
     tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
     Ok((ok, text))
-}
-
-/// The command's one HTTP client, iroh's reqwest 0.13: its
-/// `rustls-no-provider` brings no TLS provider, and a client built without
-/// one panics, so its TLS is given ring and this computer's verifier here.
-fn http() -> Result<reqwest13::Client, String> {
-    let ring = std::sync::Arc::new(rustls::crypto::ring::default_provider());
-    rustls::ClientConfig::builder_with_provider(ring)
-        .with_safe_default_protocol_versions()
-        .and_then(rustls_platform_verifier::BuilderVerifierExt::with_platform_verifier)
-        .map(|tls| {
-            reqwest13::Client::builder().tls_backend_preconfigured(tls.with_no_client_auth())
-        })
-        .map_err(|e| e.to_string())
-        .and_then(|b| b.build().map_err(|e| e.to_string()))
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -1053,7 +1068,7 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
         return Err(no());
     };
     let unjudged = || Refusal::CannotCheck(page.as_str().into());
-    let client = http().map_err(|error| {
+    let client = svrngs_node::http::client().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: not judged — no client to ask the page's host with");
             unjudged()
         })?;
@@ -1605,7 +1620,8 @@ async fn serve(
         | Verb::Folder { .. }
         | Verb::Remove { .. }
         | Verb::Leave(_)
-        | Verb::Open => {
+        | Verb::Open
+        | Verb::Update => {
             unreachable!("answered in `run`")
         }
     };

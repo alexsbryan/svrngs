@@ -35,6 +35,8 @@
 //! arch-command (c), the node's join.rs); **the shelf's apps brought**
 //! (`POST /shelf`) and **the person's yes to a carried app's new version**
 //! (`POST /runs`; canon-pin (c)), each in the group's folder or record; and
+//! **a new svrngs fetched** from the page this computer came from, and this
+//! one restarted into it (`GET` and `POST /update`; [`crate::update`]); and
 //! **what runs on this computer lent** (`POST /running`, v1ui-lend (b)),
 //! decided as `svrngs share` decides a lend ([`crate::share`]) from what
 //! `GET /running` offers, every port that answers here and is not lent;
@@ -134,7 +136,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
         "/question.js" "text/javascript" "home/question.js"
         "/look.css" "text/css" "home/look.css"
         "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
-        "/page/" "home/page/" ["acting" "acts" "acts-read" "address-copy" "address-copying" "ask" "asked" "asking" "door" "folder" "folders" "found" "group" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "group-told" "groups-left" "home-page" "home-reading" "how-it-opens" "index" "index-rows" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lend-row" "lending" "lent-read" "lent-row" "link-box" "link-copy" "link-said" "links" "make" "make-form" "offered" "on-screen" "open" "open-link" "people" "play" "play-cell" "reach" "removals" "routes" "running" "running-here" "running-look" "screen" "screen-link" "shelf" "signing-on" "since-opened" "stop-visit" "visit" "visits" "what-you-lend" "wifi" "wifi-foot"];
+        "/page/" "home/page/" ["acting" "acts" "acts-read" "address-copy" "address-copying" "ask" "asked" "asking" "door" "folder" "folders" "found" "group" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "group-told" "groups-left" "home-page" "home-reading" "how-it-opens" "index" "index-rows" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lend-row" "lending" "lent-read" "lent-row" "link-box" "link-copy" "link-said" "links" "make" "make-form" "offered" "on-screen" "open" "open-link" "people" "play" "play-cell" "reach" "removals" "routes" "running" "running-here" "running-look" "screen" "screen-link" "shelf" "signing-on" "since-opened" "stop-visit" "update" "update-line" "visit" "visits" "what-you-lend" "wifi" "wifi-foot"];
         "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
         "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
     }
@@ -148,6 +150,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .route("/link", axum::routing::post(link))
     .route("/visits", axum::routing::post(stop))
     .route("/folder", axum::routing::post(open))
+    .route("/update", get(update_check).post(update_apply))
     .route("/shelf", axum::routing::post(crate::folder::bring))
     .route("/runs", axum::routing::post(crate::folder::yes))
     .route("/group", get(namesakes).post(found))
@@ -303,6 +306,52 @@ async fn reached(State(at): State<Asking>) -> Response {
     };
     tracing::debug!(target: "home", status = answered.status().as_u16(), "home: what was said of apps reaching others' lends, asked");
     answered
+}
+
+/// `GET /update`: whether the page this computer came from offers a svrngs
+/// it does not run; `unknown` when that cannot be judged, never `current`.
+async fn update_check(State(at): State<Asking>) -> Response {
+    match crate::update::check(&at.door.data_dir).await {
+        Ok(crate::update::Check::Current) => {
+            Json(serde_json::json!({ "state": "current" })).into_response()
+        }
+        Ok(crate::update::Check::Available) => {
+            Json(serde_json::json!({ "state": "available" })).into_response()
+        }
+        Err(e) => {
+            tracing::debug!(target: "home", error = %e, "home: an update cannot be judged");
+            Json(serde_json::json!({ "state": "unknown", "why": e.to_string() })).into_response()
+        }
+    }
+}
+
+/// `POST /update`: the page's release put in place, then this node stopped
+/// so the one that starts in its place is the new binary. A refusal keeps
+/// the running one and says why.
+async fn update_apply(State(at): State<Asking>) -> Response {
+    match crate::update::apply(&at.door.data_dir).await {
+        Ok(crate::update::Outcome::Current) => {
+            Json(serde_json::json!({ "state": "current" })).into_response()
+        }
+        Ok(crate::update::Outcome::Updated) => {
+            let answer = Json(serde_json::json!({ "state": "updated" })).into_response();
+            tokio::spawn(async {
+                tokio::time::sleep(std::time::Duration::from_millis(250)).await;
+                tracing::info!(target: "home", "home: the new svrngs is in place, so this one stops for it to start");
+                std::process::exit(75);
+            });
+            answer
+        }
+        Err(e) => {
+            tracing::debug!(target: "home", error = %e, judged = e.judged(), "home: an update was refused");
+            let status = if e.judged() {
+                StatusCode::CONFLICT
+            } else {
+                StatusCode::SERVICE_UNAVAILABLE
+            };
+            LendRefusal::Closed.say(status, e.to_string())
+        }
+    }
 }
 
 /// What the person changes of a lend this computer lends.

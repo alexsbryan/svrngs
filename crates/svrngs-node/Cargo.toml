@@ -45,6 +45,11 @@ rand = "0.9"
 # x and y. Neither is a new crate here.
 ring = "0.17"
 base64 = "0.22"
+# The one HTTP client the command's page check and the update share
+# (http.rs): iroh's reqwest 0.13 and the platform verifier the command
+# already used, both already in the lock.
+reqwest13 = { package = "reqwest", version = "0.13", default-features = false, features = ["rustls-no-provider"] }
+rustls-platform-verifier = "0.7"
 # The authorize ask's query, read and its `state` written back: the lock
 # already holds `form_urlencoded` through axum's `Query` and `url`, so this
 # names one home rather than a new crate (front.rs).
