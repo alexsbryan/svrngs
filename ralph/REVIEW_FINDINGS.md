@@ -13252,3 +13252,31 @@ a run of an absent LINT alias. No product changes, new checks, plants,
 budget raises or tests in this partial audit. Full architecture review,
 clone/noun results, any resulting small fixes, and the locked full closing
 gate remain owed. The V1.6 publish artifacts remain untracked and untouched.
+
+### Preparation continuation at 029d4b84 (still incomplete)
+
+The director's corrected developer executable ran. The fresh isolated
+embedding build failed, exit 1: all three discovered local inference
+endpoints (:11434, :8080, :9741) were unreachable. Local refresh exported
+Rust/Python but skipped TypeScript, then failed its embedding rebuild.
+All four crate dry-report commands now ran and refused the missing chunk
+index, exit 1. All seven noun commands ran, exit 0, but remain unvalidated
+and incomplete in coverage. No analysis is passed or waived.
+
+Actual commands, complete outputs, executable hashes and SQLite coverage:
+`demo/runs/onboarding/2026-11-04-audit-preparation/preparation.txt` and
+`coverage.txt`. Decision request and site-grounded coverage limitations:
+that directory's `NEEDS_HUMAN.md`. Capture driver: `prepare.py`.
+No product delta from b463b29b through 029d4b84, so the existing ledger
+still reconciles. This continuation adds only recorded-run evidence and
+this appendix; no product fix or behavior change is claimed.
+
+The raw Request query reports `crates/svrngs-node/src/iroh.rs:318` and
+`publication.rs:43`. Actual declarations are the axum request alias at
+iroh.rs:319 and publication body struct at publication.rs:44. These have
+different meanings; no convergence fix established. The graph misses the
+House rules enum at `apps/canon/build/src/lib.rs:84`. Its zero Call/Resolver
+production counts exclude the test declarations, which are present in the
+graph. These are provisional inventory observations, not accepted noun
+findings: the separate planted control remains owed. Source/principle
+review and the locked full gate also remain owed.

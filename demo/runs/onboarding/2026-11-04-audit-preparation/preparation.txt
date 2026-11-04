@@ -1,0 +1,283 @@
+cwd: /Users/alexsbryan/dev/svrngs
+SVRNMESH_DATA_DIR=/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84
+corpus-id: svrngs
+
+SHA256 8827d9afbd5ac993d9fd7462a6aea8897d4f76a0c157b73a51482ac8200df669 /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev
+SHA256 0181d730aa7b372d1ec4f51fcb9410b78d59b5891b4c0e377e18c1f7a5425404 /Users/alexsbryan/dev/commonwealth-ai/target/debug/svrn-ingest
+$ git rev-parse HEAD
+029d4b847f277df31b40a2add97fd471e3fc4b92
+exit 0; elapsed 0.0s
+
+$ git -C /Users/alexsbryan/dev/commonwealth-ai rev-parse HEAD
+d8b61abe55d29f573d71ca88fa0b698e2484608c
+exit 0; elapsed 0.0s
+
+$ git diff --stat b463b29b HEAD
+ ralph/REVIEW_FINDINGS.md                          | 130 +++++++++++++++++
+ ralph/next/onboarding/PROMPT.addendum.md          |   8 +
+ ralph/next/onboarding/REVIEW_AUDIT_NEEDS_HUMAN.md | 170 ++++++++++++++++++++++
+ ralph/next/onboarding/STATE.md                    |  32 +++-
+ 4 files changed, 339 insertions(+), 1 deletion(-)
+exit 0; elapsed 0.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code index /Users/alexsbryan/dev/svrngs --corpus-id svrngs --data-dir /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes --full
+Full rebuild of 'svrngs' — --full requested.
+Every chunk will be re-embedded; this is the slow path.
+Preserved 1 entry not owned by the ingest (chunk ids are regenerated, so anything keyed to the old ones may now be stale):
+  scip_graph.db
+Indexing /Users/alexsbryan/dev/svrngs as corpus 'svrngs'
+Index directory: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes
+
+corpus-mcp: endpoint candidate ollama http://localhost:11434/v1 — unavailable: GET http://localhost:11434/v1/models: error sending request for url (http://localhost:11434/v1/models)
+corpus-mcp: endpoint candidate llama-server http://localhost:8080/v1 — unavailable: GET http://localhost:8080/v1/models: error sending request for url (http://localhost:8080/v1/models)
+corpus-mcp: endpoint candidate oicp daemon http://localhost:9741 — unavailable: GET http://localhost:9741/v1/models: error sending request for url (http://localhost:9741/v1/models)
+Error: no embedder; pass --fts-only to build a keyword-only index
+
+Caused by:
+    no inference endpoint found. Tried, in order:
+      ollama http://localhost:11434/v1 — unavailable: GET http://localhost:11434/v1/models: error sending request for url (http://localhost:11434/v1/models)
+      llama-server http://localhost:8080/v1 — unavailable: GET http://localhost:8080/v1/models: error sending request for url (http://localhost:8080/v1/models)
+      oicp daemon http://localhost:9741 — unavailable: GET http://localhost:9741/v1/models: error sending request for url (http://localhost:9741/v1/models)
+    Start one (`ollama serve`, or `llama-server -m <model.gguf> --embeddings --port 8080`), or name yours with --base-url <url>.
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: anyhow::error::<impl anyhow::Error>::msg
+   2: corpus_index::host::discover::{{closure}}
+   3: corpus_index::host::discover_and_probe::{{closure}}
+   4: svrn_ingest::index::embedder::{{closure}}
+   5: svrn_ingest::index::build::{{closure}}
+   6: svrn_ingest::index::run::{{closure}}
+   7: svrn_ingest::run_subcommand::{{closure}}
+   8: <core::pin::Pin<P> as core::future::future::Future>::poll
+   9: tokio::runtime::park::CachedParkThread::block_on::{{closure}}
+  10: tokio::runtime::park::CachedParkThread::block_on
+  11: tokio::runtime::context::blocking::BlockingRegionGuard::block_on
+  12: tokio::runtime::scheduler::multi_thread::MultiThread::block_on::{{closure}}
+  13: tokio::runtime::context::runtime::enter_runtime
+  14: tokio::runtime::scheduler::multi_thread::MultiThread::block_on
+  15: tokio::runtime::runtime::Runtime::block_on_inner
+  16: tokio::runtime::runtime::Runtime::block_on
+  17: svrn_ingest::run_subcommand
+  18: svrn_ingest::main
+  19: core::ops::function::FnOnce::call_once
+  20: std::sys::backtrace::__rust_begin_short_backtrace
+  21: std::rt::lang_start::{{closure}}
+  22: std::rt::lang_start_internal
+  23: std::rt::lang_start
+  24: _main
+
+✗ Indexing failed: /Users/alexsbryan/dev/commonwealth-ai/target/debug/svrn-ingest index failed (its reason is above)
+exit 1; elapsed 0.3s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev refresh --local --data-dir /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes
+  Refreshing call graph...
+
+    Exporting rust...
+    ✓ rust: 28791 symbols, 165110 references
+
+    Exporting typescript...
+    ⚠ typescript: skipped (export failed)
+
+    Exporting python...
+    ✓ python: 29476 symbols, 136971 references
+    ✓ 58267 symbols (+1)
+    ✓ 302081 edges (+18)
+    ✓ Done in 80 seconds
+
+  Rebuilding LanceDB corpus index: no existing index at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes/svrngs/_corpus_meta.json — first build
+Preserved 1 entry not owned by the ingest (chunk ids are regenerated, so anything keyed to the old ones may now be stale):
+  scip_graph.db
+Indexing /Users/alexsbryan/dev/svrngs as corpus 'svrngs'
+Index directory: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes
+
+corpus-mcp: endpoint candidate ollama http://localhost:11434/v1 — unavailable: GET http://localhost:11434/v1/models: error sending request for url (http://localhost:11434/v1/models)
+corpus-mcp: endpoint candidate llama-server http://localhost:8080/v1 — unavailable: GET http://localhost:8080/v1/models: error sending request for url (http://localhost:8080/v1/models)
+corpus-mcp: endpoint candidate oicp daemon http://localhost:9741 — unavailable: GET http://localhost:9741/v1/models: error sending request for url (http://localhost:9741/v1/models)
+Error: no embedder; pass --fts-only to build a keyword-only index
+
+Caused by:
+    no inference endpoint found. Tried, in order:
+      ollama http://localhost:11434/v1 — unavailable: GET http://localhost:11434/v1/models: error sending request for url (http://localhost:11434/v1/models)
+      llama-server http://localhost:8080/v1 — unavailable: GET http://localhost:8080/v1/models: error sending request for url (http://localhost:8080/v1/models)
+      oicp daemon http://localhost:9741 — unavailable: GET http://localhost:9741/v1/models: error sending request for url (http://localhost:9741/v1/models)
+    Start one (`ollama serve`, or `llama-server -m <model.gguf> --embeddings --port 8080`), or name yours with --base-url <url>.
+
+Stack backtrace:
+   0: <std::backtrace::Backtrace>::create
+   1: anyhow::error::<impl anyhow::Error>::msg
+   2: corpus_index::host::discover::{{closure}}
+   3: corpus_index::host::discover_and_probe::{{closure}}
+   4: svrn_ingest::index::embedder::{{closure}}
+   5: svrn_ingest::index::build::{{closure}}
+   6: svrn_ingest::index::run::{{closure}}
+   7: svrn_ingest::run_subcommand::{{closure}}
+   8: <core::pin::Pin<P> as core::future::future::Future>::poll
+   9: tokio::runtime::park::CachedParkThread::block_on::{{closure}}
+  10: tokio::runtime::park::CachedParkThread::block_on
+  11: tokio::runtime::context::blocking::BlockingRegionGuard::block_on
+  12: tokio::runtime::scheduler::multi_thread::MultiThread::block_on::{{closure}}
+  13: tokio::runtime::context::runtime::enter_runtime
+  14: tokio::runtime::scheduler::multi_thread::MultiThread::block_on
+  15: tokio::runtime::runtime::Runtime::block_on_inner
+  16: tokio::runtime::runtime::Runtime::block_on
+  17: svrn_ingest::run_subcommand
+  18: svrn_ingest::main
+  19: core::ops::function::FnOnce::call_once
+  20: std::sys::backtrace::__rust_begin_short_backtrace
+  21: std::rt::lang_start::{{closure}}
+  22: std::rt::lang_start_internal
+  23: std::rt::lang_start
+  24: _main
+  ✗ LanceDB rebuild failed: /Users/alexsbryan/dev/commonwealth-ai/target/debug/svrn-ingest index failed (its reason is above)
+exit 1; elapsed 85.3s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code dry-report --corpus-id svrngs --scope crates/svrngs-core/
+error: no chunk index at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes/svrngs/chunks.lance — run `svrn project init` first
+exit 1; elapsed 0.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code dry-report --corpus-id svrngs --scope crates/svrngs-node/
+error: no chunk index at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes/svrngs/chunks.lance — run `svrn project init` first
+exit 1; elapsed 0.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code dry-report --corpus-id svrngs --scope crates/svrngs-runtime/
+error: no chunk index at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes/svrngs/chunks.lance — run `svrn project init` first
+exit 1; elapsed 0.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code dry-report --corpus-id svrngs --scope crates/svrngs/
+error: no chunk index at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/onboarding-audit-029d4b84/indexes/svrngs/chunks.lance — run `svrn project init` first
+exit 1; elapsed 0.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Call --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Call
+
+definitions (0), first-party production:
+  none — check the spelling, or the name is defined only in test code
+
+used by 0 first-party crate(s), 0 reference site(s):
+
+canonical-owner candidates (crates every user already depends on):
+  none — the users share no dependency. This noun needs a new home crate,
+  or the definitions are genuinely distinct concepts.
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Fault --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Fault
+
+definitions (1), first-party production:
+  svrngs-node                    crates/svrngs-node/src/publication.rs:51
+
+morphological kin (2) — same-family names an exact-match census cannot see:
+  InviteFault  PassFault
+  (over-collects: adjudicate each, do not converge on this list)
+
+used by 1 first-party crate(s), 43 reference site(s):
+  svrngs-node
+
+canonical-owner candidates (crates every user already depends on):
+  svrngs-core                    covers 1/1  (out-degree 0)   <- lowest tier
+  svrngs-runtime                 covers 1/1  (out-degree 1)
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Phase --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Phase
+
+definitions (1), first-party production:
+  svrngs-node                    crates/svrngs-node/src/publication.rs:21
+
+used by 1 first-party crate(s), 11 reference site(s):
+  svrngs-node
+
+canonical-owner candidates (crates every user already depends on):
+  svrngs-core                    covers 1/1  (out-degree 0)   <- lowest tier
+  svrngs-runtime                 covers 1/1  (out-degree 1)
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Receipt --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Receipt
+
+definitions (1), first-party production:
+  svrngs-node                    crates/svrngs-node/src/publication.rs:31
+
+used by 1 first-party crate(s), 6 reference site(s):
+  svrngs-node
+
+canonical-owner candidates (crates every user already depends on):
+  svrngs-core                    covers 1/1  (out-degree 0)   <- lowest tier
+  svrngs-runtime                 covers 1/1  (out-degree 1)
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Request --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Request
+
+definitions (2), first-party production:
+  svrngs-node                    crates/svrngs-node/src/iroh.rs:318
+  svrngs-node                    crates/svrngs-node/src/publication.rs:43
+
+morphological kin (5) — same-family names an exact-match census cannot see:
+  AskRequest  RedeemRequest  RingSyncRequest  VisitRequest
+  WholeRequest
+  (over-collects: adjudicate each, do not converge on this list)
+
+used by 1 first-party crate(s), 6 reference site(s):
+  svrngs-node
+
+canonical-owner candidates (crates every user already depends on):
+  svrngs-core                    covers 1/1  (out-degree 0)   <- lowest tier
+  svrngs-runtime                 covers 1/1  (out-degree 1)
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Resolver --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Resolver
+
+definitions (0), first-party production:
+  none — check the spelling, or the name is defined only in test code
+
+used by 0 first-party crate(s), 0 reference site(s):
+
+canonical-owner candidates (crates every user already depends on):
+  none — the users share no dependency. This noun needs a new home crate,
+  or the definitions are genuinely distinct concepts.
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
+
+$ /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev code converge noun Welcome --corpus-id svrngs
+scope: all paths minus segments vendor node_modules .cargo-container research external target .claude tests benches examples build.rs
+
+noun: Welcome
+
+definitions (1), first-party production:
+  svrngs-node                    crates/svrngs-node/src/redeem.rs:159
+
+used by 1 first-party crate(s), 1 reference site(s):
+  svrngs-node
+
+canonical-owner candidates (crates every user already depends on):
+  svrngs-core                    covers 1/1  (out-degree 0)   <- lowest tier
+  svrngs-runtime                 covers 1/1  (out-degree 1)
+
+Behaviour duplication is a different question: `svrn code dry-report`.
+exit 0; elapsed 1.0s
