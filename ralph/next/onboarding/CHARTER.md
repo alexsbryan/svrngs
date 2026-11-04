@@ -67,6 +67,14 @@ home page's invite and name forms, `web/install.sh`, and folder/open
 surfaces. Extend them; do not make a parallel invitation, HTTPS client,
 installer or folder owner.
 
+## Director
+
+The director may split or re-scope a row that cannot execute, keeping every
+check and the row's demo. It may not weaken a check, raise a budget, or
+authorize a deployment, purchase, publish or push. A row that leaves tracked
+changes uncommitted is checkpointed as `WIP: <row>` before any later row runs;
+never discard it.
+
 ## Stop lines
 
 - The economizing pass is complete; its survey at `dece85b1` predates the
