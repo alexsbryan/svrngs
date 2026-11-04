@@ -272,7 +272,7 @@ swift                     0 / 1 lines
     give the supervisor the minimum Fedora retry instructions. No public
     deployment, push, or unsolicited change to Fedora's personal data. The
     scene remains open for the operator's actual observations.
-- [ ] onboarding-portal-reminder — depends [onboarding-welcome] — ONE ROW, the operator's request (2026-11-04): bare `svrngs` while already running should remind the person where to open their local UI rather than tell them to stop it.
+- [x] onboarding-portal-reminder e720c815b — depends [onboarding-welcome] — ONE ROW, the operator's request (2026-11-04): bare `svrngs` while already running should remind the person where to open their local UI rather than tell them to stop it.
   - **Behavior.** If the bare run command finds this data directory locked by
     an existing svrngs, print a helpful success message with the actual home
     address, `http://svrngs.localhost:<kept port>/`, and "Run `svrngs open`
