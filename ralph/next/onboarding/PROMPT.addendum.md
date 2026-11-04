@@ -47,3 +47,11 @@ test and `scripts/check.sh` under `lockf -k /tmp/svrngs-gate.lock`. Known
 flakes are `leave_race` (`crates/svrngs-node/tests/removal.rs:614`) and the
 home page's lending redraw (`the_home_page_lends_what_runs_here`); rerun the
 single test before calling it a failure.
+
+For onboarding audit rows, the developer executable is
+`/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev`.
+The generated `target/debug/sovereign-cli` path is absent here. Follow the
+instrument-preparation step in `REVIEW-audit-onboarding-auto-1` and its
+director decision package, using fresh local corpus/SCIP data and explicit
+corpus selection. The path correction changes no clone/noun acceptance bar;
+the JavaScript queue's focused-review exception does not apply.

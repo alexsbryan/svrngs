@@ -325,7 +325,37 @@ swift                     0 / 1 lines
     full gate if product behavior changes. No unsolicited installation or
     changes to the operator's Jellyfin server; the real configuration walk
     is brokered separately with the operator. Stay within approved budgets.
-- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-oidc-setup-help] — audit the commits since the previous `REVIEW-audit-` row's hash (since this queue started if there is none) against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA: (1) paste a per-unit net-line ledger for product code over that range — `git log --numstat --format=%s <hash>..HEAD`, summed by the subject's unit id, src apart from tests; (2) run `target/debug/sovereign-cli code dry-report --scope <dir>` for each crate dir the range touched and paste every exact or near clone with a side that is a symbol ADDED in the range; (3) for every new `struct`/`enum`/`trait` in the range, `target/debug/sovereign-cli code converge noun <Name>`, and paste any noun with more than one definition; fix here what is behaviour-preserving and small, record the rest in `ralph/REVIEW_FINDINGS.md` with both file:line sites — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-oidc-setup-help] — audit the commits since the previous `REVIEW-audit-` row's hash (since this queue started if there is none) against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+  - **(0) Prepare the existing instrument.** Director decision, 2026-11-04:
+    use `/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev`
+    (below, `AUDIT`), the existing owner of both audit verbs, instead of the
+    absent dispatcher `target/debug/sovereign-cli`. Local preparation of a
+    fresh code corpus and SCIP graph is part of this row, not an operator
+    decision. Use the existing `code index` and local `refresh` surfaces;
+    keep audit data in a new dedicated local directory, leaving other corpora
+    intact. Record commands, executable identity, indexed source commit and
+    coverage of the current tree (including new declarations and app sites).
+    Pass the corpus id explicitly and use the same data root for writers and
+    readers. Validate exact/near clone and repeated-noun detection on planted
+    inputs in a separate scratch corpus before interpreting clean reports.
+    Keyword-only indexing cannot satisfy the near-clone check. No external
+    source edits, substitute analyzer, paid service or deployment is authorized.
+    Any further preparation failure is reported with its actual command and
+    output; it cannot become a pass or defer either analysis. Verified entry
+    points and remaining preparation are in `REVIEW_AUDIT_NEEDS_HUMAN.md`.
+  - **(1) Ledger.** Paste a per-unit net-line ledger for product code over
+    that range — `git log --numstat --format=%s <hash>..HEAD`, summed by the
+    subject's unit id, src apart from tests.
+  - **(2) Clones.** Run `AUDIT code dry-report --corpus-id <id> --scope <dir>`
+    for each crate dir the range touched and paste every exact or near clone
+    with a side that is a symbol ADDED in the range.
+  - **(3) Nouns.** For every new `struct`/`enum`/`trait` in the range, run
+    `AUDIT code converge noun <Name> --corpus-id <id>`, and paste any noun
+    with more than one definition.
+  - **Review/close.** Fix here what is behaviour-preserving and small; record
+    the rest in `ralph/REVIEW_FINDINGS.md` with both file:line sites. Complete
+    the source/principle review, LINT and the locked full `scripts/check.sh`
+    gate. All checks remain required; no focused-review exception applies.
 - [ ] onboarding-scope-economize — depends [onboarding-oidc-setup-help] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
   - **Survey first.** Read `docs/LENDING_SCOPE.md`, its cited local/upstream
     surfaces and the current tree after the preceding fixes. Record product
