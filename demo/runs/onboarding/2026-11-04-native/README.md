@@ -234,6 +234,78 @@ The first join regression invocation used the nonexistent target `joining`
 and exited 101; the actual unchanged targets `join_by_link` and `joined`
 above were then run successfully.
 
-The final closing `scripts/check.sh` run is owed; the loop will run it once
-after this implementation is committed. Its actual output/exit status must
-be recorded before the unit is called done.
+## Closing gate
+
+The loop resumed this unit with `scripts/check.sh` exiting **0**, after
+23m53s (the gate reports 1,434 seconds). Implementation `a13f027e` was already
+committed. The complete source log is
+`ralph/next/onboarding/ctl/log/sessions/onboarding-native-publication-5.await.log`.
+Pasted gate verdicts below omit the conformance timing/account detail, not any
+check verdict. No product changes followed this run.
+
+```text
+$ scripts/check.sh
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     advisories (3 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (1 s)
+passed     rustfmt (1 s)
+passed     clippy (24 s)
+passed     tests (622 s)
+passed     canaries (21 s)
+passed     ceiling canary (62 s)
+passed     web rustfmt and clippy (11 s)
+passed     browser (173 s)
+passed     types (10 s)
+passed     typed lint (1 s)
+passed     joining in a browser (51 s)
+passed     pages (66 s)
+passed     scenes (254 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (92 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+passed     app laws (41 s)
+note       took 1434 s in all
+exit: 0 (reported by the loop)
+```
