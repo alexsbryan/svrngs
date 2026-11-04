@@ -272,7 +272,32 @@ swift                     0 / 1 lines
     give the supervisor the minimum Fedora retry instructions. No public
     deployment, push, or unsolicited change to Fedora's personal data. The
     scene remains open for the operator's actual observations.
-- [ ] onboarding-scene — depends [onboarding-welcome] — ONE ROW
+- [ ] onboarding-portal-reminder — depends [onboarding-welcome] — ONE ROW, the operator's request (2026-11-04): bare `svrngs` while already running should remind the person where to open their local UI rather than tell them to stop it.
+  - **Behavior.** If the bare run command finds this data directory locked by
+    an existing svrngs, print a helpful success message with the actual home
+    address, `http://svrngs.localhost:<kept port>/`, and "Run `svrngs open`
+    to open it in your browser." Keep this a reminder, not an unsolicited
+    browser launch. A browser origin not yet enrolled still uses `svrngs open`
+    to establish its authenticated session; printing the address grants no
+    access. Do not tell someone to stop a healthy node just to find its page.
+  - **Reuse.** `cli.rs` parses no args as `Verb::Run`, currently falls through
+    to `claim(&root)?`, and returns `Refusal::Busy`. Reuse
+    `svrngs_node::api::kept_address` as the authoritative address reader, the
+    existing home hostname and `open()` path. No port guessing, second
+    address file, new service or credential in output/debug logs. If the
+    address is missing or unreadable, say so with the existing typed errors
+    rather than invent a URL or falsely report a reachable portal.
+  - **Proof.** First reproduce with a real running node and a second bare
+    invocation: the old stop-and-run-again refusal must fail the new check.
+    Afterward assert the reminder's URL matches that node's actual port,
+    the first process remains running, and no second node/browser starts.
+    Keep the no-running-node path (bare command starts svrngs), `svrngs open`
+    and other verbs' lock behavior. Cover missing/malformed saved addresses.
+    Trace the branch at debug; update command help/design documentation with
+    the changed behavior and run affected CLI checks plus the locked full
+    gate. Stay within the approved budget and preserve the active welcome
+    worker's work. No deployment or push.
+- [ ] onboarding-scene — depends [onboarding-portal-reminder] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write
     `demo/runs/onboarding/2026-11-04-scene/PREDICTIONS.md` before any run.
