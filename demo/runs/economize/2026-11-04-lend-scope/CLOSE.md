@@ -88,3 +88,44 @@ browser run. A new browser-test tree needs its own validation by its owner.
   wait until the concurrent owner lands/checkpoints its tracked browser edits;
   do not stage or discard them to clear this row. The pre-existing V1.6
   publish artifacts are still untouched and remain pre-session untracked.
+
+## Post-commit concurrent-tree checkpoint
+
+After `d5dcfb63`, the final foreground recount found the other work had
+expanded from browser tests into production. Actual command/output:
+
+```text
+$ git status --short
+ M crates/svrngs-node/src/home.rs
+ M crates/svrngs-node/src/home/home.js
+ M crates/svrngs-node/src/home/look.css
+ M crates/svrngs-node/src/home/page/acting.js
+ M crates/svrngs-node/src/home/page/group-read.js
+ M crates/svrngs-node/src/home/page/group.js
+ M crates/svrngs-node/src/home/page/home-page.js
+ M crates/svrngs-node/src/home/page/join.js
+ M crates/svrngs-node/src/home/page/make.js
+ M crates/svrngs-node/tests/browser/main.rs
+?? crates/svrngs-node/src/home/page/grouped.js
+?? crates/svrngs-node/tests/browser/grouped.rs
+?? demo/runs/v1.6/2026-11-03/publish.json
+?? demo/runs/v1.6/2026-11-03/publish.log
+?? web/tests/grouped.mjs
+$ git diff --check
+(no output; exit 0)
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3486 / 3494 lines
+.                     19790 / 19833 lines
+js                     8156 / 8090 lines
+swift                     0 / 1 lines
+BROKEN  js has 8156 lines of code, budget 8090: raised only by the operator, with the reason in the commit
+exit 1
+```
+
+The earlier passing measurements remain evidence for `7ad807f1` plus this
+unit's documentation, not for this newer dirty product tree. This unit owns
+none of the home/browser changes above. Continue after their owner commits
+or checkpoints them: remeasure the new base, reconcile the estimate's
+baseline and cap headroom, and run the required checks before reporting done.
+Do not treat this unrelated +90 JS growth as selected-lending preapproval,
+and do not change a cap to make someone else's unfinished work pass.
