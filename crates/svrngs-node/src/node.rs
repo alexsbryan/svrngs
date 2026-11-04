@@ -432,6 +432,7 @@ impl Node {
             crate::surface::router(asking.clone())
                 .merge(crate::folder::router(folders.clone()))
                 .merge(crate::removal::router(asking.clone()))
+                .merge(crate::join::router(asking.clone()))
                 .merge(crate::room::route::router(asking.clone()))
                 .merge(crate::play::router(asking.clone()))
                 .merge(crate::session::router(asking.sessions.clone())),

@@ -421,6 +421,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # release hash install.sh keeps. No line is said twice in the touched files,
 # and the rest cannot be cut without dropping one of those checks or a
 # verdict.
+# Join-while-running, the operator's ask (2026-11-03, "a pretty glaring
+# feature gap: join another ring while svrngs runs"): a second group joined
+# through the svrngs running here — the record's POST /v1/joins and its
+# closed answer in svrngs-node join.rs, the command's ask and wording in
+# svrngs cli.rs — at 19,053. The pass wrote both once and folded what a
+# first draft said twice (the two success arms into one placement,
+# NotJoined's mapping into Outcome::of, the paths aliased): about 30 of
+# the draft's lines never landed. It looked for behaviour-keeping cuts
+# beside them in the files the route joins — node.rs, api.rs, surface.rs,
+# home.rs, group.rs, folder.rs, removal.rs — and found none: each holds
+# one decider the design names, and nothing is said twice across them.
+# The raise is the operator's: approved 2026-11-03, "Approve raise to
+# 19,100", from 18,859.
 BUDGET = {"crates/svrngs-core": 3478, ".": 19247, "js": 7484, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}

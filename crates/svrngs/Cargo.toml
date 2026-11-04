@@ -47,7 +47,10 @@ rcgen = "0.14"
 tempfile = "3"
 # The shared native session protocol fixture computes request proofs.
 ring = "0.17"
-# join_by_link.rs dials as a stranger, as svrngs-node's own tests do.
+# join_by_link.rs dials as a stranger, as svrngs-node's own tests do;
+# install.rs reads its answers with `.json()`, so the feature is on (it
+# has been off since 20ede441 wrote those reads, and the test has not
+# compiled since — found building this branch at 9adfcccc).
 reqwest = { version = "0.12", default-features = false, features = ["json"] }
 svrngs-core = { workspace = true, features = ["test-support"] }
 svrngs-node = { workspace = true, features = ["test-support"] }

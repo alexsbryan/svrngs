@@ -57,6 +57,13 @@
 //! here, else of the svrngs it starts, so the room has one decider. It says
 //! who can open them, and where each is served or why not.
 //!
+//! `join`, where svrngs runs here already, asks it to join
+//! ([`svrngs_node::join`'s route](svrngs_node::join::JOINS_ROUTE)), as
+//! `room` asks: the running svrngs is the one writer of this computer's
+//! acts, so it joins, and the command says and leaves, running nothing.
+//! One that answers no join — a build from before the route — is told as
+//! the lock's own refusal is, for stopping it is the way on from there.
+//!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
 //! origin, its setting on this computer (`group::write_origin`), and then
@@ -95,7 +102,7 @@ use svrngs_node::folder::FolderAsk;
 use svrngs_node::home::WHEN;
 use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
-use svrngs_node::join::{Entered, NotJoined};
+use svrngs_node::join::{Entered, JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
 use svrngs_node::lend::{
     self, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
@@ -138,8 +145,9 @@ svrngs — keep what your group shares on your own computers.
       Join the group a link you were sent is for. The computer that sent it
       must be on. --as is the name the group knows you by; else your full
       name as this computer shows it, or its user name. The group's folder is put at ~/svrngs/<group>.
-      --no-run stops once you are in, rather than
-      run: for a computer where svrngs runs at login, as install.sh keeps it.
+      Where svrngs runs here already, as on a computer it runs at login,
+      that svrngs joins for you and this command leaves, running nothing.
+      --no-run stops once you are in, rather than run.
 
   svrngs link <group> [--device] [--origin <url>]
       Print a new link to <group>. Any link you sent before stops letting
@@ -887,6 +895,23 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
             }
         }
+        Verb::Join { link, person, run } => match claim(&root) {
+            Err(Refusal::Busy(lock)) => {
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: join — svrngs runs here already, so it is asked to join, as `room` is");
+                let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
+                join_running(&root, &link, &person).await?
+            }
+            claimed => {
+                return start(
+                    Verb::Join { link, person, run },
+                    root,
+                    relay,
+                    claimed?,
+                    None,
+                )
+                .await
+            }
+        },
         other => {
             let claimed = claim(&root)?;
             return start(other, root, relay, claimed, None).await;
@@ -1675,6 +1700,75 @@ fn folder_at_join(node: &Node, seed: &Seed) -> Said {
     let (dir, placed) = node.folders().place(seed);
     let group = seed.name().clone();
     Said::Folder { group, dir, placed }
+}
+
+/// `svrngs join`, of the svrngs running here (join-while-running): the
+/// link asked at the record's join route, worded as a join this command
+/// made itself is ([`join_group`], [`folder_at_join`]) — the running
+/// svrngs is the one writer of this computer's acts, so it joins, and the
+/// command says and leaves, running nothing. A link whose whole text
+/// `Link::parse` here already proved is sent as it was given; the running
+/// svrngs that answers none of it is an older build, said as the lock's
+/// own refusal is, for the way on from there is the one it names.
+async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String, Refusal> {
+    let whole = match &link.origin {
+        Some(page) => https_link(page, &link.token),
+        None => client_link(&link.token),
+    };
+    let asked = JoinAsk {
+        link: whole,
+        person: person.as_str().to_string(),
+    };
+    let (_, text) = ask_running(root, JOINS_ROUTE, &asked).await?;
+    let older = |why: String| {
+        tracing::debug!(target: "cli", %why, text, "cli: the svrngs running here answered no join, as one of an older build does not");
+        Refusal::Busy(root.join("lock"))
+    };
+    let said: JoinOutcome = serde_json::from_str(&text).map_err(|e| older(e.to_string()))?;
+    let folder = |seed: &Seed, dir: String, placed: Option<String>| Said::Folder {
+        group: seed.name().clone(),
+        dir: PathBuf::from(dir),
+        placed: placed.map_or(Ok(()), Err),
+    };
+    let held = |text: String| Seed::from_text(&text).map_err(&older);
+    let named = |raw: String| Name::kept(raw).map_err(|why| older(why.to_string()));
+    Ok(match said {
+        JoinOutcome::In {
+            seed,
+            person,
+            dir,
+            placed,
+        } => {
+            let seed = held(seed)?;
+            let person = named(person)?;
+            format!(
+                "{}{}",
+                Said::Joined {
+                    seed: seed.clone(),
+                    person
+                },
+                folder(&seed, dir, placed)
+            )
+        }
+        JoinOutcome::AlreadyIn { seed, dir, placed } => {
+            let seed = held(seed)?;
+            format!(
+                "{}{}",
+                Said::AlreadyIn(seed.clone()),
+                folder(&seed, dir, placed)
+            )
+        }
+        JoinOutcome::LinkRefused => return Err(Refusal::LinkRefused),
+        JoinOutcome::NameTaken { holder, group } => {
+            return Err(Refusal::NameTaken {
+                holder: named(holder)?,
+                group: named(group)?,
+            })
+        }
+        JoinOutcome::IssuerAway => return Err(Refusal::IssuerAway),
+        JoinOutcome::Keep { group } => return Err(Refusal::Keep(named(group)?)),
+        JoinOutcome::Left { group } => return Err(Refusal::Left(named(group)?)),
+    })
 }
 
 /// The name a group knows its founder or a joiner by when `--as` names
