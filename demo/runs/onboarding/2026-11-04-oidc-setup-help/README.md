@@ -190,3 +190,38 @@ exit 0
 No product line growth or budget adjustment. A second locked full gate is
 owed after this correction and is handed to the loop with `ralph-result
 await`; do not count the first run as a passing close.
+
+## Second closing gate: ceiling failure and isolated rerun
+
+The loop's second locked full gate at `f43684f1` exited **1** after
+1,276 seconds. Its output is in
+`ralph/next/onboarding/ctl/log/sessions/onboarding-oidc-setup-help-2.await.log`.
+Every stage passed except the existing ceiling canary; the vocabulary,
+browser, pages, scenes and conformance stages all passed. The actual failure:
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock scripts/check.sh
+failed     ceiling canary (33 s)
+CEILING idle round at 25 x 10,000: 0.2943 s of processor, the median of [0.29426700000000494, 0.19435000000000002, 0.7404319999999984], against 0.1 s
+an_idle_round_is_under_the_ceiling --- FAILED
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 2 filtered out; finished in 3.80s
+note       took 1276 s in all
+exit 1
+```
+
+Reran the same ceiling test alone under the gate lock, without a product,
+instrument or threshold change:
+
+```text
+$ lockf -k /tmp/svrngs-gate.lock cargo test --release --quiet -p svrngs-node --test scale -- --ignored --exact an_idle_round_is_under_the_ceiling --nocapture
+running 1 test
+CEILING idle round at 25 x 10,000: 0.0294 s of processor, the median of [0.23146799999999956, 0.029366000000003112, 0.024200000000000443], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.024200000000000443,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.003913375}
+.
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 3.68s
+exit 0
+```
+
+The failure did not reproduce in this isolated run. This is not a diagnosis
+of the timing difference or a passing full gate. A fresh locked full gate is
+still owed and is handed to the loop with `ralph-result await`. The protected
+V1.6 publish artifacts remain untracked and untouched.
