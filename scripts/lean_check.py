@@ -409,7 +409,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Python lines, so . lands at 18,858 and its cap lowers to one past too.
 # The +1 JavaScript plant and the restored count are recorded in
 # demo/runs/economize/2026-11-03-js-read/CLOSE.md.
-BUDGET = {"crates/svrngs-core": 3478, ".": 18859, "js": 7339, "swift": 1}
+# Join-while-running, the operator's ask (2026-11-03, "a pretty glaring
+# feature gap: join another ring while svrngs runs"): a second group joined
+# through the svrngs running here — the record's POST /v1/joins and its
+# closed answer in svrngs-node join.rs, the command's ask and wording in
+# svrngs cli.rs — at 19,053. The pass wrote both once and folded what a
+# first draft said twice (the two success arms into one placement,
+# NotJoined's mapping into Outcome::of, the paths aliased): about 30 of
+# the draft's lines never landed. It looked for behaviour-keeping cuts
+# beside them in the files the route joins — node.rs, api.rs, surface.rs,
+# home.rs, group.rs, folder.rs, removal.rs — and found none: each holds
+# one decider the design names, and nothing is said twice across them.
+# The raise is the operator's to veto: 18,859 -> 19,054.
+BUDGET = {"crates/svrngs-core": 3478, ".": 19054, "js": 7339, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
