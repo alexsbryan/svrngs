@@ -1,0 +1,9 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/cfgtest.py
+crates/svrngs-node/src/http.rs:25-31 5  mod tests {
+crates/svrngs-node/src/node.rs:214-215 1  routes: axum::Router,
+crates/svrngs-node/src/node.rs:503-504 1  routes,
+crates/svrngs-node/src/node.rs:1137-1138 1  pub use tests_support::splice;
+crates/svrngs-node/src/update.rs:345-391 42  mod tests {
+total 50
+
+exit: 0

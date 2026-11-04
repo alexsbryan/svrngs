@@ -1,0 +1,15 @@
+lean_check.code_lines per reused file (inline tests included):
+crates/svrngs-node/src/invite.rs: 174
+crates/svrngs-core/src/app.rs: 24
+crates/svrngs-node/src/http.rs: 17
+crates/svrngs-node/src/declared.rs: 122
+crates/svrngs-core/src/project.rs: 25
+web/install.sh: 148
+crates/svrngs-node/src/home/page/group-link.js: 39
+crates/svrngs-node/src/home/page/group-links.js: 53
+crates/svrngs-node/src/home/ui/copy.js: 42
+web/page/name-form.js: 22
+web/page/computer.js: 33
+web/page/computer-line.js: 24
+crates/svrngs-node/src/home/page/folder.js: 34
+crates/svrngs-node/src/home/page/group-folder.js: 16

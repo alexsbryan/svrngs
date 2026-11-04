@@ -1,0 +1,566 @@
+$ python3 -I /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-js-read/survey.py more
+## web/app.js
+  iife []
+  defaults []
+  cites 0 []
+## web/authority.js
+  iife []
+  defaults []
+  cites 0 []
+## web/lend.js
+  iife []
+  defaults []
+  cites 0 []
+## web/open.js
+  iife []
+  defaults []
+  cites 0 []
+## web/shim.js
+  iife [20]
+  defaults []
+  cites 1 [120]
+## web/sign.js
+  iife []
+  defaults []
+  cites 0 []
+## web/store.js
+  iife []
+  defaults []
+  cites 0 []
+## web/sw.js
+  iife []
+  defaults []
+  cites 1 [1]
+## crates/svrngs-node/src/home/home.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/question.js
+  iife []
+  defaults [183, 247]
+  cites 4 [14, 45, 101, 237]
+## crates/svrngs-node/src/home/session-client.js
+  iife [3]
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/session-worker.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/session.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/acts.js
+  iife []
+  defaults [68, 156]
+  cites 0 []
+## web/page/among.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/ask-form.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/ask-when-read.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/ask.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/computer-line.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/computer.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/dial.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/door.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/ends.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/enter.js
+  iife []
+  defaults [180]
+  cites 0 []
+## web/page/group-door.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/guest-lends.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/hand.js
+  iife []
+  defaults []
+  cites 3 [28, 35, 39]
+## web/page/how-it-reaches.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/index.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/join.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/lend-line.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/lent-index.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/name-form.js
+  iife []
+  defaults [30]
+  cites 0 []
+## web/page/offered-groups.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/one-tab.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/opens-as-you.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/page.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/removals.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/shelf.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/uses-hidden.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/uses.js
+  iife []
+  defaults [55, 122]
+  cites 0 []
+## web/page/visit.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/visiting-now.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/visitors.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/what-acts-as-you.js
+  iife []
+  defaults []
+  cites 0 []
+## web/page/what-apps-use.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/acting.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/acts-read.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/acts.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/address-copy.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/address-copying.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/ask.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/asked.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/asking.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/door.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/folder.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/folders.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/found.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-folder.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-link.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-links.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-read.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-reading.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-screen.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group-told.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/group.js
+  iife []
+  defaults []
+  cites 6 [7, 22, 40, 47, 52, 58]
+## crates/svrngs-node/src/home/page/groups-left.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/home-page.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/home-reading.js
+  iife []
+  defaults []
+  cites 1 [3]
+## crates/svrngs-node/src/home/page/how-it-opens.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/index-rows.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/index.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/join-form.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/join.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/leave-group.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/leave.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/leaving.js
+  iife []
+  defaults [91]
+  cites 0 []
+## crates/svrngs-node/src/home/page/lend-change.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/lend-found.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/lend-key.js
+  iife []
+  defaults []
+  cites 1 [3]
+## crates/svrngs-node/src/home/page/lend-name.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/lend-row.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/lending.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/lent-read.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/lent-row.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/link-box.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/link-copy.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/link-said.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/links.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/make-form.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/make.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/offered.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/on-screen.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/open-link.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/open.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/people.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/play-cell.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/play.js
+  iife []
+  defaults []
+  cites 3 [3, 5, 26]
+## crates/svrngs-node/src/home/page/reach.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/removals.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/routes.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/running-here.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/running-look.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/running.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/screen-link.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/screen.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/shelf.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/signing-on.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/since-opened.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/stop-visit.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/update-line.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/update.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/visit.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/visits.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/what-you-lend.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/wifi-foot.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/page/wifi.js
+  iife []
+  defaults []
+  cites 3 [3, 5, 36]
+## crates/svrngs-node/src/home/ui/acts.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/changes.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/copy.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/door.js
+  iife []
+  defaults []
+  cites 1 [91]
+## crates/svrngs-node/src/home/ui/machine.js
+  iife []
+  defaults [104, 125]
+  cites 0 []
+## crates/svrngs-node/src/home/ui/parts.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/shelf.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/trace.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/uses.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/view.js
+  iife []
+  defaults []
+  cites 0 []
+## crates/svrngs-node/src/home/ui/visitors.js
+  iife []
+  defaults []
+  cites 0 []
+## names
+  name view 24 web/page/acts.js:135 web/page/ask.js:155 web/page/computer.js:76 web/page/door.js:53 web/page/index.js:99 web/page/join.js:173 web/page/shelf.js:36 web/page/uses.js:111 crates/svrngs-node/src/home/page/acts.js:61 crates/svrngs-node/src/home/page/ask.js:9 crates/svrngs-node/src/home/page/door.js:13 crates/svrngs-node/src/home/page/index.js:36 crates/svrngs-node/src/home/page/join-form.js:55 crates/svrngs-node/src/home/page/leave.js:47 crates/svrngs-node/src/home/page/lending.js:46 crates/svrngs-node/src/home/page/links.js:17 crates/svrngs-node/src/home/page/make-form.js:43 crates/svrngs-node/src/home/page/open.js:18 crates/svrngs-node/src/home/page/running.js:18 crates/svrngs-node/src/home/page/screen.js:12 crates/svrngs-node/src/home/page/shelf.js:36 crates/svrngs-node/src/home/page/update-line.js:74 crates/svrngs-node/src/home/page/visits.js:40 crates/svrngs-node/src/home/page/wifi-foot.js:43
+  name owns 10 web/page/acts.js:60 web/page/among.js:46 web/page/ask.js:50 web/page/computer.js:35 web/page/door.js:33 web/page/enter.js:131 web/page/index.js:37 web/page/join.js:70 web/page/uses.js:47 web/page/visit.js:53
+  name takes 10 web/page/acts.js:105 web/page/among.js:51 web/page/ask.js:73 web/page/computer.js:39 web/page/door.js:36 web/page/enter.js:295 web/page/index.js:47 web/page/join.js:96 web/page/uses.js:76 web/page/visit.js:69
+  name io 10 web/page/acts.js:192 web/page/among.js:132 web/page/ask.js:146 web/page/computer.js:66 web/page/door.js:44 web/page/enter.js:558 web/page/index.js:94 web/page/join.js:307 web/page/uses.js:147 web/page/visit.js:225
+  name states 9 web/page/acts.js:61 web/page/among.js:47 web/page/ask.js:51 web/page/computer.js:36 web/page/enter.js:149 web/page/index.js:38 web/page/join.js:71 web/page/uses.js:48 web/page/visit.js:54
+  name answered 6 web/lend.js:1301 web/sign.js:205 web/sw.js:88 web/page/acts.js:83 crates/svrngs-node/src/home/page/folder.js:45 crates/svrngs-node/src/home/ui/copy.js:42
+  name heading 6 web/page/among.js:114 web/page/ask.js:121 web/page/computer.js:59 web/page/enter.js:433 web/page/join.js:152 web/page/visit.js:115
+  name FIRST 5 web/lend.js:386 crates/svrngs-node/src/home/page/join.js:64 crates/svrngs-node/src/home/page/make.js:56 crates/svrngs-node/src/home/ui/copy.js:68 crates/svrngs-node/src/home/ui/shelf.js:181
+  name response 5 web/page/among.js:122 web/page/ask.js:140 web/page/enter.js:460 web/page/index.js:85 web/page/visit.js:125
+  name take 5 crates/svrngs-node/src/home/page/acts.js:42 crates/svrngs-node/src/home/page/join.js:143 crates/svrngs-node/src/home/page/leave.js:27 crates/svrngs-node/src/home/page/lending.js:31 crates/svrngs-node/src/home/page/make.js:125
+  name reading 4 crates/svrngs-node/src/home/question.js:355 web/page/enter.js:166 crates/svrngs-node/src/home/page/group-reading.js:59 crates/svrngs-node/src/home/page/home-reading.js:128
+  name trace 3 web/lend.js:152 web/page/dial.js:26 crates/svrngs-node/src/home/ui/trace.js:14
+  name say 3 web/lend.js:538 web/open.js:52 web/page/enter.js:156
+  name judged 3 web/lend.js:1077 crates/svrngs-node/src/home/page/people.js:16 crates/svrngs-node/src/home/ui/door.js:98
+  name asking 3 web/lend.js:1187 web/page/join.js:245 web/page/uses.js:55
+  name PLACES 3 web/page/page.js:142 crates/svrngs-node/src/home/page/group-read.js:16 crates/svrngs-node/src/home/page/home-page.js:14
+  name on 3 crates/svrngs-node/src/home/page/play.js:166 crates/svrngs-node/src/home/page/wifi.js:180 crates/svrngs-node/src/home/ui/shelf.js:92
+  name scope 2 web/lend.js:69 web/sw.js:30
+  name SHELL 2 web/lend.js:114 web/sw.js:38
+  name ASK 2 web/lend.js:124 crates/svrngs-node/src/home/page/asking.js:82
+  name kept 2 web/lend.js:140 web/page/lend-line.js:21
+  name dialled 2 web/lend.js:247 web/page/dial.js:198
+  name opened 2 web/lend.js:258 web/store.js:313
+  name counted 2 web/lend.js:468 crates/svrngs-node/src/home/ui/door.js:165
+  name sent 2 web/lend.js:506 crates/svrngs-node/src/home/page/routes.js:34
+  name served 2 web/lend.js:803 crates/svrngs-node/src/home/session-worker.js:143
+  name opening 2 web/lend.js:1177 web/page/index.js:44
+  name frame 2 web/lend.js:1511 web/page/page.js:165
+  name decode 2 web/open.js:62 web/sign.js:35
+  name running 2 web/open.js:77 web/page/acts.js:174
+  name until 2 crates/svrngs-node/src/home/question.js:138 web/page/visit.js:112
+  name SAYS 2 web/page/computer-line.js:10 crates/svrngs-node/src/home/page/leaving.js:66
+  name WORDS 2 web/page/computer-line.js:19 crates/svrngs-node/src/home/page/link-said.js:9
+  name failing 2 web/page/enter.js:180 web/page/visit.js:133
+  name said 2 web/page/join.js:147 crates/svrngs-node/src/home/page/update-line.js:15
+  name refusal 2 web/page/join.js:202 crates/svrngs-node/src/home/page/routes.js:25
+  name PARTS 2 web/page/page.js:140 crates/svrngs-node/src/home/ui/acts.js:14
+  name Removals 2 web/page/removals.js:10 crates/svrngs-node/src/home/page/removals.js:11
+  name bring 2 web/page/shelf.js:16 crates/svrngs-node/src/home/page/shelf.js:18
+  name GroupShelf 2 web/page/shelf.js:19 crates/svrngs-node/src/home/page/shelf.js:21
+  name at 2 web/page/visit.js:64 crates/svrngs-node/src/home/ui/door.js:45
+  name NOTES 2 web/page/what-acts-as-you.js:25 crates/svrngs-node/src/home/page/acting.js:29
+  name holds 2 crates/svrngs-node/src/home/page/acts.js:51 crates/svrngs-node/src/home/page/lending.js:36
+  name COPY 2 crates/svrngs-node/src/home/page/address-copying.js:23 crates/svrngs-node/src/home/ui/copy.js:47
+  name FIELDS 2 crates/svrngs-node/src/home/page/found.js:15 crates/svrngs-node/src/home/page/make-form.js:17
+  name VISITS 2 crates/svrngs-node/src/home/page/group-links.js:15 crates/svrngs-node/src/home/page/visit.js:41
+  name SAID 2 crates/svrngs-node/src/home/page/home-page.js:17 crates/svrngs-node/src/home/page/running-here.js:13
+  name answer 2 crates/svrngs-node/src/home/page/play.js:76 crates/svrngs-node/src/home/page/wifi.js:91
+  name part 2 crates/svrngs-node/src/home/page/play.js:225 crates/svrngs-node/src/home/page/wifi.js:252
+  name drawn 2 crates/svrngs-node/src/home/ui/copy.js:104 crates/svrngs-node/src/home/ui/shelf.js:221
+
+exit: 0

@@ -1,9 +1,11 @@
 # Welcoming people into a group
 
-Status: planned, not launched. The operator asked for this on 2026-11-03,
-after the JavaScript queue closes. `PLAN.md` §1 holds the order of work.
-This records the feature and its estimate; it approves neither a budget
-increase nor a hosting purchase. `DESIGN.md` describes what exists today.
+Status: planned, not launched. Asked for after the JavaScript queue closes,
+then moved ahead of the phone-write row by the operator on 2026-11-03 while
+publication of the recent multi-ring join-flow fixes is deferred. `PLAN.md`
+§1 holds the order of work. This records the feature and its estimate; it
+approves neither a budget increase nor a hosting purchase. `DESIGN.md`
+describes what exists today.
 
 ## 1. The outcome
 
@@ -112,18 +114,23 @@ the restart (`web/install.sh:114,149-151,191` at `dece85b1`).
 
 ## 4. Reuse and estimate
 
-The survey was read-only at `dece85b1`; no cuts were landed or subtracted.
-Counts use `scripts/lean_check.py`: nonblank, noncomment product lines,
-with tests, apps and recorded-run drivers excluded. JavaScript has its
-own counter; the core is a subset of the non-JavaScript total.
+The original survey was read-only at `dece85b1`; no cuts were landed or
+subtracted. Its current-base follow-up is open in
+`demo/runs/economize/2026-11-03-onboarding/SURVEY.md`. Counts use
+`scripts/lean_check.py`: nonblank, noncomment product lines, with tests,
+apps and recorded-run drivers excluded. JavaScript has its own counter; the
+core is a subset of the non-JavaScript total.
 
 Existing pieces to extend:
 
 - `Host::link`, `MintInvite` and redemption: multi-person invitations,
   expiry and admission; no new membership act or rule.
 - `svrngs_core::app::App`: domain-separated publication signatures.
-- The command's `http()`: extract its existing TLS client construction
-  rather than make another HTTPS client.
+- `svrngs_node::http::client()`: one TLS client is already shared by
+  `checked_page` and the node's updater (`crates/svrngs-node/src/http.rs`,
+  `crates/svrngs/src/cli.rs:1096`, `crates/svrngs-node/src/update.rs:86`,
+  landed in `467d5d16`). Reuse it; no extraction or second HTTPS client is
+  needed.
 - `declared::write_secret`: owner-only, atomic local receipt storage.
 - The home page's invitation flow, the group's `NameForm`, and `Copy`.
 - `web/install.sh`: platform selection, checksum verification, per-user
@@ -139,7 +146,7 @@ OIDC `Codes` is also unsuitable: in-memory, single-use and minute-long.
 | Work | Non-JS LoC added | JS LoC added |
 |---|---:|---:|
 | Native publication, persistent receipt, status, guarded close and recovery | 160–260 | — |
-| Shared HTTPS client extraction and integration | 5–15 | — |
+| Shared HTTPS client reuse (already landed) | 0 | — |
 | Installer recovery and focused local opening | 35–65 | — |
 | Small authoritative current-invitation query, if needed | 0–16 | — |
 | Hosted resolver, durable storage operations, authentication and limits | — | 220–360 |
@@ -147,12 +154,13 @@ OIDC `Codes` is also unsuitable: in-memory, single-use and minute-long.
 | Name-once native installation flow | — | 35–65 |
 | Clear local folder arrival | — | 15–30 |
 | Deployment, checking and type-check wiring | 15–30 | 5–15 |
-| **Total** | **215–386** | **330–560** |
+| **Total** | **210–371** | **330–560** |
 
-Combined estimate: **about 550–950 product lines**, midpoint about 750.
+Combined estimate: **about 540–930 product lines**, midpoint about 735.
 The possible 0–16 core lines are included above, not added again. Allow
 roughly 450–800 test lines, markup/configuration and wordlist data besides.
-The JavaScript queue changes the baseline: remeasure after its jubilee.
+The JavaScript queue has closed, but the current-base economizing pass is
+still open; remeasure after its cuts before asking for any budget.
 
 No credible large deletion was found in this scope. Correcting the stale
 sovereign grant instructions at `scripts/build-web.sh:149-159` could remove

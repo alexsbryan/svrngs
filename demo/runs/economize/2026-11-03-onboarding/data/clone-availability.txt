@@ -1,0 +1,20 @@
+$ zsh -c command -v sovereign-cli; for p in $HOME/dev/commonwealth-ai/target/debug/sovereign-cli $HOME/dev/commonwealth-ai/target/release/sovereign-cli $HOME/dev/commonwealth-ai/sovereign/target/release/sovereign-cli $HOME/dev/commonwealth-ai/dist/sovereign-aarch64-apple-darwin/sovereign-cli $HOME/dev/wt-rel070/dist/sovereign-aarch64-apple-darwin/sovereign-cli; do if test -x "$p"; then "$p" code dry-report --help; else printf "unavailable: %s\n" "$p"; fi; done
+unavailable: /Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli
+unavailable: /Users/alexsbryan/dev/commonwealth-ai/target/release/sovereign-cli
+unavailable: /Users/alexsbryan/dev/commonwealth-ai/sovereign/target/release/sovereign-cli
+svrn code dry-report: not available in this build.
+
+  Available here:
+    svrn code index <path> [--corpus-id <id>] [--full|--incremental]
+
+  The analysis subcommands (brief, fieldglass, arch-report, dry-report,
+  suggest-seams, check-spec) are developer tooling and ship separately.
+svrn code dry-report: not available in this build.
+
+  Available here:
+    svrn code index <path> [--corpus-id <id>] [--full|--incremental]
+
+  The analysis subcommands (brief, fieldglass, arch-report, dry-report,
+  suggest-seams, check-spec) are developer tooling and ship separately.
+
+exit: 2

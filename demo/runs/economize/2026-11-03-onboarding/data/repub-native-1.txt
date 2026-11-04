@@ -1,0 +1,11 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/repub.py /Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+UNHANDLED error[E0220]: associated type `Refusal` not found for `C`
+   --> crates/svrngs-runtime/src/lib.rs:215:37
+    |
+215 |     ) -> Result<Result<Recorded, C::Refusal>, RailError> {
+    |                                     ^^^^^^^ associated type `Refusal` not found
+
+
+errors 141 fixed 54
+
+exit: 0

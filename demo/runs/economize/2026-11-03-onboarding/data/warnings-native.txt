@@ -1,0 +1,42 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/cargo_warnings.py /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+crates/svrngs-core/src/admit.rs:190: type `membership::InviteFault` is more private than the item `RailGap::RefusedRedemption::fault`
+crates/svrngs-core/src/admit.rs:204: type `Why` is more private than the item `RailGap::Ungranted::why`
+crates/svrngs-core/src/command.rs:40: type `Reads` is more private than the item `Command::READS`
+crates/svrngs-core/src/grant.rs:26: variant `Read` is never constructed
+crates/svrngs-core/src/lib.rs:132: unused import: `command::Reads`
+crates/svrngs-core/src/lib.rs:139: unused import: `payload::PayloadError`
+crates/svrngs-core/src/lib.rs:156: unused import: `sig::act_id`
+crates/svrngs-core/src/lib.rs:160: unused import: `sig::redemption_message`
+crates/svrngs-core/src/lib.rs:161: unused import: `sig::ring_op_message`
+crates/svrngs-core/src/lib.rs:164: unused import: `sig::sign_ring_op`
+crates/svrngs-core/src/lib.rs:165: unused import: `sig::unsigned_act`
+crates/svrngs-core/src/lib.rs:174: unused import: `synced::NotASyncPath`
+crates/svrngs-core/src/lib.rs:181: unused import: `view::DIGEST_V`
+crates/svrngs-core/src/lib.rs:367: type `Payload` is more private than the item `RailAct::Record::payload`
+crates/svrngs-core/src/lib.rs:376: type `Payload` is more private than the item `RailAct::Correct::replacement`
+crates/svrngs-core/src/lib.rs:411: type `Redemption` is more private than the item `RailAct::Admit::invite`
+crates/svrngs-core/src/pass.rs:261: methods `approving` and `approve` are never used
+crates/svrngs-core/src/record.rs:27: type `Reads` is more private than the item `<record::Append as Command>::READS`
+crates/svrngs-core/src/register.rs:128: type `Reads` is more private than the item `<MintInvite as Command>::READS`
+crates/svrngs-core/src/register.rs:144: type `Reads` is more private than the item `register::<impl Command for Visit>::READS`
+crates/svrngs-core/src/register.rs:183: type `Reads` is more private than the item `<Removal as Command>::READS`
+crates/svrngs-core/src/register.rs:223: type `Reads` is more private than the item `<Leave as Command>::READS`
+crates/svrngs-core/src/register.rs:270: type `Reads` is more private than the item `<Cutover as Command>::READS`
+crates/svrngs-core/src/register.rs:327: type `Reads` is more private than the item `<HandOnTo as Command>::READS`
+crates/svrngs-core/src/register.rs:354: type `Reads` is more private than the item `<RelayAt as Command>::READS`
+crates/svrngs-core/src/register.rs:375: type `Reads` is more private than the item `<MeetsAt as Command>::READS`
+crates/svrngs-core/src/register.rs:43: type `membership::InviteFault` is more private than the item `RedeemRefusal::Fault::0`
+crates/svrngs-core/src/register.rs:57: type `Reads` is more private than the item `<Redeem as Command>::READS`
+crates/svrngs-core/src/synced.rs:131: type `Reads` is more private than the item `<SyncFolder as Command>::READS`
+crates/svrngs-node/src/dial.rs:46: constant `LINK_WITHIN` is never used
+crates/svrngs-node/src/iroh.rs:48: unused import: `crate::alpn::ALPN`
+crates/svrngs-node/src/iroh.rs:66: unused import: `iroh::address_lookup::MemoryLookup`
+crates/svrngs-node/src/lib.rs:41: private item shadows public glob re-export
+crates/svrngs-node/src/node.rs:267: associated functions `start` and `start_every` are never used
+crates/svrngs-node/src/version.rs:41: function `links` is never used
+crates/svrngs/src/cli.rs:326: type `RemoveKind` is more private than the item `Verb::Remove::kind`
+crates/svrngs/src/cli.rs:338: type `relay::Relay` is more private than the item `Verb::Relay::0`
+crates/svrngs/src/cli.rs:604: type `KeyError` is more private than the item `Refusal::Key::0`
+build-finished success: True
+
+exit: 0

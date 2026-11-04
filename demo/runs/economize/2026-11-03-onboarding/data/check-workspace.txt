@@ -1,0 +1,4 @@
+$ cargo check --workspace --offline
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.22s
+
+exit: 0

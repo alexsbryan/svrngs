@@ -1,0 +1,48 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/repub.py /Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/surface.rs:175:25
+    |
+175 |             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
+    |                         ^^^^^^^^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/origin.rs:616:91
+    |
+616 | ...   tracing::debug!(target: "origin", label, error = %e, whose = ?whose.as_ref().map(|p| p.as_str()), "origin: the lender's compu...
+    |                                                                                         ^  - type must be known at this point
+    |
+help: consider giving this clo
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs-node/src/door.rs:1096:29
+     |
+1096 |         return Err(refused(&fault.to_string()));
+     |                             ^^^^^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs-node/src/door.rs:1604:75
+     |
+1604 |     tracing::debug!(target: "door", actor, lender = ?lender.as_ref().map(|p| p.as_str()), "door: the lend's lender, by whom a refu...
+     |                                                                           ^  - type must be known at this point
+     |
+help: consider giving this closure parame
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs-node/src/door.rs:1605:56
+     |
+1605 |     let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
+     |                                                        ^  - type must be known at this point
+     |
+help: consider giving this closure parameter an explicit type
+     |
+1605 |     let lender = lender.as_ref().map_or("Its le
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/carried.rs:319:25
+    |
+319 |         let admission = rail.admission(group).ok();
+    |                         ^^^^ cannot infer type
+
+
+errors 241 fixed 82
+
+exit: 0

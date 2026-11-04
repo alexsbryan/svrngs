@@ -1,0 +1,49 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/repub.py /Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+UNHANDLED error[E0277]: the size for values of type `str` cannot be known at compilation time
+    --> crates/svrngs/src/cli.rs:1836:30
+     |
+1836 |     let made = keep.map_err(|why| keep_refused(&seed, &why))?;
+     |                              ^^^ doesn't have a size known at compile-time
+     |
+     = help: the trait `Sized` is not implemented for `str`
+     = note: all function arguments must have a s
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1896:22
+     |
+1896 |           let online = tokio::time::timeout(ONLINE_WAIT, node.endpoint().online())
+     |  ______________________^
+1897 | |             .await
+     | |__________________^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1313:33
+     |
+1313 |                     let what = (name.as_str() != kind.as_str()).then(|| format!(" ({kind})"));
+     |                                 ^^^^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1313:50
+     |
+1313 |                     let what = (name.as_str() != kind.as_str()).then(|| format!(" ({kind})"));
+     |                                                  ^^^^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1345:28
+     |
+1345 |                         if n.get() == 1 { "person" } else { "people" })?,
+     |                            ^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1365:57
+     |
+1365 |                     writeln!(f, "They cannot open {}.", path.as_str())?;
+     |                                                         ^^^^ cannot infer type
+
+
+errors 46 fixed 31
+
+exit: 0

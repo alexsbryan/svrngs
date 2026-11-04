@@ -1,0 +1,60 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/repub.py /Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/ring_sync.rs:296:9
+    |
+296 |     let namespaces = match rail.namespaces() {
+    |         ^^^^^^^^^^
+...
+303 |     if namespaces.is_empty() {
+    |        ---------- type must be known at this point
+    |
+help: consider giving `namespaces` an explicit type
+    |
+296 |     let namespaces: /* Type */ = match rail.namespaces() {
+  
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/ring_sync.rs:351:13
+    |
+351 |         let standing = match rail.standing(namespace) {
+    |             ^^^^^^^^
+...
+371 |                 if p.pubkey.is_some_and(|k| standing.names(&key_actor(&k))) {
+    |                                             -------- type must be known at this point
+    |
+help: consider giving `standing
+UNHANDLED error[E0282]: type annotations needed for `(_, _)`
+   --> crates/svrngs-node/src/ring_sync.rs:596:13
+    |
+596 |         let (for_peer, more_for_peer) = match rail.ops_missing_from_within(
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+604 |         let offered = for_peer.len();
+    |                       -------- type must be known at this point
+    |
+help: consider giving this pattern a type, 
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/rail.rs:235:32
+    |
+235 |         Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
+    |                                ^^^^^^^^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/rail.rs:289:58
+    |
+289 |         Err(e) => err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+    |                                                          ^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-node/src/rail.rs:348:38
+    |
+348 |         (read.as_ref()).is_some_and(|a| a.membership().standing.contains(line.stands_as()));
+    |                                      ^  - type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type
+    |
+348 |         (read.as_ref()).is_some_and(|a: /* Type */|
+errors 398 fixed 91
+
+exit: 0

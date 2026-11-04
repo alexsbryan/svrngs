@@ -1,0 +1,392 @@
+$ python3 -I /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-js-read/survey.py
+## web/app.js
+machine=False io=True templates=1 long=0
+  comment web/app.js:67 left=2 web/index.html holds #page.
+## web/authority.js
+machine=False io=False templates=1 long=0
+  view web/authority.js:38 signerFor expression
+  comment web/authority.js:264 left=4 One found, `found[0]` is it.
+## web/lend.js
+machine=False io=False templates=0 long=9
+  comment web/lend.js:297 left=4 ── cookies, a jar per lend ─────────────────────────────────────────────
+  comment web/lend.js:369 left=4 ── a request, through the door ─────────────────────────────────────────
+  comment web/lend.js:463 left=4 `body`, its reading traced by `said`.
+  comment web/lend.js:632 left=3 Whether `request` carries a body.
+  comment web/lend.js:1050 left=5 The wasm's `fetch` answers the page's `Response`.
+  comment web/lend.js:1371 left=5 ── what a lend's page hands over ───────────────────────────────────────
+  comment web/lend.js:1543 left=5 Opcodes (RFC 6455 §5.2): 1 text, 2 binary, 8 close.
+## web/open.js
+machine=False io=False templates=0 long=2
+## web/shim.js
+machine=False io=False templates=0 long=1
+  comment web/shim.js:79 left=5 A `name=value; …` line of cookies, as `[name, value]` pairs.
+## web/sign.js
+machine=False io=False templates=0 long=1
+## web/store.js
+machine=False io=False templates=0 long=0
+  comment web/store.js:211 left=5 `key` sealed, bound to `id`: its `iv` and `sealed`.
+  comment web/store.js:410 left=5 `split` answers one part at least.
+## web/sw.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/home.js
+machine=False io=False templates=2 long=0
+## crates/svrngs-node/src/home/question.js
+machine=False io=False templates=0 long=2
+## crates/svrngs-node/src/home/session-client.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/session-worker.js
+machine=False io=False templates=0 long=2
+## crates/svrngs-node/src/home/session.js
+machine=False io=False templates=0 long=0
+  comment crates/svrngs-node/src/home/session.js:111 left=5 Found by the test above.
+## web/page/acts.js
+machine=True io=True templates=2 long=0
+  view web/page/acts.js:136 view.acts expression
+## web/page/among.js
+machine=True io=True templates=0 long=3
+## web/page/ask-form.js
+machine=False io=False templates=2 long=0
+  view web/page/ask-form.js:13 AskForm component
+## web/page/ask-when-read.js
+machine=False io=False templates=0 long=0
+## web/page/ask.js
+machine=True io=True templates=0 long=1
+  view web/page/ask.js:155 view (one line) expression
+  comment web/page/ask.js:79 left=5 Both found, both are named.
+## web/page/computer-line.js
+machine=False io=False templates=2 long=3
+  view web/page/computer-line.js:22 ComputerLine component
+## web/page/computer.js
+machine=True io=True templates=0 long=1
+  view web/page/computer.js:76 view (one line) expression
+## web/page/dial.js
+machine=False io=False templates=0 long=5
+## web/page/door.js
+machine=True io=True templates=0 long=0
+  view web/page/door.js:54 view.door expression
+  view web/page/door.js:55 view.removals expression
+  view web/page/door.js:56 view.visitors expression
+## web/page/ends.js
+machine=False io=False templates=0 long=0
+## web/page/enter.js
+machine=True io=True templates=0 long=4
+  comment web/page/enter.js:211 left=4 `split` always answers one part.
+  comment web/page/enter.js:561 left=4 `split` always answers one part.
+## web/page/group-door.js
+machine=False io=False templates=4 long=0
+  view web/page/group-door.js:18 GroupDoor component
+## web/page/guest-lends.js
+machine=False io=False templates=2 long=0
+  view web/page/guest-lends.js:18 GuestLends component
+## web/page/hand.js
+machine=False io=False templates=0 long=2
+## web/page/how-it-reaches.js
+machine=False io=False templates=1 long=5
+  view web/page/how-it-reaches.js:11 HowItReaches component
+## web/page/index.js
+machine=True io=True templates=0 long=0
+  view web/page/index.js:99 view (one line) expression
+## web/page/join.js
+machine=True io=True templates=0 long=4
+  view web/page/join.js:174 view.join expression
+  comment web/page/join.js:104 left=5 Asking, so `join` set the link.
+  comment web/page/join.js:302 left=5 Kept just above, so found.
+## web/page/lend-line.js
+machine=False io=False templates=2 long=0
+  view web/page/lend-line.js:39 LendLine component
+## web/page/lent-index.js
+machine=False io=False templates=4 long=0
+  view web/page/lent-index.js:15 LentIndex component
+## web/page/name-form.js
+machine=False io=False templates=2 long=0
+  view web/page/name-form.js:30 NameForm expression
+## web/page/offered-groups.js
+machine=False io=False templates=1 long=0
+  view web/page/offered-groups.js:19 OfferedGroups component
+## web/page/one-tab.js
+machine=False io=False templates=1 long=0
+  view web/page/one-tab.js:18 OneTab component
+## web/page/opens-as-you.js
+machine=False io=False templates=3 long=1
+  view web/page/opens-as-you.js:24 OpensAsYou component
+## web/page/page.js
+machine=False io=True templates=2 long=0
+  view web/page/page.js:357 Page component
+  comment web/page/page.js:361 left=5 Absent until a group is held (`first`).
+## web/page/removals.js
+machine=False io=False templates=3 long=0
+  view web/page/removals.js:10 Removals component
+## web/page/shelf.js
+machine=False io=False templates=2 long=0
+  view web/page/shelf.js:19 GroupShelf component
+  view web/page/shelf.js:36 view (one line) expression
+## web/page/uses-hidden.js
+machine=False io=False templates=1 long=0
+  view web/page/uses-hidden.js:10 UsesHidden component
+## web/page/uses.js
+machine=True io=True templates=0 long=0
+  view web/page/uses.js:111 view (one line) expression
+## web/page/visit.js
+machine=True io=True templates=0 long=2
+## web/page/visiting-now.js
+machine=False io=False templates=3 long=1
+  view web/page/visiting-now.js:29 VisitingNow component
+## web/page/visitors.js
+machine=False io=False templates=3 long=0
+  view web/page/visitors.js:11 Visitors component
+## web/page/what-acts-as-you.js
+machine=False io=False templates=7 long=1
+  view web/page/what-acts-as-you.js:60 partsOf expression
+  view web/page/what-acts-as-you.js:103 WhatActsAsYou component
+## web/page/what-apps-use.js
+machine=False io=False templates=1 long=0
+  view web/page/what-apps-use.js:13 WhatAppsUse component
+## crates/svrngs-node/src/home/page/acting.js
+machine=False io=False templates=8 long=1
+  view crates/svrngs-node/src/home/page/acting.js:71 Acting component
+## crates/svrngs-node/src/home/page/acts-read.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/acts.js
+machine=True io=False templates=1 long=1
+  view crates/svrngs-node/src/home/page/acts.js:54 ActsPlace component
+  view crates/svrngs-node/src/home/page/acts.js:61 view (one line) expression
+## crates/svrngs-node/src/home/page/address-copy.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/address-copy.js:17 AddressCopy component
+## crates/svrngs-node/src/home/page/address-copying.js
+machine=True io=True templates=0 long=2
+## crates/svrngs-node/src/home/page/ask.js
+machine=False io=False templates=0 long=0
+  view crates/svrngs-node/src/home/page/ask.js:9 view (one line) expression
+## crates/svrngs-node/src/home/page/asked.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/asked.js:16 Asked component
+## crates/svrngs-node/src/home/page/asking.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/door.js
+machine=False io=False templates=0 long=0
+  view crates/svrngs-node/src/home/page/door.js:13 view (one line) expression
+## crates/svrngs-node/src/home/page/folder.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/folders.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/folders.js:11 Folders component
+## crates/svrngs-node/src/home/page/found.js
+machine=False io=False templates=3 long=1
+  view crates/svrngs-node/src/home/page/found.js:27 Found component
+## crates/svrngs-node/src/home/page/group-folder.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/group-folder.js:15 Folder component
+## crates/svrngs-node/src/home/page/group-link.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/group-links.js
+machine=False io=False templates=4 long=0
+  view crates/svrngs-node/src/home/page/group-links.js:23 Links component
+## crates/svrngs-node/src/home/page/group-read.js
+machine=False io=False templates=4 long=0
+  view crates/svrngs-node/src/home/page/group-read.js:38 GroupRead component
+## crates/svrngs-node/src/home/page/group-reading.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/group-screen.js
+machine=False io=False templates=4 long=1
+  view crates/svrngs-node/src/home/page/group-screen.js:43 Screen component
+## crates/svrngs-node/src/home/page/group-told.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/page/group.js
+machine=False io=False templates=6 long=6
+  view crates/svrngs-node/src/home/page/group.js:129 below expression
+  view crates/svrngs-node/src/home/page/group.js:140 Group component
+## crates/svrngs-node/src/home/page/groups-left.js
+machine=False io=False templates=2 long=1
+  view crates/svrngs-node/src/home/page/groups-left.js:11 GroupsLeft component
+## crates/svrngs-node/src/home/page/home-page.js
+machine=False io=False templates=9 long=3
+  view crates/svrngs-node/src/home/page/home-page.js:46 Home component
+## crates/svrngs-node/src/home/page/home-reading.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/how-it-opens.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/how-it-opens.js:15 HowItOpens component
+## crates/svrngs-node/src/home/page/index-rows.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/index-rows.js:26 IndexRows component
+## crates/svrngs-node/src/home/page/index.js
+machine=False io=False templates=3 long=0
+  view crates/svrngs-node/src/home/page/index.js:14 Index component
+  view crates/svrngs-node/src/home/page/index.js:36 view (one line) expression
+## crates/svrngs-node/src/home/page/join-form.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/join-form.js:16 JoinForm component
+  view crates/svrngs-node/src/home/page/join-form.js:55 view (one line) expression
+## crates/svrngs-node/src/home/page/join.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/leave-group.js
+machine=False io=False templates=3 long=2
+  view crates/svrngs-node/src/home/page/leave-group.js:27 Leave component
+## crates/svrngs-node/src/home/page/leave.js
+machine=True io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/leave.js:40 LeavePlace component
+  view crates/svrngs-node/src/home/page/leave.js:47 view (one line) expression
+## crates/svrngs-node/src/home/page/leaving.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/lend-change.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/lend-found.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/lend-key.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/page/lend-name.js
+machine=False io=False templates=4 long=0
+  view crates/svrngs-node/src/home/page/lend-name.js:17 LendName component
+## crates/svrngs-node/src/home/page/lend-row.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/lend-row.js:16 LendRow component
+## crates/svrngs-node/src/home/page/lending.js
+machine=True io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/lending.js:39 LendingPlace component
+  view crates/svrngs-node/src/home/page/lending.js:46 view (one line) expression
+## crates/svrngs-node/src/home/page/lent-read.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/lent-row.js
+machine=False io=False templates=6 long=0
+  view crates/svrngs-node/src/home/page/lent-row.js:23 Lent component
+## crates/svrngs-node/src/home/page/link-box.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/link-box.js:16 Open component
+## crates/svrngs-node/src/home/page/link-copy.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/page/link-said.js
+machine=False io=False templates=2 long=2
+  view crates/svrngs-node/src/home/page/link-said.js:23 LinkSaid component
+## crates/svrngs-node/src/home/page/links.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/links.js:10 LinksPlace component
+  view crates/svrngs-node/src/home/page/links.js:17 view (one line) expression
+## crates/svrngs-node/src/home/page/make-form.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/make-form.js:23 MakeForm component
+  view crates/svrngs-node/src/home/page/make-form.js:43 view (one line) expression
+## crates/svrngs-node/src/home/page/make.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/offered.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/page/on-screen.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/open-link.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/open.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/open.js:10 OpenPlace component
+  view crates/svrngs-node/src/home/page/open.js:18 view (one line) expression
+## crates/svrngs-node/src/home/page/people.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/people.js:23 People component
+## crates/svrngs-node/src/home/page/play-cell.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/play-cell.js:17 PlayCell component
+## crates/svrngs-node/src/home/page/play.js
+machine=True io=True templates=3 long=2
+  view crates/svrngs-node/src/home/page/play.js:180 Turn component
+  view crates/svrngs-node/src/home/page/play.js:216 plays expression
+## crates/svrngs-node/src/home/page/reach.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/reach.js:15 Reach component
+## crates/svrngs-node/src/home/page/removals.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/removals.js:11 Removals component
+## crates/svrngs-node/src/home/page/routes.js
+machine=False io=False templates=0 long=1
+## crates/svrngs-node/src/home/page/running-here.js
+machine=False io=False templates=2 long=3
+  view crates/svrngs-node/src/home/page/running-here.js:31 Running component
+## crates/svrngs-node/src/home/page/running-look.js
+machine=True io=True templates=0 long=1
+## crates/svrngs-node/src/home/page/running.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/running.js:11 RunningPlace component
+  view crates/svrngs-node/src/home/page/running.js:18 view (one line) expression
+## crates/svrngs-node/src/home/page/screen-link.js
+machine=False io=False templates=1 long=1
+  view crates/svrngs-node/src/home/page/screen-link.js:8 ScreenLink component
+## crates/svrngs-node/src/home/page/screen.js
+machine=False io=False templates=0 long=0
+  view crates/svrngs-node/src/home/page/screen.js:12 view (one line) expression
+## crates/svrngs-node/src/home/page/shelf.js
+machine=False io=False templates=1 long=0
+  view crates/svrngs-node/src/home/page/shelf.js:21 GroupShelf component
+  view crates/svrngs-node/src/home/page/shelf.js:36 view (one line) expression
+## crates/svrngs-node/src/home/page/signing-on.js
+machine=False io=False templates=1 long=1
+  view crates/svrngs-node/src/home/page/signing-on.js:13 SigningOn component
+## crates/svrngs-node/src/home/page/since-opened.js
+machine=False io=False templates=3 long=0
+  view crates/svrngs-node/src/home/page/since-opened.js:14 SinceOpened component
+## crates/svrngs-node/src/home/page/stop-visit.js
+machine=False io=False templates=1 long=1
+  view crates/svrngs-node/src/home/page/stop-visit.js:21 Stop component
+## crates/svrngs-node/src/home/page/update-line.js
+machine=False io=False templates=4 long=2
+  view crates/svrngs-node/src/home/page/update-line.js:36 Update component
+  view crates/svrngs-node/src/home/page/update-line.js:74 view (one line) expression
+## crates/svrngs-node/src/home/page/update.js
+machine=True io=True templates=0 long=2
+## crates/svrngs-node/src/home/page/visit.js
+machine=True io=True templates=0 long=0
+## crates/svrngs-node/src/home/page/visits.js
+machine=False io=False templates=5 long=0
+  view crates/svrngs-node/src/home/page/visits.js:14 Visits component
+  view crates/svrngs-node/src/home/page/visits.js:40 view (one line) expression
+## crates/svrngs-node/src/home/page/what-you-lend.js
+machine=False io=False templates=5 long=0
+  view crates/svrngs-node/src/home/page/what-you-lend.js:22 Lending component
+## crates/svrngs-node/src/home/page/wifi-foot.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/page/wifi-foot.js:19 WifiFoot component
+  view crates/svrngs-node/src/home/page/wifi-foot.js:43 view (one line) expression
+## crates/svrngs-node/src/home/page/wifi.js
+machine=True io=True templates=5 long=1
+  view crates/svrngs-node/src/home/page/wifi.js:196 Line component
+  view crates/svrngs-node/src/home/page/wifi.js:239 rooms expression
+  comment crates/svrngs-node/src/home/page/wifi.js:129 left=5 A refusal answers a turn, which set `state.l`.
+## crates/svrngs-node/src/home/ui/acts.js
+machine=False io=False templates=4 long=0
+  view crates/svrngs-node/src/home/ui/acts.js:37 Acts component
+## crates/svrngs-node/src/home/ui/changes.js
+machine=False io=False templates=4 long=3
+  view crates/svrngs-node/src/home/ui/changes.js:46 Changes component
+## crates/svrngs-node/src/home/ui/copy.js
+machine=True io=True templates=2 long=0
+  view crates/svrngs-node/src/home/ui/copy.js:104 drawn expression
+## crates/svrngs-node/src/home/ui/door.js
+machine=False io=False templates=4 long=0
+  view crates/svrngs-node/src/home/ui/door.js:115 theirs expression
+  view crates/svrngs-node/src/home/ui/door.js:131 cell expression
+  view crates/svrngs-node/src/home/ui/door.js:154 Door component
+## crates/svrngs-node/src/home/ui/machine.js
+machine=False io=False templates=0 long=3
+## crates/svrngs-node/src/home/ui/parts.js
+machine=False io=False templates=13 long=1
+  view crates/svrngs-node/src/home/ui/parts.js:39 Act component
+  view crates/svrngs-node/src/home/ui/parts.js:63 Said component
+  view crates/svrngs-node/src/home/ui/parts.js:84 Fold component
+  view crates/svrngs-node/src/home/ui/parts.js:121 Field component
+  view crates/svrngs-node/src/home/ui/parts.js:156 Row component
+  view crates/svrngs-node/src/home/ui/parts.js:163 Keep expression
+  view crates/svrngs-node/src/home/ui/parts.js:168 Heading expression
+## crates/svrngs-node/src/home/ui/shelf.js
+machine=True io=True templates=5 long=1
+  view crates/svrngs-node/src/home/ui/shelf.js:221 drawn expression
+## crates/svrngs-node/src/home/ui/trace.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/ui/uses.js
+machine=False io=False templates=2 long=1
+  view crates/svrngs-node/src/home/ui/uses.js:40 Uses component
+## crates/svrngs-node/src/home/ui/view.js
+machine=False io=False templates=0 long=0
+## crates/svrngs-node/src/home/ui/visitors.js
+machine=False io=False templates=2 long=0
+  view crates/svrngs-node/src/home/ui/visitors.js:23 Visiting component
+## dupes
+  dupe crates/svrngs-node/src/home/page/play.js:121 = crates/svrngs-node/src/home/page/wifi.js:132
+
+exit: 0

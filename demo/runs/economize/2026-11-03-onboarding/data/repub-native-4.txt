@@ -1,0 +1,27 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/repub.py /Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+UNHANDLED error[E0282]: type annotations needed for `(_, _)`
+   --> crates/svrngs-runtime/src/lib.rs:240:67
+    |
+240 |                 let person = of.and_then(|f| m.person_of(f)).map(|(_, p)| p.clone());
+    |                                                                   ^^^^^^  - type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type, where the placeholde
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-runtime/src/journal.rs:193:60
+    |
+193 |             if let Some(key) = op.kind.act.names().filter(|k| self.named.insert(k.to_string())) {
+    |                                                            ^                    - type must be known at this point
+    |
+help: consider giving this closure parameter an explicit type
+    |
+193 | 
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs-runtime/src/journal.rs:194:34
+    |
+194 |                 newly_named.push(key.to_string());
+    |                                  ^^^ cannot infer type
+
+
+errors 24 fixed 9
+
+exit: 0

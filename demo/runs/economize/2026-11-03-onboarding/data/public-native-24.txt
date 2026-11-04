@@ -1,0 +1,435 @@
+$ cargo check --workspace --offline --message-format=json
+warning: unused import: `command::Reads`
+   --> crates/svrngs-core/src/lib.rs:132:16
+    |
+132 | pub(crate) use command::Reads;
+    |                ^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+
+warning: unused import: `payload::PayloadError`
+   --> crates/svrngs-core/src/lib.rs:139:16
+    |
+139 | pub(crate) use payload::PayloadError;
+    |                ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: unused import: `sig::act_id`
+   --> crates/svrngs-core/src/lib.rs:156:16
+    |
+156 | pub(crate) use sig::act_id;
+    |                ^^^^^^^^^^^
+
+
+warning: unused import: `sig::redemption_message`
+   --> crates/svrngs-core/src/lib.rs:160:16
+    |
+160 | pub(crate) use sig::redemption_message;
+    |                ^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: unused import: `sig::ring_op_message`
+   --> crates/svrngs-core/src/lib.rs:161:16
+    |
+161 | pub(crate) use sig::ring_op_message;
+    |                ^^^^^^^^^^^^^^^^^^^^
+
+
+warning: unused import: `sig::sign_ring_op`
+   --> crates/svrngs-core/src/lib.rs:164:16
+    |
+164 | pub(crate) use sig::sign_ring_op;
+    |                ^^^^^^^^^^^^^^^^^
+
+
+warning: unused import: `sig::unsigned_act`
+   --> crates/svrngs-core/src/lib.rs:165:16
+    |
+165 | pub(crate) use sig::unsigned_act;
+    |                ^^^^^^^^^^^^^^^^^
+
+
+warning: unused import: `synced::NotASyncPath`
+   --> crates/svrngs-core/src/lib.rs:174:16
+    |
+174 | pub(crate) use synced::NotASyncPath;
+    |                ^^^^^^^^^^^^^^^^^^^^
+
+
+warning: unused import: `view::DIGEST_V`
+   --> crates/svrngs-core/src/lib.rs:181:16
+    |
+181 | pub(crate) use view::DIGEST_V;
+    |                ^^^^^^^^^^^^^^
+
+
+warning: type `Payload` is more private than the item `RailAct::Record::payload`
+   --> crates/svrngs-core/src/lib.rs:367:14
+    |
+367 |     Record { payload: Payload },
+    |              ^^^^^^^^^^^^^^^^ field `RailAct::Record::payload` is reachable at visibility `pub`
+    |
+note: but type `Payload` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/payload.rs:74:1
+    |
+ 74 | pub(crate) struct Payload(Value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+
+warning: type `Payload` is more private than the item `RailAct::Correct::replacement`
+   --> crates/svrngs-core/src/lib.rs:376:9
+    |
+376 |         replacement: Option<Payload>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `RailAct::Correct::replacement` is reachable at visibility `pub`
+    |
+note: but type `Payload` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/payload.rs:74:1
+    |
+ 74 | pub(crate) struct Payload(Value);
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Redemption` is more private than the item `RailAct::Admit::invite`
+   --> crates/svrngs-core/src/lib.rs:411:9
+    |
+411 |         invite: Option<Redemption>,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^ field `RailAct::Admit::invite` is reachable at visibility `pub`
+    |
+note: but type `Redemption` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/lib.rs:528:1
+    |
+528 | pub(crate) struct Redemption {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `membership::InviteFault` is more private than the item `RailGap::RefusedRedemption::fault`
+   --> crates/svrngs-core/src/admit.rs:190:9
+    |
+190 |         fault: crate::membership::InviteFault,
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ field `RailGap::RefusedRedemption::fault` is reachable at visibility `pub`
+    |
+note: but type `membership::InviteFault` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/membership.rs:129:1
+    |
+129 | pub(crate) enum InviteFault {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Why` is more private than the item `RailGap::Ungranted::why`
+   --> crates/svrngs-core/src/admit.rs:204:9
+    |
+204 |         why: crate::grant::Why,
+    |         ^^^^^^^^^^^^^^^^^^^^^^ field `RailGap::Ungranted::why` is reachable at visibility `pub`
+    |
+note: but type `Why` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/grant.rs:36:1
+    |
+ 36 | pub(crate) enum Why {
+    | ^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `Command::READS`
+  --> crates/svrngs-core/src/command.rs:40:5
+   |
+40 |     const READS: Reads;
+   |     ^^^^^^^^^^^^^^^^^^ associated constant `Command::READS` is reachable at visibility `pub`
+   |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+  --> crates/svrngs-core/src/command.rs:14:1
+   |
+14 | pub(crate) enum Reads {
+   | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<record::Append as Command>::READS`
+  --> crates/svrngs-core/src/record.rs:27:5
+   |
+27 |     const READS: Reads = Reads::Membership;
+   |     ^^^^^^^^^^^^^^^^^^ associated constant `<record::Append as Command>::READS` is reachable at visibility `pub`
+   |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+  --> crates/svrngs-core/src/command.rs:14:1
+   |
+14 | pub(crate) enum Reads {
+   | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `membership::InviteFault` is more private than the item `RedeemRefusal::Fault::0`
+   --> crates/svrngs-core/src/register.rs:43:11
+    |
+ 43 |     Fault(InviteFault),
+    |           ^^^^^^^^^^^ field `RedeemRefusal::Fault::0` is reachable at visibility `pub`
+    |
+note: but type `membership::InviteFault` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/membership.rs:129:1
+    |
+129 | pub(crate) enum InviteFault {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<Redeem as Command>::READS`
+  --> crates/svrngs-core/src/register.rs:57:5
+   |
+57 |     const READS: Reads = Reads::Membership;
+   |     ^^^^^^^^^^^^^^^^^^ associated constant `<Redeem as Command>::READS` is reachable at visibility `pub`
+   |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+  --> crates/svrngs-core/src/command.rs:14:1
+   |
+14 | pub(crate) enum Reads {
+   | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<MintInvite as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:128:5
+    |
+128 |     const READS: Reads = Reads::Membership;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<MintInvite as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `register::<impl Command for Visit>::READS`
+   --> crates/svrngs-core/src/register.rs:144:5
+    |
+144 |     const READS: Reads = Reads::Membership;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `register::<impl Command for Visit>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<Removal as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:183:5
+    |
+183 |     const READS: Reads = Reads::All;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<Removal as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<Leave as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:223:5
+    |
+223 |     const READS: Reads = Reads::All;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<Leave as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<Cutover as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:270:5
+    |
+270 |     const READS: Reads = Reads::All;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<Cutover as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<HandOnTo as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:327:5
+    |
+327 |     const READS: Reads = Reads::Membership;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<HandOnTo as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<RelayAt as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:354:5
+    |
+354 |     const READS: Reads = Reads::Membership;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<RelayAt as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<MeetsAt as Command>::READS`
+   --> crates/svrngs-core/src/register.rs:375:5
+    |
+375 |     const READS: Reads = Reads::Membership;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<MeetsAt as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `Reads` is more private than the item `<SyncFolder as Command>::READS`
+   --> crates/svrngs-core/src/synced.rs:131:5
+    |
+131 |     const READS: Reads = Reads::Membership;
+    |     ^^^^^^^^^^^^^^^^^^ associated constant `<SyncFolder as Command>::READS` is reachable at visibility `pub`
+    |
+note: but type `Reads` is only usable at visibility `pub(crate)`
+   --> crates/svrngs-core/src/command.rs:14:1
+    |
+ 14 | pub(crate) enum Reads {
+    | ^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: variant `Read` is never constructed
+  --> crates/svrngs-core/src/grant.rs:26:5
+   |
+25 | pub(crate) enum Capability<'a> {
+   |                 ---------- variant in this enum
+26 |     Read(&'a str),
+   |     ^^^^
+   |
+   = note: `Capability` has derived impls for the traits `Clone` and `Debug`, but these are intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+
+warning: methods `approving` and `approve` are never used
+   --> crates/svrngs-core/src/pass.rs:261:19
+    |
+195 | impl Pass {
+    | --------- methods in this implementation
+...
+261 |     pub(crate) fn approving(
+    |                   ^^^^^^^^^
+...
+284 |     pub(crate) fn approve(
+    |                   ^^^^^^^
+
+
+warning: private item shadows public glob re-export
+  --> crates/svrngs-node/src/lib.rs:41:16
+   |
+41 | pub(crate) use svrngs_core::alpn;
+   |                ^^^^^^^^^^^^^^^^^
+   |
+note: the name `alpn` in the type namespace is supposed to be publicly re-exported here
+  --> crates/svrngs-node/src/lib.rs:33:9
+   |
+33 | pub use svrngs_runtime::*;
+   |         ^^^^^^^^^^^^^^^^^
+note: but the private item here shadows it
+  --> crates/svrngs-node/src/lib.rs:41:16
+   |
+41 | pub(crate) use svrngs_core::alpn;
+   |                ^^^^^^^^^^^^^^^^^
+   = note: `#[warn(hidden_glob_reexports)]` on by default
+
+
+warning: unused import: `crate::alpn::ALPN`
+  --> crates/svrngs-node/src/iroh.rs:48:16
+   |
+48 | pub(crate) use crate::alpn::ALPN;
+   |                ^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+
+warning: unused import: `iroh::address_lookup::MemoryLookup`
+  --> crates/svrngs-node/src/iroh.rs:66:16
+   |
+66 | pub(crate) use iroh::address_lookup::MemoryLookup;
+   |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: constant `LINK_WITHIN` is never used
+  --> crates/svrngs-node/src/dial.rs:46:18
+   |
+46 | pub(crate) const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
+   |                  ^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+
+warning: associated functions `start` and `start_every` are never used
+   --> crates/svrngs-node/src/node.rs:267:25
+    |
+259 | impl Node {
+    | --------- associated functions in this implementation
+...
+267 |     pub(crate) async fn start(
+    |                         ^^^^^
+...
+306 |     pub(crate) async fn start_every(
+    |                         ^^^^^^^^^^^
+
+
+warning: function `links` is never used
+  --> crates/svrngs-node/src/version.rs:41:15
+   |
+41 | pub(crate) fn links(version: Option<u32>) -> bool {
+   |               ^^^^^
+
+
+warning: type `RemoveKind` is more private than the item `Verb::Remove::kind`
+   --> crates/svrngs/src/cli.rs:326:9
+    |
+326 |         kind: RemoveKind,
+    |         ^^^^^^^^^^^^^^^^ field `Verb::Remove::kind` is reachable at visibility `pub`
+    |
+note: but type `RemoveKind` is only usable at visibility `pub(crate)`
+   --> crates/svrngs/src/cli.rs:348:1
+    |
+348 | pub(crate) enum RemoveKind {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^
+    = note: `#[warn(private_interfaces)]` on by default
+
+
+warning: type `relay::Relay` is more private than the item `Verb::Relay::0`
+   --> crates/svrngs/src/cli.rs:338:11
+    |
+338 |     Relay(Relay),
+    |           ^^^^^ field `Verb::Relay::0` is reachable at visibility `pub`
+    |
+note: but type `relay::Relay` is only usable at visibility `pub(crate)`
+   --> crates/svrngs/src/relay.rs:50:1
+    |
+ 50 | pub(crate) struct Relay {
+    | ^^^^^^^^^^^^^^^^^^^^^^^
+
+
+warning: type `KeyError` is more private than the item `Refusal::Key::0`
+   --> crates/svrngs/src/cli.rs:604:17
+    |
+604 |     Key(#[from] KeyError),
+    |                 ^^^^^^^^ field `Refusal::Key::0` is reachable at visibility `pub`
+    |
+note: but type `KeyError` is only usable at visibility `pub(crate)`
+   --> crates/svrngs/src/identity.rs:63:1
+    |
+ 63 | pub(crate) enum KeyError {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+{"reason":"build-finished","success":true}
+    Checking svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch/crates/svrngs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.88s
+
+exit: 0

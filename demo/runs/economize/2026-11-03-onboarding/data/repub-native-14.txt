@@ -1,0 +1,60 @@
+$ python3 /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-10-25-give/scripts/repub.py /Users/alexsbryan/dev/svrngs/target/onboarding-econ/scratch /Users/alexsbryan/dev/svrngs/demo/runs/economize/2026-11-03-onboarding/data/public-native.jsonl
+UNHANDLED error[E0282]: type annotations needed
+   --> crates/svrngs/src/cli.rs:867:49
+    |
+867 |                 lend.sign_in_with_svrngs = Some(client.clone());
+    |                                                 ^^^^^^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1037:16
+     |
+1037 |       let node = Node::start_asking(
+     |  ________________^
+1038 | |         root.clone(),
+1039 | |         key.clone(),
+1040 | |         relay,
+...    |
+1045 | |     .await
+     | |__________^ cannot infer type
+
+
+UNHANDLED error[E0282]: type annotations needed for `(_, _)`
+    --> crates/svrngs/src/cli.rs:1604:17
+     |
+1604 |             let (seed, link) = new_group(node, name, person, page.as_ref(), &kept, relay).await?;
+     |                 ^^^^^^^^^^^^
+...
+1608 |                     seed: seed.clone(),
+     |                           ---- type must be known at this point
+     |
+help: consider giving this patt
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1734:56
+     |
+1734 |     let named = |raw: String| Name::kept(raw).map_err(|why| older(why.to_string()));
+     |                                                        ^^^        --- type must be known at this point
+     |
+help: consider giving this closure parameter an explicit type
+     |
+1734 |     let named = |raw: String|
+UNHANDLED error[E0277]: the size for values of type `str` cannot be known at compilation time
+    --> crates/svrngs/src/cli.rs:1836:30
+     |
+1836 |     let made = keep.map_err(|why| keep_refused(&seed, &why))?;
+     |                              ^^^ doesn't have a size known at compile-time
+     |
+     = help: the trait `Sized` is not implemented for `str`
+     = note: all function arguments must have a s
+UNHANDLED error[E0282]: type annotations needed
+    --> crates/svrngs/src/cli.rs:1896:22
+     |
+1896 |           let online = tokio::time::timeout(ONLINE_WAIT, node.endpoint().online())
+     |  ______________________^
+1897 | |             .await
+     | |__________________^ cannot infer type
+
+
+errors 96 fixed 71
+
+exit: 0
