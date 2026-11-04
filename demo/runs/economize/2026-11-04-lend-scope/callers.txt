@@ -1,0 +1,190 @@
+ARCHITECTURE.md:402: `<data dir>/secrets/lends/<lend>/`. `lend::declare` and `lend::withdraw`
+ARCHITECTURE.md:467: them in the lend's declaration at 0600 through `lend::declare`; the answer
+ARCHITECTURE.md:486: key, so a person's devices are one person to each. `lend::withdraw` removes them with the lend.
+ARCHITECTURE.md:681: [--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...
+ARCHITECTURE.md:696: `e1a43bcd2`, then changed (u3-5): `share <port>` takes a port alone,
+ARCHITECTURE.md:706: lend through `svrngs_node::lend::declare`, and runs the node unless the
+README.md:46: the group. Or type `svrngs share 8096`. [Lend](docs/guide/lend.md).
+RELEASES.md:167: server, is lent with `svrngs share <port> --udp --kind <name>`, or
+apps/doc/README.md:12: node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --kind doc < /dev/null
+apps/doc/server.mjs:309: `The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}. Lend it: svrngs share ${at} --name doc --kind doc`,
+apps/expenses/expenses.test.mjs:66: const acts = [pizza, share(AMA, pizza.id), share(BO, pizza.id), share(CY, pizza.id)];
+apps/expenses/expenses.test.mjs:74: const once = fold([pizza, share(AMA, pizza.id)]);
+apps/expenses/expenses.test.mjs:75: const twice = fold([pizza, share(AMA, pizza.id), share(AMA, pizza.id)]);
+apps/expenses/expenses.test.mjs:82: assert.deepEqual(fold([pizza, share(SAM, pizza.id)]).balances, { [SAM]: 0 });
+apps/expenses/expenses.test.mjs:87: const base = [pizza, share(AMA, pizza.id)];
+apps/expenses/expenses.test.mjs:99: const state = fold([share(AMA, 'act-nowhere')]);
+apps/expenses/expenses.test.mjs:130: const state = fold([pizza, share('__proto__', pizza.id), settle(SAM, '__proto__', 100)]);
+apps/expenses/expenses.test.mjs:343: const shared = [pizza, { ...share('bo', pizza.id), key: 'pb' }];
+apps/expenses/expenses.test.mjs:350: const second = { ...share('sam', pizza.id), key: 'p2' };
+apps/expenses/expenses.test.mjs:381: { ...share('alex', lunch.id), key: 'zz' },
+apps/expenses/expenses.test.mjs:382: { ...share('bo', lunch.id), key: 'mm' },
+apps/expenses/expenses.test.mjs:451: const yes = fold([pizza, share(AMA, pizza.id)]);
+apps/expenses/expenses.test.mjs:454: const unnamed = fold([pizza, share(CY, pizza.id)]);
+apps/expenses/expenses.test.mjs:479: fold([pizza, notIn(AMA, pizza.id), share(AMA, pizza.id)]).expenses[pizza.id].not,
+apps/expenses/index.js:138: ? `you owe ${to} ${share(n)} once you say you were in on it`
+apps/expenses/index.js:139: : `${n} owes ${to} ${share(n)} once they say they were in on it`;
+apps/give/src/keep.rs:539: let lent = lent.and_then(|()| Ok(self.svrngs.share(at, app, card.door.protocol)?));
+apps/give/src/keep.rs:683: let lent = (keeper.card(app)).map(|card| keeper.svrngs.share(r.at, app, card.door.protocol));
+apps/give/src/lend.rs:74: pub fn share(&self, port: u16, name: &str, door: Protocol) -> Result<(), LendError> {
+apps/give/src/lend.rs:76: let mut args = vec!["share", port.as_str(), "--name", name, "--kind", name];
+apps/jellyfin/README.md:4: `svrngs share 8096`, or lend it from the home page under "Already running
+apps/jellyfin/README.md:13: `svrngs share 8096 --sign-in-with-svrngs`, creates sign-in credentials.
+apps/jellyfin/check/check.sh:3: # call 4, sign in once): stock Jellyfin as `svrngs share 8096` lends it,
+apps/jellyfin/check/check.sh:228: printf 'MediaBrowser Token="%s"\n' "$TOKEN" | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 $SHARE_FLAGS >"$R/sam/share.out" 2>"$R/sam/share.log"
+apps/jellyfin/check/check.sh:385: # it, `share 8096 --sign-in <its port>`; Alex and Bo, two computers, ask
+apps/jellyfin/check/check.sh:434: SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --name jellyfin-mw --sign-in "$port" ${MW_SHARE_FLAGS---limit 8} </dev/null >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
+apps/jellyfin/check/lender.mjs:1: // The lender makes each person an account, as `svrngs share 8096` tells
+apps/movie-night/check/check.sh:9: #   each lent `share <its port> --kind jellyfin --sign-in <its middleware's
+apps/movie-night/check/check.sh:18: #   server, lent by Sam `share <its port> --kind movie-night --reads jellyfin`.
+apps/pantry/README.md:70: | Chat and vision (the curated pair) | `llama-server -m Qwen3.6-35B-A3B-UD-IQ4_NL.gguf --jinja --alias ana/coder --host 127.0.0.1 --port 8101 -c 8192 -ngl 99`<br>(vision: add `--mmproj mmproj-F16.gguf`, the Gemma-4-26B projector) | `svrngs share 8101 --kind llama-server --name ana-coder --refuse /slots --refuse /v1/stream --refuse /v1/streams --refuse /v1/chat/completions/control --refuse /lora-adapters --refuse /metrics --refuse /tools --refuse /cors-proxy --refuse /models` |
+apps/pantry/README.md:71: | Speech out (Kokoro v0.9.0) | `podman run --rm -p 127.0.0.1:8107:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | `svrngs share 8107 --kind kokoro --name sam-voice --refuse /docs --refuse /openapi.json` |
+apps/pantry/README.md:72: | Speech to text (whisper.cpp + wrapper) | `whisper-server -m ggml-base.en.bin --host 127.0.0.1 --port 8106 -l en` then `node apps/pantry/examples/whisper/server.mjs --upstream http://127.0.0.1:8106 --port 8110` | `svrngs share 8110 --kind whisper --name sam-stt` |
+apps/pantry/README.md:73: | Tools (any native MCP Streamable HTTP server) | serve it on `127.0.0.1:8108` with its endpoint at `/mcp` | `svrngs share 8108 --kind mcp --name sam-tools` |
+apps/pantry/README.md:90: | A model, of any runtime or modality | Run any server that answers OpenAI's `/v1/models` and `/v1/chat/completions` (or transcription, speech, embeddings, images) on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name>`. The pantry asks it; nobody adds it to a list. |
+apps/pantry/README.md:91: | A tool | Run any MCP Streamable HTTP server on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name>`. `list` shows its tools and annotations. |
+apps/pantry/examples/whisper/server.mjs:99: console.log(`lend ${at.url} with: svrngs share ${at.port} --kind whisper-server --name stt`),
+apps/taste/check/check.sh:11: #   on loopback beside a planted history, lent `share <its port> --name
+apps/taste/check/check.sh:76: kept) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --ask "$ASK" --limit 8 ;;
+apps/taste/check/check.sh:77: no-refuse) ana share $TASTE_PORT --name taste --kind taste --ask "$ASK" --limit 8 ;;
+apps/taste/check/check.sh:78: no-ask) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --limit 8 ;;
+apps/taste/check/check.sh:137: sam share $PICKS_PORT --name tonights-picks --kind movie-night --reads jellyfin --reads taste --limit 8
+apps/taste/check/check.sh:138: sam share $OTHER_PORT --name other --kind other --reads taste --limit 8
+apps/taste/taste.mjs:5: // /diary) back. Lent by Ana `svrngs share <port> --name taste --kind taste
+crates/svrngs-node/src/home.rs:405: LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
+crates/svrngs-node/src/home.rs:406: LendChange::Stop => lend::withdraw(dir, &c.lend),
+crates/svrngs-node/src/home.rs:443: format!("{name} already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."),
+crates/svrngs-node/src/home.rs:457: if let Err(e) = lend::declare(dir, &lend, None) {
+crates/svrngs-node/src/home.rs:524: /// a lend of its name, then declared ([`lend::declare`]) and [`shown`].
+crates/svrngs-node/src/home.rs:573: let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));
+crates/svrngs-node/src/lend.rs:189: /// (give-udp, give-tcp; `svrngs share <port> --udp` or `--tcp`): the
+crates/svrngs-node/src/share.rs:157: tracing::debug!(target: "share", kind = %kind, kept = kept.len(), "share: the paths the table keeps back of the kind");
+crates/svrngs-node/src/share.rs:175: tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if the table says");
+crates/svrngs-node/src/share.rs:183: tracing::debug!(target: "share", port, up, "share: probed the port");
+crates/svrngs-node/src/share.rs:210: tracing::debug!(target: "share", probed = ports.len(), ?found, "share: what listens on this computer");
+crates/svrngs-node/src/share.rs:230: tracing::debug!(target: "share", port = share.port, "share: a UDP port, lent unprobed");
+crates/svrngs-node/src/share.rs:232: tracing::debug!(target: "share", port = share.port, "share: refused — nothing listens on the port");
+crates/svrngs-node/src/share.rs:236: tracing::debug!(target: "share", port = share.port, "share: refused — no kind given, and the port is not a well-known one");
+crates/svrngs-node/src/share.rs:250: tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit, refused = refused.len(),
+crates/svrngs-node/tests/door/choices.rs:185: lend::withdraw(pair.dir.path(), &LendName::parse("taste").unwrap()).unwrap();
+crates/svrngs-node/tests/door/main.rs:757: lend::withdraw(pair.dir.path(), &LendName::parse("slow").unwrap()).unwrap();
+crates/svrngs-node/tests/door/main.rs:832: lend::withdraw(pair.dir.path(), &LendName::parse("shelf").unwrap()).unwrap();
+crates/svrngs/src/cli.rs:15: //! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp | --tcp]
+crates/svrngs/src/cli.rs:162: svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
+crates/svrngs/src/cli.rs:439: "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
+crates/svrngs/src/cli.rs:440: "--udp" | "--tcp" if verb == "share" => {
+crates/svrngs/src/cli.rs:476: && verb != "share"
+crates/svrngs/src/cli.rs:504: ("share", Some(dir), Some(group)) => {
+crates/svrngs/src/cli.rs:508: ("share", Some(_), None) => {
+crates/svrngs/src/cli.rs:511: ("share", None, Some(_)) => return Err("--group is a `share --folder` flag".into()),
+crates/svrngs/src/cli.rs:542: "share" => {
+crates/svrngs/src/cli.rs:547: let port = positional.ok_or("share wants a port: `svrngs share <port>`")?;
+crates/svrngs/src/cli.rs:1550: lend::declare(root, lend, secret.map(|s| (SECRET_HEADER, s))).map_err(|e| {
+crates/svrngs/src/cli.rs:1562: if lend::withdraw(root, name).map_err(keep)? {
+crates/svrngs/src/share/tests.rs:42: fn share(p: u16) -> Share {
+crates/svrngs/src/share/tests.rs:114: let lend = lend_of(&share(8096), |_| true, Some(jf.clone())).unwrap();
+crates/svrngs/src/share/tests.rs:119: let mut typed = share(5000);
+crates/svrngs/src/share/tests.rs:129: lend_of(&share(5000), |_| true, None),
+crates/svrngs/src/share/tests.rs:133: lend_of(&share(8096), |_| false, Some(jf)),
+crates/svrngs/src/share/tests.rs:198: let lend = lend_of(&share(8096), |_| true, Some(jf)).unwrap();
+crates/svrngs/src/share/tests.rs:207: /// Open WebUI's too): `share 8080` alone is refused, naming the kinds svrngs
+crates/svrngs/src/share/tests.rs:220: let mut typed = share(8080);
+crates/svrngs/tests/flags.rs:37: let said = cli::parse(argv(&["share", "8080", flag]));
+crates/svrngs/tests/flags.rs:40: let said = cli::parse(argv(&["share", "", "x"]));
+crates/svrngs/tests/join_page.rs:125: lend::declare(dir.path(), &shelf, None).unwrap();
+crates/svrngs/tests/new.rs:710: "share 8096 extra",
+crates/svrngs/tests/phone_dry.rs:79: lend::declare(&sam_dir, &film, None).unwrap();
+crates/svrngs/tests/play.rs:127: /// `svrngs share <port> --udp` or `--tcp` declares it.
+crates/svrngs/tests/scenes/doc.rs:124: &["share", &port, "--name", "doc", "--kind", "doc"],
+crates/svrngs/tests/scenes/events.rs:177: &["share", &port, "--kind", "events", "--name", "events"],
+crates/svrngs/tests/scenes/films.rs:2: //! `svrngs share <its port> --kind jellyfin`, typing nothing, and makes
+crates/svrngs/tests/scenes/films.rs:165: .command(&sam, &["share", &port, "--kind", "jellyfin"], "\n")
+crates/svrngs/tests/scenes/life.rs:79: /// as `svrngs share <port> --kind <name>` lends it: the app, killed on drop.
+crates/svrngs/tests/scenes/life.rs:100: .command(who, &["share", &port, "--kind", name, "--name", name], "\n")
+crates/svrngs/tests/scenes/night.rs:80: .command(&sam, &["share", &port, "--kind", "jellyfin"], "\n")
+crates/svrngs/tests/scenes/pantry.rs:4: //! computer, lent as `svrngs share <port> --kind <anything> --name <name>`
+crates/svrngs/tests/scenes/pantry.rs:85: .command(who, &["share", &port, "--kind", kind, "--name", name], "\n")
+crates/svrngs/tests/scenes/ports.rs:4: //! share <port> --udp --name walkie`; Bo runs a TCP program and lends
+crates/svrngs/tests/scenes/ports.rs:5: //! his, `svrngs share <port> --tcp --name board`. Each, on their own
+crates/svrngs/tests/scenes/ports.rs:66: let args = ["share", &port, how, "--kind", "echo", "--name", name];
+crates/svrngs/tests/share.rs:40: /// What `svrngs share <port> --kind <kind>` asks of the service at
+crates/svrngs/tests/share.rs:181: // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
+crates/svrngs/tests/share.rs:422: cli::parse(argv(&["share", "8096", flag, "x"])).is_err(),
+crates/svrngs/tests/share.rs:427: "share", "8096", "--name", "box", "--limit", "2", "--refuse", "/admin",
+crates/svrngs/tests/share.rs:436: let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
+crates/svrngs/tests/share.rs:442: cli::parse(argv(&["share", "8096", "--upload", bad])).is_err(),
+crates/svrngs/tests/share.rs:449: "share", "8096", "--reads", "films", "--reads", "music",
+crates/svrngs/tests/share.rs:455: assert!(cli::parse(argv(&["share", "8096", "--reads", "a/b"])).is_err());
+crates/svrngs/tests/share.rs:476: cli::parse(argv(&["share", "8096", "--sign-in", "9000"])).err(),
+crates/svrngs/tests/share.rs:480: cli::parse(argv(&["share", "8096", "--sign-in"])).err(),
+crates/svrngs/tests/share.rs:485: cli::parse(argv(&["share", "8096", "--sign-in", "0"])).err(),
+crates/svrngs/tests/share.rs:504: let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
+crates/svrngs/tests/share.rs:510: cli::parse(argv(&["share", "8096", "--ask", bad])).is_err(),
+crates/svrngs/tests/share.rs:591: let argv1 = ["share", p1.as_str(), "--kind", "pad"];
+crates/svrngs/tests/share.rs:608: let argv2 = ["share", p2.as_str(), "--kind", "box", "--limit", "2"];
+crates/svrngs/tests/share.rs:712: let argv = ["share", port.as_str(), "--kind", "pad"];
+crates/svrngs/tests/share.rs:713: let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "pads\n");
+crates/svrngs/tests/share.rs:785: "share",
+crates/svrngs/tests/share.rs:791: let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "");
+crates/svrngs/tests/share.rs:857: let log = logs.path().join("share");
+crates/svrngs/tests/share.rs:861: &["share", port.as_str(), "--kind", "jellyfin"],
+crates/svrngs/tests/share.rs:906: /// finding 2): `share 4533`, a stand-in listening there, lends it as
+crates/svrngs/tests/share.rs:919: let log = logs.path().join("share");
+crates/svrngs/tests/share.rs:920: let mut running = Program::start(dir.path(), &log, &["share", "4533"], &format!("{SECRET}\n"));
+crates/svrngs/tests/share.rs:970: cli::parse(argv(&["share", "--folder", "films", "--group", "house"])),
+crates/svrngs/tests/share.rs:976: assert!(cli::parse(argv(&["share", "--folder", "films"])).is_err());
+crates/svrngs/tests/share.rs:977: assert!(cli::parse(argv(&["share", "--folder", "films", "--both-ways"])).is_err());
+crates/svrngs/tests/share.rs:978: assert!(cli::parse(argv(&["share", "--group", "house"])).is_err());
+crates/svrngs/tests/tcp.rs:3: //! runs `svrngs share <port> --tcp --kind echo`, and a program on Alex's
+crates/svrngs/tests/tcp.rs:144: /// `svrngs share <port> --tcp --kind echo [args]` on Sam's computer, as the
+crates/svrngs/tests/tcp.rs:149: "share",
+crates/svrngs/tests/udp.rs:3: //! runs `svrngs share <port> --udp --kind echo`, and a program on Alex's
+crates/svrngs/tests/udp.rs:116: /// `svrngs share <port> --udp --kind echo [args]` on Sam's computer, as the
+crates/svrngs/tests/udp.rs:121: "share",
+docs/DESIGN.md:164: `svrngs share <port> --udp --kind <kind>`, or `--tcp`: its declaration says
+docs/DESIGN.md:840: self-host: `svrngs share 8096` lends Jellyfin as it comes, and someone who
+docs/DESIGN.md:842: phone. A friend's model is lent the same way: `svrngs share <port> --kind
+docs/DESIGN.md:1230: 0600, and the page shows it once (`lend::declare`, `oidc::client`).
+docs/LENDING_SCOPE.md:178: `lend::limit` and `home::sign_in` read then rewrite a full lend. A stale edit
+docs/LENDING_SCOPE.md:218: - Proposed CLI: repeat `--group <name-or-id>` on `share <port>` and allow
+docs/PLAN.md:157: Landed, give-udp: `svrngs share <port> --udp` lends a UDP port, its
+docs/PLAN.md:163: Landed, give-tcp: `svrngs share <port> --tcp` lends a TCP port, each
+docs/PLAN.md:729: how `svrngs share 8096` lends it since u5-4, each person with an account
+docs/PLAN.md:845: | `sovereign/crates/sovereign-cli-mesh/src/publish_cmd.rs` (`svrn publish <name> <port>`) and `mesh_media/offer.rs` (`probe_origin`, Jellyfin's well-known ports) | writes a lend into `config.toml`; probes a port for a known service | the verb's shape and the probe, with edits: `svrngs share <port>` writes a lend declaration into the data dir, and works whether or not svrngs is already running (a running node reads the declarations; one per data dir, `crates/svrngs/src/cli.rs` `claim`). Landed (u3-5): `crates/svrngs/src/share.rs`, its probe, table and decision in the node since v1ui-lend (a) (`crates/svrngs-node/src/share.rs`); a port alone, on 127.0.0.1; the kind the given one, else the port's from a table kept as data (`well_known.txt`, 8096 — the door speaks plain HTTP, so upstream's TLS port 8920 is not shared by number — and since bash-person 4533 and 8083), else refused; the name the given one, else the kind; the limit the given one, else none, which lets in everyone in its groups at once, printed (bash-limit: the 3 that stood here was a number nobody chose, and a declaration naming none, once refused, now holds none); the secret read from a prompt, unechoed on a terminal, sent as `authorization`; `share` runs the node unless svrngs already runs, and `svrngs unshare <name>` withdraws a lend |
+docs/PLAN.md:953: | `mesh_media/offer.rs:94-97` (`WELL_KNOWN_ORIGINS`) | 8096, then 8920 | forked already (U3): `crates/svrngs-node/src/well_known.txt`, 8096 alone, so `svrngs share 8096` names Jellyfin |
+docs/PLAN.md:1026: | U3 lend a service | the member door: a route that proxies to a lent service, the verified person set from the connection; `svrngs share <port>` with its lend declaration; streaming and byte ranges through the door; each request's share of the lender's upload; the people-at-once limit; the loopback record API (the rail routes and the live lane, forked); the list of what members lend | the app sees the verified person; a header the client typed is stripped; the lender's secret appears in no byte a member receives; with three streams, each is told a third of the declared upload, and a fourth person is refused with a reason |
+docs/PLAN.md:1042: | U5 any app on a port, Jellyfin as it comes | what an app cannot yet ask (DESIGN §3): the groups this computer holds and what their people lend, on the record API (u5-1); every lend at an origin of its own, a pass in place of the person's key, the web carried whole, its live socket included (u5-2); stock Jellyfin measured through a lend and the way past its sign-in decided (u5-3), then built (u5-4); DESIGN §1's list of apps measured on five of them (u5-catalogue-dry); Demo A's dry run (u5-9) — on the DESIGN §3 surface alone, and nothing that knows Jellyfin outside `apps/jellyfin/` | after `svrngs share 8096`, someone who never used Jellyfin opens it from the list, from a computer and from a phone, in Chromium and WebKit, plays, and seeks three times, each playing again within five seconds; two people at once, one seeking five times, never restart the other's play; no byte a person receives holds a secret the lend keeps; the conformance canary's routes all pass on a computer and with the wildcard, and on the floor (dropped since, u6-00) all but the two it cannot give, each named; DESIGN §1 names only apps the census supports |
+docs/PLAN.md:1283: lends llama-server, `svrngs share <its number> --kind llama-server`; Bo
+docs/PLAN.md:1439: - *Declared by `share`.* `svrngs share <port> --sign-in <its port>`
+docs/PLAN.md:1571: token. The lend is Jellyfin's own port: `svrngs share 8096 --sign-in
+docs/diagrams/src/guide-build.mjs:422: b += M(60, 338, 'svrngs share 4400 --kind hello', { size: 15 });
+docs/diagrams/src/guide-build.mjs:453: 'A lent server runs on Ana’s computer at 127.0.0.1:4400, lent with svrngs share 4400 --kind hello; it goes with Ana and opens while Ana’s computer is on. A carried app is a folder apps/guestbook/ with index.html and index.js in Elm’s folder, reading and writing the record at svrngs/acts; every computer in Elm serves it, so it opens while any of them is on.',
+docs/diagrams/src/guide-use.mjs:143: k.text(84, 482, 'svrngs share 8096', { size: 16, mono: true });
+docs/diagrams/src/guide-use.mjs:171: 'Sam lends Jellyfin, on localhost:8096, with Lend jellyfin to everyone in your groups or svrngs share 8096. Bo opens Sam’s jellyfin from the home page and Ana from a phone. Before Jellyfin answers, Sam’s computer checks who is asking, adds the app’s password, which stays on Sam’s computer, and keeps refused paths closed. Someone not in the group gets nothing. No port is opened on Sam’s router.',
+docs/diagrams/src/guide-use.mjs:312: b += k.text(720, 216, 'svrngs share 25565 --tcp', { size: 15, mono: true });
+docs/diagrams/src/guide-use.mjs:327: 'Ana presses Play on Sam’s minecraft, and the row says Connect to 127.0.0.1:41821. Copied. Ana’s Minecraft connects to that address on Ana’s own computer; svrngs carries it to Sam’s computer, which lent the port with svrngs share 25565 --tcp, and on to Sam’s Minecraft server on 25565.',
+docs/guide/apps.md:155: node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --kind doc < /dev/null
+docs/guide/build.md:84: ~/.local/bin/svrngs share 4400 --kind hello
+docs/guide/build.md:231: svrngs share 4500 --kind taste --ask "your film ratings"
+docs/guide/build.md:246: svrngs share 4500 --kind myapp --sign-in-with-svrngs
+docs/guide/build.md:280: - *"say what is on port 4400: `svrngs share 4400 --kind <kind>` …"*: add
+docs/guide/games.md:16: ~/.local/bin/svrngs share 25565 --tcp --kind minecraft --name minecraft
+docs/guide/games.md:30: ~/.local/bin/svrngs share 34197 --udp --kind factorio --name factorio
+docs/guide/how-it-works.md:52: svrngs share 8096 --kind jellyfin
+docs/guide/lend.md:25: svrngs share 8096
+docs/guide/lend.md:31: svrngs share 2283 --kind immich
+docs/guide/lend.md:34: Without `--kind` on a port it doesn't know, svrngs says *"say what is on port 2283: `svrngs share 2283 --kind <kind>`, its own name if it is one svrngs knows: jellyfin, navidrome, calibre-web, llama-server"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
+docs/guide/lend.md:41: svrngs share 8096
+docs/guide/lend.md:63: then `svrngs share 4533`. Each friend who opens it is in as themselves.
+docs/guide/lend.md:67: `svrngs share 8083`. Like Navidrome, it can take each person from svrngs. In Calibre-Web: Admin, Edit Basic Configuration, Feature Configuration; tick Allow Reverse Proxy Authentication, set Reverse Proxy Header Name to `X-Svrngs-User`, and Save. svrngs hasn't yet checked whether Calibre-Web lets in a friend it has no account for.
+docs/guide/lend.md:74: svrngs share 2283 --kind immich
+docs/guide/lend.md:75: svrngs share 5006 --kind actual
+docs/guide/lend.md:93: svrngs share 8096 --name films
+docs/guide/lend.md:101: svrngs share 8096 --limit 3
+docs/guide/lend.md:109: svrngs share 8000 --kind wiki --refuse /admin --refuse /settings
+docs/guide/lend.md:119: svrngs share 8096 --sign-in-with-svrngs
+docs/guide/models.md:22: svrngs share 8101 --kind llama-server --name coder
+docs/guide/models.md:94: svrngs share 8101 --kind llama-server --name coder --limit 2
+docs/guide/models.md:121: To lend your own model or tool for the pantry, run it on `127.0.0.1` and lend it with any kind: `svrngs share 8108 --kind mcp --name tools`. More recipes (speech, speech to text, a vision bridge) are in [apps/pantry/README.md](../../apps/pantry/README.md).
+docs/guide/troubleshooting.md:115: - **``svrngs: say what is on port 8080: `svrngs share 8080 --kind <kind>`, its own name if it is one svrngs knows: …``**
+docs/guide/troubleshooting.md:134: - ***"films already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."***
