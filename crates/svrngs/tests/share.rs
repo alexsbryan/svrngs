@@ -11,10 +11,9 @@
 //! the program, for the second.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
-use std::io::{BufRead, BufReader, Read, Write};
+use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::path::Path;
-use std::process::{Child, Command as Process, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -538,76 +537,9 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         .is_none());
 }
 
-/// The program, its output read line by line as it comes.
-struct Program {
-    child: Child,
-    lines: std::sync::mpsc::Receiver<String>,
-    seen: Vec<String>,
-}
-
-impl Program {
-    /// `svrngs <args>` over `dir`, tracing everything to `log`, with `input`
-    /// on its standard input.
-    fn start(dir: &Path, log: &Path, args: &[&str], input: &str) -> Self {
-        let mut child = Process::new(env!("CARGO_BIN_EXE_svrngs"))
-            .args(args)
-            .env("SVRNGS_DIR", dir)
-            .env("RUST_LOG", "trace")
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(std::fs::File::create(log).unwrap())
-            .spawn()
-            .unwrap();
-        child
-            .stdin
-            .take()
-            .unwrap()
-            .write_all(input.as_bytes())
-            .unwrap();
-        let out = child.stdout.take().unwrap();
-        let (tx, lines) = std::sync::mpsc::channel();
-        std::thread::spawn(move || {
-            for line in BufReader::new(out).lines().map_while(Result::ok) {
-                if tx.send(line).is_err() {
-                    return;
-                }
-            }
-        });
-        Program {
-            child,
-            lines,
-            seen: Vec::new(),
-        }
-    }
-
-    /// Read its output until a line holds `text`.
-    fn until(&mut self, text: &str) {
-        while !self.seen.iter().any(|l| l.contains(text)) {
-            match self.lines.recv_timeout(Duration::from_secs(30)) {
-                Ok(l) => self.seen.push(l),
-                Err(_) => panic!("no {text:?} in {:?}", self.seen),
-            }
-        }
-    }
-
-    /// Wait for it to end by itself; its exit code and whole output.
-    fn ends(mut self) -> (i32, Vec<String>) {
-        let status = self.child.wait().unwrap();
-        while let Ok(l) = self.lines.recv_timeout(Duration::from_secs(5)) {
-            self.seen.push(l);
-        }
-        (status.code().unwrap_or(-1), std::mem::take(&mut self.seen))
-    }
-}
-
-/// Dropped, the program is stopped: a test that fails before it stops one
-/// would otherwise leave it running, orphaned, holding its port.
-impl Drop for Program {
-    fn drop(&mut self) {
-        let _ = self.child.kill();
-        let _ = self.child.wait();
-    }
-}
+#[path = "common/program.rs"]
+mod program;
+use program::Program;
 
 /// Every file under `dir` but `except`, by path, holding `needle`.
 fn holding(dir: &Path, needle: &[u8], except: &Path) -> Vec<String> {
