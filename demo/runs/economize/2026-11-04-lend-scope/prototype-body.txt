@@ -1,0 +1,9 @@
+$ cargo run --offline --quiet --manifest-path /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/lend-scope-0c3qvb98/Cargo.toml -- body
+plant=body; sweep=1000 ms; experimental ceiling=1250 ms
+body: upstream closure with unpolled/backpressured downstream: Err(Elapsed(())), elapsed 1.250783s
+
+thread 'main' (4622774) panicked at prototype.rs:135:5:
+upstream must close inside 1250 ms even when body is unpolled
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+exit 101

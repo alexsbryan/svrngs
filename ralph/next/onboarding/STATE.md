@@ -383,6 +383,15 @@ swift                     0 / 1 lines
     continue to implementation without a redundant operator budget stop.
     Exceeding the survey's +700 non-JS / +235 JS guardrails, core growth or
     a wider design remains a new operator decision.
+
+  Pass evidence: `demo/runs/economize/2026-11-04-lend-scope/` (`SURVEY.md`,
+  `PROTOTYPE.md`, `CLOSE.md`). Survey committed before the prototype; no
+  supported cuts or product/cap growth. Baseline remains core 3,486,
+  non-JS 19,789, JS 8,066; Give Rust src separately 2,669. Scratch guard
+  plants fail for body/upgrade-copy/raw TCP/UDP and green meets 1,250 ms;
+  real-node two-second withdrawal remains implementation's proof. Current
+  fast checks pass; closing inventory detected unrelated concurrent browser
+  edits, retained for their owner before final done bookkeeping.
 - [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — ONE ROW, implement selected-ring lending end to end from `docs/LENDING_SCOPE.md`; minimal necessary actual growth preapproved, zero additional core product lines:
   - **Policy and migration.** Persist explicit stable group IDs on the
     existing lend declaration; no selection means no group access. New

@@ -1,0 +1,5 @@
+$ python3 scripts/principles_check.py
+pinned  docs/principles/ARCH_PRINCIPLES.md = commonwealth-ai sovereign/ARCH_PRINCIPLES.md at af47c998d
+pinned  docs/principles/RUST_ARCH.md = commonwealth-ai docs/RUST_ARCH.md at 9d6e95faf
+
+exit 0

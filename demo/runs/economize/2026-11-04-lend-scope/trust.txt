@@ -1,0 +1,4 @@
+$ python3 scripts/trust_check.py
+trust floor: 10 policies, 11 listeners, 9 gates
+
+exit 0

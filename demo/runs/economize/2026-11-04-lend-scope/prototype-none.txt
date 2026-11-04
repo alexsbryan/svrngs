@@ -1,0 +1,11 @@
+$ cargo run --offline --quiet --manifest-path /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/lend-scope-0c3qvb98/Cargo.toml -- none
+plant=none; sweep=1000 ms; experimental ceiling=1250 ms
+body: upstream closure with unpolled/backpressured downstream: Ok(Ok(())), elapsed 980.53025ms
+splice: peer EOF: Ok(Ok(0)), elapsed 980.297792ms
+splice: unrelated TCP channel still carries bytes
+raw: owned child socket EOF: Ok(Ok(0)), elapsed 980.150375ms
+udp: owned flow dropped: Ok(Ok(())), elapsed 982.260875ms
+udp: closed flow receives no post-withdrawal packet
+passed: independent body/upgrade/raw cancellation primitives
+
+exit 0

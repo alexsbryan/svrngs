@@ -1,0 +1,42 @@
+$ python3 scripts/advisories.py
+warning[yanked]: detected yanked crate (try `cargo update -p iroh-blobs`)
+    ┌─ /Users/alexsbryan/dev/svrngs/Cargo.lock:183:1
+    │
+183 │ iroh-blobs 0.103.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ yanked version
+    │
+    ├ iroh-blobs v0.103.0
+      └── svrngs-node v0.1.0
+          ├── svrngs v0.1.0
+          └── (dev) svrngs-node v0.1.0 (*)
+
+advisories ok
+passed     advisories: Cargo.toml
+warning[advisory-not-detected]: advisory was not encountered
+  ┌─ /Users/alexsbryan/dev/svrngs/deny.toml:9:11
+  │
+9 │   { id = "RUSTSEC-2023-0089", reason = "review by 2026-12-01: atomic-polyfill is transitive through postcard/heapless in pinned iroh; no vulnerable behavior is identified by this maintenance notice" },
+  │           ━━━━━━━━━━━━━━━━━             ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ignore reason
+  │           │
+  │           no crate matched advisory criteria
+
+warning[advisory-not-detected]: advisory was not encountered
+   ┌─ /Users/alexsbryan/dev/svrngs/deny.toml:11:11
+   │
+11 │   { id = "RUSTSEC-2024-0370", reason = "review by 2026-12-01: proc-macro-error is build-time through genawaiter/iroh-blobs; the notice identifies maintenance, not an exploit" },
+   │           ━━━━━━━━━━━━━━━━━             ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ignore reason
+   │           │
+   │           no crate matched advisory criteria
+
+warning[advisory-not-detected]: advisory was not encountered
+   ┌─ /Users/alexsbryan/dev/svrngs/deny.toml:12:11
+   │
+12 │   { id = "RUSTSEC-2024-0449", reason = "review by 2026-12-01: Give's existing serde_yaml parser uses unsafe-libyaml; replace with a maintained parser in a separately verified card-reader change" },
+   │           ━━━━━━━━━━━━━━━━━             ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ignore reason
+   │           │
+   │           no crate matched advisory criteria
+
+advisories ok
+passed     advisories: web/Cargo.toml
+
+exit 0

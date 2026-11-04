@@ -1,0 +1,12 @@
+$ cargo run --offline --quiet --manifest-path /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/lend-scope-0c3qvb98/Cargo.toml -- raw
+plant=raw; sweep=1000 ms; experimental ceiling=1250 ms
+body: upstream closure with unpolled/backpressured downstream: Ok(Ok(())), elapsed 979.776084ms
+splice: peer EOF: Ok(Ok(0)), elapsed 980.330166ms
+splice: unrelated TCP channel still carries bytes
+raw: owned child socket EOF: Err(Elapsed(())), elapsed 1.252192333s
+
+thread 'main' (4622930) panicked at prototype.rs:212:5:
+raw children must close inside 1250 ms
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+exit 101

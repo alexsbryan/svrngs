@@ -1,0 +1,13 @@
+$ cargo run --offline --quiet --manifest-path /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/lend-scope-0c3qvb98/Cargo.toml -- udp
+plant=udp; sweep=1000 ms; experimental ceiling=1250 ms
+body: upstream closure with unpolled/backpressured downstream: Ok(Ok(())), elapsed 980.531042ms
+splice: peer EOF: Ok(Ok(0)), elapsed 980.96475ms
+splice: unrelated TCP channel still carries bytes
+raw: owned child socket EOF: Ok(Ok(0)), elapsed 979.318958ms
+udp: owned flow dropped: Err(Elapsed(())), elapsed 1.252577625s
+
+thread 'main' (4623064) panicked at prototype.rs:258:5:
+UDP child must be dropped inside 1250 ms
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+exit 101

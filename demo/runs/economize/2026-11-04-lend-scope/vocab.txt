@@ -1,0 +1,4 @@
+$ python3 scripts/vocab_check.py
+89 app nouns, 0 in infra code
+
+exit 0

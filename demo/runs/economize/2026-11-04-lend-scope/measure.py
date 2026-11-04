@@ -15,7 +15,8 @@ ROOT = HERE.parents[3]
 def run(name, args, cwd=ROOT):
     result = subprocess.run(args, cwd=cwd, text=True, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT)
-    text = f"$ {' '.join(map(str, args))}\n{result.stdout}\nexit {result.returncode}\n"
+    output = "\n".join(line.rstrip() for line in result.stdout.splitlines())
+    text = f"$ {' '.join(map(str, args))}\n{output}\nexit {result.returncode}\n"
     (HERE / f"{name}.txt").write_text(text)
     print(text, end="")
     return result.returncode
@@ -61,10 +62,34 @@ elif sys.argv[1] == "prototype":
         scratch = Path(scratch)
         shutil.copy(HERE / "prototype.toml", scratch / "Cargo.toml")
         shutil.copy(HERE / "prototype.rs", scratch / "prototype.rs")
-        for plant in ("body", "splice", "raw", "none"):
+        for plant in ("body", "splice", "raw", "udp", "none"):
             code = run(f"prototype-{plant}", ["cargo", "run", "--offline", "--quiet",
                 "--manifest-path", str(scratch / "Cargo.toml"), "--", plant])
             if code != (0 if plant == "none" else 101):
                 sys.exit(f"unexpected prototype exit for {plant}: {code}")
+elif sys.argv[1] == "fast":
+    commands = [
+        ("lean-after", ["python3", "scripts/lean_check.py"]),
+        ("principles", ["python3", "scripts/principles_check.py"]),
+        ("trust", ["python3", "scripts/trust_check.py"]),
+        ("advisories", ["python3", "scripts/advisories.py"]),
+        ("vocab", ["python3", "scripts/vocab_check.py"]),
+        ("rustfmt", ["cargo", "fmt", "--all", "--check"]),
+        ("lint", ["web/node_modules/.bin/oxlint"]),
+        ("format", ["web/node_modules/.bin/oxfmt", "--check", "**/*.{js,mjs,cjs}"]),
+        ("types", ["node", "scripts/types.mjs"]),
+        ("typed-lint", ["node", "scripts/typed-lint.mjs"]),
+        ("page-laws", ["node", "--test", *[str(p.relative_to(ROOT)) for p in sorted((ROOT / "web/tests").rglob("*.test.mjs"))]]),
+        ("workspace", ["cargo", "check", "--workspace", "--offline"]),
+        ("unchanged-product", ["git", "diff", "--exit-code", "7ad807f1", "--", "crates", "web", "resolver", "scripts", "apps"]),
+    ]
+    for name, args in commands:
+        if run(name, args):
+            sys.exit(1)
+elif sys.argv[1] == "close":
+    run("unchanged-production", ["git", "diff", "--exit-code", "7ad807f1", "--",
+        "crates", "web", "resolver", "scripts", "apps",
+        ":!crates/**/tests/**", ":!web/tests/**"])
+    run("prior-full-gate", ["git", "show", "da503bac", "--", "ralph/REVIEW_FINDINGS.md"])
 else:
-    sys.exit("expected survey or prototype")
+    sys.exit("expected survey, prototype, fast or close")

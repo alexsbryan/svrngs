@@ -148,7 +148,8 @@ be a larger signed-context/origin design, not an extra checkbox.
    an additional network delegation and must be described as such.
 8. **Give:** `apps/give/src/lend.rs:74-82` currently calls unscoped `share`.
    Its keeper already knows the group (`keep.rs:539-547`); pass that ID.
-   Update its three share call sites, the harnesses and documented scripts.
+   Update its two keeper calls (`keep.rs:539,683`) and adapter definition,
+   the harnesses and documented scripts.
 
 ### Existing streams and app sessions
 
@@ -165,6 +166,17 @@ or splice, not the whole multiplexed iroh connection, which also carries
 other lends and group traffic. Prototype this part before promising a bound.
 The cheaper milestone denies new HTTP requests but lets existing streams
 finish; it must say exactly that and must not claim immediate withdrawal.
+
+The fresh pass's scratch experiment is now recorded in
+`../demo/runs/economize/2026-11-04-lend-scope/PROTOTYPE.md`: existing
+Tokio/Hyper/drop primitives closed a backpressured upstream HTTP body,
+an upgraded-copy primitive and owned raw TCP/UDP tasks within a 1,250 ms
+test ceiling with a one-second sweep. Each transport's disabled guard failed
+first. This is not a WebSocket-handshake or real-iroh withdrawal proof.
+Use an independently scheduled guard around the request/pump/upgrade lifetime,
+not a timer polled only by downstream body demand; own the upstream driver
+and raw children. The production row must prove the proposed two-second
+bound with real nodes and unrelated traffic still working.
 
 Jellyfin accounts, its own sessions and reach through an independently
 exposed Jellyfin address remain Jellyfin's. Removing a svrngs audience is not
@@ -254,10 +266,18 @@ about 735, with **zero planned svrngs-core lines**. Separately allow roughly
 No estimate here funds a new ACL framework, per-ring endpoints/origins,
 signed group-context passes or app account isolation.
 
-The working-tree lean reading during this survey was core 3,486/3,494,
-non-JS 19,789/19,833 and JS 8,066/8,090, while the portal worker was active.
-This does **not** fit the remaining 44 non-JS and 24 JS lines. Remeasure after
-the preceding queue work and perform the required economizing pass first.
+The fresh economizing pass at `7ad807f1`, after the preceding fixes, reports
+core **3,486/3,494**, non-JS **19,789/19,833**, JS **8,066/8,090** and Give
+Rust source separately **2,669**. Its current-source/window inventory found
+no supported behavior-preserving cut; semantic clones are could-not-judge,
+not zero. Evidence and exact caller/mutation/witness/version/migration sites
+are in `../demo/runs/economize/2026-11-04-lend-scope/SURVEY.md`.
+With exclusive caps this permits **43 non-JS and 23 JS** additional lines,
+not the arithmetic differences 44/24. The unchanged estimate does not fit
+that headroom. The scratch result retains **+400–700 non-JS / +135–235 JS**,
+zero core and Give separately +10–25. No product cut or cap edit lands in
+the pass. Audience edits preserve existing app-choice yeses; the live scope
+gate remains authoritative before any yes is honored.
 The operator has preapproved only necessary actual additions, with each
 required cap adjustment landed incrementally to one past the measured
 count. The 700 non-JS / 235 JS upper estimates are review guardrails, not

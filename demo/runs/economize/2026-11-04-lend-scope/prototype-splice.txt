@@ -1,0 +1,10 @@
+$ cargo run --offline --quiet --manifest-path /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/opencode/lend-scope-0c3qvb98/Cargo.toml -- splice
+plant=splice; sweep=1000 ms; experimental ceiling=1250 ms
+body: upstream closure with unpolled/backpressured downstream: Ok(Ok(())), elapsed 980.462333ms
+splice: peer EOF: Err(Elapsed(())), elapsed 1.252156125s
+
+thread 'main' (4622843) panicked at prototype.rs:176:5:
+upgraded copy must close inside 1250 ms
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+exit 101
