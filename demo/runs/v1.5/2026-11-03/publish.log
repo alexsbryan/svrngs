@@ -1,0 +1,81 @@
+deploy-page: this build meets its groups at n0's relays, until the switch to svrngs's (PLAN §2)
+building web for wasm32-unknown-unknown (release)…
+macOS: using /opt/homebrew/opt/llvm/bin/clang for the wasm C sources (Apple clang cannot target wasm32)
+    Finished `release` profile [optimized] target(s) in 0.95s
+wasm-opt: -Oz applied
+
+built: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site  (version 6a3a8c04fa55)
+  size: 3.9M wasm
+  1. upload that directory to the guest runtime's static origin
+     (today svrnme.sh, beside the landing page and installers)
+  2. point a grant at it:
+       svrn mesh grant --all-apps --ttl 2h --url https://<origin>/ --qr-svg wall-qr.svg
+       (--model may be omitted: it defaults to the daemon's primary slot)
+  Serve it with gzip/brotli on (the wasm compresses well) and, if the
+  host allows, the headers index.html's meta tags ask for — a CDN gives
+  both; nothing here depends on them.
+build-release: darwin-aarch64 (aarch64-apple-darwin) by cargo build…
+    Finished `release` profile [optimized] target(s) in 0.62s
+build-release: darwin-x86_64 (x86_64-apple-darwin) by cargo build…
+    Finished `release` profile [optimized] target(s) in 0.39s
+build-release: linux-x86_64 (x86_64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `x86_64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.45s
+build-release: linux-aarch64 (aarch64-unknown-linux-musl) by cargo zigbuild…
+warning: dropping unsupported crate type `cdylib` for target `aarch64-unknown-linux-musl`
+
+warning: `give-fold` (lib) generated 1 warning
+    Finished `release` profile [optimized] target(s) in 0.49s
+
+built: /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site/get
+56f640aa9b17c2155c32aa462c2d3954c38cf3cca8db08e8673e6987adbdb20f  svrngs-darwin-aarch64.tar.gz
+1f57a981a7c35065f0515ffd9cc41767e52a733414719308a0446fa83c7c0f05  svrngs-darwin-x86_64.tar.gz
+6b3f28f961a3fedc684b6378f125d0c5125b0af0955d3cbda8c9fb6567d98cc2  svrngs-linux-aarch64.tar.gz
+9c301f1561de4660e248a891956a348a85fad7b8fdd667af908825562b3c741b  svrngs-linux-x86_64.tar.gz
+570ece667478dc9be21d3483933ff6bc65e0767cc3c922b197aca3657f4117d1  give-darwin-aarch64.tar.gz
+394537f2699ff40e3dd0dcd4a232142d309960c3c614ff57040b64595862cbc2  give-darwin-x86_64.tar.gz
+9b73ee01712b5e0385643ef67faaad661d8b78b9d3394960c638690c9c04ad52  give-linux-aarch64.tar.gz
+774328dace9825e2fad049eca5e4accb18f82e61bd2328fcebf6998e5ecead6d  give-linux-x86_64.tar.gz
+deploy-page: 5a4cb567 to svrngs-page (svrnmesh) from /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+
+  Directory       /private/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site
+
+Searching for existing projects…
+
+✓ Linked          svrnmesh/svrngs-page
+
+Retrieving project…
+> Downloading a fresh `VERCEL_OIDC_TOKEN` for svrnmesh/svrngs-page
+Downloading
+
+✓ Created         .env.local file and added it to .gitignore
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+Deploying svrngs-page
+Uploading [--------------------] (0.0B/61.6MB)
+Uploading [=====---------------] (15.4MB/61.6MB)
+Uploading [==========----------] (30.8MB/61.6MB)
+Uploading [===============-----] (46.2MB/61.6MB)
+Uploading [====================] (61.6MB/61.6MB)
+  Inspect         https://vercel.com/svrnmesh/svrngs-page/E58G4keystRG3ubFZMZFcQp5M2zz
+  Production      https://svrngs-page-p5lzijv91-svrnmesh.vercel.app
+https://svrngs-page-p5lzijv91-svrnmesh.vercel.appBuilding…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 8 GB
+Retrieving list of deployment files...
+[2K[1A[2K[G  Production      https://svrngs-page-p5lzijv91-svrnmesh.vercel.app
+Completing…
+▲ Aliased         https://group.svrnme.sh
+
+✓ Ready in 23s
+
+Next steps:
+- Check the deployment response:
+  vercel curl https://svrngs-page-p5lzijv91-svrnmesh.vercel.app --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site
+- View build logs:
+  vercel inspect svrngs-page-p5lzijv91-svrnmesh.vercel.app --logs --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site
+- Create a new deployment from the same source:
+  vercel redeploy svrngs-page-p5lzijv91-svrnmesh.vercel.app --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.A0CdK3MUZw/site

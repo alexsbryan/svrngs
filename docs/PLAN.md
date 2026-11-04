@@ -313,9 +313,9 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   The final runtime is the full gate's tested tree, with the later budget
   jubilee verified by its failing plant; the doc scene passed its focused
   rerun. Its evidence is `demo/runs/economize/2026-11-03-js-read/CLOSE.md`
-  and `ralph/REVIEW_FINDINGS.md`. V1.5 is prepared with these changes, the
-  relay fallbacks and the loading, Stop and binary-message fixes
-  (`RELEASES.md`);
+  and `ralph/REVIEW_FINDINGS.md`. V1.5 is published from 5a4cb567 with these
+  changes, the relay fallbacks and the loading, Stop and binary-message
+  fixes (`RELEASES.md`; `demo/runs/v1.5/2026-11-03/README.md`);
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; `ralph/next/js/NEEDS_HUMAN.md`,
   "A phone's write waits out a round's slowest dial"): a write nudged while

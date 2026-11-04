@@ -39,6 +39,10 @@ there is no JavaScript build transform. The focused closing review and
 verification are recorded in `demo/runs/economize/2026-11-03-js-read/CLOSE.md`
 and `ralph/REVIEW_FINDINGS.md`.
 
+V1.5 is the build at `group.svrnme.sh`, from commit `5a4cb567`, tagged
+`v1.5`. Its publication and readback are recorded in
+`demo/runs/v1.5/2026-11-03/README.md`.
+
 ## V1.4, 2 November 2026
 
 V1.4 rebuilds both pages, your computer's and your group's, and closes the
