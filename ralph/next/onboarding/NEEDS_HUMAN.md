@@ -1,12 +1,26 @@
 # Onboarding's operator decisions
 
-## Store proof — live Free database provided; reset guard required
+## Store proof — live Free database and reset guard proven
 
 `onboarding-store-proof`, read on **2026-11-04 UTC / 2026-11-03 local**.
-The assigned row requires a stop here before an adapter. Local proof committed
+The assigned row requires this proof before an adapter. Local proof committed
 in `0f72a101`; source excerpts, uncertainty and arithmetic:
 `demo/runs/onboarding/2026-11-04-store/README.md`. Actual planted-red and
 atomic-green runs: that directory's `ATOMIC.md`. No product lines changed.
+
+Completion on 2026-11-04 against `a13f027e`: the guard's missing-generation
+plant failed by reopening an old phrase; local and live guarded runs passed.
+The permanent live key `svrngs:{onboarding}:generation` is pinned to
+`onboarding-2026-11-04-v1`, TTL -1, and retained after fixture cleanup. Exact
+commands/output and recovery limitations are in
+`demo/runs/onboarding/2026-11-04-store/RESET.md`; the graceful-failure contract
+is in `FAILURES.md` beside it. This sentinel detects missing/mismatched
+generation, not selective reservation loss or an old snapshot retaining the
+sentinel. A suspected rollback still needs operator reconciliation. The
+written-answer wait below is historical, superseded by the operator; no
+additional operator answer is requested by this row. Adapter failure tests,
+account checks before deployment, and the no-deployment/no-paid-usage boundary
+remain as documented in that evidence.
 
 ### The operator's live database, 2026-11-04
 

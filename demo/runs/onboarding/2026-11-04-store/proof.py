@@ -20,6 +20,9 @@ import time
 
 HERE = Path(__file__).resolve().parent
 SCRIPTS = {name: (HERE / f"{name}.lua").read_text() for name in ("create", "close")}
+GENERATION = "onboarding-2026-11-04-v1"
+GUARD = (HERE / "generation.lua").read_text()
+LOOKUP = (HERE / "lookup.lua").read_text()
 
 
 class Redis:
@@ -176,9 +179,48 @@ def lifecycle(redis):
     print(f"sample reservation MEMORY USAGE: {redis.call('MEMORY', 'USAGE', reservation)} bytes", flush=True)
 
 
+def reset_guard(redis, planted):
+    # All namespace keys share a hash tag, including its global generation.
+    keys = ("proof:{onboarding}:reservation", "proof:{onboarding}:secret",
+            "proof:{onboarding}:generation")
+
+    def operation(name, identity="owner-b/new-invite"):
+        source = LOOKUP if name == "lookup" else SCRIPTS[name]
+        return redis.call("EVAL", ("" if planted else GUARD) + source, 3, *keys,
+                          identity, "invite", int(time.time() * 1000) + 60000, GENERATION)
+
+    require(redis.call("SET", keys[2], GENERATION, "NX") == "OK", "fixture generation")
+    require(operation("create", "owner-a/old-invite") == "created", "guarded setup")
+    require(operation("lookup") == "invite", "guarded live lookup")
+    # Forget the reservation along with the generation, as a blank store would.
+    redis.call("DEL", *keys)
+    result = operation("create")
+    print(f"missing generation: publication={result}", flush=True)
+    require(result == "unavailable", "missing generation reopened an old phrase")
+    for name in ("lookup", "close"):
+        result = operation(name)
+        print(f"missing generation: {name}={result}", flush=True)
+        require(result == "unavailable", f"missing generation allowed {name}")
+    require(redis.call("EXISTS", *keys) == 0, "refusal wrote partial state or reseeded generation")
+    redis.call("SET", keys[2], "wrong-generation")
+    for name in ("create", "lookup", "close"):
+        require(operation(name) == "unavailable", f"mismatched generation allowed {name}")
+    require(redis.call("EXISTS", *keys[:2]) == 0, "mismatch wrote partial state")
+    print("passed: missing/mismatched generation refuses publication, lookup and close without writes", flush=True)
+    # Restore is fixture-only: the service has no initialization/recovery path.
+    redis.call("SET", keys[2], GENERATION)
+    require(operation("create") == "created", "matching generation refused create")
+    require(operation("lookup") == "invite", "matching generation refused lookup")
+    require(operation("close") == "closed", "matching generation refused close")
+    require(operation("create") == "closed", "guarded replay reopened")
+    require(operation("lookup") == "ended", "confirmed close not ended")
+    require(redis.call("PTTL", keys[2]) == -1, "generation expires")
+    print("passed: matching generation permits lifecycle; generation has no TTL", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=("plant-create", "plant-close", "atomic"))
+    parser.add_argument("mode", choices=("plant-create", "plant-close", "atomic", "plant-reset", "reset"))
     options = parser.parse_args()
     if not all(shutil.which(name) for name in ("redis-server", "redis-cli")):
         print("could-not-judge: redis-server and redis-cli required")
@@ -194,6 +236,8 @@ def main():
                 create_race(redis, True)
             elif options.mode == "plant-close":
                 close_race(redis, True)
+            elif options.mode in ("plant-reset", "reset"):
+                reset_guard(redis, options.mode == "plant-reset")
             else:
                 create_race(redis, False)
                 close_race(redis, False)

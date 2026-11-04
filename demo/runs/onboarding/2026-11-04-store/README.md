@@ -1,15 +1,19 @@
 # Onboarding store survey — 4 November 2026 UTC
 
-Assigned unit: `onboarding-store-proof`, `ralph/next/onboarding/STATE.md:79-106`.
+Assigned unit: `onboarding-store-proof`, `ralph/next/onboarding/STATE.md:79-131`.
 Operator-local date is 3 November; `date -u '+%Y-%m-%dT%H:%M:%SZ'` returned
 `2026-11-04T06:16:33Z`. All URLs below were read on **2026-11-04 UTC**.
 Base: `c7714367`; local primitive proof: `0f72a101`, [ATOMIC.md](ATOMIC.md).
 
-**Result:** local atomic proof passed; documented Free-only cost boundary
-established; self-hosting path established. Hosted failover/consistency and
-exact Free bandwidth-exhaustion response are **could-not-judge**, not proved
-by the local run. Phrase/abuse choices below are a recommendation awaiting
-the operator, not authorization to implement or deploy the adapter.
+**Result:** local atomic proof and live Free smoke test passed; documented
+Free-only cost boundary and self-hosting path established. The operator has
+approved the paired phrase/limits and replaced the written-answer gate with
+the generation guard. Its planted red, local green and live green are in
+[RESET.md](RESET.md); the live permanent generation key is retained. Every
+limit/error follows [FAILURES.md](FAILURES.md). Hosted failover/consistency
+and exact Free bandwidth-exhaustion response remain **could-not-judge**.
+This completes the survey's reset requirement, not a hosted durability
+guarantee or authorization to deploy/pay. Adapter failure tests are still owed.
 
 ## 1. Official evidence and its limits
 
@@ -88,15 +92,18 @@ Prod Pack or payment method is authorized by this survey.
 an authoritative state-and-secret read; do not mix a stale read-region GET
 with close. The official EVAL lock documents per-operation isolation. It
 does **not**, alongside the conflicting replication statements, prove the
-permanent no-reuse rule across hosted failure/recovery. Obtain provider
-confirmation of the selected Free endpoint's acknowledged-write recovery
-semantics before lifting the store stop line. The operator cannot convert
-this unknown to a pass by choosing shorter tombstone retention.
+permanent no-reuse rule across hosted failure/recovery. The operator has
+superseded the written-answer gate with the permanent generation guard
+(CHARTER §operator decisions). [RESET.md](RESET.md) proves refusal on a
+blank/mismatched store, and explicitly states that selective rollback is not
+detectable by this sentinel. Known/suspected recovery still requires operator
+reconciliation or retiring the namespace, never shorter tombstone retention.
 
 `ATOMIC.md` contains the exact primitives, red and green commands/output,
 Redis version, script hashes, absolute secret expiry and permanent
-reservations after a forced local crash. No hosted compatibility, failover
-or HTTP quota test was substituted for it.
+reservations after a forced local crash. `live.txt` adds hosted REST primitive
+compatibility; RESET.md adds the guarded lifecycle live. Neither is a hosted
+failover or HTTP quota test.
 
 ### Command accounting matters
 
@@ -143,11 +150,15 @@ What the operator would still supply:
 These are requirements derived from ONBOARDING §3's never-reuse/close rules,
 not claims that TLS, backups or a self-hosted deployment have been tested.
 
-## 3. Paired recommendation for the operator
+## 3. Approved paired phrase and limits
+
+The operator approved these exact proposed values on 2026-11-04 ("The rest
+is reasonable too"), recorded in `ralph/next/onboarding/NEEDS_HUMAN.md`.
+They are an adapter contract, not implemented limits or deployment approval.
 
 ### Phrase and reservation
 
-Recommend **five independent words** joined with `-`, sampled uniformly with
+Use **five independent words** joined with `-`, sampled uniformly with
 the OS/browser CSPRNG using rejection sampling (no modulo bias), from EFF's
 **Short Wordlist 1**, excluding only `yo-yo` so every word is `[a-z]{3,5}`.
 No adjective/noun grammar, truncation, fuzzy matching or human-chosen phrase.
@@ -186,9 +197,9 @@ not the invitation capability or group name. Close deletes the live secret;
 expiry removes it via TTL. Native closure must still invalidate the original
 long invitation before claiming admission closed (ONBOARDING §3).
 
-### Initial limits — exact proposed values, not yet code
+### Initial limits — approved values, not yet code
 
-| Limit | Proposed choice |
+| Limit | Approved choice |
 |---|---|
 | Public lookup | Per trusted ingress IP: **30/minute, 300/day**; global **1,000/day, 20,000/calendar month**. Include misses, expired/closed addresses and status lookups; no public list/scan. |
 | Host mutations | Verify signature before mutation; at most **5 new publications/owner/day**, **10 mutation attempts/owner/minute**, **60/hour**. Global **100 new publications/day**, **3,000 admitted mutation requests/month**, including retries/closes. Prioritize closure/status over new creation as the limit approaches; a failed withdrawal remains visibly pending. |
@@ -231,10 +242,14 @@ their record/folders continue without the resolver (ONBOARDING §3).
 
 ## 4. Handoff and unchanged inherited work
 
-`ralph/next/onboarding/NEEDS_HUMAN.md` carries the decisions requested by
-the row. No state checkbox was edited and no other queue row was opened.
+`ralph/next/onboarding/NEEDS_HUMAN.md` carries the operator's decisions.
+RESET.md completes the generation proof; FAILURES.md defines the failure
+policy and distinguishes future adapter checks from evidence collected here.
+No state checkbox was edited and no other queue row was opened.
 `scripts/check.sh` is unchanged and was not required/run for this survey
-(assigned row:104-106); the lean count is unchanged in `ATOMIC.md`.
+(assigned row:122-127). ATOMIC.md records the earlier lean count; RESET.md
+records this completion's current-base count (native publication has landed
+in between; this survey still adds no counted product lines).
 
 Inspected inherited `demo/runs/v1.6/2026-11-03/publish.json:1-6`: source
 `75f9fd3b`, scratch `/private/tmp/svrngs-release-v1.6`, state `running`.

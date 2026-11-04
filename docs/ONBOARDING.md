@@ -185,8 +185,8 @@ not a completed implementation measurement. `home/` is
 Combined estimate: **575–981 product lines**, midpoint about 780.
 Allow roughly 450–800 test lines, markup/configuration and wordlist data
 besides. Resolver storage semantics can revise the provisional resolver
-range; the planned store is chosen, but its adapter waits on
-`onboarding-store-proof`.
+range; the planned store's proof is recorded in §5. Its adapter remains
+unbuilt and must prove the failure/commit behavior described there.
 
 Remeasured after the survey at `194aa994`: core **3,477/3,478**, `.`
 **19,441/19,442**, `js` **7,499/7,500**, unchanged from its base. No
@@ -219,7 +219,9 @@ retry, a permanent reservation, and an error the client can map to
 handler, not a deployment authorization. The written-answer gate is
 superseded by a permanent generation key: if the store looks reset, the
 resolver refuses short-address service rather than reuse the URL namespace.
-Do not build a provider framework.
+The permanent live generation and local/live refusal proofs are recorded in
+`../demo/runs/onboarding/2026-11-04-store/RESET.md`. These are experiments,
+not a deployed resolver. Do not build a provider framework.
 
 Pricing checked on 2026-11-03: [Upstash Redis](https://upstash.com/pricing/redis)
 offers one free database, 250 MB and 500,000 commands/month. Usage-based
@@ -249,7 +251,15 @@ bandwidth-exhaustion response is undocumented in the pages read. The resolver
 therefore keeps a permanent generation key and refuses all short-address
 service if it is missing, rather than reuse the URL namespace. The
 self-hosting path is documented, including the handler transport change
-required by ordinary Redis.
+required by ordinary Redis. The guard runs within every operation's EVAL,
+not as a separate preflight; missing or mismatched generation refuses lookup,
+publication, status and close without writes or automatic reseeding. A
+sentinel cannot detect selective reservation loss or an old snapshot retaining
+it: known/suspected rollback still requires operator reconciliation or URL
+namespace retirement. The precise error/retry and uncertain-mutation contract
+is in `../demo/runs/onboarding/2026-11-04-store/FAILURES.md`. The adapter must
+prove no partial publication/close under injected failures; script isolation
+is not rollback of Redis writes after runtime errors.
 The paired five-word phrase and abuse-limit recommendation was approved by
 the operator on 2026-11-04 ("The rest is reasonable too"), together with the
 graceful-failure requirement ("We should fail gracefully in the case we hit
