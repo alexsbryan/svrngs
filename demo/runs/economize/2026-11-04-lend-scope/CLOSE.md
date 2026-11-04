@@ -129,3 +129,11 @@ or checkpoints them: remeasure the new base, reconcile the estimate's
 baseline and cap headroom, and run the required checks before reporting done.
 Do not treat this unrelated +90 JS growth as selected-lending preapproval,
 and do not change a cap to make someone else's unfinished work pass.
+
+## Resumed checkpoint reconciliation
+
+Inherited grouped-home files were inspected and checkpointed in `c3fa0ef7`
+as required by the next session's instructions. The new locked fast-check
+transcript is `reconcile-fast.txt`; `RECONCILE.md` records its failures,
+fresh counts/headroom and the owner/director decision needed to resume.
+The earlier passing fast checks do not describe this newer product baseline.

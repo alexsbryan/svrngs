@@ -285,6 +285,16 @@ up-front allocations; exceeding them, adding core lines or expanding scope
 needs a new decision. Existing-stack economy is credible; fitting under
 today's caps is not.
 
+Reconciliation at `c3fa0ef7` checkpoints an unrelated, unfinished grouped-home
+prototype: core **3,486/3,494**, non-JS **19,790/19,833**, JS **8,174/8,090**.
+Relative to the survey this is **0 core / +1 non-JS / +108 JS**, none spent
+by selected-ring lending. Non-JS headroom is now **42** lines; JavaScript
+has no headroom and is **85 lines** above its maximum passing count of 8,089.
+Do not charge that prototype to lending's conditional approval. Its owner
+must reconcile the baseline before an incremental lending cap calculation.
+The estimate and guardrails above remain unchanged; the current failures
+and decision request are in the pass's `RECONCILE.md`.
+
 ## Proof before landing
 
 Use the existing node/door, native command, browser, raw-port and scene

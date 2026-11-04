@@ -1,0 +1,135 @@
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3486 / 3494 lines
+.                     19790 / 19833 lines
+js                     8174 / 8090 lines
+swift                     0 / 1 lines
+BROKEN  js has 8174 lines of code, budget 8090: raised only by the operator, with the reason in the commit
+exit 1
+$ python3 scripts/principles_check.py
+pinned  docs/principles/ARCH_PRINCIPLES.md = commonwealth-ai sovereign/ARCH_PRINCIPLES.md at af47c998d
+pinned  docs/principles/RUST_ARCH.md = commonwealth-ai docs/RUST_ARCH.md at 9d6e95faf
+exit 0
+$ python3 scripts/trust_check.py
+trust floor: 10 policies, 11 listeners, 9 gates
+exit 0
+$ python3 scripts/advisories.py
+warning[yanked]: detected yanked crate (try `cargo update -p iroh-blobs`)
+    ┌─ /Users/alexsbryan/dev/svrngs/Cargo.lock:183:1
+    │
+183 │ iroh-blobs 0.103.0 registry+https://github.com/rust-lang/crates.io-index
+    │ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ yanked version
+    │
+    ├ iroh-blobs v0.103.0
+      └── svrngs-node v0.1.0
+          ├── svrngs v0.1.0
+          └── (dev) svrngs-node v0.1.0 (*)
+
+advisories ok
+passed     advisories: Cargo.toml
+warning[advisory-not-detected]: advisory was not encountered
+  ┌─ /Users/alexsbryan/dev/svrngs/deny.toml:9:11
+  │
+9 │   { id = "RUSTSEC-2023-0089", reason = "review by 2026-12-01: atomic-polyfill is transitive through postcard/heapless in pinned iroh; no vulnerable behavior is identified by this maintenance notice" },
+  │           ━━━━━━━━━━━━━━━━━             ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ignore reason
+  │           │                              
+  │           no crate matched advisory criteria
+
+warning[advisory-not-detected]: advisory was not encountered
+   ┌─ /Users/alexsbryan/dev/svrngs/deny.toml:11:11
+   │
+11 │   { id = "RUSTSEC-2024-0370", reason = "review by 2026-12-01: proc-macro-error is build-time through genawaiter/iroh-blobs; the notice identifies maintenance, not an exploit" },
+   │           ━━━━━━━━━━━━━━━━━             ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ignore reason
+   │           │                              
+   │           no crate matched advisory criteria
+
+warning[advisory-not-detected]: advisory was not encountered
+   ┌─ /Users/alexsbryan/dev/svrngs/deny.toml:12:11
+   │
+12 │   { id = "RUSTSEC-2024-0449", reason = "review by 2026-12-01: Give's existing serde_yaml parser uses unsafe-libyaml; replace with a maintained parser in a separately verified card-reader change" },
+   │           ━━━━━━━━━━━━━━━━━             ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── ignore reason
+   │           │                              
+   │           no crate matched advisory criteria
+
+advisories ok
+passed     advisories: web/Cargo.toml
+exit 0
+$ python3 scripts/vocab_check.py
+89 app nouns, 0 in infra code
+exit 0
+$ cargo fmt --all --check
+Diff in /Users/alexsbryan/dev/svrngs/crates/svrngs-node/tests/browser/grouped.rs:7:
+     let dir = tempfile::tempdir().unwrap();
+     let (ada, group) = house(dir.path(), &relay, &signing(7)).await;
+     let open = drive::open_at(ada.api_addr().port(), "svrngs", "/?ui=b").unwrap();
+-    let seen = drive(engine, "grouped.mjs", json!({ "open": open, "group": group }), None).await;
++    let seen = drive(
++        engine,
++        "grouped.mjs",
++        json!({ "open": open, "group": group }),
++        None,
++    )
++    .await;
+     eprintln!("grouped home: {seen:#}");
+     ada.endpoint().close().await;
+ }
+exit 1
+$ web/node_modules/.bin/oxlint
+crates/svrngs-node/src/home/page/grouped.js:56:1: error eslint(complexity): function `Context` has a complexity of 11. Maximum allowed is 10.
+exit 1
+$ web/node_modules/.bin/oxfmt --check **/*.{js,mjs,cjs}
+Checking formatting...
+
+crates/svrngs-node/src/home/page/grouped.js (0ms)
+web/tests/grouped.mjs (4ms)
+web/tests/grouped.test.mjs (0ms)
+
+Format issues found in above 3 files. Run without `--check` to fix.
+Finished in 41ms on 294 files using 12 threads.
+exit 1
+$ node scripts/types.mjs
+crates/svrngs-node/src/home/page/grouped.js(51,93): error TS18048: 'selected' is possibly 'undefined'.
+
+types: 1 errors in 130 files
+exit 1
+$ node scripts/typed-lint.mjs
+typed lint, jsconfig.json: 126 files, exit 1
+crates/svrngs-node/src/home/page/grouped.js:56:1: error eslint(complexity): function `Context` has a complexity of 11. Maximum allowed is 10.
+crates/svrngs-node/src/home/page/grouped.js:49:8: error typescript(strict-boolean-expressions): Unexpected nullable number value in conditional. help: Handle the nullish and zero cases explicitly.
+typed lint, jsconfig.workers.json: 3 files, exit 0
+exit 1
+$ node --test web/tests/grouped.test.mjs
+TAP version 13
+# (node:30840) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: B places every original group capability exactly once
+ok 1 - B places every original group capability exactly once
+  ---
+  duration_ms: 0.98375
+  ...
+# Subtest: B destinations retain stable ids and refuse unknown views without exposing controls
+ok 2 - B destinations retain stable ids and refuse unknown views without exposing controls
+  ---
+  duration_ms: 0.248333
+  ...
+# Subtest: making and joining preserve B and its destination through the reread
+ok 3 - making and joining preserve B and its destination through the reread
+  ---
+  duration_ms: 0.106
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 100.401916
+exit 0
+$ cargo check --workspace --offline
+    Checking svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
+    Checking svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 7.03s
+exit 0

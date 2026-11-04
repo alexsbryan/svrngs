@@ -386,12 +386,15 @@ swift                     0 / 1 lines
 
   Pass evidence: `demo/runs/economize/2026-11-04-lend-scope/` (`SURVEY.md`,
   `PROTOTYPE.md`, `CLOSE.md`). Survey committed before the prototype; no
-  supported cuts or product/cap growth. Baseline remains core 3,486,
-  non-JS 19,789, JS 8,066; Give Rust src separately 2,669. Scratch guard
+  supported cuts or product/cap growth by this unit. Survey baseline: core
+  3,486, non-JS 19,789, JS 8,066; Give Rust src separately 2,669. Scratch guard
   plants fail for body/upgrade-copy/raw TCP/UDP and green meets 1,250 ms;
   real-node two-second withdrawal remains implementation's proof. Current
-  fast checks pass; closing inventory detected unrelated concurrent browser
-  edits, retained for their owner before final done bookkeeping.
+  fast checks passed at the survey base. Inherited grouped-home work is now
+  checkpointed as `c3fa0ef7`; reconciliation is core 3,486, non-JS 19,790,
+  JS 8,174, with lean/format/lint/type failures in that unfinished prototype.
+  `RECONCILE.md` and `reconcile-fast.txt` record the locked checks and request
+  owner/director reconciliation, without spending lending approval on it.
 - [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — ONE ROW, implement selected-ring lending end to end from `docs/LENDING_SCOPE.md`; minimal necessary actual growth preapproved, zero additional core product lines:
   - **Policy and migration.** Persist explicit stable group IDs on the
     existing lend declaration; no selection means no group access. New
