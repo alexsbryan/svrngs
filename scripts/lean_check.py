@@ -432,9 +432,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # beside them in the files the route joins — node.rs, api.rs, surface.rs,
 # home.rs, group.rs, folder.rs, removal.rs — and found none: each holds
 # one decider the design names, and nothing is said twice across them.
-# The raise is the operator's: approved 2026-11-03, "Approve raise to
-# 19,100", from 18,859.
-BUDGET = {"crates/svrngs-core": 3478, ".": 19247, "js": 7484, "swift": 1}
+# Merged onto main's update raise (c85fcbeb), the tree lands at 19,441;
+# the operator approved both caps 2026-11-03 ("Approve both"): `.` to
+# 19,442 and `js` to 7,500, the js overage the page's stale-worker fix
+# added (d6d2a120, 15 over its 7,484).
+BUDGET = {"crates/svrngs-core": 3478, ".": 19442, "js": 7500, "swift": 1}
 CODE = {".rs", ".ts", ".py", ".sh"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
