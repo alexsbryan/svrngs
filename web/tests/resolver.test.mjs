@@ -419,6 +419,16 @@ test('ingress bounds, authentication, trusted IP and no public directory', async
   assert.equal(calls, 0);
 });
 
+test('a UTF-8 BOM cannot change the bytes whose signature is checked', async () => {
+  reset();
+  const q = body();
+  const signed = mutation(q);
+  await refused(
+    await handle(new Request(signed, { body: `\ufeff${JSON.stringify(q)}` }), '127.0.0.1'),
+  );
+  assert.equal(calls, 0);
+});
+
 test('distributed guessing and owner limits include misses, retries and status', async () => {
   const clock = seconds();
   const date = new Date();

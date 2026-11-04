@@ -36,7 +36,11 @@ async function bounded(stream, signal) {
     for (;;) {
       const { done, value } = await reader.read();
       if (signal.aborted) throw new Error('timeout');
-      if (done) return new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks));
+      // A BOM is signed data too; TextDecoder otherwise strips it.
+      if (done)
+        return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(
+          Buffer.concat(chunks),
+        );
       length += value.length;
       if (length > 8192) throw new Error('body_limit');
       chunks.push(Buffer.from(value));

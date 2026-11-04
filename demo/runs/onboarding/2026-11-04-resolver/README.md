@@ -226,6 +226,36 @@ The earlier store survey's durability and hosting cost-boundary limits remain.
 
 ## Closing gate
 
+Review of the committed handler at `61ea3533` found that TextDecoder's default
+BOM stripping violated the exact-signed-bytes contract. A valid signed JSON
+request with an unsigned UTF-8 BOM prepended was accepted. The new check first
+failed against that implementation, then passed with `ignoreBOM: true` (which
+keeps the marker as data for signature verification):
+
+```text
+$ node --test --test-name-pattern='UTF-8 BOM' web/tests/resolver.test.mjs
+not ok - a UTF-8 BOM cannot change the bytes whose signature is checked
+200 !== 503
+# pass 0
+# fail 1
+exit 1
+
+# After preserving the BOM:
+$ node --test --test-name-pattern='UTF-8 BOM' web/tests/resolver.test.mjs
+ok - a UTF-8 BOM cannot change the bytes whose signature is checked
+# pass 1
+# fail 0
+# skipped 16
+exit 0
+
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3486 / 3494 lines
+.                     19739 / 19833 lines
+js                     7829 / 8090 lines
+swift                     0 / 1 lines
+exit 0
+```
+
 Targeted resolver laws, lint and the live adapter proof have passed. The full
 closing `scripts/check.sh` is still owed, to run once under
 `lockf -k /tmp/svrngs-gate.lock`. It will be handed to the loop as a foreground
