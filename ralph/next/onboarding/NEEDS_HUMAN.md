@@ -1,9 +1,10 @@
 # Onboarding's budget and resolver decision
 
-Status: survey and revised estimate recorded; **full closing gate still
-never-ran**. This package is prepared for the operator, but is not yet a
-claim that `onboarding-economize` passed. Commit the gate's actual output
-and exit code here before returning the unit's needs-human result.
+Status: survey and revised estimate recorded; **first full closing gate
+failed**, retained in `4555a32e`. Podman is now started and the isolated
+browser retry passed; the unchanged full gate must pass before this package
+claims that `onboarding-economize` passed. Commit its output and exit code
+here before returning the unit's needs-human result.
 
 ## Questions, in order
 
@@ -84,9 +85,45 @@ The original count and all run files are under
 `demo/runs/economize/2026-11-03-onboarding/data/`. The survey driver reuses
 the earlier instruments unchanged; no new gate was added.
 
-### Closing gate — owed
+### Closing gate — first failure retained, full retry owed
 
-Run once through the queue's await facility (do not background it):
+The first `measure.py close` completed in 602 seconds, exit 1. Its complete
+output is `demo/runs/economize/2026-11-03-onboarding/data/check-first.txt`
+(committed in `4555a32e`), including:
+
+```text
+failed     tests (5 s)
+failed     browser (161 s)
+never-ran  scene give (chromium): Error: unable to connect to Podman socket: failed to connect: dial tcp 127.0.0.1:62636: connect: connection refused
+never-ran  scene give_gone (chromium): Error: unable to connect to Podman socket: failed to connect: dial tcp 127.0.0.1:62636: connect: connection refused
+never-ran  scene give_move (chromium): Error: unable to connect to Podman socket: failed to connect: dial tcp 127.0.0.1:62636: connect: connection refused
+note       took 602 s in all
+exit: 1
+```
+
+Seven Give tests refused to run without Podman (:51-100). Chromium failed
+`the_home_page_lends_what_runs_here` at `tests/browser/main.rs:4574`, checking
+the final chores lending redraw (:891-892). Its captured trace ended while
+the final LENDING read was still in flight (:237-244); this suggests a
+snapshot timing issue, but does not establish its cause.
+
+Prerequisite recovery and focused retry, without product or test edits:
+
+```text
+$ podman machine start
+Starting machine "podman-machine-default"
+Machine "podman-machine-default" started successfully
+$ podman info --format '{{.Host.Security.Rootless}}'
+true
+$ cargo test --quiet --workspace --test browser the_home_page_lends_what_runs_here -- --nocapture
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 95 filtered out; finished in 8.22s
+```
+
+All three commands exited 0. The isolated retry's trace completed with
+`LENDING: answered (2 lent)` and the chores row present. One passing retry
+does not resolve the initial failure or replace the full gate.
+
+Retry through the queue's await facility (do not background it):
 
 ```sh
 python3 -I demo/runs/economize/2026-11-03-onboarding/measure.py close

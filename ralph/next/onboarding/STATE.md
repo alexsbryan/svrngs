@@ -32,8 +32,11 @@ product cut; the clone instrument is could-not-judge, not a zero-clone
 finding. The revised estimate in `docs/ONBOARDING.md` §4 is +230–391
 non-JS and +345–590 JS, with possible +0–16 core included in non-JS.
 `NEEDS_HUMAN.md` prepares the operator's budget/storage questions. The
-full closing gate and its committed exit-0 evidence are still owed before
-the pass is complete; its driver is `measure.py close` in that run directory.
+full closing gate first failed (`4555a32e`, `data/check-first.txt`): Podman
+was unavailable and Chromium's final lending redraw assertion failed.
+Podman is now started and the isolated browser retry passed without edits;
+the full retry and committed exit-0 evidence remain owed before the pass is
+complete. Its driver is `measure.py close` in that run directory.
 
 ## Rows
 
