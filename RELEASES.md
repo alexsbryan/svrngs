@@ -1,5 +1,36 @@
 # svrngs releases
 
+## V1.6, 3 November 2026
+
+V1.6 lets a computer join another group while svrngs is running, and lets
+svrngs update itself from the page it came from.
+
+**Join another group without stopping svrngs.** On a computer where svrngs
+runs from login, as `install.sh` keeps it, `svrngs join` used to refuse:
+"svrngs is already running on this computer; stop it, then run this again."
+Now `svrngs join <link>` asks the svrngs already running to join — the same
+computer joins the second group, places its folder at `~/svrngs/<group>`,
+and the running svrngs keeps running, for both groups. Your home page draws
+every group you are in as its own section, and a group joined from a
+terminal appears there the next time you come back to the page, with no
+reload. A computer whose svrngs is from before this release still says to
+stop it first.
+
+**svrngs updates itself from its page.** The home page says when a new
+svrngs is ready, with one Update button; `svrngs update` does the same from
+a terminal. The new program comes from the page this computer was installed
+from, is checked against that page's `SHA256SUMS` before it replaces the
+running one, and svrngs restarts into it (launchd on macOS, systemd on
+Linux). `install.sh` keeps the checksum it already checks; Give still
+follows the install line.
+
+**A stale page worker never answers a newer build**, and the page reloads
+itself after an update.
+
+V1.6 is the build at `group.svrnme.sh`, from commit `SOURCE`, tagged
+`v1.6`. Its publication and readback are recorded in
+`demo/runs/v1.6/2026-11-03/README.md`.
+
 ## V1.5, 3 November 2026
 
 V1.5 adds more than one way for computers to reach their group, fixes a
