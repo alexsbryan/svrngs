@@ -201,15 +201,16 @@ in_chromium!(
     /// read its groups once drew house alone.
     a_group_joined_by_the_running_svrngs_is_on_the_page_when_shown_again
 );
-async fn a_group_joined_by_the_running_svrngs_is_on_the_page_when_shown_again(
-    engine: Engine,
-) {
+async fn a_group_joined_by_the_running_svrngs_is_on_the_page_when_shown_again(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let (ada, home) = house(dir.path(), &relay).await;
     let sam_dir = tempfile::tempdir().unwrap();
     let (sam, _, trip) = computer(sam_dir.path(), &relay, 2, "Trip", "Sam").await;
-    let made = sam.host().link(&trip, false, None, None).expect("Sam makes a link to Trip");
+    let made = sam
+        .host()
+        .link(&trip, false, None, None)
+        .expect("Sam makes a link to Trip");
     let link = svrngs_node::link::client_link(&made.token);
     let ready = dir.path().join("ready");
     let args = json!({
@@ -248,7 +249,10 @@ async fn a_group_joined_by_the_running_svrngs_is_on_the_page_when_shown_again(
         .json()
         .await
         .unwrap_or(serde_json::Value::Null);
-    assert_eq!(joined["outcome"], "in", "the running svrngs let ada in: {joined}");
+    assert_eq!(
+        joined["outcome"], "in",
+        "the running svrngs let ada in: {joined}"
+    );
     send.send(()).expect("the page is shown again");
     let seen = driven.await.expect("the page was driven");
     let headings: Vec<String> = seen["later"]["words"]
