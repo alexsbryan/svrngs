@@ -485,6 +485,51 @@ async fn phone_joining(
     )
 }
 
+/// Sam's computer, its group `house` met at `own` and reached through
+/// `build` — which the node holds plainly, while the page reaches the same
+/// front over TLS — and a link carrying `relays`. The data directory is
+/// kept alive by the caller.
+async fn sam_meeting_at(
+    seed: u8,
+    own: svrngs_core::relay::Url,
+    build: &iroh_relay::server::Server,
+    relays: Vec<svrngs_core::relay::Url>,
+) -> (tempfile::TempDir, Node, String) {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[seed; 32]);
+    let sam = Node::start(
+        dir.path().to_path_buf(),
+        key.clone(),
+        &svrngs_node::iroh::RelayConfig {
+            relay_urls: vec![harness::relay_url(build)],
+            n0_services: false,
+            loopback_only: true,
+        },
+        svrngs::group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("Sam's computer starts");
+    let house = svrngs_node::group::draw(
+        Name::parse("house").unwrap(),
+        Name::parse("Sam").unwrap(),
+        key.verifying_key(),
+    );
+    sam.host()
+        .keep_group(&house, None, &[own])
+        .expect("house kept");
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let token = sam
+        .host()
+        .mint(&house.id(), relays, None, now)
+        .expect("a link")
+        .encode();
+    (dir, sam, token)
+}
+
 in_webkit!(
     /// **A fresh browser under the published page's policy joins through
     /// the advertised public fallback, the group's own HTTP relay never
@@ -506,20 +551,13 @@ async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
     let (own, public) = (harness::relay().await, harness::relay().await);
     let own_url: Url = harness::relay_url(&own).parse().unwrap();
     let public_https = format!("https://{}/", harness::relay_at(&public));
-    let dir = tempfile::tempdir().unwrap();
-    let sam = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[1; 32]),
-        &svrngs_node::iroh::RelayConfig {
-            relay_urls: vec![harness::relay_url(&public)],
-            n0_services: false,
-            loopback_only: true,
-        },
-        svrngs::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
+    let (dir, sam, token) = sam_meeting_at(
+        1,
+        own_url.clone(),
+        &public,
+        vec![own_url.clone(), public_https.parse().unwrap()],
     )
-    .await
-    .expect("Sam's computer starts");
+    .await;
     let shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
@@ -532,42 +570,15 @@ async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
         asks: None,
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
-    let seed = svrngs_node::group::draw(
-        Name::parse("house").unwrap(),
-        Name::parse("Sam").unwrap(),
-        SigningKey::from_bytes(&[1; 32]).verifying_key(),
-    );
-    sam.host()
-        .keep_group(&seed, None, &[own_url.clone()])
-        .expect("house kept, met at A");
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
-    let token = sam
-        .host()
-        .mint(
-            &seed.id(),
-            vec![own_url.clone(), public_https.parse().unwrap()],
-            None,
-            now,
-        )
-        .expect("a link preferring A, carrying B");
 
-    let (seen, origin) = phone_joining(
-        engine,
-        site.to_str().unwrap(),
-        &token.encode(),
-        Some("production"),
-    )
-    .await;
+    let (seen, origin) =
+        phone_joining(engine, site.to_str().unwrap(), &token, Some("production")).await;
     let port = origin
         .trim_end_matches('/')
         .rsplit(':')
         .next()
         .unwrap()
         .to_string();
-    eprintln!("published policy: {seen:#}");
     eprintln!("published policy: {seen:#}");
 
     // In through B alone, and the lend opens at its own origin from A's side
@@ -634,48 +645,14 @@ async fn a_route_that_answers_but_cannot_reach_the_issuer_does_not_win(engine: h
     let dead_https = format!("https://{}/", harness::relay_at(&dead));
     let dead_own: Url = harness::relay_url(&dead).parse().unwrap();
     let public_https = format!("https://{}/", harness::relay_at(&public));
-    let dir = tempfile::tempdir().unwrap();
-    let sam = Node::start(
-        dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[2; 32]),
-        &svrngs_node::iroh::RelayConfig {
-            relay_urls: vec![harness::relay_url(&public)],
-            n0_services: false,
-            loopback_only: true,
-        },
-        svrngs::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("Sam's computer starts");
-    let seed = svrngs_node::group::draw(
-        Name::parse("house").unwrap(),
-        Name::parse("Sam").unwrap(),
-        SigningKey::from_bytes(&[2; 32]).verifying_key(),
-    );
-    sam.host()
-        .keep_group(&seed, None, &[dead_own])
-        .expect("house kept, met at the dead end");
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
-    let token = sam
-        .host()
-        .mint(
-            &seed.id(),
-            vec![dead_https.parse().unwrap(), public_https.parse().unwrap()],
-            None,
-            now,
-        )
-        .expect("a link preferring the dead end, carrying the keeper's relay");
-    let (seen, _) = phone_joining(
-        engine,
-        site.to_str().unwrap(),
-        &token.encode(),
-        Some("production"),
+    let (_dir, sam, token) = sam_meeting_at(
+        2,
+        dead_own,
+        &public,
+        vec![dead_https.parse().unwrap(), public_https.parse().unwrap()],
     )
     .await;
+    let (seen, _) = phone_joining(engine, site.to_str().unwrap(), &token, Some("production")).await;
     eprintln!("dead-end route: {seen:#}");
     assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
     let said: Vec<&str> = seen["lines"]
