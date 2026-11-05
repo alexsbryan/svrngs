@@ -12,7 +12,9 @@
 # EnvironmentVariables if the pass runs cargo checks.
 label = "svrngs-onboarding"
 session_timeout = 7200
-audit_every = 9
+# The explicit REVIEW-audit-onboarding-auto-1 row is now the final audit.
+# Preserve all of its requirements; omit cadence generation so a parked audit
+# cannot spawn another duplicate and the final reviewed tree is indexed once.
 worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
 settings = "ralph/claude-settings.json"
 

@@ -106,6 +106,14 @@ welcome/portal/OIDC fixes: `onboarding-scope-economize`, then
 
 ## Director
 
+Completion sequencing (supervisor, 2026-11-04, after the operator's request
+to finish): land grouped-home reconciliation, close the existing lending
+economizing pass, implement scoped lending, then complete the existing
+strict audit auto-1 across the full implementation range before the people
+scene. Auto-2 stays as completed history. Automatic cadence generation is
+off; the explicit final audit preserves every outstanding requirement. Do
+not add features or redundant audit/preparation rows to this completion path.
+
 Grouped-home B's measured remainder was separately approved by the operator
 on 2026-11-04: JS cap **8,090 to 8,188 (+98)** at 8,187 counted lines after
 the preserving-economy review; no core or non-JS increase. This is not paid

@@ -15,8 +15,11 @@ No home-wide Glob or broad permission change is needed. A loopback probe at
 9741 currently refuses connection; that daemon is not a prerequisite when
 the existing local embedding server can be started directly.
 
-The audit now depends on grouped-home reconciliation so it measures the
-committed owner handback and approved budget, not a changing WIP baseline.
+The audit now follows grouped-home reconciliation and scoped-lending
+implementation so it measures the final committed product, not a changing
+WIP baseline. It is the one remaining explicit final audit and covers
+194aa994 through that final implementation HEAD, including earlier work;
+completed auto-2 does not discharge the outstanding original analyses.
 No clone/noun, source-review, lint or full-gate criterion is waived. The
 earlier evidence below remains historical.
 

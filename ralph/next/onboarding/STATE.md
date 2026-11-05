@@ -325,7 +325,16 @@ swift                     0 / 1 lines
     full gate if product behavior changes. No unsolicited installation or
     changes to the operator's Jellyfin server; the real configuration walk
     is brokered separately with the operator. Stay within approved budgets.
-- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-grouped-home-reconcile] — audit the commits since the previous `REVIEW-audit-` row's hash (since this queue started if there is none) against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-scoped-lending] — final audit of this queue's implementation range, 194aa994 through the final scoped-lending HEAD, against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+  - **Completion sequencing, 2026-11-04.** This existing row is the one
+    remaining final audit, after implementation and before the people scene.
+    Keep every original ledger, instrument/control, clone/noun, source-review,
+    lint and locked-gate requirement. Cover the full implementation range,
+    including work previously reported by completed auto-2; do not limit
+    coverage to the latest audit's hash. Auto-2 remains historical evidence,
+    not an excuse to skip auto-1's outstanding checks. No new cadence audit
+    rows are needed. Finish the current product work first so the audit
+    instruments are prepared once for the final reviewed tree.
   - **Supervisor resume context, 2026-11-04.** The last director ended on a
     rejected home-wide model search, not a completed analysis. The operator
     confirms main models live under `commonwealth-ai/sovereign/models`.
@@ -339,8 +348,8 @@ swift                     0 / 1 lines
     Stop only the process you started. No download, paid service or broad
     home-directory Glob is needed. Keep preparation in the isolated corpus
     already described below and read existing exporter controls for coverage.
-    Reconciliation is now a prerequisite so the corpus/gate measure its
-    committed product, rather than competing with an unfinished UI owner.
+    Reconciled grouped-home and scoped lending are prerequisites so the
+    corpus/gate measure their committed product, rather than a changing tree.
     Preserve all audit requirements; report results through `ralph-result`
     rather than ending on a rejected tool call.
   - **(0) Prepare the existing instrument.** Director decision, 2026-11-04:
@@ -487,7 +496,7 @@ swift                     0 / 1 lines
     full gate and a recorded real-node House/Trip scene; do not claim the
     people welcome from automated evidence. No live personal-data migration,
     public deployment, service spend or push as a side effect of this row.
-- [ ] onboarding-scene — depends [onboarding-scoped-lending] — ONE ROW
+- [ ] onboarding-scene — depends [REVIEW-audit-onboarding-auto-1] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write
     `demo/runs/onboarding/2026-11-04-scene/PREDICTIONS.md` before any run.
