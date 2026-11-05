@@ -104,3 +104,59 @@ the measured number for it.
   cut (relay_tiers measures the move; a sync scene is not written). They
   are the next session's, after the operator's decision, if the allowance
   is raised.
+
+## Director's verification (2026-11-05)
+
+Re-measured in the main tree at 7efc3e55, tree clean:
+
+- `python3 scripts/lean_check.py` exit 1: `.` 19,912/19,833, core
+  3,491/3,494, js 8,187/8,188, swift 0/1. The baseline f8a57035 re-run in
+  a worktree: `.` 19,832/19,833, core 3,486/3,494, js 8,187/8,188,
+  swift 0/1, exit 0 — so the repository cap had one line of headroom
+  before this queue and the landing's +80 is what breaks it.
+- Counted deltas f8a57035..HEAD, by the lean rule: product +80 exactly —
+  `crates/svrngs-core/src/relay.rs` +5, `web/src/lib.rs` +75, every other
+  product file +0; test files +353 (relay_fallback.rs +124, join_page.rs
+  +217, relay_tests.rs +7, relay_tiers.rs +3, page.mjs +2).
+- The ready diff applied to a scratch copy of `scripts/lean_check.py`
+  (not the repo file) makes the check exit 0: `.` 19,912/19,913, core
+  3,491/3,494, js 8,187/8,188, swift 0/1.
+- Focused checks re-run green: core relay 7 passed; relay_tiers 2
+  (24.1 s); relay_fallback 1 (20.4 s); join_page 4 (31.5 s);
+  fallback.test.mjs 1 pass; oxlint, oxfmt --check, scripts/types.mjs
+  (0 errors in 130 files), scripts/typed-lint.mjs clean.
+- The survey's caller lists spot-check: `relay_of` at dial.js:121,
+  join.js:270, visit.js:202; `relays_of` at hand.js:80, visit.js:149;
+  `holder_endpoint` at lend.js:280 and
+  apps/taste/check/other/other.js:85.
+
+## The decision, for the operator
+
+The charter reserves the cap to the operator — "Do not edit BUDGET or the
+trust floor without the required operator decision"; the test allowance
+is the operator's word in CHARTER.md §Budget and no script enforces it.
+Neither director nor worker may move either, and no worker can finish the
+unit inside the current caps: the test overage (353 against 150) stands
+whatever product lines are found, and the row's remaining checks would
+add more tests. The fork goes to the operator with this package.
+
+Options and their costs:
+
+- A (recommended): approve as asked — `.` 19,833 → 19,913 (one past the
+  landing) and the queue's test allowance 150 → 353. Cost: the repository
+  cap rises +80, all of it the authorized feature, whose focused checks
+  are green and whose landing is verified above.
+- B: order a further economizing pass over the whole repository before
+  any raise. Cost: another worker session; the onboarding queue's
+  instruments (public/dead-code, test-cfg, line-window, page-structure)
+  found no supported cut days ago, and no pass can cut the test overage
+  the row's own checks need. Likely re-lands at the same ask.
+- C: hold the cap and drop or reshape the landing. Cost: the authorized
+  demo — a fresh browser joining through the public fallback under the
+  production CSP — does not ship.
+
+Recommendation: A. After the word: apply the cap diff (and record the
+test allowance), then the row's remaining checks (a stalled eligible
+primary's no-delay bound; all-routes-down cleanup and bounded failure;
+native local sync with public reach cut), then REVIEW runs the unchanged
+full `scripts/check.sh`.
