@@ -27,8 +27,8 @@ test('a group met at its fallback says why in a person’s words, and one met at
   const section = (fallback) =>
     words(Group({ g: { id: 'ab12', name: 'House', removed: null, fallback } }));
   const said = {
-    unanswered:
-      'This computer can’t reach the place House usually meets, so it’s reaching House a backup way for now.',
+    fallback:
+      'This computer is reachable through the public way for now, so a phone can open House too. It goes back to the place House usually meets once the public way stops answering.',
     unowned:
       'This computer is also in a group with no meeting place of its own, so it reaches every group, House too, the backup way.',
   };

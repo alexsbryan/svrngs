@@ -92,16 +92,18 @@ async fn homed(node: &Node, want: &str) -> u128 {
     panic!("not homed at {want} within {by:?}");
 }
 
-/// **A group meets at its own relay while it answers, at the build's
-/// only when it does not, and at its own again once it answers.** Ada's
-/// group names A; her build's relay is B. She is homed at A; A stopped,
-/// at B; A back at its address, at A again. Planted: `Host::check` deciding
-/// as though the own relay always answered, and she never left A.
+/// **A group meets at the build's fallback while it answers, and at its
+/// own relay when it does not** (relay fallbacks; the relay-fallback
+/// charter: a browser may reach this computer only through the fallback):
+/// Ada's group names A; her build's relay is B. She is homed at B; B
+/// stopped, at A; B back at its address, at B again. Planted: the own tier
+/// preferred while the build's answers, and once the fallback stops she
+/// never reaches her own relay (red: not homed at A within 56 s).
 #[tokio::test(flavor = "multi_thread")]
-async fn a_group_meets_at_its_own_relay_while_it_answers() {
+async fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
-    let ((own, a), (_build, b)) = (relay(any).await, relay(any).await);
-    let a_at = own.http_addr().unwrap();
+    let ((_own, a), (build, b)) = (relay(any).await, relay(any).await);
+    let b_at = build.http_addr().unwrap();
     let (dir, key) = (
         tempfile::tempdir().unwrap(),
         SigningKey::from_bytes(&[3; 32]),
@@ -121,16 +123,19 @@ async fn a_group_meets_at_its_own_relay_while_it_answers() {
     node.host()
         .keep_group(&seed, None, &at_a)
         .expect("Ada keeps house, met at A");
-    eprintln!("TIERS homed at its own: {} ms", homed(&node, &a).await);
-    own.shutdown().await.unwrap();
     eprintln!(
-        "TIERS its own stopped, at the build's: {} ms",
+        "TIERS at the build's fallback while it answers: {} ms",
         homed(&node, &b).await
     );
-    let _back = relay(a_at).await;
+    build.shutdown().await.unwrap();
     eprintln!(
-        "TIERS its own back, at its own: {} ms",
+        "TIERS the fallback stopped, at its own: {} ms",
         homed(&node, &a).await
+    );
+    let _back = relay(b_at).await;
+    eprintln!(
+        "TIERS the fallback back, at the fallback: {} ms",
+        homed(&node, &b).await
     );
     node.endpoint().close().await;
 }

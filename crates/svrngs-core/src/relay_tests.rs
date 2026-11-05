@@ -120,30 +120,30 @@ fn a_group_never_meets_without_the_builds_relays() {
     assert_eq!(mesh.join(plain).relays().count(), 4);
 }
 
-/// **A group meets at its own relays while any answers, and at the
-/// build's only when none does** (relay fallbacks; GROUP_RELAYS §7, the
-/// operator's "Tiers"): the one decision holds the own tier alone while it
-/// answers, both tiers when none of it does, and both whatever answers
-/// when a group joined in names none of its own, one endpoint serving
-/// every group; a computer in no group is at the build's. Planted: the
-/// build's tier held whatever answers, and the first row failed.
+/// **A group meets at the build's fallback while it answers, and at its
+/// own relays when it does not** (relay fallbacks; GROUP_RELAYS §7, the
+/// charter's "keep a public fallback reachable while online"): the one
+/// decision holds the build's tier alone while it answers, the own tier
+/// alone when it does not, and the build's whatever answers when a group
+/// joined in names none of its own, one endpoint serving every group; a
+/// computer in no group is at the build's. Planted: the own tier preferred
+/// while the build's answers, and the first row failed.
 #[test]
-fn a_group_meets_at_its_own_relays_while_any_answers() {
+fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     let url = |u: &str| Url::parse(u).unwrap();
     let (a, n0) = (
         url("http://10.0.0.2:3340/"),
         url("https://use1-1.relay.n0.iroh.link/"),
     );
     let mesh = || Meeting::of([a.clone()], core::slice::from_ref(&n0));
-    let both = BTreeSet::from([a.clone(), n0.clone()]);
     for (meeting, answers, tier, held) in [
-        (mesh(), true, Tier::Own, BTreeSet::from([a.clone()])),
-        (mesh(), false, Tier::Unanswered, both.clone()),
+        (mesh(), true, Tier::Fallback, BTreeSet::from([n0.clone()])),
+        (mesh(), false, Tier::Own, BTreeSet::from([a.clone()])),
         (
             mesh().join(Meeting::of([], core::slice::from_ref(&n0))),
             true,
             Tier::Unowned,
-            both.clone(),
+            BTreeSet::from([n0.clone()]),
         ),
         (
             Meeting::of([], core::slice::from_ref(&n0)),
@@ -154,4 +154,14 @@ fn a_group_meets_at_its_own_relays_while_any_answers() {
     ] {
         assert_eq!(meeting.decide(answers), (tier, held), "{tier:?}");
     }
+    // A build with no relay at all answers nothing: a group's own relays
+    // are held, and a group naming none holds none.
+    assert_eq!(
+        Meeting::of([a.clone()], &[]).decide(true),
+        (Tier::Own, BTreeSet::from([a.clone()]))
+    );
+    assert_eq!(
+        Meeting::of([], &[]).decide(true),
+        (Tier::Unowned, BTreeSet::new())
+    );
 }
