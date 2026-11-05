@@ -290,7 +290,9 @@ async function opened() {
     ? 'of this run, named by the holder’s link'
     : 'as the pass’s holder, for an older door';
   trace(`RUNTIME: opening the endpoint ${as}`);
-  return holder_endpoint(bytes, handed.relays);
+  // A pass kept before relay fallbacks names its one relay, and no `relays`.
+  if (!handed.relays) trace('RUNTIME: the pass names one relay, as one kept before fallbacks');
+  return holder_endpoint(bytes, handed.relays ?? (handed.relay ? [handed.relay] : []));
 }
 
 // The pass a request carries, and the link naming this run's endpoint

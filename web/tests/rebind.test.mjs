@@ -78,3 +78,25 @@ test("a guest's lends name no one relay, so every route the link carries is race
     [null],
   );
 });
+
+// Review F5: a pass kept before relay fallbacks names `relay` and no
+// `relays`, and the wasm glue reads `relays.length` for its Vec<String>
+// (svrngs_web.js `passArrayJsValueToWasm0`), so the worker's open threw.
+// Watched failing at 11c5c342: "Cannot read properties of undefined".
+test('a pass kept before relay fallbacks opens at its one relay', async () => {
+  const context = {
+    handed: { seed: 'ab', relay: 'https://own/' },
+    init: async () => {},
+    store: { runtime: () => '' },
+    fromHex: () => new Uint8Array(32),
+    trace: () => {},
+    // As the glue passes a Vec<String>: its length, then each.
+    holder_endpoint: async (_, relays) =>
+      Array.from({ length: relays.length }, (_, i) => relays[i]),
+  };
+  const opened = runInNewContext(
+    `let loaded, linked;\n${cut('lend.js', 'opened')}\nopened;`,
+    context,
+  );
+  assert.deepEqual(Array.from(await opened()), ['https://own/']);
+});
