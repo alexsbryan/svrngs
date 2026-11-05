@@ -52,7 +52,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
   if (!('serviceWorker' in navigator))
     return { type: 'unopened', said: `This browser cannot open ${named(lend)}.` };
   const opened = await withYes(hand, lend);
-  const lends = passLends(hand, lend, opened);
+  const lends = passLends(core, hand, lend, opened);
   const { holder, seed, raw } = await holderOf(core, label, lends);
   const start = `${store.lendOrigin(location.protocol, label, location.host)}/open.html?v=__VERSION__${at ? `&back=${encodeURIComponent(at)}` : ''}`;
   // This open's approver (HOLDER_APPROVAL §3.D): named in both passes, its
@@ -109,13 +109,16 @@ async function withYes({ group, label, at }, lend) {
 }
 
 // The lends the pass names: the lend, and the lends of each kind it
-// reads, unless the group stopped its reads.
+// reads, unless the group stopped its reads. A relay the page's policy
+// refuses goes as none, so the worker dials the taken routes instead of a
+// blocked one (a worker has no document to judge that itself).
 /**
+ * @param {typeof Wasm} core
  * @param {Hand} hand
  * @param {Lent} lend
  * @param {Partial<Group>} opened
  */
-function passLends({ lent, label }, lend, opened) {
+function passLends(core, { lent, label }, lend, opened) {
   const stopped = opened.reads?.[label]?.said === 'stop';
   if (stopped) trace(`PAGE: ${lend.name}'s reads were stopped here, so its pass names none`);
   return [
@@ -126,7 +129,7 @@ function passLends({ lent, label }, lend, opened) {
   ].map((other) => ({
     label: other.label,
     key: other.key,
-    relay: other.relay ?? null,
+    relay: other.relay && core.relay_taken(other.relay) ? other.relay : null,
     name: other.name,
     kind: other.kind,
     group: other.group ?? null,

@@ -214,13 +214,15 @@ async fn bind(
 /// Dial `to`, a computer's key in 64 hex, else the token's issuer, from
 /// `bound` on `alpn`: through `via`, the relay its group names for it
 /// (relay-in-record), when this page may take that one, else every relay
-/// the token carries, all tried at once, so a route that is stalled or
-/// cannot reach the computer does not delay the one that answers. A
-/// connection carries the key dialled and is authenticated as that
-/// computer's, so a route is chosen only after reaching it. A dial to a
-/// lender is given up when not answered `within` (events-asleep), a
-/// member's to the computer its link names within [`dial::LINK_WITHIN`]
-/// ([`Endpoint::dial_link`]); a joiner's to it waits as long as iroh does.
+/// the link carries, all tried at once, so a route that is stalled or
+/// cannot reach the computer does not delay the one that answers. A pass's
+/// holder has no document to judge the page's policy by, so the relay the
+/// page handed it for a lender is taken as handed. A connection carries
+/// the key dialled and is authenticated as that computer's, so a route is
+/// chosen only after reaching it. A dial to a lender is given up when not
+/// answered `within` (events-asleep), a member's to the computer its link
+/// names within [`dial::LINK_WITHIN`] ([`Endpoint::dial_link`]); a
+/// joiner's to it waits as long as iroh does.
 async fn reach(
     bound: &Bound,
     to: Option<String>,
@@ -247,8 +249,12 @@ async fn reach(
         Some(Ok(url)) => Some(url),
         Some(Err(e)) => refuse!("LAYER parse: REFUSED — {via:?} is not a relay: {e}"),
     };
+    // A pass's holder has no document to judge the page's policy by: every
+    // relay it was handed was taken by the page that handed it
+    // ([`relays_of`], `relay_taken`), so the one named for a lender is
+    // taken as handed. A page judges its own.
     let routes: Vec<RelayUrl> = match named {
-        Some(relay) if this_page_takes(&relay) => {
+        Some(relay) if bound.issuer.is_none() || this_page_takes(&relay) => {
             t!("LAYER parse: ok — {node_id}'s group names its relay {relay}");
             vec![relay]
         }
@@ -445,6 +451,14 @@ pub fn relays_of(token: String) -> Result<Vec<String>, JsError> {
         .filter(this_page_takes)
         .map(|r| RelayUrl::from(r).to_string())
         .collect())
+}
+
+/// Whether this page's policy takes `relay`, a URL: what a page asks
+/// before handing a lend's worker the relay its record names for a lender,
+/// so the worker is never handed one the page refuses (relay fallbacks).
+#[wasm_bindgen]
+pub fn relay_taken(relay: String) -> bool {
+    relay::parse(&relay).is_ok_and(|url| this_page_takes(&url))
 }
 
 /// The key of the computer that made the link `token`, 64 hex: the one
