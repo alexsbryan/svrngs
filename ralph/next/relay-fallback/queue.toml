@@ -14,4 +14,5 @@ settings = "ralph/claude-settings.json"
 worker = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
 review = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
 resolve = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
-variant = "medium"
+# Standing effort rule: AGENTS.md, "Ralph model effort".
+variant = "max"
