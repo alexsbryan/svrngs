@@ -182,3 +182,10 @@ loop stays parked on stock-relay until then. Test allowance for the repair:
 +150 lines beyond the audited 450. Product lines come from the queue's
 remaining 71, but the repository cap `.` has 2 lines of headroom (19,911 of
 19,913): any raise returns to the operator as a measured one-line diff.
+
+## Operator decision (2026-11-05): raise to fit, add the backoff
+
+Repair commits 7a35fe1a..6d8cfd50 (strong-model worker, seat-reviewed). Caps:
+`.` 19,913 -> 19,946 and js 8,188 -> 8,212, each one past where the repair
+lands (lean_check exit 0). Repair test lines: +181 net (+200/-19) since
+6359387a, the measured total, against the +150 first allowed.

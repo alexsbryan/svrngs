@@ -456,12 +456,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the keeper meets at the advertised public fallback while it answers, the
 # page takes every route its policy allows and races them; +80 over the
 # cap, raised to one past where it lands: 19,913.
+# The review repair, the operator's decision (2026-11-05, "raise to fit, add
+# backoff"): an independent review found six defects the queue's audit passed
+# (a fallback held on a bare TCP connect, one miss flipping the tier, links
+# minted with no https route, a refused bind cached for good, visits racing
+# one route, old passes throwing) and the re-entry backoff; `.` +33 and js +23
+# over, each raised to one past where it lands: 19,946 and 8,212.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 19913,
+    ".": 19946,
 
-    "js": 8188,
+    "js": 8212,
 
     "swift": 1,
 }
