@@ -122,8 +122,8 @@ fn carried(link: &Link) -> Vec<String> {
 /// `tiers.rs` already makes. A link minted now carries R_pub alone; Alex
 /// holds R_pub alone and is let in. Control: Sam relieved of R_pub, the
 /// relay stopped, leaves the fallback-only joiner `IssuerAway`, and Sam's
-/// home moves to R_own; a link minted then carries R_own, and Bo holding
-/// R_own alone is let in.
+/// home moves to R_own; a link minted then carries R_own and R_pub beside
+/// it, and Bo holding R_own alone is let in.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_fallback_home_reaches_the_issuer_and_the_local_primary_takes_over() {
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
@@ -203,8 +203,8 @@ async fn a_fallback_home_reaches_the_issuer_and_the_local_primary_takes_over() {
     let link = Link::parse(&client_link(&linked.token)).expect("the link parses");
     assert_eq!(
         carried(&link),
-        vec![r_own.clone()],
-        "the second link carries the local primary alone"
+        vec![r_own.clone(), r_pub.clone()],
+        "the second link carries the local primary, and the fallback beside it (review F2)"
     );
     let (_bo_dir, bo) = node(4, &[r_own.clone()], any).await;
     let joined = bo.host().join(&link, &Name::parse("bo").unwrap()).await;

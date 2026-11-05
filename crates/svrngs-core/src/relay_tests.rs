@@ -69,10 +69,12 @@ fn a_relays_url_loses_its_hosts_trailing_dot_and_nothing_else() {
 /// holds every relay the build gives, read dotless, where a member is
 /// dialled, and never among the group's own, as a link from a computer
 /// homed at the build's carries one (the run's take 1); and a link carries
-/// the issuer's home first, then the group's own, else the build's first
-/// alone. Planted: `Meeting::of` keeping the build's only when the group
-/// names none, and the first two rows failed; and keeping a build's relay
-/// in the own tier, and the own-tier assertion failed.
+/// the issuer's home first, else the group's own first, and beside it the
+/// build's first, or the group's own when the first is the build's (review
+/// F2: watched red at 569373e5, `[b, a]` for `[b, euc1]`). Planted:
+/// `Meeting::of` keeping the build's only when the group names none, and
+/// the first two rows failed; and keeping a build's relay in the own tier,
+/// and the own-tier assertion failed.
 /// (A meeting written by hand does not compile: `Meeting`'s doc test.)
 #[test]
 fn a_group_never_meets_without_the_builds_relays() {
@@ -101,12 +103,15 @@ fn a_group_never_meets_without_the_builds_relays() {
         "a build's relay is never a group's own"
     );
     let mesh = Meeting::of([a.clone(), b.clone()], &build);
-    assert_eq!(mesh.carried(Some(&b)), [b.clone(), a.clone()]);
+    // The build's first, euc1 in the set's order, whatever the tier (F2).
+    let first = &dotless_build[1];
+    assert_eq!(mesh.carried(Some(&b)), [b.clone(), first.clone()]);
     assert_eq!(
         mesh.carried(Some(&dotless_build[0])),
         [dotless_build[0].clone(), a.clone()]
     );
-    assert_eq!(mesh.carried(None), [a.clone(), b.clone()]);
+    assert_eq!(mesh.carried(None), [a.clone(), first.clone()]);
+    assert_eq!(Meeting::of([a.clone()], &[]).carried(Some(&a)), [a.clone()]);
     let plain = Meeting::of([], &build);
     assert_eq!(
         plain.carried(Some(&dotless_build[1])),

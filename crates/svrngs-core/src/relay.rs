@@ -161,16 +161,17 @@ impl Meeting {
     }
 
     /// The at most two relays a link carries: `home`, the issuer's, first
-    /// when it is the meeting's, then the group's own, else the build's
-    /// first, so a group with none of its own carries one relay, as before.
+    /// when it is the meeting's, else the group's own first, else the
+    /// build's; and beside it the build's first, whatever the tier at
+    /// minting, so an https page always has the public fallback to take
+    /// (review F2), or the group's own first when the first is the build's.
     pub fn carried(&self, home: Option<&Url>) -> Vec<Url> {
         let home = home.filter(|h| self.relays().any(|r| r == *h));
-        let own = self.own.iter().filter(|r| Some(*r) != home);
-        let mut carried: Vec<&Url> = home.into_iter().chain(own).take(2).collect();
-        if carried.is_empty() {
-            carried.extend(self.build.first());
-        }
-        tracing::debug!(target: "relay", ?carried, "relay: a link carries the issuer's home first, then the group's own");
+        let first = home.or(self.own.first()).or(self.build.first());
+        let at_build = first.is_some_and(|f| self.build.contains(f));
+        let beside = (if at_build { &self.own } else { &self.build }).first();
+        let carried: Vec<&Url> = first.into_iter().chain(beside).collect();
+        tracing::debug!(target: "relay", ?carried, at_build, "relay: a link carries the issuer's home first, else the group's own, and beside it the build's first, else the group's own");
         carried.into_iter().cloned().collect()
     }
 }

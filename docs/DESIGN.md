@@ -1308,9 +1308,9 @@ fallback while it answers, and at its groups' own relays when it does not,
 decided in one place (svrn-docs `rings/current/GROUP_RELAYS.md` §7, the
 operator's "Tiers", 2026-11-02; the relay-fallback charter, 2026-11-04: a
 browser holding only the published page's policy can reach a computer
-through the build's https fallback alone). The fallback comes first because
-a link's routes are drawn from the tier the computer is met at: while the
-build's answers, the link carries it and a phone can open the group. Its
+through the build's https fallback alone). The fallback comes first, and
+every link carries it, so a phone can open the group whichever tier the
+computer was met at when the link was made. Its
 own are the relays its keeper names in its record by a `Meets` act (§6),
 made with `svrngs new <name> --relay <name or url>`, once for each;
 `svrngs link <group> --relay <name or url>` replaces them later, keeper
@@ -1338,7 +1338,9 @@ no relay of its own keeps the fallback, and meets every group there. A dial
 to a member reaches both tiers and the relay the record names for it,
 whichever tier this computer is at, since iroh dials a relay its endpoint
 does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a link carries
-at most two relays, the tier's first, so a phone's page dials it and asks
+at most two relays, the computer's home first, else the group's own
+first, and beside it the build's first, or the group's own when the home
+is the build's (`Meeting::carried`), so a phone's page dials them and asks
 no lookup. The page takes every route the link carries that its own policy
 allows — under `connect-src 'self' wss: https:` a plain-HTTP relay is none,
 and is never tried — and dials the issuer through all of them at once, so
