@@ -111,16 +111,13 @@ fn upgrades_insecure() -> bool {
 /// https:` refuses it, and the mixed content would too, so the route is
 /// never tried there — no blocked request is issued for it.
 fn this_page_takes(relay: &svrngs_core::relay::Url) -> bool {
-    if relay.scheme() == "https" {
-        return true;
-    }
     let location = js_sys::Reflect::get(&js_sys::global(), &JsValue::from_str("location")).ok();
     let https_page = location
         .and_then(|l| js_sys::Reflect::get(&l, &JsValue::from_str("protocol")).ok())
         .and_then(|p| p.as_string())
         .as_deref()
         == Some("https:");
-    !https_page || upgrades_insecure()
+    relay.scheme() == "https" || !https_page || upgrades_insecure()
 }
 
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
