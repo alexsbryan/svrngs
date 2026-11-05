@@ -92,6 +92,32 @@ async fn homed(node: &Node, want: &str) -> u128 {
     panic!("not homed at {want} within {by:?}");
 }
 
+/// Ada's computer, its build's relay `build`, keeping house met at `own`;
+/// its data directory kept alive by the caller.
+async fn ada(build: &str, own: &str) -> (tempfile::TempDir, Node) {
+    let (dir, key) = (
+        tempfile::tempdir().unwrap(),
+        SigningKey::from_bytes(&[3; 32]),
+    );
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let node = Node::start(
+        dir.path().to_path_buf(),
+        key.clone(),
+        &at(build),
+        |_| Ok(None),
+        any,
+    )
+    .await
+    .unwrap();
+    let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
+    let seed = svrngs_node::group::draw(name("house"), name("Ada"), key.verifying_key());
+    let at_own = [own.parse::<Url>().unwrap()];
+    node.host()
+        .keep_group(&seed, None, &at_own)
+        .expect("Ada keeps house, met at her own relay");
+    (dir, node)
+}
+
 /// **A group meets at the build's fallback while it answers, and at its
 /// own relay when it does not** (relay fallbacks; the relay-fallback
 /// charter: a browser may reach this computer only through the fallback):
@@ -104,25 +130,7 @@ async fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
     let ((_own, a), (build, b)) = (relay(any).await, relay(any).await);
     let b_at = build.http_addr().unwrap();
-    let (dir, key) = (
-        tempfile::tempdir().unwrap(),
-        SigningKey::from_bytes(&[3; 32]),
-    );
-    let node = Node::start(
-        dir.path().to_path_buf(),
-        key.clone(),
-        &at(&b),
-        |_| Ok(None),
-        any,
-    )
-    .await
-    .unwrap();
-    let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
-    let seed = svrngs_node::group::draw(name("house"), name("Ada"), key.verifying_key());
-    let at_a = [a.parse::<Url>().unwrap()];
-    node.host()
-        .keep_group(&seed, None, &at_a)
-        .expect("Ada keeps house, met at A");
+    let (_dir, node) = ada(&b, &a).await;
     eprintln!(
         "TIERS at the build's fallback while it answers: {} ms",
         homed(&node, &b).await
