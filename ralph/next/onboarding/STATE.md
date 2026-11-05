@@ -430,7 +430,7 @@ swift                     0 / 1 lines
     integrated run belongs to the existing audit after both scope lanes.
     State that distinction honestly. No deployment, publish or push. Then
     resume the existing lending survey; do not recreate its scratch proof.
-- [ ] onboarding-scope-economize — depends [onboarding-grouped-home-reconcile] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
+- [x] onboarding-scope-economize cc95b62f0 — depends [onboarding-grouped-home-reconcile] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
   - **Survey first.** Read `docs/LENDING_SCOPE.md`, its cited local/upstream
     surfaces and the current tree after the preceding fixes. Record product
     counts by core/non-JS/JS and Give, candidates with exact sites, and the
