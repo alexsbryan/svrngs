@@ -44,6 +44,14 @@ pub const ANSWERS_WITHIN: Duration = Duration::from_secs(3);
 /// which iroh advises waiting `online` for (endpoint.rs:1316-1319).
 pub const REGISTERED_WITHIN: Duration = Duration::from_secs(iroh::NET_REPORT_TIMEOUT);
 
+/// How many asks in a row find this endpoint unregistered at the build's
+/// tier before it is left, once reached: a loss shorter than two asks and
+/// their waits, 25 s, is kept, longer than iroh's cap on its wait to dial a
+/// relay again, 16 s (iroh-1.0.2 socket/transports/relay/actor.rs:353),
+/// though its jitter may double one wait (backon-1.6.0
+/// backoff/exponential.rs:233). One home, read by the tests (review F2).
+pub const LEFT_AFTER: u32 = 3;
+
 /// What this computer's endpoint holds now, and from what: where its
 /// groups meet, as last read from their records ([`Host::refresh`]), the
 /// tier, the relays, whether the build's fallback answered at the last ask,
@@ -129,28 +137,35 @@ impl Host {
     /// Asks the build's fallback whether it answers, every [`ASKED_EVERY`],
     /// and decides on each answer, until the node stops: the fallback is
     /// the one tier a browser may reach this computer through, so its
-    /// answer, not the own tier's, moves the meeting. At the fallback, the
+    /// answer, not the own tier's, moves the meeting. At the build's tier, the
     /// answer is whether this endpoint is [`Self::registered`] there, since
-    /// a relay may take a connection and register nobody (review F1).
+    /// a relay may take a connection and register nobody (review F1), and
+    /// one reached is left only after [`LEFT_AFTER`] misses (review F2).
     pub(crate) async fn check(self: Arc<Self>) {
-        let mut every = tokio::time::interval(ASKED_EVERY);
+        let (mut every, mut misses, mut reached) = (tokio::time::interval(ASKED_EVERY), 0, false);
         loop {
             every.tick().await;
             let Held { meeting, tier, .. } = self.held.borrow().clone();
             let build = meeting.build().clone();
             let mut asks = tokio::task::JoinSet::new();
-            for relay in build.clone().into_iter().filter(|_| tier != Tier::Fallback) {
+            for relay in build.clone().into_iter().filter(|_| tier == Tier::Own) {
                 asks.spawn(async move { answers(&relay).await });
             }
             // With no build tier, nothing to answer: the tier is the
             // groups' own whatever, and a group asked for next starts at
             // the build's until the first ask says otherwise.
-            let answered = match tier {
-                Tier::Fallback => self.registered(&build).await,
-                _ => build.is_empty() || asks.join_all().await.into_iter().any(|a| a),
-            };
-            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, "tiers: whether the build's fallback answers, at the fallback whether this endpoint is registered there");
-            self.decide(Some(answered)).await;
+            let answered = build.is_empty()
+                || match tier {
+                    Tier::Own => asks.join_all().await.into_iter().any(|a| a),
+                    _ => self.registered(&build).await,
+                };
+            misses = if answered { 0 } else { misses + 1 };
+            // Kept only once reached: a fallback this computer reached and
+            // lost for a moment is held; one it never reached is left at once.
+            let kept = tier != Tier::Own && !answered && reached && misses < LEFT_AFTER;
+            reached = tier != Tier::Own && (answered || kept);
+            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, kept, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
+            self.decide(Some(answered || kept)).await;
         }
     }
 

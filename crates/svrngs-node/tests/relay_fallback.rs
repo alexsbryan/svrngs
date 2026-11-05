@@ -74,16 +74,21 @@ fn home(node: &Node) -> Option<String> {
         .map(ToString::to_string)
 }
 
-/// Waits up to iroh's slowest re-check for `node`'s home to be `want`.
+/// Waits for `node`'s home to be `want`, up to the asks that leave the
+/// fallback and one more, and iroh's 10 s report.
 async fn homed_at(node: &Node, want: &str) {
-    let t = Instant::now();
-    while t.elapsed() < Duration::from_secs(30) {
+    let (t, tiers) = (Instant::now(), svrngs_node::tiers::LEFT_AFTER + 1);
+    while t.elapsed() < svrngs_node::tiers::ASKED_EVERY * tiers + Duration::from_secs(10) {
         if home(node).as_deref() == Some(want) {
             return;
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    panic!("not homed at {want} within 30 s; home is {:?}", home(node));
+    panic!(
+        "not homed at {want} in {:?}; home is {:?}",
+        t.elapsed(),
+        home(node)
+    );
 }
 
 /// An `Admit` act naming the key of `seed`.
