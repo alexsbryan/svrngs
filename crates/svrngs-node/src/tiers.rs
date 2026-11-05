@@ -52,6 +52,14 @@ pub const REGISTERED_WITHIN: Duration = Duration::from_secs(iroh::NET_REPORT_TIM
 /// backoff/exponential.rs:233). One home, read by the tests (review F2).
 pub const LEFT_AFTER: u32 = 3;
 
+/// The most asks a move to the build's tier is held off for after one that
+/// never registered there: 30, five minutes of [`ASKED_EVERY`]. The hold
+/// doubles, 1, 2, 4 and on to this, from each such move, and ends at the
+/// first registration, so a relay that answers the ask and registers no
+/// one, as a captive portal does, is not gone back to every 20 s (review
+/// F1's residual: at its own relay 18 s of 60).
+pub const HELD_AT_MOST: u32 = 30;
+
 /// What this computer's endpoint holds now, and from what: where its
 /// groups meet, as last read from their records ([`Host::refresh`]), the
 /// tier, the relays, whether the build's fallback answered at the last ask,
@@ -143,12 +151,19 @@ impl Host {
     /// one reached is left only after [`LEFT_AFTER`] misses (review F2).
     pub(crate) async fn check(self: Arc<Self>) {
         let (mut every, mut misses, mut reached) = (tokio::time::interval(ASKED_EVERY), 0, false);
+        let (mut wait, mut held_for) = (0, 0);
         loop {
             every.tick().await;
             let Held { meeting, tier, .. } = self.held.borrow().clone();
             let build = meeting.build().clone();
+            let holding = tier == Tier::Own && held_for > 0;
+            if holding {
+                held_for -= 1;
+                tracing::debug!(target: "tiers", misses, wait, left = held_for, "tiers: the build's fallback not asked — a move there registered nowhere, so moves are held off");
+            }
             let mut asks = tokio::task::JoinSet::new();
-            for relay in build.clone().into_iter().filter(|_| tier == Tier::Own) {
+            let ask = tier == Tier::Own && !holding;
+            for relay in build.clone().into_iter().filter(|_| ask) {
                 asks.spawn(async move { answers(&relay).await });
             }
             // With no build tier, nothing to answer: the tier is the
@@ -156,15 +171,23 @@ impl Host {
             // the build's until the first ask says otherwise.
             let answered = build.is_empty()
                 || match tier {
-                    Tier::Own => asks.join_all().await.into_iter().any(|a| a),
+                    Tier::Own => ask && asks.join_all().await.into_iter().any(|a| a),
                     _ => self.registered(&build).await,
                 };
             misses = if answered { 0 } else { misses + 1 };
+            // A move to the build's that never registered holds the next
+            // off, twice as long each time; a registration ends the hold.
+            if tier != Tier::Own && !answered && !reached {
+                wait = (wait * 2).clamp(1, HELD_AT_MOST);
+                held_for = wait;
+            } else if tier != Tier::Own && answered {
+                wait = 0;
+            }
             // Kept only once reached: a fallback this computer reached and
             // lost for a moment is held; one it never reached is left at once.
             let kept = tier != Tier::Own && !answered && reached && misses < LEFT_AFTER;
             reached = tier != Tier::Own && (answered || kept);
-            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, kept, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
+            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, kept, wait, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
             self.decide(Some(answered || kept)).await;
         }
     }

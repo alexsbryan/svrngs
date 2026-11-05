@@ -1330,9 +1330,10 @@ and would never see one come back; at the build's, the answer is whether
 the endpoint is registered there — its home relay connected, iroh's
 `home_relay_status` — within `REGISTERED_WITHIN`, 5 s, since a relay may
 take a connection and register no one, as a captive portal does. One
-never registered at is left at the first ask that finds it so; one
-reached, once `LEFT_AFTER`, 3, asks in a row do, so a fallback that
-blinked is not left while iroh waits to dial it again. One
+never registered at is left at the first ask that finds it so, the next
+move there held off 1, 2, 4 asks and on, to `HELD_AT_MOST`, 30, until one
+registers; one reached, once `LEFT_AFTER`, 3, asks in a row do, so a
+fallback that blinked is not left while iroh waits to dial it again. One
 endpoint serves every group, so a computer that also holds a group naming
 no relay of its own keeps the fallback, and meets every group there. A dial
 to a member reaches both tiers and the relay the record names for it,

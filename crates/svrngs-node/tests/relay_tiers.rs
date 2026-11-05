@@ -223,8 +223,10 @@ async fn pings() -> String {
 /// **A fallback this computer cannot register at is left for its own**
 /// (review F1): Ada's group names A; her build's fallback B answers the
 /// ask and is no relay, so her endpoint is never connected there. She is
-/// homed at A. Planted, watched red at 7a35fe1a: the ask's answer alone
-/// held the fallback, and she was not homed at A within 56 s.
+/// homed at A, and stays there for most of the next 90 s, the moves back
+/// held off. Planted, watched red at 7a35fe1a: the ask's answer alone
+/// held the fallback, and she was not homed at A within 56 s; and the
+/// hold-off at 0, at A 30% of the time.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_fallback_this_computer_cannot_register_at_is_left() {
     let ((_own, a), b) = (relay("127.0.0.1:0".parse().unwrap()).await, pings().await);
@@ -233,5 +235,18 @@ async fn a_fallback_this_computer_cannot_register_at_is_left() {
         "TIERS unregistered at the fallback, at its own: {} ms",
         homed(&node, &a).await
     );
+    // Held off doubling, she is at A for most of 90 s, not 30% (F1 residual).
+    let (t, mut at_a) = (Instant::now(), 0);
+    while t.elapsed() < Duration::from_secs(90) {
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        at_a += usize::from(
+            node.endpoint()
+                .addr()
+                .relay_urls()
+                .any(|r| r.to_string() == a),
+        );
+    }
+    eprintln!("TIERS at its own {at_a} of 180 half-seconds");
+    assert!(at_a >= 108, "at A only {at_a} of 180 half-seconds");
     node.endpoint().close().await;
 }
