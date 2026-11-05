@@ -136,6 +136,9 @@ const failing = (/** @type {any} */ error) =>
 // other run reads it.
 /** @type {Uint8Array<ArrayBuffer> | undefined} */
 let key;
+// Each lent app is the link's computer's, named at no one relay of the
+// link's, so the page's and the worker's dials race every route the link
+// carries that the page takes (web/src/lib.rs `reach`; review F4).
 /**
  * @param {typeof Wasm} core
  * @param {string} token
@@ -146,7 +149,7 @@ const stay = (core, token, visit) => {
   const issuer = core.issuer_of(token);
   const lent = Object.entries(visit.lent).map(([name, kind]) => ({
     key: issuer,
-    relay: core.relays_of(token)[0] ?? null,
+    relay: null,
     name,
     kind,
     person: visit.host,

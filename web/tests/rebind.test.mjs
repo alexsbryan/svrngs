@@ -60,3 +60,21 @@ test("a lend worker's dial opens its endpoint again after a refused open", async
   assert.equal(await dialled('ab'), 'reached');
   assert.equal(binding.binds, 2);
 });
+
+// Review F4: a guest's lent apps named the link's first relay as the
+// lender's, so the page's and the worker's `reach` took that one route.
+// They name none, so every route the link carries is raced (spec item 5).
+// Watched failing at 5cd42620: the lend named https://fallback/.
+test("a guest's lends name no one relay, so every route the link carries is raced", () => {
+  const stay = runInNewContext(`${cut('page/visit.js', 'stay')}\nstay;`, {});
+  const core = {
+    issuer_of: () => 'ab',
+    relays_of: () => ['https://fallback/', 'https://own/'],
+    label: (key, name) => `${name}.${key}`,
+  };
+  const visit = { lent: { films: 'jellyfin' }, host: 'Kim', until: 0, version: 1 };
+  assert.deepEqual(
+    Array.from(stay(core, 'token', visit).stay.lent, (lend) => lend.relay),
+    [null],
+  );
+});
