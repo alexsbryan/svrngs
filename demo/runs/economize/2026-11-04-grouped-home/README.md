@@ -1,6 +1,5 @@
 # Grouped home B — reuse and capability proof
 
-Operator: “Ok let's build out B (being sure to not lose any capability)”.
 This is the native browser's opt-in presentation; no membership, lending,
 signing, authentication or phone behavior changes.
 
@@ -8,9 +7,8 @@ signing, authentication or phone behavior changes.
 
 The pre-edit base was `0f2a2e02`: `python3 scripts/lean_check.py` passed at
 3,486 core, 19,789 non-JavaScript and 8,066 JavaScript lines. The caps are
-exclusive: only 23 additional JS lines fit below 8,090. No cap is changed
-by this experiment. Concurrent checkpoint commits `80b97bf9` and `c3fa0ef7`
-captured the in-progress UI; they are not completion evidence.
+exclusive: only 23 additional JS lines fit below 8,090. The separate +98 cap
+increase and its boundary test are recorded in `BUDGET.md`.
 
 Inspected before adding a module:
 
@@ -39,8 +37,8 @@ No supported deletion in the pre-existing product was found. Merging GROUP
 with HOME or removing background reads would lose distinct ownership/readiness;
 copying controls would duplicate policy. Removing A would prevent the requested
 comparison. No packing or formatter exception funds the build. The remaining
-addition is presentation, destinations and typed view helpers; a measured cap
-request is still owed.
+addition is presentation, destinations and typed view helpers. The net growth
+is 121 JavaScript lines and one non-JavaScript serving entry.
 
 ## Capability destinations
 
@@ -105,9 +103,8 @@ the plant the same gate passes. No product source is temporarily changed.
 
 `check.log` records `lockf -k /tmp/svrngs-gate.lock scripts/check.sh`, exit 1,
 1,432 seconds. Every step except lean and browser passed. Lean measured
-3,486 core, 19,790 non-JS and **8,187 JS**; its exclusive JS cap is still
-8,090. The smallest sufficient new cap is **8,188 (+98)**. The cap remains
-unchanged pending operator approval.
+3,486 core, 19,790 non-JS and **8,187 JS**, against the then-current JS cap
+of 8,090. The cap was subsequently raised to **8,188 (+98)**; see `BUDGET.md`.
 
 The browser step passed 97 tests, ignored 2 and failed only the original
 `the_home_page_lends_what_runs_here`. Its captured trace ends with
@@ -138,7 +135,5 @@ bytes in the browser, leaving real session enrollment intact.
 
 Final `oxlint`, `oxfmt`, `scripts/types.mjs` (130 files), and typed lint
 (126 page files and 3 worker files) passed. `cargo build -p svrngs` passed;
-`target/debug/svrngs` embeds B. The running personal node was not replaced.
-The full gate has not exited 0: budget approval and a final unchanged gate
-after that approval are still required. No cap edit or new Xenia model run
-is included in these results.
+`target/debug/svrngs` embeds B. The subsequent `closing-check.log` passes
+through the page checks but is incomplete; it has no full-gate exit-0 verdict.

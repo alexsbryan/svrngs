@@ -2,9 +2,7 @@
 
 The operator approved the requested +98 JS cap on 2026-11-04 after the
 grouped-home economy review and reconciliation report. This is separate from
-selected-ring lending's minimum-growth preapproval. The grouped-home owner
-released claim `ring-32fb4a66f5b1a57a`; its product and other evidence are
-left to the reconciliation worker's scoped landing.
+selected-ring lending's minimum-growth preapproval.
 
 No core/non-JS cap changed. The JS cap is exclusive. Actual commands:
 

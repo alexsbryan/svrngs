@@ -348,14 +348,13 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   preapproved only the minimum necessary actual line growth after the pass,
   with zero additional core product lines and incremental measured cap
   adjustments, not an advance allocation of the estimate's upper bounds.
-  In parallel the operator requested the browser UX comparison, 2026-11-04:
-  "Ok let's build out B (being sure to not lose any capability)". B is an
-  opt-in group overview, selected-group workspace and computer destination,
+  The parallel browser UX comparison adds B: an opt-in group overview,
+  selected-group workspace and computer destination,
   preserving A and every existing control (`DESIGN.md` §3,
   `home/page/grouped.js`). Its inventory and navigation proof precede the
-  dedicated multi-group Xenia comparison. This authorizes the UI build, not
-  a JavaScript cap increase; the measured economy pass is
-  `../demo/runs/economize/2026-11-04-grouped-home/README.md`;
+  dedicated multi-group Xenia comparison. The separate +98 JavaScript cap
+  increase is recorded in the grouped-home economy pass:
+  `../demo/runs/economize/2026-11-04-grouped-home/BUDGET.md`;
 - a phone's write reaching the group's other computers at once (the
   operator, 2026-11-03, "A now, B as a row"; kept behind onboarding by the
   operator's reprioritization; `ralph/next/js/NEEDS_HUMAN.md`, "A phone's
