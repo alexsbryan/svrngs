@@ -422,3 +422,170 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
     );
     sam.endpoint().close().await;
 }
+
+in_webkit!(
+    /// **A fresh browser under the published page's policy joins through
+    /// the advertised public fallback, the group's own HTTP relay never
+    /// tried** (relay-fallback charter). Sam's group is met at A, a
+    /// plain-HTTP relay (the Pi's stand-in); his build's fallback is B,
+    /// which the page reaches over TLS at the same front the node reaches
+    /// plainly. The link he mints prefers A and carries B. The published
+    /// `connect-src 'self' wss: https:` refuses A, so the page takes B
+    /// alone, joins once and opens the lend. Planted: the page binding the
+    /// link's first relay whatever its policy takes, and the join hangs at
+    /// the blocked request (no name form — the incident's shape).
+    a_browser_under_the_published_policy_joins_through_the_public_fallback
+);
+async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
+    engine: harness::Engine,
+) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let public_https = format!("https://{}/", harness::relay_at(&public));
+    let dir = tempfile::tempdir().unwrap();
+    let sam = Node::start(
+        dir.path().to_path_buf(),
+        SigningKey::from_bytes(&[1; 32]),
+        &svrngs_node::iroh::RelayConfig {
+            relay_urls: vec![harness::relay_url(&public)],
+            n0_services: false,
+            loopback_only: true,
+        },
+        svrngs::group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("Sam's computer starts");
+    let shelf = Lend {
+        name: LendName::parse("shelf").unwrap(),
+        source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
+        kind: Kind::parse("shelf").unwrap(),
+        limit: NonZeroU16::new(3),
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in_with_svrngs: None,
+        asks: None,
+    };
+    lend::declare(dir.path(), &shelf, None).unwrap();
+    let seed = svrngs_node::group::draw(
+        Name::parse("house").unwrap(),
+        Name::parse("Sam").unwrap(),
+        SigningKey::from_bytes(&[1; 32]).verifying_key(),
+    );
+    sam.host()
+        .keep_group(&seed, None, &[own_url.clone()])
+        .expect("house kept, met at A");
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let token = sam
+        .host()
+        .mint(
+            &seed.id(),
+            vec![own_url.clone(), public_https.parse().unwrap()],
+            None,
+            now,
+        )
+        .expect("a link preferring A, carrying B");
+
+    let mut phone = tokio::process::Command::new("node")
+        .arg(harness::repo().join("web/tests/join.mjs"))
+        .arg(json!({ "engine": engine.as_str(), "site": site, "policy": "production" }).to_string())
+        .env("SVRNGS_BROWSERS", harness::browsers())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .expect("node runs: the browser tests need Node 18 or later");
+    let mut out = BufReader::new(phone.stdout.take().unwrap()).lines();
+    let first = out.next_line().await.unwrap().unwrap_or_else(|| {
+        panic!(
+            "the browser half printed no origin; it exited {:?}",
+            phone.try_wait()
+        )
+    });
+    let origin: Value = serde_json::from_str(&first).unwrap();
+    let origin = origin["origin"].as_str().expect("the page's origin");
+    let port = origin
+        .trim_end_matches('/')
+        .rsplit(':')
+        .next()
+        .unwrap()
+        .to_string();
+    let mut stdin = phone.stdin.take().unwrap();
+    stdin
+        .write_all(
+            format!(
+                "{}\n",
+                json!({ "link": format!("{origin}#{}", token.encode()), "name": "Pia" })
+            )
+            .as_bytes(),
+        )
+        .await
+        .unwrap();
+    stdin.flush().await.unwrap();
+
+    let mut stderr = String::new();
+    let mut err = phone.stderr.take().unwrap();
+    let mut last = None;
+    while let Some(line) = out.next_line().await.unwrap() {
+        last = Some(line);
+    }
+    err.read_to_string(&mut stderr).await.unwrap();
+    let status = phone.wait().await.unwrap();
+    assert!(
+        status.success(),
+        "the browser half failed ({status}):\n{stderr}"
+    );
+    let seen: Value = serde_json::from_str(&last.expect("the browser half printed")).unwrap();
+    eprintln!("published policy: {seen:#}");
+
+    // In through B alone, and the lend opens at its own origin from A's side
+    // of the group's record.
+    let first = &seen["first"];
+    assert!(in_house(first, "Pia"), "{seen:#}");
+    let shelf_label = svrngs_core::pass::Label::of(
+        SigningKey::from_bytes(&[1; 32]).verifying_key().as_bytes(),
+        "shelf",
+    );
+    assert_eq!(
+        seen["opened"],
+        json!({ "origin": format!("https://{shelf_label}.{}:{port}", harness::PAGE_HOST), "text": "hi" }),
+        "{seen:#}"
+    );
+
+    // A was never tried: no request was blocked, and no line names it.
+    let logs = seen["logs"].as_array().unwrap();
+    let refused = |l: &Value| {
+        let l = l.as_str().unwrap_or_default();
+        [
+            "Content Security Policy",
+            "violates",
+            "mixed content",
+            "blocked",
+        ]
+        .iter()
+        .any(|word| l.contains(word))
+    };
+    assert!(
+        !logs.iter().any(refused),
+        "a request was refused by the page's policy:\n{seen:#}"
+    );
+    let lines = seen["lines"].as_array().unwrap();
+    let said: Vec<&str> = lines.iter().filter_map(Value::as_str).collect();
+    assert!(
+        !said.iter().any(|l| l.contains(&own_url.to_string())),
+        "the HTTP relay was dialled:\n{seen:#}"
+    );
+    assert!(
+        said.iter()
+            .any(|l| l.contains("LAYER parse: ok — relay") && l.contains(&public_https)),
+        "the fallback was bound:\n{seen:#}"
+    );
+    sam.endpoint().close().await;
+}

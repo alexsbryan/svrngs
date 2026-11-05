@@ -18,7 +18,7 @@ import { createInterface } from 'node:readline';
 import { firstLook, inApp, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const server = await serve(args.site);
+const server = await serve(args.site, { policy: args.policy });
 // The page's origin as `svrngs new --origin` checks it, on `localhost`, a
 // name every name under which this computer answers; the phone reaches the
 // same server at the page's host over TLS (page.mjs `PAGE_HOST`), so the

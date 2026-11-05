@@ -211,7 +211,7 @@ export function starting(type) {
     env: { ...process.env, SVRNGS_WEBKIT: type.executablePath() },
   };
 }
-export function serve(dir, { worker, port = 0 } = {}) {
+export function serve(dir, { worker, port = 0, policy } = {}) {
   const root = resolve(dir);
   const asked = [];
   const server = http.createServer(async (req, res) => {
@@ -227,10 +227,15 @@ export function serve(dir, { worker, port = 0 } = {}) {
     }
     const file = join(root, normalize(path.endsWith('/') ? `${path}index.html` : path));
     if (!file.startsWith(root)) return res.writeHead(403).end();
-    const upgraded = new URL(`http://${req.headers.host}`).hostname.endsWith(PAGE_HOST);
+    // A production-policy page keeps the built meta as `scripts/build-web.sh`
+    // writes it, so the tests can prove what the published page does with an
+    // HTTP route: `tests()`' allowance is not added, and nothing upgrades.
+    const upgraded =
+      policy !== 'production' && new URL(`http://${req.headers.host}`).hostname.endsWith(PAGE_HOST);
     try {
       let body = await readFile(file);
-      if (/\/(index|404)\.html$/.test(file)) body = tests(body, upgraded);
+      if (/\/(index|404)\.html$/.test(file) && policy !== 'production')
+        body = tests(body, upgraded);
       if (worker && path === '/lend.js') body = `${worker}\n${body}`;
       res.writeHead(200, {
         'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
@@ -243,7 +248,7 @@ export function serve(dir, { worker, port = 0 } = {}) {
       const missing = await readFile(join(root, '404.html')).catch(() => null);
       res
         .writeHead(404, { 'content-type': TYPES['.html'] })
-        .end(missing ? tests(missing, upgraded) : '');
+        .end(missing && policy !== 'production' ? tests(missing, upgraded) : missing || '');
     }
   });
   server.asked = asked;
