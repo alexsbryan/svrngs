@@ -169,3 +169,16 @@ Approved as asked. `.` 19,833 -> 19,913 applied in `scripts/lean_check.py`
 remaining checks: a stalled eligible primary's no-delay bound; all-routes-down
 cleanup with the bounded failure said; native local sync with public reach cut.
 No further cap raise is authorized; a landing past 19,913 or 450 stops again.
+
+## Operator decision (2026-11-05): repair the review findings with a strong model
+
+An independent review of the product delta f8a57035..HEAD found defects the
+final audit passed; the seat confirmed three by reading (tiers.rs:242-244 with
+relay.rs:155-158; tiers.rs:139-140 with relay.rs:169-171; lib.rs:206-209 with
+dial.js:110 and lend.js:248,290). The operator chose: a strong-model worker
+repairs them in this worktree, one finding per commit with red/green tests, the
+seat reviews each diff, then the unchanged full scripts/check.sh runs. The Flash
+loop stays parked on stock-relay until then. Test allowance for the repair:
++150 lines beyond the audited 450. Product lines come from the queue's
+remaining 71, but the repository cap `.` has 2 lines of headroom (19,911 of
+19,913): any raise returns to the operator as a measured one-line diff.
