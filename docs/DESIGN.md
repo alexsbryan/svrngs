@@ -1298,6 +1298,10 @@ verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each at most `OPEN_RATE`, 8,800,000 bytes a second, the
 most a film at Demo A's bitrate drew.
 
+Any iroh-relay 1.0.x served over HTTPS at a name carries a group, the
+stock binary alone: `svrngs relay` is that server with group-only
+admission and its own certificates; a bare one admits whoever finds it.
+
 **Where a computer meets its groups.** A computer meets at the build's
 fallback while it answers, and at its groups' own relays when it does not,
 decided in one place (svrn-docs `rings/current/GROUP_RELAYS.md` §7, the
