@@ -470,11 +470,22 @@ swift                     0 / 1 lines
   3,486, non-JS 19,789, JS 8,066; Give Rust src separately 2,669. Scratch guard
   plants fail for body/upgrade-copy/raw TCP/UDP and green meets 1,250 ms;
   real-node two-second withdrawal remains implementation's proof. Current
-  fast checks passed at the survey base. Inherited grouped-home work is now
-  checkpointed as `c3fa0ef7`; reconciliation is core 3,486, non-JS 19,790,
-  JS 8,174, with lean/format/lint/type failures in that unfinished prototype.
-  `RECONCILE.md` and `reconcile-fast.txt` record the locked checks and request
-  owner/director reconciliation, without spending lending approval on it.
+  fast checks passed at the survey base. Inherited grouped-home work was
+  checkpointed as `c3fa0ef7`; `RECONCILE.md` and `reconcile-fast.txt` record
+  the locked checks and the owner/director reconciliation request, without
+  spending lending approval on it. That prerequisite landed
+  (`onboarding-grouped-home-reconcile`, `b3cfadfe`, closed `b484b2b3`).
+  Resumed close (`23a3fa27`): `measure.py resume` rechecked the landed baseline
+  under the gate lock at core 3,486/3,494, non-JS 19,795/19,833, JS 8,187/8,188,
+  with principles, trust, advisories, vocabulary, rustfmt, oxlint, oxfmt, types,
+  typed-lint, 141 page-law tests and `cargo check --workspace --offline` all
+  exit 0 (`resume-fast.txt`). The `seam-diff` shows the only surveyed-surface
+  change since `7ad807f1` is `home.rs:140`'s grouped module line, owned by
+  grouped-home reconciliation; every other cited lending seam is byte-unchanged.
+  `docs/LENDING_SCOPE.md` now records 38 non-JS / 1 JS line of headroom, below
+  the unchanged +400–700 / +135–235 estimate, zero core. No product cut, cap
+  edit or code change; survey and prototype retained, not recreated. No full
+  `scripts/check.sh` (the final audit owns the one integrated gate).
 - [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — BACKEND LANE, implement selected-ring lender enforcement from `docs/LENDING_SCOPE.md` and `SCOPE_PARALLEL.md`; minimal necessary actual growth preapproved, zero additional core product lines:
   - **Parallel ownership.** Own Rust policy/storage/CLI/HTTP/OIDC/raw code,
     wasm `current_version()` and Give's known-group Rust callers. UI is being
