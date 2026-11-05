@@ -173,7 +173,10 @@ async fn bind(
     // ── LAYER 1: the person's key, then the link's token ───────────────────
     let secret = match <[u8; 32]>::try_from(key.as_slice()) {
         Ok(bytes) => iroh::SecretKey::from_bytes(&bytes),
-        Err(_) => refuse!("LAYER key: REFUSED — the page holds {} bytes, not a key's 32", key.len()),
+        Err(_) => refuse!(
+            "LAYER key: REFUSED — the page holds {} bytes, not a key's 32",
+            key.len()
+        ),
     };
     t!("LAYER key: ok — the key {}", secret.public());
     // The relays the link carries, or a pass's holder is handed, and no
@@ -224,7 +227,10 @@ async fn reach(
     alpn: Alpn,
     within: Option<std::time::Duration>,
 ) -> Result<iroh::endpoint::Connection, JsError> {
-    let issuer = to.is_none();
+    // The issuer's dial is held as iroh holds one, a lender's as
+    // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
+    // would end the issuer's before its cap did (v1ui-race (a)).
+    let held = if to.is_none() { Default::default() } else { dial::held() };
     let node_id = match to {
         None => match bound.issuer {
             Some(issuer) => issuer,
@@ -255,10 +261,6 @@ async fn reach(
         }
     };
 
-    // The issuer's dial is held as iroh holds one, a lender's as
-    // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
-    // would end the issuer's before its cap did (v1ui-race (a)).
-    let held = if issuer { Default::default() } else { dial::held() };
     let opts = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
     use n0_future::StreamExt as _;
     let mut tries = n0_future::FuturesUnordered::new();
@@ -364,8 +366,7 @@ impl Dialled {
     /// Close the dial, and every stream with it: its endpoint when it
     /// bound one for itself, else its connection.
     pub fn close(&self) -> js_sys::Promise {
-        let ep = self.ep.clone();
-        let conn = self.conn.clone();
+        let (ep, conn) = (self.ep.clone(), self.conn.clone());
         wasm_bindgen_futures::future_to_promise(async move {
             match ep {
                 Some(ep) => ep.close().await,
