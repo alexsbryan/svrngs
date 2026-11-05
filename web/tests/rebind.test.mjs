@@ -40,17 +40,20 @@ test("the page's dial binds again after a refused bind", async (t) => {
   assert.equal(bound.binds, 2);
 });
 
+// The top-level function or arrow `name` as web/`file` declares it, up to
+// its closing brace, or nothing where it declares none.
+const cut = (file, name) => {
+  const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+  const at = text.search(new RegExp(`^((async )?function ${name}\\(|const ${name} = )`, 'm'));
+  return at < 0 ? '' : text.slice(at, text.indexOf('\n}', at) + 3);
+};
+
 test("a lend worker's dial opens its endpoint again after a refused open", async () => {
-  const lend = readFileSync(new URL('../lend.js', import.meta.url), 'utf8');
-  const cut = (name) => {
-    const at = lend.search(new RegExp(`^(async )?function ${name}\\(`, 'm'));
-    return at < 0 ? '' : lend.slice(at, lend.indexOf('\n}\n', at) + 2);
-  };
   const binding = binder();
   const context = { binding, trace: () => {}, handed: { lends: [] } };
   const source = `let endpoint = null;
     const opened = () => binding.bind({ dial_lend: async () => 'reached' });
-    ${cut('dialled')}${cut('bound')}
+    ${cut('lend.js', 'dialled')}${cut('lend.js', 'bound')}
     dialled;`;
   const dialled = runInNewContext(source, context);
   await assert.rejects(dialled('ab'));
