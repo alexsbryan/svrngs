@@ -28,10 +28,11 @@ use std::time::{Duration, Instant};
 
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs_core::link::{client_link, Link};
+use svrngs_core::tests_support::{record, Batch};
 use svrngs_node::group::{self, Name};
 use svrngs_node::iroh::RelayUrl;
 use svrngs_node::node::Node;
-use svrngs_node::SigningKey;
+use svrngs_node::{actor_of, Person, RailAct, SigningKey};
 
 /// A plain-HTTP relay on 127.0.0.1 at `at` (port 0 for any), and its URL.
 async fn relay(at: SocketAddr) -> (Server, String) {
@@ -73,16 +74,33 @@ fn home(node: &Node) -> Option<String> {
         .map(ToString::to_string)
 }
 
-/// Waits up to iroh's slowest re-check for `node`'s home to be `want`.
+/// Waits up to three of svrngs's asks and iroh's slowest re-check for
+/// `node`'s home to be `want`, as `relay_tiers` waits.
 async fn homed_at(node: &Node, want: &str) {
     let t = Instant::now();
-    while t.elapsed() < Duration::from_secs(30) {
+    let by = svrngs_node::tiers::ASKED_EVERY * 3 + Duration::from_secs(26);
+    while t.elapsed() < by {
         if home(node).as_deref() == Some(want) {
             return;
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    panic!("not homed at {want} within 30 s; home is {:?}", home(node));
+    panic!("not homed at {want} within {by:?}; home is {:?}", home(node));
+}
+
+/// An `Admit` act naming the key of `seed`.
+fn admit(person: &str, seed: u8) -> RailAct {
+    RailAct::Admit {
+        person: Person::parse(person).unwrap(),
+        key: actor_of(&SigningKey::from_bytes(&[seed; 32])),
+        invite: None,
+    }
+}
+
+/// Whether `node`'s journal holds a record whose payload says `what`.
+fn holds(node: &Node, group: &str, what: &str) -> bool {
+    let journal = node.rail().group_dir(group).unwrap().join("ring_oplog.jsonl");
+    std::fs::read_to_string(journal).unwrap_or_default().contains(what)
 }
 
 /// The relays a link carries, as strings.
@@ -192,5 +210,76 @@ async fn a_fallback_home_reaches_the_issuer_and_the_local_primary_takes_over() {
     sam.endpoint().close().await;
     alex.endpoint().close().await;
     alex2.endpoint().close().await;
+    bo.endpoint().close().await;
+}
+
+/// **A fresh contribution syncs after the public reach is cut** (the
+/// relay-fallback charter: a native computer's local recovery when the
+/// internet disappears). Ada's group is met at A, its own relay; her
+/// build's fallback is B, where she and Bo are homed while it answers. B is
+/// stopped: both move to A (the move `relay_tiers` measures), and a record
+/// Ada writes then reaches Bo through A. Control: a record written before
+/// the cut reaches Bo through B. Both nodes are loopback-only, so every
+/// dial is relay-carried; neither has connected before the cut, so no
+/// direct path is cached. Planted, watched failing: `Meeting::decide`
+/// keeping the build's fallback when it does not answer, so neither home
+/// moves and nothing is reached (red: not homed at A within 56 s).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_fresh_contribution_syncs_after_the_public_reach_is_cut() {
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let ((_own, a), (build, b)) = (relay(any).await, relay(any).await);
+    let at_a: svrngs_core::relay::Url = a.parse().unwrap();
+    let (_ada_dir, ada) = node(5, &[b.clone()], any).await;
+    let house = group::draw(
+        Name::parse("house").unwrap(),
+        Name::parse("ada").unwrap(),
+        SigningKey::from_bytes(&[5; 32]).verifying_key(),
+    );
+    ada.host()
+        .keep_group(&house, None, &[at_a.clone()])
+        .expect("Ada keeps house, met at A");
+    let (_bo_dir, bo) = node(6, &[b.clone()], any).await;
+    bo.host()
+        .keep_group(&house, None, &[at_a.clone()])
+        .expect("Bo keeps house, met at A");
+    ada.rail()
+        .commit(&house.id(), &Batch(vec![admit("bo", 6)]))
+        .unwrap()
+        .unwrap();
+    homed_at(&ada, &b).await;
+    homed_at(&bo, &b).await;
+
+    // Control: while the fallback answers, a record Ada writes reaches Bo.
+    ada.rail()
+        .commit(&house.id(), &Batch(vec![record("before the cut")]))
+        .unwrap()
+        .unwrap();
+    tokio::time::timeout(Duration::from_secs(30), ada.round())
+        .await
+        .expect("Ada's round finishes");
+    assert!(
+        holds(&bo, &house.id(), "before the cut"),
+        "the fallback carried the control round"
+    );
+
+    // The public reach is cut, and both computers move to the group's own.
+    build.shutdown().await.unwrap();
+    homed_at(&ada, &a).await;
+    homed_at(&bo, &a).await;
+
+    // A fresh contribution reaches Bo through A.
+    ada.rail()
+        .commit(&house.id(), &Batch(vec![record("after the cut")]))
+        .unwrap()
+        .unwrap();
+    tokio::time::timeout(Duration::from_secs(30), ada.round())
+        .await
+        .expect("Ada's round finishes");
+    assert!(
+        holds(&bo, &house.id(), "after the cut"),
+        "the group's own relay carried a fresh contribution with the public reach cut"
+    );
+
+    ada.endpoint().close().await;
     bo.endpoint().close().await;
 }
