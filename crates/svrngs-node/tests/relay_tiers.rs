@@ -147,3 +147,37 @@ async fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     );
     node.endpoint().close().await;
 }
+
+/// A server on 127.0.0.1 that answers every request 200 and is no relay:
+/// svrngs's ask of it passes (`tiers::answers`, `GET /ping`), and an
+/// endpoint never registers there, as at a captive portal taking TCP 443.
+async fn pings() -> String {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://{}/", listener.local_addr().unwrap());
+    tokio::spawn(async move {
+        while let Ok((mut asked, _)) = listener.accept().await {
+            let _ = asked.read(&mut [0; 1024]).await;
+            let _ = asked
+                .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n")
+                .await;
+        }
+    });
+    url
+}
+
+/// **A fallback this computer cannot register at is left for its own**
+/// (review F1): Ada's group names A; her build's fallback B answers the
+/// ask and is no relay, so her endpoint is never connected there. She is
+/// homed at A. Planted, watched red at 7a35fe1a: the ask's answer alone
+/// held the fallback, and she was not homed at A within 56 s.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_fallback_this_computer_cannot_register_at_is_left() {
+    let ((_own, a), b) = (relay("127.0.0.1:0".parse().unwrap()).await, pings().await);
+    let (_dir, node) = ada(&b, &a).await;
+    eprintln!(
+        "TIERS unregistered at the fallback, at its own: {} ms",
+        homed(&node, &a).await
+    );
+    node.endpoint().close().await;
+}

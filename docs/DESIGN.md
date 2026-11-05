@@ -1325,8 +1325,12 @@ always carries the build's; `Meeting::decide` is the one decision, and
 svrngs-node's `tiers` the one place it changes the endpoint's relays.
 svrngs asks the build's fallback itself every `tiers::ASKED_EVERY`, 10 s,
 each within `ANSWERS_WITHIN`, 3 s, and gives the endpoint the fallback
-while it answers and the own relays once it does not, since iroh's report
-stops probing once a relay answers and would never see one come back. One
+once it answers, since iroh's report stops probing once a relay answers
+and would never see one come back; at the fallback, the answer is whether
+the endpoint is registered there — its home relay connected, iroh's
+`home_relay_status` — within `REGISTERED_WITHIN`, 5 s, since a relay may
+take a connection and register no one, as a captive portal does, and the
+own relays come back once it is not. One
 endpoint serves every group, so a computer that also holds a group naming
 no relay of its own keeps the fallback, and meets every group there. A dial
 to a member reaches both tiers and the relay the record names for it,

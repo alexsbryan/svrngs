@@ -38,6 +38,12 @@ pub const ASKED_EVERY: Duration = Duration::from_secs(10);
 /// svrngs calls silent is one iroh's report would too.
 pub const ANSWERS_WITHIN: Duration = Duration::from_secs(3);
 
+/// How long this endpoint has, at each ask, to be registered at the
+/// build's fallback it holds: iroh's own report timeout,
+/// `NET_REPORT_TIMEOUT` (iroh-1.0.2 lib.rs:292, net_report/defaults.rs:14),
+/// which iroh advises waiting `online` for (endpoint.rs:1316-1319).
+pub const REGISTERED_WITHIN: Duration = Duration::from_secs(iroh::NET_REPORT_TIMEOUT);
+
 /// What this computer's endpoint holds now, and from what: where its
 /// groups meet, as last read from their records ([`Host::refresh`]), the
 /// tier, the relays, whether the build's fallback answered at the last ask,
@@ -123,23 +129,46 @@ impl Host {
     /// Asks the build's fallback whether it answers, every [`ASKED_EVERY`],
     /// and decides on each answer, until the node stops: the fallback is
     /// the one tier a browser may reach this computer through, so its
-    /// answer, not the own tier's, moves the meeting.
+    /// answer, not the own tier's, moves the meeting. At the fallback, the
+    /// answer is whether this endpoint is [`Self::registered`] there, since
+    /// a relay may take a connection and register nobody (review F1).
     pub(crate) async fn check(self: Arc<Self>) {
         let mut every = tokio::time::interval(ASKED_EVERY);
         loop {
             every.tick().await;
-            let build = self.held.borrow().meeting.build().clone();
+            let Held { meeting, tier, .. } = self.held.borrow().clone();
+            let build = meeting.build().clone();
             let mut asks = tokio::task::JoinSet::new();
-            for relay in build.clone() {
+            for relay in build.clone().into_iter().filter(|_| tier != Tier::Fallback) {
                 asks.spawn(async move { answers(&relay).await });
             }
             // With no build tier, nothing to answer: the tier is the
             // groups' own whatever, and a group asked for next starts at
             // the build's until the first ask says otherwise.
-            let answered = build.is_empty() || asks.join_all().await.into_iter().any(|a| a);
-            tracing::debug!(target: "tiers", build = build.len(), answered, "tiers: whether the build's fallback answers");
+            let answered = match tier {
+                Tier::Fallback => self.registered(&build).await,
+                _ => build.is_empty() || asks.join_all().await.into_iter().any(|a| a),
+            };
+            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, "tiers: whether the build's fallback answers, at the fallback whether this endpoint is registered there");
             self.decide(Some(answered)).await;
         }
+    }
+
+    /// Whether this endpoint's home relay is one of `build`'s and connected,
+    /// waited for up to [`REGISTERED_WITHIN`]: registered there, its
+    /// handshake done, not merely chosen (iroh-1.0.2
+    /// `Endpoint::home_relay_status`, endpoint.rs:1384, and
+    /// `RelayStatus::is_connected`, :1906, what `Endpoint::online` reads).
+    async fn registered(&self, build: &BTreeSet<Url>) -> bool {
+        use n0_future::StreamExt as _;
+        let mut homes = iroh::Watcher::stream(self.endpoint.home_relay_status());
+        let at = |h: &iroh::endpoint::RelayStatus| {
+            h.is_connected() && build.contains(&h.url().clone().into())
+        };
+        let registered =
+            tokio::time::timeout(REGISTERED_WITHIN, homes.any(|homes| homes.iter().any(at))).await;
+        tracing::debug!(target: "tiers", ?registered, "tiers: whether this endpoint is registered at the build's fallback");
+        registered.unwrap_or(false)
     }
 
     /// Where a group made here with no relay named meets: where this
