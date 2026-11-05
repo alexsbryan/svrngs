@@ -173,12 +173,7 @@ async fn bind(
     // ── LAYER 1: the person's key, then the link's token ───────────────────
     let secret = match <[u8; 32]>::try_from(key.as_slice()) {
         Ok(bytes) => iroh::SecretKey::from_bytes(&bytes),
-        Err(_) => {
-            refuse!(
-                "LAYER key: REFUSED — the page holds {} bytes, not a key's 32",
-                key.len()
-            )
-        }
+        Err(_) => refuse!("LAYER key: REFUSED — the page holds {} bytes, not a key's 32", key.len()),
     };
     t!("LAYER key: ok — the key {}", secret.public());
     // The relays the link carries, or a pass's holder is handed, and no
