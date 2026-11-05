@@ -21,7 +21,9 @@ need a compatible local HTTPS path; no route policy can manufacture that path.
 
 Net product growth: at most 150 nonblank, noncomment lines: 40 native/core Rust,
 80 browser Rust, 30 JavaScript. Core may grow at most 10 lines, included in the
-40. Tests: at most 150 added code lines using existing harnesses. Product-doc
+40. Tests: at most 450 added code lines using existing harnesses (operator,
+2026-11-05: raised from 150 after the measured 353, with room for the row's
+remaining checks; the repository cap `.` raised to 19,913 in lean_check.py). Product-doc
 changes: at most 30 added lines; queue instructions and run evidence are separate.
 These are ceilings, not targets. Baseline is source f8a57035206be60212d283493ffd3a944976fbdd.
 

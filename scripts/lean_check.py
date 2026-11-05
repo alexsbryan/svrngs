@@ -452,10 +452,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # drops B behavior or the A/B comparison (ralph/next/onboarding/
 # GROUPED_HOME_RECONCILE.md). This spends no lending approval.
 # Separate rungs let the parallel backend/UI lanes adjust only their own cap.
+# The relay-fallback queue's landing, the operator's decision (2026-11-05):
+# the keeper meets at the advertised public fallback while it answers, the
+# page takes every route its policy allows and races them; +80 over the
+# cap, raised to one past where it lands: 19,913.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 19833,
+    ".": 19913,
 
     "js": 8188,
 

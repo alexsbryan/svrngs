@@ -160,3 +160,12 @@ test allowance), then the row's remaining checks (a stalled eligible
 primary's no-delay bound; all-routes-down cleanup and bounded failure;
 native local sync with public reach cut), then REVIEW runs the unchanged
 full `scripts/check.sh`.
+
+## Operator decision (2026-11-05): A
+
+Approved as asked. `.` 19,833 -> 19,913 applied in `scripts/lean_check.py`
+(lean_check exit 0: 19,912/19,913). The queue's test allowance is 450
+(CHARTER.md §Budget, STATE.md), covering the measured 353 and the row's
+remaining checks: a stalled eligible primary's no-delay bound; all-routes-down
+cleanup with the bounded failure said; native local sync with public reach cut.
+No further cap raise is authorized; a landing past 19,913 or 450 stops again.
