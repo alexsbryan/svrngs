@@ -137,3 +137,47 @@ as required by the next session's instructions. The new locked fast-check
 transcript is `reconcile-fast.txt`; `RECONCILE.md` records its failures,
 fresh counts/headroom and the owner/director decision needed to resume.
 The earlier passing fast checks do not describe this newer product baseline.
+
+## Resumed close against the landed baseline
+
+The prerequisite `onboarding-grouped-home-reconcile` closed at `b3cfadfe`
+(`b484b2b3`), landing the preserved grouped-home handback with a fresh locked
+focused gate and the operator-approved JS cap 8,188 at 8,187 lines. This pass
+then remeasured that landed tree with
+`lockf -k /tmp/svrngs-gate.lock python3 demo/runs/economize/2026-11-04-lend-scope/measure.py resume`:
+
+```text
+$ python3 scripts/lean_check.py
+crates/svrngs-core     3486 / 3494 lines
+.                     19795 / 19833 lines
+js                     8187 / 8188 lines
+swift                     0 / 1 lines
+exit 0
+```
+
+`resume-fast.txt` records every command and exit: principles (pins at
+`af47c998d` / `9d6e95faf`), trust floor (10 policies, 11 listeners, 9 gates),
+advisories (both workspaces), vocabulary (89 app nouns, 0 in infra), rustfmt,
+oxlint, oxfmt (294 files), types (130 files), typed-lint (126 + 3 files), the
+141 page-law tests and `cargo check --workspace --offline` — all exit 0. The
+resume's `seam-diff` over the surveyed lending surfaces reports one line
+changed since `7ad807f1`: `crates/svrngs-node/src/home.rs:140`
+(`"/page/" "home/page/" ["grouped"]`), owned by the grouped-home
+reconciliation. Every seam the survey cites is otherwise byte-unchanged, so
+the survey's seam recheck still holds at HEAD.
+
+Updated baseline and headroom are recorded in `docs/LENDING_SCOPE.md`:
+**38 non-JS / 1 JS** exclusive-cap line available. Cuts **0**, core growth
+**0**, non-JS growth **0**, JS growth **0**, Give growth **0**, caps changed
+**0**. Necessary remaining implementation is unchanged at **+400–700 non-JS /
++135–235 JS**, Give separately **+10–25**, core **0**.
+
+No full `scripts/check.sh` runs here: the operator's demo-deadline policy
+(`SCOPE_PARALLEL.md`) assigns the one integrated locked full gate to the final
+audit (`REVIEW-audit-onboarding-auto-1`) after the backend/UI merge. This close
+claims no passing full product gate. No deployment, publish or push. The V1.6
+publish artifacts remain untouched and untracked.
+
+The scratch prototype and its evidence (`PROTOTYPE.md`,
+`prototype-{body,splice,raw,udp,none}.txt`) are retained, not recreated; the
+real-node two-second withdrawal proof belongs to `onboarding-scoped-lending`.

@@ -38,5 +38,4 @@ warning[advisory-not-detected]: advisory was not encountered
 
 advisories ok
 passed     advisories: web/Cargo.toml
-
 exit 0

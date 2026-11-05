@@ -1,6 +1,3 @@
 $ cargo check --workspace --offline
-    Checking svrngs-node v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs-node)
-    Checking svrngs v0.1.0 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 14.19s
-
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.28s
 exit 0

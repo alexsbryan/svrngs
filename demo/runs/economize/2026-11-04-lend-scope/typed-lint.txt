@@ -1,5 +1,4 @@
 $ node scripts/typed-lint.mjs
-typed lint, jsconfig.json: 125 files, exit 0
+typed lint, jsconfig.json: 126 files, exit 0
 typed lint, jsconfig.workers.json: 3 files, exit 0
-
 exit 0

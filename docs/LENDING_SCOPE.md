@@ -285,15 +285,40 @@ up-front allocations; exceeding them, adding core lines or expanding scope
 needs a new decision. Existing-stack economy is credible; fitting under
 today's caps is not.
 
-Reconciliation at `c3fa0ef7` checkpoints an unrelated, unfinished grouped-home
+Reconciliation at `c3fa0ef7` checkpointed an unrelated, unfinished grouped-home
 prototype: core **3,486/3,494**, non-JS **19,790/19,833**, JS **8,174/8,090**.
-Relative to the survey this is **0 core / +1 non-JS / +108 JS**, none spent
-by selected-ring lending. Non-JS headroom is now **42** lines; JavaScript
-has no headroom and is **85 lines** above its maximum passing count of 8,089.
-Do not charge that prototype to lending's conditional approval. Its owner
-must reconcile the baseline before an incremental lending cap calculation.
-The estimate and guardrails above remain unchanged; the current failures
-and decision request are in the pass's `RECONCILE.md`.
+Relative to the survey this was **0 core / +1 non-JS / +108 JS**, none spent
+by selected-ring lending. Do not charge that prototype to lending's
+conditional approval. Its owner reconciled it in
+`onboarding-grouped-home-reconcile` (`b3cfadfe`, closed `b484b2b3`), and the
+operator separately approved its measured JS remainder (cap 8,090 to 8,188 at
+8,187 counted lines; no core or non-JS increase), recorded in
+`../demo/runs/economize/2026-11-04-grouped-home/BUDGET.md`.
+
+The resumed pass rechecked the landed baseline (HEAD `b484b2b3`) with
+`measure.py resume`, whose `resume-fast.txt` holds the fresh commands and
+exits: lean **core 3,486/3,494, non-JS 19,795/19,833, JS 8,187/8,188**, exit 0
+(the +5 non-JS over the handback is `dbfa37a8`'s budget-layout lines, no cap
+value changed); principles, trust floor, advisories, vocabulary, rustfmt,
+oxlint, oxfmt, types, typed-lint, the 141 page-law tests and
+`cargo check --workspace --offline` all exit 0 under
+`lockf -k /tmp/svrngs-gate.lock`. The same run's `seam-diff` shows the only
+change to any surveyed lending surface since `7ad807f1` is one served-module
+line in `home.rs:140` (`"/page/" "home/page/" ["grouped"]`), which the
+grouped-home reconciliation owns; every other seam the survey cites
+(`lend.rs`, `door.rs`, `door/`, `version.rs`, `node.rs`, `oidc/`, `origin.rs`,
+`surface.rs`, `cli.rs`, `register.rs`, `apps/give/src/`) is byte-unchanged. The
+seams therefore still hold as surveyed; the estimate and guardrails above are
+unchanged.
+
+That leaves **38 non-JS** and **1 JS** line of exclusive-cap headroom, well
+under the +400–700 non-JS / +135–235 JS estimate, so implementation will need
+incremental cap adjustments to `measured count + 1` as each landing occurs.
+No product cut, cap edit or code change lands in this pass; the resume records
+evidence only. The scratch prototype and its closing evidence remain in
+`PROTOTYPE.md` and `CLOSE.md`. A full `scripts/check.sh` is not run here: the
+operator's demo-deadline policy (`SCOPE_PARALLEL.md`) assigns the one
+integrated locked full gate to the final audit after the backend/UI merge.
 
 ## Proof before landing
 

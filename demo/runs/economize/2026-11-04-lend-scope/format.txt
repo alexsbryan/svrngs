@@ -2,6 +2,5 @@ $ web/node_modules/.bin/oxfmt --check **/*.{js,mjs,cjs}
 Checking formatting...
 
 All matched files use the correct format.
-Finished in 45ms on 291 files using 12 threads.
-
+Finished in 30ms on 294 files using 12 threads.
 exit 0

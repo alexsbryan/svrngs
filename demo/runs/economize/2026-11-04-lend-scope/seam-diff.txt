@@ -1,0 +1,4 @@
+$ git diff --stat 7ad807f1..HEAD -- crates/svrngs-node/src/lend.rs crates/svrngs-node/src/door.rs crates/svrngs-node/src/door/ crates/svrngs-node/src/home.rs crates/svrngs-node/src/version.rs crates/svrngs-node/src/node.rs crates/svrngs-node/src/oidc/ crates/svrngs-node/src/origin.rs crates/svrngs-node/src/surface.rs crates/svrngs/src/cli.rs apps/give/src/ crates/svrngs-runtime/src/register.rs
+ crates/svrngs-node/src/home.rs | 1 +
+ 1 file changed, 1 insertion(+)
+exit 0

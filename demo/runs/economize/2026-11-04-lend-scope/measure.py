@@ -22,6 +22,12 @@ def run(name, args, cwd=ROOT):
     return result.returncode
 
 
+def combine(name, parts):
+    text = "".join((HERE / f"{part}.txt").read_text() for part in parts)
+    (HERE / f"{name}.txt").write_text(text)
+    print(f"wrote {name}.txt from {', '.join(parts)}")
+
+
 if sys.argv[1] == "survey":
     run("lean-before", ["python3", "scripts/lean_check.py"])
     spec = importlib.util.spec_from_file_location("lean", ROOT / "scripts/lean_check.py")
@@ -91,5 +97,40 @@ elif sys.argv[1] == "close":
         "crates", "web", "resolver", "scripts", "apps",
         ":!crates/**/tests/**", ":!web/tests/**"])
     run("prior-full-gate", ["git", "show", "da503bac", "--", "ralph/REVIEW_FINDINGS.md"])
+elif sys.argv[1] == "resume":
+    # Resumed after onboarding-grouped-home-reconcile landed (HEAD b484b2b3).
+    # Rechecks the current landed baseline and the lending seams the survey
+    # names; the survey/prototype evidence is retained, not recreated.
+    commands = [
+        ("lean-after", ["python3", "scripts/lean_check.py"]),
+        ("principles", ["python3", "scripts/principles_check.py"]),
+        ("trust", ["python3", "scripts/trust_check.py"]),
+        ("advisories", ["python3", "scripts/advisories.py"]),
+        ("vocab", ["python3", "scripts/vocab_check.py"]),
+        ("rustfmt", ["cargo", "fmt", "--all", "--check"]),
+        ("lint", ["web/node_modules/.bin/oxlint"]),
+        ("format", ["web/node_modules/.bin/oxfmt", "--check", "**/*.{js,mjs,cjs}"]),
+        ("types", ["node", "scripts/types.mjs"]),
+        ("typed-lint", ["node", "scripts/typed-lint.mjs"]),
+        ("page-laws", ["node", "--test", *[str(p.relative_to(ROOT))
+            for p in sorted((ROOT / "web/tests").rglob("*.test.mjs"))]]),
+        ("workspace", ["cargo", "check", "--workspace", "--offline"]),
+        # The landed grouped-home handback changed product; this is evidence of
+        # the seam files being otherwise untouched since the survey base, not a
+        # claim of an unchanged product tree.
+        ("seam-diff", ["git", "diff", "--stat", "7ad807f1..HEAD", "--",
+            "crates/svrngs-node/src/lend.rs", "crates/svrngs-node/src/door.rs",
+            "crates/svrngs-node/src/door/", "crates/svrngs-node/src/home.rs",
+            "crates/svrngs-node/src/version.rs", "crates/svrngs-node/src/node.rs",
+            "crates/svrngs-node/src/oidc/", "crates/svrngs-node/src/origin.rs",
+            "crates/svrngs-node/src/surface.rs", "crates/svrngs/src/cli.rs",
+            "apps/give/src/", "crates/svrngs-runtime/src/register.rs"]),
+    ]
+    for name, args in commands:
+        if run(name, args):
+            sys.exit(1)
+    combine("resume-fast", [name for name, _ in commands])
+elif sys.argv[1] == "combine":
+    combine(sys.argv[2], sys.argv[3:])
 else:
-    sys.exit("expected survey, prototype, fast or close")
+    sys.exit("expected survey, prototype, fast, resume, combine or close")

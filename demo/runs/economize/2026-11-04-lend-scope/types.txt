@@ -1,4 +1,3 @@
 $ node scripts/types.mjs
-types: 0 errors in 129 files
-
+types: 0 errors in 130 files
 exit 0

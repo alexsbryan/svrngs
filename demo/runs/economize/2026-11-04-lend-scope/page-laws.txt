@@ -1,763 +1,781 @@
-$ node --test web/tests/authority.test.mjs web/tests/copy.test.mjs web/tests/fallback.test.mjs web/tests/lend-frames.test.mjs web/tests/machine.test.mjs web/tests/one-ui.test.mjs web/tests/pages/acts.test.mjs web/tests/pages/enter.test.mjs web/tests/pages/frame.test.mjs web/tests/pages/home-join.test.mjs web/tests/pages/home-make.test.mjs web/tests/pages/members.test.mjs web/tests/pages/native-arrival.test.mjs web/tests/pages/play.test.mjs web/tests/pages/rooms.test.mjs web/tests/pages/shelf.test.mjs web/tests/parts.test.mjs web/tests/release.test.mjs web/tests/resolver.test.mjs web/tests/session-proof.test.mjs web/tests/shim.test.mjs web/tests/specifiers.test.mjs web/tests/update.test.mjs web/tests/vendor.test.mjs web/tests/worker.test.mjs
+$ node --test web/tests/authority.test.mjs web/tests/copy.test.mjs web/tests/fallback.test.mjs web/tests/grouped.test.mjs web/tests/lend-frames.test.mjs web/tests/machine.test.mjs web/tests/one-ui.test.mjs web/tests/pages/acts.test.mjs web/tests/pages/enter.test.mjs web/tests/pages/frame.test.mjs web/tests/pages/home-join.test.mjs web/tests/pages/home-make.test.mjs web/tests/pages/members.test.mjs web/tests/pages/native-arrival.test.mjs web/tests/pages/play.test.mjs web/tests/pages/rooms.test.mjs web/tests/pages/shelf.test.mjs web/tests/parts.test.mjs web/tests/release.test.mjs web/tests/resolver.test.mjs web/tests/session-proof.test.mjs web/tests/shim.test.mjs web/tests/specifiers.test.mjs web/tests/update.test.mjs web/tests/vendor.test.mjs web/tests/worker.test.mjs
 TAP version 13
-# (node:59681) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/authority.js is not specified and it doesn't parse as CommonJS.
+# (node:16565) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/authority.js is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a write is caused by a page of this origin, or a navigation one of them began
 ok 1 - a write is caused by a page of this origin, or a navigation one of them began
   ---
-  duration_ms: 64.558125
+  duration_ms: 36.819417
   ...
 # Subtest: the only extra frame remains at the platform parent origin
 ok 2 - the only extra frame remains at the platform parent origin
   ---
-  duration_ms: 0.178959
+  duration_ms: 0.516458
   ...
 # Subtest: an open’s approver opens only with its own W, for the open it was sealed to
 ok 3 - an open’s approver opens only with its own W, for the open it was sealed to
   ---
-  duration_ms: 38.687583
+  duration_ms: 39.844083
   ...
 # Subtest: the signer reads only the one __Host- cookie named for its app
 ok 4 - the signer reads only the one __Host- cookie named for its app
   ---
-  duration_ms: 0.17775
+  duration_ms: 1.278875
   ...
 # Subtest: a private seed must prove the holder named by the trusted handoff
 ok 5 - a private seed must prove the holder named by the trusted handoff
   ---
-  duration_ms: 12.481708
+  duration_ms: 32.515584
   ...
-# (node:59682) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16566) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a copy is written, then said copied, and traced as COPY
 ok 6 - a copy is written, then said copied, and traced as COPY
   ---
-  duration_ms: 12.196375
+  duration_ms: 37.043625
   ...
 # Subtest: a copy the clipboard refuses is unwritten, with why; one whose io answers nothing too
 ok 7 - a copy the clipboard refuses is unwritten, with why; one whose io answers nothing too
   ---
-  duration_ms: 7.064708
+  duration_ms: 47.51325
   ...
 # Subtest: a copy while one is copying is refused, and once answered a copy is taken again, each answer kept in turn
 ok 8 - a copy while one is copying is refused, and once answered a copy is taken again, each answer kept in turn
   ---
-  duration_ms: 4.099958
+  duration_ms: 4.329416
   ...
 # Subtest: an answer with no copy being written is refused, and so is a message COPY does not take
 ok 9 - an answer with no copy being written is refused, and so is a message COPY does not take
   ---
-  duration_ms: 0.415417
+  duration_ms: 0.742
   ...
 # Subtest: without beside, the answer is the button’s word, as the phone’s \#copy is; a press sends the copy of its text
 ok 10 - without beside, the answer is the button’s word, as the phone’s \#copy is; a press sends the copy of its text
   ---
-  duration_ms: 1.245667
+  duration_ms: 0.66375
   ...
 # Subtest: with beside, each answer is said after the button and what beside draws, the second " Copied." kept
 ok 11 - with beside, each answer is said after the button and what beside draws, the second " Copied." kept
   ---
-  duration_ms: 0.417541
+  duration_ms: 0.372417
   ...
-# (node:59683) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16567) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a group met at its fallback says why in a person’s words, and one met at its own says nothing
 ok 12 - a group met at its fallback says why in a person’s words, and one met at its own says nothing
   ---
-  duration_ms: 19.921084
+  duration_ms: 4.960667
+  ...
+# (node:16568) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: B places every original group capability exactly once
+ok 13 - B places every original group capability exactly once
+  ---
+  duration_ms: 3.557708
+  ...
+# Subtest: B destinations retain stable ids and refuse unknown views without exposing controls
+ok 14 - B destinations retain stable ids and refuse unknown views without exposing controls
+  ---
+  duration_ms: 5.92325
+  ...
+# Subtest: making and joining preserve B and its destination through the reread
+ok 15 - making and joining preserve B and its destination through the reread
+  ---
+  duration_ms: 0.202875
   ...
 # Subtest: a frame whose head comes split across reads is told whole, then the end
     # Subtest: 70000 bytes, split at 1
     ok 1 - 70000 bytes, split at 1
       ---
-      duration_ms: 94.634792
+      duration_ms: 119.082583
       ...
     # Subtest: 70000 bytes, split at 2
     ok 2 - 70000 bytes, split at 2
       ---
-      duration_ms: 61.5935
+      duration_ms: 92.880584
       ...
     # Subtest: 70000 bytes, split at 3
     ok 3 - 70000 bytes, split at 3
       ---
-      duration_ms: 58.625333
+      duration_ms: 81.469625
       ...
     # Subtest: 70000 bytes, split at 4
     ok 4 - 70000 bytes, split at 4
       ---
-      duration_ms: 49.977709
+      duration_ms: 122.234541
       ...
     # Subtest: 70000 bytes, split at 5
     ok 5 - 70000 bytes, split at 5
       ---
-      duration_ms: 40.382417
+      duration_ms: 97.39525
       ...
     # Subtest: 70000 bytes, split at 6
     ok 6 - 70000 bytes, split at 6
       ---
-      duration_ms: 56.186917
+      duration_ms: 96.920209
       ...
     # Subtest: 70000 bytes, split at 7
     ok 7 - 70000 bytes, split at 7
       ---
-      duration_ms: 58.614875
+      duration_ms: 94.11525
       ...
     # Subtest: 70000 bytes, split at 8
     ok 8 - 70000 bytes, split at 8
       ---
-      duration_ms: 71.608208
+      duration_ms: 81.609834
       ...
     # Subtest: 70000 bytes, split at 9
     ok 9 - 70000 bytes, split at 9
       ---
-      duration_ms: 70.488375
+      duration_ms: 179.367208
       ...
     # Subtest: 70000 bytes, split at 10
     ok 10 - 70000 bytes, split at 10
       ---
-      duration_ms: 37.002542
+      duration_ms: 47.627334
       ...
     # Subtest: 70000 bytes, split at 5000
     ok 11 - 70000 bytes, split at 5000
       ---
-      duration_ms: 30.348334
+      duration_ms: 57.34025
       ...
     # Subtest: 300 bytes, split at 1
     ok 12 - 300 bytes, split at 1
       ---
-      duration_ms: 16.9085
+      duration_ms: 23.926709
       ...
     # Subtest: 300 bytes, split at 2
     ok 13 - 300 bytes, split at 2
       ---
-      duration_ms: 13.750959
+      duration_ms: 31.451375
       ...
     # Subtest: 300 bytes, split at 3
     ok 14 - 300 bytes, split at 3
       ---
-      duration_ms: 12.46325
+      duration_ms: 19.45375
       ...
     # Subtest: 300 bytes, split at 4
     ok 15 - 300 bytes, split at 4
       ---
-      duration_ms: 14.667417
+      duration_ms: 28.585792
       ...
     # Subtest: 300 bytes, split at 100
     ok 16 - 300 bytes, split at 100
       ---
-      duration_ms: 17.348584
+      duration_ms: 26.940458
       ...
     # Subtest: 127 bytes, split at 1
     ok 17 - 127 bytes, split at 1
       ---
-      duration_ms: 19.3435
+      duration_ms: 22.945458
       ...
     # Subtest: 127 bytes, split at 2
     ok 18 - 127 bytes, split at 2
       ---
-      duration_ms: 18.91775
+      duration_ms: 28.87125
       ...
     # Subtest: 127 bytes, split at 3
     ok 19 - 127 bytes, split at 3
       ---
-      duration_ms: 20.689292
+      duration_ms: 20.985833
       ...
     # Subtest: 127 bytes, split at 4
     ok 20 - 127 bytes, split at 4
       ---
-      duration_ms: 14.571334
+      duration_ms: 28.5105
       ...
     # Subtest: 127 bytes, split at 100
     ok 21 - 127 bytes, split at 100
       ---
-      duration_ms: 14.321917
+      duration_ms: 23.300667
       ...
     1..21
-ok 13 - a frame whose head comes split across reads is told whole, then the end
+ok 16 - a frame whose head comes split across reads is told whole, then the end
   ---
-  duration_ms: 798.629083
+  duration_ms: 1332.918458
   ...
 # Subtest: two frames in one read are told in turn
-ok 14 - two frames in one read are told in turn
+ok 17 - two frames in one read are told in turn
   ---
-  duration_ms: 34.449333
+  duration_ms: 79.879542
   ...
 # Subtest: a step answers the next state, tells each subscriber once, and is traced
-ok 15 - a step answers the next state, tells each subscriber once, and is traced
+ok 18 - a step answers the next state, tells each subscriber once, and is traced
   ---
-  duration_ms: 3.983709
+  duration_ms: 3.542291
   ...
 # Subtest: a refusal keeps the same state, tells nobody, runs nothing, and is traced with why
-ok 16 - a refusal keeps the same state, tells nobody, runs nothing, and is traced with why
+ok 19 - a refusal keeps the same state, tells nobody, runs nothing, and is traced with why
   ---
-  duration_ms: 50.352334
+  duration_ms: 23.680458
   ...
 # Subtest: an effect rejected, thrown, or with no io answers its failed message, with why
-ok 17 - an effect rejected, thrown, or with no io answers its failed message, with why
+ok 20 - an effect rejected, thrown, or with no io answers its failed message, with why
   ---
-  duration_ms: 17.787458
+  duration_ms: 12.676333
   ...
 # Subtest: an effect that answers nothing answers its failed message, never a quiet idle
-ok 18 - an effect that answers nothing answers its failed message, never a quiet idle
+ok 21 - an effect that answers nothing answers its failed message, never a quiet idle
   ---
-  duration_ms: 3.732625
+  duration_ms: 2.038333
   ...
 # Subtest: a late answer is refused by name, and the newer one taken
-ok 19 - a late answer is refused by name, and the newer one taken
+ok 22 - a late answer is refused by name, and the newer one taken
   ---
-  duration_ms: 0.817
+  duration_ms: 0.303
   ...
 # Subtest: a step that answers a state outside its region is refused
-ok 20 - a step that answers a state outside its region is refused
+ok 23 - a step that answers a state outside its region is refused
   ---
-  duration_ms: 0.58275
+  duration_ms: 0.147625
   ...
 # Subtest: effects run in the order the step gives them, after the state is taken
-ok 21 - effects run in the order the step gives them, after the state is taken
+ok 24 - effects run in the order the step gives them, after the state is taken
   ---
-  duration_ms: 4.661083
+  duration_ms: 2.532541
   ...
 # Subtest: no file names a second UI, or the switch to it
-ok 22 - no file names a second UI, or the switch to it
+ok 25 - no file names a second UI, or the switch to it
   ---
-  duration_ms: 551.23925
+  duration_ms: 724.630875
   ...
-# (node:59697) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16572) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: "What acts as you" drawn as question.js `acts` draws it: folded, each part headed once it has a line, its note after
-ok 23 - "What acts as you" drawn as question.js `acts` draws it: folded, each part headed once it has a line, its note after
+ok 26 - "What acts as you" drawn as question.js `acts` draws it: folded, each part headed once it has a line, its note after
   ---
-  duration_ms: 1.722542
+  duration_ms: 20.668208
   ...
 # Subtest: an app’s new version drawn as question.js `changes` draws it: unknown, none, by you and by another, of this group only
-ok 24 - an app’s new version drawn as question.js `changes` draws it: unknown, none, by you and by another, of this group only
+ok 27 - an app’s new version drawn as question.js `changes` draws it: unknown, none, by you and by another, of this group only
   ---
-  duration_ms: 1.674625
+  duration_ms: 19.732125
   ...
 # Subtest: a yes to a new version: sent by its button, its line said in its place once done, a refusal beside the button
-ok 25 - a yes to a new version: sent by its button, its line said in its place once done, a refusal beside the button
+ok 28 - a yes to a new version: sent by its button, its line said in its place once done, a refusal beside the button
   ---
-  duration_ms: 6.079
+  duration_ms: 7.258792
   ...
 # Subtest: what apps use drawn as question.js `uses` draws it, a line each, as `li` and as `p`; Stop sent with both labels
-ok 26 - what apps use drawn as question.js `uses` draws it, a line each, as `li` and as `p`; Stop sent with both labels
+ok 29 - what apps use drawn as question.js `uses` draws it, a line each, as `li` and as `p`; Stop sent with both labels
   ---
-  duration_ms: 0.697666
+  duration_ms: 1.848834
   ...
 # Subtest: a group read holding unsent lines answers their carry, then nothing once none is left (page-acts (d))
-ok 27 - a group read holding unsent lines answers their carry, then nothing once none is left (page-acts (d))
+ok 30 - a group read holding unsent lines answers their carry, then nothing once none is left (page-acts (d))
   ---
-  duration_ms: 2.5465
+  duration_ms: 0.549
   ...
-# (node:59699) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16573) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: each fragment is routed as web/app.js opening routes it
-ok 28 - each fragment is routed as web/app.js opening routes it
+ok 31 - each fragment is routed as web/app.js opening routes it
   ---
-  duration_ms: 2.427666
+  duration_ms: 1.513792
   ...
 # Subtest: one tab holds the group: another says so, and takes it here when asked
-ok 29 - one tab holds the group: another says so, and takes it here when asked
+ok 32 - one tab holds the group: another says so, and takes it here when asked
   ---
-  duration_ms: 0.518708
+  duration_ms: 0.474
   ...
 # Subtest: the read: its refusals said, an older answer refused by name, and what it read
-ok 30 - the read: its refusals said, an older answer refused by name, and what it read
+ok 33 - the read: its refusals said, an older answer refused by name, and what it read
   ---
-  duration_ms: 0.496
+  duration_ms: 0.479
   ...
 # Subtest: back on screen the list is read again, and a read again that fails keeps the list, saying why
-ok 31 - back on screen the list is read again, and a read again that fails keeps the list, saying why
+ok 34 - back on screen the list is read again, and a read again that fails keeps the list, saying why
   ---
-  duration_ms: 0.407042
+  duration_ms: 7.5345
   ...
 # Subtest: a group picked from the offer leaves it in the same step
-ok 32 - a group picked from the offer leaves it in the same step
+ok 35 - a group picked from the offer leaves it in the same step
   ---
-  duration_ms: 0.181083
+  duration_ms: 3.730625
   ...
-# (node:59700) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16574) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a message type taken by two flows is refused as PAGE composes
-ok 33 - a message type taken by two flows is refused as PAGE composes
+ok 36 - a message type taken by two flows is refused as PAGE composes
   ---
-  duration_ms: 0.6775
+  duration_ms: 0.70425
   ...
 # Subtest: a part’s own message is taken by its name, so two flows each draw a Fold
-ok 34 - a part’s own message is taken by its name, so two flows each draw a Fold
+ok 37 - a part’s own message is taken by its name, so two flows each draw a Fold
   ---
-  duration_ms: 0.342041
+  duration_ms: 0.356209
   ...
 # Subtest: a region, a field, an io or a place two flows claim is refused as PAGE composes
-ok 35 - a region, a field, an io or a place two flows claim is refused as PAGE composes
+ok 38 - a region, a field, an io or a place two flows claim is refused as PAGE composes
   ---
-  duration_ms: 0.22225
+  duration_ms: 0.273125
   ...
 # Subtest: a take that moves a field or region its flow does not own is refused, naming it, and nobody is told
-ok 36 - a take that moves a field or region its flow does not own is refused, naming it, and nobody is told
+ok 39 - a take that moves a field or region its flow does not own is refused, naming it, and nobody is told
   ---
-  duration_ms: 0.786292
+  duration_ms: 0.869541
   ...
 # Subtest: the heading is the first a slot gives, in ORDER; the response every slot’s lines, joined in that order
-ok 37 - the heading is the first a slot gives, in ORDER; the response every slot’s lines, joined in that order
+ok 40 - the heading is the first a slot gives, in ORDER; the response every slot’s lines, joined in that order
   ---
-  duration_ms: 2.099708
+  duration_ms: 0.322666
   ...
 # Subtest: the flows compose, every flow built, their places web/index.html’s body in its order as first drawn
-ok 38 - the flows compose, every flow built, their places web/index.html’s body in its order as first drawn
+ok 41 - the flows compose, every flow built, their places web/index.html’s body in its order as first drawn
   ---
-  duration_ms: 24.597417
+  duration_ms: 51.658125
   ...
 # Subtest: an older answer to what a link is for is refused by name
-ok 39 - an older answer to what a link is for is refused by name
+ok 42 - an older answer to what a link is for is refused by name
   ---
-  duration_ms: 0.852458
+  duration_ms: 3.173375
   ...
 # Subtest: the name the link joins as is the one asked, and a second press is refused
-ok 40 - the name the link joins as is the one asked, and a second press is refused
+ok 43 - the name the link joins as is the one asked, and a second press is refused
   ---
-  duration_ms: 0.194958
+  duration_ms: 0.263875
   ...
 # Subtest: a refusal is said in place of the last, the link checked kept to press again
-ok 41 - a refusal is said in place of the last, the link checked kept to press again
+ok 44 - a refusal is said in place of the last, the link checked kept to press again
   ---
-  duration_ms: 0.105958
+  duration_ms: 0.114542
   ...
 # Subtest: joined, the form is empty again, and HOME says so from what was joined
-ok 42 - joined, the form is empty again, and HOME says so from what was joined
+ok 45 - joined, the form is empty again, and HOME says so from what was joined
   ---
-  duration_ms: 0.14875
+  duration_ms: 0.158417
   ...
 # Subtest: an older answer of namesakes is refused by name
-ok 43 - an older answer of namesakes is refused by name
+ok 46 - an older answer of namesakes is refused by name
   ---
-  duration_ms: 10.442833
+  duration_ms: 8.671375
   ...
 # Subtest: a second press is refused while it makes, and a refusal is said once
-ok 44 - a second press is refused while it makes, and a refusal is said once
+ok 47 - a second press is refused while it makes, and a refusal is said once
   ---
-  duration_ms: 0.198083
+  duration_ms: 0.138333
   ...
 # Subtest: made, the form is empty again, and HOME says so from what was made
-ok 45 - made, the form is empty again, and HOME says so from what was made
+ok 48 - made, the form is empty again, and HOME says so from what was made
   ---
-  duration_ms: 0.677083
+  duration_ms: 0.125583
   ...
-# (node:59857) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16610) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: the door as question.js `door` draws it: unjudged, judged, not known now
-ok 46 - the door as question.js `door` draws it: unjudged, judged, not known now
+ok 49 - the door as question.js `door` draws it: unjudged, judged, not known now
   ---
-  duration_ms: 44.746792
+  duration_ms: 127.052209
   ...
 # Subtest: given what is lent, each person’s own lends in their window, the group’s in nobody’s
-ok 47 - given what is lent, each person’s own lends in their window, the group’s in nobody’s
+ok 50 - given what is lent, each person’s own lends in their window, the group’s in nobody’s
   ---
-  duration_ms: 4.400834
+  duration_ms: 10.783334
   ...
 # Subtest: who is visiting as question.js `visiting` draws it, by host
-ok 48 - who is visiting as question.js `visiting` draws it, by host
+ok 51 - who is visiting as question.js `visiting` draws it, by host
   ---
-  duration_ms: 0.992208
+  duration_ms: 3.210333
   ...
-# (node:59872) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16611) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: a typed short address redirects only to the canonical page in native mode
-ok 49 - a typed short address redirects only to the canonical page in native mode
+ok 52 - a typed short address redirects only to the canonical page in native mode
   ---
-  duration_ms: 102.521
+  duration_ms: 114.82325
   ...
 # Subtest: a resolver limit renders temporary unavailability and manual retry, never ended
-ok 50 - a resolver limit renders temporary unavailability and manual retry, never ended
+ok 53 - a resolver limit renders temporary unavailability and manual retry, never ended
   ---
-  duration_ms: 7.094333
+  duration_ms: 0.880292
   ...
 # Subtest: native arrival asks the name once and offers a literal shell command without browser admission
-ok 51 - native arrival asks the name once and offers a literal shell command without browser admission
+ok 54 - native arrival asks the name once and offers a literal shell command without browser admission
   ---
-  duration_ms: 29.671083
+  duration_ms: 25.976917
   ...
-# (node:59879) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16612) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: read as it loads, then once a round of the groups’ reads, however many cells ask
-ok 52 - read as it loads, then once a round of the groups’ reads, however many cells ask
+ok 55 - read as it loads, then once a round of the groups’ reads, however many cells ask
   ---
-  duration_ms: 11.42025
+  duration_ms: 0.7955
   ...
 # Subtest: a turn is PLAY’s: its answer is what has Play on, what it copied kept for its lend, a second turn and a read refused while it runs
-ok 53 - a turn is PLAY’s: its answer is what has Play on, what it copied kept for its lend, a second turn and a read refused while it runs
+ok 56 - a turn is PLAY’s: its answer is what has Play on, what it copied kept for its lend, a second turn and a read refused while it runs
   ---
-  duration_ms: 1.219625
+  duration_ms: 0.270333
   ...
 # Subtest: a refused turn goes back to where it was, each refusal kept for that lend
-ok 54 - a refused turn goes back to where it was, each refusal kept for that lend
+ok 57 - a refused turn goes back to where it was, each refusal kept for that lend
   ---
-  duration_ms: 2.339666
+  duration_ms: 0.101791
   ...
 # Subtest: "What acts as you" lists each Play on with its Stop, or why none can be read; none when nothing is on
-ok 55 - "What acts as you" lists each Play on with its Stop, or why none can be read; none when nothing is on
+ok 58 - "What acts as you" lists each Play on with its Stop, or why none can be read; none when nothing is on
   ---
-  duration_ms: 1.905042
+  duration_ms: 0.451583
   ...
-# (node:59880) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/hooks.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16613) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: read as it loads, then once a round of the groups’ reads, however many groups ask
-ok 56 - read as it loads, then once a round of the groups’ reads, however many groups ask
+ok 59 - read as it loads, then once a round of the groups’ reads, however many groups ask
   ---
-  duration_ms: 0.710541
+  duration_ms: 2.57175
   ...
 # Subtest: a turn is ROOM’s: its answer is what is open, a second turn and a read refused while it runs
-ok 57 - a turn is ROOM’s: its answer is what is open, a second turn and a read refused while it runs
+ok 60 - a turn is ROOM’s: its answer is what is open, a second turn and a read refused while it runs
   ---
-  duration_ms: 0.160084
+  duration_ms: 0.398625
   ...
 # Subtest: a refused turn goes back to where it was, why kept for that lend
-ok 58 - a refused turn goes back to where it was, why kept for that lend
+ok 61 - a refused turn goes back to where it was, why kept for that lend
   ---
-  duration_ms: 0.087708
+  duration_ms: 0.210667
   ...
 # Subtest: "Open to this WiFi" lists what is open and what a press here closed; none when nothing is
-ok 59 - "Open to this WiFi" lists what is open and what a press here closed; none when nothing is
+ok 62 - "Open to this WiFi" lists what is open and what a press here closed; none when nothing is
   ---
-  duration_ms: 0.489042
+  duration_ms: 1.129667
   ...
-# (node:59887) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/htm.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16614) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: drawn as question.js `table` draws it: offered, one on the table, all on it, a group unnamed
-ok 60 - drawn as question.js `table` draws it: offered, one on the table, all on it, a group unnamed
+ok 63 - drawn as question.js `table` draws it: offered, one on the table, all on it, a group unnamed
   ---
-  duration_ms: 1.558291
+  duration_ms: 4.256291
   ...
 # Subtest: folded as "Bring more to <group>" for someone who just joined, as `table` folds it
-ok 61 - folded as "Bring more to <group>" for someone who just joined, as `table` folds it
+ok 64 - folded as "Bring more to <group>" for someone who just joined, as `table` folds it
   ---
-  duration_ms: 5.871958
+  duration_ms: 0.322208
   ...
 # Subtest: a tick is kept, and the button brings the ticked ones still offered
-ok 62 - a tick is kept, and the button brings the ticked ones still offered
+ok 65 - a tick is kept, and the button brings the ticked ones still offered
   ---
-  duration_ms: 41.939291
+  duration_ms: 29.483417
   ...
 # Subtest: each answer said beside the button, in v1’s words, the words above the boxes kept
-ok 63 - each answer said beside the button, in v1’s words, the words above the boxes kept
+ok 66 - each answer said beside the button, in v1’s words, the words above the boxes kept
   ---
-  duration_ms: 0.223084
+  duration_ms: 0.730834
   ...
 # Subtest: while it brings, a second bring and a tick are refused, the button and the boxes held
-ok 64 - while it brings, a second bring and a tick are refused, the button and the boxes held
+ok 67 - while it brings, a second bring and a tick are refused, the button and the boxes held
   ---
-  duration_ms: 0.216542
+  duration_ms: 0.531833
   ...
 # Subtest: what it brought is offered no more, its tick gone; all brought, the answer stands alone
-ok 65 - what it brought is offered no more, its tick gone; all brought, the answer stands alone
+ok 68 - what it brought is offered no more, its tick gone; all brought, the answer stands alone
   ---
-  duration_ms: 0.2175
+  duration_ms: 1.672583
   ...
 # Subtest: brought, the page reads its group again, by the `after` it gives
-ok 66 - brought, the page reads its group again, by the `after` it gives
+ok 69 - brought, the page reads its group again, by the `after` it gives
   ---
-  duration_ms: 51.911666
+  duration_ms: 72.513833
   ...
 # Subtest: the io answers brought, with what it brought as why
-ok 67 - the io answers brought, with what it brought as why
+ok 70 - the io answers brought, with what it brought as why
   ---
-  duration_ms: 4.052125
+  duration_ms: 0.267417
   ...
-# (node:59892) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16637) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: Keep is question.js `keeping`, byte for byte
-ok 68 - Keep is question.js `keeping`, byte for byte
+ok 71 - Keep is question.js `keeping`, byte for byte
   ---
-  duration_ms: 11.872542
+  duration_ms: 3.239792
   ...
 # Subtest: Row is question.js `row`, a head row too, and a line across the table as home.js draws it
-ok 69 - Row is question.js `row`, a head row too, and a line across the table as home.js draws it
+ok 72 - Row is question.js `row`, a head row too, and a line across the table as home.js draws it
   ---
-  duration_ms: 0.425708
+  duration_ms: 6.372166
   ...
 # Subtest: Act is a button with its answer beside it, as home.js draws one; disabled and silent while busy
-ok 70 - Act is a button with its answer beside it, as home.js draws one; disabled and silent while busy
+ok 73 - Act is a button with its answer beside it, as home.js draws one; disabled and silent while busy
   ---
-  duration_ms: 0.59675
+  duration_ms: 0.783667
   ...
 # Subtest: Act's answer in its place, and a form's own button, which sends nothing itself
-ok 71 - Act's answer in its place, and a form's own button, which sends nothing itself
+ok 74 - Act's answer in its place, and a form's own button, which sends nothing itself
   ---
-  duration_ms: 2.610291
+  duration_ms: 0.140542
   ...
 # Subtest: Fold is the shelf’s and acts’ <details>, and says each toggle
-ok 72 - Fold is the shelf’s and acts’ <details>, and says each toggle
+ok 75 - Fold is the shelf’s and acts’ <details>, and says each toggle
   ---
-  duration_ms: 20.207625
+  duration_ms: 33.188583
   ...
 # Subtest: Field: the join’s label and box, the home page’s wrapped ones and its select, and what each sends
-ok 73 - Field: the join’s label and box, the home page’s wrapped ones and its select, and what each sends
+ok 76 - Field: the join’s label and box, the home page’s wrapped ones and its select, and what each sends
   ---
-  duration_ms: 0.692792
+  duration_ms: 7.104
   ...
 # Subtest: Heading and Said are the phone’s \#status, \#response and \#why
-ok 74 - Heading and Said are the phone’s \#status, \#response and \#why
+ok 77 - Heading and Said are the phone’s \#status, \#response and \#why
   ---
-  duration_ms: 0.1385
+  duration_ms: 0.507292
   ...
 # Subtest: no crate gives test-support to anything but a test
-ok 75 - no crate gives test-support to anything but a test
+ok 78 - no crate gives test-support to anything but a test
   ---
-  duration_ms: 53.875375
+  duration_ms: 182.488458
   ...
 # Subtest: test-support under svrngs's [dependencies] is caught, by line
-ok 76 - test-support under svrngs's [dependencies] is caught, by line
+ok 79 - test-support under svrngs's [dependencies] is caught, by line
   ---
-  duration_ms: 0.691958
+  duration_ms: 0.304875
   ...
 # Subtest: the release and the deploy name no feature
-ok 77 - the release and the deploy name no feature
+ok 80 - the release and the deploy name no feature
   ---
-  duration_ms: 0.569
+  duration_ms: 0.192583
   ...
 # Subtest: phrase source, space and Rust signing-key vector are pinned
-ok 78 - phrase source, space and Rust signing-key vector are pinned
+ok 81 - phrase source, space and Rust signing-key vector are pinned
   ---
-  duration_ms: 45.576125
+  duration_ms: 2.071583
   ...
 # lifecycle command maximum: 16
 # Subtest: authenticated lifecycle, immutable binding, closure and no reopen
-ok 79 - authenticated lifecycle, immutable binding, closure and no reopen
+ok 82 - authenticated lifecycle, immutable binding, closure and no reopen
   ---
-  duration_ms: 251.272459
+  duration_ms: 415.482541
   ...
 # Subtest: old phrase cannot name a later owner and close-before-publish is final
-ok 80 - old phrase cannot name a later owner and close-before-publish is final
+ok 83 - old phrase cannot name a later owner and close-before-publish is final
   ---
-  duration_ms: 96.366417
+  duration_ms: 121.281208
   ...
 # Subtest: missing and mismatched generation refuse every operation without writes
-ok 81 - missing and mismatched generation refuse every operation without writes
+ok 84 - missing and mismatched generation refuse every operation without writes
   ---
-  duration_ms: 170.945709
+  duration_ms: 252.029041
   ...
 # Subtest: expiry erases actual secret while reservation permanently refuses reuse
-ok 82 - expiry erases actual secret while reservation permanently refuses reuse
+ok 85 - expiry erases actual secret while reservation permanently refuses reuse
   ---
-  duration_ms: 2165.843334
+  duration_ms: 2210.786792
   ...
 # before/after all 11 lifecycle writes and lost commit replies: passed
 # Subtest: every write boundary is uncertain-safe and reconciles the same operation
-ok 83 - every write boundary is uncertain-safe and reconciles the same operation
+ok 86 - every write boundary is uncertain-safe and reconciles the same operation
   ---
-  duration_ms: 1613.594583
+  duration_ms: 2381.851375
   ...
 # Subtest: provider failures are unavailable with one attempt and no false ended
-ok 84 - provider failures are unavailable with one attempt and no false ended
+ok 87 - provider failures are unavailable with one attempt and no false ended
   ---
-  duration_ms: 16.540709
+  duration_ms: 30.109125
   ...
 # Subtest: ingress bounds, authentication, trusted IP and no public directory
-ok 85 - ingress bounds, authentication, trusted IP and no public directory
+ok 88 - ingress bounds, authentication, trusted IP and no public directory
   ---
-  duration_ms: 24.388833
+  duration_ms: 49.511667
   ...
 # Subtest: a UTF-8 BOM cannot change the bytes whose signature is checked
-ok 86 - a UTF-8 BOM cannot change the bytes whose signature is checked
+ok 89 - a UTF-8 BOM cannot change the bytes whose signature is checked
   ---
-  duration_ms: 22.5655
+  duration_ms: 32.0765
   ...
 # all 9 approved request ceilings plus status counting: passed
 # Subtest: distributed guessing and owner limits include misses, retries and status
-ok 87 - distributed guessing and owner limits include misses, retries and status
+ok 90 - distributed guessing and owner limits include misses, retries and status
   ---
-  duration_ms: 553.690917
+  duration_ms: 856.42175
   ...
 # Subtest: new creation leaves two close attempts per active secret near monthly ceiling
-ok 88 - new creation leaves two close attempts per active secret near monthly ceiling
+ok 91 - new creation leaves two close attempts per active secret near monthly ceiling
   ---
-  duration_ms: 47.886625
+  duration_ms: 69.264583
   ...
 # Subtest: active, reservation and memory caps fail before publication writes
-ok 89 - active, reservation and memory caps fail before publication writes
+ok 92 - active, reservation and memory caps fail before publication writes
   ---
-  duration_ms: 2920.138042
+  duration_ms: 2485.824625
   ...
 # Subtest: concurrent allocation and publish-close races keep one immutable owner
-ok 90 - concurrent allocation and publish-close races keep one immutable owner
+ok 93 - concurrent allocation and publish-close races keep one immutable owner
   ---
-  duration_ms: 114.908291
+  duration_ms: 94.027625
   ...
 # Subtest: pending secret reserves capacity before the capability write
-ok 91 - pending secret reserves capacity before the capability write
+ok 94 - pending secret reserves capacity before the capability write
   ---
-  duration_ms: 1057.56725
+  duration_ms: 943.785708
   ...
 # Subtest: whole-response timeout cancels stalled streams and cannot later publish
-ok 92 - whole-response timeout cancels stalled streams and cannot later publish
+ok 95 - whole-response timeout cancels stalled streams and cannot later publish
   ---
-  duration_ms: 8003.483917
+  duration_ms: 8002.852208
   ...
 # Subtest: AOF restart retains closed reservations, never the discarded secret
-ok 93 - AOF restart retains closed reservations, never the discarded secret
+ok 96 - AOF restart retains closed reservations, never the discarded secret
   ---
-  duration_ms: 130.187625
+  duration_ms: 127.87075
   ...
 # Subtest: resolver refuses provider failure with retry guidance, never ended
-ok 94 - resolver refuses provider failure with retry guidance, never ended
+ok 97 - resolver refuses provider failure with retry guidance, never ended
   ---
-  duration_ms: 0.525833
+  duration_ms: 0.514958
   ...
 # Subtest: browser proof covers port, method, raw path, body digest, intent and boot challenge
-ok 95 - browser proof covers port, method, raw path, body digest, intent and boot challenge
+ok 98 - browser proof covers port, method, raw path, body digest, intent and boot challenge
   ---
-  duration_ms: 42.498042
+  duration_ms: 57.587875
   ...
 # Subtest: the authentication worker never lends its key to a foreign frame or form
-ok 96 - the authentication worker never lends its key to a foreign frame or form
+ok 99 - the authentication worker never lends its key to a foreign frame or form
   ---
-  duration_ms: 4.761041
+  duration_ms: 0.428
   ...
 # Subtest: a navigation the worker is shown no Origin of is its own page’s only by its referrer
-ok 97 - a navigation the worker is shown no Origin of is its own page’s only by its referrer
+ok 100 - a navigation the worker is shown no Origin of is its own page’s only by its referrer
   ---
-  duration_ms: 0.522792
+  duration_ms: 0.227
   ...
 # Subtest: a socket sends the bytes each ArrayBufferView views, and nothing of its buffer past them
-ok 98 - a socket sends the bytes each ArrayBufferView views, and nothing of its buffer past them
+ok 101 - a socket sends the bytes each ArrayBufferView views, and nothing of its buffer past them
   ---
-  duration_ms: 22.790584
+  duration_ms: 35.334208
   ...
 # Subtest: a string, an ArrayBuffer and a Blob are sent as they are
-ok 99 - a string, an ArrayBuffer and a Blob are sent as they are
+ok 102 - a string, an ArrayBuffer and a Blob are sent as they are
   ---
-  duration_ms: 5.670334
+  duration_ms: 9.212708
   ...
 # Subtest: every import into vendor/, ui/, page/ or question.js is versioned, and only ui/view.js imports vendor/
-ok 100 - every import into vendor/, ui/, page/ or question.js is versioned, and only ui/view.js imports vendor/
+ok 103 - every import into vendor/, ui/, page/ or question.js is versioned, and only ui/view.js imports vendor/
   ---
-  duration_ms: 37.947875
+  duration_ms: 58.402333
   ...
 # Subtest: a bare ../vendor/preact.js is caught, twice, by name
-ok 101 - a bare ../vendor/preact.js is caught, twice, by name
+ok 104 - a bare ../vendor/preact.js is caught, twice, by name
   ---
-  duration_ms: 0.1495
+  duration_ms: 0.138042
   ...
 # Subtest: the page checks as it opens; current says nothing and runs nothing
-ok 102 - the page checks as it opens; current says nothing and runs nothing
+ok 105 - the page checks as it opens; current says nothing and runs nothing
   ---
-  duration_ms: 8.661334
+  duration_ms: 29.737291
   ...
 # Subtest: available offers it; update asks, updated waits, back reloads
-ok 103 - available offers it; update asks, updated waits, back reloads
+ok 106 - available offers it; update asks, updated waits, back reloads
   ---
-  duration_ms: 0.207792
+  duration_ms: 1.328875
   ...
 # Subtest: a check that cannot be judged is not current, and says nothing until asked
-ok 104 - a check that cannot be judged is not current, and says nothing until asked
+ok 107 - a check that cannot be judged is not current, and says nothing until asked
   ---
-  duration_ms: 0.428792
+  duration_ms: 0.08875
   ...
 # Subtest: an unknown answer is unread, never current
-ok 105 - an unknown answer is unread, never current
+ok 108 - an unknown answer is unread, never current
   ---
-  duration_ms: 0.60525
+  duration_ms: 0.062666
   ...
 # Subtest: a refusal keeps its why, and can be tried again or left
-ok 106 - a refusal keeps its why, and can be tried again or left
+ok 109 - a refusal keeps its why, and can be tried again or left
   ---
-  duration_ms: 0.146208
+  duration_ms: 0.079334
   ...
 # Subtest: a wait that hears nothing says how to open svrngs again
-ok 107 - a wait that hears nothing says how to open svrngs again
+ok 110 - a wait that hears nothing says how to open svrngs again
   ---
-  duration_ms: 0.073042
+  duration_ms: 0.06
   ...
 # Subtest: later dismisses an offered update
-ok 108 - later dismisses an offered update
+ok 111 - later dismisses an offered update
   ---
-  duration_ms: 0.165416
+  duration_ms: 0.151166
   ...
 # Subtest: an update that was already current reloads once, and the reload does not ask again
-ok 109 - an update that was already current reloads once, and the reload does not ask again
+ok 112 - an update that was already current reloads once, and the reload does not ask again
   ---
-  duration_ms: 0.081333
+  duration_ms: 0.064875
   ...
 # Subtest: every vendored file is the one pinned
-ok 110 - every vendored file is the one pinned
+ok 113 - every vendored file is the one pinned
   ---
-  duration_ms: 3.03475
+  duration_ms: 22.659083
   ...
 # Subtest: one byte changed in hooks.js is caught, by name
-ok 111 - one byte changed in hooks.js is caught, by name
+ok 114 - one byte changed in hooks.js is caught, by name
   ---
-  duration_ms: 5.120709
+  duration_ms: 5.843041
   ...
 # Subtest: no file keeps a source map line, and hooks.js imports one Preact, versioned
-ok 112 - no file keeps a source map line, and hooks.js imports one Preact, versioned
+ok 115 - no file keeps a source map line, and hooks.js imports one Preact, versioned
   ---
-  duration_ms: 0.50925
+  duration_ms: 0.719166
   ...
-# (node:60171) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16680) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: htm bound to Preact writes a vnode, and the hooks load beside it
-ok 113 - htm bound to Preact writes a vnode, and the hooks load beside it
+ok 116 - htm bound to Preact writes a vnode, and the hooks load beside it
   ---
-  duration_ms: 7.49575
+  duration_ms: 11.066666
   ...
-# (node:60182) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/sw.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# (node:16681) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/sw.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: this build's shell is served from its cache
-ok 114 - this build's shell is served from its cache
+ok 117 - this build's shell is served from its cache
   ---
-  duration_ms: 1.246541
+  duration_ms: 8.630833
   ...
 # Subtest: an older build's cache does not answer a newer build's request
-ok 115 - an older build's cache does not answer a newer build's request
+ok 118 - an older build's cache does not answer a newer build's request
   ---
-  duration_ms: 0.111334
+  duration_ms: 0.146833
   ...
 # Subtest: an update reloads the open pages onto the new build
-ok 116 - an update reloads the open pages onto the new build
+ok 119 - an update reloads the open pages onto the new build
   ---
-  duration_ms: 0.431
+  duration_ms: 0.557625
   ...
 # Subtest: a first install leaves the page the person is opening alone
-ok 117 - a first install leaves the page the person is opening alone
+ok 120 - a first install leaves the page the person is opening alone
   ---
-  duration_ms: 0.098209
+  duration_ms: 0.518541
   ...
-1..117
-# tests 138
+1..120
+# tests 141
 # suites 0
-# pass 138
+# pass 141
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 17926.77075
-
+# duration_ms 19287.398709
 exit 0
