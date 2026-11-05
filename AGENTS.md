@@ -52,6 +52,12 @@ there moves the demo that follows it, and work that moves no demo waits.
 12. **Draw the line by ownership.** A group is not a mesh; app-specific code
     lives only in `apps/`; a chat adapter lives in its own package.
 
+## Ralph model effort
+
+DeepSeek Flash always runs at **max** effort: `variant = "max"` in its queue,
+passed as `--variant max`. Apply this when creating or resuming a queue;
+older manifests using medium or high do not override this operator setting.
+
 ## Done
 
 `scripts/check.sh` exits 0. It runs the principle pins, the lean check
