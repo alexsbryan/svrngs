@@ -3,6 +3,14 @@ This queue starts the self-service room welcome in `docs/ONBOARDING.md`.
 Before the row, read this queue's `CHARTER.md` whole, `STATE.md`'s opening,
 and `docs/ONBOARDING.md` whole. Use `docs/PLAN.md` §1 for priority.
 
+**Operator's demo deadline overrides old per-row full-gate instructions.**
+Read `SCOPE_PARALLEL.md` in this queue before work. Backend runs here; the
+Node-only UI queue owns its separate worktree against the exact API shape.
+Run meaningful focused affected
+checks and commit; do not launch check.sh at every intermediate row close.
+One final integrated gate is still mandatory after the UI branch merges. Do not
+recreate the completed scope survey/prototype or redesign grouped home.
+
 The current-base economizing pass is complete. The operator approved its
 upper estimate (3,494 core, 19,833 `.`, 8,090 `js`), chose Upstash Redis
 Free with no paid overage, and approved the paired phrase/limits. The
@@ -47,6 +55,16 @@ test and `scripts/check.sh` under `lockf -k /tmp/svrngs-gate.lock`. Known
 flakes are `leave_race` (`crates/svrngs-node/tests/removal.rs:614`) and the
 home page's lending redraw (`the_home_page_lends_what_runs_here`); rerun the
 single test before calling it a failure.
+
+<!-- section: done -->
+For this deadline, an intermediate row is done when its assigned focused
+checks, budget evidence and commits are complete under SCOPE_PARALLEL.md.
+Name any pending other-lane integration honestly; do not claim a passing
+full product gate. The explicit final audit owns integration and the one
+locked scripts/check.sh run on the merged product. All of its steps remain
+required; a failure/product change may require a rerun. Then run
+`ralph-result done` in the shell as its own command. Long focused runs use
+`ralph-result await <budget> -- <focused command>`; do not wait silently.
 
 For onboarding audit rows, the developer executable is
 `/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev`.

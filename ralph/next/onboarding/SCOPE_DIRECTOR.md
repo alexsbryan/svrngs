@@ -1,5 +1,11 @@
 # Director decision: reconcile grouped-home before lending close
 
+**Current operator demo-deadline policy:** `SCOPE_PARALLEL.md` supersedes
+this historical report's repeated intermediate-full-gate requirement.
+The handback is landed at `e659dd1f`; close reconciliation with focused
+affected checks/counts, then finish the existing economy close. Backend and
+UI run independently; one final integrated full gate remains mandatory.
+
 2026-11-04, `onboarding-scope-economize`, director attempt 1.
 
 ## Decision

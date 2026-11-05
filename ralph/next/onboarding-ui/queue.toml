@@ -1,0 +1,12 @@
+# Node-only parallel UI worktree for the operator's two-hour demo deadline.
+# Native/backend remains in the main onboarding queue. No automatic audits.
+label = "svrngs-onboarding-ui"
+session_timeout = 3600
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+
+[models]
+worker = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
+review = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
+resolve = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
+variant = "medium"

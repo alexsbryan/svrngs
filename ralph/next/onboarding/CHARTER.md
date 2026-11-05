@@ -106,6 +106,25 @@ welcome/portal/OIDC fixes: `onboarding-scope-economize`, then
 
 ## Director
 
+### Demo-deadline override, 2026-11-04 local
+
+The operator explicitly requests independent parallel workers on DeepInfra's
+DeepSeek Flash and fewer check.sh runs for a demo in a couple of hours.
+`SCOPE_PARALLEL.md` is the shared API/ownership/check contract. Use this native
+backend queue plus a separate Node-only UI worktree/queue; the two-Rust-lane
+memory guard currently cannot admit a pool of two. This splits the same
+product work without adding feature scope; UI starts against the frozen
+contract while reconciliation/economy finish. All roles use the
+live-probed `deepinfra/deepseek-ai/DeepSeek-V4.1-Flash`, medium.
+
+Intermediate rows close with their focused affected checks, counts and honest
+integration handoffs. The existing final audit may merge the completed clean
+UI branch after its queue is done, integrates both workstreams and owns
+one unchanged locked full gate before demo readiness. This supersedes earlier
+per-row full-gate requirements in STATE/director reports; no check is deleted
+from the final gate, and actual failures/product changes justify reruns.
+Keep total necessary-growth approval across the lanes, not two budgets.
+
 Completion sequencing (supervisor, 2026-11-04, after the operator's request
 to finish): land grouped-home reconciliation, close the existing lending
 economizing pass, implement scoped lending, then complete the existing

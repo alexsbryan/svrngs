@@ -1,5 +1,11 @@
 # Grouped-home reconciliation — measured budget decision
 
+**Current operator demo-deadline policy:** handback landed at `e659dd1f`.
+Use `SCOPE_PARALLEL.md`: fresh focused affected checks/counts close this
+intermediate row; the one integrated full gate runs after backend/UI merge.
+Earlier per-row full-gate demands below are historical. No final-gate step
+or capability proof is removed.
+
 ## Operator answer and owner handback, 2026-11-04
 
 The operator approved the measured **+98 JS cap**, 8,090 to 8,188, after the

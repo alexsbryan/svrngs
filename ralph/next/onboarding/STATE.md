@@ -325,7 +325,19 @@ swift                     0 / 1 lines
     full gate if product behavior changes. No unsolicited installation or
     changes to the operator's Jellyfin server; the real configuration walk
     is brokered separately with the operator. Stay within approved budgets.
-- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-scoped-lending] — final audit of this queue's implementation range, 194aa994 through the final scoped-lending HEAD, against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+- [ ] REVIEW-audit-onboarding-auto-1 — depends [onboarding-scoped-lending] — final integrated audit of this queue's implementation range, 194aa994 through the merged backend/UI HEAD, against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+  - **Demo-deadline integration owner.** Read `SCOPE_PARALLEL.md`. Integrate
+    Check the separate onboarding-ui worktree's queue/DONE marker and clean
+    committed branch as specified there, then merge that finished branch.
+    Do not merge an actively edited UI branch. Integrate
+    both workstreams' exact API shape, wasm types/version header, UI served modules,
+    Give callers, docs and combined counts. Apply only necessary remaining
+    preapproved cap increments on the merged tree, with its evidence. Verify
+    real-node House/Trip denial and bounded withdrawal, preserve unrelated
+    traffic, then own the one final locked full gate. Intermediate rows use
+    focused checks; do not re-run full gates solely because a row/commit ends.
+    Prepare matching local demo artifacts from the gated product, recording
+    hashes and reusing that gate for unchanged product bytes.
   - **Completion sequencing, 2026-11-04.** This existing row is the one
     remaining final audit, after implementation and before the people scene.
     Keep every original ledger, instrument/control, clone/noun, source-review,
@@ -401,11 +413,14 @@ swift                     0 / 1 lines
     `ring-32fb4a66f5b1a57a`; finish the scoped handback/landing rather than
     wait for that historical hold. If a final recount needs more than 8,188,
     present only the additional measured remainder and supported options.
-  - **Close.** Land the owner's reconciled product tree and record counts,
-    affected checks and a foreground full `scripts/check.sh` exit 0 under
-    `lockf -k /tmp/svrngs-gate.lock`. No closure on a WIP checkpoint or prior
-    product evidence. No deployment, publish or push. Then resume the
-    existing lending survey; its scratch proof need not be invented again.
+  - **Close under the operator's demo-deadline override.** The supervisor
+    landed the preserved owner handback at `e659dd1f`. Record fresh counts,
+    applicable lint/format/types and the focused grouped-home browser proof
+    under the shared browser lock; retain its named red/green capability
+    inventory. No new full check.sh at this intermediate close; its final
+    integrated run belongs to the existing audit after both scope lanes.
+    State that distinction honestly. No deployment, publish or push. Then
+    resume the existing lending survey; do not recreate its scratch proof.
 - [ ] onboarding-scope-economize — depends [onboarding-grouped-home-reconcile] — ONE ROW, current-base reuse/economizing pass for selected-ring lending; the operator preapproved only minimum necessary growth (2026-11-04; CHARTER "Selected-ring lending"):
   - **Survey first.** Read `docs/LENDING_SCOPE.md`, its cited local/upstream
     surfaces and the current tree after the preceding fixes. Record product
@@ -433,12 +448,12 @@ swift                     0 / 1 lines
     Exceeding the survey's +700 non-JS / +235 JS guardrails, core growth or
     a wider design remains a new operator decision.
   - **Resume after reconciliation.** Remeasure the landed prerequisite,
-    update `docs/LENDING_SCOPE.md` baseline/headroom and recheck the cited
-    lending seams against it. Keep the original survey and scratch proof as
-    historical evidence. Run current fast checks and retain the required
-    locked full-gate evidence for the final product tree; no earlier passing
-    run covers the unfinished grouped-home checkpoint. Do not restart the
-    completed prototype or request lending budget approval again.
+    update `docs/LENDING_SCOPE.md` baseline/headroom (including the five
+    budget-formatting lines in `dbfa37a8`) and recheck the lending seams.
+    Keep the completed survey and scratch proof, run current fast checks,
+    and close promptly. The operator assigned the one final integrated gate
+    to the audit, not this intermediate row. Do not restart the completed
+    prototype or request lending budget approval again.
 
   Pass evidence: `demo/runs/economize/2026-11-04-lend-scope/` (`SURVEY.md`,
   `PROTOTYPE.md`, `CLOSE.md`). Survey committed before the prototype; no
@@ -451,7 +466,14 @@ swift                     0 / 1 lines
   JS 8,174, with lean/format/lint/type failures in that unfinished prototype.
   `RECONCILE.md` and `reconcile-fast.txt` record the locked checks and request
   owner/director reconciliation, without spending lending approval on it.
-- [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — ONE ROW, implement selected-ring lending end to end from `docs/LENDING_SCOPE.md`; minimal necessary actual growth preapproved, zero additional core product lines:
+- [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — BACKEND LANE, implement selected-ring lender enforcement from `docs/LENDING_SCOPE.md` and `SCOPE_PARALLEL.md`; minimal necessary actual growth preapproved, zero additional core product lines:
+  - **Parallel ownership.** Own Rust policy/storage/CLI/HTTP/OIDC/raw code,
+    wasm `current_version()` and Give's known-group Rust callers. UI is being
+    built independently in `onboarding-scope-ui`; use the frozen JSON/version
+    contract in `SCOPE_PARALLEL.md`, not a different shape. Do not edit UI JS,
+    its type declarations, browser registration or the home served-module
+    table. Those belong to the UI lane. Adjust only the non-JS budget rung;
+    the total original growth guardrails apply across both lanes.
   - **Policy and migration.** Persist explicit stable group IDs on the
     existing lend declaration; no selection means no group access. New
     joins never widen an existing audience. Pause/stamp legacy declarations
@@ -473,10 +495,11 @@ swift                     0 / 1 lines
   - **Withdrawal and interfaces.** Implement the fresh pass's measured
     bounded cut of affected HTTP bodies/WebSockets and raw connections;
     never close the whole shared transport or unrelated traffic. Keep owner
-    administration and deliberate WiFi delegation explicit. Add group
-    selections and audience-only edits to existing typed UI/CLI, with current
-    name/ID disambiguation. Update Give's known-group share call sites and
-    the current scripts. Do not silently reset credentials on a scope edit.
+    administration and deliberate WiFi delegation explicit. Implement the
+    existing CLI and home endpoints for explicit selections/audience-only
+    edits, with current name/ID disambiguation, for the parallel UI lane.
+    Update Give's known-group share call sites and current scripts. Do not
+    silently reset credentials on a scope edit.
   - **Red-first proof.** House-only member succeeds; Trip-only member can
     neither discover nor contact the upstream lend. Try direct/copied URLs,
     stale passes, forged group headers, OIDC, TCP and UDP; prove absence of
@@ -492,10 +515,12 @@ swift                     0 / 1 lines
     implemented policy, migration and exact withdrawal semantics. Recount
     after each part. Only raise a cap when required, one past the actual
     count, under CHARTER's preapproval and with the fresh pass/plant cited;
-    no up-front upper-bound raise and no core growth. Close with the locked
-    full gate and a recorded real-node House/Trip scene; do not claim the
-    people welcome from automated evidence. No live personal-data migration,
-    public deployment, service spend or push as a side effect of this row.
+    no up-front upper-bound raise and no core growth. Close with meaningful
+    focused Rust/CLI/OIDC/raw/migration/Give checks and real-node House/Trip
+    evidence under `SCOPE_PARALLEL.md`; no intermediate full check.sh. The
+    final audit integrates UI and owns that one full gate. Report pending
+    cross-lane integration honestly. No live personal-data migration, public
+    deployment, service spend or push as a side effect of this row.
 - [ ] onboarding-scene — depends [REVIEW-audit-onboarding-auto-1] — ONE ROW
   (ONBOARDING §6):
   - **(a) Predictions before data.** Write
