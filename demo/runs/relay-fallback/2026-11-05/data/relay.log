@@ -1,0 +1,3 @@
+2026-11-05T07:27:41.196857Z  INFO iroh_relay::server::http_server: [HTTP/WS] relay: serving on 127.0.0.1:51801
+2026-11-05T07:28:45.595445Z  WARN relay-http-serve:conn{peer=127.0.0.1:52078}:handler:client-connection-actor{remote_endpoint=8c0e269247 connection_id=1}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-05T07:28:45.626910Z  WARN relay-http-serve:conn{peer=127.0.0.1:51821}:handler:client-connection-actor{remote_endpoint=e8e8ba9123 connection_id=0}: iroh_relay::server::client: actor errored Stream terminated, exiting
