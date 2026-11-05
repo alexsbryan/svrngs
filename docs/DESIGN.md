@@ -1348,7 +1348,8 @@ a route that is stalled or cannot reach it does not delay one that
 answers; the connection that wins is the issuer's key, so a route is
 chosen only after reaching it. A page no relay of which answers within
 `dial::LINK_WITHIN` closes its endpoint and says the computer did not
-answer, so no dial is left running. Each change of tier and of home is traced,
+answer, so no dial is left running, and its next dial, or a lend worker's,
+binds again. Each change of tier and of home is traced,
 and the home page says when, and why, a group is met at the build's
 fallback. A computer that reaches none of its relays in 10 s says which it
 tried, and goes on trying.
