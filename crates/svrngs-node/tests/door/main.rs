@@ -119,7 +119,7 @@ impl Pair {
     fn lend(&self, name: &str, port: u16, refused: &[&str]) {
         let dir = lend::lends_dir(self.dir.path());
         std::fs::create_dir_all(&dir).unwrap();
-        let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": refused });
+        let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": refused, "groups": [NS] });
         std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
     }
 
@@ -305,10 +305,11 @@ impl Bos {
         Bos { a, dir, devices }
     }
 
-    /// A lends `name` as `body` says.
-    fn lend(&self, name: &str, body: serde_json::Value) {
+    /// A lends `name` as `body` says, lent to this computer's group.
+    fn lend(&self, name: &str, mut body: serde_json::Value) {
         let dir = lend::lends_dir(self.dir.path());
         std::fs::create_dir_all(&dir).unwrap();
+        body["groups"] = serde_json::json!([NS]);
         std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
     }
 
@@ -684,7 +685,9 @@ async fn held_origin() -> (SocketAddr, tokio::sync::oneshot::Sender<()>) {
 
 /// What A lends, as B asks it now: `(name, kind, limit, using)`.
 async fn lends_of(pair: &Pair) -> Vec<(String, String, u64, u64)> {
-    let reply = pair.get("/lends", "").await;
+    let reply = pair
+        .get("/lends", "x-svrngs-version: 5\r\n")
+        .await;
     assert_eq!(reply.status, 200, "{}", reply.text);
     let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
     let doc: serde_json::Value = serde_json::from_str(body).unwrap();
@@ -841,7 +844,7 @@ async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
 fn lends_on(dir: &std::path::Path, name: &str, port: u16) {
     let lends = lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": [] });
+    let body = serde_json::json!({ "port": port, "kind": "k", "limit": 3, "refused": [], "groups": [NS] });
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -903,7 +906,7 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
     };
     pair.a.rail().commit(NS, &at).unwrap().unwrap();
 
-    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
+    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "x-svrngs-version: 5\r\n").await;
     assert_eq!(reply.status, 200, "{}", reply.text);
     let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
     let doc: serde_json::Value = serde_json::from_str(body).unwrap();
@@ -987,7 +990,7 @@ async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
 
     let cy_key = actor_of(&signing(3));
     let want = vec![relay.to_string()];
-    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "").await;
+    let reply = pair.get(svrngs_node::node::PEOPLE_LENDS_ROUTE, "x-svrngs-version: 5\r\n").await;
     assert_eq!(reply.status, 200, "{}", reply.text);
     let body = reply.text.split("\r\n\r\n").nth(1).unwrap();
     let doc: serde_json::Value = serde_json::from_str(body).unwrap();
@@ -1013,7 +1016,7 @@ async fn declarations_that_cannot_be_read_are_refused_on_both_routes_never_lent_
     let pair = Pair::new().await;
     std::fs::write(lend::lends_dir(pair.dir.path()), "not a directory").unwrap();
     for route in ["/lends", svrngs_node::node::PEOPLE_LENDS_ROUTE] {
-        let reply = pair.get(route, "").await;
+        let reply = pair.get(route, "x-svrngs-version: 5\r\n").await;
         assert_eq!(reply.status, 500, "{route}: {}", reply.text);
         assert!(
             reply

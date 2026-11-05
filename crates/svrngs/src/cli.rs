@@ -105,7 +105,7 @@ use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{Entered, JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
 use svrngs_node::lend::{
-    self, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
+    self, Audience, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
 use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::relay::n0_relays;
@@ -556,6 +556,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 asks,
                 sign_in,
                 raw: carries,
+                audience: Audience::Legacy,
             }))
         }
         "leave" => Ok(Verb::Leave(

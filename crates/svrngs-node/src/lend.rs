@@ -210,18 +210,54 @@ impl Raw {
     }
 }
 
+/// Which groups a declared lend is lent to (LENDING_SCOPE §"Policy and
+/// representation"): the explicit stable group IDs its lender chose, or the
+/// legacy declaration that named none. A closed type (AGENTS 9) so a
+/// selection is never confused with its absence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Audience {
+    /// A declaration that predates selection, or one never stamped: no
+    /// group is reached, and the person must choose. Never all groups
+    /// (ARCH 6): an old broad declaration is paused, not inherited.
+    Legacy,
+    /// The groups the lender explicitly chose, by their stable IDs. Empty
+    /// is paused to groups; a carried app's own group is separate and never
+    /// stored here ([`Source::Carried`]).
+    Selected(Vec<String>),
+}
+
+impl Audience {
+    /// Whether `group` may reach a lend with this audience: only a selected
+    /// ID, never the legacy declaration.
+    pub fn reaches(&self, group: &str) -> bool {
+        matches!(self, Audience::Selected(ids) if ids.iter().any(|id| id == group))
+    }
+
+    /// The IDs as the wire and the page read them: `None` for legacy (needs
+    /// selection), the list — possibly empty, paused — for a selection.
+    pub fn ids(&self) -> Option<&[String]> {
+        match self {
+            Audience::Legacy => None,
+            Audience::Selected(ids) => Some(ids),
+        }
+    }
+}
+
 /// A lend as its declaration says, or as its group's folder carries it:
-/// where it is answered from, what it is, how many people may use it at
-/// once, what the door refuses of it, and the upload its lender declares,
-/// if any.
+/// where it is answered from, what it is, which groups it is lent to, how
+/// many people may use it at once, what the door refuses of it, and the
+/// upload its lender declares, if any.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Lend {
     pub name: LendName,
     pub source: Source,
     pub kind: Kind,
+    /// The groups its lender explicitly chose (LENDING_SCOPE). A carried
+    /// app's audience is its own group ([`Source::Carried`]), never this.
+    pub audience: Audience,
     /// How many people may use it at once (DESIGN §3, "Too many at once"):
-    /// none when its lender names no number, and then everyone in its groups
-    /// (bash-limit; the operator, 2026-10-12).
+    /// none when its lender names no number, and then everyone in its
+    /// selected groups (bash-limit; the operator, 2026-10-12).
     pub limit: Option<NonZeroU16>,
     pub refused: Vec<RefusedPath>,
     /// None when its lender declares none: then no request through the
@@ -259,6 +295,9 @@ impl Lend {
             name,
             source: Source::Carried(group.into()),
             kind: parsed,
+            // A carried app's reach is its own group, by `Source::Carried`;
+            // this audience is never consulted for one.
+            audience: Audience::Selected(Vec::new()),
             limit: None,
             refused: Vec::new(),
             upload: None,
@@ -287,6 +326,13 @@ struct LendFile {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     raw: Option<Raw>,
     kind: Kind,
+    /// The groups this lend is lent to (LENDING_SCOPE), by their stable
+    /// IDs. Absent is a legacy declaration that named none: paused, needing
+    /// selection, never all groups (ARCH 6). Present and empty is paused;
+    /// `deny_unknown_fields` makes an old binary refuse a scoped file rather
+    /// than share it globally on downgrade.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    groups: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     limit: Option<NonZeroU16>,
     #[serde(default)]
@@ -377,6 +423,12 @@ pub struct Offered {
     /// computer answers. Absent for a port's.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub group: Option<String>,
+    /// The groups this lend is lent to, by stable ID (LENDING_SCOPE): the
+    /// audience a list discloses. `null` is a legacy declaration that needs
+    /// selection; `[]` is paused. Required on read, never an absent field
+    /// taken as all groups.
+    #[serde(default, deserialize_with = "Option::deserialize")]
+    pub groups: Option<Vec<String>>,
     /// How its bytes travel when it is a port's own, not a page's
     /// (give-play): what the home page offers Play for. Absent for a page,
     /// and from a computer whose svrngs lends no port.
@@ -392,13 +444,20 @@ impl Offered {
         self.reads.contains(&other.kind)
     }
 
-    /// Whether this lend is listed to an asker in the groups `stands`
-    /// answers yes to: a carried app only in its own group (COMMUNITY_APPS
-    /// §7, found 3), any other everywhere. The one rule the door's `/lends`
-    /// and a computer's own list ask, each by its own `stands` (#166);
-    /// `Folders::open` is the gate it shadows.
-    pub(crate) fn listed(&self, stands: impl Fn(&String) -> bool) -> bool {
-        self.group.as_ref().is_none_or(stands)
+    /// Whether this lend is listed to an asker the groups `stands` answers
+    /// yes to (LENDING_SCOPE §"Enforcement and disclosure"): a carried app
+    /// only in its own group (COMMUNITY_APPS §7, found 3), a declared lend
+    /// only through a group it is actually lent to. A legacy declaration
+    /// (`groups` null) and a paused one (`[]`) are never listed; the
+    /// audience is never widened to every shared group.
+    pub(crate) fn listed(&self, stands: impl Fn(&str) -> bool) -> bool {
+        match &self.group {
+            Some(own) => stands(own),
+            None => self
+                .groups
+                .as_deref()
+                .is_some_and(|ids| ids.iter().any(|id| stands(id))),
+        }
     }
 }
 
@@ -429,6 +488,11 @@ pub enum LendError {
     TwoSecrets,
     #[error("{path} cannot be written: {source}")]
     Unwritable {
+        path: PathBuf,
+        source: std::io::Error,
+    },
+    #[error("{path} is held by another change: {source}")]
+    Busy {
         path: PathBuf,
         source: std::io::Error,
     },
@@ -478,6 +542,9 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         name: name.clone(),
         source: (file.raw).map_or(Source::Port(file.port), |r| Source::Raw(r, file.port)),
         kind: file.kind,
+        audience: file
+            .groups
+            .map_or(Audience::Legacy, Audience::Selected),
         limit: file.limit,
         refused,
         upload: file.upload,
@@ -550,20 +617,90 @@ pub fn declare(
 }
 
 /// Let in `limit` people at once to the lend `name`, none for everyone in
-/// its groups (bash-limit; the home page's `/lent`): its declaration
-/// rewritten whole, its secret and choices kept, so the door takes it at
-/// its next request. `false` when this computer lends nothing by that name.
+/// its selected groups (bash-limit; the home page's `/lent`): its
+/// declaration rewritten whole, its secret and choices kept, so the door
+/// takes it at its next request. `false` when this computer lends nothing
+/// by that name. Serialized with every other change through [`mutate`], so
+/// a limit edit never restores an audience another narrowed (LENDING_SCOPE
+/// §"Updates, migration and mixed versions").
 pub fn limit(
     data_dir: &Path,
     name: &LendName,
     limit: Option<NonZeroU16>,
 ) -> Result<bool, LendError> {
+    mutate(data_dir, name, |lend| {
+        tracing::debug!(target: "lend", lend = %name, was = ?lend.limit, now = ?limit, "lend: its limit changed");
+        lend.limit = limit;
+    })
+}
+
+/// Change the lend `name` in place: read it, let `edit` rewrite it, write it
+/// whole — the whole read/modify/write held under one per-lend lock, so a
+/// change never loses another's (LENDING_SCOPE). `false` when this computer
+/// lends nothing by that name; an error when it cannot be read or written,
+/// or the lock is held.
+pub fn mutate(
+    data_dir: &Path,
+    name: &LendName,
+    edit: impl FnOnce(&mut Lend),
+) -> Result<bool, LendError> {
+    let _held = lock_lend(data_dir, name)?;
     let Some(mut lend) = read(data_dir, name)? else {
         return Ok(false);
     };
-    tracing::debug!(target: "lend", lend = %name, was = ?lend.limit, now = ?limit, "lend: its limit changed");
-    lend.limit = limit;
+    edit(&mut lend);
     write(data_dir, &lend).map(|()| true)
+}
+
+/// Hold the per-lend lock while a read/modify/write of `name`'s
+/// declaration runs; let it go when the returned file drops. The standard
+/// library's `File::try_lock`, as `cli::claim` uses it: no new lock crate
+/// (LENDING_SCOPE). A held lock is a visible busy, never a lost update.
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the mutation lock: one writer per lend declaration, taken at the I/O edge"
+)]
+fn lock_lend(data_dir: &Path, name: &LendName) -> Result<std::fs::File, LendError> {
+    let dir = data_dir.join("locks");
+    std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
+        path: dir.clone(),
+        source,
+    })?;
+    let path = dir.join(format!("{name}.lock"));
+    let file = std::fs::File::create(&path).map_err(|source| LendError::Unwritable {
+        path: path.clone(),
+        source,
+    })?;
+    match file.try_lock() {
+        Ok(()) => Ok(file),
+        Err(source) => {
+            let source = match source {
+                std::fs::TryLockError::WouldBlock => {
+                    std::io::Error::new(std::io::ErrorKind::WouldBlock, "held")
+                }
+                std::fs::TryLockError::Error(e) => e,
+            };
+            tracing::debug!(target: "lend", lend = %name, lock = %path.display(), error = %source,
+                "lend: refused — another change holds its lock");
+            Err(LendError::Busy { path, source })
+        }
+    }
+}
+
+/// Set the groups the lend `name` is lent to, its other fields kept — its
+/// secret, its sign-in client and its choices (LENDING_SCOPE §"Audience-only
+/// edits retain credentials and choices"). Serialized like every change.
+/// `false` when this computer lends nothing by that name.
+pub fn set_audience(
+    data_dir: &Path,
+    name: &LendName,
+    groups: Vec<String>,
+) -> Result<bool, LendError> {
+    mutate(data_dir, name, |lend| {
+        tracing::debug!(target: "lend", lend = %name, was = ?lend.audience, now = groups.len(),
+            "lend: the groups it is lent to changed");
+        lend.audience = Audience::Selected(groups);
+    })
 }
 
 /// `lend`'s declaration, through a file renamed into place.
@@ -582,6 +719,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         port,
         raw,
         kind: lend.kind.clone(),
+        groups: lend.audience.ids().map(<[String]>::to_vec),
         limit: lend.limit,
         refused: lend.refused.iter().map(|r| r.0.clone()).collect(),
         upload: lend.upload,

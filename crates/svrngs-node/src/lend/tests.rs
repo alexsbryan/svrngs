@@ -90,6 +90,7 @@ fn lend(name: &str, port: u16) -> Lend {
         name: LendName::parse(name).unwrap(),
         source: Source::Port(NonZeroU16::new(port).unwrap()),
         kind: Kind::parse("k").unwrap(),
+        audience: Audience::Selected(vec!["house".to_string()]),
         limit: NonZeroU16::new(3),
         refused: vec![refused("/admin")],
         upload: None,
@@ -263,3 +264,104 @@ fn a_sign_in_client_is_checked_written_owner_only_and_never_both() {
         "a lend declares its own password or a sign-in, never both"
     );
 }
+
+/// A declaration that names no groups is legacy, needing selection, never
+/// all groups; a selection is read back and reaches only its IDs. Planted:
+/// a declaration without `groups` read as reaching every group.
+#[test]
+fn a_lend_with_no_selection_reaches_nothing_and_a_selection_reaches_its_ids() {
+    let root = tempfile::tempdir().unwrap();
+    let name = LendName::parse("jellyfin").unwrap();
+    std::fs::create_dir_all(lends_dir(root.path())).unwrap();
+    let file = lends_dir(root.path()).join("jellyfin.json");
+    std::fs::write(&file, r#"{"port": 8096, "kind": "k", "refused": []}"#).unwrap();
+    let legacy = read(root.path(), &name).unwrap().unwrap();
+    assert_eq!(legacy.audience, Audience::Legacy);
+    assert!(
+        !legacy.audience.reaches("house") && !legacy.audience.reaches("trip"),
+        "a legacy declaration reaches no group"
+    );
+    std::fs::write(
+        &file,
+        r#"{"port": 8096, "kind": "k", "refused": [], "groups": ["house"]}"#,
+    )
+    .unwrap();
+    let scoped = read(root.path(), &name).unwrap().unwrap();
+    assert_eq!(scoped.audience, Audience::Selected(vec!["house".into()]));
+    assert!(scoped.audience.reaches("house"));
+    assert!(!scoped.audience.reaches("trip"));
+    assert_eq!(scoped.audience.ids(), Some(["house".to_string()].as_slice()));
+}
+
+/// An audience-only edit fixes the groups and keeps every other field —
+/// the declared password, the sign-in client, the refused paths; a limit
+/// edit through the same path keeps the audience, so a limit change never
+/// restores a grant another narrowed (LENDING_SCOPE §"Updates"). Planted:
+/// the limit edit rewriting the audience.
+#[test]
+fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
+    let root = tempfile::tempdir().unwrap();
+    let mut jellyfin = lend("jellyfin", 8096);
+    jellyfin.audience = Audience::Selected(vec!["house".into()]);
+    jellyfin.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
+    declare(root.path(), &jellyfin, Some(("authorization", "s3cret"))).unwrap();
+    let file = lends_dir(root.path()).join("jellyfin.json");
+
+    set_audience(root.path(), &jellyfin.name, vec!["house".into(), "trip".into()]).unwrap();
+    let after = read(root.path(), &jellyfin.name).unwrap().unwrap();
+    assert_eq!(
+        after.audience,
+        Audience::Selected(vec!["house".into(), "trip".into()])
+    );
+    assert_eq!(after.upload, jellyfin.upload, "the upload is kept");
+    assert_eq!(after.kind, jellyfin.kind, "the kind is kept");
+    assert_eq!(
+        crate::declared::read_declared_in(&secret_dir(root.path(), &jellyfin.name)),
+        vec![("authorization".to_string(), "s3cret".to_string())],
+        "the declared password is kept"
+    );
+    let bytes_before = std::fs::read_to_string(&file).unwrap();
+    assert!(bytes_before.contains("trip"), "the audience is written");
+
+    limit(root.path(), &jellyfin.name, NonZeroU16::new(5)).unwrap();
+    let after_limit = read(root.path(), &jellyfin.name).unwrap().unwrap();
+    assert_eq!(
+        after_limit.audience,
+        Audience::Selected(vec!["house".into(), "trip".into()]),
+        "a limit edit preserves the audience"
+    );
+    assert_eq!(after_limit.limit, NonZeroU16::new(5));
+}
+
+/// What a lend is lent to is disclosed by `listed`: a declared lend only
+/// through a selected ID, a legacy one and a paused one never; a carried
+/// app only in its own group. Planted: a legacy lend listed to everyone.
+#[test]
+fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
+    let house = |g: &str| g == "house";
+    let offered = |groups: Option<Vec<String>>, carried: Option<&str>| Offered {
+        name: LendName::parse("jellyfin").unwrap(),
+        kind: Kind::parse("k").unwrap(),
+        limit: None,
+        using: 0,
+        upload: None,
+        reads: Vec::new(),
+        asks: None,
+        group: carried.map(str::to_string),
+        groups,
+        raw: None,
+    };
+    assert!(offered(Some(vec!["house".into()]), None).listed(house));
+    assert!(!offered(Some(vec!["house".into()]), None).listed(|g| g == "trip"));
+    assert!(
+        !offered(None, None).listed(|_| true),
+        "a legacy declaration is not listed even to a member of every group"
+    );
+    assert!(
+        !offered(Some(Vec::new()), None).listed(|_| true),
+        "a paused lend is not listed"
+    );
+    assert!(offered(Some(vec!["house".into()]), Some("house")).listed(house));
+    assert!(!offered(Some(vec!["house".into()]), Some("house")).listed(|g| g == "trip"));
+}
+

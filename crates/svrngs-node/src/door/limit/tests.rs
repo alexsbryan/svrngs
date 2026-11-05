@@ -9,7 +9,7 @@ use std::num::{NonZeroU16, NonZeroU32};
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::lend::{Kind, Lend, LendName};
+use crate::lend::{Audience, Kind, Lend, LendName};
 use crate::network::guess;
 
 const AWAY: Whereabouts = Whereabouts::Away;
@@ -20,6 +20,7 @@ fn shelf(upload: Option<u64>) -> Lend {
         name: LendName::parse("shelf").unwrap(),
         source: crate::lend::Source::Port(NonZeroU16::new(8096).unwrap()),
         kind: Kind::parse("k").unwrap(),
+        audience: Audience::Selected(vec!["house".to_string()]),
         limit: NonZeroU16::new(3),
         refused: Vec::new(),
         // Read as a declaration's `upload_bps` is.

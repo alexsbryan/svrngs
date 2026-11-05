@@ -893,8 +893,14 @@ pub(crate) async fn ask_lends(
     actor: &str,
     contact: Contact,
 ) -> Answered {
-    let asked = axum::http::Request::get(LENDS_ROUTE).body(Default::default());
-    let asked = asked.expect("a fixed route");
+    let asked = axum::http::Request::builder()
+        .uri(LENDS_ROUTE)
+        .header(
+            crate::version::SCOPE_HEADER,
+            crate::version::VERSION.to_string(),
+        )
+        .body(Default::default())
+        .expect("a fixed route and a plain header");
     match transport.fetch(&contact, asked).await {
         Ok(r) if r.status().is_success() => answered(actor, r.body()),
         Ok(r) => {
@@ -1009,7 +1015,15 @@ fn people_router(asking: Asking) -> axum::Router {
 async fn people_lends(
     State(at): State<Asking>,
     dialer: Option<Extension<Dialer>>,
+    headers: axum::http::HeaderMap,
 ) -> Result<Response, Response> {
+    if !crate::door::scope_marked(&headers) {
+        tracing::debug!(target: "node", "node: people's lends refused — the ask carries no scope marker");
+        return Err(err(
+            StatusCode::FORBIDDEN,
+            "this computer reads a scope marker on this ask: update svrngs and try again",
+        ));
+    }
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "node", "node: people's lends refused — no verified dialer, so the request did not come on an iroh stream");
         return Err(err(
@@ -1088,7 +1102,7 @@ impl Asking {
         // A carried app only in its own group (COMMUNITY_APPS §7, found
         // 3), each computer's copy listed, so a phone knows every computer
         // to reach the group through; the pages show one (question.js `once`).
-        let carries = |g: &String| groups.iter().any(|(ns, _)| ns == g);
+        let carries = |g: &str| groups.iter().any(|(ns, _)| ns == g);
         lent.retain(|l| l.offered.listed(carries));
         lent.sort_by(|a, b| {
             (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))

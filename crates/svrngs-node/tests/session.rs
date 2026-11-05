@@ -183,7 +183,7 @@ async fn a_lend_has_its_own_key_and_no_proof_reaches_the_service() {
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(
         dir.join("night.json"),
-        serde_json::json!({"port":service.port(),"kind":"night","limit":3}).to_string(),
+        serde_json::json!({"port":service.port(),"kind":"night","limit":3,"groups":["house"]}).to_string(),
     )
     .unwrap();
     let name = Label::of(&signing(1).verifying_key().to_bytes(), "night").to_string();
@@ -243,7 +243,7 @@ async fn a_same_origin_redirect_is_followed_once_by_the_proof_that_asked_it() {
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(
         dir.join("canary.json"),
-        serde_json::json!({"port":service.port(),"kind":"canary","limit":3}).to_string(),
+        serde_json::json!({"port":service.port(),"kind":"canary","limit":3,"groups":["house"]}).to_string(),
     )
     .unwrap();
     let name = Label::of(&signing(1).verifying_key().to_bytes(), "canary").to_string();

@@ -34,7 +34,7 @@ const ALEXS: &str = "Bearer alexs-secret";
 fn lends(dir: &std::path::Path, name: &str, port: u16, secret: &str) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
-    let body = serde_json::json!({ "port": port, "kind": "app", "limit": 3 });
+    let body = serde_json::json!({ "port": port, "kind": "app", "limit": 3, "groups": [NS] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
     let secrets = lend::secret_dir(dir, &LendName::parse(name).unwrap());
     declared::write_declared_in(&secrets, "authorization", secret).unwrap();
@@ -357,7 +357,7 @@ async fn the_record_answers_no_lend_s_origin_and_refuses_a_page() {
 fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
-    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "groups": [NS] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
     let secrets = lend::secret_dir(dir, &LendName::parse(name).unwrap());
     declared::write_declared_in(&secrets, "authorization", ALEXS).unwrap();

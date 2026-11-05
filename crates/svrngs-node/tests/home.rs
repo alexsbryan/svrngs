@@ -41,7 +41,7 @@ fn declare(
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
     let body =
-        serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "asks": asks });
+        serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "asks": asks, "groups": [NS] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -420,7 +420,7 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let (shelf_at, _kept) = origins::head_origin().await;
     let at = lend::lends_dir(sam_dir.path());
     std::fs::create_dir_all(&at).unwrap();
-    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books", "limit": 1 });
+    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books", "limit": 1, "groups": [NS] });
     std::fs::write(at.join("shelf.json"), body.to_string()).unwrap();
     let shelf = Label::of(&signing(2).verifying_key().to_bytes(), "shelf");
     let name = lend::LendName::parse("shelf").unwrap();
@@ -546,7 +546,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
     let (shelf_at, _kept) = origins::head_origin().await;
     let lends = lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
-    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books" });
+    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books", "groups": [NS] });
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     let name = lend::LendName::parse("shelf").unwrap();
     let api = alex.api_addr();
@@ -687,7 +687,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
             None => origins::head_origin().await.0.port(),
         };
         let body =
-            serde_json::json!({ "port": port, "kind": "media", "limit": 3, "refused": refused });
+            serde_json::json!({ "port": port, "kind": "media", "limit": 3, "refused": refused, "groups": [NS] });
         std::fs::create_dir_all(lend::lends_dir(dir)).unwrap();
         std::fs::write(
             lend::lends_dir(dir).join(format!("{name}.json")),
@@ -854,7 +854,8 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
 /// page sent (axum's `JsonRejection`) and the lend's own refusal
 /// (`ShareRefusal`), each said in its own words: a port of 0, which is
 /// nothing running here; a name that is not one word; what it is, not
-/// one word; a body that is not JSON; and nothing answering at a port.
+/// one word; a body that names no groups, which must be chosen; a body
+/// that is not JSON; and nothing answering at a port.
 /// Each is traced with what was refused. Red on the plant the finding
 /// names: a port of 0, told as before that a name and what it is are
 /// each one word, and untraced.
@@ -863,6 +864,14 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     let (said, _heard) = heard("home=debug");
     let dir = tempfile::tempdir().unwrap();
     let alex = start(1, dir.path()).await;
+    // The lender must hold the group it lends to; without one, an
+    // explicit selection is refused before the port is ever checked.
+    let seed = Roster::new(
+        [(svrngs_node::Person::parse("alex").unwrap(), vec![svrngs_node::actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    alex.rail().set_seed(NS, &seed).unwrap();
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
@@ -876,19 +885,23 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
             "That is not something running on this computer: look again, then lend it from the list.",
         ),
         (
-            format!(r#"{{"port":{port},"name":"my pad","kind":"pad"}}"#),
+            format!(r#"{{"port":{port},"name":"my pad","kind":"pad","groups":["house"]}}"#),
             "Give it a name of one word: letters and digits, with - or _ between.",
         ),
         (
-            format!(r#"{{"port":{port},"name":"pad","kind":"a pad"}}"#),
+            format!(r#"{{"port":{port},"name":"pad","kind":"a pad","groups":["house"]}}"#),
             "Say what it is in one word: letters and digits, with - or _ between.",
+        ),
+        (
+            format!(r#"{{"port":{port},"name":"pad","kind":"pad"}}"#),
+            "Choose which groups can open this first.",
         ),
         (
             "port=8080".to_string(),
             "This computer could not read what the page sent: reload the page, then try again.",
         ),
         (
-            format!(r#"{{"port":{port},"name":"pad","kind":"pad"}}"#),
+            format!(r#"{{"port":{port},"name":"pad","kind":"pad","groups":["house"]}}"#),
             &*format!("Nothing answers at http://localhost:{port} now: start it, then lend it."),
         ),
     ];

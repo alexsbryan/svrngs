@@ -25,10 +25,24 @@
 //! from a phone counts only with its open's approver's approval of its exact
 //! content, which a computer below 4 neither asks for nor reads (line
 //! version 13), so an answer below 4 is older and not read; the group's
-//! keeper upgrades first (docs/releases/).
+//! keeper upgrades first (docs/releases/). 5 is selected-group lending
+//! (LENDING_SCOPE): a lend's list answer carries the stable group IDs it is
+//! lent to, and a list or lend request from a caller that knows to send
+//! [`crate::version::VERSION`] in [`SCOPE_HEADER`] may read them. An old
+//! consumer below 5 accepts a 5 answer, so [`older`] alone does not fence
+//! it: a lender refuses an unmarked discovery request, and a consumer
+//! refuses an unscoped answer, through the scope marker beside the version.
 
 /// This build's version, as its answers carry it.
-pub const VERSION: u32 = 4;
+pub const VERSION: u32 = 5;
+
+/// The header a caller sends to declare it speaks selected-group scope
+/// (LENDING_SCOPE §"Updates, migration and mixed versions"): its value is
+/// [`VERSION`]. Compatibility data, never authorization — a caller that
+/// sends it still passes the lender's actual audience and membership
+/// checks. A lender refuses a discovery request without it, and a consumer
+/// refuses a discovery answer whose messages do not carry scope.
+pub const SCOPE_HEADER: &str = "x-svrngs-version";
 
 /// Whether an answer carrying `version`, none when it carries none, comes
 /// from a computer running an svrngs older than any this one reads.

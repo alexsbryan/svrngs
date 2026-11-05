@@ -70,7 +70,7 @@ use svrngs_core::pass::Label;
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
 use crate::join::{Entered, NotJoined};
-use crate::lend::{self, Kind, LendName, Source::Port};
+use crate::lend::{self, Audience, Kind, LendName, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share, ShareRefusal};
 
@@ -366,11 +366,15 @@ struct Changing {
 }
 
 /// A closed set (AGENTS 9): let in this many at once, none for everyone in
-/// its groups; or lend it no longer.
+/// its groups; the groups it is lent to (LENDING_SCOPE); or lend it no
+/// longer.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum LendChange {
     Limit(Option<NonZeroU16>),
+    /// The groups it is lent to, by stable ID: an audience-only edit that
+    /// keeps its secret, sign-in client and choices (SCOPE_PARALLEL.md).
+    Groups(Vec<String>),
     /// The lender turns on signing people in with svrngs for it.
     #[serde(rename = "sign-in")]
     SignIn,
@@ -402,12 +406,20 @@ async fn lent(State(at): State<Asking>) -> Response {
 /// `POST /lent`: the person's change, written to the lend's declaration.
 async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     let dir = &at.door.data_dir;
+    let to = kind_of(&c.to);
     let done = match c.to {
         LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
+        LendChange::Groups(groups) => match chosen(&at, &groups) {
+            Ok(()) => lend::set_audience(dir, &c.lend, groups),
+            Err(refused) => {
+                tracing::debug!(target: "home", lend = %c.lend, "home: refused — an audience names a group this computer does not hold");
+                return refused;
+            }
+        },
         LendChange::Stop => lend::withdraw(dir, &c.lend),
         LendChange::SignIn => return sign_in(&at, &c.lend).await,
     };
-    tracing::debug!(target: "home", lend = %c.lend, to = ?c.to, done = ?done.as_ref().ok(), "home: the person changed a lend");
+    tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         Ok(false) => {
@@ -416,6 +428,40 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         Err(e) => {
             tracing::warn!(target: "home", lend = %c.lend, error = %e, "home: refused — the lend's declaration cannot be changed");
             LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED)
+        }
+    }
+}
+
+/// A short name for a change, for the trace: only the kind is kept, never a
+/// group list a person chose.
+fn kind_of(change: &LendChange) -> &'static str {
+    match change {
+        LendChange::Limit(_) => "limit",
+        LendChange::Groups(_) => "groups",
+        LendChange::SignIn => "sign-in",
+        LendChange::Stop => "stop",
+    }
+}
+
+/// A selected audience names only groups this computer holds, by stable ID
+/// (LENDING_SCOPE): an unknown ID is refused, never stored, so a misspelt
+/// or foreign group can never become a grant. Empty is allowed (paused).
+fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
+    let held = at.door.rail.namespaces().map_err(|e| {
+        tracing::warn!(target: "home", error = %e, "home: refused — the groups held cannot be listed");
+        LendRefusal::Fault.say(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "this computer cannot read which groups it holds",
+        )
+    })?;
+    match groups.iter().find(|id| !held.contains(id)) {
+        None => Ok(()),
+        Some(unknown) => {
+            tracing::debug!(target: "home", group = unknown, "home: refused — an audience names an unknown group");
+            Err(LendRefusal::Closed.say(
+                StatusCode::BAD_REQUEST,
+                format!("{unknown} is not a group this computer holds: choose one of the groups shown."),
+            ))
         }
     }
 }
@@ -517,6 +563,11 @@ struct ToLend {
     port: NonZeroU16,
     name: Option<String>,
     kind: Option<String>,
+    /// The groups to lend it to, required (SCOPE_PARALLEL.md): an absent
+    /// field is `None` and is refused, never defaulted to all groups; an
+    /// explicit empty list is paused. `Option` distinguishes absent from
+    /// paused, which a plain `Vec` could not.
+    groups: Option<Vec<String>>,
 }
 
 /// `POST /running`: the lend decided as `svrngs share` decides one
@@ -535,7 +586,7 @@ async fn lend_one(
     };
     // What the page sent: a port that is none, 0 or past 65535, else a
     // body the page never sends.
-    let Json(ToLend { port, name, kind }) = asked.map_err(|e| match e {
+    let Json(ToLend { port, name, kind, groups }) = asked.map_err(|e| match e {
         JsonRejection::JsonDataError(_) => refused("That is not something running on this computer: look again, then lend it from the list.", &e),
         _ => refused("This computer could not read what the page sent: reload the page, then try again.", &e),
     })?;
@@ -550,6 +601,19 @@ async fn lend_one(
     if known.is_none() && (name.is_none() || kind.is_none()) {
         return Err(refused(unknown, &port));
     }
+    // The audience is required and explicit (SCOPE_PARALLEL.md): an absent
+    // selection is refused, never defaulted to all groups; every ID is
+    // checked against the groups this computer holds. A present empty list
+    // is a deliberate pause.
+    let Some(groups) = groups else {
+        return Err(refused(
+            "Choose which groups can open this first.",
+            &"no selection",
+        ));
+    };
+    if let Err(e) = chosen(&at, &groups) {
+        return Err(e);
+    }
     let asked = Share {
         port,
         name,
@@ -561,6 +625,7 @@ async fn lend_one(
         asks: None,
         sign_in: false,
         raw: None,
+        audience: Audience::Selected(groups),
     };
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.

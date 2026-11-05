@@ -372,6 +372,14 @@ pub fn links(version: Option<u32>) -> bool {
     version::links(version)
 }
 
+/// This build's version, as a discovery ask carries it: the one constant
+/// the page sends in `x-svrngs-version` at the phone's discovery edge
+/// (SCOPE_PARALLEL.md), so a page and a computer agree.
+#[wasm_bindgen]
+pub fn current_version() -> u32 {
+    version::VERSION
+}
+
 /// The label of the lend `name` lent by the computer whose key is
 /// `lender`, 64 hex: one DNS label, its origin's name (u5-2).
 #[wasm_bindgen]

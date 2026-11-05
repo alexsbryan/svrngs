@@ -36,7 +36,7 @@
 use std::num::NonZeroU16;
 use std::time::Duration;
 
-use crate::lend::{Kind, Lend, LendName, Raw, RefusedPath, Source, Upload};
+use crate::lend::{Audience, Kind, Lend, LendName, Raw, RefusedPath, Source, Upload};
 
 /// The well-known ports and the kind of service that listens on each, one
 /// `<port> <kind>` a line, then how its lender makes a person an account
@@ -109,6 +109,10 @@ pub struct Share {
     /// `--udp` or `--tcp`: lent as its own datagrams or bytes, not as a
     /// page (give-udp, give-tcp).
     pub raw: Option<Raw>,
+    /// The groups it is lent to (LENDING_SCOPE): explicit stable IDs its
+    /// lender chose, or [`Audience::Legacy`] when none was given, which is
+    /// paused until selection, never all groups.
+    pub audience: Audience,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -254,6 +258,7 @@ pub fn lend_of(
         name,
         source: raw.map_or(Source::Port(share.port), |r| Source::Raw(r, share.port)),
         kind,
+        audience: share.audience.clone(),
         limit,
         refused,
         upload: share.upload,

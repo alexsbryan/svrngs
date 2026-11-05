@@ -329,6 +329,25 @@ pub const LEND_ROUTE: &str = "/lend/";
 /// Where a member asks what this computer lends.
 pub const LENDS_ROUTE: &str = "/lends";
 
+/// Whether a discovery request carries [`crate::version::SCOPE_HEADER`] at
+/// this build's version: the compatibility fence that lets a new lender
+/// refuse an old consumer, which [`crate::version::older`] alone cannot
+/// (an old consumer accepts a newer answer). It is not a credential: a
+/// caller that sends it still passes the audience and membership checks.
+fn scope_aware(headers: &HeaderMap) -> bool {
+    headers
+        .get(crate::version::SCOPE_HEADER)
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u32>().ok())
+        .is_some_and(|v| v >= crate::version::VERSION)
+}
+
+/// [`scope_aware`] for the node's own discovery route (`/people/lends`),
+/// which reads the same marker at the same edge.
+pub(crate) fn scope_marked(headers: &HeaderMap) -> bool {
+    scope_aware(headers)
+}
+
 /// Where a lend's choices are said and asked ([`choices`]).
 const CHOICES: &str = "/choices/{lend}";
 
@@ -518,7 +537,15 @@ impl Drop for InFlight {
 async fn lends(
     State(door): State<Door>,
     dialer: Option<Extension<Dialer>>,
+    headers: HeaderMap,
 ) -> Result<Response, Response> {
+    if !scope_aware(&headers) {
+        tracing::debug!(target: "door", "door: lends refused — the ask carries no scope marker");
+        return Err(err(
+            StatusCode::FORBIDDEN,
+            "the computer you reached reads a scope marker on this ask: update svrngs and try again",
+        ));
+    }
     let Some(Extension(dialer)) = dialer else {
         tracing::warn!(target: "door", "door: lends refused — no verified dialer, so the request did not come on an iroh stream");
         return Err(err(
@@ -532,9 +559,9 @@ async fn lends(
         return Err(err(StatusCode::FORBIDDEN, LENDS_NOTHING));
     }
     let mut offered = offered(&door).await?;
-    let stands = |g: &String| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
+    let stands = |g: &str| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
     offered.retain(|o| o.listed(stands));
-    tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group");
+    tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group and each declared lend only through a group it is lent to");
     let version = crate::version::VERSION;
     Ok(Json(serde_json::json!({ "lends": offered, "version": version })).into_response())
 }
@@ -581,6 +608,10 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             group: match &lend.source {
                 Source::Carried(group) => Some(group.clone()),
                 Source::Port(_) | Source::Raw(..) => None,
+            },
+            groups: match &lend.source {
+                Source::Carried(group) => Some(vec![group.clone()]),
+                Source::Port(_) | Source::Raw(..) => lend.audience.ids().map(<[String]>::to_vec),
             },
             raw: match lend.source {
                 Source::Raw(raw, _) => Some(raw),
@@ -980,10 +1011,11 @@ struct Asker {
     host: Option<Person>,
 }
 
-/// Who asks, decided before the lend is found or after: a member by the
-/// key it dials with, a holder only by a pass for the lend it names.
+/// Who asks, decided before the lend is found or after: a member or the
+/// lender itself by the key it dials with — resolved only once the lend's
+/// audience is known — or a holder solely by a pass for the lend it names.
 enum Pending {
-    Known(Asker),
+    Member(String),
     Pass(Dialer),
 }
 
@@ -1061,6 +1093,7 @@ async fn holder_of(
     holder: &Dialer,
     headers: &HeaderMap,
     lend: &Lend,
+    eligible: impl Fn(&str) -> bool,
 ) -> Result<Asker, Response> {
     let key = holder.actor();
     let refused = |why: &str| {
@@ -1095,7 +1128,13 @@ async fn holder_of(
     if let Err(fault) = checked {
         return Err(refused(&fault.to_string()));
     }
-    let mut standing = PersonKey::resolved(door, &pass.person);
+    // A group that `eligible` refuses grants nothing, so the signer's
+    // identity is resolved only through a group this lend is lent to.
+    let expected = |member: &crate::register::Member| member.person_key.clone();
+    let standing = door
+        .rail
+        .standing_in(&pass.person, &eligible)
+        .map(|(group, member)| (group, member.person.clone(), PersonKey(expected(&member))));
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
     if standing.is_none() && door.rail.removed_anywhere(&pass.person).is_some() {
@@ -1103,20 +1142,26 @@ async fn holder_of(
             "door: refused — the pass's signer was removed from a group held here");
         return Err(gone());
     }
-    if standing.is_none() {
+    let standing = if standing.is_none() {
         if let Some(visit) = door.rail.visit_anywhere(&pass.person) {
-            return guest_of(&hex::encode(door.key), visit, pass, lend, now);
+            return guest_of(&hex::encode(door.key), visit, pass, lend, now, &eligible);
         }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
-            "door: the pass's signer stands in no group held here, so the group's ring is asked once first");
-        let known = || door.rail.standing_anywhere(&pass.person).is_some();
+            "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
+        let known = || door.rail.standing_in(&pass.person, &eligible).is_some();
         let in_time = door.ring.until(ASK_WITHIN, known).await;
-        standing = PersonKey::resolved(door, &pass.person);
-        tracing::debug!(target: "door", signer = pass.person, in_time, known = standing.is_some(),
+        let again = door
+            .rail
+            .standing_in(&pass.person, &eligible)
+            .map(|(group, member)| (group, member.person.clone(), PersonKey(expected(&member))));
+        tracing::debug!(target: "door", signer = pass.person, in_time, known = again.is_some(),
             "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
-    }
+        again
+    } else {
+        standing
+    };
     let Some((group, person, actor)) = standing else {
-        return Err(refused("its signer stands in no group held here"));
+        return Err(refused("its signer stands in no group this lends to"));
     };
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
         "door: a pass opens this lend, so its holder asks as the person who signed it");
@@ -1137,7 +1182,14 @@ async fn holder_of(
 /// group's. Each refusal says which of those refused it: `ended` for the
 /// visit's end, `closed` for the rest. A visit begun later than now, which
 /// only this computer's clock stepping back makes, is said as one ended.
-fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<Asker, Response> {
+fn guest_of(
+    me: &str,
+    v: Visiting,
+    pass: Pass,
+    lend: &Lend,
+    now: i64,
+    eligible: &impl Fn(&str) -> bool,
+) -> Result<Asker, Response> {
     let ((group, register, guest), name) = (v, lend.name.as_str());
     let host = register.members.get(&guest.host).map(|m| &m.person);
     let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
@@ -1152,15 +1204,19 @@ fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<
     let named = guest.visit.opens.get(me).is_some_and(|l| l.contains(name));
     let ended = |w| Some((LendRefusal::Ended, w));
     let closed = |w| Some((LendRefusal::Closed, w));
+    // The visit's group must still be one the lend is lent to: a visit in a
+    // group the audience excludes reaches nothing here (LENDING_SCOPE).
+    let in_scope = eligible(&group);
     let refused = match () {
         _ if gone => ended(format!("{host} is no longer a member, so your visit ended")),
         _ if stopped => ended(format!("{host} ended your visit")),
         _ if !live => ended(format!("your visit with {host} is over: its time is up")),
         _ if !own => closed(format!("{name} is not {host}'s to open to you")),
+        _ if !in_scope => closed(format!("{name} is no longer lent to your visit's group")),
         _ if !named => closed(format!("{host} did not open {name} to you")),
         _ => None,
     };
-    tracing::debug!(target: "door", guest = pass.person, %host, lend = name, live, own, named, ?refused, "door: a visit's key — let in as its host's guest only while the visit is live and names this lend, its host's own, never a carried app");
+    tracing::debug!(target: "door", guest = pass.person, %host, lend = name, live, own, in_scope, named, ?refused, "door: a visit's key — let in as its host's guest only while the visit is live, in a group the lend reaches, and names this lend, its host's own, never a carried app");
     if let Some((kind, words)) = refused {
         return Err(kind.say(StatusCode::FORBIDDEN, words));
     }
@@ -1253,26 +1309,18 @@ pub(crate) async fn lend_for(
         );
     };
     let pending = match &who {
-        Who::Member(_) | Who::Own(_) => {
-            let Some((group, person, whose)) = PersonKey::resolved(door, &actor) else {
-                tracing::debug!(target: "door", actor, "door: refused — the dialer stands in no group held here");
-                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
-            };
-            Pending::Known(Asker {
-                actor: whose,
-                device: DeviceKey(actor.clone()),
-                group,
-                person,
-                app: match &who {
-                    Who::Own(app) => Some(app.clone()),
-                    _ => None,
-                },
-                host: None,
-            })
-        }
+        Who::Member(_) | Who::Own(_) => Pending::Member(actor.clone()),
         Who::Holder(dialer) => Pending::Pass(*dialer),
     };
     let lend = choices::found(door, raw_name)?;
+    // A carried app's reach is its own group; a declared lend's is its
+    // explicit audience (LENDING_SCOPE). The audience is read from the
+    // declaration just read, so a narrowing takes effect at the next
+    // request (RUST_ARCH 8; LENDING_SCOPE §"Raw admission and sweep").
+    let eligible = |group: &str| match &lend.source {
+        Source::Carried(own) => own == group,
+        Source::Port(_) | Source::Raw(..) => lend.audience.reaches(group),
+    };
     let Asker {
         actor: whose,
         device,
@@ -1281,8 +1329,43 @@ pub(crate) async fn lend_for(
         mut app,
         host,
     } = match pending {
-        Pending::Known(asker) => asker,
-        Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
+        Pending::Member(key) => match &who {
+            // The lender's own page at its own origin is not a group grant:
+            // its administration stays its own (LENDING_SCOPE). It is let
+            // in as this computer's person, as before.
+            Who::Own(label) => {
+                let Some((group, person, whose)) = PersonKey::resolved(door, &key) else {
+                    tracing::debug!(target: "door", actor = key, "door: refused — the lender stands in no group held here");
+                    return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
+                };
+                Asker {
+                    actor: whose,
+                    device: DeviceKey(key),
+                    group,
+                    person,
+                    app: Some(label.clone()),
+                    host: None,
+                }
+            }
+            Who::Member(_) => {
+                let Some((group, member)) = door.rail.standing_in(&key, eligible) else {
+                    tracing::debug!(target: "door", actor = key, lend = %lend.name,
+                        "door: refused — the dialer stands in no group this lend is lent to");
+                    return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
+                };
+                let whose = PersonKey(member.person_key);
+                Asker {
+                    actor: whose,
+                    device: DeviceKey(key),
+                    group,
+                    person: member.person,
+                    app: None,
+                    host: None,
+                }
+            }
+            Who::Holder(_) => unreachable!("a holder is resolved through its pass"),
+        },
+        Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend, &eligible).await?,
     };
     let actor = whose.as_str();
     let port = match &lend.source {

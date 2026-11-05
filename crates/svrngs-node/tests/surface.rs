@@ -49,10 +49,10 @@ async fn start(seed: u8, dir: &std::path::Path) -> Node {
 }
 
 /// `dir`'s computer lends `name` on `port`, declaring `upload_bps` or none.
-fn lends(dir: &std::path::Path, name: &str, port: u16, upload_bps: Option<u64>) {
+fn lends(dir: &std::path::Path, group: &str, name: &str, port: u16, upload_bps: Option<u64>) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
-    let mut body = serde_json::json!({ "port": port, "kind": "media", "limit": 3 });
+    let mut body = serde_json::json!({ "port": port, "kind": "media", "limit": 3, "groups": [group] });
     if let Some(bps) = upload_bps {
         body["upload_bps"] = bps.into();
     }
@@ -61,10 +61,10 @@ fn lends(dir: &std::path::Path, name: &str, port: u16, upload_bps: Option<u64>) 
 
 /// `dir`'s computer lends `name` on `port`, of `kind`, declaring the kinds
 /// it `reads`.
-fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
+fn declare(dir: &std::path::Path, group: &str, name: &str, port: u16, kind: &str, reads: &[&str]) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
-    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads });
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "groups": [group] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -243,8 +243,8 @@ fn listed(body: &serde_json::Value) -> Vec<Listed> {
 #[tokio::test]
 async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stale() {
     let house = House::new().await;
-    lends(house.alex_dir.path(), "telly", 8096, None);
-    lends(house.sam_dir.path(), "films", 8097, Some(30_000_000));
+    lends(house.alex_dir.path(), &house.id, "telly", 8096, None);
+    lends(house.sam_dir.path(), &house.id, "films", 8097, Some(30_000_000));
     let (alex, sam) = (actor_of(&signing(1)), actor_of(&signing(2)));
     let entry = |person: &str, key: &str, name: &str, upload| {
         (
@@ -406,9 +406,9 @@ async fn a_caller_off_loopback_is_refused_the_groups_and_the_lends() {
 #[tokio::test]
 async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     let mut house = House::new().await;
-    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
-    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
-    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    declare(house.alex_dir.path(), &house.id, "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), &house.id, "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), &house.id, "films", 8097, "media", &[]);
     let port = house.alex.api_addr().port();
     let label = |seed: u8, name: &str| {
         svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
@@ -452,9 +452,9 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
 #[tokio::test]
 async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
     let house = House::new().await;
-    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
-    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
-    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    declare(house.alex_dir.path(), &house.id, "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), &house.id, "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), &house.id, "films", 8097, "media", &[]);
     let admit = svrngs_core::tests_support::Fixture {
         act: RailAct::Admit {
             person: Person::parse("cy").unwrap(),
@@ -515,10 +515,10 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
 #[tokio::test]
 async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origin() {
     let mut house = House::new().await;
-    declare(house.alex_dir.path(), "night", 8596, "night", &["media"]);
-    declare(house.alex_dir.path(), "telly", 8096, "media", &[]);
-    declare(house.sam_dir.path(), "reel", 8597, "night", &["media"]);
-    declare(house.sam_dir.path(), "films", 8097, "media", &[]);
+    declare(house.alex_dir.path(), &house.id, "night", 8596, "night", &["media"]);
+    declare(house.alex_dir.path(), &house.id, "telly", 8096, "media", &[]);
+    declare(house.sam_dir.path(), &house.id, "reel", 8597, "night", &["media"]);
+    declare(house.sam_dir.path(), &house.id, "films", 8097, "media", &[]);
     let label = |seed: u8, name: &str| {
         svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
     };

@@ -43,8 +43,7 @@ async fn a_lend_that_asks_lets_in_only_the_app_its_person_said_yes_to() {
     let (pair, heads) = lending_heads().await;
     let (at, taste_heads) = origins::head_origin().await;
     let declare = || {
-        let body =
-            serde_json::json!({ "port": at.port(), "kind": "taste", "limit": 3, "asks": WORDS });
+        let body = serde_json::json!({ "port": at.port(), "kind": "taste", "limit": 3, "asks": WORDS, "groups": ["house"] });
         let dir = lend::lends_dir(pair.dir.path());
         std::fs::write(dir.join("taste.json"), body.to_string()).unwrap();
     };
@@ -175,7 +174,7 @@ async fn a_lend_that_asks_lets_in_only_the_app_its_person_said_yes_to() {
         pages.text
     );
 
-    let lends = pair.get("/lends", "").await;
+    let lends = pair.get("/lends", "x-svrngs-version: 5\r\n").await;
     assert!(
         lends.text.contains(&format!(r#""asks":"{WORDS}""#)),
         "{}",

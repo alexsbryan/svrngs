@@ -338,6 +338,37 @@ impl RingRail {
         found
     }
 
+    /// The first group held here that both `eligible` accepts and `actor`
+    /// stands in, and the [`Member`] they stand as there; `None` when they
+    /// stand in none that qualifies (LENDING_SCOPE). The one answer a lend
+    /// with an audience asks, so its person is resolved only through a
+    /// group that may reach it — never another group they also stand in,
+    /// which would attribute an eligible request to an excluded group's
+    /// person. A group whose register is unreadable, or that `eligible`
+    /// refuses, vouches for nobody.
+    pub fn standing_in(
+        &self,
+        actor: &str,
+        eligible: impl Fn(&str) -> bool,
+    ) -> Option<(String, Member)> {
+        let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
+        let found = held.ok()?.iter().find_map(|ns| {
+            if !eligible(ns) {
+                return None;
+            }
+            match self.standing(ns) {
+                Ok(Standing::Members(m)) => Some((ns.clone(), m.get(actor)?.clone())),
+                Ok(_) => None,
+                Err(e) => {
+                    tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
+                    None
+                }
+            }
+        });
+        tracing::debug!(target: "register", actor, found = ?found, "register: the eligible group held here the key stands in, and as whom, or none");
+        found
+    }
+
     /// The first group held here a visit the fold counts is `key`'s in, its
     /// register and the visit, live or not (guests-door): whom the door lets
     /// in as a guest, asking the visit's liveness of [`Guest::live`]. `None`

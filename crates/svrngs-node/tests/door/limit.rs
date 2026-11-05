@@ -76,6 +76,7 @@ impl Crowd {
         std::fs::create_dir_all(&dir).unwrap();
         let body = serde_json::json!({
             "port": origin.port(), "kind": "k", "limit": 3, "upload_bps": 30_000_000,
+            "groups": [NS],
         });
         std::fs::write(dir.join("shelf.json"), body.to_string()).unwrap();
         Crowd {

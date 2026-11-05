@@ -39,7 +39,7 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader, Lines};
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
-use super::{busy_words, find, now, Door, InFlight, PersonKey, Verdict, LENDS_NOTHING};
+use super::{busy_words, find, now, Door, InFlight, Verdict, LENDS_NOTHING};
 use crate::iroh::{closed_unadmitted, key_actor, Alpn, Endpoint, EndpointAddr, Via, NOT_ADMITTED};
 use crate::lend::{Lend, LendName, Raw, Source};
 
@@ -153,19 +153,26 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
     let lent = (&door, actor.as_str(), &lend, port, &conn);
     tokio::select! {
         () = carrying(lent, raw, send) => {}
-        () = unstood(&door, &actor) => {
-            tracing::debug!(target: "door", actor, lend = %lend.name, "raw: the member's connection closed by the lender — the dialer no longer stands in any group held here");
+        () = unstood(&door, actor.as_str(), &lend) => {
+            tracing::debug!(target: "door", actor, lend = %lend.name, "raw: the member's connection closed by the lender — the dialer no longer stands in a group this lend reaches, or it is withdrawn");
             conn.close(0u32.into(), NOT_ADMITTED);
         }
     }
 }
 
-/// When `actor` no longer stands in any group held here, asked every
-/// [`SWEEP`] as [`admitted`] asks it: a removed member's open connection
-/// would otherwise run until it closes, or a flow that keeps sending, on.
-async fn unstood(door: &Door, actor: &str) {
+/// When `actor` no longer stands in any group the lend `lend` reaches, or
+/// the lend is withdrawn or unreadable, asked every [`SWEEP`] as
+/// [`admitted`] asks it — the live declaration re-read each tick, so a
+/// narrowing closes an open raw connection rather than letting it run on
+/// (LENDING_SCOPE §"Raw admission and current-scope sweep").
+async fn unstood(door: &Door, actor: &str, lend: &Lend) {
     let mut every = tokio::time::interval(SWEEP);
-    while PersonKey::resolved(door, actor).is_some() {
+    loop {
+        let stands = live_eligible(door, lend)
+            .is_ok_and(|eligible| door.rail.standing_in(actor, &eligible).is_some());
+        if !stands {
+            return;
+        }
         every.tick().await;
     }
 }
@@ -223,24 +230,61 @@ async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, 
 }
 
 /// One use of a raw lend, `what` in the traces, let in by the dialer's
-/// standing now and the lend's limit, which counts people, not flows or
-/// connections: that person's use, held (none for one not counted); or why
-/// not, in a person's words.
+/// standing in a group the lend is lent to *now* and the lend's limit,
+/// which counts people, not flows or connections: that person's use, held
+/// (none for one not counted); or why not, in a person's words.
+///
+/// The declaration is re-read here, not the `Lend` captured when the lend
+/// was opened, so an audience narrowed since takes effect on each new use
+/// (LENDING_SCOPE §"Raw admission and current-scope sweep").
 pub(super) async fn admitted(lent: &Lending<'_>, what: &str) -> Result<Option<InFlight>, String> {
     let (door, actor, lend, _, conn) = *lent;
-    let Some((_, _, whose)) = PersonKey::resolved(door, actor) else {
-        tracing::debug!(target: "door", actor, what, "raw: a use refused — the dialer stands in no group held here now");
+    let eligible = match live_eligible(door, lend) {
+        Ok(eligible) => eligible,
+        Err(words) => return Err(words),
+    };
+    let Some((_, member)) = door.rail.standing_in(actor, &eligible) else {
+        tracing::debug!(target: "door", actor, what, lend = %lend.name, "raw: a use refused — the dialer stands in no group this lend is lent to now");
         return Err(LENDS_NOTHING.into());
     };
+    let whose = member.person_key;
     let at = crate::network::guess(Via(conn.clone()).observe().and_then(|o| o.addr));
-    match door.using.ask(lend, whose.as_str(), at).await {
+    match door.using.ask(lend, &whose, at).await {
         Some((Verdict::Full { using, limit }, _)) => {
-            tracing::info!(target: "door", person = whose.as_str(), lend = %lend.name, what, using, limit,
+            tracing::info!(target: "door", person = whose, lend = %lend.name, what, using, limit,
                 "raw: a use refused — as many people as the lend's limit are using it");
             Err(busy_words(lend, using, limit))
         }
         Some((_, held)) => Ok(held),
         None => Err(super::UNCOUNTED.into()),
+    }
+}
+
+/// The live eligibility of a raw lend: re-read the declaration and derive
+/// whether a group may reach it, from its audience (or a carried app's own
+/// group). An unreadable or missing declaration reaches nothing — a
+/// withdrawal or a broken read fails closed, never open (ARCH 6).
+pub(super) fn live_eligible(door: &Door, lend: &Lend) -> Result<impl Fn(&str) -> bool, String> {
+    match crate::lend::read(&door.data_dir, &lend.name) {
+        Ok(Some(live)) => {
+            let carried = match &live.source {
+                Source::Carried(own) => Some(own.clone()),
+                Source::Port(_) | Source::Raw(..) => None,
+            };
+            let audience = live.audience.clone();
+            Ok(move |group: &str| match &carried {
+                Some(own) => own == group,
+                None => audience.reaches(group),
+            })
+        }
+        Ok(None) => {
+            tracing::debug!(target: "door", lend = %lend.name, "raw: a use refused — it is no longer declared here");
+            Err(format!("{} is no longer lent here", lend.name))
+        }
+        Err(e) => {
+            tracing::warn!(target: "door", lend = %lend.name, error = %e, "raw: a use refused — its declaration cannot be read");
+            Err(format!("{} cannot be read here now", lend.name))
+        }
     }
 }
 

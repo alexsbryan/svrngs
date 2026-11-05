@@ -39,6 +39,7 @@ fn signs_in(pair: &Pair, name: &str, port: u16, client: &str, secret: &str) {
     let body = json!({
         "port": port,
         "kind": "k",
+        "groups": [NS],
         "sign_in_with_svrngs": { "client_id": client, "client_secret": secret },
     });
     std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
@@ -534,6 +535,7 @@ async fn a_guests_code_names_the_guest_never_the_host() {
     let body = json!({
         "port": port,
         "kind": "k",
+        "groups": [NS],
         "sign_in_with_svrngs": { "client_id": CLIENT, "client_secret": SECRET },
     });
     std::fs::write(dir.join(format!("{LEND}.json")), body.to_string()).unwrap();
