@@ -353,7 +353,7 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
     )
     .await
     .expect("Sam makes house");
-    let (_, printed, _) = cli::link_to(&sam, "house", Some(&page), &ours, true)
+    let (_, printed, _) = cli::link_to(&sam, "house", Some(&page), &ours, true, &[])
         .await
         .expect("Sam's computer makes a link for Sam's devices");
     let link = printed.https.clone().expect("an https link on the origin");

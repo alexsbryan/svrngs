@@ -202,7 +202,7 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     let (house, first) = cli::new_group(&node, name("House"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
-    let (again, second, _) = cli::link_to(&node, "house", None, &no_relay(), false)
+    let (again, second, _) = cli::link_to(&node, "house", None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert_eq!(again, house);
@@ -214,17 +214,17 @@ async fn link_mints_a_new_link_to_the_group_it_names() {
     assert_eq!(keys, [key_of(&first), key_of(&second)]);
 
     assert!(matches!(
-        cli::link_to(&node, "work", None, &no_relay(), false).await,
+        cli::link_to(&node, "work", None, &no_relay(), false, &[]).await,
         Err(Refusal::NoGroup(_))
     ));
     let (other, _) = cli::new_group(&node, name("house"), name("Sam"), None, &[], &no_relay())
         .await
         .unwrap();
     assert!(matches!(
-        cli::link_to(&node, "house", None, &no_relay(), false).await,
+        cli::link_to(&node, "house", None, &no_relay(), false, &[]).await,
         Err(Refusal::Ambiguous { .. })
     ));
-    let (picked, _, _) = cli::link_to(&node, &other.id()[..8], None, &no_relay(), false)
+    let (picked, _, _) = cli::link_to(&node, &other.id()[..8], None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert_eq!(picked, other);
@@ -255,20 +255,20 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
     .await
     .unwrap();
     assert!(https(&first).starts_with("https://x.example/#"), "{first}");
-    let (_, later, _) = cli::link_to(&node, "house", None, &no_relay(), false)
+    let (_, later, _) = cli::link_to(&node, "house", None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert!(https(&later).starts_with("https://x.example/#"), "{later}");
 
     let y = Origin::parse("https://y.example/ours/").unwrap();
-    let (_, moved, _) = cli::link_to(&node, "house", Some(&y), &no_relay(), false)
+    let (_, moved, _) = cli::link_to(&node, "house", Some(&y), &no_relay(), false, &[])
         .await
         .unwrap();
     assert!(
         https(&moved).starts_with("https://y.example/ours/#"),
         "{moved}"
     );
-    let (_, after, _) = cli::link_to(&node, "house", None, &no_relay(), false)
+    let (_, after, _) = cli::link_to(&node, "house", None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert!(
@@ -280,7 +280,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
         .await
         .unwrap();
     assert_eq!(https(&plain), "", "no origin, no https link: {plain}");
-    let (_, again, _) = cli::link_to(&node, "work", None, &no_relay(), false)
+    let (_, again, _) = cli::link_to(&node, "work", None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert_eq!(https(&again), "", "{again}");
@@ -288,7 +288,7 @@ async fn a_group_keeps_the_origin_its_links_print_on() {
     // A group whose kept origin is gone prints the client's link alone.
     let kept = node.rail().group_dir(&house.id()).unwrap().join("origin");
     std::fs::remove_file(&kept).unwrap();
-    let (_, gone, _) = cli::link_to(&node, "house", None, &no_relay(), false)
+    let (_, gone, _) = cli::link_to(&node, "house", None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert_eq!(https(&gone), "", "{gone}");
@@ -436,6 +436,7 @@ fn the_verbs_parse() {
             group: "house".into(),
             origin: Some(Origin::parse("https://links.example.org/").unwrap()),
             device: false,
+            relays: Vec::new(),
         }
     );
     assert_eq!(
@@ -444,6 +445,7 @@ fn the_verbs_parse() {
             group: "house".into(),
             origin: None,
             device: true,
+            relays: Vec::new(),
         },
         "--device: a link for another device of yours (bash-devices)"
     );
@@ -453,6 +455,7 @@ fn the_verbs_parse() {
             group: "house".into(),
             origin: None,
             device: false,
+            relays: Vec::new(),
         },
         "no --origin is the group's own, not the default"
     );
@@ -672,7 +675,7 @@ async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
         )),
         "{own}"
     );
-    let (_, again, _) = cli::link_to(&node, "house", None, &no_relay(), false)
+    let (_, again, _) = cli::link_to(&node, "house", None, &no_relay(), false, &[])
         .await
         .unwrap();
     assert!(

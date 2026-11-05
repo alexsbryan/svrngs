@@ -202,6 +202,37 @@ impl crate::node::Host {
         Ok(())
     }
 
+    /// Where `group` meets, or the keeper's new set of relays: `relays`
+    /// empty asks; any other replaces the group's own, and only the
+    /// keeper's act counts (relay fallbacks; [`svrngs_core::MeetsAt`]). The
+    /// group's id, people and files are untouched.
+    pub fn meet(&self, group: &str, relays: &[RelayUrl]) -> Result<Vec<RelayUrl>, String> {
+        let r = self.rail.register(group).map_err(|e| e.to_string())?;
+        if relays.is_empty() {
+            return Ok(r
+                .meets
+                .unwrap_or_default()
+                .into_iter()
+                .map(RelayUrl::from)
+                .collect());
+        }
+        let only = || "only the group's keeper decides where it meets".to_string();
+        if r.keeper.as_deref() != Some(self.actor.as_str()) {
+            tracing::debug!(target: "group", group, keeper = ?r.keeper, "group: meet — refused, not the keeper");
+            return Err(only());
+        }
+        let asked: BTreeSet<Url> = relays.iter().cloned().map(Into::into).collect();
+        self.rail
+            .commit_said(group, &svrngs_core::MeetsAt(asked))
+            .map_err(|e| e.to_string())?
+            .map_err(|why| match why {
+                svrngs_core::HandOnRefusal::NotKeeper => only(),
+                _ => format!("{why:?}"),
+            })?;
+        self.refresh();
+        Ok(relays.to_vec())
+    }
+
     /// Where `group` meets ([`meeting`]), by this computer's build.
     pub(crate) fn meeting(&self, group: &str) -> Meeting {
         meeting(&self.rail, group, &self.build)

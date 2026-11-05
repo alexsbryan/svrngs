@@ -1303,7 +1303,9 @@ while any of them answers, and at the build's relay only when none does,
 decided in one place (svrn-docs `rings/current/GROUP_RELAYS.md` §7, the
 operator's "Tiers", 2026-11-02). Its own are the relays its keeper names in
 its record by a `Meets` act (§6), made with `svrngs new <name> --relay
-<name or url>`, once for each. The build's are one of a closed set,
+<name or url>`, once for each; `svrngs link <group> --relay <name or
+url>` replaces them later, keeper only, and the new link carries them. The
+build's are one of a closed set,
 `cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay at
 `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup and n0
 none of the path. The build ships one, `cli::SHIPPED`: n0's for now, until
@@ -1809,9 +1811,10 @@ from the journal waits in PLAN §2.
   which a build before it reads as a newer line, meeting its group where it
   did). The fold keeps it (`Membership::meets_at`); `MeetsAt` writes it only
   when the record says otherwise and refuses anyone but the keeper. `new
-  --relay` writes it at a group's start; a keeper's computer names an old
-  group's from the relay its file keeps, once (`Host::cut_over`), and until
-  then that file is read in its place (group.rs `meeting`).
+  --relay` writes it at a group's start, and `svrngs link <group> --relay`
+  replaces it later; a keeper's computer names an old group's from the relay
+  its file keeps, once (`Host::cut_over`), and until then that file is read
+  in its place (group.rs `meeting`).
 - **A visit is folded beside membership** (svrn-docs `GUESTS.md` §3, §5).
   A `Visit{guest, key, opens, until}`, signed by the host's computer, names
   the guest, a key fresh for the visit and the lends it opens, by each
