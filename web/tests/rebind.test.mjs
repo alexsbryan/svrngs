@@ -100,3 +100,23 @@ test('a pass kept before relay fallbacks opens at its one relay', async () => {
   );
   assert.deepEqual(Array.from(await opened()), ['https://own/']);
 });
+
+// Review F6: a relay the record names for a lend that the page's policy
+// refuses went to the worker as none, unsaid, and the worker said the
+// group names none. The page says it refused that one, by name. Watched
+// failing at fd50dd58: nothing traced.
+test('a relay the page refuses for a lend is said by name as it goes as none', () => {
+  const said = [];
+  const lent = [{ label: 'films.ab', name: 'Films', relay: 'http://10.0.0.2:3340/' }];
+  const context = { trace: (line) => said.push(line) };
+  const passLends = runInNewContext(
+    `${cut('page/hand.js', 'passLends')}${cut('page/hand.js', 'taken')}\npassLends;`,
+    context,
+  );
+  const lends = passLends({ relay_taken: () => false }, { lent, label: 'films.ab' }, lent[0], {});
+  assert.equal(lends[0].relay, null);
+  assert.ok(
+    said.some((line) => line.includes('Films') && line.includes('http://10.0.0.2:3340/')),
+    said.join('\n'),
+  );
+});

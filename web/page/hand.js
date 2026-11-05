@@ -129,7 +129,7 @@ function passLends(core, { lent, label }, lend, opened) {
   ].map((other) => ({
     label: other.label,
     key: other.key,
-    relay: other.relay && core.relay_taken(other.relay) ? other.relay : null,
+    relay: taken(core, other),
     name: other.name,
     kind: other.kind,
     group: other.group ?? null,
@@ -137,6 +137,19 @@ function passLends(core, { lent, label }, lend, opened) {
     asks: other.asks,
     version: other.version ?? null,
   }));
+}
+
+// The relay the record names for `lend` when this page's policy takes it,
+// else none; one refused is said by name, so the worker's "names no relay"
+// is read rightly (review F6).
+/**
+ * @param {typeof Wasm} core
+ * @param {Lent} lend
+ */
+function taken(core, { name, relay }) {
+  if (!relay || core.relay_taken(relay)) return relay ?? null;
+  trace(`PAGE: ${name}'s relay ${relay} is one this page's policy refuses, so its pass names none`);
+  return null;
 }
 
 // The holder of the lend origin's open, kept for `label` unless a lend of

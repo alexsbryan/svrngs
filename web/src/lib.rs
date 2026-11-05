@@ -263,7 +263,7 @@ async fn reach(
             bound.relays.clone()
         }
         None => {
-            t!("LAYER parse: the group names no relay for {node_id}, so every relay the link carries is tried");
+            t!("LAYER parse: no relay named for {node_id} — its group names none, or the page refused it — so every relay the link carries is tried");
             bound.relays.clone()
         }
     };
