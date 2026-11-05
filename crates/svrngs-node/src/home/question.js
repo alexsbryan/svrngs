@@ -26,6 +26,9 @@
  * @property {number | null} [version] the lending computer's svrngs
  * @property {number} [limit] how many may have it open at once
  * @property {number} [using] how many have it open now
+ * @property {string[] | null} [groups] the stable ids of the groups that may
+ *   open it, in the owner's own `/lent` answer: `[]` paused, `null` legacy
+ *   and needing selection (SCOPE_PARALLEL.md, owner `GET /lent`)
  * @property {string} [called] its lender, as `called` tells namesakes apart
  */
 
