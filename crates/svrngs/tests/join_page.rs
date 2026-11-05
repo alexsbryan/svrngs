@@ -62,6 +62,22 @@ async fn service() -> u16 {
     port
 }
 
+/// A route that accepts and never answers: a stalled relay, each
+/// connection held open for the test's length, reached over TLS at its
+/// address (the tests' browsers take the certificate). Its URL, https, so
+/// every page's policy takes it and tries it.
+async fn stalled() -> String {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    tokio::spawn(async move {
+        let mut held = Vec::new();
+        while let Ok((sock, _)) = listener.accept().await {
+            held.push(sock);
+        }
+    });
+    format!("https://127.0.0.1:{port}/")
+}
+
 /// Each `Admit` in Sam's record: its person, key and device, if it
 /// redeems a link.
 fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
@@ -625,6 +641,55 @@ async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
         said.iter()
             .any(|l| l.contains("LAYER parse: ok — relay") && l.contains(&public_https)),
         "the fallback was bound:\n{seen:#}"
+    );
+    sam.endpoint().close().await;
+}
+
+in_webkit!(
+    /// **A stalled eligible primary does not delay the fallback** (the
+    /// relay-fallback charter: eligible routes are tried at once, so a
+    /// route that does not answer does not hold up one that does). Sam's
+    /// group is met at A, a plain-HTTP relay (the Pi's stand-in); his
+    /// build's fallback is B, reached over TLS at the front the node
+    /// reaches plainly. The link prefers S, an https route that accepts
+    /// and never answers, and carries B. The published policy takes both,
+    /// so both are dialled; B answers and the join is in. Planted:
+    /// `reach` dialling the first route alone, and the join hangs at S.
+    a_stalled_eligible_primary_does_not_delay_the_fallback
+);
+async fn a_stalled_eligible_primary_does_not_delay_the_fallback(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let stalled: Url = stalled().await.parse().unwrap();
+    let public_https = format!("https://{}/", harness::relay_at(&public));
+    let (_dir, sam, token) = sam_meeting_at(
+        3,
+        own_url,
+        &public,
+        vec![stalled.clone(), public_https.parse().unwrap()],
+    )
+    .await;
+    let (seen, _) = phone_joining(engine, site.to_str().unwrap(), &token, Some("production")).await;
+    eprintln!("stalled route: {seen:#}");
+    assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
+    let said: Vec<&str> = seen["lines"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    let at = |url: &str| said.iter().position(|l| l.contains("dialing") && l.contains(url));
+    let (stalled_at, public_at) = (at(stalled.as_str()), at(&public_https));
+    let won_at = said.iter().position(|l| l.contains("QUIC connection established"));
+    assert!(
+        stalled_at.is_some() && public_at.is_some() && won_at.is_some(),
+        "both routes were dialled and one answered:\n{seen:#}"
+    );
+    assert!(
+        stalled_at < won_at && public_at < won_at,
+        "the fallback answered while the stalled route was still dialling:\n{seen:#}"
     );
     sam.endpoint().close().await;
 }
