@@ -81,8 +81,8 @@ run, not a committed second test; the browser half is shared with the
 existing fallback scene (net −12); `free` is three lines; the port wait
 is bounded; the build's stderr is kept; `cargo` builds into the binary's
 own target dir (the row's correction — no env games). What remains is
-each line the row's proof names: the splice (22), the binary's
-build/config/spawn (40), the shared browser half (27), the scene test
+each line the row's proof names: `free` (4), the splice (22), the binary's
+build/config/spawn (39), the shared browser half (27), the scene test
 (10), and the `sam_meeting_at`/existing-test delta (−12). Cutting to 80
 would drop the homed assert (the row's plant names "the computer does not
 home"), the join assert, or the build's stderr — each a weaker check,
