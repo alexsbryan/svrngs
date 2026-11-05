@@ -12,12 +12,14 @@ the ones each commit body cites, on this tree.
 
 ## Verdicts, kept apart
 
-- **Automated: pending.** The unchanged full gate is run as this unit's
-  background run — `env CARGO_INCREMENTAL=0 lockf -k /tmp/svrngs-gate.lock
-  scripts/check.sh` (`ralph-result await 6h`, 2026-11-05). Its exit and step
-  table are recorded in `GATE.md` beside this file when the run ends; this
-  line is completed there. A gate that did not exit 0 is a repair owed, not a
-  pass.
+- **Automated: pending the rerun.** The unchanged full gate's first run
+  (2026-11-05, `ralph-result await 6h`) exited 1: a pre-existing browser
+  test the delta had broken (`a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit`,
+  fixed in 96a40bc7 after two preserving cuts, 98c06cad and 927057a2), a
+  cold release profile at the ceiling canary, and the podman machine down
+  (give's tests and three scenes never ran). All repaired; `GATE.md` beside
+  this file records run 1 and starts the rerun, which the loop owns. A gate
+  that did not exit 0 is a repair owed, not a pass.
 - **Real device: never-ran.** `HUMAN-relay-fallback-phone` (STATE.md:27) is
   the operator's physical scene: a phone joins from the shared link with the
   Pi's HTTP-only primary and the public fallback online, opens the mesh-side
@@ -32,10 +34,10 @@ Counted as lean_check.py counts: nonblank, noncomment.
 
 | what | allowance | landed |
 | --- | --- | --- |
-| product, all | +150 | **+80** |
+| product, all | +150 | **+79** |
 | — core Rust (`crates/svrngs-core`) | ≤ +10 | **+5** (`src/relay.rs`) |
 | — native Rust (`crates/svrngs-node` product) | (in +120) | **+0** (`tiers.rs`, `dial.rs`, `home/page/group.js`) |
-| — browser Rust (`web/src/lib.rs`) | (in +120, ≤ +80 slice) | **+75** |
+| — browser Rust (`web/src/lib.rs`) | (in +120, ≤ +80 slice) | **+74** |
 | — JavaScript product | ≤ +30 | **+0** (`authority.js`, `lend.js`, `hand.js`, `visit.js`, `apps/…/other.js`) |
 | tests, all | ≤ +450 (operator, 2026-11-05) | **+436** |
 | — `crates/svrngs-node/tests/relay_fallback.rs` | | +179 |
@@ -46,11 +48,14 @@ Counted as lean_check.py counts: nonblank, noncomment.
 | product docs (`docs/DESIGN.md`, `docs/PLAN.md`) | ≤ +30 | **+16** (+8, +8) |
 
 `python3 scripts/lean_check.py` exit 0 at HEAD: core 3491/3494,
-`.` 19912/19913, js 8187/8188, swift 0/1 (baseline 3486/3494, 19832/19833,
+`. ` 19911/19913, js 8187/8188, swift 0/1 (baseline 3486/3494, 19832/19833,
 8187/8188, 0/1). The one `lean_check.py` change in the delta is the operator's
-cap decision (fb0d5fb7): `.` 19833 → 19913, one past where the landing sits;
-the commit gives the reason and the queue's test allowance rose 150 → 450
-after the measured 353. No other cap changed; no cap was pre-raised.
+cap decision (fb0d5fb7): `.` 19833 → 19913, one past where the landing then
+sat; the commit gives the reason and the queue's test allowance rose 150 → 450
+after the measured 353. No other cap changed; no cap was pre-raised. The
+gate's browser failure cost 3 lines to repair; two preserving cuts first
+gave back 4 (98c06cad, 927057a2), so the repaired landing sits 2 under the
+cap and the cap is unchanged.
 
 ## Plant ledger: every new check, its plant, its red and green
 
@@ -71,7 +76,13 @@ run is the one the landing commit pasted.
 Pre-existing checks the row names, still green in the landings' runs: the name
 refusal asked again, exactly one `Admit` on a join and none on reopening
 (`a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking`), and
-the pages' laws (`web/tests/fallback.test.mjs`).
+the pages' laws (`web/tests/fallback.test.mjs`). The gate's own first run
+found one more, red at c2248833 and green at 96a40bc7: the pre-existing
+`a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit`
+(failed: the socket opened while the lid was shut, 33.59 s; green 78.26 s).
+Its plant is `reach` reading the page's policy in a lend's worker, where
+there is no document: the named relay was refused and `bound.relays` put in
+its place (GATE.md).
 
 ## The incident reproduction, synthetic
 
@@ -146,7 +157,8 @@ Command, under the shared lock and `CARGO_INCREMENTAL=0`:
 env CARGO_INCREMENTAL=0 lockf -k /tmp/svrngs-gate.lock scripts/check.sh
 ```
 
-started 2026-11-05 as the unit's `ralph-result await 6h` run; the loop owns
-its lifetime. Verdict when this report was committed: **pending** — see
-`GATE.md` beside this file, which the resumed session fills from the run's
-log, together with this line.
+Run 1 (2026-11-05, the unit's first `ralph-result await 6h`) exited 1; the
+repair is in the three commits above and its evidence is in `GATE.md`
+beside this file, which also records the rerun started the same way. The
+loop owns the rerun's lifetime; its exit and step table complete `GATE.md`
+and this line.
