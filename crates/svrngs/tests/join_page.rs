@@ -446,25 +446,26 @@ async fn phone_joining(args: Value, token: &str) -> (Value, String) {
 }
 
 /// Sam's computer, its group `house` met at `own` and reached through
-/// `build` — which the node holds plainly, while the page reaches the same
-/// front over TLS — and a link carrying `relays`. The data directory is
-/// kept alive by the caller.
+/// `build`, the build's fallback as this computer reaches it — which the
+/// node holds plainly, while the page reaches the same front over TLS — and
+/// a link carrying `relays`. The data directory is kept alive by the caller.
 async fn sam_meeting_at(
     seed: u8,
     own: svrngs_core::relay::Url,
-    build: &iroh_relay::server::Server,
+    build: &str,
     relays: Vec<svrngs_core::relay::Url>,
 ) -> (tempfile::TempDir, Node, String) {
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[seed; 32]);
-    let sam = Node::start(
+    let sam = Node::start_asking(
         dir.path().to_path_buf(),
         key.clone(),
         &svrngs_node::iroh::RelayConfig {
-            relay_urls: vec![harness::relay_url(build)],
+            relay_urls: vec![build.to_string()],
             n0_services: false,
             loopback_only: true,
         },
+        &[own.clone()],
         svrngs::group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
     )
@@ -490,6 +491,38 @@ async fn sam_meeting_at(
     (dir, sam, token)
 }
 
+/// The browser half of a joining scene, under the published policy: Sam's
+/// computer met at `own` and reached through `build`, a link carrying
+/// `relays`, a `shelf` lend declared, and one opening; what the page saw,
+/// its origin, and the home relay Sam holds at the end.
+async fn phone_joins_through(
+    engine: harness::Engine,
+    own: svrngs_core::relay::Url,
+    build: &str,
+    relays: Vec<svrngs_core::relay::Url>,
+) -> (Value, String, Option<String>) {
+    let (dir, sam, token) = sam_meeting_at(1, own, build, relays).await;
+    let shelf = Lend {
+        name: LendName::parse("shelf").unwrap(),
+        source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
+        kind: Kind::parse("shelf").unwrap(),
+        limit: NonZeroU16::new(3),
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in_with_svrngs: None,
+        asks: None,
+    };
+    lend::declare(dir.path(), &shelf, None).unwrap();
+    let args =
+        json!({ "engine": engine.as_str(), "site": harness::site(), "policy": "production" });
+    let (seen, origin) = phone_joining(args, &token).await;
+    let addr = sam.endpoint().addr();
+    let home = addr.relay_urls().next().map(|r| r.to_string());
+    sam.endpoint().close().await;
+    (seen, origin, home)
+}
+
 in_webkit!(
     /// **A fresh browser under the published page's policy joins through
     /// the advertised public fallback, the group's own HTTP relay never
@@ -507,32 +540,16 @@ async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
     engine: harness::Engine,
 ) {
     use svrngs_core::relay::Url;
-    let site = harness::site();
     let (own, public) = (harness::relay().await, harness::relay().await);
     let own_url: Url = harness::relay_url(&own).parse().unwrap();
     let public_https = format!("https://{}/", harness::relay_at(&public));
-    let (dir, sam, token) = sam_meeting_at(
-        1,
+    let (seen, origin, _) = phone_joins_through(
+        engine,
         own_url.clone(),
-        &public,
+        &harness::relay_url(&public),
         vec![own_url.clone(), public_https.parse().unwrap()],
     )
     .await;
-    let shelf = Lend {
-        name: LendName::parse("shelf").unwrap(),
-        source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
-        kind: Kind::parse("shelf").unwrap(),
-        limit: NonZeroU16::new(3),
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-    };
-    lend::declare(dir.path(), &shelf, None).unwrap();
-
-    let args = json!({ "engine": engine.as_str(), "site": site, "policy": "production" });
-    let (seen, origin) = phone_joining(args, &token).await;
     let port = origin
         .trim_end_matches('/')
         .rsplit(':')
@@ -586,7 +603,6 @@ async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
             .any(|l| l.contains("LAYER parse: ok — relay") && l.contains(&public_https)),
         "the fallback was bound:\n{seen:#}"
     );
-    sam.endpoint().close().await;
 }
 
 in_webkit!(
@@ -608,7 +624,7 @@ async fn a_route_that_answers_but_cannot_reach_the_issuer_does_not_win(engine: h
     let (_dir, sam, token) = sam_meeting_at(
         2,
         dead_own,
-        &public,
+        &harness::relay_url(&public),
         vec![dead_https.parse().unwrap(), public_https.parse().unwrap()],
     )
     .await;
@@ -657,7 +673,7 @@ async fn a_stalled_eligible_primary_does_not_delay_the_fallback(engine: harness:
     let (_dir, sam, token) = sam_meeting_at(
         3,
         own_url,
-        &public,
+        &harness::relay_url(&public),
         vec![stalled.clone(), public_https.parse().unwrap()],
     )
     .await;
@@ -702,7 +718,7 @@ async fn every_route_down_fails_bounded_and_closes_the_endpoint(engine: harness:
     let (_dir, sam, token) = sam_meeting_at(
         4,
         own_url,
-        &public,
+        &harness::relay_url(&public),
         vec![down_a.parse().unwrap(), down_b.parse().unwrap()],
     )
     .await;
