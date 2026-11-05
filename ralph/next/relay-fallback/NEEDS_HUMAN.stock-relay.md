@@ -104,3 +104,10 @@ python3 scripts/lean_check.py
 The first join_page run builds `target/stock-relay` (~4 min, cached
 after); later runs ~20 s. No full gate: the row says the audit already
 ran it and this row adds no product code.
+
+## Operator decision (2026-11-05): accept +90
+
+The row's test allowance is 90 (STATE.md). The DESIGN sentence now names the
+tested version (1.0.2, not 1.0.x) and the requirement this row found: a
+certificate a public authority signed, since computers trust the public
+roots alone (cee748a3). 4 doc lines against the row's raised 4.

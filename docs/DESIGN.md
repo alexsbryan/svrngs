@@ -1298,8 +1298,9 @@ verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each at most `OPEN_RATE`, 8,800,000 bytes a second, the
 most a film at Demo A's bitrate drew.
 
-Any iroh-relay 1.0.x served over HTTPS at a name carries a group, the
-stock binary alone: `svrngs relay` is that server with group-only
+The stock iroh-relay 1.0.2 binary carries a group too, served over HTTPS
+at a name whose certificate a public authority signed (computers trust the
+public roots alone): `svrngs relay` is that server with group-only
 admission and its own certificates; a bare one admits whoever finds it.
 
 **Where a computer meets its groups.** A computer meets at the build's
