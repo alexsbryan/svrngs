@@ -329,6 +329,15 @@ swift                     0 / 1 lines
   - **Demo-deadline integration owner.** Read `SCOPE_PARALLEL.md`. Integrate
     Check the separate onboarding-ui worktree's queue/DONE marker and clean
     committed branch as specified there, then merge that finished branch.
+    Use the runner's `status --workdir <ui-worktree> --queue onboarding-ui`
+    and `git -C <ui-worktree>`/the shared object store for that inspection;
+    do not trigger an external-directory permission failure with a broad
+    filesystem scan. The supervisor has prepared a loopback embedding server
+    at `http://127.0.0.1:8080/v1`, model `qwen-embedding-0.6b`, with a live
+    numeric 1024-dimensional embedding probe. Reuse it if healthy; the
+    supervisor owns its process (initial PID 83108). It needs no paid
+    service or model download. Verify current readiness rather than assuming
+    its historical PID is still alive, and do not stop an unrelated process.
     Do not merge an actively edited UI branch. Integrate
     both workstreams' exact API shape, wasm types/version header, UI served modules,
     Give callers, docs and combined counts. Apply only necessary remaining

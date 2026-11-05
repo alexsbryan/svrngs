@@ -2,6 +2,14 @@
 
 ## Supervisor resume context, 2026-11-04
 
+The supervisor has now started the cached model locally: endpoint
+`http://127.0.0.1:8080/v1`, model alias `qwen-embedding-0.6b`, initial PID
+83108. A real `/v1/embeddings` probe returned a numeric vector of dimension
+1024. Runtime log/PID files are in `target/onboarding-audit/`; these are not
+committed audit results. Reuse the healthy supervisor-owned service for the
+existing ingestor; still validate the actual clone/noun instruments and
+their controls. Do not claim those analyses passed from this endpoint probe.
+
 The last director stopped after a rejected home-wide search for an embedding
 model. The operator confirms `commonwealth-ai/sovereign/models` is the main
 model directory; a bounded check verified
