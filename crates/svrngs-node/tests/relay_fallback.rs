@@ -85,7 +85,10 @@ async fn homed_at(node: &Node, want: &str) {
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    panic!("not homed at {want} within {by:?}; home is {:?}", home(node));
+    panic!(
+        "not homed at {want} within {by:?}; home is {:?}",
+        home(node)
+    );
 }
 
 /// An `Admit` act naming the key of `seed`.
@@ -99,8 +102,14 @@ fn admit(person: &str, seed: u8) -> RailAct {
 
 /// Whether `node`'s journal holds a record whose payload says `what`.
 fn holds(node: &Node, group: &str, what: &str) -> bool {
-    let journal = node.rail().group_dir(group).unwrap().join("ring_oplog.jsonl");
-    std::fs::read_to_string(journal).unwrap_or_default().contains(what)
+    let journal = node
+        .rail()
+        .group_dir(group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    std::fs::read_to_string(journal)
+        .unwrap_or_default()
+        .contains(what)
 }
 
 /// The relays a link carries, as strings.
