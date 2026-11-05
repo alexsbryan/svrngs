@@ -12,7 +12,8 @@ touch its data, operate the Pi, or use public deployment credentials. No push,
 main merge, dependency, new transport stack, CSP/trust-floor widening or release.
 
 Keep the source estimate honest: at most +150 product lines (120 Rust, including
-<=10 core, and 30 JS) and <=150 added test code lines; no scope hidden in demos
+<=10 core, and 30 JS) and <=450 added test code lines (operator 2026-11-05, raised
+from 150 with `.` to 19,913: NEEDS_HUMAN.md); no scope hidden in demos
 or generated helpers. Inventory before new modules; preserve cuts in their own
 commits and lower caps. Do not pre-raise caps to the allowance. If an actual
 post-pass landing needs a cap change, present measured counts and a ready diff
@@ -26,9 +27,11 @@ another list of n0 servers in the browser. Keep one endpoint per key; cancel
 underlying losing work, not merely the JavaScript wait for it.
 
 Use CARGO_INCREMENTAL=0. Run every browser test and the final full gate under
-lockf -k /tmp/svrngs-gate.lock. There is currently about 49 GiB free on this Mac;
+lockf -k /tmp/svrngs-gate.lock. There is currently about 44 GiB free on this Mac;
 inspect build-cache reuse before expensive builds and never remove another
-worktree's artifacts. The final audit owns the unchanged full gate; intermediate
+worktree's artifacts. Reads outside this worktree (~/.cargo, other
+worktrees' sources) are auto-rejected; the repo's own config is all the gate
+uses, so do not probe for more. The final audit owns the unchanged full gate; intermediate
 units use their assigned focused checks, with no weaker final acceptance.
 
 <!-- section: done -->
