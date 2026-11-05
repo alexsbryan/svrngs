@@ -169,3 +169,30 @@ beside this file. Run 2 (2026-11-05, the unit's second `ralph-result await
 step passed and its step table and notes are in `GATE.md`. The audit's
 automated verdict is passed on run 2; the real-device verdict stays
 never-ran (`HUMAN-relay-fallback-phone`).
+
+## Repair after the audit (2026-11-05)
+
+An independent strong-model review of the product delta found six defects
+this audit passed; a strong-model worker repaired them, the seat reviewed
+each diff (7a35fe1a..6d8cfd50; caps 22f60b4f, operator's raise):
+
+- F1 46bfa2d4 + 6d8cfd50: the fallback is held only while this endpoint is
+  registered there (iroh `home_relay_status`), not on a bare TCP connect; a
+  move that registered nowhere holds the next off, doubling to 30 asks.
+- F2 569373e5, d4733200: a reached fallback is left after `LEFT_AFTER` = 3
+  misses; every link carries the build's fallback beside its first relay.
+- F3 d2a160c6: a refused bind is let go (page and worker), so the next dial
+  binds again.
+- F4 11c5c342: a guest's lends race every route the link carries.
+- F5 fd50dd58: a pass kept before fallbacks opens at its one relay.
+- F6 c219aa63: a relay the page refuses for a lend is traced by name.
+
+Each carries its red/green run in its commit body. Counts at 22f60b4f:
+`.` 19,945/19,946, js 8,211/8,212, core 3,490/3,494; repair tests +181 net.
+
+Full gate at 22f60b4f: run 1 failed `tests` on two leave_page WebKit tests
+(home page 401 then timeout, load 14-15 on 12 cores); leave_page alone at
+the same commit passed 3 of 3 (21.4 s each); run 2 passed every step,
+exit 0, 1,398 s. Real device: never-ran (the operator's phone row).
+Known, outside this delta: web/page/dial.js `hold` drops the old endpoint
+without closing it.
