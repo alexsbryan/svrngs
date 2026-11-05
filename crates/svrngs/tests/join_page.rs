@@ -491,6 +491,86 @@ async fn sam_meeting_at(
     (dir, sam, token)
 }
 
+/// A port on 127.0.0.1 nothing listens on: bound, read and let go.
+fn free() -> u16 {
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    l.local_addr().unwrap().port()
+}
+
+/// Plain in, TLS out to `to`, trusting `cert` as a public name's
+/// certificate is trusted: the way a computer reaches the stock relay,
+/// whose per-run certificate its endpoint does not know (svrngs's endpoint
+/// trusts the webpki roots alone: `guest.rs` builds `presets::Minimal`
+/// with no `ca_tls_config`, iroh-1.0.2 `endpoint.rs:261`).
+async fn splice(to: std::net::SocketAddr, cert: Vec<u8>) -> String {
+    let config = iroh_relay::tls::CaTlsConfig::custom_roots([cert.into()])
+        .client_config(std::sync::Arc::new(rustls::crypto::ring::default_provider()))
+        .unwrap();
+    let connector = tokio_rustls::TlsConnector::from(std::sync::Arc::new(config));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let at = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut asked, _)) = listener.accept().await {
+            let connector = connector.clone();
+            tokio::spawn(async move {
+                let stream = tokio::net::TcpStream::connect(to).await?;
+                let name = rustls::pki_types::ServerName::IpAddress(to.ip().into());
+                let mut tls = connector.connect(name, stream).await?;
+                tokio::io::copy_bidirectional(&mut asked, &mut tls)
+                    .await
+                    .map(|_| ())
+            });
+        }
+    });
+    format!("http://{at}/")
+}
+
+/// The stock `iroh-relay` binary at `access`, on 127.0.0.1, with a manual
+/// per-run certificate: its own CLI, config file and TLS termination, as
+/// someone setting up a network runs it (`cargo build -p iroh-relay --bin
+/// iroh-relay`, no download and no svrngs code in it). Returns the child
+/// (killed when dropped), the https URL a browser reaches it at, and the
+/// plain URL a computer reaches it at through [`splice`].
+async fn stock_relay(access: &str) -> (tokio::process::Child, String, String) {
+    let built = std::process::Command::new("cargo")
+        .current_dir(harness::repo())
+        .args(["build", "-p", "iroh-relay", "--bin", "iroh-relay"])
+        .args(["--target-dir", "target/stock-relay"])
+        .output()
+        .expect("cargo runs");
+    let why = String::from_utf8_lossy(&built.stderr);
+    let ok = built.status.success();
+    assert!(ok, "the stock relay did not build:\n{why}");
+    let dir = tempfile::tempdir().unwrap();
+    let made = rcgen::generate_simple_self_signed(vec!["127.0.0.1".into()]).unwrap();
+    std::fs::write(dir.path().join("default.crt"), made.cert.pem()).unwrap();
+    let key = made.signing_key.serialize_pem();
+    std::fs::write(dir.path().join("default.key"), key).unwrap();
+    let (http, https) = (free(), free());
+    let config = format!(
+        "http_bind_addr = \"127.0.0.1:{http}\"\nenable_metrics = false\n{access}\n[tls]\nhttps_bind_addr = \"127.0.0.1:{https}\"\ncert_mode = \"Manual\"\ncert_dir = \"{}\"\n",
+        dir.path().display()
+    );
+    std::fs::write(dir.path().join("relay.toml"), config).unwrap();
+    let child =
+        tokio::process::Command::new(harness::repo().join("target/stock-relay/debug/iroh-relay"))
+            .arg("--config-path")
+            .arg(dir.path().join("relay.toml"))
+            .kill_on_drop(true)
+            .spawn()
+            .expect("the stock relay starts");
+    for _ in 0..100 {
+        if std::net::TcpStream::connect(("127.0.0.1", https)).is_ok() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    let https_url = format!("https://127.0.0.1:{https}/");
+    let at = std::net::SocketAddr::from(([127, 0, 0, 1], https));
+    let plain = splice(at, made.cert.der().to_vec()).await;
+    (child, https_url, plain)
+}
+
 /// The browser half of a joining scene, under the published policy: Sam's
 /// computer met at `own` and reached through `build`, a link carrying
 /// `relays`, a `shelf` lend declared, and one opening; what the page saw,
@@ -747,4 +827,27 @@ async fn every_route_down_fails_bounded_and_closes_the_endpoint(engine: harness:
         "the refusal names the bound and the close:\n{seen:#}"
     );
     sam.endpoint().close().await;
+}
+
+in_webkit!(
+    /// **A group's own relay is the stock `iroh-relay` binary** (the
+    /// operator, 2026-11-05): its own CLI, config file and TLS termination
+    /// on 127.0.0.1, named as the group's own relay, with the build's
+    /// fallback unanswering, so the computer homes there — and a fresh
+    /// browser under the published policy joins through it and opens a
+    /// lend. The computer reaches it through `splice`, since its endpoint
+    /// trusts the webpki roots alone (`guest.rs`). Planted, watched red:
+    /// the same binary with `access.allowlist = []` — the computer does
+    /// not home and the browser does not join.
+    a_group_meets_at_a_stock_iroh_relay
+);
+async fn a_group_meets_at_a_stock_iroh_relay(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let (_stock, https, plain) = stock_relay("access = \"everyone\"").await;
+    let dead = format!("http://127.0.0.1:{}/", free());
+    let (plain, https) = (Url::parse(&plain).unwrap(), Url::parse(&https).unwrap());
+    let (seen, _, home) = phone_joins_through(engine, plain.clone(), &dead, vec![https]).await;
+    assert_eq!(home.as_deref(), Some(plain.as_str()), "{seen:#}");
+    assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
+    assert_eq!(seen["opened"]["text"], "hi", "{seen:#}");
 }
