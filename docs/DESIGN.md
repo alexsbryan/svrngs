@@ -1333,7 +1333,9 @@ allows — under `connect-src 'self' wss: https:` a plain-HTTP relay is none,
 and is never tried — and dials the issuer through all of them at once, so
 a route that is stalled or cannot reach it does not delay one that
 answers; the connection that wins is the issuer's key, so a route is
-chosen only after reaching it. Each change of tier and of home is traced,
+chosen only after reaching it. A page no relay of which answers within
+`dial::LINK_WITHIN` closes its endpoint and says the computer did not
+answer, so no dial is left running. Each change of tier and of home is traced,
 and the home page says when, and why, a group is met at the build's
 fallback. A computer that reaches none of its relays in 10 s says which it
 tried, and goes on trying.

@@ -634,3 +634,101 @@ async fn a_route_that_answers_but_cannot_reach_the_issuer_does_not_win(engine: h
     );
     sam.endpoint().close().await;
 }
+
+in_webkit!(
+    /// **A stalled eligible primary does not delay the fallback** (the
+    /// relay-fallback charter: eligible routes are tried at once, so a
+    /// route that does not answer does not hold up one that does). Sam's
+    /// group is met at A, a plain-HTTP relay (the Pi's stand-in); his
+    /// build's fallback is B, reached over TLS at the front the node
+    /// reaches plainly. The link prefers S, an https route that accepts
+    /// and never answers, and carries B. The published policy takes both,
+    /// so both are dialled; B answers and the join is in. Planted:
+    /// `reach` dialling the first route alone, and the join hangs at S.
+    a_stalled_eligible_primary_does_not_delay_the_fallback
+);
+async fn a_stalled_eligible_primary_does_not_delay_the_fallback(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let stalled: Url = stalled().await.parse().unwrap();
+    let public_https = format!("https://{}/", harness::relay_at(&public));
+    let (_dir, sam, token) = sam_meeting_at(
+        3,
+        own_url,
+        &public,
+        vec![stalled.clone(), public_https.parse().unwrap()],
+    )
+    .await;
+    let args = json!({ "engine": engine.as_str(), "site": site, "policy": "production" });
+    let (seen, _) = phone_joining(args, &token).await;
+    eprintln!("stalled route: {seen:#}");
+    assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
+    let lines = seen["lines"].as_array().unwrap();
+    let said: Vec<&str> = lines.iter().filter_map(Value::as_str).collect();
+    let at = |url: &str| {
+        said.iter()
+            .position(|l| l.contains("dialing") && l.contains(url))
+    };
+    let (stalled_at, public_at) = (at(stalled.as_str()), at(&public_https));
+    let won_at = said
+        .iter()
+        .position(|l| l.contains("QUIC connection established"));
+    assert!(
+        matches!((stalled_at, public_at, won_at), (Some(s), Some(p), Some(w)) if s < w && p < w),
+        "the fallback answered while the stalled route was still dialling:\n{seen:#}"
+    );
+    sam.endpoint().close().await;
+}
+
+in_webkit!(
+    /// **Every route down fails bounded, in the page's accurate words, and
+    /// the endpoint is closed** (the relay-fallback charter: bounded
+    /// cancellation and cleanup). The link names two https routes that
+    /// accept and never answer. `bind` waits `dial::LINK_WITHIN` for any
+    /// relay to answer; none does, the endpoint is closed, and the page
+    /// says the computer did not answer. Planted, watched failing: the
+    /// unbounded wait, which left the person waiting the page's whole
+    /// PATIENCE (60 s) with the endpoint still bound.
+    every_route_down_fails_bounded_and_closes_the_endpoint
+);
+async fn every_route_down_fails_bounded_and_closes_the_endpoint(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let (down_a, down_b) = (stalled().await, stalled().await);
+    let (_dir, sam, token) = sam_meeting_at(
+        4,
+        own_url,
+        &public,
+        vec![down_a.parse().unwrap(), down_b.parse().unwrap()],
+    )
+    .await;
+    let args =
+        json!({ "engine": engine.as_str(), "site": site, "policy": "production", "fail": true });
+    let (seen, _) = phone_joining(args, &token).await;
+    eprintln!("all routes down: {seen:#}");
+    assert_eq!(
+        seen["first"]["status"],
+        "The computer that sent this link did not answer. Try again later.",
+        "the failure is the page's accurate words:\n{seen:#}"
+    );
+    let ms = seen["ms"]
+        .as_u64()
+        .expect("the browser half timed the failure");
+    assert!(
+        ms < 30_000,
+        "the failure was not bounded: {ms} ms\n{seen:#}"
+    );
+    let lines = seen["lines"].as_array().unwrap();
+    assert!(
+        lines
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|l| l.contains("LAYER relay-connect: REFUSED — no relay answered within")),
+        "the refusal names the bound and the close:\n{seen:#}"
+    );
+    sam.endpoint().close().await;
+}

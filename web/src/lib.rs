@@ -149,10 +149,11 @@ async fn bind_for(key: Vec<u8>, token: &str, held: bool) -> Result<Bound, JsErro
 }
 
 /// Bind an endpoint as the person whose key is `key` — or a pass's holder —
-/// reaching the network through `relays` alone, and wait until it is online.
-/// `issuer` is whom it dials when no other computer is named. One that dials
-/// lenders is `held` as [`dial::held`] says; the one a link's dial binds for
-/// itself waits as iroh does.
+/// reaching the network through `relays` alone, and wait until it is online,
+/// or [`dial::LINK_WITHIN`] passes with no relay answering, when the endpoint
+/// is closed and the bind refused. `issuer` is whom it dials when no other
+/// computer is named. One that dials lenders is `held` as [`dial::held`]
+/// says; the one a link's dial binds for itself waits as iroh does.
 ///
 /// `key` is the person's key, the 32 bytes the page's store holds (DESIGN
 /// §3, call 1): iroh signs its handshake with it synchronously, so it is
@@ -205,7 +206,11 @@ async fn bind(
 
     // ── LAYER 3: relay connect ─────────────────────────────────────────────
     t!("LAYER relay-connect: waiting for the relay handshake (endpoint.online())…");
-    ep.online().await;
+    let within = dial::LINK_WITHIN;
+    if n0_future::time::timeout(within, ep.online()).await.is_err() {
+        ep.close().await;
+        refuse!("LAYER relay-connect: REFUSED — no relay answered within {within:?}, and the endpoint is closed")
+    }
     t!("LAYER relay-connect: ok — endpoint reports online (relay handshake done)");
     Ok(Bound { ep, issuer, relays })
 }
