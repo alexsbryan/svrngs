@@ -455,25 +455,28 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Selected-group audience UI, operator-preapproved (SCOPE_PARALLEL.md,
 # "Checks"; the original combined guardrail is +235 JS): the two lending
 # machines take `choose`/`audience` and carry `groups`, the rows draw the
-# boxes and read paused []/legacy null, and the audience threads from HOME's
-# groups into found.js and lent-row.js, so the measured js is 8,299 and its
-# exclusive cap one past is 8,300, +111 over grouped-home B's 8,187. The
-# economizing pass reused the existing machines, parts and group data, and
+# boxes and read paused []/legacy null, the audience threads from HOME's
+# groups into found.js and lent-row.js, and web/page/dial.js `lends` names
+# its svrngs version with `x-svrngs-version`, so the measured js is 8,300
+# and its exclusive cap one past is 8,301, +113 over grouped-home B's 8,187.
+# The economizing pass reused the existing machines, parts and group data,
 # factored the boxes into the shared home/page/group-choice.js (found.js and
-# lent-row.js each lost their local box markup and `tick`); no preserving cut
-# of the remaining audience presentation was found — deleting it drops the
-# explicit-choice behavior the row requires. Each law in
+# lent-row.js each lost their local box markup and `tick`), and folded the
+# discovery header into a one-line `SCOPED(core)` beside PEOPLE_LENDS; no
+# preserving cut of the remaining audience presentation was found — deleting
+# it drops the explicit-choice behavior the row requires. Each law in
 # web/tests/pages/lend-groups.test.mjs failed on a named plant (no `choose`;
 # `choose` replacing instead of merging; [] read as legacy; no maker in the
-# label) before passing. Core and non-JS caps are unchanged; a served-module
-# entry (`group-choice`) rides the existing home.rs table line, so the `.`
-# rung does not move.
+# label) and web/tests/pages/discovery-header.test.mjs on the header removed,
+# before passing. Core and non-JS caps are unchanged; a served-module entry
+# (`group-choice`) rides the existing home.rs table line, so the `.` rung
+# does not move.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
     ".": 19833,
 
-    "js": 8300,
+    "js": 8301,
 
     "swift": 1,
 }
