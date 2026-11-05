@@ -12,14 +12,19 @@ the ones each commit body cites, on this tree.
 
 ## Verdicts, kept apart
 
-- **Automated: pending the rerun.** The unchanged full gate's first run
-  (2026-11-05, `ralph-result await 6h`) exited 1: a pre-existing browser
-  test the delta had broken (`a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit`,
+- **Automated: passed.** The unchanged full gate's second run (2026-11-05,
+  `ralph-result await 6h` from db292099) exited 0 in 24m01s (1441 s): every
+  step passed, no never-ran, no could-not-judge — the browser suite
+  (214 s), `join_page` including the published-policy cold-start join and
+  the lent `shelf` opening (96 s), the fourteen scenes (292 s), the
+  conformance canary (141 s), the ceiling canary at 0.0268 s against 0.1 s.
+  `GATE.md` beside this file records both runs and their step tables. The
+  first run (2026-11-05, exit 1) found one real regression the delta had
+  caused (`a_phone_s_socket_opens_again_once_its_lender_answers_again::webkit`,
   fixed in 96a40bc7 after two preserving cuts, 98c06cad and 927057a2), a
   cold release profile at the ceiling canary, and the podman machine down
-  (give's tests and three scenes never ran). All repaired; `GATE.md` beside
-  this file records run 1 and starts the rerun, which the loop owns. A gate
-  that did not exit 0 is a repair owed, not a pass.
+  (give's tests and three scenes never ran); all repaired before run 2. A
+  gate that did not exit 0 is a repair owed, not a pass.
 - **Real device: never-ran.** `HUMAN-relay-fallback-phone` (STATE.md:27) is
   the operator's physical scene: a phone joins from the shared link with the
   Pi's HTTP-only primary and the public fallback online, opens the mesh-side
@@ -159,6 +164,8 @@ env CARGO_INCREMENTAL=0 lockf -k /tmp/svrngs-gate.lock scripts/check.sh
 
 Run 1 (2026-11-05, the unit's first `ralph-result await 6h`) exited 1; the
 repair is in the three commits above and its evidence is in `GATE.md`
-beside this file, which also records the rerun started the same way. The
-loop owns the rerun's lifetime; its exit and step table complete `GATE.md`
-and this line.
+beside this file. Run 2 (2026-11-05, the unit's second `ralph-result await
+6h`, the same command and lock, tree db292099) exited 0 in 1441 s; every
+step passed and its step table and notes are in `GATE.md`. The audit's
+automated verdict is passed on run 2; the real-device verdict stays
+never-ran (`HUMAN-relay-fallback-phone`).
