@@ -551,7 +551,36 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   running an older svrngs, whose answer is not read field by field
   (`crates/svrngs-node/src/version.rs`).
 
-On it a person can:
+The default layout, **A**, keeps the groups on one page. The opt-in layout
+**B** (`svrngs open '/?ui=b'`) gives the same capabilities three places:
+an overview of groups, one group's workspace, and **This computer**. Each
+group is linked by its stable id, with maker and joining date still saying
+which namesake it is. Ordinary links, Back and refresh keep the selected
+destination; no browser preference or membership is changed. **Original
+layout** opens A. This is a local comparison surface, not a published default
+or a completed Xenia study (`home/page/grouped.js`).
+
+B's workspace leads with the existing app index and folder opener. **People**
+holds presence, visitors and removals; **Add an app** holds the existing
+shelf; **Manage this group** holds every invitation and device-link control,
+WiFi sharing, program addresses, the presentation screen, handover and leave.
+**This computer** holds what acts as you, running-program discovery, and
+lending/sign-in/limit controls; terminal-only removal instructions are shown
+there. Joining, making a group, opening a link and groups left each have a
+navigation destination. App-opening consent and every command remain the
+same components and routes as A. Hidden groups and home places stay mounted,
+so the computer-wide access view still receives every group's reads.
+
+A group's available app versions get a factual review link beside that
+workspace; current versions keep running until the existing yes. Review
+opens **This computer** with the access and changes disclosures expanded,
+labelled by group. In B a focused native welcome offers **Continue to
+<group>** as well as **All your groups**, both retaining B; management and
+terminal instructions are absent from the welcome. The phone page is unchanged.
+The control-inventory and navigation proof is
+`web/tests/grouped.mjs`, run by `browser/grouped.rs`.
+
+On either layout a person can:
 - open each thing lent ("Sam’s llama-server"), in a tab of its own, or
   copy its address for a program, such as a chat program pointed at a
   friend's model;

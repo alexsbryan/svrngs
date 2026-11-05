@@ -1,0 +1,146 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.26s
+     Running tests/browser/main.rs (target/debug/deps/browser-819c0721243e8d6e)
+
+running 1 test
+
+thread 'grouped::grouped_home_keeps_capabilities_and_group_identity::chromium' (5064627) panicked at crates/svrngs-node/tests/browser/drive.rs:114:5:
+the browser half failed (exit status: 1):
+AssertionError [ERR_ASSERTION]: all original group controls retained
++ actual - expected ... Lines skipped
+
+  [
+    '["A",null,null,"Money","/to?lend=money-e5ccf0df88d5f6c73c16bcfdf467f7352d50bb22a6dff2cc2b097164992e9bc4",null]',
+    '["A",null,null,"Show House on a screen","/?screen=e5ccf0df88d5f6c73c16bcfdf467f7352d50bb22a6dff2cc2b097164992e9bc4",null]',
++   '["BUTTON",null,null,"Add your phone or another computer",null,null]',
++   '["BUTTON",null,null,"Bring the ticked ones to House",null,null]',
++   '["BUTTON",null,null,"Hand it on",null,null]',
++   '["BUTTON",null,null,"Have a guest",null,null]',
++   '["BUTTON",null,null,"Invite people here",null,null]',
++   '["BUTTON",null,null,"Invite someone to House",null,null]',
++   '["BUTTON",null,null,"Leave House",null,null]',
+-   '["A",null,null,"http://library.localhost:1234","http://library.localhost:1234",null]',
+-   '["A",null,null,"http://money-e5ccf0df88d5f6c73c16bcfdf467f7352d50bb22a6dff2cc2b097164992e9bc4.localhost:1234","http://money-e5ccf0df88d5f6c73c16bcfdf467f7352d50bb22a6dff2cc2b097164992e9bc4.localhost:1234",null]',
+-   '["BUTTON",null,null,"Add your phone or another computer",null,null]',
+-   '["BUTTON",null,null,"Bring the ticked ones to House",null,null]',
+-   '["BUTTON",null,null,"Copy its address for a program",null,null]',
+-   '["BUTTON",null,null,"Copy its address for a program",null,null]',
+-   '["BUTTON",null,null,"Hand it on",null,null]',
+-   '["BUTTON",null,null,"Have a guest",null,null]',
+-   '["BUTTON",null,null,"Invite people here",null,null]',
+-   '["BUTTON",null,null,"Invite someone to House",null,null]',
+-   '["BUTTON",null,null,"Leave House",null,null]',
+-   '["BUTTON",null,null,"Open it to this WiFi",null,null]',
+-   '["BUTTON",null,null,"Open it to this WiFi",null,null]',
+    '["BUTTON",null,null,"Open this folder",null,null]',
+...
+    '["INPUT","hidden","said","",null,null]',
+    '["SELECT",null,null,"SamKimAna",null,null]'
+  ]
+Failed to load resource: the server responded with a status of 401 (Unauthorized)
+PLAY: answered (0 on): reading -> read
+ROOM: answered (0 open): reading -> read
+HOME: layout b
+HOME: read (3 group(s)): reading/none -> read/none
+UPDATE: checked: checking -> current
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: answered (people 1): reading/reading -> read/reading
+GROUP: answered (lends 1): read/reading -> read/read
+GROUP: answered (people 1): reading/reading -> read/reading
+GROUP: answered (lends 1): read/reading -> read/read
+GROUP: answered (people 1): reading/reading -> read/reading
+GROUP: answered (lends 1): read/reading -> read/read
+LINK: published: none/reading -> none/ready
+LINK: published: none/reading -> none/ready
+LINK: published: none/reading -> none/ready
+HOME: told (House: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+HOME: told (House: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+HOME: told (Welcome room: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+ACTS: read: reading/idle -> reading/idle, running read
+ACTS: reached (3 asking): reading/idle -> read/idle
+HOME: told (what acts as you is read): read/none -> read/none
+LENDING: read: reading -> reading, running read
+LENDING: answered (1 lent): reading -> read
+HOME: told (what you lend is read): read/none -> read/none
+PLAY: answered (0 on): reading -> read
+ROOM: answered (0 open): reading -> read
+HOME: layout a
+HOME: read (3 group(s)): reading/none -> read/none
+UPDATE: checked: checking -> current
+ROOM: read refused in read: round 1 is read already
+GROUP: read: reading/reading -> reading/reading, running get, get
+ROOM: read refused in read: round 1 is read already
+GROUP: read: reading/reading -> reading/reading, running get, get
+ROOM: read refused in read: round 1 is read already
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: answered (people 1): reading/reading -> read/reading
+ROOM: read refused in read: round 1 is read already
+GROUP: answered (lends 1): read/reading -> read/read
+GROUP: answered (people 1): reading/reading -> read/reading
+ROOM: read refused in read: round 1 is read already
+GROUP: answered (lends 1): read/reading -> read/read
+GROUP: answered (people 1): reading/reading -> read/reading
+ROOM: read refused in read: round 1 is read already
+GROUP: answered (lends 1): read/reading -> read/read
+LINK: published: none/reading -> none/ready
+LINK: published: none/reading -> none/ready
+LINK: published: none/reading -> none/ready
+HOME: told (House: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+HOME: told (House: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+HOME: told (Welcome room: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+ACTS: read: reading/idle -> reading/idle, running read
+ACTS: reached (3 asking): reading/idle -> read/idle
+HOME: told (what acts as you is read): read/none -> read/none
+LENDING: read: reading -> reading, running read
+LENDING: answered (1 lent): reading -> read
+HOME: told (what you lend is read): read/none -> read/none
+ACTS: fold: read/idle -> read/idle
+ACTS: fold: read/idle -> read/idle
+PLAY: answered (0 on): reading -> read
+ROOM: answered (0 open): reading -> read
+HOME: layout b
+HOME: read (3 group(s)): reading/none -> read/none
+UPDATE: checked: checking -> current
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: read: reading/reading -> reading/reading, running get, get
+GROUP: answered (people 1): reading/reading -> read/reading
+GROUP: answered (lends 1): read/reading -> read/read
+GROUP: answered (people 1): reading/reading -> read/reading
+GROUP: answered (lends 1): read/reading -> read/read
+GROUP: answered (people 1): reading/reading -> read/reading
+GROUP: answered (lends 1): read/reading -> read/read
+LINK: published: none/reading -> none/ready
+LINK: published: none/reading -> none/ready
+LINK: published: none/reading -> none/ready
+HOME: told (House: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+HOME: told (House: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+HOME: told (Welcome room: people read, lends read): read/none -> read/none
+PLAY: read refused in read: round 1 is read already
+ACTS: read: reading/idle -> reading/idle, running read
+ACTS: reached (3 asking): reading/idle -> read/idle
+HOME: told (what acts as you is read): read/none -> read/none
+LENDING: read: reading -> reading, running read
+LENDING: answered (1 lent): reading -> read
+HOME: told (what you lend is read): read/none -> read/none
+
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test grouped::grouped_home_keeps_capabilities_and_group_identity::chromium ... FAILED
+
+failures:
+
+failures:
+    grouped::grouped_home_keeps_capabilities_and_group_identity::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 99 filtered out; finished in 5.40s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`

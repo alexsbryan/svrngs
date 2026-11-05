@@ -4523,6 +4523,9 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             "all": "#running li, #running p",
             "do": [look, press(8096), press(chores.port()), fill(chores.port(), "name", "chores"),
                 fill(chores.port(), "kind", "chore-wheel"), press(chores.port())],
+            // The running row answers before HOME's lending reread. An old
+            // list still matches `#lent h2 ~ *` (grouped-home check.log).
+            "after": ["#lent li", "chores: everyone in your groups at once"],
             "text": true,
         }),
     )

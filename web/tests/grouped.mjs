@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Native authenticated shell; synthetic three-group reads and recorded writes.
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
@@ -8,12 +9,364 @@ const { context, close } = await launch(args.engine, { device: 'Desktop Chrome' 
 const logs = [];
 context.on('console', (message) => logs.push(message.text()));
 try {
+  if (process.env.GROUPED_HOME_PLANT === 'missing-wifi') {
+    await context.route('**/page/grouped.js*', async (route) => {
+      const source = await readFile(
+        new URL('../../crates/svrngs-node/src/home/page/grouped.js', import.meta.url),
+        'utf8',
+      );
+      const body = source.replace(
+        "draw(['links', 'wifi', 'show', 'leave'])",
+        "draw(['links', 'show', 'leave'])",
+      );
+      await route.fulfill({ contentType: 'text/javascript', body });
+    });
+  }
+  const ids = [args.group, '2'.repeat(64), '3'.repeat(64)];
+  await context.addInitScript(
+    ({ ids }) => {
+      const people = ['Alex', 'Sam', 'Kim', 'Ana'].map((person, i) => ({
+        key: `person-${i}`,
+        person_key: `person-${i}`,
+        person,
+        device: 'computer',
+        joined: i === 0 ? 'started' : { at: 1793404800 + i },
+      }));
+      const shelf = [
+        { name: 'Money', words: 'Who paid for what and who owes whom.' },
+        { name: 'Events' },
+      ];
+      const groups = ids.map((id, i) => ({
+        id,
+        name: i === 2 ? 'Welcome room' : 'House',
+        person: 'Alex',
+        removed: false,
+        left: false,
+        keeps: true,
+        folders: [`/fixture/${id}`],
+        fallback: null,
+        made: { name: 'House', maker: i === 1 ? 'Kim' : 'Sam', since: 1793404800 },
+        removals: [],
+        visiting: [
+          {
+            id: 'visit',
+            guest: 'Pat',
+            host: 'Alex',
+            host_key: 'person-0',
+            until: 1893404800,
+            yours: true,
+          },
+        ],
+      }));
+      const hosted = {
+        key: 'person-0',
+        person: 'Alex',
+        name: 'library',
+        kind: 'books',
+        origin: 'http://library.localhost:1234',
+        limit: 2,
+        using: 0,
+      };
+      const lends = (id) => ({
+        lent: [
+          {
+            key: 'person-0',
+            person: 'Alex',
+            name: `Money-${id}`,
+            kind: 'Money',
+            group: id,
+            origin: `http://money-${id}.localhost:1234`,
+            limit: null,
+            using: 0,
+          },
+          {
+            ...hosted,
+            key: 'person-1',
+            person: 'Sam',
+            reads: ['taste'],
+            asks: 'May I read your taste?',
+          },
+          {
+            key: 'person-1',
+            person: 'Sam',
+            name: 'played',
+            kind: 'echo',
+            raw: 'udp',
+            origin: 'http://played.localhost:1234',
+            limit: 3,
+            using: 0,
+          },
+        ],
+        shelf,
+        unanswered: [{ person: 'Ana', person_key: 'person-3' }],
+        unheard: [],
+        refused: [],
+        older: [],
+        changed: [{ group: id, app: 'Money', by: 'Kim', by_key: 'person-2', at: 1793404900 }],
+      });
+      const original = window.fetch;
+      const writes = JSON.parse(sessionStorage.getItem('grouped-writes') ?? '[]');
+      window.fetch = async (input, init) => {
+        const url = new URL(String(input), location.href);
+        const path = url.pathname;
+        const mode = sessionStorage.getItem('grouped-mode');
+        const json = (body) => Response.json(body);
+        if (
+          init?.method === 'POST' &&
+          [
+            '/folder',
+            '/group',
+            '/join',
+            '/link',
+            '/publication',
+            '/publication/close',
+            '/lent',
+            '/runs',
+            '/choices',
+            '/visits',
+            '/v1/leaves',
+            '/v1/handovers',
+          ].includes(path)
+        ) {
+          const body = JSON.parse(init.body);
+          writes.push({ path, body });
+          sessionStorage.setItem('grouped-writes', JSON.stringify(writes));
+          if (path === '/group') return json([body[0], null, []]);
+          if (path === '/join') return json(['House', 'Alex', null]);
+          if (path === '/link')
+            return json({ client: 'svrngs://fixture', https: 'https://group.test/#fixture' });
+          if (path === '/publication')
+            return json({
+              id: 'pub',
+              state: 'open',
+              address: 'https://join.test/fixture',
+              until: 1893404800,
+            });
+          if (path === '/publication/close')
+            return json({ id: 'pub', state: 'closed', address: null, until: 1893404800 });
+          if (path === '/lent') return json({});
+          return json({});
+        }
+        if (path === '/v1/groups') {
+          if (mode === 'unread') return new Response('fixture unavailable', { status: 503 });
+          const rows = mode === 'empty' ? [] : groups.map((g) => ({ ...g }));
+          if (mode === 'left') rows[2].left = true;
+          if (mode === 'removed') rows[2].removed = true;
+          return json({ groups: rows, key: 'person-0' });
+        }
+        if (path === '/v1/rail/people') return json({ people });
+        if (path === '/v1/lends') {
+          if (mode === 'lends-unread') return new Response('fixture unavailable', { status: 503 });
+          return json(lends(url.searchParams.get('namespace')));
+        }
+        if (path === '/v1/room' || path === '/v1/play') return json([]);
+        if (path === '/reaching') return json({ library: { said: 'yes', at: 1793404800 } });
+        if (path === '/choices') return json({ choices: [] });
+        if (path === '/lent') return json({ lent: [hosted], signing: [] });
+        if (path === '/update') return json({ state: 'current' });
+        if (path === '/publication') return json(null);
+        if (path === '/group') return json([]);
+        if (path === '/join') return json(['House', null, 'fixture']);
+        return original(input, init);
+      };
+    },
+    { ids },
+  );
   const page = await context.newPage();
   page.on('pageerror', (error) => logs.push(`pageerror: ${error}`));
   await page.goto(args.open);
   await page.getByRole('navigation', { name: 'Your groups' }).waitFor({ timeout: 10_000 });
   assert.equal(await page.getByRole('link', { name: 'All your groups', exact: true }).count(), 1);
-  console.log(JSON.stringify({ navigation: true }));
+  const origin = new URL(page.url()).origin;
+  const visit = async (path) => {
+    await page.goto(`${origin}/${path}`);
+    await page.locator('#home p.address').waitFor();
+  };
+  const inventory = async (selector) => {
+    await page.locator(selector).evaluateAll((roots) => {
+      for (const root of roots)
+        for (const detail of root.querySelectorAll('details')) detail.open = true;
+    });
+    return page.locator(selector).evaluateAll((roots) =>
+      roots
+        .flatMap((root) =>
+          [...root.querySelectorAll('a,button,input,select')]
+            .filter((el) => el.getAttribute('type') === 'hidden' || el.checkVisibility())
+            .map((el) => [
+              el.tagName,
+              el.getAttribute('type'),
+              el.getAttribute('name'),
+              el.tagName === 'INPUT' ? '' : el.textContent.trim(),
+              el.getAttribute('href'),
+              el.getAttribute('action'),
+            ])
+            .map((entry) => JSON.stringify(entry)),
+        )
+        .sort(),
+    );
+  };
+  await page.locator('#home p.address').waitFor();
+  assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 0);
+  assert.equal(await page.locator('.group-list a').count(), 3);
+  assert.equal(await page.locator('#terminal').isVisible(), false);
+  const overview = await page.screenshot({
+    path: `${args.artifacts ?? 'target'}/grouped-overview.png`,
+    fullPage: true,
+  });
+  assert.ok(overview.length > 0);
+
+  // A supplies the control inventory independently of B's layout manifest.
+  await visit('');
+  const baselineGroups = [];
+  for (const id of ids) baselineGroups.push(await inventory(`#group-${id}`));
+  const baselineHome = {};
+  for (const name of ['acts', 'open', 'join', 'make', 'running', 'lent'])
+    baselineHome[name] = await inventory(`#${name}`);
+  assert.equal(await page.locator('.grouped-nav').count(), 0);
+  assert.equal(await page.locator('#terminal').isVisible(), true);
+
+  for (const [i, id] of ids.entries()) {
+    await visit(`?ui=b&group=${id}`);
+    const group = page.locator(`#group-${id}`);
+    assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 1);
+    assert.equal(await group.isVisible(), true);
+    assert.equal(await group.locator('table.index').isVisible(), true);
+    assert.equal(
+      await group.getByRole('button', { name: 'Open this folder', exact: true }).isVisible(),
+      true,
+    );
+    assert.equal(await group.getByRole('button', { name: /^Leave / }).isVisible(), false);
+    assert.deepEqual(
+      await inventory(`#group-${id}`),
+      baselineGroups[i],
+      'all original group controls retained',
+    );
+    await group.getByRole('button', { name: 'Open this folder', exact: true }).click();
+    await group.getByText('Opened, in a window of its own.', { exact: false }).waitFor();
+    const sent = await page.evaluate(() => JSON.parse(sessionStorage.getItem('grouped-writes')));
+    assert.deepEqual(sent.at(-1), { path: '/folder', body: { group: id, dir: `/fixture/${id}` } });
+    await page.reload();
+    await page.locator('#home p.address').waitFor();
+    assert.equal(await group.isVisible(), true, 'refresh retains selected stable id');
+  }
+
+  // Normal links, Back, and rereads retain the selected group.
+  await page.locator('.group-switcher summary').click();
+  await page.locator(`.group-list a[href$="group=${ids[0]}"]`).click();
+  await page.locator('#home p.address').waitFor();
+  await page.goBack();
+  await page.locator('#home p.address').waitFor();
+  assert.equal(await page.locator(`#group-${ids[2]}`).isVisible(), true);
+  await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+  assert.equal(await page.locator(`#group-${ids[2]}`).isVisible(), true);
+
+  await page.locator('.grouped-notice a').click();
+  await page.locator('#home p.address').waitFor();
+  assert.equal(await page.locator('#acts').isVisible(), true);
+  assert.equal(await page.locator('#acts details').first().getAttribute('open'), '');
+  assert.equal(
+    await page
+      .getByRole('button', { name: 'Open the new version', exact: true })
+      .first()
+      .isVisible(),
+    true,
+  );
+  assert.equal(await page.locator('#terminal').isVisible(), true);
+  for (const [view, names] of Object.entries({
+    computer: ['acts', 'running', 'lent'],
+    open: ['open'],
+    join: ['join'],
+    make: ['make'],
+  })) {
+    await visit(`?ui=b&view=${view}`);
+    for (const name of names) {
+      assert.equal(await page.locator(`#${name}`).isVisible(), true);
+      assert.deepEqual(
+        await inventory(`#${name}`),
+        baselineHome[name],
+        `${name} controls retained`,
+      );
+    }
+    assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 0);
+  }
+
+  await page.locator('#make input[name="name"]').fill('New group');
+  await page.locator('#make input[name="person"]').fill('Alex');
+  await page.locator('#make button').click();
+  await page.getByText('You made New group.', { exact: false }).waitFor();
+  assert.equal(await page.locator('.grouped-nav').isVisible(), true);
+  await visit('?ui=b&view=join');
+  await page.locator('#join input[name="link"]').fill('fixture');
+  await page.locator('#join input[name="person"]').fill('Alex');
+  await page.locator('#join button').click();
+  await page.getByText('You’re in House', { exact: false }).waitFor();
+  assert.equal(await page.locator('.grouped-nav').isVisible(), true);
+
+  await page.goto(`${origin}/?ui=b#group-${ids[2]}`);
+  await page.getByRole('heading', { name: 'Welcome to Welcome room', exact: true }).waitFor();
+  assert.equal(await page.locator('#terminal').isVisible(), false);
+  await page.getByRole('link', { name: 'Continue to Welcome room', exact: true }).click();
+  await page.locator('#home p.address').waitFor();
+  assert.equal(await page.locator(`#group-${ids[2]}`).isVisible(), true);
+
+  for (const view of ['constructor', '__proto__', 'not-a-view']) {
+    await visit(`?ui=b&view=${view}`);
+    await page.getByText('This page is not available.', { exact: false }).waitFor();
+    assert.equal(await page.locator('#lent').isVisible(), false);
+  }
+  await visit('?ui=b&group=missing');
+  await page.getByText('This group is not available here.', { exact: false }).waitFor();
+  assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 0);
+
+  for (const mode of ['left', 'removed', 'lends-unread', 'empty']) {
+    await page.evaluate((mode) => sessionStorage.setItem('grouped-mode', mode), mode);
+    await page.goto(`${origin}/?ui=b&group=${ids[2]}`);
+    await page.reload();
+    await page.locator('#home p.address').waitFor();
+    const expected = {
+      left: 'This group is not available here.',
+      removed: 'You are no longer in Welcome room.',
+      'lends-unread': 'cannot read what Welcome room lends',
+      empty: 'You’re in no group yet.',
+    };
+    await page.getByText(expected[mode], { exact: false }).waitFor();
+    if (mode === 'left') {
+      await page.getByRole('link', { name: 'Groups you left', exact: true }).click();
+      await page.locator('#left').waitFor();
+      assert.ok((await page.locator('#left').textContent()).includes('Welcome room'));
+    }
+  }
+  await page.evaluate(() => sessionStorage.setItem('grouped-mode', 'unread'));
+  await page.reload();
+  await page.getByText('This computer cannot read your groups:', { exact: false }).waitFor();
+  await page.evaluate(() => sessionStorage.removeItem('grouped-mode'));
+  await visit('?ui=b');
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.screenshot({
+    path: `${args.artifacts ?? 'target'}/grouped-narrow.png`,
+    fullPage: true,
+  });
+  await visit(`?ui=b&group=${ids[2]}`);
+  assert.equal(
+    await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+    false,
+    'workspace has no horizontal overflow',
+  );
+  await page.screenshot({
+    path: `${args.artifacts ?? 'target'}/grouped-workspace.png`,
+    fullPage: true,
+  });
+  assert.ok(!logs.some((line) => line.startsWith('pageerror:')), logs.join('\n'));
+  console.log(
+    JSON.stringify({
+      navigation: true,
+      groupControls: baselineGroups.map((list) => list.length),
+      homeControls: Object.fromEntries(
+        Object.entries(baselineHome).map(([key, list]) => [key, list.length]),
+      ),
+    }),
+  );
 } catch (error) {
   console.error(`${error}\n${logs.join('\n')}`);
   process.exitCode = 1;

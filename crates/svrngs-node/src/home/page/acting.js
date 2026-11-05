@@ -74,7 +74,7 @@ export function Acting({ s: homeState, home }) {
       at: { reaching: 'reading', doing: 'idle' },
       acted: {},
       said: {},
-      folds: homeState.q.review ? { acts: true, changes: true } : {},
+      folds: homeState.q.ui === 'b' && homeState.q.review ? { acts: true, changes: true } : {},
     }),
   );
   // HOME draws the section once the groups are read (home-page.js `Home`).

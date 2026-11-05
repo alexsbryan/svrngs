@@ -1,0 +1,1087 @@
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 4083)
+passed     principles pinned (0 s)
+failed     lean and RUST_ARCH (0 s)
+           crates/svrngs-core     3486 / 3494 lines
+           .                     19790 / 19833 lines
+           js                     8187 / 8090 lines
+           swift                     0 / 1 lines
+           BROKEN  js has 8187 lines of code, budget 8090: raised only by the operator, with the reason in the commit
+passed     trust floor (1 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (18 s)
+passed     rustfmt (1 s)
+passed     clippy (38 s)
+passed     tests (627 s)
+passed     canaries (21 s)
+passed     ceiling canary (42 s)
+           CEILING idle round at 25 x 10,000: 0.0293 s of processor, the median of [0.2160290000000007, 0.02825599999999895, 0.029301999999999495], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.029301999999999495,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.004406375}
+passed     web rustfmt and clippy (5 s)
+failed     browser (160 s)
+           
+           running 100 tests
+           i..............................................
+           running 1 test
+           .host controls pending: {
+             "reloaded": "joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.Retry joiningClose joining",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61711/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:61711/publication"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61711/publication?group=house"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61711/publication?group=house"
+               ]
+             ],
+             "text": "joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.joining is temporarily unavailable; retry in a minute from this computerRetry joiningClose joining"
+           }
+           .i.test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.03s
+           
+           
+           running 1 test
+           host controls open: {
+             "reloaded": "http://127.0.0.1:61708/acorn-basil-cabin-daisy-eagle Copy the addressEnds 11/5/2026, 3:17:45 PM. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.Close joining",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61855/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:61855/publication"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61855/publication?group=house"
+               ]
+             ],
+             "text": "http://127.0.0.1:61708/acorn-basil-cabin-daisy-eagle Copy the addressEnds 11/5/2026, 3:17:45 PM. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.Close joining"
+           }
+           .test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.11s
+           
+           
+           running 1 test
+           ..host controls closing: {
+             "reloaded": "http://127.0.0.1:61708/acorn-basil-cabin-daisy-eagle Copy the addressjoining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.Retry closing",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61953/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:61953/publication/close"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61953/publication?group=house"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61953/publication?group=house"
+               ]
+             ],
+             "text": "http://127.0.0.1:61708/acorn-basil-cabin-daisy-eagle Copied.joining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.joining is temporarily unavailable; retry in a minute from this computerRetry closing"
+           }
+           test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.13s
+           
+           
+           running 1 test
+           host controls closed: {
+             "reloaded": "Joining is closedInvite people here",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:62096/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:62096/publication/close"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62096/publication?group=house"
+               ]
+             ],
+             "text": "Joining is closedInvite people here"
+           }
+           ..test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.28s
+           
+           
+           running 1 test
+           ...host controls inspect: {
+             "reloaded": "Joining is closedInvite people here",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:62234/publication?group=house"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62234/publication?group=house"
+               ]
+             ],
+             "text": "Joining is closedInvite people here"
+           }
+           .test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 2.95s
+           
+           ...... 66/100
+           the_home_page_lends_what_runs_here::chromium --- FAILED
+           ................................test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit has been running for over 60 seconds
+           .
+           failures:
+           
+           ---- the_home_page_lends_what_runs_here::chromium stdout ----
+           ada's home page: {
+             "after": [
+               [
+                 "You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.",
+                 "Look for programs running on this computer",
+                 "Something at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "jellyfin, at http://localhost:8096. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Lend jellyfin to everyone in your groups",
+                 "Something at http://localhost:8188. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:20000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:34855. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:40246. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:43863. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47436. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47628. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:48520. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups"
+               ],
+               [
+                 "You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.",
+                 "Look for programs running on this computer",
+                 "Something at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "You lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. ",
+                 "Something at http://localhost:8188. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:20000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:34855. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:40246. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:43863. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47436. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47628. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:48520. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups"
+               ],
+               [
+                 "You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.",
+                 "Look for programs running on this computer",
+                 "Something at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "You lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. ",
+                 "Something at http://localhost:8188. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:20000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups Give it a name and say what it is first: svrngs does not know what runs there.",
+                 "Something at http://localhost:34855. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:40246. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:43863. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47436. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47628. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:48520. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups"
+               ],
+               [
+                 "You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.",
+                 "Look for programs running on this computer",
+                 "Something at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "You lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. ",
+                 "Something at http://localhost:8188. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "You lent chores, at http://localhost:20000: everyone in your groups can open it now.  ",
+                 "Something at http://localhost:34855. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:40246. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:43863. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47436. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:47628. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups",
+                 "Something at http://localhost:48520. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups"
+               ]
+             ],
+             "all": [
+               "This page lists the programs running on this computer only when you ask: looking takes it a few seconds of work.",
+               "Look for programs running on this computer"
+             ],
+             "clipboard": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.localhost:62237/",
+             "drawn": null,
+             "heading": "A group whose name this computer cannot read",
+             "later": null,
+             "lines": [
+               "PLAY: answered (0 on): reading -> read",
+               "ROOM: answered (0 open): reading -> read",
+               "HOME: layout a",
+               "HOME: read (1 group(s)): reading/none -> read/none",
+               "ROOM: read refused in read: round 1 is read already",
+               "GROUP: read: reading/reading -> reading/reading, running get, get",
+               "ROOM: read refused in read: round 1 is read already",
+               "UPDATE: checked (this computer does not know the page svrngs came from, so it cannot update: run the install line from your group’s page once): checking -> unread",
+               "GROUP: answered (people 1): reading/reading -> read/reading",
+               "GROUP: answered (lends 1): read/reading -> read/read",
+               "LINK: published: none/reading -> none/ready",
+               "HOME: told (null: people read, lends read): read/none -> read/none",
+               "ACTS: read: reading/idle -> reading/idle, running read",
+               "ACTS: reached (0 asking): reading/idle -> read/idle",
+               "HOME: told (what acts as you is read): read/none -> read/none",
+               "LENDING: read: reading -> reading, running read",
+               "LENDING: answered (0 lent): reading -> read",
+               "HOME: told (what you lend is read): read/none -> read/none",
+               "RUNNING: look: unlooked -> looking, running look",
+               "RUNNING: looked (14 running): looking -> looked",
+               "LEND: lend: unlent -> lending, running lend",
+               "LEND: lent (jellyfin): lending -> lent, running again",
+               "HOME: again: read/none -> rereading/none, running groups",
+               "LEND: told (the groups read again): lent -> lent",
+               "HOME: read (1 group(s)): rereading/none -> read/none",
+               "GROUP: again: read/read -> reading/reading, running get, get",
+               "ACTS: read: read/idle -> read/idle, running read",
+               "LENDING: read: read -> reading, running read",
+               "GROUP: answered (people 2): reading/reading -> read/reading",
+               "ROOM: read: read -> reading, running read",
+               "ACTS: reached (0 asking): read/idle -> read/idle",
+               "LENDING: answered (1 lent): reading -> read",
+               "GROUP: answered (lends 2): read/reading -> read/read",
+               "HOME: told (null: people read, lends read): read/none -> read/none",
+               "ROOM: answered (0 open): reading -> read",
+               "LEND: lend: unlent -> lending, running lend",
+               "LEND: refused (Give it a name and say what it is first: svrngs does not know what runs there.): lending -> unlent",
+               "LEND: typed: unlent -> unlent",
+               "LEND: typed: unlent -> unlent",
+               "LEND: lend: unlent -> lending, running lend",
+               "LEND: lent (chores): lending -> lent, running again",
+               "HOME: again: read/none -> rereading/none, running groups",
+               "LEND: told (the groups read again): lent -> lent",
+               "HOME: read (1 group(s)): rereading/none -> read/none",
+               "GROUP: again: read/read -> reading/reading, running get, get",
+               "ACTS: read: read/idle -> read/idle, running read",
+               "LENDING: read: read -> reading, running read"
+             ],
+             "links": [
+               {
+                 "href": "http://svrngs.localhost:62258/to?lend=umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr",
+                 "target": "_blank",
+                 "text": "ada’s jellyfin"
+               },
+               {
+                 "href": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:62258/",
+                 "target": "",
+                 "text": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:62258/"
+               },
+               {
+                 "href": "http://svrngs.localhost:62258/?screen=house",
+                 "target": "_blank",
+                 "text": "Show this group on a screen"
+               }
+             ],
+             "loads": 1,
+             "logs": [
+               "debug: PLAY: answered (0 on): reading -> read",
+               "debug: ROOM: answered (0 open): reading -> read",
+               "debug: HOME: layout a",
+               "debug: HOME: read (1 group(s)): reading/none -> read/none",
+               "debug: ROOM: read refused in read: round 1 is read already",
+               "debug: GROUP: read: reading/reading -> reading/reading, running get, get",
+               "debug: ROOM: read refused in read: round 1 is read already",
+               "debug: UPDATE: checked (this computer does not know the page svrngs came from, so it cannot update: run the install line from your group’s page once): checking -> unread",
+               "debug: GROUP: answered (people 1): reading/reading -> read/reading",
+               "debug: GROUP: answered (lends 1): read/reading -> read/read",
+               "debug: LINK: published: none/reading -> none/ready",
+               "debug: HOME: told (null: people read, lends read): read/none -> read/none",
+               "debug: ACTS: read: reading/idle -> reading/idle, running read",
+               "debug: ACTS: reached (0 asking): reading/idle -> read/idle",
+               "debug: HOME: told (what acts as you is read): read/none -> read/none",
+               "debug: LENDING: read: reading -> reading, running read",
+               "debug: LENDING: answered (0 lent): reading -> read",
+               "debug: HOME: told (what you lend is read): read/none -> read/none",
+               "debug: RUNNING: look: unlooked -> looking, running look",
+               "debug: RUNNING: looked (14 running): looking -> looked",
+               "debug: LEND: lend: unlent -> lending, running lend",
+               "debug: LEND: lent (jellyfin): lending -> lent, running again",
+               "debug: HOME: again: read/none -> rereading/none, running groups",
+               "debug: LEND: told (the groups read again): lent -> lent",
+               "debug: HOME: read (1 group(s)): rereading/none -> read/none",
+               "debug: GROUP: again: read/read -> reading/reading, running get, get",
+               "debug: ACTS: read: read/idle -> read/idle, running read",
+               "debug: LENDING: read: read -> reading, running read",
+               "debug: GROUP: answered (people 2): reading/reading -> read/reading",
+               "debug: ROOM: read: read -> reading, running read",
+               "debug: ACTS: reached (0 asking): read/idle -> read/idle",
+               "debug: LENDING: answered (1 lent): reading -> read",
+               "debug: GROUP: answered (lends 2): read/reading -> read/read",
+               "debug: HOME: told (null: people read, lends read): read/none -> read/none",
+               "debug: ROOM: answered (0 open): reading -> read",
+               "debug: LEND: lend: unlent -> lending, running lend",
+               "error: Failed to load resource: the server responded with a status of 400 (Bad Request)",
+               "debug: LEND: refused (Give it a name and say what it is first: svrngs does not know what runs there.): lending -> unlent",
+               "debug: LEND: typed: unlent -> unlent",
+               "debug: LEND: typed: unlent -> unlent",
+               "debug: LEND: lend: unlent -> lending, running lend",
+               "debug: LEND: lent (chores): lending -> lent, running again",
+               "debug: HOME: again: read/none -> rereading/none, running groups",
+               "debug: LEND: told (the groups read again): lent -> lent",
+               "debug: HOME: read (1 group(s)): rereading/none -> read/none",
+               "debug: GROUP: again: read/read -> reading/reading, running get, get",
+               "debug: ACTS: read: read/idle -> read/idle, running read",
+               "debug: LENDING: read: read -> reading, running read"
+             ],
+             "look": null,
+             "opened": null,
+             "opens": [],
+             "read": "What you lend",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/look.css",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/home.js",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/trace.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/view.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/machine.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/home-reading.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/home-page.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/groups-left.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/grouped.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/vendor/preact.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/vendor/hooks.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/vendor/htm.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/offered.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/routes.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/question.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-folder.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/folder.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-read.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-reading.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/shelf.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/index.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/running.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lending.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/door.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/visits.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/leave.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/screen.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/join.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/join-form.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/make.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/make-form.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/links.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/open.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/acts.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/ask.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/wifi.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/wifi-foot.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/play.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/update-line.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/running-here.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/parts.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/index-rows.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/shelf.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/what-you-lend.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/visitors.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/stop-visit.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/folders.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/people.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/removals.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/leave-group.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-screen.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/screen-link.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/link-box.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/asked.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-links.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/update.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lend-key.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/acting.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-told.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/address-copy.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/found.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/running-look.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lend-row.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lent-read.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lent-row.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/visit.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/leaving.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/door.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/on-screen.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/since-opened.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/asking.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/group-link.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/link-said.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/copy.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/open-link.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/address-copying.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/acts.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/changes.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/ui/uses.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/acts-read.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/reach.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/play",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lend-found.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/how-it-opens.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lend-name.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/lend-change.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/signing-on.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/link-copy.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/room",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/page/play-cell.js?v=__VERSION__",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/update",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/lends?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/publication?group=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/reaching",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/lent",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/running",
+                 ""
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:62258/running",
+                 "{\"port\":8096,\"name\":null,\"kind\":null}"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/lends?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/reaching",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/lent",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/room",
+                 ""
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:62258/running",
+                 "{\"port\":20000,\"name\":null,\"kind\":null}"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:62258/running",
+                 "{\"port\":20000,\"name\":\"chores\",\"kind\":\"chore-wheel\"}"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/groups",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/rail/people?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/v1/lends?namespace=house",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/reaching",
+                 ""
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:62258/lent",
+                 ""
+               ]
+             ],
+             "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it.\n\nA group whose name this computer cannot read\nWhat\tWhose\tHow it opens\tNow\nada’s jellyfin It writes what you say there into your group’s record, as you.\tada\tIn a tab.\ton\nada\non now\nbo\non now\n\nInvite people here\n\nInvite someone to this groupAdd your phone or another computerHave a guest\n\nYou keep the order of removals in this group. Choose who keeps it after you, then leave: \nbo\nHand it on\n\nLeaving this group stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave this group\n\nBring things to the table\n\nThese come with svrngs. Bring one, and everyone in your group opens it on their own computer or phone, while any computer in your group is on.\n\n Money: who owes whom, and for what.\n\n Events: the get-togethers people post, and who’s coming.\n\n House rules: the rules your house agrees, and how you agree them.\n\nBring the ticked ones to your group\n\nada’s jellyfin:Open it to this WiFi, and anyone on it can open it as you while svrngs runs. Open it to this WiFi Copy its address for a program\nhttp://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:62258/ Bookmark this.\n\nShow this group on a screen\n\nWhat acts as you\nOpen a link from your group\n\nThe link: Open it\n\nJoin a group from a link\n\nThe link someone sent you: Your name in it: \n\nMake a group\n\nA name for the group: Your name in it: Make a group\n\nAlready running here\n\nYou looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.\n\nLook for programs running on this computer\n\nSomething at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nYou lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save.\nSomething at http://localhost:8188. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nYou lent chores, at http://localhost:20000: everyone in your groups can open it now.\nSomething at http://localhost:34855. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:40246. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:43863. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:47436. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:47628. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nSomething at http://localhost:48520. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups\nWhat you lend\njellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manySign people in with svrngsStop lending\n\nYour home page, the same address each time svrngs starts: http://svrngs.localhost:62258/\n\nDone in a terminal\n\nOne thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:\n\nRemove someone from a group: svrngs remove <their name> --group <the group’s name>\n\nTo open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
+             "timed": {
+               "#lent h2": 239,
+               "#running li": 843
+             }
+           }
+           
+           thread 'the_home_page_lends_what_runs_here::chromium' (4942635) panicked at crates/svrngs-node/tests/browser/main.rs:4585:9:
+           what this computer lends, drawn again in place: chores
+           Your groups
+           
+           This page is yours, and only this computer opens it: nobody in your groups sees it.
+           
+           A group whose name this computer cannot read
+           What	Whose	How it opens	Now
+           ada’s jellyfin It writes what you say there into your group’s record, as you.	ada	In a tab.	on
+           ada
+           on now
+           bo
+           on now
+           
+           Invite people here
+           
+           Invite someone to this groupAdd your phone or another computerHave a guest
+           
+           You keep the order of removals in this group. Choose who keeps it after you, then leave: 
+           bo
+           Hand it on
+           
+           Leaving this group stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. Leave this group
+           
+           Bring things to the table
+           
+           These come with svrngs. Bring one, and everyone in your group opens it on their own computer or phone, while any computer in your group is on.
+           
+            Money: who owes whom, and for what.
+           
+            Events: the get-togethers people post, and who’s coming.
+           
+            House rules: the rules your house agrees, and how you agree them.
+           
+           Bring the ticked ones to your group
+           
+           ada’s jellyfin:Open it to this WiFi, and anyone on it can open it as you while svrngs runs. Open it to this WiFi Copy its address for a program
+           http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.localhost:62258/ Bookmark this.
+           
+           Show this group on a screen
+           
+           What acts as you
+           Open a link from your group
+           
+           The link: Open it
+           
+           Join a group from a link
+           
+           The link someone sent you: Your name in it: 
+           
+           Make a group
+           
+           A name for the group: Your name in it: Make a group
+           
+           Already running here
+           
+           You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.
+           
+           Look for programs running on this computer
+           
+           Something at http://localhost:2222. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:2223. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:4226. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:5000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:7000. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           You lent jellyfin, at http://localhost:8096: everyone in your groups can open it now. It keeps its own accounts, so make each person one in it: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save.
+           Something at http://localhost:8188. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           You lent chores, at http://localhost:20000: everyone in your groups can open it now.
+           Something at http://localhost:34855. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:40246. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:43863. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:47436. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:47628. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           Something at http://localhost:48520. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that. Its name: What it is: Lend it to everyone in your groups
+           What you lend
+           jellyfin: everyone in your groups at once, 0 using it now. How many people at once: Let in this manySign people in with svrngsStop lending
+           
+           Your home page, the same address each time svrngs starts: http://svrngs.localhost:62258/
+           
+           Done in a terminal
+           
+           One thing is not done on this page yet. For it, open the Terminal app and type its line, with your own words in place of each <…>:
+           
+           Remove someone from a group: svrngs remove <their name> --group <the group’s name>
+           
+           To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               the_home_page_lends_what_runs_here::chromium
+           
+           test result: FAILED. 97 passed; 1 failed; 2 ignored; 0 measured; 0 filtered out; finished in 151.94s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+passed     types (2 s)
+passed     typed lint (1 s)
+passed     joining in a browser (43 s)
+passed     pages (65 s)
+passed     scenes (273 s)
+passed     scene doc (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+passed     scene films (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene house_rules (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (92 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  Host check, absolute redirect      passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  seeks back to back                 passed
+           computer  seeks back to back                 passed, a rate
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  seeks back to back                 passed
+           wildcard  seeks back to back                 passed, a rate
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	416	passed	3288	passed
+           computer	bo	407	passed	2905	passed
+           wildcard	sam	311	passed	3361	passed
+           wildcard	bo	340	passed	4271	passed
+           of 536 here since 2026-10-22T17:12:29Z: 2 missed 5 s through a lend, 86 straight; 334 ended at a load above 12 cores
+passed     app laws (41 s)
+note       took 1432 s in all

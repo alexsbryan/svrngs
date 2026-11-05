@@ -123,4 +123,4 @@ export const MAKE = (home) => ({
  * @returns {Step<HOME.State, HOME.Effect>}
  */
 export const take = (state, message) =>
-  go(state, { said: 'made' }, { q: { ...state.q, ...message.q } });
+  go(state, { said: 'made' }, { q: state.q.ui === 'b' ? { ...state.q, ...message.q } : message.q });

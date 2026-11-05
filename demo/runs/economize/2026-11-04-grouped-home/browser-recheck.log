@@ -1,0 +1,131 @@
+
+running 100 tests
+i..............................................
+running 1 test
+..ihost controls pending: {
+  "reloaded": "joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.Retry joiningClose joining",
+  "sent": [
+    [
+      "GET",
+      "http://svrngs.localhost:62318/publication?group=house"
+    ],
+    [
+      "POST",
+      "http://svrngs.localhost:62318/publication"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62318/publication?group=house"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62318/publication?group=house"
+    ]
+  ],
+  "text": "joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.joining is temporarily unavailable; retry in a minute from this computerRetry joiningClose joining"
+}
+test publication::onboarding_host_controls_child ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.30s
+
+
+running 1 test
+.host controls open: {
+  "reloaded": "http://127.0.0.1:62314/acorn-basil-cabin-daisy-eagle Copy the addressEnds 11/5/2026, 3:30:45 PM. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.Close joining",
+  "sent": [
+    [
+      "GET",
+      "http://svrngs.localhost:62445/publication?group=house"
+    ],
+    [
+      "POST",
+      "http://svrngs.localhost:62445/publication"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62445/publication?group=house"
+    ]
+  ],
+  "text": "http://127.0.0.1:62314/acorn-basil-cabin-daisy-eagle Copy the addressEnds 11/5/2026, 3:30:45 PM. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.Close joining"
+}
+.test publication::onboarding_host_controls_child ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.26s
+
+
+running 1 test
+.host controls closing: {
+  "reloaded": "http://127.0.0.1:62314/acorn-basil-cabin-daisy-eagle Copy the addressjoining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.Retry closing",
+  "sent": [
+    [
+      "GET",
+      "http://svrngs.localhost:62544/publication?group=house"
+    ],
+    [
+      "POST",
+      "http://svrngs.localhost:62544/publication/close"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62544/publication?group=house"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62544/publication?group=house"
+    ]
+  ],
+  "text": "http://127.0.0.1:62314/acorn-basil-cabin-daisy-eagle Copied.joining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.joining is temporarily unavailable; retry in a minute from this computerRetry closing"
+}
+test publication::onboarding_host_controls_child ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.37s
+
+
+running 1 test
+..host controls closed: {
+  "reloaded": "Joining is closedInvite people here",
+  "sent": [
+    [
+      "GET",
+      "http://svrngs.localhost:62687/publication?group=house"
+    ],
+    [
+      "POST",
+      "http://svrngs.localhost:62687/publication/close"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62687/publication?group=house"
+    ]
+  ],
+  "text": "Joining is closedInvite people here"
+}
+.test publication::onboarding_host_controls_child ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.60s
+
+
+running 1 test
+...host controls inspect: {
+  "reloaded": "Joining is closedInvite people here",
+  "sent": [
+    [
+      "GET",
+      "http://svrngs.localhost:62829/publication?group=house"
+    ],
+    [
+      "GET",
+      "http://svrngs.localhost:62829/publication?group=house"
+    ]
+  ],
+  "text": "Joining is closedInvite people here"
+}
+.test publication::onboarding_host_controls_child ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 99 filtered out; finished in 3.01s
+
+........................... 87/100
+............test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit has been running for over 60 seconds
+.
+test result: ok. 98 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 144.45s
+

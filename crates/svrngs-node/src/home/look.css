@@ -155,6 +155,7 @@ small.keep { display: block; font-family: var(--mono); overflow-wrap: anywhere; 
 
 /* The opt-in layout keeps its navigation separate from group actions. */
 body.layout-b h1 { margin-bottom: 0.75rem; padding: 0.75rem; font-size: 2.25rem; line-height: 1; }
+body.layout-b .folder, body.layout-b .address { overflow-wrap: anywhere; }
 .grouped-nav { margin: 1.5rem 0; border-block: var(--rule); padding: 0.5rem 0; }
 .grouped-nav p { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; }
 .grouped-nav a { display: inline-block; padding: 0.25rem 0; }

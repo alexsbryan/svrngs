@@ -4,14 +4,21 @@ import { register } from 'node:module';
 import { test } from 'node:test';
 
 register('./pages/layout.mjs', import.meta.url);
-const { address, exposes, GroupPlaces } = await import('../../crates/svrngs-node/src/home/page/grouped.js?v=__VERSION__');
-const { PLACES } = await import('../../crates/svrngs-node/src/home/page/group-read.js?v=__VERSION__');
+const { address, exposes, GroupPlaces } =
+  await import('../../crates/svrngs-node/src/home/page/grouped.js?v=__VERSION__');
+const { PLACES } =
+  await import('../../crates/svrngs-node/src/home/page/group-read.js?v=__VERSION__');
 const join = await import('../../crates/svrngs-node/src/home/page/join.js?v=__VERSION__');
 const make = await import('../../crates/svrngs-node/src/home/page/make.js?v=__VERSION__');
 
 test('B places every original group capability exactly once', () => {
   const placed = [];
-  GroupPlaces({ draw: (names) => { placed.push(...names); return null; } });
+  GroupPlaces({
+    draw: (names) => {
+      placed.push(...names);
+      return null;
+    },
+  });
   assert.deepEqual(placed.toSorted(), [...PLACES].sort());
 });
 
@@ -29,5 +36,10 @@ test('making and joining preserve B and its destination through the reread', () 
   for (const flow of [join, make]) {
     const next = flow.take(state, { q: { joined: 'House' } }).state;
     assert.deepEqual(next.q, { ui: 'b', view: 'join', joined: 'House' });
+    assert.deepEqual(
+      flow.take({ ...state, q: { joined: 'Old' } }, { q: { made: 'New' } }).state.q,
+      { made: 'New' },
+      'A retains its original notice replacement',
+    );
   }
 });

@@ -36,17 +36,19 @@ export function exposes(state, place) {
 
 /** @param {{ s: State }} props */
 function GroupLinks({ s: state }) {
-  return state.groups?.filter((group) => !group.left).map((group) => {
-    const made = group.made ? ` (${whose(group.made)})` : '';
-    return html`<li><a href=${address('groups', group.id)} aria-current=${group.id === state.q.group ? 'page' : undefined}>${group.name ?? 'A group whose name cannot be read'}${made}</a><small>${group.person ? `You are ${group.person} here.` : 'This computer cannot say who you are here.'}</small></li>`;
-  });
+  return state.groups
+    ?.filter((group) => !group.left)
+    .map((group) => {
+      const made = group.made ? ` (${whose(group.made)})` : '';
+      return html`<li><a href=${address('groups', group.id)} aria-current=${group.id === state.q.group ? 'page' : undefined}>${group.name ?? 'A group whose name cannot be read'}${made}</a><small>${group.person ? `You are ${group.person} here.` : 'This computer cannot say who you are here.'}</small></li>`;
+    });
 }
 
 /** @param {{ s: State }} props */
 function Notice({ s: state }) {
   const selected = state.groups?.find((group) => group.id === state.q.group && !group.left);
   const changes = selected && state.told?.[selected.id]?.lends?.changed;
-  if (!changes?.length) return null;
+  if (!selected || !changes || changes.length === 0) return null;
   return html`
     <p class="grouped-notice"><a href=${`${address('computer')}&review=${encodeURIComponent(selected.id)}`}>${changes.length} ${changes.length === 1 ? 'app has a new version' : 'apps have new versions'} you can review.</a> Your current versions keep running.</p>
   `;
@@ -54,15 +56,22 @@ function Notice({ s: state }) {
 
 /** @param {{ s: State }} props */
 function Context({ s: state }) {
+  const groups = /** @type {Group[]} */ (state.groups);
   if (state.q.group) {
-    const found = state.groups?.some((group) => group.id === state.q.group && !group.left);
-    return !found && html`<p class="bad">This group is not available here. Choose another group, or see Groups you left.</p>`;
+    const found = groups.some((group) => group.id === state.q.group && !group.left);
+    return (
+      !found &&
+      html`<p class="bad">This group is not available here. Choose another group, or see Groups you left.</p>`
+    );
   }
   const view = state.q.view ?? 'groups';
-  if (!Object.hasOwn(VIEWS, view)) return html`<p class="bad">This page is not available. Choose a destination above.</p>`;
+  if (!Object.hasOwn(VIEWS, view))
+    return html`<p class="bad">This page is not available. Choose a destination above.</p>`;
   if (view === 'groups') return html`<p>Choose a group to open its apps and shared folder.</p>`;
-  if (view === 'computer') return html`<h2>This computer</h2><p>What you share, and what can act as you, across your groups.</p>`;
-  if (view === 'left' && !state.groups?.some((group) => group.left)) return html`<p>You have no groups you left on this computer.</p>`;
+  if (view === 'computer')
+    return html`<h2>This computer</h2><p>What you share, and what can act as you, across your groups.</p>`;
+  if (view === 'left' && !groups.some((group) => group.left))
+    return html`<p>You have no groups you left on this computer.</p>`;
   return null;
 }
 
