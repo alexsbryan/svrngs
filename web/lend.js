@@ -277,7 +277,7 @@ async function opened() {
     ? 'of this run, named by the holder’s link'
     : 'as the pass’s holder, for an older door';
   trace(`RUNTIME: opening the endpoint ${as}`);
-  return holder_endpoint(bytes, handed.relay);
+  return holder_endpoint(bytes, handed.relays);
 }
 
 // The pass a request carries, and the link naming this run's endpoint

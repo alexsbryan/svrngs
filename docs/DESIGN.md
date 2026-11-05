@@ -1298,14 +1298,18 @@ verb, and one whose groups cannot be read is refused as that. `--open` lets
 everyone through, each at most `OPEN_RATE`, 8,800,000 bytes a second, the
 most a film at Demo A's bitrate drew.
 
-**Where a computer meets its groups.** A group meets at its own relays
-while any of them answers, and at the build's relay only when none does,
+**Where a computer meets its groups.** A computer meets at the build's
+fallback while it answers, and at its groups' own relays when it does not,
 decided in one place (svrn-docs `rings/current/GROUP_RELAYS.md` §7, the
-operator's "Tiers", 2026-11-02). Its own are the relays its keeper names in
-its record by a `Meets` act (§6), made with `svrngs new <name> --relay
-<name or url>`, once for each; `svrngs link <group> --relay <name or
-url>` replaces them later, keeper only, and the new link carries them. The
-build's are one of a closed set,
+operator's "Tiers", 2026-11-02; the relay-fallback charter, 2026-11-04: a
+browser holding only the published page's policy can reach a computer
+through the build's https fallback alone). The fallback comes first because
+a link's routes are drawn from the tier the computer is met at: while the
+build's answers, the link carries it and a phone can open the group. Its
+own are the relays its keeper names in its record by a `Meets` act (§6),
+made with `svrngs new <name> --relay <name or url>`, once for each;
+`svrngs link <group> --relay <name or url>` replaces them later, keeper
+only, and the new link carries them. The build's are one of a closed set,
 `cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay at
 `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup and n0
 none of the path. The build ships one, `cli::SHIPPED`: n0's for now, until
@@ -1314,23 +1318,25 @@ no record, so the switch moves every group at once. The two tiers are a
 type, svrngs-core's `relay::Meeting`, made only by `Meeting::of`, which
 always carries the build's; `Meeting::decide` is the one decision, and
 svrngs-node's `tiers` the one place it changes the endpoint's relays.
-Within a tier iroh makes the fastest that answers a computer's home. The
-order between tiers is svrngs's, since an `svrngs relay --at` relay serves
-no QUIC address discovery and iroh's report, given n0's beside it, picks
-n0's (measured 2026-11-02, svrn-docs §7): svrngs asks the group's own
-relays itself every `tiers::ASKED_EVERY`, 10 s, each within
-`ANSWERS_WITHIN`, 3 s, and gives the endpoint the build's relay when none
-answers and takes it away once one does. One endpoint serves every group,
-so a computer that also holds a group naming no relay of its own keeps the
-build's relay, and meets every group there. A dial to a member reaches
-both tiers and the relay the record names for it, whichever tier this
-computer is at, since iroh dials a relay its endpoint does not hold
-(`crates/svrngs-node/tests/relay_tiers.rs`); a link carries at most two
-relays, the issuer's home first, so a phone's page dials it and asks no
-lookup. Each change of tier and of home is traced, and the home page says
-when, and why, a group is met at the build's relay. A computer that
-reaches none of its relays in 10 s says which it tried, and goes on
-trying.
+svrngs asks the build's fallback itself every `tiers::ASKED_EVERY`, 10 s,
+each within `ANSWERS_WITHIN`, 3 s, and gives the endpoint the fallback
+while it answers and the own relays once it does not, since iroh's report
+stops probing once a relay answers and would never see one come back. One
+endpoint serves every group, so a computer that also holds a group naming
+no relay of its own keeps the fallback, and meets every group there. A dial
+to a member reaches both tiers and the relay the record names for it,
+whichever tier this computer is at, since iroh dials a relay its endpoint
+does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a link carries
+at most two relays, the tier's first, so a phone's page dials it and asks
+no lookup. The page takes every route the link carries that its own policy
+allows — under `connect-src 'self' wss: https:` a plain-HTTP relay is none,
+and is never tried — and dials the issuer through all of them at once, so
+a route that is stalled or cannot reach it does not delay one that
+answers; the connection that wins is the issuer's key, so a route is
+chosen only after reaching it. Each change of tier and of home is traced,
+and the home page says when, and why, a group is met at the build's
+fallback. A computer that reaches none of its relays in 10 s says which it
+tried, and goes on trying.
 
 ## 4. Domains, and the fork
 

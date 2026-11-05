@@ -146,7 +146,7 @@ const stay = (core, token, visit) => {
   const issuer = core.issuer_of(token);
   const lent = Object.entries(visit.lent).map(([name, kind]) => ({
     key: issuer,
-    relay: core.relay_of(token),
+    relay: core.relays_of(token)[0] ?? null,
     name,
     kind,
     person: visit.host,
