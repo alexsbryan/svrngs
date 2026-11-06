@@ -9,9 +9,9 @@
 // (`part`, for acting.js). What has Play on that cannot be read is said
 // once, in `part`, never read as none; Play then writes it over.
 import { html, useStore } from '../ui/view.js?v=__VERSION__';
-import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
-import { keyOf, same } from './lend-key.js?v=__VERSION__';
+import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -105,53 +105,19 @@ export const PLAY = {
         copied: off ? '' : await copy(playing.find(same(lend))),
       })),
   },
-  // Each message's read numbered; an answer older than the last read asked
-  // refused by name, and a read or a turn while a turn is under way, before
-  // any case takes them.
-  step: (state, message) => {
-    const [asked, serial] = ask(state, 'play');
-    const old = message.n === undefined ? '' : late(state, 'play', message.n);
-    if (old) return no(state, old);
-    if (state.at.play === 'turning' && ['read', 'turn'].includes(message.type))
-      return no(state, 'a turn is under way, and its answer is what has Play on');
-    // A refusal, and an answer with what it copied, answer a turn, which
-    // set `state.l`.
-    switch (message.type) {
-      case 'read':
-        if (message.round <= state.round)
-          return no(state, `round ${message.round} is read already`);
-        return go(
-          state,
-          { play: 'reading' },
-          { asked, round: message.round },
-          { run: 'read', n: serial, failed: 'unread' },
-        );
-      case 'turn':
-        return go(
-          state,
-          { play: 'turning' },
-          { asked, was: state.at.play, l: message.l },
-          { run: 'turn', n: serial, l: message.l, off: message.off, failed: 'refused' },
-        );
-      case 'refused': {
-        const key = keyOf(/** @type {Port} */ (state.l));
-        const said = `${state.said[key] ?? ''} ${message.why}`;
-        return go(state, { play: state.was }, { said: { ...state.said, [key]: said } });
-      }
-      case 'answered': {
-        // A read copies nothing, and keeps what a turn copied before it.
-        const copied =
-          message.copied === undefined
-            ? state.copied
-            : { ...state.copied, [keyOf(/** @type {Port} */ (state.l))]: message.copied };
-        return go(state, { play: 'read' }, { plays: message.plays, copied });
-      }
-      case 'unread':
-        return go(state, { play: 'unread' }, { why: message.why });
-      default:
-        return assertNever(state, message, 'Play');
-    }
-  },
+  step: turns('play', {
+    busy: 'what has Play on',
+    taker: 'Play',
+    refused: (said, why) => `${said ?? ''} ${why}`,
+    // A read copies nothing, and keeps what a turn copied before it.
+    answered: (state, message) => {
+      const copied =
+        message.copied === undefined
+          ? state.copied
+          : { ...state.copied, [keyOf(state.l)]: message.copied };
+      return go(state, { play: 'read' }, { plays: message.plays, copied });
+    },
+  }),
 };
 export const play = machine(
   'PLAY',

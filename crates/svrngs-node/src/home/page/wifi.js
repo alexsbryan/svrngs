@@ -12,10 +12,10 @@
 // cannot be read is said once, in `part`, never read as none; a press in a
 // line then writes it over.
 import { html, useStore } from '../ui/view.js?v=__VERSION__';
-import { ask, assertNever, go, late, machine, no } from '../ui/machine.js?v=__VERSION__';
+import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
 import { AddressCopy } from './address-copy.js?v=__VERSION__';
-import { keyOf, same } from './lend-key.js?v=__VERSION__';
+import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -117,55 +117,20 @@ export const ROOM = {
         answer(serial, { l: lend, off }),
       ),
   },
-  // Each message's read numbered; an answer older than the last read asked
-  // refused by name, and a read or a turn while a turn is under way, before
-  // any case takes them.
-  step: (state, message) => {
-    const [asked, serial] = ask(state, 'room');
-    const old = message.n === undefined ? '' : late(state, 'room', message.n);
-    if (old) return no(state, old);
-    if (state.at.room === 'turning' && ['read', 'turn'].includes(message.type))
-      return no(state, 'a turn is under way, and its answer is what is open');
-    // A refusal answers a turn, which set `state.l`.
-    switch (message.type) {
-      case 'read':
-        if (message.round <= state.round)
-          return no(state, `round ${message.round} is read already`);
-        return go(
-          state,
-          { room: 'reading' },
-          { asked, round: message.round },
-          { run: 'read', n: serial, failed: 'unread' },
-        );
-      case 'turn':
-        return go(
-          state,
-          { room: 'turning' },
-          { asked, was: state.at.room, l: message.l },
-          { run: 'turn', n: serial, l: message.l, off: message.off, failed: 'refused' },
-        );
-      case 'refused':
-        return go(
-          state,
-          { room: state.was },
-          { said: { ...state.said, [keyOf(/** @type {Which} */ (state.l))]: ` ${message.why}` } },
-        );
-      case 'answered': {
-        // The turn read once, as tsc does not narrow `message.turned` inside
-        // the filter's callback. A read turns nothing, and keeps what was
-        // closed.
-        const turned = message.turned;
-        if (!turned) return go(state, { room: 'read' }, { room: message.room });
-        const others = state.closed.filter((closed) => !same(closed)(turned.l));
-        const closed = turned.off ? [...others, turned.l] : others;
-        return go(state, { room: 'read' }, { room: message.room, closed });
-      }
-      case 'unread':
-        return go(state, { room: 'unread' }, { why: message.why });
-      default:
-        return assertNever(state, message, 'the room');
-    }
-  },
+  step: turns('room', {
+    busy: 'what is open',
+    taker: 'the room',
+    refused: (_, why) => ` ${why}`,
+    // A read turns nothing, and keeps what was closed.
+    answered: (state, message) => {
+      const { room: open } = message;
+      const turned = /** @type {Turned | undefined} */ (message.turned);
+      if (!turned) return go(state, { room: 'read' }, { room: open });
+      const others = state.closed.filter((/** @type {Which} */ closed) => !same(closed)(turned.l));
+      const closed = turned.off ? [...others, turned.l] : others;
+      return go(state, { room: 'read' }, { room: open, closed });
+    },
+  }),
 };
 export const room = machine(
   'ROOM',
