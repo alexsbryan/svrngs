@@ -9,6 +9,7 @@
 // posted to its lender's door, and then it asks again; a refusal is said
 // after the button.
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
+import { silent, unreached } from '../question.js?v=__VERSION__';
 import { dialled, exchange, saying, trace } from './dial.js?v=__VERSION__';
 import { notLent } from './page.js?v=__VERSION__';
 import { UsesHidden } from './uses-hidden.js?v=__VERSION__';
@@ -121,7 +122,8 @@ const door = (group, lend, body, away = '') =>
   dialled(group, lend)
     .catch((error) => {
       trace(`PAGE: the dial failed: ${error}`);
-      return Promise.reject(saying(`${lend.person}’s computer did not answer.${away}`));
+      const quiet = `${silent(`${lend.person}’s computer`)}${away}`;
+      return Promise.reject(saying(unreached(error, quiet)));
     })
     .then(async (connection) => {
       const bytes = body && new TextEncoder().encode(JSON.stringify(body));

@@ -7,7 +7,7 @@
 // The group's key and its one endpoint live here, never in state. One
 // endpoint serves every dial, since the relay keeps one per key, so a
 // second endpoint of the key would displace the first.
-import { whoseComputer } from '../question.js?v=__VERSION__';
+import { silent, unreached, whoseComputer } from '../question.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
 /** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
 /** @import { Dialled, Endpoint } from '../wasm/svrngs_web.js?v=__VERSION__' */
@@ -108,7 +108,7 @@ export const exchange = (connection, path, bytes) =>
     )
     .finally(() => connection.close());
 
-export const AWAY = 'The computer that sent this link did not answer. Try again later.';
+export const AWAY = `${silent('The computer that sent this link')} Try again later.`;
 
 /**
  * What a link's refusal says, by the issuer's status.
@@ -132,7 +132,7 @@ export const linkRefused = (status) =>
 export async function posted(core, as, token, { path, body, refused = linkRefused }) {
   const dialled = await patiently(core.connect_to_join(as, token)).catch((error) => {
     trace(`PAGE: the dial failed: ${error}`);
-    throw saying(AWAY);
+    throw saying(unreached(error, AWAY));
   });
   const [ok, status, text] = await exchange(dialled, path, new TextEncoder().encode(body));
   if (ok) return text;
@@ -224,10 +224,10 @@ async function reach(core, group, tried) {
     ),
   ];
   const asked = [...(linked ? [link] : []), ...others];
-  const away = `${asked.map((one) => `${whoseComputer(one)} did not answer.`).join(' ')} Try again later.`;
+  const away = `${asked.map((one) => silent(whoseComputer(one))).join(' ')} Try again later.`;
   const [dialled, computer] = await patiently(Promise.any(tries)).catch((error) => {
     trace(`PAGE: the dial failed: ${error}`);
-    return Promise.reject(saying(away));
+    return Promise.reject(saying(unreached(error, away)));
   });
   trace(
     `PAGE: reached ${group.name} through ${computer ? `${computer.person}'s` : "the link's"} computer`,

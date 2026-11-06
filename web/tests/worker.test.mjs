@@ -166,3 +166,30 @@ test('one piece that cannot be fetched fails the install, so no worker runs half
   await assert.rejects(installed());
   assert.deepEqual(skipped, []);
 });
+
+// KEEP_GOING_AT_HOME 12, 18: a tab whose app's computer is silent is shown
+// its window, dark; where nothing on the way answered it is told that, since
+// no computer was asked. Watched failing with `away` taking no error.
+test("an app's window goes dark only for a computer that was reached for", async () => {
+  const { unreached } = await import('../../crates/svrngs-node/src/home/question.js?v=__VERSION__');
+  const lend = { label: 'l', person: 'ada', name: 'notes' };
+  const away = runInNewContext(`${cut('away')}\naway;`, {
+    QUIET: 'quiet',
+    REFUSED: 'x-svrngs-refused',
+    unreached,
+    awayPage: async () => '{who}’s window is dark',
+    trace: () => {},
+    say: (status, words) => ({ status, words }),
+    Response: class {
+      constructor(body) {
+        this.words = body;
+      }
+    },
+  });
+  const tab = { mode: 'navigate' };
+  const silent = new Error('LAYER tls/alpn+relay: REFUSED — not answered in 8s: asleep');
+  assert.equal((await away(tab, lend, silent)).words, 'ada’s window is dark');
+  const nothing = new Error('LAYER relay-connect: REFUSED — no relay answered within 10s');
+  assert.match((await away(tab, lend, nothing)).words, /Nothing on the way to your group/);
+  assert.equal((await away({ mode: 'cors' }, lend, silent)).words, 'quiet');
+});

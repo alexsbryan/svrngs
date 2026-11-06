@@ -789,7 +789,8 @@ in_webkit!(
     /// cancellation and cleanup). The link names two https routes that
     /// accept and never answer. `bind` waits `dial::LINK_WITHIN` for any
     /// relay to answer; none does, the endpoint is closed, and the page
-    /// says the computer did not answer. Planted, watched failing: the
+    /// says that, never that a computer it did not ask was silent
+    /// (KEEP_GOING_AT_HOME 18). Planted, watched failing: the
     /// unbounded wait, which left the person waiting the page's whole
     /// PATIENCE (60 s) with the endpoint still bound.
     every_route_down_fails_bounded_and_closes_the_endpoint
@@ -813,7 +814,7 @@ async fn every_route_down_fails_bounded_and_closes_the_endpoint(engine: harness:
     eprintln!("all routes down: {seen:#}");
     assert_eq!(
         seen["first"]["status"],
-        "The computer that sent this link did not answer. Try again later.",
+        "Nothing on the way to your group answered, so no computer was asked. Check your connection and try again.",
         "the failure is the page's accurate words:\n{seen:#}"
     );
     let ms = seen["ms"]

@@ -515,8 +515,12 @@ alike:**
   drawn as a page of its words; a program is given the JSON. A lend whose
   computer did not answer, `away`, is drawn as its person's window on the
   door, dark (`home/away.html`, which a phone's lend worker shows too,
-  naming the lend): that their computer did not answer, never that it
-  sleeps, nor since when. On a
+  naming the lend): that their computer did not answer and so may be off,
+  never that it sleeps, nor since when. Only a computer that was reached
+  for and stayed silent is said so: a phone says no relay answering, a link
+  naming no way in and a browser's refusal each in its own words, in one
+  place (`question.js` `unreached`), and shows a lend's worker's plain words
+  for them, no dark window. On a
   computer a page that reads a lend may read svrngs's answers at that lend's
   origin, which allow its origin alone, never `*`, and the lend's own answer
   only as far as that answer allows; any other page is allowed nothing

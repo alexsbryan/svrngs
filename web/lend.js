@@ -57,6 +57,7 @@ import init, {
   unsigned_line,
 } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
+import { silent, unreached } from './question.js?v=__VERSION__';
 import { framing, fromHex, maySign, openMessage, signerFor } from './authority.js?v=__VERSION__';
 /** @import { Handoff, Passed } from './authority.js?v=__VERSION__' */
 /** @import { Dialled, Endpoint } from './wasm/svrngs_web.js?v=__VERSION__' */
@@ -119,6 +120,7 @@ const SAVED =
 const OWN = store.labelOf(SCOPE.hostname);
 const SIGNER = signerFor(SCOPE, SITE);
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
+const QUIET = `${silent('The computer lending this')} Try again later.`;
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
 // Where its pages ask the lends they read, as a computer's origin answers
 // them too (crates/svrngs-node/src/surface.rs, `READS_PATH`).
@@ -691,7 +693,7 @@ async function proxied(asked, held) {
   const body = await bodyFor(asked, headers);
   const said = ranged(request, path);
   const res = await doorAnswer(asked, headers, body);
-  if (!res) return away(request, asked.lend);
+  if ('lost' in res) return away(request, asked.lend, res.lost);
   const range = res.headers.get('content-range') ?? '';
   const late = request.signal.aborted ? ', after the browser let go of it' : '';
   said?.(`answered ${res.status} ${range}${late}`);
@@ -764,13 +766,13 @@ async function bodyFor({ request, path }, headers) {
   return sent(blob, `${request.method} ${path}`);
 }
 
-// The door's answer to `asked`, or none when the lender's computer did
-// not answer.
+// The door's answer to `asked`, or what was lost when the lender's computer
+// could not be reached.
 /**
  * @param {Asked} asked
  * @param {Header[]} headers
  * @param {ReadableStream<Uint8Array> | null} body
- * @returns {Promise<Response | null>} the wasm's `fetch` answers the page's `Response`
+ * @returns {Promise<Response | { lost: unknown }>} the wasm's `fetch` answers the page's `Response`
  */
 async function doorAnswer({ request, lend, path }, headers, body) {
   for (let tries = 0; ; tries++) {
@@ -781,7 +783,7 @@ async function doorAnswer({ request, lend, path }, headers, body) {
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${error}`);
       // A dial that heard nothing from the computer within the cap, new or
       // held, is not tried again: a second would wait the cap again.
-      if (body || tries || /asleep/.test(error)) return null;
+      if (body || tries || /asleep/.test(error)) return { lost: error };
     }
   }
 }
@@ -1070,7 +1072,8 @@ async function writeSigned(lend, group, act, grant) {
   } catch (error) {
     dials.delete(lend.key);
     trace(`RUNTIME: lines not carried: ${String(error)}`);
-    const words = `${lend.person}’s computer did not answer. It is kept on this phone and goes with your next entry`;
+    const why = unreached(error, silent(`${lend.person}’s computer`));
+    const words = `${why} It is kept on this phone and goes with your next entry`;
     return Response.json({ error: words }, { status: 502 });
   }
   return judged(lend, res);
@@ -1153,12 +1156,15 @@ async function judged(lend, res) {
 /**
  * @param {Request} request
  * @param {Passed} lend
+ * @param {unknown} error
  */
-async function away(request, lend) {
-  const page = request.mode === 'navigate' ? await awayPage() : undefined;
+async function away(request, lend, error) {
+  const words = unreached(error, QUIET);
+  const dark = words === QUIET && request.mode === 'navigate';
+  const page = dark ? await awayPage() : undefined;
   const as = page ? 'as its window, dark' : 'in svrngs’s words';
-  trace(`RUNTIME: ${lend.label}'s computer did not answer, said ${as}`);
-  if (!page) return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+  trace(`RUNTIME: ${lend.label}'s computer was not reached, said ${as}: ${String(error)}`);
+  if (!page) return say(502, words, 'away');
   const who = lend.person.replace(/</g, '&lt;');
   const what = `${who}’s ${lend.name.replace(/</g, '&lt;')}`;
   const filled = page.replaceAll('{who}', who).replaceAll('{what}', what);
@@ -1269,7 +1275,7 @@ async function stopping(label) {
   } catch (error) {
     dials.delete(lend.key);
     trace(`RUNTIME: the stop for ${label} failed: ${String(error)}`);
-    return say(502, 'The computer lending this did not answer. Try again later.', 'away');
+    return say(502, unreached(error, QUIET), 'away');
   }
 }
 

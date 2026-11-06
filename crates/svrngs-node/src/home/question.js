@@ -324,6 +324,29 @@ export const titled = (group) => `${group.name}${group.maker ? ` (${whose(group)
 export const whoseComputer = (computer) =>
   computer ? `${computer.person}’s computer` : 'The computer that sent your link';
 
+// Whose computer did not answer, when the way to it did: all a page can know
+// of it, so never that it sleeps, nor since when (DESIGN §3).
+export const silent = (/** @type {string} */ whom) => `${whom} did not answer, so it may be off.`;
+
+// Why a dial failed: what the runtime refused with (web/src/lib.rs `refuse!`)
+// or the browser did, each try's when several failed, each cause in its own
+// words; `quiet` when only the computer was silent. The one mapping both a
+// page and a lend's worker say a dial's failure by (KEEP_GOING_AT_HOME 18).
+/**
+ * @param {any} error
+ * @param {string} quiet
+ */
+export const unreached = (error, quiet) => {
+  const why = String(error?.errors?.join(' ') ?? error);
+  if (/NotAllowedError|SecurityError/.test(why))
+    return 'This browser refused what svrngs needs to reach your group. Allow it in the browser’s settings and try again.';
+  if (why.includes('names no relay this page'))
+    return 'This link names no way in this page can use. Ask whoever sent it for a new one.';
+  if (why.includes('no relay answered'))
+    return 'Nothing on the way to your group answered, so no computer was asked. Check your connection and try again.';
+  return quiet;
+};
+
 // The groups a new one shares its name with (/group, the node's one rule;
 // #138), each said as `whose`, in the command's words (cli.rs
 // `namesakes_said`): `verb` says it before the group is made or after.

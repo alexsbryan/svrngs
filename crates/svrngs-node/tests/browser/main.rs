@@ -4419,7 +4419,7 @@ async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
     let listed = &seen["listed"];
     assert_eq!(
         listed["status"],
-        "ada’s computer did not answer. cy’s computer did not answer. Try again later.",
+        "ada’s computer did not answer, so it may be off. cy’s computer did not answer, so it may be off. Try again later.",
         "{seen:#}"
     );
     let text = listed["text"].as_str().unwrap_or_default();

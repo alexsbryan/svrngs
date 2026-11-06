@@ -6,8 +6,8 @@
   worker (web/lend.js `away`), to which scripts/build-web.sh copies this
   file. Each fills in {who}, the lender's name, and {what}, what could
   not open, each with `<` escaped. It says only that the
-  computer did not answer, as the door does: never that it sleeps, nor
-  since when (DESIGN §3, "Who went off is never a line"). A program is
+  computer did not answer and so may be off, as the door does: never that
+  it sleeps, nor since when (DESIGN §3, "Who went off is never a line"). A program is
   given svrngs's JSON instead, `away`.
 -->
 <html lang="en">
@@ -22,7 +22,7 @@
   a { color: gold; }
 </style>
 <h1>☾ {who}’s window is dark</h1>
-<p>{who}’s computer didn’t answer, so {what} can’t open right now. It opens again once that computer answers.</p>
+<p>{who}’s computer didn’t answer, so {what} can’t open right now. It may be off, and it opens again once it answers.</p>
 <p><a href="">Try again</a></p>
 <p>Goodnight from {who}.</p>
 </html>

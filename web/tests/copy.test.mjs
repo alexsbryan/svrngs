@@ -148,3 +148,35 @@ test('with beside, each answer is said after the button and what beside draws, t
     '<button>Copy the link</button> <small>Bookmark this.</small>',
   );
 });
+
+// KEEP_GOING_AT_HOME 18, 12: why a dial failed, each cause in its own true
+// words and in one place, from what the runtime refused with
+// (web/src/lib.rs `refuse!`) or the browser did; a computer is said to be
+// silent only when the way to it answered. Watched failing before `unreached`
+// existed, when every one of these read "did not answer".
+test('why a dial failed is said truly, one cause apart from another', async () => {
+  const { silent, unreached } =
+    await import('../../crates/svrngs-node/src/home/question.js?v=__VERSION__');
+  const off = silent('ada’s computer');
+  assert.equal(off, 'ada’s computer did not answer, so it may be off.');
+  const said = (error) => unreached(error, off);
+  const noRelay = new Error(
+    'LAYER relay-connect: REFUSED — no relay answered within 10s, and the endpoint is closed',
+  );
+  const noWay = new Error(
+    "LAYER parse: REFUSED — the link names no relay this page's policy takes",
+  );
+  const asleep = new Error('LAYER tls/alpn+relay: REFUSED — not answered in Some(8s): asleep');
+  const failed = new Error('LAYER tls/alpn+relay: REFUSED — connect() failed on every route: x');
+  const refused = new DOMException('denied', 'NotAllowedError');
+  assert.match(said(noRelay), /Nothing on the way to your group answered/);
+  assert.match(said(noWay), /names no way in this page can use/);
+  assert.match(said(refused), /browser refused/);
+  assert.match(said(new DOMException('no', 'SecurityError')), /browser refused/);
+  for (const error of [asleep, failed, new Error('no answer')]) assert.equal(said(error), off);
+  const all = new AggregateError([noRelay, noRelay]);
+  assert.equal(said(all), said(noRelay), 'every try of a dial, each read');
+  const words = new Set([noRelay, noWay, refused, asleep].map(said));
+  assert.equal(words.size, 4, 'each cause reads apart');
+  for (const line of words) assert.ok(!/relay|node|key/i.test(line), line);
+});
