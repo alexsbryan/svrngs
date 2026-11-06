@@ -65,7 +65,19 @@ struct Computer {
     dir: tempfile::TempDir,
 }
 
+/// Every computer here keeps its group folders in a home of this run's, as
+/// `new` puts them under `HOME`, never in the person's own `~/svrngs`.
+fn own_home() {
+    static HOME: std::sync::OnceLock<tempfile::TempDir> = std::sync::OnceLock::new();
+    HOME.get_or_init(|| {
+        let home = tempfile::tempdir().unwrap();
+        std::env::set_var("HOME", home.path());
+        home
+    });
+}
+
 async fn computer(seed: u8) -> Computer {
+    own_home();
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[seed; 32]);
     let node = Node::start(
