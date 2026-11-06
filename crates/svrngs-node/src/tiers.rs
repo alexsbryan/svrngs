@@ -4,9 +4,9 @@
 //! corrected by the relay-fallback charter: a browser may reach this
 //! computer only through the build's fallback while it answers, so that is
 //! the tier held): the build's fallback alone while it answers, and the
-//! groups' own relays alone when it does not, or the build's while a group
-//! it holds names none of its own, since one endpoint, so one home, serves
-//! every group. svrngs-core's `Meeting::decide` is the one decision;
+//! groups' own relays alone when it does not, one endpoint, so one home,
+//! serving every group; the build's whatever answers only when no group
+//! names one. svrngs-core's `Meeting::decide` is the one decision;
 //! [`Host::decide`] is the one place it changes the endpoint's relays
 //! (iroh-1.0.2 `Endpoint::insert_relay`, `remove_relay`, endpoint.rs:982,
 //! :996).

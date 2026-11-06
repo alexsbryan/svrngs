@@ -69,15 +69,12 @@ pub fn dotless(mut url: Url) -> Url {
 ///
 /// ```compile_fail
 /// // A meeting by hand, the build's tier left out, does not compile.
-/// let _ = svrngs_core::relay::Meeting { own: Default::default(), build: Default::default(), unowned: false };
+/// let _ = svrngs_core::relay::Meeting { own: Default::default(), build: Default::default() };
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Meeting {
     own: BTreeSet<Url>,
     build: BTreeSet<Url>,
-    /// Whether a group it was made of names no relay of its own, so the
-    /// build's tier is held whatever answers ([`Tier::Unowned`]).
-    unowned: bool,
 }
 
 /// Which tier a computer meets its groups at (relay fallbacks): a closed set.
@@ -90,8 +87,7 @@ pub enum Tier {
     /// The build's fallback alone: it answers, so a browser holding only
     /// the published page's policy reaches this computer through it.
     Fallback,
-    /// The build's too: a group it holds names none of its own, and one
-    /// endpoint, so one home, serves every group (§7's first slice).
+    /// The build's too: no group it holds names one of its own.
     Unowned,
 }
 
@@ -107,11 +103,7 @@ impl Meeting {
             .map(dotless)
             .filter(|r| !build.contains(r))
             .collect();
-        let meeting = Self {
-            unowned: own.is_empty(),
-            own,
-            build,
-        };
+        let meeting = Self { own, build };
         tracing::debug!(target: "relay", own = ?meeting.own, build = ?meeting.build, "relay: where a group meets, its own relays as one tier and the build's as the other");
         meeting
     }
@@ -136,7 +128,6 @@ impl Meeting {
     pub fn join(mut self, other: Meeting) -> Self {
         self.own.extend(other.own);
         self.build.extend(other.build);
-        self.unowned |= other.unowned;
         self
     }
 
@@ -144,10 +135,11 @@ impl Meeting {
     /// the relays its endpoint holds for it, given whether the build's
     /// fallback `answers` — never, when the build has none. The build's
     /// alone while it answers, so a browser may reach this computer through
-    /// it; the group's own alone when it does not; and the build's whatever
-    /// answers when a group it holds names none of its own.
+    /// it; its groups' own alone when it does not, so a group that names
+    /// none pins nobody to a relay that has gone; and the build's whatever
+    /// answers only when no group it holds names one.
     pub fn decide(&self, answers: bool) -> (Tier, BTreeSet<Url>) {
-        let tier = match (self.unowned, answers && !self.build.is_empty()) {
+        let tier = match (self.own.is_empty(), answers && !self.build.is_empty()) {
             (true, _) => Tier::Unowned,
             (false, true) => Tier::Fallback,
             (false, false) => Tier::Own,

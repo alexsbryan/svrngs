@@ -231,6 +231,20 @@ async fn a_fallback_home_reaches_the_issuer_and_the_local_primary_takes_over() {
 /// moves and nothing is reached (red: not homed at A within 30 s).
 #[tokio::test(flavor = "multi_thread")]
 async fn a_fresh_contribution_syncs_after_the_public_reach_is_cut() {
+    cut_and_contribute(false).await;
+}
+
+/// **A group that knows only the public relay pins nobody to it**
+/// (KEEP_GOING_AT_HOME 8): the same cut, with Ada and Bo each in a second
+/// group naming no relay of its own. Both still move to A, and the record
+/// still arrives. Planted: `Meeting::decide` keeping the build's tier for
+/// every group when any one names none (red: not homed at A).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone() {
+    cut_and_contribute(true).await;
+}
+
+async fn cut_and_contribute(public_only: bool) {
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
     let ((_own, a), (build, b)) = (relay(any).await, relay(any).await);
     let at_a: svrngs_core::relay::Url = a.parse().unwrap();
@@ -251,6 +265,17 @@ async fn a_fresh_contribution_syncs_after_the_public_reach_is_cut() {
         .commit(&house.id(), &Batch(vec![admit("bo", 6)]))
         .unwrap()
         .unwrap();
+    if public_only {
+        for (host, seed) in [(ada.host(), 5), (bo.host(), 6)] {
+            let away = group::draw(
+                Name::parse("away").unwrap(),
+                Name::parse("ada").unwrap(),
+                SigningKey::from_bytes(&[seed; 32]).verifying_key(),
+            );
+            host.keep_group(&away, None, &[])
+                .expect("a public-only group");
+        }
+    }
     homed_at(&ada, &b).await;
     homed_at(&bo, &b).await;
 

@@ -29,8 +29,6 @@ test('a group met at its fallback says why in a person’s words, and one met at
   const said = {
     fallback:
       'This computer is reachable through the public way for now, so a phone can open House too. It goes back to the place House usually meets once the public way stops answering.',
-    unowned:
-      'This computer is also in a group with no meeting place of its own, so it reaches every group, House too, the backup way.',
   };
   for (const [why, line] of Object.entries(said)) {
     assert.ok(section(why).includes(line), section(why));

@@ -129,10 +129,12 @@ fn a_group_never_meets_without_the_builds_relays() {
 /// own relays when it does not** (relay fallbacks; GROUP_RELAYS §7, the
 /// charter's "keep a public fallback reachable while online"): the one
 /// decision holds the build's tier alone while it answers, the own tier
-/// alone when it does not, and the build's whatever answers when a group
-/// joined in names none of its own, one endpoint serving every group; a
-/// computer in no group is at the build's. Planted: the own tier preferred
-/// while the build's answers, and the first row failed.
+/// alone when it does not, whether or not another group it holds names
+/// none of its own (KEEP_GOING_AT_HOME 8: a public-only group does not pin
+/// a computer to a relay that has gone), and the build's whatever answers
+/// only when no group names one; a computer in no group is at the build's.
+/// Planted: the own tier preferred while the build's answers, and the first
+/// row failed; one unowned group holding the build's tier for all.
 #[test]
 fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     let url = |u: &str| Url::parse(u).unwrap();
@@ -147,8 +149,20 @@ fn a_group_meets_at_the_builds_fallback_while_it_answers() {
         (
             mesh().join(Meeting::of([], core::slice::from_ref(&n0))),
             true,
-            Tier::Unowned,
+            Tier::Fallback,
             BTreeSet::from([n0.clone()]),
+        ),
+        (
+            mesh().join(Meeting::of([], core::slice::from_ref(&n0))),
+            false,
+            Tier::Own,
+            BTreeSet::from([a.clone()]),
+        ),
+        (
+            Meeting::of([], core::slice::from_ref(&n0)).join(mesh()),
+            false,
+            Tier::Own,
+            BTreeSet::from([a.clone()]),
         ),
         (
             Meeting::of([], core::slice::from_ref(&n0)),
