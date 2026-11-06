@@ -19,6 +19,7 @@ use n0_future::task::AbortOnDropHandle;
 use svrngs_core::pass::Label;
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
+use crate::lend::LendName;
 use crate::network::{guess, Unread, Whereabouts};
 use crate::node::Asking;
 use crate::origin::{Appending, Unconsented};
@@ -46,7 +47,8 @@ pub(crate) fn spawn(at: Asking, mut asked: kept::Asks<Turn, InRoom>) -> AbortOnD
     AbortOnDropHandle::new(tokio::spawn(async move {
         let mut every = tokio::time::interval(LOOK_EVERY);
         loop {
-            let done = kept::next(&mut every, &mut asked, &file, &mut on, Turn::made);
+            let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
+            let done = kept::next(&mut every, &mut asked, &file, &mut on, id);
             let Some(done) = done.await else { return };
             let room = serve(&at, on.as_deref().unwrap_or_default(), &mut listening).await;
             done.map(|d| d.send(on.as_ref().map(|_| room).map_err(String::clone)));

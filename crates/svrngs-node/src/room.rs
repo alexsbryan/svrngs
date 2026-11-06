@@ -152,30 +152,8 @@ pub enum RoomAsk {
     Off { key: String, name: LendName },
 }
 
-/// A change to the room, sent to its owner: these on, this one off, or
-/// none, to read it.
-pub(crate) enum Turn {
-    On(Vec<On>),
-    Off(String, LendName),
-    Read,
-}
-
-impl Turn {
-    /// The lends `on` once turned, each lend on once; `None` for a read,
-    /// which changes nothing.
-    fn made(self, on: &[On]) -> Option<Vec<On>> {
-        let mut on = on.to_vec();
-        match self {
-            Turn::On(lends) => lends.into_iter().for_each(|l| {
-                on.retain(|o| (&o.key, &o.name) != (&l.key, &l.name));
-                on.push(l);
-            }),
-            Turn::Off(key, name) => on.retain(|o| o.key != key || o.name != name),
-            Turn::Read => return None,
-        }
-        Some(on)
-    }
-}
+/// A change to the room, sent to its owner.
+pub(crate) type Turn = kept::Turn<On>;
 
 #[cfg(test)]
 #[path = "room_tests.rs"]

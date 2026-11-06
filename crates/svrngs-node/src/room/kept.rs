@@ -11,6 +11,8 @@ use std::path::Path;
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::sync::{mpsc, oneshot};
 
+use crate::lend::LendName;
+
 /// The lends on, as `file` keeps them: none before the first is turned on;
 /// why, when it cannot be read or parsed, which the room says and serves
 /// nothing from (AGENTS.md 6).
@@ -29,6 +31,31 @@ pub(crate) fn write<T: Serialize>(file: &Path, on: &[T]) {
     let bytes = serde_json::to_vec(on).expect("the room is JSON");
     let kept = crate::declared::write_whole(file, &bytes);
     tracing::debug!(target: "room", file = %file.display(), on = on.len(), ?kept, "room: turned, and kept so it opens again as svrngs starts");
+}
+
+/// A change to the lends on, sent to their owner: these on, this one off,
+/// or none, to read them.
+pub(crate) enum Turn<On> {
+    On(Vec<On>),
+    Off(String, LendName),
+    Read,
+}
+
+impl<On: Clone> Turn<On> {
+    /// The lends `on` once turned, each lend, as `id` tells them apart, on
+    /// once; `None` for a read, which changes nothing.
+    fn made(self, on: &[On], id: fn(&On) -> (&String, &LendName)) -> Option<Vec<On>> {
+        let mut on = on.to_vec();
+        match self {
+            Turn::On(lends) => lends.into_iter().for_each(|l| {
+                on.retain(|o| id(o) != id(&l));
+                on.push(l);
+            }),
+            Turn::Off(key, name) => on.retain(|o| id(o) != (&key, &name)),
+            Turn::Read => return None,
+        }
+        Some(on)
+    }
 }
 
 /// Where an owner answers what stands after a turn, or why that cannot be
@@ -68,18 +95,18 @@ impl<T, A> Owner<T, A> {
 /// at an ask, its turn made and written to `file`, and who to answer. A
 /// turn, not a read, writes over `on`: one that could not be read too.
 /// `None` once no handle is left.
-pub(crate) async fn next<T, A, On: Serialize>(
+pub(crate) async fn next<A, On: Clone + Serialize>(
     every: &mut tokio::time::Interval,
-    asked: &mut Asks<T, A>,
+    asked: &mut Asks<Turn<On>, A>,
     file: &Path,
     on: &mut Result<Vec<On>, String>,
-    made: impl FnOnce(T, &[On]) -> Option<Vec<On>>,
+    id: fn(&On) -> (&String, &LendName),
 ) -> Option<Option<Done<A>>> {
     tokio::select! {
         _ = every.tick() => Some(None),
         turned = asked.recv() => {
             let (turn, done) = turned?;
-            if let Some(made) = made(turn, on.as_deref().unwrap_or_default()) {
+            if let Some(made) = turn.made(on.as_deref().unwrap_or_default(), id) {
                 write(file, &made);
                 *on = Ok(made);
             }

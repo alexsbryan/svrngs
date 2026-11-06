@@ -108,29 +108,8 @@ pub enum PlayAsk {
     Off { key: String, name: LendName },
 }
 
-/// A change to what has Play on, sent to its owner: this one on, this one
-/// off, or none, to read it.
-pub(crate) enum Turn {
-    On(On),
-    Off(String, LendName),
-    Read,
-}
-
-impl Turn {
-    /// The lends `on` once turned, each once; `None` for a read.
-    fn made(self, on: &[On]) -> Option<Vec<On>> {
-        let mut on = on.to_vec();
-        match self {
-            Turn::On(o) => {
-                on.retain(|x| (&x.key, &x.name) != (&o.key, &o.name));
-                on.push(o);
-            }
-            Turn::Off(key, name) => on.retain(|o| o.key != key || o.name != name),
-            Turn::Read => return None,
-        }
-        Some(on)
-    }
-}
+/// A change to what has Play on, sent to its owner.
+pub(crate) type Turn = kept::Turn<On>;
 
 /// Each lend open, by its label: the member's half of the door, and its
 /// lender's last words of a program refused.
@@ -148,7 +127,8 @@ pub(crate) fn spawn(at: Asking, mut asked: kept::Asks<Turn, Playing>) -> AbortOn
     AbortOnDropHandle::new(tokio::spawn(async move {
         let mut every = tokio::time::interval(LOOK_EVERY);
         loop {
-            let done = kept::next(&mut every, &mut asked, &file, &mut on, Turn::made);
+            let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
+            let done = kept::next(&mut every, &mut asked, &file, &mut on, id);
             let Some(done) = done.await else { return };
             let plays = play(&at, on.as_deref().unwrap_or_default(), &mut open).await;
             done.map(|d| d.send(on.as_ref().map(|_| plays).map_err(String::clone)));
@@ -256,7 +236,7 @@ async fn turn(State(at): State<Asking>, Json(ask): Json<PlayAsk>) -> Response {
         let words = format!("{name} is not lent to this computer as a port now");
         return LendRefusal::Unlent.say(StatusCode::CONFLICT, words);
     };
-    turned(&at, Turn::On(On { key, name, raw })).await
+    turned(&at, Turn::On(vec![On { key, name, raw }])).await
 }
 
 /// `turn` made by Play's owner, and what has Play on then; why that cannot
