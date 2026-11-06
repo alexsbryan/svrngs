@@ -609,11 +609,12 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     running.until("Leave this running");
     assert!(
-        running.seen.iter().any(
-            |l| l.starts_with("You lend pad (port")
+        running
+            .seen
+            .iter()
+            .any(|l| l.starts_with("You lend pad (port")
                 && l.contains("to the groups you chose")
-                && l.contains("as many at once as want it")
-        ),
+                && l.contains("as many at once as want it")),
         "{:?}",
         running.seen
     );
