@@ -11,7 +11,7 @@
 // ended. The key never enters state: the edge holds it.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { patiently, saying, wasm } from './dial.js?v=__VERSION__';
+import { posted, readable, wasm } from './dial.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './hand.js?v=__VERSION__';
 /** @import { Visit } from '../store.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
@@ -172,28 +172,10 @@ const stay = (core, token, visit) => {
  */
 async function visiting(core, token, guest) {
   const ask = JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token));
-  const bytes = new TextEncoder().encode(JSON.stringify({ ask, guest }));
-  const dialled = await patiently(
-    core.connect_to_join(/** @type {Uint8Array} */ (key), token),
-  ).catch(() => {
-    throw saying('The computer that sent this link did not answer. Try again later.');
-  });
-  // The wasm's `fetch` answers the page's `Response` (svrngs_web.d.ts `Dialled`).
-  /** @type {Response} */
-  const res = await dialled
-    .fetch(
-      'POST',
-      '/visit',
-      [
-        ['content-type', 'application/json'],
-        ['content-length', String(bytes.length)],
-      ],
-      new Blob([bytes]).stream(),
-    )
-    .finally(() => dialled.close());
-  if (res.ok) return res.json();
-  if (res.status === 403) throw saying('This link lets nobody in. Ask for a new one.');
-  throw saying('The computer that sent this link cannot let anyone in just now. Try again later.');
+  const body = JSON.stringify({ ask, guest });
+  return JSON.parse(
+    await posted(core, /** @type {Uint8Array} */ (key), token, { path: '/visit', body }),
+  );
 }
 /**
  * The visit kept for this link, its key unsealed, or `unkept` when none is.
@@ -202,9 +184,7 @@ async function visiting(core, token, guest) {
  */
 async function recalling(token) {
   const core = await wasm();
-  if (!core.relay_of(token)) {
-    throw saying('This link was made by an older svrngs. Ask whoever sent it for a new one.');
-  }
+  readable(core, token);
   const kept = await store.visitOf(token);
   if (!kept) return { type: 'unkept', why: 'no visit is kept for this link' };
   key = kept.key;

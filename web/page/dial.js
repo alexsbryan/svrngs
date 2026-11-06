@@ -33,9 +33,22 @@ export const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 export const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 
 // An error in words the page says to the person, as a failed message's
-// `said`.
-export const saying = (/** @type {string} */ words) =>
-  Object.assign(new Error(words), { said: words });
+// `said`, and the status it answers when a computer refused.
+/**
+ * @param {string} words
+ * @param {number} [status]
+ */
+export const saying = (words, status) => Object.assign(new Error(words), { said: words, status });
+
+// `token`, refused when this build cannot read a link's way in from it.
+/**
+ * @param {typeof Wasm} core
+ * @param {string} token
+ */
+export const readable = (core, token) => {
+  if (!core.relay_of(token))
+    throw saying('This link was made by an older svrngs. Ask whoever sent it for a new one.');
+};
 
 /**
  * What `dialling` answers, or an error once PATIENCE has passed with no
@@ -84,6 +97,39 @@ export const exchange = (connection, path, bytes) =>
         ]),
     )
     .finally(() => connection.close());
+
+export const AWAY = 'The computer that sent this link did not answer. Try again later.';
+
+/**
+ * What a link's refusal says, by the issuer's status.
+ * @param {number} status
+ */
+export const linkRefused = (status) =>
+  status === 403
+    ? 'This link lets nobody in. Ask for a new one.'
+    : 'The computer that sent this link cannot let anyone in just now. Try again later.';
+
+/**
+ * `body` posted at `path` to the issuer of `token`, dialled as `as` within
+ * PATIENCE: its answer's text, or the refusal `refused` words for its
+ * status. A join's and a visit's one way to the computer that made a link.
+ * @param {typeof Wasm} core
+ * @param {Uint8Array} as
+ * @param {string} token
+ * @param {{ path: string, body: string }} request
+ * @param {(status: number, text: string) => string} [refused]
+ * @returns {Promise<string>}
+ */
+export async function posted(core, as, token, { path, body }, refused = linkRefused) {
+  const dialled = await patiently(core.connect_to_join(as, token)).catch((error) => {
+    trace(`PAGE: the dial failed: ${error}`);
+    throw saying(AWAY);
+  });
+  const [ok, status, text] = await exchange(dialled, path, new TextEncoder().encode(body));
+  if (ok) return text;
+  trace(`PAGE: ${path} answered ${status}: ${text}`);
+  throw saying(refused(status, text), status);
+}
 
 // Each typed apart, as JSDoc types only the first of several declared at once.
 // The group's key, set by enter.js's `open`, which comes before every read.
@@ -136,8 +182,7 @@ const endpoint = (core, group) => {
  * @returns {Promise<[Dialled, Computer | undefined]>} and the computer that answered, none when the link's did
  */
 async function reach(core, group, tried) {
-  if (!core.relay_of(group.token))
-    throw saying('This link was made by an older svrngs. Ask whoever sent it for a new one.');
+  readable(core, group.token);
   const issuer = core.issuer_of(group.token);
   const link = group.computers?.find((one) => one.key === issuer);
   const linked = !tried.includes(issuer);

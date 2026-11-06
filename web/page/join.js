@@ -11,7 +11,7 @@
 // apart from every group, and sent to the visit as `guest named`.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { exchange, patiently, trace, wasm } from './dial.js?v=__VERSION__';
+import { AWAY, linkRefused, posted, readable, saying, trace, wasm } from './dial.js?v=__VERSION__';
 import { NameForm } from './name-form.js?v=__VERSION__';
 import { sending } from './page.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
@@ -216,42 +216,9 @@ export const view = {
 // (`connect_to_join`) within dial.js's PATIENCE, and the ask and the
 // redemption posted; the joined group kept, its key sealed (store.js
 // `keep`).
-const AWAY = 'The computer that sent this link did not answer. Try again later.';
-/**
- * @param {string} words
- * @param {number} [status]
- */
-const refusal = (words, status) => Object.assign(new Error(words), { said: words, status });
-/**
- * What a link's refusal says, by the issuer's status.
- * @param {number} status
- */
-const linkRefused = (status) =>
-  status === 403
-    ? 'This link lets nobody in. Ask for a new one.'
-    : 'The computer that sent this link cannot let anyone in just now. Try again later.';
 // Made fresh by `ask`, which comes before every `admit` (`asked`).
 /** @type {Uint8Array<ArrayBuffer>} */
 let key;
-/**
- * `body` posted at `path` to the issuer of `token`, its answer's text, or
- * the refusal `refused` words for its status.
- * @param {typeof Wasm} core
- * @param {string} token
- * @param {{ path: string, body: string }} request
- * @param {(status: number, text: string) => string} [refused]
- * @returns {Promise<string>}
- */
-async function posted(core, token, { path, body }, refused = linkRefused) {
-  const dialled = await patiently(core.connect_to_join(key, token)).catch((error) => {
-    trace(`PAGE: the dial failed: ${error}`);
-    throw refusal(AWAY);
-  });
-  const [ok, status, text] = await exchange(dialled, path, new TextEncoder().encode(body));
-  if (ok) return text;
-  trace(`PAGE: ${path} answered ${status}: ${text}`);
-  throw refusal(refused(status, text), status);
-}
 const unjoined = (/** @type {Error & { said?: string }} */ error) =>
   /** @satisfies {PageMessage} */ ({
     type: 'unjoined',
@@ -267,17 +234,15 @@ const unjoined = (/** @type {Error & { said?: string }} */ error) =>
  */
 async function asking(token, native) {
   const core = await wasm();
-  if (!core.relay_of(token)) {
-    throw refusal('This link was made by an older svrngs. Ask whoever sent it for a new one.');
-  }
+  readable(core, token);
   key = crypto.getRandomValues(new Uint8Array(32));
-  const reply = await posted(core, token, {
+  const reply = await posted(core, key, token, {
     path: native ? '/ask?native=true' : '/ask',
     body: core.ask(key, token),
   });
   const welcome = native ? JSON.parse(reply) : null;
   const told = native ? JSON.stringify(welcome.asked) : reply;
-  if (native && typeof welcome.inviter !== 'string') throw refusal(AWAY);
+  if (native && typeof welcome.inviter !== 'string') throw saying(AWAY);
   const group = core.believe(told);
   const devices = group.person ? `, for ${group.person}’s devices` : '';
   return {
@@ -320,7 +285,7 @@ async function admitting({ token, told, group, name }) {
   } catch (/** @type {any} */ error) {
     return { type: 'taken', why: `${error.message[0].toUpperCase()}${error.message.slice(1)}.` };
   }
-  await posted(core, token, { path: '/redeem', body }, (status, text) =>
+  await posted(core, key, token, { path: '/redeem', body }, (status, text) =>
     goesBy(group, status, text),
   );
   const person = JSON.parse(body).person;
