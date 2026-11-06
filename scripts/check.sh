@@ -77,7 +77,7 @@ rm -rf target/could-not-judge target/conformance
 # The canaries, browser, joining and conformance targets are `test = false`
 # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
 # once, in its own step below, and not again here.
-step "tests"    cargo test --quiet
+step "tests"    cargo test --quiet --no-fail-fast
 # The canaries (DESIGN §5), by name: the apps that keep the infra general.
 step "canaries" cargo test --quiet --workspace --test canaries
 # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
