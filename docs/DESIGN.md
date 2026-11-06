@@ -423,7 +423,8 @@ alike:**
     page ("Lent apps", call 6); none for a key asking with no pass;
   - where it is lent, `x-svrngs-label`, the lend's label, and
     `x-svrngs-pages`, the group page of each group the lender's computer
-    holds that the asker stands in, `<group>=<page>` apart by a space (the
+    holds that the asker stands in and the lend is lent to, never another,
+    `<group>=<page>` apart by a space (the
     page `none` when the group keeps none, `unread` when it cannot be read).
     From them an app writes a link into itself, `<page>#open=<label>&at=<path>`,
     which the group's page opens on a phone and a computer's home page opens

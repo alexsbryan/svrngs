@@ -1599,10 +1599,16 @@ impl Drop for Carriage {
     }
 }
 
-/// [`PAGES_HEADER`]'s value for `device`; `None`, named at warn, when the
-/// groups held cannot be listed, and at debug when a page cannot be a header.
-fn pages(door: &Door, device: &DeviceKey) -> Option<HeaderValue> {
+/// [`PAGES_HEADER`]'s value for `device` asking `lend`: the groups it
+/// stands in that the lend reaches, never another (LENDING_SCOPE
+/// §"Enforcement and disclosure" 5); `None`, named at warn, when the groups
+/// held cannot be listed, and at debug when a page cannot be a header.
+fn pages(door: &Door, device: &DeviceKey, lend: &Lend) -> Option<HeaderValue> {
     let stands = |group: &String| {
+        if !lend.reaches(group) {
+            tracing::debug!(target: "door", group, lend = %lend.name, "door: a group the lend is not lent to, so its page is not told");
+            return false;
+        }
         let standing = door.rail.standing(group);
         tracing::debug!(target: "door", group, read = standing.is_ok(), "door: whether the device stands in a group, for its page; an unreadable register tells none");
         standing.is_ok_and(|s| s.names(device.as_str()))
@@ -1699,7 +1705,7 @@ async fn forward(
     }
     let label = Label::of(&door.key, lend.name.as_str());
     let named = HeaderValue::from_str(label.as_str()).expect("a label is base32, so a header");
-    let pages = pages(door, device).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
+    let pages = pages(door, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
     let told = [(HeaderName::from_static(LABEL_HEADER), named)];
     parts.headers.extend(told.into_iter().chain(pages));
     if displaced > 0 {

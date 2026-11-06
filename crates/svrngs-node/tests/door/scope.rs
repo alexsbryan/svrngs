@@ -84,6 +84,21 @@ async fn a_list_tells_a_member_only_the_groups_it_shares_with_the_lend() {
     pair.close().await;
 }
 
+/// The groups the service is told a House member's request comes with:
+/// the house's page, never trip's, which bo stands in and the shelf is not
+/// lent to. Planted: every group bo stands in told (`pages` unfiltered).
+#[tokio::test]
+async fn the_service_is_told_only_the_groups_the_lend_reaches() {
+    let (pair, heads) = lending_heads().await;
+    groups_held(&pair, &[NS, "yard"]);
+    let reply = pair.get("/lend/shelf/whoami", "").await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let pages = header_values(&last(&heads), "x-svrngs-pages").join(" ");
+    assert!(pages.starts_with(&format!("{NS}=")), "{pages}");
+    assert!(!pages.contains("trip") && !pages.contains("yard"), "{pages}");
+    pair.close().await;
+}
+
 /// A stale pass: bo's pass for the shelf, signed while it was lent to the
 /// house, opens nothing once it is lent only to yard, and the service is
 /// not asked again. Planted: the signer resolved through any group.
