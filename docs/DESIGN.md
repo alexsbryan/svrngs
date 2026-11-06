@@ -153,8 +153,16 @@ web UI — is an app like any other. What the group may do with it is its
 *lend declaration*, kept as data on the lender's computer: a secret the
 door injects and never lets out, in place of the client's own header of its
 name (a lend with no secret leaves each browser's own), the paths it
-refuses, how many people may use it at once. A lend is lent to every group
-its lender's computer holds. *Lends are asked, not stored:* each computer
+refuses, how many people may use it at once, and the groups it is lent to.
+*A lend reaches only the groups its lender chose* (docs/LENDING_SCOPE.md):
+its declaration names their stable ids in `groups`; `[]` is paused, and a
+declaration without the field, written before groups could be chosen, is
+legacy and paused too, never every group. Joining a group never adds it.
+A carried app's group is its own and is not chosen (`Lend::reaches`). A
+member is let in only through a chosen group both they and the lender
+stand in, and asks as the person that group names them; when two chosen
+groups name one device as different people the door refuses rather than
+pick one (`RingRail::standing_in`). *Lends are asked, not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
 never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit

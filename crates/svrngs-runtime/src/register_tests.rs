@@ -323,3 +323,33 @@ fn a_keepers_remove_of_another_key_of_their_own_is_read_as_the_fold_reads_it() {
     let said: Vec<_> = register.removals.iter().map(|r| r.said).collect();
     assert_eq!(said, [RemovalSaid::Removed], "{:?}", register.removals);
 }
+
+/// A device standing in two groups a lend reaches as two different people
+/// is refused, not resolved to whichever group lists first, so an allowed
+/// request is never attributed to another account (LENDING_SCOPE §"One
+/// policy"); one person in both resolves through the first eligible group,
+/// and a group the lend does not reach never vouches. The failing input is
+/// the first-match `find_map`, which answers `house`'s alex for key 2.
+#[test]
+fn a_device_two_eligible_groups_name_as_different_people_stands_in_neither() {
+    use std::sync::Arc;
+    let dir = tempfile::tempdir().unwrap();
+    let rail = RingRail::new(dir.path(), Arc::new(key(1)));
+    let roster = |person: &str, keys: &[u8]| {
+        let keys = keys.iter().map(|k| actor_of(&key(*k))).collect();
+        Roster::new([(Person::parse(person).unwrap(), keys)].into_iter().collect())
+    };
+    rail.set_seed("house", &roster("alex", &[1, 2])).unwrap();
+    rail.set_seed("trip", &roster("bo", &[2])).unwrap();
+    rail.set_seed("yard", &roster("alex", &[1, 2])).unwrap();
+    let two = actor_of(&key(2));
+    let person = |eligible: &[&str]| {
+        let found = rail.standing_in(&two, |g| eligible.contains(&g));
+        found.map(|(group, m)| (group, m.person_key))
+    };
+    assert_eq!(person(&["house", "trip"]), None, "two people for one device");
+    assert_eq!(person(&["trip"]), Some(("trip".into(), two.clone())));
+    let alex = Some(("house".into(), actor_of(&key(1))));
+    assert_eq!(person(&["house", "yard"]), alex, "one person, the first group");
+    assert_eq!(person(&["yard", "house"]), alex, "order of the ask changes nothing");
+}
