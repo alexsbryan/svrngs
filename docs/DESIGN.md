@@ -179,7 +179,7 @@ start of their id; with none it is refused with that command, never lent
 to all. `svrngs unshare <lend> --group <group>` takes just those groups
 away, its secret, sign-in and choices kept; bare `unshare` stops lending
 it. Every change to a declaration — its groups, its limit, turning on
-sign-in — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
+sign-in, stopping it — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
 from its read to its write (`lend::mutate`), so no change writes back
 what another narrowed; one made while another holds it is refused, busy
 (409 on the home page), and changes nothing. A group taken away is

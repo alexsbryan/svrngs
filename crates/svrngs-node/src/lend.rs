@@ -782,8 +782,11 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
 
 /// Take back the lend `name`: its declaration, then its choices, then its
 /// secret, so a lend shared again asks again. `false`
-/// when this computer lends nothing by that name.
+/// when this computer lends nothing by that name. Held under its lock like
+/// every change ([`mutate`]), so a change read before it cannot write the
+/// lend back; busy while another holds it.
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
+    let _held = lock_lend(data_dir, name)?;
     let path = lends_dir(data_dir).join(format!("{name}.json"));
     let declared = match std::fs::remove_file(&path) {
         Ok(()) => true,

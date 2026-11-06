@@ -468,3 +468,36 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
         .unwrap();
     assert_eq!(pad.audience, Audience::Legacy, "and it reaches nobody");
 }
+
+/// A withdrawal is serialized with every other change to the lend: one
+/// asked while a change holds its lock is busy, so the change's write can
+/// never bring back a lend just withdrawn. Planted: `withdraw` outside the
+/// lock, which removed the file mid-change and let the change write it back.
+#[test]
+fn a_withdrawal_while_a_change_holds_the_lend_is_busy_never_undone() {
+    let root = tempfile::tempdir().unwrap();
+    let shelf = lend("shelf", 9);
+    declare(root.path(), &shelf, None).unwrap();
+    let mut during = None;
+    let changed = mutate(root.path(), &shelf.name, |l| {
+        during = Some(withdraw(root.path(), &shelf.name));
+        l.limit = NonZeroU16::new(5);
+    });
+    assert!(changed.unwrap(), "the change is written");
+    let said = during.unwrap();
+    let back = read(root.path(), &shelf.name).unwrap().is_some();
+    assert!(
+        !(matches!(said, Ok(true)) && back),
+        "withdraw said it withdrew, and the change wrote the lend back"
+    );
+    assert!(matches!(said, Err(LendError::Busy { .. })), "{said:?}");
+    assert!(
+        withdraw(root.path(), &shelf.name).unwrap(),
+        "taken once let go"
+    );
+    assert_eq!(
+        read(root.path(), &shelf.name).unwrap(),
+        None,
+        "and it stays withdrawn"
+    );
+}
