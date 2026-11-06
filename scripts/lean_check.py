@@ -503,12 +503,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Merged with the backend (merge-scope-ui): the UI lane's +113 under its
 # preapproval above, on top of main's 8,211, which already carries
 # relay-fallback's +24: 8,324 measured after the merge, the cap 8,325.
+# The merge's integration fix in lent-row.js (absent groups) adds one: 8,326.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
     ".": 20431,
 
-    "js": 8325,
+    "js": 8326,
 
     "swift": 1,
 }
