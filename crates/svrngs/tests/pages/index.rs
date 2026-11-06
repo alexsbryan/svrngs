@@ -107,6 +107,7 @@ async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
             "all": "#running li, #running p",
             "do": [["#running button:has-text('Look for programs')", null, true],
                 [format!("{row} input[name=name]"), "notes"], [format!("{row} input[name=kind]"), "notes"],
+                [format!("{row} input[type=checkbox]"), true],
                 [format!("{row} button"), null, true, "You lent notes"]],
             "after": ["#home table.index", "ada’s notes"],
             "text": true,
@@ -124,7 +125,7 @@ async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
             "the index lists ada’s notes",
         ),
         (
-            !text.contains("notes: everyone in your groups at once"),
+            !text.contains("notes: everyone in the groups you chose at once"),
             "What you lend lists it",
         ),
         (seen["loads"] != 1, "with no reload"),
@@ -151,6 +152,7 @@ async fn lending(
     let (ada, home, id) = house(dir, relay).await;
     let mut body = body;
     body["port"] = json!(serving(22000, "ada's shelf").await);
+    body["groups"] = json!([id]);
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
@@ -200,7 +202,7 @@ async fn three_changes_to_a_lend_are_read_again_in_place(engine: Engine) {
             "four, read again",
         ),
         (
-            !first(&seen, 1).starts_with("shelf: everyone in your groups at once"),
+            !first(&seen, 1).starts_with("shelf: everyone in the groups you chose at once"),
             "everyone, read again",
         ),
         (

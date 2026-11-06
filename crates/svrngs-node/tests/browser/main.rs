@@ -1593,6 +1593,11 @@ async fn a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone(engine: Engi
     svrngs_node::group::write_origin(&house, &Origin::parse(&page).unwrap()).unwrap();
     let (app, heads) = linking_app().await;
     lend(dir.path(), "app", app.port());
+    // Lent to both groups, so both pages are told: a page is told only of
+    // a group the lend reaches (LENDING_SCOPE §"Enforcement and disclosure" 5).
+    let name = svrngs_node::lend::LendName::parse("app").unwrap();
+    let both = vec![NS.to_string(), "dweb".to_string()];
+    assert!(svrngs_node::lend::set_audience(dir.path(), &name, both).unwrap());
     let label = label(1, "app");
 
     let own = reqwest::Client::builder()
@@ -2467,7 +2472,7 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
         "{seen:#}"
     );
     assert!(
-        first(&after[1]).starts_with("shelf: everyone in your groups at once"),
+        first(&after[1]).starts_with("shelf: everyone in the groups you chose at once"),
         "{seen:#}"
     );
     assert_eq!(after[2], json!(["You lend nothing yet."]), "{seen:#}");
@@ -4512,6 +4517,9 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     let row = |port: u16| format!("#running li:has-text('localhost:{port}')");
     let press = |port: u16| json!([format!("{} button", row(port)), null, true]);
     let fill = |port: u16, n: &str, v: &str| json!([format!("{} input[name={n}]", row(port)), v]);
+    // A person ticks who can open it before lending it (SCOPE_PARALLEL.md:
+    // never a default): the row offers HOME's one group.
+    let tick = |port: u16| json!([format!("{} input[type=checkbox]", row(port)), true]);
     let look = json!(["#running button:has-text('Look for programs')", null, true]);
     let seen = home_page(
         engine,
@@ -4520,11 +4528,12 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
             "read": "#lent h2",
             "timed": ["#lent h2", "#running li"],
             "all": "#running li, #running p",
-            "do": [look, press(8096), press(chores.port()), fill(chores.port(), "name", "chores"),
-                fill(chores.port(), "kind", "chore-wheel"), press(chores.port())],
+            "do": [look, tick(8096), press(8096), tick(chores.port()), press(chores.port()),
+                fill(chores.port(), "name", "chores"), fill(chores.port(), "kind", "chore-wheel"),
+                press(chores.port())],
             // The running row answers before HOME's lending reread. An old
             // list still matches `#lent h2 ~ *` (grouped-home check.log).
-            "after": ["#lent li", "chores: everyone in your groups at once"],
+            "after": ["#lent li", "chores: everyone in the groups you chose at once"],
             "text": true,
         }),
     )
@@ -4559,6 +4568,10 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         "jellyfin named, with how to make each person an account first:\n{seen:#}"
     );
     assert!(said(found, chores.port()).contains("Its name"), "{seen:#}");
+    assert!(
+        first.contains("Who can open jellyfin?"),
+        "the row asks who can open it, a group to tick:\n{seen:#}"
+    );
     let quiet = |p: u16| std::net::TcpStream::connect(("127.0.0.1", p)).is_err();
     for port in [gone, ada.api_addr().port()]
         .into_iter()
@@ -4585,7 +4598,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
     );
     for lent in ["jellyfin", "chores"] {
         assert!(
-            page.contains(&format!("{lent}: everyone in your groups at once")),
+            page.contains(&format!("{lent}: everyone in the groups you chose at once")),
             "what this computer lends, drawn again in place: {lent}\n{page}"
         );
     }
@@ -4603,6 +4616,12 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         read("chores"),
         Some((port(chores.port()), "chore-wheel".into()))
     );
+    let name = svrngs_node::lend::LendName::parse("chores").unwrap();
+    let lent_to = svrngs_node::lend::read(ada_dir.path(), &name)
+        .unwrap()
+        .unwrap();
+    let house = svrngs_node::lend::Audience::Selected(vec![NS.to_string()]);
+    assert_eq!(lent_to.audience, house, "lent to the group ticked");
 
     let opened = home_page(engine, &bo, json!({ "open": "ada’s jellyfin" })).await;
     eprintln!("bo's home page: {opened:#}");
