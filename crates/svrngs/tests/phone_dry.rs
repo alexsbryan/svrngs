@@ -65,19 +65,7 @@ async fn sam_through_a_relay_on_this_computer() {
     tokio::time::timeout(Duration::from_secs(20), sam.endpoint().online())
         .await
         .expect("Sam's computer reaches the relay on 127.0.0.1");
-    let film = Lend {
-        name: LendName::parse("film").unwrap(),
-        source: svrngs_node::lend::Source::Port(port),
-        kind: Kind::parse("film").unwrap(),
-        limit: Some(limit),
-        refused: Vec::new(),
-        upload: None,
-        reads: Vec::new(),
-        sign_in_with_svrngs: None,
-        asks: None,
-    };
-    lend::declare(&sam_dir, &film, None).unwrap();
-    let (_, printed) = cli::new_group(
+    let (house, printed) = cli::new_group(
         &sam,
         Name::parse("House").unwrap(),
         Name::parse("Sam").unwrap(),
@@ -87,6 +75,20 @@ async fn sam_through_a_relay_on_this_computer() {
     )
     .await
     .expect("Sam makes House, its links on the page's origin");
+    let film = Lend {
+        name: LendName::parse("film").unwrap(),
+        source: svrngs_node::lend::Source::Port(port),
+        kind: Kind::parse("film").unwrap(),
+        // Lent to House, the group just made (LENDING_SCOPE).
+        audience: svrngs_node::lend::Audience::Selected(vec![house.id().to_string()]),
+        limit: Some(limit),
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in_with_svrngs: None,
+        asks: None,
+    };
+    lend::declare(&sam_dir, &film, None).unwrap();
     let link = printed.https.expect("an https link on the origin");
     std::fs::write(dir.join("link"), &link).unwrap();
     eprintln!("the link printed: {link}");

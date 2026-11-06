@@ -183,7 +183,7 @@ async fn group(relay: &Server) -> Group {
     ] {
         let at = lend::lends_dir(dir.path());
         std::fs::create_dir_all(&at).unwrap();
-        let body = json!({ "port": port, "kind": "app", "limit": 3 });
+        let body = json!({ "port": port, "kind": "app", "limit": 3, "groups": [NS] });
         std::fs::write(at.join("app.json"), body.to_string()).unwrap();
         let secrets = lend::secret_dir(dir.path(), &LendName::parse("app").unwrap());
         declared::write_declared_in(&secrets, "authorization", secret).unwrap();

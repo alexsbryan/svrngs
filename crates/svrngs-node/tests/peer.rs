@@ -43,7 +43,7 @@ static ONE_AT_A_TIME: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(())
 fn lends(dir: &Path, name: &str, port: u16, asks: Option<&str>) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
-    let body = json!({ "port": port, "kind": "app", "limit": 3, "asks": asks });
+    let body = json!({ "port": port, "kind": "app", "limit": 3, "asks": asks, "groups": [pair::NS] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 

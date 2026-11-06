@@ -51,6 +51,7 @@ fn share(p: u16) -> Share {
         asks: None,
         sign_in: false,
         raw: None,
+        audience: svrngs_node::lend::Audience::Legacy,
     }
 }
 

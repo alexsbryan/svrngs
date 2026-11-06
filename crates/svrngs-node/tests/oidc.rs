@@ -20,6 +20,9 @@ use svrngs_node::SigningKey;
 
 const LEND: &str = "media";
 const PORT: u16 = 8096;
+/// The group the lend is lent to (LENDING_SCOPE): a declaration that names
+/// no group is legacy and paused, so this test's lend must name one.
+const NS: &str = "house";
 const CLIENT: &str = "svrngs-media";
 const SECRET: &str = "media-secret_2026.10";
 const PUBLIC: &str = "public";
@@ -62,7 +65,7 @@ fn signs_in(dir: &Path, name: &str, port: u16, client: &str, secret: Option<&str
     if let Some(secret) = secret {
         client["client_secret"] = secret.into();
     }
-    let body = json!({ "port": port, "kind": "media", "sign_in_with_svrngs": client });
+    let body = json!({ "port": port, "kind": "media", "groups": [NS], "sign_in_with_svrngs": client });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
