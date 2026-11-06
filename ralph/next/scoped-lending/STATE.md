@@ -11,7 +11,7 @@ full gate exits 0.
 
 ## Rows
 
-- [ ] onboarding-scoped-lending — depends [onboarding-scope-economize] — BACKEND LANE, implement selected-ring lender enforcement from `docs/LENDING_SCOPE.md` and `SCOPE_PARALLEL.md`; minimal necessary actual growth preapproved, zero additional core product lines:
+- [x] onboarding-scoped-lending (seat review 2026-11-05: 2547d91c WIP finished a325f178..a0806f9f; legacy pauses on upgrade, seat decision from ARCH 6) — depends [onboarding-scope-economize] — BACKEND LANE, implement selected-ring lender enforcement from `docs/LENDING_SCOPE.md` and `SCOPE_PARALLEL.md`; minimal necessary actual growth preapproved, zero additional core product lines:
   - **Parallel ownership.** Own Rust policy/storage/CLI/HTTP/OIDC/raw code,
     wasm `current_version()` and Give's known-group Rust callers. UI is being
     built independently in `onboarding-scope-ui`; use the frozen JSON/version
@@ -66,7 +66,7 @@ full gate exits 0.
     final audit integrates UI and owns that one full gate. Report pending
     cross-lane integration honestly. No live personal-data migration, public
     deployment, service spend or push as a side effect of this row.
-- [ ] merge-scope-ui — depends [onboarding-scoped-lending] — merge ralph/onboarding-scope-ui into main against the frozen JSON/version contract in SCOPE_PARALLEL.md; resolve conflicts behaviour-preserving; focused UI/page-law/types checks.
+- [x] merge-scope-ui (dc533bb9, integration fixes dc67430f f0502673; focused UI 14/14, page laws 155/155) — depends [onboarding-scoped-lending] — merge ralph/onboarding-scope-ui into main against the frozen JSON/version contract in SCOPE_PARALLEL.md; resolve conflicts behaviour-preserving; focused UI/page-law/types checks.
 - [ ] REVIEW-audit-onboarding-auto-1 — depends [merge-scope-ui] — final integrated audit of this queue's implementation range, 194aa994 through the merged backend/UI HEAD, against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
   - **Demo-deadline integration owner.** Read `SCOPE_PARALLEL.md`. Integrate
     Check the separate onboarding-ui worktree's queue/DONE marker and clean

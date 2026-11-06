@@ -162,6 +162,8 @@ it stamps each such file `"groups": null` under the lend's lock, which reads
 the same, needing selection, while an svrngs before 5 refuses the file
 rather than lend it to every group; a file it cannot stamp stays legacy
 (`lend::stamp`). Joining a group never adds it.
+Upgrading to 5 therefore pauses every lend a computer already had until its
+lender chooses its groups, on the home page or with `svrngs share --group`.
 A carried app's group is its own and is not chosen (`Lend::reaches`). A
 member is let in only through a chosen group both they and the lender
 stand in now — the lender's own standing asked at each request
