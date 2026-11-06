@@ -312,7 +312,7 @@ pub(crate) fn everywhere(
 /// Whether any of `relays` answers ([`answers`]), all asked at once.
 async fn any_answers(relays: &BTreeSet<Url>) -> bool {
     let mut asks = tokio::task::JoinSet::new();
-    for relay in relays.iter().cloned() {
+    for relay in relays.clone() {
         asks.spawn(async move { answers(&relay).await });
     }
     asks.join_all().await.contains(&true)

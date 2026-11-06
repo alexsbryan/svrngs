@@ -1048,16 +1048,9 @@ async fn start(
         Verb::Join { link, .. } => link.token.relays.clone(),
         _ => Vec::new(),
     };
-    let node = Node::start_asking(
-        root.clone(),
-        key.clone(),
-        relay,
-        &asked,
-        group::seed_text,
-        api,
-    )
-    .await
-    .map_err(|e: NodeError| {
+    let seeds = group::seed_text;
+    let node = Node::start_asking(root.clone(), key.clone(), relay, &asked, seeds, api);
+    let node = node.await.map_err(|e: NodeError| {
         tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
         match e {
             NodeError::Api(ApiError::Taken(at)) => Refusal::Taken(at, root.join(API_FILE)),

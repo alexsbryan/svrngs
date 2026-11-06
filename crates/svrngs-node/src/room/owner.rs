@@ -17,7 +17,6 @@ use axum::response::Response;
 use axum::Router;
 use n0_future::task::AbortOnDropHandle;
 use svrngs_core::pass::Label;
-use tokio::sync::{mpsc, oneshot};
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
 use crate::network::{guess, Unread, Whereabouts};
@@ -32,58 +31,23 @@ use crate::origin::{Appending, Unconsented};
 /// `scutil`), and sends nothing; nothing is read while nothing is on.
 pub(crate) const LOOK_EVERY: Duration = Duration::from_secs(5);
 
-/// A turn, and where its owner answers the room as it stands after it, or
-/// why what is on cannot be read.
-type TurnAsk = (Turn, oneshot::Sender<Result<Vec<InRoom>, String>>);
-
-/// What the room's owner reads its asks from.
-type Asks = mpsc::UnboundedReceiver<TurnAsk>;
-
 /// Each lend served, by its label: where, and its listener.
 type Listening = BTreeMap<Label, (SocketAddr, AbortOnDropHandle<()>)>;
 
 /// The room's owner's handle ([`spawn`]), held by the node's routers.
-#[derive(Clone)]
-pub(crate) struct Room(mpsc::UnboundedSender<TurnAsk>);
-
-impl Room {
-    /// A room, and what its owner takes.
-    pub(crate) fn new() -> (Self, Asks) {
-        let (room, asked) = mpsc::unbounded_channel();
-        (Room(room), asked)
-    }
-
-    /// `turn` made by the room's owner, and the room as it stands then, or
-    /// why it cannot be read; `None` once it has stopped.
-    pub(super) async fn turn(&self, turn: Turn) -> Option<Result<Vec<InRoom>, String>> {
-        let (done, made) = oneshot::channel();
-        self.0.send((turn, done)).ok()?;
-        made.await.ok()
-    }
-}
+pub(crate) type Room = kept::Owner<Turn, InRoom>;
 
 /// The room's one owner, for as long as the node runs: the lends on, read
 /// from [`ROOM_FILE`] as it starts and written there at each turn, each
 /// served as [`serve`] decides every [`LOOK_EVERY`] and at each ask.
-pub(crate) fn spawn(at: Asking, mut asked: Asks) -> AbortOnDropHandle<()> {
+pub(crate) fn spawn(at: Asking, mut asked: kept::Asks<Turn, InRoom>) -> AbortOnDropHandle<()> {
     let file = at.door.data_dir.join(ROOM_FILE);
     let (mut on, mut listening) = (kept::read(&file), Listening::new());
     AbortOnDropHandle::new(tokio::spawn(async move {
         let mut every = tokio::time::interval(LOOK_EVERY);
         loop {
-            let done = tokio::select! {
-                _ = every.tick() => None,
-                turned = asked.recv() => {
-                    let Some((turn, done)) = turned else { return };
-                    // A turn, not a read, writes the room over: one that
-                    // could not be read too.
-                    if let Some(made) = turn.made(on.as_deref().unwrap_or_default()) {
-                        kept::write(&file, &made);
-                        on = Ok(made);
-                    }
-                    Some(done)
-                }
-            };
+            let done = kept::next(&mut every, &mut asked, &file, &mut on, Turn::made);
+            let Some(done) = done.await else { return };
             let room = serve(&at, on.as_deref().unwrap_or_default(), &mut listening).await;
             done.map(|d| d.send(on.as_ref().map(|_| room).map_err(String::clone)));
         }

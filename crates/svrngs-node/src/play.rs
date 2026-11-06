@@ -31,7 +31,6 @@ use n0_future::task::AbortOnDropHandle;
 use serde::{Deserialize, Serialize};
 use svrngs_core::pass::Label;
 use tokio::net::{TcpListener, UdpSocket};
-use tokio::sync::{mpsc, oneshot};
 
 use crate::door::{tcp, udp, LendRefusal};
 use crate::lend::{LendName, Raw};
@@ -133,57 +132,24 @@ impl Turn {
     }
 }
 
-/// A turn, and where its owner answers what has Play on after it, or why
-/// that cannot be read.
-type TurnAsk = (Turn, oneshot::Sender<Result<Vec<Playing>, String>>);
-
-/// What Play's owner reads its asks from.
-type Asks = mpsc::UnboundedReceiver<TurnAsk>;
-
 /// Each lend open, by its label: the member's half of the door, and its
 /// lender's last words of a program refused.
 type Opened = BTreeMap<Label, (udp::Carried, Option<String>)>;
 
 /// Play's owner's handle ([`spawn`]), held by the node's routers.
-#[derive(Clone)]
-pub(crate) struct Plays(mpsc::UnboundedSender<TurnAsk>);
-
-impl Plays {
-    /// A handle, and what its owner takes.
-    pub(crate) fn new() -> (Self, Asks) {
-        let (plays, asked) = mpsc::unbounded_channel();
-        (Plays(plays), asked)
-    }
-
-    /// `turn` made by Play's owner, and what has Play on then, or why it
-    /// cannot be read; `None` once it has stopped.
-    async fn turn(&self, turn: Turn) -> Option<Result<Vec<Playing>, String>> {
-        let (done, made) = oneshot::channel();
-        self.0.send((turn, done)).ok()?;
-        made.await.ok()
-    }
-}
+pub(crate) type Plays = kept::Owner<Turn, Playing>;
 
 /// Play's one owner, for as long as the node runs: the lends with Play on,
 /// read from [`PLAY_FILE`] as it starts and written there at each turn,
 /// each opened as [`play`] decides every [`LOOK_EVERY`] and at each ask.
-pub(crate) fn spawn(at: Asking, mut asked: Asks) -> AbortOnDropHandle<()> {
+pub(crate) fn spawn(at: Asking, mut asked: kept::Asks<Turn, Playing>) -> AbortOnDropHandle<()> {
     let file = at.door.data_dir.join(PLAY_FILE);
     let (mut on, mut open) = (kept::read::<On>(&file), Opened::new());
     AbortOnDropHandle::new(tokio::spawn(async move {
         let mut every = tokio::time::interval(LOOK_EVERY);
         loop {
-            let done = tokio::select! {
-                _ = every.tick() => None,
-                turned = asked.recv() => {
-                    let Some((turn, done)) = turned else { return };
-                    if let Some(made) = turn.made(on.as_deref().unwrap_or_default()) {
-                        kept::write(&file, &made);
-                        on = Ok(made);
-                    }
-                    Some(done)
-                }
-            };
+            let done = kept::next(&mut every, &mut asked, &file, &mut on, Turn::made);
+            let Some(done) = done.await else { return };
             let plays = play(&at, on.as_deref().unwrap_or_default(), &mut open).await;
             done.map(|d| d.send(on.as_ref().map(|_| plays).map_err(String::clone)));
         }
