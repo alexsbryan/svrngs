@@ -95,8 +95,8 @@
     set bufferedAmount(_) {}
   }
   for (const [name, value] of Object.entries({ CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 })) {
-    Object.defineProperty(Socket, name, { value });
-    Object.defineProperty(Socket.prototype, name, { value });
+    Object.defineProperty(Socket, name, { value, enumerable: true });
+    Object.defineProperty(Socket.prototype, name, { value, enumerable: true });
   }
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
   // Absent where the origin is not secure (Service Workers,
