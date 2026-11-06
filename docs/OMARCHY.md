@@ -22,15 +22,77 @@ together.
 | B | Live updates never start on a computer | General bug: every Action Cable app, on any OS | Land |
 | C | Install line and "Open this folder" hang | General bug: Linux desktops where `xdg-open` stays in the foreground | Land if the budget allows; see the cost |
 | D | Port 80 mishandled | Narrow: only an app lent on port 80, such as ONCE's proxy | Hold |
-| E | Wi-Fi lend blocked by the firewall | Omarchy's firewall default; a change to what svrngs does to a computer | Smallest option only; hold the rest |
+| E | Wi-Fi lend blocked by the firewall | Omarchy's firewall default | Omarchy layer only; at most one general sentence in core |
 | F | `svrngs new` and `link` while running | A plan for an agent skill that does not exist yet | Hold |
-| G | Bar plugin, install entry, agent skill | Omarchy only | Outside core; no decision needed now |
+| G | Bar plugin, install entry, agent skill | Omarchy only | Omarchy layer; no decision needed now |
 
-If only one line is read: **A and B are the case for changing core. Nothing
-else here needs to change core now.** An earlier recommendation to have svrngs
-run `pkexec ufw` is withdrawn as a recommendation; section 4 gives both sides.
+If only one line is read: **A and B are the case for changing core. Anything
+for Omarchy lives in a thin layer of its own and touches nothing near core**
+(section 2). An earlier recommendation to have svrngs run `pkexec ufw` is
+withdrawn: that behavior belongs to that layer or to nothing.
 
-## 2. What was tested
+## 2. Boundaries
+
+The operator's rule, 2026-11-06: if svrngs builds something for Omarchy, there
+can be something Omarchy in a super thin layer, and it touches nothing close to
+core.
+
+```
+  Omarchy layer         its own repository, its own release, Omarchy's words
+  (bar plugin, status script, install entry, firewall prompt, agent skill)
+        |
+        |  uses only what any program on this computer may use
+        v
+  The public surface    `svrngs` commands, install.sh, the token file,
+                        GET /v1/groups, GET /v1/lends, /v1/room, POST /v1/open
+  ----------------------------------------------------------------- the line
+  svrngs                svrngs-core, svrngs-node, the CLI, the pages
+                        knows no distribution, desktop or firewall
+```
+
+**What each side may do.**
+
+| | Omarchy layer | svrngs |
+|---|---|---|
+| Names Omarchy, Hyprland, Quickshell, `ufw`, `pkexec` | Yes | Never, in code or comments |
+| Holds privileged steps, such as a password prompt | Yes, with the person's yes | No |
+| Reads another tool's files | Yes | No |
+| Adds a route, flag or setting | No | Only for a reason that holds with Omarchy gone |
+| Ships with svrngs's release | No | Yes |
+| Counts against the size budget | No, as `apps/` does not | Yes |
+
+**The test for any change below the line: would it be justified if Omarchy did
+not exist?** Testing on Omarchy can reveal a bug. It cannot be the reason for a
+feature. If the layer needs something svrngs lacks, the layer does without it,
+or the need is argued as a general one in its own right.
+
+**How the line stays held.** `AGENTS.md` 10 asks for rules that are structural,
+not remembered, and the tool exists. `scripts/vocab_check.py`, in
+`scripts/check.sh`, refuses any noun listed in an `apps/**/nouns.txt` from infra
+code. A list of this layer's nouns (`omarchy`, `hyprland`, `quickshell`, `ufw`,
+`pkexec`) makes crossing the line fail the gate. It reads `.rs` files and the
+pages but skips comments and does not read `web/install.sh`, so those gaps would
+need closing or stating. Today no file in `crates/`, `web/`, `scripts/` or
+`apps/` names any of these.
+
+**Where the layer lives.** Its own repository, as `AGENTS.md` 12 says of a chat
+adapter. The plugin marketplace requires `manifest.json` at a repository's
+root, so it cannot sit in `apps/` here. Open question 7 asks whether a noun list
+belongs in this repository without the code.
+
+**Each change against the line.**
+
+| Change | Side | Holds with Omarchy gone? |
+|---|---|---|
+| A, B, C | svrngs | Yes: general bugs in lends and in opening a browser |
+| D | svrngs | Yes, but waits for a need |
+| E, a general sentence | svrngs | Yes: true on any computer, and reads nothing |
+| E, reading firewall rules | Layer | No, so it may not be in svrngs |
+| E, the password prompt | Layer | No, so it may not be in svrngs |
+| F | svrngs | Unproven; held |
+| G | Layer | No, so it stays in the layer |
+
+## 3. What was tested
 
 Omarchy 4.5.0 (`omarchy 4.5.0-3`, kernel 7.2.15) from the published ISO,
 checksum verified, unattended install, in QEMU on the Fedora box. Three VMs:
@@ -72,7 +134,7 @@ looked into.
 - One unexplained reading: Cy showed as away while running. Sixteen later
   readings were clean. It is neither a bug nor ruled out.
 
-## 3. The three general bugs
+## 4. The three general bugs
 
 ### A. Rails forms fail through any lend
 
@@ -147,7 +209,7 @@ second to refuse, and does not wait further. Its output goes nowhere, so a
 browser cannot hold a pipe open.
 
 **Cost, not small.**
-- About 11 net lines, which goes over the budget (section 6).
+- About 11 net lines, which goes over the budget (section 7).
 - Every `svrngs open` and folder press takes a fixed extra second, on Macs too,
   which do not have this bug.
 - That second blocks a request's thread, as the current code does for longer.
@@ -162,7 +224,7 @@ browser cannot hold a pipe open.
 **Recommendation.** Land some version, but open question 3 should settle which.
 The version on the branch is not obviously the smallest good one.
 
-## 4. The changes that come from Omarchy
+## 5. The changes that come from Omarchy
 
 ### D. Port 80
 
@@ -190,39 +252,38 @@ the belief that most do not block this is unverified. Group members' computers
 are not affected: they connect directly under the stock firewall. Only a device
 like a TV is.
 
-There are three sizes of answer.
+**Under section 2, the Omarchy answer is entirely in the layer.** It needs no
+core change, because `/v1/room` already gives any local program each lend's
+address and port.
 
-| Size | What it does | Core change | Decides for the person |
-|---|---|---|---|
-| E1. Docs | A line in `docs/guide/tv.md` and troubleshooting: the rule to add | None | Nothing |
-| E2. Say so | The page and `svrngs room` say the firewall may stop this, and give the line to paste | Reads firewall state, adds words | Nothing |
-| E3. Ask | svrngs runs `pkexec ufw allow` so the system's password dialog appears | E2 plus a new capability | Asks to change the firewall |
+| Part | Lives in | What it does |
+|---|---|---|
+| E1. Docs | svrngs docs | A line in `docs/guide/tv.md` and troubleshooting, for any computer with a firewall |
+| E2. One sentence | svrngs, one wording | The room's words add that this computer's firewall may stop a device. It reads nothing, and is true anywhere |
+| E3. Check | Omarchy layer | Reads `/v1/room`, then `/etc/ufw/user.rules`, and shows in the panel if the port is blocked |
+| E4. Ask | Omarchy layer | On the person's press, runs `pkexec ufw allow` for this network and port |
 
-**The case for E3.** It was tested and works: Omarchy's own themed dialog
-appears from a plain background service, naming the rule. A person a bit afraid
-of terminals gets one press. The rule is as narrow as it can be, one network
-and one port. Cancel leaves nothing behind.
+**What was tested for E3 and E4.** The rule works from a real LAN device and
+survives a reboot. `/etc/ufw/user.rules` is world-readable on Omarchy. `pkexec`
+brought up Omarchy's themed password dialog from a background service. Cancel
+leaves no rule. A prompt nobody answers waits forever, so the layer must not
+block on it. None of this has been run from inside the plugin.
 
-**The case against E3, which is why it is no longer recommended.**
-- svrngs would become a program that changes a computer's firewall. It has never
-  done anything like that. `docs/guide/start.md` tells people the line "changes
-  none of your computer's settings"; this would not break that sentence, but it
-  moves away from what it promises.
-- It depends on `/etc/ufw/user.rules`, an internal file of another program. It
-  is world-readable on Omarchy. Whether that holds elsewhere was not checked.
-- It would be one firewall's code in core. The operator has ruled out per-app
-  glue, and this is the same kind of narrowing, applied to a system tool.
-- A prompt nobody answers waits forever, so it needs careful handling.
-- It changes what can reach a person, which is the trust floor's subject
-  (`scripts/trust_floor.txt`) and the operator's alone.
+**What is given up.** A press on the home page no longer leads to a password
+dialog. Someone without the layer gets the sentence and the docs, and pastes a
+line. Their page stops overclaiming, but it cannot know for certain.
 
-**A middle path.** E3's behavior could live only in the Omarchy plugin, which is
-already allowed to be Omarchy-specific and is outside core. Core would stay at
-E1 or E2. The plugin can read `/v1/room`, and runs in the session.
+**Rejected: firewall code in svrngs.** Reading `ufw` state or running `pkexec`
+from svrngs fails section 2 outright. It would also make svrngs a program that
+changes a computer's firewall, which it has never done, and `docs/guide/start.md`
+tells people the line "changes none of your computer's settings".
 
-**Recommendation.** E1 now. E2 only if the operator agrees the page must not
-overclaim, knowing it means reading firewall state in core. E3 in core: no. E3
-in the plugin: decide with G.
+**Rejected: an install-time port range rule.** It opens 9,000 ports on every
+network and needs `sudo` in the line.
+
+**Recommendation.** E1 now. E2 if the operator wants the page to stop
+overclaiming: it is a general sentence, so it passes section 2. E3 and E4 only
+in the layer, and only if G goes ahead.
 
 ### F. `svrngs new` and `link` while svrngs runs
 
@@ -246,17 +307,21 @@ home page. A one-line change that reverses nothing.
 
 ### G. The plugin, install entry and agent skill
 
-These need no change to core. The plugin runs today against `/v1/groups` and
-`/v1/lends`, with no Rust changes. It must live in its own repository, because
-the marketplace requires `manifest.json` at the repository root. It needs a
-confirm step before lending: in testing, one Enter on the default row lent a
-browser's debug port.
+This is the Omarchy layer of section 2. The plugin runs today against
+`/v1/groups` and `/v1/lends`, with no Rust changes. It needs a confirm step
+before lending: in testing, one Enter on the default row lent a browser's debug
+port.
+
+Two facts for whoever builds it. `omarchy-webapp-install` overwrites the
+`svrngs.desktop` that `install.sh` writes, so the layer must not use that name.
+A launcher with a bare URL dead-ends without a session, so it should mint an
+address through `POST /v1/open`, which is untested from the layer.
 
 No decision is needed now. The question for later is whether exposure on
 Omarchy is worth a separate repository to maintain. The marketplace holds about
 6,300 entries, and plugins in the same niche showed 0 or 1 stars.
 
-## 5. Against the principles
+## 6. Against the principles
 
 | Change | North star test | DESIGN rule at stake | Verdict |
 |---|---|---|---|
@@ -264,12 +329,13 @@ Omarchy is worth a separate repository to maintain. The marketplace holds about
 | C | 1: a person's first ten seconds | None | Passes, at a cost |
 | D | 2, for one class of app | §2 rule 3 | Waits for a trigger |
 | E1 | Neutral | None | Passes |
-| E2 | 2: the page stops overclaiming | §1 "the most general surface with the fewest features" | Operator's call |
-| E3 | Helps 1 for one distribution | §1 "the system learns by adding apps, never by adding platform" | Fails in core |
+| E2, a general sentence | 2: the page stops overclaiming | None | Passes |
+| E3, E4, in svrngs | Helps 1 for one distribution | §1 "the system learns by adding apps, never by adding platform" | Fails, and section 2 rules it out |
+| E3, E4, in the layer | Helps 1 for those who install it | None: outside core | No core question |
 | F | Helps 2 for a caller that does not exist | `DESIGN.md:686`; §2 rule 3 | Waits for a trigger |
 | G | Outside core | None | No core question |
 
-## 6. Budget
+## 7. Budget
 
 `scripts/lean_check.py` fails when a count reaches its cap, so `.` must stay
 below 20,455, which leaves room for 1 more line on main today.
@@ -279,36 +345,47 @@ below 20,455, which leaves room for 1 more line on main today.
 | Main, `7232aadd` | 20,453 | Yes |
 | A, B, D, branch `omarchy-lend-fixes` | 20,452 | Yes, 1 fewer than main |
 | A, B, D, C, branch `omarchy-rest` | 20,463 | No, over by 9 |
-| E2, E3, F | Unwritten; a guess of 40-60 more | No |
+| E1, E2 | About one line of wording | Depends on C |
+| E3, E4, G | 0: they live in the layer | Not counted |
+| F | Unwritten and held | Not estimated |
 
 A and B alone need no raise. C needs a cut or a raise, and `AGENTS.md` requires
 an economizing pass before a raise is asked. Nothing here asks for one.
 
-## 7. Open questions for the operator
+## 8. Open questions for the operator
 
 1. Must the catalogue's five apps be rerun before A lands? This document says
    yes. It costs a run but A changes a header for every plain lend.
 2. Is A's known cost acceptable: apps that print their own address show
    `localhost` in a plain lend?
 3. For C: the shared `opened()`, an `install.sh`-only fix, or Linux-only waiting?
-4. Should the page say the firewall may block a Wi-Fi lend (E2), knowing that
-   means core reads firewall state?
+4. Should the room's words say a firewall may stop a device (E2)? It reads
+   nothing and is true anywhere, but it adds a caveat every person sees.
 5. Is Omarchy work wanted at all before the next unit in PLAN §1? If yes, it
    needs a row. If no, A and B can still land as bug fixes.
 6. Should the Omarchy runs be recorded in `demo/runs/`? `AGENTS.md` 4 and 7 ask
    for claims to rest on runs a reader can find.
+7. Should this repository hold a noun list for a layer whose code lives
+   elsewhere, so `scripts/vocab_check.py` can guard the line? If so, where,
+   since the check reads `apps/**/nouns.txt`?
 
-## 8. What exists now
+## 9. What exists now
 
 Nothing below is on `main`, and nothing is pushed.
 
 | Item | Where | State |
 |---|---|---|
-| A, D, B | Branch `omarchy-lend-fixes` at `325c73b9`, worktree `~/dev/svrngs-lanes/omarchy-lend-fixes` | Three commits, tested as in section 2, not rebased on `7232aadd`, commit bodies lack their evidence |
+| A, D, B | Branch `omarchy-lend-fixes` at `325c73b9`, worktree `~/dev/svrngs-lanes/omarchy-lend-fixes` | Three commits, tested as in section 3, not rebased on `7232aadd`, commit bodies lack their evidence |
 | C | Branch `omarchy-rest` at `64036dc4`, worktree `~/dev/svrngs-lanes/omarchy-rest` | One commit, on top of the above, test never run |
 | E, F | Nowhere | No code written |
 | Plugin | `~/omarchy-lab/plugin` on the Fedora box | Prototype, no confirm step, unpublished |
 | Test VMs | `~/omarchy-lab` on the Fedora box | Disposable |
+
+**The held code crosses the line and must be corrected before landing.** On
+`omarchy-lend-fixes` and `omarchy-rest`, comments and test notes in core files
+name Omarchy, ONCE and a private lab path, for example `opened()` in `home.rs`
+and `own_address` in `door.rs`. They should describe the behavior alone. The
+evidence belongs in the commit bodies and `demo/runs/`.
 
 If A and B are approved, B and A can be taken from the branch without D. If this
 review rejects the work, the branches can simply be deleted. No shipped behavior
