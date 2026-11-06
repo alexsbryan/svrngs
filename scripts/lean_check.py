@@ -510,13 +510,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # `stands_here` and `door::reached` at redemption (+4), F12 a legacy
 # `unshare --group` refused (+6), F8 `stamp`'s traces (+15) take `.` from
 # the audit's 20,428 to 20,454, cap 20,455 (lending +509 of its +700); F10
-# a row naming every id (+4) takes js to 8,329, cap 8,330.
+# a row naming every id (+4) takes js to 8,329, cap 8,330. Then the gate's
+# app-nouns fix drops group-choice.js's cast (-4), so js lands at 8,325 and
+# the cap comes down to where it lands, 8,326.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
     ".": 20455,
 
-    "js": 8330,
+    "js": 8326,
 
     "swift": 1,
 }
