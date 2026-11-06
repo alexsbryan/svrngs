@@ -124,7 +124,9 @@ paths="$bin:/opt/podman/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/
 # $label's (launchd) or $unit's (systemd) file, and stopping it if kept.
 if [ "$os" = darwin ]; then
   at() { kept="$HOME/Library/LaunchAgents/$label.plist"; }
-  stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null; }
+  # bootout returns before launchd lets go, and until then a bootstrap fails
+  # with 5. No limit: launchd ends a service, and Give (ExitTimeOut 0) finishes.
+  stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null && while launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; do sleep 0.1; done; }
 else
   at() { kept="$HOME/.config/systemd/user/$unit.service"; }
   stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }

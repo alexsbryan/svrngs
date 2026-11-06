@@ -141,7 +141,9 @@ fn site(sums: Option<&str>) -> tempfile::TempDir {
 }
 
 /// The stubs: `launchctl` runs the svrngs its agent names as launchd
-/// would, and stops it; `open` keeps the address; `uname`, when `uname`
+/// would, and stops it as launchd does: `bootout` returns at once, and until
+/// the service is gone `print` still finds it and `bootstrap` fails with 5
+/// (5 of 5 on real launchd, 2026-11-06). `open` keeps the address; `uname`, when `uname`
 /// is given, names another platform; and `sh` is dash where this computer
 /// has it, Debian's `/bin/sh`, which holds install.sh to POSIX.
 fn stubs(home: &Path, uname: Option<&str>) -> PathBuf {
@@ -151,6 +153,7 @@ fn stubs(home: &Path, uname: Option<&str>) -> PathBuf {
 echo "launchctl $*" >>"$HOME/stubs/said"
 case "$1" in
   bootstrap)
+    if [ -e "$HOME/stubs/leaving" ]; then echo "Bootstrap failed: 5: Input/output error" >&2; exit 5; fi
     grep -q '<string>relay</string>\|<string>keep</string>' "$3" && exit 0
     run=$(sed -n 's:.*<array><string>\(.*\)</string></array>.*:\1:p' "$3")
     dir=$(sed -n 's:.*<key>SVRNGS_DIR</key><string>\(.*\)</string>.*:\1:p' "$3")
@@ -160,7 +163,9 @@ case "$1" in
     case "$2" in */sh.svrnme.give) exit 0 ;; esac
     [ -f "$HOME/stubs/pid" ] || exit 3
     pid=$(cat "$HOME/stubs/pid"); rm "$HOME/stubs/pid"; kill "$pid"
-    while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done ;;
+    touch "$HOME/stubs/leaving"
+    (while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done; sleep 0.3; rm -f "$HOME/stubs/leaving") >/dev/null 2>&1 & ;;
+  print) [ -e "$HOME/stubs/leaving" ] ;;
 esac
 "#;
     let open = "#!/bin/sh\necho \"$*\" >>\"$HOME/stubs/opened\"\n";
