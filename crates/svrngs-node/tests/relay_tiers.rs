@@ -8,6 +8,8 @@
 //! second such relay standing in for n0's so nothing leaves this computer.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod common;
+
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 
@@ -270,6 +272,90 @@ async fn a_keeper_taking_away_the_last_relay_is_met_nowhere_near_it_again() {
         );
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
+    node.endpoint().close().await;
+}
+
+/// "Check the connection now" pressed on `node`'s home page: where the
+/// page is sent, `/?` and what happened.
+async fn pressed(node: &Node) -> String {
+    use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+    let (browser, home) = (
+        common::Browser::of(node),
+        format!("svrngs.localhost:{}", node.api_addr().port()),
+    );
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let path = browser.path(&home, "/connection", &own);
+    let proof = browser.proof("POST", &home, &path, &own, "").await;
+    let mut sock = tokio::net::TcpStream::connect(browser.api()).await.unwrap();
+    let asked = format!("POST {path} HTTP/1.1\r\nHost: {home}\r\n{own}{proof}Content-Length: 0\r\nConnection: close\r\n\r\n");
+    sock.write_all(asked.as_bytes()).await.unwrap();
+    let mut reply = String::new();
+    sock.read_to_string(&mut reply).await.unwrap();
+    let to = reply.lines().find_map(|l| {
+        l.to_ascii_lowercase()
+            .strip_prefix("location: ")
+            .map(str::to_string)
+    });
+    to.unwrap_or_else(|| panic!("no page to go to: {reply}"))
+}
+
+/// **A person who cannot wait presses and this computer moves now**
+/// (KEEP_GOING_AT_HOME 7): the fallback cut, the button asks it once, it
+/// does not answer, and Ada is homed at her group's own relay inside the
+/// `LEFT_AFTER` asks the automatic move waits out, and stays, an ask already
+/// under way undoing nothing; the round fired says so in the group's record
+/// at once, where the next would be a minute off.
+#[tokio::test(flavor = "multi_thread")]
+async fn pressed_with_the_fallback_cut_this_computer_moves_now() {
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let ((_own, a), (build, _)) = (relay(any).await, relay(any).await);
+    let (way, cut) = cuttable(build.http_addr().unwrap()).await;
+    let (_dir, node) = ada(&way, &a).await;
+    homed(&node, &way).await;
+    cut.send_replace(true);
+    let t = Instant::now();
+    assert_eq!(pressed(&node).await, "/?moved");
+    homed(&node, &a).await;
+    let took = t.elapsed();
+    eprintln!("TIERS pressed, at its own: {took:?}");
+    let automatic = svrngs_node::tiers::ASKED_EVERY * svrngs_node::tiers::LEFT_AFTER;
+    assert!(
+        took < automatic,
+        "{took:?}, no sooner than the automatic move"
+    );
+    let group = node.rail().namespaces().unwrap().remove(0);
+    let journal = node
+        .rail()
+        .group_dir(&group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    let says = |l: &str| l.contains(&a) && !l.contains("\"relays\"");
+    let round = tokio::time::timeout(Duration::from_secs(5), async {
+        while !(std::fs::read_to_string(&journal).unwrap().lines()).any(says) {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+    round.await.expect("the round fired says where she is now");
+    while t.elapsed() < took + svrngs_node::tiers::ASKED_EVERY + Duration::from_secs(6) {
+        let home = node.endpoint().addr();
+        let at_a = home.relay_urls().any(|r| r.to_string() == a);
+        assert!(at_a, "not kept at A {:?} after the press", t.elapsed());
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    node.endpoint().close().await;
+}
+
+/// **A press with the fallback answering moves nobody**, and says so.
+#[tokio::test(flavor = "multi_thread")]
+async fn pressed_with_the_fallback_answering_nothing_moves() {
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let ((_own, a), (_build, b)) = (relay(any).await, relay(any).await);
+    let (_dir, node) = ada(&b, &a).await;
+    homed(&node, &b).await;
+    assert_eq!(pressed(&node).await, "/?stayed");
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    homed(&node, &b).await;
     node.endpoint().close().await;
 }
 

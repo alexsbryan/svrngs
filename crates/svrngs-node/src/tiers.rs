@@ -161,17 +161,13 @@ impl Host {
                 held_for -= 1;
                 tracing::debug!(target: "tiers", misses, wait, left = held_for, "tiers: the build's fallback not asked — a move there registered nowhere, so moves are held off");
             }
-            let mut asks = tokio::task::JoinSet::new();
             let ask = tier == Tier::Own && !holding;
-            for relay in build.clone().into_iter().filter(|_| ask) {
-                asks.spawn(async move { answers(&relay).await });
-            }
             // With no build tier, nothing to answer: the tier is the
             // groups' own whatever, and a group asked for next starts at
             // the build's until the first ask says otherwise.
             let answered = build.is_empty()
                 || match tier {
-                    Tier::Own => ask && asks.join_all().await.into_iter().any(|a| a),
+                    Tier::Own => ask && any_answers(&build).await,
                     _ => self.registered(&build).await,
                 };
             misses = if answered { 0 } else { misses + 1 };
@@ -184,28 +180,50 @@ impl Host {
                 wait = 0;
             }
             // Kept only once reached: a fallback this computer reached and
-            // lost for a moment is held; one it never reached is left at once.
-            let kept = tier != Tier::Own && !answered && reached && misses < LEFT_AFTER;
+            // lost for a moment is held; one it never reached is left at once,
+            // as is one a person's press left while this ask ran.
+            let pressed = self.held.borrow().tier != tier;
+            let kept = !pressed && tier != Tier::Own && !answered && reached && misses < LEFT_AFTER;
             reached = tier != Tier::Own && (answered || kept);
-            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, kept, wait, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
+            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, pressed, kept, wait, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
             self.decide(Some(answered || kept)).await;
         }
     }
 
-    /// Whether this endpoint's home relay is one of `build`'s and connected,
+    /// The home page's button (KEEP_GOING_AT_HOME 7), for someone who cannot
+    /// wait out [`LEFT_AFTER`]: the build's fallback asked once now and, when
+    /// it does not answer, left at once for the groups' own, and said home
+    /// only once this endpoint is [`Self::registered`] there. What happened,
+    /// as the page's address says it. An answer moves nobody: a blip decides
+    /// nothing here, and [`Self::check`] goes on as it was.
+    pub(crate) async fn check_now(&self) -> &'static str {
+        let meeting = self.held.borrow().meeting.clone();
+        let (build, own) = (meeting.build(), meeting.own());
+        let answered = build.is_empty() || any_answers(build).await;
+        self.decide(Some(answered).filter(|a| !a)).await;
+        let moved = !answered && self.registered(own).await;
+        tracing::debug!(target: "tiers", answered, moved, "tiers: a person asked now whether the build's fallback answers, and left it if not");
+        match (answered, moved) {
+            (true, _) => "stayed",
+            (_, true) => "moved",
+            _ => "nowhere",
+        }
+    }
+
+    /// Whether this endpoint's home relay is one of `relays` and connected,
     /// waited for up to [`REGISTERED_WITHIN`]: registered there, its
     /// handshake done, not merely chosen (iroh-1.0.2
     /// `Endpoint::home_relay_status`, endpoint.rs:1384, and
     /// `RelayStatus::is_connected`, :1906, what `Endpoint::online` reads).
-    async fn registered(&self, build: &BTreeSet<Url>) -> bool {
+    async fn registered(&self, relays: &BTreeSet<Url>) -> bool {
         use n0_future::StreamExt as _;
         let mut homes = iroh::Watcher::stream(self.endpoint.home_relay_status());
         let at = |h: &iroh::endpoint::RelayStatus| {
-            h.is_connected() && build.contains(&h.url().clone().into())
+            h.is_connected() && relays.contains(&h.url().clone().into())
         };
         let registered =
             tokio::time::timeout(REGISTERED_WITHIN, homes.any(|homes| homes.iter().any(at))).await;
-        tracing::debug!(target: "tiers", ?registered, "tiers: whether this endpoint is registered at the build's fallback");
+        tracing::debug!(target: "tiers", ?registered, "tiers: whether this endpoint is registered at the relays asked of");
         registered.unwrap_or(false)
     }
 
@@ -289,6 +307,15 @@ pub(crate) fn everywhere(
     each.chain(asked)
         .reduce(Meeting::join)
         .unwrap_or_else(|| Meeting::of([], build))
+}
+
+/// Whether any of `relays` answers ([`answers`]), all asked at once.
+async fn any_answers(relays: &BTreeSet<Url>) -> bool {
+    let mut asks = tokio::task::JoinSet::new();
+    for relay in relays.iter().cloned() {
+        asks.spawn(async move { answers(&relay).await });
+    }
+    asks.join_all().await.contains(&true)
 }
 
 /// Whether `relay` answers within [`ANSWERS_WITHIN`]: a plain-HTTP relay,

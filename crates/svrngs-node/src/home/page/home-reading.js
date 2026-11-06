@@ -32,7 +32,7 @@ import { get } from './routes.js?v=__VERSION__';
  * or why they could not be read; and the fields each feature's `take`
  * sets.
  * @typedef {object} Own
- * @property {{ groups: 'reading' | 'read' | 'rereading' | 'unread', said: 'none' | 'made' | 'joined' | 'left' }} at
+ * @property {{ groups: 'reading' | 'read' | 'rereading' | 'unread', said: Done }} at
  * @property {Record<string, number>} [asked]
  * @property {boolean} ask whether the address is /ask
  * @property {Said} q
@@ -138,6 +138,10 @@ const reading = (state, message) => {
 
 // The address, read once as the page starts, and what it says was done
 // here.
+// What the address says was done here (home-page.js `SAID`).
+const DONE = /** @type {const} */ (['made', 'joined', 'left', 'stayed', 'moved', 'nowhere']);
+/** @typedef {'none' | typeof DONE[number]} Done */
+
 /**
  * @param {Location} location
  * @returns {State}
@@ -146,7 +150,7 @@ export const first = ({ pathname, search, origin, hash }) => {
   const query = Object.fromEntries(new URLSearchParams(search));
   if (pathname === '/' && !query.screen && hash.startsWith('#group-'))
     query.welcome = hash.slice(7);
-  const done = /** @type {const} */ (['made', 'joined', 'left']).find((said) => said in query);
+  const done = DONE.find((said) => said in query);
   return {
     at: { groups: 'reading', said: done ?? 'none' },
     asked: { groups: 1 },
@@ -168,7 +172,7 @@ export const first = ({ pathname, search, origin, hash }) => {
 export const HOME = (flows) => ({
   states: {
     groups: ['reading', 'read', 'rereading', 'unread'],
-    said: ['none', 'made', 'joined', 'left'],
+    said: ['none', ...DONE],
   },
   step: (state, message) => {
     switch (message.type) {

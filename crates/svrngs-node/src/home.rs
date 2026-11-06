@@ -151,6 +151,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .route("/lent", get(lent).post(change))
     .route("/running", get(running).post(lend_one))
     .route("/link", axum::routing::post(link))
+    .route("/connection", axum::routing::post(connection))
     .route("/publication", get(crate::publication::status).post(crate::publication::publish))
     .route("/publication/close", axum::routing::post(crate::publication::close))
     .route("/visits", axum::routing::post(stop))
@@ -240,6 +241,15 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
         HeaderValue::from_static(POLICY),
     );
     answer
+}
+
+/// `POST /connection`, the form of "Check the connection now": this
+/// computer's fallback asked now ([`crate::node::Host::check_now`]), a round
+/// fired, and this page again, its address saying what happened.
+async fn connection(State(at): State<Asking>) -> Redirect {
+    let said = at.host.check_now().await;
+    at.folders.nudge.notify_one();
+    Redirect::to(&format!("/?{said}"))
 }
 
 /// What the person says of an app on a lend.

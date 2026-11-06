@@ -24,15 +24,26 @@ const SAID = {
     `You’re in ${query.joined}${query.person ? `, as ${query.person}.` : ' already.'} ${invite}`,
   left: (query) =>
     `You left ${query.left}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`,
+  // The button below, as home.rs `connection` answers it.
+  stayed: () => 'The public way answers, so nothing changed.',
+  moved: () =>
+    'The public way did not answer, so this computer moved to where your group usually meets.',
+  nowhere: () => 'The public way did not answer, and neither did anywhere else your groups meet.',
 };
 
 // What was done here, said once (`SAID`), and the folder that could not be
 // made when one could not.
 /** @param {State} state */
-const saidOnce = (state) => {
+export const saidOnce = (state) => {
   const unplaced = state.q.unplaced ? `Its folder could not be made: ${state.q.unplaced}. ` : '';
   return SAID[state.at.said](state.q, unplaced);
 };
+
+// For someone who cannot wait for this computer to find out on its own
+// (KEEP_GOING_AT_HOME 7): a form, as ./reach.js is, so the answer is said
+// once by `SAID`.
+export const Connection = () =>
+  html`<form method="post" action="/connection"><button>Check the connection now</button></form>`;
 
 /**
  * The page: HOME's store, each feature's module, and each place's view.
@@ -145,6 +156,7 @@ export function Home({ store, flows, places }) {
     <${Choices} s=${state} />
     ${sections}
     ${after}
+    <${Connection} />
     ${!held && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}${grouped ? address(query.view, query.group) : '/'}</p>`}
   `;
 }

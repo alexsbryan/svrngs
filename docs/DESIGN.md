@@ -1400,7 +1400,11 @@ take a connection and register no one, as a captive portal does. One
 never registered at is left at the first ask that finds it so, the next
 move there held off 1, 2, 4 asks and on, to `HELD_AT_MOST`, 30, until one
 registers; one reached, once `LEFT_AFTER`, 3, asks in a row do, so a
-fallback that blinked is not left while iroh waits to dial it again. One
+fallback that blinked is not left while iroh waits to dial it again.
+"Check the connection now" on the home page is for someone who cannot wait:
+`POST /connection` asks the fallback once, leaves it at once when it does not
+answer, fires a round and says on the page what happened, "moved" only once
+this computer is registered at the group's own; an answer moves nobody. One
 endpoint serves every group, so a computer that also holds a group naming
 no relay of its own keeps the fallback, and meets every group there. A dial
 to a member reaches both tiers and the relay the record names for it,
