@@ -77,7 +77,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
     holder,
     seed: seed && store.hex(seed),
     raw,
-    relays: core.relays_of(group.token),
+    relays: core.relays_of(group.token, group.meets),
     page: here(),
     unanswered: unanswered.map((who) => who.person),
   };

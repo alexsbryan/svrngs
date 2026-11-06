@@ -13,7 +13,8 @@
 //            key opens only as the key of the group it was kept for; and
 //            once opened, `computers`, whose each lending computer of the
 //            last answer is, its key and relay, which the page reaches the
-//            group through when its link's does not answer; and `maker`,
+//            group through when its link's does not answer; `meets`, the
+//            relays its keeper names, dialled beside the link's; and `maker`,
 //            who made the group, and `since`, when this phone joined it,
 //            absent on a group kept before the page kept them.
 //
@@ -81,6 +82,7 @@ const VERSION = 2;
  * @property {string} [maker]
  * @property {number} [since]
  * @property {Computer[]} [computers]
+ * @property {string[]} [meets] the relays the keeper says it meets at, as last read; none until a computer names them
  * @property {string[]} [addresses] each lend's label and alias, as last read
  * @property {Record<string, Said>} [reads] by a lend's label
  * @property {Line} [line] the last line signed here

@@ -285,9 +285,11 @@ async function admitting({ token, told, group, name }) {
   } catch (/** @type {any} */ error) {
     return { type: 'taken', why: `${error.message[0].toUpperCase()}${error.message.slice(1)}.` };
   }
-  await posted(core, key, token, { path: '/redeem', body }, (status, text) =>
-    goesBy(group, status, text),
-  );
+  await posted(core, key, token, {
+    path: '/redeem',
+    body,
+    refused: (status, text) => goesBy(group, status, text),
+  });
   const person = JSON.parse(body).person;
   await store.keep({
     id: group.id,

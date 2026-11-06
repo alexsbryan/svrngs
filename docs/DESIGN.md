@@ -1912,7 +1912,17 @@ from the journal waits in PLAN §2.
   the first group naming a relay for it (`node::relay_of`). A key with none named is traced, and with no address
   lookup the transport refuses it before iroh is asked, never dialling it
   blind.
-- **Where the group meets is the keeper's, in the record.** A
+- **Where the group meets is the keeper's, in the record, and a phone reads
+  it from the group.** `/people/lends` answers `meets`, the keeper's relays of
+  the asker's groups (`null` when a record cannot be read, absent from an older
+  computer). The page keeps at most `MEETS_KEPT`, 8, each this page's policy
+  takes (web/page/enter.js `meeting`), on its `Group`; a later list replaces
+  it, so a relay the keeper took away goes, and no list leaves what is kept.
+  Every dial and pass adds them to the link's own relays, which stay the way
+  in (web/src/lib.rs `ways_in`), and a lender's dial tries them beside the one
+  relay its row names, which may be old; the page's endpoint binds again when
+  the list changes. A member's computer that lies can add at most eight
+  relays that carry nothing it can read, and none is a way into the group. A
   `Meets{relays}` act names the relays the group meets at beside the
   build's, which no record names; it counts only as the keeper's, as a cut
   does, its newest winning, and a `Correct` voids none (line version 14,

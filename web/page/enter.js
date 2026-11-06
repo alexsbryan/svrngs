@@ -78,6 +78,7 @@ import { sending } from './page.js?v=__VERSION__';
  * @property {PeopleRow[]} people
  * @property {Shelved[]} shelf
  * @property {Change[] | null} [changed]
+ * @property {unknown} [meets] the relays its keeper says the group meets at, unchecked; none from an older computer or an unread record
  * @property {number} [version]
  */
 
@@ -109,6 +110,7 @@ import { sending } from './page.js?v=__VERSION__';
  *       link?: Computer,
  *       body: Partial<Body>,
  *       lent: Lent[],
+ *       meets?: string[],
  *       me: string,
  *       older: boolean,
  *     }
@@ -389,6 +391,7 @@ export const takes = {
     const group = {
       ...state.group,
       computers,
+      meets: message.meets ?? state.group.meets,
       addresses: [
         ...lent.map((lend) => lend.label),
         ...once(lent).map((lend) => alias(lend, lent, people)),
@@ -520,6 +523,24 @@ const locking = (id, steal) =>
       location.reload();
     });
   });
+// How many of the group's relays a phone keeps, so a computer that lies
+// cannot slow every later dial with a flood of them (KEEP_GOING_AT_HOME 6).
+export const MEETS_KEPT = 8;
+// The relays a reply names that this page takes, at most MEETS_KEPT; none
+// when it names no list, as an older computer's does, so what is kept stands.
+/**
+ * @param {typeof Wasm} core
+ * @param {unknown} said
+ */
+export const meeting = (core, said) => {
+  if (!Array.isArray(said)) {
+    trace('PAGE: the reply names no relays, so those kept stand');
+    return undefined;
+  }
+  const taken = said.filter((one) => typeof one === 'string' && core.relay_taken(one));
+  trace(`PAGE: kept ${Math.min(taken.length, MEETS_KEPT)} of ${said.length} relay(s) named`);
+  return taken.slice(0, MEETS_KEPT);
+};
 // Each lend with its label, and whose lender `apart` says; and `me`, the
 // key this page holds as the record spells it, public, which the record's
 // rows name, never the key itself.
@@ -551,6 +572,7 @@ async function readLends(group, serial) {
     link,
     body,
     lent,
+    meets: res.ok ? meeting(core, body.meets) : undefined,
     me: actor(core),
     older: res.ok && core.older(body.version),
     why: `${res.status}${refused}, at version ${body.version}, ${lent.length} lent`,

@@ -39,6 +39,7 @@ mod opens;
 mod acts;
 mod grouped;
 // A lent port opened on this computer while Play is on (give-play).
+mod keep_going;
 mod native_arrival;
 mod play;
 mod publication;

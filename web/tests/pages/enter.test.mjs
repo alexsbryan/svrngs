@@ -253,3 +253,54 @@ test('a group picked from the offer leaves it in the same step', () => {
   );
   assert.match(parts.step(r.state, { type: 'pick', group: lake }).refused, /nothing is offered/);
 });
+
+// KEEP_GOING_AT_HOME 4-6: only what a reply names is kept, each relay the
+// page's own check takes and at most eight, so a flood cannot slow a phone;
+// a later reply that names fewer drops the rest; an older computer's reply,
+// which names none, leaves the phone as it was. `kept` is what the phone
+// dials beside its link.
+test('the relays a reply names are kept, capped and checked, and a later reply drops the rest', async () => {
+  const { MEETS_KEPT, meeting } = await import('../../page/enter.js?v=__VERSION__');
+  const said = [];
+  const core = { relay_taken: (one) => one.startsWith('https://') };
+  globalThis.__trace = (line) => said.push(line);
+  const flood = Array.from({ length: 500 }, (_, n) => `https://liar${n}.example/`);
+  assert.equal(MEETS_KEPT, 8);
+  assert.deepEqual(meeting(core, flood), flood.slice(0, 8), 'a flood is cut to the cap');
+  assert.ok(
+    said.some((line) => line.includes('8 of 500')),
+    said.join('\n'),
+  );
+  assert.deepEqual(
+    meeting(core, ['http://plain.example/', 7, 'https://home.example/']),
+    ['https://home.example/'],
+    'each is checked, what is not a relay with them',
+  );
+  assert.deepEqual(meeting(core, []), [], 'a reply naming none drops all');
+  assert.equal(meeting(core, undefined), undefined, 'an older computer says nothing of them');
+  assert.equal(meeting(core, null), undefined, 'nor one whose record cannot be read');
+  assert.equal(meeting(core, 'https://home.example/'), undefined);
+  delete globalThis.__trace;
+
+  const reading = (group) =>
+    parts.step(through(first, { type: 'hold', group }, { type: 'held' }), {
+      type: 'opened',
+      group,
+    }).state;
+  const kept = (group, m) => {
+    const { effects } = parts.step(reading(group), {
+      type: 'read',
+      n: 1,
+      ok: true,
+      body,
+      lent: [],
+      ...m,
+    });
+    return effects.find((f) => f.run === 'keep').group.meets;
+  };
+  const home = ['https://home.example/'];
+  assert.deepEqual(kept(house, { meets: home }), home, 'learned, with no new link');
+  assert.deepEqual(kept({ ...house, meets: home }, { meets: [] }), [], 'dropped when unnamed');
+  assert.deepEqual(kept({ ...house, meets: home }, {}), home, 'an older reply keeps what is kept');
+  assert.equal(kept(house, {}), undefined, 'and a phone that learned none has none');
+});

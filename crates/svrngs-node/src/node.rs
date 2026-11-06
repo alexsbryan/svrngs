@@ -49,7 +49,7 @@
 //! browser's endpoint lives only while its page runs and every dial of it
 //! would wait out a timeout.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -1041,12 +1041,15 @@ async fn people_lends(
     let removals: Option<Vec<_>> =
         rs.map(|rs| rs.iter().flat_map(|r| r.removals.clone()).collect());
     let on: Option<Vec<_>> = rs.and_then(|rs| rs.iter().map(|r| visiting(r, me)).collect());
+    let meets: Option<BTreeSet<_>> =
+        rs.map(|rs| rs.iter().flat_map(|r| r.meets.clone()).flatten().collect());
     tracing::debug!(target: "node", asker, groups = groups.len(), lent = lent.len(), ?unlisted,
-        removals = ?removals.as_ref().map(Vec::len),
+        removals = ?removals.as_ref().map(Vec::len), meets = ?meets.as_ref().map(|m| m.len()),
         "node: people's lends — answered what the people of the asker's groups lend, each with its lender's key");
     let mut body = serde_json::json!(unlisted);
     body["lent"] = serde_json::json!(lent);
     body["removals"] = serde_json::json!(removals);
+    body["meets"] = serde_json::json!(meets);
     body["visiting"] = serde_json::json!(on.map(|each| each.concat()));
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);

@@ -116,11 +116,10 @@ export const linkRefused = (status) =>
  * @param {typeof Wasm} core
  * @param {Uint8Array} as
  * @param {string} token
- * @param {{ path: string, body: string }} request
- * @param {(status: number, text: string) => string} [refused]
+ * @param {{ path: string, body: string, refused?: (status: number, text: string) => string }} request
  * @returns {Promise<string>}
  */
-export async function posted(core, as, token, { path, body }, refused = linkRefused) {
+export async function posted(core, as, token, { path, body, refused = linkRefused }) {
   const dialled = await patiently(core.connect_to_join(as, token)).catch((error) => {
     trace(`PAGE: the dial failed: ${error}`);
     throw saying(AWAY);
@@ -137,6 +136,8 @@ export async function posted(core, as, token, { path, body }, refused = linkRefu
 let key;
 /** @type {Promise<Endpoint> | null} */
 let bound;
+// The group's relays `bound` was bound with.
+let boundAt = '';
 
 /**
  * The group's key, unsealed as it opens. The endpoint of the key before it
@@ -156,15 +157,23 @@ export const hold = (unsealed) => {
 export const actor = (core) => core.actor(key);
 
 /**
- * The one endpoint, bound as the person on the first dial. One refused (no
+ * The one endpoint, bound as the person on the first dial with the group's
+ * relays as last read, and bound again when a read changes them: a relay
+ * keeps one endpoint per key, so the old one is closed. One refused (no
  * relay answered in time, web/src/lib.rs `bind`) is let go, so the next
  * dial binds again rather than the refusal for good (review F3).
  * @param {typeof Wasm} core
  * @param {Group} group
  */
 const endpoint = (core, group) => {
-  if (bound) return bound;
-  const binding = (bound = core.endpoint(key, group.token));
+  const ways = String(group.meets);
+  if (bound && ways === boundAt) return bound;
+  if (bound) {
+    trace(`PAGE: the group's relays changed to ${ways}, so the endpoint binds again with them`);
+    void bound.then((old) => old.close()).catch(() => {});
+  }
+  boundAt = ways;
+  const binding = (bound = core.endpoint(key, group.token, group.meets));
   binding.catch((error) => {
     if (bound !== binding) return;
     trace(`PAGE: the endpoint was not bound, so the next dial binds one: ${error}`);

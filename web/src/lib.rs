@@ -119,6 +119,20 @@ fn this_page_takes(relay: &svrngs_core::relay::Url) -> bool {
     relay.scheme() == "https" || !https_page || upgrades_insecure()
 }
 
+/// The ways to a group: the relays its link carries, today's way in, then
+/// `meets`, those its keeper names as the page last read them, each once and
+/// each one this page's policy takes.
+fn ways_in(link: Vec<svrngs_core::relay::Url>, meets: &[String]) -> Vec<RelayUrl> {
+    let named = meets.iter().filter_map(|one| relay::parse(one).ok());
+    let mut ways: Vec<RelayUrl> = Vec::new();
+    for way in link.into_iter().map(RelayUrl::from).chain(named) {
+        if this_page_takes(&way) && !ways.contains(&way) {
+            ways.push(way);
+        }
+    }
+    ways
+}
+
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
 /// every relay it carries this page's policy takes — the public fallback
 /// beside the group's own HTTP relay, where that one is one the page may
@@ -126,18 +140,13 @@ fn this_page_takes(relay: &svrngs_core::relay::Url) -> bool {
 /// carries none: from a computer that reached no relay, with n0's lookup
 /// or without it (`cli::link_relay`, relay-park (c)), or one naming only
 /// routes the published policy refuses.
-async fn bind_for(key: Vec<u8>, token: &str, held: bool) -> Result<Bound, JsError> {
+async fn bind_for(key: Vec<u8>, token: &str, meets: &[String], held: bool) -> Result<Bound, JsError> {
     let Some(link) = Token::decode(token) else {
         refuse!("LAYER parse: REFUSED — the fragment is not a link's token: {token}")
     };
     let issuer = computer(link.issuer.as_bytes())?;
     t!("LAYER parse: ok — issuer {issuer}");
-    let relays: Vec<RelayUrl> = link
-        .relays
-        .into_iter()
-        .filter(this_page_takes)
-        .map(RelayUrl::from)
-        .collect();
+    let relays = ways_in(link.relays, meets);
     if relays.is_empty() {
         refuse!("LAYER parse: REFUSED — the link names no relay this page's policy takes")
     }
@@ -253,20 +262,17 @@ async fn reach(
     // relay it was handed was taken by the page that handed it
     // ([`relays_of`], `relay_taken`), so the one named for a lender is
     // taken as handed. A page judges its own.
-    let routes: Vec<RelayUrl> = match named {
+    let mut routes = bound.relays.clone();
+    match named {
         Some(relay) if bound.issuer.is_none() || this_page_takes(&relay) => {
-            t!("LAYER parse: ok — {node_id}'s group names its relay {relay}");
-            vec![relay]
+            t!("LAYER parse: ok — {node_id}'s group names its relay {relay}, tried beside every way this endpoint knows");
+            if !routes.contains(&relay) {
+                routes.push(relay);
+            }
         }
-        Some(relay) => {
-            t!("LAYER parse: {node_id}'s group names {relay}, which this page's policy does not take, so the link's routes are tried");
-            bound.relays.clone()
-        }
-        None => {
-            t!("LAYER parse: no relay named for {node_id} — its group names none, or the page refused it — so every relay the link carries is tried");
-            bound.relays.clone()
-        }
-    };
+        Some(relay) => t!("LAYER parse: {node_id}'s group names {relay}, which this page's policy does not take, so the link's routes are tried"),
+        None => t!("LAYER parse: no relay named for {node_id} — its group names none, or the page refused it — so every relay the link carries is tried"),
+    }
 
     let opts = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
     use n0_future::StreamExt as _;
@@ -391,7 +397,7 @@ impl Dialled {
 /// link's computer by [`Endpoint::dial_link`]; #172 took the second way.)
 #[wasm_bindgen]
 pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
-    let bound = bind_for(key, &token, false).await?;
+    let bound = bind_for(key, &token, &[], false).await?;
     let conn = reach(&bound, None, None, Alpn::Redeem, None).await?;
     let ep = Some(bound.ep);
     Ok(Dialled { ep, conn })
@@ -404,9 +410,9 @@ pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsE
 /// (iroh-relay-1.0.2/src/server/clients.rs:80-92), so the worker holds one
 /// for every lender it reaches, never one per dial.
 #[wasm_bindgen]
-pub async fn endpoint(key: Vec<u8>, token: String) -> Result<Endpoint, JsError> {
+pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -> Result<Endpoint, JsError> {
     Ok(Endpoint {
-        bound: bind_for(key, &token, true).await?,
+        bound: bind_for(key, &token, &meets.unwrap_or_default(), true).await?,
     })
 }
 
@@ -443,14 +449,10 @@ pub fn relay_of(token: String) -> Result<Option<String>, JsError> {
 /// handed in place of the token, so an app does not revert to a route the
 /// page refuses (u5-2; relay fallbacks).
 #[wasm_bindgen]
-pub fn relays_of(token: String) -> Result<Vec<String>, JsError> {
+pub fn relays_of(token: String, meets: Option<Vec<String>>) -> Result<Vec<String>, JsError> {
     let link = Token::decode(&token).ok_or_else(|| JsError::new("not a link's token"))?;
-    Ok(link
-        .relays
-        .into_iter()
-        .filter(this_page_takes)
-        .map(|r| RelayUrl::from(r).to_string())
-        .collect())
+    let ways = ways_in(link.relays, &meets.unwrap_or_default());
+    Ok(ways.iter().map(ToString::to_string).collect())
 }
 
 /// Whether this page's policy takes `relay`, a URL: what a page asks

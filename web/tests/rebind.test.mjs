@@ -123,3 +123,33 @@ test('a relay the page refuses for a lend is said by name as it goes as none', (
     said.join('\n'),
   );
 });
+
+// KEEP_GOING_AT_HOME 4: relays learned in a read reach the next dial, not
+// the next visit, and the endpoint they replace is closed, as a relay keeps
+// one per key. Watched failing with `endpoint` keeping what it bound: bound
+// once, and the second dial asked through the link's relays alone.
+test("the page's endpoint binds again, closing the old, when the group's relays change", async () => {
+  const opened = [];
+  const closed = [];
+  const reached = { fetch: async () => 'lends', close: async () => {} };
+  const core = {
+    relay_of: () => 'https://relay.example/',
+    issuer_of: () => 'ab',
+    endpoint: async (_, __, meets) => {
+      opened.push(meets);
+      return { dial_link: async () => reached, close: async () => closed.push(meets) };
+    },
+    current_version: () => 5,
+  };
+  hold(new Uint8Array(32));
+  const group = { token: 'token', name: 'House' };
+  await lends(core, group, []);
+  await lends(core, group, []);
+  assert.deepEqual(opened, [undefined], 'nothing changed, so one endpoint');
+  const home = ['https://home.example/'];
+  await lends(core, { ...group, meets: home }, []);
+  await lends(core, { ...group, meets: home }, []);
+  assert.deepEqual(opened, [undefined, home]);
+  await new Promise((done) => setImmediate(done));
+  assert.deepEqual(closed, [undefined], 'the first closed, and the second kept');
+});
