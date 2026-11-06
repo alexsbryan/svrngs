@@ -67,7 +67,7 @@ full gate exits 0.
     cross-lane integration honestly. No live personal-data migration, public
     deployment, service spend or push as a side effect of this row.
 - [x] merge-scope-ui (dc533bb9, integration fixes dc67430f f0502673; focused UI 14/14, page laws 155/155) — depends [onboarding-scoped-lending] — merge ralph/onboarding-scope-ui into main against the frozen JSON/version contract in SCOPE_PARALLEL.md; resolve conflicts behaviour-preserving; focused UI/page-law/types checks.
-- [ ] REVIEW-audit-onboarding-auto-1 — depends [merge-scope-ui] — final integrated audit of this queue's implementation range, 194aa994 through the merged backend/UI HEAD, against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
+- [x] REVIEW-audit-onboarding-auto-1 (2026-11-05: ralph/REVIEW_FINDINGS.md; full check.sh exit 0 at 15acd066, target/gate/check-15acd066.log; real-node scene 65/65 at demo/runs/scoped-lending/2026-11-05/SCENE.md) — depends [merge-scope-ui] — final integrated audit of this queue's implementation range, 194aa994 through the merged backend/UI HEAD, against `docs/principles/ARCH_PRINCIPLES.md`; REUSE AND SIZE, WITH DATA — read: `docs/principles/ARCH_PRINCIPLES.md` — check: LINT
   - **Demo-deadline integration owner.** Read `SCOPE_PARALLEL.md`. Integrate
     Check the separate onboarding-ui worktree's queue/DONE marker and clean
     committed branch as specified there, then merge that finished branch.
