@@ -394,3 +394,38 @@ async fn a_member_no_longer_standing_is_cut() {
         "Dee, still standing, keeps their connection through the same window"
     );
 }
+
+/// **A port taken from a group is cut, and no other** (LENDING_SCOPE
+/// §"Enforcement and disclosure" 2). Alex has a connection open on Sam's
+/// echo and one on Sam's other, both lent to the house. Sam lends echo to
+/// no group (`[]`, paused): within two seconds Sam's computer closes
+/// Alex's echo, read to its end, while Alex's other carries on. Planted:
+/// the sweep asking the lend as it was opened, not as it is declared now.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_port_its_group_is_taken_from_is_cut_and_no_other() {
+    let (sam, them, _) = house(&[(2, "Alex")]).await;
+    let echoes = share_tcp(&sam, echo().await, &[]);
+    let other = share_tcp(&sam, echo().await, &["--name", "other"]);
+    let alex = &them[0];
+    let (carried, at_echo) = open(alex, &sam, &echoes).await;
+    let _echo = carried.expect("Alex's computer opens Sam's echo");
+    let (carried, at_other) = open(alex, &sam, &other).await;
+    let _other = carried.expect("Alex's computer opens Sam's other");
+    let mut e = TcpStream::connect(at_echo).await.unwrap();
+    let mut o = TcpStream::connect(at_other).await.unwrap();
+    assert_eq!(asks(&mut e, b"one").await.as_deref(), Some(&b"one"[..]));
+    assert_eq!(asks(&mut o, b"one").await.as_deref(), Some(&b"one"[..]));
+
+    let began = std::time::Instant::now();
+    let paused = svrngs_node::lend::set_audience(sam.dir.path(), &echoes.name, Vec::new());
+    assert!(paused.unwrap());
+    let mut rest = Vec::new();
+    let ended = timeout(Duration::from_secs(2), e.read_to_end(&mut rest)).await;
+    eprintln!("echo cut after {:?}", began.elapsed());
+    assert!(
+        ended.is_ok(),
+        "echo is still open 2 s after its group was taken away"
+    );
+    let still = asks(&mut o, b"two").await;
+    assert_eq!(still.as_deref(), Some(&b"two"[..]), "other carries on");
+}
