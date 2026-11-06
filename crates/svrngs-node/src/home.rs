@@ -816,8 +816,8 @@ async fn namesakes(State(at): State<Asking>, Query(n): Query<Naming>) -> Respons
     }
 }
 
-/// The programs that open an address or a folder, in turn: macOS's, then
-/// the freedesktop one Linux desktops answer.
+/// The programs that open an address or a folder: macOS's, or the freedesktop
+/// one anywhere else, whose `open` can be something else (`openvt`).
 const OPENERS: [&str; 2] = ["open", "xdg-open"];
 
 /// How long an opener has to refuse before it is taken to have opened.
@@ -825,21 +825,23 @@ const OPENER_ANSWERS: Duration = Duration::from_secs(1);
 
 /// Whether an opener took `what`. `xdg-open` stays until the browser or file
 /// manager it started closes, so one still running has taken it: it is never
-/// waited for. Its output goes nowhere, so nothing it starts holds a pipe its
+/// waited for, though a thread reaps it. Its output goes nowhere, so nothing it starts holds a pipe its
 /// caller reads to the end, as install.sh's `$(svrngs open)` does.
 pub fn opened(what: &OsStr) -> Option<&'static str> {
-    OPENERS.into_iter().find(|opener| {
-        let mut opening = Command::new(opener);
-        opening
-            .arg(what)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null());
-        let answer = opening.spawn().and_then(|mut opening| {
-            std::thread::sleep(OPENER_ANSWERS);
-            opening.try_wait()
-        });
-        answer.is_ok_and(|done| done.is_none_or(|said| said.success()))
-    })
+    let opener = OPENERS[usize::from(!cfg!(target_os = "macos"))];
+    let mut opening = Command::new(opener);
+    opening
+        .arg(what)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    let answer = opening.spawn().and_then(|mut opening| {
+        std::thread::sleep(OPENER_ANSWERS);
+        let answer = opening.try_wait();
+        std::thread::spawn(move || opening.wait());
+        answer
+    });
+    let took = answer.is_ok_and(|done| done.is_none_or(|said| said.success()));
+    took.then_some(opener)
 }
 
 /// `POST /folder`: the folder `dir` opened, asked as `/v1/folders` is asked

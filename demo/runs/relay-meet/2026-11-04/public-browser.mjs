@@ -30,7 +30,7 @@ try {
     result.installation = await page.locator('body').innerText();
     assert.ok(result.installation.includes('https://group.svrnme.sh/install.sh'));
     assert.ok(result.installation.includes('--as'));
-    assert.ok(!result.installation.includes('tailf85b04'));
+    assert.ok(!result.installation.includes('.ts.net'));
     console.log('PASS real public Chromium short-address navigation -> issuer ask -> native name form -> canonical installation command');
   } else {
     console.log('Observed public browser name form:', result.nameForm);

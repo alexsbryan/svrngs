@@ -1134,8 +1134,9 @@ async fn two_groups_of_one_name_are_chosen_by_id_never_by_name() {
 }
 
 /// `unshare --group` on a legacy lend, which a start now lends to its
-/// computer's groups, so only one made since: that group cannot open it,
-/// and the declaration still needs selection. Supersedes audit F12's refusal.
+/// computer's groups, so only one made since: that group cannot open it, and
+/// the words say that, not that a change was made (audit F12). It still
+/// needs selection.
 #[tokio::test(flavor = "multi_thread")]
 async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     use svrngs_node::lend::{self, Audience};

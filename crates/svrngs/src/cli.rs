@@ -1441,7 +1441,7 @@ impl std::fmt::Display for Said {
                 writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
             }
             Said::Unshared(name) => writeln!(f, "You no longer lend {name}."),
-            Said::Narrowed(name) => writeln!(f, "Those groups can no longer open {name}."),
+            Said::Narrowed(name) => writeln!(f, "Those groups cannot open {name}."),
             Said::Removal {
                 group,
                 person,

@@ -35,7 +35,7 @@ release and Linux x86_64 musl release builds, each exit 0. The Linux file
 is a statically linked x86-64 ELF; the Mac file is an ARM64 Mach-O.
 
 Scene-only address (requires this Mac and tailnet reach):
-`https://alexs-macbook-pro.tailf85b04.ts.net:8443/`.
+`https://<this-computer>.<tailnet>.ts.net:8443/`.
 `source.json` there records the built source and file hashes. Downloads:
 
 | Archive | SHA-256 |
@@ -72,7 +72,7 @@ groups joined later; this candidate has no per-ring audience selection.
 To install/update on either supported demo machine, preserving its data:
 
 ```sh
-curl -fsSL https://alexs-macbook-pro.tailf85b04.ts.net:8443/install.sh | sh -s -- 'https://alexs-macbook-pro.tailf85b04.ts.net:8443/'
+curl -fsSL https://<this-computer>.<tailnet>.ts.net:8443/install.sh | sh -s -- 'https://<this-computer>.<tailnet>.ts.net:8443/'
 ```
 
 The installer checks the archive before updating, restarts the installed
@@ -133,7 +133,7 @@ The tailnet staging process was stopped.
 Repository check status: `git diff --check` passes. Lean reports core
 3,486/3,494 and non-JS 19,832/19,833, but **JS 8,195/8,188 fails**. The
 adapter adds eight counted lines (seven beyond current headroom), after its
-own pass reduced eleven to eight. No cap was raised. Budget approval or
+own pass reduced eleven to eight. No cap was raised in this run; the operator then approved +50 js, of which the merge took 8 (`scripts/lean_check.py`). Budget approval or
 further cuts are still required before a clean full-gate landing.
 
 Public install/update line:

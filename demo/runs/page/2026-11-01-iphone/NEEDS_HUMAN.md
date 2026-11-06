@@ -35,7 +35,7 @@ In another:
 tailscale serve --bg 8787
 ```
 
-It prints an https address, `https://alexs-macbook-pro.tailf85b04.ts.net/`.
+It prints an https address, `https://<this-computer>.<tailnet>.ts.net/`.
 If it says the tailnet's https is off, it gives a link to the setting that
 turns it on. Turn it on, then run the line again.
 
@@ -57,7 +57,7 @@ It prints a link, `svrngs://join/<token>`. The page's address and that
 token make the phone's link:
 
 ```
-https://alexs-macbook-pro.tailf85b04.ts.net/#<token>
+https://<this-computer>.<tailnet>.ts.net/#<token>
 ```
 
 `--origin` is left out on purpose. It refuses any host that does not serve
