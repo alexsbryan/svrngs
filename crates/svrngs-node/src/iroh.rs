@@ -467,11 +467,12 @@ pub struct Via(pub(crate) iroh::endpoint::Connection);
 /// What a connection's selected path looks like now, as iroh's
 /// `Connection::paths()` and `PathStats` report it: use, never capacity
 /// (PLAN §4, U3's inventory, its iroh_path row).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Observed {
     /// The address the path ends at, `None` when it rides a relay.
     pub addr: Option<IpAddr>,
-    pub relayed: bool,
+    /// The relay it rides, `None` when it goes direct.
+    pub relay: Option<RelayUrl>,
     pub rtt: Duration,
     /// Bytes this computer has sent on the path, and received.
     pub sent: u64,
@@ -488,13 +489,14 @@ impl Via {
         let paths = self.0.paths();
         let path = paths.iter().find(|p| p.is_selected())?;
         let stats = path.stats();
-        let addr = match path.remote_addr() {
-            iroh::TransportAddr::Ip(a) => Some(a.ip()),
-            _ => None,
+        let (addr, relay) = match path.remote_addr() {
+            iroh::TransportAddr::Ip(a) => (Some(a.ip()), None),
+            iroh::TransportAddr::Relay(r) => (None, Some(r.clone())),
+            _ => (None, None),
         };
         Some(Observed {
             addr,
-            relayed: path.is_relay(),
+            relay,
             rtt: stats.rtt,
             sent: stats.udp_tx.bytes,
             received: stats.udp_rx.bytes,

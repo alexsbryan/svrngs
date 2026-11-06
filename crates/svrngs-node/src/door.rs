@@ -47,8 +47,8 @@
 //! [`SHARE_HEADER`] on the request the service receives and on the answer
 //! the member receives; a lend declaring none tells no share. Each verdict
 //! is traced at info with the path the door observed ([`Via`]) — its bytes,
-//! RTT and whether it is relayed — so a watcher of the lender's log reads
-//! every share without the debug level.
+//! RTT and the relay it rides, if any — so a watcher of the lender's log
+//! reads every share, and which relay carried it, without the debug level.
 //!
 //! **What it lends, asked** (u3-5; DESIGN §3, "Lends are asked, not
 //! stored"): `GET /lends` answers a dialer standing in a group this
@@ -1556,14 +1556,14 @@ pub(crate) async fn lend_for(
     if observed.is_none() {
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
-    let whereabouts = crate::network::guess(observed.and_then(|o| o.addr));
+    let whereabouts = crate::network::guess(observed.as_ref().and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return Err(LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCOUNTED));
     };
-    let (relayed, rtt_ms, sent, received) = observed.map_or((None, None, None, None), |o| {
+    let (relay, rtt_ms, sent, received) = observed.as_ref().map_or((None, None, None, None), |o| {
         (
-            Some(o.relayed),
+            o.relay.clone(),
             Some(o.rtt.as_millis()),
             Some(o.sent),
             Some(o.received),
@@ -1576,14 +1576,14 @@ pub(crate) async fn lend_for(
             return Err(busy(&lend, using, limit));
         }
         Verdict::Home => {
-            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.and_then(|o| o.addr),
+            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.as_ref().and_then(|o| o.addr),
                 "door: guessed in this computer's home — the path ends at a private address — so not counted and told no share");
             None
         }
         Verdict::In { people, share } => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, people, share_bps = ?share,
-                declared_bps = ?lend.upload.map(lend::Upload::bps), relayed = ?relayed, rtt_ms = ?rtt_ms,
-                sent = ?sent, received = ?received, "door: let in, and told their share of the declared upload");
+                declared_bps = ?lend.upload.map(lend::Upload::bps), relayed = ?observed.as_ref().map(|o| o.relay.is_some()), rtt_ms = ?rtt_ms,
+                sent = ?sent, received = ?received, relay = ?relay, "door: let in, and told their share of the declared upload");
             if share.is_none() {
                 tracing::debug!(target: "door", lend = %lend.name, "door: the lend declares no upload, so no share is told");
             }

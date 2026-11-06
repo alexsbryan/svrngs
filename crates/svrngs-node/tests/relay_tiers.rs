@@ -359,6 +359,68 @@ async fn pressed_with_the_fallback_answering_nothing_moves() {
     node.endpoint().close().await;
 }
 
+/// **The log says which relay carried an action** (KEEP_GOING_AT_HOME 20):
+/// Sam, a member whose endpoint has no way but the relay, opens what Ada
+/// lends, and the door's line for it names that relay. Why she is there is
+/// the tier's: `tiers` traces each move at debug.
+#[tokio::test]
+async fn the_door_says_which_relay_carried_an_action() {
+    let (said, _heard) = common::heard("door=info");
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let (_relay, url) = relay(any).await;
+    let (_dir, node) = ada(&url, &url).await;
+    homed(&node, &url).await;
+    let group = node.rail().namespaces().unwrap().remove(0);
+    let sam = SigningKey::from_bytes(&[9; 32]);
+    let admit = svrngs_core::tests_support::Fixture {
+        act: svrngs_node::RailAct::Admit {
+            person: svrngs_node::Person::parse("sam").unwrap(),
+            key: svrngs_node::actor_of(&sam),
+            invite: None,
+        },
+    };
+    node.rail().commit(&group, &admit).unwrap().unwrap();
+    let port = pings()
+        .await
+        .rsplit(':')
+        .next()
+        .unwrap()
+        .trim_end_matches('/')
+        .parse::<u16>();
+    let lends = svrngs_node::lend::lends_dir(node.rail().root());
+    std::fs::create_dir_all(&lends).unwrap();
+    let lent =
+        serde_json::json!({ "port": port.unwrap(), "kind": "app", "limit": 3, "groups": [group] });
+    std::fs::write(lends.join("telly.json"), lent.to_string()).unwrap();
+
+    let map = iroh::RelayMap::from(url.parse::<RelayUrl>().unwrap());
+    let dialer = iroh::endpoint::Builder::new(iroh::endpoint::presets::Minimal)
+        .crypto_provider(svrngs_node::guest::ring_crypto_provider())
+        .secret_key(SecretKey::from_bytes(&sam.to_bytes()))
+        .relay_mode(iroh::RelayMode::Custom(map))
+        .clear_ip_transports()
+        .bind()
+        .await
+        .unwrap();
+    let at = EndpointAddr::new(node.endpoint().id()).with_relay_url(url.parse().unwrap());
+    let conn = dialer.connect(at, svrngs_node::alpn::ALPN).await.unwrap();
+    let (mut send, mut recv) = conn.open_bi().await.unwrap();
+    let label = svrngs_core::pass::Label::of(node.endpoint().id().as_bytes(), "telly");
+    let ask = format!("GET /lend/{label}/ HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n");
+    send.write_all(ask.as_bytes()).await.unwrap();
+    let reply = recv.read_to_end(1 << 16).await.unwrap();
+    let reply = String::from_utf8_lossy(&reply);
+    assert!(reply.starts_with("HTTP/1.1 200"), "{reply}");
+    let lines = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let line = lines.lines().find(|l| l.contains("door: let in"));
+    let line = line.unwrap_or_else(|| panic!("no line: {lines}"));
+    assert!(line.contains(&url), "{line}");
+    // apps/jellyfin/check/trio.py reads the fields before it, in this order.
+    assert!(line.contains(" relayed=Some(true) rtt_ms="), "{line}");
+    dialer.close().await;
+    node.endpoint().close().await;
+}
+
 /// A server on 127.0.0.1 that answers every request 200 and is no relay:
 /// svrngs's ask of it passes (`tiers::answers`, `GET /ping`), and an
 /// endpoint never registers there, as at a captive portal taking TCP 443.
