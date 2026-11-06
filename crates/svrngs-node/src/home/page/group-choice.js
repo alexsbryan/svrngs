@@ -27,6 +27,16 @@ import { whose } from '../question.js?v=__VERSION__';
  * @property {(message: { type: 'choose', id: string, on: boolean }) => void} send
  */
 
+/**
+ * A group as the boxes and a lend's row both say it: its name, and who made
+ * it, so two of one name are told apart.
+ * @param {Choice} group
+ */
+export const called = (group) => {
+  const made = group.made && whose(group.made);
+  return `${group.name ?? 'a group whose name this computer cannot read'}${made ? ` (${made})` : ''}`;
+};
+
 /** @param {GroupChoiceProps} props */
 export function GroupChoice({ groups, ticked, waiting = false, send }) {
   /** @param {string} id */
@@ -37,7 +47,6 @@ export function GroupChoice({ groups, ticked, waiting = false, send }) {
       on: /** @type {HTMLInputElement} */ (pressed.currentTarget).checked,
     });
   return groups.map((group) => {
-    const made = group.made && whose(group.made);
     return html`
       <p>
         <label>
@@ -47,7 +56,7 @@ export function GroupChoice({ groups, ticked, waiting = false, send }) {
             checked=${ticked.includes(group.id)}
             onChange=${tick(group.id)}
           />
-          ${group.name ?? 'a group whose name this computer cannot read'}${made ? ` (${made})` : ''}
+          ${called(group)}
         </label>
       </p>
     `;

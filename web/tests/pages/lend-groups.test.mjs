@@ -141,3 +141,26 @@ test('two groups of one name are told apart in the boxes by who made them', () =
   assert.ok(boxes.includes('Trip (sam’s'), boxes);
   assert.ok(boxes.includes('Trip'), 'the person’s own group keeps the bare name');
 });
+
+// A row names every id of its audience (audit F10): one this computer holds
+// no group for is said by its id's start, never dropped, so no row reads
+// "Lent to ."; two groups of one name are told apart as the boxes tell them
+// (group-choice.js). Planted: the ids HOME does not hold filtered out, and
+// a bare name for each.
+test('a row names every audience id, unheld ones by their id, namesakes apart', () => {
+  const gone = '0123456789abcdef';
+  assert.equal(
+    lentTo({ groups: ['house', gone] }, CHOICES),
+    'Lent to House and a group this computer does not hold (01234567).',
+  );
+  const none = lentTo({ groups: [gone] }, CHOICES);
+  assert.notEqual(none, 'Lent to .');
+  assert.ok(none.includes('01234567'), none);
+  const trips = [
+    { id: 'a', name: 'Trip', made: { name: 'Trip', maker: 'sam', since: 1 } },
+    { id: 'b', name: 'Trip', made: null },
+  ];
+  const both = lentTo({ groups: ['a', 'b'] }, trips);
+  assert.ok(both.startsWith('Lent to Trip (sam’s'), both);
+  assert.ok(both.endsWith(' and Trip.'), both);
+});

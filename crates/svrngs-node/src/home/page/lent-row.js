@@ -9,7 +9,7 @@ import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
-import { GroupChoice } from './group-choice.js?v=__VERSION__';
+import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
 import { SigningOn } from './signing-on.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
@@ -37,9 +37,11 @@ export const lentTo = (lend, groups) => {
   const ids = lend.groups ?? null;
   if (ids === null) return 'Choose which groups can open this.';
   if (ids.length === 0) return 'Paused: no group can open it.';
-  const names = groups
-    .filter((group) => ids.includes(group.id))
-    .map((group) => group.name ?? 'a group whose name this computer cannot read');
+  // Every id named, one this computer holds no group for by its start.
+  const names = ids.map((id) => {
+    const group = groups.find((held) => held.id === id);
+    return group ? called(group) : `a group this computer does not hold (${id.slice(0, 8)})`;
+  });
   return `Lent to ${names.join(' and ')}.`;
 };
 
