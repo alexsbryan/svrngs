@@ -40,12 +40,8 @@ export const called = (group) => {
 /** @param {GroupChoiceProps} props */
 export function GroupChoice({ groups, ticked, waiting = false, send }) {
   /** @param {string} id */
-  const tick = (id) => (/** @type {Event} */ pressed) =>
-    send({
-      type: 'choose',
-      id,
-      on: /** @type {HTMLInputElement} */ (pressed.currentTarget).checked,
-    });
+  const tick = (id) => (/** @type {{ currentTarget: HTMLInputElement }} */ pressed) =>
+    send({ type: 'choose', id, on: pressed.currentTarget.checked });
   return groups.map((group) => {
     return html`
       <p>
