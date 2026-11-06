@@ -1016,3 +1016,46 @@ async fn the_home_page_s_modules_are_served_each_as_its_file_and_no_other() {
     }
     node.endpoint().close().await;
 }
+
+/// Every change to a lend's declaration holds its lock for the whole read,
+/// change and write (LENDING_SCOPE §"Updates, migration and mixed
+/// versions"): while another change holds it, a sign-in, a limit and an
+/// audience edit are each answered 409, busy, and the declaration is left
+/// as it was, never written from a stale read. Once it is let go each is
+/// taken, and the audience edit keeps the sign-in client. Planted:
+/// sign-in's read and write outside the lock, which wrote while it was held.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let browser = &Browser::of(&alex);
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let to = |change: &str| format!(r#"{{"lend":"shelf","to":{change}}}"#);
+    std::fs::create_dir_all(dir.path().join("locks")).unwrap();
+    let held = std::fs::File::create(dir.path().join("locks/shelf.lock")).unwrap();
+    held.try_lock().unwrap();
+    let before = std::fs::read(lends.join("shelf.json")).unwrap();
+    for change in [r#""sign-in""#, r#"{"limit":2}"#, r#"{"groups":[]}"#] {
+        let said = ask(browser, "POST", &home, "/lent", &own, &to(change)).await;
+        assert_eq!(said.status, 409, "{change}: {}", said.body);
+    }
+    let after = std::fs::read(lends.join("shelf.json")).unwrap();
+    assert_eq!(after, before, "nothing is written while another change holds it");
+    drop(held);
+    let signed = ask(browser, "POST", &home, "/lent", &own, &to(r#""sign-in""#)).await;
+    assert_eq!(signed.status, 200, "{}", signed.body);
+    let paused = ask(browser, "POST", &home, "/lent", &own, &to(r#"{"groups":[]}"#)).await;
+    assert_eq!(paused.status, 204, "{}", paused.body);
+    let name = lend::LendName::parse("shelf").unwrap();
+    let kept = lend::read(dir.path(), &name).unwrap().unwrap();
+    assert_eq!(kept.audience, lend::Audience::Selected(Vec::new()));
+    assert!(kept.sign_in_with_svrngs.is_some(), "the audience edit kept the client");
+    alex.endpoint().close().await;
+}

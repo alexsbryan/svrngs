@@ -422,11 +422,22 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
-        Ok(false) => {
-            LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "you lend nothing by that name")
+        unchanged => unchanged_said(&c.lend, unchanged),
+    }
+}
+
+/// A change not made, said: nothing lent by that name, another change
+/// holding it (409, try again), or a declaration that cannot be changed.
+fn unchanged_said(name: &LendName, done: Result<bool, lend::LendError>) -> Response {
+    match done {
+        Ok(_) => LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "you lend nothing by that name"),
+        Err(e @ lend::LendError::Busy { .. }) => {
+            tracing::debug!(target: "home", lend = %name, error = %e, "home: refused — another change to it is being saved");
+            let words = "another change to it is being saved: try again";
+            LendRefusal::Closed.say(StatusCode::CONFLICT, words)
         }
         Err(e) => {
-            tracing::warn!(target: "home", lend = %c.lend, error = %e, "home: refused — the lend's declaration cannot be changed");
+            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — the lend's declaration cannot be changed");
             LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED)
         }
     }
@@ -472,24 +483,6 @@ fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
 /// page shows them the once; `GET /lent` says only that it signs people in.
 async fn sign_in(at: &Asking, name: &LendName) -> Response {
     let dir = &at.door.data_dir;
-    let mut lend = match lend::read(dir, name) {
-        Ok(Some(lend)) => lend,
-        Ok(None) => {
-            tracing::debug!(target: "home", lend = %name, "home: refused — nothing is lent by that name");
-            return LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "you lend nothing by that name");
-        }
-        Err(e) => {
-            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be read");
-            return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED);
-        }
-    };
-    if lend.sign_in_with_svrngs.is_some() {
-        tracing::debug!(target: "home", lend = %name, "home: refused — it signs people in with svrngs already");
-        return LendRefusal::Closed.say(
-            StatusCode::CONFLICT,
-            format!("{name} already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."),
-        );
-    }
     let client = match crate::oidc::client() {
         Ok(client) => client,
         Err(e) => {
@@ -500,10 +493,23 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
             );
         }
     };
-    lend.sign_in_with_svrngs = Some(client.clone());
-    if let Err(e) = lend::declare(dir, &lend, None) {
-        tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — its declaration cannot be changed");
-        return LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED);
+    // Read, changed and written under the lend's lock, as every change is
+    // (`lend::mutate`), so it never writes back an audience read stale.
+    let mut had = false;
+    let done = lend::mutate(dir, name, |lend| {
+        had = lend.sign_in_with_svrngs.is_some();
+        lend.sign_in_with_svrngs.get_or_insert_with(|| client.clone());
+    });
+    match done {
+        Ok(true) if had => {
+            tracing::debug!(target: "home", lend = %name, "home: refused — it signs people in with svrngs already");
+            return LendRefusal::Closed.say(
+                StatusCode::CONFLICT,
+                format!("{name} already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."),
+            );
+        }
+        Ok(true) => {}
+        unchanged => return unchanged_said(name, unchanged),
     }
     let issuer = crate::oidc::issuer(at.host.api_port, name.as_str());
     tracing::debug!(target: "home", lend = %name, %issuer, "home: it signs people in with svrngs now");

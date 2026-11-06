@@ -170,7 +170,11 @@ the lender's own home page is told the whole audience. `svrngs share
 start of their id; with none it is refused with that command, never lent
 to all. `svrngs unshare <lend> --group <group>` takes just those groups
 away, its secret, sign-in and choices kept; bare `unshare` stops lending
-it. *Lends are asked,
+it. Every change to a declaration — its groups, its limit, turning on
+sign-in — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
+from its read to its write (`lend::mutate`), so no change writes back
+what another narrowed; one made while another holds it is refused, busy
+(409 on the home page), and changes nothing. *Lends are asked,
 not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
 never stale. The lender's own lend, opened on their own computer, goes
