@@ -90,6 +90,15 @@ function running(registration) {
   });
 }
 
+// Whether this browser's group page issued `handed`, said to the person
+// when it did not.
+/** @param {Handoff} handed */
+async function checked(handed) {
+  const yes = await issued(handed);
+  if (!yes) say('Open this app again from your group’s page.');
+  return yes;
+}
+
 // Whether this browser's group page issued `handed`: the group's signer,
 // framed at the address derived from this origin's own host, adopts the
 // open's approver on its first ask, or finds the one it adopted
@@ -98,7 +107,7 @@ function running(registration) {
  * @param {Handoff} handed
  * @returns {Promise<boolean>}
  */
-async function checked(handed) {
+async function issued(handed) {
   const url = signerFor(location.href, new URL('./', import.meta.url).pathname);
   const frame = document.createElement('iframe');
   frame.hidden = true;
@@ -158,10 +167,7 @@ async function handedHere() {
   if (store.labelOf(location.hostname) !== handed.label) {
     throw new Error(`a pass for ${handed.label} opened at ${location.origin}`);
   }
-  if (!(await checked(handed))) {
-    say('Open this app again from your group’s page.');
-    return null;
-  }
+  if (!(await checked(handed))) return null;
   // Lines the last pass's holder signed and no computer took yet go on
   // with this one (lend.js `writing`), each under the pass it was signed with.
   const was = /** @type {Handed | undefined | null} */ (
@@ -217,10 +223,7 @@ async function handedKept(asked) {
     say('Open this from your group’s page.');
     return null;
   }
-  if (!(await checked(handed))) {
-    say('Open this app again from your group’s page.');
-    return null;
-  }
+  if (!(await checked(handed))) return null;
   if (asked.has('again')) {
     location.replace(`${handed.page}#open=${handed.label}`);
     return null;
