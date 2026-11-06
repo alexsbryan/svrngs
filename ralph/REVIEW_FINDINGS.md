@@ -13464,3 +13464,258 @@ is added after the full gate; no implementation or check changed.
 This audit's own changes are evidence and the assigned row's path correction;
 they add no product/test code and do not change the empty subject inventories.
 The pre-existing V1.6 publish artifacts were inspected and left untouched.
+
+## REVIEW-audit-onboarding-auto-1 (2026-11-05, independent final audit; range 194aa994..0fc5b189)
+
+Scope of this pass: (0) instrument, (1) ledger, (2) clones, (3) nouns,
+the source/principle review and LINT. The locked full `scripts/check.sh`
+and the real-node House/Trip scene are **not run here**: the seat runs the
+gate on this tree and a separate worker runs the scene.
+
+### (0) Instrument
+
+- Auditor `/Users/alexsbryan/dev/commonwealth-ai/target/debug/sovereign-cli-dev`,
+  sha256 `8827d9afbd5ac993…` (as REVIEW_AUDIT_NEEDS_HUMAN.md records);
+  ingester `target/debug/svrn-ingest` sha256 `0181d730aa7b372d…`;
+  commonwealth-ai at d8b61abe5; not rebuilt.
+- Embedder: `http://127.0.0.1:8080/v1` did not answer at start (no
+  supervisor process). This audit started its own
+  `/opt/homebrew/bin/llama-server -m …/sovereign/models/qwen-embedding-0.6b.gguf
+  --embeddings --pooling last --host 127.0.0.1 --port 8080`, 1024-d. Three
+  configurations failed before one held, each a finding below (I1–I3); the
+  one all results come from is `-c 49152 -np 3 -b 16384 -ub 16384`.
+- Data: one isolated root, `SVRNMESH_DATA_DIR=target/audit-onboarding-auto-1/root`,
+  corpus id `svrngs`, writers (`code index --data-dir root/indexes`,
+  `refresh --local --data-dir root/indexes`) and readers on the same root.
+- Source: a `git archive 0fc5b189` of `Cargo.toml Cargo.lock clippy.toml
+  rustfmt.toml deny.toml crates web apps resolver scripts` at
+  `target/audit-onboarding-auto-1/src/svrngs`, so the corpus is exactly the
+  reviewed HEAD whatever this audit later commits. Vendored bundles and
+  `.d.ts` (72 files) were dropped: the dry report excludes `vendor` anyway,
+  and a minified line is a 41,669-token chunk (I3). docs/demo/ralph prose
+  is not indexed. Coverage: 6,381 chunks, 4,874 function/method chunks,
+  **0 zero vectors** (read from `chunks.lance` with pylance); every new
+  declaration checked is present (`Door::reached`, `withdrawn`,
+  `guest_admitted`, `cut_by`, `lend::stamp`, `mutate`, `lock_lend`,
+  `RingRail::standing_in`, `udp::live`, `home::chosen`, `lentTo`,
+  `GroupChoice`, `current_version`, `publication::change`). SCIP: Rust
+  29,805 symbols / 171,450 refs, Python 1,574; **TypeScript none** (I4).
+- Controls, separate scratch corpus `scratch-root`/`plantrepo` (planted:
+  an exact copy `tally_widths` alpha.rs:7/beta.rs:7, a renamed near copy
+  `merge_selected`/`keep_chosen`, a noun `PlantedAudience` defined twice,
+  controls `checksum_bytes` and `SoloLedger` once). Run twice, on two
+  server configurations, identical numbers:
+  - exact tier: the copy found at both thresholds; controls not paired.
+  - near tier at the default 0.95: **0 clusters — it misses both plants**
+    (the byte-identical pair scores cosine 0.901, its chunks carry
+    different doc comments). At 0.80: both found (0.901, 0.823), control
+    excluded; at 0.70 unrelated symbols chain (0.744). **0.80 is the
+    validated operating point**; 0.95 results are reported but a clean 0.95
+    proves nothing.
+  - nouns: `PlantedAudience` 2 definitions, `SoloLedger` 1.
+  - In the real corpus the 0.80 near tier independently flagged the one
+    genuine duplicate this review found by reading (`scope_aware` /
+    `scope_marked`, cosine 0.827).
+
+### (1) Net lines per unit (subject prefix), product code
+
+`git log --numstat --format='@@%h %s' 194aa994..0fc5b189`, summed by the
+subject's unit id. Code extensions (.rs .js .mjs .cjs .ts .py .sh .swift)
+outside ralph/ demo/ docs/; test = a tests/fixtures segment, `tests.rs`,
+`*_test(s).rs`, `*.test.mjs`. Raw lines (comments and blanks included),
+not lean's count; inline `#[cfg(test)]` modules count as src. `onboarding:`
+subjects cover several of that queue's units (the hash map is in the
+2026-11-04 entry above).
+
+| unit | commits | src + | src − | src net | test + | test − | test net |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| onboarding | 49 | 1094 | 86 | 1008 | 2354 | 12 | 2342 |
+| WIP (c3fa0ef7, 38685b28, 2547d91c) | 3 | 642 | 96 | 546 | 230 | 40 | 190 |
+| scoped-lending | 25 | 527 | 236 | 291 | 1264 | 126 | 1138 |
+| relay-fallback | 49 | 461 | 200 | 261 | 1420 | 463 | 957 |
+| onboarding-scope-ui | 4 | 277 | 60 | 217 | 200 | 3 | 197 |
+| relay | 1 | 49 | 3 | 46 | 241 | 16 | 225 |
+| lean | 6 | 42 | 6 | 36 | 0 | 0 | 0 |
+| onboarding-economize | 5 | 9 | 1 | 8 | 0 | 0 | 0 |
+| http | 1 | 4 | 1 | 3 | 0 | 0 | 0 |
+| merge-scope-ui | 2 | 5 | 3 | 2 | 3 | 0 | 3 |
+| relay_tiers | 1 | 0 | 0 | 0 | 24 | 16 | 8 |
+| rebind.test.mjs | 1 | 0 | 0 | 0 | 9 | 6 | 3 |
+| 10 units with no code (ralph, Merge, queue, …) | 41 | 0 | 0 | 0 | 0 | 0 | 0 |
+| **total** | **184** | **3110** | **692** | **2418** | **5745** | **682** | **5063** |
+
+Endpoint check, `git diff --numstat 194aa994..0fc5b189`, same rules: src
+net **2421**, test net **5063**. The 3-line difference is the two merge
+commits' own resolutions, which `git log --numstat` does not list. Lean at
+0fc5b189: core 3490/3494, `.` 20430/20431, js 8325/8326. Core grew +4
+over the range, from relay-fallback (d4733200, b6db94fd) and onboarding
+(a13f027e); scoped-lending touched no core line.
+
+### (2) Clones with a side ADDED in the range
+
+`AUDIT code dry-report --corpus-id svrngs --scope <dir>/ --threshold T`,
+T = 0.95 and 0.80, for crates/svrngs-node, crates/svrngs-core,
+crates/svrngs-runtime, crates/svrngs, web, apps/give, resolver, apps/doc,
+apps/pantry, apps/taste; all exit 0. A side is ADDED when its first line
+is an added line of `git diff -U0 194aa994 0fc5b189`. Reports are in
+`target/audit-onboarding-auto-1/reports/`.
+
+- **Exact tier: no group with an added side** in any Rust scope. JS exact
+  clones are **could-not-judge** (I4): web, resolver, apps/doc and
+  apps/pantry say so; in crates/svrngs-node the JS under home/page is
+  silently outside the exact tier.
+- **Near tier at 0.95:** one cluster with an added side,
+  resolver/handler.mjs `run` 149–292 and `createResolver` 151–292 (0.971):
+  `run` is nested in `createResolver`, one body, not a clone.
+- **Near tier at 0.80:** 22 clusters with an added side (node 15, core 3,
+  web 2, runtime 1, resolver 1). One is a duplicate and is fixed
+  (aaf2daa4): `door::scope_aware` door.rs:337 / `door::scope_marked`
+  door.rs:347 (0.827). The rest, judged by reading both sides:
+  - overlapping chunks of adjacent or nested symbols, not clones:
+    `reaches`/`ids` lend.rs:229/235, `router`/`holders_router`
+    door.rs:414/425, `publish`/`close` publication.rs:141/144 (both one
+    line over `change`), `answer`/`status` publication.rs:116/131,
+    `invites`/`current_invite` core project.rs:42/31, `join`/`build`
+    core relay.rs:133/128, `at_fallback`/`home`/`made_at` tiers.rs:239,
+    `relays_of`/`relay_of` web/src/lib.rs:443/433 (different rules: one
+    filters by the page's policy), `upgrades_insecure`/`this_page_takes`
+    web/src/lib.rs:92/110.
+  - topical clusters, shape not shared: the 21-symbol lend-listing cluster
+    (door.rs `lends`, home.rs `lend_one`, node.rs `people_lends`,
+    found.js `Found`, lent-row.js `Lent`, …), grouped.js places
+    (`Choices`, `ArrivalLinks`, `GroupPlaces`, `Context`/`Navigation`),
+    home-page.js `Home`/`Arrival` with `HOME`/`GROUP`, `unchanged_said`
+    with home.rs `change`/`lent`, `declare`/`write` lend.rs:630/744,
+    `lentTo` with `LendName`/`named`, group-links.js publication parts,
+    and test pairs (lend/tests.rs 269/302, core relay_tests.rs 77/134).
+  - runtime `RingRail::standing_in` register.rs:347 pairs (0.823–0.846)
+    with `standing`/`seeded`, not with `standing_anywhere`; reading finds
+    the duplication there instead (F7).
+
+### (3) New nouns
+
+`AUDIT code converge noun <Name> --corpus-id svrngs`, exit 0 each, over
+every `struct`/`enum`/`trait` added in the range. One definition:
+`Audience` lend.rs:217, `Watched` door.rs:756, `Phase` publication.rs:21,
+`Receipt` publication.rs:31, `Fault` publication.rs:51, `Welcome`
+redeem.rs:159 (SCIP lines are 0-based). Test-only, so no production
+definition: `OldLendFile` (lend/tests.rs), `Call`, `Resolver`
+(tests/home/publication.rs). Not indexed (demo/): `Endless`, `PumpBody`,
+`Flow` (demo/runs/economize/2026-11-04-lend-scope/prototype.rs).
+**More than one definition:**
+
+- `Request`: `pub type Request = axum::http::Request<Body>` iroh.rs:319
+  (the request the door and origin carry) and `pub(crate) struct Request
+  {group, id}` publication.rs:44 (a publication's body), one crate, two
+  meanings. Rename the publication body; not done here (a name choice).
+
+### Fixed here (each its own commit)
+
+- aaf2daa4 — behaviour-preserving: `scope_marked` door.rs:345-349, a
+  second name whose body only called `scope_aware` door.rs:337;
+  node.rs:1021 asks `scope_aware`. `--test door` 52 passed. Lean `.` −3.
+- 85f18f74 — **behaviour fix, red first**: `lend::withdraw` lend.rs:786
+  took no lock, so a `mutate` (lend.rs:686) that read the lend before a
+  Stop (home.rs:419) or bare `unshare` (cli.rs:1603) wrote the withdrawn
+  lend back, old audience and all, after `withdraw` had said it was
+  withdrawn. Red: lend/tests.rs
+  `a_withdrawal_while_a_change_holds_the_lend_is_busy_never_undone`
+  panicked "withdraw said it withdrew, and the change wrote the lend
+  back", exit 101. Green: 14 lend tests, `--test home` 18, `-p svrngs
+  --test share` 13, clippy `-p svrngs-node --all-targets -D warnings`.
+  DESIGN.md:182 names stopping among the locked changes. Lean `.` +1.
+- d02b396d — docs: LENDING_SCOPE.md:3/:12 said queued/not implemented;
+  lend.rs:438 said `Offered.groups` is required on read, against its
+  `#[serde(default)]` lend.rs:440.
+
+### Findings (not fixed; both sites each, lines at 0fc5b189)
+
+- **F4 `declare` outside the lock.** `lend::declare` lend.rs:633 rewrites
+  the declaration and removes the secret dir without `lock_lend`
+  lend.rs:703, so a concurrent `mutate` lend.rs:686 can write a stale lend
+  over a re-share (`share_lend` cli.rs:1582; `lend_one` home.rs:648 only
+  declares new names). Same class as the fixed withdraw; one line, but it
+  makes a re-share answer busy, a CLI behaviour decision.
+- **F5 "this computer stands in the group" decided three ways (ARCH 8).**
+  `Door::reached` door.rs:404-406 (`standing(group).names(me)`),
+  `home::chosen` home.rs:468-469 (the same closure spelt again), and
+  `guest_of` door.rs:1327 (`register.members.contains_key(me)`); `me` is
+  `hex::encode(self.key)` door.rs:405 in one and
+  `actor_of(rail.signer())` door.rs:799 in another. They agree today
+  (a cut key leaves `members`, register.rs:270-273); nothing makes them.
+- **F6 OIDC redemption re-derives reach without the lender's standing.**
+  provider.rs:364 asks `Lend::reaches` and provider.rs:372-374 the
+  asker's standing; `Door::reached` door.rs:404 also asks the lender's.
+  A lender whose key leaves a group's roster without being cut (the case
+  scope.rs `a_group_the_lender_no_longer_stands_in_reaches_nothing` pins
+  at the door) still redeems a code minted through it within its minute.
+- **F7 `standing_in` copies `standing_anywhere`'s walk.** register.rs:350-375
+  and register.rs:326-339 hold the same namespace scan, per-group match
+  and warn; they differ by the eligible filter and the two-people refusal.
+  Collapsing them changes `standing_anywhere`'s answer for an ambiguous
+  key, so it is a decision, not a move.
+- **F8 `lend::stamp` fails closed but untraced on two branches.**
+  lend.rs:574-577 flattens a `read_dir` error and its entries' errors;
+  lend.rs:585-586 turns an unreadable or malformed file into a silent
+  `continue`. Such a file stays legacy and `read` lend.rs:532-543 refuses
+  it, so nothing is served (verified by reading, and lend/tests.rs
+  `a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it`
+  covers the unwritable case), but lend.rs:571-572 says "One that cannot
+  be stamped is traced". Needs 3+ counted lines; `.` has 2 left.
+- **F9 Publication says every refusal as "temporarily unavailable".**
+  publication.rs:119-130 maps every `Fault` to 503 `UNAVAILABLE`,
+  including local refusals: not a member (publication.rs:136, :157),
+  "no publication to close" :167, a resolver that is not HTTPS :180,
+  "stale close" :205. CHARTER's graceful-failure rule is for provider
+  limits and errors; these are the request's own (ARCH 6). The reason is
+  traced at debug only.
+- **F10 A lend row drops audience IDs it cannot name.** lent-row.js:39-43
+  keeps only IDs among HOME's groups; one that is not (a group left or
+  forgotten) vanishes, and a row whose every ID is such says "Lent to ."
+  group-choice.js:44 names an unnamed group instead; two groups of one
+  name read "Trip and Trip" here though GroupChoice tells them apart
+  (group-choice.js:39). JS is at 8325/8326, no room.
+- **F11 The scope header's name is spelt in two languages.**
+  version.rs:45 `SCOPE_HEADER` and web/page/dial.js:25
+  `'x-svrngs-version'`; the wasm exports the value only (web/src/lib.rs:491).
+- **F12 `unshare --group` on a legacy lend says it narrowed.** cli.rs:1596-1600
+  leaves a `Legacy` audience as it is, and cli.rs:1606-1608 answers
+  `Said::Narrowed` ("Those groups can no longer open it") for a change not
+  made. Harmless, as legacy reaches nobody, but it says a change happened.
+- **F13 The withdrawal sweep does not re-ask a pass's lifetime.** For a
+  pass holder `withdrawn` door.rs:768-790 watches standing only, while
+  `holder_of` door.rs:1200 checks the pass's lifetime once, at admission
+  (door.rs:1236); a holder's stream
+  outlives the pass. Pre-existing semantics, not widened by this range.
+- **F14 Checkpoint commits mix dimensions (ARCH 2).** 2547d91c (WIP:
+  onboarding-scoped-lending, 21 files, +647/−119: door, lend, home, udp,
+  register, cli, web) and c3fa0ef7; historical, recorded only.
+
+### Problems in the commonwealth-ai instrument (reported, not fixed)
+
+- **I1** llama-server with its defaults (`n_ubatch` 512, 4 slots) exited
+  silently mid-index; the ingest then failed "error sending request".
+- **I2** with `-np 1 -c 32768` the ingest stored **zero vectors for every
+  symbol chunk** and exited 0; only file chunks had vectors. The dry
+  report then said near-tier could-not-judge, which is right, but
+  `code index` said "✓ Indexed".
+- **I3** one chunk past the server's context (9,953 then 41,669 tokens)
+  aborts the whole index; nothing is truncated or skipped.
+- **I4** `refresh --local` with a tsconfig.json: "SCIP decode: failed to
+  decode Protobuf message: Diagnostic.tags … invalid tag value: 0" from
+  scip-typescript's output, exit 1 (the Rust graph was preserved); without
+  one, scip-typescript finds no project. So no JS symbol is in the graph.
+- **I5** `code index --full` over an existing corpus printed "✓ Indexed"
+  and exited 0 while promotion failed ("both hold corpus data named
+  documents.lance") and left no `chunks.lance`.
+- **I6** the near tier's default 0.95 misses a byte-identical body
+  (cosine 0.901 on the plant).
+
+### LINT and counts at this audit's HEAD
+
+`git diff --check 0fc5b189 HEAD`, `web/node_modules/.bin/oxlint`,
+`web/node_modules/.bin/oxfmt --check '**/*.{js,mjs,cjs}'` (298 files),
+`cargo fmt --all -- --check`, `cargo clippy -p svrngs-node --all-targets
+-- -D warnings`: all exit 0. Lean: core 3490/3494, `.` 20428/20431, js
+8325/8326, swift 0/1. Not run: `scripts/check.sh` (the seat's),
+the real-node scene (another worker's), browser tests.
