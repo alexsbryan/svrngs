@@ -7,6 +7,10 @@
 //! link keep the old relay.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs::cli::{self, MeetAt, Verb};
 use svrngs::group;
@@ -158,6 +162,85 @@ async fn a_keeper_changes_where_the_group_meets_and_a_member_may_not() {
 
     sam.endpoint().close().await;
     alex.endpoint().close().await;
+}
+
+/// A relay's address that takes each connection and never answers, and
+/// how many it has taken.
+async fn stalled() -> (svrngs_core::relay::Url, Arc<AtomicUsize>) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("https://{}/", listener.local_addr().unwrap());
+    let count = Arc::new(AtomicUsize::new(0));
+    let counting = count.clone();
+    tokio::spawn(async move {
+        while let Ok((sock, _)) = listener.accept().await {
+            counting.fetch_add(1, Ordering::SeqCst);
+            std::mem::forget(sock);
+        }
+    });
+    (url.parse().unwrap(), count)
+}
+
+/// **Every relay down, the attempt ends bounded and nothing is left
+/// running** (KEEP_GOING_AT_HOME "every attempt failing without leaving
+/// anything running"; the native half of `join_page.rs`'s
+/// `every_route_down_fails_bounded_and_closes_the_endpoint`): the build's
+/// relay and both a link names take a connection and never answer. The
+/// join refuses in the command's words inside `BOUND`, the same 30 s the
+/// browser's is held to, plus the 10 s `ONLINE_WAIT` the command spends
+/// first; the endpoint closes as `start` closes it; and with the node
+/// dropped, past one `ASKED_EVERY`, no relay is dialled again.
+#[tokio::test(flavor = "multi_thread")]
+async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
+    const BOUND: Duration = Duration::from_secs(40);
+    let ((build, b), (one, o), (two, t)) = (stalled().await, stalled().await, stalled().await);
+    let dir = tempfile::tempdir().unwrap();
+    let ours = RelayConfig {
+        relay_urls: vec![build.to_string()],
+        ..cli::reach(MeetAt::Svrngs)
+    };
+    let key = SigningKey::from_bytes(&[76; 32]);
+    let relays = vec![one, two];
+    let node = Node::start_asking(
+        dir.path().to_path_buf(),
+        key.clone(),
+        &ours,
+        &relays,
+        group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("a computer starts");
+    let token = svrngs_node::link::Token {
+        issuer: SigningKey::from_bytes(&[77; 32]).verifying_key(),
+        secret: [7; 16],
+        relays,
+    };
+    let link = Link::parse(&svrngs_node::link::client_link(&token)).unwrap();
+    let person = group::Name::parse("Pia").unwrap();
+
+    let began = Instant::now();
+    let tried = tokio::time::timeout(BOUND, cli::join_group(&node, &key, &link, &person)).await;
+    eprintln!("every relay down: {:?}", began.elapsed());
+    let tried = tried.unwrap_or_else(|_| panic!("the join still waits after {BOUND:?}"));
+    assert!(matches!(tried, Err(cli::Refusal::IssuerAway)), "{tried:?}");
+
+    let (endpoint, taken) = (node.endpoint().clone(), [b, o, t]);
+    tokio::time::timeout(Duration::from_secs(10), endpoint.close())
+        .await
+        .expect("the endpoint closes bounded");
+    assert!(endpoint.is_closed());
+    drop(node);
+    let count =
+        |t: &[Arc<AtomicUsize>; 3]| t.iter().map(|c| c.load(Ordering::SeqCst)).sum::<usize>();
+    assert!(count(&taken) > 0, "control: the relays were dialled");
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    let closed = count(&taken);
+    tokio::time::sleep(svrngs_node::tiers::ASKED_EVERY + Duration::from_secs(2)).await;
+    assert_eq!(
+        count(&taken),
+        closed,
+        "something still dials after the close"
+    );
 }
 
 /// `link --relay` parses, and a group name is still required.
