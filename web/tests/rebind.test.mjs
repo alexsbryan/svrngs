@@ -128,7 +128,8 @@ test('a relay the page refuses for a lend is said by name as it goes as none', (
 // the next visit, and the endpoint they replace is closed, as a relay keeps
 // one per key. Watched failing with `endpoint` keeping what it bound: bound
 // once, and the second dial asked through the link's relays alone.
-test("the page's endpoint binds again, closing the old, when the group's relays change", async () => {
+test("the page's endpoint binds again, closing the old, when the group's relays change", async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
   const opened = [];
   const closed = [];
   const reached = { fetch: async () => 'lends', close: async () => {} };

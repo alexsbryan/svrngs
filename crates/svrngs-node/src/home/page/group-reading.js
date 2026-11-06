@@ -86,22 +86,17 @@ export const GROUP = (flows) => ({
       case 'again':
       case 'visible':
         return reading(state);
-      case 'answered': {
-        const old = late(state, message.kind, message.n);
-        if (old) return no(state, old);
-        return go(
-          state,
-          /** @type {Partial<State['at']>} */ ({ [message.kind]: 'read' }),
-          /** @type {Partial<State>} */ ({ [message.kind]: message.body }),
-        );
-      }
+      case 'answered':
       case 'unread': {
         const old = late(state, message.kind, message.n);
         if (old) return no(state, old);
+        const read = message.type === 'answered';
         return go(
           state,
-          /** @type {Partial<State['at']>} */ ({ [message.kind]: 'unread' }),
-          { why: message.why },
+          /** @type {Partial<State['at']>} */ ({ [message.kind]: read ? 'read' : 'unread' }),
+          /** @type {Partial<State>} */ (
+            message.type === 'answered' ? { [message.kind]: message.body } : { why: message.why }
+          ),
         );
       }
       default:

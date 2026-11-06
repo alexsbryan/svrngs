@@ -10,6 +10,7 @@
 // after the button.
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { dialled, exchange, saying, trace } from './dial.js?v=__VERSION__';
+import { notLent } from './page.js?v=__VERSION__';
 import { UsesHidden } from './uses-hidden.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
@@ -88,10 +89,7 @@ export const takes = {
   },
   stop: (state, { lend, app }) => {
     const found = state.lent?.find((one) => one.label === lend);
-    if (!found) {
-      const group = /** @type {Partial<State>} */ (state).group?.name ?? 'here';
-      return no(state, `nothing ${group} lends is ${lend}`);
-    }
+    if (!found) return notLent(state, lend);
     return go(
       state,
       {},

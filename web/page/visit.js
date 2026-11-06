@@ -11,7 +11,7 @@
 // ended. The key never enters state: the edge holds it.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { posted, readable, wasm } from './dial.js?v=__VERSION__';
+import { posted, readable, wasm, when } from './dial.js?v=__VERSION__';
 import { PASS_LIFE, handing } from './hand.js?v=__VERSION__';
 /** @import { Visit } from '../store.js?v=__VERSION__' */
 /** @import { Io, Step, Takes } from '../ui/machine.js?v=__VERSION__' */
@@ -208,11 +208,7 @@ async function redeeming(token, guest) {
 export const io = {
   recall: ({ token }) => recalling(token).catch(failing),
   redeem: ({ token, guest }) => redeeming(token, guest).catch(failing),
-  over: ({ until: ends }) =>
-    new Promise((resolve) => setTimeout(resolve, ends * 1000 - Date.now())).then(() => ({
-      type: 'ended',
-      why: `the visit ended at ${ends}`,
-    })),
+  over: ({ until: ends }) => when(ends, { type: 'ended', why: `the visit ended at ${ends}` }),
   call: ({ token, lent, label, until: ends }) =>
     handing(
       { group: { token }, lent, unanswered: [], label },

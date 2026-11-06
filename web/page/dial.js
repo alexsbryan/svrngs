@@ -32,6 +32,16 @@ export const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
 // in node, which has no `window`.
 export const trace = (/** @type {string} */ line) => globalThis.__trace?.(line);
 
+// `message` once the time `until`, in seconds, has come.
+/**
+ * @template T
+ * @param {number} until
+ * @param {T} message
+ * @returns {Promise<T>}
+ */
+export const when = (until, message) =>
+  new Promise((resolve) => setTimeout(() => resolve(message), until * 1000 - Date.now()));
+
 // An error in words the page says to the person, as a failed message's
 // `said`, and the status it answers when a computer refused.
 /**

@@ -7,6 +7,7 @@
 // group read again (enter.js `reread`), so a visit drops off the page as
 // it ends rather than at the next open. One end is waited for at a time.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
+import { when } from './dial.js?v=__VERSION__';
 import { GroupDoor } from './group-door.js?v=__VERSION__';
 import { Removals } from './removals.js?v=__VERSION__';
 import { Visitors } from './visitors.js?v=__VERSION__';
@@ -42,11 +43,7 @@ export const takes = {
 
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
-  end: ({ until }) =>
-    new Promise((resolve) => setTimeout(resolve, until * 1000 - Date.now())).then(() => ({
-      type: 'reread',
-      why: `a visit ended at ${until}`,
-    })),
+  end: ({ until }) => when(until, { type: 'reread', why: `a visit ended at ${until}` }),
 };
 
 /** @type {Record<string, (props: Props) => Drawn>} */

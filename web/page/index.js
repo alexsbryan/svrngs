@@ -9,6 +9,7 @@ import { named } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { handing } from './hand.js?v=__VERSION__';
 import { LentIndex } from './lent-index.js?v=__VERSION__';
+import { notLent } from './page.js?v=__VERSION__';
 /** @import { Group } from '../store.js?v=__VERSION__' */
 /** @import { Io, Takes } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -47,10 +48,7 @@ const opening = (state) => state.lent?.find((one) => one.label === state.opening
 export const takes = {
   open: (state, { label, at }) => {
     const lend = state.lent?.find((one) => one.label === label);
-    if (!lend) {
-      const group = /** @type {Partial<State>} */ (state).group?.name ?? 'here';
-      return no(state, `nothing ${group} lends is ${label}`);
-    }
+    if (!lend) return notLent(state, label);
     if (state.at.open === 'opening') return no(state, `${state.opening} is opening already`);
     return go(
       state,
