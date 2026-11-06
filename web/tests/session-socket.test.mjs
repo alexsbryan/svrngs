@@ -16,7 +16,11 @@ const SOURCE = readFileSync(
 
 test('a `for in` over the socket finds its states, on the class and on a socket', () => {
   const window = { WebSocket: class {} };
-  new Function('window', 'navigator', 'location', SOURCE)(window, {}, { href: 'http://a.localhost/' });
+  new Function('window', 'navigator', 'location', SOURCE)(
+    window,
+    {},
+    { href: 'http://a.localhost/' },
+  );
   const states = (of) => {
     const found = [];
     for (const name in of) found.push(name);
