@@ -331,10 +331,12 @@ impl Node {
             path: data_dir.clone(),
             source,
         })?;
-        crate::lend::stamp(&data_dir);
         let actor = actor_of(&key);
         let secret = SecretKey::from_bytes(&key.to_bytes());
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
+        let mut stood_in = rail.namespaces().unwrap_or_default();
+        stood_in.retain(|group| crate::door::stands_here(&rail, group));
+        crate::lend::stamp(&data_dir, &stood_in);
         // Bound before the endpoint, so a refused address leaves no endpoint
         // dropped open.
         // One nudge, the round's, which the append door fires so a write

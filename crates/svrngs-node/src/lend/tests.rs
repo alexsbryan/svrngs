@@ -407,12 +407,14 @@ struct OldLendFile {
     asks: Option<String>,
 }
 
-/// A legacy declaration — no `groups` key — is stamped `"groups": null`
-/// once, its limit and sign-in client kept, still read as needing
-/// selection, and left byte for byte on a second start; the old parser
-/// refuses the stamped file rather than lend it to every group. A stamp
-/// that cannot be written leaves the file as it was, legacy and listed to
-/// nobody. Planted: no stamp, the file left for an old binary to lend.
+/// A legacy declaration — no `groups` key — on a computer in no group is
+/// stamped `"groups": null` once, its limit and sign-in client kept, still
+/// read as needing selection, and left byte for byte on a second start; the
+/// old parser refuses the stamped file rather than lend it to every group.
+/// In groups, the same file and a `null` are lent to those, once, and a
+/// list, empty or not, is never rewritten. A stamp that cannot be written
+/// leaves the file as it was, legacy and listed to nobody. Planted: no
+/// stamp, the file left for an old binary to lend.
 #[cfg(unix)]
 #[test]
 fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
@@ -428,7 +430,7 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
         serde_json::from_str::<OldLendFile>(&legacy).is_ok(),
         "the old parser reads legacy"
     );
-    stamp(dir.path());
+    stamp(dir.path(), &[]);
     let stamped = std::fs::read_to_string(lends.join("media.json")).unwrap();
     let json: serde_json::Value = serde_json::from_str(&stamped).unwrap();
     assert_eq!(json["groups"], serde_json::Value::Null, "{stamped}");
@@ -447,7 +449,7 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
         (media.limit, media.sign_in_with_svrngs.is_some()),
         (NonZeroU16::new(2), true)
     );
-    stamp(dir.path());
+    stamp(dir.path(), &[]);
     assert_eq!(
         std::fs::read_to_string(lends.join("media.json")).unwrap(),
         stamped,
@@ -456,7 +458,7 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
 
     std::fs::write(lends.join("pad.json"), r#"{"port":9,"kind":"pad"}"#).unwrap();
     std::fs::set_permissions(&lends, std::fs::Permissions::from_mode(0o555)).unwrap();
-    stamp(dir.path());
+    stamp(dir.path(), &[]);
     std::fs::set_permissions(&lends, std::fs::Permissions::from_mode(0o755)).unwrap();
     let pad = std::fs::read_to_string(lends.join("pad.json")).unwrap();
     assert_eq!(
@@ -467,6 +469,31 @@ fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
         .unwrap()
         .unwrap();
     assert_eq!(pad.audience, Audience::Legacy, "and it reaches nobody");
+
+    let house = vec!["house".to_string()];
+    stamp(dir.path(), &house);
+    let audience = |name: &str| {
+        let name = LendName::parse(name).unwrap();
+        read(dir.path(), &name).unwrap().unwrap().audience
+    };
+    assert_eq!(audience("media"), Audience::Selected(house.clone()));
+    assert_eq!(audience("pad"), Audience::Selected(house.clone()));
+    let kept = read(dir.path(), &LendName::parse("media").unwrap()).unwrap();
+    assert_eq!(kept.unwrap().limit, NonZeroU16::new(2), "the rest kept");
+    let later = vec!["house".to_string(), "later".to_string()];
+    stamp(dir.path(), &later);
+    assert_eq!(audience("media"), Audience::Selected(house), "a snapshot");
+    std::fs::write(
+        lends.join("still.json"),
+        r#"{"port":9,"kind":"pad","groups":[]}"#,
+    )
+    .unwrap();
+    stamp(dir.path(), &later);
+    assert_eq!(
+        audience("still"),
+        Audience::Selected(Vec::new()),
+        "paused stays paused"
+    );
 }
 
 /// A withdrawal is serialized with every other change to the lend: one

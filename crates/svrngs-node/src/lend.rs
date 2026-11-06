@@ -565,13 +565,16 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
     }))
 }
 
-/// Stamp each legacy declaration, one with no `groups` key, `"groups":
-/// null` under its lock before this computer lends anything: read as before,
-/// needing selection, while an svrngs before 5 refuses the file
-/// (`deny_unknown_fields`) rather than lend it to every group (LENDING_SCOPE
-/// §"Updates, migration and mixed versions"). One that cannot be stamped
-/// is traced and left legacy, which no group reaches.
-pub fn stamp(data_dir: &Path) {
+/// Lend each declaration from before groups, one with no `groups` key or
+/// the `"groups": null` a first 5 left, to `groups`, those this computer
+/// stands in now, under its lock before it lends anything: it opens for
+/// the people it opened for, a snapshot, so a group joined later is never
+/// added and its lender can pare it down (LENDING_SCOPE §"Updates, migration
+/// and mixed versions"). No group to name leaves `null`, read as needing
+/// selection. Either way an svrngs before 5 refuses the file
+/// (`deny_unknown_fields`) rather than lend it to every group. One that
+/// cannot be written is traced and left legacy, which no group reaches.
+pub fn stamp(data_dir: &Path, groups: &[String]) {
     let dir = lends_dir(data_dir);
     let entries = match std::fs::read_dir(&dir) {
         Ok(entries) => entries,
@@ -595,21 +598,20 @@ pub fn stamp(data_dir: &Path) {
         let read = std::fs::read_to_string(&path).map_err(|e| e.to_string());
         let value = read
             .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).map_err(|e| e.to_string()));
-        match value {
-            Ok(v) if v.get("groups").is_some() => continue,
-            Ok(_) => {}
-            Err(e) => {
-                tracing::warn!(target: "lend", file = %path.display(), error = e, "lend: refused — a declaration cannot be read, so it is not stamped; read refuses it too, so nothing is lent from it");
-                continue;
-            }
+        let Ok(value) = value.inspect_err(|e| tracing::warn!(target: "lend", file = %path.display(), error = e, "lend: refused — a declaration cannot be read, so it is not stamped; read refuses it too, so nothing is lent from it")) else {
+            continue;
+        };
+        if value.get("groups").is_some_and(|g| !g.is_null()) {
+            continue;
         }
-        match mutate(data_dir, &name, |_| {}) {
-            Ok(_) => {
-                tracing::debug!(target: "lend", lend = %name, "lend: a legacy declaration stamped groups null, needing selection")
+        let lent = mutate(data_dir, &name, |lend| {
+            tracing::info!(target: "lend", lend = %name, groups = groups.len(), "lend: a declaration from before groups goes to the groups this computer stands in now; in none, it needs selection");
+            if lend.audience == Audience::Legacy && !groups.is_empty() {
+                lend.audience = Audience::Selected(groups.to_vec());
             }
-            Err(e) => {
-                tracing::warn!(target: "lend", lend = %name, error = %e, "lend: refused — a legacy declaration cannot be stamped, so it stays legacy, lent to no group")
-            }
+        });
+        if let Err(e) = lent {
+            tracing::warn!(target: "lend", lend = %name, error = %e, "lend: refused — a legacy declaration cannot be stamped, so it stays legacy, lent to no group");
         }
     }
 }

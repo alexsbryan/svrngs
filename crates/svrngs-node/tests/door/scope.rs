@@ -14,7 +14,7 @@ use svrngs_node::lend::{self, LendName};
 use svrngs_node::{actor_of, Person, Roster};
 
 use super::common::bridge_as;
-use super::{header_values, last, lending_heads, raw_to, signing, unix_now, Pair, NS};
+use super::{header_values, last, lending_heads, raw_to, signing, start, unix_now, Pair, NS};
 
 /// A's three groups, the shelf lent to `to`.
 fn groups_held(pair: &Pair, to: &[&str]) {
@@ -303,4 +303,82 @@ async fn joining_a_third_group_leaves_the_declaration_and_reaches_nothing() {
     );
     assert!(heads.lock().unwrap().is_empty(), "the service was asked");
     pair.close().await;
+}
+
+/// A lend from before groups opens on the next start exactly as it did, to
+/// the groups its computer stands in then, whichever way it was left: no
+/// `groups` key (from an svrngs before 5) or `null` (stamped by the first
+/// 5). Bo reaches both through the door. A group A holds but no longer
+/// stands in is not named, nor is one it joins after, and a lend paused or
+/// chosen on purpose is untouched. Planted: `stamp` writing `null` as
+/// before, so nobody reaches either.
+#[tokio::test]
+async fn a_lend_from_before_groups_opens_as_it_did_and_can_then_be_pared_down() {
+    let (origin, heads) = super::origins::head_origin().await;
+    let port = origin.port();
+    let (dir, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let rail = svrngs_runtime::RingRail::new(dir.path(), std::sync::Arc::new(signing(1)));
+    let people = |list: &[(&str, u8)]| {
+        Roster::new(
+            list.iter()
+                .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(*k))]))
+                .collect(),
+        )
+    };
+    let group = people(&[("ada", 1), ("bo", 2)]);
+    for ns in [NS, "trip"] {
+        rail.set_seed(ns, &group).unwrap();
+    }
+    rail.set_seed("gone", &people(&[("cy", 3)])).unwrap();
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let write = |name: &str, tail: &str| {
+        let body = format!(r#"{{"port":{port},"kind":"k","refused":[]{tail}}}"#);
+        std::fs::write(lends.join(format!("{name}.json")), body).unwrap();
+    };
+    write("old", "");
+    write("stamped", r#","groups":null"#);
+    write("paused", r#","groups":[]"#);
+    write("chosen", r#","groups":["trip"]"#);
+
+    let a = start(1, dir.path()).await;
+    let audience = |name: &str| {
+        let name = LendName::parse(name).unwrap();
+        lend::read(dir.path(), &name).unwrap().unwrap().audience
+    };
+    let mut held = vec![NS.to_string(), "trip".to_string()];
+    held.sort();
+    for name in ["old", "stamped"] {
+        assert_eq!(
+            audience(name),
+            lend::Audience::Selected(held.clone()),
+            "{name}"
+        );
+    }
+    assert_eq!(audience("paused"), lend::Audience::Selected(Vec::new()));
+    assert_eq!(
+        audience("chosen"),
+        lend::Audience::Selected(vec!["trip".to_string()])
+    );
+
+    let b = start(2, db.path()).await;
+    let pair = Pair::dialling(a, b, dir, db).await;
+    for name in ["old", "stamped"] {
+        let reply = pair.get(&format!("/lend/{name}/whoami"), "").await;
+        assert_eq!(reply.status, 200, "{name}: {}", reply.text);
+        assert_eq!(header_values(&last(&heads), "x-svrngs-person"), vec!["bo"]);
+    }
+    let paused = pair.get("/lend/paused/whoami", "").await;
+    assert_eq!(paused.status, 403, "{}", paused.text);
+
+    pair.a.rail().set_seed("later", &group).unwrap();
+    let old = audience_of(&pair, "old");
+    assert!(!old.contains(&"later".to_string()), "{old:?}");
+    pair.close().await;
+}
+
+fn audience_of(pair: &Pair, name: &str) -> Vec<String> {
+    let name = LendName::parse(name).unwrap();
+    let lend = lend::read(pair.dir.path(), &name).unwrap().unwrap();
+    lend.audience.ids().unwrap().to_vec()
 }

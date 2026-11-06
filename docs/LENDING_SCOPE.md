@@ -73,7 +73,9 @@ Do not store group display names or use their prefixes as identities.
 - New lend: require explicit selection. From a group's own page, that group
   may be visibly preselected, but only the person's lending action commits it.
 - Empty set: paused to groups; show that plainly, retaining configuration.
-- Legacy missing field: needs selection, never implicitly all groups.
+- Legacy missing field: on start, a snapshot of the groups its lender's
+  computer stands in then, never "all groups I might join later"
+  (§"Updates, migration and mixed versions"). In no group: needs selection.
 - An explicit "all current groups" action, if offered, stores today's IDs.
   It is a snapshot, never "all groups I might join later".
 - Existing carried app: its audience remains its own group, derived from
@@ -198,14 +200,16 @@ library `File::try_lock` primitive; return a visible busy/conflict on
 contention. All limit/sign-in/audience writers must participate. Locking only
 the final write is insufficient. Keep this at the I/O edge.
 
-Recommended legacy transition: pause group access until selection. Before
-the upgraded node advertises lends, stamp legacy declarations with an empty
-explicit audience, preserving secrets and other fields; surface "Choose
-which groups can open this" locally. A failed migration must not serve the
-old broad grant. This deliberate break needs operator approval and release
-instructions. Automatic snapshot-to-current-groups is a less disruptive
-alternative, but preserves existing unintended exposure and infers consent;
-it is not the recommendation.
+Legacy transition, by the operator's decision of 2026-11-06, replacing the
+pause this document recommended: everything keeps working as before, and
+grouping is a new ability to pare down. Before the upgraded node advertises
+lends, a declaration with no choice (no `groups` key, or the `null` the first
+5 wrote) is stamped with the groups its computer stands in then, preserving
+secrets and other fields. That preserves an exposure the lender already had
+and infers consent for it, and widens nothing: a group it joins later is never
+added, a removed group is not named, and an empty list is a pause and stays one.
+In no group, it stays `null`, needing selection. A failed migration must not
+serve the old broad grant: a file that cannot be read or written stays unlent.
 
 Put the scope field inside the original declaration: old binaries use
 `deny_unknown_fields`, so they reject a scoped file rather than treating a
@@ -345,7 +349,8 @@ planted bypass before passing.
    next door request.
 5. Race audience narrowing against limit/sign-in edits; verify no restored
    grant, credential loss or torn file. Restart preserves selected IDs.
-6. Legacy/missing/malformed/unreadable scope never becomes everyone.
+6. Malformed/unreadable scope never becomes everyone, and legacy/missing
+   becomes only the snapshot above, never later groups.
    Test migration failure and an actual old binary/parser against the new
    declaration and discovery message in both upgrade directions.
 7. Recheck carried apps, owner access, visits, app-read/append contexts,

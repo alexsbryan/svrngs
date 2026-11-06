@@ -97,6 +97,11 @@ impl Pair {
             },
         };
         a.rail().commit(NS, &fixture).unwrap().unwrap();
+        Self::dialling(a, b, dir, db).await
+    }
+
+    /// B's bridge to A, once A stands with it.
+    async fn dialling(a: Node, b: Node, dir: tempfile::TempDir, db: tempfile::TempDir) -> Self {
         let base = b
             .transport()
             .spliced(&Contact {
