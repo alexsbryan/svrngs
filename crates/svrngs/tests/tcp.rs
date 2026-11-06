@@ -402,6 +402,10 @@ async fn a_member_no_longer_standing_is_cut() {
 /// Alex's echo, read to its end, while Alex's other carries on. Planted:
 /// the sweep asking the lend as it was opened, not as it is declared now.
 #[tokio::test(flavor = "multi_thread")]
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the test's stopwatch, for the bound it reports"
+)]
 async fn a_port_its_group_is_taken_from_is_cut_and_no_other() {
     let (sam, them, _) = house(&[(2, "Alex")]).await;
     let echoes = share_tcp(&sam, echo().await, &[]);
