@@ -114,11 +114,10 @@ struct Held {
     /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
     /// beside `removed`'s, or when this computer's clock cannot be read.
     visiting: Option<Vec<serde_json::Value>>,
-    /// Why this computer meets the group at the build's relay now, when the
-    /// group names relays of its own and none of them is this computer's
-    /// home: they answer, and the build's fallback is held while it does
-    /// (relay fallbacks). The home page says so in a person's words; `null` when
-    /// it meets the group at its own.
+    /// Why this computer meets the group where it does now: the group names
+    /// relays of its own, and this computer is at the build's fallback
+    /// because that answers (relay fallbacks). The home page says so in a
+    /// person's words; `null` when it meets the group at its own.
     fallback: Option<svrngs_core::relay::Tier>,
 }
 
