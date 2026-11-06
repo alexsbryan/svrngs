@@ -64,6 +64,8 @@
 //! acts, so it joins, and the command says and leaves, running nothing.
 //! One that answers no join — a build from before the route — is told as
 //! the lock's own refusal is, for stopping it is the way on from there.
+//! `link`, with no `--origin`, asks it too, so a keeper changes where a
+//! group meets with one command ([`svrngs_node::home::LINKS_ROUTE`]).
 //!
 //! `new` and `link` always print the client's link, `svrngs://join/<token>`
 //! (u2-8): nothing depends on a hosted page. A group may keep a page
@@ -100,6 +102,7 @@ use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
 use svrngs_node::folder::FolderAsk;
+use svrngs_node::home::LINKS_ROUTE;
 use svrngs_node::home::WHEN;
 use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
@@ -158,7 +161,8 @@ svrngs — keep what your group shares on your own computers.
       also prints it on a page address, from now on, as `new` does.
       --device makes it a link for another computer or phone of yours: it
       joins as you, asked no name.
-      --relay changes where <group> meets (keeper only); stop svrngs first.
+      --relay changes where <group> meets (keeper only). Where svrngs runs
+      here already, that svrngs makes the link, unless --origin is given.
 
   svrngs share <port> --group <group>... [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in each
@@ -931,10 +935,13 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 return start(join, root, relay, claimed?, None).await;
             }
         },
-        other => {
-            let claimed = claim(&root)?;
-            return start(other, root, relay, claimed, None).await;
-        }
+        other => match (claim(&root), other) {
+            (Err(Refusal::Busy(lock)), link @ Verb::Link { origin: None, .. }) => {
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: link — svrngs runs here already, so it is asked, as `join` is");
+                link_running(&root, link).await?.to_string()
+            }
+            (claimed, other) => return start(other, root, relay, claimed?, None).await,
+        },
     };
     print!("{said}");
     Ok(())
@@ -1927,6 +1934,39 @@ pub async fn link_to(
     let made = node.host().link(&seed.id(), device, page, None);
     let made = made.map_err(|e| unminted(&seed, e))?;
     Ok((seed, Printed::of(&made), made.device))
+}
+
+/// `svrngs link`, of the svrngs running here, the one writer of this
+/// computer's acts ([`svrngs_node::home::LINKS_ROUTE`]), said as [`link_to`]'s
+/// is; its refusal, a non-keeper's among them, in its words. One that
+/// answers no link is an older build, said as [`join_running`] says it.
+async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
+    let device = matches!(link, Verb::Link { device: true, .. });
+    let Verb::Link { group, relays, .. } = link else {
+        unreachable!("asked only of a link")
+    };
+    let seed = group_named(root, &group)?;
+    let asked = serde_json::json!({ "group": seed.id(), "device": device, "relays": relays });
+    let (ok, text) = ask_running(root, LINKS_ROUTE, &asked).await?;
+    let older = || Refusal::Busy(root.join("lock"));
+    let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
+    tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
+    let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {
+        let why = told["error"].as_str().ok_or_else(older)?;
+        return Err(Refusal::Meet(why.to_string()));
+    };
+    let https: Option<String> = told["https"].as_str().map(Into::into);
+    let page = https
+        .as_deref()
+        .and_then(Link::parse)
+        .and_then(|l| l.origin);
+    let device = serde_json::from_value(told["device"].clone()).map_err(|_| older())?;
+    let link = Printed {
+        client,
+        https,
+        page,
+    };
+    Ok(Said::Linked { seed, link, device })
 }
 
 /// Why the node made no link, in the command's refusals.

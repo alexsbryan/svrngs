@@ -675,18 +675,30 @@ async fn lend_one(
 /// `visit`, to have a guest for that many seconds (guests-link).
 #[derive(Deserialize)]
 #[serde(deny_unknown_fields)]
-struct Linking {
+pub(crate) struct Linking {
     group: String,
     device: bool,
     #[serde(default)]
     visit: Option<i64>,
+    /// What `link --relay` asks ([`crate::node::Host::meet`]): none on the
+    /// page, which keeps where a group meets as it is.
+    #[serde(default)]
+    relays: Vec<crate::iroh::RelayUrl>,
 }
+
+/// Where the command asks a link of the svrngs running here, as it asks a
+/// join ([`crate::join::JOINS_ROUTE`]): [`link`], behind the record's checks.
+pub const LINKS_ROUTE: &str = "/v1/links";
 
 /// `POST /link`: a link to the group, as `svrngs link` makes it
 /// ([`crate::node::Host::link`]), its home relay waited for as there
 /// ([`crate::node::Host::online`]); a guest's, `<page>#visit=<token>`, so
 /// the page tells it from a join link before it asks anything.
-async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+    if let Err(why) = at.host.meet(&l.group, &l.relays) {
+        tracing::debug!(target: "home", group = l.group, why, "home: refused — where the group meets stays");
+        return LendRefusal::Closed.say(StatusCode::FORBIDDEN, why);
+    }
     // Its home first, as `svrngs link` waits (cli.rs `link_to`): with none
     // yet, a link names a relay this computer may never register at.
     let online = at.host.online().await;
@@ -701,8 +713,9 @@ async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
                     h
                 }
             });
-            Json(serde_json::json!({ "client": client_link(&made.token), "https": https }))
-                .into_response()
+            let (client, device) = (client_link(&made.token), made.device);
+            let made = serde_json::json!({ "client": client, "https": https, "device": device });
+            Json(made).into_response()
         }
         Err(crate::invite::Unminted::NotIn) => {
             tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");

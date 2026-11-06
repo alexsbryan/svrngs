@@ -243,6 +243,83 @@ async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
     );
 }
 
+/// **`link --relay` while svrngs runs asks it** (KEEP_GOING_AT_HOME 28): the
+/// program, as a person runs it, beside a svrngs holding the data dir's lock
+/// and serving the group's record. Sam's asks his: where house meets changes
+/// and the link printed carries it. Alex's, not the keeper's, is refused in
+/// the keeper rule's words and writes nothing.
+#[tokio::test(flavor = "multi_thread")]
+async fn link_relay_asks_the_svrngs_running_here() {
+    let ((_old, old), (_new, new), (_build, build)) =
+        (relay_here().await, relay_here().await, relay_here().await);
+    let dirs = [(); 2].map(|()| tempfile::tempdir().unwrap());
+    let ours = RelayConfig {
+        relay_urls: vec![build.clone()],
+        ..cli::reach(MeetAt::Svrngs)
+    };
+    let sam = computer(dirs[0].path(), 78, &ours).await;
+    let (name, person) = (
+        group::Name::parse("house").unwrap(),
+        group::Name::parse("Sam"),
+    );
+    let relays = [old.parse().unwrap()];
+    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &relays, &ours)
+        .await
+        .expect("Sam makes house");
+    let Verb::Join { link, person, .. } =
+        cli::parse(argv(&format!("join {} --as Alex", printed.client))).unwrap()
+    else {
+        panic!("join parses as join");
+    };
+    let alex = computer(dirs[1].path(), 79, &ours).await;
+    let key = SigningKey::from_bytes(&[79; 32]);
+    cli::join_group(&alex, &key, &link, &person.unwrap())
+        .await
+        .expect("Alex joins");
+    let _held = dirs
+        .each_ref()
+        .map(|d| cli::claim(d.path()).expect("the lock is free"));
+    let link = |dir: &std::path::Path| {
+        let new = new.clone();
+        let dir = dir.to_path_buf();
+        tokio::task::spawn_blocking(move || {
+            std::process::Command::new(env!("CARGO_BIN_EXE_svrngs"))
+                .args(["link", "house", "--relay", &new])
+                .env("SVRNGS_DIR", &dir)
+                .env("HOME", &dir)
+                .output()
+                .unwrap()
+        })
+    };
+
+    let before = acts(&alex, &seed.id());
+    let refused = link(dirs[1].path()).await.unwrap();
+    let said = String::from_utf8_lossy(&refused.stderr);
+    assert!(!refused.status.success(), "{refused:?}");
+    assert!(
+        said.contains("only the group's keeper decides where it meets"),
+        "{said}"
+    );
+    assert_eq!(acts(&alex, &seed.id()), before, "the refusal writes no act");
+
+    let done = link(dirs[0].path()).await.unwrap();
+    let said = String::from_utf8_lossy(&done.stdout);
+    assert!(done.status.success(), "{done:?}");
+    assert_eq!(meets(&sam, &seed.id()), vec![new.clone()]);
+    let line = said
+        .lines()
+        .find(|l| l.contains("svrngs://join/"))
+        .expect(&said);
+    let minted = Link::parse(line.trim()).expect("the link printed is whole");
+    assert!(
+        minted.token.relays.iter().any(|r| r.to_string() == new),
+        "the link printed carries the new relay: {:?}",
+        minted.token.relays
+    );
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}
+
 /// `link --relay` parses, and a group name is still required.
 #[test]
 fn link_takes_relay() {

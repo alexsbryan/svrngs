@@ -262,6 +262,7 @@ impl IntoResponse for Outcome {
 pub(crate) fn router(asking: Asking) -> Router {
     Router::new()
         .route(JOINS_ROUTE, post(joined_here))
+        .route(crate::home::LINKS_ROUTE, post(crate::home::link))
         .with_state(asking)
 }
 

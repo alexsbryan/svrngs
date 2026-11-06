@@ -684,7 +684,10 @@ new` makes one (the node's `group.rs`), joined as `svrngs join` joins
 (`join.rs`), a link as `svrngs link` (`invite.rs`), a lend as `svrngs share`
 decides it (`share.rs`) — so a computer whose svrngs runs from login needs
 no terminal: `svrngs join` joins through the svrngs running there, asked
-as `room` and `leave` ask it, and `svrngs new` and `svrngs link` are the
+as `room` and `leave` ask it, and so does `svrngs link`, `--relay` and
+`--device` included, at `/v1/links`, the page's own `link` behind the
+token, so a keeper changes where a group meets with one command. `svrngs
+new`, and `link --origin`, whose page the command checks itself, are the
 page's alone while it runs.
 A group's folder goes where a joiner's does (`Folders::place`, one home for
 `new`, `join` and the page); a place another group's folder holds already,
@@ -1380,7 +1383,8 @@ every link carries it, so a phone can open the group whichever tier the
 computer was met at when the link was made. Its
 own are the relays its keeper names in its record by a `Meets` act (§6),
 made with `svrngs new <name> --relay <name or url>`, once for each;
-`svrngs link <group> --relay <name or url>` replaces them later, keeper
+`svrngs link <group> --relay <name or url>` replaces them later, while
+svrngs runs or not, keeper
 only, and the new link carries them. The build's are one of a closed set,
 `cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay at
 `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup and n0
