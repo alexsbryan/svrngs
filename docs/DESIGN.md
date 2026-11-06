@@ -1276,7 +1276,8 @@ assume no screen, a TV one device among others.
      redeems it only while the lend is still lent to that group and a
      member's device still stands in it, so a group taken from its audience,
      or the person removed, inside the code's minute is `invalid_grant`; a
-     guest's code is held to the audience alone.
+     guest's code only while `guest_of` would still let the guest in
+     (`guest_admitted`), so a stopped or ended visit refuses it too.
      A guest's code names the guest, never their host. A
      redirect a browser would read as another host's, `//` or a `\` after
      the origin, or one holding a control character, is refused, as the

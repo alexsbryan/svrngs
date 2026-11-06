@@ -365,14 +365,21 @@ async fn token(
         let why = "the lend is no longer lent to the group the code was minted through";
         return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
     }
-    let member = matches!(code.who.group, svrngs_core::token::Group::Member);
-    if member
-        && !p
-            .rail
-            .standing(&code.group)
-            .is_ok_and(|s| s.names(&code.device))
-    {
-        let why = "the person is no longer in the group the code was minted through";
+    // The one decision that let the asker in, asked again: a member's
+    // standing in the code's group, a guest's visit by `guest_of`.
+    let (admitted, why) = match code.who.group {
+        svrngs_core::token::Group::Member => (
+            p.rail
+                .standing(&code.group)
+                .is_ok_and(|s| s.names(&code.device)),
+            "the person is no longer in the group the code was minted through",
+        ),
+        svrngs_core::token::Group::Guest => (
+            crate::door::guest_admitted(&p.rail, &code.device, &declared),
+            "the guest's visit no longer lets them in",
+        ),
+    };
+    if !admitted {
         return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
     }
     if form.redirect_uri.as_deref() != Some(code.redirect.as_str()) {

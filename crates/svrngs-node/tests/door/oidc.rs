@@ -598,6 +598,72 @@ impl House {
     }
 }
 
+/// A guest's code is redeemed only while the door would still let the
+/// guest in (guest_of, asked again): Kim stops Sam's visit inside the
+/// code's minute, the lend still lent to the house, and the code is
+/// `invalid_grant`. Planted: the audience alone at a guest's redemption.
+#[tokio::test]
+async fn a_guests_code_is_not_redeemed_once_the_visit_is_stopped() {
+    let house = House::new().await;
+    let (origin, _heads) = origins::head_origin().await;
+    let port = origin.port();
+    let dir = lend::lends_dir(house.dirs[0].path());
+    std::fs::create_dir_all(&dir).unwrap();
+    let body = json!({
+        "port": port, "kind": "k", "groups": [NS],
+        "sign_in_with_svrngs": { "client_id": CLIENT, "client_secret": SECRET },
+    });
+    std::fs::write(dir.join(format!("{LEND}.json")), body.to_string()).unwrap();
+    let visit = house.visit(unix_now() + 24 * 3600, LEND);
+    let label = Label::of(house.kim.endpoint().id().as_bytes(), LEND);
+    let holder = signing(HOLDER);
+    let pass = Pass::sign(
+        &signing(SAM),
+        &actor_of(&holder),
+        (label.clone(), vec![]),
+        unix_now() + 3600,
+    );
+    let bridge = bridge_as(&holder, &house.kim, Alpn::Lend).await;
+    let asked = format!(
+        "GET /lend/{label}/.svrngs/oidc/authorize?{} HTTP/1.1\r\nHost: local\r\n\
+         x-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
+        ask(port, CLIENT, ""),
+        pass.encode()
+    );
+    let reply = raw_to(bridge.local_addr(), asked).await;
+    assert_eq!(reply.status, 302, "{}", reply.text);
+    let loc = location(&reply).expect("a Location");
+    let code = pairs(loc.split_once('?').unwrap().1)
+        .remove("code")
+        .expect("a code");
+    let stop = svrngs_core::tests_support::Fixture {
+        act: RailAct::Correct {
+            corrects: visit,
+            replacement: None,
+        },
+    };
+    house.kim.rail().commit(NS, &stop).unwrap().unwrap();
+    tokio::time::sleep(Duration::from_millis(1100)).await;
+    let redirect = format!("http://localhost:{port}{PATH}");
+    let form = [
+        ("grant_type", "authorization_code"),
+        ("code", code.as_str()),
+        ("redirect_uri", redirect.as_str()),
+        ("code_verifier", VERIFIER),
+    ];
+    let (status, answer) = token(&house.kim, LEND, CLIENT, SECRET, &form).await;
+    assert_eq!(
+        (status, answer["error"].as_str()),
+        (400, Some("invalid_grant")),
+        "{answer:#}"
+    );
+    let why = answer["error_description"].as_str().unwrap_or_default();
+    assert!(
+        why.contains("guest"),
+        "refused for the visit, not another check: {answer:#}"
+    );
+}
+
 /// Given Kim's lend signing people in with svrngs and Sam over as Kim's
 /// guest, when Sam's browser reaches the authorize address with the visit's
 /// pass, then the code redeems for the guest — the visit's key, Sam's
