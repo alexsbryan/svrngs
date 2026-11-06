@@ -204,6 +204,8 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Kind::parse("shelf").unwrap(),
+        // Lent once Sam has made house, below (LENDING_SCOPE).
+        audience: svrngs_node::lend::Audience::Legacy,
         limit: NonZeroU16::new(3),
         refused: Vec::new(),
         upload: None,
@@ -236,6 +238,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     )
     .await
     .expect("Sam makes house, its links on the page's origin");
+    lend::set_audience(dir.path(), &shelf.name, vec![seed.id()]).unwrap();
     let link = printed.https.clone().expect("an https link on the origin");
     eprintln!("the link printed: {link}");
     let seen = finished(
@@ -586,6 +589,8 @@ async fn phone_joins_through(
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
         kind: Kind::parse("shelf").unwrap(),
+        // Lent to the group Sam's computer keeps (LENDING_SCOPE).
+        audience: svrngs_node::lend::Audience::Selected(sam.rail().namespaces().unwrap()),
         limit: NonZeroU16::new(3),
         refused: Vec::new(),
         upload: None,
