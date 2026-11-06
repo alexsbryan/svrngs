@@ -107,12 +107,14 @@ const scope = /** @type {Scope} */ (self);
 /** @typedef {Record<'fetch' | 'install' | 'activate' | 'message', Listener[]>} On */
 
 const SCOPE = new URL(scope.registration.scope);
-// Where the page's files are on this origin, the shell this worker leaves
-// to the network: any version of them, so a newer page starts here too.
-// `self.location` is a `WorkerLocation`, which `URL` reads as its `href`.
+// Where the page's files are on this origin, and those it saves, so a phone
+// reopens with the public site gone (KEEP_GOING_AT_HOME 10). `self.location`
+// is a `WorkerLocation`, which `URL` reads as its `href`.
 const SITE = new URL('./', /** @type {string} */ (/** @type {unknown} */ (self.location))).pathname;
-const SHELL =
-  /^(open\.html|open\.js|lend\.js|shim\.js|store\.js|authority\.js|wasm\/svrngs_web(_bg\.wasm|\.js))$/;
+const SAVED =
+  'open.html open.js lend.js shim.js store.js authority.js away.html wasm/svrngs_web.js wasm/svrngs_web_bg.wasm'.split(
+    ' ',
+  );
 // This worker's lend: the first name of its address.
 const OWN = store.labelOf(SCOPE.hostname);
 const SIGNER = signerFor(SCOPE, SITE);
@@ -152,8 +154,37 @@ self.__trace = (line) => {
 const trace = self.__trace;
 trace(`RUNTIME: this run of the worker begins`);
 
-scope.addEventListener('install', () => scope.skipWaiting());
-scope.addEventListener('activate', (event) => event.waitUntil(scope.clients.claim()));
+// One saved piece's address, this build's: a build's own files, as web/sw.js
+// keeps them, so no worker answers a newer build's request with its copy.
+/** @param {string} file */
+const savedAt = (file) => `${SITE}${file}?v=__VERSION__`;
+
+// This build's pieces kept whole or not at all: one that fails fails the
+// install, so an older worker keeps serving and open.js says this could not
+// open, and a worker that runs has everything it saves.
+async function installed() {
+  const cache = await caches.open(store.CACHE);
+  await cache.addAll(SAVED.map(savedAt));
+  trace(`RUNTIME: this build's ${SAVED.length} pieces are saved here`);
+  await scope.skipWaiting();
+}
+
+// Older builds' caches gone, and only those: a lend's own pages keep theirs
+// on this origin. Unlike the page's worker it reloads nothing, since a page
+// here is a person's app at work. This worker's script is one address
+// whatever the build (open.js `handedOn`), so the browser finds a new one
+// itself after a navigation here; until then this worker sends a newer
+// build's requests to the network, and they go on working.
+async function activated() {
+  const names = await caches.keys();
+  const older = names.filter((name) => name.startsWith(store.CACHES) && name !== store.CACHE);
+  await Promise.all(older.map((name) => caches.delete(name)));
+  trace(`RUNTIME: ${older.length} older build(s) dropped`);
+  await scope.clients.claim();
+}
+
+scope.addEventListener('install', (event) => event.waitUntil(installed()));
+scope.addEventListener('activate', (event) => event.waitUntil(activated()));
 
 // What this run of the worker holds, all of it lost when the browser stops
 // it: what the page handed it, the wasm, its endpoint, a dial per lender,
@@ -1140,7 +1171,7 @@ async function away(request, lend) {
 // away.html's text, or none, traced, where it cannot be fetched.
 async function awayPage() {
   try {
-    const response = await fetch(`${SITE}away.html?v=__VERSION__`);
+    const response = await saved(new Request(savedAt('away.html')));
     if (response.ok) return await response.text();
     trace(`RUNTIME: away.html not fetched: ${response.status}`);
   } catch (error) {
@@ -1344,7 +1375,10 @@ async function answered(fetchEvent, url, where) {
 scope.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const here = url.origin === self.location.origin;
-  if (here && shellAt(url)) return;
+  if (here && shellAt(url)) {
+    event.respondWith(saved(event.request));
+    return;
+  }
   const own = here ? ownAnswer(event.request, url) : null;
   if (own) {
     event.respondWith(own);
@@ -1355,12 +1389,32 @@ scope.addEventListener('fetch', (event) => {
 });
 
 // Whether `url`, at this origin, is one of the page's files, any version
-// of them, which this worker leaves to the network (`SHELL`).
+// of them (`SAVED`).
 /** @param {URL} url */
 const shellAt = (url) =>
   url.searchParams.has('v') &&
   url.pathname.startsWith(SITE) &&
-  SHELL.test(url.pathname.slice(SITE.length));
+  SAVED.includes(url.pathname.slice(SITE.length));
+
+// One of the page's files: this build's from what is saved, its version
+// matched and the rest of its address not, as the shim's carries its lend
+// and an open its way back; any other version from the network, so a newer
+// page starts here too. Neither there, the person is told what to do.
+/** @param {Request} request */
+async function saved(request) {
+  const url = new URL(request.url);
+  const file = url.pathname.slice(SITE.length);
+  const here = url.searchParams.get('v') === '__VERSION__';
+  const hit = here
+    ? await caches.open(store.CACHE).then((cache) => cache.match(savedAt(file)))
+    : null;
+  if (hit) return hit;
+  trace(`RUNTIME: ${file} ${url.searchParams.get('v')} is not saved here, so the site is asked`);
+  return fetch(request).catch((error) => {
+    trace(`RUNTIME: ${file} could not be fetched either: ${String(error)}`);
+    return say(503, 'This phone has not saved this app. Open it once while online.', 'away');
+  });
+}
 
 // The answer to `request` at one of this worker's own addresses on this
 // origin: its trace, the lends its pages read, an ask, or a stop. None at

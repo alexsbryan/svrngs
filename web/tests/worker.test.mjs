@@ -6,7 +6,9 @@
 // with `ignoreSearch: true`, so the old build answered requests for the new
 // one's URLs, and nothing reloaded the page onto the build the node spoke.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 // `sw.js` takes `self` as it loads, so it is here first.
 const scope = {
@@ -86,4 +88,81 @@ test('a first install leaves the page the person is opening alone', async () => 
   };
   await worker.activated();
   assert.deepEqual(open.navigated, []);
+});
+
+// A lend's worker's saved pieces (KEEP_GOING_AT_HOME 10; web/lend.js), its
+// functions cut from its text, as lend.js is a worker a law cannot import.
+const LEND = readFileSync(new URL('../lend.js', import.meta.url), 'utf8');
+const cut = (name) => {
+  const at = LEND.search(new RegExp(`^(async )?function ${name}\\(`, 'm'));
+  return LEND.slice(at, LEND.indexOf('\n}\n', at) + 2);
+};
+const lendWorker = (context) =>
+  runInNewContext(
+    `const SITE = '/'; const savedAt = (file) => \`/\${file}?v=__VERSION__\`;
+     ${cut('saved')}${cut('activated')}${cut('installed')}
+     ({ saved, activated, installed });`,
+    {
+      URL,
+      trace: () => {},
+      store: { CACHE: 'svrngs-web-__VERSION__', CACHES: 'svrngs-web-' },
+      SAVED: ['shim.js', 'open.html'],
+      say: (status) => ({ status }),
+      ...context,
+    },
+  );
+const at = (path) => ({ url: `https://l.group.svrnme.sh${path}` });
+const cacheOf = (files) => ({
+  match: async (url) => (files.includes(url) ? { from: 'cache', url } : undefined),
+});
+
+test("a lend's worker answers its own build's piece, however the address goes on", async () => {
+  const { saved } = lendWorker({
+    caches: { open: async () => cacheOf(['/shim.js?v=__VERSION__']) },
+    fetch: async () => ({ from: 'network' }),
+  });
+  const got = await saved(at('/shim.js?v=__VERSION__&l=label&c=cookies'));
+  assert.deepEqual([got.from, got.url], ['cache', '/shim.js?v=__VERSION__']);
+});
+
+test("a lend's worker never answers a newer build's request with its own copy", async () => {
+  const { saved } = lendWorker({
+    caches: { open: async () => cacheOf(['/open.js?v=NEWER', '/open.js?v=__VERSION__']) },
+    fetch: async () => ({ from: 'network' }),
+  });
+  assert.equal((await saved(at('/open.js?v=NEWER'))).from, 'network');
+});
+
+test('a piece neither saved nor reachable is said, not a broken load', async () => {
+  const { saved } = lendWorker({
+    caches: { open: async () => cacheOf([]) },
+    fetch: async () => Promise.reject(new Error('the site is gone')),
+  });
+  assert.equal((await saved(at('/shim.js?v=__VERSION__'))).status, 503);
+});
+
+test("activation drops older builds' caches and leaves the app's own", async () => {
+  const deleted = [];
+  const { activated } = lendWorker({
+    caches: {
+      keys: async () => ['svrngs-web-OLD', 'svrngs-web-__VERSION__', 'the-apps-own'],
+      delete: async (name) => deleted.push(name),
+    },
+    scope: { clients: { claim: async () => {} } },
+    Promise,
+  });
+  await activated();
+  assert.deepEqual(deleted, ['svrngs-web-OLD']);
+});
+
+test('one piece that cannot be fetched fails the install, so no worker runs half saved', async () => {
+  const skipped = [];
+  const { installed } = lendWorker({
+    caches: {
+      open: async () => ({ addAll: async () => Promise.reject(new Error('one piece is gone')) }),
+    },
+    scope: { skipWaiting: async () => skipped.push(true) },
+  });
+  await assert.rejects(installed());
+  assert.deepEqual(skipped, []);
 });

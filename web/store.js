@@ -432,7 +432,8 @@ export function labelOf(hostname) {
 // one entry in the version's cache, which whoever asks first fills — the
 // page, on a cold join — and the worker reads. __VERSION__ is stamped at
 // build time, as in sw.js.
-export const CACHE = 'svrngs-web-__VERSION__';
+export const CACHES = 'svrngs-web-';
+export const CACHE = `${CACHES}__VERSION__`;
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
 
 // The module's `Response`, for wasm-bindgen's `init({ module_or_path })`:

@@ -79,13 +79,19 @@ function running(registration) {
   const worker = /** @type {ServiceWorker} */ (
     registration.installing ?? registration.waiting ?? registration.active
   );
-  return new Promise((done) => {
+  return new Promise((done, failed) => {
     if (worker.state === 'activated') {
       done(worker);
       return;
     }
     worker.addEventListener('statechange', () => {
       if (worker.state === 'activated') done(worker);
+      // An install that could not save its pieces (lend.js `installed`):
+      // an older worker goes on, and with none this cannot open.
+      if (worker.state === 'redundant') {
+        if (registration.active) done(registration.active);
+        else failed(new Error('the lend’s worker did not install'));
+      }
     });
   });
 }

@@ -1095,6 +1095,21 @@ Seven calls:
    Measured: `demo/runs/capability/2026-10-23-pass-key/` (`probe.mjs`,
    `idle.mjs`); held by `web/tests/ask.mjs` step 5.
 
+   A lend's origin saves its shell as the group's page does, so a phone
+   reopens with the public site gone (KEEP_GOING_AT_HOME 10): its worker
+   keeps every file it needs (`SAVED`, the away page among them), whole or
+   its install fails and an older worker goes on, under this build's cache,
+   and answers a file only when its `?v=` is this build's, so no worker
+   answers a newer build's request. The script's address is one whatever
+   the build, so the browser finds a new worker itself. Activation drops
+   older builds' caches by their name alone, since an app keeps its own on
+   this origin, and reloads no page, since that page is someone's app at
+   work. The app's own pages share the origin, so they can write in this
+   cache as they can in the wasm's, the trust risk 5 already names; a pass
+   it holds still lapses as ever, and only the group's page signs another.
+   WebKit under Playwright keeps nothing in the Cache API in a context with
+   a profile, so this is tested in Chromium (`tests/browser/keep_going.rs`).
+
    So a lent page composes others: at its own origin, `GET /svrngs-reads`
    answers each lend it reads — its kind, name, lender and the address to
    ask it at — and the people whose computer did not answer, never the pass
