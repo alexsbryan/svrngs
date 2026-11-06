@@ -4,7 +4,7 @@
 // group's, not this computer's to change, so it is not listed. Each read
 // is counted, so an older answer is refused by name, and the last read
 // stays drawn while the next is asked.
-import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
+import { reads } from '../ui/machine.js?v=__VERSION__';
 import { get } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Lend } from '../question.js?v=__VERSION__' */
@@ -49,26 +49,13 @@ export const LENDING = {
         }),
       ),
   },
-  // Each message's read numbered, and an answer older than the last read
-  // asked refused by name, before any case takes it.
-  step: (state, message) => {
-    const [asked, serial] = ask(state, 'lent');
-    const old = message.type === 'read' ? '' : late(state, 'lent', message.n);
-    if (old) return no(state, old);
-    switch (message.type) {
-      case 'read':
-        return go(
-          state,
-          { lent: 'reading' },
-          { asked },
-          { run: 'read', n: serial, failed: 'unread' },
-        );
-      case 'answered':
-        return go(state, { lent: 'read' }, { lent: message.lent, signing: message.signing });
-      case 'unread':
-        return go(state, { lent: 'unread' }, { why: message.why });
-      default:
-        return assertNever(state, message, 'what you lend');
-    }
-  },
+  step: reads({
+    region: 'lent',
+    start: 'read',
+    reading: 'reading',
+    done: 'answered',
+    at: 'read',
+    fields: ['lent', 'signing'],
+    taker: 'what you lend',
+  }),
 };

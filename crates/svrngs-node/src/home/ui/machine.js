@@ -139,6 +139,37 @@ export const late = (state, kind, serial) =>
     : `${kind} ${serial} answered after ${kind} ${state.asked?.[kind]} was asked`;
 
 /**
+ * The step of a page's one read of something in `region`: `start` asks it,
+ * numbered, and an answer older than the last read asked is refused by name,
+ * before any case takes it. `done` answers it, at `at`, the `fields` it
+ * carries kept; `unread` fails it. `taker` says whose step it is.
+ * @param {{ region: string, start: string, reading: string, done: string, at: string, fields: string[], taker: string }} read
+ * @returns {(state: any, message: any) => any}
+ */
+export const reads =
+  ({ region, start, reading, done, at, fields, taker }) =>
+  (state, message) => {
+    const [asked, serial] = ask(state, region);
+    const old = message.type === start ? '' : late(state, region, message.n);
+    if (old) return no(state, old);
+    if (message.type === start)
+      return go(
+        state,
+        { [region]: reading },
+        { asked },
+        { run: start, n: serial, failed: 'unread' },
+      );
+    if (message.type === done)
+      return go(
+        state,
+        { [region]: at },
+        Object.fromEntries(fields.map((field) => [field, message[field]])),
+      );
+    if (message.type === 'unread') return go(state, { [region]: 'unread' }, { why: message.why });
+    return no(state, `${taker} takes no ${message.type}`);
+  };
+
+/**
  * The end of a step's `switch (message.type)`, where the compiler gives `message` the
  * type `never` once every case is taken: a message type a step declares and
  * no case takes fails `types` here. A message no type foresaw, such as an

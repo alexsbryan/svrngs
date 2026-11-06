@@ -5,7 +5,7 @@
 // like, never as the page loads: the look knocks at every address here,
 // seconds of this computer's work. Each look is counted, so an older
 // look's answer is refused by name.
-import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
+import { reads } from '../ui/machine.js?v=__VERSION__';
 import { get } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 
@@ -80,24 +80,13 @@ export const RUNNING = {
         why: `${found.length} running`,
       })),
   },
-  step: (state, message) => {
-    const [asked, serial] = ask(state, 'running');
-    const old = message.type === 'look' ? '' : late(state, 'running', message.n);
-    if (old) return no(state, old);
-    switch (message.type) {
-      case 'look':
-        return go(
-          state,
-          { running: 'looking' },
-          { asked },
-          { run: 'look', n: serial, failed: 'unread' },
-        );
-      case 'looked':
-        return go(state, { running: 'looked' }, { found: message.found, named: message.named });
-      case 'unread':
-        return go(state, { running: 'unread' }, { why: message.why });
-      default:
-        return assertNever(state, message, 'what runs here');
-    }
-  },
+  step: reads({
+    region: 'running',
+    start: 'look',
+    reading: 'looking',
+    done: 'looked',
+    at: 'looked',
+    fields: ['found', 'named'],
+    taker: 'what runs here',
+  }),
 };
