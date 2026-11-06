@@ -1387,10 +1387,10 @@ impl std::fmt::Display for Said {
                     Source::Carried(_) => return writeln!(f, "{} is carried in its group's folder.", lend.name),
                 };
                 match lend.limit {
-                    Some(n) => writeln!(f, "You lend {name} ({raw}port {port}) to everyone in your groups, up to {n} {} at once.",
+                    Some(n) => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, up to {n} {} at once.",
                         if n.get() == 1 { "person" } else { "people" })?,
-                    None => writeln!(f, "You lend {name} ({raw}port {port}) to everyone in your groups, as many at once as want it. \
-                        To let fewer in at once, change it on your home page, or `svrngs share {port} --limit <number>`.")?,
+                    None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
+                        To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
                 match accounts {
                     Some(share::Signs::Accounts(how)) => writeln!(

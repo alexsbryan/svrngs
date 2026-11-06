@@ -14,7 +14,7 @@ llama-server -m my-model.gguf --host 127.0.0.1 --port 8101
 
 When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, it's ready. (Without `--port`, llama-server uses 8080.)
 
-**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so the row says *"Something at http://localhost:8101. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that."* Type a name in **Its name:** (`coder`) and `llama-server` in **What it is:**, then press **Lend it to everyone in your groups**.
+**From your home page:** under **Already running here**, press **Look for programs running on this computer**. svrngs doesn't know llama-server by its port (its usual 8080 is many programs' port), so the row says *"Something at http://localhost:8101. To lend it, give it a name and say what it is, each one word; if it is llama-server, say that."* Type a name in **Its name:** (`coder`) and `llama-server` in **What it is:**, tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
 **From a terminal:**
 
@@ -25,7 +25,7 @@ svrngs share 8101 --kind llama-server --name coder --group <group>
 It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. Then:
 
 ```
-You lend coder (port 8101) to everyone in your groups, as many at once as want it. …
+You lend coder (port 8101) to the groups you chose, as many at once as want it. …
 They cannot open /slots, /v1/stream, /v1/streams, /v1/chat/completions/control, /lora-adapters, /metrics, /tools, /cors-proxy, /models: svrngs keeps these back whenever a llama-server is lent, since they show one person's use of it to the others or change it for everyone.
 ```
 

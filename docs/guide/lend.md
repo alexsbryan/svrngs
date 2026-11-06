@@ -11,11 +11,11 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 1. Start the program as you always do. Say Sam starts Jellyfin.
 2. Open your home page (open svrngs from your Applications). Under **Already running here**, press **Look for programs running on this computer**. Looking takes a few seconds.
 3. The page lists what it found, each at its address: *"jellyfin, at http://localhost:8096. It keeps its own accounts, so make each person one in it: …"*
-4. Press **Lend jellyfin to everyone in your groups**.
+4. Tick the groups who can open it, then press **Lend jellyfin to House** (the button names the groups you ticked).
 
-The row then says *"You lent jellyfin, at http://localhost:8096: everyone in your groups can open it now."*, and it shows under **What you lend**.
+The row then says *"You lent jellyfin, at http://localhost:8096: the groups you chose can open it now."*, and it shows under **What you lend**.
 
-If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say what it is, each one word…"*. Fill in **Its name:** and **What it is:** (for example `actual` and `actual`), then press **Lend it to everyone in your groups**.
+If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say what it is, each one word…"*. Fill in **Its name:** and **What it is:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
 The home page never asks for a password. If the program wants one on every request, lend it from a terminal (below).
 
@@ -44,7 +44,7 @@ svrngs share 8096 --group <group>
 Jellyfin keeps its own accounts, so svrngs asks no password and tells you how to make your friends one:
 
 ```
-You lend jellyfin (port 8096) to everyone in your groups, as many at once as want it. …
+You lend jellyfin (port 8096) to the groups you chose, as many at once as want it. …
 jellyfin asks each person to sign in once, with an account you make them. In jellyfin: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save. Then tell each person theirs.
 `svrngs unshare jellyfin` stops lending it.
 ```
@@ -101,7 +101,7 @@ Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the
 svrngs share 8096 --limit 3 --group <group>
 ```
 
-On your home page, under **What you lend**, type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in your groups can use it at once.
+On your home page, under **What you lend**, type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in the groups you chose can use it at once.
 
 ## Keep part of it back
 

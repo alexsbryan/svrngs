@@ -46,7 +46,7 @@ Anything that answers at an address on your computer can be lent:
 Jellyfin at `http://localhost:8096`, llama-server, Navidrome, Immich, a
 game server. Sam runs Jellyfin. On the home page, under **Already running
 here**, Sam presses **Look for programs running on this computer**, then
-**Lend jellyfin to everyone in your groups**. Or, in a terminal:
+ticks who can open it and presses **Lend jellyfin to House**. Or, in a terminal:
 
 ```
 svrngs share 8096 --kind jellyfin --group <group>
