@@ -33,10 +33,12 @@ import { SigningOn } from './signing-on.js?v=__VERSION__';
  * @param {Choice[]} groups
  */
 export const lentTo = (lend, groups) => {
-  if (lend.groups === null) return 'Choose which groups can open this.';
-  if (lend.groups.length === 0) return 'Paused: no group can open it.';
+  // Absent is read as legacy, needing selection: never as every group.
+  const ids = lend.groups ?? null;
+  if (ids === null) return 'Choose which groups can open this.';
+  if (ids.length === 0) return 'Paused: no group can open it.';
   const names = groups
-    .filter((group) => /** @type {string[]} */ (lend.groups).includes(group.id))
+    .filter((group) => ids.includes(group.id))
     .map((group) => group.name ?? 'a group whose name this computer cannot read');
   return `Lent to ${names.join(' and ')}.`;
 };
