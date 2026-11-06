@@ -156,3 +156,68 @@ async fn a_list_asked_without_this_builds_scope_marker_is_refused() {
     assert_eq!(listed(&pair).await["lends"], serde_json::json!([]));
     pair.close().await;
 }
+
+/// A request through bo's bridge whose answer's head has come: the socket,
+/// its body still to come.
+async fn opened(pair: &Pair, head: &str) -> tokio::net::TcpStream {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let mut sock = tokio::net::TcpStream::connect(pair.bridge).await.unwrap();
+    sock.write_all(format!("{head}Host: local\r\n\r\n").as_bytes()).await.unwrap();
+    let (mut seen, mut byte) = (Vec::new(), [0u8; 1]);
+    while !seen.ends_with(b"\r\n\r\n") {
+        assert_eq!(sock.read(&mut byte).await.unwrap(), 1, "{:?}", String::from_utf8_lossy(&seen));
+        seen.push(byte[0]);
+    }
+    assert!(seen.starts_with(b"HTTP/1.1 20") || seen.starts_with(b"HTTP/1.1 101"), "{:?}", String::from_utf8_lossy(&seen));
+    sock
+}
+
+/// How long `sock` carries on before it ends, read as it comes, up to `within`.
+async fn ends_within(sock: &mut tokio::net::TcpStream, within: std::time::Duration) -> Option<std::time::Duration> {
+    use tokio::io::AsyncReadExt;
+    let began = std::time::Instant::now();
+    let mut buf = [0u8; 4096];
+    let ended = async { while sock.read(&mut buf).await.is_ok_and(|n| n > 0) {} };
+    tokio::time::timeout(within, ended).await.ok().map(|()| began.elapsed())
+}
+
+/// Withdrawal of what already streams (LENDING_SCOPE §"Existing streams
+/// and app sessions"): bo streams the shelf and the radio, both lent to
+/// the house, and holds a WebSocket to `live`. Once the shelf and `live`
+/// are lent only to yard, the shelf's answer and the socket each end
+/// within two seconds; the radio's stream, through the same bridge, still
+/// carries bytes after, and a new request to it is answered. Planted: the
+/// answer's body and the upgraded copy carried on to their end, unwatched.
+#[tokio::test]
+async fn a_stream_ends_within_two_seconds_of_its_group_taken_away_and_no_other() {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+    let two = std::time::Duration::from_secs(2);
+    let pair = Pair::new().await;
+    let (stream, _) = super::origins::streaming_origin().await;
+    let (live, _) = super::origins::upgrade_origin().await;
+    for (name, port) in [("shelf", stream.port()), ("radio", stream.port()), ("live", live.port())] {
+        pair.lend(name, port, &[]);
+    }
+    groups_held(&pair, &[NS]);
+    let mut shelf = opened(&pair, "GET /lend/shelf/stream HTTP/1.1\r\n").await;
+    let mut radio = opened(&pair, "GET /lend/radio/stream HTTP/1.1\r\n").await;
+    let upgrade = "GET /lend/live/socket HTTP/1.1\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n";
+    let mut socket = opened(&pair, upgrade).await;
+    socket.write_all(b"ping").await.unwrap();
+    let mut echo = [0u8; 4];
+    socket.read_exact(&mut echo).await.unwrap();
+
+    to_groups(&pair, &["yard"]);
+    let live = LendName::parse("live").unwrap();
+    assert!(lend::set_audience(pair.dir.path(), &live, vec!["yard".into()]).unwrap());
+    let cut = ends_within(&mut shelf, two).await;
+    let closed = ends_within(&mut socket, two).await;
+    eprintln!("the shelf's answer ended after {cut:?}, the socket after {closed:?}");
+    assert!(cut.is_some(), "the shelf's answer still carries on after 2 s");
+    assert!(closed.is_some(), "the socket is still open after 2 s");
+    let mut more = [0u8; 64];
+    let carried = tokio::time::timeout(two, radio.read(&mut more)).await;
+    assert!(matches!(carried, Ok(Ok(n)) if n > 0), "the radio stopped: {carried:?}");
+    assert_eq!(pair.get("/lend/radio/now", "").await.status, 200);
+    pair.close().await;
+}

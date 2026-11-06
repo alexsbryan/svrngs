@@ -702,8 +702,10 @@ pub(crate) fn splice<H: Send + 'static>(
     service: hyper::upgrade::OnUpgrade,
     held: H,
     lend: String,
+    cut: impl std::future::Future<Output = ()> + Send + 'static,
 ) {
-    tokio::spawn(async move {
+    let name = lend.clone();
+    let spliced = async move {
         let _held = held;
         let (asker, service) = match tokio::try_join!(asker, service) {
             Ok(both) => both,
@@ -724,7 +726,60 @@ pub(crate) fn splice<H: Send + 'static>(
                 tracing::debug!(target: "door", lend, error = %e, "door: an upgraded connection ended in error")
             }
         }
+    };
+    tokio::spawn(async move {
+        tokio::select! {
+            () = spliced => {}
+            () = cut => tracing::info!(target: "door", lend = name, "door: an upgraded connection cut — its asker no longer stands in a group the lend reaches"),
+        }
     });
+}
+
+/// When `device` no longer stands in a group `lend` reaches, its live
+/// declaration asked every sweep as a raw lend's is ([`udp::unstood`]),
+/// whether or not the asker reads: what an answer streaming to them and an
+/// upgraded connection are cut by (LENDING_SCOPE §"Existing streams and
+/// app sessions"). Never for none: an owner's or a guest's use.
+fn withdrawn(door: &Door, lend: &Lend, device: Option<String>) -> impl std::future::Future<Output = ()> + Send + 'static {
+    let (door, lend) = (door.clone(), lend.clone());
+    async move {
+        match device {
+            Some(device) => udp::unstood(&door, &device, &lend).await,
+            None => std::future::pending().await,
+        }
+    }
+}
+
+/// `body`, carried by a task of its own until it ends or `cut` fires: then
+/// the service's answer is dropped, its connection and the use it holds
+/// with it, and the asker's body ends in an error, never as if whole. The
+/// task, not the asker's reading, waits on `cut`, so an asker that stops
+/// reading is cut all the same.
+fn cut_by<B>(body: B, cut: impl std::future::Future<Output = ()> + Send + 'static, lend: String) -> Body
+where
+    B: hyper::body::Body<Data = axum::body::Bytes> + Send + Unpin + 'static,
+    B::Error: Into<axum::BoxError> + Send,
+{
+    let (tx, rx) = mpsc::channel::<Result<hyper::body::Frame<_>, axum::BoxError>>(1);
+    tokio::spawn(async move {
+        let mut body = body;
+        let pump = async {
+            while let Some(frame) = body.frame().await {
+                if tx.send(frame.map_err(Into::into)).await.is_err() {
+                    return;
+                }
+            }
+        };
+        tokio::select! {
+            () = pump => return,
+            () = cut => {}
+        }
+        drop(body);
+        tracing::info!(target: "door", lend, "door: an answer cut — its asker no longer stands in a group the lend reaches");
+        let _ = tx.send(Err("this is no longer lent to you".into())).await;
+    });
+    let frames = n0_future::stream::unfold(rx, |mut rx| async move { Some((rx.recv().await?, rx)) });
+    Body::new(http_body_util::StreamBody::new(frames))
 }
 
 /// The request's head as the service is to see it: the client's headers
@@ -1468,7 +1523,8 @@ pub(crate) async fn lend_for(
     };
     tracing::debug!(target: "door", actor, person = person.as_str(), host = ?host.as_ref().map(Person::as_str), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
         method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none");
-    let told = Told { share, held };
+    let watched = (!matches!(who, Who::Own(_)) && host.is_none()).then(|| device.to_string());
+    let told = Told { share, held, watched };
     forward(
         door,
         (&lend, port),
@@ -1491,6 +1547,9 @@ const UNCOUNTED: &str =
 struct Told {
     share: Option<u64>,
     held: Option<InFlight>,
+    /// The device whose standing the answer is cut by; none for an
+    /// owner's or a guest's use ([`withdrawn`]).
+    watched: Option<String>,
 }
 
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:
@@ -1647,7 +1706,7 @@ async fn forward(
     host: Option<&Person>,
     path: String,
     mut req: Request,
-    Told { share, held }: Told,
+    Told { share, held, watched }: Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
     let range = req.headers().get(header::RANGE);
@@ -1753,11 +1812,13 @@ async fn forward(
         (Some(asker), Some(service), Some(protocol)) => {
             tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the service switched protocols; splicing the two");
             keep_upgrade(&mut parts.headers, protocol);
-            splice(asker, service, held, lend.name.to_string());
-            None
+            let cut = withdrawn(door, lend, watched);
+            splice(asker, service, held, lend.name.to_string(), cut);
+            (None, None)
         }
-        _ => held,
+        _ => (held, watched),
     };
+    let (held, watched) = held;
     let sent = (parts.headers.get(header::LOCATION)).and_then(|l| l.to_str().ok());
     match sent.map(|l| LendPath::parse(l, port, None)) {
         Some(Ok(path)) => {
@@ -1795,7 +1856,11 @@ async fn forward(
         carried.sent += frame.data_ref().map_or(0, |d| d.len() as u64);
         frame
     });
-    let mut response = Response::new(Body::new(body));
+    let body = match watched {
+        Some(device) => cut_by(body, withdrawn(door, lend, Some(device)), lend.name.to_string()),
+        None => Body::new(body),
+    };
+    let mut response = Response::new(body);
     *response.status_mut() = parts.status;
     *response.headers_mut() = parts.headers;
     Ok(response.into_response())

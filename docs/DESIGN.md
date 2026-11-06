@@ -174,7 +174,18 @@ it. Every change to a declaration — its groups, its limit, turning on
 sign-in — holds that lend's lock (`locks/<lend>.lock`, `File::try_lock`)
 from its read to its write (`lend::mutate`), so no change writes back
 what another narrowed; one made while another holds it is refused, busy
-(409 on the home page), and changes nothing. *Lends are asked,
+(409 on the home page), and changes nothing. A group taken away is
+refused at the next request, and what already streams to its people is
+cut within two seconds: every second the door re-reads the declaration
+for each answer still streaming to a member or pass holder and each
+upgraded connection (a WebSocket) of theirs, and once the asker stands in
+no group the lend reaches it drops the service's answer, ending the
+asker's body in an error, or closes that upgraded connection
+(`door::withdrawn`, `cut_by`, `splice`); the connection to their
+computer, other lends and the group's sync carry on. Measured at 0.97 s
+for an answer and about 1 s for a socket on loopback (`tests/door/
+scope.rs`). An owner's and a guest's streams are not watched, and what
+already reached the app, or an app's own sessions, is not undone. *Lends are asked,
 not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
 never stale. The lender's own lend, opened on their own computer, goes

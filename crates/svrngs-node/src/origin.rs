@@ -630,7 +630,7 @@ async fn carried(
     door::strip_hop_by_hop(&mut parts.headers);
     if let (Some(asker), Some(service), Some(protocol)) = (asker, service, switched) {
         door::keep_upgrade(&mut parts.headers, protocol);
-        door::splice(asker, service, (), label.to_string());
+        door::splice(asker, service, (), label.to_string(), std::future::pending());
     }
     let mut response = Response::new(Body::new(body));
     *response.status_mut() = parts.status;

@@ -165,7 +165,7 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
 /// [`admitted`] asks it — the live declaration re-read each tick, so a
 /// narrowing closes an open raw connection rather than letting it run on
 /// (LENDING_SCOPE §"Raw admission and current-scope sweep").
-async fn unstood(door: &Door, actor: &str, lend: &Lend) {
+pub(super) async fn unstood(door: &Door, actor: &str, lend: &Lend) {
     let mut every = tokio::time::interval(SWEEP);
     loop {
         let stands = live(door, lend)
