@@ -572,10 +572,19 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
 /// §"Updates, migration and mixed versions"). One that cannot be stamped
 /// is traced and left legacy, which no group reaches.
 pub fn stamp(data_dir: &Path) {
-    let entries = std::fs::read_dir(lends_dir(data_dir))
-        .into_iter()
-        .flatten()
-        .flatten();
+    let dir = lends_dir(data_dir);
+    let entries = match std::fs::read_dir(&dir) {
+        Ok(entries) => entries,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            return tracing::debug!(target: "lend", dir = %dir.display(), "lend: no declarations, so none to stamp");
+        }
+        Err(e) => {
+            return tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: refused — the declarations cannot be listed, so none is stamped; each stays as it is, legacy lent to no group");
+        }
+    };
+    let entries = entries.filter_map(|e| {
+        e.inspect_err(|e| tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: a declaration cannot be listed, so it is not stamped")).ok()
+    });
     for path in entries.map(|e| e.path()) {
         let name = path
             .file_name()
@@ -583,10 +592,16 @@ pub fn stamp(data_dir: &Path) {
         let Some(Ok(name)) = name.map(LendName::parse) else {
             continue;
         };
-        let text = std::fs::read_to_string(&path).unwrap_or_default();
-        let value = serde_json::from_str::<serde_json::Value>(&text).ok();
-        if value.is_none_or(|v| v.get("groups").is_some()) {
-            continue;
+        let read = std::fs::read_to_string(&path).map_err(|e| e.to_string());
+        let value = read
+            .and_then(|t| serde_json::from_str::<serde_json::Value>(&t).map_err(|e| e.to_string()));
+        match value {
+            Ok(v) if v.get("groups").is_some() => continue,
+            Ok(_) => {}
+            Err(e) => {
+                tracing::warn!(target: "lend", file = %path.display(), error = e, "lend: refused — a declaration cannot be read, so it is not stamped; read refuses it too, so nothing is lent from it");
+                continue;
+            }
         }
         match mutate(data_dir, &name, |_| {}) {
             Ok(_) => {
