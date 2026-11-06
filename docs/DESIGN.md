@@ -266,7 +266,8 @@ reads it before the page sees the answer, shapes each under the kind the
 lend declares (`grant::app_act`), signs it as the person and carries it to
 the lender (`POST /carry`), so the app's next read holds it. A computer's
 origin (`crates/svrngs-node/src/origin.rs`, `appended`) signs as its own
-person, in a group both it and the lender stand in. A phone's worker
+person, in a group both it and the lender stand in and the lend is lent
+to, never another both stand in. A phone's worker
 (`web/lend.js`, `appended`) signs with the pass's holder, in the group it
 was opened from, under a second pass the group page signs at the open,
 whose app is that kind's part of the group (`Label::carried`), so the

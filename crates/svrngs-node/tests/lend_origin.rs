@@ -929,14 +929,20 @@ fn written(node: &Node) -> Vec<(String, String, String)> {
 /// and no carry is needed. Refused, the answer withheld and the refusal in
 /// words, nothing written: a correction of an act outside the lend's kind
 /// (Alex's own `money/paid`), so an app voids nothing of another's part;
-/// an act in a group Alex's computer does not hold. No answer carries the
-/// header on to the page. Red at HEAD: the door passes the header through
-/// to the page and nobody writes the act.
+/// an act in a group Alex's computer does not hold; an act in trip, which
+/// both hold and the lend is not lent to (LENDING_SCOPE §"Enforcement and
+/// disclosure" 5). No answer carries the header on to the page. Red at
+/// HEAD: the door passes the header through to the page and nobody writes
+/// the act; then, for trip, an act judged by both standing alone.
 #[tokio::test]
 async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     let (said, _heard) = common::heard("origin=debug");
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    let both = [("alex", 1), ("sam", 2)].map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(k))]));
+    for node in [&alex, &sam] {
+        node.rail().set_seed("trip", &Roster::new(both.clone().into_iter().collect())).unwrap();
+    }
     for dir in [alex_dir.path(), sam_dir.path()] {
         declare(
             dir,
@@ -1013,6 +1019,11 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
             serde_json::json!([{ "group": "elsewhere", "op": { "kind": "coming", "event": "e1" } }]),
             "sam’s events wrote in a group you and its lender are not both in, so it was not saved.",
         ),
+        (
+            "a group both hold that the lend is not lent to",
+            serde_json::json!([{ "group": "trip", "op": { "kind": "coming", "event": "e1" } }]),
+            "sam’s events wrote in a group it is not lent to, so it was not saved.",
+        ),
     ] {
         let (head, sock) = asked(on, &host(2), &post(acts)).await;
         let page = format!("{head}{}", body(sock).await);
@@ -1029,9 +1040,12 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
             .into_iter()
             .filter(|(k, _, _)| k == "a correction");
         assert_eq!(corrections.count(), 0, "nothing refused is written");
-        let elsewhere = node.rail().admission("elsewhere").ok();
-        let elsewhere = elsewhere.map(|a| serde_json::to_value(a.wire()).unwrap());
-        assert!(elsewhere.is_none_or(|ops| ops.as_array().unwrap().is_empty()));
+        for group in ["elsewhere", "trip"] {
+            let ops = node.rail().admission(group).ok();
+            let ops = ops.map(|a| serde_json::to_value(a.wire()).unwrap());
+            let app_s = |o: &serde_json::Value| o["payload"]["kind"] == "events/coming";
+            assert!(ops.is_none_or(|ops| !ops.as_array().unwrap().iter().any(app_s)), "{group}");
+        }
     }
     assert!(
         !written(&sam).iter().any(|(_, _, k)| k == &sam_key),

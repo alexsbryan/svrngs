@@ -419,6 +419,8 @@ enum Unwritten {
     Unread,
     #[error("wrote in a group you and its lender are not both in")]
     NotBoth,
+    #[error("wrote in a group it is not lent to")]
+    NotLent,
     #[error("writes only its own part of the group’s record")]
     OtherPart,
 }
@@ -473,6 +475,9 @@ async fn appended(
         let read = read
             .filter(|a| both(&a.membership().standing))
             .ok_or(Unwritten::NotBoth)?;
+        // Only a group the lend reaches, never another both stand in.
+        let reached = lend.as_ref().is_some_and(|l| l.clone().listed(|g| Some(g) == group));
+        reached.then_some(()).ok_or(Unwritten::NotLent)?;
         let body = serde_json::to_vec(act).unwrap_or_default();
         let shaped = svrngs_core::grant::app_act(kind, &body).ok_or(Unwritten::Unread)?;
         let ops = serde_json::to_value(read.wire()).unwrap_or_default();
