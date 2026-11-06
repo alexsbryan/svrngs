@@ -225,7 +225,7 @@ up() {
   # Sam lends it as it comes, eight at once for the phones unless a run
   # says otherwise (SHARE_FLAGS); a password typed is not asked for, and
   # not kept.
-  printf 'MediaBrowser Token="%s"\n' "$TOKEN" | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 $SHARE_FLAGS >"$R/sam/share.out" 2>"$R/sam/share.log"
+  printf 'MediaBrowser Token="%s"\n' "$TOKEN" | SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --group House $SHARE_FLAGS >"$R/sam/share.out" 2>"$R/sam/share.log"
   say "sam: $(grep -m1 'You lend' "$R/sam/share.out")"
   local how; how="$(grep -m1 'asks each person to sign in once' "$R/sam/share.out")" || { say "share told Sam nothing of accounts"; exit 1; }
   say "sam is told: $how"
@@ -431,7 +431,7 @@ mw() {
   # whose accounts mw_up just deleted.
   [ -z "${MW_PORT_LENT:-}" ] || mw_forget
   if [ -z "${MW_PORT_LENT:-}" ]; then
-    SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --name jellyfin-mw --sign-in "$port" ${MW_SHARE_FLAGS---limit 8} </dev/null >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
+    SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" share 8096 --group House --name jellyfin-mw --sign-in "$port" ${MW_SHARE_FLAGS---limit 8} </dev/null >"$R/sam/share-mw.out" 2>>"$R/sam/share.log"
     say "sam: $(grep -m1 'You lend' "$R/sam/share-mw.out")"
     # What share tells a lender who names a sign-in: no accounts to make.
     say "sam is told: $(grep -v '^You lend' "$R/sam/share-mw.out" | tr '\n' ' ')"

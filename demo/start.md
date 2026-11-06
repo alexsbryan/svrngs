@@ -103,7 +103,7 @@ from a terminal, before the page could. In a terminal, type, with the
 number from step 1:
 
 ```
-~/.local/bin/svrngs share 18089 --kind llama-server
+~/.local/bin/svrngs share 18089 --kind llama-server --group <group>
 ```
 
 `--kind llama-server` tells svrngs what is at that number, so it knows
@@ -194,7 +194,7 @@ do.
   after step 3 or 7. Type svrngs where it was put,
   `~/.local/bin/svrngs`, as in step 5.
 - **`svrngs: say what is on port 18089: svrngs share 18089 --kind
-  <kind>`** after `svrngs share 18089` alone. svrngs cannot tell
+  <kind>`** after `svrngs share 18089 --group <group>` alone. svrngs cannot tell
   llama-server by its number. Type the line again with `--kind
   llama-server` at its end.
 - **The terminal waits after `svrngs share`**, its last line asking

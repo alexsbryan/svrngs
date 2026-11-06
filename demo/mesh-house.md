@@ -26,7 +26,7 @@ cannot use it across the cut.
   `svrngs join '<link>' --as <name>`
 - On a mesh member:
   `llama-server -m <local.gguf> --host 127.0.0.1 --port 18089`
-  `svrngs share 18089 --kind llama-server`
+  `svrngs share 18089 --kind llama-server --group <group>`
   Use a local file: `-hf` needs the internet at load time.
 
 ## The scene

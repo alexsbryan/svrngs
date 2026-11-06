@@ -67,10 +67,10 @@ Add a row with a pull request, not a pantry change.
 
 | What | Serve on your computer | Lent to your groups |
 |---|---|---|
-| Chat and vision (the curated pair) | `llama-server -m Qwen3.6-35B-A3B-UD-IQ4_NL.gguf --jinja --alias ana/coder --host 127.0.0.1 --port 8101 -c 8192 -ngl 99`<br>(vision: add `--mmproj mmproj-F16.gguf`, the Gemma-4-26B projector) | `svrngs share 8101 --kind llama-server --name ana-coder --refuse /slots --refuse /v1/stream --refuse /v1/streams --refuse /v1/chat/completions/control --refuse /lora-adapters --refuse /metrics --refuse /tools --refuse /cors-proxy --refuse /models` |
-| Speech out (Kokoro v0.9.0) | `podman run --rm -p 127.0.0.1:8107:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | `svrngs share 8107 --kind kokoro --name sam-voice --refuse /docs --refuse /openapi.json` |
-| Speech to text (whisper.cpp + wrapper) | `whisper-server -m ggml-base.en.bin --host 127.0.0.1 --port 8106 -l en` then `node apps/pantry/examples/whisper/server.mjs --upstream http://127.0.0.1:8106 --port 8110` | `svrngs share 8110 --kind whisper --name sam-stt` |
-| Tools (any native MCP Streamable HTTP server) | serve it on `127.0.0.1:8108` with its endpoint at `/mcp` | `svrngs share 8108 --kind mcp --name sam-tools` |
+| Chat and vision (the curated pair) | `llama-server -m Qwen3.6-35B-A3B-UD-IQ4_NL.gguf --jinja --alias ana/coder --host 127.0.0.1 --port 8101 -c 8192 -ngl 99`<br>(vision: add `--mmproj mmproj-F16.gguf`, the Gemma-4-26B projector) | `svrngs share 8101 --kind llama-server --name ana-coder --refuse /slots --refuse /v1/stream --refuse /v1/streams --refuse /v1/chat/completions/control --refuse /lora-adapters --refuse /metrics --refuse /tools --refuse /cors-proxy --refuse /models --group <group>` |
+| Speech out (Kokoro v0.9.0) | `podman run --rm -p 127.0.0.1:8107:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | `svrngs share 8107 --kind kokoro --name sam-voice --refuse /docs --refuse /openapi.json --group <group>` |
+| Speech to text (whisper.cpp + wrapper) | `whisper-server -m ggml-base.en.bin --host 127.0.0.1 --port 8106 -l en` then `node apps/pantry/examples/whisper/server.mjs --upstream http://127.0.0.1:8106 --port 8110` | `svrngs share 8110 --kind whisper --name sam-stt --group <group>` |
+| Tools (any native MCP Streamable HTTP server) | serve it on `127.0.0.1:8108` with its endpoint at `/mcp` | `svrngs share 8108 --kind mcp --name sam-tools --group <group>` |
 
 The curated pair is `unsloth/Qwen3.6-35B-A3B-MTP-GGUF` and
 `unsloth/gemma-4-26B-A4B-it-GGUF`; the public file, revision and sha256 are
@@ -87,8 +87,8 @@ person.
 
 | You want to lend | Do this |
 |---|---|
-| A model, of any runtime or modality | Run any server that answers OpenAI's `/v1/models` and `/v1/chat/completions` (or transcription, speech, embeddings, images) on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name>`. The pantry asks it; nobody adds it to a list. |
-| A tool | Run any MCP Streamable HTTP server on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name>`. `list` shows its tools and annotations. |
+| A model, of any runtime or modality | Run any server that answers OpenAI's `/v1/models` and `/v1/chat/completions` (or transcription, speech, embeddings, images) on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name> --group <group>`. The pantry asks it; nobody adds it to a list. |
+| A tool | Run any MCP Streamable HTTP server on 127.0.0.1, then `svrngs share <port> --kind <anything> --name <name> --group <group>`. `list` shows its tools and annotations. |
 | Behaviour: vision bridging, a voice pipeline, retrieval, guardrails | Write a small OpenAI-in, OpenAI-out server that calls your own pantry's address, and point your interface at it. The vision bridge in `examples/bridge/` is the worked example. |
 
 ## Write an adapter

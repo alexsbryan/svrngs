@@ -22,13 +22,13 @@ The home page never asks for a password. If the program wants one on every reque
 ## Lend it from a terminal
 
 ```
-svrngs share 8096
+svrngs share 8096 --group <group>
 ```
 
-That's the port number from the program's address. svrngs knows a few programs by their port: Jellyfin (8096), Navidrome (4533) and Calibre-Web (8083). For anything else, say what it is with `--kind`:
+That's the port number from the program's address, and `--group` says who can open it: say it once for each group, by its name or the start of its id. With none, svrngs refuses and tells you this line; it never lends to all your groups. svrngs knows a few programs by their port: Jellyfin (8096), Navidrome (4533) and Calibre-Web (8083). For anything else, say what it is with `--kind`:
 
 ```
-svrngs share 2283 --kind immich
+svrngs share 2283 --kind immich --group <group>
 ```
 
 Without `--kind` on a port it doesn't know, svrngs says *"say what is on port 2283: `svrngs share 2283 --kind <kind>`, its own name if it is one svrngs knows: jellyfin, navidrome, calibre-web, llama-server"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
@@ -38,7 +38,7 @@ If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ct
 ## Lend Jellyfin
 
 ```
-svrngs share 8096
+svrngs share 8096 --group <group>
 ```
 
 Jellyfin keeps its own accounts, so svrngs asks no password and tells you how to make your friends one:
@@ -60,19 +60,19 @@ ND_EXTAUTH_USERHEADER=X-Svrngs-User
 ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32
 ```
 
-then `svrngs share 4533`. Each friend who opens it is in as themselves.
+then `svrngs share 4533 --group <group>`. Each friend who opens it is in as themselves.
 
 ## Lend Calibre-Web
 
-`svrngs share 8083`. Like Navidrome, it can take each person from svrngs. In Calibre-Web: Admin, Edit Basic Configuration, Feature Configuration; tick Allow Reverse Proxy Authentication, set Reverse Proxy Header Name to `X-Svrngs-User`, and Save. svrngs hasn't yet checked whether Calibre-Web lets in a friend it has no account for.
+`svrngs share 8083 --group <group>`. Like Navidrome, it can take each person from svrngs. In Calibre-Web: Admin, Edit Basic Configuration, Feature Configuration; tick Allow Reverse Proxy Authentication, set Reverse Proxy Header Name to `X-Svrngs-User`, and Save. svrngs hasn't yet checked whether Calibre-Web lets in a friend it has no account for.
 
 ## Lend Immich, Actual, or anything else
 
 Say what it is in one word, and svrngs passes that word on as the app's kind:
 
 ```
-svrngs share 2283 --kind immich
-svrngs share 5006 --kind actual
+svrngs share 2283 --kind immich --group <group>
+svrngs share 5006 --kind actual --group <group>
 ```
 
 svrngs asks whether it takes a password on each request (next section). Immich keeps its own accounts, so press Enter and make each friend an account in Immich. Actual asks everyone for the one server password you set.
@@ -90,7 +90,7 @@ Most apps with a sign-in page don't need this: press Enter. Paste something only
 ## Give it a name
 
 ```
-svrngs share 8096 --name films
+svrngs share 8096 --name films --group <group>
 ```
 
 Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the kind: *"Sam’s jellyfin"*. A name is letters, digits, `-` and `_`.
@@ -98,7 +98,7 @@ Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the
 ## Let in only so many at once
 
 ```
-svrngs share 8096 --limit 3
+svrngs share 8096 --limit 3 --group <group>
 ```
 
 On your home page, under **What you lend**, type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in your groups can use it at once.
@@ -106,7 +106,7 @@ On your home page, under **What you lend**, type a number in **How many people a
 ## Keep part of it back
 
 ```
-svrngs share 8000 --kind wiki --refuse /admin --refuse /settings
+svrngs share 8000 --kind wiki --refuse /admin --refuse /settings --group <group>
 ```
 
 Each path, and everything under it, stays closed to your friends: `/admin` closes `/admin` and `/admin/users`, but not `/administer`, however it's spelled. They see *"wiki is lent without /admin"*. Repeat `--refuse` for each path.
@@ -116,7 +116,7 @@ Each path, and everything under it, stays closed to your friends: `/admin` close
 For an app that speaks OpenID Connect, such as Jellyfin with its SSO plugin, svrngs can sign each friend in as themselves, with nothing typed:
 
 ```
-svrngs share 8096 --sign-in-with-svrngs
+svrngs share 8096 --sign-in-with-svrngs --group <group>
 ```
 
 Or press **Sign people in with svrngs** beside it under **What you lend**. Either way you get three things to copy into the app's own settings: *"choose OpenID Connect, and fill in: issuer http://127.0.0.1:…/oidc/jellyfin, client id …, client secret …"*, then *"It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none. Copy the secret now: it is not shown again."*

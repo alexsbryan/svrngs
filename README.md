@@ -43,7 +43,7 @@ minutes.
 
 - **Lend what you run.** Jellyfin, Navidrome, Immich, Actual: anything on
   a port. Your home page lists what's running, and one press gives it to
-  the group. Or type `svrngs share 8096`. [Lend](docs/guide/lend.md).
+  the group. Or type `svrngs share 8096 --group <group>`. [Lend](docs/guide/lend.md).
 - **Share a model.** Lend your llama-server; friends chat with it, and
   their programs call it at an address that doesn't change.
   [Models](docs/guide/models.md).

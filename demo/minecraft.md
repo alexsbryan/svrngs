@@ -37,7 +37,7 @@ page"). Nobody is told them.
 2. The host lends that port, in a terminal on the host's computer:
 
    ```
-   ~/.local/bin/svrngs share 25565 --tcp --kind minecraft --name minecraft
+   ~/.local/bin/svrngs share 25565 --tcp --kind minecraft --name minecraft --group <group>
    ```
 
    It prints "You lend minecraft (TCP port 25565) to everyone in your

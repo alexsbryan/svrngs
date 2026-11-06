@@ -73,9 +73,9 @@ lent() {
   local how="${1:-kept}"
   [ -f "$R/ana/lent-taste" ] && ana unshare taste
   case "$how" in
-    kept) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --ask "$ASK" --limit 8 ;;
-    no-refuse) ana share $TASTE_PORT --name taste --kind taste --ask "$ASK" --limit 8 ;;
-    no-ask) ana share $TASTE_PORT --name taste --kind taste --refuse /diary --limit 8 ;;
+    kept) ana share $TASTE_PORT --group House --name taste --kind taste --refuse /diary --ask "$ASK" --limit 8 ;;
+    no-refuse) ana share $TASTE_PORT --group House --name taste --kind taste --ask "$ASK" --limit 8 ;;
+    no-ask) ana share $TASTE_PORT --group House --name taste --kind taste --refuse /diary --limit 8 ;;
   esac
   touch "$R/ana/lent-taste"
   say "taste lent ($how), no choice kept: $(grep 'You lend' "$R/ana/share.out" | tail -1)"
@@ -134,8 +134,8 @@ up() {
   nohup python3 -m http.server $OTHER_PORT --bind 127.0.0.1 --directory "$HERE/other" >"$R/other-server.log" 2>&1 &
   echo $! >"$R/other-server.pid"
   sleep 1
-  sam share $PICKS_PORT --name tonights-picks --kind movie-night --reads jellyfin --reads taste --limit 8
-  sam share $OTHER_PORT --name other --kind other --reads taste --limit 8
+  sam share $PICKS_PORT --group House --name tonights-picks --kind movie-night --reads jellyfin --reads taste --limit 8
+  sam share $OTHER_PORT --group House --name other --kind other --reads taste --limit 8
   say "sam: $(grep 'You lend' "$R/sam/share.out" | tail -2 | tr '\n' ' ')"
   cp "$R/ana/share.out" "$OUT/ana-share.out"; cp "$R/sam/share.out" "$OUT/sam-share.out"
   # Ana's computer learns of those who joined before it by its ring round.

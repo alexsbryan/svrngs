@@ -163,8 +163,9 @@ The people in your group's section on the home page show the same form.
 ## Be in several groups at once
 
 Each group has its own section on your home page, in its own colour. What
-you lend with `svrngs share` reaches everyone in all your groups. Leaving
-or being removed from one group touches no other.
+you lend reaches only the groups you chose for it, and joining another
+group adds nothing to it. Leaving or being removed from one group touches
+no other.
 
 Two groups can share a name. The home page tells them apart by who made
 each and since when: *Trip (Sam’s, since 3 Oct)*. In a command, name the

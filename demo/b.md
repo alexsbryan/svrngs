@@ -31,7 +31,7 @@ them on every gate, a newcomer's phone for the five
 (`crates/svrngs/tests/scenes/night.rs`). Set up before the evening: Sam
 runs `svrngs new <group> --origin <page>`, which prints the group's link,
 `svrngs://join/<token>`, and the same link on the page's address, for a
-phone, and keeps running; beside it, `svrngs share 8096`, which prints how
+phone, and keeps running; beside it, `svrngs share 8096 --group <group>`, which prints how
 to make an account in Jellyfin's own pages; Sam makes one for the room,
 every library ticked, and the export of Jellyfin's users is taken after
 that. Dee: `svrngs join <link>` on the computer on the TV's WiFi, then

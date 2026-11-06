@@ -19,7 +19,7 @@ When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, i
 **From a terminal:**
 
 ```
-svrngs share 8101 --kind llama-server --name coder
+svrngs share 8101 --kind llama-server --name coder --group <group>
 ```
 
 It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. Then:
@@ -91,7 +91,7 @@ The address ends in `/`, so `v1/...` goes straight after it. Sam's computer has 
 A model can only answer so many people at once. Set how many:
 
 ```
-svrngs share 8101 --kind llama-server --name coder --limit 2
+svrngs share 8101 --kind llama-server --name coder --limit 2 --group <group>
 ```
 
 Or on your home page, under **What you lend**, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
@@ -118,7 +118,7 @@ It says *"Point your interface at http://127.0.0.1:8787/v1"* (your number may di
 
 **Tools.** A friend's tool is any MCP server that speaks Streamable HTTP. Paste its address from `list`, with `/mcp` on the end, into your app's MCP settings. Like a program, your app needs to send your token, as the header `Authorization: Bearer <the text in ~/.svrngs/token>`.
 
-To lend your own model or tool for the pantry, run it on `127.0.0.1` and lend it with any kind: `svrngs share 8108 --kind mcp --name tools`. More recipes (speech, speech to text, a vision bridge) are in [apps/pantry/README.md](../../apps/pantry/README.md).
+To lend your own model or tool for the pantry, run it on `127.0.0.1` and lend it with any kind: `svrngs share 8108 --kind mcp --name tools --group <group>`. More recipes (speech, speech to text, a vision bridge) are in [apps/pantry/README.md](../../apps/pantry/README.md).
 
 ## Who sees what
 

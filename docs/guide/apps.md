@@ -152,7 +152,7 @@ The doc isn't on the tick list either. You lend it from a copy of the svrngs
 source, with svrngs running:
 
 ```
-node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --kind doc < /dev/null
+node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --kind doc --group <group> < /dev/null
 ```
 
 (`svrngs` here is `~/.local/bin/svrngs` if your terminal doesn't find it.)

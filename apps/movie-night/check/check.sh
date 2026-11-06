@@ -211,7 +211,7 @@ up() {
   # Each lends: Sam's and Dee's Jellyfins through their middlewares, Cy's
   # a jellyfin its computer is asleep before anyone asks, and Sam Movie
   # Night, which reads every jellyfin.
-  lend() { local who="$1"; shift; SVRNGS_DIR="$R/$who" NO_COLOR=1 RUST_LOG=debug "$B" share "$@" --limit 8 </dev/null >>"$R/$who/share.out" 2>>"$R/$who/share.log"; say "$who: $(tail -n +1 "$R/$who/share.out" | grep 'You lend' | tail -1)"; }
+  lend() { local who="$1"; shift; SVRNGS_DIR="$R/$who" NO_COLOR=1 RUST_LOG=debug "$B" share "$@" --group House --limit 8 </dev/null >>"$R/$who/share.out" 2>>"$R/$who/share.log"; say "$who: $(tail -n +1 "$R/$who/share.out" | grep 'You lend' | tail -1)"; }
   lend sam $SAM_JF --kind jellyfin --sign-in $((SAM_JF + 1))
   lend dee $DEE_JF --kind jellyfin --sign-in $((DEE_JF + 1))
   # share lends only a port something answers: a stand-in answers Cy's

@@ -1,7 +1,7 @@
 # Jellyfin
 
 For whoever lends Jellyfin. svrngs finds it by its own port, 8096:
-`svrngs share 8096`, or lend it from the home page under "Already running
+`svrngs share 8096 --group <group>`, or lend it from the home page under "Already running
 here". It is lent as it comes, with no password typed, so Jellyfin asks
 each person to sign in once, with an account you make them; `share` tells
 you how, and the catalogue's run measured it on one computer
@@ -10,7 +10,7 @@ you how, and the catalogue's run measured it on one computer
 ## Set up Sign in with svrngs
 
 Turning on **Sign people in with svrngs**, or running
-`svrngs share 8096 --sign-in-with-svrngs`, creates sign-in credentials.
+`svrngs share 8096 --sign-in-with-svrngs --group <group>`, creates sign-in credentials.
 **It does not install a Jellyfin plugin or configure Jellyfin.** Complete
 the steps below on the computer lending Jellyfin, using its administrator
 account. Keep an ordinary administrator login available while testing.

@@ -81,7 +81,7 @@ Run it, and lend it, with svrngs running:
 
 ```
 node hello.mjs &
-~/.local/bin/svrngs share 4400 --kind hello
+~/.local/bin/svrngs share 4400 --kind hello --group <group>
 ```
 
 svrngs asks *"If hello takes a password on each request, paste what it
@@ -228,7 +228,7 @@ Lend with `--ask` and your words, and no other app can use your lend for a
 person until that person says yes:
 
 ```
-svrngs share 4500 --kind taste --ask "your film ratings"
+svrngs share 4500 --kind taste --ask "your film ratings" --group <group>
 ```
 
 An app lent with `--reads taste` finds yours at `/svrngs-reads` on its own
@@ -243,7 +243,7 @@ app with `x-svrngs-refused: unasked`; after a stop, `stopped`.
 If your app already speaks OpenID Connect, add `--sign-in-with-svrngs`:
 
 ```
-svrngs share 4500 --kind myapp --sign-in-with-svrngs
+svrngs share 4500 --kind myapp --sign-in-with-svrngs --group <group>
 ```
 
 It prints an issuer, a client id and a secret for your app's settings

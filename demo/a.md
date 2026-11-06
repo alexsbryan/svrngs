@@ -28,8 +28,8 @@ one host (`crates/svrngs/tests/scenes/films.rs`), and the dry run of
 2026-10-11 took them first, through a sign-in program since gone
 (`runs/a/2026-10-11/`). Set up before the run: Sam lends Jellyfin from his
 home page, under "Already running here", with sign-in with svrngs turned
-on, or `svrngs share 8096 --sign-in-with-svrngs --upload <the upload
-written down>`, which keeps nothing of Jellyfin's and asks Sam to make
+on, or `svrngs share 8096 --group <group> --sign-in-with-svrngs --upload
+<the upload written down>`, which keeps nothing of Jellyfin's and asks Sam to make
 nobody an account; the export of Jellyfin's users is taken after that.
 From the link on: Sam makes the group on his home page and copies its
 link, or runs `svrngs new <group>`, which prints it,
