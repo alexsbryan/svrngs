@@ -392,19 +392,30 @@ pub struct Door {
 }
 
 impl Door {
-    /// Whether `group` reaches `lend` now: chosen for it ([`Lend::reaches`])
-    /// and one this computer's own key still stands in, asked at each use
-    /// (LENDING_SCOPE §"One policy": a group both the lender and asker
-    /// stand in).
+    /// [`reached`], asked of this door's groups.
     pub(crate) fn reached(&self, lend: &Lend, group: &str) -> bool {
-        let me = hex::encode(self.key);
-        let stands = || self.rail.standing(group).is_ok_and(|s| s.names(&me));
-        let reached = lend.reaches(group) && stands();
-        if !reached && lend.reaches(group) {
-            tracing::debug!(target: "door", lend = %lend.name, group, "door: a chosen group this computer no longer stands in reaches nothing");
-        }
-        reached
+        reached(&self.rail, lend, group)
     }
+}
+
+/// Whether this computer's own key stands in `group` now: the one answer
+/// the door, the home page's selection and a code's redemption ask
+/// (ARCH 8; the key is the rail's signer, the one it dials with).
+pub(crate) fn stands_here(rail: &RingRail, group: &str) -> bool {
+    let me = crate::actor_of(rail.signer());
+    rail.standing(group).is_ok_and(|s| s.names(&me))
+}
+
+/// Whether `group` reaches `lend` now: chosen for it ([`Lend::reaches`])
+/// and one this computer's own key still stands in ([`stands_here`]),
+/// asked at each use (LENDING_SCOPE §"One policy": a group both the
+/// lender and asker stand in).
+pub(crate) fn reached(rail: &RingRail, lend: &Lend, group: &str) -> bool {
+    let reached = lend.reaches(group) && stands_here(rail, group);
+    if !reached && lend.reaches(group) {
+        tracing::debug!(target: "door", lend = %lend.name, group, "door: a chosen group this computer no longer stands in reaches nothing");
+    }
+    reached
 }
 
 /// The door's routes, for the members' protocol's router: a lend, every

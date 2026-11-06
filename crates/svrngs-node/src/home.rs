@@ -465,8 +465,7 @@ fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
             "this computer cannot read which groups it holds",
         )
     })?;
-    let me = hex::encode(at.door.key);
-    let stands = |id: &String| at.door.rail.standing(id).is_ok_and(|s| s.names(&me));
+    let stands = |id: &String| crate::door::stands_here(&at.door.rail, id);
     match groups.iter().find(|id| !held.contains(id) || !stands(id)) {
         None => Ok(()),
         Some(unknown) => {
