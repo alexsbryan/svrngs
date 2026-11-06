@@ -1,0 +1,11 @@
+2026-11-06T07:08:09.810966Z DEBUG tiers: tiers: this computer meets its groups at another tier now from=Fallback to=Own
+2026-11-06T07:08:09.810995Z DEBUG tiers: tiers: a relay given to this computer's endpoint relay=http://127.0.0.1:51730/ tier=Own
+2026-11-06T07:08:09.811063Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:09.811082Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:09.811096Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:09.811110Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:12.812306Z DEBUG tiers: tiers: this computer meets its groups at another relay now, the groups it meets at their fallback named from=None to=Some("http://127.0.0.1:51730/") fallback=[]
+2026-11-06T07:08:12.819300Z DEBUG join: join: redeeming as this person group=ea71a21553c46fe029afdb82afcff81342e78715cf2ad6baec1a6eb349268900 person=Theo
+2026-11-06T07:08:12.829616Z DEBUG join: join: let in group=ea71a21553c46fe029afdb82afcff81342e78715cf2ad6baec1a6eb349268900 redeemed=Admitted(OpId(ContentHash(980b1f8a4d192299)))
+2026-11-06T07:08:12.830804Z DEBUG join: join: a client's link, so no origin is kept group=ea71a21553c46fe029afdb82afcff81342e78715cf2ad6baec1a6eb349268900
+2026-11-06T07:08:12.856184Z DEBUG join: join: synced once from the issuer group=ea71a21553c46fe029afdb82afcff81342e78715cf2ad6baec1a6eb349268900 pulled=6

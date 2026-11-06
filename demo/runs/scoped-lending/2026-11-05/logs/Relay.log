@@ -1,0 +1,18 @@
+2026-11-06T07:07:47.073717Z DEBUG relay: relay: plain HTTP at the address given, with no certificate addr=127.0.0.1:51730
+2026-11-06T07:07:47.073833Z DEBUG relay: relay: starting relay=Relay { at: Here(127.0.0.1:51730), open: true } admits=Admits(None)
+2026-11-06T07:07:55.412876Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51754}:handler: relay: relay: admitted — the relay is open key="f456cc7a6e35cb54674b7d3fafa69b3cf67b8df2ab46ad7ca69bd7fb384d48d2"
+2026-11-06T07:07:56.525618Z  WARN relay-http-serve:conn{peer=127.0.0.1:51754}:handler:client-connection-actor{remote_endpoint=f456cc7a6e connection_id=0}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:08:04.605216Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51771}:handler: relay: relay: admitted — the relay is open key="f456cc7a6e35cb54674b7d3fafa69b3cf67b8df2ab46ad7ca69bd7fb384d48d2"
+2026-11-06T07:08:12.813046Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51798}:handler: relay: relay: admitted — the relay is open key="8633445349264859affcc42687fe3811278c1e87c08c985c6b62fc2ed19e4ae7"
+2026-11-06T07:08:12.979726Z  WARN relay-http-serve:conn{peer=127.0.0.1:51771}:handler:client-connection-actor{remote_endpoint=f456cc7a6e connection_id=1}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:08:13.062556Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51802}:handler: relay: relay: admitted — the relay is open key="f456cc7a6e35cb54674b7d3fafa69b3cf67b8df2ab46ad7ca69bd7fb384d48d2"
+2026-11-06T07:08:29.229979Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51832}:handler: relay: relay: admitted — the relay is open key="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926"
+2026-11-06T07:08:38.153941Z DEBUG relay-http-serve:conn{peer=127.0.0.1:51878}:handler: relay: relay: admitted — the relay is open key="103901e978e8346cb4ae859117e9d60d1c504cefbc29a9100206d7b37929d7cf"
+2026-11-06T07:09:07.185753Z  WARN relay-http-serve:conn{peer=127.0.0.1:51802}:handler:client-connection-actor{remote_endpoint=f456cc7a6e connection_id=3}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:09:07.276607Z DEBUG relay-http-serve:conn{peer=127.0.0.1:52185}:handler: relay: relay: admitted — the relay is open key="f456cc7a6e35cb54674b7d3fafa69b3cf67b8df2ab46ad7ca69bd7fb384d48d2"
+2026-11-06T07:09:08.011821Z  WARN relay-http-serve:conn{peer=127.0.0.1:52185}:handler:client-connection-actor{remote_endpoint=f456cc7a6e connection_id=6}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:09:08.118813Z DEBUG relay-http-serve:conn{peer=127.0.0.1:52194}:handler: relay: relay: admitted — the relay is open key="f456cc7a6e35cb54674b7d3fafa69b3cf67b8df2ab46ad7ca69bd7fb384d48d2"
+2026-11-06T07:09:08.887529Z  WARN relay-http-serve:conn{peer=127.0.0.1:52194}:handler:client-connection-actor{remote_endpoint=f456cc7a6e connection_id=7}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:09:09.893924Z  WARN relay-http-serve:conn{peer=127.0.0.1:51878}:handler:client-connection-actor{remote_endpoint=103901e978 connection_id=5}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:09:09.922054Z  WARN relay-http-serve:conn{peer=127.0.0.1:51832}:handler:client-connection-actor{remote_endpoint=20133f5b8d connection_id=4}: iroh_relay::server::client: actor errored Stream terminated, exiting
+2026-11-06T07:09:10.590638Z  WARN relay-http-serve:conn{peer=127.0.0.1:51798}:handler:client-connection-actor{remote_endpoint=8633445349 connection_id=2}: iroh_relay::server::client: actor errored Stream terminated, exiting

@@ -1,0 +1,60 @@
+2026-11-06T07:07:52.408369Z DEBUG tiers: tiers: this computer meets its groups at another tier now from=Fallback to=Own
+2026-11-06T07:07:52.408382Z DEBUG tiers: tiers: a relay given to this computer's endpoint relay=http://127.0.0.1:51730/ tier=Own
+2026-11-06T07:07:52.408418Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:07:52.408435Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:07:52.408446Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:07:52.408456Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:07:55.411932Z DEBUG tiers: tiers: this computer meets its groups at another relay now, the groups it meets at their fallback named from=None to=Some("http://127.0.0.1:51730/") fallback=[]
+2026-11-06T07:08:01.601379Z DEBUG tiers: tiers: this computer meets its groups at another tier now from=Fallback to=Own
+2026-11-06T07:08:01.601390Z DEBUG tiers: tiers: a relay given to this computer's endpoint relay=http://127.0.0.1:51730/ tier=Own
+2026-11-06T07:08:01.601421Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:01.601434Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:01.601444Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:01.601459Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:04.604809Z DEBUG tiers: tiers: this computer meets its groups at another relay now, the groups it meets at their fallback named from=None to=Some("http://127.0.0.1:51730/") fallback=[]
+2026-11-06T07:08:18.031933Z DEBUG tiers: tiers: this computer meets its groups at another tier now from=Fallback to=Own
+2026-11-06T07:08:18.031945Z DEBUG tiers: tiers: a relay given to this computer's endpoint relay=http://127.0.0.1:51730/ tier=Own
+2026-11-06T07:08:18.031969Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:18.031980Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:18.031992Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:18.032001Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:21.035859Z DEBUG tiers: tiers: this computer meets its groups at another relay now, the groups it meets at their fallback named from=None to=Some("http://127.0.0.1:51730/") fallback=[]
+2026-11-06T07:08:29.497119Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(0) sent=Some(15530) received=Some(12279)
+2026-11-06T07:08:29.499997Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:08:29.507087Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="8633445349264859affcc42687fe3811278c1e87c08c985c6b62fc2ed19e4ae7" lend=hearth
+2026-11-06T07:08:29.508840Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="8633445349264859affcc42687fe3811278c1e87c08c985c6b62fc2ed19e4ae7" lend=hearth
+2026-11-06T07:08:29.510678Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="8633445349264859affcc42687fe3811278c1e87c08c985c6b62fc2ed19e4ae7" lend=hearth
+2026-11-06T07:08:30.014611Z  INFO door: door: let in, and told their share of the declared upload person="Theo" lend=atlas people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(0) sent=Some(10181) received=Some(11925)
+2026-11-06T07:08:30.016403Z DEBUG door: door: the lend's service answered; streaming it back actor="8633445349264859affcc42687fe3811278c1e87c08c985c6b62fc2ed19e4ae7" lend=atlas status=200
+2026-11-06T07:08:38.323884Z DEBUG join: join: redeeming as this person group=37dabaf4ec38fc81c4cceb578cc62f053bfc7dabc2d500b2587763a9641b2143 person=Lender
+2026-11-06T07:08:38.332629Z DEBUG join: join: let in group=37dabaf4ec38fc81c4cceb578cc62f053bfc7dabc2d500b2587763a9641b2143 redeemed=Admitted(OpId(ContentHash(de9aaaff1c13422e)))
+2026-11-06T07:08:38.334003Z DEBUG join: join: a client's link, so no origin is kept group=37dabaf4ec38fc81c4cceb578cc62f053bfc7dabc2d500b2587763a9641b2143
+2026-11-06T07:08:38.359757Z DEBUG join: join: synced once from the issuer group=37dabaf4ec38fc81c4cceb578cc62f053bfc7dabc2d500b2587763a9641b2143 pulled=6
+2026-11-06T07:08:38.359794Z DEBUG join: join: answered the command's join, by the svrngs running here group=37dabaf4ec38fc81c4cceb578cc62f053bfc7dabc2d500b2587763a9641b2143 person=Some("Lender")
+2026-11-06T07:08:41.442597Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="103901e978e8346cb4ae859117e9d60d1c504cefbc29a9100206d7b37929d7cf" lend=hearth
+2026-11-06T07:08:41.949841Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(0) sent=Some(16886) received=Some(13541)
+2026-11-06T07:08:41.951079Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:08:41.971596Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(2) sent=Some(17205) received=Some(15889)
+2026-11-06T07:08:41.972913Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:08:43.976235Z  INFO door: door: an answer cut — its asker no longer stands in a group the lend reaches lend="hearth"
+2026-11-06T07:08:44.053398Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth
+2026-11-06T07:08:50.363998Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(4) sent=Some(32366) received=Some(48566)
+2026-11-06T07:08:50.365312Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:08:50.369877Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(4) sent=Some(32688) received=Some(50919)
+2026-11-06T07:08:50.371111Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:08:53.373916Z  INFO door: door: an answer cut — its asker no longer stands in a group the lend reaches lend="hearth"
+2026-11-06T07:08:53.452323Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth
+2026-11-06T07:08:58.717118Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1) sent=Some(48493) received=Some(83497)
+2026-11-06T07:08:58.718433Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:08:58.723101Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1) sent=Some(48815) received=Some(85850)
+2026-11-06T07:08:58.725008Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:09:01.728514Z  INFO door: door: an answer cut — its asker no longer stands in a group the lend reaches lend="hearth"
+2026-11-06T07:09:01.804038Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth
+2026-11-06T07:09:07.156966Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(1) sent=Some(65263) received=Some(118525)
+2026-11-06T07:09:07.158355Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:09:07.481002Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=hearth people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(0) sent=Some(8496) received=Some(9043)
+2026-11-06T07:09:07.482625Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=hearth status=200
+2026-11-06T07:09:07.492755Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="8633445349264859affcc42687fe3811278c1e87c08c985c6b62fc2ed19e4ae7" lend=hearth
+2026-11-06T07:09:08.007187Z  INFO door: door: let in, and told their share of the declared upload person="Hana" lend=attic people=1 share_bps=None declared_bps=None relayed=Some(true) rtt_ms=Some(0) sent=Some(9096) received=Some(9910)
+2026-11-06T07:09:08.009974Z DEBUG door: door: the lend's service answered; streaming it back actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=attic status=200
+2026-11-06T07:09:08.345524Z DEBUG door: door: refused — the dialer stands in no group this lend is lent to actor="20133f5b8dc9409635b98d3891abdcfd8b635ba7e13459e25aa4fd9b846e5926" lend=attic

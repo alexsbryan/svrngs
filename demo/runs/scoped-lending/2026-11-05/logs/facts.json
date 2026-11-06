@@ -1,0 +1,483 @@
+{
+ "head": "15acd0668ac0e098b79c61fb836e3d1ea79e68b7",
+ "binary_sha256": "5e199f4db84a97931389d4e0c799c88448f920d3af58cb80a34d1e4ebc16bf63",
+ "checks": [
+  {
+   "item": "rules",
+   "what": "under the profile a process cannot reach n0",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "Relay's HOME is its own",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "Lender's HOME is its own",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "Hana's HOME is its own",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "Theo's HOME is its own",
+   "ok": true
+  },
+  {
+   "item": "setup",
+   "what": "share hearth to House",
+   "ok": true
+  },
+  {
+   "item": "setup",
+   "what": "share porch to House",
+   "ok": true
+  },
+  {
+   "item": "setup",
+   "what": "share atlas to Trip",
+   "ok": true
+  },
+  {
+   "item": "setup",
+   "what": "share attic to House",
+   "ok": true
+  },
+  {
+   "item": 1,
+   "what": "Hana lists hearth",
+   "ok": true
+  },
+  {
+   "item": 1,
+   "what": "Hana gets the upstream's answer through hearth",
+   "ok": true
+  },
+  {
+   "item": 2,
+   "what": "Theo lists atlas in Trip, so the Lender answered him, and not hearth",
+   "ok": true
+  },
+  {
+   "item": 2,
+   "what": "Theo cannot ask House's lends",
+   "ok": true
+  },
+  {
+   "item": 2,
+   "what": "Theo refused: copied address /",
+   "ok": true
+  },
+  {
+   "item": 2,
+   "what": "Theo refused: copied address /stream",
+   "ok": true
+  },
+  {
+   "item": 2,
+   "what": "Theo refused: forged headers",
+   "ok": true
+  },
+  {
+   "item": 2,
+   "what": "the upstream saw none of Theo's attempts",
+   "ok": true
+  },
+  {
+   "item": 3,
+   "what": "Theo gets atlas through Trip",
+   "ok": true
+  },
+  {
+   "item": 4,
+   "what": "Lender joins Book",
+   "ok": true
+  },
+  {
+   "item": 4,
+   "what": "Book is held on the Lender",
+   "ok": true
+  },
+  {
+   "item": 4,
+   "what": "the declaration's bytes are unchanged",
+   "ok": true
+  },
+  {
+   "item": 4,
+   "what": "Ren lists none of the Lender's lends in Book",
+   "ok": true
+  },
+  {
+   "item": 4,
+   "what": "Ren's copied address is refused, no upstream contact",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: the stream is running",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: unshare exit 0",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: the stream ended, not to its natural end",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: ended within the 2 s bound",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: a fresh request is refused",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: porch's stream ran to its end",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: every porch request answered",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 1: sync both ways through the cut",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: hearth lent to House again",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: the stream is running",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: unshare exit 0",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: the stream ended, not to its natural end",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: ended within the 2 s bound",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: a fresh request is refused",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: porch's stream ran to its end",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: every porch request answered",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 2: sync both ways through the cut",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: hearth lent to House again",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: the stream is running",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: unshare exit 0",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: the stream ended, not to its natural end",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: ended within the 2 s bound",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: a fresh request is refused",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: porch's stream ran to its end",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: every porch request answered",
+   "ok": true
+  },
+  {
+   "item": 5,
+   "what": "run 3: sync both ways through the cut",
+   "ok": true
+  },
+  {
+   "item": 6,
+   "what": "hearth lent to House again",
+   "ok": true
+  },
+  {
+   "item": 6,
+   "what": "the declaration is the same bytes after a restart",
+   "ok": true
+  },
+  {
+   "item": 6,
+   "what": "Hana still gets hearth",
+   "ok": true
+  },
+  {
+   "item": 6,
+   "what": "Theo lists atlas and not hearth",
+   "ok": true
+  },
+  {
+   "item": 6,
+   "what": "Theo still refused, no upstream contact",
+   "ok": true
+  },
+  {
+   "item": 7,
+   "what": "attic answers Hana while it is lent to House",
+   "ok": true
+  },
+  {
+   "item": 7,
+   "what": "no groups key before start",
+   "ok": true
+  },
+  {
+   "item": 7,
+   "what": "stamped groups: null on start",
+   "ok": true
+  },
+  {
+   "item": 7,
+   "what": "no group lists attic",
+   "ok": true
+  },
+  {
+   "item": 7,
+   "what": "Hana's copied address to attic is refused, no upstream contact",
+   "ok": true
+  },
+  {
+   "item": 7,
+   "what": "unshare --group on a legacy lend is refused and says so",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "the door traced each refusal of hearth",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "the door traced each cut",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "every member's use the door traced came through the relay",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "the only relay ever given to the Lender's endpoint is the local one",
+   "ok": true
+  },
+  {
+   "item": "rules",
+   "what": "no new folder in the real ~/svrngs",
+   "ok": true
+  }
+ ],
+ "house": "b8184a25bb81733a064a8024eed790e1722a685fc3684a7ad4efa8ee590ae3fd",
+ "trip": "ea71a21553c46fe029afdb82afcff81342e78715cf2ad6baec1a6eb349268900",
+ "book": "37dabaf4ec38fc81c4cceb578cc62f053bfc7dabc2d500b2587763a9641b2143",
+ "withdrawal": [
+  {
+   "run": 1,
+   "unshare_exit": 0,
+   "unshare_said": "Those groups can no longer open hearth.",
+   "unshare_ms": 23,
+   "return_to_end_s": 0.304,
+   "ended": "eof",
+   "clean_end": false,
+   "lines_at_unshare": 9,
+   "lines_total": 10,
+   "last_data_after_return_s": 0.144,
+   "fresh_request": {
+    "status": 403,
+    "refused": "closed",
+    "body": "{\"error\":\"the computer you reached lends nothing to you\",\"kind\":\"closed\"}"
+   },
+   "porch_stream": {
+    "how": "eof",
+    "clean": true,
+    "lines": 40,
+    "of": 40
+   },
+   "porch_polls": {
+    "n": 29,
+    "answered": 29,
+    "worst_ms": 24
+   },
+   "sync_ms": {
+    "lender_to_hana_before": 74,
+    "hana_to_lender_during": 72,
+    "lender_to_hana_after": 74
+   },
+   "upstream_end": [
+    {
+     "t": 1793948924.223,
+     "kind": "stream-cut",
+     "path": "/stream?lines=300",
+     "at_line": 11,
+     "error": "BrokenPipeError"
+    }
+   ]
+  },
+  {
+   "run": 2,
+   "unshare_exit": 0,
+   "unshare_said": "Those groups can no longer open hearth.",
+   "unshare_ms": 24,
+   "return_to_end_s": 0.928,
+   "ended": "eof",
+   "clean_end": false,
+   "lines_at_unshare": 10,
+   "lines_total": 15,
+   "last_data_after_return_s": 0.802,
+   "fresh_request": {
+    "status": 403,
+    "refused": "closed",
+    "body": "{\"error\":\"the computer you reached lends nothing to you\",\"kind\":\"closed\"}"
+   },
+   "porch_stream": {
+    "how": "eof",
+    "clean": true,
+    "lines": 40,
+    "of": 40
+   },
+   "porch_polls": {
+    "n": 27,
+    "answered": 27,
+    "worst_ms": 12
+   },
+   "sync_ms": {
+    "lender_to_hana_before": 78,
+    "hana_to_lender_during": 72,
+    "lender_to_hana_after": 75
+   },
+   "upstream_end": [
+    {
+     "t": 1793948933.656,
+     "kind": "stream-cut",
+     "path": "/stream?lines=300",
+     "at_line": 16,
+     "error": "BrokenPipeError"
+    }
+   ]
+  },
+  {
+   "run": 3,
+   "unshare_exit": 0,
+   "unshare_said": "Those groups can no longer open hearth.",
+   "unshare_ms": 24,
+   "return_to_end_s": 0.54,
+   "ended": "eof",
+   "clean_end": false,
+   "lines_at_unshare": 12,
+   "lines_total": 15,
+   "last_data_after_return_s": 0.401,
+   "fresh_request": {
+    "status": 403,
+    "refused": "closed",
+    "body": "{\"error\":\"the computer you reached lends nothing to you\",\"kind\":\"closed\"}"
+   },
+   "porch_stream": {
+    "how": "eof",
+    "clean": true,
+    "lines": 40,
+    "of": 40
+   },
+   "porch_polls": {
+    "n": 26,
+    "answered": 26,
+    "worst_ms": 11
+   },
+   "sync_ms": {
+    "lender_to_hana_before": 81,
+    "hana_to_lender_during": 75,
+    "lender_to_hana_after": 73
+   },
+   "upstream_end": [
+    {
+     "t": 1793948942.001,
+     "kind": "stream-cut",
+     "path": "/stream?lines=300",
+     "at_line": 16,
+     "error": "BrokenPipeError"
+    }
+   ]
+  }
+ ],
+ "relayed": {
+  "true": 110,
+  "false": 0
+ },
+ "verdict": "pass",
+ "pids": [
+  32070,
+  32071,
+  32072,
+  32073,
+  32074,
+  32080,
+  32089,
+  32096,
+  32117,
+  32126,
+  32144,
+  32200,
+  32203
+ ],
+ "left_running": []
+}

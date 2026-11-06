@@ -1,0 +1,7 @@
+2026-11-06T07:08:35.150351Z DEBUG tiers: tiers: this computer meets its groups at another tier now from=Fallback to=Own
+2026-11-06T07:08:35.150362Z DEBUG tiers: tiers: a relay given to this computer's endpoint relay=http://127.0.0.1:51730/ tier=Own
+2026-11-06T07:08:35.150432Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:35.150481Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:35.150499Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:35.150511Z DEBUG tiers: tiers: a relay taken from this computer's endpoint relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+2026-11-06T07:08:38.153309Z DEBUG tiers: tiers: this computer meets its groups at another relay now, the groups it meets at their fallback named from=None to=Some("http://127.0.0.1:51730/") fallback=[]
