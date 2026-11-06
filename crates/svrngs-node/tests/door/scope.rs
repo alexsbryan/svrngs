@@ -255,3 +255,23 @@ async fn a_stream_ends_within_two_seconds_of_its_group_taken_away_and_no_other()
     assert_eq!(pair.get("/lend/radio/now", "").await.status, 200);
     pair.close().await;
 }
+
+/// The lender's own standing, asked at each request (LENDING_SCOPE §"One
+/// policy": a chosen group in which both the lender and the asker stand):
+/// the shelf lent only to bos, a group A holds that names bo and not ada,
+/// is refused bo `closed`, and the service is not asked. Planted: the
+/// audience asked alone, never whether the lender stands there.
+#[tokio::test]
+async fn a_group_the_lender_no_longer_stands_in_reaches_nothing() {
+    let (pair, heads) = lending_heads().await;
+    let bo = [(Person::parse("bo").unwrap(), vec![actor_of(&signing(2))])];
+    pair.a
+        .rail()
+        .set_seed("bos", &Roster::new(bo.into_iter().collect()))
+        .unwrap();
+    to_groups(&pair, &["bos"]);
+    let reply = pair.get("/lend/shelf/whoami", "").await;
+    assert_eq!(reply.status, 403, "{}", reply.text);
+    assert!(heads.lock().unwrap().is_empty(), "the service was asked");
+    pair.close().await;
+}

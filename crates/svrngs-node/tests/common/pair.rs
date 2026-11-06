@@ -60,6 +60,14 @@ pub async fn alex_lets_sam_in(alex_dir: &Path, sam_dir: &Path) -> (Node, Node) {
         },
     };
     alex.rail().commit(NS, &admit).unwrap().unwrap();
+    // Sam's computer holds its own admission, as a round would carry it:
+    // a lend reaches a group only while its lender stands there.
+    let theirs = sam.rail().digest(NS).unwrap();
+    let (ops, _) = alex
+        .rail()
+        .ops_missing_from_within(NS, &theirs, usize::MAX)
+        .unwrap();
+    sam.rail().ingest_all(NS, &ops).unwrap();
     alex.transport()
         .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
     (alex, sam)

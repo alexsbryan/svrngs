@@ -119,7 +119,9 @@ fn the_token_subs_the_person_not_a_device() {
 /// lend on port 8096, the browser on `browser`: its status and `Location`.
 fn authorized(redirect: &str, browser: Option<&str>) -> (u16, Option<String>) {
     let dir = tempfile::tempdir().unwrap();
-    let provider = Provider::new(dir.path().to_path_buf(), 1).unwrap();
+    let key = std::sync::Arc::new(crate::SigningKey::from_bytes(&[1; 32]));
+    let rail = std::sync::Arc::new(crate::RingRail::new(dir.path(), key));
+    let provider = Provider::new(dir.path().to_path_buf(), 1, rail).unwrap();
     let lend = crate::lend::Lend::carried("media", "0123456789abcdef").unwrap();
     let client = SignInWithSvrngs {
         client_id: "svrngs-media".into(),
@@ -141,7 +143,7 @@ fn authorized(redirect: &str, browser: Option<&str>) -> (u16, Option<String>) {
         &client,
         port,
         browser,
-        (who, "0123456789abcdef".into()),
+        (who, "0123456789abcdef".into(), SUB.into()),
         Some(&query),
     );
     let location = (answer.headers().get(axum::http::header::LOCATION))

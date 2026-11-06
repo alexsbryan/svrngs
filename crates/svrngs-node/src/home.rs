@@ -465,14 +465,16 @@ fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
             "this computer cannot read which groups it holds",
         )
     })?;
-    match groups.iter().find(|id| !held.contains(id)) {
+    let me = hex::encode(at.door.key);
+    let stands = |id: &String| at.door.rail.standing(id).is_ok_and(|s| s.names(&me));
+    match groups.iter().find(|id| !held.contains(id) || !stands(id)) {
         None => Ok(()),
         Some(unknown) => {
-            tracing::debug!(target: "home", group = unknown, "home: refused — an audience names an unknown group");
+            tracing::debug!(target: "home", group = unknown, "home: refused — an audience names a group not held here, or one this computer does not stand in");
             Err(LendRefusal::Closed.say(
                 StatusCode::BAD_REQUEST,
                 format!(
-                    "{unknown} is not a group this computer holds: choose one of the groups shown."
+                    "{unknown} is not a group you are in on this computer: choose one of the groups shown."
                 ),
             ))
         }

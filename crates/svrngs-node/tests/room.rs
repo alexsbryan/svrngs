@@ -106,6 +106,14 @@ fn founded(node: &Node) {
 async fn sam(sam: u8, dir: &Path, alex: &Node) -> (Node, tokio::process::Child, u16) {
     let node = start(sam, dir).await;
     founded(&node);
+    // Sam's computer holds its own admission, as a round would carry it:
+    // a lend reaches a group only while its lender stands there.
+    let theirs = node.rail().digest(NS).unwrap();
+    let (ops, _) = alex
+        .rail()
+        .ops_missing_from_within(NS, &theirs, usize::MAX)
+        .unwrap();
+    node.rail().ingest_all(NS, &ops).unwrap();
     let (canary, port) = canary("sam").await;
     lends(dir, "app", port);
     alex.transport()

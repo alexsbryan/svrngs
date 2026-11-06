@@ -395,7 +395,7 @@ impl Node {
         let rounds = Rounds::new(Default::default());
         // One provider, its key and its code store, shared by the door that
         // mints a code and the API that redeems it.
-        let oidc = crate::oidc::Provider::new(data_dir.clone(), host.api_port)?;
+        let oidc = crate::oidc::Provider::new(data_dir.clone(), host.api_port, rail.clone())?;
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
             rail: rail.clone(),

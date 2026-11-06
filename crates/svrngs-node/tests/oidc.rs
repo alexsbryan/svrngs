@@ -191,6 +191,17 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
     signs_in(dir.path(), LEND, PORT, CLIENT, Some(SECRET));
     signs_in(dir.path(), PUBLIC, 8097, PUBLIC_CLIENT, None);
     let node = start(dir.path()).await;
+    // Ana's device and the lender both stand in the house, the group each
+    // code is minted through: a code is redeemed only while they do.
+    let ana = svrngs_node::Person::parse("ana").unwrap();
+    let lender = svrngs_node::Person::parse("lender").unwrap();
+    let house = [
+        (ana, vec![SUB.to_string()]),
+        (lender, vec![svrngs_node::actor_of(&signing(1))]),
+    ];
+    node.rail()
+        .set_seed(NS, &svrngs_node::Roster::new(house.into_iter().collect()))
+        .unwrap();
     let api = node.api_addr().port();
     let issuer = format!("http://127.0.0.1:{api}/oidc/{LEND}");
 

@@ -396,6 +396,22 @@ pub struct Door {
     pub(crate) oidc: crate::oidc::Provider,
 }
 
+impl Door {
+    /// Whether `group` reaches `lend` now: chosen for it ([`Lend::reaches`])
+    /// and one this computer's own key still stands in, asked at each use
+    /// (LENDING_SCOPE §"One policy": a group both the lender and asker
+    /// stand in).
+    pub(crate) fn reached(&self, lend: &Lend, group: &str) -> bool {
+        let me = hex::encode(self.key);
+        let stands = || self.rail.standing(group).is_ok_and(|s| s.names(&me));
+        let reached = lend.reaches(group) && stands();
+        if !reached && lend.reaches(group) {
+            tracing::debug!(target: "door", lend = %lend.name, group, "door: a chosen group this computer no longer stands in reaches nothing");
+        }
+        reached
+    }
+}
+
 /// The door's routes, for the members' protocol's router: a lend, every
 /// method, and the list of what this computer lends.
 pub fn router(door: Door) -> axum::Router {
@@ -1193,7 +1209,7 @@ async fn holder_of(
     }
     // A group the lend does not reach grants nothing, so the signer's
     // identity is resolved only through a group this lend is lent to.
-    let eligible = |group: &str| lend.reaches(group);
+    let eligible = |group: &str| door.reached(lend, group);
     let expected = |member: &crate::register::Member| member.person_key.clone();
     let standing = door
         .rail
@@ -1263,7 +1279,7 @@ fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<
     let closed = |w| Some((LendRefusal::Closed, w));
     // The visit's group must still be one the lend is lent to: a visit in a
     // group the audience excludes reaches nothing here (LENDING_SCOPE).
-    let in_scope = lend.reaches(&group);
+    let in_scope = lend.reaches(&group) && register.members.contains_key(me);
     let refused = match () {
         _ if gone => ended(format!("{host} is no longer a member, so your visit ended")),
         _ if stopped => ended(format!("{host} ended your visit")),
@@ -1374,7 +1390,7 @@ pub(crate) async fn lend_for(
     // explicit audience (LENDING_SCOPE). The audience is read from the
     // declaration just read, so a narrowing takes effect at the next
     // request (RUST_ARCH 8; LENDING_SCOPE §"Raw admission and sweep").
-    let eligible = |group: &str| lend.reaches(group);
+    let eligible = |group: &str| door.reached(&lend, group);
     let Asker {
         actor: whose,
         device,
@@ -1468,7 +1484,7 @@ pub(crate) async fn lend_for(
             client,
             port,
             browser.as_deref(),
-            (who, group),
+            (who, group, device.to_string()),
             req.uri().query(),
         ));
     }
@@ -1671,7 +1687,7 @@ impl Drop for Carriage {
 /// held cannot be listed, and at debug when a page cannot be a header.
 fn pages(door: &Door, device: &DeviceKey, lend: &Lend) -> Option<HeaderValue> {
     let stands = |group: &String| {
-        if !lend.reaches(group) {
+        if !door.reached(lend, group) {
             tracing::debug!(target: "door", group, lend = %lend.name, "door: a group the lend is not lent to, so its page is not told");
             return false;
         }

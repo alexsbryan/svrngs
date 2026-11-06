@@ -164,7 +164,9 @@ rather than lend it to every group; a file it cannot stamp stays legacy
 (`lend::stamp`). Joining a group never adds it.
 A carried app's group is its own and is not chosen (`Lend::reaches`). A
 member is let in only through a chosen group both they and the lender
-stand in, and asks as the person that group names them; when two chosen
+stand in now — the lender's own standing asked at each request
+(`Door::reached`), and a selection naming a group the lender does not
+stand in refused — and asks as the person that group names them; when two chosen
 groups name one device as different people the door refuses rather than
 pick one (`RingRail::standing_in`). A list of lends, `/lends` or
 `/people/lends`, names each only to a member of one of its groups, and
@@ -1267,8 +1269,10 @@ assume no screen, a TV one device among others.
      `-Proto` — the scope, `state`, `nonce` and PKCE, and mints a one-time
      code bound to that person, the group the door let them in through,
      the client, the redirect, the challenge and the nonce. The token route
-     redeems it only while the lend is still lent to that group, so a group
-     taken from its audience inside the code's minute is `invalid_grant`.
+     redeems it only while the lend is still lent to that group and a
+     member's device still stands in it, so a group taken from its audience,
+     or the person removed, inside the code's minute is `invalid_grant`; a
+     guest's code is held to the audience alone.
      A guest's code names the guest, never their host. A
      redirect a browser would read as another host's, `//` or a `\` after
      the origin, or one holding a control character, is refused, as the

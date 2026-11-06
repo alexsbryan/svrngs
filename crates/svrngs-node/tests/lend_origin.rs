@@ -679,6 +679,13 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
         };
         alex.rail().commit(NS, &admit).unwrap().unwrap();
     }
+    // Sam's computer holds its own admission, as a round would carry it.
+    let theirs = sam.rail().digest(NS).unwrap();
+    let (ops, _) = alex
+        .rail()
+        .ops_missing_from_within(NS, &theirs, usize::MAX)
+        .unwrap();
+    sam.rail().ingest_all(NS, &ops).unwrap();
     let (pad, _) = origins::head_origin().await;
     lends(sam_dir.path(), "pad", pad.port(), SAMS);
     let api = alex.api_addr();
@@ -738,8 +745,9 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
 /// Sam's pad each lent on a port nothing listens on: at each origin on
 /// Alex's computer, a tab (`Accept: text/html`) is shown a page naming the
 /// lender and the lend, never a brace or the port; a program is given the
-/// JSON, `away`. Sam's computer here holds only Alex's founding, so it
-/// names its lender by none of its own (`Its lender`), never a host.
+/// JSON, `away`. Sam's computer holds its own admission, so it names its
+/// lender sam (a lend reaches only a group its lender stands in), never a
+/// host.
 /// Planted: HEAD before it, which answered both in braces. Each lender
 /// found, or none, is traced (#173; red at 9543e52, untraced).
 #[tokio::test]
@@ -752,7 +760,7 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
     lends(sam_dir.path(), "pad", stopped.port(), SAMS);
     let api = alex.api_addr();
     let on = &Browser::of(&alex);
-    for (node, name, lender) in [(&alex, "telly", "alex"), (&sam, "pad", "Its lender")] {
+    for (node, name, lender) in [(&alex, "telly", "alex"), (&sam, "pad", "sam")] {
         let host = format!(
             "{}.localhost:{}",
             Label::of(node.endpoint().id().as_bytes(), name),
@@ -784,7 +792,7 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
         (log.lines()).any(|l| l.contains("door: the lend's lender") && l.contains(lender))
     };
     assert!(
-        traced("lender=Some(\"alex\")") && traced("lender=None"),
+        traced("lender=Some(\"alex\")") && traced("lender=Some(\"sam\")"),
         "{log}"
     );
 }

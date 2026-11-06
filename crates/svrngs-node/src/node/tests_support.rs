@@ -89,6 +89,7 @@ impl Node {
         self.asking.oidc.mint(crate::oidc::Code {
             lend,
             client: client.into(),
+            device: who.sub.clone(),
             who,
             group: through.unwrap_or_default(),
             redirect: redirect.into(),

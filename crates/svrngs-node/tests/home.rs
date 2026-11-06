@@ -1075,3 +1075,41 @@ async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
     );
     alex.endpoint().close().await;
 }
+
+/// A selection names only groups the lender stands in now
+/// (SCOPE_PARALLEL.md: validate explicit selections and lender standing):
+/// alex's computer holds the house, where alex stands, and bos, which
+/// names only sam; an audience of bos is refused 400 and the declaration
+/// keeps the house; one of the house is taken. Planted: `chosen` asking
+/// only whether the group is held.
+#[tokio::test]
+async fn an_audience_names_only_groups_the_lender_stands_in() {
+    let dir = tempfile::tempdir().unwrap();
+    let alex = start(1, dir.path()).await;
+    let roster = |p: &str, k: u8| {
+        Roster::new(
+            [(Person::parse(p).unwrap(), vec![actor_of(&signing(k))])]
+                .into_iter()
+                .collect(),
+        )
+    };
+    alex.rail().set_seed(NS, &roster("alex", 1)).unwrap();
+    alex.rail().set_seed("bos", &roster("sam", 2)).unwrap();
+    let lends = lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
+    std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
+    let browser = &Browser::of(&alex);
+    let home = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let to = |g: &str| format!(r#"{{"lend":"shelf","to":{{"groups":["{g}"]}}}}"#);
+    let bos = ask(browser, "POST", &home, "/lent", &own, &to("bos")).await;
+    assert_eq!(bos.status, 400, "{}", bos.body);
+    let name = lend::LendName::parse("shelf").unwrap();
+    let kept = lend::read(dir.path(), &name).unwrap().unwrap().audience;
+    assert_eq!(kept, lend::Audience::Selected(vec![NS.into()]));
+    let house = ask(browser, "POST", &home, "/lent", &own, &to(NS)).await;
+    assert_eq!(house.status, 204, "{}", house.body);
+    alex.endpoint().close().await;
+}

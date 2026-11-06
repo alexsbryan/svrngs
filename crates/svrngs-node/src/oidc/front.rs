@@ -38,7 +38,7 @@ pub(crate) fn authorize(
     client: &SignInWithSvrngs,
     port: NonZeroU16,
     browser: Option<&str>,
-    (who, group): (Subject, String),
+    (who, group, device): (Subject, String, String),
     query: Option<&str>,
 ) -> Response {
     let asked = match asked(query) {
@@ -76,6 +76,7 @@ pub(crate) fn authorize(
         client: client.client_id.clone(),
         who,
         group,
+        device,
         redirect: redirect.into(),
         challenge,
         nonce: asked("nonce").map(Into::into),

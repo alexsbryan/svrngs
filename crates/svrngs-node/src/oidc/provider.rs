@@ -77,19 +77,25 @@ pub(crate) fn now() -> i64 {
 }
 
 /// The provider's state: the lender's key, the codes kept in this run's
-/// memory, and where the lends' declarations are read.
+/// memory, where the lends' declarations are read, and the groups held,
+/// whose standing a code is redeemed by.
 #[derive(Clone)]
 pub struct Provider {
     key: Arc<Key>,
     codes: Arc<Codes<Code>>,
     data_dir: PathBuf,
     port: u16,
+    rail: Arc<crate::RingRail>,
 }
 
 impl Provider {
     /// The provider for the API at `port`, with the lender's key read or
     /// made once in `data_dir` (the key's one home).
-    pub fn new(data_dir: PathBuf, port: u16) -> Result<Self, KeyFailure> {
+    pub fn new(
+        data_dir: PathBuf,
+        port: u16,
+        rail: Arc<crate::RingRail>,
+    ) -> Result<Self, KeyFailure> {
         let key = super::load_or_create(&data_dir)?;
         tracing::debug!(target: "oidc", port, "oidc: the provider's back channel is ready");
         Ok(Self {
@@ -97,6 +103,7 @@ impl Provider {
             codes: Arc::new(Codes::new()),
             data_dir,
             port,
+            rail,
         })
     }
 
@@ -160,6 +167,9 @@ pub(crate) struct Code {
     /// minted: redeemed only while the lend still reaches it (LENDING_SCOPE
     /// §"Enforcement and disclosure" 6).
     pub(crate) group: String,
+    /// The device the door let in, which must still stand in `group` at
+    /// redemption; a guest's code is held to the audience alone.
+    pub(crate) device: String,
     pub(crate) redirect: String,
     pub(crate) challenge: Option<S256Challenge>,
     pub(crate) nonce: Option<String>,
@@ -353,6 +363,16 @@ async fn token(
     }
     if !declared.reaches(&code.group) {
         let why = "the lend is no longer lent to the group the code was minted through";
+        return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
+    }
+    let member = matches!(code.who.group, svrngs_core::token::Group::Member);
+    if member
+        && !p
+            .rail
+            .standing(&code.group)
+            .is_ok_and(|s| s.names(&code.device))
+    {
+        let why = "the person is no longer in the group the code was minted through";
         return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
     }
     if form.redirect_uri.as_deref() != Some(code.redirect.as_str()) {
