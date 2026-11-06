@@ -536,7 +536,7 @@ impl Keeper {
             }
             healthy => healthy.map_err(StartError::from),
         };
-        let lent = lent.and_then(|()| Ok(self.svrngs.share(at, app, card.door.protocol)?));
+        let lent = lent.and_then(|()| Ok(self.svrngs.share(at, app, card.door.protocol, group)?));
         if let Err(why) = lent {
             let _ = run.stop();
             return Err(why);
@@ -680,7 +680,7 @@ impl Keeper {
             );
             eprintln!("give: {app} did not move to {}’s computer: {why}", yes.person);
             keeper.failed.insert(app.into(), (yes.act.clone(), now));
-            let lent = (keeper.card(app)).map(|card| keeper.svrngs.share(r.at, app, card.door.protocol));
+            let lent = (keeper.card(app)).map(|card| keeper.svrngs.share(r.at, app, card.door.protocol, &r.group));
             if !matches!(lent, Ok(Ok(()))) {
                 eprintln!("give: {app} could not be lent again here");
             }

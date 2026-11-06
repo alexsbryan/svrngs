@@ -181,7 +181,8 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 
     // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
     let (origin, heads) = service().await;
-    let asked = share_of(origin, "pad");
+    let lent_to = svrngs_node::lend::Audience::Selected(vec![seed.id()]);
+    let asked = Share { audience: lent_to, ..share_of(origin, "pad") };
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
@@ -253,7 +254,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     );
 
     // ── Sam stops; Alex's next ask lists nothing of Sam's.
-    let stopped = cli::unshare(sam.dir.path(), &lend.name).expect("Sam lent pad");
+    let stopped = cli::unshare(sam.dir.path(), &lend.name, &[]).expect("Sam lent pad");
     assert_eq!(stopped, Said::Unshared(lend.name.clone()));
     said.push(stopped.to_string());
     let again = cli::running(alex.dir.path(), &alex.node).await.to_string();
@@ -262,7 +263,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         "a stopped share is still listed: {again:?}"
     );
     said.push(again);
-    let refused = cli::unshare(sam.dir.path(), &lend.name).unwrap_err();
+    let refused = cli::unshare(sam.dir.path(), &lend.name, &[]).unwrap_err();
     assert_eq!(refused.exit_code(), 1);
     said.push(refused.to_string());
     for r in [
@@ -289,7 +290,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 #[tokio::test(flavor = "multi_thread")]
 async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
     let sam = computer(3).await;
-    let (_, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
+    let (lab, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
         .await
         .expect("Sam makes Lab");
     let alex = computer(4).await;
@@ -300,7 +301,8 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         .expect("Alex is let in");
 
     let (origin, heads) = service().await;
-    let asked = share_of(origin, "llama-server");
+    let lent_to = svrngs_node::lend::Audience::Selected(vec![lab.id()]);
+    let asked = Share { audience: lent_to, ..share_of(origin, "llama-server") };
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
@@ -424,7 +426,7 @@ fn share_takes_no_password_on_the_command_line() {
             "{flag} is taken"
         );
     }
-    let Ok(Verb::Share(asked)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&[
         "share", "8096", "--name", "box", "--limit", "2", "--refuse", "/admin",
     ])) else {
         panic!("share parses");
@@ -434,7 +436,7 @@ fn share_takes_no_password_on_the_command_line() {
     assert_eq!(asked.refused.len(), 1);
     assert_eq!(asked.upload, None, "no upload stated, none declared");
     assert!(cli::parse(argv(&["new", "x", "--limit", "2"])).is_err());
-    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
+    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&["share", "8096", "--upload", "30"])) else {
         panic!("share parses an upload");
     };
     assert_eq!(asked.upload.map(|u| u.bps()), Some(30_000_000));
@@ -446,7 +448,7 @@ fn share_takes_no_password_on_the_command_line() {
     }
     assert!(cli::parse(argv(&["link", "x", "--upload", "30"])).is_err());
     // The kinds a lend reads (u5-2), each said again for more.
-    let Ok(Verb::Share(asked)) = cli::parse(argv(&[
+    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&[
         "share", "8096", "--reads", "films", "--reads", "music",
     ])) else {
         panic!("share parses what it reads");
@@ -502,7 +504,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
             .collect::<Vec<_>>()
     };
     let words = "the app receives ranked suggestions; your history stays where it is";
-    let Ok(Verb::Share(asked)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
+    let Ok(Verb::Share(asked, _)) = cli::parse(argv(&["share", "8096", "--ask", words])) else {
         panic!("share parses what it asks");
     };
     assert_eq!(asked.asks.as_deref(), Some(words));
@@ -532,7 +534,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         issuer: None,
     };
     assert!(said.to_string().contains(words), "{said}");
-    cli::unshare(dir.path(), &name).unwrap();
+    cli::unshare(dir.path(), &name, &[]).unwrap();
     assert!(svrngs_node::lend::read(dir.path(), &name)
         .unwrap()
         .is_none());
@@ -589,7 +591,8 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
         second.local_addr().unwrap().port().to_string(),
     );
 
-    let argv1 = ["share", p1.as_str(), "--kind", "pad"];
+    holds_lab(dir.path(), logs.path());
+    let argv1 = ["share", p1.as_str(), "--kind", "pad", "--group", "Lab"];
     assert!(!argv1.iter().any(|a| a.contains("sams-own")));
     let mut running = Program::start(
         dir.path(),
@@ -606,7 +609,7 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
         running.seen
     );
 
-    let argv2 = ["share", p2.as_str(), "--kind", "box", "--limit", "2"];
+    let argv2 = ["share", p2.as_str(), "--kind", "box", "--limit", "2", "--group", "Lab"];
     let (code, said) = Program::start(
         dir.path(),
         &logs.path().join("second"),
@@ -676,6 +679,15 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     drop((first, second));
 }
 
+/// Sam's computer at `dir` holds Lab, made as `svrngs new Lab --as Sam`
+/// makes it: `share` lends only to a group it names (LENDING_SCOPE).
+fn holds_lab(dir: &Path, logs: &Path) {
+    let mut made = Program::start(dir, &logs.join("new"), &["new", "Lab", "--as", "Sam"], "");
+    made.until("Leave this running");
+    let _ = made.child.kill();
+    let _ = made.ends();
+}
+
 /// What svrngs running over `dir` answers `GET /v1/room`, at the API it
 /// wrote, as the home page reads it.
 fn room_of(dir: &Path) -> serde_json::Value {
@@ -710,7 +722,8 @@ fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
     let logs = tempfile::tempdir().unwrap();
     let pad = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = pad.local_addr().unwrap().port().to_string();
-    let argv = ["share", port.as_str(), "--kind", "pad"];
+    holds_lab(dir.path(), logs.path());
+    let argv = ["share", port.as_str(), "--kind", "pad", "--group", "Lab"];
     let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "pads\n");
     running.until("Leave this running");
     let told = "Whenever svrngs runs here, anyone on this computer's WiFi can open these as you; nobody off it can. Each stays on the WiFi where you turned it on, until you close it to this WiFi on your home page.";
@@ -722,7 +735,7 @@ fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
     assert!(said.iter().any(|l| l.starts_with(told)), "{said:?}");
     let line = said
         .iter()
-        .find(|l| l.starts_with("pad: "))
+        .find(|l| l.starts_with("Sam's pad: "))
         .expect("pad said");
     assert!(
         !said.iter().any(|l| l.contains("Leave this running")),
@@ -730,7 +743,7 @@ fn room_asks_svrngs_running_here_and_keeps_it_across_a_restart() {
     );
     let room = room_of(dir.path());
     assert_eq!(room[0]["name"], "pad", "{room}");
-    assert_eq!(&room[0]["said"], &line["pad: ".len()..], "{room}");
+    assert_eq!(&room[0]["said"], &line["Sam's pad: ".len()..], "{room}");
     let _ = running.child.kill();
     running.ends();
 
@@ -788,7 +801,10 @@ fn share_turns_on_signing_people_in_with_svrngs() {
         "--kind",
         "pad",
         "--sign-in-with-svrngs",
+        "--group",
+        "Lab",
     ];
+    holds_lab(dir.path(), logs.path());
     let mut running = Program::start(dir.path(), &logs.path().join("share"), &argv, "");
     running.until("Leave this running");
     let _ = running.child.kill();
@@ -856,10 +872,11 @@ fn a_service_with_its_own_accounts_is_lent_with_no_password() {
     let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = stand_in.local_addr().unwrap().port().to_string();
     let log = logs.path().join("share");
+    holds_lab(dir.path(), logs.path());
     let mut running = Program::start(
         dir.path(),
         &log,
-        &["share", port.as_str(), "--kind", "jellyfin"],
+        &["share", port.as_str(), "--kind", "jellyfin", "--group", "Lab"],
         &format!("{SECRET}\n"),
     );
     running.until("Leave this running");
@@ -918,7 +935,9 @@ fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() {
     let stand_in = std::net::TcpListener::bind("127.0.0.1:4533")
         .expect("port 4533 is free on this computer: something listening there cannot be judged");
     let log = logs.path().join("share");
-    let mut running = Program::start(dir.path(), &log, &["share", "4533"], &format!("{SECRET}\n"));
+    holds_lab(dir.path(), logs.path());
+    let argv = ["share", "4533", "--group", "Lab"];
+    let mut running = Program::start(dir.path(), &log, &argv, &format!("{SECRET}\n"));
     running.until("Leave this running");
     let _ = running.child.kill();
     let (_, seen) = running.ends();
@@ -1019,4 +1038,43 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     let refused = ask("house").await;
     assert!(matches!(refused, Err(Refusal::NotRunning)), "{refused:?}");
     assert_eq!(refused.unwrap_err().exit_code(), 3);
+}
+
+/// Who can open a lend is said, never assumed (LENDING_SCOPE §"User
+/// interface and commands"): `share` with no `--group` is refused with the
+/// command that lends it; each `--group` is a group held here, by name, kept
+/// by its id; `unshare --group` takes only that group from the audience, its
+/// secret kept, and bare `unshare` still withdraws it. Planted: no
+/// `--group` read as the legacy lend, paused, the checkpoint's parse.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
+    use svrngs_node::lend::{self, Audience};
+    let sam = computer(1).await;
+    let (mut seeds, relay) = (Vec::new(), no_relay());
+    for group in ["house", "trip"] {
+        let made = cli::new_group(&sam.node, name(group), name("Sam"), None, &[], &relay);
+        seeds.push(made.await.expect("Sam makes the group").0.id());
+    }
+    let (dir, port) = (sam.dir.path(), std::num::NonZeroU16::new(8096).unwrap());
+    let none = cli::audience_of(dir, port, &[]).unwrap_err();
+    let next = "say which groups can open it: `svrngs share 8096 --group <group>`, once for each";
+    assert_eq!((none.to_string().as_str(), none.exit_code()), (next, 1));
+    let named = |g: &[&str]| g.iter().map(|g| g.to_string()).collect::<Vec<_>>();
+    let both = cli::audience_of(dir, port, &named(&["house", "trip"])).unwrap();
+    assert_eq!(both, Audience::Selected(seeds.clone()));
+    let yard = cli::audience_of(dir, port, &named(&["yard"]));
+    assert!(matches!(yard, Err(Refusal::NoGroup(_))), "{yard:?}");
+
+    let (origin, _heads) = service().await;
+    let asked = Share { audience: both, ..share_of(origin, "pad") };
+    let pad = share::lend_of(&asked, share::listens, None).unwrap();
+    cli::share_lend(dir, &pad, Some(SECRET)).unwrap();
+    let narrowed = cli::unshare(dir, &pad.name, &named(&["trip"])).unwrap();
+    assert_eq!(narrowed, Said::Narrowed(pad.name.clone()));
+    let kept = lend::read(dir, &pad.name).unwrap().unwrap();
+    assert_eq!(kept.audience, Audience::Selected(vec![seeds[0].clone()]));
+    let secret = svrngs_node::declared::read_declared_in(&lend::secret_dir(dir, &pad.name));
+    assert!(secret.iter().any(|(_, v)| v == SECRET), "{secret:?}");
+    let gone = cli::unshare(dir, &pad.name, &[]).unwrap();
+    assert_eq!(gone, Said::Unshared(pad.name.clone()));
 }

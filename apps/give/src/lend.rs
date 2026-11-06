@@ -69,11 +69,12 @@ impl Svrngs {
         Ok(said)
     }
 
-    /// Lend what listens on this computer's `port` as `name`: a page for an
-    /// HTTP door, a port as it is for a TCP or UDP one.
-    pub fn share(&self, port: u16, name: &str, door: Protocol) -> Result<(), LendError> {
+    /// Lend what listens on this computer's `port` as `name` to `group`, by
+    /// its id, the one group that keeps it: a page for an HTTP door, a port
+    /// as it is for a TCP or UDP one.
+    pub fn share(&self, port: u16, name: &str, door: Protocol, group: &str) -> Result<(), LendError> {
         let port = port.to_string();
-        let mut args = vec!["share", port.as_str(), "--name", name, "--kind", name];
+        let mut args = vec!["share", port.as_str(), "--name", name, "--kind", name, "--group", group];
         match door {
             Protocol::Http => {}
             Protocol::Tcp => args.push("--tcp"),

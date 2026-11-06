@@ -125,9 +125,11 @@ fn share_udp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
         "echo",
     ];
     let argv = argv.iter().chain(args).map(|s| s.to_string());
-    let Ok(Verb::Share(asked)) = cli::parse(argv) else {
+    let groups = ["--group", "house"].iter().map(|s| s.to_string());
+    let Ok(Verb::Share(mut asked, named)) = cli::parse(argv.chain(groups)) else {
         panic!("share --udp parses");
     };
+    asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();
     assert_eq!(asked.raw, Some(Raw::Udp));
     // A UDP port answers no connection, so it is lent unprobed.
     let lend = share::lend_of(&asked, |_| false, share::well_known_kind(asked.port))

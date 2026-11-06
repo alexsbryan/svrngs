@@ -12,9 +12,9 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp | --tcp]
 //!                                          lend a service on this computer
-//! svrngs unshare <name>                    stop lending it
+//! svrngs unshare <name> [--group G]...     stop lending it, or to G only
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
 //!                                          asked of svrngs running here
 //! svrngs room <name>...                    open lends to this computer's WiFi,
@@ -160,9 +160,10 @@ svrngs — keep what your group shares on your own computers.
       joins as you, asked no name.
       --relay changes where <group> meets (keeper only); stop svrngs first.
 
-  svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
-      Lend what runs on <port> on this computer to everyone in your groups:
-      each reaches it through this computer, as themselves. It asks for the
+  svrngs share <port> --group <group>... [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
+      Lend what runs on <port> on this computer to everyone in each
+      --group, by its name or the start of its id; say it again for more.
+      Each reaches it through this computer, as themselves. It asks for the
       password the service takes on each request, if any; that stays on
       this computer, and nobody you lend it to receives it. For a service
       it knows keeps its own accounts it asks none, and says how to make
@@ -173,7 +174,7 @@ svrngs — keep what your group shares on your own computers.
       does not know the port; without it, svrngs says the kinds it knows.
       Of a kind it knows, it keeps back, and says, what shows one person's
       use of it to the others or changes it for everyone. --limit is how
-      many people may use it at once; else everyone in your groups. --refuse keeps a path of it from them; say it again
+      many people may use it at once; else everyone in those groups. --refuse keeps a path of it from them; say it again
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
       --reads lets it open, as whoever opens it, what your groups lend of
@@ -188,8 +189,9 @@ svrngs — keep what your group shares on your own computers.
       as a page: it takes a --kind, and --name and --limit as any lend
       does.
 
-  svrngs unshare <name>
-      Stop lending <name>.
+  svrngs unshare <name> [--group <group>]...
+      Stop lending <name>; with --group, stop lending it to that group
+      only, keeping the rest.
 
   svrngs open [/<local destination>]
       Open your home page in your browser, as svrngs in your Applications
@@ -315,9 +317,12 @@ pub enum Verb {
         /// when its keeper changes it; empty leaves it.
         relays: Vec<RelayUrl>,
     },
-    /// No secret: it is read from a prompt (the module docs).
-    Share(Share),
-    Unshare(LendName),
+    /// No secret: it is read from a prompt (the module docs). Each
+    /// `--group`, a name or the start of an id, as typed: who can open it.
+    Share(Share, Vec<String>),
+    /// Each `--group` as typed: only those taken from its audience; none
+    /// withdraws it.
+    Unshare(LendName, Vec<String>),
     /// `share --folder --group`, asked of svrngs running here: the
     /// directory, absolute, and the group as typed.
     Folder {
@@ -372,7 +377,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
-    let (mut folder, mut group) = (None, None);
+    let (mut folder, mut group, mut groups) = (None, None, Vec::new());
     let mut asks = None;
     let mut sign_in = false;
     let mut carries = None;
@@ -430,7 +435,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 return Err("--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own".into())
             }
             "--folder" => folder = Some(raw),
-            "--group" => group = Some(raw),
+            "--group" => {
+                groups.push(raw.clone());
+                group = Some(raw);
+            }
             "--ask" => {
                 if raw.trim().is_empty() || raw.chars().any(char::is_control) {
                     return Err("--ask wants words: what an app receives from it".into());
@@ -512,9 +520,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         ("share", Some(_), None) => {
             return Err("--folder takes --group: a folder is one group's".into())
         }
-        ("share", None, Some(_)) => return Err("--group is a `share --folder` flag".into()),
-        (_, None, None) => {}
-        _ => return Err("--folder is a `share` flag, and --group a `share --folder`, `remove` and `handover` one".into()),
+        ("share" | "unshare", None, _) | (_, None, None) => {}
+        _ => return Err("--folder is a `share` flag, and --group a `share`, `unshare`, `remove` and `handover` one".into()),
     }
     match verb.as_str() {
         "new" => {
@@ -550,7 +557,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 return Err("--udp and --tcp lend a port as it is, with no paths, upload, reads, ask or sign-in: those are a page's".into());
             }
             let port = positional.ok_or("share wants a port: `svrngs share <port>`")?;
-            Ok(Verb::Share(Share {
+            Ok(Verb::Share(
+                Share {
                 port: share::resolve_target(&port)?,
                 name,
                 kind,
@@ -562,14 +570,16 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 sign_in,
                 raw: carries,
                 audience: Audience::Legacy,
-            }))
+                },
+                groups,
+            ))
         }
         "leave" => Ok(Verb::Leave(
             positional.ok_or("leave wants a group: `svrngs leave <group>`")?,
         )),
         "unshare" => {
             let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
-            Ok(Verb::Unshare(lend_name(&raw)?))
+            Ok(Verb::Unshare(lend_name(&raw)?, groups))
         }
         "room" => {
             let first = positional.ok_or("room wants what to serve: `svrngs room <name>...`")?;
@@ -636,6 +646,8 @@ pub enum Refusal {
     Left(Name),
     #[error("you are in no group called {0} on this computer")]
     NoGroup(String),
+    #[error("say which groups can open it: `svrngs share {0} --group <group>`, once for each")]
+    NoAudience(NonZeroU16),
     #[error("more than one group here is called {name}; say which by the start of its id: {}", ids.join(", "))]
     Ambiguous { name: String, ids: Vec<String> },
     #[error("you are not in {0} on this computer, so you cannot send its link")]
@@ -719,6 +731,7 @@ impl Refusal {
             | Refusal::NameTaken { .. }
             | Refusal::Left(_)
             | Refusal::NoGroup(_)
+            | Refusal::NoAudience(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
             | Refusal::Share(_)
@@ -822,7 +835,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             claimed => return start(Verb::Run, root, relay, claimed?, None).await,
         },
         Verb::Relay(asked) => return relay::run(asked, &root).await,
-        Verb::Unshare(name) => unshare(&root, &name)?.to_string(),
+        Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at) => open(&root, at.as_deref()).await?,
         Verb::Update => {
             return match svrngs_node::update::apply(&root).await {
@@ -879,7 +892,8 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             }
             claimed => return start(Verb::Room(names), root, relay, claimed?, None).await,
         },
-        Verb::Share(asked) => {
+        Verb::Share(mut asked, groups) => {
+            asked.audience = audience_of(&root, asked.port, &groups)?;
             let known = share::well_known_kind(asked.port);
             let mut lend = share::lend_of(&asked, share::listens, known)?;
             let accounts = share::accounts_of(&lend.kind);
@@ -1262,6 +1276,7 @@ pub enum Said {
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
+    Narrowed(LendName),
     /// `room`: each lend on for the room, and where it is served or why not.
     Room(Vec<room::InRoom>),
     /// `remove` or `handover` (U7): what happened to `person` in `group`.
@@ -1429,6 +1444,7 @@ impl std::fmt::Display for Said {
                 writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
             }
             Said::Unshared(name) => writeln!(f, "You no longer lend {name}."),
+            Said::Narrowed(name) => writeln!(f, "Those groups can no longer open {name}."),
             Said::Removal {
                 group,
                 person,
@@ -1564,12 +1580,27 @@ pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), 
 }
 
 /// `svrngs unshare`: withdraw the lend `name` from the data dir at `root`.
-pub fn unshare(root: &Path, name: &LendName) -> Result<Said, Refusal> {
+pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, Refusal> {
     let keep = |e: lend::LendError| {
         tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
         Refusal::KeepLend(name.clone())
     };
-    if lend::withdraw(root, name).map_err(keep)? {
+    let ids = groups.iter().map(|g| group_named(root, g).map(|s| s.id()));
+    let ids = ids.collect::<Result<Vec<_>, _>>()?;
+    let narrowed = |lend: &mut Lend| {
+        if let Audience::Selected(kept) = &mut lend.audience {
+            kept.retain(|id| !ids.contains(id));
+        }
+    };
+    tracing::debug!(target: "cli", lend = %name, groups = ids.len(), "cli: unshare — those groups only, or none named and it is withdrawn");
+    let done = match ids.is_empty() {
+        true => lend::withdraw(root, name),
+        false => lend::mutate(root, name, narrowed),
+    };
+    if done.map_err(keep)? {
+        if !ids.is_empty() {
+            return Ok(Said::Narrowed(name.clone()));
+        }
         return Ok(Said::Unshared(name.clone()));
     }
     let lent = lend::all(root)
@@ -1663,8 +1694,8 @@ async fn serve(
         Verb::Run => running(root, node).await,
         Verb::Room(names) => room(root, names).await?,
         Verb::Help
-        | Verb::Share(_)
-        | Verb::Unshare(_)
+        | Verb::Share(..)
+        | Verb::Unshare(..)
         | Verb::Relay(_)
         | Verb::Folder { .. }
         | Verb::Remove { .. }
@@ -1861,6 +1892,18 @@ pub async fn new_group(
     tracing::debug!(target: "cli", group = %id, name = %seed.name(), page = ?page.map(Origin::as_str), ?kept, asked, "cli: group made, keeping the relay asked, else the one the home page's keeps");
     let made = made.map_err(|e| unminted(&seed, e))?;
     Ok((seed, Printed::of(&made)))
+}
+
+/// The groups `share` lends to, each `--group` the one [`group_named`]
+/// finds: refused with the next command when none is named, never all
+/// groups (LENDING_SCOPE §"User interface and commands").
+pub fn audience_of(root: &Path, port: NonZeroU16, named: &[String]) -> Result<Audience, Refusal> {
+    if named.is_empty() {
+        tracing::debug!(target: "cli", port, "cli: share — refused, no group named to lend it to");
+        return Err(Refusal::NoAudience(port));
+    }
+    let ids = named.iter().map(|g| group_named(root, g).map(|s| s.id()));
+    ids.collect::<Result<_, _>>().map(Audience::Selected)
 }
 
 /// The one group held under `root` that `reference` names, by its name or

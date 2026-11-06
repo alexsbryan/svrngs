@@ -754,7 +754,7 @@ const HEARD_WITHIN: Duration = Duration::from_secs(5);
 #[tokio::test(flavor = "multi_thread")]
 async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     let sam = computer(1).await;
-    let (_, printed) = sams_house(&sam).await;
+    let (house, printed) = sams_house(&sam).await;
     let link = parsed(&printed, &sam.node);
     let ana = computer(2).await;
     knows(&ana, &sam.node);
@@ -763,7 +763,7 @@ async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
         .expect("Ana is let in");
     let lends = svrngs_node::lend::lends_dir(ana._dir.path());
     std::fs::create_dir_all(&lends).unwrap();
-    let music = serde_json::json!({ "port": 4533, "kind": "navidrome", "limit": 3 });
+    let music = serde_json::json!({ "port": 4533, "kind": "navidrome", "limit": 3, "groups": [house.id()] });
     std::fs::write(lends.join("music.json"), music.to_string()).unwrap();
     knows(&sam, &ana.node);
     let alex = computer(3).await;

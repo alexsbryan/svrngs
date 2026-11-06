@@ -272,6 +272,9 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
     let mut made = Program::start(dir.path(), &logs.path().join("new"), &new);
     made.until("Leave this running");
     drop(made);
+    // Lent to Lab, the group just made (LENDING_SCOPE).
+    let lab = svrngs::group::groups(dir.path())[0].id();
+    assert!(svrngs_node::lend::set_audience(dir.path(), &lend.name, vec![lab]).unwrap());
 
     let mut at = Vec::new();
     let mut kept = None;

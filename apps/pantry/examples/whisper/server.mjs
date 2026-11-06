@@ -96,7 +96,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     model: arg('--model', 'whisper-1'),
   })
     .then((at) =>
-      console.log(`lend ${at.url} with: svrngs share ${at.port} --kind whisper-server --name stt`),
+      console.log(`lend ${at.url} with: svrngs share ${at.port} --kind whisper-server --name stt --group <group>`),
     )
     .catch((e) => {
       console.error(`whisper wrapper: ${e.message}`);

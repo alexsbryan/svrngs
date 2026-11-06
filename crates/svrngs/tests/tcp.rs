@@ -153,9 +153,11 @@ fn share_tcp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
         "echo",
     ];
     let argv = argv.iter().chain(args).map(|s| s.to_string());
-    let Ok(Verb::Share(asked)) = cli::parse(argv) else {
+    let groups = ["--group", "house"].iter().map(|s| s.to_string());
+    let Ok(Verb::Share(mut asked, named)) = cli::parse(argv.chain(groups)) else {
         panic!("share --tcp parses");
     };
+    asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();
     assert_eq!(asked.raw, Some(Raw::Tcp));
     // A TCP port answers a connection, so it is lent only when one does.
     let unanswered = share::lend_of(&asked, |_| false, None);

@@ -124,11 +124,13 @@ async fn tcp_echo() -> u16 {
 }
 
 /// Sam lends `port` as `name`, a raw port of the way `raw` says, as
-/// `svrngs share <port> --udp` or `--tcp` declares it.
+/// `svrngs share <port> --udp` or `--tcp` declares it, lent to the groups
+/// Sam holds.
 fn lend(sam: &Path, lend: &str, port: u16, raw: &str) {
     let lends = svrngs_node::lend::lends_dir(sam);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": port, "raw": raw, "kind": "echo", "limit": 3 });
+    let groups: Vec<_> = svrngs::group::groups(sam).iter().map(|s| s.id()).collect();
+    let body = json!({ "port": port, "raw": raw, "kind": "echo", "limit": 3, "groups": groups });
     std::fs::write(lends.join(format!("{lend}.json")), body.to_string()).unwrap();
 }
 

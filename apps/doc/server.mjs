@@ -306,6 +306,6 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   }
   const { port: at } = await start({ port, keep: arg('--keep'), api: arg('--svrngs') });
   console.log(
-    `The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}. Lend it: svrngs share ${at} --name doc --kind doc`,
+    `The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}. Lend it: svrngs share ${at} --name doc --kind doc --group <group>`,
   );
 }

@@ -58,7 +58,7 @@ a port: Jellyfin and Navidrome for the library, Immich for photos,
 Audiobookshelf and Calibre-Web for books, Nextcloud and Paperless-ngx for
 files, Actual for money, Mealie and Grocy for plans, Home Assistant, and
 llama-server for a model. Run one on any member's computer, `svrngs share
-<port> --kind <name>`, and everyone in the group can open it: no port
+<port> --kind <name> --group <group>`, and everyone in that group can open it: no port
 opened, no tunnel, nothing for them to install. An app that takes the
 signed-in person from a request header lets each person straight in once
 its lender names `X-Svrngs-User` in its settings; `svrngs share` knows
@@ -165,7 +165,12 @@ groups name one device as different people the door refuses rather than
 pick one (`RingRail::standing_in`). A list of lends, `/lends` or
 `/people/lends`, names each only to a member of one of its groups, and
 tells them only the groups of its audience they share (`Offered::listed`);
-the lender's own home page is told the whole audience. *Lends are asked,
+the lender's own home page is told the whole audience. `svrngs share
+<port> --group <group>`, once for each, names the groups by name or the
+start of their id; with none it is refused with that command, never lent
+to all. `svrngs unshare <lend> --group <group>` takes just those groups
+away, its secret, sign-in and choices kept; bare `unshare` stops lending
+it. *Lends are asked,
 not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
 never stale. The lender's own lend, opened on their own computer, goes
