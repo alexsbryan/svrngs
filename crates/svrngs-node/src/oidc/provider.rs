@@ -361,7 +361,9 @@ async fn token(
             "the code was minted for another client",
         );
     }
-    if !declared.reaches(&code.group) {
+    // The door's own decision: chosen for the lend, and the lender still
+    // standing there (audit F6), never the reach rule spelt again.
+    if !crate::door::reached(&p.rail, &declared, &code.group) {
         let why = "the lend is no longer lent to the group the code was minted through";
         return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
     }

@@ -548,3 +548,53 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
 
     node.endpoint().close().await;
 }
+
+/// A code is redeemed only through a group that still reaches the lend by
+/// the door's own decision (audit F6; `door::reached`): the lender's key
+/// leaves the house's roster inside the code's minute, uncut, Ana still in
+/// it and the lend still lent there, and the code is `invalid_grant`.
+/// Planted: the reach rule re-derived at redemption without the lender's
+/// standing.
+#[tokio::test]
+async fn a_code_is_not_redeemed_once_the_lender_no_longer_stands_in_its_group() {
+    let dir = tempfile::tempdir().unwrap();
+    signs_in(dir.path(), LEND, PORT, CLIENT, Some(SECRET));
+    let node = start(dir.path()).await;
+    let roster = |with_lender: bool| {
+        let mut people = vec![(
+            svrngs_node::Person::parse("ana").unwrap(),
+            vec![SUB.to_string()],
+        )];
+        if with_lender {
+            let lender = svrngs_node::actor_of(&signing(1));
+            people.push((svrngs_node::Person::parse("lender").unwrap(), vec![lender]));
+        }
+        svrngs_node::Roster::new(people.into_iter().collect())
+    };
+    node.rail().set_seed(NS, &roster(true)).unwrap();
+    let code = node.oidc_code(
+        LEND,
+        CLIENT,
+        SUB,
+        NAME,
+        USER,
+        Group::Member,
+        REDIRECT,
+        Some(CHALLENGE),
+        Some("S256"),
+        None,
+    );
+    node.rail().set_seed(NS, &roster(false)).unwrap();
+    let form = [
+        ("grant_type", "authorization_code"),
+        ("code", code.as_str()),
+        ("redirect_uri", REDIRECT),
+        ("code_verifier", VERIFIER),
+    ];
+    let (status, answer) = token(&node, Some((CLIENT, SECRET)), &form).await;
+    assert_eq!(
+        (status, answer["error"].as_str()),
+        (400, Some("invalid_grant")),
+        "{answer:#}"
+    );
+}

@@ -1282,7 +1282,8 @@ assume no screen, a TV one device among others.
      `-Proto` — the scope, `state`, `nonce` and PKCE, and mints a one-time
      code bound to that person, the group the door let them in through,
      the client, the redirect, the challenge and the nonce. The token route
-     redeems it only while the lend is still lent to that group and a
+     redeems it only while that group still reaches the lend by the door's
+     own decision (`door::reached`: chosen, and the lender standing there) and a
      member's device still stands in it, so a group taken from its audience,
      or the person removed, inside the code's minute is `invalid_grant`; a
      guest's code only while `guest_of` would still let the guest in
