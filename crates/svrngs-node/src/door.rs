@@ -895,8 +895,13 @@ fn secret_headers(door: &Door, lend: &LendName) -> Vec<(HeaderName, HeaderValue)
 /// u5-2 the door passed the browser's `Host`, so the service built its
 /// links for the address the browser used, one `<lender's bridge>/lend/<name>/`
 /// for every lend.
-fn own_address(port: NonZeroU16) -> HeaderValue {
-    HeaderValue::from_str(&format!("localhost:{port}")).expect("a host and a port are a header")
+///
+/// On port 80 it names no port, as a browser's `Host` and `Origin` never do,
+/// so a proxy that routes by host and an app that checks `Origin` read it as one.
+pub(crate) fn own_address(port: NonZeroU16) -> HeaderValue {
+    let own = format!("localhost:{port}");
+    HeaderValue::from_str(own.strip_suffix(":80").unwrap_or(&own))
+        .expect("a host and a port are a header")
 }
 
 /// The scheme the browser reached a lend with, from the `Host` it asked:
@@ -981,7 +986,8 @@ fn own_origin(headers: &mut HeaderMap, label: &Label, (lend, port): (&Lend, NonZ
 const OWN_HOSTS: [&str; 3] = ["localhost", "127.0.0.1", "[::1]"];
 
 /// A path on a lend's own origin: what is left of a URL on the service's
-/// own address (`http://<one of OWN_HOSTS>:<port>`) or on the browser's
+/// own address (`http://<one of OWN_HOSTS>:<port>`, no port needed on port
+/// 80, where a service's own URLs name none) or on the browser's
 /// origin for the lend once that is taken off, case ignored, `/` for
 /// nothing. Parsed once, so a `Location` built from it is read on whatever
 /// origin the browser reached the lend at, and never as another host's: it
@@ -1002,7 +1008,9 @@ impl LendPath {
         browser: Option<&str>,
     ) -> Result<Self, &'static str> {
         let own = OWN_HOSTS.map(|host| format!("http://{host}:{port}"));
-        let rest = (own.iter().map(String::as_str).chain(browser))
+        let plain = OWN_HOSTS.map(|host| format!("http://{host}"));
+        let plain = plain.iter().filter(|_| port.get() == 80);
+        let rest = (own.iter().chain(plain).map(String::as_str).chain(browser))
             .find_map(|origin| {
                 let rest = url
                     .get(..origin.len())?

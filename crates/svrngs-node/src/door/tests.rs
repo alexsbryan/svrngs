@@ -192,3 +192,23 @@ fn the_scheme_told_is_the_one_the_browser_used() {
         assert_eq!(scheme_of(host), scheme, "{host}");
     }
 }
+
+/// On port 80 a service's own address names no port, so `Host` and `Origin`
+/// read as a browser's would and a redirect on `http://localhost/` stays on
+/// the lend. Planted, watched failing: `own_address` naming `:80`, and
+/// `LendPath::parse` taking only `http://<host>:<port>`, which sent a visitor
+/// to their own computer. A name that only starts the same is still refused.
+#[test]
+fn port_80_names_no_port() {
+    let port = |n| NonZeroU16::new(n).unwrap();
+    assert_eq!(own_address(port(80)), "localhost");
+    assert_eq!(own_address(port(8096)), "localhost:8096");
+    let path = |url, at: u16| LendPath::parse(url, port(at), None).map(|p| p.location([]));
+    assert_eq!(
+        path("http://localhost/session/new", 80).unwrap(),
+        "/session/new"
+    );
+    assert_eq!(path("http://127.0.0.1:80/x", 80).unwrap(), "/x");
+    assert!(path("http://localhost.evil.example/x", 80).is_err());
+    assert!(path("http://localhost/x", 8096).is_err());
+}
