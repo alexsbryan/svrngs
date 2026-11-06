@@ -1224,7 +1224,16 @@ async fn holder_of(
     }
     let standing = if standing.is_none() {
         if let Some(visit) = door.rail.visit_anywhere(&pass.person) {
-            return guest_of(&hex::encode(door.key), visit, pass, lend, now);
+            let (group, host, person) =
+                guest_of(&hex::encode(door.key), visit, &pass.person, lend, now)?;
+            return Ok(Asker {
+                app: Some(pass.app),
+                actor: PersonKey(pass.person.clone()),
+                device: DeviceKey(pass.person),
+                group,
+                person,
+                host: Some(host),
+            });
         }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
@@ -1255,18 +1264,25 @@ async fn holder_of(
     })
 }
 
-/// The guest whose visit's key signed `pass` (guests-door; GUESTS §3.4-§3.6,
+/// The guest whose visit's key `key` signed a pass (guests-door; GUESTS §3.4-§3.6,
 /// §5 "The door"): let in as themselves, their host's guest, only while the
 /// fold says the visit is live ([`svrngs_core::Guest::live`]) and it names
 /// this lend, its host's, this computer's own, and never a carried app, the
 /// group's. Each refusal says which of those refused it: `ended` for the
 /// visit's end, `closed` for the rest. A visit begun later than now, which
 /// only this computer's clock stepping back makes, is said as one ended.
-fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<Asker, Response> {
+/// Let in, the visit's group, the host and the guest as the fold names them.
+fn guest_of(
+    me: &str,
+    v: Visiting,
+    key: &str,
+    lend: &Lend,
+    now: i64,
+) -> Result<(String, Person, Person), Response> {
     let ((group, register, guest), name) = (v, lend.name.as_str());
     let host = register.members.get(&guest.host).map(|m| &m.person);
     let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
-        tracing::debug!(target: "door", guest = pass.person, host = guest.host, "door: refused — a visit whose host is bound to nobody here");
+        tracing::debug!(target: "door", guest = key, host = guest.host, "door: refused — a visit whose host is bound to nobody here");
         return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nobody here hosts your visit"));
     };
     let live = guest.live(&register.cut, now);
@@ -1289,18 +1305,11 @@ fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<
         _ if !named => closed(format!("{host} did not open {name} to you")),
         _ => None,
     };
-    tracing::debug!(target: "door", guest = pass.person, %host, lend = name, live, own, in_scope, named, ?refused, "door: a visit's key — let in as its host's guest only while the visit is live, in a group the lend reaches, and names this lend, its host's own, never a carried app");
+    tracing::debug!(target: "door", guest = key, %host, lend = name, live, own, in_scope, named, ?refused, "door: a visit's key — let in as its host's guest only while the visit is live, in a group the lend reaches, and names this lend, its host's own, never a carried app");
     if let Some((kind, words)) = refused {
         return Err(kind.say(StatusCode::FORBIDDEN, words));
     }
-    Ok(Asker {
-        app: Some(pass.app),
-        actor: PersonKey(pass.person.clone()),
-        device: DeviceKey(pass.person),
-        group,
-        person: guest.visit.guest,
-        host: Some(host),
-    })
+    Ok((group, host, guest.visit.guest))
 }
 
 /// The app a member's own pass names (sup-1): a computer's origin signs
