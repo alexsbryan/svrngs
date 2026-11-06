@@ -1045,6 +1045,25 @@ async function writeSigned(lend, group, act, grant) {
   return judged(lend, res);
 }
 
+// `text` posted as JSON to `lend`'s computer, beside `headers`.
+/**
+ * @param {Passed} lend
+ * @param {string} path
+ * @param {string} text
+ * @param {Header[]} [headers]
+ * @returns {Promise<Response>} the wasm's `fetch` answers the page's `Response`
+ */
+async function posted(lend, path, text, headers = []) {
+  const body = new TextEncoder().encode(text);
+  const dial = await dialFor(lend.key);
+  const heads = [
+    ...headers,
+    ['content-type', 'application/json'],
+    ['content-length', `${body.length}`],
+  ];
+  return dial.fetch('POST', path, heads, new Blob([body]).stream());
+}
+
 // Each line not yet carried (`unsent`) taken to the lend's computer in
 // turn, and let go of once taken, until one is not: the answer to the
 // last one sent.
@@ -1056,16 +1075,7 @@ async function carried(lend) {
   /** @type {Response | undefined} */
   let res;
   for (const carrying of /** @type {Unsent[]} */ (handed.unsent)) {
-    const body = new TextEncoder().encode(JSON.stringify(carrying));
-    const headers = [
-      ['content-type', 'application/json'],
-      ['content-length', String(body.length)],
-    ];
-    const dial = await dialFor(lend.key);
-    // The wasm's `fetch` answers the page's `Response`.
-    res = /** @type {Response} */ (
-      await dial.fetch('POST', '/carry', headers, new Blob([body]).stream())
-    );
+    res = await posted(lend, '/carry', JSON.stringify(carrying));
     trace(
       `RUNTIME: line ${carrying[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`,
     );
@@ -1221,16 +1231,10 @@ async function stopping(label) {
     trace(`RUNTIME: a page stops ${OWN} using ${label}, which it does not read: refused`);
     return closed();
   }
-  const body = new TextEncoder().encode('{"said":"stop"}');
-  const headers = [
-    ...(await passed(held)),
-    ['content-type', 'application/json'],
-    ['content-length', String(body.length)],
-  ];
+  const headers = await passed(held);
   trace(`RUNTIME: a page stops ${OWN} using ${label}`);
   try {
-    const dial = await dialFor(lend.key);
-    return await dial.fetch('POST', `/choices/${label}`, headers, new Blob([body]).stream());
+    return await posted(lend, `/choices/${label}`, '{"said":"stop"}', headers);
   } catch (error) {
     dials.delete(lend.key);
     trace(`RUNTIME: the stop for ${label} failed: ${String(error)}`);

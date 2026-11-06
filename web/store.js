@@ -163,6 +163,10 @@ async function run(store, mode, act, opening = open) {
 export const stored = (name, keyPath, mode, act) =>
   run('kept', mode, act, () => openDb(name, 1, (db) => db.createObjectStore('kept', { keyPath })));
 
+// What the `seal` store keeps under `name`, of whatever kind it was kept.
+/** @param {string} name */
+const inSeal = (name) => run('seal', 'readonly', (objects) => objects.get(name));
+
 // What a sealing key read back is, for the trace: Safari's worker on an
 // iPhone failed to unseal with `OperationError` while its page and Firefox's
 // worker did not (2026-10-05), and a key read back unusable and a key made
@@ -184,11 +188,7 @@ const described = (key) => {
  * @returns {Promise<CryptoKey>}
  */
 async function sealingKey(make) {
-  const held = await run(
-    'seal',
-    'readonly',
-    (objects) => /** @type {IDBRequest<CryptoKey | undefined>} */ (objects.get('key')),
-  );
+  const held = /** @type {CryptoKey | undefined} */ (await inSeal('key'));
   if (held) {
     globalThis.__trace?.(`STORE: the sealing key read back: ${described(held)}`);
     return held;
@@ -264,11 +264,7 @@ export async function keepVisit(token, visit, key) {
  */
 export async function visitOf(token) {
   /** @typedef {Visit & Awaited<ReturnType<typeof sealed>>} Kept */
-  const visit = await run(
-    'seal',
-    'readonly',
-    (objects) => /** @type {IDBRequest<Kept | undefined>} */ (objects.get(`visit ${token}`)),
-  );
+  const visit = /** @type {Kept | undefined} */ (await inSeal(`visit ${token}`));
   if (!visit) return undefined;
   return { ...visit, key: await unseal({ ...visit, id: token }) };
 }
@@ -284,12 +280,7 @@ export async function visitOf(token) {
  */
 export async function holder(label, key) {
   if (key === undefined) {
-    return run(
-      'seal',
-      'readonly',
-      (objects) =>
-        /** @type {IDBRequest<string | null | undefined>} */ (objects.get(`holder ${label}`)),
-    );
+    return inSeal(`holder ${label}`);
   }
   await run('seal', 'readwrite', (objects) => objects.put(key, `holder ${label}`));
   return undefined;
