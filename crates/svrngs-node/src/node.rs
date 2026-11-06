@@ -1018,7 +1018,7 @@ async fn people_lends(
     dialer: Option<Extension<Dialer>>,
     headers: axum::http::HeaderMap,
 ) -> Result<Response, Response> {
-    if !crate::door::scope_marked(&headers) {
+    if !crate::door::scope_aware(&headers) {
         tracing::debug!(target: "node", "node: people's lends refused — the ask carries no scope marker");
         return Err(err(
             StatusCode::FORBIDDEN,

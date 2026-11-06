@@ -334,18 +334,13 @@ pub const LENDS_ROUTE: &str = "/lends";
 /// refuse an old consumer, which [`crate::version::older`] alone cannot
 /// (an old consumer accepts a newer answer). It is not a credential: a
 /// caller that sends it still passes the audience and membership checks.
-fn scope_aware(headers: &HeaderMap) -> bool {
+/// The node's own discovery route (`/people/lends`) asks it too.
+pub(crate) fn scope_aware(headers: &HeaderMap) -> bool {
     headers
         .get(crate::version::SCOPE_HEADER)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.parse::<u32>().ok())
         .is_some_and(|v| v >= crate::version::VERSION)
-}
-
-/// [`scope_aware`] for the node's own discovery route (`/people/lends`),
-/// which reads the same marker at the same edge.
-pub(crate) fn scope_marked(headers: &HeaderMap) -> bool {
-    scope_aware(headers)
 }
 
 /// Where a lend's choices are said and asked ([`choices`]).
