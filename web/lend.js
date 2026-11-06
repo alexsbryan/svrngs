@@ -245,10 +245,23 @@ function dialFor(lender) {
  * @returns {Promise<Dialled>}
  */
 async function dialled(lender) {
-  endpoint ??= opened();
   trace(`RUNTIME: dialling ${lender} for the pass's holder`);
   const relay = handed.lends.find((lend) => lend.key === lender)?.relay ?? null;
-  return (await endpoint).dial_lend(lender, relay);
+  return (await bound()).dial_lend(lender, relay);
+}
+
+// This run's endpoint, opened at the first dial; one refused (no relay
+// answered in time, web/src/lib.rs `bind`) is let go, so the next dial
+// opens one again rather than the refusal for good (review F3).
+function bound() {
+  if (endpoint) return endpoint;
+  const opening = (endpoint = opened());
+  opening.catch((error) => {
+    if (endpoint !== opening) return;
+    trace(`RUNTIME: the endpoint was not opened, so the next dial opens one: ${error}`);
+    endpoint = null;
+  });
+  return opening;
 }
 
 // This run's endpoint (DESIGN §3): a key of this run's alone, which the
@@ -277,7 +290,9 @@ async function opened() {
     ? 'of this run, named by the holder’s link'
     : 'as the pass’s holder, for an older door';
   trace(`RUNTIME: opening the endpoint ${as}`);
-  return holder_endpoint(bytes, handed.relay);
+  // A pass kept before relay fallbacks names its one relay, and no `relays`.
+  if (!handed.relays) trace('RUNTIME: the pass names one relay, as one kept before fallbacks');
+  return holder_endpoint(bytes, handed.relays ?? (handed.relay ? [handed.relay] : []));
 }
 
 // The pass a request carries, and the link naming this run's endpoint
@@ -287,7 +302,7 @@ async function opened() {
  * @returns {Promise<Header[]>}
  */
 async function passed(handoff) {
-  await (endpoint ??= opened());
+  await bound();
   /** @type {Header[]} */
   const headers = [['x-svrngs-pass', handoff.pass]];
   if (linked) headers.push(['x-svrngs-link', linked]);

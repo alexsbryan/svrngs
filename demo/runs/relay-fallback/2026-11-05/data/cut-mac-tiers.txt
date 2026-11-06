@@ -1,0 +1,103 @@
+00:00:00 UTC registered=Ok(true)
+00:00:00 UTC tier=Fallback answered=true misses=0
+00:00:10 UTC registered=Ok(true)
+00:00:10 UTC tier=Fallback answered=true misses=0
+00:00:20 UTC registered=Ok(true)
+00:00:20 UTC tier=Fallback answered=true misses=0
+00:00:30 UTC registered=Ok(true)
+00:00:30 UTC tier=Fallback answered=true misses=0
+00:00:40 UTC registered=Ok(true)
+00:00:40 UTC tier=Fallback answered=true misses=0
+00:00:50 UTC registered=Ok(true)
+00:00:50 UTC tier=Fallback answered=true misses=0
+00:01:00 UTC registered=Ok(true)
+00:01:00 UTC tier=Fallback answered=true misses=0
+00:01:10 UTC registered=Ok(true)
+00:01:10 UTC tier=Fallback answered=true misses=0
+00:01:20 UTC registered=Ok(true)
+00:01:20 UTC tier=Fallback answered=true misses=0
+00:01:30 UTC registered=Ok(true)
+00:01:30 UTC tier=Fallback answered=true misses=0
+00:01:40 UTC registered=Ok(true)
+00:01:40 UTC tier=Fallback answered=true misses=0
+00:01:50 UTC registered=Ok(true)
+00:01:50 UTC tier=Fallback answered=true misses=0
+00:02:05 UTC registered=Err(Elapsed(()))
+00:02:05 UTC tier=Fallback answered=false misses=1
+00:02:15 UTC registered=Err(Elapsed(()))
+00:02:15 UTC tier=Fallback answered=false misses=2
+00:02:25 UTC registered=Err(Elapsed(()))
+00:02:25 UTC tier=Fallback answered=false misses=3
+00:02:25 UTC another tier now
+00:02:25 UTC relay given relay=http://192.168.1.11:3340/ tier=Own
+00:02:25 UTC relay taken relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+00:02:25 UTC relay taken relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+00:02:25 UTC relay taken relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+00:02:25 UTC relay taken relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+00:02:28 UTC
+00:02:33 UTC tier=Own answered=false misses=4
+00:02:43 UTC tier=Own answered=false misses=5
+00:02:53 UTC tier=Own answered=false misses=6
+00:03:03 UTC tier=Own answered=false misses=7
+00:03:13 UTC tier=Own answered=false misses=8
+00:03:23 UTC tier=Own answered=false misses=9
+00:03:33 UTC tier=Own answered=false misses=10
+00:03:43 UTC tier=Own answered=false misses=11
+00:03:53 UTC tier=Own answered=false misses=12
+00:04:03 UTC tier=Own answered=false misses=13
+00:04:10 UTC tier=Own answered=false misses=14
+00:04:20 UTC tier=Own answered=false misses=15
+00:04:30 UTC tier=Own answered=false misses=16
+00:04:40 UTC tier=Own answered=false misses=17
+00:04:50 UTC tier=Own answered=false misses=18
+00:05:00 UTC tier=Own answered=false misses=19
+00:05:10 UTC tier=Own answered=true misses=0
+00:05:10 UTC another tier now
+00:05:10 UTC relay given relay=https://aps1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:10 UTC relay given relay=https://euc1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:10 UTC relay given relay=https://use1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:10 UTC relay given relay=https://usw1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:10 UTC relay taken relay=http://192.168.1.11:3340/ tier=Fallback
+00:05:25 UTC registered=Err(Elapsed(()))
+00:05:25 UTC tier=Fallback answered=false misses=1
+00:05:25 UTC another tier now
+00:05:25 UTC relay given relay=http://192.168.1.11:3340/ tier=Own
+00:05:25 UTC relay taken relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+00:05:25 UTC relay taken relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+00:05:25 UTC relay taken relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+00:05:25 UTC relay taken relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+00:05:30 UTC tier=Own answered=false misses=2
+00:05:40 UTC tier=Own answered=true misses=0
+00:05:40 UTC another tier now
+00:05:40 UTC relay given relay=https://aps1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:40 UTC relay given relay=https://euc1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:40 UTC relay given relay=https://use1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:40 UTC relay given relay=https://usw1-1.relay.n0.iroh.link/ tier=Fallback
+00:05:40 UTC relay taken relay=http://192.168.1.11:3340/ tier=Fallback
+00:05:55 UTC registered=Err(Elapsed(()))
+00:05:55 UTC tier=Fallback answered=false misses=1
+00:05:55 UTC another tier now
+00:05:55 UTC relay given relay=http://192.168.1.11:3340/ tier=Own
+00:05:55 UTC relay taken relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+00:05:55 UTC relay taken relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+00:05:55 UTC relay taken relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+00:05:55 UTC relay taken relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+00:06:00 UTC tier=Own answered=false misses=2
+00:06:10 UTC tier=Own answered=false misses=3
+00:06:20 UTC tier=Own answered=true misses=0
+00:06:20 UTC another tier now
+00:06:20 UTC relay given relay=https://aps1-1.relay.n0.iroh.link/ tier=Fallback
+00:06:20 UTC relay given relay=https://euc1-1.relay.n0.iroh.link/ tier=Fallback
+00:06:20 UTC relay given relay=https://use1-1.relay.n0.iroh.link/ tier=Fallback
+00:06:20 UTC relay given relay=https://usw1-1.relay.n0.iroh.link/ tier=Fallback
+00:06:20 UTC relay taken relay=http://192.168.1.11:3340/ tier=Fallback
+00:06:35 UTC registered=Err(Elapsed(()))
+00:06:35 UTC tier=Fallback answered=false misses=1
+00:06:35 UTC another tier now
+00:06:35 UTC relay given relay=http://192.168.1.11:3340/ tier=Own
+00:06:35 UTC relay taken relay=https://aps1-1.relay.n0.iroh.link/ tier=Own
+00:06:35 UTC relay taken relay=https://euc1-1.relay.n0.iroh.link/ tier=Own
+00:06:35 UTC relay taken relay=https://use1-1.relay.n0.iroh.link/ tier=Own
+00:06:35 UTC relay taken relay=https://usw1-1.relay.n0.iroh.link/ tier=Own
+00:06:40 UTC tier=Own answered=false misses=2
+00:06:50 UTC tier=Own answered=false misses=3

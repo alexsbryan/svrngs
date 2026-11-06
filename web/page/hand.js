@@ -52,7 +52,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
   if (!('serviceWorker' in navigator))
     return { type: 'unopened', said: `This browser cannot open ${named(lend)}.` };
   const opened = await withYes(hand, lend);
-  const lends = passLends(hand, lend, opened);
+  const lends = passLends(core, hand, lend, opened);
   const { holder, seed, raw } = await holderOf(core, label, lends);
   const start = `${store.lendOrigin(location.protocol, label, location.host)}/open.html?v=__VERSION__${at ? `&back=${encodeURIComponent(at)}` : ''}`;
   // This open's approver (HOLDER_APPROVAL §3.D): named in both passes, its
@@ -77,7 +77,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
     holder,
     seed: seed && store.hex(seed),
     raw,
-    relay: core.relay_of(group.token) ?? null,
+    relays: core.relays_of(group.token),
     page: here(),
     unanswered: unanswered.map((who) => who.person),
   };
@@ -109,13 +109,16 @@ async function withYes({ group, label, at }, lend) {
 }
 
 // The lends the pass names: the lend, and the lends of each kind it
-// reads, unless the group stopped its reads.
+// reads, unless the group stopped its reads. A relay the page's policy
+// refuses goes as none, so the worker dials the taken routes instead of a
+// blocked one (a worker has no document to judge that itself).
 /**
+ * @param {typeof Wasm} core
  * @param {Hand} hand
  * @param {Lent} lend
  * @param {Partial<Group>} opened
  */
-function passLends({ lent, label }, lend, opened) {
+function passLends(core, { lent, label }, lend, opened) {
   const stopped = opened.reads?.[label]?.said === 'stop';
   if (stopped) trace(`PAGE: ${lend.name}'s reads were stopped here, so its pass names none`);
   return [
@@ -126,7 +129,7 @@ function passLends({ lent, label }, lend, opened) {
   ].map((other) => ({
     label: other.label,
     key: other.key,
-    relay: other.relay ?? null,
+    relay: taken(core, other),
     name: other.name,
     kind: other.kind,
     group: other.group ?? null,
@@ -134,6 +137,19 @@ function passLends({ lent, label }, lend, opened) {
     asks: other.asks,
     version: other.version ?? null,
   }));
+}
+
+// The relay the record names for `lend` when this page's policy takes it,
+// else none; one refused is said by name, so the worker's "names no relay"
+// is read rightly (review F6).
+/**
+ * @param {typeof Wasm} core
+ * @param {Lent} lend
+ */
+function taken(core, { name, relay }) {
+  if (!relay || core.relay_taken(relay)) return relay ?? null;
+  trace(`PAGE: ${name}'s relay ${relay} is one this page's policy refuses, so its pass names none`);
+  return null;
 }
 
 // The holder of the lend origin's open, kept for `label` unless a lend of

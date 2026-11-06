@@ -82,7 +82,10 @@ async function yes() {
         30_000,
       ),
     );
-    const endpoint = await Promise.race([holder_endpoint(holder, k.relay), late]);
+    const endpoint = await Promise.race([
+      holder_endpoint(holder, k.relays ?? (k.relay ? [k.relay] : [])),
+      late,
+    ]);
     reached('online');
     const door = await Promise.race([
       endpoint.dial_lend(k.lends.find((l) => l.label === lend).key),

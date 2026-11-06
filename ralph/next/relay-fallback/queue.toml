@@ -1,0 +1,18 @@
+# Serial loop, operator: "Ok start the ralph loop on this".
+# python3 ~/dev/commonwealth-ai/scripts/ralph.py run \
+#   --workdir ~/dev/svrngs-lanes/relay-fallback --queue relay-fallback \
+#   --install-launchd --max-stall 3
+# python3 ~/dev/commonwealth-ai/scripts/ralph.py start \
+#   --workdir ~/dev/svrngs-lanes/relay-fallback --queue relay-fallback
+label = "svrngs-relay-fallback"
+session_timeout = 7200
+worker_bin = "/Users/alexsbryan/dev/commonwealth-ai/scripts/ralph-claude-shim.sh"
+settings = "ralph/claude-settings.json"
+# The explicit final audit owns the full gate. No duplicate cadence audits.
+
+[models]
+worker = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
+review = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
+resolve = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
+# Standing effort rule: AGENTS.md, "Ralph model effort".
+variant = "max"

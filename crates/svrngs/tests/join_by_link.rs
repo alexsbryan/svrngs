@@ -335,7 +335,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     assert_eq!(admitted(&sam.node, &group), three, "no second Admit");
 
     // ── Sam sends a new link: Dee, with the old one, is refused.
-    let (linked, printed2, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false)
+    let (linked, printed2, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false, &[])
         .await
         .unwrap();
     said.push(
@@ -650,7 +650,7 @@ async fn a_name_someone_in_the_group_goes_by_is_refused_with_how_to_join() {
 async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
     let sam = computer(1).await;
     let (seed, _) = sams_house(&sam).await;
-    let (_, printed, device) = cli::link_to(&sam.node, "house", None, &no_relay(), true)
+    let (_, printed, device) = cli::link_to(&sam.node, "house", None, &no_relay(), true, &[])
         .await
         .expect("Sam's computer makes a link for Sam's devices");
     assert_eq!(device.map(|p| p.to_string()), Some("Sam".to_string()));
@@ -822,12 +822,12 @@ async fn a_member_prints_links_on_the_page_the_founders_opened() {
             .await
             .unwrap_or_else(|e| panic!("{n} is let in: {e}"));
     }
-    let (_, theirs, _) = cli::link_to(&alex.node, "house", None, &no_relay(), false)
+    let (_, theirs, _) = cli::link_to(&alex.node, "house", None, &no_relay(), false, &[])
         .await
         .expect("Alex, in house, prints a link");
     let on = theirs.https.unwrap_or_default();
     assert!(on.starts_with("https://x.example/#"), "{on}");
-    let (_, cys, _) = cli::link_to(&cy.node, "house", None, &no_relay(), false)
+    let (_, cys, _) = cli::link_to(&cy.node, "house", None, &no_relay(), false, &[])
         .await
         .expect("Cy, in house, prints a link");
     assert_eq!(cys.https, None, "{cys}");
@@ -971,7 +971,7 @@ async fn a_computer_the_group_cut_is_told_so_by_the_issuer() {
     let dir = again.node.rail().group_dir(&group).unwrap();
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("roster.json"), "no roster").unwrap();
-    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false)
+    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), false, &[])
         .await
         .expect("Sam's computer makes its next link");
     let link = parsed(&printed, &sam.node);

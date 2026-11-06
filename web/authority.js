@@ -157,7 +157,10 @@ function framedOne(one, signer) {
  * @property {string | null} [seed] the holder's seed, as hex, when it is new; gone
  *   once open.js hands the open on with no need of it
  * @property {boolean} raw whether the holder goes as bytes
- * @property {string | null} relay
+ * @property {string[]} [relays] every relay the group's link carries that this page's
+ *   policy takes, so its worker dials the public fallback and not a route the page refuses;
+ *   none in a pass kept before relay fallbacks
+ * @property {string | null} [relay] the one relay a pass kept before relay fallbacks names
  * @property {string} page the group's page, to come back to
  * @property {string[]} unanswered whose computers did not answer, by name
  * @property {string} [proof]
@@ -174,7 +177,7 @@ const OPEN_FIELDS = [
   'group',
   'holder',
   'raw',
-  'relay',
+  'relays',
   'page',
   'unanswered',
 ];

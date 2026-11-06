@@ -1,0 +1,70 @@
+2026-11-05T07:27:41.225517Z  INFO svrngs::identity: node_key: generated + persisted identity key (first boot) node_pubkey=e8e8ba9123112e593aa0f8559050be0eac9e75a8a10de733b4691da1d39a0a9f
+2026-11-05T07:27:41.230092Z  INFO transport: iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact) n0_services=true loopback_only=false relays=["http://127.0.0.1:51801/"]
+2026-11-05T07:27:41.273180Z  INFO folder: folder: the store is open untagged=0
+2026-11-05T07:27:41.280762Z  INFO rails: api: serving the record to this computer's apps addr=127.0.0.1:51803
+2026-11-05T07:27:41.280995Z  INFO node: node: endpoint bound with the signing key actor="e8e8ba9123112e593aa0f8559050be0eac9e75a8a10de733b4691da1d39a0a9f" data_dir=/Users/alexsbryan/dev/svrngs-lanes/relay-fallback/demo/runs/relay-fallback/2026-11-05/data/scratch/keeper/.svrngs dial=Some("e8e8ba9123112e593aa0f8559050be0eac9e75a8a10de733b4691da1d39a0a9f@192.168.1.11:63810") api=127.0.0.1:51803
+2026-11-05T07:27:41.281239Z  INFO svrngs_node::ring_sync: ring sync: loop started interval_secs=60
+2026-11-05T07:27:43.373590Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:44.247861Z  INFO endpoint{id=e8e8ba9123}:relay-actor: iroh::socket::transports::relay::actor: home is now relay http://127.0.0.1:51801/, was None
+2026-11-05T07:27:44.296763Z  INFO folder: synced: the directory kept in step with the group's folder namespace="fde11eb5e477474ea33f092c4ef90cfcd941596e53baeef99cb40129558361c3" folder="house" dir=/Users/alexsbryan/dev/svrngs-lanes/relay-fallback/demo/runs/relay-fallback/2026-11-05/data/scratch/keeper/svrngs/house
+2026-11-05T07:27:44.391419Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:45.394881Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:46.451132Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:47.465129Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:48.482692Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:49.488847Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:50.531601Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:51.562144Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:52.581439Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:53.604617Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:54.666008Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:55.717660Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:56.743124Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:57.783931Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:58.818234Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:27:59.851827Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:00.891016Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:01.896983Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:02.913703Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:03.921835Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:04.931556Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:06.002670Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:07.033284Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:08.068160Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:09.080807Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:10.134179Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:11.187745Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:12.188962Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:13.209637Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:14.283641Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:15.347926Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:16.355853Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:17.361490Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:18.398277Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:19.451553Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:20.484490Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:21.497201Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:22.568597Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:23.601893Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:24.635297Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:25.657421Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:26.680363Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:27.702229Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:28.707078Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:29.720213Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:30.792977Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:31.812183Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:32.834211Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:33.839851Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:34.852065Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:35.877028Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:36.906727Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:37.952389Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:38.987083Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:40.032057Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:41.088881Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:41.288492Z  INFO svrngs_node::ring_sync: ring sync: round membership exchanged_with=[] skipped_offline=[]
+2026-11-05T07:28:42.094008Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:43.149655Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:44.153283Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort
+2026-11-05T07:28:45.194638Z  INFO iroh_blobs::store::gc: abort gc run: protect callback indicated abort

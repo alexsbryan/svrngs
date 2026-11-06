@@ -151,13 +151,14 @@ svrngs — keep what your group shares on your own computers.
       that svrngs joins for you and this command leaves, running nothing.
       --no-run stops once you are in, rather than run.
 
-  svrngs link <group> [--device] [--origin <url>]
+  svrngs link <group> [--device] [--origin <url>] [--relay <url>]...
       Print a new link to <group>. Any link you sent before stops letting
       anyone new in; everyone it let in stays. <group> is its name, or the
       first 8 letters of its id when two groups share a name. --origin
       also prints it on a page address, from now on, as `new` does.
       --device makes it a link for another computer or phone of yours: it
       joins as you, asked no name.
+      --relay changes where <group> meets (keeper only); stop svrngs first.
 
   svrngs share <port> [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in your groups:
@@ -310,6 +311,9 @@ pub enum Verb {
         /// `--device`: a device link, for another device of this
         /// computer's person (bash-devices).
         device: bool,
+        /// `--relay`, once for each: where the group meets from now on,
+        /// when its keeper changes it; empty leaves it.
+        relays: Vec<RelayUrl>,
     },
     /// No secret: it is read from a prompt (the module docs).
     Share(Share),
@@ -383,7 +387,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         // where they are flags, so elsewhere they stay unknown. The rest
         // are a pattern the compiler holds, never text split (#147).
         let valued = match arg.as_str() {
-            "--relay" => verb == "new",
+            "--relay" => matches!(verb.as_str(), "new" | "link"),
             "--at" => verb == "relay",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
             "--as" | "--origin" | "--name" | "--kind" | "--limit" | "--refuse" | "--upload"
@@ -538,6 +542,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             group: positional.ok_or("link wants a group: `svrngs link <group>`")?,
             origin,
             device,
+            relays,
         }),
         "share" => {
             let page = !refused.is_empty() || upload.is_some() || !reads.is_empty();
@@ -665,6 +670,9 @@ pub enum Refusal {
     /// `remove` or `handover` refused, in the words [`Said::Removal`] says.
     #[error("{0}")]
     Removal(String),
+    /// `link --relay` refused, in the node's words.
+    #[error("{0}")]
+    Meet(String),
     #[error("{0} cannot be changed on this computer (RUST_LOG=debug says why)")]
     Unchanged(Name),
     /// `update` could not judge the page, or refused what it offered.
@@ -719,6 +727,7 @@ impl Refusal {
             | Refusal::Room(_)
             | Refusal::Folder(_)
             | Refusal::Removal(_)
+            | Refusal::Meet(_)
             | Refusal::RelayForNobody
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
@@ -1641,12 +1650,14 @@ async fn serve(
             group,
             origin,
             device,
+            relays,
         } => {
             let page = match origin {
                 Some(page) => Some(checked_page(page).await?),
                 None => None,
             };
-            let (seed, link, device) = link_to(node, &group, page.as_ref(), relay, device).await?;
+            let (seed, link, device) =
+                link_to(node, &group, page.as_ref(), relay, device, &relays).await?;
             Said::Linked { seed, link, device }
         }
         Verb::Run => running(root, node).await,
@@ -1886,8 +1897,12 @@ pub async fn link_to(
     page: Option<&Origin>,
     relay: &RelayConfig,
     device: bool,
+    relays: &[RelayUrl],
 ) -> Result<(Seed, Printed, Option<Person>), Refusal> {
     let seed = group_named(node.rail().root(), reference)?;
+    node.host()
+        .meet(&seed.id(), relays)
+        .map_err(Refusal::Meet)?;
     wait_online(node, &relay.relay_urls).await;
     let made = node.host().link(&seed.id(), device, page, None);
     let made = made.map_err(|e| unminted(&seed, e))?;

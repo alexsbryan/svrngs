@@ -62,6 +62,95 @@ async fn service() -> u16 {
     port
 }
 
+/// A route that accepts and never answers: a stalled relay, each
+/// connection held open (never closed) for the test's length, reached over
+/// TLS at its address (the tests' browsers take the certificate). Its
+/// URL, https, so every page's policy takes it and tries it.
+async fn stalled() -> String {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    tokio::spawn(async move {
+        while let Ok((sock, _)) = listener.accept().await {
+            std::mem::forget(sock);
+        }
+    });
+    format!("https://127.0.0.1:{port}/")
+}
+
+/// The phone's half of a joining test: `web/tests/join.mjs` started with
+/// `args`, its printed origin read — the page's origin as the command
+/// checks it — and its stdout reader, kept for [`finished`]. The browser
+/// half fails naming the install command when Playwright or its browsers
+/// are absent; it never skips.
+async fn phone(
+    args: Value,
+) -> (
+    tokio::process::Child,
+    tokio::io::Lines<BufReader<tokio::process::ChildStdout>>,
+    String,
+) {
+    let mut phone = tokio::process::Command::new("node")
+        .arg(harness::repo().join("web/tests/join.mjs"))
+        .arg(args.to_string())
+        .env("SVRNGS_BROWSERS", harness::browsers())
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .expect("node runs: the browser tests need Node 18 or later");
+    let mut out = BufReader::new(phone.stdout.take().unwrap()).lines();
+    let first = out.next_line().await.unwrap().unwrap_or_else(|| {
+        panic!(
+            "the browser half printed no origin; it exited {:?}",
+            phone.try_wait()
+        )
+    });
+    let origin: Value = serde_json::from_str(&first).unwrap();
+    (
+        phone,
+        out,
+        origin["origin"]
+            .as_str()
+            .expect("the page's origin")
+            .to_string(),
+    )
+}
+
+/// `phone` answered `told`: its stdin written once, its output drained to
+/// the last line, its stderr read — the browser half's failure named — and
+/// that line parsed.
+async fn finished(
+    mut phone: tokio::process::Child,
+    mut out: tokio::io::Lines<BufReader<tokio::process::ChildStdout>>,
+    told: Value,
+) -> Value {
+    let mut stdin = phone.stdin.take().unwrap();
+    stdin
+        .write_all(format!("{told}\n").as_bytes())
+        .await
+        .unwrap();
+    stdin.flush().await.unwrap();
+    let mut last = None;
+    while let Some(line) = out.next_line().await.unwrap() {
+        last = Some(line);
+    }
+    let mut stderr = String::new();
+    phone
+        .stderr
+        .take()
+        .unwrap()
+        .read_to_string(&mut stderr)
+        .await
+        .unwrap();
+    let status = phone.wait().await.unwrap();
+    assert!(
+        status.success(),
+        "the browser half failed ({status}):\n{stderr}"
+    );
+    serde_json::from_str(&last.expect("the browser half printed")).unwrap()
+}
+
 /// Each `Admit` in Sam's record: its person, key and device, if it
 /// redeems a link.
 fn admits(sam: &Node, group: &str) -> Vec<(String, String, Option<Device>)> {
@@ -124,25 +213,8 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
 
-    let mut phone = tokio::process::Command::new("node")
-        .arg(harness::repo().join("web/tests/join.mjs"))
-        .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
-        .env("SVRNGS_BROWSERS", harness::browsers())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .kill_on_drop(true)
-        .spawn()
-        .expect("node runs: the browser tests need Node 18 or later");
-    let mut out = BufReader::new(phone.stdout.take().unwrap()).lines();
-    let first = out.next_line().await.unwrap().unwrap_or_else(|| {
-        panic!(
-            "the browser half printed no origin; it exited {:?}",
-            phone.try_wait()
-        )
-    });
-    let origin: Value = serde_json::from_str(&first).unwrap();
-    let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
+    let (phone, out, origin) = phone(json!({ "engine": engine.as_str(), "site": site })).await;
+    let origin = Origin::parse(&origin).unwrap();
     let port = origin
         .as_str()
         .trim_end_matches('/')
@@ -166,32 +238,12 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     .expect("Sam makes house, its links on the page's origin");
     let link = printed.https.clone().expect("an https link on the origin");
     eprintln!("the link printed: {link}");
-    let mut stdin = phone.stdin.take().unwrap();
-    stdin
-        .write_all(
-            format!(
-                "{}\n",
-                json!({ "link": link, "name": "Pia", "taken": "sam", "hint": true })
-            )
-            .as_bytes(),
-        )
-        .await
-        .unwrap();
-    stdin.flush().await.unwrap();
-
-    let mut stderr = String::new();
-    let mut err = phone.stderr.take().unwrap();
-    let mut last = None;
-    while let Some(line) = out.next_line().await.unwrap() {
-        last = Some(line);
-    }
-    err.read_to_string(&mut stderr).await.unwrap();
-    let status = phone.wait().await.unwrap();
-    assert!(
-        status.success(),
-        "the browser half failed ({status}):\n{stderr}"
-    );
-    let seen: Value = serde_json::from_str(&last.expect("the browser half printed")).unwrap();
+    let seen = finished(
+        phone,
+        out,
+        json!({ "link": link, "name": "Pia", "taken": "sam", "hint": true }),
+    )
+    .await;
 
     // In: asked the name once, and listed Sam's shelf as the command prints it.
     let first = &seen["first"];
@@ -324,24 +376,8 @@ in_webkit!(
 async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: harness::Engine) {
     let site = harness::site();
     let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
-    let mut phone = tokio::process::Command::new("node")
-        .arg(harness::repo().join("web/tests/join.mjs"))
-        .arg(json!({ "engine": engine.as_str(), "site": site }).to_string())
-        .env("SVRNGS_BROWSERS", harness::browsers())
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .kill_on_drop(true)
-        .spawn()
-        .expect("node runs: the browser tests need Node 18 or later");
-    let mut out = BufReader::new(phone.stdout.take().unwrap()).lines();
-    let first = out
-        .next_line()
-        .await
-        .unwrap()
-        .expect("the browser half prints its origin");
-    let origin: Value = serde_json::from_str(&first).unwrap();
-    let origin = Origin::parse(origin["origin"].as_str().unwrap()).unwrap();
+    let (phone, out, origin) = phone(json!({ "engine": engine.as_str(), "site": site })).await;
+    let origin = Origin::parse(&origin).unwrap();
     let page = cli::checked_page(origin).await.expect("the page is served");
     let (seed, _) = cli::new_group(
         &sam,
@@ -353,35 +389,11 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
     )
     .await
     .expect("Sam makes house");
-    let (_, printed, _) = cli::link_to(&sam, "house", Some(&page), &ours, true)
+    let (_, printed, _) = cli::link_to(&sam, "house", Some(&page), &ours, true, &[])
         .await
         .expect("Sam's computer makes a link for Sam's devices");
     let link = printed.https.clone().expect("an https link on the origin");
-    let mut stdin = phone.stdin.take().unwrap();
-    let told = json!({ "link": link, "name": "Pia" });
-    stdin
-        .write_all(format!("{told}\n").as_bytes())
-        .await
-        .unwrap();
-    stdin.flush().await.unwrap();
-    let mut last = None;
-    while let Some(line) = out.next_line().await.unwrap() {
-        last = Some(line);
-    }
-    let mut stderr = String::new();
-    phone
-        .stderr
-        .take()
-        .unwrap()
-        .read_to_string(&mut stderr)
-        .await
-        .unwrap();
-    let status = phone.wait().await.unwrap();
-    assert!(
-        status.success(),
-        "the browser half failed ({status}):\n{stderr}"
-    );
-    let seen: Value = serde_json::from_str(&last.expect("the browser half printed")).unwrap();
+    let seen = finished(phone, out, json!({ "link": link, "name": "Pia" })).await;
 
     let first = &seen["first"];
     assert_eq!(
@@ -421,4 +433,421 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
         ("Sam", sams.as_str())
     );
     sam.endpoint().close().await;
+}
+
+/// [`phone`] and [`finished`] for the link `<origin>#<token>` as Pia:
+/// `args` says the engine, the built site, the page's `policy` (`None`:
+/// the tests' allowance; `"production"`: the built meta alone) and, with
+/// `fail`, one opening and how long it took, the link never reachable.
+async fn phone_joining(args: Value, token: &str) -> (Value, String) {
+    let (phone, out, origin) = phone(args.clone()).await;
+    let told = json!({ "link": format!("{origin}#{token}"), "name": "Pia", "fail": args["fail"] });
+    (finished(phone, out, told).await, origin)
+}
+
+/// Sam's computer, its group `house` met at `own` and reached through
+/// `build`, the build's fallback as this computer reaches it — which the
+/// node holds plainly, while the page reaches the same front over TLS — and
+/// a link carrying `relays`. The data directory is kept alive by the caller.
+async fn sam_meeting_at(
+    seed: u8,
+    own: svrngs_core::relay::Url,
+    build: &str,
+    relays: Vec<svrngs_core::relay::Url>,
+) -> (tempfile::TempDir, Node, String) {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[seed; 32]);
+    let sam = Node::start_asking(
+        dir.path().to_path_buf(),
+        key.clone(),
+        &svrngs_node::iroh::RelayConfig {
+            relay_urls: vec![build.to_string()],
+            n0_services: false,
+            loopback_only: true,
+        },
+        &[own.clone()],
+        svrngs::group::seed_text,
+        "127.0.0.1:0".parse().unwrap(),
+    )
+    .await
+    .expect("Sam's computer starts");
+    let house = svrngs_node::group::draw(
+        Name::parse("house").unwrap(),
+        Name::parse("Sam").unwrap(),
+        key.verifying_key(),
+    );
+    sam.host()
+        .keep_group(&house, None, &[own])
+        .expect("house kept");
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let token = sam
+        .host()
+        .mint(&house.id(), relays, None, now)
+        .expect("a link")
+        .encode();
+    (dir, sam, token)
+}
+
+/// A port on 127.0.0.1 nothing listens on: bound, read and let go.
+fn free() -> u16 {
+    let l = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    l.local_addr().unwrap().port()
+}
+
+/// Plain in, TLS out to `to`, trusting `cert` as a public name's
+/// certificate is trusted: the way a computer reaches the stock relay,
+/// whose per-run certificate its endpoint does not know (svrngs's endpoint
+/// trusts the webpki roots alone: `guest.rs` builds `presets::Minimal`
+/// with no `ca_tls_config`, iroh-1.0.2 `endpoint.rs:261`).
+async fn splice(to: std::net::SocketAddr, cert: Vec<u8>) -> String {
+    let config = iroh_relay::tls::CaTlsConfig::custom_roots([cert.into()])
+        .client_config(std::sync::Arc::new(rustls::crypto::ring::default_provider()))
+        .unwrap();
+    let connector = tokio_rustls::TlsConnector::from(std::sync::Arc::new(config));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let at = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut asked, _)) = listener.accept().await {
+            let connector = connector.clone();
+            tokio::spawn(async move {
+                let stream = tokio::net::TcpStream::connect(to).await?;
+                let name = rustls::pki_types::ServerName::IpAddress(to.ip().into());
+                let mut tls = connector.connect(name, stream).await?;
+                tokio::io::copy_bidirectional(&mut asked, &mut tls)
+                    .await
+                    .map(|_| ())
+            });
+        }
+    });
+    format!("http://{at}/")
+}
+
+/// The stock `iroh-relay` binary at `access`, on 127.0.0.1, with a manual
+/// per-run certificate: its own CLI, config file and TLS termination, as
+/// someone setting up a network runs it (`cargo build -p iroh-relay --bin
+/// iroh-relay`, no download and no svrngs code in it). Returns the child
+/// (killed when dropped), the https URL a browser reaches it at, and the
+/// plain URL a computer reaches it at through [`splice`].
+async fn stock_relay(access: &str) -> (tokio::process::Child, String, String) {
+    let built = std::process::Command::new("cargo")
+        .current_dir(harness::repo())
+        .args(["build", "-p", "iroh-relay", "--bin", "iroh-relay"])
+        .args(["--target-dir", "target/stock-relay"])
+        .output()
+        .expect("cargo runs");
+    let why = String::from_utf8_lossy(&built.stderr);
+    let ok = built.status.success();
+    assert!(ok, "the stock relay did not build:\n{why}");
+    let dir = tempfile::tempdir().unwrap();
+    let made = rcgen::generate_simple_self_signed(vec!["127.0.0.1".into()]).unwrap();
+    std::fs::write(dir.path().join("default.crt"), made.cert.pem()).unwrap();
+    let key = made.signing_key.serialize_pem();
+    std::fs::write(dir.path().join("default.key"), key).unwrap();
+    let (http, https) = (free(), free());
+    let config = format!(
+        "http_bind_addr = \"127.0.0.1:{http}\"\nenable_metrics = false\n{access}\n[tls]\nhttps_bind_addr = \"127.0.0.1:{https}\"\ncert_mode = \"Manual\"\ncert_dir = \"{}\"\n",
+        dir.path().display()
+    );
+    std::fs::write(dir.path().join("relay.toml"), config).unwrap();
+    let child =
+        tokio::process::Command::new(harness::repo().join("target/stock-relay/debug/iroh-relay"))
+            .arg("--config-path")
+            .arg(dir.path().join("relay.toml"))
+            .kill_on_drop(true)
+            .spawn()
+            .expect("the stock relay starts");
+    for _ in 0..100 {
+        if std::net::TcpStream::connect(("127.0.0.1", https)).is_ok() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    let https_url = format!("https://127.0.0.1:{https}/");
+    let at = std::net::SocketAddr::from(([127, 0, 0, 1], https));
+    let plain = splice(at, made.cert.der().to_vec()).await;
+    (child, https_url, plain)
+}
+
+/// The browser half of a joining scene, under the published policy: Sam's
+/// computer met at `own` and reached through `build`, a link carrying
+/// `relays`, a `shelf` lend declared, and one opening; what the page saw,
+/// its origin, and the home relay Sam holds at the end.
+async fn phone_joins_through(
+    engine: harness::Engine,
+    own: svrngs_core::relay::Url,
+    build: &str,
+    relays: Vec<svrngs_core::relay::Url>,
+) -> (Value, String, Option<String>) {
+    let (dir, sam, token) = sam_meeting_at(1, own, build, relays).await;
+    let shelf = Lend {
+        name: LendName::parse("shelf").unwrap(),
+        source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
+        kind: Kind::parse("shelf").unwrap(),
+        limit: NonZeroU16::new(3),
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        sign_in_with_svrngs: None,
+        asks: None,
+    };
+    lend::declare(dir.path(), &shelf, None).unwrap();
+    let args =
+        json!({ "engine": engine.as_str(), "site": harness::site(), "policy": "production" });
+    let (seen, origin) = phone_joining(args, &token).await;
+    let addr = sam.endpoint().addr();
+    let home = addr.relay_urls().next().map(|r| r.to_string());
+    sam.endpoint().close().await;
+    (seen, origin, home)
+}
+
+in_webkit!(
+    /// **A fresh browser under the published page's policy joins through
+    /// the advertised public fallback, the group's own HTTP relay never
+    /// tried** (relay-fallback charter). Sam's group is met at A, a
+    /// plain-HTTP relay (the Pi's stand-in); his build's fallback is B,
+    /// which the page reaches over TLS at the same front the node reaches
+    /// plainly. The link he mints prefers A and carries B. The published
+    /// `connect-src 'self' wss: https:` refuses A, so the page takes B
+    /// alone, joins once and opens the lend. Planted: the page binding the
+    /// link's first relay whatever its policy takes, and the join hangs at
+    /// the blocked request (no name form — the incident's shape).
+    a_browser_under_the_published_policy_joins_through_the_public_fallback
+);
+async fn a_browser_under_the_published_policy_joins_through_the_public_fallback(
+    engine: harness::Engine,
+) {
+    use svrngs_core::relay::Url;
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let public_https = format!("https://{}/", harness::relay_at(&public));
+    let (seen, origin, _) = phone_joins_through(
+        engine,
+        own_url.clone(),
+        &harness::relay_url(&public),
+        vec![own_url.clone(), public_https.parse().unwrap()],
+    )
+    .await;
+    let port = origin
+        .trim_end_matches('/')
+        .rsplit(':')
+        .next()
+        .unwrap()
+        .to_string();
+    eprintln!("published policy: {seen:#}");
+
+    // In through B alone, and the lend opens at its own origin from A's side
+    // of the group's record.
+    let first = &seen["first"];
+    assert!(in_house(first, "Pia"), "{seen:#}");
+    for again in ["again", "alone"] {
+        assert!(in_house(&seen[again], "Pia"), "{again}:\n{seen:#}");
+    }
+    let shelf_label = svrngs_core::pass::Label::of(
+        SigningKey::from_bytes(&[1; 32]).verifying_key().as_bytes(),
+        "shelf",
+    );
+    assert_eq!(
+        seen["opened"],
+        json!({ "origin": format!("https://{shelf_label}.{}:{port}", harness::PAGE_HOST), "text": "hi" }),
+        "{seen:#}"
+    );
+
+    // A was never tried: no request was blocked, and no line names it.
+    let logs = seen["logs"].as_array().unwrap();
+    let refused = |l: &Value| {
+        let l = l.as_str().unwrap_or_default();
+        [
+            "Content Security Policy",
+            "violates",
+            "mixed content",
+            "blocked",
+        ]
+        .iter()
+        .any(|word| l.contains(word))
+    };
+    assert!(
+        !logs.iter().any(refused),
+        "a request was refused by the page's policy:\n{seen:#}"
+    );
+    let lines = seen["lines"].as_array().unwrap();
+    let said: Vec<&str> = lines.iter().filter_map(Value::as_str).collect();
+    assert!(
+        !said.iter().any(|l| l.contains(&own_url.to_string())),
+        "the HTTP relay was dialled:\n{seen:#}"
+    );
+    assert!(
+        said.iter()
+            .any(|l| l.contains("LAYER parse: ok — relay") && l.contains(&public_https)),
+        "the fallback was bound:\n{seen:#}"
+    );
+}
+
+in_webkit!(
+    /// **A relay that answers but cannot carry to the issuer does not win**
+    /// (relay-fallback charter). The link prefers A, a live relay the
+    /// keeper is not at — its probe answers, and a dial there finds no
+    /// one — and carries B, where the keeper is. The browser tries both at
+    /// once and is let in through B. Planted: `reach` dialling the first
+    /// route alone, and the join fails.
+    a_route_that_answers_but_cannot_reach_the_issuer_does_not_win
+);
+async fn a_route_that_answers_but_cannot_reach_the_issuer_does_not_win(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (dead, public) = (harness::relay().await, harness::relay().await);
+    let dead_https = format!("https://{}/", harness::relay_at(&dead));
+    let dead_own: Url = harness::relay_url(&dead).parse().unwrap();
+    let public_https = format!("https://{}/", harness::relay_at(&public));
+    let (_dir, sam, token) = sam_meeting_at(
+        2,
+        dead_own,
+        &harness::relay_url(&public),
+        vec![dead_https.parse().unwrap(), public_https.parse().unwrap()],
+    )
+    .await;
+    let args = json!({ "engine": engine.as_str(), "site": site, "policy": "production" });
+    let (seen, _) = phone_joining(args, &token).await;
+    eprintln!("dead-end route: {seen:#}");
+    assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
+    let said: Vec<&str> = seen["lines"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(Value::as_str)
+        .collect();
+    assert!(
+        said.iter()
+            .any(|l| l.contains("dialing") && l.contains(&dead_https)),
+        "the dead-end route was not tried:\n{seen:#}"
+    );
+    assert!(
+        said.iter()
+            .any(|l| l.contains("QUIC connection established")),
+        "{seen:#}"
+    );
+    sam.endpoint().close().await;
+}
+
+in_webkit!(
+    /// **A stalled eligible primary does not delay the fallback** (the
+    /// relay-fallback charter: eligible routes are tried at once, so a
+    /// route that does not answer does not hold up one that does). Sam's
+    /// group is met at A, a plain-HTTP relay (the Pi's stand-in); his
+    /// build's fallback is B, reached over TLS at the front the node
+    /// reaches plainly. The link prefers S, an https route that accepts
+    /// and never answers, and carries B. The published policy takes both,
+    /// so both are dialled; B answers and the join is in. Planted:
+    /// `reach` dialling the first route alone, and the join hangs at S.
+    a_stalled_eligible_primary_does_not_delay_the_fallback
+);
+async fn a_stalled_eligible_primary_does_not_delay_the_fallback(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let stalled: Url = stalled().await.parse().unwrap();
+    let public_https = format!("https://{}/", harness::relay_at(&public));
+    let (_dir, sam, token) = sam_meeting_at(
+        3,
+        own_url,
+        &harness::relay_url(&public),
+        vec![stalled.clone(), public_https.parse().unwrap()],
+    )
+    .await;
+    let args = json!({ "engine": engine.as_str(), "site": site, "policy": "production" });
+    let (seen, _) = phone_joining(args, &token).await;
+    eprintln!("stalled route: {seen:#}");
+    assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
+    let lines = seen["lines"].as_array().unwrap();
+    let said: Vec<&str> = lines.iter().filter_map(Value::as_str).collect();
+    let at = |url: &str| {
+        said.iter()
+            .position(|l| l.contains("dialing") && l.contains(url))
+    };
+    let (stalled_at, public_at) = (at(stalled.as_str()), at(&public_https));
+    let won_at = said
+        .iter()
+        .position(|l| l.contains("QUIC connection established"));
+    assert!(
+        matches!((stalled_at, public_at, won_at), (Some(s), Some(p), Some(w)) if s < w && p < w),
+        "the fallback answered while the stalled route was still dialling:\n{seen:#}"
+    );
+    sam.endpoint().close().await;
+}
+
+in_webkit!(
+    /// **Every route down fails bounded, in the page's accurate words, and
+    /// the endpoint is closed** (the relay-fallback charter: bounded
+    /// cancellation and cleanup). The link names two https routes that
+    /// accept and never answer. `bind` waits `dial::LINK_WITHIN` for any
+    /// relay to answer; none does, the endpoint is closed, and the page
+    /// says the computer did not answer. Planted, watched failing: the
+    /// unbounded wait, which left the person waiting the page's whole
+    /// PATIENCE (60 s) with the endpoint still bound.
+    every_route_down_fails_bounded_and_closes_the_endpoint
+);
+async fn every_route_down_fails_bounded_and_closes_the_endpoint(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let site = harness::site();
+    let (own, public) = (harness::relay().await, harness::relay().await);
+    let own_url: Url = harness::relay_url(&own).parse().unwrap();
+    let (down_a, down_b) = (stalled().await, stalled().await);
+    let (_dir, sam, token) = sam_meeting_at(
+        4,
+        own_url,
+        &harness::relay_url(&public),
+        vec![down_a.parse().unwrap(), down_b.parse().unwrap()],
+    )
+    .await;
+    let args =
+        json!({ "engine": engine.as_str(), "site": site, "policy": "production", "fail": true });
+    let (seen, _) = phone_joining(args, &token).await;
+    eprintln!("all routes down: {seen:#}");
+    assert_eq!(
+        seen["first"]["status"],
+        "The computer that sent this link did not answer. Try again later.",
+        "the failure is the page's accurate words:\n{seen:#}"
+    );
+    let ms = seen["ms"]
+        .as_u64()
+        .expect("the browser half timed the failure");
+    assert!(
+        ms < 30_000,
+        "the failure was not bounded: {ms} ms\n{seen:#}"
+    );
+    let lines = seen["lines"].as_array().unwrap();
+    assert!(
+        lines
+            .iter()
+            .filter_map(Value::as_str)
+            .any(|l| l.contains("LAYER relay-connect: REFUSED — no relay answered within")),
+        "the refusal names the bound and the close:\n{seen:#}"
+    );
+    sam.endpoint().close().await;
+}
+
+in_webkit!(
+    /// **A group's own relay is the stock `iroh-relay` binary** (the
+    /// operator, 2026-11-05): its own CLI, config file and TLS termination
+    /// on 127.0.0.1, named as the group's own relay, with the build's
+    /// fallback unanswering, so the computer homes there — and a fresh
+    /// browser under the published policy joins through it and opens a
+    /// lend. The computer reaches it through `splice`, since its endpoint
+    /// trusts the webpki roots alone (`guest.rs`). Planted, watched red:
+    /// the same binary with `access.allowlist = []` — the computer does
+    /// not home and the browser does not join.
+    a_group_meets_at_a_stock_iroh_relay
+);
+async fn a_group_meets_at_a_stock_iroh_relay(engine: harness::Engine) {
+    use svrngs_core::relay::Url;
+    let (_stock, https, plain) = stock_relay("access = \"everyone\"").await;
+    let dead = format!("http://127.0.0.1:{}/", free());
+    let (plain, https) = (Url::parse(&plain).unwrap(), Url::parse(&https).unwrap());
+    let (seen, _, home) = phone_joins_through(engine, plain.clone(), &dead, vec![https]).await;
+    assert_eq!(home.as_deref(), Some(plain.as_str()), "{seen:#}");
+    assert!(in_house(&seen["first"], "Pia"), "{seen:#}");
+    assert_eq!(seen["opened"]["text"], "hi", "{seen:#}");
 }

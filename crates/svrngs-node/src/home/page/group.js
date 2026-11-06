@@ -33,7 +33,7 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  * @property {{ name: string, maker: string | null, since: number | null } | null} made who made it, `null` for this computer's key, and since when it is held here (group.rs `Namesake`)
  * @property {string[] | null} folders
  * @property {Visit[] | null} visiting
- * @property {'unanswered' | 'unowned' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
+ * @property {'fallback' | 'unowned' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
  */
 
 /**
@@ -73,8 +73,8 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
 // `fallback` (relay fallbacks; svrngs-core relay.rs `Tier`).
 /** @type {Record<NonNullable<Group['fallback']>, (name: string) => string>} */
 const BACKUP = {
-  unanswered: (name) =>
-    `This computer can’t reach the place ${name} usually meets, so it’s reaching ${name} a backup way for now. There’s nothing to do: it switches back by itself once that place answers.`,
+  fallback: (name) =>
+    `This computer is reachable through the public way for now, so a phone can open ${name} too. It goes back to the place ${name} usually meets once the public way stops answering.`,
   unowned: (name) =>
     `This computer is also in a group with no meeting place of its own, so it reaches every group, ${name} too, the backup way. The others in ${name} still reach it.`,
 };

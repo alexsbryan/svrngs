@@ -101,7 +101,9 @@ Nothing we run holds them. We run three things, and you can replace each:
    Its certificate comes from Let's Encrypt.
 3. **Make the group there.** `svrngs new <group> --relay <name>`. Every
    computer its links let in meets it there. Friends on a computer join
-   with `svrngs join <link>`, and need no page.
+   with `svrngs join <link>`, and need no page. To move a group later,
+   stop svrngs and run `svrngs link <group> --relay <name>`: only its
+   keeper may, and the new link carries the new relay.
 4. **Host the page, for phones.** Run `scripts/build-web.sh` and
    `scripts/build-release.sh` (each one's top says what it needs), then
    serve `target/web/site/` over HTTPS at your host and at every name under

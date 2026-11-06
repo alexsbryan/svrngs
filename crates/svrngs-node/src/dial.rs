@@ -33,7 +33,9 @@ pub const DIAL_WITHIN: std::time::Duration = std::time::Duration::from_secs(4);
 /// answer its dial as a member (v1ui-reach (b); `web/src/lib.rs`
 /// `Endpoint::dial_link`), dialled at once with the lenders' computers,
 /// each within its own cap, so the page goes through whichever answers
-/// first (v1ui-race (a)).
+/// first (v1ui-race (a)); and how long an endpoint waits for any relay to
+/// answer before it is closed and the bind refused (`bind`, relay
+/// fallbacks).
 /// **10 s, by [`DIAL_WITHIN`]'s rule, written before the measurement**
 /// (`demo/runs/reach/2026-10-14/`, PREDICTIONS.md, "The cap"): the slowest
 /// working dial, 3,057 ms, times 3, rounded up to a whole second; the

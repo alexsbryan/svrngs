@@ -316,7 +316,15 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   and `ralph/REVIEW_FINDINGS.md`. V1.5 is published from 5a4cb567 with these
   changes, the relay fallbacks and the loading, Stop and binary-message
   fixes (`RELEASES.md`; `demo/runs/v1.5/2026-11-03/README.md`);
-- welcoming a room of laptop users, after the JavaScript queue closes
+- the immediate-connect relay correction (`ralph/next/relay-fallback/`,
+  operator: "Ok start the ralph loop on this"), ahead of the remaining
+  onboarding work on the demo branch: cold keeper fallback proof and
+  economizing first, then preferred+public invitation routes and shared
+  browser/app recovery, then one final audit. The demo is a fresh HTTPS
+  browser joining and opening a lend despite an HTTP-only mesh primary.
+  Budget: +150 product lines, core at most +10 included, +150 test lines;
+  cap changes still require the post-pass decision. No deployment here;
+- welcoming a room of laptop users, after the JavaScript queue and relay correction
   (reprioritized by the operator, 2026-11-03: "Instead of releasing that
   right now I want to start the work in docs/ONBOARDING.md"; publication of
   the recent multi-ring join-flow fixes deferred):

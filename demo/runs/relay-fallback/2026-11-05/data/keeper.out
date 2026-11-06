@@ -1,0 +1,8 @@
+Made house, with you as Sam.
+Send this link to the people you want in it. It works for a day, while this computer is on:
+
+  svrngs://join/<the token>
+
+house's folder is /Users/alexsbryan/dev/svrngs-lanes/relay-fallback/demo/runs/relay-fallback/2026-11-05/data/scratch/keeper/svrngs/house: what anyone in house puts there reaches this computer, and what you put there reaches theirs.
+
+Leave this running; Ctrl-C stops it.

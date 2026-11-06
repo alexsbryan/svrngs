@@ -84,10 +84,12 @@ pub struct Meeting {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Tier {
-    /// Its groups' own relays alone, iroh choosing among them by speed.
+    /// Its groups' own relays alone: the build's fallback is not answering,
+    /// so this computer is reached the way its groups meet locally.
     Own,
-    /// The build's too: none of its groups' own relays answers.
-    Unanswered,
+    /// The build's fallback alone: it answers, so a browser holding only
+    /// the published page's policy reaches this computer through it.
+    Fallback,
     /// The build's too: a group it holds names none of its own, and one
     /// endpoint, so one home, serves every group (§7's first slice).
     Unowned,
@@ -124,6 +126,12 @@ impl Meeting {
         &self.own
     }
 
+    /// The build's tier: the fallback svrngs asks whether it answers, since
+    /// it is the one a browser may reach (§7's correction).
+    pub fn build(&self) -> &BTreeSet<Url> {
+        &self.build
+    }
+
     /// Where a computer of both groups meets: each tier joined.
     pub fn join(mut self, other: Meeting) -> Self {
         self.own.extend(other.own);
@@ -133,32 +141,37 @@ impl Meeting {
     }
 
     /// The one decision (§7): the tier a computer meets its groups at, and
-    /// the relays its endpoint holds for it, given whether any of the own
-    /// tier `answers`. The build's tier only while none answers, or while
-    /// a group names none of its own.
+    /// the relays its endpoint holds for it, given whether the build's
+    /// fallback `answers` — never, when the build has none. The build's
+    /// alone while it answers, so a browser may reach this computer through
+    /// it; the group's own alone when it does not; and the build's whatever
+    /// answers when a group it holds names none of its own.
     pub fn decide(&self, answers: bool) -> (Tier, BTreeSet<Url>) {
-        let tier = match (self.unowned, answers) {
+        let tier = match (self.unowned, answers && !self.build.is_empty()) {
             (true, _) => Tier::Unowned,
-            (false, false) => Tier::Unanswered,
-            (false, true) => Tier::Own,
+            (false, true) => Tier::Fallback,
+            (false, false) => Tier::Own,
         };
-        let build = self.build.iter().filter(|_| tier != Tier::Own);
-        let held: BTreeSet<Url> = self.own.iter().chain(build).cloned().collect();
-        tracing::debug!(target: "relay", ?tier, answers, held = held.len(), "relay: the tier a computer meets its groups at — its own relays while any answers, the build's beside them only when none does or a group names none");
+        let held = match tier {
+            Tier::Own => self.own.clone(),
+            _ => self.build.clone(),
+        };
+        tracing::debug!(target: "relay", ?tier, answers, held = held.len(), "relay: the tier a computer meets its groups at — the build's fallback while it answers, else the group's own; both whatever answers when a group names none of its own");
         (tier, held)
     }
 
     /// The at most two relays a link carries: `home`, the issuer's, first
-    /// when it is the meeting's, then the group's own, else the build's
-    /// first, so a group with none of its own carries one relay, as before.
+    /// when it is the meeting's, else the group's own first, else the
+    /// build's; and beside it the build's first, whatever the tier at
+    /// minting, so an https page always has the public fallback to take
+    /// (review F2), or the group's own first when the first is the build's.
     pub fn carried(&self, home: Option<&Url>) -> Vec<Url> {
         let home = home.filter(|h| self.relays().any(|r| r == *h));
-        let own = self.own.iter().filter(|r| Some(*r) != home);
-        let mut carried: Vec<&Url> = home.into_iter().chain(own).take(2).collect();
-        if carried.is_empty() {
-            carried.extend(self.build.first());
-        }
-        tracing::debug!(target: "relay", ?carried, "relay: a link carries the issuer's home first, then the group's own");
+        let first = home.or(self.own.first()).or(self.build.first());
+        let at_build = first.is_some_and(|f| self.build.contains(f));
+        let beside = (if at_build { &self.own } else { &self.build }).first();
+        let carried: Vec<&Url> = first.into_iter().chain(beside).collect();
+        tracing::debug!(target: "relay", ?carried, at_build, "relay: a link carries the issuer's home first, else the group's own, and beside it the build's first, else the group's own");
         carried.into_iter().cloned().collect()
     }
 }

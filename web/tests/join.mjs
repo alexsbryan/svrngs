@@ -18,7 +18,7 @@ import { createInterface } from 'node:readline';
 import { firstLook, inApp, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const server = await serve(args.site);
+const server = await serve(args.site, { policy: args.policy });
 // The page's origin as `svrngs new --origin` checks it, on `localhost`, a
 // name every name under which this computer answers; the phone reaches the
 // same server at the page's host over TLS (page.mjs `PAGE_HOST`), so the
@@ -31,7 +31,7 @@ const told = await new Promise((done) => input.once('line', done));
 input.close();
 // `taken`, when told, is typed first: a name someone in the group goes by,
 // which the page refuses and asks again, saying why (bash-person).
-const { link: printed, name, taken, hint: probe } = JSON.parse(told);
+const { link: printed, name, taken, hint: probe, fail } = JSON.parse(told);
 const link = printed.replace(checked, origin);
 
 // In the page: the person's key as the page's store unseals it, and where
@@ -220,15 +220,19 @@ try {
       await other.close();
     }
   }
+  const started = Date.now();
   const first = await opening(link);
-  const stored = await page.evaluate(scan);
-  const again = await opening(link);
-  const alone = await opening(origin);
+  const ms = Date.now() - started;
+  // `fail`: the link cannot be reached, so the one opening and how long it
+  // took are the whole answer; nothing is joined and nothing is opened.
+  const stored = fail ? null : await page.evaluate(scan);
+  const again = fail ? null : await opening(link);
+  const alone = fail ? null : await opening(origin);
   const lines = await page.evaluate(() => window.__lines);
   // Open the first lend listed: the page goes to its own origin, whose
   // worker serves it from its lender's computer, dialled by key with a pass.
   let opened = null;
-  if (alone.lent.length) {
+  if (alone?.lent.length) {
     const away = (url) => inApp(url) && url.pathname === '/';
     await Promise.all([page.waitForURL(away, { timeout: 90_000 }), page.click('#lent button')]);
     await page
@@ -239,7 +243,7 @@ try {
       text: await page.evaluate(() => document.body.innerText),
     };
   }
-  console.log(JSON.stringify({ hint, first, stored, again, alone, opened, lines, logs }));
+  console.log(JSON.stringify({ hint, first, ms, stored, again, alone, opened, lines, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;

@@ -103,11 +103,22 @@ export const hold = (unsealed) => {
 export const actor = (core) => core.actor(key);
 
 /**
- * The one endpoint, bound as the person on the first dial.
+ * The one endpoint, bound as the person on the first dial. One refused (no
+ * relay answered in time, web/src/lib.rs `bind`) is let go, so the next
+ * dial binds again rather than the refusal for good (review F3).
  * @param {typeof Wasm} core
  * @param {Group} group
  */
-const endpoint = (core, group) => (bound ??= core.endpoint(key, group.token));
+const endpoint = (core, group) => {
+  if (bound) return bound;
+  const binding = (bound = core.endpoint(key, group.token));
+  binding.catch((error) => {
+    if (bound !== binding) return;
+    trace(`PAGE: the endpoint was not bound, so the next dial binds one: ${error}`);
+    bound = null;
+  });
+  return binding;
+};
 
 /**
  * `group` dialled through the first to answer of its link's computer and
