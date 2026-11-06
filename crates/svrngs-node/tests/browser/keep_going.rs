@@ -6,9 +6,11 @@ use super::*;
 
 /// The relay `node` is homed at now, if any.
 fn home(node: &Node) -> Option<String> {
-    let addr = node.endpoint().addr();
-    let url = addr.relay_urls().next().map(ToString::to_string);
-    url
+    node.endpoint()
+        .addr()
+        .relay_urls()
+        .next()
+        .map(ToString::to_string)
 }
 
 /// The browser half run on `args`, with what `cut` does done between its
