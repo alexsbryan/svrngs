@@ -256,6 +256,7 @@ async fn computer(dir: &std::path::Path, key: &SigningKey, ours: &RelayConfig) -
         dir.to_path_buf(),
         key.clone(),
         ours,
+        &[],
         group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
         Duration::from_secs(86_400),

@@ -833,19 +833,12 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at) => open(&root, at.as_deref()).await?,
-        Verb::Update => {
-            return match svrngs_node::update::apply(&root).await {
-                Ok(svrngs_node::update::Outcome::Current) => {
-                    println!("This computer has the latest svrngs.");
-                    Ok(())
-                }
-                Ok(svrngs_node::update::Outcome::Updated) => {
-                    println!("Updated svrngs. Restart it to use it.");
-                    Ok(())
-                }
-                Err(e) => Err(Refusal::Update(e)),
-            };
+        Verb::Update => match svrngs_node::update::apply(&root).await {
+            Ok(svrngs_node::update::Outcome::Current) => "This computer has the latest svrngs.\n",
+            Ok(svrngs_node::update::Outcome::Updated) => "Updated svrngs. Restart it to use it.\n",
+            Err(e) => return Err(Refusal::Update(e)),
         }
+        .to_string(),
         Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -934,14 +927,8 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 join_running(&root, &link, &person).await?
             }
             claimed => {
-                return start(
-                    Verb::Join { link, person, run },
-                    root,
-                    relay,
-                    claimed?,
-                    None,
-                )
-                .await
+                let join = Verb::Join { link, person, run };
+                return start(join, root, relay, claimed?, None).await;
             }
         },
         other => {

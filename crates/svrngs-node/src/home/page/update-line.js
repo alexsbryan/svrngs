@@ -44,19 +44,10 @@ export function Update() {
       <h2>This computer’s svrngs</h2>
       <p>${said(state)}</p>
       ${
-        at === 'available' &&
+        (at === 'available' || at === 'refused') &&
         html`
         <p>
-          <button onClick=${() => send({ type: 'update' })}>Update and restart</button>
-          <button onClick=${() => send({ type: 'later' })}>Later</button>
-        </p>
-      `
-      }
-      ${
-        at === 'refused' &&
-        html`
-        <p>
-          <button onClick=${() => send({ type: 'update' })}>Try again</button>
+          <button onClick=${() => send({ type: 'update' })}>${at === 'refused' ? 'Try again' : 'Update and restart'}</button>
           <button onClick=${() => send({ type: 'later' })}>Later</button>
         </p>
       `

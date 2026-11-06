@@ -275,7 +275,7 @@ impl Node {
         seeds: SeedText,
         api: SocketAddr,
     ) -> Result<Self, NodeError> {
-        Self::start_every(data_dir, key, relay, seeds, api, DEFAULT_RING_SYNC_INTERVAL).await
+        Self::start_asking(data_dir, key, relay, &[], seeds, api).await
     }
 
     /// [`Node::start`], its endpoint built with `asked` among its groups'
@@ -291,34 +291,15 @@ impl Node {
         seeds: SeedText,
         api: SocketAddr,
     ) -> Result<Self, NodeError> {
-        Self::begin(
-            data_dir,
-            key,
-            relay,
-            asked,
-            seeds,
-            api,
-            DEFAULT_RING_SYNC_INTERVAL,
-        )
-        .await
+        let every = DEFAULT_RING_SYNC_INTERVAL;
+        Self::start_every(data_dir, key, relay, asked, seeds, api, every).await
     }
 
-    /// [`Node::start`], with the round every `every` rather than every
+    /// [`Node::start_asking`], with the round every `every` rather than every
     /// [`DEFAULT_RING_SYNC_INTERVAL`]. The scale instrument
     /// (`tests/scale.rs`) passes a day, so that no node's own round runs
     /// inside one it is timing.
     pub async fn start_every(
-        data_dir: PathBuf,
-        key: SigningKey,
-        relay: &RelayConfig,
-        seeds: SeedText,
-        api: SocketAddr,
-        every: Duration,
-    ) -> Result<Self, NodeError> {
-        Self::begin(data_dir, key, relay, &[], seeds, api, every).await
-    }
-
-    async fn begin(
         data_dir: PathBuf,
         key: SigningKey,
         relay: &RelayConfig,

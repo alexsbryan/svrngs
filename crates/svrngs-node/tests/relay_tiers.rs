@@ -232,6 +232,7 @@ async fn a_keeper_taking_away_the_last_relay_is_met_nowhere_near_it_again() {
         dir.path().into(),
         key.clone(),
         &at(&way),
+        &[],
         |_| Ok(None),
         any,
         every,

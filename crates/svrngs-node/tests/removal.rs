@@ -390,6 +390,7 @@ mod leave_race {
             dir.path().to_path_buf(),
             signing(seed),
             &no_relay(),
+            &[],
             no_seed,
             api,
             DAY,

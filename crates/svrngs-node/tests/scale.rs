@@ -592,6 +592,7 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
                 d.path().to_path_buf(),
                 signing(i as u8 + 1),
                 &no_relay,
+                &[],
                 |_| Ok(None),
                 "127.0.0.1:0".parse().unwrap(),
                 A_DAY,
