@@ -121,7 +121,7 @@ Branch `omarchy-lend-fixes`, in the gate image on the Fedora box: `cargo fmt`
 and clippy pass, door tests 53 of 53, door unit tests 20 of 20, each fix's
 plant watched red. 17 page laws and one `home` test fail there, the same 17 by
 name and the same test on unpatched `cf38fa6f`; why they fail there was not
-looked into.
+looked into. Since that run the branch has changed only in comments.
 
 **Limits of this evidence.**
 - One run of each measurement, in VMs. One run is not a rate (`AGENTS.md` 7).
@@ -375,17 +375,11 @@ Nothing below is on `main`, and nothing is pushed.
 
 | Item | Where | State |
 |---|---|---|
-| A, D, B | Branch `omarchy-lend-fixes` at `325c73b9`, worktree `~/dev/svrngs-lanes/omarchy-lend-fixes` | Three commits, tested as in section 3, not rebased on `7232aadd`, commit bodies lack their evidence |
-| C | Branch `omarchy-rest` at `64036dc4`, worktree `~/dev/svrngs-lanes/omarchy-rest` | One commit, on top of the above, test never run |
+| A, D, B | Branch `omarchy-lend-fixes` at `7967e94c`, worktree `~/dev/svrngs-lanes/omarchy-lend-fixes` | Three commits, tested as in section 3, not rebased on `7232aadd`, commit bodies lack their evidence |
+| C | Branch `omarchy-rest` at `f791bd72`, worktree `~/dev/svrngs-lanes/omarchy-rest` | One commit, on top of the above, test never run |
 | E, F | Nowhere | No code written |
 | Plugin | `~/omarchy-lab/plugin` on the Fedora box | Prototype, no confirm step, unpublished |
 | Test VMs | `~/omarchy-lab` on the Fedora box | Disposable |
-
-**The held code crosses the line and must be corrected before landing.** On
-`omarchy-lend-fixes` and `omarchy-rest`, comments and test notes in core files
-name Omarchy, ONCE and a private lab path, for example `opened()` in `home.rs`
-and `own_address` in `door.rs`. They should describe the behavior alone. The
-evidence belongs in the commit bodies and `demo/runs/`.
 
 If A and B are approved, B and A can be taken from the branch without D. If this
 review rejects the work, the branches can simply be deleted. No shipped behavior
