@@ -174,7 +174,18 @@ async fn events(engine: Engine) {
     let shared = scene
         .command(
             &sam,
-            &["share", &port, "--kind", "events", "--name", "events"],
+            &[
+                "share",
+                &port,
+                "--kind",
+                "events",
+                "--name",
+                "events",
+                "--group",
+                "The House",
+                "--group",
+                "dWeb",
+            ],
             "\n",
         )
         .await;

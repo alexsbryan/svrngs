@@ -77,7 +77,11 @@ async fn night(engine: Engine) {
     let group = sam.group_named("House").await;
     let port = jf.port.to_string();
     let shared = scene
-        .command(&sam, &["share", &port, "--kind", "jellyfin"], "\n")
+        .command(
+            &sam,
+            &["share", &port, "--kind", "jellyfin", "--group", "House"],
+            "\n",
+        )
         .await;
     let how = shared
         .lines()

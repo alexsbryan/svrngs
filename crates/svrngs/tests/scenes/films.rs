@@ -162,7 +162,11 @@ async fn films(engine: Engine) {
     let (sam, group) = scene.founds("Sam", "House").await;
     let port = jf.port.to_string();
     let shared = scene
-        .command(&sam, &["share", &port, "--kind", "jellyfin"], "\n")
+        .command(
+            &sam,
+            &["share", &port, "--kind", "jellyfin", "--group", "House"],
+            "\n",
+        )
         .await;
     if std::env::var("SCENES_PLANT").as_deref() == Ok("films:token") {
         // The plant: Sam's token kept as the lend's secret, where the door

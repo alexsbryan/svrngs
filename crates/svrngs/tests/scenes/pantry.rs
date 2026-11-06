@@ -82,7 +82,13 @@ async fn lends(
         .unwrap()
         .expect("it prints its port");
     let shared = scene
-        .command(who, &["share", &port, "--kind", kind, "--name", name], "\n")
+        .command(
+            who,
+            &[
+                "share", &port, "--kind", kind, "--name", name, "--group", "Kitchen",
+            ],
+            "\n",
+        )
         .await;
     assert!(shared.contains(&format!("You lend {name}")), "{shared}");
     served

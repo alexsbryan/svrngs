@@ -121,7 +121,9 @@ async fn doc(engine: Engine) {
     let shared = scene
         .command(
             &alex,
-            &["share", &port, "--name", "doc", "--kind", "doc"],
+            &[
+                "share", &port, "--name", "doc", "--kind", "doc", "--group", "House",
+            ],
             "",
         )
         .await;

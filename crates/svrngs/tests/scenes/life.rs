@@ -97,7 +97,13 @@ async fn lends(scene: &Scene, who: &Person, name: &str) -> tokio::process::Child
         .unwrap()
         .expect("the app prints its port");
     let shared = scene
-        .command(who, &["share", &port, "--kind", name, "--name", name], "\n")
+        .command(
+            who,
+            &[
+                "share", &port, "--kind", name, "--name", name, "--group", GROUP,
+            ],
+            "\n",
+        )
         .await;
     assert!(shared.contains(&format!("You lend {name}")), "{shared}");
     served

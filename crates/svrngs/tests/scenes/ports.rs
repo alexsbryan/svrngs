@@ -63,7 +63,9 @@ async fn tcp_echo() -> u16 {
 /// command lends one beside the svrngs running there.
 async fn lends(scene: &Scene, who: &Person, port: u16, how: &str, name: &str) {
     let port = port.to_string();
-    let args = ["share", &port, how, "--kind", "echo", "--name", name];
+    let args = [
+        "share", &port, how, "--kind", "echo", "--name", name, "--group", "House",
+    ];
     let shared = scene.command(who, &args, "\n").await;
     let raw = how.trim_start_matches("--").to_uppercase();
     assert!(
