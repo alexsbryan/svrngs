@@ -193,11 +193,15 @@ impl crate::node::Host {
         rail.set_seed(&seed.id(), &seed.roster())
             .map_err(|e| e.to_string())?;
         if founds {
-            let said = rail.commit(&seed.id(), &svrngs_core::MeetsAt(own));
+            let said = rail.commit(&seed.id(), &svrngs_core::MeetsAt(own.clone()));
             said.map_err(|e| e.to_string())?
                 .map_err(|why| format!("{why:?}"))?;
         }
         self.cut_over(&seed.id());
+        // Its record says where it meets from now on: a relay kept asked
+        // here would outlast the keeper's taking it away (requirement 5).
+        self.held
+            .send_modify(|h| h.asked.retain(|r| !own.contains(r)));
         self.refresh();
         Ok(())
     }

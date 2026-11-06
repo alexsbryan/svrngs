@@ -1912,7 +1912,11 @@ from the journal waits in PLAN §2.
   --relay` writes it at a group's start, and `svrngs link <group> --relay`
   replaces it later; a keeper's computer names an old group's from the relay
   its file keeps, once (`Host::cut_over`), and until then that file is read
-  in its place (group.rs `meeting`).
+  in its place (group.rs `meeting`). A relay `new --relay` or a link asked
+  for is forgotten as its group is kept, so the record alone decides from
+  then on and a relay the keeper took away is not gone back to; while no
+  other relay answers iroh keeps the home it has (iroh-1.0.2 socket.rs:1967),
+  so the move off it waits for one. No command names an empty set yet.
 - **A visit is folded beside membership** (svrn-docs `GUESTS.md` §3, §5).
   A `Visit{guest, key, opens, until}`, signed by the host's computer, names
   the guest, a key fresh for the visit and the lends it opens, by each

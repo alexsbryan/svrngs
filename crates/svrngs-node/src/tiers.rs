@@ -70,7 +70,7 @@ pub(crate) struct Held {
     tier: Tier,
     relays: BTreeSet<Url>,
     answers: bool,
-    asked: BTreeSet<Url>,
+    pub(crate) asked: BTreeSet<Url>,
 }
 
 impl Held {

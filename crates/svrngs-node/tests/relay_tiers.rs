@@ -72,13 +72,16 @@ async fn a_dial_reaches_a_member_at_a_relay_this_computer_does_not_hold() {
     taken.await.unwrap();
 }
 
+/// The asks that leave the fallback and two more, and iroh's slowest
+/// re-check.
+fn homing_by() -> Duration {
+    svrngs_node::tiers::ASKED_EVERY * (svrngs_node::tiers::LEFT_AFTER + 2) + Duration::from_secs(26)
+}
+
 /// The relay `node` is homed at, once it is `want`, waited for up to
-/// the asks that leave the fallback and two more, and iroh's slowest
-/// re-check; the wait in ms.
+/// [`homing_by`]; the wait in ms.
 async fn homed(node: &Node, want: &str) -> u128 {
-    let t = Instant::now();
-    let by = svrngs_node::tiers::ASKED_EVERY * (svrngs_node::tiers::LEFT_AFTER + 2)
-        + Duration::from_secs(26);
+    let (t, by) = (Instant::now(), homing_by());
     while t.elapsed() < by {
         let home = node
             .endpoint()
@@ -199,6 +202,73 @@ async fn a_group_meets_at_the_builds_fallback_while_it_answers() {
         "TIERS the fallback back, at the fallback: {} ms",
         homed(&node, &way).await
     );
+    node.endpoint().close().await;
+}
+
+/// **A keeper who takes away a group's last relay is met nowhere near it
+/// again** (KEEP_GOING_AT_HOME 5): Ada made house at A, asked as `new
+/// --relay` asks, and sits at A, her build's way cut. The keeper's act names
+/// no relay at all. A new link does not carry A; the way back, she is homed
+/// at the build's; the way cut again past `LEFT_AFTER` and iroh's slowest
+/// re-check, she does not go back to A. Planted, watched red: `keep_group`
+/// leaving A in `Held::asked`, and she went back. While no other relay
+/// answers iroh keeps the home it has, map or no map (iroh-1.0.2
+/// socket.rs:1967), so this waits for the way back rather than assert her
+/// gone from A at once. No command writes the empty set yet (`Host::meet`
+/// reads on empty): the act goes in through the rail, and a one-second
+/// round reads it.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_keeper_taking_away_the_last_relay_is_met_nowhere_near_it_again() {
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let ((_own, a), (build, _)) = (relay(any).await, relay(any).await);
+    let (way, cut) = cuttable(build.http_addr().unwrap()).await;
+    cut.send_replace(true);
+    let (dir, key) = (
+        tempfile::tempdir().unwrap(),
+        SigningKey::from_bytes(&[4; 32]),
+    );
+    let every = Duration::from_secs(1);
+    let node = Node::start_every(
+        dir.path().into(),
+        key.clone(),
+        &at(&way),
+        |_| Ok(None),
+        any,
+        every,
+    )
+    .await
+    .unwrap();
+    let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
+    let seed = svrngs_node::group::draw(name("house"), name("Ada"), key.verifying_key());
+    let at_own = [a.parse::<Url>().unwrap()];
+    node.host().meet_at(&at_own).await;
+    node.host().keep_group(&seed, None, &at_own).unwrap();
+    homed(&node, &a).await;
+
+    node.rail()
+        .commit(&seed.id(), &svrngs_core::MeetsAt(Default::default()))
+        .expect("the journal takes it")
+        .expect("the keeper's act counts");
+    let link = node.host().link(&seed.id(), false, None, None).unwrap();
+    assert!(
+        !link.token.relays.contains(&at_own[0]),
+        "a new link still carries A: {:?}",
+        link.token.relays
+    );
+    cut.send_replace(false);
+    homed(&node, &way).await;
+    cut.send_replace(true);
+    let (away, by) = (Instant::now(), homing_by());
+    while away.elapsed() < by {
+        let home = node.endpoint().addr();
+        assert_ne!(
+            home.relay_urls().next().map(ToString::to_string),
+            Some(a.clone()),
+            "back at A {:?} after the cut",
+            away.elapsed()
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
     node.endpoint().close().await;
 }
 
