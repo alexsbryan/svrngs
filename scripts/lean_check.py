@@ -462,10 +462,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # minted with no https route, a refused bind cached for good, visits racing
 # one route, old passes throwing) and the re-entry backoff; `.` +33 and js +23
 # over, each raised to one past where it lands: 19,946 and 8,212.
+# Selected-ring lending's backend (onboarding-scoped-lending), under the
+# operator's preapproval of its minimal necessary growth (2026-11-04,
+# ralph/next/onboarding/CHARTER.md "Selected-ring lending"): `.` 20,331
+# needs the exclusive cap 20,332, +386 over the 19,945 the relay-fallback
+# landing left (the 2547d91c checkpoint +272, this row's finish +114); no
+# core or js change. The fresh pass (docs/LENDING_SCOPE.md, resumed at
+# b484b2b3) established no preserving cut; this row's one, `Lend::reaches`
+# for three copies of its rule (95fa27b5, -12 lines), is counted.
+# The rest is new policy: the audience, its witness, list and header
+# scope, OIDC provenance, the edit lock, `share --group`, and cutting
+# streams; within the +700 review bound.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 19946,
+    ".": 20332,
 
     "js": 8212,
 
