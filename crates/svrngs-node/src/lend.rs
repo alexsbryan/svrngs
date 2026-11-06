@@ -641,6 +641,9 @@ pub fn declare(
             "lend: refused — a lend declares its own password or a sign-in with svrngs, never both");
         return Err(LendError::TwoSecrets);
     }
+    // Held from the secret to the declaration, as every change is, so a
+    // change that read the lend before never writes it back over this.
+    let _held = lock_lend(data_dir, &lend.name)?;
     let secrets = secret_dir(data_dir, &lend.name);
     let unwritable = |path: &Path| {
         let path = path.to_path_buf();

@@ -501,3 +501,39 @@ fn a_withdrawal_while_a_change_holds_the_lend_is_busy_never_undone() {
         "and it stays withdrawn"
     );
 }
+
+/// A re-declaration is serialized with every other change to the lend
+/// (audit F4): a `share --group` narrowing asked while a limit change holds
+/// the lock is busy, so the change's stale write can never undo it, and
+/// once let go the narrowing is taken and kept. Planted: `declare` outside
+/// the lock, which the change's write then undid.
+#[test]
+fn a_redeclaration_while_a_change_holds_the_lend_is_busy_never_undone() {
+    let root = tempfile::tempdir().unwrap();
+    let both = Audience::Selected(vec!["house".into(), "trip".into()]);
+    let shelf = Lend {
+        audience: both,
+        ..lend("shelf", 9)
+    };
+    declare(root.path(), &shelf, None).unwrap();
+    let narrowed = Lend {
+        audience: Audience::Selected(vec!["house".into()]),
+        ..shelf.clone()
+    };
+    let mut during = None;
+    let changed = mutate(root.path(), &shelf.name, |l| {
+        during = Some(declare(root.path(), &narrowed, None));
+        l.limit = NonZeroU16::new(5);
+    });
+    assert!(changed.unwrap(), "the change is written");
+    let said = during.unwrap();
+    let now = read(root.path(), &shelf.name).unwrap().unwrap().audience;
+    assert!(
+        !(said.is_ok() && now != narrowed.audience),
+        "declare said it narrowed, and the change wrote the old audience back"
+    );
+    assert!(matches!(said, Err(LendError::Busy { .. })), "{said:?}");
+    declare(root.path(), &narrowed, None).unwrap();
+    let kept = read(root.path(), &shelf.name).unwrap().unwrap().audience;
+    assert_eq!(kept, narrowed.audience, "taken once let go");
+}
