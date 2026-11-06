@@ -305,6 +305,42 @@ export async function persist() {
   return `asked the browser to keep the page's storage: ${granted ? 'granted' : 'refused'}`;
 }
 
+// `label`'s origin holds this build's every piece, as its signer was told.
+/** @param {string} label */
+export const keepSaved = (label) =>
+  run('seal', 'readwrite', (objects) => objects.put('__VERSION__', `saved ${label}`));
+
+// Said while the browser has not been let reach the home network
+// (KEEP_GOING_AT_HOME 21): Chromium's permission, which others refuse to name.
+const LOCAL =
+  'This browser asks before it reaches devices on your home network. Allow it, so this phone can find your group when the internet is out.';
+
+// What keeps this phone from going on with `group` at home: none when it is
+// ready (KEEP_GOING_AT_HOME 29). Each is what a check found, never that
+// something was once opened. An app's mark is set by its signer when that
+// origin held this build's every piece, so a new build asks it again.
+/**
+ * @param {{ id: string, name: string }} group
+ * @param {{ label: string, name: string }[]} lent
+ * @returns {Promise<string[]>}
+ */
+export async function unready(group, lent) {
+  const kept = (await groups()).some((one) => one.id === group.id);
+  const apps = await Promise.all(lent.map((lend) => inSeal(`saved ${lend.label}`)));
+  const keeps = await navigator.storage?.persisted();
+  const local = await navigator.permissions
+    ?.query({ name: /** @type {PermissionName} */ ('local-network-access') })
+    .catch(() => null);
+  return [
+    ...(kept ? [] : [`${group.name} is not saved on this phone.`]),
+    ...lent
+      .filter((_, at) => apps[at] !== '__VERSION__')
+      .map((lend) => `${lend.name} is not saved here: open it once while online.`),
+    ...(keeps ? [] : ['The browser has not agreed to keep what this page saves.']),
+    ...(local && local.state !== 'granted' ? [LOCAL] : []),
+  ];
+}
+
 // Every group kept, the last opened first. Their keys stay sealed.
 export async function groups() {
   const kept = await run(
@@ -434,6 +470,20 @@ export function labelOf(hostname) {
 // build time, as in sw.js.
 export const CACHES = 'svrngs-web-';
 export const CACHE = `${CACHES}__VERSION__`;
+// What a lend's origin saves, so a phone reopens with the public site gone
+// (KEEP_GOING_AT_HOME 10), and one piece's address, this build's.
+export const SAVED =
+  'open.html open.js lend.js shim.js store.js authority.js away.html wasm/svrngs_web.js wasm/svrngs_web_bg.wasm'.split(
+    ' ',
+  );
+/** @param {string} file */
+export const savedAt = (file) => new URL(`./${file}?v=__VERSION__`, import.meta.url).href;
+// Whether all of them are here, at this origin.
+export const whole = async () => {
+  const cache = await caches.open(CACHE);
+  const held = await Promise.all(SAVED.map((file) => cache.match(savedAt(file))));
+  return held.every(Boolean);
+};
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
 
 // The module's `Response`, for wasm-bindgen's `init({ module_or_path })`:

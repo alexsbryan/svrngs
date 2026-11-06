@@ -99,14 +99,18 @@ const cut = (name) => {
 };
 const lendWorker = (context) =>
   runInNewContext(
-    `const SITE = '/'; const savedAt = (file) => \`/\${file}?v=__VERSION__\`;
+    `const SITE = '/';
      ${cut('saved')}${cut('activated')}${cut('installed')}
      ({ saved, activated, installed });`,
     {
       URL,
       trace: () => {},
-      store: { CACHE: 'svrngs-web-__VERSION__', CACHES: 'svrngs-web-' },
-      SAVED: ['shim.js', 'open.html'],
+      store: {
+        CACHE: 'svrngs-web-__VERSION__',
+        CACHES: 'svrngs-web-',
+        SAVED: ['shim.js', 'open.html'],
+        savedAt: (file) => `/${file}?v=__VERSION__`,
+      },
       say: (status) => ({ status }),
       ...context,
     },

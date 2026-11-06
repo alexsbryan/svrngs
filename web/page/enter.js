@@ -52,6 +52,7 @@ import { sending } from './page.js?v=__VERSION__';
  * @property {boolean} joined
  * @property {Computer} [via] the computer the last read went through, none for the link's
  * @property {string} stale why the last read again failed, or ''
+ * @property {string[]} [unready] what keeps this phone from going on at home (store.js `unready`)
  * @property {Lent[]} [lent] what the group lends, once read
  * @property {PeopleRow[]} people
  * @property {Shelved[]} shelf
@@ -115,7 +116,7 @@ import { sending } from './page.js?v=__VERSION__';
  *       older: boolean,
  *     }
  *   | { type: 'unread', n?: number, said?: string, why: string }
- *   | { type: 'kept' }} Message
+ *   | { type: 'kept', unready?: string[] }} Message
  */
 
 /**
@@ -127,7 +128,7 @@ import { sending } from './page.js?v=__VERSION__';
  *   | { run: 'release', failed: string }
  *   | { run: 'open', group: Group, failed: string }
  *   | { run: 'read', group: Group, n: number, failed: string }
- *   | { run: 'keep', group: Group, failed: string }} Effect
+ *   | { run: 'keep', group: Group, lent: Lent[], failed: string }} Effect
  */
 
 export const owns = [
@@ -137,6 +138,7 @@ export const owns = [
   'via',
   'stale',
   'lent',
+  'unready',
   'people',
   'shelf',
   'unanswered',
@@ -416,7 +418,7 @@ export const takes = {
         changed,
         me: message.me,
       },
-      { run: 'keep', group, failed: 'failed' },
+      { run: 'keep', group, lent, failed: 'failed' },
     );
   },
   unread: (state, message) => {
@@ -426,11 +428,11 @@ export const takes = {
   },
   // Read, what `#open=` names is sent to be named (among.js `wanted`).
   // Sent only when `wants` names what is open.
-  kept: (state) => {
-    if (!state.wants?.open) return go(state, {}, {});
+  kept: (state, { unready }) => {
+    if (!state.wants?.open) return go(state, {}, { unready });
     // Its `open` is the string just tested.
     const wants = /** @type {Wants & { open: string }} */ (state.wants);
-    return go(state, {}, {}, sending('wanted', { wants }));
+    return go(state, {}, { unready }, sending('wanted', { wants }));
   },
 };
 
@@ -469,8 +471,9 @@ export const response = {
     const stale = state.stale
       ? [`What ${state.group.name} lends cannot be read again just now: ${state.stale}`]
       : [];
-    if (state.lent.length > 0 || missing.length > 0) return [...stale, ...missing];
-    return [...stale, `Nobody in ${state.group.name} lends anything yet.`];
+    const ready = state.unready ?? [];
+    if (state.lent.length > 0 || missing.length > 0) return [...stale, ...missing, ...ready];
+    return [...stale, `Nobody in ${state.group.name} lends anything yet.`, ...ready];
   },
 };
 
@@ -620,5 +623,8 @@ export const io = {
       said: error.said,
       why: String(error),
     })),
-  keep: ({ group }) => store.opened(group).then(() => ({ type: 'kept' })),
+  keep: async ({ group, lent }) => {
+    await store.opened(group);
+    return { type: 'kept', unready: await store.unready(group, lent) };
+  },
 };

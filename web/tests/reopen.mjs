@@ -67,6 +67,25 @@ const keptGroup = async () => {
   const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
   return (await store.groups())[0];
 };
+// In the group's page: what its readiness check says of the kept group and a
+// lend, and of a group this phone never kept.
+const readiness = async ({ label, name }) => {
+  const app = document.querySelector('script[type=module]').src;
+  const store = await import(new URL(`./store.js${new URL(app).search}`, app).href);
+  const group = (await store.groups())[0];
+  const asked = {};
+  for (const state of ['granted', 'denied']) {
+    navigator.permissions.query = async () => ({ state });
+    asked[state] = await store.unready(group, []);
+  }
+  return {
+    ...asked,
+    kept: await store.unready(group, [{ label, name }]),
+    unkept: await store.unready({ id: 'none', name: 'unkept' }, []),
+  };
+};
+const shown = (page, line) =>
+  page.waitForFunction((said) => document.body.innerText.includes(said), line, { timeout: 30_000 });
 // In a lend's page: what this origin's caches hold, by the file's name.
 const pieces = async () => {
   const held = {};
@@ -119,9 +138,16 @@ try {
   let app = null;
   let saved = null;
   if (args.open) {
+    await shown(page, `${args.open} is not saved here`);
     await fromList(page);
     app = page.url();
     saved = await page.evaluate(pieces);
+    await page.goto(origin);
+    await page.waitForSelector('#lent button', { timeout: 60_000 });
+    first.ready = await page.evaluate(readiness, {
+      label: new URL(app).hostname.split('.')[0],
+      name: args.open,
+    });
   }
   await close();
   writeFileSync(args.ready, 'ready');

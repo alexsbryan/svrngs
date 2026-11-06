@@ -166,7 +166,7 @@ addEventListener('message', (asked) => {
 // What the app framing this signer `asked`, answered on `port`: its open
 // adopted, or an entry approved; anything else refused, by a throw.
 /**
- * @param {MessageEvent<{ opening?: Handoff } | null>} asked an open to adopt, else an
+ * @param {MessageEvent<{ opening?: Handoff, saved?: boolean } | null>} asked an open to adopt, else an
  *   entry, which `entryAsked` reads
  * @param {MessagePort} port
  */
@@ -180,6 +180,7 @@ async function answered(asked, port) {
       throw new Error(`an open for ${handoff.label} asked from ${label}`);
     }
     await approver(label, handoff, now);
+    if (asked.data.saved === true) await store.keepSaved(label);
     port.postMessage({ opened: true });
     return;
   }

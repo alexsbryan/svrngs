@@ -1114,6 +1114,15 @@ Seven calls:
    WebKit under Playwright keeps nothing in the Cache API in a context with
    a profile, so this is tested in Chromium (`tests/browser/keep_going.rs`).
 
+   A phone counts as ready only by a check (KEEP_GOING_AT_HOME 29, 21):
+   `store.js` `unready` says on the group's page what is not yet so. The
+   group is kept, each app's signer marked its origin holding this build's
+   every piece when it opened, and the browser agreed to keep its storage.
+   A new build asks each app again. The mark cannot see a browser clear that
+   origin later, which the spec does not promise. Where the browser asks
+   before reaching the home network, it says what that is for; what happens
+   when someone says no is the real run's to record.
+
    So a lent page composes others: at its own origin, `GET /svrngs-reads`
    answers each lend it reads — its kind, name, lender and the address to
    ask it at — and the people whose computer did not answer, never the pass

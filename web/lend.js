@@ -112,10 +112,6 @@ const SCOPE = new URL(scope.registration.scope);
 // reopens with the public site gone (KEEP_GOING_AT_HOME 10). `self.location`
 // is a `WorkerLocation`, which `URL` reads as its `href`.
 const SITE = new URL('./', /** @type {string} */ (/** @type {unknown} */ (self.location))).pathname;
-const SAVED =
-  'open.html open.js lend.js shim.js store.js authority.js away.html wasm/svrngs_web.js wasm/svrngs_web_bg.wasm'.split(
-    ' ',
-  );
 // This worker's lend: the first name of its address.
 const OWN = store.labelOf(SCOPE.hostname);
 const SIGNER = signerFor(SCOPE, SITE);
@@ -156,18 +152,13 @@ self.__trace = (line) => {
 const trace = self.__trace;
 trace(`RUNTIME: this run of the worker begins`);
 
-// One saved piece's address, this build's: a build's own files, as web/sw.js
-// keeps them, so no worker answers a newer build's request with its copy.
-/** @param {string} file */
-const savedAt = (file) => `${SITE}${file}?v=__VERSION__`;
-
 // This build's pieces kept whole or not at all: one that fails fails the
 // install, so an older worker keeps serving and open.js says this could not
 // open, and a worker that runs has everything it saves.
 async function installed() {
   const cache = await caches.open(store.CACHE);
-  await cache.addAll(SAVED.map(savedAt));
-  trace(`RUNTIME: this build's ${SAVED.length} pieces are saved here`);
+  await cache.addAll(store.SAVED.map(store.savedAt));
+  trace(`RUNTIME: this build's ${store.SAVED.length} pieces are saved here`);
   await scope.skipWaiting();
 }
 
@@ -1177,7 +1168,7 @@ async function away(request, lend, error) {
 // away.html's text, or none, traced, where it cannot be fetched.
 async function awayPage() {
   try {
-    const response = await saved(new Request(savedAt('away.html')));
+    const response = await saved(new Request(store.savedAt('away.html')));
     if (response.ok) return await response.text();
     trace(`RUNTIME: away.html not fetched: ${response.status}`);
   } catch (error) {
@@ -1400,7 +1391,7 @@ scope.addEventListener('fetch', (event) => {
 const shellAt = (url) =>
   url.searchParams.has('v') &&
   url.pathname.startsWith(SITE) &&
-  SAVED.includes(url.pathname.slice(SITE.length));
+  store.SAVED.includes(url.pathname.slice(SITE.length));
 
 // One of the page's files: this build's from what is saved, its version
 // matched and the rest of its address not, as the shim's carries its lend
@@ -1412,7 +1403,7 @@ async function saved(request) {
   const file = url.pathname.slice(SITE.length);
   const here = url.searchParams.get('v') === '__VERSION__';
   const hit = here
-    ? await caches.open(store.CACHE).then((cache) => cache.match(savedAt(file)))
+    ? await caches.open(store.CACHE).then((cache) => cache.match(store.savedAt(file)))
     : null;
   if (hit) return hit;
   trace(`RUNTIME: ${file} ${url.searchParams.get('v')} is not saved here, so the site is asked`);

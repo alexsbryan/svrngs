@@ -516,12 +516,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # a row naming every id (+4) takes js to 8,329, cap 8,330. Then the gate's
 # app-nouns fix drops group-choice.js's cast (-4), so js lands at 8,325 and
 # the cap comes down to where it lands, 8,326.
+# The phone's readiness check and its home-network words (KEEP_GOING_AT_HOME
+# 29, 21): +30 js, the operator's decision of 2026-11-06, after about 95 lines
+# of duplicates were cut for the slice. 8,334 to 8,364.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
     ".": 20455,
 
-    "js": 8334,
+    "js": 8364,
 
     "swift": 1,
 }

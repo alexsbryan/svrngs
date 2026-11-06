@@ -111,9 +111,10 @@ async function checked(handed) {
 // (sign.js; svrn-docs rings/current/HOLDER_APPROVAL.md §3.D).
 /**
  * @param {Handoff} handed
+ * @param {boolean} [saved] this origin holds every piece, for the signer to mark
  * @returns {Promise<boolean>}
  */
-async function issued(handed) {
+async function issued(handed, saved = false) {
   const url = signerFor(location.href, new URL('./', import.meta.url).pathname);
   const frame = document.createElement('iframe');
   frame.hidden = true;
@@ -133,7 +134,7 @@ async function issued(handed) {
       frame.onload = () => {
         // Loaded, the frame has its window.
         const signer = /** @type {Window} */ (frame.contentWindow);
-        signer.postMessage({ opening }, new URL(url).origin, [channel.port2]);
+        signer.postMessage({ opening, saved }, new URL(url).origin, [channel.port2]);
       };
       document.body.append(frame);
     });
@@ -249,6 +250,8 @@ async function handedOn({ handed, seed }, asked) {
     await navigator.serviceWorker.register(script, { scope: '/', type: 'module' }),
   );
   console.debug('OPEN: the lend’s worker runs; handing it the pass');
+  // A mark for the group's readiness check, never a reason not to open.
+  if (await store.whole()) await issued(handed, true).catch((no) => console.debug(`OPEN: ${no}`));
   let held = await store.handOver(worker, { handed });
   // Safari's worker loses the key (above): the seed's bytes go in its place.
   if (!held && seed) {

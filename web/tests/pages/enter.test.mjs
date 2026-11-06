@@ -10,6 +10,7 @@ import { test } from 'node:test';
 
 register('./layout.mjs', import.meta.url);
 const { compose } = await import('../../page/page.js?v=__VERSION__');
+const { response } = await import('../../page/enter.js?v=__VERSION__');
 const FLOWS = [
   'enter',
   'computer',
@@ -303,4 +304,12 @@ test('the relays a reply names are kept, capped and checked, and a later reply d
   assert.deepEqual(kept({ ...house, meets: home }, { meets: [] }), [], 'dropped when unnamed');
   assert.deepEqual(kept({ ...house, meets: home }, {}), home, 'an older reply keeps what is kept');
   assert.equal(kept(house, {}), undefined, 'and a phone that learned none has none');
+});
+
+test('what keeps a phone from going on at home is said under what its group lends', () => {
+  const unready = ['films is not saved here: open it once while online.'];
+  const lent = [{ name: 'films', label: 'l' }];
+  const none = { unanswered: [], unheard: [], refused: [], behind: [], people: [] };
+  const state = { ...none, group: { name: 'house' }, lent, stale: '', unready };
+  assert.deepEqual(response.enter(state), unready);
 });
