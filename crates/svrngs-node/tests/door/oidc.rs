@@ -325,6 +325,37 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     pair.close().await;
 }
 
+/// A code minted through the house is not redeemed once the lend is no
+/// longer lent to the house, inside the code's minute, and no new one is
+/// minted: the authorize path refuses bo (LENDING_SCOPE §"Enforcement and
+/// disclosure" 6). Planted: a redemption that asks no group of the code.
+#[tokio::test]
+async fn a_code_is_not_redeemed_once_its_group_is_no_longer_lent_to() {
+    let pair = Pair::new().await;
+    let (origin, _heads) = origins::head_origin().await;
+    let port = origin.port();
+    signs_in(&pair, LEND, port, CLIENT, SECRET);
+    let redirect = format!("http://localhost:{port}{PATH}");
+    let authorize = format!("/lend/{LEND}/.svrngs/oidc/authorize?{}", ask(port, CLIENT, ""));
+    let reply = get(pair.bridge, &authorize, "").await;
+    assert_eq!(reply.status, 302, "{}", reply.text);
+    let loc = location(&reply).expect("a Location");
+    let code = pairs(loc.split_once('?').expect("a query").1)["code"].clone();
+    let name = LendName::parse(LEND).unwrap();
+    assert!(lend::set_audience(pair.dir.path(), &name, vec!["yard".into()]).unwrap());
+    let form = [
+        ("grant_type", "authorization_code"),
+        ("code", code.as_str()),
+        ("redirect_uri", redirect.as_str()),
+        ("code_verifier", VERIFIER),
+    ];
+    let (status, answer) = token(&pair.a, LEND, CLIENT, SECRET, &form).await;
+    assert_eq!((status, answer["error"].as_str()), (400, Some("invalid_grant")), "{answer:#}");
+    let again = get(pair.bridge, &authorize, "").await;
+    assert_eq!(again.status, 403, "{}", again.text);
+    pair.close().await;
+}
+
 /// Given a lend signing people in with svrngs, when the app built its
 /// callback on the lend's own origin — the browser's host and scheme, which
 /// the door tells it as `X-Forwarded-Host`/`-Proto` (oidc-jellyfin) — then

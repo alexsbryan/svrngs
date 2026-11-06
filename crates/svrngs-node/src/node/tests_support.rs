@@ -80,10 +80,15 @@ impl Node {
             username: username.into(),
             group,
         };
+        // Through the first group the lend is lent to, as the door lets in.
+        let lend = crate::lend::LendName::parse(lend).expect("a test's lend name");
+        let read = crate::lend::read(&self.asking.door.data_dir, &lend).ok().flatten();
+        let through = read.and_then(|l| l.audience.ids()?.first().cloned());
         self.asking.oidc.mint(crate::oidc::Code {
-            lend: crate::lend::LendName::parse(lend).expect("a test's lend name"),
+            lend,
             client: client.into(),
             who,
+            group: through.unwrap_or_default(),
             redirect: redirect.into(),
             challenge,
             nonce: nonce.map(Into::into),

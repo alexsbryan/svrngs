@@ -1386,7 +1386,7 @@ pub(crate) async fn lend_for(
             ));
         };
         let (name, username) = told_as(&person, host.as_ref(), actor);
-        let group = if host.is_some() {
+        let kind = if host.is_some() {
             Group::Guest
         } else {
             Group::Member
@@ -1395,9 +1395,9 @@ pub(crate) async fn lend_for(
             sub: actor.to_string(),
             name,
             username,
-            group,
+            group: kind,
         };
-        tracing::debug!(target: "door", actor, lend = %lend.name, ?group,
+        tracing::debug!(target: "door", actor, lend = %lend.name, ?kind, through = group,
             "door: the authorize path on the lend's own origin, answered by the door and never carried");
         let browser = req
             .headers()
@@ -1410,7 +1410,7 @@ pub(crate) async fn lend_for(
             client,
             port,
             browser.as_deref(),
-            who,
+            (who, group),
             req.uri().query(),
         ));
     }

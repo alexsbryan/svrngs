@@ -148,13 +148,18 @@ impl Provider {
 }
 
 /// A one-time code the door mints at the authorize path and the token route
-/// redeems: the person, the lend and client it was made for, the redirect
-/// and the PKCE challenge it is bound to, and the nonce to echo.
+/// redeems: the person, the group the door let them in through, the lend
+/// and client it was made for, the redirect and the PKCE challenge it is
+/// bound to, and the nonce to echo.
 #[derive(Debug, Clone)]
 pub(crate) struct Code {
     pub(crate) lend: LendName,
     pub(crate) client: String,
     pub(crate) who: Subject,
+    /// The group the asker stood in that the lend reached when the code was
+    /// minted: redeemed only while the lend still reaches it (LENDING_SCOPE
+    /// §"Enforcement and disclosure" 6).
+    pub(crate) group: String,
     pub(crate) redirect: String,
     pub(crate) challenge: Option<S256Challenge>,
     pub(crate) nonce: Option<String>,
@@ -293,7 +298,7 @@ async fn token(
     headers: HeaderMap,
     Form(form): Form<TokenForm>,
 ) -> Response {
-    let Some((name, _declared, config)) = p.declared(&lend) else {
+    let Some((name, declared, config)) = p.declared(&lend) else {
         return missing(&lend);
     };
     if form.grant_type.as_deref() != Some("authorization_code") {
@@ -345,6 +350,10 @@ async fn token(
             "invalid_grant",
             "the code was minted for another client",
         );
+    }
+    if !declared.reaches(&code.group) {
+        let why = "the lend is no longer lent to the group the code was minted through";
+        return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
     }
     if form.redirect_uri.as_deref() != Some(code.redirect.as_str()) {
         return refuse(

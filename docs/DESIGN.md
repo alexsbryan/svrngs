@@ -1245,8 +1245,11 @@ assume no screen, a TV one device among others.
      into a path), when it does not trust a proxy's headers, or on the
      lend's own origin when it does trust the door's `X-Forwarded-Host` and
      `-Proto` — the scope, `state`, `nonce` and PKCE, and mints a one-time
-     code bound to that person, the client, the redirect, the challenge and
-     the nonce. A guest's code names the guest, never their host. A
+     code bound to that person, the group the door let them in through,
+     the client, the redirect, the challenge and the nonce. The token route
+     redeems it only while the lend is still lent to that group, so a group
+     taken from its audience inside the code's minute is `invalid_grant`.
+     A guest's code names the guest, never their host. A
      redirect a browser would read as another host's, `//` or a `\` after
      the origin, or one holding a control character, is refused, as the
      door never makes such a service's redirect a path either: both read
