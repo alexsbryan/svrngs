@@ -363,5 +363,10 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
     );
     assert!(offered(Some(vec!["house".into()]), Some("house")).listed(house));
     assert!(!offered(Some(vec!["house".into()]), Some("house")).listed(|g| g == "trip"));
+    // Listed, it tells only the groups the asker shares, never the rest of
+    // its audience. Planted: the whole selection disclosed.
+    let mut both = offered(Some(vec!["house".into(), "trip".into()]), None);
+    assert!(both.listed(house));
+    assert_eq!(both.groups, Some(vec!["house".into()]), "trip is not told");
 }
 

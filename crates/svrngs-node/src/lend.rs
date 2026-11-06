@@ -458,14 +458,16 @@ impl Offered {
     /// only in its own group (COMMUNITY_APPS §7, found 3), a declared lend
     /// only through a group it is actually lent to. A legacy declaration
     /// (`groups` null) and a paused one (`[]`) are never listed; the
-    /// audience is never widened to every shared group.
-    pub(crate) fn listed(&self, stands: impl Fn(&str) -> bool) -> bool {
+    /// audience is never widened to every shared group. Its `groups` keep
+    /// only those `stands` answers yes to: the rest of its audience is
+    /// never told to the asker.
+    pub(crate) fn listed(&mut self, stands: impl Fn(&str) -> bool) -> bool {
+        if let Some(ids) = &mut self.groups {
+            ids.retain(|id| stands(id));
+        }
         match &self.group {
             Some(own) => stands(own),
-            None => self
-                .groups
-                .as_deref()
-                .is_some_and(|ids| ids.iter().any(|id| stands(id))),
+            None => self.groups.as_ref().is_some_and(|ids| !ids.is_empty()),
         }
     }
 }

@@ -162,7 +162,11 @@ A carried app's group is its own and is not chosen (`Lend::reaches`). A
 member is let in only through a chosen group both they and the lender
 stand in, and asks as the person that group names them; when two chosen
 groups name one device as different people the door refuses rather than
-pick one (`RingRail::standing_in`). *Lends are asked, not stored:* each computer
+pick one (`RingRail::standing_in`). A list of lends, `/lends` or
+`/people/lends`, names each only to a member of one of its groups, and
+tells them only the groups of its audience they share (`Offered::listed`);
+the lender's own home page is told the whole audience. *Lends are asked,
+not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
 never stale. The lender's own lend, opened on their own computer, goes
 through their own door's rules too, its secret injected and its limit

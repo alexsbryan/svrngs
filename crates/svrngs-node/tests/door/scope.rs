@@ -71,6 +71,19 @@ async fn a_member_of_no_group_it_is_lent_to_neither_lists_nor_reaches_it() {
     pair.close().await;
 }
 
+/// What a House member is told is lent: once the shelf is lent to the
+/// house and yard, bo's list names the shelf with only the house of its
+/// audience, the group they share, never yard. Planted: the whole audience
+/// listed.
+#[tokio::test]
+async fn a_list_tells_a_member_only_the_groups_it_shares_with_the_lend() {
+    let (pair, _heads) = lending_heads().await;
+    groups_held(&pair, &[NS, "yard"]);
+    let lends = listed(&pair).await;
+    assert_eq!(lends["lends"][0]["groups"], serde_json::json!([NS]), "{lends}");
+    pair.close().await;
+}
+
 /// A stale pass: bo's pass for the shelf, signed while it was lent to the
 /// house, opens nothing once it is lent only to yard, and the service is
 /// not asked again. Planted: the signer resolved through any group.
