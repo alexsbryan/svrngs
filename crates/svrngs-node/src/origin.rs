@@ -476,7 +476,9 @@ async fn appended(
             .filter(|a| both(&a.membership().standing))
             .ok_or(Unwritten::NotBoth)?;
         // Only a group the lend reaches, never another both stand in.
-        let reached = lend.as_ref().is_some_and(|l| l.clone().listed(|g| Some(g) == group));
+        let reached = lend
+            .as_ref()
+            .is_some_and(|l| l.clone().listed(|g| Some(g) == group));
         reached.then_some(()).ok_or(Unwritten::NotLent)?;
         let body = serde_json::to_vec(act).unwrap_or_default();
         let shaped = svrngs_core::grant::app_act(kind, &body).ok_or(Unwritten::Unread)?;
@@ -630,7 +632,13 @@ async fn carried(
     door::strip_hop_by_hop(&mut parts.headers);
     if let (Some(asker), Some(service), Some(protocol)) = (asker, service, switched) {
         door::keep_upgrade(&mut parts.headers, protocol);
-        door::splice(asker, service, (), label.to_string(), std::future::pending());
+        door::splice(
+            asker,
+            service,
+            (),
+            label.to_string(),
+            std::future::pending(),
+        );
     }
     let mut response = Response::new(Body::new(body));
     *response.status_mut() = parts.status;

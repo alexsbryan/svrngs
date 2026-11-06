@@ -336,7 +336,10 @@ async fn a_code_is_not_redeemed_once_its_group_is_no_longer_lent_to() {
     let port = origin.port();
     signs_in(&pair, LEND, port, CLIENT, SECRET);
     let redirect = format!("http://localhost:{port}{PATH}");
-    let authorize = format!("/lend/{LEND}/.svrngs/oidc/authorize?{}", ask(port, CLIENT, ""));
+    let authorize = format!(
+        "/lend/{LEND}/.svrngs/oidc/authorize?{}",
+        ask(port, CLIENT, "")
+    );
     let reply = get(pair.bridge, &authorize, "").await;
     assert_eq!(reply.status, 302, "{}", reply.text);
     let loc = location(&reply).expect("a Location");
@@ -350,7 +353,11 @@ async fn a_code_is_not_redeemed_once_its_group_is_no_longer_lent_to() {
         ("code_verifier", VERIFIER),
     ];
     let (status, answer) = token(&pair.a, LEND, CLIENT, SECRET, &form).await;
-    assert_eq!((status, answer["error"].as_str()), (400, Some("invalid_grant")), "{answer:#}");
+    assert_eq!(
+        (status, answer["error"].as_str()),
+        (400, Some("invalid_grant")),
+        "{answer:#}"
+    );
     let again = get(pair.bridge, &authorize, "").await;
     assert_eq!(again.status, 403, "{}", again.text);
     pair.close().await;

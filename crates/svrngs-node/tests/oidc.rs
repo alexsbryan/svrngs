@@ -65,7 +65,8 @@ fn signs_in(dir: &Path, name: &str, port: u16, client: &str, secret: Option<&str
     if let Some(secret) = secret {
         client["client_secret"] = secret.into();
     }
-    let body = json!({ "port": port, "kind": "media", "groups": [NS], "sign_in_with_svrngs": client });
+    let body =
+        json!({ "port": port, "kind": "media", "groups": [NS], "sign_in_with_svrngs": client });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 

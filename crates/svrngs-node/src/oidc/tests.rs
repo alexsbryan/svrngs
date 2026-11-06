@@ -135,7 +135,15 @@ fn authorized(redirect: &str, browser: Option<&str>) -> (u16, Option<String>) {
     let query =
         format!("response_type=code&client_id=svrngs-media&redirect_uri={redirect}&scope=openid");
     let port = std::num::NonZeroU16::new(8096).unwrap();
-    let answer = authorize(&provider, &lend, &client, port, browser, (who, "0123456789abcdef".into()), Some(&query));
+    let answer = authorize(
+        &provider,
+        &lend,
+        &client,
+        port,
+        browser,
+        (who, "0123456789abcdef".into()),
+        Some(&query),
+    );
     let location = (answer.headers().get(axum::http::header::LOCATION))
         .map(|l| String::from_utf8_lossy(l.as_bytes()).into_owned());
     (answer.status().as_u16(), location)

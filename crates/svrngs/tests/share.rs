@@ -182,7 +182,10 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     // ── Sam shares the service on its port, as `svrngs share <port> --kind pad`.
     let (origin, heads) = service().await;
     let lent_to = svrngs_node::lend::Audience::Selected(vec![seed.id()]);
-    let asked = Share { audience: lent_to, ..share_of(origin, "pad") };
+    let asked = Share {
+        audience: lent_to,
+        ..share_of(origin, "pad")
+    };
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
@@ -290,9 +293,10 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
 #[tokio::test(flavor = "multi_thread")]
 async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats() {
     let sam = computer(3).await;
-    let (lab, printed) = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
-        .await
-        .expect("Sam makes Lab");
+    let (lab, printed) =
+        cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &no_relay())
+            .await
+            .expect("Sam makes Lab");
     let alex = computer(4).await;
     knows(&alex, &sam.node);
     let link = Link::parse(&printed.client).unwrap();
@@ -302,7 +306,10 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
 
     let (origin, heads) = service().await;
     let lent_to = svrngs_node::lend::Audience::Selected(vec![lab.id()]);
-    let asked = Share { audience: lent_to, ..share_of(origin, "llama-server") };
+    let asked = Share {
+        audience: lent_to,
+        ..share_of(origin, "llama-server")
+    };
     let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
         .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
@@ -609,7 +616,16 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
         running.seen
     );
 
-    let argv2 = ["share", p2.as_str(), "--kind", "box", "--limit", "2", "--group", "Lab"];
+    let argv2 = [
+        "share",
+        p2.as_str(),
+        "--kind",
+        "box",
+        "--limit",
+        "2",
+        "--group",
+        "Lab",
+    ];
     let (code, said) = Program::start(
         dir.path(),
         &logs.path().join("second"),
@@ -876,7 +892,14 @@ fn a_service_with_its_own_accounts_is_lent_with_no_password() {
     let mut running = Program::start(
         dir.path(),
         &log,
-        &["share", port.as_str(), "--kind", "jellyfin", "--group", "Lab"],
+        &[
+            "share",
+            port.as_str(),
+            "--kind",
+            "jellyfin",
+            "--group",
+            "Lab",
+        ],
         &format!("{SECRET}\n"),
     );
     running.until("Leave this running");
@@ -1066,7 +1089,10 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     assert!(matches!(yard, Err(Refusal::NoGroup(_))), "{yard:?}");
 
     let (origin, _heads) = service().await;
-    let asked = Share { audience: both, ..share_of(origin, "pad") };
+    let asked = Share {
+        audience: both,
+        ..share_of(origin, "pad")
+    };
     let pad = share::lend_of(&asked, share::listens, None).unwrap();
     cli::share_lend(dir, &pad, Some(SECRET)).unwrap();
     let narrowed = cli::unshare(dir, &pad.name, &named(&["trip"])).unwrap();

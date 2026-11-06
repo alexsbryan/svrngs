@@ -939,9 +939,12 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     let (said, _heard) = common::heard("origin=debug");
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let both = [("alex", 1), ("sam", 2)].map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(k))]));
+    let both = [("alex", 1), ("sam", 2)]
+        .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(k))]));
     for node in [&alex, &sam] {
-        node.rail().set_seed("trip", &Roster::new(both.clone().into_iter().collect())).unwrap();
+        node.rail()
+            .set_seed("trip", &Roster::new(both.clone().into_iter().collect()))
+            .unwrap();
     }
     for dir in [alex_dir.path(), sam_dir.path()] {
         declare(
@@ -1044,7 +1047,10 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
             let ops = node.rail().admission(group).ok();
             let ops = ops.map(|a| serde_json::to_value(a.wire()).unwrap());
             let app_s = |o: &serde_json::Value| o["payload"]["kind"] == "events/coming";
-            assert!(ops.is_none_or(|ops| !ops.as_array().unwrap().iter().any(app_s)), "{group}");
+            assert!(
+                ops.is_none_or(|ops| !ops.as_array().unwrap().iter().any(app_s)),
+                "{group}"
+            );
         }
     }
     assert!(

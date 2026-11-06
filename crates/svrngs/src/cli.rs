@@ -559,17 +559,17 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             let port = positional.ok_or("share wants a port: `svrngs share <port>`")?;
             Ok(Verb::Share(
                 Share {
-                port: share::resolve_target(&port)?,
-                name,
-                kind,
-                limit,
-                refused,
-                upload,
-                reads,
-                asks,
-                sign_in,
-                raw: carries,
-                audience: Audience::Legacy,
+                    port: share::resolve_target(&port)?,
+                    name,
+                    kind,
+                    limit,
+                    refused,
+                    upload,
+                    reads,
+                    asks,
+                    sign_in,
+                    raw: carries,
+                    audience: Audience::Legacy,
                 },
                 groups,
             ))
@@ -1242,7 +1242,10 @@ pub enum Said {
         device: Option<Person>,
     },
     /// `join`: let in by the link's issuer, as `person`.
-    Joined { seed: Seed, person: Name },
+    Joined {
+        seed: Seed,
+        person: Name,
+    },
     /// `join` of a group this computer is in already.
     AlreadyIn(Seed),
     /// After `join`: the group's folder at `dir`, kept the same as
@@ -1286,7 +1289,10 @@ pub enum Said {
         outcome: Outcome,
     },
     /// `leave` (groups-leave): what happened as you left `group`.
-    Left { group: Name, outcome: Outcome },
+    Left {
+        group: Name,
+        outcome: Outcome,
+    },
 }
 
 impl std::fmt::Display for Said {

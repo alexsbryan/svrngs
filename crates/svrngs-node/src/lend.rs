@@ -553,9 +553,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         name: name.clone(),
         source: (file.raw).map_or(Source::Port(file.port), |r| Source::Raw(r, file.port)),
         kind: file.kind,
-        audience: file
-            .groups
-            .map_or(Audience::Legacy, Audience::Selected),
+        audience: file.groups.map_or(Audience::Legacy, Audience::Selected),
         limit: file.limit,
         refused,
         upload: file.upload,

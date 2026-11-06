@@ -40,8 +40,7 @@ fn declare(
 ) {
     let at = lend::lends_dir(dir);
     std::fs::create_dir_all(&at).unwrap();
-    let body =
-        serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "asks": asks, "groups": [NS] });
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "asks": asks, "groups": [NS] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -420,7 +419,8 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let (shelf_at, _kept) = origins::head_origin().await;
     let at = lend::lends_dir(sam_dir.path());
     std::fs::create_dir_all(&at).unwrap();
-    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books", "limit": 1, "groups": [NS] });
+    let body =
+        serde_json::json!({ "port": shelf_at.port(), "kind": "books", "limit": 1, "groups": [NS] });
     std::fs::write(at.join("shelf.json"), body.to_string()).unwrap();
     let shelf = Label::of(&signing(2).verifying_key().to_bytes(), "shelf");
     let name = lend::LendName::parse("shelf").unwrap();
@@ -686,8 +686,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
             Some(p) => p,
             None => origins::head_origin().await.0.port(),
         };
-        let body =
-            serde_json::json!({ "port": port, "kind": "media", "limit": 3, "refused": refused, "groups": [NS] });
+        let body = serde_json::json!({ "port": port, "kind": "media", "limit": 3, "refused": refused, "groups": [NS] });
         std::fs::create_dir_all(lend::lends_dir(dir)).unwrap();
         std::fs::write(
             lend::lends_dir(dir).join(format!("{name}.json")),
@@ -867,9 +866,12 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     // The lender must hold the group it lends to; without one, an
     // explicit selection is refused before the port is ever checked.
     let seed = Roster::new(
-        [(svrngs_node::Person::parse("alex").unwrap(), vec![svrngs_node::actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
+        [(
+            svrngs_node::Person::parse("alex").unwrap(),
+            vec![svrngs_node::actor_of(&signing(1))],
+        )]
+        .into_iter()
+        .collect(),
     );
     alex.rail().set_seed(NS, &seed).unwrap();
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
@@ -1047,15 +1049,29 @@ async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
         assert_eq!(said.status, 409, "{change}: {}", said.body);
     }
     let after = std::fs::read(lends.join("shelf.json")).unwrap();
-    assert_eq!(after, before, "nothing is written while another change holds it");
+    assert_eq!(
+        after, before,
+        "nothing is written while another change holds it"
+    );
     drop(held);
     let signed = ask(browser, "POST", &home, "/lent", &own, &to(r#""sign-in""#)).await;
     assert_eq!(signed.status, 200, "{}", signed.body);
-    let paused = ask(browser, "POST", &home, "/lent", &own, &to(r#"{"groups":[]}"#)).await;
+    let paused = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &to(r#"{"groups":[]}"#),
+    )
+    .await;
     assert_eq!(paused.status, 204, "{}", paused.body);
     let name = lend::LendName::parse("shelf").unwrap();
     let kept = lend::read(dir.path(), &name).unwrap().unwrap();
     assert_eq!(kept.audience, lend::Audience::Selected(Vec::new()));
-    assert!(kept.sign_in_with_svrngs.is_some(), "the audience edit kept the client");
+    assert!(
+        kept.sign_in_with_svrngs.is_some(),
+        "the audience edit kept the client"
+    );
     alex.endpoint().close().await;
 }

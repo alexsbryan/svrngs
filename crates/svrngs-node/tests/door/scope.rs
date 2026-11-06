@@ -80,7 +80,11 @@ async fn a_list_tells_a_member_only_the_groups_it_shares_with_the_lend() {
     let (pair, _heads) = lending_heads().await;
     groups_held(&pair, &[NS, "yard"]);
     let lends = listed(&pair).await;
-    assert_eq!(lends["lends"][0]["groups"], serde_json::json!([NS]), "{lends}");
+    assert_eq!(
+        lends["lends"][0]["groups"],
+        serde_json::json!([NS]),
+        "{lends}"
+    );
     pair.close().await;
 }
 
@@ -95,7 +99,10 @@ async fn the_service_is_told_only_the_groups_the_lend_reaches() {
     assert_eq!(reply.status, 200, "{}", reply.text);
     let pages = header_values(&last(&heads), "x-svrngs-pages").join(" ");
     assert!(pages.starts_with(&format!("{NS}=")), "{pages}");
-    assert!(!pages.contains("trip") && !pages.contains("yard"), "{pages}");
+    assert!(
+        !pages.contains("trip") && !pages.contains("yard"),
+        "{pages}"
+    );
     pair.close().await;
 }
 
@@ -162,23 +169,40 @@ async fn a_list_asked_without_this_builds_scope_marker_is_refused() {
 async fn opened(pair: &Pair, head: &str) -> tokio::net::TcpStream {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
     let mut sock = tokio::net::TcpStream::connect(pair.bridge).await.unwrap();
-    sock.write_all(format!("{head}Host: local\r\n\r\n").as_bytes()).await.unwrap();
+    sock.write_all(format!("{head}Host: local\r\n\r\n").as_bytes())
+        .await
+        .unwrap();
     let (mut seen, mut byte) = (Vec::new(), [0u8; 1]);
     while !seen.ends_with(b"\r\n\r\n") {
-        assert_eq!(sock.read(&mut byte).await.unwrap(), 1, "{:?}", String::from_utf8_lossy(&seen));
+        assert_eq!(
+            sock.read(&mut byte).await.unwrap(),
+            1,
+            "{:?}",
+            String::from_utf8_lossy(&seen)
+        );
         seen.push(byte[0]);
     }
-    assert!(seen.starts_with(b"HTTP/1.1 20") || seen.starts_with(b"HTTP/1.1 101"), "{:?}", String::from_utf8_lossy(&seen));
+    assert!(
+        seen.starts_with(b"HTTP/1.1 20") || seen.starts_with(b"HTTP/1.1 101"),
+        "{:?}",
+        String::from_utf8_lossy(&seen)
+    );
     sock
 }
 
 /// How long `sock` carries on before it ends, read as it comes, up to `within`.
-async fn ends_within(sock: &mut tokio::net::TcpStream, within: std::time::Duration) -> Option<std::time::Duration> {
+async fn ends_within(
+    sock: &mut tokio::net::TcpStream,
+    within: std::time::Duration,
+) -> Option<std::time::Duration> {
     use tokio::io::AsyncReadExt;
     let began = std::time::Instant::now();
     let mut buf = [0u8; 4096];
     let ended = async { while sock.read(&mut buf).await.is_ok_and(|n| n > 0) {} };
-    tokio::time::timeout(within, ended).await.ok().map(|()| began.elapsed())
+    tokio::time::timeout(within, ended)
+        .await
+        .ok()
+        .map(|()| began.elapsed())
 }
 
 /// Withdrawal of what already streams (LENDING_SCOPE §"Existing streams
@@ -195,7 +219,11 @@ async fn a_stream_ends_within_two_seconds_of_its_group_taken_away_and_no_other()
     let pair = Pair::new().await;
     let (stream, _) = super::origins::streaming_origin().await;
     let (live, _) = super::origins::upgrade_origin().await;
-    for (name, port) in [("shelf", stream.port()), ("radio", stream.port()), ("live", live.port())] {
+    for (name, port) in [
+        ("shelf", stream.port()),
+        ("radio", stream.port()),
+        ("live", live.port()),
+    ] {
         pair.lend(name, port, &[]);
     }
     groups_held(&pair, &[NS]);
@@ -213,11 +241,17 @@ async fn a_stream_ends_within_two_seconds_of_its_group_taken_away_and_no_other()
     let cut = ends_within(&mut shelf, two).await;
     let closed = ends_within(&mut socket, two).await;
     eprintln!("the shelf's answer ended after {cut:?}, the socket after {closed:?}");
-    assert!(cut.is_some(), "the shelf's answer still carries on after 2 s");
+    assert!(
+        cut.is_some(),
+        "the shelf's answer still carries on after 2 s"
+    );
     assert!(closed.is_some(), "the socket is still open after 2 s");
     let mut more = [0u8; 64];
     let carried = tokio::time::timeout(two, radio.read(&mut more)).await;
-    assert!(matches!(carried, Ok(Ok(n)) if n > 0), "the radio stopped: {carried:?}");
+    assert!(
+        matches!(carried, Ok(Ok(n)) if n > 0),
+        "the radio stopped: {carried:?}"
+    );
     assert_eq!(pair.get("/lend/radio/now", "").await.status, 200);
     pair.close().await;
 }

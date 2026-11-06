@@ -290,7 +290,10 @@ fn a_lend_with_no_selection_reaches_nothing_and_a_selection_reaches_its_ids() {
     assert_eq!(scoped.audience, Audience::Selected(vec!["house".into()]));
     assert!(scoped.audience.reaches("house"));
     assert!(!scoped.audience.reaches("trip"));
-    assert_eq!(scoped.audience.ids(), Some(["house".to_string()].as_slice()));
+    assert_eq!(
+        scoped.audience.ids(),
+        Some(["house".to_string()].as_slice())
+    );
 }
 
 /// An audience-only edit fixes the groups and keeps every other field —
@@ -307,7 +310,12 @@ fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
     declare(root.path(), &jellyfin, Some(("authorization", "s3cret"))).unwrap();
     let file = lends_dir(root.path()).join("jellyfin.json");
 
-    set_audience(root.path(), &jellyfin.name, vec!["house".into(), "trip".into()]).unwrap();
+    set_audience(
+        root.path(),
+        &jellyfin.name,
+        vec!["house".into(), "trip".into()],
+    )
+    .unwrap();
     let after = read(root.path(), &jellyfin.name).unwrap().unwrap();
     assert_eq!(
         after.audience,
@@ -369,4 +377,3 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
     assert!(both.listed(house));
     assert_eq!(both.groups, Some(vec!["house".into()]), "trip is not told");
 }
-

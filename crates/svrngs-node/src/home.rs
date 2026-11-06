@@ -471,7 +471,9 @@ fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
             tracing::debug!(target: "home", group = unknown, "home: refused — an audience names an unknown group");
             Err(LendRefusal::Closed.say(
                 StatusCode::BAD_REQUEST,
-                format!("{unknown} is not a group this computer holds: choose one of the groups shown."),
+                format!(
+                    "{unknown} is not a group this computer holds: choose one of the groups shown."
+                ),
             ))
         }
     }
@@ -498,7 +500,8 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
     let mut had = false;
     let done = lend::mutate(dir, name, |lend| {
         had = lend.sign_in_with_svrngs.is_some();
-        lend.sign_in_with_svrngs.get_or_insert_with(|| client.clone());
+        lend.sign_in_with_svrngs
+            .get_or_insert_with(|| client.clone());
     });
     match done {
         Ok(true) if had => {

@@ -347,11 +347,7 @@ impl RingRail {
     /// person. A group whose register is unreadable, or that `eligible`
     /// refuses, vouches for nobody; eligible groups naming the key as two
     /// people are refused, never one picked by order.
-    pub fn standing_in(
-        &self,
-        actor: &str,
-        eligible: impl Fn(&str) -> bool,
-    ) -> Option<(String, Member)> {
+    pub fn standing_in(&self, actor: &str, eligible: impl Fn(&str) -> bool) -> Option<(String, Member)> {
         let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
         let mut found = held.ok()?.into_iter().filter_map(|ns| {
             if !eligible(&ns) {
@@ -367,7 +363,9 @@ impl RingRail {
             }
         });
         let first = found.next();
-        let two = first.as_ref().and_then(|(_, m)| found.find(|(_, o)| o.person_key != m.person_key));
+        let two = first
+            .as_ref()
+            .and_then(|(_, m)| found.find(|(_, o)| o.person_key != m.person_key));
         if let Some((ns, _)) = two {
             tracing::warn!(target: "register", actor, namespace = ns, "register: refused — two eligible groups name the key as different people");
             return None;

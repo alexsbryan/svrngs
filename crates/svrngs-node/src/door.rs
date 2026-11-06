@@ -740,7 +740,11 @@ pub(crate) fn splice<H: Send + 'static>(
 /// whether or not the asker reads: what an answer streaming to them and an
 /// upgraded connection are cut by (LENDING_SCOPE §"Existing streams and
 /// app sessions"). Never for none: an owner's or a guest's use.
-fn withdrawn(door: &Door, lend: &Lend, device: Option<String>) -> impl std::future::Future<Output = ()> + Send + 'static {
+fn withdrawn(
+    door: &Door,
+    lend: &Lend,
+    device: Option<String>,
+) -> impl std::future::Future<Output = ()> + Send + 'static {
     let (door, lend) = (door.clone(), lend.clone());
     async move {
         match device {
@@ -755,7 +759,11 @@ fn withdrawn(door: &Door, lend: &Lend, device: Option<String>) -> impl std::futu
 /// with it, and the asker's body ends in an error, never as if whole. The
 /// task, not the asker's reading, waits on `cut`, so an asker that stops
 /// reading is cut all the same.
-fn cut_by<B>(body: B, cut: impl std::future::Future<Output = ()> + Send + 'static, lend: String) -> Body
+fn cut_by<B>(
+    body: B,
+    cut: impl std::future::Future<Output = ()> + Send + 'static,
+    lend: String,
+) -> Body
 where
     B: hyper::body::Body<Data = axum::body::Bytes> + Send + Unpin + 'static,
     B::Error: Into<axum::BoxError> + Send,
@@ -778,7 +786,8 @@ where
         tracing::info!(target: "door", lend, "door: an answer cut — its asker no longer stands in a group the lend reaches");
         let _ = tx.send(Err("this is no longer lent to you".into())).await;
     });
-    let frames = n0_future::stream::unfold(rx, |mut rx| async move { Some((rx.recv().await?, rx)) });
+    let frames =
+        n0_future::stream::unfold(rx, |mut rx| async move { Some((rx.recv().await?, rx)) });
     Body::new(http_body_util::StreamBody::new(frames))
 }
 
@@ -1237,13 +1246,7 @@ async fn holder_of(
 /// group's. Each refusal says which of those refused it: `ended` for the
 /// visit's end, `closed` for the rest. A visit begun later than now, which
 /// only this computer's clock stepping back makes, is said as one ended.
-fn guest_of(
-    me: &str,
-    v: Visiting,
-    pass: Pass,
-    lend: &Lend,
-    now: i64,
-) -> Result<Asker, Response> {
+fn guest_of(me: &str, v: Visiting, pass: Pass, lend: &Lend, now: i64) -> Result<Asker, Response> {
     let ((group, register, guest), name) = (v, lend.name.as_str());
     let host = register.members.get(&guest.host).map(|m| &m.person);
     let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
@@ -1524,7 +1527,11 @@ pub(crate) async fn lend_for(
     tracing::debug!(target: "door", actor, person = person.as_str(), host = ?host.as_ref().map(Person::as_str), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
         method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none");
     let watched = (!matches!(who, Who::Own(_)) && host.is_none()).then(|| device.to_string());
-    let told = Told { share, held, watched };
+    let told = Told {
+        share,
+        held,
+        watched,
+    };
     forward(
         door,
         (&lend, port),
@@ -1706,7 +1713,11 @@ async fn forward(
     host: Option<&Person>,
     path: String,
     mut req: Request,
-    Told { share, held, watched }: Told,
+    Told {
+        share,
+        held,
+        watched,
+    }: Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
     let range = req.headers().get(header::RANGE);
@@ -1857,7 +1868,11 @@ async fn forward(
         frame
     });
     let body = match watched {
-        Some(device) => cut_by(body, withdrawn(door, lend, Some(device)), lend.name.to_string()),
+        Some(device) => cut_by(
+            body,
+            withdrawn(door, lend, Some(device)),
+            lend.name.to_string(),
+        ),
         None => Body::new(body),
     };
     let mut response = Response::new(body);
