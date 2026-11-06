@@ -576,14 +576,8 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
 /// cannot be written is traced and left legacy, which no group reaches.
 pub fn stamp(data_dir: &Path, groups: &[String]) {
     let dir = lends_dir(data_dir);
-    let entries = match std::fs::read_dir(&dir) {
-        Ok(entries) => entries,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-            return tracing::debug!(target: "lend", dir = %dir.display(), "lend: no declarations, so none to stamp");
-        }
-        Err(e) => {
-            return tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: refused — the declarations cannot be listed, so none is stamped; each stays as it is, legacy lent to no group");
-        }
+    let Ok(entries) = std::fs::read_dir(&dir).inspect_err(|e| tracing::debug!(target: "lend", dir = %dir.display(), error = %e, "lend: the declarations cannot be listed, none yet or refused, so none is stamped; each stays as it is, lent to no group")) else {
+        return;
     };
     let entries = entries.filter_map(|e| {
         e.inspect_err(|e| tracing::warn!(target: "lend", dir = %dir.display(), error = %e, "lend: a declaration cannot be listed, so it is not stamped")).ok()

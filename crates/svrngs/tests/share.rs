@@ -1133,13 +1133,11 @@ async fn two_groups_of_one_name_are_chosen_by_id_never_by_name() {
     assert_eq!(second, Audience::Selected(vec![ids[1].clone()]));
 }
 
-/// `unshare --group` on a legacy lend says what is true (audit F12): it is
-/// lent to no group yet, so nothing was taken from that one; refused, exit
-/// 1, as a change not made is, and the declaration still needs selection.
-/// Planted: `Said::Narrowed`, "Those groups can no longer open it", for a
-/// change not made.
+/// `unshare --group` on a legacy lend, which a start now lends to its
+/// computer's groups, so only one made since: that group cannot open it,
+/// and the declaration still needs selection. Supersedes audit F12's refusal.
 #[tokio::test(flavor = "multi_thread")]
-async fn unshare_a_group_from_a_legacy_lend_says_it_needs_selection() {
+async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     use svrngs_node::lend::{self, Audience};
     let sam = computer(1).await;
     let relay = no_relay();
@@ -1149,13 +1147,7 @@ async fn unshare_a_group_from_a_legacy_lend_says_it_needs_selection() {
     let pad = share::lend_of(&share_of(origin, "pad"), share::listens, None).unwrap();
     cli::share_lend(sam.dir.path(), &pad, None).unwrap();
     let said = cli::unshare(sam.dir.path(), &pad.name, &["house".to_string()]);
-    let refused = said.expect_err("a legacy lend is not narrowed");
-    assert_eq!(refused.exit_code(), 1, "{refused}");
-    let words = refused.to_string();
-    assert!(
-        words.contains("no group") && words.contains("--group"),
-        "{words}"
-    );
+    said.expect("true already: a legacy lend reaches no group");
     let kept = lend::read(sam.dir.path(), &pad.name).unwrap().unwrap();
     assert_eq!(kept.audience, Audience::Legacy);
 }

@@ -642,8 +642,6 @@ pub enum Refusal {
     Left(Name),
     #[error("you are in no group called {0} on this computer")]
     NoGroup(String),
-    #[error("{0} is lent to no group yet, so no group was taken from it: choose who can open it with `svrngs share <port> --group <group>`")]
-    NeedsSelection(LendName),
     #[error("say which groups can open it: `svrngs share {0} --group <group>`, once for each")]
     NoAudience(NonZeroU16),
     #[error("more than one group here is called {name}; say which by the start of its id: {}", ids.join(", "))]
@@ -730,7 +728,6 @@ impl Refusal {
             | Refusal::Left(_)
             | Refusal::NoGroup(_)
             | Refusal::NoAudience(_)
-            | Refusal::NeedsSelection(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
             | Refusal::Share(_)
@@ -1587,10 +1584,10 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     };
     let ids = groups.iter().map(|g| group_named(root, g).map(|s| s.id()));
     let ids = ids.collect::<Result<Vec<_>, _>>()?;
-    let mut legacy = false;
-    let narrowed = |lend: &mut Lend| match &mut lend.audience {
-        Audience::Selected(kept) => kept.retain(|id| !ids.contains(id)),
-        Audience::Legacy => legacy = true,
+    let narrowed = |lend: &mut Lend| {
+        if let Audience::Selected(kept) = &mut lend.audience {
+            kept.retain(|id| !ids.contains(id));
+        }
     };
     tracing::debug!(target: "cli", lend = %name, groups = ids.len(), "cli: unshare — those groups only, or none named and it is withdrawn");
     let done = match ids.is_empty() {
@@ -1598,10 +1595,6 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
         false => lend::mutate(root, name, narrowed),
     };
     if done.map_err(keep)? {
-        if legacy {
-            tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, a legacy lend is lent to no group, so none was taken");
-            return Err(Refusal::NeedsSelection(name.clone()));
-        }
         if !ids.is_empty() {
             return Ok(Said::Narrowed(name.clone()));
         }
