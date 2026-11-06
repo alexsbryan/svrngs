@@ -921,30 +921,28 @@ pub(crate) fn scheme_of(host: &str) -> &'static str {
     }
 }
 
-/// Tell the service the origin the browser used, as a reverse proxy does
-/// (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked and
-/// `X-Forwarded-Proto` its scheme ([`scheme_of`]). Any of either a client
-/// typed is displaced, so only the door's reach the service. The service is
-/// still asked at its own address ([`own_address`]); this is the one fact
-/// it may need to build a page on the lend's own origin, as the Jellyfin
-/// SSO plugin's callback does when `KnownProxies` names this computer
-/// (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
-fn tell_origin(headers: &mut HeaderMap) {
+/// Tell a service that signs people in the origin the browser used, as a
+/// reverse proxy does (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the
+/// browser asked and `X-Forwarded-Proto` its scheme ([`scheme_of`]). Any of
+/// either a client typed is displaced for every lend, so only the door's
+/// reach a service. The service is still asked at its own address
+/// ([`own_address`]); this is the one fact it may need to build a page on the
+/// lend's own origin, as the Jellyfin SSO plugin's callback does when
+/// `KnownProxies` names this computer (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
+/// Every other lend is told none, so it has one address for itself: Rails
+/// takes its base URL from `X-Forwarded-Host` and refuses every post whose
+/// `Origin` differs, and [`own_origin`] tells `Origin` as the service's own.
+fn tell_origin(headers: &mut HeaderMap, signs_in: bool) {
     let (forwarded_host, forwarded_proto) = (
         HeaderName::from_static("x-forwarded-host"),
         HeaderName::from_static("x-forwarded-proto"),
     );
     headers.remove(&forwarded_host);
     headers.remove(&forwarded_proto);
-    let Some(host) = headers
-        .get(header::HOST)
-        .and_then(|h| h.to_str().ok())
-        .map(str::to_owned)
+    let Some((value, host)) = (headers.get(header::HOST).filter(|_| signs_in))
+        .and_then(|h| Some((h.clone(), h.to_str().ok()?.to_owned())))
     else {
-        tracing::debug!(target: "door", "door: the browser's Host cannot be read, so the service is told no forwarded origin");
-        return;
-    };
-    let Ok(value) = HeaderValue::from_str(&host) else {
+        tracing::debug!(target: "door", signs_in, "door: the service is told no forwarded origin: it signs nobody in, or the browser's Host cannot be read");
         return;
     };
     let scheme = scheme_of(&host);
@@ -1845,7 +1843,7 @@ async fn forward(
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
     }
-    tell_origin(&mut parts.headers);
+    tell_origin(&mut parts.headers, lend.sign_in_with_svrngs.is_some());
     parts.headers.insert(header::HOST, own_address(port));
     own_origin(&mut parts.headers, &label, (lend, port));
     if let Some(protocol) = upgrade.clone() {

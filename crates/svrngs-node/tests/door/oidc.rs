@@ -506,6 +506,55 @@ async fn the_authorize_path_accepts_the_lends_own_origin_as_the_redirect() {
     pair.close().await;
 }
 
+/// The browser's own origin is told to a service that signs people in, as a
+/// reverse proxy tells it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
+/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host (or an
+/// address, `the_scheme_told_is_the_one_the_browser_used`) and `https`
+/// otherwise; a value the client typed is displaced, and `Host` is still the
+/// service's own address. Planted: the door before this row, which sent
+/// neither and let a client's through.
+#[tokio::test]
+async fn the_browser_origin_is_told_to_the_service_as_forwarded_headers() {
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    signs_in(&pair, "shelf", origin.port(), CLIENT, SECRET);
+    let own = format!("localhost:{}", origin.port());
+    let label = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    for (host, proto) in [
+        (format!("{label}.localhost:6473"), "http"),
+        (format!("{label}.svrngs.example"), "https"),
+    ] {
+        let reply = pair
+            .raw(
+                format!(
+                    "GET /lend/shelf/whoami HTTP/1.1\r\nHost: {host}\r\n\
+                     x-forwarded-host: evil.example\r\nX-Forwarded-Proto: https\r\n\
+                     Connection: close\r\n\r\n"
+                )
+                .as_bytes(),
+            )
+            .await;
+        assert_eq!(reply.status, 200, "{}", reply.text);
+        let head = last(&heads);
+        assert_eq!(
+            header_values(&head, "x-forwarded-host"),
+            vec![host.as_str()],
+            "the browser's host is not the one the service is told: {head}"
+        );
+        assert_eq!(
+            header_values(&head, "x-forwarded-proto"),
+            vec![proto],
+            "the scheme is not the browser's: {head}"
+        );
+        assert_eq!(
+            header_values(&head, "host"),
+            vec![own.as_str()],
+            "the service's own Host changed: {head}"
+        );
+    }
+    pair.close().await;
+}
+
 /// Given a lend signing people in with svrngs, when a device in the room
 /// reaches it at the room's address, `http://<private address>:<port>/`
 /// (DESIGN §3 "The room", call 3; room.rs), plain http, then the service is

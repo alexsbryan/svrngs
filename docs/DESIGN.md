@@ -961,8 +961,10 @@ Seven calls:
    self-hosted apps, each asking for its own root. A group that does not
    trust our host runs on any static host that answers every name under it
    (§7). The service is still asked at its own address
-   (`Host: localhost:<port>`), and the door tells it the browser's origin
-   as a reverse proxy does: `X-Forwarded-Host` the host the browser asked,
+   (`Host: localhost:<port>`), and the door tells a lend that signs people
+   in with svrngs the browser's origin as a reverse proxy does, and any
+   other lend none, so a service has one address for itself, which Rails's
+   post check needs: `X-Forwarded-Host` the host the browser asked,
    `X-Forwarded-Proto` `http` for a `*.localhost` host or an address (the
    room's, "The room", call 3) and `https` for a page host's name, and any
    of either the client typed displaced (`door::tell_origin`). An app that trusts its proxy builds its pages on

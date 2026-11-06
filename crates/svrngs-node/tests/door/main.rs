@@ -1484,54 +1484,50 @@ async fn a_services_redirect_off_its_own_origin_is_never_made_a_path() {
     pair.close().await;
 }
 
-/// The browser's own origin is told to the service as a reverse proxy tells
-/// it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
-/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host (or an
-/// address, `the_scheme_told_is_the_one_the_browser_used`) and `https`
-/// otherwise; a value the client typed is displaced, and `Host` is still the
-/// service's own address. Planted: the door before this row, which sent
-/// neither and let a client's through.
+/// A service is told one address for itself. Rails takes its base URL from
+/// `X-Forwarded-Host` when one comes, else `Host`, and refuses every post
+/// whose `Origin` is not that base, so a lend that signs nobody in is told
+/// no forwarded origin, a value the client typed displaced, and its own
+/// pages' `Origin` as its own address. Planted, watched failing: `tell_origin`
+/// told every lend, as it did from 1efa9a2d, which answered every stock Rails
+/// form 422 (`InvalidCrossOriginRequest`) through a lend.
 #[tokio::test]
-async fn the_browser_origin_is_told_to_the_service_as_forwarded_headers() {
+async fn a_service_is_told_one_address_for_itself() {
     use svrngs_core::pass::Label;
 
     let pair = Pair::new().await;
     let (origin, heads) = origins::head_origin().await;
     pair.lend("shelf", origin.port(), &[]);
-    let own = format!("localhost:{}", origin.port());
     let label = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
-    for (host, proto) in [
-        (format!("{label}.localhost:6473"), "http"),
-        (format!("{label}.svrngs.example"), "https"),
-    ] {
-        let reply = pair
-            .raw(
-                format!(
-                    "GET /lend/shelf/whoami HTTP/1.1\r\nHost: {host}\r\n\
-                     x-forwarded-host: evil.example\r\nX-Forwarded-Proto: https\r\n\
-                     Connection: close\r\n\r\n"
-                )
-                .as_bytes(),
+    let host = format!("{label}.localhost:6473");
+    let reply = pair
+        .raw(
+            format!(
+                "GET /lend/shelf/whoami HTTP/1.1\r\nHost: {host}\r\nOrigin: http://{host}\r\n\
+                 x-forwarded-host: evil.example\r\nX-Forwarded-Proto: https\r\n\
+                 Connection: close\r\n\r\n"
             )
-            .await;
-        assert_eq!(reply.status, 200, "{}", reply.text);
-        let head = last(&heads);
-        assert_eq!(
-            header_values(&head, "x-forwarded-host"),
-            vec![host.as_str()],
-            "the browser's host is not the one the service is told: {head}"
-        );
-        assert_eq!(
-            header_values(&head, "x-forwarded-proto"),
-            vec![proto],
-            "the scheme is not the browser's: {head}"
-        );
-        assert_eq!(
-            header_values(&head, "host"),
-            vec![own.as_str()],
-            "the service's own Host changed: {head}"
-        );
-    }
+            .as_bytes(),
+        )
+        .await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let head = last(&heads);
+    let forwarded = header_values(&head, "x-forwarded-host");
+    assert!(
+        forwarded.is_empty(),
+        "a forwarded host reached the service: {head}"
+    );
+    assert!(
+        header_values(&head, "x-forwarded-proto").is_empty(),
+        "a forwarded scheme reached the service: {head}"
+    );
+    let told = header_values(&head, "host");
+    let base = forwarded.first().or(told.first()).expect("a Host");
+    assert_eq!(
+        header_values(&head, "origin"),
+        vec![format!("http://{base}").as_str()],
+        "the service would refuse its own pages' posts: {head}"
+    );
     pair.close().await;
 }
 
