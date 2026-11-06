@@ -1197,7 +1197,7 @@ async fn holder_of(
     let expected = |member: &crate::register::Member| member.person_key.clone();
     let standing = door
         .rail
-        .standing_in(&pass.person, &eligible)
+        .standing_in(&pass.person, eligible)
         .map(|(group, member)| (group, member.person.clone(), PersonKey(expected(&member))));
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
@@ -1212,11 +1212,11 @@ async fn holder_of(
         }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
-        let known = || door.rail.standing_in(&pass.person, &eligible).is_some();
+        let known = || door.rail.standing_in(&pass.person, eligible).is_some();
         let in_time = door.ring.until(ASK_WITHIN, known).await;
         let again = door
             .rail
-            .standing_in(&pass.person, &eligible)
+            .standing_in(&pass.person, eligible)
             .map(|(group, member)| (group, member.person.clone(), PersonKey(expected(&member))));
         tracing::debug!(target: "door", signer = pass.person, in_time, known = again.is_some(),
             "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");

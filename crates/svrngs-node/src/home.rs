@@ -620,9 +620,7 @@ async fn lend_one(
             &"no selection",
         ));
     };
-    if let Err(e) = chosen(&at, &groups) {
-        return Err(e);
-    }
+    chosen(&at, &groups)?;
     let asked = Share {
         port,
         name,

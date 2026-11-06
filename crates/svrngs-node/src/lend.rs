@@ -665,10 +665,6 @@ pub fn mutate(
 /// declaration runs; let it go when the returned file drops. The standard
 /// library's `File::try_lock`, as `cli::claim` uses it: no new lock crate
 /// (LENDING_SCOPE). A held lock is a visible busy, never a lost update.
-#[expect(
-    clippy::disallowed_methods,
-    reason = "the mutation lock: one writer per lend declaration, taken at the I/O edge"
-)]
 fn lock_lend(data_dir: &Path, name: &LendName) -> Result<std::fs::File, LendError> {
     let dir = data_dir.join("locks");
     std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
