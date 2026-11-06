@@ -196,3 +196,28 @@ the same commit passed 3 of 3 (21.4 s each); run 2 passed every step,
 exit 0, 1,398 s. Real device: never-ran (the operator's phone row).
 Known, outside this delta: web/page/dial.js `hold` drops the old endpoint
 without closing it.
+
+## Real device (2026-11-05, operator's run): passed
+
+Stand-ins for the Pi scene: this Mac ran an HTTP-only `svrngs relay --at
+192.168.1.11:3340 --open` and a keeper built at 15cdab84 (`--relay` that
+relay); the page at 15cdab84 was deployed to group.svrnme.sh by the operator;
+a Fedora desktop on the same LAN joined as a second computer.
+
+- Phone (operator): opened the link on the published page, joined once, opened
+  the lent llama-server and got an answer.
+- Cut (router WAN unplugged ~16:01:55 PST): Mac first miss 16:02:05, third
+  16:02:25 -> tier=Own with http://192.168.1.11:3340/ given and the four n0
+  relays taken (data/cut-mac-tiers.txt). Fedora: first miss 16:02:04, Own at
+  16:02:24.7. after-cut.txt written on the Mac 16:02:40 (data/cut-mac-watch.log)
+  arrived on Fedora 16:02:40.4, WAN out. The keeper's TCP ask stayed false the
+  whole outage although the router answers TLS with its own certificate.
+- Recovery: Mac back at the fallback on the first answered ask, 16:05:10.
+- Phone during the outage: the lent app's request stayed "loading", no
+  bounded failure said (expected loss of the group; the missing message is a
+  follow-up, not this row).
+- Observed, not reproduced: Fedora's TCP ask answered from 16:05:39 while its
+  registration timed out until 16:12:21 — five held tries (30-98 s apart),
+  each dropping the LAN relay ~15 s. The Mac registered at 16:05:10, so this
+  is Fedora's, not the uplink's. Follow-ups: find why; keep own relays held
+  while a fallback try has not yet registered.
