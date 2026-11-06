@@ -108,7 +108,9 @@ async fn run(home: &Path) -> (tokio::process::Child, String) {
             let api = api.trim().to_string();
             let token = std::fs::read_to_string(home.join(".svrngs/token")).unwrap_or_default();
             let asked = http.get(format!("{api}/v1/groups")).bearer_auth(token);
-            if asked.send().await.is_ok() {
+            // A success, not any answer: the file may still name the port
+            // of a `new` killed before this, which something else may hold.
+            if asked.send().await.is_ok_and(|r| r.status().is_success()) {
                 break api;
             }
             tokio::time::sleep(Duration::from_millis(100)).await;
