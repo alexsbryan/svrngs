@@ -478,10 +478,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # a selection's, an OIDC code's (23caceac) — take `.` to 20,393, the
 # exclusive cap 20,394, +62; core and js unchanged. +448 over the 19,945
 # baseline in all, inside the +700 bound; no further preserving cut found.
+# Guests by one decider (seat, 2026-11-05): the guest watch and a guest's
+# code asked by guest_of (4fba7e59, bed790e6, 4ae0d111) take `.` to
+# 20,430, the exclusive cap 20,431, +36; +485 over 19,945 in all.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 20394,
+    ".": 20431,
 
     "js": 8212,
 
