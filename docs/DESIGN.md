@@ -1411,8 +1411,8 @@ answer, fires a round and says on the page what happened, "moved" only once
 this computer is registered at the group's own; an answer moves nobody. The
 door's line for each request let in names the relay that carried it, none when
 it came direct, and `tiers` says at debug why this computer is at it. One
-endpoint serves every group, so a computer that also holds a group naming
-no relay of its own keeps the fallback, and meets every group there. A dial
+endpoint serves every group, and only a computer none of whose groups names
+a relay of its own keeps the fallback when it stops answering. A dial
 to a member reaches both tiers and the relay the record names for it,
 whichever tier this computer is at, since iroh dials a relay its endpoint
 does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a link carries
