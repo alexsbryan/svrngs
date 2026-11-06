@@ -473,10 +473,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # The rest is new policy: the audience, its witness, list and header
 # scope, OIDC provenance, the edit lock, `share --group`, and cutting
 # streams; within the +700 review bound.
+# The seat's review of that row (2026-11-05), the same preapproval: the
+# legacy stamp (7a8af0ac) and current membership — the lender's standing,
+# a selection's, an OIDC code's (23caceac) — take `.` to 20,393, the
+# exclusive cap 20,394, +62; core and js unchanged. +448 over the 19,945
+# baseline in all, inside the +700 bound; no further preserving cut found.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 20332,
+    ".": 20394,
 
     "js": 8212,
 
