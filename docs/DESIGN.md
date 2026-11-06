@@ -157,7 +157,11 @@ refuses, how many people may use it at once, and the groups it is lent to.
 *A lend reaches only the groups its lender chose* (docs/LENDING_SCOPE.md):
 its declaration names their stable ids in `groups`; `[]` is paused, and a
 declaration without the field, written before groups could be chosen, is
-legacy and paused too, never every group. Joining a group never adds it.
+legacy and paused too, never every group. Before a computer lends anything
+it stamps each such file `"groups": null` under the lend's lock, which reads
+the same, needing selection, while an svrngs before 5 refuses the file
+rather than lend it to every group; a file it cannot stamp stays legacy
+(`lend::stamp`). Joining a group never adds it.
 A carried app's group is its own and is not chosen (`Lend::reaches`). A
 member is let in only through a chosen group both they and the lender
 stand in, and asks as the person that group names them; when two chosen

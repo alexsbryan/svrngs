@@ -377,3 +377,94 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
     assert!(both.listed(house));
     assert_eq!(both.groups, Some(vec!["house".into()]), "trip is not told");
 }
+
+/// origin/main's `LendFile` (crates/svrngs-node/src/lend.rs:282-306 at
+/// d6d2a120), verbatim but its name: the parser of an svrngs before
+/// selected groups, which a downgrade would run on these files.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+#[allow(dead_code)]
+struct OldLendFile {
+    port: NonZeroU16,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    raw: Option<Raw>,
+    kind: Kind,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    limit: Option<NonZeroU16>,
+    #[serde(default)]
+    refused: Vec<String>,
+    #[serde(
+        default,
+        rename = "upload_bps",
+        skip_serializing_if = "Option::is_none"
+    )]
+    upload: Option<Upload>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    reads: Vec<Kind>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sign_in_with_svrngs: Option<SignInWithSvrngs>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    asks: Option<String>,
+}
+
+/// A legacy declaration — no `groups` key — is stamped `"groups": null`
+/// once, its limit and sign-in client kept, still read as needing
+/// selection, and left byte for byte on a second start; the old parser
+/// refuses the stamped file rather than lend it to every group. A stamp
+/// that cannot be written leaves the file as it was, legacy and listed to
+/// nobody. Planted: no stamp, the file left for an old binary to lend.
+#[cfg(unix)]
+#[test]
+fn a_legacy_declaration_is_stamped_once_so_an_old_parser_refuses_it() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let lends = lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let client = r#"{"client_id":"svrngs-media","client_secret":"s3cret"}"#;
+    let legacy =
+        format!(r#"{{"port":8096,"kind":"media","limit":2,"sign_in_with_svrngs":{client}}}"#);
+    std::fs::write(lends.join("media.json"), &legacy).unwrap();
+    assert!(
+        serde_json::from_str::<OldLendFile>(&legacy).is_ok(),
+        "the old parser reads legacy"
+    );
+    stamp(dir.path());
+    let stamped = std::fs::read_to_string(lends.join("media.json")).unwrap();
+    let json: serde_json::Value = serde_json::from_str(&stamped).unwrap();
+    assert_eq!(json["groups"], serde_json::Value::Null, "{stamped}");
+    assert!(
+        json.as_object().unwrap().contains_key("groups"),
+        "{stamped}"
+    );
+    assert!(
+        serde_json::from_str::<OldLendFile>(&stamped).is_err(),
+        "an old svrngs refuses it"
+    );
+    let name = LendName::parse("media").unwrap();
+    let media = read(dir.path(), &name).unwrap().unwrap();
+    assert_eq!(media.audience, Audience::Legacy);
+    assert_eq!(
+        (media.limit, media.sign_in_with_svrngs.is_some()),
+        (NonZeroU16::new(2), true)
+    );
+    stamp(dir.path());
+    assert_eq!(
+        std::fs::read_to_string(lends.join("media.json")).unwrap(),
+        stamped,
+        "once"
+    );
+
+    std::fs::write(lends.join("pad.json"), r#"{"port":9,"kind":"pad"}"#).unwrap();
+    std::fs::set_permissions(&lends, std::fs::Permissions::from_mode(0o555)).unwrap();
+    stamp(dir.path());
+    std::fs::set_permissions(&lends, std::fs::Permissions::from_mode(0o755)).unwrap();
+    let pad = std::fs::read_to_string(lends.join("pad.json")).unwrap();
+    assert_eq!(
+        pad, r#"{"port":9,"kind":"pad"}"#,
+        "an unwritable stamp leaves it"
+    );
+    let pad = read(dir.path(), &LendName::parse("pad").unwrap())
+        .unwrap()
+        .unwrap();
+    assert_eq!(pad.audience, Audience::Legacy, "and it reaches nobody");
+}

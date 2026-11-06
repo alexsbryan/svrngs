@@ -339,8 +339,9 @@ struct LendFile {
     /// IDs. Absent is a legacy declaration that named none: paused, needing
     /// selection, never all groups (ARCH 6). Present and empty is paused;
     /// `deny_unknown_fields` makes an old binary refuse a scoped file rather
-    /// than share it globally on downgrade.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// than share it globally on downgrade. Written always, `null` for
+    /// legacy, so every file this build writes is refused by an old one.
+    #[serde(default)]
     groups: Option<Vec<String>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     limit: Option<NonZeroU16>,
@@ -561,6 +562,40 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         sign_in_with_svrngs,
         asks: file.asks,
     }))
+}
+
+/// Stamp each legacy declaration, one with no `groups` key, `"groups":
+/// null` under its lock before this computer lends anything: read as before,
+/// needing selection, while an svrngs before 5 refuses the file
+/// (`deny_unknown_fields`) rather than lend it to every group (LENDING_SCOPE
+/// §"Updates, migration and mixed versions"). One that cannot be stamped
+/// is traced and left legacy, which no group reaches.
+pub fn stamp(data_dir: &Path) {
+    let entries = std::fs::read_dir(lends_dir(data_dir))
+        .into_iter()
+        .flatten()
+        .flatten();
+    for path in entries.map(|e| e.path()) {
+        let name = path
+            .file_name()
+            .and_then(|f| f.to_str()?.strip_suffix(".json"));
+        let Some(Ok(name)) = name.map(LendName::parse) else {
+            continue;
+        };
+        let text = std::fs::read_to_string(&path).unwrap_or_default();
+        let value = serde_json::from_str::<serde_json::Value>(&text).ok();
+        if value.is_none_or(|v| v.get("groups").is_some()) {
+            continue;
+        }
+        match mutate(data_dir, &name, |_| {}) {
+            Ok(_) => {
+                tracing::debug!(target: "lend", lend = %name, "lend: a legacy declaration stamped groups null, needing selection")
+            }
+            Err(e) => {
+                tracing::warn!(target: "lend", lend = %name, error = %e, "lend: refused — a legacy declaration cannot be stamped, so it stays legacy, lent to no group")
+            }
+        }
+    }
 }
 
 /// Every lend this computer declares, by name: each declaration read as

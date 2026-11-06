@@ -327,6 +327,7 @@ impl Node {
             path: data_dir.clone(),
             source,
         })?;
+        crate::lend::stamp(&data_dir);
         let actor = actor_of(&key);
         let secret = SecretKey::from_bytes(&key.to_bytes());
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
