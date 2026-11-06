@@ -87,6 +87,60 @@ fn address_in(line: &str) -> String {
         .to_string()
 }
 
+/// `svrngs open` hands the address over and leaves: `xdg-open` stays until a
+/// browser it started closes, and that browser must hold no pipe of its
+/// caller's, as install.sh's `$(svrngs open)` reads one to the end. An opener
+/// that refuses still leaves the person the address. Planted, watched failing:
+/// `Command::status` in `open`, which held here until the opener left.
+#[cfg(unix)]
+#[test]
+fn an_opener_that_stays_does_not_hold_svrngs_open() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let opener = if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
+    let fake = logs.path().join(opener);
+    let stub = |body: &str| {
+        std::fs::write(&fake, format!("#!/bin/sh\n{body}\n")).unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
+    };
+    let invoke = || {
+        Process::new(env!("CARGO_BIN_EXE_svrngs"))
+            .arg("open")
+            .env("SVRNGS_DIR", dir.path())
+            .env("HOME", dir.path())
+            .env("PATH", logs.path())
+            .output()
+            .unwrap()
+    };
+    let mut running = Program::start(dir.path(), &logs.path().join("first"), &[]);
+    running.until("//svrngs.localhost:");
+    stub("echo browser noise\nexec /bin/sleep 20");
+    let started = std::time::Instant::now();
+    let held = invoke();
+    assert!(
+        started.elapsed().as_secs() < 10,
+        "the opener held it: {:?}",
+        started.elapsed()
+    );
+    let said = String::from_utf8_lossy(&held.stdout);
+    assert_eq!(
+        said, "Your home page is open in your browser.\n",
+        "{held:?}"
+    );
+    stub("exit 3");
+    let refused = invoke();
+    let said = String::from_utf8_lossy(&refused.stdout);
+    assert!(
+        said.starts_with("Open this in your browser within a minute: http"),
+        "{refused:?}"
+    );
+}
+
 /// The plant is the old Busy refusal on a second bare invocation. The first
 /// bare invocation must still start a node; only `open` may launch a browser.
 #[cfg(unix)]

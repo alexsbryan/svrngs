@@ -62,8 +62,10 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::get;
 use axum::{Form, Json, Router};
 use serde::Deserialize;
+use std::ffi::OsStr;
 use std::num::NonZeroU16;
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::time::Duration;
 use svrngs_core::link::{client_link, https_link, Link};
 use svrngs_core::pass::Label;
 
@@ -814,9 +816,31 @@ async fn namesakes(State(at): State<Asking>, Query(n): Query<Naming>) -> Respons
     }
 }
 
-/// The programs that open a folder in its file browser, in turn: macOS's,
-/// then the freedesktop one Linux desktops answer.
+/// The programs that open an address or a folder, in turn: macOS's, then
+/// the freedesktop one Linux desktops answer.
 const OPENERS: [&str; 2] = ["open", "xdg-open"];
+
+/// How long an opener has to refuse before it is taken to have opened.
+const OPENER_ANSWERS: Duration = Duration::from_secs(1);
+
+/// Whether an opener took `what`. `xdg-open` stays until the browser or file
+/// manager it started closes, so one still running has taken it: it is never
+/// waited for. Its output goes nowhere, so nothing it starts holds a pipe its
+/// caller reads to the end, as install.sh's `$(svrngs open)` does.
+pub fn opened(what: &OsStr) -> Option<&'static str> {
+    OPENERS.into_iter().find(|opener| {
+        let mut opening = Command::new(opener);
+        opening
+            .arg(what)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+        let answer = opening.spawn().and_then(|mut opening| {
+            std::thread::sleep(OPENER_ANSWERS);
+            opening.try_wait()
+        });
+        answer.is_ok_and(|done| done.is_none_or(|said| said.success()))
+    })
+}
 
 /// `POST /folder`: the folder `dir` opened, asked as `/v1/folders` is asked
 /// to keep it, and only one `/v1/groups` lists for the group
@@ -824,8 +848,7 @@ const OPENERS: [&str; 2] = ["open", "xdg-open"];
 async fn open(State(at): State<Asking>, Json(o): Json<crate::folder::FolderAsk>) -> Response {
     let listed =
         crate::folder::dirs_of(&at.door.data_dir, &o.group).is_ok_and(|d| d.contains(&o.dir));
-    let opens = |p: &&str| matches!(Command::new(p).arg(&o.dir).status(), Ok(s) if s.success());
-    let by = OPENERS.iter().find(|p| listed && opens(p));
+    let by = listed.then(|| opened(o.dir.as_os_str())).flatten();
     tracing::debug!(target: "home", group = o.group, dir = %o.dir.display(), listed, ?by, "home: a folder asked opened");
     match (listed, by) {
         (true, Some(_)) => StatusCode::NO_CONTENT.into_response(),

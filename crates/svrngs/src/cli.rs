@@ -1007,16 +1007,11 @@ async fn open(root: &Path, at: Option<&str>) -> Result<String, Refusal> {
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
     let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
-    let opener = if cfg!(target_os = "macos") {
-        "open"
-    } else {
-        "xdg-open"
-    };
-    let opened = std::process::Command::new(opener).arg(&at).status();
-    tracing::debug!(target: "cli", opener, ?opened, "cli: open — the home page, with a code for its session, given to the browser");
-    Ok(match opened {
-        Ok(s) if s.success() => "Your home page is open in your browser.\n".into(),
-        _ => format!("Open this in your browser within a minute: {at}\n"),
+    let opener = svrngs_node::home::opened(at.as_ref());
+    tracing::debug!(target: "cli", ?opener, "cli: open — the home page, with a code for its session, given to the browser");
+    Ok(match opener {
+        Some(_) => "Your home page is open in your browser.\n".into(),
+        None => format!("Open this in your browser within a minute: {at}\n"),
     })
 }
 
