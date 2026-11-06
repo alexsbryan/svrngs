@@ -1,8 +1,8 @@
 //! A group made on the home page (start-group; DESIGN §3, "The home
-//! page"): on a computer whose svrngs runs as install.sh keeps it — the
-//! bare `svrngs`, this build's, in a `HOME` of its own, where `svrngs new`
-//! is refused while it runs (demo/runs/start/2026-10-13-home/NEEDS_HUMAN.md)
-//! — the page, in Playwright's headless Chromium and in its WebKit, makes
+//! page"): on a computer whose svrngs runs as install.sh keeps it — bare,
+//! in a process and a `HOME` of its own, where `svrngs new` is refused
+//! while it runs (demo/runs/start/2026-10-13-home/NEEDS_HUMAN.md) — the
+//! page, in Playwright's headless Chromium and in its WebKit, makes
 //! a group by its name and the person's; its folder is placed at
 //! `~/svrngs/<name>`, where `join` puts everyone's; a link the page makes
 //! for it is redeemed by another computer, which then stands in it; and a
@@ -11,8 +11,12 @@
 //! page this computer's svrngs came from, as install.sh keeps it, so the
 //! link is an https link on it. Neither computer is
 //! restarted. Dee's computer holds a first group, Lab, made by `svrngs new
-//! --relay` at a relay on 127.0.0.1, so it is met there alone, as Bo's
-//! computer is: nothing leaves this computer. The browser half is
+//! --relay` at a relay on 127.0.0.1, as Bo's computer is. Nothing leaves
+//! this computer: Dee's is this test binary run again as
+//! [`dee_s_computer`], `cli::run` as `main` calls it, with a second relay on
+//! 127.0.0.1 for the build's and no n0, since a gate must not hang on a
+//! public service it does not own. So `reach(SHIPPED)`, which `main` passes,
+//! is not run here: `tests/shipped.rs` pins it. The browser half is
 //! `web/tests/home.mjs`, which fails naming the install command when
 //! Playwright or its browsers are absent — it never skips.
 
@@ -33,17 +37,42 @@ use home_page::home_page;
 use serde_json::{json, Value};
 use svrngs::cli;
 use svrngs::group::Name;
+use svrngs_node::iroh::RelayConfig;
 use svrngs_node::link::Link;
 use svrngs_node::{actor_of, SigningKey};
 use tokio::io::AsyncBufReadExt;
 
-/// `svrngs <args>`, this build's, with `home` its `HOME` and nothing else
-/// of this computer's environment but its `PATH`, and the group's traces
-/// at debug on its stderr: a name's one rule (#138).
-fn svrngs(home: &Path, args: &[&str]) -> tokio::process::Command {
-    let mut c = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"));
-    c.args(args)
+/// Dee's computer, never a test alone: `svrngs <DEE_ARGS>` as `main` runs
+/// it, but for the build's relay, `DEE_BUILD`, one on 127.0.0.1 in place of
+/// `reach(SHIPPED)`'s n0.
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "run by `svrngs`, in a process of its own, as Dee's computer"]
+async fn dee_s_computer() {
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .with_writer(std::io::stderr)
+        .init();
+    let args: Vec<String> = serde_json::from_str(&std::env::var("DEE_ARGS").unwrap()).unwrap();
+    let command = cli::parse(std::iter::once("svrngs".into()).chain(args)).unwrap();
+    let relay = RelayConfig {
+        relay_urls: vec![std::env::var("DEE_BUILD").unwrap()],
+        n0_services: false,
+        loopback_only: true,
+    };
+    let root = cli::data_dir().unwrap();
+    cli::run(command, root, &relay).await.unwrap();
+}
+
+/// `svrngs <args>` on Dee's computer ([`dee_s_computer`]), `build` the
+/// build's relay, with `home` its `HOME` and nothing else of this
+/// computer's environment but its `PATH`, and the group's traces at debug
+/// on its stderr: a name's one rule (#138).
+fn svrngs(home: &Path, build: &str, args: &[&str]) -> tokio::process::Command {
+    let mut c = tokio::process::Command::new(std::env::current_exe().unwrap());
+    c.args(["--exact", "dee_s_computer", "--ignored", "--nocapture"])
         .env_clear()
+        .env("DEE_ARGS", json!(args).to_string())
+        .env("DEE_BUILD", build)
         .env("HOME", home)
         .env("PATH", std::env::var_os("PATH").unwrap_or_default())
         .env("RUST_LOG", "group=debug")
@@ -57,8 +86,8 @@ fn svrngs(home: &Path, args: &[&str]) -> tokio::process::Command {
 /// `svrngs new <name> --as Dee --relay <at>` in `home`, run until it says
 /// all it says, as a terminal's Ctrl-C then stops it: what it printed, and
 /// what it traced.
-async fn new(home: &Path, name: &str, at: &str) -> (Vec<String>, String) {
-    let mut new = svrngs(home, &["new", name, "--as", "Dee", "--relay", at])
+async fn new(home: &Path, build: &str, name: &str, at: &str) -> (Vec<String>, String) {
+    let mut new = svrngs(home, build, &["new", name, "--as", "Dee", "--relay", at])
         .spawn()
         .unwrap();
     let mut out = tokio::io::BufReader::new(new.stdout.take().unwrap()).lines();
@@ -99,8 +128,8 @@ fn ruled(traced: &str, name: &str, held: usize) -> bool {
 
 /// svrngs as login keeps it in `home`, the bare command left running,
 /// and its home page's address once it answers.
-async fn run(home: &Path) -> (tokio::process::Child, String) {
-    let running = svrngs(home, &[]).spawn().unwrap();
+async fn run(home: &Path, build: &str) -> (tokio::process::Child, String) {
+    let running = svrngs(home, build, &[]).spawn().unwrap();
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let api = tokio::time::timeout(Duration::from_secs(30), async {
         loop {
@@ -134,13 +163,15 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let (relay, _ours, _bo_dir, bo) = common::sams_computer(4).await;
     let home = tempfile::tempdir().unwrap();
     let at = harness::relay_url(&relay);
+    let shipped = harness::relay().await;
+    let build = harness::relay_url(&shipped);
 
     // Lab, Dee's first group, met at the relay here; then another called
     // lab, said beside the first by whose it is and since when, by the
     // name's one rule (#138).
-    let (said, traced) = new(home.path(), "Lab", &at).await;
+    let (said, traced) = new(home.path(), &build, "Lab", &at).await;
     assert!(ruled(&traced, "Lab", 0), "{said:#?}\n{traced}");
-    let (said, traced) = new(home.path(), "lab", &at).await;
+    let (said, traced) = new(home.path(), &build, "lab", &at).await;
     let today = chrono::Local::now().format("%-d %b");
     let second =
         format!("You’re already in Lab (yours, since {today}). This is a second group called lab.");
@@ -174,7 +205,7 @@ async fn the_home_page_makes_a_group_another_computer_joins_with_no_restart(
     let came_from = "http://127.0.0.1:9/";
     std::fs::write(data.join("origin"), came_from).unwrap();
 
-    let (mut running, page) = run(home.path()).await;
+    let (mut running, page) = run(home.path(), &build).await;
 
     let all = "#home section h2, #home section p, #home > p, #home summary";
     let seen = home_page(
@@ -291,8 +322,10 @@ async fn the_home_page_joins_another_group_from_its_link_while_svrngs_runs(
     let link = svrngs_node::link::client_link(&made.token);
 
     let home = tempfile::tempdir().unwrap();
-    new(home.path(), "Lab", &harness::relay_url(&relay)).await;
-    let (mut running, page) = run(home.path()).await;
+    let shipped = harness::relay().await;
+    let build = harness::relay_url(&shipped);
+    new(home.path(), &build, "Lab", &harness::relay_url(&relay)).await;
+    let (mut running, page) = run(home.path(), &build).await;
     let all = "#home section h2, #home section p, #home > p, #home summary";
     let seen = home_page(
         engine,
