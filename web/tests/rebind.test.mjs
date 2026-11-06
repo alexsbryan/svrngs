@@ -32,6 +32,9 @@ test("the page's dial binds again after a refused bind", async (t) => {
     relay_of: () => 'https://relay.example/',
     issuer_of: () => 'ab',
     endpoint: () => bound.bind({ dial_link: async () => reached }),
+    // The wasm's version, which the page sends as x-svrngs-version
+    // (SCOPE_PARALLEL.md): the merged dial asks it of every list.
+    current_version: () => 5,
   };
   hold(new Uint8Array(32));
   const group = { token: 'token', name: 'House' };
