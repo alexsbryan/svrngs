@@ -504,12 +504,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # preapproval above, on top of main's 8,211, which already carries
 # relay-fallback's +24: 8,324 measured after the merge, the cap 8,325.
 # The merge's integration fix in lent-row.js (absent groups) adds one: 8,326.
+# The independent audit's findings (ralph/REVIEW_FINDINGS.md,
+# "REVIEW-audit-onboarding-auto-1 (2026-11-05)"), fixed under the same
+# lending preapproval: F4 the re-declaration's lock (+1), F5/F6 one
+# `stands_here` and `door::reached` at redemption (+4), F12 a legacy
+# `unshare --group` refused (+6), F8 `stamp`'s traces (+15) take `.` from
+# the audit's 20,428 to 20,454, cap 20,455 (lending +509 of its +700); F10
+# a row naming every id (+4) takes js to 8,329, cap 8,330.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 20431,
+    ".": 20455,
 
-    "js": 8326,
+    "js": 8330,
 
     "swift": 1,
 }
