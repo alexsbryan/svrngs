@@ -20,10 +20,11 @@ use common::{heard, loopback_sockets, Browser};
 use pair::{alex_lets_sam_in, signing, start, NS};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
+use iroh_relay::server::{RelayConfig, Server, ServerConfig};
+use svrngs_core::link::Link;
 use svrngs_core::pass::Label;
-use svrngs_node::lend;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, Roster};
+use svrngs_node::{actor_of, group, lend, Person, Roster, SigningKey};
 
 const WORDS: &str = "the app receives ranked suggestions; your history stays where it is";
 
@@ -846,6 +847,78 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
         "the page's refusal traced: {log}"
     );
     alex.endpoint().close().await;
+}
+
+/// **A link the page makes before this computer has a home names the
+/// home it comes to.** The first iroh report, which sets the home, takes
+/// its whole 3 s where no IPv6 probe answers, and the page can ask sooner.
+/// A relay of the build's, stopped, sorts first, as aps1-1 does among n0's;
+/// a group that names none of its own sends a link with no home to the
+/// sorted first, where this computer never registers, and a joiner who is
+/// told nothing else waits out `ANSWERED_WITHIN`
+/// (`home_group.rs`, `Bo is let in: Err(IssuerAway)`). Red, watched failing,
+/// on the route with no wait: the link names the stopped relay.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_link_the_page_makes_before_a_home_names_the_home_it_comes_to() {
+    let relay = || async {
+        let mut config = ServerConfig::default();
+        config.relay = Some(RelayConfig::new(([127, 0, 0, 1], 0)));
+        Server::spawn(config).await.expect("a relay on 127.0.0.1")
+    };
+    let mut relays = [relay().await, relay().await];
+    let at = |r: &Server| format!("http://{}/", r.http_addr().unwrap());
+    relays.sort_by_key(at);
+    let [stopped, live] = relays;
+    let urls = [at(&stopped), at(&live)];
+    stopped.shutdown().await.unwrap();
+
+    let computer = |seed: u8, relay_urls: Vec<String>, dir: std::path::PathBuf| async move {
+        let reach = svrngs_node::iroh::RelayConfig {
+            relay_urls,
+            n0_services: false,
+            loopback_only: true,
+        };
+        let key = SigningKey::from_bytes(&[seed; 32]);
+        let any = "127.0.0.1:0".parse().unwrap();
+        Node::start(dir, key, &reach, group::seed_text, any)
+            .await
+            .expect("a computer starts")
+    };
+    let dir = tempfile::tempdir().unwrap();
+    let alex = computer(1, urls.to_vec(), dir.path().into()).await;
+    let house = group::draw(
+        group::Name::parse("house").unwrap(),
+        group::Name::parse("alex").unwrap(),
+        SigningKey::from_bytes(&[1; 32]).verifying_key(),
+    );
+    let kept = alex.host().keep_group(&house, None, &[]);
+    kept.expect("Alex keeps a group that names no relay of its own");
+    let home = || alex.endpoint().addr().relay_urls().next().cloned();
+    assert_eq!(home(), None, "asked before this computer has a home");
+
+    let page = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{page}\r\n");
+    let body = serde_json::json!({ "group": house.id(), "device": false }).to_string();
+    let got = ask(&Browser::of(&alex), "POST", &page, "/link", &own, &body).await;
+    assert_eq!(got.status, 200, "{}", got.body);
+    let link = Link::parse(got.json()["client"].as_str().unwrap()).expect("a link");
+    let carried: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
+    assert_eq!(
+        carried,
+        [urls[1].clone()],
+        "the relay this computer is met at"
+    );
+
+    let dir = tempfile::tempdir().unwrap();
+    let bo = computer(2, vec![urls[1].clone()], dir.path().into()).await;
+    let joined = bo
+        .host()
+        .join(&link, &group::Name::parse("bo").unwrap())
+        .await;
+    assert!(joined.is_ok(), "Bo is let in: {joined:?}");
+    alex.endpoint().close().await;
+    bo.endpoint().close().await;
 }
 
 /// **Lending from the page, each refusal said apart and traced**

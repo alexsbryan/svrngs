@@ -671,9 +671,14 @@ struct Linking {
 }
 
 /// `POST /link`: a link to the group, as `svrngs link` makes it
-/// ([`crate::node::Host::link`]); a guest's, `<page>#visit=<token>`, so
+/// ([`crate::node::Host::link`]), its home relay waited for as there
+/// ([`crate::node::Host::online`]); a guest's, `<page>#visit=<token>`, so
 /// the page tells it from a join link before it asks anything.
 async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
+    // Its home first, as `svrngs link` waits (cli.rs `link_to`): with none
+    // yet, a link names a relay this computer may never register at.
+    let online = at.host.online().await;
+    tracing::debug!(target: "home", group = l.group, online, "home: a link, once this computer's home relay is reached or waited for");
     match at.host.link(&l.group, l.device, None, l.visit) {
         Ok(made) => {
             let https = made.page.map(|p| https_link(&p, &made.token));

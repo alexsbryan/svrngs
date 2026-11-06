@@ -110,8 +110,8 @@ pub struct Lent {
 /// that does not.
 pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
 
-/// How long `new` and `link` wait for this computer's address before
-/// printing a link, when it has a relay to reach.
+/// How long `new`, `link` and the home page wait for this computer's
+/// address before making a link, when it has a relay to reach.
 pub const ONLINE_WAIT: Duration = Duration::from_secs(10);
 
 /// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a

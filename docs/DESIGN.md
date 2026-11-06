@@ -1403,7 +1403,10 @@ does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a link carries
 at most two relays, the computer's home first, else the group's own
 first, and beside it the build's first, or the group's own when the home
 is the build's (`Meeting::carried`), so a phone's page dials them and asks
-no lookup. The page takes every route the link carries that its own policy
+no lookup. `svrngs link` and the home page each wait for the home first, up
+to `ONLINE_WAIT`, 10 s, so a link made as svrngs starts names the relay it
+comes to be met at; one that reaches none in that time makes the link
+anyway. The page takes every route the link carries that its own policy
 allows — under `connect-src 'self' wss: https:` a plain-HTTP relay is none,
 and is never tried — and dials the issuer through all of them at once, so
 a route that is stalled or cannot reach it does not delay one that
