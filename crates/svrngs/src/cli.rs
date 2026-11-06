@@ -282,10 +282,6 @@ pub enum MeetAt {
 /// order (DESIGN §7; PLAN §2).
 pub const SHIPPED: MeetAt = MeetAt::N0;
 
-/// How long `new` and `link` wait for this computer's address before
-/// printing a link, when it has a relay to reach.
-const ONLINE_WAIT: Duration = Duration::from_secs(10);
-
 /// What was typed.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Verb {
@@ -1973,18 +1969,14 @@ fn unminted(seed: &Seed, e: Unminted) -> Refusal {
     }
 }
 
-/// Wait up to [`ONLINE_WAIT`] for a home relay, when this computer has
-/// relays to reach, saying which it `tried` when it reached none.
+/// Wait for a home relay ([`svrngs_node::node::Host::online`]), saying
+/// which relays it `tried` when it reached none.
 async fn wait_online(node: &Node, tried: &[String]) {
-    if node.relayed() {
-        let online = tokio::time::timeout(ONLINE_WAIT, node.endpoint().online())
-            .await
-            .is_ok();
-        tracing::debug!(target: "cli", online, ?tried, "cli: waited for a relay");
-        if !online && !tried.is_empty() {
-            let secs = ONLINE_WAIT.as_secs();
-            eprintln!("svrngs: after {secs} s, this computer has not yet reached the server your groups find it through. It goes on, and keeps trying; until it does, they may not reach you (RUST_LOG=debug names the server).");
-        }
+    let online = node.host().online().await;
+    tracing::debug!(target: "cli", online, ?tried, "cli: waited for a relay");
+    if !online && !tried.is_empty() {
+        let secs = svrngs_node::node::ONLINE_WAIT.as_secs();
+        eprintln!("svrngs: after {secs} s, this computer has not yet reached the server your groups find it through. It goes on, and keeps trying; until it does, they may not reach you (RUST_LOG=debug names the server).");
     }
 }
 

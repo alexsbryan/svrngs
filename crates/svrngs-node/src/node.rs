@@ -110,6 +110,10 @@ pub struct Lent {
 /// that does not.
 pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
 
+/// How long `new` and `link` wait for this computer's address before
+/// printing a link, when it has a relay to reach.
+pub const ONLINE_WAIT: Duration = Duration::from_secs(10);
+
 /// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a
 /// service manager and `kill` send (syp-6 b). Its caller then closes the
 /// node's endpoint, telling every peer each connection is closed. A
@@ -545,14 +549,16 @@ impl Node {
         let groups = self.host.standings().unwrap_or_default();
         self.host.lends_in(&groups, None).await
     }
-
-    /// Whether this computer reaches the network through a relay at all.
-    pub fn relayed(&self) -> bool {
-        self.host.relayed
-    }
 }
 
 impl Host {
+    /// Whether this computer's home relay is reached, waited for up to
+    /// [`ONLINE_WAIT`]; true at once with no relay to reach.
+    pub async fn online(&self) -> bool {
+        let wait = tokio::time::timeout(ONLINE_WAIT, self.endpoint.online());
+        !self.relayed || wait.await.is_ok()
+    }
+
     /// One exchange of `namespace` with the node at `peer`, whatever this
     /// node's register says of it: a joiner syncs once from the issuer that
     /// admitted it, whom its own register may not know yet (PLAN §4,
