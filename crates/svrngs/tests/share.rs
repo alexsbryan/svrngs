@@ -1104,3 +1104,28 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
     let gone = cli::unshare(dir, &pad.name, &[]).unwrap();
     assert_eq!(gone, Said::Unshared(pad.name.clone()));
 }
+
+/// Two groups of one name never share a grant (LENDING_SCOPE §"Policy and
+/// representation": a duplicate display name must not retarget it): Sam
+/// holds two called House. `--group House` is refused as ambiguous, naming
+/// both ids' starts; the start of one's id chooses that one alone, and the
+/// declaration keeps its id, which a rename or a third House never moves.
+/// Planted: a name read as the first group that has it.
+#[tokio::test(flavor = "multi_thread")]
+async fn two_groups_of_one_name_are_chosen_by_id_never_by_name() {
+    use svrngs_node::lend::Audience;
+    let sam = computer(1).await;
+    let (mut ids, relay) = (Vec::new(), no_relay());
+    for _ in 0..2 {
+        let made = cli::new_group(&sam.node, name("House"), name("Sam"), None, &[], &relay);
+        ids.push(made.await.expect("Sam makes a House").0.id());
+    }
+    let (dir, port) = (sam.dir.path(), std::num::NonZeroU16::new(8096).unwrap());
+    let both = cli::audience_of(dir, port, &["House".to_string()]);
+    assert!(
+        matches!(&both, Err(Refusal::Ambiguous { ids: i, .. }) if i.len() == 2),
+        "{both:?}"
+    );
+    let second = cli::audience_of(dir, port, &[ids[1][..8].to_string()]).unwrap();
+    assert_eq!(second, Audience::Selected(vec![ids[1].clone()]));
+}

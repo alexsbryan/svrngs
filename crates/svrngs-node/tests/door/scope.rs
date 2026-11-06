@@ -275,3 +275,32 @@ async fn a_group_the_lender_no_longer_stands_in_reaches_nothing() {
     assert!(heads.lock().unwrap().is_empty(), "the service was asked");
     pair.close().await;
 }
+
+/// Joining a third group widens nothing (LENDING_SCOPE "Proof before
+/// landing" 3): the shelf lent only to yard; A then holds club, ada and
+/// bo's. The declaration's bytes are as they were, and bo, now in a third
+/// group with the lender, still neither lists nor reaches it. Planted: a
+/// lend reaching every group its lender stands in.
+#[tokio::test]
+async fn joining_a_third_group_leaves_the_declaration_and_reaches_nothing() {
+    let (pair, heads) = lending_heads().await;
+    groups_held(&pair, &["yard"]);
+    let file = lend::lends_dir(pair.dir.path()).join("shelf.json");
+    let before = std::fs::read(&file).unwrap();
+    let club = [("ada", 1), ("bo", 2)]
+        .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(k))]));
+    pair.a
+        .rail()
+        .set_seed("club", &Roster::new(club.into_iter().collect()))
+        .unwrap();
+    assert_eq!(listed(&pair).await["lends"], serde_json::json!([]));
+    let reply = pair.get("/lend/shelf/whoami", "").await;
+    assert_eq!(reply.status, 403, "{}", reply.text);
+    assert_eq!(
+        std::fs::read(&file).unwrap(),
+        before,
+        "the declaration is unchanged"
+    );
+    assert!(heads.lock().unwrap().is_empty(), "the service was asked");
+    pair.close().await;
+}

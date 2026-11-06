@@ -50,3 +50,33 @@ fn a_computer_answering_an_older_version_is_named_older() {
     );
     assert!(matches!(answered("cy", b"not json"), Answered::Refused));
 }
+
+/// The relayed direction of the scope fence (LENDING_SCOPE §"Updates,
+/// migration and mixed versions"): a computer still on 4 answers its lends
+/// unscoped, every one to every group; this computer names it older and
+/// lists none of them on, so `/people/lends` never relays an old broad
+/// grant. A 5 answer whose lend names no `groups` is read but listed to
+/// nobody. Planted: VERSION left at 4, which read the 4 answer as lends.
+#[test]
+fn an_unscoped_answer_from_a_computer_on_4_is_relayed_to_nobody() {
+    let shelf = serde_json::json!({
+        "name": "shelf", "kind": "k", "limit": null, "using": 0, "upload_bps": null, "reads": [],
+    });
+    let said = |v: u32| {
+        answered(
+            "cy",
+            &serde_json::to_vec(&serde_json::json!({ "version": v, "lends": [shelf] })).unwrap(),
+        )
+    };
+    assert!(
+        matches!(said(4), Answered::Older),
+        "a 4 answer is older, not read"
+    );
+    let Answered::Lends(mut lends, 5) = said(5) else {
+        panic!("a 5 answer is read")
+    };
+    assert!(
+        !lends[0].listed(|_| true),
+        "a lend with no groups is listed to nobody"
+    );
+}

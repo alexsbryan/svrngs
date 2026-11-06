@@ -376,3 +376,51 @@ async fn a_member_no_longer_standing_is_cut() {
         "Dee, still standing, is carried through the same window"
     );
 }
+
+/// **A port taken from a group is cut, and no other** (LENDING_SCOPE
+/// §"Enforcement and disclosure" 2). Alex keeps sending to Sam's echo and
+/// to Sam's other, both lent to the house. Sam lends echo to no group
+/// (`[]`): two seconds on, none of Alex's packets reaches echo and none
+/// comes back, while other still carries Alex's. Planted: the sweep asking
+/// the lend as it was opened, not as it is declared now.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_port_its_group_is_taken_from_is_cut_and_no_other() {
+    let (sam, them) = house(&[(2, "Alex")]).await;
+    let (echo, mut lent) = told_echo().await;
+    let (other_at, mut others) = told_echo().await;
+    let echoes = share_udp(&sam, echo.port(), &[]);
+    let other = share_udp(&sam, other_at.port(), &["--name", "other"]);
+    let alex = &them[0];
+    let (carried, at_echo) = open(alex, &sam, &echoes).await;
+    let _echo = carried.expect("Alex's computer opens Sam's echo");
+    let (carried, at_other) = open(alex, &sam, &other).await;
+    let _other = carried.expect("Alex's computer opens Sam's other");
+    let mut hears = keeps_sending(program().await, at_echo, b"echo");
+    let _other_hears = keeps_sending(program().await, at_other, b"other");
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    assert!(
+        drained(&mut lent).iter().any(|p| p == b"echo"),
+        "control: echo is reached"
+    );
+
+    let paused = svrngs_node::lend::set_audience(sam.dir.path(), &echoes.name, Vec::new());
+    assert!(paused.unwrap());
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    let _ = (
+        drained(&mut lent),
+        drained(&mut hears),
+        drained(&mut others),
+    );
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    let reached = drained(&mut lent);
+    assert!(
+        !reached.iter().any(|p| p == b"echo"),
+        "echo still reached {} times",
+        reached.len()
+    );
+    assert!(drained(&mut hears).is_empty(), "Alex still hears echo");
+    assert!(
+        drained(&mut others).iter().any(|p| p == b"other"),
+        "other stopped"
+    );
+}
