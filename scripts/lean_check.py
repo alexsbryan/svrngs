@@ -481,12 +481,34 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Guests by one decider (seat, 2026-11-05): the guest watch and a guest's
 # code asked by guest_of (4fba7e59, bed790e6, 4ae0d111) take `.` to
 # 20,430, the exclusive cap 20,431, +36; +485 over 19,945 in all.
+# Selected-group audience UI, operator-preapproved (SCOPE_PARALLEL.md,
+# "Checks"; the original combined guardrail is +235 JS): the two lending
+# machines take `choose`/`audience` and carry `groups`, the rows draw the
+# boxes and read paused []/legacy null, the audience threads from HOME's
+# groups into found.js and lent-row.js, and web/page/dial.js `lends` names
+# its svrngs version with `x-svrngs-version`, so the measured js is 8,300
+# and its exclusive cap one past is 8,301, +113 over grouped-home B's 8,187.
+# The economizing pass reused the existing machines, parts and group data,
+# factored the boxes into the shared home/page/group-choice.js (found.js and
+# lent-row.js each lost their local box markup and `tick`), and folded the
+# discovery header into a one-line `SCOPED(core)` beside PEOPLE_LENDS; no
+# preserving cut of the remaining audience presentation was found — deleting
+# it drops the explicit-choice behavior the row requires. Each law in
+# web/tests/pages/lend-groups.test.mjs failed on a named plant (no `choose`;
+# `choose` replacing instead of merging; [] read as legacy; no maker in the
+# label) and web/tests/pages/discovery-header.test.mjs on the header removed,
+# before passing. Core and non-JS caps are unchanged; a served-module entry
+# (`group-choice`) rides the existing home.rs table line, so the `.` rung
+# does not move.
+# Merged with the backend (merge-scope-ui): the UI lane's +113 under its
+# preapproval above, on top of main's 8,211, which already carries
+# relay-fallback's +24: 8,324 measured after the merge, the cap 8,325.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
     ".": 20431,
 
-    "js": 8212,
+    "js": 8325,
 
     "swift": 1,
 }

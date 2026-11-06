@@ -4,7 +4,7 @@ Read `../onboarding/SCOPE_PARALLEL.md`, `CHARTER.md`, and
 `docs/LENDING_SCOPE.md`. This queue supplies only the UI half of the
 main queue's scoped-lending implementation. Work only in this worktree.
 
-- [ ] onboarding-scope-ui — depends [] — implement the existing scope UI against the frozen API; meaningful focused Node checks and commits, no cargo or full check.sh:
+- [x] onboarding-scope-ui 2f22da567 — depends [] — implement the existing scope UI against the frozen API; meaningful focused Node checks and commits, no cargo or full check.sh:
   - Explicit stable-ID group choices for new lends; no implicit all-groups
     selection. Show the selected rings, paused [] and legacy null requiring
     selection on owner rows. An audience-only edit preserves other settings;

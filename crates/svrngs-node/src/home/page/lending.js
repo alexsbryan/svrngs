@@ -10,6 +10,7 @@ import { go } from '../ui/machine.js?v=__VERSION__';
 import { Lending } from './what-you-lend.js?v=__VERSION__';
 /** @import { Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
@@ -38,8 +39,11 @@ export const holds = (state) => /** @type {Groups} */ (state.groups).length > 0 
 /** @param {HOME.PlaceProps} props */
 function LendingPlace({ s: state, home }) {
   // HOME draws its places once the groups are read (home-page.js `Home`).
-  if (/** @type {Groups} */ (state.groups).length === 0) return false;
-  return html`<${Lending} round=${state.round} home=${home} told=${state.lentRead} />`;
+  const groups = /** @type {Choice[]} */ (state.groups);
+  if (groups.length === 0) return false;
+  return html`
+    <${Lending} round=${state.round} groups=${groups} home=${home} told=${state.lentRead} />
+  `;
 }
 
 /** @type {{ lent: (props: HOME.PlaceProps) => Drawn }} */

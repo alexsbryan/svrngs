@@ -7,19 +7,21 @@ import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { LENDING } from './lent-read.js?v=__VERSION__';
 import { Lent } from './lent-row.js?v=__VERSION__';
+/** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /**
- * The list, read again on each of HOME's rounds: the round, HOME's
- * `dispatch`, and whether HOME is told it was read.
+ * The list, read again on each of HOME's rounds: the round, HOME's groups
+ * to lend one to, HOME's `dispatch`, and whether HOME is told it was read.
  * @typedef {object} LendingProps
  * @property {HOME.State['round']} round
+ * @property {Choice[]} groups
  * @property {HOME.PlaceProps['home']} home
  * @property {boolean | undefined} told
  */
 
 /** @param {LendingProps} props */
-export function Lending({ round, home, told }) {
+export function Lending({ round, groups, home, told }) {
   const [state, send] = useMachine(() => machine('LENDING', LENDING, { at: { lent: 'reading' } }));
   useEffect(() => {
     send({ type: 'read' });
@@ -36,6 +38,7 @@ export function Lending({ round, home, told }) {
         key=${lend.name}
         l=${lend}
         signs=${signing.includes(lend.name)}
+        groups=${groups}
         home=${home}
       />
     `,

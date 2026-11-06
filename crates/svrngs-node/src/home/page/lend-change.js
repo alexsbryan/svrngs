@@ -2,7 +2,8 @@
 // CHANGE, the machine of a lend's row in "What you lend" (lent-row.js
 // `Lent`): how many it lets in at once, its person's choice, a number or
 // everyone in their groups, set or cleared; signing people in with svrngs
-// turned on; or its lending stopped. The door takes a change at its next
+// turned on; its audience, the groups that can open it, by their stable
+// ids; or its lending stopped. The door takes a change at its next
 // request. A second press while one change is under way is refused. A
 // change is answered by HOME's `again`, the groups and the list read
 // again, and the typed number and what was said are cleared with it. Why a
@@ -21,28 +22,34 @@ import { post } from './routes.js?v=__VERSION__';
 
 /**
  * A change of a lend: how many it lets in at once, a number or everyone
- * (`null`), or its lending stopped.
- * @typedef {{ limit: number | null } | 'stop'} To
+ * (`null`); its audience, the group ids that can open it; or its lending
+ * stopped. An audience-only change preserves every other setting
+ * (SCOPE_PARALLEL.md, `POST /lent`).
+ * @typedef {{ limit: number | null } | { groups: string[] } | 'stop'} To
  */
 
 /**
- * A lend's row's state: where its change is, the number typed, what was
- * last said, and the app form's fill, once.
+ * A lend's row's state: where its change is, the number typed, the group
+ * ids chosen, what was last said, and the app form's fill, once.
  * @typedef {object} State
  * @property {{ change: 'idle' | 'changing' | 'refused' }} at
  * @property {Record<string, number>} [asked]
  * @property {string} said
  * @property {string} [many]
+ * @property {string[]} groups
  * @property {Signed} [shown]
  */
 
 /**
  * The messages a row takes: a number typed, in the Field, which names no
- * field here; a change pressed; Sign people in pressed; Let in this many
+ * field here; a group ticked or unticked, by its stable id; a change
+ * pressed; the audience saved; Sign people in pressed; Let in this many
  * pressed, with the number; the change made, signing on, or refused, with
  * why.
  * @typedef {{ type: 'typed', value: string }
+ *   | { type: 'choose', id: string, on: boolean }
  *   | { type: 'change', to: To }
+ *   | { type: 'audience' }
  *   | { type: 'sign' }
  *   | { type: 'many', value: string }
  *   | { type: 'changed', why: string }
@@ -92,6 +99,22 @@ export const CHANGE = (lend, home) => ({
     switch (message.type) {
       case 'typed':
         return go(state, {}, { many: message.value });
+      case 'choose':
+        return go(
+          state,
+          {},
+          {
+            groups: message.on
+              ? [...state.groups.filter((id) => id !== message.id), message.id]
+              : state.groups.filter((id) => id !== message.id),
+          },
+        );
+      case 'audience':
+        return changing(state, {
+          run: 'change',
+          to: { groups: state.groups },
+          failed: 'refused',
+        });
       case 'change':
         return changing(state, { run: 'change', to: message.to, failed: 'refused' });
       case 'sign':

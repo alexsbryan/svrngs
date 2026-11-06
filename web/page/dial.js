@@ -16,6 +16,13 @@ import { whoseComputer } from '../question.js?v=__VERSION__';
 // How long a dial waits for a computer to answer, in milliseconds.
 export const PATIENCE = 60_000;
 const PEOPLE_LENDS = '/people/lends';
+// This page's svrngs version, as the wasm export names it, sent so a lender
+// refuses an old discovery request that cannot name a scope
+// (SCOPE_PARALLEL.md, "Shared API shape"); compatibility data, never
+// permission.
+/** @param {typeof Wasm} core */
+const SCOPED = (core) =>
+  /** @type {[string, string]} */ (['x-svrngs-version', String(core.current_version())]);
 
 // The runtime by its one URL, imported only once app.js has run its init.
 export const wasm = () => import('../wasm/svrngs_web.js?v=__VERSION__');
@@ -183,9 +190,13 @@ async function reach(core, group, tried) {
  * @param {string[]} tried
  * @returns {Promise<[Dialled, Computer | undefined, Response]>}
  */
+// The discovery read names this page's svrngs version with
+// `x-svrngs-version`, so a lender refuses an old request that cannot name
+// a scope (SCOPE_PARALLEL.md, "Shared API shape"); compatibility data,
+// never permission.
 export const lends = (core, group, tried) =>
   reach(core, group, tried).then(([dialled, via]) =>
-    dialled.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json']], null).then(
+    dialled.fetch('GET', PEOPLE_LENDS, [['accept', 'application/json'], SCOPED(core)], null).then(
       (res) => [dialled, via, res],
       (error) => {
         trace(

@@ -640,7 +640,11 @@ On either layout a person can:
   from 1024 to 49151 that answers on 127.0.0.1, less svrngs's own, what it
   lends already and what signs people in to a lend. A kind the
   well-known table knows is named, with what it needs first, and lent by one
-  button; any other once the person gives it a name and says what it is;
+  button; any other once the person gives it a name and says what it is.
+  Who can open it is an explicit set of the person's groups, one box a
+  group, ticked by the person and never everyone by default: with no group
+  ticked the lend is refused, so joining a group later never widens it, and
+  two groups of one name are told apart by who made each;
 - bring things to the table: the shelf, svrngs's own apps (Money, Events,
   House rules), listed as data in `crates/svrngs-node/src/shelf.txt` and
   embedded at build so svrngs's code names none, each brought into the
@@ -653,7 +657,10 @@ On either layout a person can:
   (the operator, 2026-10-26; `demo/xenia/findings/
   after-join-reads-as-permissions.md`);
 - change how many people at once may use what their computer lends, a number
-  or everyone, or stop lending it;
+  or everyone; change who can open it, the groups it is lent to, shown as
+  the selected groups, "Paused" when none and "Choose which groups" when a
+  lend from before the change has none chosen yet, saved apart from every
+  other setting; or stop lending it;
 - say yes to an app, or stop it;
 - show a group on a screen — a TV, a spare laptop, a projector — at
   `/?screen=<its id>`, opened in a tab of its own from "Show <group> on a

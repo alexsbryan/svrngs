@@ -7,6 +7,7 @@ import { Act } from '../ui/parts.js?v=__VERSION__';
 import { Found } from './found.js?v=__VERSION__';
 import { RUNNING } from './running-look.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
+/** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
 
 /** @type {Record<State['at']['running'], (s: State) => string>} */
@@ -18,17 +19,18 @@ const SAID = {
   // `state.found` is the look's, which set 'looked' with it.
   looked: (state) =>
     /** @type {Shown[]} */ (state.found).length
-      ? 'You looked just now: the programs running on this computer, each at its address. Lend one, and everyone in your groups opens it in their browser, as themselves, while this computer is on. You can stop lending it below at any time.'
+      ? 'You looked just now: the programs running on this computer, each at its address. Lend one to the groups you choose, and the people in them open it in their browser, as themselves, while this computer is on. You can change who can open it, or stop lending it, below at any time.'
       : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.',
 };
 
 /**
- * "Already running here": HOME's `dispatch`, which each lend tells.
- * @typedef {{ home: Home }} RunningProps
+ * "Already running here": HOME's groups to lend one to, and its `dispatch`,
+ * which each lend tells.
+ * @typedef {{ groups: Choice[], home: Home }} RunningProps
  */
 
 /** @param {RunningProps} props */
-export function Running({ home }) {
+export function Running({ groups, home }) {
   const [state, send] = useMachine(() =>
     machine('RUNNING', RUNNING, { at: { running: 'unlooked' } }),
   );
@@ -39,7 +41,13 @@ export function Running({ home }) {
     state.at.running === 'looked' &&
     /** @type {Shown[]} */ (state.found).map(
       (row) =>
-        html`<${Found} key=${`${look}:${row.port}`} r=${row} named=${state.named} home=${home} />`,
+        html`<${Found}
+          key=${`${look}:${row.port}`}
+          r=${row}
+          named=${state.named}
+          groups=${groups}
+          home=${home}
+        />`,
     );
   const busy = state.at.running === 'looking' ? 'busy' : 'idle';
   return html`
