@@ -1693,8 +1693,13 @@ from the journal waits in PLAN §2.
   corrections can void anything. A computer refuses a new holder entry by
   `/carry` until it holds the keeper's cutover (`upgrade_keeper`), and one
   no approver approved (`not_approved`). The keeper upgrades first: the
-  protocol is version 4, and a computer answering below it is older
-  (`version.rs`).
+  protocol is version 5, and a computer answering below it is older
+  (`version.rs`). 5 is lending to chosen groups: a list of lends is
+  asked with `x-svrngs-version: 5`, and a computer refuses one asked
+  without it or below it (403), since an older one would read a scoped
+  list as everything lent; `current_version()` (web/src/lib.rs) is the
+  value a page sends.
+  It is compatibility, never permission.
 - **An entry's author is its signer.** A line counts as its signer's
   person, or a holder's as the person its pass names. A line naming
   another person, as an older svrngs wrote a phone's act (`on_behalf_of`),
