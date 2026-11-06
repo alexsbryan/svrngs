@@ -312,11 +312,7 @@ pub(super) async fn stop_with_pass(
             LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nothing is lent to you by that name")
         );
     };
-    let eligible = |group: &str| match &lend.source {
-        crate::lend::Source::Carried(own) => own == group,
-        _ => lend.audience.reaches(group),
-    };
-    let Asker { actor, app, .. } = holder_of(&door, &dialer, &headers, &lend, eligible).await?;
+    let Asker { actor, app, .. } = holder_of(&door, &dialer, &headers, &lend).await?;
     let app = app.expect("a pass names its app");
     Ok(stop(&door, &lend, actor, app, &body).await)
 }

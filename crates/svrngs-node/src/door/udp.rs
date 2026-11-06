@@ -168,8 +168,8 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
 async fn unstood(door: &Door, actor: &str, lend: &Lend) {
     let mut every = tokio::time::interval(SWEEP);
     loop {
-        let stands = live_eligible(door, lend)
-            .is_ok_and(|eligible| door.rail.standing_in(actor, &eligible).is_some());
+        let stands = live(door, lend)
+            .is_ok_and(|live| door.rail.standing_in(actor, |g| live.reaches(g)).is_some());
         if !stands {
             return;
         }
@@ -239,11 +239,8 @@ async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, 
 /// (LENDING_SCOPE §"Raw admission and current-scope sweep").
 pub(super) async fn admitted(lent: &Lending<'_>, what: &str) -> Result<Option<InFlight>, String> {
     let (door, actor, lend, _, conn) = *lent;
-    let eligible = match live_eligible(door, lend) {
-        Ok(eligible) => eligible,
-        Err(words) => return Err(words),
-    };
-    let Some((_, member)) = door.rail.standing_in(actor, &eligible) else {
+    let live = live(door, lend)?;
+    let Some((_, member)) = door.rail.standing_in(actor, |g| live.reaches(g)) else {
         tracing::debug!(target: "door", actor, what, lend = %lend.name, "raw: a use refused — the dialer stands in no group this lend is lent to now");
         return Err(LENDS_NOTHING.into());
     };
@@ -260,23 +257,13 @@ pub(super) async fn admitted(lent: &Lending<'_>, what: &str) -> Result<Option<In
     }
 }
 
-/// The live eligibility of a raw lend: re-read the declaration and derive
-/// whether a group may reach it, from its audience (or a carried app's own
-/// group). An unreadable or missing declaration reaches nothing — a
-/// withdrawal or a broken read fails closed, never open (ARCH 6).
-pub(super) fn live_eligible(door: &Door, lend: &Lend) -> Result<impl Fn(&str) -> bool, String> {
+/// A raw lend as its declaration says now, which [`Lend::reaches`] asks:
+/// re-read, not the one captured at open. An unreadable or missing
+/// declaration reaches nothing — a withdrawal or a broken read fails
+/// closed, never open (ARCH 6).
+pub(super) fn live(door: &Door, lend: &Lend) -> Result<Lend, String> {
     match crate::lend::read(&door.data_dir, &lend.name) {
-        Ok(Some(live)) => {
-            let carried = match &live.source {
-                Source::Carried(own) => Some(own.clone()),
-                Source::Port(_) | Source::Raw(..) => None,
-            };
-            let audience = live.audience.clone();
-            Ok(move |group: &str| match &carried {
-                Some(own) => own == group,
-                None => audience.reaches(group),
-            })
-        }
+        Ok(Some(live)) => Ok(live),
         Ok(None) => {
             tracing::debug!(target: "door", lend = %lend.name, "raw: a use refused — it is no longer declared here");
             Err(format!("{} is no longer lent here", lend.name))

@@ -280,6 +280,15 @@ pub struct Lend {
 }
 
 impl Lend {
+    /// Whether `group` may reach this lend: a carried app only its own
+    /// group, a declared lend only a group its lender chose (LENDING_SCOPE).
+    pub fn reaches(&self, group: &str) -> bool {
+        match &self.source {
+            Source::Carried(own) => own == group,
+            Source::Port(_) | Source::Raw(..) => self.audience.reaches(group),
+        }
+    }
+
     /// The app `kind` carried in `group`: its name the kind's and the
     /// group id's first 16 letters, so a computer in two groups carrying an
     /// app of one name gives each a label of its own (COMMUNITY_APPS §7,

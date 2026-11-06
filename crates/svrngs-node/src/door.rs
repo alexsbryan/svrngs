@@ -1093,7 +1093,6 @@ async fn holder_of(
     holder: &Dialer,
     headers: &HeaderMap,
     lend: &Lend,
-    eligible: impl Fn(&str) -> bool,
 ) -> Result<Asker, Response> {
     let key = holder.actor();
     let refused = |why: &str| {
@@ -1128,8 +1127,9 @@ async fn holder_of(
     if let Err(fault) = checked {
         return Err(refused(&fault.to_string()));
     }
-    // A group that `eligible` refuses grants nothing, so the signer's
+    // A group the lend does not reach grants nothing, so the signer's
     // identity is resolved only through a group this lend is lent to.
+    let eligible = |group: &str| lend.reaches(group);
     let expected = |member: &crate::register::Member| member.person_key.clone();
     let standing = door
         .rail
@@ -1144,7 +1144,7 @@ async fn holder_of(
     }
     let standing = if standing.is_none() {
         if let Some(visit) = door.rail.visit_anywhere(&pass.person) {
-            return guest_of(&hex::encode(door.key), visit, pass, lend, now, &eligible);
+            return guest_of(&hex::encode(door.key), visit, pass, lend, now);
         }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
@@ -1188,7 +1188,6 @@ fn guest_of(
     pass: Pass,
     lend: &Lend,
     now: i64,
-    eligible: &impl Fn(&str) -> bool,
 ) -> Result<Asker, Response> {
     let ((group, register, guest), name) = (v, lend.name.as_str());
     let host = register.members.get(&guest.host).map(|m| &m.person);
@@ -1206,7 +1205,7 @@ fn guest_of(
     let closed = |w| Some((LendRefusal::Closed, w));
     // The visit's group must still be one the lend is lent to: a visit in a
     // group the audience excludes reaches nothing here (LENDING_SCOPE).
-    let in_scope = eligible(&group);
+    let in_scope = lend.reaches(&group);
     let refused = match () {
         _ if gone => ended(format!("{host} is no longer a member, so your visit ended")),
         _ if stopped => ended(format!("{host} ended your visit")),
@@ -1317,10 +1316,7 @@ pub(crate) async fn lend_for(
     // explicit audience (LENDING_SCOPE). The audience is read from the
     // declaration just read, so a narrowing takes effect at the next
     // request (RUST_ARCH 8; LENDING_SCOPE §"Raw admission and sweep").
-    let eligible = |group: &str| match &lend.source {
-        Source::Carried(own) => own == group,
-        Source::Port(_) | Source::Raw(..) => lend.audience.reaches(group),
-    };
+    let eligible = |group: &str| lend.reaches(group);
     let Asker {
         actor: whose,
         device,
@@ -1365,7 +1361,7 @@ pub(crate) async fn lend_for(
             }
             Who::Holder(_) => unreachable!("a holder is resolved through its pass"),
         },
-        Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend, &eligible).await?,
+        Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
     };
     let actor = whose.as_str();
     let port = match &lend.source {
