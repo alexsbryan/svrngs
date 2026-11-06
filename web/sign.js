@@ -45,45 +45,13 @@ async function digest(handoff) {
   return store.hex(new Uint8Array(await crypto.subtle.digest('SHA-256', message)));
 }
 
-// One transaction on this origin's store `name`, its one object store kept
-// by `keyPath`: `act(store)`'s request's answer once it commits.
-/**
- * @template T
- * @param {string} name
- * @param {string} keyPath
- * @param {IDBTransactionMode} mode
- * @param {(store: IDBObjectStore) => IDBRequest<T>} act
- * @returns {Promise<T>}
- */
-function stored(name, keyPath, mode, act) {
-  return new Promise((yes, no) => {
-    const request = indexedDB.open(name, 1);
-    request.onupgradeneeded = () => request.result.createObjectStore('kept', { keyPath });
-    request.onerror = () => no(request.error);
-    request.onsuccess = () => {
-      const transaction = request.result.transaction('kept', mode);
-      const asked = act(transaction.objectStore('kept'));
-      transaction.oncomplete = () => {
-        request.result.close();
-        yes(asked.result);
-      };
-      const refused = () => {
-        request.result.close();
-        no(transaction.error ?? new Error('this browser’s storage refused'));
-      };
-      transaction.onabort = refused;
-      transaction.onerror = refused;
-    };
-  });
-}
-
 // This origin's approvers, by an app's label.
 /**
  * @template T
  * @param {IDBTransactionMode} mode
  * @param {(store: IDBObjectStore) => IDBRequest<T>} act
  */
-const approvers = (mode, act) => stored('svrngs-approvers', 'label', mode, act);
+const approvers = (mode, act) => store.stored('svrngs-approvers', 'label', mode, act);
 
 // The approver for `label`'s open `handoff`. A cookie for the label that opens the
 // open's seal is adopted first: kept, then deleted, so a second frame finds
@@ -145,7 +113,7 @@ async function stableApproval(group, pass, line, now) {
   const approval = decode(pass);
   const id = `${group}/${approval.person}/${approval.app}/${approval.op}`;
   let chosen = pass;
-  await stored('svrngs-approvals', 'id', 'readwrite', (entries) => {
+  await store.stored('svrngs-approvals', 'id', 'readwrite', (entries) => {
     const read = /** @type {IDBRequest<{ id: string, pass: string, until: number }[]>} */ (
       entries.getAll()
     );

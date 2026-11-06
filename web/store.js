@@ -139,9 +139,27 @@ async function run(store, mode, act, opening = open) {
       db.close();
       done(request.result);
     };
-    transaction.onerror = () => fail(transaction.error);
+    const refused = () => {
+      db.close();
+      fail(transaction.error ?? new Error('this browser’s storage refused'));
+    };
+    transaction.onabort = refused;
+    transaction.onerror = refused;
   });
 }
+
+// One request on this origin's store `name`, its one object store kept by
+// `keyPath`: the group's signer's (sign.js).
+/**
+ * @template T
+ * @param {string} name
+ * @param {string} keyPath
+ * @param {IDBTransactionMode} mode
+ * @param {(store: IDBObjectStore) => IDBRequest<T>} act
+ * @returns {Promise<T>}
+ */
+export const stored = (name, keyPath, mode, act) =>
+  run('kept', mode, act, () => openDb(name, 1, (db) => db.createObjectStore('kept', { keyPath })));
 
 // What a sealing key read back is, for the trace: Safari's worker on an
 // iPhone failed to unseal with `OperationError` while its page and Firefox's
