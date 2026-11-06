@@ -354,3 +354,85 @@ async fn sams_visit_key_syncs_nothing_and_reads_no_person_presence_or_record() {
     assert!(served.is_empty(), "Sam's visit key was served: {served:#?}");
     house.close().await;
 }
+
+/// Sam's open answer of Kim's `name` through `holder`'s bridge, its head
+/// read: the bridge, kept open, and the socket, its body still to come.
+async fn sam_streams(to: &Node, name: &str) -> (impl Sized, tokio::net::TcpStream) {
+    let label = Label::of(to.endpoint().id().as_bytes(), name);
+    let holder = signing(HOLDER);
+    let pass = Pass::sign(
+        &signing(SAM),
+        &actor_of(&holder),
+        (label.clone(), vec![]),
+        unix_now() + 3600,
+    );
+    let bridge = bridge_as(&holder, to, Alpn::Lend).await;
+    let mut sock = tokio::net::TcpStream::connect(bridge.local_addr())
+        .await
+        .unwrap();
+    let head = format!(
+        "GET /lend/{label}/stream HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\n\r\n",
+        pass.encode()
+    );
+    sock.write_all(head.as_bytes()).await.unwrap();
+    let (mut seen, mut byte) = (Vec::new(), [0u8; 1]);
+    while !seen.ends_with(b"\r\n\r\n") {
+        assert_eq!(
+            sock.read(&mut byte).await.unwrap(),
+            1,
+            "{:?}",
+            String::from_utf8_lossy(&seen)
+        );
+        seen.push(byte[0]);
+    }
+    assert!(
+        seen.starts_with(b"HTTP/1.1 200"),
+        "{:?}",
+        String::from_utf8_lossy(&seen)
+    );
+    (bridge, sock)
+}
+
+/// A guest's open stream is cut by the decision that let them in
+/// (guest_of, asked every sweep): Sam streams Kim's radio; once it is lent
+/// to no group, the answer ends within two seconds; streaming again after
+/// it is lent back, once Kim stops the visit, it ends within two seconds
+/// too. Owner streams are not watched. Planted: no watch on a guest's use.
+#[tokio::test]
+async fn a_guests_stream_ends_when_its_group_or_visit_no_longer_lets_them_in() {
+    let house = House::new().await;
+    let (radio, _heads) = origins::streaming_origin().await;
+    lends_on(house.dirs[0].path(), "radio", radio.port());
+    let visit = house.visit(unix_now() + 24 * 3600, &[(&house.kim, "radio")]);
+    let name = svrngs_node::lend::LendName::parse("radio").unwrap();
+    let to = |g: Vec<String>| {
+        assert!(svrngs_node::lend::set_audience(house.dirs[0].path(), &name, g).unwrap())
+    };
+    let ends = |mut sock: tokio::net::TcpStream| async move {
+        let mut buf = [0u8; 4096];
+        let ended = async { while sock.read(&mut buf).await.is_ok_and(|n| n > 0) {} };
+        tokio::time::timeout(Duration::from_secs(2), ended)
+            .await
+            .is_ok()
+    };
+    let (_bridge, sock) = sam_streams(&house.kim, "radio").await;
+    to(Vec::new());
+    assert!(
+        ends(sock).await,
+        "the guest's answer carries on, its group taken away"
+    );
+    to(vec![NS.into()]);
+    let (_bridge, sock) = sam_streams(&house.kim, "radio").await;
+    let stop = svrngs_core::tests_support::Fixture {
+        act: RailAct::Correct {
+            corrects: visit,
+            replacement: None,
+        },
+    };
+    house.kim.rail().commit(NS, &stop).unwrap().unwrap();
+    assert!(
+        ends(sock).await,
+        "the guest's answer carries on, the visit stopped"
+    );
+    house.close().await;
+}

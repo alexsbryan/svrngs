@@ -190,8 +190,12 @@ asker's body in an error, or closes that upgraded connection
 (`door::withdrawn`, `cut_by`, `splice`); the connection to their
 computer, other lends and the group's sync carry on. Measured at 0.97 s
 for an answer and about 1 s for a socket on loopback (`tests/door/
-scope.rs`). An owner's and a guest's streams are not watched, and what
-already reached the app, or an app's own sessions, is not undone. *Lends are asked,
+scope.rs`). A guest's streams are watched by the decision that let them
+in (`guest_admitted`, `guest_of` asked again): once the visit's group no
+longer reaches the lend, or the visit ends or is stopped, they are cut
+within the same bound. An owner's are never watched: the owner never
+loses their own lend. What already reached the app, or an app's own
+sessions, is not undone. *Lends are asked,
 not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
 never stale. The lender's own lend, opened on their own computer, goes

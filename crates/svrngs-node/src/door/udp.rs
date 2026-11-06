@@ -51,7 +51,7 @@ pub(crate) const IDLE: Duration = Duration::from_secs(60);
 /// How long a packet's fragments wait for the rest: past it, one was lost.
 pub(crate) const WHOLE_WITHIN: Duration = Duration::from_secs(2);
 /// How often each side looks for what is past its time.
-const SWEEP: Duration = Duration::from_secs(1);
+pub(super) const SWEEP: Duration = Duration::from_secs(1);
 /// The largest UDP packet, the bound of what a socket reads.
 const LARGEST: usize = 65_535;
 

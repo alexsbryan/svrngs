@@ -751,23 +751,52 @@ pub(crate) fn splice<H: Send + 'static>(
     });
 }
 
-/// When `device` no longer stands in a group `lend` reaches, its live
-/// declaration asked every sweep as a raw lend's is ([`udp::unstood`]),
-/// whether or not the asker reads: what an answer streaming to them and an
-/// upgraded connection are cut by (LENDING_SCOPE §"Existing streams and
-/// app sessions"). Never for none: an owner's or a guest's use.
+/// Whose use an answer is cut by (AGENTS 9): a member's or pass holder's
+/// device, or a guest's visit key. An owner's use is none: the owner never
+/// loses their own lend.
+enum Watched {
+    Member(String),
+    Guest(String),
+}
+
+/// When the use `watched` would no longer be let in, the live declaration
+/// asked every sweep whether or not the asker reads, by the one decision
+/// that let it in: a member's standing as a raw lend's is
+/// ([`udp::unstood`]), a guest's visit by [`guest_admitted`]. What an
+/// answer streaming to them and an upgraded connection are cut by
+/// (LENDING_SCOPE §"Existing streams and app sessions"). Never for none.
 fn withdrawn(
     door: &Door,
     lend: &Lend,
-    device: Option<String>,
+    watched: Option<Watched>,
 ) -> impl std::future::Future<Output = ()> + Send + 'static {
     let (door, lend) = (door.clone(), lend.clone());
     async move {
-        match device {
-            Some(device) => udp::unstood(&door, &device, &lend).await,
+        match watched {
+            Some(Watched::Member(device)) => udp::unstood(&door, &device, &lend).await,
+            Some(Watched::Guest(key)) => {
+                let mut every = tokio::time::interval(udp::SWEEP);
+                let admitted =
+                    || udp::live(&door, &lend).is_ok_and(|l| guest_admitted(&door.rail, &key, &l));
+                while admitted() {
+                    every.tick().await;
+                }
+                tracing::debug!(target: "door", guest = key, lend = %lend.name, "door: a guest's use is no longer let in, so it is cut");
+            }
             None => std::future::pending().await,
         }
     }
+}
+
+/// Whether the guest whose visit key is `key` would be let into `lend` now:
+/// [`guest_of`]'s decision asked again, by the withdrawal sweep and at a
+/// guest's OIDC redemption, never a second rule (ARCH 8).
+pub(crate) fn guest_admitted(rail: &RingRail, key: &str, lend: &Lend) -> bool {
+    let (Some(visit), Some(now)) = (rail.visit_anywhere(key), unix_now()) else {
+        tracing::debug!(target: "door", guest = key, "door: no visit of the key's held here, or no clock, so the guest is not let in");
+        return false;
+    };
+    guest_of(&crate::actor_of(rail.signer()), visit, key, lend, now).is_ok()
 }
 
 /// `body`, carried by a task of its own until it ends or `cut` fires: then
@@ -1551,7 +1580,11 @@ pub(crate) async fn lend_for(
     };
     tracing::debug!(target: "door", actor, person = person.as_str(), host = ?host.as_ref().map(Person::as_str), group, lend = %lend.name, app = ?app.as_ref().map(Label::as_str),
         method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none");
-    let watched = (!matches!(who, Who::Own(_)) && host.is_none()).then(|| device.to_string());
+    let watched = match (&who, &host) {
+        (Who::Own(_), _) => None,
+        (_, Some(_)) => Some(Watched::Guest(device.to_string())),
+        (_, None) => Some(Watched::Member(device.to_string())),
+    };
     let told = Told {
         share,
         held,
@@ -1579,9 +1612,8 @@ const UNCOUNTED: &str =
 struct Told {
     share: Option<u64>,
     held: Option<InFlight>,
-    /// The device whose standing the answer is cut by; none for an
-    /// owner's or a guest's use ([`withdrawn`]).
-    watched: Option<String>,
+    /// Whose use the answer is cut by; none for an owner's ([`withdrawn`]).
+    watched: Option<Watched>,
 }
 
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:
@@ -1893,9 +1925,9 @@ async fn forward(
         frame
     });
     let body = match watched {
-        Some(device) => cut_by(
+        Some(watched) => cut_by(
             body,
-            withdrawn(door, lend, Some(device)),
+            withdrawn(door, lend, Some(watched)),
             lend.name.to_string(),
         ),
         None => Body::new(body),
