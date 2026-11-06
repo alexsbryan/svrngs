@@ -509,6 +509,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # lending preapproval: F4 the re-declaration's lock (+1), F5/F6 one
 # `stands_here` and `door::reached` at redemption (+4), F12 a legacy
 # `unshare --group` refused (+6), F8 `stamp`'s traces (+15) take `.` from
+# The public resolver adapter, relay-meet's: +8 js, within the operator's
+# "Also raise the js cap 50 lines" (2026-11-04), which main never took:
+# 8,326 to 8,334. Nothing else moves.
 # the audit's 20,428 to 20,454, cap 20,455 (lending +509 of its +700); F10
 # a row naming every id (+4) takes js to 8,329, cap 8,330. Then the gate's
 # app-nouns fix drops group-choice.js's cast (-4), so js lands at 8,325 and
@@ -518,7 +521,7 @@ BUDGET = {
 
     ".": 20455,
 
-    "js": 8326,
+    "js": 8334,
 
     "swift": 1,
 }

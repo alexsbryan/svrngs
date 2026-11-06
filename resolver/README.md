@@ -1,11 +1,42 @@
-# Short invitation resolver (not deployed)
+# Short invitation resolver
+
+Deployed at `https://join.svrnme.sh/` in Vercel project `svrngs-join`.
+The public native lifecycle proof and its limits are recorded in
+`../demo/runs/relay-meet/2026-11-04/README.md`.
 
 `createResolver({token, url?, debug?})` in `handler.mjs` returns a Fetch-API
 handler `(Request, trustedIngressIp) => Promise<Response>`. Node 20+; no SDK
 or dependency install. The hosting adapter must supply the actual ingress IP,
 never a caller's forwarded header. Missing IP/configuration refuses service.
 The default URL is the operator's Free database; credentials stay server-side.
-This directory starts no listener and supplies no deployment configuration.
+This directory starts no listener.
+
+## Vercel Node hosting adapter
+
+`api/join.mjs` is the one hosting adapter, a `fetch` Web Handler (Vercel's
+recommended shape; no build step). `vercel.json` routes every path on the
+project's domain to it and bundles `handler.mjs`, `store.mjs` and `words.txt`
+(their `import.meta.url` reads are outside `api/`). It sets no `runtime`: Vercel
+autodetects the Node.js runtime from `package.json`'s `engines.node` `24.x`
+(the project's default) — an explicit `nodejs20.x` is both discontinued and an
+invalid runtime config on this project. `package.json` also sets
+`"type": "module"` for the `.mjs` imports.
+
+The adapter supplies the trusted ingress IP from the platform-overwritten
+`x-forwarded-for` header, left-most value. Vercel's request-headers contract
+(<https://vercel.com/docs/headers/request-headers>, read 2026-11-04) states the
+platform "overwrite[s] the X-Forwarded-For header and do[es] not forward
+external IPs ... to prevent IP spoofing", and that `x-real-ip` and
+`x-vercel-forwarded-for` are "identical to the x-forwarded-for header". That
+overwritten value is therefore the real client IP and a caller cannot set it;
+there is no fallback to any client-supplied header. An absent or malformed
+value, or a missing server-side token, reaches `handler.mjs`'s `configuration`
+refusal and answers 503 `unavailable`, never a defaulted identity.
+
+The Upstash bearer token is read only from the server-side environment variable
+`SVRNGS_RESOLVER_TOKEN`; it is never written into the site, the build or a
+process argument. Set it with `vercel env add SVRNGS_RESOLVER_TOKEN production`
+and paste at the prompt (never on the command line), then deploy.
 
 POST `/` implements the native signed contract in
 `../demo/runs/onboarding/2026-11-04-native/README.md`. It additionally accepts

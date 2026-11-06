@@ -856,14 +856,16 @@ expiry, reachability guidance and **Close joining**. They read the local
 receipt on mount and after an uncertain mutation; pending publication and
 closure offer explicit retries, with no automatic network retry. Ordinary
 and device links reread publication status because they supersede it. Reload
-and restart recover these controls from the native receipt. Hosted provisioning
-and the people scene remain the onboarding queue's work (`ONBOARDING.md`).
+and restart recover these controls from the native receipt. The public resolver
+is provisioned; the people scene remains the onboarding queue's work (`ONBOARDING.md`).
 
-*The short-address resolver* (`resolver/handler.mjs`, not deployed) maps five
+*The short-address resolver* (`resolver/handler.mjs`, at `join.svrnme.sh`) maps five
 independently sampled EFF words to that ordinary invitation. Native mutations
 verify the existing key's `svrngs-app:onboarding:` signature over exact bytes;
-the hosting edge supplies the trusted ingress IP. There is no directory or
-forwarded-header fallback. One Upstash Redis EVAL owns generation checking,
+the hosting edge supplies the trusted ingress IP. The Vercel Node adapter
+(`resolver/api/join.mjs`) reads the platform-overwritten ingress header and
+server-side token; missing configuration refuses service. There is no directory
+or client-header fallback. One Upstash Redis EVAL owns generation checking,
 shared quotas, immutable owner/id/phrase reservations and closure. A pending
 reservation fixes the binding before a capacity slot and expiring secret are
 written; only the final open marker exposes the capability. Closure deletes
@@ -904,7 +906,8 @@ Loading, unread groups, an unavailable target and unknown/absent folders say
 what is missing with refresh/help guidance; names never select a substitute.
 Ordinary `/` retains the full home page. Proofs are in
 `demo/runs/onboarding/2026-11-04-arrival/README.md` and
-`demo/runs/onboarding/2026-11-04-welcome/README.md`; no resolver is deployed.
+`demo/runs/onboarding/2026-11-04-welcome/README.md`. The public native lifecycle
+proof and its limits are in `demo/runs/relay-meet/2026-11-04/README.md`.
 
 *The phone's app joins by the same link* (designed, not built; §7). On our
 page host the chat link is a universal link, so with the app installed it

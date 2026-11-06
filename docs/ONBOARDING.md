@@ -4,8 +4,14 @@ Status: native publication/recovery (`crates/svrngs-node/src/publication.rs`),
 the home page's host controls (`home/page/group-link.js`, `group-links.js`),
 the authenticated Upstash resolver (`resolver/`), and native attendee arrival
 (`web/page/join.js`, `web/install.sh`) are built. The resolver
-has local failure-injection and live isolated-fixture proofs; it is not
-deployed, and the welcome is not launched.
+has local failure-injection and live isolated-fixture proofs, and is deployed
+at `https://join.svrnme.sh/`. The canonical page and downloads are deployed at
+`https://group.svrnme.sh/`. A native lifecycle through those public endpoints
+passed with two processes on one Mac. After a scene startup-order correction,
+the operator confirmed Fedora's public installer completed and opened the
+focused native welcome and folder opener, reusing its existing membership.
+The new contribution and full three-laptop people scene remain unperformed
+(`../demo/runs/relay-meet/2026-11-04/README.md`).
 Asked for after the JavaScript queue closes,
 then moved ahead of the phone-write row by the operator on 2026-11-03 while
 publication of the recent multi-ring join-flow fixes is deferred. `PLAN.md`
