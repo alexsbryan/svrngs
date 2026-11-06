@@ -84,7 +84,7 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
         ("notes", notes.port(), json!(["films"])),
         ("films", films.port(), json!([])),
     ] {
-        let body = json!({ "port": port, "kind": name, "limit": 3, "refused": [], "reads": reads });
+        let body = json!({ "groups": [NS], "port": port, "kind": name, "limit": 3, "refused": [], "reads": reads });
         std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
     }
     let port = ada.api_addr().port();

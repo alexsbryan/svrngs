@@ -61,7 +61,7 @@ async fn a_member_presses_play_and_its_stop_is_listed_under_what_acts_as_you(eng
     let cy = joined(cy_dir.path(), &relay, &ada, 44, "cy").await;
     let lends = svrngs_node::lend::lends_dir(cy_dir.path());
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": udp_echo().await, "raw": "udp", "kind": "echo", "limit": 3 });
+    let body = json!({ "groups": [NS], "port": udp_echo().await, "raw": "udp", "kind": "echo", "limit": 3 });
     std::fs::write(lends.join("played.json"), body.to_string()).unwrap();
     let label = svrngs_core::pass::Label::of(signing(44).verifying_key().as_bytes(), "played");
     let at = SocketAddr::from((Ipv4Addr::LOCALHOST, svrngs_node::room::port_of(&label)));

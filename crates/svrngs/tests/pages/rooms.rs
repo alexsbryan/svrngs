@@ -106,7 +106,7 @@ async fn lends_a_udp_port(dir: &Path, name: &str) {
     });
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": port, "raw": "udp", "kind": "echo", "limit": 3 });
+    let body = json!({ "port": port, "raw": "udp", "kind": "echo", "limit": 3, "groups": svrngs::group::groups(dir).iter().map(|s| s.id()).collect::<Vec<_>>() });
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -134,7 +134,7 @@ async fn lends_a_page(dir: &Path, name: &str, title: &'static str) {
     });
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": port, "kind": "k", "limit": 3 });
+    let body = json!({ "port": port, "kind": "k", "limit": 3, "groups": svrngs::group::groups(dir).iter().map(|s| s.id()).collect::<Vec<_>>() });
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 

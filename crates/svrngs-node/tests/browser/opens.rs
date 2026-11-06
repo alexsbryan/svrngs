@@ -53,7 +53,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
         ("films", films.port(), "films", json!([])),
         ("plain", plain.port(), "k", json!([])),
     ] {
-        let body = json!({ "port": port, "kind": kind, "limit": 3, "refused": [], "reads": reads });
+        let body = json!({ "groups": [NS], "port": port, "kind": kind, "limit": 3, "refused": [], "reads": reads });
         std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
     }
     let port = ada.api_addr().port();

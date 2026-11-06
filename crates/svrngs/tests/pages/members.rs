@@ -174,7 +174,7 @@ async fn a_guest_s_stop_ends_the_visit_with_no_reload(engine: Engine) {
 fn ada_has_a_guest(dir: &Path, ada: &Node, id: &str, secs: i64) -> String {
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": 22999, "kind": "k", "limit": 3, "refused": [], "reads": [] });
+    let body = json!({ "port": 22999, "kind": "k", "limit": 3, "refused": [], "reads": [], "groups": [id] });
     std::fs::write(lends.join("notes.json"), body.to_string()).unwrap();
     let page = svrngs_core::link::Origin::parse("https://house.example/").unwrap();
     let linked = (ada.host().link(id, false, Some(&page), Some(secs))).expect("a guest's link");

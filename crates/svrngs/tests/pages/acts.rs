@@ -63,7 +63,7 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, S
         ("page", json!({ "reads": ["k"] })),
         ("shelf", json!({ "asks": ASKS })),
     ] {
-        let mut body = json!({ "port": serving().await, "kind": "k", "limit": 3, "refused": [] });
+        let mut body = json!({ "port": serving().await, "kind": "k", "limit": 3, "refused": [], "groups": [seed.id()] });
         body.as_object_mut()
             .unwrap()
             .extend(more.as_object().unwrap().clone());

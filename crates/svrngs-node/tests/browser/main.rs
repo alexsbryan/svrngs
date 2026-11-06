@@ -450,7 +450,7 @@ fn lend(dir: &Path, name: &str, port: u16) {
 fn lend_reading(dir: &Path, name: &str, port: u16, reads: &[&str]) {
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": port, "kind": "k", "limit": 3, "refused": [], "reads": reads });
+    let body = json!({ "groups": [NS], "port": port, "kind": "k", "limit": 3, "refused": [], "reads": reads });
     std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -991,7 +991,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     lend(cy_dir.path(), "shelf", shelf.port());
     let strict = origins::refusing_origin().await;
     let lends = svrngs_node::lend::lends_dir(cy_dir.path());
-    let body = json!({ "port": strict.port(), "kind": "k", "limit": 3, "refused": ["/private"] });
+    let body = json!({ "groups": [NS], "port": strict.port(), "kind": "k", "limit": 3, "refused": ["/private"] });
     std::fs::write(lends.join("strict.json"), body.to_string()).unwrap();
 
     let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
@@ -2250,8 +2250,7 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     let (shelf, heads) = kept_page("<!doctype html><title>cy's shelf</title>").await;
     let lends = svrngs_node::lend::lends_dir(cy_dir.path());
     std::fs::create_dir_all(&lends).unwrap();
-    let body =
-        json!({ "port": shelf.port(), "kind": "k", "limit": 3, "refused": [], "asks": WORDS });
+    let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "k", "limit": 3, "refused": [], "asks": WORDS });
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     let (page_label, shelf_label) = (label(1, "page"), label(2, "shelf"));
     // Bo stopped 200 other apps on the shelf before: what apps use is then
@@ -2399,7 +2398,7 @@ async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
     let page = page_origin("<!doctype html><title>ada's page</title>").await;
     lend_reading(ada_dir.path(), "page", page.port(), &["books"]);
     let (shelf, _) = kept_page("<!doctype html><title>ada's shelf</title>").await;
-    let body = json!({ "port": shelf.port(), "kind": "books", "limit": 3, "asks": "the page reads the shelf" });
+    let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "books", "limit": 3, "asks": "the page reads the shelf" });
     std::fs::write(
         svrngs_node::lend::lends_dir(ada_dir.path()).join("shelf.json"),
         body.to_string(),
@@ -2442,7 +2441,7 @@ async fn the_home_page_changes_a_lend_s_limit_in_place(engine: Engine) {
     let ada_dir = tempfile::tempdir().unwrap();
     let ada = node(ada_dir.path(), &relay, &signing(7)).await;
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
-    let body = json!({ "port": shelf.port(), "kind": "books", "limit": 1 });
+    let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "books", "limit": 1 });
     let lends = svrngs_node::lend::lends_dir(ada_dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
@@ -2499,7 +2498,7 @@ async fn the_home_page_turns_on_signing_people_in_with_svrngs(engine: Engine) {
     let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
     let lends = svrngs_node::lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
-    let body = json!({ "port": shelf.port(), "kind": "books" });
+    let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "books" });
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     let seen = home_page(
         engine,
@@ -3850,7 +3849,7 @@ async fn the_screen_shows_what_is_lent_after_it_opened(engine: Engine) {
         "http://svrngs.localhost:{}/?screen={NS}",
         ada.api_addr().port()
     );
-    let lent = json!({ "port": shelf.port(), "name": "shelf", "kind": "k" });
+    let lent = json!({ "groups": [NS], "port": shelf.port(), "name": "shelf", "kind": "k" });
     let args = json!({ "at": at, "lend": lent, "says": "ada lent shelf" });
     let seen = drive(engine, "screen.mjs", args, None).await;
     eprintln!("the screen's run: {seen:#}");

@@ -12,7 +12,7 @@ use super::*;
 fn declare(dir: &Path, name: &str, port: u16, with: Value) {
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
-    let mut body = json!({ "port": port, "limit": 3, "refused": [], "reads": [] });
+    let mut body = json!({ "groups": [NS], "port": port, "limit": 3, "refused": [], "reads": [] });
     body.as_object_mut()
         .unwrap()
         .extend(with.as_object().unwrap().clone());
