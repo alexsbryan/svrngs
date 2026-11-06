@@ -1,6 +1,9 @@
 # Lending to selected groups — due diligence
 
-Status: queued, not implemented. On 2026-11-04 the operator approved the
+Status: implemented by `onboarding-scoped-lending` and `merge-scope-ui`
+(through 0fc5b189); `docs/DESIGN.md` describes the behaviour as built, and
+this file stays the due-diligence record it was written as. On 2026-11-04
+the operator approved the
 minimum necessary line growth in advance and asked for as few queue rows as
 necessary. `ralph/next/onboarding/STATE.md` holds the economizing pass and
 implementation; its charter holds the incremental budget authorization.
@@ -9,7 +12,8 @@ authorized for this work. Surveyed 2026-11-04,
 starting at `cb171e7d65cd73b5683eb4136505a313b00592da`; the portal worker
 was active in `cli.rs` and DESIGN. References below name the surveyed
 symbols; implementation must recheck them after the current queue lands.
-`DESIGN.md` still describes the implemented all-groups behavior.
+When surveyed, `DESIGN.md` described the then-implemented all-groups
+behavior.
 
 ## Recommendation
 

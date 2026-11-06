@@ -435,8 +435,9 @@ pub struct Offered {
     pub group: Option<String>,
     /// The groups this lend is lent to, by stable ID (LENDING_SCOPE): the
     /// audience a list discloses. `null` is a legacy declaration that needs
-    /// selection; `[]` is paused. Required on read, never an absent field
-    /// taken as all groups.
+    /// selection; `[]` is paused. An absent field reads as `null`, from an
+    /// answer that names no audience, and is listed to nobody — never taken
+    /// as all groups (`Offered::listed`).
     #[serde(default, deserialize_with = "Option::deserialize")]
     pub groups: Option<Vec<String>>,
     /// How its bytes travel when it is a port's own, not a page's
