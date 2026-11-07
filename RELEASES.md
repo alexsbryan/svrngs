@@ -1,5 +1,67 @@
 # svrngs releases
 
+## V1.7, 7 November 2026
+
+V1.7 lets you choose which of your groups can open what you lend, welcomes
+new people into a group through a short address, gives the home page one
+page per group, and keeps a phone's group working through a lost
+connection. Update the computer that keeps your group first, then
+everyone else's.
+
+**Update your group's keeper first.** Computers on V1.6 and V1.7 don't
+list each other's lends, so until a computer is updated, what it lends
+isn't shown to the others, and it doesn't see theirs.
+
+**Choose who can open what you lend.** Each lend on your home page asks
+"Who can open it?", with one box for each of your groups. From a terminal,
+`svrngs share <port> --group <group>` says which groups can open it; say
+`--group` again for more. `svrngs unshare <name> --group <group>` takes
+one group off and keeps the rest. When you update, each lend you already
+have stays open to the groups this computer is in at that moment. A group
+you join later doesn't get it unless you choose. Taking a group off a lend
+cuts what its people already have open within two seconds, and an app's
+sign-in and its saved entries follow the same choice.
+
+**Welcome people with a short address.** **Invite people here** on a
+group's page makes a temporary address that's easy to type, such as
+`join.svrnme.sh/cedar-otter-moon`, which you can close at any time. Each
+person who opens it gives their name once and installs svrngs. They then
+arrive at a welcome to that group and its shared folder, with a way back to
+all their groups. If the address service can't answer, the page says that
+joining is temporarily unavailable; it never says the invitation has
+ended, and people already in the group keep working.
+
+**One page for each group.** The home page now shows your groups first.
+Each group has its own page, and **This computer** holds the connection and
+the address that opens svrngs again. The old long page stays at `/?ui=a`
+for about two weeks.
+
+**A phone keeps going.** A phone on the group's page joins through the
+public meeting point when the group's own one can't be reached from it. It
+learns the group's meeting points from the group's computers, with no new
+invitation. When no computer answers, it says "This page keeps asking."
+and tries again by itself until one does, so at home with the internet out
+the same group keeps working, with nobody joining again.
+
+**An app carried by several computers is one app.** Its copies on the
+group's computers share one address in the group, and whichever computer
+carries it serves it. A computer still on V1.6 lists its copy at its own
+address, as before.
+
+**Smaller fixes.**
+- `svrngs restart` stops svrngs and starts it again, so you can use a new
+  one after `svrngs update`.
+- `svrngs open --print` shows an address you can open in another browser
+  within a minute.
+- The install line stops an svrngs that was started by hand, so a join
+  after it isn't refused as already running.
+- When an app's answer is lost after you send something, the page says to
+  check whether it arrived before you send it again.
+
+V1.7 is the build at `group.svrnme.sh`, from the commit tagged `v1.7`. Its
+publication and readback are recorded in
+`demo/runs/v1.7/2026-11-07/README.md`.
+
 ## V1.6, 3 November 2026
 
 V1.6 lets a computer join another group while svrngs is running, and lets
