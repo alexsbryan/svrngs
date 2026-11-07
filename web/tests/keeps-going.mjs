@@ -13,6 +13,7 @@
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
+import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -59,8 +60,17 @@ try {
   await new Promise((done) => server.close(done));
   ({ context, close } = await launch(args.engine, { profile }));
   page = watch(context.pages()[0] ?? (await context.newPage()));
-  await page.goto(origin);
-  await page.waitForSelector('#lent button', { timeout: 90_000 });
+  // The page says to try again when its first dial finds nobody yet: a person
+  // reloads, so this does, and the count says how often it took that.
+  let tries = 0;
+  for (; ; tries += 1) {
+    await page.goto(origin);
+    const lent = page.locator('#lent button');
+    const said = page.getByText('Try again later');
+    await lent.or(said).first().waitFor({ timeout: 90_000 });
+    if ((await lent.count()) > 0) break;
+    assert.ok(tries < 3, `still unreached after ${tries} reloads`);
+  }
   await open(page);
   const during = await write(page, args.outage);
   const app = page.url();
@@ -75,7 +85,7 @@ try {
     loads: performance.getEntriesByType('navigation').length,
     type: performance.getEntriesByType('navigation')[0]?.type,
   }));
-  console.log(JSON.stringify({ during, after, stayed, same: page.url() === app, logs }));
+  console.log(JSON.stringify({ during, after, stayed, tries, same: page.url() === app, logs }));
 } catch (e) {
   console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
   process.exitCode = 1;
