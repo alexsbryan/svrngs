@@ -272,7 +272,7 @@ function dialAt(lend) {
 function letGo(lend) {
   const key = lenderOf(lend);
   dials.delete(key);
-  if (lend.lenders?.length) failed.add(key);
+  if ((lend.lenders?.length ?? 0) > 0) failed.add(key);
   trace(
     `RUNTIME: ${key} let go for ${lend.name}, ${lend.lenders?.length ?? 0} other computers carry it`,
   );

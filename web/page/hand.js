@@ -128,11 +128,12 @@ function passLends(core, { lent, label }, lend, opened) {
         ? []
         : lent.filter((other) => other !== lend && (lend.reads ?? []).includes(other.kind))),
     ]
-      // One of each label: a carried app's other copies go as its `lenders`.
+      // One of each label: a carried app's other copies go as its `lenders`,
+      // the only lends that share a label under another computer's key.
       .filter((other, i, all) => all.findIndex((one) => one.label === other.label) === i)
       .map((other) => ({
         lenders: lent
-          .filter((one) => one.group && one.label === other.label && one.key !== other.key)
+          .filter((one) => one.label === other.label && one.key !== other.key)
           .map((one) => ({ key: one.key, relay: taken(core, one), version: one.version ?? null })),
         label: other.label,
         key: other.key,
