@@ -123,4 +123,4 @@ export const MAKE = (home) => ({
  * @returns {Step<HOME.State, HOME.Effect>}
  */
 export const take = (state, message) =>
-  go(state, { said: 'made' }, { q: state.grouped ? { ...state.q, ...message.q } : message.q });
+  go(state, { said: 'made' }, { q: message.q });

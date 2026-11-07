@@ -94,7 +94,7 @@ export function Navigation({ s: state }) {
 
 /** @param {{ s: State }} props */
 export function Choices({ s: state }) {
-  const where = state.grouped ? 'from the navigation above' : 'below';
+  const where = state.grouped ? 'above' : 'below';
   return html`
     ${state.grouped && html`<${Navigation} s=${state} />`}
     ${state.groups?.length === 0 && html`<p class="none">You’re in no group yet. Join one ${where} from the link someone sent you, or make your own.</p>`}
