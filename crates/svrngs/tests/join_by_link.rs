@@ -897,43 +897,6 @@ fn an_issuer_answering_another_groups_seed_is_not_believed() {
     assert_eq!(group::answered(&house.id(), "{}"), None);
 }
 
-/// A svrngs running here that answers no join is an older build, and joining
-/// says that, with the way on. Watched failing: it said svrngs was running
-/// and to stop it, which is what the person had been told and could not act on.
-#[tokio::test(flavor = "multi_thread")]
-async fn a_join_a_running_older_svrngs_cannot_answer_says_so() {
-    let dir = tempfile::tempdir().unwrap();
-    let _held = cli::claim(dir.path()).expect("the lock, as a running svrngs holds it");
-    let older = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let at = older.local_addr().unwrap();
-    tokio::spawn(async move {
-        let (mut sock, _) = older.accept().await.unwrap();
-        let mut asked = [0; 4096];
-        let _ = tokio::io::AsyncReadExt::read(&mut sock, &mut asked).await;
-        let answer = b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n";
-        tokio::io::AsyncWriteExt::write_all(&mut sock, answer)
-            .await
-            .unwrap();
-    });
-    std::fs::write(dir.path().join("api"), format!("http://{at}")).unwrap();
-    std::fs::write(dir.path().join("token"), "a token").unwrap();
-    let founder = SigningKey::from_bytes(&[1; 32]);
-    let token = Token {
-        issuer: founder.verifying_key(),
-        secret: [7; 16],
-        relays: Vec::new(),
-    };
-    let join = cli::parse(argv(&["join", &client_link(&token), "--as", "Alex"])).unwrap();
-    let relay = cli::reach(cli::MeetAt::N0);
-    let refused = cli::run(join, dir.path().to_path_buf(), &relay).await;
-    assert!(matches!(refused, Err(cli::Refusal::Older)), "{refused:?}");
-    let said = refused.unwrap_err().to_string();
-    assert!(
-        said.contains("svrngs update") && said.contains("svrngs restart"),
-        "{said}"
-    );
-}
-
 /// `join` parses a link in each of its forms and `--as`; a link cut short
 /// is refused before anything is dialled.
 #[test]
@@ -1044,15 +1007,13 @@ async fn a_relay() -> (iroh_relay::server::Server, RelayUrl) {
     (server, url)
 }
 
-/// **A join the svrngs running here did not answer is said as the lock's
-/// refusal** (join-while-running): svrngs holds the data dir and answers
-/// no `/v1/joins` — a build from before the route, stood in for by a
-/// socket that answers 404 — and `svrngs join` says what the lock's own
-/// refusal says, for stopping it is the way on from there. Planted,
-/// watched failing with the fallback pointing at `Refusal::NotRunning`:
-/// the wrong refusal, of a svrngs not running.
+/// **A join the svrngs running here did not answer says it is too old**
+/// (join-while-running): svrngs holds the data dir and answers no
+/// `/v1/joins`, a build from before the route, stood in for by a socket that
+/// answers 404, and `svrngs join` gives the way on. Watched failing with the
+/// fallback at `Refusal::Busy`, the refusal this was until an operator hit it.
 #[tokio::test(flavor = "multi_thread")]
-async fn a_join_an_older_svrngs_did_not_answer_is_the_locks_refusal() {
+async fn a_join_an_older_svrngs_did_not_answer_says_it_is_too_old() {
     // The svrngs of an older build: a socket answering 404 to everything,
     // and the data dir's `api` naming it.
     let older = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
@@ -1104,9 +1065,9 @@ async fn a_join_an_older_svrngs_did_not_answer_is_the_locks_refusal() {
         .as_ref()
         .expect_err("no join, for nothing answered it")
         .to_string();
-    assert!(matches!(refused, Err(Refusal::Busy(_))), "{words}");
+    assert!(matches!(refused, Err(Refusal::Older)), "{words}");
     assert!(
-        words.contains("already running on this computer") && words.contains("stop it"),
+        words.contains("svrngs update") && words.contains("svrngs restart"),
         "{words}"
     );
 }
