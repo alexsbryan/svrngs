@@ -44,8 +44,27 @@ changes `scripts/check.sh` and no runtime file. The lean caps are the operator's
 
 ## Publication
 
-To be filled by the publish run.
+`publish.py` ran `scripts/deploy-page.sh` in a clean detached worktree at
+23ed4ef7 (`v1.7`), 2026-11-07 23:23 to 23:32 UTC, exit 0 (`publish.json`,
+`publish.log`). The build meets its groups at n0's relays (`SHIPPED`). The page
+built as version f21ccefa713c, the eight programs built for all four
+platforms, and Vercel deployment `dpl_Gw3EV1M3t44o3mmMeGPjSHKUE3JM` reached
+production, READY, aliased to `https://group.svrnme.sh`.
 
 ## Readback
 
-To be filled by the verify run.
+`verify.py` passed (`verification.json`): its four planted faults rejected
+first, then 78 public files fetched from `group.svrnme.sh` and each equal to
+the built site's bytes, the live `get/SHA256SUMS` equal to the built one
+(`SHA256SUMS`, `live-sums.txt`) and naming exactly the eight downloads, both
+frame policies as `vercel.json` sets them, the wildcard name
+`release-23ed4ef7.group.svrnme.sh` serving the same page, `.env.local`,
+`.vercel/project.json` and `vercel.json` each 404, and the downloaded
+darwin-aarch64 `svrngs --help` (exit 0) and `give` (exit 2, its usage)
+starting. No other platform's program was run here.
+
+The tag `v1.7` is pushed with main. `join.svrnme.sh`, checked by hand before
+this run, answered every request, a well-formed unused phrase included, 503
+"joining is temporarily unavailable", where an unused phrase is `ended`
+(`resolver/store.mjs`); its cause was not looked into here, so short
+addresses, though released, may not work until it is.
