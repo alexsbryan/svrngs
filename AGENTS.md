@@ -72,5 +72,10 @@ after an economizing pass: its commit gives the reason, names what that pass
 cut, and says why the rest could not be found in the code there is. A pass's
 cuts lower the cap to where they land.
 
+While iterating, `scripts/check.sh --touched` runs the cheap steps and, of
+the slow ones, only those a change since the upstream can reach, each said
+with the file that reached it (`scripts/touched.py`); a file it cannot place
+runs them all. It is never the gate: the whole check runs once before a push.
+
 Ship code, not prose. Commit freely; never push without the operator. Commit
 messages carry no assistant attribution.
