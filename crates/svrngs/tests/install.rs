@@ -37,7 +37,7 @@ use svrngs_node::update::RELEASE_FILE;
 use svrngs_node::link::Origin;
 #[cfg(target_os = "macos")]
 use svrngs_node::RailAct;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
 
 /// This computer's tarball, as install.sh names it from `uname`.
 fn tarball() -> String {
@@ -357,6 +357,69 @@ async fn a_refused_join_restarts_the_existing_installation() {
 }
 
 #[cfg(target_os = "macos")]
+/// A svrngs started by hand, which no launchd or systemd can stop, holds
+/// the data a join needs; older than the join route (2020f28e), it also
+/// cannot join for the line. The line stops it, and keeps svrngs at login in
+/// its place. Watched failing: without the stop it ran on, unstopped.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_svrngs_started_by_hand_is_stopped_by_the_line() {
+    let site = site(None);
+    let port = host(site.path().to_path_buf()).await;
+    let page = format!("http://127.0.0.1:{port}/");
+    let home = tempfile::tempdir().unwrap();
+    let _started = Started(home.path().to_path_buf());
+    assert!(paste(port, &page, home.path(), None).await.status.success());
+    let kept = match cfg!(target_os = "macos") {
+        true => "Library/LaunchAgents/sh.svrnme.svrngs.plist",
+        false => ".config/systemd/user/svrngs.service",
+    };
+    let pid = std::fs::read_to_string(home.path().join("stubs/pid")).unwrap();
+    let stopped = std::process::Command::new("kill").arg(pid.trim()).status();
+    assert!(stopped.unwrap().success());
+    let gone = format!("while kill -0 {} 2>/dev/null; do sleep 0.1; done", pid.trim());
+    let waited = std::process::Command::new("/bin/sh").args(["-c", &gone]).status();
+    assert!(waited.unwrap().success());
+    std::fs::remove_file(home.path().join("stubs/pid")).unwrap();
+    std::fs::remove_file(home.path().join(kept)).unwrap();
+
+    let mut by_hand = tokio::process::Command::new(home.path().join(".local/bin/svrngs"))
+        .env_clear()
+        .env("HOME", home.path())
+        .env("USER", "Alex")
+        .stdout(std::process::Stdio::piped())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let mut said = tokio::io::BufReader::new(by_hand.stdout.take().unwrap()).lines();
+    let up = async {
+        while let Some(line) = said.next_line().await.unwrap() {
+            if line.contains("Leave this running") {
+                return;
+            }
+        }
+        panic!("svrngs ended before it ran");
+    };
+    tokio::time::timeout(Duration::from_secs(30), up)
+        .await
+        .expect("svrngs runs by hand");
+
+    let line = paste(port, &page, home.path(), None).await;
+    assert!(line.status.success());
+    let out = String::from_utf8_lossy(&line.stdout);
+    assert!(
+        out.contains("Stopped the svrngs running here"),
+        "the stop is said: {out}"
+    );
+    tokio::time::timeout(Duration::from_secs(10), by_hand.wait())
+        .await
+        .expect("the svrngs started by hand stopped")
+        .unwrap();
+    assert!(
+        home.path().join("stubs/pid").exists(),
+        "svrngs is kept at login in its place"
+    );
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn native_arrival_retries_one_identity_and_opens_the_exact_group() {
     let site = site(None);

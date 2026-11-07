@@ -64,10 +64,7 @@ if [ "${1:-}" = --at ]; then
   shift 2
 fi
 from="${SVRNGS_FROM:-${link%%#*}}"
-case "$from" in
-  http://* | https://*) ;;
-  *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;;
-esac
+case "$from" in http://* | https://*) ;; *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;; esac
 case "$from" in */) ;; *) from="$from/" ;; esac
 
 case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; *) os="" ;; esac
@@ -133,8 +130,11 @@ else
 fi
 stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $unit, to update it."; fi; }
 # A svrngs kept running holds its data, which joining needs: stopped
-# first, started again below on the new one.
+# first, started again below on the new one. One started by hand holds it
+# too, and no launchd or systemd stops it: stopped here, kept at login below.
+# Waited for by its lock, for a limit: if it stays, joining says so.
 stopped
+[ -n "$relay" ] || for pid in $(lsof -t "$dir/lock" 2>/dev/null); do kill "$pid" && say "Stopped the svrngs running here, to update it."; tries=0; while [ "$tries" -lt 50 ] && lsof -t "$dir/lock" >/dev/null 2>&1; do tries=$((tries + 1)); sleep 0.1; done; done
 
 mkdir -p "$bin" "$dir"
 # The page it came from, by the name the node reads (svrngs-node invite.rs
