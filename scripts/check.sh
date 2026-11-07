@@ -4,6 +4,7 @@
 # a step that never ran is owed, never counted as a pass.
 set -u
 cd "$(dirname "$0")/.."
+git config core.hooksPath .githooks # every clone that runs this gets the hook
 # The conformance canary holds about 250 files open at once (six tests, three
 # nodes each, in one process), so under launchd's soft limit of 256
 # (`launchctl limit maxfiles`) it fails by the launcher, not the code: raised
@@ -68,6 +69,9 @@ laws=$(find web/tests -name '*.test.mjs' 2>/dev/null)
 if [ -n "$laws" ]; then step "page laws" node --test $laws
 else echo "never-ran  page laws: none in web/tests"; failed=1; fi
 step "rustfmt"  cargo fmt --all --check
+# All of the above takes under a minute. A failure there is one the rest cannot
+# change, so it ends the run; `--fast` stops here always (.githooks/pre-commit).
+if [ "$failed" != 0 ] || [ "${1:-}" = --fast ]; then exit "$failed"; fi
 # Then the test targets `cargo test` skips (`test = false`), which
 # --all-targets leaves out and a glob of names reaches.
 step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"

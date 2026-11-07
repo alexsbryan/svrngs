@@ -1,0 +1,13 @@
+#!/bin/sh
+# What goes in is formatted by the commit, so a misformatted commit cannot be
+# made; then check.sh's cheap steps refuse what no formatter can fix. A file
+# with changes not going in is left for those steps, so nothing else is swept.
+files=$(git diff --cached --name-only --diff-filter=ACM)
+for file in $files; do
+  git diff --quiet -- "$file" || continue
+  case "$file" in
+    *.js | *.mjs | *.cjs) web/node_modules/.bin/oxfmt "$file" >/dev/null && git add "$file" ;;
+    *.rs) cargo fmt --all && git add "$file" ;;
+  esac
+done
+exec scripts/check.sh --fast
