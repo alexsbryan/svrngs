@@ -340,7 +340,7 @@ pub(crate) fn scope_aware(headers: &HeaderMap) -> bool {
         .get(crate::version::SCOPE_HEADER)
         .and_then(|v| v.to_str().ok())
         .and_then(|v| v.parse::<u32>().ok())
-        .is_some_and(|v| v >= crate::version::VERSION)
+        .is_some_and(|v| crate::version::scoped(Some(v)))
 }
 
 /// Where a lend's choices are said and asked ([`choices`]).
@@ -1164,12 +1164,12 @@ fn dialed(dialer: Option<Extension<Dialer>>, words: &str) -> Result<Dialer, Resp
 /// this computer's key (u5-2). `None` when this computer lends none so.
 fn find(door: &Door, raw: &str) -> Result<Option<Lend>, lend::LendError> {
     let carried = || door.folders.carried().into_iter();
-    if let Some(label) = Label::parse(raw).filter(|l| l.lender() == door.key) {
+    if let Some(label) = Label::parse(raw) {
         let found = (lend::all(&door.data_dir)?
             .into_iter()
             .filter_map(Result::ok))
         .chain(carried())
-        .find(|l| Label::of(&door.key, l.name.as_str()) == label);
+        .find(|l| l.label(&door.key) == label);
         tracing::debug!(target: "door", label = raw, found = ?found.as_ref().map(|l| l.name.to_string()), "door: a lend named by its label");
         return Ok(found);
     }
@@ -1233,7 +1233,7 @@ async fn holder_of(
     else {
         return Err(refused("no pass, or none that reads"));
     };
-    let label = Label::of(&door.key, lend.name.as_str());
+    let label = lend.label(&door.key);
     let Some(now) = unix_now() else {
         return Err(refused("this computer's clock cannot be read"));
     };
@@ -1369,7 +1369,7 @@ fn own_app(
         return Ok(None);
     };
     let key = dialer.actor();
-    let label = Label::of(&door.key, lend.name.as_str());
+    let label = lend.label(&door.key);
     let pass = raw.to_str().ok().and_then(Pass::decode);
     let fault = match &pass {
         None => Some("none that reads".to_string()),
@@ -1842,7 +1842,7 @@ async fn forward(
             .headers
             .insert(HeaderName::from_static(APP_HEADER), app);
     }
-    let label = Label::of(&door.key, lend.name.as_str());
+    let label = lend.label(&door.key);
     let named = HeaderValue::from_str(label.as_str()).expect("a label is base32, so a header");
     let pages = pages(door, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
     let told = [(HeaderName::from_static(LABEL_HEADER), named)];

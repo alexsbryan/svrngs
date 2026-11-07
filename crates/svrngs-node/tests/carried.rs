@@ -991,7 +991,7 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
         .unwrap()
         .as_secs() as i64
         + 1;
-    let app = Label::carried(&signing(1).verifying_key().to_bytes(), "Money", &group);
+    let app = Label::carried("Money", &group);
     let approver = signing(8);
     let pass = |by: u8| {
         let lends = (app.clone(), vec![]);
@@ -1066,13 +1066,16 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
 /// computer never writes as them** (capability-signed; DESIGN.md §7 beside
 /// `demo/runs/authorship/2026-10-24/`, the case the scenes found, c7452b2c):
 /// Ana carries Money and it reaches Cy's computer, both on. Cy's list names
-/// both copies, Cy's own first, so the page's one copy (question.js `once`)
-/// is Cy's, whose acts Cy's computer signs. Refused: a write from Cy's
-/// computer reaching Ana's copy, which Ana's computer would sign
+/// both copies at one origin (svrngs-core `Label::carried`), Cy's own
+/// first, so Money's origin on Cy's computer is served by Cy's copy
+/// (origin.rs `serving`), whose acts Cy's computer signs. Refused: a write
+/// from Cy's computer reaching Ana's door, which Ana's computer would sign
 /// `on_behalf_of` Cy: 403, "Open Money from your home page to write in
-/// it.", and nothing written; Ana's copy still answers Cy's reads. Kept:
-/// Cy's write on Cy's own copy is Cy's. Planted: the list sorted by person
-/// alone, as before, and Ana's copy is first.
+/// it.", and nothing written; Ana's copy still answers Cy's reads. A page
+/// kept at Ana's copy's label from before wire version 6 is told Money's
+/// address moved, 410, never "nothing is lent". Kept: Cy's write is Cy's.
+/// Planted: the list sorted by person alone, as before, and Ana's copy is
+/// first; the old label answered 404.
 #[tokio::test]
 async fn a_member_writes_on_their_own_computer_s_copy_alone() {
     let (nodes, _dirs) = computers().await;
@@ -1107,16 +1110,45 @@ async fn a_member_writes_on_their_own_computer_s_copy_alone() {
         "Cy's own copy first:\n{listed:#}"
     );
 
+    let origin = money[0]["origin"].as_str().unwrap();
+    assert_eq!(
+        money[1]["origin"], origin,
+        "one Money, whichever computer carries it"
+    );
+
+    // Cy's write reaching Ana's door, as Cy's computer would carry it there.
     let expense = json!({ "op": { "kind": "expense", "amount_cents": 1 } });
-    let theirs = money[1]["origin"].as_str().unwrap();
-    let wrote = at(cy, theirs, "POST", "/svrngs/acts", Some(expense.clone())).await;
+    let label = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let bridge = common::bridge_as(&signing(3), ana, svrngs_core::alpn::Alpn::Member).await;
+    let route = format!("http://{}/lend/{label}/svrngs/acts", bridge.local_addr());
+    let wrote = http().post(&route).json(&expense).send().await.unwrap();
     assert_eq!(wrote.status(), 403, "Ana's computer writes nothing as Cy");
     let said: Value = wrote.json().await.unwrap();
     assert_eq!(
         said["error"],
         "Open Money from your home page to write in it."
     );
-    let read = at(cy, theirs, "GET", "/svrngs/acts", None).await;
+    let old = svrngs_core::pass::Label::of(
+        &signing(1).verifying_key().to_bytes(),
+        &svrngs_core::pass::carried_name("Money", &group),
+    );
+    let kept = format!("http://{}/lend/{old}/", bridge.local_addr());
+    let kept = http().get(kept).send().await.unwrap();
+    assert_eq!(
+        kept.status(),
+        410,
+        "a page kept at Ana's copy's label from before"
+    );
+    let said: Value = kept.json().await.unwrap();
+    assert_eq!(
+        said["error"],
+        "Money has one address for the whole group now: open it again from your group’s page."
+    );
+    let read = http().get(&route).send().await.unwrap();
     assert_eq!(read.status(), 200, "Ana's copy still answers Cy's reads");
     let ops = read.json::<Value>().await.unwrap()["ops"]
         .as_array()
@@ -1124,8 +1156,7 @@ async fn a_member_writes_on_their_own_computer_s_copy_alone() {
         .len();
     assert_eq!(ops, 0, "nothing written");
 
-    let own = money[0]["origin"].as_str().unwrap();
-    let wrote = at(cy, own, "POST", "/svrngs/acts", Some(expense)).await;
+    let wrote = at(cy, origin, "POST", "/svrngs/acts", Some(expense)).await;
     assert!(wrote.status().is_success(), "Cy writes on Cy's own copy");
     let op: Value = wrote.json().await.unwrap();
     assert_eq!(op["actor"], cys.as_str(), "{op:#}");

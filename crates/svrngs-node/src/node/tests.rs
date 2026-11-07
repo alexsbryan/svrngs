@@ -34,7 +34,11 @@ fn a_computer_answering_an_older_version_is_named_older() {
         matches!(said(Some(now + 1), lend()), Answered::Lends(l, _) if l.len() == 1),
         "a later one"
     );
-    for before in 1..now {
+    assert!(
+        matches!(said(Some(5), lend()), Answered::Lends(l, _) if l.len() == 1),
+        "6 reads 5: a raise that is `Behind::Reads` cuts nobody off (version.rs STEPS)"
+    );
+    for before in 1..5 {
         assert!(
             matches!(said(Some(before), lend()), Answered::Older),
             "{before}: one before the holders' flag day (version 4) takes an app's entry unapproved"

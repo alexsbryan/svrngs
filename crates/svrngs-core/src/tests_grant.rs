@@ -129,6 +129,49 @@ fn a_holder_writes_only_its_own_app_s_part() {
     assert_eq!(whose(&a), vec![mine("dinner", "bo")], "{:?}", a.gaps());
 }
 
+/// **The group's one label for an app writes its kind, as a copy's did.**
+/// A pass since wire version 6 names `Label::carried(kind, group)`; lines
+/// before it named one computer's copy, and both fold as bo's, the new one
+/// still its kind's alone. Planted, watched failing: `carries` reading only
+/// the new label, and the dinner before it no longer counts.
+#[test]
+fn the_group_s_one_label_writes_its_kind_as_a_copy_s_did() {
+    let new = Pass::sign(
+        &key(2),
+        &actor_of(&key(HOLDER)),
+        (Label::carried("money", NS), vec![]),
+        2_000,
+    );
+    let dinner = held(
+        HOLDER,
+        &pass(2, "money", 2_000),
+        100,
+        None,
+        act("money/expense", "dinner"),
+    );
+    let taxi = held(
+        HOLDER,
+        &new,
+        101,
+        Some(&dinner),
+        act("money/expense", "taxi"),
+    );
+    let coming = held(
+        HOLDER,
+        &new,
+        102,
+        Some(&taxi),
+        act("events/coming", "coming"),
+    );
+    let a = admitted(&[dinner, taxi, coming]);
+    assert_eq!(
+        whose(&a),
+        vec![mine("dinner", "bo"), mine("taxi", "bo")],
+        "{:?}",
+        a.gaps()
+    );
+}
+
 /// **A holder decides nothing.** No pass grants Decide (DESIGN §4): a
 /// holder's `Admit` lets nobody in, and its `Relay` names nothing.
 #[test]

@@ -63,7 +63,6 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::{Extension, Json};
 use serde::{Deserialize, Serialize};
-use svrngs_core::pass::Label;
 use svrngs_core::relay::{Meeting, Url};
 
 use crate::door::LENDS_ROUTE;
@@ -404,6 +403,7 @@ impl Node {
             room,
             plays,
             sessions: crate::session::Sessions::new(token.clone(), host.api_port),
+            lenders: crate::origin::Lenders::default(),
         };
         let room = crate::room::owner::spawn(asking.clone(), owner);
         let play = crate::play::spawn(asking.clone(), player);
@@ -657,11 +657,11 @@ impl Host {
         ))
     }
 
-    /// Where this computer's browser opens the lend `name` of the computer
-    /// whose key is `lender`, actor hex: the lend's origin, or `None` for a
-    /// key that is not one.
-    pub(crate) fn origin(&self, lender: &str, name: &str) -> Option<String> {
-        let label = Label::of_hex(lender, name)?;
+    /// Where this computer's browser opens the lend `offered` of the
+    /// computer whose key is `lender`, actor hex: the lend's origin
+    /// ([`Offered::label`]), or `None` for a key that is not one.
+    pub(crate) fn origin(&self, lender: &str, offered: &Offered, version: u32) -> Option<String> {
+        let label = offered.label(lender, version)?;
         Some(crate::origin::origin(&label, self.api_port))
     }
 
@@ -782,7 +782,7 @@ impl Host {
             match ask.await {
                 Ok((named, key, Answered::Lends(answered, version))) => {
                     for offered in answered {
-                        let Some(address) = self.origin(&key, offered.name.as_str()) else {
+                        let Some(address) = self.origin(&key, &offered, version) else {
                             continue;
                         };
                         lends.lent.push(Lent {
@@ -977,6 +977,8 @@ pub(crate) struct Asking {
     pub(crate) plays: crate::play::Plays,
     /// Who opened the home page and each lend's origin ([`crate::session`]).
     pub(crate) sessions: crate::session::Sessions,
+    /// Which computers carry each carried app ([`crate::origin::Lenders`]).
+    pub(crate) lenders: crate::origin::Lenders,
 }
 
 fn people_router(asking: Asking) -> axum::Router {
@@ -1104,6 +1106,7 @@ impl Asking {
         // a page opens is the one whose acts this computer signs as its own
         // person (capability-signed).
         lent.sort_by_key(|l| l.offered.group.is_some() && l.key != self.host.actor);
+        self.lenders.heard(&lent);
         Ok((lent, others.unlisted))
     }
 }

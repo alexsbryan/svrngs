@@ -16,7 +16,7 @@ use alloc::format;
 
 use serde::{Deserialize, Serialize};
 
-use crate::pass::{Label, Pass};
+use crate::pass::{carried_name, Label, Pass, Whose};
 
 /// What a signer asks to do as a person: read or append the app `kind`'s
 /// part of the record, or decide (a yes to a version, and every act of the
@@ -76,7 +76,7 @@ impl Grant<'_> {
             _ if at >= pass.until => Err(Why::Lapsed),
             Capability::Decide => Err(Why::Decides),
             Capability::Read(kind) | Capability::Append(kind)
-                if Label::carried(&pass.app.lender(), kind, group) == pass.app =>
+                if carries(&pass.app, kind, group) =>
             {
                 Ok(())
             }
@@ -85,6 +85,15 @@ impl Grant<'_> {
         tracing::debug!(target: "rail:grant", holder = %crate::actor_prefix(holder), person = %crate::actor_prefix(&pass.person), app = %pass.app, ?cap, at, ?verdict,
             "grant: a holder reads and appends only its app's own part, before its pass lapses, and decides nothing");
         verdict
+    }
+}
+
+/// Whether `app` is the app `kind` carried in `group`: its label since
+/// wire version 6, or one computer's copy's, as lines before it name it.
+fn carries(app: &Label, kind: &str, group: &str) -> bool {
+    match app.whose() {
+        Whose::Carried => Label::carried(kind, group) == *app,
+        Whose::Computer(key) => Label::of(&key, &carried_name(kind, group)) == *app,
     }
 }
 

@@ -525,12 +525,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 2026-11-06, "Raise to 20,498": `version::STEPS`, so a raise must say what it
 # does to older computers (+16); `Refusal::Older`; the token line a program is
 # told at a lend's origin, restored; check.sh's fast stage. 20,476 to 20,498.
+# The operator's decision of 2026-11-07, "Raise to 3511/20651/8385": a carried
+# app is one label in its group (`Label::carried`, `Label::lent`), the computer
+# serving it chosen at dial time (origin.rs `serving`, lend.js `lenderOf`), a
+# phone's line carried on to the next computer, `older` and the scope marker
+# read from `STEPS` so wire version 6 cuts no computer at 5 off, and a page
+# kept at an old label told where its app went. core 3,494 to 3,511; . 20,498
+# to 20,651; js 8,364 to 8,385.
 BUDGET = {
-    "crates/svrngs-core": 3494,
+    "crates/svrngs-core": 3511,
 
-    ".": 20498,
+    ".": 20651,
 
-    "js": 8364,
+    "js": 8385,
 
     "swift": 1,
 }

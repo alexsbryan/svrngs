@@ -53,6 +53,10 @@ pub const STEPS: &[Behind] = &[
     Behind::Reads,
     Behind::FlagDay("docs/DESIGN.md"),
     Behind::FlagDay("docs/LENDING_SCOPE.md"),
+    // 6: a carried app is one label in its group (svrngs-core `Label::carried`),
+    // served by whichever computer carries it; a computer below 6 lists and
+    // serves its copy at its own label, as before ([`carried_once`]).
+    Behind::Reads,
 ];
 
 /// This build's version, as its answers carry it.
@@ -67,9 +71,28 @@ pub const VERSION: u32 = STEPS.len() as u32;
 pub const SCOPE_HEADER: &str = "x-svrngs-version";
 
 /// Whether an answer carrying `version`, none when it carries none, comes
-/// from a computer running an svrngs older than any this one reads.
+/// from a computer running an svrngs older than any this one reads: one
+/// below the last flag day in [`STEPS`], so a [`Behind::Reads`] raise cuts
+/// nobody off.
 pub fn older(version: Option<u32>) -> bool {
-    version.is_none_or(|v| v < VERSION)
+    let read = STEPS
+        .iter()
+        .rposition(|s| matches!(s, Behind::FlagDay(_)))
+        .map_or(0, |i| i + 1);
+    version.is_none_or(|v| (v as usize) < read)
+}
+
+/// Whether a computer marking its ask with `version` in [`SCOPE_HEADER`]
+/// speaks selected-group scope, which began at 5: a later raise cuts no
+/// computer at 5 off.
+pub fn scoped(version: Option<u32>) -> bool {
+    version.is_some_and(|v| v >= 5)
+}
+
+/// Whether a computer whose answer carries `version` serves a carried app
+/// at the group's one label, not its copy's own.
+pub fn carried_once(version: Option<u32>) -> bool {
+    version.is_some_and(|v| v >= 6)
 }
 
 /// Whether a computer whose answer carries `version` takes a pass carried

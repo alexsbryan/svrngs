@@ -251,6 +251,33 @@ async function holding() {
   return handed;
 }
 
+// The computers `lend` is dialled at: the one it was opened from, then each
+// other carrying it (web/page/hand.js `passLends`), each that did not
+// answer this run (`failed`) last, so a carried app is written through
+// whichever computer answers.
+/** @param {Passed} lend */
+function lenderOf(lend) {
+  const keys = [lend.key, ...(lend.lenders ?? []).map((one) => one.key)];
+  if (keys.every((key) => failed.has(key))) for (const key of keys) failed.delete(key);
+  // `keys` holds `lend.key`, so one is found once `failed` lets them all go.
+  return /** @type {string} */ (keys.find((key) => !failed.has(key)));
+}
+const failed = new Set();
+/** @param {Passed} lend */
+function dialAt(lend) {
+  return dialFor(lenderOf(lend));
+}
+// The dial `lend` was just at let go; for a carried app, its computer tried last.
+/** @param {Passed} lend */
+function letGo(lend) {
+  const key = lenderOf(lend);
+  dials.delete(key);
+  if (lend.lenders?.length) failed.add(key);
+  trace(
+    `RUNTIME: ${key} let go for ${lend.name}, ${lend.lenders?.length ?? 0} other computers carry it`,
+  );
+}
+
 /**
  * @param {string} lender
  * @returns {Promise<Dialled>}
@@ -272,7 +299,8 @@ function dialFor(lender) {
  */
 async function dialled(lender) {
   trace(`RUNTIME: dialling ${lender} for the pass's holder`);
-  const relay = handed.lends.find((lend) => lend.key === lender)?.relay ?? null;
+  const every = handed.lends.flatMap((lend) => [lend, ...(lend.lenders ?? [])]);
+  const relay = every.find((lend) => lend.key === lender)?.relay ?? null;
   return (await bound()).dial_lend(lender, relay);
 }
 
@@ -770,9 +798,9 @@ async function bodyFor({ request, path }, headers) {
 async function doorAnswer({ request, lend, path }, headers, body) {
   for (let tries = 0; ; tries++) {
     try {
-      return await (await dialFor(lend.key)).fetch(request.method, path, headers, body);
+      return await (await dialAt(lend)).fetch(request.method, path, headers, body);
     } catch (/** @type {any} */ error) {
-      dials.delete(lend.key);
+      letGo(lend);
       trace(`RUNTIME: ${request.method} ${path} failed (try ${tries + 1}): ${error}`);
       // A dial that heard nothing from the computer within the cap, new or
       // held, is not tried again: a second would wait the cap again.
@@ -1059,17 +1087,20 @@ async function writeSigned(lend, group, act, grant) {
   // `unsent` is set just above, and below each time `handed` is.
   const carrying = /** @type {Unsent[]} */ (handed.unsent).length;
   trace(`RUNTIME: an act of ${lend.kind} signed as line ${line.seq}, ${carrying} to carry`);
-  let res;
-  try {
-    res = await carried(lend);
-  } catch (error) {
-    dials.delete(lend.key);
-    trace(`RUNTIME: lines not carried: ${String(error)}`);
-    const why = unreached(error, silent(`${lend.person}’s computer`));
-    const words = `${why} It is kept on this phone and goes with your next entry`;
-    return Response.json({ error: words }, { status: 502 });
+  // A line is the same bytes at every computer, which takes it once by its
+  // id (rail.rs `carry`), so the next computer lending the app is asked it.
+  for (let tries = 0; ; tries++) {
+    try {
+      return judged(lend, await carried(lend));
+    } catch (error) {
+      letGo(lend);
+      trace(`RUNTIME: lines not carried: ${String(error)}`);
+      if (tries < (lend.lenders?.length ?? 0)) continue;
+      const why = unreached(error, silent(`${lend.person}’s computer`));
+      const words = `${why} It is kept on this phone and goes with your next entry`;
+      return Response.json({ error: words }, { status: 502 });
+    }
   }
-  return judged(lend, res);
 }
 
 // `text` posted as JSON to `lend`'s computer, beside `headers`.
@@ -1082,7 +1113,7 @@ async function writeSigned(lend, group, act, grant) {
  */
 async function posted(lend, path, text, headers = []) {
   const body = new TextEncoder().encode(text);
-  const dial = await dialFor(lend.key);
+  const dial = await dialAt(lend);
   const heads = [
     ...headers,
     ['content-type', 'application/json'],
@@ -1266,7 +1297,7 @@ async function stopping(label) {
   try {
     return await posted(lend, `/choices/${label}`, '{"said":"stop"}', headers);
   } catch (error) {
-    dials.delete(lend.key);
+    letGo(lend);
     trace(`RUNTIME: the stop for ${label} failed: ${String(error)}`);
     return say(502, unreached(error, QUIET), 'away');
   }
@@ -1667,12 +1698,12 @@ async function switched({ url, protocols }, port) {
   /** @type {Switched} */
   let remote;
   try {
-    const dial = await dialFor(lend.key);
+    const dial = await dialAt(lend);
     remote = await dial.socket(`/lend/${where.label}${where.path}`, headers);
   } catch (error) {
     // The dial let go, as `lent` does, so the next socket dials the
     // computer afresh once it answers again (demo/runs/doc/2026-10-20/found/).
-    dials.delete(lend.key);
+    letGo(lend);
     trace(`RUNTIME: a socket at ${where.path} failed: ${String(error)}`);
     port.postMessage({ closed: 1006, reason: String(error) });
     return null;

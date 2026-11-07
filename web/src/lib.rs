@@ -274,6 +274,8 @@ async fn reach(
         None => t!("LAYER parse: no relay named for {node_id} — its group names none, or the page refused it — so every relay the link carries is tried"),
     }
 
+    // The relay this endpoint is at, named beside the one that answers.
+    let at = bound.ep.addr().relay_urls().next().cloned();
     let opts = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
     use n0_future::StreamExt as _;
     let mut tries = n0_future::FuturesUnordered::new();
@@ -285,15 +287,17 @@ async fn reach(
             let connect =
                 async { Ok::<_, iroh::endpoint::ConnectError>(ep.connect_with_opts(addr, alpn, opts).await?.await?) };
             match within {
-                Some(within) => n0_future::time::timeout(within, connect).await,
-                None => Ok(connect.await),
+                Some(within) => (relay, n0_future::time::timeout(within, connect).await),
+                None => (relay, Ok(connect.await)),
             }
         });
     }
     let (mut timed_out, mut failed) = (false, None);
-    while let Some(dialled) = tries.next().await {
+    while let Some((relay, dialled)) = tries.next().await {
         match dialled {
             Ok(Ok(conn)) => {
+                let own = Some(relay) == at.as_ref();
+                t!("LAYER relay chosen: {relay}, this page's own: {own}");
                 t!("LAYER tls/alpn+relay: ok — QUIC connection established to {node_id} on the {alpn:?} protocol");
                 t!(
                     "LAYER tls/alpn: negotiated ALPN = {:?}",
@@ -494,12 +498,22 @@ pub fn current_version() -> u32 {
     version::VERSION
 }
 
-/// The label of the lend `name` lent by the computer whose key is
-/// `lender`, 64 hex: one DNS label, its origin's name (u5-2).
+/// The label of the lend `name` of the kind `kind` lent by the computer
+/// whose key is `lender`, 64 hex, in `group` when its group carries it, as
+/// a computer of `version` lists it: one DNS label, its origin's name
+/// (u5-2; svrngs-core's `Label::lent`, the computer's rule too).
 #[wasm_bindgen]
-pub fn label(lender: String, name: String) -> Result<String, JsError> {
-    let label = Label::of_hex(&lender, &name).ok_or_else(|| JsError::new("not a computer's key"))?;
-    Ok(label.to_string())
+pub fn label(
+    lender: String,
+    name: String,
+    kind: String,
+    group: Option<String>,
+    version: Option<u32>,
+) -> Result<String, JsError> {
+    let key: [u8; 32] = (hex::decode(&lender).ok().and_then(|k| k.try_into().ok()))
+        .ok_or_else(|| JsError::new("not a computer's key"))?;
+    let carried = group.as_deref().filter(|_| version::carried_once(version));
+    Ok(Label::lent(&key, &name, carried.map(|g| (kind.as_str(), g))).to_string())
 }
 
 /// Whether `raw` is a lend's label, as svrngs-core reads one
@@ -511,16 +525,14 @@ pub fn is_label(raw: String) -> bool {
     Label::parse(&raw).is_some()
 }
 
-/// The label of the app `kind` carried in `group` and lent by `lender`, 64
-/// hex: what a write pass names, so the fold lets its holder write `kind`'s
-/// part as its person (svrngs-core's `Label::carried`; capability-signed).
+/// The label a port's app lent by `lender`, 64 hex, writes the kind
+/// `kind`'s part of `group` under: what its write pass names, so the fold
+/// lets its holder write as its person (svrngs-core's `grant.rs` `carries`;
+/// capability-signed). A carried app's own label already does.
 #[wasm_bindgen]
 pub fn carried_label(lender: String, kind: String, group: String) -> Result<String, JsError> {
-    let key: [u8; 32] = hex::decode(&lender)
-        .ok()
-        .and_then(|k| k.try_into().ok())
-        .ok_or_else(|| JsError::new("not a computer's key"))?;
-    Ok(Label::carried(&key, &kind, &group).to_string())
+    let name = svrngs_core::pass::carried_name(&kind, &group);
+    Label::of_hex(&lender, &name).map(|l| l.to_string()).ok_or_else(|| JsError::new("not a computer's key"))
 }
 
 /// The person whose key is `person` lets the key `holder`, 64 hex, act as
@@ -636,7 +648,7 @@ pub fn approve_line(
     let ours = named(&reach)
         && named(grant)
         && grant == &issued
-        && reach.app.lender() == grant.app.lender()
+        && reach.app.whose() == grant.app.whose()
         && now.abs_diff(line.ts_unix) <= 300;
     if !ours || reach.check(&line.actor, &reach.app, now).is_err() {
         return Err(JsError::new("this app has no live authority here"));

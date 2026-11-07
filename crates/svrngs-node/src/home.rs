@@ -892,7 +892,7 @@ struct Of {
 
 /// `GET /choices?lend=`: the person's choices on a lend, asked of its door now.
 async fn choices(State(at): State<Asking>, Query(Of { lend }): Query<Of>) -> Response {
-    if lend.lender() == at.door.key {
+    if let Ok(crate::origin::Serving::Own) = crate::origin::serving(&at, &lend).await {
         return own_choices(&at.door, &lend);
     }
     at_door(&at, &lend, None, None).await
@@ -910,7 +910,7 @@ pub(crate) async fn say(
     pass: Option<HeaderValue>,
 ) -> Response {
     tracing::debug!(target: "home", %lend, %app, ?said, by_app = pass.is_some(), "home: a choice said");
-    if lend.lender() == at.door.key {
+    if let Ok(crate::origin::Serving::Own) = crate::origin::serving(at, lend).await {
         return own_choose(&at.door, lend, app, said).await;
     }
     let body = match pass {
@@ -929,7 +929,7 @@ async fn at_door(
     body: Option<serde_json::Value>,
     pass: Option<HeaderValue>,
 ) -> Response {
-    let contact = match crate::origin::dialled(at, lend) {
+    let contact = match crate::origin::dialled(at, lend).await {
         Ok(contact) => contact,
         Err(refused) => return refused,
     };

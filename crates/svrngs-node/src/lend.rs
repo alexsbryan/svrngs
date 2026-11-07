@@ -26,6 +26,7 @@ use std::num::{NonZeroU16, NonZeroU32, NonZeroU64};
 use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
+use svrngs_core::pass::Label;
 
 /// A lend's name: the file its declaration is kept in, and the path segment
 /// a member's request names it by (`/lend/<name>/…`). ASCII letters, digits,
@@ -280,6 +281,18 @@ pub struct Lend {
 }
 
 impl Lend {
+    /// This lend's label on the computer whose key is `lender`: a carried
+    /// app's the group's one ([`Label::carried`]), whichever computer
+    /// carries it; a declared lend's its lender's. The one decider of a
+    /// lend's label, its [`Offered`]'s too.
+    pub fn label(&self, lender: &[u8; 32]) -> Label {
+        let carried = match &self.source {
+            Source::Carried(group) => Some((self.kind.as_str(), group.as_str())),
+            Source::Port(_) | Source::Raw(..) => None,
+        };
+        Label::lent(lender, self.name.as_str(), carried)
+    }
+
     /// Whether `group` may reach this lend: a carried app only its own
     /// group, a declared lend only a group its lender chose (LENDING_SCOPE).
     pub fn reaches(&self, group: &str) -> bool {
@@ -448,6 +461,21 @@ pub struct Offered {
 }
 
 impl Offered {
+    /// This lend's label as listed by the computer whose key is `lender`,
+    /// 64 hex, at `version` ([`Lend::label`]): a carried app's at a computer
+    /// below 6 its copy's own, as that computer serves it
+    /// ([`crate::version::carried_once`]); `None` for a key that is not one.
+    pub(crate) fn label(&self, lender: &str, version: u32) -> Option<Label> {
+        let key: [u8; 32] = hex::decode(lender).ok()?.try_into().ok()?;
+        let once = crate::version::carried_once(Some(version));
+        let carried = self
+            .group
+            .as_deref()
+            .filter(|_| once)
+            .map(|g| (self.kind.as_str(), g));
+        Some(Label::lent(&key, self.name.as_str(), carried))
+    }
+
     /// Whether this lend's pages read `other`: the one decider of what a
     /// page reaches on a computer ([`crate::origin`]) and what
     /// `/svrngs-reads` tells it ([`crate::surface::reads`]).

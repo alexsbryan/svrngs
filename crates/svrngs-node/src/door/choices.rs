@@ -141,7 +141,7 @@ pub(super) fn check(
     person: &PersonKey,
     app: Option<&Label>,
 ) -> Option<Response> {
-    let own = Label::of(&door.key, lend.name.as_str());
+    let own = lend.label(&door.key);
     let choice = match (&lend.asks, app) {
         (Some(_), Some(app)) => match read(door, lend) {
             Ok(mut kept) => kept.remove(person).and_then(|mut k| k.remove(app)),
@@ -199,8 +199,15 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
     match find(door, raw) {
         Ok(Some(lend)) => Ok(lend),
         Ok(None) => {
-            tracing::debug!(target: "door", lend = raw, "door: refused — no lend declared by that name");
-            Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name"))
+            // A carried app's label before wire version 6 named this
+            // computer's copy: a page kept from then is told where it went.
+            let was = |l: &Lend| Label::parse(raw) == Some(Label::of(&door.key, l.name.as_str()));
+            let moved = door.folders.carried().into_iter().find(was);
+            tracing::debug!(target: "door", lend = raw, moved = ?moved.as_ref().map(|l| l.name.to_string()), "door: refused — no lend declared by that name, or a carried app's label from before it had one in its group");
+            Err(match moved {
+                Some(l) => LendRefusal::Unlent.say(StatusCode::GONE, format!("{} has one address for the whole group now: open it again from your group’s page.", l.kind.as_str())),
+                None => LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name"),
+            })
         }
         Err(e) => {
             tracing::warn!(target: "door", lend = raw, error = %e, "door: refused — the lend's declaration cannot be read");

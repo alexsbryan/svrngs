@@ -121,22 +121,30 @@ async function withYes({ group, label, at }, lend) {
 function passLends(core, { lent, label }, lend, opened) {
   const stopped = opened.reads?.[label]?.said === 'stop';
   if (stopped) trace(`PAGE: ${lend.name}'s reads were stopped here, so its pass names none`);
-  return [
-    lend,
-    ...(stopped
-      ? []
-      : lent.filter((other) => other !== lend && (lend.reads ?? []).includes(other.kind))),
-  ].map((other) => ({
-    label: other.label,
-    key: other.key,
-    relay: taken(core, other),
-    name: other.name,
-    kind: other.kind,
-    group: other.group ?? null,
-    person: other.person,
-    asks: other.asks,
-    version: other.version ?? null,
-  }));
+  return (
+    [
+      lend,
+      ...(stopped
+        ? []
+        : lent.filter((other) => other !== lend && (lend.reads ?? []).includes(other.kind))),
+    ]
+      // One of each label: a carried app's other copies go as its `lenders`.
+      .filter((other, i, all) => all.findIndex((one) => one.label === other.label) === i)
+      .map((other) => ({
+        lenders: lent
+          .filter((one) => one.group && one.label === other.label && one.key !== other.key)
+          .map((one) => ({ key: one.key, relay: taken(core, one), version: one.version ?? null })),
+        label: other.label,
+        key: other.key,
+        relay: taken(core, other),
+        name: other.name,
+        kind: other.kind,
+        group: other.group ?? null,
+        person: other.person,
+        asks: other.asks,
+        version: other.version ?? null,
+      }))
+  );
 }
 
 // The relay the record names for `lend` when this page's policy takes it,

@@ -141,7 +141,9 @@ function framedOne(one, signer) {
  * @property {string} person
  * @property {string} [asks]
  * @property {number | null} version
+ * @property {Lender[]} [lenders] each other computer carrying it, a carried app's
  */
+/** @typedef {{ key: string, relay: string | null, version: number | null }} Lender */
 
 /**
  * The hand-off: what the group's page hands a lend's origin in the

@@ -226,6 +226,87 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.p
     drop(cy);
 }
 
+in_webkit!(
+    /// **The same page writes through the next computer once the first
+    /// stops** (KEEP_GOING_AT_HOME 11): Money is one origin in house
+    /// whichever computer lends it (svrngs-core `Label::carried`). Bo's
+    /// phone opens it through ada's computer and writes; ada's stops; the
+    /// same page, never loaded again, writes through cy's, and reads both
+    /// entries back as bo's. Planted, watched failing: a write's line
+    /// carried to the first computer alone (web/lend.js `writeSigned`), and
+    /// the second write is kept on the phone, 502.
+    the_same_page_writes_through_the_next_computer_once_the_first_stops
+);
+async fn the_same_page_writes_through_the_next_computer_once_the_first_stops(engine: Engine) {
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let (at_ada, at_cy) = (dirs[0].path().join("house"), dirs[1].path().join("house"));
+    for (computer, folder) in [(&ada, &at_ada), (&cy, &at_cy)] {
+        std::fs::create_dir(folder).unwrap();
+        keep_folder(computer, folder).await;
+    }
+    let page = "<!doctype html><title>Money</title>";
+    carry(&at_ada, "Money", &[("index.html", page.into())]);
+    let held = || at_cy.join("apps/Money/index.html").exists();
+    for _ in 0..60 {
+        if held() {
+            break;
+        }
+        for computer in [&ada, &cy] {
+            let _ = tokio::time::timeout(Duration::from_secs(10), computer.round()).await;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    assert!(held(), "Money reaches cy's folder");
+    let (one, two) = (
+        carried_at(&ada, "Money").await,
+        carried_at(&cy, "Money").await,
+    );
+    assert_eq!(
+        one.split('.').next(),
+        two.split('.').next(),
+        "one Money label on both"
+    );
+    let dir = dirs[2].path();
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "open": "Money",
+        "dir": dir,
+        "first": "the bins",
+        "second": "the milk",
+    });
+    let phone = tokio::spawn(drive(engine, "carried-on.mjs", args, None));
+    tokio::time::timeout(Duration::from_secs(180), async {
+        while !dir.join("wrote").exists() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("the phone opens Money through ada's computer and writes");
+    ada.endpoint().close().await;
+    drop(ada);
+    std::fs::write(dir.join("gone"), "").unwrap();
+    let seen = phone.await.unwrap();
+    eprintln!("the phone's run: {seen:#}");
+    assert_eq!(seen["first"]["status"], 200, "{seen:#}");
+    assert_eq!(
+        seen["second"]["status"], 200,
+        "written through cy's:\n{seen:#}"
+    );
+    let read = seen["read"].as_str().unwrap_or_default();
+    assert!(
+        read.contains("the bins") && read.contains("the milk"),
+        "{seen:#}"
+    );
+    assert_eq!(seen["loads"], 1, "the same page: {seen:#}");
+    drop(cy);
+}
+
 /// The files of the app in `apps/<dir>/` its page needs: its page, its
 /// script and its fold.
 fn files_of<'a>(dir: &str, fold: &'a str) -> Vec<(&'a str, String)> {

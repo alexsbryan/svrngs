@@ -39,7 +39,7 @@ use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use svrngs_core::app::App;
-use svrngs_core::pass::Label;
+use svrngs_core::pass::{Label, Whose};
 
 use crate::door::choices::{self, Said};
 use crate::door::LendRefusal;
@@ -269,7 +269,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
     let lent: Vec<serde_json::Value> = lent
         .into_iter()
         .filter_map(|l| {
-            let origin = host.origin(&l.key, l.offered.name.as_str())?;
+            let origin = host.origin(&l.key, &l.offered, l.version)?;
             let mut l = serde_json::to_value(l).ok()?;
             l["origin"] = origin.into();
             Some(l)
@@ -299,7 +299,10 @@ async fn read_by(
     at: &Asking,
     app: &Label,
 ) -> Result<(Vec<Lending>, Unlisted, Vec<String>), Response> {
-    let reader = hex::encode(app.lender());
+    let reader = match crate::origin::serving(at, app).await? {
+        crate::origin::Serving::Own => at.host.actor.clone(),
+        crate::origin::Serving::At(_, lender) => lender,
+    };
     let host = &at.host;
     let (mut groups, own) = host.shared_with(&reader)?;
     groups.retain(|(_, s)| s.contains_key(&host.actor));
@@ -327,9 +330,9 @@ async fn read_by(
     Ok((read, unlisted, silent))
 }
 
-/// A lend's label, from its lender's key and its name.
+/// A lend's label, as its lender lists it ([`crate::lend::Offered::label`]).
 fn named(l: &Lending) -> Option<Label> {
-    Label::of_hex(&l.key, l.offered.name.as_str())
+    l.offered.label(&l.key, l.version)
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`
@@ -341,7 +344,10 @@ fn named(l: &Lending) -> Option<Label> {
 pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
     let (read, unlisted, silent) = read_by(at, app).await?;
     if read.iter().any(|l| named(l).as_ref() == Some(label)) {
-        let own = app.lender() == at.door.key;
+        let own = matches!(
+            crate::origin::serving(at, app).await?,
+            crate::origin::Serving::Own
+        );
         let said = if own {
             None
         } else {
@@ -356,7 +362,12 @@ pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(
         }
         return Ok(());
     }
-    if silent.contains(&hex::encode(label.lender())) {
+    // A carried app's computers are each listed or not: none stands for it.
+    let lender = match label.whose() {
+        Whose::Computer(key) => Some(hex::encode(key)),
+        Whose::Carried => None,
+    };
+    if lender.is_some_and(|l| silent.contains(&l)) {
         tracing::debug!(target: "surface", %app, %label, ?unlisted, "surface: refused — the lend's lender did not say what it lends, so whether the page reads it cannot be judged");
         return Err(crate::origin::away());
     }

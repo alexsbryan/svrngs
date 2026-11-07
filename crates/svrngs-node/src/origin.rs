@@ -35,7 +35,9 @@ use axum::http::{Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::Router;
 use serde_json::Value;
-use svrngs_core::pass::{Label, Pass};
+use std::collections::BTreeMap;
+
+use svrngs_core::pass::{Label, Pass, Whose};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::iroh::Contact;
@@ -383,16 +385,14 @@ pub(crate) async fn reach(
 ) -> Result<Response, Response> {
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
-    let lender = label.lender();
     let door: &Door = &at.door;
-    if lender == door.key {
+    let Serving::At(contact, lender) = serving(at, &label).await? else {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();
         parts.uri = uri_of(&target)?;
         let answer = door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body));
-        return appended(at, &label, None, answer.await?, appending).await;
-    }
-    let contact = dialled(at, &label)?;
+        return appended(at, &label, &Serving::Own, answer.await?, appending).await;
+    };
     let Some(pass) = own_pass(at, &app, &label) else {
         return Err(LendRefusal::Fault.say(
             StatusCode::INTERNAL_SERVER_ERROR,
@@ -400,9 +400,10 @@ pub(crate) async fn reach(
         ));
     };
     req.headers_mut().insert(PASS_HEADER, pass);
-    tracing::debug!(target: "origin", %label, %app, lender = hex::encode(lender), "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
-    let answer = carried(at, req, &contact, &target, label.as_str()).await?;
-    appended(at, &label, Some(&contact), answer, appending).await
+    tracing::debug!(target: "origin", %label, %app, lender, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
+    let answer = carried(at, req, &contact, &target, label.as_str()).await;
+    let answer = answer.inspect_err(|_| at.lenders.away(&label, &lender))?;
+    appended(at, &label, &Serving::At(contact, lender), answer, appending).await
 }
 
 /// The header in which a lent app's answer names, as a JSON array, the
@@ -435,7 +436,7 @@ enum Unwritten {
 async fn appended(
     at: &Asking,
     label: &Label,
-    contact: Option<&Contact>,
+    serving: &Serving,
     mut answer: Response,
     appending: Appending,
 ) -> Result<Response, Response> {
@@ -449,8 +450,8 @@ async fn appended(
             "this request did not authorize entries from the app",
         ));
     }
-    let (rail, lender) = (&at.host.rail, hex::encode(label.lender()));
-    let lend = declared(at, label, contact).await;
+    let (rail, (contact, lender)) = (&at.host.rail, serving.dialled(&at.host.actor));
+    let lend = declared(at, label, serving).await;
     if let Some(l) = lend.as_ref().filter(|l| !appending.permits(&l.kind)) {
         tracing::debug!(target: "origin", %label, kind = %l.kind.as_str(), ?appending, "origin: refused — the lend's declared kind is not the one the program accepts entries of");
         return Err(LendRefusal::Closed.say(
@@ -458,7 +459,7 @@ async fn appended(
             "the app's kind changed; this program authorized no entry of that kind",
         ));
     }
-    let who = contact.and_then(|_| rail.standing_anywhere(&lender));
+    let who = contact.and_then(|_| rail.standing_anywhere(lender));
     let whose = who.map_or("Your".into(), |(_, m)| format!("{}’s", m.person));
     let name = lend.as_ref().map_or("app", |l| l.name.as_str());
     let what = format!("{whose} {name}");
@@ -471,7 +472,7 @@ async fn appended(
         let group = act["group"].as_str();
         let read = rail.admission(group.ok_or(Unwritten::Unread)?).ok();
         let both =
-            |s: &std::collections::BTreeSet<_>| s.contains(&lender) && s.contains(&at.host.actor);
+            |s: &std::collections::BTreeSet<_>| s.contains(lender) && s.contains(&at.host.actor);
         let read = read
             .filter(|a| both(&a.membership().standing))
             .ok_or(Unwritten::NotBoth)?;
@@ -527,20 +528,121 @@ async fn appended(
 
 /// The lend `label` as its lender declares it: this computer's own from
 /// its declarations, another computer's asked of it now.
-async fn declared(at: &Asking, label: &Label, contact: Option<&Contact>) -> Option<Offered> {
-    let lends = match contact {
-        None => door::offered(&at.door).await.ok()?,
+async fn declared(at: &Asking, label: &Label, serving: &Serving) -> Option<Offered> {
+    let (contact, lender) = serving.dialled(&at.host.actor);
+    let (lends, version) = match contact {
+        None => (door::offered(&at.door).await.ok()?, crate::version::VERSION),
         Some(c) => {
             match crate::node::ask_lends(&at.host.transport, label.as_str(), c.clone()).await {
-                crate::node::Answered::Lends(lends, _) => lends,
+                crate::node::Answered::Lends(lends, version) => (lends, version),
                 _ => return None,
             }
         }
     };
-    let lender = label.lender();
     lends
         .into_iter()
-        .find(|o| Label::of(&lender, o.name.as_str()) == *label)
+        .find(|o| o.label(lender, version).as_ref() == Some(label))
+}
+
+/// Who serves the lend `label` to this computer: its own door, or the
+/// computer at `.0`, whose key is `.1`, dialled as this computer's key.
+pub(crate) enum Serving {
+    Own,
+    At(Contact, String),
+}
+
+impl Serving {
+    /// The contact dialled, none for this computer's own, and the lender's
+    /// key, `own` for this computer's.
+    fn dialled<'a>(&'a self, own: &'a str) -> (Option<&'a Contact>, &'a str) {
+        match self {
+            Self::Own => (None, own),
+            Self::At(contact, lender) => (Some(contact), lender),
+        }
+    }
+}
+
+/// Who serves `label` ([`Serving`]): a computer's lend its lender; a
+/// carried app this computer's own copy when it carries one, else the
+/// first computer [`Lenders`] names that is a contact here, so the app is
+/// one origin whichever computer answers (COMMUNITY_APPS §7). Not heard of
+/// yet, every group held here is asked what it lends first.
+pub(crate) async fn serving(at: &Asking, label: &Label) -> Result<Serving, Response> {
+    let key = match label.whose() {
+        Whose::Computer(key) => hex::encode(key),
+        Whose::Carried => match at.lenders.of(label) {
+            Some(keys) => lender_of(at, label, keys)?,
+            None => {
+                let (groups, own) = at.host.shared_with(&at.host.actor)?;
+                if let Some(own) = own {
+                    at.lent(&groups, &own, None).await?;
+                }
+                lender_of(at, label, at.lenders.of(label).unwrap_or_default())?
+            }
+        },
+    };
+    if key == at.host.actor {
+        return Ok(Serving::Own);
+    }
+    let contact = at
+        .host
+        .contact(&key)
+        .ok_or_else(|| refused(at, label, &key))?;
+    Ok(Serving::At(contact, key))
+}
+
+/// The first of `keys` carrying `label` that is this computer or a
+/// contact here, or "nothing is lent here".
+fn lender_of(at: &Asking, label: &Label, keys: Vec<String>) -> Result<String, Response> {
+    let found = keys
+        .iter()
+        .find(|k| **k == at.host.actor || at.host.contact(k).is_some());
+    tracing::debug!(target: "origin", %label, ?keys, found, "origin: a carried app, served by the first computer carrying it that is reached from here");
+    found
+        .cloned()
+        .ok_or_else(|| LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"))
+}
+
+/// Which computers carry each carried app, as the last listing of lends
+/// here said ([`Asking::lent`]): this computer's own copy first, then each
+/// other's; one that did not answer goes last ([`Self::away`]).
+#[derive(Clone)]
+pub(crate) struct Lenders(tokio::sync::watch::Sender<BTreeMap<Label, Vec<String>>>);
+
+impl Default for Lenders {
+    fn default() -> Self {
+        Self(tokio::sync::watch::Sender::new(BTreeMap::new()))
+    }
+}
+
+impl Lenders {
+    /// What a listing of lends said, each carried app's computers in its order.
+    pub(crate) fn heard(&self, lent: &[crate::node::Lending]) {
+        let mut heard: BTreeMap<Label, Vec<String>> = BTreeMap::new();
+        for l in lent.iter().filter(|l| l.offered.group.is_some()) {
+            let Some(label) = l.offered.label(&l.key, l.version) else {
+                continue;
+            };
+            heard.entry(label).or_default().push(l.key.clone());
+        }
+        self.0.send_modify(|all| all.extend(heard));
+    }
+
+    fn of(&self, label: &Label) -> Option<Vec<String>> {
+        self.0.borrow().get(label).cloned()
+    }
+
+    /// `lender` did not answer for `label`: the next request tries it last.
+    fn away(&self, label: &Label, lender: &str) {
+        self.0.send_if_modified(|all| {
+            let Some(keys) = all.get_mut(label) else {
+                return false;
+            };
+            keys.retain(|k| k != lender);
+            keys.push(lender.into());
+            true
+        });
+    }
 }
 
 /// `target` as the address a lend is asked at, or refused as no path.
@@ -555,11 +657,14 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
 
 /// The computer lending `label`, to be dialled as this computer's key,
 /// or [`refused`].
-pub(crate) fn dialled(at: &Asking, label: &Label) -> Result<Contact, Response> {
-    let actor = hex::encode(label.lender());
-    at.host
-        .contact(&actor)
-        .ok_or_else(|| refused(at, label, &actor))
+pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<Contact, Response> {
+    match serving(at, label).await? {
+        Serving::At(contact, _) => Ok(contact),
+        Serving::Own => Err(LendRefusal::Fault.say(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "this computer's own lend is not dialled",
+        )),
+    }
 }
 
 /// A lender standing in no group held here refused, so no page makes this

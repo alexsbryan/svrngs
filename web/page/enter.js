@@ -561,7 +561,7 @@ async function readLends(group, serial) {
   await connection.close();
   const lent = (body.lent ?? []).map((lend) => ({
     ...lend,
-    label: core.label(lend.key, lend.name),
+    label: core.label(lend.key, lend.name, lend.kind, lend.group ?? null, lend.version ?? null),
   }));
   const link = group.computers?.find((computer) => computer.key === core.issuer_of(group.token));
   apart(lent, body.people ?? []);

@@ -9,7 +9,10 @@
 //! certificate, which covers one label. A label holds at most 63 bytes, and
 //! a lend's name may be 64, so the label is the lender's key in full, which
 //! is dialled, then ten letters of the name's hash, which only its lender's
-//! door reads back, from what it declares: 62 letters of [`BASE32`].
+//! door reads back, from what it declares: 62 letters of [`BASE32`]. An app
+//! its group carries is one label in the group whichever computer carries
+//! it ([`Label::carried`]): its key's letters name no computer, and the
+//! computer is found as it is dialled ([`Label::whose`]).
 //!
 //! **A pass**: a person's key signs that a fresh key, the holder, may act
 //! as them for an app — a lend, whose pages ask — toward it and the lends
@@ -109,18 +112,58 @@ impl Label {
         Some(Self(raw.into()))
     }
 
-    /// The label of the app `kind` carried in `group` and lent by `lender`
-    /// ([`carried_name`]): what a holder's pass names as its app, so the
-    /// fold reads the kind a holder may write from it (capability-signed).
-    pub fn carried(lender: &[u8; 32], kind: &str, group: &str) -> Self {
-        Self::of(lender, &carried_name(kind, group))
+    /// The label of the app `kind` carried in `group`, one for every
+    /// computer carrying it, so the app is one origin and its pages one
+    /// copy whichever computer answers. Its key's letters are [`CARRIED`]
+    /// and the group's and kind's hash, a key no computer holds; the rest
+    /// is [`Self::of`]'s, so a build before wire version 6 reads it as a
+    /// label and its fold's check of a pass's app holds unchanged.
+    pub fn carried(kind: &str, group: &str) -> Self {
+        let mut key = [0; 32];
+        key[..16].copy_from_slice(&carried_hash("")[..16]);
+        key[16..].copy_from_slice(&carried_hash(&alloc::format!("\0{group}\0{kind}"))[..16]);
+        Self::of(&key, &carried_name(kind, group))
     }
 
-    /// The lender's key, dialled to reach the lend.
-    pub fn lender(&self) -> [u8; 32] {
-        key_of(&self.0[..KEY_LETTERS]).expect("a label parsed holds a key")
+    /// The label the lend `name` of `lender` is listed at: the group's one
+    /// when `carried` names the kind and group of an app the group carries
+    /// and the lender serves it so (wire version 6), else its lender's. The
+    /// one rule for a computer's list and a phone's page.
+    pub fn lent(lender: &[u8; 32], name: &str, carried: Option<(&str, &str)>) -> Self {
+        match carried {
+            Some((kind, group)) => Self::carried(kind, group),
+            None => Self::of(lender, name),
+        }
+    }
+
+    /// Whose this label is: a computer's lend, dialled at its key, or an
+    /// app a group carries, which any computer carrying it serves. A
+    /// computer's key begins as a carried app's by a chance of one in 2^128.
+    pub fn whose(&self) -> Whose {
+        let key = key_of(&self.0[..KEY_LETTERS]).expect("a label parsed holds a key");
+        match key[..16] == carried_hash("")[..16] {
+            true => Whose::Carried,
+            false => Whose::Computer(key),
+        }
     }
 }
+
+/// The hash a carried app's label's key letters are made of: of `what`
+/// after "carried", the empty one their first 16 bytes, every carried app's.
+fn carried_hash(what: &str) -> [u8; 32] {
+    let hashed = [crate::sig::LABEL_DOMAIN, b"carried", what.as_bytes()].concat();
+    *blake3::hash(&hashed).as_bytes()
+}
+
+/// Whose a lend's label is ([`Label::whose`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Whose {
+    /// A computer's own lend: this key's computer is dialled.
+    Computer([u8; 32]),
+    /// An app a group carries: the computer is found among those carrying it.
+    Carried,
+}
+
 crate::text_newtype!(Label);
 
 impl TryFrom<String> for Label {

@@ -94,7 +94,7 @@ fn a_fold_of_holders_records() {
     let (computers, holders) = (keys(1), keys(101));
     let ops: Vec<_> = (computers.iter().zip(&holders))
         .flat_map(|(k, h)| {
-            let app = Label::carried(&k.verifying_key().to_bytes(), "money", NS);
+            let app = Label::carried("money", NS);
             let pass = Pass::sign(k, &actor_of(h), (app, vec![]), 1_800_000_000);
             records(h, Some(&pass))
         })

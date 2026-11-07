@@ -6,6 +6,40 @@ fn lender(seed: u8) -> [u8; 32] {
     key(seed).verifying_key().to_bytes()
 }
 
+/// A carried app is one label in its group, whichever computer carries
+/// it, and no computer's: another kind or group is another label. A build
+/// before wire version 6 reads it as a lend's label, and its fold's check
+/// (`Label::carried(&app.lender(), kind, group) == app`, grant.rs before
+/// it) still holds.
+#[test]
+fn a_carried_app_is_one_label_in_its_group_and_no_computer_s() {
+    let money = Label::carried("Money", "house-0123456789abcdef");
+    assert_eq!(money.whose(), Whose::Carried);
+    assert_eq!(Label::parse(money.as_str()), Some(money.clone()));
+    assert_ne!(Label::carried("Notes", "house-0123456789abcdef"), money);
+    assert_ne!(Label::carried("Money", "flat-0123456789abcdef"), money);
+    let old_reading = key_of(&money.as_str()[..KEY_LETTERS]).unwrap();
+    let name = carried_name("Money", "house-0123456789abcdef");
+    assert_eq!(Label::of(&old_reading, &name), money);
+    let lent = |carried| Label::lent(&lender(1), &name, carried);
+    assert_eq!(
+        lent(Some(("Money", "house-0123456789abcdef"))),
+        money,
+        "listed once"
+    );
+    assert_eq!(
+        lent(None),
+        Label::of(&lender(1), &name),
+        "a computer's own copy"
+    );
+    for seed in 1..=8 {
+        assert_eq!(
+            Label::of(&lender(seed), &name).whose(),
+            Whose::Computer(lender(seed))
+        );
+    }
+}
+
 /// A label is one DNS label — 62 lowercase letters and digits — that gives
 /// its lender's key back whole; another name, or another lender, is
 /// another label; and anything that is not one is refused.
@@ -17,7 +51,7 @@ fn a_label_is_one_dns_label_that_names_its_lender_and_lend() {
         .as_str()
         .bytes()
         .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit()));
-    assert_eq!(label.lender(), lender(1));
+    assert_eq!(label.whose(), Whose::Computer(lender(1)));
     assert_eq!(Label::parse(label.as_str()), Some(label.clone()));
     assert_ne!(Label::of(&lender(1), "films"), label);
     assert_ne!(Label::of(&lender(2), "jellyfin"), label);

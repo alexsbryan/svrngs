@@ -21,12 +21,14 @@ const defined = (name) => {
 };
 const posts = /^const posts = .*$/m.exec(LEND)?.[0];
 assert.ok(posts, 'lend.js declares posts');
-const SOURCE = [posts, ...['bodyFor', 'doorAnswer', 'sent'].map(defined)].join('\n');
+const SOURCE = [
+  posts,
+  ...['bodyFor', 'doorAnswer', 'sent', 'lenderOf', 'dialAt', 'letGo'].map(defined),
+].join('\n');
 
 // Each method's asks of a dial that fails with `error`, `body` the page's.
-async function asked(method, error, body) {
-  const sends = [];
-  const said = [];
+async function asked(method, error, body, lend = { key: 'key' }) {
+  const [sends, said, dialled] = [[], [], []];
   const dial = {
     fetch: async (how, path, headers, stream) => {
       sends.push({ how, path, body: stream !== null });
@@ -38,7 +40,8 @@ async function asked(method, error, body) {
     ReadableStream,
     SLICE: 1 << 20,
     dials: new Map([['key', dial]]),
-    dialFor: async () => dial,
+    dialFor: async (key) => (dialled.push(key), dial),
+    failed: new Set(),
     trace: (line) => said.push(line),
   };
   const run = runInNewContext(
@@ -46,8 +49,8 @@ async function asked(method, error, body) {
     scope,
   );
   const request = new Request('https://lend.example/thing', { method, body });
-  const lost = await run({ request, lend: { key: 'key' }, path: '/thing' });
-  return { sends, lost, said, dials: scope.dials };
+  const lost = await run({ request, lend, path: '/thing' });
+  return { sends, lost, said, dials: scope.dials, dialled, failed: scope.failed };
 }
 
 for (const [method, body] of [
@@ -115,3 +118,17 @@ for (const method of ['GET', 'HEAD']) {
     );
   });
 }
+
+// A carried app is one origin whichever computer lends it (svrngs-core
+// `Label::carried`): a read lost at one computer is tried at the next, and
+// a write lost is sent no more, but the next goes to the next computer.
+// Planted, watched failing: `letGo` not marking the computer `failed`, and
+// the read was tried at `ada` twice.
+test('a carried app is tried at the next computer lending it', async () => {
+  const lend = { key: 'ada', name: 'Money', lenders: [{ key: 'cy' }] };
+  const read = await asked('GET', new Error('connection lost'), undefined, lend);
+  assert.deepEqual(read.dialled, ['ada', 'cy'], 'the read went on to cy');
+  const wrote = await asked('POST', new Error('connection lost'), 'an entry', lend);
+  assert.deepEqual(wrote.dialled, ['ada'], 'the write is sent once');
+  assert.deepEqual([...wrote.failed], ['ada'], 'and the next goes to cy');
+});

@@ -994,7 +994,13 @@ Seven calls:
    sets its stock `KnownProxies` (`demo/runs/oidc/2026-10-21-jellyfin-2/`).
 
    A lend's address is its bookmark, and never changes: its label is its
-   lender's key and its name. Opened where its worker is not, a browser
+   lender's key and its name, and an app its group carries has one label in
+   the group, its kind and group hashed under a key no computer holds
+   (wire version 6, `Label::carried`), so it is one origin whichever
+   computer serves it, the computer chosen as it is dialled (`origin.rs`
+   `serving`, `lend.js` `lenderOf`). A computer below 6 lists and serves its
+   copy at its own label, as before; a page kept at a copy's label from then
+   is told its app's address moved (410). Opened where its worker is not, a browser
    that never opened it or cleared it, the page's host answers with the
    group's page, which sends the browser on to the group's page at
    `#open=<label>&at=<path>&cold`: holding the group it signs a pass and

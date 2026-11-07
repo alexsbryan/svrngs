@@ -154,7 +154,7 @@ const stay = (core, token, visit) => {
     kind,
     person: visit.host,
     version: visit.version,
-    label: core.label(issuer, name),
+    label: core.label(issuer, name, kind, null, visit.version),
   }));
   return {
     type: 'redeemed',

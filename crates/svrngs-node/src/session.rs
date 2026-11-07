@@ -614,13 +614,8 @@ impl Sessions {
     }
 
     pub(crate) fn refused(&self, why: &str) -> Response {
-        let file = self
-            .token
-            .file()
-            .display()
-            .to_string()
-            .replace('&', "&amp;")
-            .replace('<', "&lt;");
+        let file = self.token.file().display().to_string();
+        let file = file.replace('&', "&amp;").replace('<', "&lt;");
         let opener = if cfg!(target_os = "macos") {
             "Applications"
         } else {
