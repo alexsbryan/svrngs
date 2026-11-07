@@ -36,6 +36,13 @@ impl Node {
         &self.host.transport
     }
 
+    /// What this computer's endpoint holds now, as [`crate::tiers`] spells
+    /// it: the tier and the relays a test of a move reads, which iroh keeps
+    /// to itself once the map changes under a home (2db4a71f).
+    pub fn tier_held(&self) -> String {
+        format!("{:?}", *self.host.held.borrow())
+    }
+
     /// The relays this computer dials `actor` at, each way it dials: a
     /// folder's fetch and a lend's origin ([`Host::contact`]), then the
     /// round and the lend asks ([`Host::standing_peers`]) (#127).

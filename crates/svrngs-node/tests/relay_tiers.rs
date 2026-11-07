@@ -346,6 +346,41 @@ async fn pressed_with_the_fallback_cut_this_computer_moves_now() {
     node.endpoint().close().await;
 }
 
+/// **An ask under way when a person pressed does not undo the press**
+/// (KEEP_GOING_AT_HOME 7; `tiers.rs` `pressed`): Ada is registered at her
+/// build's fallback, and the way to it is cut 1.5 s before an ask is due, so
+/// the ask waits on a registration while the press, its one question taking
+/// `ANSWERS_WITHIN`, leaves the fallback. That ask ends a miss short of
+/// `LEFT_AFTER`, the kind a reached fallback is kept through; the tier stays
+/// the group's own for as long as it takes to end and be decided on. Read
+/// from the tier held, since iroh keeps the home it has when the map changes
+/// under it. Planted, watched failing: `pressed` always false, and the tier
+/// went back to the fallback.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_ask_under_way_does_not_undo_a_press() {
+    let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
+    let ((_own, a), (build, _)) = (relay(any).await, relay(any).await);
+    let (way, cut) = cuttable(build.http_addr().unwrap()).await;
+    let every = svrngs_node::tiers::ASKED_EVERY;
+    // The asks fall every ASKED_EVERY from the node's start.
+    let started = Instant::now();
+    let (_dir, node) = ada(&way, &a).await;
+    homed(&node, &way).await;
+    let lead = Duration::from_millis(1500);
+    let asks = started.elapsed().as_millis() / every.as_millis() + 2;
+    let due = started + every * asks as u32 - lead;
+    tokio::time::sleep_until(due.into()).await;
+    cut.send_replace(true);
+    assert_eq!(pressed(&node).await, "/?moved");
+    let until = due + lead + svrngs_node::tiers::REGISTERED_WITHIN + Duration::from_secs(4);
+    while Instant::now() < until {
+        let held = node.tier_held();
+        assert!(held.contains("tier: Own"), "{held}");
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    node.endpoint().close().await;
+}
+
 /// **A press with the fallback answering moves nobody**, and says so.
 #[tokio::test(flavor = "multi_thread")]
 async fn pressed_with_the_fallback_answering_nothing_moves() {
