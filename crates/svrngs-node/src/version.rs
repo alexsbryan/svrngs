@@ -10,7 +10,8 @@
 //! this file by `#[path]` (`web/src/lib.rs` `older`), so a page and a
 //! computer ask one rule.
 //!
-//! Raised when an answer a page reads changes what it carries. 1 is the
+//! Raised when an answer a page reads changes what it carries, by an entry
+//! in [`STEPS`], which says what the raise does to older computers. 1 is the
 //! first: no build that left this host carries one
 //! (`ralph/next/arch/arch-version/SURVEY.md`), and the operator let those
 //! go (2026-10-15, "Let them go; V1's publish replaces them"). 2 is the
@@ -33,8 +34,29 @@
 //! it: a lender refuses an unmarked discovery request, and a consumer
 //! refuses an unscoped answer, through the scope marker beside the version.
 
+/// What a version does to computers one version behind it. There is no
+/// default: to raise the version is to choose, so no raise reaches older
+/// computers by accident.
+pub enum Behind {
+    /// They go on working, read as they were.
+    Reads,
+    /// They are cut off until they upgrade. The file named says who goes
+    /// first and in what order, and names this version
+    /// (`tests/wire_versions.rs`).
+    FlagDay(&'static str),
+}
+
+/// Every version there has been, oldest first: a raise is one more entry.
+pub const STEPS: &[Behind] = &[
+    Behind::Reads,
+    Behind::Reads,
+    Behind::Reads,
+    Behind::FlagDay("docs/DESIGN.md"),
+    Behind::FlagDay("docs/LENDING_SCOPE.md"),
+];
+
 /// This build's version, as its answers carry it.
-pub const VERSION: u32 = 5;
+pub const VERSION: u32 = STEPS.len() as u32;
 
 /// The header a caller sends to declare it speaks selected-group scope
 /// (LENDING_SCOPE §"Updates, migration and mixed versions"): its value is

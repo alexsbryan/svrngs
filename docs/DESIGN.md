@@ -1752,7 +1752,8 @@ from the journal waits in PLAN §2.
   A holder's timestamp can't show when it wrote: the app's own code holds
   the holder, so it can stamp any time. So an app's entry counts only once
   its open's approver approves its exact content (svrn-docs
-  rings/current/HOLDER_APPROVAL.md, option D). The group's page mints the
+  rings/current/HOLDER_APPROVAL.md, option D; wire version 4, a flag day: the
+  group's keeper upgrades first). The group's page mints the
   approver for each open and names its key in both passes it signs
   (`Pass.approver`, in the person's signature). It hands the key only to
   the group's signer, `web/sign.html` at the page's origin, which an app's

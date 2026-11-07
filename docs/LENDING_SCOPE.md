@@ -191,6 +191,9 @@ traffic through the door regardless of those app credentials.
 
 ## Updates, migration and mixed versions
 
+This is wire version 5, a flag day: computers at 4 and 5 do not list each
+other's lends, so keepers upgrade first, then everyone else.
+
 Use one audience-only mutation helper for UI/CLI, preserving the rest of the
 declaration. Atomic rename prevents torn files, not lost updates: today's
 `lend::limit` and `home::sign_in` read then rewrite a full lend. A stale edit
