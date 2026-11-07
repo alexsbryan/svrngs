@@ -98,7 +98,7 @@ step "canaries" cargo test --quiet --workspace --test canaries
 # an idle round under 0.1 s of processor, in release, by name from the
 # ignored instrument. Its reading is printed, passed or failed.
 step "ceiling canary" cargo test --release --quiet -p svrngs-node --test scale -- --ignored --exact an_idle_round_is_under_the_ceiling --nocapture
-grep -h '^CEILING' /tmp/svrngs-check.$$ | sed 's/^/           /' | grep . || { echo "never-ran  ceiling canary: no CEILING reading, so no test of that name ran"; failed=1; }
+! reached "ceiling canary" || grep -h '^CEILING' /tmp/svrngs-check.$$ | sed 's/^/           /' | grep . || { echo "never-ran  ceiling canary: no CEILING reading, so no test of that name ran"; failed=1; }
 # The page (PLAN §4, U4): its crate is a workspace of its own, for wasm.
 step "web rustfmt and clippy" scripts/build-web.sh --lint
 # The page in a browser, by name: it builds the page, runs a relay
