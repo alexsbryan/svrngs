@@ -375,6 +375,15 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   carried-trace.txt`). Such a write goes out without waiting for that
   round. Its test: a group with one computer asleep, a phone's yes, and
   the app opened at once on another computer;
+- keeping a group going when the internet goes out at home: the demo is
+  svrn-docs `rings/current/KEEP_GOING_AT_HOME.md`'s scene. You join on a
+  phone or a computer, use the group around town, come home, the internet is
+  unplugged, and you keep using the same group with the same people, nobody
+  joining again and nobody changing a setting, then carry on when it comes
+  back. Its checks are the tests that name it (`tests/browser/keep_going.rs`,
+  `tests/relay_tiers.rs`, `tests/relay_fallback.rs`); its bar is that
+  document's one real run, on a real phone and computers on the house mesh,
+  which no test stands in for;
 - sealing, at its §2 trigger.
 
 The operator's switch stands apart from that order: when they flip
