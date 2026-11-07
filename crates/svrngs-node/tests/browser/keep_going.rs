@@ -18,6 +18,7 @@ fn home(node: &Node) -> Option<String> {
 async fn reopened<F: std::future::Future<Output = ()> + Send + 'static>(
     engine: Engine,
     mut args: Value,
+    script: &str,
     cut: F,
 ) -> Value {
     let dir = tempfile::tempdir().unwrap();
@@ -31,7 +32,7 @@ async fn reopened<F: std::future::Future<Output = ()> + Send + 'static>(
         cut.await;
         let _ = go.send(());
     });
-    drive(engine, "reopen.mjs", args, Some(wait)).await
+    drive(engine, script, args, Some(wait)).await
 }
 
 in_webkit!(
@@ -62,7 +63,7 @@ async fn a_phone_learns_the_group_s_relay_with_no_new_invitation(engine: Engine)
     });
     let ada = std::sync::Arc::new(ada);
     let (moved, moves) = (ada.clone(), at_home.clone());
-    let seen = reopened(engine, args, async move {
+    let seen = reopened(engine, args, "reopen.mjs", async move {
         public.shutdown().await.unwrap();
         let start = std::time::Instant::now();
         while home(&moved).as_deref() != Some(moves.as_str()) {
@@ -139,7 +140,7 @@ async fn a_phone_reopens_the_group_and_its_app_with_the_public_site_gone(engine:
     });
     let ada = std::sync::Arc::new(ada);
     let (moved, moves) = (ada.clone(), at_home.clone());
-    let seen = reopened(engine, args, async move {
+    let seen = reopened(engine, args, "reopen.mjs", async move {
         public.shutdown().await.unwrap();
         let start = std::time::Instant::now();
         while home(&moved).as_deref() != Some(moves.as_str()) {
@@ -206,7 +207,7 @@ async fn a_new_release_replaces_a_lend_s_saved_pages(engine: Engine) {
         "open": "shelf",
         "rebuilt": true,
     });
-    let seen = reopened(engine, args, async {}).await;
+    let seen = reopened(engine, args, "reopen.mjs", async {}).await;
     eprintln!("{seen:#}");
     assert_eq!(pieces(&seen["saved"]).len(), 9, "{seen:#}");
     let name = format!("svrngs-web-{}", seen["reopened"]["built"].as_str().unwrap());
@@ -563,4 +564,63 @@ async fn the_house_keeps_going_through_the_home_relay_and_comes_back(engine: Eng
         let held = group::groups(computer.rail().root());
         assert!(held.iter().any(|s| s.id() == id), "the same group");
     }
+}
+
+in_chromium!(
+    /// **A phone with the page saved joins at home with the internet out**
+    /// (KEEP_GOING_AT_HOME 3, 1): Pia opened the group's page once, in no
+    /// group, and her browser closed. The public relay and the page's site
+    /// go, and ada's computer moves to the home relay. Her invitation names
+    /// both ways in: opened on the saved page she gives her name and is in
+    /// the group, seen on ada's record. A planted bad input, kept as the
+    /// control: the same link naming the public relay alone, on the same
+    /// saved page, ends in the page's words and no one let in. Chromium's,
+    /// as the reopen test is. A page saved means opened once: nothing here
+    /// says a phone that never opened it can join (spec, "not promising").
+    a_phone_with_the_page_saved_joins_at_home_with_the_internet_out
+);
+async fn a_phone_with_the_page_saved_joins_at_home_with_the_internet_out(engine: Engine) {
+    let (public, house_relay) = (relay().await, relay().await);
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, id) = house(dir.path(), &public, &signing(7)).await;
+    let at_home = relay_url(&house_relay);
+    let named: svrngs_node::iroh::RelayUrl = at_home.parse().unwrap();
+    ada.host().meet(&id, &[named]).expect("ada keeps the group");
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let (own, out): (svrngs_core::relay::Url, svrngs_core::relay::Url) = (
+        at_home.parse().unwrap(),
+        relay_url(&public).parse().unwrap(),
+    );
+    let link = (ada.host().mint(&id, vec![own, out.clone()], None, now)).unwrap();
+    let old = Token {
+        relays: vec![out],
+        ..link.clone()
+    };
+    let args = json!({ "site": site(), "link": link.encode(), "old": old.encode() });
+    let ada = std::sync::Arc::new(ada);
+    let (moved, moves) = (ada.clone(), at_home.clone());
+    let seen = reopened(engine, args, "join-saved.mjs", async move {
+        public.shutdown().await.unwrap();
+        moved_to(&moved, &moves).await;
+    })
+    .await;
+    eprintln!("{seen:#}");
+    assert!(
+        seen["old"]["kind"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("bad"),
+        "the old link reaches nobody: {seen:#}"
+    );
+    assert!(
+        seen["joined"]["said"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("in house"),
+        "{seen:#}"
+    );
+    assert!(holds(&ada, &id, "Pia"), "ada's record holds her: {seen:#}");
 }

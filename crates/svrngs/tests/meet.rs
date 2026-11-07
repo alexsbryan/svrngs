@@ -243,6 +243,84 @@ async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
     );
 }
 
+/// **A computer with the program joins at home with the internet out**
+/// (KEEP_GOING_AT_HOME 3, 1): Sam's group meets at the home relay and his
+/// build's public relay is gone, so he has moved. Pia's program knows only
+/// the same gone public relay, and her link names both. She is in, as
+/// `svrngs join` joins, within the bound the refusal is held to. A planted
+/// bad input, kept as the control: the same link naming the public relay
+/// alone, as an old invitation does, leaves the issuer away.
+#[tokio::test(flavor = "multi_thread")]
+async fn the_program_joins_at_home_with_the_public_relay_gone() {
+    const BOUND: Duration = Duration::from_secs(40);
+    let ((_home, home), (public, at_public)) = (relay_here().await, relay_here().await);
+    let dirs = [(); 3].map(|()| tempfile::tempdir().unwrap());
+    let ours = RelayConfig {
+        relay_urls: vec![at_public.clone()],
+        ..cli::reach(MeetAt::Svrngs)
+    };
+    let sam = computer(dirs[0].path(), 81, &ours).await;
+    let made = cli::parse(argv(&format!("new house --as Sam --relay {home}"))).unwrap();
+    let Verb::New {
+        name,
+        person,
+        relays,
+        ..
+    } = made
+    else {
+        panic!("new parses as new");
+    };
+    let (_seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &relays, &ours)
+        .await
+        .expect("Sam makes house");
+    let link = Link::parse(&printed.client).unwrap();
+    let names: Vec<String> = link.token.relays.iter().map(ToString::to_string).collect();
+    assert!(
+        names.contains(&home) && names.contains(&at_public),
+        "both ways in: {names:?}"
+    );
+
+    public.shutdown().await.unwrap();
+    let every = svrngs_node::tiers::ASKED_EVERY * (svrngs_node::tiers::LEFT_AFTER + 2);
+    tokio::time::timeout(every, async {
+        while !sam
+            .endpoint()
+            .addr()
+            .relay_urls()
+            .any(|r| r.to_string() == home)
+        {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    })
+    .await
+    .expect("Sam moves to the home relay");
+
+    let mut old = link.clone();
+    old.token.relays.retain(|r| r.to_string() == at_public);
+    let late = computer(dirs[1].path(), 82, &ours).await;
+    let key = SigningKey::from_bytes(&[82; 32]);
+    let lee = group::Name::parse("Lee").unwrap();
+    let refused = cli::join_group(&late, &key, &old, &lee);
+    let refused = tokio::time::timeout(BOUND, refused).await.expect("bounded");
+    assert!(
+        matches!(refused, Err(cli::Refusal::IssuerAway)),
+        "{refused:?}"
+    );
+
+    let pia = computer(dirs[2].path(), 83, &ours).await;
+    let key = SigningKey::from_bytes(&[83; 32]);
+    let person = group::Name::parse("Pia").unwrap();
+    let began = Instant::now();
+    let joined = tokio::time::timeout(BOUND, cli::join_group(&pia, &key, &link, &person))
+        .await
+        .expect("the join ends inside the refusal's bound");
+    eprintln!("joined at home in {:?}", began.elapsed());
+    assert!(matches!(joined, Ok(cli::Said::Joined { .. })), "{joined:?}");
+    sam.endpoint().close().await;
+    pia.endpoint().close().await;
+    late.endpoint().close().await;
+}
+
 /// **`link --relay` while svrngs runs asks it** (KEEP_GOING_AT_HOME 28): the
 /// program, as a person runs it, beside a svrngs holding the data dir's lock
 /// and serving the group's record. Sam's asks his: where house meets changes
