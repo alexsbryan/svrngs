@@ -76,3 +76,42 @@ test('a read given up on by the idle timeout is not tried again', async () => {
   const { sends } = await asked('GET', new Error('asleep: timed out'));
   assert.equal(sends.length, 1);
 });
+
+// What a person is told, cut from lend.js as above: a write that may have
+// reached the app is not one to send again unlooked, and a read still is.
+const SAID = [
+  ...['QUIET', 'UNSURE'].map((name) => new RegExp(`^const ${name} = [^]*?;$`, 'm').exec(LEND)?.[0]),
+  defined('away'),
+].join('\n');
+const told = (method, mode) =>
+  runInNewContext(`${SAID}\n(away)`, {
+    posts: (request) => !['GET', 'HEAD'].includes(request.method),
+    silent: (whom) => `${whom} did not answer, so it may be off.`,
+    unreached: (_, quiet) => quiet,
+    trace: () => {},
+    say: (_, words) => words,
+    awayPage: async () => undefined,
+    Response,
+  })({ method, mode }, { label: 'l', person: 'Sam', name: 'Money' }, new Error('lost'));
+
+for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
+  test(`a ${method} whose answer was lost says it may have gone through`, async () => {
+    const words = await told(method, 'cors');
+    assert.match(words, /may have gone through/);
+    assert.match(words, /[Cc]heck before you send it again/);
+    assert.doesNotMatch(words, /Try again later/);
+  });
+}
+
+test('a form sent in a whole tab is told the same, not shown the dark window', async () => {
+  assert.match(await told('POST', 'navigate'), /may have gone through/);
+});
+
+for (const method of ['GET', 'HEAD']) {
+  test(`a ${method} keeps today's words`, async () => {
+    assert.equal(
+      await told(method, 'cors'),
+      'The computer lending this did not answer, so it may be off. Try again later.',
+    );
+  });
+}

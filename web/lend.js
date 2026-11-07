@@ -117,6 +117,8 @@ const OWN = store.labelOf(SCOPE.hostname);
 const SIGNER = signerFor(SCOPE, SITE);
 const PLAIN = { 'content-type': 'text/plain; charset=utf-8' };
 const QUIET = `${silent('The computer lending this')} Try again later.`;
+// A write whose answer was lost may have reached the app: never sent again here.
+const UNSURE = `${silent('The computer lending this')} What you sent may have gone through, so check before you send it again.`;
 const TRACE = `${SCOPE.pathname}svrngs-trace`;
 // Where its pages ask the lends they read, as a computer's origin answers
 // them too (crates/svrngs-node/src/surface.rs, `READS_PATH`).
@@ -1150,7 +1152,7 @@ async function judged(lend, res) {
  * @param {unknown} error
  */
 async function away(request, lend, error) {
-  const words = unreached(error, QUIET);
+  const words = unreached(error, posts(request) ? UNSURE : QUIET);
   const dark = words === QUIET && request.mode === 'navigate';
   const page = dark ? await awayPage() : undefined;
   const as = page ? 'as its window, dark' : 'in svrngs’s words';

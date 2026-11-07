@@ -72,6 +72,11 @@ short name.
   Sam's computer is asleep or off. It opens again once that computer
   answers; press **Try again** then. On a phone you may see *"The computer
   lending this did not answer. Try again later."* instead.
+- ***"The computer lending this did not answer, so it may be off. What you
+  sent may have gone through, so check before you send it again."***
+  You saved or sent something and the answer never came back. The app may
+  have it already, so look in the app first, and send it again only if it
+  is not there.
 - ***"Sam's computer did not answer, so what they lend is not listed."***
   The same, seen from your home page or the group's page. Reload when
   Sam's computer is on.

@@ -179,8 +179,10 @@ test("an app's window goes dark only for a computer that was reached for", async
   const lend = { label: 'l', person: 'ada', name: 'notes' };
   const away = runInNewContext(`${cut('away')}\naway;`, {
     QUIET: 'quiet',
+    UNSURE: 'unsure',
     REFUSED: 'x-svrngs-refused',
     unreached,
+    posts: (request) => request.method === 'POST',
     awayPage: async () => '{who}’s window is dark',
     trace: () => {},
     say: (status, words) => ({ status, words }),
