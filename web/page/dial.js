@@ -224,10 +224,13 @@ async function reach(core, group, tried) {
     ),
   ];
   const asked = [...(linked ? [link] : []), ...others];
-  const away = `${asked.map((one) => silent(whoseComputer(one))).join(' ')} Try again later.`;
+  const silence = asked.map((one) => silent(whoseComputer(one))).join(' ');
+  const away = `${silence} Try again later.`;
   const [dialled, computer] = await patiently(Promise.any(tries)).catch((error) => {
     trace(`PAGE: the dial failed: ${error}`);
-    return Promise.reject(saying(unreached(error, away)));
+    const said = unreached(error, away);
+    // Only a silence is asked again (enter.js `failing`), never a refusal.
+    return Promise.reject(Object.assign(saying(said), { silence: said === away && silence }));
   });
   trace(
     `PAGE: reached ${group.name} through ${computer ? `${computer.person}'s` : "the link's"} computer`,

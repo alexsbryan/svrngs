@@ -235,6 +235,47 @@ test('back on screen the list is read again, and a read again that fails keeps t
   assert.deepEqual(back.group.addresses, ['l', 'notes@ada']);
 });
 
+test('a read no computer answers keeps the tab and is asked again until one does', () => {
+  const reading = through(
+    first,
+    { type: 'hold', group: house },
+    { type: 'held' },
+    { type: 'opened', group: house },
+  );
+  const quiet = 'ada’s computer did not answer, so it may be off.';
+  const silent = parts.step(reading, {
+    type: 'unread',
+    n: 1,
+    said: `${quiet} Try again later.`,
+    silence: quiet,
+  });
+  assert.deepEqual(
+    silent.effects,
+    [{ run: 'again', failed: 'failed' }],
+    'the lock is kept and nothing fails the page',
+  );
+  assert.deepEqual(parts.heading(silent.state), [`${quiet} This page keeps asking.`, 'bad']);
+  const again = parts.step(silent.state, { type: 'reread', why: 'no computer answered' });
+  assert.deepEqual(again.effects, [{ run: 'read', group: house, n: 2, failed: 'unread' }]);
+  assert.deepEqual(parts.heading(again.state), [`${quiet} This page keeps asking.`, 'bad']);
+  const answered = through(again.state, { type: 'read', n: 2, ok: true, body, lent: [] });
+  assert.deepEqual(parts.heading(answered), ['You’re in house, as bo', 'good']);
+  const stale = parts.step(answered, { type: 'shown' }).state;
+  assert.deepEqual(
+    parts.step(stale, { type: 'unread', n: 3, said: quiet, silence: quiet }).effects,
+    [{ run: 'again', failed: 'failed' }],
+    'a read again no computer answers is asked again too',
+  );
+  const refused = 'This browser refused what svrngs needs to reach your group.';
+  assert.deepEqual(
+    parts
+      .step(reading, { type: 'unread', n: 1, said: refused })
+      .effects.map((f) => f.m?.said ?? f.run),
+    ['release', refused],
+    'a refusal is said, never asked again',
+  );
+});
+
 // Picked, the offer and its line go in the click's own step, as v1's click
 // emptied #door and #said before `hold` (web/app.js@19b63b2b:586): the browser
 // driver reads the next line once `hold`'s lock answers (cold.mjs `landed`).

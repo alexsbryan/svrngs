@@ -1539,7 +1539,10 @@ Every dial the transport makes to a member's computer, and a phone's page's
 to a lender, is given up when not answered within 4 s, the slowest working
 dial measured times three (`dial.rs`, which the page compiles too), so a
 person is told an asleep computer did not answer then, not after iroh's 30 s.
-A joiner's dial to the computer its link names waits as iroh does. A phone's
+The group's page, its read answered by no computer, says so, keeps the tab's
+hold on the group and reads again 5 s on until one answers (`enter.js`
+`failing`), so a computer that wakes, or is slow under load, is reached
+without a reload; a refusal is said once and not asked again. A joiner's dial to the computer its link names waits as iroh does. A phone's
 dial is held only while the computer sends something within that time, a
 keep-alive each second, and a request on a dial that falls silent is not
 dialled again. A dial a request or a socket failed on is let go, so the

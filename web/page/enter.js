@@ -11,7 +11,7 @@ import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { alias, apart, called, once, titled, whoseComputer } from '../question.js?v=__VERSION__';
 import { named as saidOf } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
-import { actor, hold, lends, trace, wasm } from './dial.js?v=__VERSION__';
+import { actor, hold, lends, trace, wasm, when } from './dial.js?v=__VERSION__';
 import { sending } from './page.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
 /** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
@@ -116,7 +116,7 @@ import { sending } from './page.js?v=__VERSION__';
  *       me: string,
  *       older: boolean,
  *     }
- *   | { type: 'unread', n?: number, said?: string, why: string }
+ *   | { type: 'unread', n?: number, said?: string, silence?: string, why: string }
  *   | { type: 'kept', unready?: string[] }} Message
  */
 
@@ -129,7 +129,8 @@ import { sending } from './page.js?v=__VERSION__';
  *   | { run: 'release', failed: string }
  *   | { run: 'open', group: Group, failed: string }
  *   | { run: 'read', group: Group, n: number, failed: string }
- *   | { run: 'keep', group: Group, lent: Lent[], failed: string }} Effect
+ *   | { run: 'keep', group: Group, lent: Lent[], failed: string }
+ *   | { run: 'again', failed: string }} Effect
  */
 
 export const owns = [
@@ -174,20 +175,26 @@ const reading = (state, patch) => {
   const read = { run: 'read', group: patch.group ?? state.group, n: serial, failed: 'unread' };
   return go(state, { list: 'reading' }, { ...patch, asked }, read);
 };
-// A read again that fails keeps the list drawn, and says why over it; a
-// first read that fails lets the lock go, and says why in the heading.
+// A read no computer answered (`silence`) keeps the lock and is asked
+// again (`again`) until one does, so the page rides out its computers
+// moving relays; any other read again that fails keeps the list drawn,
+// and says why over it; a first one lets the lock go, said in the heading.
 /**
  * @param {State} state
  * @param {string} [said]
  * @param {string} [why]
+ * @param {string} [silence]
  * @returns {Stepped}
  */
-const failing = (state, said, why = said) => {
+const failing = (state, said, why = said, silence = '') => {
+  if (silence) return go(state, { list: 'unread' }, { stale: `${silence} ${ASKING}` }, AGAIN);
   if (state.lent) return go(state, { list: 'unread' }, { stale: why });
   // Cast as either effect, so `go` takes it and the `say` as one list.
   const release = /** @type {Effect | Send} */ ({ run: 'release', failed: 'failed' });
   return go(state, { list: 'unread' }, {}, release, say(said));
 };
+const ASKING = 'This page keeps asking.';
+const AGAIN = /** @type {Effect} */ ({ run: 'again', failed: 'failed' });
 // Read again, after a write here or on coming back on screen (PAGE_STATE
 // §3, 6), once a read has answered.
 /**
@@ -425,7 +432,7 @@ export const takes = {
   unread: (state, message) => {
     const later = late(state, 'list', message.n);
     if (later) return no(state, later);
-    return failing(state, message.said, message.said ?? message.why);
+    return failing(state, message.said, message.said ?? message.why, message.silence);
   },
   // Read, what `#open=` names is sent to be named (among.js `wanted`).
   // Sent only when `wants` names what is open.
@@ -446,6 +453,7 @@ export const heading = {
       const through = state.via ? `, through ${state.via.person}’s computer` : '';
       return [`You’re in ${state.group.name}, as ${state.group.person}${through}`, 'good'];
     }
+    if (state.stale) return [state.stale, 'bad'];
     return state.at.list === 'reading' && [`Reaching ${state.group.name}…`];
   },
 };
@@ -624,8 +632,11 @@ export const io = {
       type: 'unread',
       n: serial,
       said: error.said,
+      silence: error.silence,
       why: String(error),
     })),
+  // Asked again a few seconds on (`failing`).
+  again: () => when(Date.now() / 1000 + 5, { type: 'reread', why: 'no computer answered' }),
   keep: async ({ group, lent }) => {
     await store.opened(group);
     // Only a group with a relay of its own goes on when the internet goes.

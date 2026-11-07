@@ -532,12 +532,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # read from `STEPS` so wire version 6 cuts no computer at 5 off, and a page
 # kept at an old label told where its app went. core 3,494 to 3,511; . 20,498
 # to 20,651; js 8,364 to 8,385.
+# The operator's decision of 2026-11-07, "8396 / 20835 with trace": the
+# group's page asks again while no computer answers its read (enter.js
+# `failing`, +8 js); the touched tier, check.sh's slow steps a change can
+# reach (scripts/touched.py and its wiring, +159 .); and the page's opt-in
+# trace of iroh's own events (web/src/lib.rs `trace_iroh`, +25 ., +3 js).
+# . 20,651 to 20,835; js 8,385 to 8,396; core unchanged.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20651,
+    ".": 20835,
 
-    "js": 8385,
+    "js": 8396,
 
     "swift": 1,
 }
