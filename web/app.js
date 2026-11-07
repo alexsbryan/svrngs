@@ -8,7 +8,7 @@
 // good when a person left while the module awaited the wasm's fetch.
 // Everything else is PAGE's (web/page/page.js), drawn into
 // web/index.html's #page.
-import init from './wasm/svrngs_web.js?v=__VERSION__';
+import init, { trace_iroh } from './wasm/svrngs_web.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 import { trace } from './ui/trace.js?v=__VERSION__';
 import { html, render } from './ui/view.js?v=__VERSION__';
@@ -33,10 +33,13 @@ import * as visit from './page/visit.js?v=__VERSION__';
 const edge = {
   io: {
     init: () =>
-      init({ module_or_path: store.runtime() }).then(() => ({
-        type: 'start',
-        fragment: location.hash.slice(1),
-      })),
+      init({ module_or_path: store.runtime() }).then(() => {
+        try {
+          const iroh = localStorage.getItem('svrngs-iroh');
+          if (iroh) trace_iroh(iroh);
+        } catch {}
+        return { type: 'start', fragment: location.hash.slice(1) };
+      }),
   },
 };
 const parts = compose({

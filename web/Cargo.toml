@@ -50,6 +50,7 @@ hex = "0.4"
 # the version this crate's lock already holds through iroh.
 n0-future = "0.3"
 tracing = "0.1"
+tracing-subscriber = { version = "=0.3.23", default-features = false, features = ["fmt", "std", "registry"] }
 
 # Its own workspace root: without this, cargo walks up to the repo's
 # [workspace] and refuses the crate as a non-member.

@@ -57,6 +57,39 @@ fn emit(line: &str) {
     }
 }
 
+/// iroh's own events for `targets` (tracing-subscriber's `Targets`, as
+/// `iroh::socket=trace`), sent to the page's trace: opt-in, by the page's
+/// `svrngs-iroh` storage key (web/app.js), so a dial's stall is seen.
+#[wasm_bindgen]
+pub fn trace_iroh(targets: String) -> Result<(), JsError> {
+    use tracing_subscriber::layer::SubscriberExt as _;
+    use tracing_subscriber::util::SubscriberInitExt as _;
+    let targets: tracing_subscriber::filter::Targets = targets.parse().map_err(|e| JsError::new(&format!("{e}")))?;
+    let fmt = tracing_subscriber::fmt::layer().without_time().with_ansi(false);
+    let fmt = fmt.with_writer(|| Emitted(Vec::new()));
+    let set = tracing_subscriber::registry().with(fmt).with(targets).try_init();
+    set.map_err(|e| JsError::new(&e.to_string()))
+}
+
+/// One event's line, emitted whole when written.
+struct Emitted(Vec<u8>);
+
+impl std::io::Write for Emitted {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0.extend_from_slice(bytes);
+        Ok(bytes.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+impl Drop for Emitted {
+    fn drop(&mut self) {
+        emit(String::from_utf8_lossy(&self.0).trim_end());
+    }
+}
+
 /// A refusal's line is emitted, and is the error.
 macro_rules! refuse {
     ($($a:tt)*) => {{
@@ -532,7 +565,9 @@ pub fn is_label(raw: String) -> bool {
 #[wasm_bindgen]
 pub fn carried_label(lender: String, kind: String, group: String) -> Result<String, JsError> {
     let name = svrngs_core::pass::carried_name(&kind, &group);
-    Label::of_hex(&lender, &name).map(|l| l.to_string()).ok_or_else(|| JsError::new("not a computer's key"))
+    Label::of_hex(&lender, &name)
+        .map(|l| l.to_string())
+        .ok_or_else(|| JsError::new("not a computer's key"))
 }
 
 /// The person whose key is `person` lets the key `holder`, 64 hex, act as
