@@ -521,11 +521,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # of duplicates were cut for the slice. 8,334 to 8,364.
 # The operator's decision of 2026-11-06, "Raise to 20,476": `svrngs restart`,
 # asking launchd or systemd so it works on any running build, and its refusal
-# where neither keeps svrngs. 20,455 to 20,476.
+# where neither keeps svrngs. 20,455 to 20,476. The operator's decision of
+# 2026-11-06, "Raise to 20,498": `version::STEPS`, so a raise must say what it
+# does to older computers (+16); `Refusal::Older`; the token line a program is
+# told at a lend's origin, restored; check.sh's fast stage. 20,476 to 20,498.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 20476,
+    ".": 20498,
 
     "js": 8364,
 

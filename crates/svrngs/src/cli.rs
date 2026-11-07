@@ -631,6 +631,8 @@ pub enum Refusal {
     Busy(PathBuf),
     #[error("svrngs is not kept running at login here, so nothing can restart it: stop it where it runs (Ctrl-C), then start it with `svrngs`")]
     NotKept,
+    #[error("the svrngs running here is too old to do this: run `svrngs update`, then `svrngs restart`, then run this again")]
+    Older,
     #[error(transparent)]
     Key(#[from] KeyError),
     #[error("this computer cannot be reached from here yet (RUST_LOG=debug says why)")]
@@ -755,6 +757,7 @@ impl Refusal {
             | Refusal::Meet(_)
             | Refusal::RelayForNobody
             | Refusal::NotKept
+            | Refusal::Older
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -1030,12 +1033,12 @@ fn restart(root: &Path) -> Result<String, Refusal> {
     use std::os::unix::fs::MetadataExt as _;
     let uid = std::fs::metadata(root).map_or(0, |dir| dir.uid());
     let gui = format!("gui/{uid}/sh.svrnme.svrngs");
-    let (tool, how) = match cfg!(target_os = "macos") {
+    let (manager, how) = match cfg!(target_os = "macos") {
         true => ("launchctl", vec!["kickstart", "-k", &gui]),
         false => ("systemctl", vec!["--user", "restart", "svrngs.service"]),
     };
-    let done = std::process::Command::new(tool).args(how).output();
-    tracing::debug!(target: "cli", tool, ?done, "cli: restart — asked what keeps svrngs running");
+    let done = std::process::Command::new(manager).args(how).output();
+    tracing::debug!(target: "cli", manager, ?done, "cli: restart — asked what keeps svrngs running");
     let said = "svrngs is restarting. Your home page comes back in a moment.\n";
     (done
         .is_ok_and(|out| out.status.success())
@@ -1785,8 +1788,8 @@ fn folder_at_join(node: &Node, seed: &Seed) -> Said {
 /// svrngs is the one writer of this computer's acts, so it joins, and the
 /// command says and leaves, running nothing. A link whose whole text
 /// `Link::parse` here already proved is sent as it was given; the running
-/// svrngs that answers none of it is an older build, said as the lock's
-/// own refusal is, for the way on from there is the one it names.
+/// svrngs that answers none of it is an older build: [`Refusal::Older`],
+/// never the lock's own refusal, which would send someone to stop it.
 async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String, Refusal> {
     let whole = match &link.origin {
         Some(page) => https_link(page, &link.token),
@@ -1799,7 +1802,7 @@ async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String,
     let (_, text) = ask_running(root, JOINS_ROUTE, &asked).await?;
     let older = |why: String| {
         tracing::debug!(target: "cli", %why, text, "cli: the svrngs running here answered no join, as one of an older build does not");
-        Refusal::Busy(root.join("lock"))
+        Refusal::Older
     };
     let said: JoinOutcome = serde_json::from_str(&text).map_err(|e| older(e.to_string()))?;
     let folder = |seed: &Seed, dir: String, placed: Option<String>| Said::Folder {
@@ -1986,7 +1989,7 @@ async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
     let seed = group_named(root, &group)?;
     let asked = serde_json::json!({ "group": seed.id(), "device": device, "relays": relays });
     let (ok, text) = ask_running(root, LINKS_ROUTE, &asked).await?;
-    let older = || Refusal::Busy(root.join("lock"));
+    let older = || Refusal::Older;
     let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
     tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
     let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {

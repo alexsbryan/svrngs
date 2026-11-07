@@ -900,7 +900,7 @@ async fn restart_asks_what_keeps_svrngs_and_refuses_where_nothing_does() {
 /// A second browser has no session, so the page it is refused with says
 /// what that is and how to let it in: `svrngs open --print` shows an open
 /// and launches nothing, and that open lets a browser in as any open does.
-/// Watched failing: the page spoke of a token and `--print` was refused.
+/// Watched failing: `--print` was refused.
 #[tokio::test(flavor = "multi_thread")]
 async fn another_browser_is_told_how_to_come_in_and_can() {
     let site = site(None);
@@ -923,7 +923,7 @@ async fn another_browser_is_told_how_to_come_in_and_can() {
     let mut refused = String::new();
     sock.read_to_string(&mut refused).await.unwrap();
     assert!(refused.contains("svrngs open --print"), "{refused}");
-    assert!(!refused.contains("token"), "{refused}");
+    assert!(refused.contains("A program, not a browser"), "{refused}");
 
     let opened = home.path().join("stubs/opened");
     let before = std::fs::read_to_string(&opened).unwrap();
