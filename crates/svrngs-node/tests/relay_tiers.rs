@@ -9,6 +9,9 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+#[path = "common/cuttable.rs"]
+mod cuttable;
+use cuttable::cuttable;
 
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
@@ -123,33 +126,6 @@ async fn ada(build: &str, own: &str) -> (tempfile::TempDir, Node) {
         .keep_group(&seed, None, &at_own)
         .expect("Ada keeps house, met at her own relay");
     (dir, node)
-}
-
-/// A plain TCP way to the relay at `to`, and its switch: while cut, each
-/// connection through it is closed and each new one held unanswered, then
-/// carried once it is not, so iroh's dial waits rather than backs off.
-async fn cuttable(to: SocketAddr) -> (String, tokio::sync::watch::Sender<bool>) {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let (url, cut) = (
-        format!("http://{}/", listener.local_addr().unwrap()),
-        tokio::sync::watch::Sender::new(false),
-    );
-    let switch = cut.clone();
-    tokio::spawn(async move {
-        while let Ok((mut asked, _)) = listener.accept().await {
-            let mut cut = switch.subscribe();
-            tokio::spawn(async move {
-                let _ = cut.wait_for(|c| !c).await;
-                let mut relay = tokio::net::TcpStream::connect(to).await?;
-                tokio::select! {
-                    _ = tokio::io::copy_bidirectional(&mut asked, &mut relay) => {}
-                    _ = cut.wait_for(|c| *c) => {}
-                }
-                std::io::Result::Ok(())
-            });
-        }
-    });
-    (url, cut)
 }
 
 /// **A group meets at the build's fallback while it answers, and at its

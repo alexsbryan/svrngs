@@ -38,6 +38,9 @@ mod opens;
 // What acts as you, and its Stop (capability-what-acts).
 mod acts;
 mod grouped;
+// A way to a relay a test can cut, relay_tiers.rs's too.
+#[path = "../common/cuttable.rs"]
+mod cuttable;
 // A lent port opened on this computer while Play is on (give-play).
 mod keep_going;
 mod native_arrival;

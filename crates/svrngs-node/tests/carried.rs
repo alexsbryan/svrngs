@@ -1035,6 +1035,22 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
         .unwrap();
     let said: Value = carry(&own).await.unwrap().json().await.unwrap();
     assert_eq!(said["counted"], true, "{said}");
+    // Its answer lost, the phone carries the same bytes with its next entry
+    // (web/lend.js `carried`): the same one line, counted (KEEP_GOING_AT_HOME
+    // 19), read from the file, since the fold counts a line once anyway.
+    // Planted, watched failing: `ingest_all` taking every line it is handed,
+    // and the file held two.
+    let said: Value = carry(&own).await.unwrap().json().await.unwrap();
+    assert_eq!(said["counted"], true, "{said}");
+    let journal = ana
+        .rail()
+        .group_dir(&group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    let file = std::fs::read_to_string(journal).unwrap();
+    let sig = &own.kind.sig;
+    let held = file.lines().filter(|l| l.contains(sig.as_str())).count();
+    assert_eq!(held, 1, "one line on the record");
     let a = ana.rail().admission(&group).unwrap();
     let ops: Vec<_> = (svrngs_core::tests_support::wire_ops(&a).into_iter())
         .filter(|o| o.payload.is_some())
