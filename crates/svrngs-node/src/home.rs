@@ -245,11 +245,12 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
 
 /// `POST /connection`, the form of "Check the connection now": this
 /// computer's fallback asked now ([`crate::node::Host::check_now`]), a round
-/// fired, and this page again, its address saying what happened.
+/// fired, and This computer, where the button is, its address saying what
+/// happened.
 async fn connection(State(at): State<Asking>) -> Redirect {
     let said = at.host.check_now().await;
     at.folders.nudge.notify_one();
-    Redirect::to(&format!("/?{said}"))
+    Redirect::to(&format!("/?view=computer&{said}"))
 }
 
 /// What the person says of an app on a lend.

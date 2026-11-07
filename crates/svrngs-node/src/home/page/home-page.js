@@ -7,7 +7,7 @@
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { Group } from './group.js?v=__VERSION__';
 import { Folder } from './group-folder.js?v=__VERSION__';
-import { address, ArrivalLinks, Choices, exposes } from './grouped.js?v=__VERSION__';
+import { ArrivalLinks, Choices, exposes } from './grouped.js?v=__VERSION__';
 /** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Group as Held } from './group.js?v=__VERSION__' */
 /** @import { Flows, Message, Places, Said, State } from './home-reading.js?v=__VERSION__' */
@@ -15,11 +15,11 @@ import { address, ArrivalLinks, Choices, exposes } from './grouped.js?v=__VERSIO
 // The page's places after the groups, in the order they are drawn.
 const PLACES = ['acts', 'left', 'open', 'join', 'make', 'running', 'lent'];
 
-/** @type {Record<State['at']['said'], (q: Said, u: string) => string>} */
+/** @type {Record<State['at']['said'], (q: Said, u: string, grouped: boolean) => string>} */
 const SAID = {
   none: () => '',
-  made: (query, invite) =>
-    `You made ${query.made}. ${query.also ? `${query.also} ` : ''}${invite}${query.ui === 'b' ? 'Open its group to invite someone.' : 'Invite someone to it below.'}`,
+  made: (query, invite, grouped) =>
+    `You made ${query.made}. ${query.also ? `${query.also} ` : ''}${invite}${grouped ? 'Open its group to invite someone.' : 'Invite someone to it below.'}`,
   joined: (query, invite) =>
     `You’re in ${query.joined}${query.person ? `, as ${query.person}.` : ' already.'} ${invite}`,
   left: (query) =>
@@ -36,7 +36,7 @@ const SAID = {
 /** @param {State} state */
 export const saidOnce = (state) => {
   const unplaced = state.q.unplaced ? `Its folder could not be made: ${state.q.unplaced}. ` : '';
-  return SAID[state.at.said](state.q, unplaced);
+  return SAID[state.at.said](state.q, unplaced, state.grouped);
 };
 
 // For someone who cannot wait for this computer to find out on its own
@@ -95,11 +95,20 @@ function Arrival({ state }) {
   `;
 }
 
+// The page's address, drawn last, once no feature's file `holds` it while it
+// reads: a driver reads the whole page once it is there (web/tests/home.mjs
+// `all`, web/tests/acts.mjs `loaded`). A names `/` though it is `/?ui=a`.
+/** @param {{ s: State, held: boolean }} props */
+const Foot = ({ s: state, held }) => html`
+  <${Connection} />
+  ${!held && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}/</p>`}
+`;
+
 /** @param {HomeProps} props */
 export function Home({ store, flows, places }) {
   const state = useStore(store);
   const query = state.q;
-  const grouped = query.ui === 'b';
+  const { grouped } = state;
   const home = store.dispatch;
   /** @param {string} place */
   const Place = (place) => places[place] && html`<${places[place]} s=${state} home=${home} />`;
@@ -145,9 +154,6 @@ export function Home({ store, flows, places }) {
       ? html`<div data-home-place=${place} hidden=${!exposes(state, place)}>${drawn}</div>`
       : drawn;
   });
-  // The page's address is drawn last, once no feature's file `holds` it
-  // while it reads: a driver reads the whole page once it is there
-  // (web/tests/home.mjs `all`, web/tests/acts.mjs `loaded`).
   const held = Object.values(flows).some((flow) => flow.holds?.(state));
   return html`
     ${update}
@@ -156,7 +162,6 @@ export function Home({ store, flows, places }) {
     <${Choices} s=${state} />
     ${sections}
     ${after}
-    <${Connection} />
-    ${!held && html`<p class="address">Your home page, the same address each time svrngs starts: ${state.origin}${grouped ? address(query.view, query.group) : '/'}</p>`}
+    ${exposes(state, 'connection') && html`<${Foot} s=${state} held=${held} />`}
   `;
 }

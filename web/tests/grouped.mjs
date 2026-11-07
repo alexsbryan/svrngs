@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Native authenticated shell; synthetic three-group reads and recorded writes.
+// B is what a person sees; A, frozen at `/?ui=a`, is the live control baseline.
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const { context, close } = await launch(args.engine, { device: 'Desktop Chrome' });
+const { context, close } = await launch(args.engine, { device: 'Desktop Chrome', b: true });
 const logs = [];
 context.on('console', (message) => logs.push(message.text()));
 try {
@@ -178,10 +179,23 @@ try {
   await page.getByRole('navigation', { name: 'Your groups' }).waitFor({ timeout: 10_000 });
   assert.equal(await page.getByRole('link', { name: 'All your groups', exact: true }).count(), 1);
   const origin = new URL(page.url()).origin;
+  const nav = page.locator('.grouped-nav');
+  // Each place's drawn sign: A's foot, B's navigation.
   const visit = async (path) => {
     await page.goto(`${origin}/${path}`);
-    await page.locator('#home p.address').waitFor();
+    await (path.includes('ui=a') ? page.locator('#home p.address') : nav).waitFor();
   };
+  const links = () => nav.locator('a').allTextContents();
+  // The page's foot, and #intro, where B shows them and nowhere else.
+  const shows = async (name, { intro = false, foot = false }) => {
+    const button = page.getByRole('button', { name: 'Check the connection now', exact: true });
+    assert.equal(await page.locator('#intro').isVisible(), intro, `${name}: intro`);
+    assert.equal(await button.count(), foot ? 1 : 0, `${name}: the connection button`);
+    assert.equal(await page.locator('#home p.address').count(), foot ? 1 : 0, `${name}: address`);
+    assert.equal(await page.locator('#again').isVisible(), foot, `${name}: how it opens again`);
+    assert.equal(await page.locator('#terminal').isVisible(), foot, `${name}: the terminal`);
+  };
+  const TWO = ['All your groups', 'This computer'];
   const inventory = async (selector) => {
     await page.locator(selector).evaluateAll((roots) => {
       for (const root of roots)
@@ -205,10 +219,17 @@ try {
         .sort(),
     );
   };
-  await page.locator('#home p.address').waitFor();
   assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 0);
+  await page.locator('.group-list a').nth(2).waitFor();
   assert.equal(await page.locator('.group-list a').count(), 3);
-  assert.equal(await page.locator('#terminal').isVisible(), false);
+  assert.deepEqual(
+    (await links()).filter((name) => !/^(House|Welcome room) /.test(name)),
+    [...TWO, 'Join a group', 'Make a group', 'Open a link', 'Groups you left'],
+    'the overview offers these and no way back to A',
+  );
+  assert.equal(await page.locator('#home details:visible').count(), 0, 'nothing to unfold');
+  assert.equal(await page.getByText('Choose a group', { exact: false }).count(), 0);
+  await shows('overview', { intro: true });
   const overview = await page.screenshot({
     path: `${args.artifacts ?? 'target'}/grouped-overview.png`,
     fullPage: true,
@@ -216,47 +237,56 @@ try {
   assert.ok(overview.length > 0);
 
   // A supplies the control inventory independently of B's layout manifest.
-  await visit('');
+  await visit('?ui=a');
   const baselineGroups = [];
   for (const id of ids) baselineGroups.push(await inventory(`#group-${id}`));
   const baselineHome = {};
   for (const name of ['acts', 'open', 'join', 'make', 'running', 'lent'])
     baselineHome[name] = await inventory(`#${name}`);
-  assert.equal(await page.locator('.grouped-nav').count(), 0);
+  assert.equal(await nav.count(), 0);
   assert.equal(await page.locator('#terminal').isVisible(), true);
+  assert.equal(await page.locator('#again').isVisible(), true);
+  assert.equal(await page.locator('#intro').isVisible(), true);
+
+  // B has no foot to wait on: a place's controls are read until they are all drawn.
+  const drawn = async (selector, want, why) => {
+    let seen;
+    for (let tries = 0; tries < 100; tries++) {
+      seen = await inventory(selector);
+      if (JSON.stringify(seen) === JSON.stringify(want)) break;
+      await page.waitForTimeout(100);
+    }
+    assert.deepEqual(seen, want, why);
+  };
 
   for (const [i, id] of ids.entries()) {
-    await visit(`?ui=b&group=${id}`);
+    await visit(`?group=${id}`);
     const group = page.locator(`#group-${id}`);
     assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 1);
     assert.equal(await group.isVisible(), true);
-    assert.equal(await group.locator('table.index').isVisible(), true);
-    assert.equal(
-      await group.getByRole('button', { name: 'Open this folder', exact: true }).isVisible(),
-      true,
-    );
+    await group.locator('table.index').waitFor();
+    await group.getByRole('button', { name: 'Open this folder', exact: true }).waitFor();
+    assert.deepEqual(await links(), TWO, 'a group page has no Switch group, no tools row');
+    assert.equal(await group.locator('h2').first().isVisible(), true, 'its banner heads the page');
+    await shows('a group', {});
     assert.equal(await group.getByRole('button', { name: /^Leave / }).isVisible(), false);
-    assert.deepEqual(
-      await inventory(`#group-${id}`),
-      baselineGroups[i],
-      'all original group controls retained',
-    );
+    await drawn(`#group-${id}`, baselineGroups[i], 'all original group controls retained');
     await group.getByRole('button', { name: 'Open this folder', exact: true }).click();
     await group.getByText('Opened, in a window of its own.', { exact: false }).waitFor();
     const sent = await page.evaluate(() => JSON.parse(sessionStorage.getItem('grouped-writes')));
     assert.deepEqual(sent.at(-1), { path: '/folder', body: { group: id, dir: `/fixture/${id}` } });
     await page.reload();
-    await page.locator('#home p.address').waitFor();
+    await group.waitFor();
     assert.equal(await group.isVisible(), true, 'refresh retains selected stable id');
   }
 
   // Normal links, Back, and rereads retain the selected group.
-  await page.locator('.group-switcher summary').click();
+  await page.getByRole('link', { name: 'All your groups', exact: true }).click();
   await page.locator(`.group-list a[href$="group=${ids[0]}"]`).click();
-  await page.locator('#home p.address').waitFor();
+  await page.locator(`#group-${ids[0]}`).waitFor();
   await page.goBack();
-  await page.locator('#home p.address').waitFor();
-  assert.equal(await page.locator(`#group-${ids[2]}`).isVisible(), true);
+  await page.goBack();
+  await page.locator(`#group-${ids[2]}`).waitFor();
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   assert.equal(await page.locator(`#group-${ids[2]}`).isVisible(), true);
 
@@ -271,22 +301,24 @@ try {
       .isVisible(),
     true,
   );
-  assert.equal(await page.locator('#terminal').isVisible(), true);
+  await shows('This computer', { foot: true });
+  assert.equal(
+    await page.locator('#home p.address').textContent(),
+    `Your home page, the same address each time svrngs starts: ${origin}/`,
+  );
   for (const [view, names] of Object.entries({
     computer: ['acts', 'running', 'lent'],
     open: ['open'],
     join: ['join'],
     make: ['make'],
   })) {
-    await visit(`?ui=b&view=${view}`);
+    await visit(`?view=${view}`);
+    assert.deepEqual(await links(), TWO, `${view} has no Switch group, no tools row`);
     for (const name of names) {
-      assert.equal(await page.locator(`#${name}`).isVisible(), true);
-      assert.deepEqual(
-        await inventory(`#${name}`),
-        baselineHome[name],
-        `${name} controls retained`,
-      );
+      await page.locator(`#${name}`).waitFor();
+      await drawn(`#${name}`, baselineHome[name], `${name} controls retained`);
     }
+    await shows(view, { foot: view === 'computer' });
     assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 0);
   }
 
@@ -294,35 +326,66 @@ try {
   await page.locator('#make input[name="person"]').fill('Alex');
   await page.locator('#make button').click();
   await page.getByText('You made New group.', { exact: false }).waitFor();
-  assert.equal(await page.locator('.grouped-nav').isVisible(), true);
-  await visit('?ui=b&view=join');
+  assert.equal(await nav.isVisible(), true);
+  await visit('?view=join');
   await page.locator('#join input[name="link"]').fill('fixture');
   await page.locator('#join input[name="person"]').fill('Alex');
   await page.locator('#join button').click();
   await page.getByText('You’re in House', { exact: false }).waitFor();
-  assert.equal(await page.locator('.grouped-nav').isVisible(), true);
+  assert.equal(await nav.isVisible(), true);
 
-  await page.goto(`${origin}/?ui=b#group-${ids[2]}`);
+  // The button's answer lands on This computer, beside the button, said once.
+  await visit('?view=computer');
+  await page.getByRole('button', { name: 'Check the connection now', exact: true }).click();
+  await page.waitForURL(`${origin}/?view=computer`);
+  await page
+    .locator('#home > p')
+    .getByText(/^The public way (answers|did not answer)/)
+    .waitFor();
+  await page.locator('#home p.address').waitFor();
+  await shows('the answered button', { foot: true });
+  await page.reload();
+  await page.locator('#home p.address').waitFor();
+  assert.equal(await page.getByText(/^The public way/).count(), 0, 'said once');
+
+  // An old bookmark of B still opens B, and nothing draws a way to A.
+  await visit('?ui=b');
+  await page.locator('.group-list a').nth(2).waitFor();
+  assert.equal(await page.locator('a[href*="ui="]').count(), 0);
+  await visit('?ui=a');
+  assert.equal(await page.locator('a[href*="ui="]').count(), 0);
+  // A's said-once address stays A, and so does its write.
+  await visit('?ui=a&made=Old');
+  assert.equal(page.url(), `${origin}/?ui=a`);
+  await page.locator('#make input[name="name"]').fill('New group');
+  await page.locator('#make input[name="person"]').fill('Alex');
+  await page.locator('#make button').click();
+  await page.getByText('You made New group. Invite someone to it below.').waitFor();
+  assert.equal(await nav.count(), 0, 'a write on A stays on A');
+
+  await page.goto(`${origin}/#group-${ids[2]}`);
   await page.getByRole('heading', { name: 'Welcome to Welcome room', exact: true }).waitFor();
   assert.equal(await page.locator('#terminal').isVisible(), false);
+  assert.deepEqual(
+    await page.locator('#home a').evaluateAll((all) => all.map((a) => a.getAttribute('href'))),
+    [`/?group=${ids[2]}`, '/'],
+  );
   await page.getByRole('link', { name: 'Continue to Welcome room', exact: true }).click();
-  await page.locator('#home p.address').waitFor();
-  assert.equal(await page.locator(`#group-${ids[2]}`).isVisible(), true);
+  await page.locator(`#group-${ids[2]}`).waitFor();
 
   for (const view of ['constructor', '__proto__', 'not-a-view']) {
-    await visit(`?ui=b&view=${view}`);
+    await visit(`?view=${view}`);
     await page.getByText('This page is not available.', { exact: false }).waitFor();
     assert.equal(await page.locator('#lent').isVisible(), false);
   }
-  await visit('?ui=b&group=missing');
+  await visit('?group=missing');
   await page.getByText('This group is not available here.', { exact: false }).waitFor();
   assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 0);
 
   for (const mode of ['left', 'removed', 'lends-unread', 'empty']) {
     await page.evaluate((mode) => sessionStorage.setItem('grouped-mode', mode), mode);
-    await page.goto(`${origin}/?ui=b&group=${ids[2]}`);
+    await page.goto(`${origin}/?group=${ids[2]}`);
     await page.reload();
-    await page.locator('#home p.address').waitFor();
     const expected = {
       left: 'This group is not available here.',
       removed: 'You are no longer in Welcome room.',
@@ -331,6 +394,7 @@ try {
     };
     await page.getByText(expected[mode], { exact: false }).waitFor();
     if (mode === 'left') {
+      await page.getByRole('link', { name: 'All your groups', exact: true }).click();
       await page.getByRole('link', { name: 'Groups you left', exact: true }).click();
       await page.locator('#left').waitFor();
       assert.ok((await page.locator('#left').textContent()).includes('Welcome room'));
@@ -340,14 +404,15 @@ try {
   await page.reload();
   await page.getByText('This computer cannot read your groups:', { exact: false }).waitFor();
   await page.evaluate(() => sessionStorage.removeItem('grouped-mode'));
-  await visit('?ui=b');
+  await visit('');
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.screenshot({
     path: `${args.artifacts ?? 'target'}/grouped-narrow.png`,
     fullPage: true,
   });
-  await visit(`?ui=b&group=${ids[2]}`);
+  await visit(`?group=${ids[2]}`);
+  await page.locator(`#group-${ids[2]} table.index`).waitFor();
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
     false,

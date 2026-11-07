@@ -249,7 +249,7 @@ async fn the_home_page_says_what_was_done_once(engine: Engine) {
     }
     let said = |load: &str| seen[load]["said"].to_string();
     assert!(
-        said("first").contains("You made Trip. Invite someone to it below."),
+        said("first").contains("You made Trip. Open its group to invite someone."),
         "{seen:#}"
     );
     assert!(

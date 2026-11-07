@@ -1,6 +1,6 @@
 // The browser half of page-open (e)'s test (crates/svrngs/tests/
 // pages/open.rs): the home page opened at `args.ask` (`/?made=Trip`),
-// read once it is drawn, its address last; then loaded again, and read
+// read once it is drawn, as a person has it on B; then loaded again, and read
 // again. For each load: what `#home > p` says, every request it made in
 // order, and the address it shows; and the trace.
 //
@@ -10,7 +10,7 @@
 import { launch } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const { context, close } = await launch(args.engine);
+const { context, close } = await launch(args.engine, { b: true });
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
@@ -18,10 +18,9 @@ try {
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   let sent = [];
   page.on('request', (r) => sent.push(new URL(r.url()).pathname));
-  // Drawn: its address, the page's last part, and its group's lends
-  // answered (GROUP's trace; v1 traces nothing, so is read at its address).
+  // Drawn: its navigation, and its group's lends answered (GROUP's trace).
   const read = async () => {
-    await page.locator('#home p.address').waitFor({ timeout: 30_000 });
+    await page.locator('.grouped-nav').waitFor({ timeout: 30_000 });
     await page.waitForFunction(
       () =>
         !window.__lines ||

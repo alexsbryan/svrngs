@@ -141,8 +141,4 @@ export const JOIN = (home) => ({
  * @returns {Step<HOME.State, HOME.Effect>}
  */
 export const take = (state, message) =>
-  go(
-    state,
-    { said: 'joined' },
-    { q: state.q.ui === 'b' ? { ...state.q, ...message.q } : message.q },
-  );
+  go(state, { said: 'joined' }, { q: state.grouped ? { ...state.q, ...message.q } : message.q });

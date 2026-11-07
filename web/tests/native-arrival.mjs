@@ -7,7 +7,7 @@ import { createResolver } from '../../resolver/handler.mjs';
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
 const origin = pageAt(server);
-const { context, close } = await launch(args.engine, { device: 'Desktop Chrome' });
+const { context, close } = await launch(args.engine, { device: 'Desktop Chrome', b: true });
 const logs = [];
 context.on('console', (message) => logs.push(message.text()));
 try {
@@ -124,7 +124,7 @@ try {
   await section.locator('.folder').waitFor();
   assert.equal(await page.locator('#home section').count(), 1, 'refresh keeps the welcome');
   await page.getByRole('link', { name: 'All your groups', exact: true }).click();
-  await page.locator('#home p.address').waitFor();
+  await page.locator('.grouped-nav').waitFor();
   assert.equal(await page.locator('#home section[id^="group-"]').count(), 3);
   await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
   await page.waitForTimeout(6000);
@@ -134,7 +134,7 @@ try {
     'reread cannot reopen welcome',
   );
   await page.reload();
-  await page.locator('#home p.address').waitFor();
+  await page.locator('.grouped-nav').waitFor();
   assert.equal(
     await page.locator('#home section[id^="group-"]').count(),
     3,

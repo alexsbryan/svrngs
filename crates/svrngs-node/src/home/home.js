@@ -34,7 +34,7 @@ Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
     // reload, or the page opened again, says it no more.
     const said = store.get().at.said;
     const query = store.get().q;
-    const grouped = query.ui === 'b';
+    const { grouped } = store.get();
     document.body.classList.toggle('layout-b', grouped);
     trace(`HOME: layout ${grouped ? 'b' : 'a'}`);
     if (said !== 'none') {
@@ -42,7 +42,7 @@ Promise.all(FILES.map((file) => import(`./page/${file}.js?v=__VERSION__`)))
       history.replaceState(
         null,
         '',
-        grouped ? address(query.view, query.group) : location.pathname,
+        grouped ? address(query.view, query.group) : `${location.pathname}?ui=a`,
       );
     }
     // home/index.html holds #home, as it does where its files fail below.

@@ -603,14 +603,18 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   running an older svrngs, whose answer is not read field by field
   (`crates/svrngs-node/src/version.rs`).
 
-The default layout, **A**, keeps the groups on one page. The opt-in layout
-**B** (`svrngs open '/?ui=b'`) gives the same capabilities three places:
+The home page's layout, **B**, at `/`, gives the capabilities three places:
 an overview of groups, one group's workspace, and **This computer**. Each
 group is linked by its stable id, with maker and joining date still saying
 which namesake it is. Ordinary links, Back and refresh keep the selected
-destination; no browser preference or membership is changed. **Original
-layout** opens A. This is a local comparison surface, not a published default
-or a completed Xenia study (`home/page/grouped.js`).
+destination; no browser preference or membership is changed. The overview is
+the heading, the one privacy line, the group cards and one row of actions:
+Join a group, Make a group, Open a link and Groups you left. Every other page's
+navigation is only **All your groups** and **This computer**, and a group's own
+banner is its page's heading. The first layout, **A**, the groups on one page,
+is frozen at `/?ui=a`, linked from nowhere, and goes within a couple of weeks
+of 2026-11-06 (the operator). An old `/?ui=b` bookmark opens B
+(`home/page/home-reading.js` `first`, `home/page/grouped.js`).
 
 B's workspace leads with the existing app index and folder opener. **People**
 holds presence, visitors and removals; **Add an app** holds the existing
@@ -618,19 +622,22 @@ shelf; **Manage this group** holds every invitation and device-link control,
 WiFi sharing, program addresses, the presentation screen, handover and leave.
 **This computer** holds what acts as you, running-program discovery, and
 lending/sign-in/limit controls; terminal-only removal instructions are shown
-there. Joining, making a group, opening a link and groups left each have a
-navigation destination. App-opening consent and every command remain the
+there, with **Check the connection now**, whose answer lands on that page, and
+the page's address. Joining, making a group, opening a link and groups left
+each have a destination from the overview. App-opening consent and every command remain the
 same components and routes as A. Hidden groups and home places stay mounted,
 so the computer-wide access view still receives every group's reads.
 
 A group's available app versions get a factual review link beside that
 workspace; current versions keep running until the existing yes. Review
 opens **This computer** with the access and changes disclosures expanded,
-labelled by group. In B a focused native welcome offers **Continue to
-<group>** as well as **All your groups**, both retaining B; management and
+labelled by group. A focused native welcome offers **Continue to
+<group>** as well as **All your groups**; management and
 terminal instructions are absent from the welcome. The phone page is unchanged.
 The control-inventory and navigation proof is
-`web/tests/grouped.mjs`, run by `browser/grouped.rs`.
+`web/tests/grouped.mjs`, run by `browser/grouped.rs`, A its live baseline. A
+driver written for one long page is held on A by `web/tests/page.mjs`
+`longPage`; those are what A's removal still has to move.
 
 On either layout a person can:
 - open each thing lent ("Sam’s llama-server"), in a tab of its own, or
@@ -1436,7 +1443,7 @@ registers; one reached, once `LEFT_AFTER`, 3, asks in a row do, so a
 fallback that blinked is not left while iroh waits to dial it again.
 "Check the connection now" on the home page is for someone who cannot wait:
 `POST /connection` asks the fallback once, leaves it at once when it does not
-answer, fires a round and says on the page what happened, "moved" only once
+answer, fires a round and says on This computer what happened, "moved" only once
 this computer is registered at the group's own; an answer moves nobody. The
 door's line for each request let in names the relay that carried it, none when
 it came direct, and `tiers` says at debug why this computer is at it. One

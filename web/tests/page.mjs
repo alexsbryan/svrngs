@@ -295,6 +295,17 @@ async function opened(context) {
   return context;
 }
 
+// Layout A's seam, gone with A (home-reading.js `first`): each load of the
+// home page, a redirect or a reload too, at `/?ui=a` before its scripts read
+// the address, so a driver written for one long page stays on it.
+function longPage() {
+  const query = new URLSearchParams(location.search);
+  if (location.hostname !== 'svrngs.localhost' || location.pathname !== '/' || query.has('ui'))
+    return;
+  query.set('ui', 'a');
+  history.replaceState(null, '', `/?${query}${location.hash}`);
+}
+
 // A browser of `engine` and a context in it, as a phone or a desktop
 // opens the page, and how to close it. With `profile`, a directory, the
 // context keeps what the page stores there, so a browser closed and
@@ -306,8 +317,9 @@ async function opened(context) {
 // `unopened`: a context svrngs opened no host in, as a browser no open
 // reached (give-session). With `zone`, an IANA time zone, the browser's
 // clock reads in it, as a browser elsewhere does (Playwright's
-// `timezoneId`).
-export async function launch(engine, { profile, device: as, args, unopened, zone } = {}) {
+// `timezoneId`). With `b`, the home page as a person now has it; without
+// it, a driver that reads one long page: `longPage`, the sunset's worklist.
+export async function launch(engine, { profile, device: as, args, unopened, zone, b } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
     process.exit(1);
@@ -352,6 +364,7 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
   }
   made.context.pages().forEach(landing);
   made.context.on('page', landing);
+  if (!b) await made.context.addInitScript(longPage);
   if (!unopened) await opened(made.context);
   return made;
 }

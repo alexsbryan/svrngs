@@ -135,9 +135,11 @@ async fn a_link_to_nothing_lent_is_said_once(engine: Engine) {
 /// Ada's home page, with Sam's computer holding Trip, the `steps` taken,
 /// given Sam's link to Trip, each read once `until`'s words hold it, with
 /// what `held` holds (web/tests/pages/index.mjs): the reads, and whether
-/// the page loaded once.
+/// the page loaded once. With `view`, on layout B's page of that name, as
+/// a person has it; without, on A's one long page.
 async fn drawn(
     engine: Engine,
+    view: Option<&str>,
     read: &str,
     steps: impl FnOnce(&str) -> Value,
     held: Value,
@@ -149,7 +151,11 @@ async fn drawn(
     let (sam, _, trip) = computer(sam_dir.path(), &relay, 2, "Trip", "Sam").await;
     let made = (sam.host().link(&trip, false, None, None)).expect("Sam makes a link to Trip");
     let link = svrngs_node::link::client_link(&made.token);
-    let args = json!({ "home": home, "read": read, "steps": steps(&link), "held": held });
+    let mut args = json!({ "home": home, "read": read, "steps": steps(&link), "held": held });
+    if let Some(view) = view {
+        args["home"] = json!(format!("{home}?view={view}"));
+        args["b"] = json!(format!("#{view} input"));
+    }
     let seen = drive(engine, "pages/index.mjs", args, None).await;
     drop((ada, sam));
     seen
@@ -176,7 +182,14 @@ async fn a_group_joined_is_drawn_with_no_reload(engine: Engine) {
             ]
         ])
     };
-    let seen = drawn(engine, "#home > p, #home summary", steps, Value::Null).await;
+    let seen = drawn(
+        engine,
+        Some("join"),
+        "#home > p, #home summary",
+        steps,
+        Value::Null,
+    )
+    .await;
     let words = seen["after"][0]["words"].to_string();
     let wrong: Vec<&str> = [
         (!words.contains("You’re in Trip, as Dee."), "said joined"),
@@ -302,6 +315,7 @@ async fn a_group_made_is_drawn_with_no_reload(engine: Engine) {
     };
     let seen = drawn(
         engine,
+        Some("make"),
         "#home > p, #home section button",
         steps,
         Value::Null,
@@ -356,7 +370,7 @@ async fn a_group_made_or_joined_says_it_is_being_read_until_it_is(engine: Engine
         ])
     };
     let held = json!([["/v1/rail/people", "/v1/lends"], "…"]);
-    let seen = drawn(engine, "#home section[data-colour]", steps, held).await;
+    let seen = drawn(engine, None, "#home section[data-colour]", steps, held).await;
     eprintln!("the home page's run: {seen:#}");
     // The words of the section `head` starts, in the read `at`.
     let section = |at: &Value, head: &str| {

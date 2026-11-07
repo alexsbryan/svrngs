@@ -74,7 +74,7 @@ export function Acting({ s: homeState, home }) {
       at: { reaching: 'reading', doing: 'idle' },
       acted: {},
       said: {},
-      folds: homeState.q.ui === 'b' && homeState.q.review ? { acts: true, changes: true } : {},
+      folds: homeState.grouped && homeState.q.review ? { acts: true, changes: true } : {},
     }),
   );
   // HOME draws the section once the groups are read (home-page.js `Home`).
@@ -135,7 +135,7 @@ export function Acting({ s: homeState, home }) {
       open: state.folds?.changes,
       send: yes(group),
     });
-    const heading = homeState.q.ui === 'b' && html`<h4>${group.name ?? 'Your group'}</h4>`;
+    const heading = homeState.grouped && html`<h4>${group.name ?? 'Your group'}</h4>`;
     return [heading, ...carried, ...changes];
   };
   const reads = shown.filter((group) => /** @type {Told} */ (told(group)).lends).flatMap(readsIn);

@@ -291,7 +291,7 @@ async fn pressed_with_the_fallback_cut_this_computer_moves_now() {
     homed(&node, &way).await;
     cut.send_replace(true);
     let t = Instant::now();
-    assert_eq!(pressed(&node).await, "/?moved");
+    assert_eq!(pressed(&node).await, "/?view=computer&moved");
     homed(&node, &a).await;
     let took = t.elapsed();
     eprintln!("TIERS pressed, at its own: {took:?}");
@@ -347,7 +347,7 @@ async fn an_ask_under_way_does_not_undo_a_press() {
     let due = started + every * asks as u32 - lead;
     tokio::time::sleep_until(due.into()).await;
     cut.send_replace(true);
-    assert_eq!(pressed(&node).await, "/?moved");
+    assert_eq!(pressed(&node).await, "/?view=computer&moved");
     let until = due + lead + svrngs_node::tiers::REGISTERED_WITHIN + Duration::from_secs(4);
     while Instant::now() < until {
         let held = node.tier_held();
@@ -364,7 +364,7 @@ async fn pressed_with_the_fallback_answering_nothing_moves() {
     let ((_own, a), (_build, b)) = (relay(any).await, relay(any).await);
     let (_dir, node) = ada(&b, &a).await;
     homed(&node, &b).await;
-    assert_eq!(pressed(&node).await, "/?stayed");
+    assert_eq!(pressed(&node).await, "/?view=computer&stayed");
     tokio::time::sleep(Duration::from_secs(5)).await;
     homed(&node, &b).await;
     node.endpoint().close().await;

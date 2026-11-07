@@ -1,5 +1,6 @@
 // The browser half of page-index's tests (crates/svrngs/tests/
-// pages/index.rs): the home page at `home`, or the group's page (`site`,
+// pages/index.rs): the home page at `home`, on B and that selector's sign
+// that it is drawn given as `b`, or the group's page (`site`,
 // `key`, `token`, held as page.mjs `driving` holds it), and each of `steps`
 // in turn, [selector, value, line, until?]: a value `true` ticks the box,
 // another fills it, and null clicks it, then reads once the page has
@@ -141,13 +142,13 @@ async function run(page, ready, loaded, go) {
 }
 
 if (args.home) {
-  const { context, close } = await launch(args.engine);
+  const { context, close } = await launch(args.engine, { b: Boolean(args.b) });
   const logs = [];
   context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   try {
     const page = await context.newPage();
     page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-    const seen = await run(page, '#lent h2 ~ *', 0, () => page.goto(args.home));
+    const seen = await run(page, args.b ?? '#lent h2 ~ *', 0, () => page.goto(args.home));
     console.log(JSON.stringify({ ...seen, logs }));
   } catch (e) {
     console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);

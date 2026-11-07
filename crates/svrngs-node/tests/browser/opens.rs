@@ -220,8 +220,9 @@ async fn an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again(engin
     }
     assert_eq!(seen["error"], Value::Null, "{seen:#}");
     assert_eq!(
-        seen["opened"], home,
-        "the open lands on the home page: {seen:#}"
+        seen["opened"],
+        format!("{home}?ui=a"),
+        "the open lands on the home page, long as page.mjs `longPage` holds it: {seen:#}"
     );
     for (key, url, title) in [("lend", &at, "ada's pad"), ("lend_again", &at, "ada's pad")] {
         assert_eq!(
@@ -230,7 +231,11 @@ async fn an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again(engin
             "{key}: {seen:#}"
         );
     }
-    assert_eq!(seen["home_again"]["url"], home, "{seen:#}");
+    assert_eq!(
+        seen["home_again"]["url"],
+        format!("{home}?ui=a"),
+        "{seen:#}"
+    );
     assert_ne!(
         seen["home_again"]["title"], "Open svrngs from your computer",
         "a bookmark opens the home page again: {seen:#}"

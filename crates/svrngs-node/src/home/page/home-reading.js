@@ -36,6 +36,7 @@ import { get } from './routes.js?v=__VERSION__';
  * @property {Record<string, number>} [asked]
  * @property {boolean} ask whether the address is /ask
  * @property {Said} q
+ * @property {boolean} grouped layout B, `first` decides
  * @property {string} origin
  * @property {Held[]} [groups]
  * @property {string} [key]
@@ -156,6 +157,9 @@ export const first = ({ pathname, search, origin, hash }) => {
     asked: { groups: 1 },
     ask: pathname === '/ask',
     q: query,
+    // The layout's one decider: `/` is B. A, `/?ui=a`, is frozen, nothing links
+    // to it, and it goes within a couple of weeks of 2026-11-06.
+    grouped: query.ui !== 'a',
     origin,
   };
 };
