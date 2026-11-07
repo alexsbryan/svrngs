@@ -1,0 +1,5 @@
+#!/bin/sh
+# The consumer owns this world; Xenia receives only its scene contract.
+set -eu
+cd "$(dirname "$0")/../../.."
+exec cargo test --quiet -p svrngs --test xenia -- neighbourhood

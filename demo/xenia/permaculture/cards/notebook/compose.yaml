@@ -1,0 +1,44 @@
+# A rehearsal fixture, not a shipped community app. Its useful state lives
+# only in /data; Give must carry it, rather than a page faking a handover.
+services:
+  web:
+    image: docker.io/library/busybox:1.37.0@sha256:bdf57e528e45e4433820e045b29b4597825a1c9e38353532d90a01445013f82e
+    command:
+      - sh
+      - -c
+      - |
+        mkdir -p /web/cgi-bin
+        cat > /web/index.html <<'HTML'
+        <!doctype html><html lang="en"><meta charset="utf-8"><meta http-equiv="refresh" content="0;url=/cgi-bin/book"><title>Neighbourhood notebook</title><a href="/cgi-bin/book">Open the notebook</a></html>
+        HTML
+        cat > /web/cgi-bin/book <<'CGI'
+        #!/bin/sh
+        if [ "$REQUEST_METHOD" = POST ]; then
+          body=$(dd bs=1 count="$CONTENT_LENGTH" 2>/dev/null)
+          note=$(httpd -d "$(printf '%s' "${body#note=}" | tr '+' ' ')")
+          if [ -n "$note" ]; then
+            printf '%s\n' "$note" | sed 's/\&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g; s/^/<p>/; s/$/<\/p>/' >> /data/notes.html
+          fi
+          printf 'Status: 303 See Other\r\nLocation: /cgi-bin/book\r\n\r\n'
+          exit
+        fi
+        printf 'Content-Type: text/html; charset=utf-8\r\nCache-Control: no-store\r\n\r\n'
+        printf '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Neighbourhood notebook</title><h1>Neighbourhood notebook</h1><p>Seed swap: Saturday at 11, outside number 14. Bring spare envelopes.</p><h2>What neighbours know</h2>'
+        if [ -f /data/notes.html ]; then cat /data/notes.html; fi
+        printf '<form method="post" action="/cgi-bin/book"><label>Your note <textarea name="note" maxlength="500" required></textarea></label><button>Add your note</button></form><p>A small notebook made for this rehearsal.</p></html>'
+        CGI
+        chmod +x /web/cgi-bin/book
+        exec httpd -f -p 8080 -h /web
+    volumes: ["data:/data"]
+    ports: ["8080:8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://web:8080/cgi-bin/book"]
+      interval: 1s
+      retries: 10
+volumes:
+  data: {}
+x-svrngs:
+  title: Neighbourhood notebook
+  about: Seed-swap plans and useful notes from your neighbours.
+  door: { port: 8080, protocol: http }
+  state: [data]

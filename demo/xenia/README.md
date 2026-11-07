@@ -42,6 +42,11 @@ keeps the world up until xenia closes its stdin.
 - **`newcomer`**: June, a bit afraid of computers, joins the house from
   her computer's home page by the link Kim sent, with no terminal.
 
+The separate [`permaculture/`](permaculture/README.md) set keeps one world
+through five parts: use a neighbourhood notebook, retain a neighbour's
+knowledge, decline keeping it, consent to a handover, then try to end the
+arrangement. It runs separately so the original first-visit set stays small.
+
 Each world is a function in `crates/svrngs/tests/xenia/main.rs`, built on
 the demo scenes' `crates/svrngs/tests/scenes/people.rs`: real svrngs
 computers of this build, each with a home of its own, the house met at a

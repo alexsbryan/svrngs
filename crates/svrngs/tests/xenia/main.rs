@@ -33,6 +33,16 @@ mod common;
 #[allow(dead_code)]
 mod people;
 
+// Give's scripted scenes register with libtest; here only their world-building
+// helpers are reused. Xenia's strangers, not those scripts, do the acting.
+macro_rules! scene {
+    ($($registration:tt)*) => {};
+}
+#[path = "../scenes/give.rs"]
+#[allow(dead_code)]
+mod give;
+mod neighbourhood;
+
 use serde_json::{json, Value};
 use svrngs_core::link::KEPT_WORDS;
 
@@ -469,17 +479,19 @@ async fn newcomer_world() {
 fn main() {
     let named = std::env::args().nth(1).unwrap_or_default();
     let scene = named.rsplit('/').next().unwrap_or_default().to_string();
-    let world: std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> =
-        match scene.as_str() {
-            "together" => Box::pin(together_world()),
-            "kim" => Box::pin(kim_world()),
-            "ana" => Box::pin(ana_world()),
-            "newcomer" => Box::pin(newcomer_world()),
-            _ => {
-                eprintln!("xenia: no world is called {named:?}: together, kim, ana or newcomer");
-                std::process::exit(2)
-            }
-        };
+    let world: std::pin::Pin<Box<dyn std::future::Future<Output = ()> + Send>> = match scene
+        .as_str()
+    {
+        "together" => Box::pin(together_world()),
+        "kim" => Box::pin(kim_world()),
+        "ana" => Box::pin(ana_world()),
+        "newcomer" => Box::pin(newcomer_world()),
+        "neighbourhood" => Box::pin(neighbourhood::world()),
+        _ => {
+            eprintln!("xenia: no world is called {named:?}: together, kim, ana, newcomer or neighbourhood");
+            std::process::exit(2)
+        }
+    };
     let place = format!("xenia-{scene}-chromium");
     let run = tokio::runtime::Runtime::new().expect("a runtime");
     run.block_on(people::judged(place, world));
