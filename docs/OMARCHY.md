@@ -371,16 +371,8 @@ an economizing pass before a raise is asked. Nothing here asks for one.
 
 ## 9. What exists now
 
-Nothing below is on `main`, and nothing is pushed.
-
-| Item | Where | State |
-|---|---|---|
-| A, D, B | Branch `omarchy-lend-fixes` at `7967e94c`, worktree `~/dev/svrngs-lanes/omarchy-lend-fixes` | Three commits, tested as in section 3, not rebased on `7232aadd`, commit bodies lack their evidence |
-| C | Branch `omarchy-rest` at `f791bd72`, worktree `~/dev/svrngs-lanes/omarchy-rest` | One commit, on top of the above, test never run |
-| E, F | Nowhere | No code written |
-| Plugin | `~/omarchy-lab/plugin` on the Fedora box | Prototype, no confirm step, unpublished |
-| Test VMs | `~/omarchy-lab` on the Fedora box | Disposable |
-
-If A and B are approved, B and A can be taken from the branch without D. If this
-review rejects the work, the branches can simply be deleted. No shipped behavior
-depends on any of it.
+A, B, C and D are on `main` and deployed (`90629602`, `334f30ef`, `4eca3fef`,
+`f867f78a`). E1 is in `docs/guide/tv.md` and troubleshooting. E2 waits on question 4.
+F is held with no code written. E3, E4 and G belong to the layer, outside this
+repository; the plugin prototype is `~/omarchy-lab/plugin` on the Fedora box,
+unpublished and with no confirm step. The earlier branches and worktrees are gone.

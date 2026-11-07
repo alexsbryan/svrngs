@@ -173,6 +173,9 @@ short name.
   It opens again when your computer is back on that WiFi.
 - ***"Closed for now: … another program on this computer holds the port it needs."***
   Stop that program and it opens again.
+- **The address is open, but a TV or phone on your WiFi can't reach it.**
+  This computer's firewall may be stopping it. svrngs never changes a
+  firewall: allow the port after the colon, for your WiFi, in its settings.
 - **`svrngs: nobody in your groups lends jellyfin to this computer now`**
   after `svrngs room`. Check the name your home page shows; its lender may
   have stopped lending it.

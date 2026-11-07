@@ -29,6 +29,7 @@ What to know:
 - **It's you.** Anything on this WiFi that opens it opens it as you, so share the WiFi with people you'd lend your name to. A friend's lend counts it as one person: you.
 - **This WiFi only.** It stays open whenever svrngs runs on this computer and the computer is on that WiFi, after a restart too. On another WiFi it's closed: *"Closed for now: this computer is on another WiFi than the one where you turned it on. It opens again when you are there again."*
 - **Until you close it.** Press **Close it to this WiFi** on the same line. There's no terminal command for closing.
+- **A firewall can stop it.** svrngs never changes this computer's firewall. If it blocks the address, allow that port for your WiFi in the firewall's own settings.
 - **It's listed.** On your home page, open **What acts as you**: it shows it under **Open to this WiFi**, with its button to close it.
 
 ## Put your group on a screen
