@@ -23,7 +23,7 @@ pub(super) async fn carried_at(at: &Node, app: &str) -> String {
 }
 
 /// [`carried_at`], the app carried by `group`.
-async fn carried_in(at: &Node, app: &str, group: &str) -> String {
+pub(super) async fn carried_in(at: &Node, app: &str, group: &str) -> String {
     let url = format!("http://{}/v1/lends?namespace={group}", at.api_addr());
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     for _ in 0..60 {
