@@ -166,6 +166,7 @@ case "$1" in
     touch "$HOME/stubs/leaving"
     (while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done; sleep 0.3; rm -f "$HOME/stubs/leaving") >/dev/null 2>&1 & ;;
   print) [ -e "$HOME/stubs/leaving" ] ;;
+  kickstart) [ -f "$HOME/stubs/pid" ] ;;
 esac
 "#;
     let open = "#!/bin/sh\necho \"$*\" >>\"$HOME/stubs/opened\"\n";
@@ -181,6 +182,7 @@ case "$*" in
     SVRNGS_DIR="$dir" $run >>"$dir/svrngs.log" 2>&1 &
     echo $! >"$HOME/stubs/pid" ;;
   "--user is-active --quiet svrngs.service") [ -f "$HOME/stubs/pid" ] ;;
+  "--user restart svrngs.service") [ -f "$HOME/stubs/pid" ] ;;
   "--user stop svrngs.service")
     pid=$(cat "$HOME/stubs/pid"); rm "$HOME/stubs/pid"; kill "$pid"
     while kill -0 "$pid" 2>/dev/null; do sleep 0.1; done ;;
@@ -856,6 +858,43 @@ async fn redeemed(url: &str) -> (u16, bool) {
     sock.read_to_string(&mut reply).await.unwrap();
     let set = reply.contains("\"key\":");
     (reply[9..12].parse().unwrap(), set)
+}
+
+/// `svrngs restart` asks what keeps svrngs running, and says so plainly when
+/// nothing does. Watched failing: `restart` was an unknown command.
+#[tokio::test(flavor = "multi_thread")]
+async fn restart_asks_what_keeps_svrngs_and_refuses_where_nothing_does() {
+    let site = site(None);
+    let port = host(site.path().to_path_buf()).await;
+    let home = tempfile::tempdir().unwrap();
+    let _started = Started(home.path().to_path_buf());
+    let page = format!("http://127.0.0.1:{port}/");
+    assert!(paste(port, &page, home.path(), None).await.status.success());
+    let restart = || {
+        tokio::process::Command::new(home.path().join(".local/bin/svrngs"))
+            .arg("restart")
+            .env_clear()
+            .env("HOME", home.path())
+            .env("PATH", home.path().join("stubs"))
+            .output()
+    };
+    let kept = restart().await.unwrap();
+    assert!(kept.status.success(), "{kept:?}");
+    let said = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+    let asked = match cfg!(target_os = "macos") {
+        true => "launchctl kickstart -k gui/",
+        false => "systemctl --user restart svrngs.service",
+    };
+    assert!(said.contains(asked), "{said}");
+
+    let pid = std::fs::read_to_string(home.path().join("stubs/pid")).unwrap();
+    let stopped = std::process::Command::new("kill").arg(pid.trim()).status();
+    assert!(stopped.unwrap().success());
+    std::fs::remove_file(home.path().join("stubs/pid")).unwrap();
+    let not = restart().await.unwrap();
+    assert!(!not.status.success(), "{not:?}");
+    let why = String::from_utf8_lossy(&not.stderr);
+    assert!(why.contains("not kept running at login"), "{why}");
 }
 
 /// A second browser has no session, so the page it is refused with says

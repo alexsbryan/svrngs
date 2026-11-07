@@ -44,6 +44,7 @@ fn each_flag_taking_a_value_wants_one_and_no_other_argument_takes_one() {
 #[test]
 fn update_is_a_verb_of_its_own_and_says_which_verdict_it_reached() {
     assert_eq!(cli::parse(argv(&["update"])), Ok(cli::Verb::Update));
+    assert_eq!(cli::parse(argv(&["restart"])), Ok(cli::Verb::Restart));
     use svrngs_node::update::UpdateError;
     assert_eq!(cli::Refusal::Update(UpdateError::NoPage).exit_code(), 3);
     assert_eq!(cli::Refusal::Update(UpdateError::Mismatch).exit_code(), 1);

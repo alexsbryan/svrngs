@@ -205,7 +205,10 @@ svrngs — keep what your group shares on your own computers.
 
   svrngs update
       Get the newest svrngs from the page this computer was installed
-      from, if this computer's is not it. Restart svrngs to use it.
+      from, if this computer's is not it. `svrngs restart` then uses it.
+
+  svrngs restart
+      Stop svrngs and start it again, as a new login would.
 
   svrngs share --folder <dir> --group <group>
       Keep <dir> the same on every computer in <group> that shares a folder
@@ -349,6 +352,8 @@ pub enum Verb {
     Open(Option<String>, bool),
     /// `update`: the newest svrngs from the page this computer came from.
     Update,
+    /// `restart`: svrngs stopped and started by what keeps it running.
+    Restart,
     Relay(Relay),
     Help,
 }
@@ -606,6 +611,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "open" => Ok(Verb::Open(positional, print)),
         "update" => Ok(Verb::Update),
+        "restart" => Ok(Verb::Restart),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -623,6 +629,8 @@ pub enum Refusal {
         "svrngs is already running on this computer ({0} is held); stop it, then run this again"
     )]
     Busy(PathBuf),
+    #[error("svrngs is not kept running at login here, so nothing can restart it: stop it where it runs (Ctrl-C), then start it with `svrngs`")]
+    NotKept,
     #[error(transparent)]
     Key(#[from] KeyError),
     #[error("this computer cannot be reached from here yet (RUST_LOG=debug says why)")]
@@ -746,6 +754,7 @@ impl Refusal {
             | Refusal::Removal(_)
             | Refusal::Meet(_)
             | Refusal::RelayForNobody
+            | Refusal::NotKept
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -843,10 +852,11 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         Verb::Open(at, print) => open(&root, at.as_deref(), print).await?,
         Verb::Update => match svrngs_node::update::apply(&root).await {
             Ok(svrngs_node::update::Outcome::Current) => "This computer has the latest svrngs.\n",
-            Ok(svrngs_node::update::Outcome::Updated) => "Updated svrngs. Restart it to use it.\n",
+            Ok(svrngs_node::update::Outcome::Updated) => "Updated. `svrngs restart` uses it.\n",
             Err(e) => return Err(Refusal::Update(e)),
         }
         .to_string(),
+        Verb::Restart => restart(&root)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
         Verb::Remove {
             kind,
@@ -1011,6 +1021,26 @@ async fn open(root: &Path, at: Option<&str>, print: bool) -> Result<String, Refu
         Some(_) => "Your home page is open in your browser.\n".into(),
         None => format!("Open this in your browser within a minute: {at}\n"),
     })
+}
+
+/// `svrngs restart`: launchd or systemd, whichever keeps svrngs at login,
+/// stops it as it stops it at logout and starts it, so this works on any
+/// build that is running. One started by hand is kept by neither: refused.
+fn restart(root: &Path) -> Result<String, Refusal> {
+    use std::os::unix::fs::MetadataExt as _;
+    let uid = std::fs::metadata(root).map_or(0, |dir| dir.uid());
+    let gui = format!("gui/{uid}/sh.svrnme.svrngs");
+    let (tool, how) = match cfg!(target_os = "macos") {
+        true => ("launchctl", vec!["kickstart", "-k", &gui]),
+        false => ("systemctl", vec!["--user", "restart", "svrngs.service"]),
+    };
+    let done = std::process::Command::new(tool).args(how).output();
+    tracing::debug!(target: "cli", tool, ?done, "cli: restart — asked what keeps svrngs running");
+    let said = "svrngs is restarting. Your home page comes back in a moment.\n";
+    (done
+        .is_ok_and(|out| out.status.success())
+        .then(|| said.to_string()))
+    .ok_or(Refusal::NotKept)
 }
 
 /// POST `body` to `route` of svrngs running here, at the API it wrote,
@@ -1692,7 +1722,8 @@ async fn serve(
         | Verb::Remove { .. }
         | Verb::Leave(_)
         | Verb::Open(..)
-        | Verb::Update => {
+        | Verb::Update
+        | Verb::Restart => {
             unreachable!("answered in `run`")
         }
     };

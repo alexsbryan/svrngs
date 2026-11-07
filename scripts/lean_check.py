@@ -519,10 +519,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # The phone's readiness check and its home-network words (KEEP_GOING_AT_HOME
 # 29, 21): +30 js, the operator's decision of 2026-11-06, after about 95 lines
 # of duplicates were cut for the slice. 8,334 to 8,364.
+# The operator's decision of 2026-11-06, "Raise to 20,476": `svrngs restart`,
+# asking launchd or systemd so it works on any running build, and its refusal
+# where neither keeps svrngs. 20,455 to 20,476.
 BUDGET = {
     "crates/svrngs-core": 3494,
 
-    ".": 20455,
+    ".": 20476,
 
     "js": 8364,
 
