@@ -566,6 +566,9 @@ svrngs holds it, the command succeeds with the home address read from the
 kept API port and says to run `svrngs open`, without launching a browser.
 A missing or unreadable address is refused rather than guessed. The address
 alone grants no session; `open` remains the authenticated way into the page.
+A browser with none is refused with what that is and how to let it in:
+`svrngs open --print` shows an open and launches nothing, for a browser that
+is not the default one. An open is single-use and each browser keeps its own.
 
 **The home page**, `http://svrngs.localhost:<port>/`, at the same address each
 time svrngs starts (§7): the person's own page on their computer, written for

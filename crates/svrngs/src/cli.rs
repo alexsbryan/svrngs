@@ -197,10 +197,11 @@ svrngs — keep what your group shares on your own computers.
       Stop lending <name>; with --group, stop lending it to that group
       only, keeping the rest.
 
-  svrngs open [/<local destination>]
+  svrngs open [/<local destination>] [--print]
       Open your home page in your browser, as svrngs in your Applications
       (on Linux, your applications menu) does. An optional local destination
-      focuses that part of the home page.
+      focuses that part of the home page. --print shows an address to open
+      in another browser within a minute, once, and opens nothing.
 
   svrngs update
       Get the newest svrngs from the page this computer was installed
@@ -343,8 +344,9 @@ pub enum Verb {
     /// `leave` (groups-leave), asked of svrngs running here: the group
     /// as typed.
     Leave(String),
-    /// `open` (give-session): the home page, in this computer's browser.
-    Open(Option<String>),
+    /// `open` (give-session): the home page, in this computer's browser,
+    /// or with `--print` shown for another.
+    Open(Option<String>, bool),
     /// `update`: the newest svrngs from the page this computer came from.
     Update,
     Relay(Relay),
@@ -383,6 +385,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut carries = None;
     let mut run = true;
     let mut device = false;
+    let mut print = false;
     let (mut open, mut staging, mut here) = (false, false, None);
     let mut joined = None;
     let mut more = Vec::new();
@@ -448,6 +451,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--joined" if valued => joined = Some(joined_of(&raw)?),
             "--no-run" if verb == "join" => run = false,
             "--device" if verb == "link" => device = true,
+            "--print" if verb == "open" => print = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
             "--udp" | "--tcp" if verb == "share" => {
                 let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
@@ -600,7 +604,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             };
             Ok(Verb::Relay(Relay { at, open }))
         }
-        "open" => Ok(Verb::Open(positional)),
+        "open" => Ok(Verb::Open(positional, print)),
         "update" => Ok(Verb::Update),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
@@ -836,7 +840,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         },
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
-        Verb::Open(at) => open(&root, at.as_deref()).await?,
+        Verb::Open(at, print) => open(&root, at.as_deref(), print).await?,
         Verb::Update => match svrngs_node::update::apply(&root).await {
             Ok(svrngs_node::update::Outcome::Current) => "This computer has the latest svrngs.\n",
             Ok(svrngs_node::update::Outcome::Updated) => "Updated svrngs. Restart it to use it.\n",
@@ -992,13 +996,16 @@ fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<S
 
 /// `svrngs open`: an address with a code that opens the home page once,
 /// as its session there (give-session), asked of svrngs running here and
-/// opened in this computer's browser, else said to open there.
-async fn open(root: &Path, at: Option<&str>) -> Result<String, Refusal> {
+/// opened in this computer's browser; shown instead with `print`, for
+/// another browser, or where none opens.
+async fn open(root: &Path, at: Option<&str>, print: bool) -> Result<String, Refusal> {
     let (ok, text) = ask_running(root, "/v1/open", &serde_json::json!({ "at": at })).await?;
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
     let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
-    let opener = svrngs_node::home::opened(at.as_ref());
+    let opener = (!print)
+        .then(|| svrngs_node::home::opened(at.as_ref()))
+        .flatten();
     tracing::debug!(target: "cli", ?opener, "cli: open — the home page, with a code for its session, given to the browser");
     Ok(match opener {
         Some(_) => "Your home page is open in your browser.\n".into(),
@@ -1684,7 +1691,7 @@ async fn serve(
         | Verb::Folder { .. }
         | Verb::Remove { .. }
         | Verb::Leave(_)
-        | Verb::Open(_)
+        | Verb::Open(..)
         | Verb::Update => {
             unreachable!("answered in `run`")
         }
