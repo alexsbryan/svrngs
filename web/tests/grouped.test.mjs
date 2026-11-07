@@ -38,11 +38,12 @@ test('B destinations retain stable ids and refuse unknown views without exposing
   assert.equal(exposes({ grouped: true, q: { group: 'a', view: 'computer' } }, 'acts'), false);
 });
 
-test('making and joining preserve B and its destination through the reread', () => {
+test('making and joining land where the new group is, leaving the form behind', () => {
   const state = { at: { said: 'none' }, grouped: true, q: { view: 'join' } };
   for (const flow of [join, make]) {
     const next = flow.take(state, { q: { joined: 'House' } }).state;
-    assert.deepEqual(next.q, { view: 'join', joined: 'House' });
+    assert.deepEqual(next.q, { joined: 'House' });
+    assert.equal(next.grouped, true, 'the layout is held apart from the address');
     assert.deepEqual(
       flow.take({ ...state, grouped: false, q: { joined: 'Old' } }, { q: { made: 'New' } }).state.q,
       { made: 'New' },
