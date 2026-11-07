@@ -9,6 +9,7 @@
 // in state. It draws nothing: #door draws its tab (group-door.js).
 import { ask, go, late, no } from '../ui/machine.js?v=__VERSION__';
 import { alias, apart, called, once, titled, whoseComputer } from '../question.js?v=__VERSION__';
+import { named as saidOf } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { actor, hold, lends, trace, wasm } from './dial.js?v=__VERSION__';
 import { sending } from './page.js?v=__VERSION__';
@@ -471,9 +472,9 @@ export const response = {
     const stale = state.stale
       ? [`What ${state.group.name} lends cannot be read again just now: ${state.stale}`]
       : [];
-    const ready = state.unready ?? [];
-    if (state.lent.length > 0 || missing.length > 0) return [...stale, ...missing, ...ready];
-    return [...stale, `Nobody in ${state.group.name} lends anything yet.`, ...ready];
+    const none = state.lent.length + missing.length === 0;
+    const nobody = none ? [`Nobody in ${state.group.name} lends anything yet.`] : [];
+    return [...stale, ...missing, ...nobody, ...(state.unready ?? [])];
   },
 };
 
@@ -529,20 +530,19 @@ const locking = (id, steal) =>
 // How many of the group's relays a phone keeps, so a computer that lies
 // cannot slow every later dial with a flood of them (KEEP_GOING_AT_HOME 6).
 export const MEETS_KEPT = 8;
-// The relays a reply names that this page takes, at most MEETS_KEPT; none
-// when it names no list, as an older computer's does, so what is kept stands.
+// The relays a reply names that this page takes, each once, at most
+// MEETS_KEPT; none when it names no list, as an older computer's does, or
+// none it takes, as one yet to read the group's record, so what is kept stands.
+// No command leaves a group with no relay, so an empty list never means one.
 /**
  * @param {typeof Wasm} core
  * @param {unknown} said
  */
 export const meeting = (core, said) => {
-  if (!Array.isArray(said)) {
-    trace('PAGE: the reply names no relays, so those kept stand');
-    return undefined;
-  }
-  const taken = said.filter((one) => typeof one === 'string' && core.relay_taken(one));
-  trace(`PAGE: kept ${Math.min(taken.length, MEETS_KEPT)} of ${said.length} relay(s) named`);
-  return taken.slice(0, MEETS_KEPT);
+  const named = Array.isArray(said) ? [...new Set(said)] : [];
+  const taken = named.filter((one) => typeof one === 'string' && core.relay_taken(one));
+  trace(`PAGE: kept ${Math.min(taken.length, MEETS_KEPT)} of ${named.length} relay(s) named`);
+  return taken.length > 0 ? taken.slice(0, MEETS_KEPT) : undefined;
 };
 // Each lend with its label, and whose lender `apart` says; and `me`, the
 // key this page holds as the record spells it, public, which the record's
@@ -581,6 +581,9 @@ async function readLends(group, serial) {
     why: `${res.status}${refused}, at version ${body.version}, ${lent.length} lent`,
   };
 }
+// A readiness check that could not run, said rather than failing a good read.
+/** @param {unknown} error */
+const unchecked = (error) => [`This phone could not check what it has saved: ${String(error)}`];
 /** @type {Io<Effect, PageMessage>} */
 export const io = {
   look: async ({ fragment }) => {
@@ -625,6 +628,8 @@ export const io = {
     })),
   keep: async ({ group, lent }) => {
     await store.opened(group);
-    return { type: 'kept', unready: await store.unready(group, lent) };
+    // Only a group with a relay of its own goes on when the internet goes.
+    if ((group.meets?.length ?? 0) === 0) return { type: 'kept' };
+    return { type: 'kept', unready: await store.unready(lent, saidOf).catch(unchecked) };
   },
 };

@@ -277,7 +277,10 @@ test('the relays a reply names are kept, capped and checked, and a later reply d
     ['https://home.example/'],
     'each is checked, what is not a relay with them',
   );
-  assert.deepEqual(meeting(core, []), [], 'a reply naming none drops all');
+  assert.equal(meeting(core, []), undefined, 'a reply naming none leaves what is kept');
+  assert.equal(meeting(core, ['http://plain.example/']), undefined, 'as does one it refuses');
+  const twice = ['https://home.example/', 'https://home.example/', 'https://home.example/'];
+  assert.deepEqual(meeting(core, twice), ['https://home.example/'], 'a relay named again is one');
   assert.equal(meeting(core, undefined), undefined, 'an older computer says nothing of them');
   assert.equal(meeting(core, null), undefined, 'nor one whose record cannot be read');
   assert.equal(meeting(core, 'https://home.example/'), undefined);

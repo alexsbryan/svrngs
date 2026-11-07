@@ -315,27 +315,27 @@ export const keepSaved = (label) =>
 const LOCAL =
   'This browser asks before it reaches devices on your home network. Allow it, so this phone can find your group when the internet is out.';
 
-// What keeps this phone from going on with `group` at home: none when it is
-// ready (KEEP_GOING_AT_HOME 29). Each is what a check found, never that
-// something was once opened. An app's mark is set by its signer when that
-// origin held this build's every piece, so a new build asks it again.
+// What keeps this phone from going on at home with the apps `lent`: none when
+// it is ready (KEEP_GOING_AT_HOME 29). The group itself is `opened`'s, which
+// refuses first if it cannot be kept. Each is what a check found, never that
+// something was once opened: an app's mark is its signer's, set when that
+// origin held all of the signer's own build, so a new build asks it again.
 /**
- * @param {{ id: string, name: string }} group
- * @param {{ label: string, name: string }[]} lent
+ * @template {{ label: string }} L
+ * @param {L[]} lent
+ * @param {(lend: L) => string} named how a person calls one
  * @returns {Promise<string[]>}
  */
-export async function unready(group, lent) {
-  const kept = (await groups()).some((one) => one.id === group.id);
+export async function unready(lent, named) {
   const apps = await Promise.all(lent.map((lend) => inSeal(`saved ${lend.label}`)));
-  const keeps = await navigator.storage?.persisted();
+  const keeps = await navigator.storage.persisted();
   const local = await navigator.permissions
-    ?.query({ name: /** @type {PermissionName} */ ('local-network-access') })
+    .query({ name: /** @type {PermissionName} */ ('local-network-access') })
     .catch(() => null);
   return [
-    ...(kept ? [] : [`${group.name} is not saved on this phone.`]),
     ...lent
       .filter((_, at) => apps[at] !== '__VERSION__')
-      .map((lend) => `${lend.name} is not saved here: open it once while online.`),
+      .map((lend) => `${named(lend)} is not saved here: open it once while online.`),
     ...(keeps ? [] : ['The browser has not agreed to keep what this page saves.']),
     ...(local && local.state !== 'granted' ? [LOCAL] : []),
   ];
@@ -481,8 +481,7 @@ export const savedAt = (file) => new URL(`./${file}?v=__VERSION__`, import.meta.
 // Whether all of them are here, at this origin.
 export const whole = async () => {
   const cache = await caches.open(CACHE);
-  const held = await Promise.all(SAVED.map((file) => cache.match(savedAt(file))));
-  return held.every(Boolean);
+  return (await Promise.all(SAVED.map((file) => cache.match(savedAt(file))))).every(Boolean);
 };
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
 

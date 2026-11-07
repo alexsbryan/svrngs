@@ -154,8 +154,6 @@ const PLACES = [
 ];
 const COULD_NOT = 'This browser could not open the page.';
 
-// The effect that sends a message of `type` to the flow that takes it,
-// which the frame's io dispatches (`frame`).
 // `label` refused: nothing the group lends goes by it.
 /**
  * @param {State} state
@@ -167,6 +165,8 @@ export const notLent = (state, label) =>
     `nothing ${/** @type {Partial<State>} */ (state).group?.name ?? 'here'} lends is ${label}`,
   );
 
+// The effect that sends a message of `type` to the flow that takes it,
+// which the frame's io dispatches (`frame`).
 export const sending = /** @type {Sender} */ (
   (type, message) => ({ run: 'send', m: { type, ...message } })
 );

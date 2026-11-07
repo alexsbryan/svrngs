@@ -1116,8 +1116,9 @@ Seven calls:
 
    A phone counts as ready only by a check (KEEP_GOING_AT_HOME 29, 21):
    `store.js` `unready` says on the group's page what is not yet so. The
-   group is kept, each app's signer marked its origin holding this build's
-   every piece when it opened, and the browser agreed to keep its storage.
+   group is kept (`opened` refuses first if it cannot be), each app's signer
+   marked its origin holding the signer's own build whole when it opened, and
+   the browser agreed to keep its storage.
    A new build asks each app again. The mark cannot see a browser clear that
    origin later, which the spec does not promise. Where the browser asks
    before reaching the home network, it says what that is for; what happens
@@ -1945,7 +1946,8 @@ from the journal waits in PLAN §2.
   the asker's groups (`null` when a record cannot be read, absent from an older
   computer). The page keeps at most `MEETS_KEPT`, 8, each this page's policy
   takes (web/page/enter.js `meeting`), on its `Group`; a later list replaces
-  it, so a relay the keeper took away goes, and no list leaves what is kept.
+  it, so a relay the keeper took away goes, and no list, or none taken,
+  leaves what is kept, since no command leaves a group with no relay.
   Every dial and pass adds them to the link's own relays, which stay the way
   in (web/src/lib.rs `ways_in`), and a lender's dial tries them beside the one
   relay its row names, which may be old; the page's endpoint binds again when

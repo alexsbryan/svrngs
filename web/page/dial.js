@@ -176,7 +176,7 @@ export const actor = (core) => core.actor(key);
  * @param {Group} group
  */
 const endpoint = (core, group) => {
-  const ways = String(group.meets);
+  const ways = String(group.meets ?? []);
   if (bound && ways === boundAt) return bound;
   if (bound) {
     trace(`PAGE: the group's relays changed to ${ways}, so the endpoint binds again with them`);

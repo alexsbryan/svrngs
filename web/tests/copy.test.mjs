@@ -160,6 +160,12 @@ test('why a dial failed is said truly, one cause apart from another', async () =
   const off = silent('ada’s computer');
   assert.equal(off, 'ada’s computer did not answer, so it may be off.');
   const said = (error) => unreached(error, off);
+  assert.ok(
+    said(new Error('LAYER wasm-bindgen/iroh-endpoint: REFUSED — endpoint bind failed: x')).includes(
+      'no computer was asked',
+    ),
+    'a page that never dialled does not say a computer was silent',
+  );
   const noRelay = new Error(
     'LAYER relay-connect: REFUSED — no relay answered within 10s, and the endpoint is closed',
   );

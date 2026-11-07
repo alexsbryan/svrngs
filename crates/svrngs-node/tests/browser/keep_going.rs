@@ -111,8 +111,8 @@ in_chromium!(
     /// signs itself. Every saved piece answers; each taken out in turn stops
     /// answering, which is the check the spec demands. Planted, watched
     /// failing: the shell left to the network, as lend.js was. The readiness
-    /// check (29) names the app until it has been opened, and a group never
-    /// kept; planted, watched failing: the signer marking nothing.
+    /// check (29) names the app until it has been opened; planted, watched
+    /// failing: the signer marking nothing.
     a_phone_reopens_the_group_and_its_app_with_the_public_site_gone
 );
 async fn a_phone_reopens_the_group_and_its_app_with_the_public_site_gone(engine: Engine) {
@@ -155,11 +155,7 @@ async fn a_phone_reopens_the_group_and_its_app_with_the_public_site_gone(engine:
     let lines = |of: &str| seen["first"]["ready"][of].to_string();
     assert!(
         !lines("kept").contains("not saved"),
-        "the group and the app opened once while online are saved: {seen:#}"
-    );
-    assert!(
-        lines("unkept").contains("unkept is not saved on this phone"),
-        "a group never kept is not ready: {seen:#}"
+        "the app opened once while online is saved: {seen:#}"
     );
     assert!(
         lines("denied").contains("home network") && !lines("granted").contains("home network"),

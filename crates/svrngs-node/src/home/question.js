@@ -344,6 +344,8 @@ export const unreached = (error, quiet) => {
     return 'This link names no way in this page can use. Ask whoever sent it for a new one.';
   if (why.includes('no relay answered'))
     return 'Nothing on the way to your group answered, so no computer was asked. Check your connection and try again.';
+  if (/LAYER (parse|key|wasm-bindgen)/.test(why))
+    return 'This page could not start the connection, so no computer was asked. Reload it and try again.';
   return quiet;
 };
 

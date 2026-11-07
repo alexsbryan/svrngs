@@ -4862,6 +4862,9 @@ async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engi
     let site = site();
     let (relay, far) = (relay().await, relay().await);
     let (cys, lid) = lid(&far).await;
+    // The phone's way shuts too: a dial tries every relay the phone knows,
+    // and cy, having answered it there, can be reached there.
+    let (phones, shut) = self::lid(&relay).await;
     let bo = signing(7);
     let (ada_dir, cy_dir, kept) = (
         tempfile::tempdir().unwrap(),
@@ -4883,7 +4886,12 @@ async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engi
     let args = json!({
         "site": site,
         "key": hex::encode(bo.to_bytes()),
-        "token": token(&signing(1), &relay),
+        "token": Token {
+            issuer: signing(1).verifying_key(),
+            secret: [0; 16],
+            relays: vec![phones.parse().expect("a URL")],
+        }
+        .encode(),
         "ready": ready,
         "again": again,
         "open": "room",
@@ -4903,9 +4911,11 @@ async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engi
     };
     written(ready.clone()).await;
     lid.send(false).unwrap();
+    shut.send(false).unwrap();
     go.send(()).unwrap();
     written(again.clone()).await;
     lid.send(true).unwrap();
+    shut.send(true).unwrap();
     let seen = phone.await.unwrap();
     eprintln!("the phone's run: {seen:#}");
     assert_eq!(seen["opened"]["title"], "cy's room", "{seen:#}");
