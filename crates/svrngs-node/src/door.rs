@@ -752,7 +752,7 @@ pub(crate) fn splice<H: Send + 'static>(
     tokio::spawn(async move {
         tokio::select! {
             () = spliced => {}
-            () = cut => tracing::info!(target: "door", lend = name, "door: an upgraded connection cut — its asker no longer stands in a group the lend reaches"),
+            () = cut => tracing::info!(target: "door", lend = name, "door: an upgraded connection cut — its asker is no longer let in"),
         }
     });
 }
@@ -760,36 +760,44 @@ pub(crate) fn splice<H: Send + 'static>(
 /// Whose use an answer is cut by (AGENTS 9): a member's or pass holder's
 /// device, or a guest's visit key. An owner's use is none: the owner never
 /// loses their own lend.
+#[derive(Debug)]
 enum Watched {
     Member(String),
     Guest(String),
 }
 
 /// When the use `watched` would no longer be let in, the live declaration
-/// asked every sweep whether or not the asker reads, by the one decision
-/// that let it in: a member's standing as a raw lend's is
-/// ([`udp::unstood`]), a guest's visit by [`guest_admitted`]. What an
-/// answer streaming to them and an upgraded connection are cut by
+/// asked every [`udp::SWEEP`] whether or not the asker reads, by the one
+/// decision that let it in: a member's standing as a raw lend's is
+/// ([`udp::stands`]), a guest's visit by [`guest_admitted`], and the time
+/// `until` which the pass, or the link carrying it, opened the lend to its
+/// holder ([`holder_of`]), read on the clock [`Pass::check`] read it on.
+/// What an answer streaming to them and an upgraded connection are cut by
 /// (LENDING_SCOPE §"Existing streams and app sessions"). Never for none.
 fn withdrawn(
     door: &Door,
     lend: &Lend,
-    watched: Option<Watched>,
+    watched: Option<(Watched, Option<i64>)>,
 ) -> impl std::future::Future<Output = ()> + Send + 'static {
     let (door, lend) = (door.clone(), lend.clone());
     async move {
-        match watched {
-            Some(Watched::Member(device)) => udp::unstood(&door, &device, &lend).await,
-            Some(Watched::Guest(key)) => {
-                let mut every = tokio::time::interval(udp::SWEEP);
-                let admitted =
-                    || udp::live(&door, &lend).is_ok_and(|l| guest_admitted(&door.rail, &key, &l));
-                while admitted() {
-                    every.tick().await;
+        let Some((watched, until)) = watched else {
+            return std::future::pending().await;
+        };
+        let mut every = tokio::time::interval(udp::SWEEP);
+        loop {
+            // No clock, no pass judged: as at the door ([`unix_now`]).
+            let lapsed = until.is_some_and(|u| unix_now().is_none_or(|now| now >= u));
+            let let_in = match &watched {
+                Watched::Member(device) => udp::stands(&door, device, &lend),
+                Watched::Guest(key) => {
+                    udp::live(&door, &lend).is_ok_and(|l| guest_admitted(&door.rail, key, &l))
                 }
-                tracing::debug!(target: "door", guest = key, lend = %lend.name, "door: a guest's use is no longer let in, so it is cut");
+            };
+            if lapsed || !let_in {
+                return tracing::debug!(target: "door", lend = %lend.name, ?watched, until, lapsed, let_in, "door: a use no longer let in — its standing or visit gone, or the pass carrying it lapsed — so it is cut");
             }
-            None => std::future::pending().await,
+            every.tick().await;
         }
     }
 }
@@ -834,7 +842,7 @@ where
             () = cut => {}
         }
         drop(body);
-        tracing::info!(target: "door", lend, "door: an answer cut — its asker no longer stands in a group the lend reaches");
+        tracing::info!(target: "door", lend, "door: an answer cut — its asker is no longer let in");
         let _ = tx.send(Err("this is no longer lent to you".into())).await;
     });
     let frames =
@@ -1130,6 +1138,9 @@ struct Asker {
     /// Whose guest they are, for a visit's key ([`guest_of`]); none for a
     /// person of the group.
     host: Option<Person>,
+    /// When the pass, or the link carrying it, stops opening the lend to
+    /// its holder ([`holder_of`]); none for a key let in without one.
+    until: Option<i64>,
 }
 
 /// Who asks, decided before the lend is found or after: a member or the
@@ -1237,12 +1248,13 @@ async fn holder_of(
     let Some(now) = unix_now() else {
         return Err(refused("this computer's clock cannot be read"));
     };
-    let checked = match headers
+    // A link carried lapses no later than its pass ([`Pass::carries`]).
+    let (checked, until) = match headers
         .get(LINK_HEADER)
         .map(|v| v.to_str().ok().and_then(Pass::decode))
     {
-        None => pass.check(&key, &label, now),
-        Some(Some(link)) => pass.carries(&link, &key, &label, now),
+        None => (pass.check(&key, &label, now), pass.until),
+        Some(Some(link)) => (pass.carries(&link, &key, &label, now), link.until),
         Some(None) => return Err(refused("a link that does not read")),
     };
     if let Err(fault) = checked {
@@ -1274,6 +1286,7 @@ async fn holder_of(
                 group,
                 person,
                 host: Some(host),
+                until: Some(until),
             });
         }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
@@ -1289,8 +1302,8 @@ async fn holder_of(
     let Some((group, person, actor)) = standing else {
         return Err(refused("its signer stands in no group this lends to"));
     };
-    tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until = pass.until,
-        "door: a pass opens this lend, so its holder asks as the person who signed it");
+    tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until,
+        "door: a pass opens this lend until the earlier of its and its link's time, so its holder asks as the person who signed it");
     Ok(Asker {
         app: Some(pass.app),
         device: DeviceKey(pass.person),
@@ -1298,6 +1311,7 @@ async fn holder_of(
         group,
         person,
         host: None,
+        until: Some(until),
     })
 }
 
@@ -1444,6 +1458,7 @@ pub(crate) async fn lend_for(
         person,
         mut app,
         host,
+        until,
     } = match pending {
         Pending::Member(key) => match &who {
             // The lender's own page at its own origin is not a group grant:
@@ -1461,6 +1476,7 @@ pub(crate) async fn lend_for(
                     person,
                     app: Some(label.clone()),
                     host: None,
+                    until: None,
                 }
             }
             Who::Member(_) => {
@@ -1477,6 +1493,7 @@ pub(crate) async fn lend_for(
                     person: member.person,
                     app: None,
                     host: None,
+                    until: None,
                 }
             }
             Who::Holder(_) => unreachable!("a holder is resolved through its pass"),
@@ -1590,8 +1607,8 @@ pub(crate) async fn lend_for(
         method = %req.method(), path = service_path, "door: carrying a request to the lend's service, the app the pass's or none, a guest's host's or none");
     let watched = match (&who, &host) {
         (Who::Own(_), _) => None,
-        (_, Some(_)) => Some(Watched::Guest(device.to_string())),
-        (_, None) => Some(Watched::Member(device.to_string())),
+        (_, Some(_)) => Some((Watched::Guest(device.to_string()), until)),
+        (_, None) => Some((Watched::Member(device.to_string()), until)),
     };
     let told = Told {
         share,
@@ -1620,8 +1637,9 @@ const UNCOUNTED: &str =
 struct Told {
     share: Option<u64>,
     held: Option<InFlight>,
-    /// Whose use the answer is cut by; none for an owner's ([`withdrawn`]).
-    watched: Option<Watched>,
+    /// Whose use the answer is cut by, and when the pass that let it in
+    /// lapses ([`Asker`]'s `until`); none for an owner's ([`withdrawn`]).
+    watched: Option<(Watched, Option<i64>)>,
 }
 
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:

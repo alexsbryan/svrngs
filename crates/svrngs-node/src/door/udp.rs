@@ -160,22 +160,20 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
     }
 }
 
-/// When `actor` no longer stands in any group the lend `lend` reaches, or
-/// the lend is withdrawn or unreadable, asked every [`SWEEP`] as
-/// [`admitted`] asks it — the live declaration re-read each tick, so a
-/// narrowing closes an open raw connection rather than letting it run on
-/// (LENDING_SCOPE §"Raw admission and current-scope sweep").
-pub(super) async fn unstood(door: &Door, actor: &str, lend: &Lend) {
+/// Whether `actor` stands in a group the lend `lend` reaches, the lend
+/// neither withdrawn nor unreadable, as [`admitted`] asks it: the live
+/// declaration re-read each time, so a narrowing closes an open raw
+/// connection rather than letting it run on (LENDING_SCOPE §"Raw admission
+/// and current-scope sweep").
+pub(super) fn stands(door: &Door, actor: &str, lend: &Lend) -> bool {
+    let reached = |live: Lend| door.rail.standing_in(actor, |g| door.reached(&live, g));
+    live(door, lend).is_ok_and(|live| reached(live).is_some())
+}
+
+/// When `actor` no longer [`stands`] for `lend`, asked every [`SWEEP`].
+async fn unstood(door: &Door, actor: &str, lend: &Lend) {
     let mut every = tokio::time::interval(SWEEP);
-    loop {
-        let stands = live(door, lend).is_ok_and(|live| {
-            door.rail
-                .standing_in(actor, |g| door.reached(&live, g))
-                .is_some()
-        });
-        if !stands {
-            return;
-        }
+    while stands(door, actor, lend) {
         every.tick().await;
     }
 }

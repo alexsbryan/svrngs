@@ -164,11 +164,11 @@ async fn a_list_asked_without_this_builds_scope_marker_is_refused() {
     pair.close().await;
 }
 
-/// A request through bo's bridge whose answer's head has come: the socket,
-/// its body still to come.
-async fn opened(pair: &Pair, head: &str) -> tokio::net::TcpStream {
+/// A request through the bridge at `at` whose answer's head has come: the
+/// socket, its body still to come.
+async fn opened(at: std::net::SocketAddr, head: &str) -> tokio::net::TcpStream {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
-    let mut sock = tokio::net::TcpStream::connect(pair.bridge).await.unwrap();
+    let mut sock = tokio::net::TcpStream::connect(at).await.unwrap();
     sock.write_all(format!("{head}Host: local\r\n\r\n").as_bytes())
         .await
         .unwrap();
@@ -227,10 +227,10 @@ async fn a_stream_ends_within_two_seconds_of_its_group_taken_away_and_no_other()
         pair.lend(name, port, &[]);
     }
     groups_held(&pair, &[NS]);
-    let mut shelf = opened(&pair, "GET /lend/shelf/stream HTTP/1.1\r\n").await;
-    let mut radio = opened(&pair, "GET /lend/radio/stream HTTP/1.1\r\n").await;
+    let mut shelf = opened(pair.bridge, "GET /lend/shelf/stream HTTP/1.1\r\n").await;
+    let mut radio = opened(pair.bridge, "GET /lend/radio/stream HTTP/1.1\r\n").await;
     let upgrade = "GET /lend/live/socket HTTP/1.1\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n";
-    let mut socket = opened(&pair, upgrade).await;
+    let mut socket = opened(pair.bridge, upgrade).await;
     socket.write_all(b"ping").await.unwrap();
     let mut echo = [0u8; 4];
     socket.read_exact(&mut echo).await.unwrap();
@@ -253,6 +253,75 @@ async fn a_stream_ends_within_two_seconds_of_its_group_taken_away_and_no_other()
         "the radio stopped: {carried:?}"
     );
     assert_eq!(pair.get("/lend/radio/now", "").await.status, 200);
+    pair.close().await;
+}
+
+/// A pass's time, watched as standing is (LENDING_SCOPE §"Existing streams
+/// and app sessions"): a holder streams the shelf on bo's pass, and an
+/// endpoint key on a longer pass through a link to it; each answer ends
+/// within a sweep after the earlier of its pass's and its link's `until`,
+/// never before it, and a stream on a pass that outlives both still
+/// carries bytes after. Planted: the lapse unchecked once a request is let
+/// in (authority spike, "withdraw-expiry-inflight": ran 2.9 s past it).
+#[tokio::test]
+async fn a_stream_on_a_pass_ends_within_a_sweep_of_its_pass_or_link_lapsing() {
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+    use tokio::io::AsyncReadExt;
+    let pair = Pair::new().await;
+    let (stream, _) = super::origins::streaming_origin().await;
+    pair.lend("shelf", stream.port(), &[]);
+    let shelf = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    let (holder, endpoint) = (signing(9), signing(10));
+    let by_holder = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let by_endpoint = bridge_as(&endpoint, &pair.a, Alpn::Lend).await;
+    let lapse = unix_now() + 2;
+    let bos = |until| {
+        Pass::sign(
+            &signing(2),
+            &actor_of(&holder),
+            (shelf.clone(), vec![]),
+            until,
+        )
+    };
+    let (short, long) = (bos(lapse), bos(lapse + 3600));
+    let mut link = long.link(&actor_of(&endpoint));
+    link.until = lapse;
+    link.sig = svrngs_core::sign_message(&holder, &link.message());
+    let head = |pass: &Pass, link: Option<&Pass>| {
+        let link = link.map_or(String::new(), |l| {
+            format!("x-svrngs-link: {}\r\n", l.encode())
+        });
+        format!(
+            "GET /lend/{shelf}/stream HTTP/1.1\r\nx-svrngs-pass: {}\r\n{link}",
+            pass.encode()
+        )
+    };
+    let mut lapsing = opened(by_holder.local_addr(), &head(&short, None)).await;
+    let mut linked = opened(by_endpoint.local_addr(), &head(&long, Some(&link))).await;
+    let mut lasting = opened(by_holder.local_addr(), &head(&long, None)).await;
+
+    let lapses_at = UNIX_EPOCH + Duration::from_secs(lapse as u64);
+    let within = lapses_at
+        .duration_since(SystemTime::now())
+        .unwrap_or_default()
+        + Duration::from_millis(1500);
+    let ended = async |sock: &mut tokio::net::TcpStream| {
+        let ended = ends_within(sock, within).await;
+        ended.map(|_| SystemTime::now().duration_since(lapses_at))
+    };
+    let (cut, cut_linked) = tokio::join!(ended(&mut lapsing), ended(&mut linked));
+    eprintln!("after the lapse, the pass's answer ended {cut:?}, the link's {cut_linked:?}");
+    for (what, cut) in [("the pass's", cut), ("the link's", cut_linked)] {
+        let cut =
+            cut.unwrap_or_else(|| panic!("{what} answer still carries on 1.5 s past its lapse"));
+        assert!(cut.is_ok(), "{what} answer ended before its lapse: {cut:?}");
+    }
+    let mut more = [0u8; 64];
+    let carried = tokio::time::timeout(Duration::from_secs(2), lasting.read(&mut more)).await;
+    assert!(
+        matches!(carried, Ok(Ok(n)) if n > 0),
+        "the stream on the lasting pass stopped: {carried:?}"
+    );
     pair.close().await;
 }
 

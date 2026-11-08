@@ -162,8 +162,10 @@ be a larger signed-context/origin design, not an extra checkbox.
 New requests should lose access after the saved audience changes. Already
 authorized requests may have reached the app; a policy change cannot undo
 those effects. Raw connections can be cut at the current one-second sweep.
-HTTP response bodies and WebSocket splices currently run to completion
-(`door.rs`: `forward`, `splice`).
+HTTP response bodies and WebSocket splices are cut at the same sweep
+(`door.rs`: `withdrawn`, `cut_by`, `splice`), and one let in by a pass,
+directly or through a link, is cut there once the earlier of the pass's
+and the link's `until` has passed.
 
 Recommend bounded closure of active lend streams as a separate, measured
 part of the implementation. Reuse the existing ownership/cancellation

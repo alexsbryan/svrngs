@@ -197,8 +197,13 @@ for an answer and about 1 s for a socket on loopback (`tests/door/
 scope.rs`). A guest's streams are watched by the decision that let them
 in (`guest_admitted`, `guest_of` asked again): once the visit's group no
 longer reaches the lend, or the visit ends or is stopped, they are cut
-within the same bound. An owner's are never watched: the owner never
-loses their own lend. What already reached the app, or an app's own
+within the same bound. What a pass let in, directly or through a link
+(`holder_of`), is watched by its time as well: it is cut at the first
+sweep after the earlier of the pass's and the link's `until`, read on the
+clock the door read it on (0.35 to 0.86 s after the lapse in three runs on
+loopback, `tests/door/scope.rs`). A member's own page's pass only names
+its app (`own_app`); the member stands by dial, and is watched so. An
+owner's are never watched: the owner never loses their own lend. What already reached the app, or an app's own
 sessions, is not undone. *Lends are asked,
 not stored:* each computer
 answers what it lends when asked, so an asleep computer's lends are absent,
