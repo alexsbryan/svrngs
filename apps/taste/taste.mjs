@@ -1,126 +1,358 @@
-// su: own serve — Ana's taste (demo/runs/su/2026-10-09/README.md, su-0;
-// cut to what svrngs carries, sup-4, demo/runs/sup/2026-10-10/): a small
-// program on Ana's computer, on loopback alone, offering `rankCandidates`
-// (POST /rank) beside her watch history and keeping `viewingDiary` (GET
-// /diary) back. Lent by Ana `svrngs share <port> --name taste --kind taste
-// --refuse /diary --ask "<what an app receives>"`, so the door refuses
-// /diary to everyone who reaches the lend, and carries an ask only from an
-// app its person said yes to and has not stopped (DESIGN §3, "What an app
-// gets"). Who may rank, beyond that, is this program's: its owner, until a
-// lend its lender's person alone reaches (PLAN §4, "Then"). Every line is
-// marked by su-0's rule (§4).
+#!/usr/bin/env node
+// Ana's taste: a small program on her computer that keeps the films she
+// rated and guesses which films in her friends' libraries she'll like. Its
+// page is its own, lent by her, so it runs at her own origin on her own
+// computer: what she rated, and what taste guesses from it, reaches no page
+// of anyone else's (apps/taste/README.md). Started by her, it lends itself,
+// as Give does (`svrngs share`):
+//
+//   node taste.mjs [--embed <address of her own llama-server>]
+//
+// so the door refuses /diary to everyone, its page reads her groups'
+// Jellyfins by the account each lender keeps for apps (`--reads jellyfin`),
+// and another app gets her taste only once she says yes (`--ask`). Its
+// ratings are kept in `$SVRNGS_DIR/taste`, else `~/.svrngs/taste`.
 //
 //   node taste.mjs <port> <dir>
 //
-// <dir> holds `diary.json` (the planted rows) and `owners` (Ana's keys,
-// actor hex, a line each: her computer's and each of her phones').
-import fs from 'node:fs';
+// serves on <port> with the diary in <dir> and lends nothing, as su's check
+// (apps/taste/check/check.sh) runs it.
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
-import path from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const [port, dir] = process.argv.slice(2);
-const at = (name) => path.join(dir, name);
-const log = (...words) => console.log(new Date().toISOString(), ...words);
-// su: plant switch — which of su-0's plants this program runs (§3): none
-// unless the check names one.
+import { SAID, diary, imported, letterboxd, rate, same } from './diary.mjs';
+import { catalog, numbers } from './model.mjs';
+import { scored } from './score.mjs';
+import * as svrngs from './svrngs.mjs';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+// A plant the check names, else none: `bo`, the owner check off; `subset`,
+// only her rated films sent to the model, as her diary names them;
+// `rated-first`, her rated films first in the list; `constant`, a scorer
+// that knows nothing.
 const PLANT = process.env.TASTE_PLANT || null;
 
-// su: own serve
+// What another app receives from taste, said where its person says yes
+// (`svrngs share --ask`).
+const ASK =
+  'It gets films back in the order you’ll most likely enjoy them. What you rated stays on your computer.';
+
+function flags(argv) {
+  const out = { embed: null, port: null, dir: null, lend: true };
+  if (/^\d+$/.test(argv[0] ?? ''))
+    return { ...out, port: Number(argv[0]), dir: argv[1], lend: false };
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--embed') out.embed = (argv[++i] ?? '').replace(/\/+$/, '');
+    else throw new Error(`taste takes --embed <address>, not ${argv[i]}`);
+  }
+  return out;
+}
+
+const opts = flags(process.argv.slice(2));
+const dir = opts.dir ?? join(svrngs.dataDir(), 'taste');
+mkdirSync(dir, { recursive: true, mode: 0o700 });
+// Every decision taste makes, written to `taste.log` in its dir: the
+// terminal Ana pasted the line into shows only what is said to her.
+const log = (...words) =>
+  appendFileSync(
+    join(dir, 'taste.log'),
+    `${[new Date().toISOString(), ...words.map((w) => (typeof w === 'string' ? w : String(w?.stack ?? w)))].join(' ')}\n`,
+  );
+
+// An app at another origin reads the answer, as Tonight's Picks does
+// (DESIGN §3, "Lent apps", call 6): which app asked is the door's to say,
+// and only taste's own page is told more than the films (`rank`).
 function answer(res, status, body) {
-  // A page at another origin reads the answer, as Jellyfin's lets it: on a
-  // computer Tonight's Picks is at its own (DESIGN §3, "Lent apps", call 6).
   res.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': '*' });
   res.end(JSON.stringify(body));
 }
 
 async function read(req) {
   const parts = [];
-  for await (const part of req) parts.push(part);
+  let n = 0;
+  for await (const part of req) {
+    n += part.length;
+    if (n > 8 * 1024 * 1024) throw new Error('too large');
+    parts.push(part);
+  }
   const text = Buffer.concat(parts).toString();
   return text ? JSON.parse(text) : {};
 }
 
-// su: own diary — the rows, read where they are stored, on each ask.
-const diary = () => JSON.parse(fs.readFileSync(at('diary.json'), 'utf8')).rows;
-
-// su: own rank — a film the history names: by a provider id both name,
-// else by title and year.
-const plain = (s) =>
-  String(s ?? '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-function same(film, row) {
-  const ids = Object.keys(film.ids ?? {}).filter((k) => k in (row.ids ?? {}));
-  if (ids.length) return ids.some((k) => String(film.ids[k]) === String(row.ids[k]));
-  return plain(film.title) === plain(row.title) && film.year === row.year;
+// The person this computer is, asked of svrngs on each request (svrngs.mjs
+// `ownerKeys`): only they rank, rate or import. A key svrngs cannot name is
+// nobody's, never assumed hers.
+async function owned(key) {
+  if (PLANT === 'bo') return true;
+  if (!key) return false;
+  try {
+    return (await svrngs.ownerKeys()).has(key);
+  } catch (e) {
+    log('owner: svrngs could not say who this computer is:', e.message);
+    return false;
+  }
 }
 
-// The films given, in the order Ana's history gives them: the mean of her
-// ratings of each, a film she never rated after every film she did, ties
-// by title. Nothing but the films goes back: no score, no row.
-function rank(films) {
-  const rows = diary();
-  const score = (f) => {
-    const mine = rows.filter((r) => same(f, r));
-    return mine.length ? mine.reduce((s, r) => s + r.rating, 0) / mine.length : -1;
+// Ana's own name, for the words a refusal says.
+async function whose() {
+  try {
+    const { groups } = await svrngs.groups();
+    return groups.find((g) => g.person)?.person ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// The model taste asks: her own, when she names one; else each friend's
+// llama-server her groups lend, in the record's order, reached as her
+// through svrngs with this computer's token, which svrngs takes off before
+// the model is asked (pantry.mjs `probe`).
+async function models() {
+  if (opts.embed) return [{ at: opts.embed, token: null, who: 'your own model' }];
+  const { token } = svrngs.record();
+  const lent = await svrngs.lendsOf('llama-server');
+  return lent.map((l) => ({
+    at: l.origin.replace(/\/+$/, ''),
+    token,
+    who: `${l.person}’s ${l.offered?.name ?? l.name ?? 'llama-server'}`,
+  }));
+}
+
+// Numbers for every film of `list` from the first model that answers, or
+// why none did: never a guess made up in their place.
+async function ask(list, rows) {
+  let tried = [];
+  try {
+    tried = await models();
+  } catch (e) {
+    return { why: `svrngs couldn’t say who shares a model (${e.message}).` };
+  }
+  if (!tried.length)
+    return { why: 'nobody in your groups shares a model taste can use. Your ratings are kept.' };
+  for (const model of tried) {
+    try {
+      if (PLANT === 'subset') {
+        // The plant: her rated films, as her diary names them, sent alone.
+        const theirs = rows.map((r, i) => ({
+          library: 'diary',
+          id: String(i),
+          title: r.title,
+          year: r.year,
+        }));
+        await numbers(catalog(theirs).catalog, model, log);
+        return { model, vectors: null };
+      }
+      return { model, vectors: await numbers(list, model, log) };
+    } catch (e) {
+      log('model:', model.who, 'did not answer:', e.message);
+    }
+  }
+  return { why: `${tried.map((m) => m.who).join(', ')} didn’t answer. Try again later.` };
+}
+
+// The films handed, scored. Taste's own page is told her ratings, the
+// guesses and why; any other app the films alone, in order: no score, no
+// row, no reason (su-0's rule).
+async function rank(body, own) {
+  const made = catalog(body.films);
+  if (!made.catalog) return { status: 400, body: { error: made.why } };
+  const list = made.catalog;
+  const rows = diary(dir);
+  if (PLANT === 'rated-first') {
+    // The plant: the films she rated first in what the model is sent.
+    const mine = (f) => rows.some((r) => same(f, r));
+    const films = [...list.films.filter(mine), ...list.films.filter((f) => !mine(f))];
+    const texts = films.map((f) => list.texts[list.films.indexOf(f)]);
+    Object.assign(list, { films, texts });
+  }
+  const { model, vectors, why } = await ask(list, rows);
+  const ranked = scored(list.films, vectors, rows, PLANT);
+  log('ranked', ranked.length, 'films', own ? 'for its own page' : 'for another app');
+  if (!own) return { status: 200, body: { films: ranked.map((r) => r.film) } };
+  const elsewhere = rows.filter((r) => !list.films.some((f) => same(f, r))).length;
+  return {
+    status: 200,
+    body: {
+      films: ranked.map((r) => ({
+        library: r.film.library,
+        id: r.film.id,
+        title: r.film.title,
+        year: r.film.year,
+        ids: r.film.ids,
+        mine: r.mine,
+        guess: r.mine === null ? r.score : null,
+        because: r.because,
+      })),
+      model: model?.who ?? null,
+      unguessed: why ?? null,
+      elsewhere,
+    },
   };
-  return films
-    .map((f) => ({ f, s: score(f) }))
-    .sort((a, b) => b.s - a.s || plain(a.f.title).localeCompare(plain(b.f.title)))
-    .map(({ f }) => f);
 }
 
-// su: enforce refuse — a refusal as one: 403, its kind, and words a person
-// reads; logged with who asked and why.
-function refuse(res, kind, words, who) {
-  log(`refused ${kind}:`, JSON.stringify(who));
-  answer(res, 403, { refused: kind, error: words });
-}
+const PAGE = { '/': 'index.html', '/page.js': 'page.js', '/page.css': 'page.css' };
+const TYPES = { html: 'text/html; charset=utf-8', js: 'text/javascript', css: 'text/css' };
 
-// su: enforce owner — the asker is Ana: the key the door verified is one of
-// hers. svrngs names no person across devices (PLAN §4, "Then"), so her keys
-// are listed here, read on each ask.
-const owners = () => fs.readFileSync(at('owners'), 'utf8').split(/\s+/).filter(Boolean);
-const owned = (key) => owners().includes(key);
-// su: plant bo — bar 2's plant: the owner check taken out
-const isOwner = PLANT === 'bo' ? () => true : owned;
-
-// su: own serve
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://taste');
-  // su: enforce refuse — who asks, as the door says: an absent header is
-  // never defaulted.
-  const who = {
-    person: req.headers['x-svrngs-person'] ?? null,
-    key: req.headers['x-svrngs-key'] ?? null,
-  };
-  // su: own serve — the app the door carried this for, logged: whether it
-  // may ask is the door's (sup-2).
+  // Who asks and for which app, as the door says: an absent header is
+  // nobody, never defaulted to her.
+  const key = req.headers['x-svrngs-key'] ?? null;
   const app = req.headers['x-svrngs-app'] ?? null;
-  log(req.method, url.pathname, JSON.stringify({ ...who, app }));
+  // Its own page: the app the door names is this lend itself.
+  const own = app !== null && app === (req.headers['x-svrngs-label'] ?? null);
+  log(
+    req.method,
+    url.pathname,
+    JSON.stringify({ person: req.headers['x-svrngs-person'] ?? null, key, app, own }),
+  );
   try {
-    // su: own diary — on this port, loopback on Ana's computer: the door
-    // refuses /diary to everyone who reaches the lend.
+    if (req.method === 'GET' && PAGE[url.pathname]) {
+      const file = PAGE[url.pathname];
+      res.writeHead(200, {
+        'content-type': TYPES[file.split('.').pop()],
+        'cache-control': 'no-store',
+      });
+      return res.end(readFileSync(join(HERE, 'page', file)));
+    }
+    // On loopback alone: the door refuses /diary to everyone the lend reaches.
     if (req.method === 'GET' && url.pathname === '/diary')
-      return answer(res, 200, { rows: diary() });
-    // su: own serve
-    if (req.method !== 'POST' || url.pathname !== '/rank')
-      return answer(res, 404, { error: 'nothing here by that name' });
-    // su: enforce owner
-    if (!isOwner(who.key)) return refuse(res, 'not-yours', 'This taste is someone else’s.', who);
-    // su: own rank
-    const { films } = await read(req);
-    if (!Array.isArray(films)) return answer(res, 400, { error: 'films: a list of films to rank' });
-    const ranked = rank(films);
-    log('ranked', ranked.length, 'films for', app);
-    return answer(res, 200, { films: ranked });
-    // su: own serve
+      return answer(res, 200, { rows: diary(dir) });
+    if (req.method !== 'POST' || !['/rank', '/rate', '/import'].includes(url.pathname))
+      return answer(res, 404, { error: 'Nothing here by that name.' });
+    if (!(await owned(key))) {
+      const name = await whose();
+      log('refused: not the owner', JSON.stringify({ key, app }));
+      const words = name
+        ? `This is ${name}’s taste. Only ${name} can rate films here or see what it guesses.`
+        : 'This taste is someone else’s.';
+      return answer(res, 403, { refused: 'not-yours', error: words });
+    }
+    const body = await read(req);
+    if (url.pathname === '/rank') {
+      const ranked = await rank(body, own);
+      return answer(res, ranked.status, ranked.body);
+    }
+    // Her diary is written by her own page alone, never by another app.
+    if (!own)
+      return answer(res, 403, {
+        refused: 'not-its-page',
+        error: 'Only taste’s own page can change your ratings.',
+      });
+    if (url.pathname === '/rate') {
+      const f = body.film ?? {};
+      if (typeof f.title !== 'string' || !(body.said === null || body.said in SAID))
+        return answer(res, 400, { error: 'say loved, liked or not-for-me of a film with a title' });
+      const film = {
+        title: f.title,
+        year: Number.isInteger(f.year) ? f.year : null,
+        ids: f.ids ?? {},
+      };
+      rate(dir, film, body.said === null ? null : SAID[body.said]);
+      log('rated a film:', body.said);
+      return answer(res, 200, { rated: true });
+    }
+    let got;
+    try {
+      got = letterboxd(String(body.text ?? ''));
+    } catch {
+      return answer(res, 400, {
+        error: 'That file isn’t a Letterboxd ratings file. Choose ratings.csv from your export.',
+      });
+    }
+    imported(dir, got.rows);
+    log('imported', got.rows.length, 'ratings from Letterboxd;', got.unrated, 'lines without one');
+    return answer(res, 200, { kept: got.rows.length });
   } catch (e) {
     log('failed:', e);
-    return answer(res, 500, { error: 'Ana’s taste could not answer.' });
+    return answer(res, 500, { error: 'Taste couldn’t answer. Try again.' });
   }
 });
 
-server.listen(Number(port), '127.0.0.1', () =>
-  log(`taste: listening on 127.0.0.1:${port}, ${dir}`),
-);
+// Where taste listens on this computer: the place it took last time, kept
+// in its dir, so its lend still points at it after a restart.
+function place() {
+  try {
+    return Number(readFileSync(join(dir, 'port'), 'utf8').trim()) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+function listen(port) {
+  return new Promise((done, fail) => {
+    server.once('error', fail);
+    server.listen(port, '127.0.0.1', () => done(server.address().port));
+  });
+}
+
+async function start() {
+  let port;
+  try {
+    port = await listen(opts.port ?? place());
+  } catch (e) {
+    if (e.code !== 'EADDRINUSE') throw e;
+    console.log(
+      `Another program is using taste’s place on this computer (127.0.0.1:${place()}). If taste is already running in another window, use that one.`,
+    );
+    process.exit(1);
+  }
+  log(`listening on 127.0.0.1:${port}, ratings in ${dir}`);
+  if (!opts.lend) return;
+  writeFileSync(join(dir, 'port'), `${port}\n`);
+  let held;
+  try {
+    held = await svrngs.groups();
+  } catch (e) {
+    console.log(
+      `Taste couldn’t reach svrngs on this computer. Start svrngs, then paste the line again. (${e.message})`,
+    );
+    process.exit(1);
+  }
+  if (!held.groups.length) {
+    console.log(
+      'Join a group first: taste shows films from your friends’ libraries. Then paste the line again.',
+    );
+    process.exit(1);
+  }
+  const groups = held.groups.flatMap((g) => ['--group', g.id]);
+  const args = [
+    'share',
+    String(port),
+    '--name',
+    'taste',
+    '--kind',
+    'taste',
+    '--reads',
+    'jellyfin',
+    '--refuse',
+    '/diary',
+    '--ask',
+    ASK,
+    ...groups,
+  ];
+  const shared = await svrngs.run(args);
+  log('svrngs share:', shared.ok ? 'lent' : 'failed', shared.said);
+  if (!shared.ok) {
+    console.log(`svrngs didn’t share taste: ${shared.said}`);
+    process.exit(1);
+  }
+  // The home page names a lend by its lender, its own lender's too
+  // (home/question.js `named`).
+  const me = held.groups.find((g) => g.person)?.person;
+  const opener = me ? `“Open ${me}’s taste”` : 'Open beside taste';
+  const names = held.groups
+    .map((g) => g.name)
+    .filter(Boolean)
+    .join(' and ');
+  console.log(
+    `Taste is on. To open it, go to your svrngs home page and press ${opener} under ${names || 'your group'}.`,
+  );
+  console.log(
+    'Keep this window open while you use it: closing it turns taste off. Your ratings stay on this computer.',
+  );
+}
+
+start();

@@ -61,7 +61,9 @@ sam() { SVRNGS_DIR="$R/sam" NO_COLOR=1 RUST_LOG=debug "$B" "$@" </dev/null >>"$R
 # Ana's taste, its switch set to PLANT (else none).
 taste() {
   [ -f "$R/taste.pid" ] && { kill "$(cat "$R/taste.pid")" 2>/dev/null || true; sleep 1; }
-  TASTE_PLANT="${PLANT:-}" nohup node "$REPO/apps/taste/taste.mjs" $TASTE_PORT "$R/taste" >>"$R/taste.log" 2>&1 &
+  # Its owner is the person Ana's computer is, asked of her svrngs
+  # (apps/taste/svrngs.mjs `ownerKeys`); the owners file below is no longer read.
+  SVRNGS_DIR="$R/ana" TASTE_PLANT="${PLANT:-}" nohup node "$REPO/apps/taste/taste.mjs" $TASTE_PORT "$R/taste" >>"$R/taste.log" 2>&1 &
   echo $! >"$R/taste.pid"
   for _ in $(seq 1 50); do curl -s -o /dev/null "http://127.0.0.1:$TASTE_PORT/" && break; sleep 0.1; done
   say "taste: up${PLANT:+ with plant $PLANT}"
