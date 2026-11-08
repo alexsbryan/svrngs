@@ -1251,11 +1251,11 @@ async fn holder_of(
     // A group the lend does not reach grants nothing, so the signer's
     // identity is resolved only through a group this lend is lent to.
     let eligible = |group: &str| door.reached(lend, group);
-    let expected = |member: &crate::register::Member| member.person_key.clone();
-    let standing = door
-        .rail
-        .standing_in(&pass.person, eligible)
-        .map(|(group, member)| (group, member.person.clone(), PersonKey(expected(&member))));
+    let stands = || {
+        let standing = door.rail.standing_in(&pass.person, eligible);
+        standing.map(|(group, member)| (group, member.person, PersonKey(member.person_key)))
+    };
+    let standing = stands();
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
     if standing.is_none() && door.rail.removed_anywhere(&pass.person).is_some() {
@@ -1278,12 +1278,8 @@ async fn holder_of(
         }
         tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
             "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
-        let known = || door.rail.standing_in(&pass.person, eligible).is_some();
-        let in_time = door.ring.until(ASK_WITHIN, known).await;
-        let again = door
-            .rail
-            .standing_in(&pass.person, eligible)
-            .map(|(group, member)| (group, member.person.clone(), PersonKey(expected(&member))));
+        let in_time = door.ring.until(ASK_WITHIN, || stands().is_some()).await;
+        let again = stands();
         tracing::debug!(target: "door", signer = pass.person, in_time, known = again.is_some(),
             "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
         again
@@ -1849,16 +1845,14 @@ async fn forward(
         .query()
         .map_or(path.clone(), |q| format!("{path}?{q}"));
     let displaced = rewrite_headers(&mut parts.headers, identity, &secret);
-    if let Some(app) = app {
-        let app = HeaderValue::from_str(app.as_str()).expect("a label is base32, so a header");
-        parts
-            .headers
-            .insert(HeaderName::from_static(APP_HEADER), app);
-    }
-    let named = HeaderValue::from_str(label.as_str()).expect("a label is base32, so a header");
+    let said =
+        |l: &Label| HeaderValue::from_str(l.as_str()).expect("a label is base32, so a header");
+    let app = app.map(|a| (HeaderName::from_static(APP_HEADER), said(a)));
     let pages = pages(door, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
-    let told = [(HeaderName::from_static(LABEL_HEADER), named)];
-    parts.headers.extend(told.into_iter().chain(pages));
+    let told = [(HeaderName::from_static(LABEL_HEADER), said(&label))];
+    parts
+        .headers
+        .extend(told.into_iter().chain(app).chain(pages));
     if displaced > 0 {
         tracing::info!(target: "door", actor, lend = %lend.name, displaced,
             "door: dropped headers the client typed in the door's or the secret's name before setting them");
@@ -1900,7 +1894,7 @@ async fn forward(
     let service_side = switched.as_ref().map(|_| hyper::upgrade::on(&mut answer));
     let (mut parts, body) = answer.into_parts();
     strip_hop_by_hop(&mut parts.headers);
-    let held = match (asker_side, service_side, switched) {
+    let (held, watched) = match (asker_side, service_side, switched) {
         (Some(asker), Some(service), Some(protocol)) => {
             tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the service switched protocols; splicing the two");
             keep_upgrade(&mut parts.headers, protocol);
@@ -1910,7 +1904,6 @@ async fn forward(
         }
         _ => (held, watched),
     };
-    let (held, watched) = held;
     let sent = (parts.headers.get(header::LOCATION)).and_then(|l| l.to_str().ok());
     match sent.map(|l| LendPath::parse(l, port, None)) {
         Some(Ok(path)) => {
