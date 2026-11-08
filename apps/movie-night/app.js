@@ -3,7 +3,7 @@
 // copies under it, each opening in its own Jellyfin
 // (demo/runs/mn/2026-10-08/README.md). A static page: no server, no
 // credential, nothing kept but its own query and results.
-import { copyOf, films, itemAt, names } from './match.js';
+import { closest, copyOf, distance, films, itemAt } from './match.js';
 // mn: plant switch
 import { PLANT, TOKEN } from './plant.js';
 
@@ -23,14 +23,16 @@ const told = () =>
     () => null,
   );
 
-// mn: own cards — each library by its lender, in the person's words.
+// mn: own cards — each library by its lender, in the person's words: "Sam’s
+// library", and its name beside that only where Sam lends more than one.
 async function libraries() {
   const t = await told();
   if (!t) return null;
+  const many = (l) => t.lends.filter((o) => o.lender === l.lender).length > 1;
   return {
     libs: t.lends.map((l) => ({
       library: l.lender,
-      who: `${l.lender}’s ${l.name}`,
+      who: many(l) ? `${l.lender}’s library “${l.name}”` : `${l.lender}’s library`,
       base: l.address,
     })),
     unanswered: t.unanswered,
@@ -54,6 +56,9 @@ async function ask(url) {
   }
   if (res.status === 502 || res.status === 504)
     return { state: 'away', why: `answered ${res.status}` };
+  // The library itself asked for a sign-in: its lender keeps no account for
+  // apps that read it (`svrngs share --readers`), which only they can add.
+  if (res.status === 401) return { state: 'closed', why: 'answered 401' };
   if (!res.ok) return { state: 'refused', why: `answered ${res.status}` };
   return { state: 'answered', body: await res.json() };
 }
@@ -104,13 +109,18 @@ async function search(query) {
     libs.map(async (lib, i) => {
       const got = await listed(lib);
       if (n !== asked) return;
-      const mine = (got.copies ?? []).filter((c) => names(query, c.title));
+      const near = (got.copies ?? []).map((c) => ({ ...c, d: distance(query, c.title) }));
+      const mine = near.filter((c) => c.d !== null);
       // mn: own choose — each copy's address in its own Jellyfin
       for (const c of mine) c.href = itemAt(lib.base, c);
-      // mn: own cards
-      copies.push(...mine.map((c) => ({ ...c, who: lib.who })));
-      state.libs[i] = { ...state.libs[i], state: got.state, matched: mine.length, why: got.why };
-      state.films = films(copies);
+      // mn: own cards — each library's count is of the films shown, the
+      // nearest of every library's, so it is counted again with each answer
+      copies.push(...mine.map((c) => ({ ...c, who: lib.who, at: i })));
+      state.libs[i] = { ...state.libs[i], state: got.state, why: got.why };
+      state.films = closest(films(copies));
+      const shown = state.films.flatMap((f) => f.copies);
+      for (const [j, l] of state.libs.entries())
+        if (l.state === 'answered') l.matched = shown.filter((c) => c.at === j).length;
       render(state);
     }),
   );
@@ -131,6 +141,8 @@ const WORDS = {
       ? `${l.who}: ${l.matched} ${l.matched === 1 ? 'film' : 'films'}`
       : `${l.who}: nothing by that name`,
   away: (l) => `${l.who} did not answer: its computer may be asleep. Its films are not here.`,
+  closed: (l) =>
+    `${l.who} doesn’t let Movie Night search it yet. Only ${l.library} can change that.`,
   refused: (l) => `${l.who} would not let you in.`,
   failed: (l) => `${l.who} could not be read from here.`,
   unanswered: (l) => `${l.who} did not answer, so no library of theirs is here.`,

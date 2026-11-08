@@ -29,12 +29,22 @@ function within(q, t) {
   return Math.min(...row);
 }
 
-// Whether a query names a title: one slip in four letters forgiven, at
-// least one, so a short query stays strict.
-export function names(query, title) {
+// How far a title is from what a person typed: the slips it takes, one in
+// four letters forgiven and at least one, so a short query stays strict;
+// null when the title is past that.
+export function distance(query, title) {
   const q = plain(query);
-  if (!q) return false;
-  return within(q, plain(title)) <= Math.max(1, Math.floor(q.length / 4));
+  if (!q) return null;
+  const d = within(q, plain(title));
+  return d <= Math.max(1, Math.floor(q.length / 4)) ? d : null;
+}
+
+// Only the films nearest what was typed: a title typed whole finds that
+// film alone, though "Test Pattern One" is three slips from "Test Pattern
+// Two"; a slip finds every film as near as the nearest.
+export function closest(films) {
+  const near = Math.min(...films.map((f) => Math.min(...f.copies.map((c) => c.d))));
+  return films.filter((f) => f.copies.some((c) => c.d === near));
 }
 
 // A film as Jellyfin's `/Items` gives it, in Movie Night's words.

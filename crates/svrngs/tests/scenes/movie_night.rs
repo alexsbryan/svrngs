@@ -238,6 +238,15 @@ async fn movie_night(engine: Engine) {
         }
         panic!("Ana's steps did not go as the scene says: {seen:#}");
     }
+    // Without the readers' account, Movie Night says whose it is to open,
+    // since Ana cannot (app.js `WORDS.closed`); her search then shows nothing.
+    let said = seen["searched"]["said"].as_str().unwrap_or_default();
+    if planted("no-readers") {
+        assert_eq!(
+            said, "Sam’s library doesn’t let Movie Night search it yet. Only Sam can change that.",
+            "the refusal names who can open it"
+        );
+    }
     let cards = seen["searched"]["cards"]
         .as_array()
         .cloned()
@@ -248,9 +257,17 @@ async fn movie_night(engine: Engine) {
         .find(|c| c.starts_with(FILM));
     assert!(
         card.is_some_and(
-            |c| c.contains(&format!("{FILM} (2026)")) && c.contains("Watch from Sam’s jellyfin")
+            |c| c.contains(&format!("{FILM} (2026)")) && c.contains("Watch from Sam’s library")
         ),
         "Ana's search shows Sam's film, his copy under it: {:#}",
+        seen["searched"]
+    );
+    // The title typed whole finds that film alone, though Test Pattern Two
+    // and Three are within its slips (apps/movie-night/match.js `closest`).
+    assert_eq!(
+        (cards.len(), said),
+        (1, "Sam’s library: 1 film"),
+        "Ana's search shows the one film she named: {:#}",
         seen["searched"]
     );
 
