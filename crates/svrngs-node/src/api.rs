@@ -208,14 +208,15 @@ async fn not_from_a_page(request: Request, next: Next) -> Response {
         return next.run(request).await;
     };
     tracing::warn!(target: "rails", page = ?page, path = %request.uri().path(), "api: refused — a page in a browser asked the record");
-    (
-        StatusCode::FORBIDDEN,
-        Json(serde_json::json!({
-            "error": "the record is served to this computer's apps, not to a page in a browser",
-            "kind": "from_a_page",
-        })),
-    )
-        .into_response()
+    let why = "the record is served to this computer's apps, not to a page in a browser";
+    refuse(StatusCode::FORBIDDEN, "from_a_page", why)
+}
+
+/// A refusal in the record's one shape beside the group's
+/// ([`crate::rail::refused_as`]): its sentence, and its `kind`.
+pub(crate) fn refuse(status: StatusCode, kind: &str, error: impl ToString) -> Response {
+    let said = serde_json::json!({ "error": error.to_string(), "kind": kind });
+    (status, Json(said)).into_response()
 }
 
 /// Serve the record only to a program that shows this computer's token
@@ -228,11 +229,7 @@ async fn holds_the_token(State(token): State<Bearer>, request: Request, next: Ne
         return next.run(request).await;
     }
     let why = format!("send this computer's token, which {} holds, as `Authorization: Bearer <token>`: the record answers no program without it", token.file().display());
-    (
-        StatusCode::UNAUTHORIZED,
-        Json(serde_json::json!({ "error": why, "kind": "no_token" })),
-    )
-        .into_response()
+    refuse(StatusCode::UNAUTHORIZED, "no_token", why)
 }
 
 /// Serve a request only from a caller on this computer: the bind guard's
@@ -246,13 +243,7 @@ async fn from_this_computer(request: Request, next: Next) -> Response {
         .extensions()
         .get::<ConnectInfo<SocketAddr>>()
         .map(|c| c.0);
-    let refused = |why: String| {
-        (
-            StatusCode::FORBIDDEN,
-            Json(serde_json::json!({ "error": why, "kind": "not_loopback" })),
-        )
-            .into_response()
-    };
+    let refused = |why: String| refuse(StatusCode::FORBIDDEN, "not_loopback", why);
     match caller {
         Some(addr) => match check_loopback(addr) {
             Ok(()) => {

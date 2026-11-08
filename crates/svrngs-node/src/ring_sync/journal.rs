@@ -13,7 +13,7 @@
 //! [`crate::node::Host`] and [`crate::RingRail`] — so the round and the route call
 //! them directly (RUST_ARCH 7).
 
-use crate::iroh::{Contact, PublicKey};
+use crate::iroh::Contact;
 
 /// One round's view of the membership: the Online members it may dial, and
 /// the two name lists its glassbox line prints. Upstream's `RoundMembers::of`
@@ -34,11 +34,7 @@ impl RoundMembers {
         let exchanged_with = members.iter().map(|(name, _)| name.clone()).collect();
         let peers = members
             .into_iter()
-            .map(|(name, contact)| OnlinePeer {
-                pubkey: Some(contact.key),
-                contact,
-                name,
-            })
+            .map(|(name, contact)| OnlinePeer { contact, name })
             .collect();
         Self {
             peers,
@@ -50,16 +46,11 @@ impl RoundMembers {
 
 /// An Online member of this mesh, as one round sees it.
 ///
-/// Carries the key the roster filter decides on alongside the contact the
-/// transport dials, because the two are read from the same `MemberRecord` in
-/// the same pass and the filter runs per namespace, after the membership lock
-/// is gone.
+/// The roster filter decides on the key its contact carries, which the
+/// transport dials. (svrngs: upstream kept that key beside the contact as an
+/// `Option`, `None` for a member on a pre-identity build; every member here
+/// is a key, so it was always `Some`, and went.)
 pub(super) struct OnlinePeer {
     pub(super) contact: Contact,
-    /// `None` for a member on a pre-identity build. Such a member is absent
-    /// from every DERIVED roster by construction (`ring_roster`'s
-    /// `unidentified` count), and the round offers it nothing. (svrngs: every
-    /// member is a key, so this is always `Some`.)
-    pub(super) pubkey: Option<PublicKey>,
     pub(super) name: String,
 }

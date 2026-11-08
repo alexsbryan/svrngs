@@ -75,6 +75,8 @@ const ORIGINS: usize = 64;
 /// The most redirects waiting for their onward request at once, every origin's:
 /// one a proved request's answer named, each kept while its stamp is fresh.
 const ONWARDS: usize = 4096;
+/// Kept by no cache: the session's epoch, scripts, browser key and refusal page.
+const NO_STORE: (header::HeaderName, &str) = (header::CACHE_CONTROL, "no-store");
 
 /// Why a request shows no session ([`Sessions::shown`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -111,6 +113,7 @@ pub(crate) enum Spent {
 /// with the tree's own nodes, however many proofs are shown. Stale ones
 /// are dropped at each spend, as a stale stamp is refused before its nonce
 /// is read.
+#[derive(Default)]
 #[expect(
     clippy::disallowed_types,
     reason = "the nonce store is one process's map, read and written by its own routes"
@@ -118,14 +121,6 @@ pub(crate) enum Spent {
 pub(crate) struct Nonces(Mutex<BTreeMap<String, BTreeSet<(i64, u128)>>>);
 
 impl Nonces {
-    #[expect(
-        clippy::disallowed_types,
-        reason = "the nonce store is one process's map, read and written by its own routes"
-    )]
-    pub(crate) fn new() -> Self {
-        Self(Mutex::new(BTreeMap::new()))
-    }
-
     /// `nonce`, stamped `stamp`, spent for `origin` at `now`: once, in
     /// that origin's window; or why not.
     pub(crate) fn spend(
@@ -174,6 +169,7 @@ struct Onward {
 /// fresh, and through at most [`FOLLOWS`] redirects, as a browser's fetch
 /// follows at most 20. Bounded by [`ONWARDS`]; past it a redirect is not
 /// followed, and says so.
+#[derive(Default)]
 #[expect(
     clippy::disallowed_types,
     reason = "the onward store is one process's map, read and written by its own routes"
@@ -185,14 +181,6 @@ pub(crate) struct Onwards(Mutex<BTreeMap<String, Onward>>);
 const FOLLOWS: u8 = 20;
 
 impl Onwards {
-    #[expect(
-        clippy::disallowed_types,
-        reason = "the onward store is one process's map, read and written by its own routes"
-    )]
-    fn new() -> Self {
-        Self(Mutex::new(BTreeMap::new()))
-    }
-
     /// `proof`'s onward request at origin `name`, address `at`, by `method`, kept
     /// until taken or stale at `now`: how many redirects it has followed;
     /// or why not, the proof followed through [`FOLLOWS`] already, or the
@@ -278,8 +266,8 @@ impl Sessions {
             key: ring::hmac::Key::new(ring::hmac::HMAC_SHA256, token.secret().as_bytes()),
             token,
             codes: Arc::new(Codes::new()),
-            nonces: Arc::new(Nonces::new()),
-            onwards: Arc::new(Onwards::new()),
+            nonces: Arc::new(Nonces::default()),
+            onwards: Arc::new(Onwards::default()),
             sockets: Arc::new(Codes::new()),
             port,
             epoch: hex::encode(epoch),
@@ -422,9 +410,7 @@ impl Sessions {
     /// Only fixed bootstrap code is public. It carries no person's data or authority.
     pub(crate) fn public(&self, name: &str, req: &Request) -> Option<Response> {
         if req.uri().path() == "/svrngs-session-epoch" && req.method() == axum::http::Method::GET {
-            return Some(
-                ([(header::CACHE_CONTROL, "no-store")], self.epoch.clone()).into_response(),
-            );
+            return Some(([NO_STORE], self.epoch.clone()).into_response());
         }
         if req.uri().path() == "/svrngs-socket" && req.method() == axum::http::Method::POST {
             let at = form_urlencoded::parse(req.uri().query().unwrap_or_default().as_bytes())
@@ -457,16 +443,8 @@ impl Sessions {
             }
             _ => return None,
         };
-        Some(
-            (
-                [
-                    (header::CONTENT_TYPE, "text/javascript"),
-                    (header::CACHE_CONTROL, "no-store"),
-                ],
-                file,
-            )
-                .into_response(),
-        )
+        let headers = [(header::CONTENT_TYPE, "text/javascript"), NO_STORE];
+        Some((headers, file).into_response())
     }
 
     /// Browser WebSockets cannot set a proof header: a proved fetch mints one use.
@@ -545,7 +523,7 @@ impl Sessions {
         match self.codes.redeem(code) {
             Ok((host, at)) if host == name => {
                 tracing::debug!(target: "session", name, "session: origin enrolled once, no cookie issued");
-                ([(header::CACHE_CONTROL, "no-store")], Json(serde_json::json!({ "key": URL_SAFE_NO_PAD.encode(self.browser_key(name)), "at": at }))).into_response()
+                ([NO_STORE], Json(serde_json::json!({ "key": URL_SAFE_NO_PAD.encode(self.browser_key(name)), "at": at }))).into_response()
             }
             Ok((host, _)) => {
                 tracing::debug!(target: "session", name, minted_for = host, "session: refused — an open minted for another origin");
@@ -624,10 +602,7 @@ impl Sessions {
         let page = format!("<!doctype html><meta charset=utf-8><title>Open svrngs from your computer</title><h1>Open svrngs from your computer</h1><p>{why}</p><p>Open svrngs from your {opener}, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.</p><p>To use this browser too, open the Terminal app, type <code>svrngs open --print</code>, and open the address it shows here within a minute.</p><p>A program, not a browser, sends the token in {file}.</p><p id=svrngs-session-state></p><script type=module src=/svrngs-session.js></script>");
         (
             StatusCode::UNAUTHORIZED,
-            [
-                (header::CACHE_CONTROL, "no-store"),
-                (header::REFERRER_POLICY, "no-referrer"),
-            ],
+            [NO_STORE, (header::REFERRER_POLICY, "no-referrer")],
             Html(page),
         )
             .into_response()

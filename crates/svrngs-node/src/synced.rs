@@ -601,22 +601,17 @@ impl Folders {
             if before.is_some_and(|h| h.p.entry == p.entry) {
                 continue;
             }
-            if !root.unchanged(
-                Path::new(p.path.as_str()),
-                before.map(|h| (h.p.size, h.mtime)),
-            ) {
+            let was = before.map(|h| (h.p.size, h.mtime));
+            if !root.unchanged(Path::new(p.path.as_str()), was) {
                 tracing::debug!(target: "folder", folder, path = %p.path, "synced: not written — the disk changed since it was last held, and is never written over");
                 continue;
             }
             if before.is_none_or(|h| h.p.hash != p.hash) {
-                fetches.push((p.clone(), before.map(|h| (h.p.size, h.mtime))));
+                fetches.push((p.clone(), was));
                 continue;
             }
-            match root
-                .metadata(Path::new(p.path.as_str()))
-                .map(|(_, mtime)| mtime)
-            {
-                Ok(mtime) => {
+            match root.metadata(Path::new(p.path.as_str())) {
+                Ok((_, mtime)) => {
                     let p = p.clone();
                     held.insert(p.path.clone(), Held { p, mtime });
                 }
@@ -645,11 +640,8 @@ impl Folders {
                 continue;
             };
             hold.push(tag);
-            match root
-                .metadata(Path::new(p.path.as_str()))
-                .map(|(_, mtime)| mtime)
-            {
-                Ok(mtime) => drop(held.insert(p.path.clone(), Held { p, mtime })),
+            match root.metadata(Path::new(p.path.as_str())) {
+                Ok((_, mtime)) => drop(held.insert(p.path.clone(), Held { p, mtime })),
                 Err(why) => {
                     tracing::warn!(target: "folder", folder, path = %p.path, %why, "synced: written, but its mtime cannot be read, so it is not held");
                     unwritten += 1;

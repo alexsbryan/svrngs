@@ -311,6 +311,8 @@ async fn token(
     let Some((name, declared, config)) = p.declared(&lend) else {
         return missing(&lend);
     };
+    let grant = |why: &str| refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
+    let bad_client = |why: &str| refuse(StatusCode::UNAUTHORIZED, "invalid_client", why);
     if form.grant_type.as_deref() != Some("authorization_code") {
         return refuse(
             StatusCode::BAD_REQUEST,
@@ -320,21 +322,13 @@ async fn token(
     }
     let (client_id, secret) = match client_of(&headers, &form) {
         Ok(client) => client,
-        Err(why) => return refuse(StatusCode::UNAUTHORIZED, "invalid_client", why),
+        Err(why) => return bad_client(&why),
     };
     if client_id != config.client_id {
-        return refuse(
-            StatusCode::UNAUTHORIZED,
-            "invalid_client",
-            format!("{client_id} is not this lend's client"),
-        );
+        return bad_client(&format!("{client_id} is not this lend's client"));
     }
     if !secret_ok(config.client_secret.as_deref(), secret.as_deref()) {
-        return refuse(
-            StatusCode::UNAUTHORIZED,
-            "invalid_client",
-            "the client's secret is not this lend's",
-        );
+        return bad_client("the client's secret is not this lend's");
     }
     let Some(text) = form.code.as_deref() else {
         return refuse(
@@ -345,27 +339,18 @@ async fn token(
     };
     let code = match p.codes.redeem(text) {
         Ok(code) => code,
-        Err(why) => return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why),
+        Err(why) => return grant(why),
     };
     if code.lend != name {
-        return refuse(
-            StatusCode::BAD_REQUEST,
-            "invalid_grant",
-            "the code was minted for another lend",
-        );
+        return grant("the code was minted for another lend");
     }
     if code.client != client_id {
-        return refuse(
-            StatusCode::BAD_REQUEST,
-            "invalid_grant",
-            "the code was minted for another client",
-        );
+        return grant("the code was minted for another client");
     }
     // The door's own decision: chosen for the lend, and the lender still
     // standing there (audit F6), never the reach rule spelt again.
     if !crate::door::reached(&p.rail, &declared, &code.group) {
-        let why = "the lend is no longer lent to the group the code was minted through";
-        return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
+        return grant("the lend is no longer lent to the group the code was minted through");
     }
     // The one decision that let the asker in, asked again: a member's
     // standing in the code's group, a guest's visit by `guest_of`.
@@ -382,29 +367,17 @@ async fn token(
         ),
     };
     if !admitted {
-        return refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
+        return grant(why);
     }
     if form.redirect_uri.as_deref() != Some(code.redirect.as_str()) {
-        return refuse(
-            StatusCode::BAD_REQUEST,
-            "invalid_grant",
-            "the redirect does not match the one the code was minted for",
-        );
+        return grant("the redirect does not match the one the code was minted for");
     }
     if let Some(challenge) = &code.challenge {
         let Some(verifier) = form.code_verifier.as_deref() else {
-            return refuse(
-                StatusCode::BAD_REQUEST,
-                "invalid_grant",
-                "the code was minted with a PKCE challenge and no verifier was sent",
-            );
+            return grant("the code was minted with a PKCE challenge and no verifier was sent");
         };
         if !challenge.answers(verifier) {
-            return refuse(
-                StatusCode::BAD_REQUEST,
-                "invalid_grant",
-                "the code verifier does not answer the code's challenge",
-            );
+            return grant("the code verifier does not answer the code's challenge");
         }
     }
     let issuer = issuer(p.port, name.as_str());

@@ -269,11 +269,7 @@ pub(crate) fn router(asking: Asking) -> Router {
 /// An ask the record cannot take, in the record's one refusal shape.
 fn not_taken(status: StatusCode, kind: &str, error: String) -> Response {
     tracing::debug!(target: "join", kind, "join: an ask the record cannot take");
-    (
-        status,
-        Json(serde_json::json!({ "error": error, "kind": kind })),
-    )
-        .into_response()
+    crate::api::refuse(status, kind, error)
 }
 
 /// `POST /v1/joins`: the group the link names joined by the svrngs running

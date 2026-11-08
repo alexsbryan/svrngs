@@ -79,6 +79,7 @@ use crate::ring_sync::{
     exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, RingSyncHandle, RoundMembers,
     Rounds, DEFAULT_RING_SYNC_INTERVAL,
 };
+use crate::version::{SCOPE_HEADER, VERSION};
 use crate::{actor_of, Person, RingRail, SigningKey};
 
 /// Groups held here, each by its namespace with who stands in it.
@@ -360,15 +361,11 @@ impl Node {
             api_port: api.addr().port(),
             minting: Default::default(),
         });
-        match rail.namespaces() {
-            Ok(groups) => {
-                for group in groups {
-                    host.cut_over(&group);
-                }
-            }
-            Err(why) => {
-                tracing::warn!(target: "node", %why, "node: groups unreadable at startup; their delegated writes remain closed")
-            }
+        let held = rail.namespaces().inspect_err(|why| {
+            tracing::warn!(target: "node", %why, "node: groups unreadable at startup; their delegated writes remain closed")
+        });
+        for group in held.unwrap_or_default() {
+            host.cut_over(&group);
         }
         // Its groups' own relays asked whether they answer, and each move of
         // this computer's home said (relay fallbacks).
@@ -683,15 +680,11 @@ impl Host {
     /// the groups held cannot be listed. A group whose register is
     /// unreadable is left out.
     pub(crate) fn standings(&self) -> Option<Groups> {
-        let namespaces = match self.rail.namespaces() {
-            Ok(n) => n,
-            Err(e) => {
-                tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so the round has no members");
-                return None;
-            }
-        };
+        let namespaces = self.rail.namespaces().inspect_err(|e| {
+            tracing::warn!(target: "node", error = %e, "node: cannot list the groups held, so the round has no members");
+        });
         let mut out = Vec::new();
-        for namespace in namespaces {
+        for namespace in namespaces.ok()? {
             match self.rail.standing(&namespace) {
                 Ok(Standing::Members(m)) => out.push((namespace, m)),
                 Ok(_) => continue,
@@ -803,9 +796,7 @@ impl Host {
                 }
             }
         }
-        lends.lent.sort_by(|a, b| {
-            (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
-        });
+        (lends.lent).sort_by_key(|l| (l.person.clone(), l.offered.name.clone()));
         tracing::debug!(target: "node", lent = lends.lent.len(), unlisted = ?lends.unlisted,
             "node: lends — asked every computer of the groups");
         lends
@@ -885,10 +876,7 @@ pub(crate) async fn ask_lends(
 ) -> Answered {
     let asked = axum::http::Request::builder()
         .uri(LENDS_ROUTE)
-        .header(
-            crate::version::SCOPE_HEADER,
-            crate::version::VERSION.to_string(),
-        )
+        .header(SCOPE_HEADER, VERSION.to_string())
         .body(Default::default())
         .expect("a fixed route and a plain header");
     match transport.fetch(&contact, asked).await {
@@ -1057,7 +1045,7 @@ async fn people_lends(
     body["people"] = crate::rail::standing_json(&people);
     body["shelf"] = crate::folder::shelf();
     body["changed"] = at.folders.changed(&groups, &asker);
-    body["version"] = crate::version::VERSION.into();
+    body["version"] = VERSION.into();
     Ok(Json(body).into_response())
 }
 
@@ -1076,14 +1064,8 @@ impl Asking {
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
         let offered = crate::door::offered(&self.door).await?;
         let others = self.host.lends_in(groups, asker).await;
-        let mine = (offered.into_iter()).map(|o| {
-            (
-                own.clone(),
-                self.host.actor.clone(),
-                o,
-                crate::version::VERSION,
-            )
-        });
+        let me = &self.host.actor;
+        let mine = (offered.into_iter()).map(|o| (own.clone(), me.clone(), o, VERSION));
         let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered, l.version));
         let mut lent: Vec<Lending> = (mine.chain(theirs))
             .map(|(person, key, offered, version)| Lending {
@@ -1099,9 +1081,7 @@ impl Asking {
         // to reach the group through; the pages show one (question.js `once`).
         let carries = |g: &str| groups.iter().any(|(ns, _)| ns == g);
         lent.retain_mut(|l| l.offered.listed(carries));
-        lent.sort_by(|a, b| {
-            (a.person.as_str(), &a.offered.name).cmp(&(b.person.as_str(), &b.offered.name))
-        });
+        lent.sort_by_key(|l| (l.person.clone(), l.offered.name.clone()));
         // This computer's own copy of a carried app first, so the one copy
         // a page opens is the one whose acts this computer signs as its own
         // person (capability-signed).

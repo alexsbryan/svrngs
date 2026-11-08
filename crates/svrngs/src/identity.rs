@@ -38,8 +38,7 @@ fn key_path(data_dir: &Path) -> std::path::PathBuf {
 }
 
 fn load_key(data_dir: &Path) -> std::io::Result<Option<SigningKey>> {
-    let path = key_path(data_dir);
-    match fs::read(&path) {
+    match fs::read(key_path(data_dir)) {
         Ok(bytes) => {
             let seed: [u8; 32] = bytes.as_slice().try_into().map_err(|_| {
                 std::io::Error::new(
@@ -89,11 +88,10 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError
         }
         Ok(None) => {
             let mut seed = [0u8; 32];
-            if let Err(e) = getrandom::fill(&mut seed) {
-                // getrandom failing is catastrophic enough that an
-                // expect matches NodeId::generate's posture.
-                panic!("failed to generate node key entropy: {e}");
-            }
+            // getrandom failing is catastrophic enough that an
+            // expect matches NodeId::generate's posture.
+            getrandom::fill(&mut seed)
+                .unwrap_or_else(|e| panic!("failed to generate node key entropy: {e}"));
             let fresh = SigningKey::from_bytes(&seed);
             save_key(data_dir, &fresh).map_err(|source| {
                 tracing::debug!(

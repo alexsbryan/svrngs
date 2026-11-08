@@ -200,12 +200,8 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
             site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
     if at_own {
-        if let Some(mut answer) = at.sessions.public(crate::session::HOME, &req) {
-            answer.headers_mut().insert(
-                header::CONTENT_SECURITY_POLICY,
-                HeaderValue::from_static(POLICY),
-            );
-            return answer;
+        if let Some(answer) = at.sessions.public(crate::session::HOME, &req) {
+            return ([(header::CONTENT_SECURITY_POLICY, POLICY)], answer).into_response();
         }
     }
     let shown = at.sessions.shown(&req, crate::session::HOME);
@@ -217,7 +213,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
         .get("x-svrngs-intent")
         .is_some_and(|h| h == "yes");
     let closed = || LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself");
-    let mut answer = if opening {
+    let answer = if opening {
         at.sessions.redeem(crate::session::HOME, &req)
     } else if shown == crate::session::Shown::Neither {
         tracing::debug!(target: "home", path = %req.uri().path(), "home: refused — neither its session's proof nor the token");
@@ -236,11 +232,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
     } else {
         next.run(req).await
     };
-    answer.headers_mut().insert(
-        header::CONTENT_SECURITY_POLICY,
-        HeaderValue::from_static(POLICY),
-    );
-    answer
+    ([(header::CONTENT_SECURITY_POLICY, POLICY)], answer).into_response()
 }
 
 /// `POST /connection`, the form of "Check the connection now": this

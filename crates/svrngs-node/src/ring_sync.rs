@@ -364,18 +364,9 @@ pub async fn run_one_round(
                 continue;
             }
         };
-        let (offered_to, skipped_not_standing): (Vec<&OnlinePeer>, Vec<&str>) = {
-            let mut on = Vec::new();
-            let mut off = Vec::new();
-            for p in &peers {
-                if p.pubkey.is_some_and(|k| standing.names(&key_actor(&k))) {
-                    on.push(p);
-                } else {
-                    off.push(p.name.as_str());
-                }
-            }
-            (on, off)
-        };
+        let (offered_to, off): (Vec<&OnlinePeer>, Vec<_>) =
+            (peers.iter()).partition(|p| standing.names(&key_actor(&p.contact.key)));
+        let skipped_not_standing: Vec<&str> = off.iter().map(|p| p.name.as_str()).collect();
         // GLASSBOX: the third list beside exchanged and offline. A namespace
         // that reaches nobody because nobody stands in it looks exactly
         // like a namespace with nothing to send.

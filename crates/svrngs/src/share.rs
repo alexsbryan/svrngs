@@ -19,12 +19,8 @@ pub use svrngs_node::share::*;
 /// `0.0.0.0` target would already be on the LAN to anyone, with no identity
 /// attached, which is the thing the mesh replaces.
 pub fn resolve_target(port: &str) -> Result<NonZeroU16, String> {
-    match port.parse::<u16>().ok().and_then(NonZeroU16::new) {
-        Some(p) => Ok(p),
-        None => Err(format!(
-            "`{port}` is not a port on this computer: a number from 1 to 65535"
-        )),
-    }
+    let p = port.parse::<u16>().ok().and_then(NonZeroU16::new);
+    p.ok_or_else(|| format!("`{port}` is not a port on this computer: a number from 1 to 65535"))
 }
 
 #[cfg(test)]

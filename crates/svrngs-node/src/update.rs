@@ -293,22 +293,23 @@ fn hash(bytes: &[u8]) -> String {
     hex::encode(digest(&SHA256, bytes).as_ref())
 }
 
+/// Why the update’s place, its lock or its folder, cannot be kept.
+fn unplaced(e: std::io::Error) -> UpdateError {
+    UpdateError::CouldNotJudge(format!("this computer cannot keep the update’s place: {e}"))
+}
+
 /// The update’s place, held for as long as the update runs: one update at
 /// a time, in this process and in any other using the same data dir.
 fn claim(dir: &Path) -> Result<File, UpdateError> {
     let path = dir.join(LOCK_FILE);
-    let file = File::create(&path).map_err(|e| {
-        UpdateError::CouldNotJudge(format!("this computer cannot keep the update’s place: {e}"))
-    })?;
+    let file = File::create(&path).map_err(unplaced)?;
     match file.try_lock() {
         Ok(()) => Ok(file),
         Err(std::fs::TryLockError::WouldBlock) => {
             tracing::debug!(target: "update", path = %path.display(), "update: refused — another update holds this computer’s place");
             Err(UpdateError::Busy)
         }
-        Err(std::fs::TryLockError::Error(e)) => Err(UpdateError::CouldNotJudge(format!(
-            "this computer cannot keep the update’s place: {e}"
-        ))),
+        Err(std::fs::TryLockError::Error(e)) => Err(unplaced(e)),
     }
 }
 
@@ -319,9 +320,7 @@ impl Temp {
     fn new(dir: &Path) -> Result<Self, UpdateError> {
         let path = dir.join("update");
         let _ = fs::remove_dir_all(&path);
-        fs::create_dir(&path).map_err(|e| {
-            UpdateError::CouldNotJudge(format!("this computer cannot keep the update’s place: {e}"))
-        })?;
+        fs::create_dir(&path).map_err(unplaced)?;
         Ok(Self(path))
     }
 }

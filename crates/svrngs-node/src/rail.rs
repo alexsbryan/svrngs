@@ -116,25 +116,12 @@ pub(crate) fn standing_of(
     rail: &RingRail,
     namespace: &str,
 ) -> Result<BTreeMap<String, Member>, Response> {
+    let refused = |status, kind: &str, why| refused_as(status, namespace, kind, why);
     if !crate::valid_namespace(namespace) {
         tracing::debug!(target: "rails", namespace, "rail: refused a namespace that is not one");
-        return Err((
-            StatusCode::BAD_REQUEST,
-            Json(serde_json::json!({
-                "error": RailError::BadNamespace(namespace.to_string()).to_string(),
-                "kind": "bad_namespace",
-                "namespace": namespace,
-            })),
-        )
-            .into_response());
+        let why = RailError::BadNamespace(namespace.to_string()).to_string();
+        return Err(refused(StatusCode::BAD_REQUEST, "bad_namespace", why));
     }
-    let refused = |status: StatusCode, kind: &str, why: String| {
-        (
-            status,
-            Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
-        )
-            .into_response()
-    };
     match rail.standing(namespace) {
         Ok(Standing::Members(people) | Standing::Left(people)) => {
             tracing::debug!(target: "rails", namespace, people = people.len(), "rail: the group is held here, left or not, and its register read");
@@ -261,7 +248,7 @@ pub(crate) async fn append_act(
             });
             Json(out).into_response()
         }
-        Err(e @ RailError::NotInRoster { .. }) => {
+        Err(RailError::NotInRoster { actor, namespace }) => {
             // `kind` carries the refusal TYPED, not only as prose: the KV
             // pump's defer-on-not-in-roster is a real decision that must
             // survive the dial, and a client matching on the sentence would
@@ -269,10 +256,6 @@ pub(crate) async fn append_act(
             // was refused. (svrngs: upstream chose the sentence by the
             // roster's origin; here the register decides, and the sentence
             // an app may show a person says so in DESIGN §1's words.)
-            let (actor, namespace) = match &e {
-                RailError::NotInRoster { actor, namespace } => (actor.clone(), namespace.clone()),
-                _ => (String::new(), String::new()),
-            };
             tracing::debug!(target: "rails", namespace = %namespace, actor = %actor, "rail: refused — this computer's key does not stand in the group");
             let refusal = serde_json::json!({
                 "error": format!(
@@ -381,13 +364,16 @@ pub(crate) async fn carry(
     Json(serde_json::json!({ "id": id, "counted": counted })).into_response()
 }
 
-/// A typed refusal: the sentence, its `kind`, and the group.
+/// A typed refusal: the sentence, its `kind`, and the group, refused 422.
 fn refused(namespace: &str, kind: &str, why: String) -> Response {
-    (
-        StatusCode::UNPROCESSABLE_ENTITY,
-        Json(serde_json::json!({ "error": why, "kind": kind, "namespace": namespace })),
-    )
-        .into_response()
+    refused_as(StatusCode::UNPROCESSABLE_ENTITY, namespace, kind, why)
+}
+
+/// A typed refusal at `status`: the shape every door that refuses a group
+/// by `kind` answers.
+pub(crate) fn refused_as(status: StatusCode, namespace: &str, kind: &str, why: String) -> Response {
+    let said = serde_json::json!({ "error": why, "kind": kind, "namespace": namespace });
+    (status, Json(said)).into_response()
 }
 
 /// `admission`'s ops as the wire spells them, each an older computer wrote

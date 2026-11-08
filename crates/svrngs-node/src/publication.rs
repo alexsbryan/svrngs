@@ -50,37 +50,26 @@ pub(crate) struct Request {
 #[derive(Debug, thiserror::Error)]
 #[error("{0}")]
 struct Fault(String);
-impl<E: std::fmt::Display> From<&E> for Fault {
-    fn from(e: &E) -> Self {
-        Self(e.to_string())
-    }
+fn fault(e: impl std::fmt::Display) -> Fault {
+    Fault(e.to_string())
 }
 
 impl Receipt {
     fn read(host: &Host, group: &str) -> Result<Option<Self>, Fault> {
-        let dir = host.rail.group_dir(group).map_err(|e| Fault::from(&e))?;
+        let dir = host.rail.group_dir(group).map_err(fault)?;
         match std::fs::read(dir.join(RECEIPT)) {
-            Ok(bytes) => serde_json::from_slice(&bytes)
-                .map(Some)
-                .map_err(|e| Fault::from(&e)),
+            Ok(bytes) => serde_json::from_slice(&bytes).map(Some).map_err(fault),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(Fault::from(&e)),
+            Err(e) => Err(fault(e)),
         }
     }
     fn keep(&self, host: &Host, group: &str) -> Result<(), Fault> {
-        let at = host
-            .rail
-            .group_dir(group)
-            .map_err(|e| Fault::from(&e))?
-            .join(RECEIPT);
-        let bytes = serde_json::to_vec(self).map_err(|e| Fault::from(&e))?;
-        crate::declared::write_secret(&at, &bytes).map_err(|(_, e)| Fault::from(&e))
+        let at = host.rail.group_dir(group).map_err(fault)?.join(RECEIPT);
+        let bytes = serde_json::to_vec(self).map_err(fault)?;
+        crate::declared::write_secret(&at, &bytes).map_err(|(_, e)| fault(e))
     }
     fn current(&self, host: &Host, group: &str) -> Result<bool, Fault> {
-        let latest = host
-            .rail
-            .current_invite(group)
-            .map_err(|e| Fault::from(&e))?;
+        let latest = host.rail.current_invite(group).map_err(fault)?;
         Ok(latest.is_some_and(|(_, i)| i.key == self.id))
     }
     #[expect(
@@ -91,7 +80,7 @@ impl Receipt {
         let current = self.current(host, group)?;
         let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|e| Fault::from(&e))?
+            .map_err(fault)?
             .as_secs() as i64;
         let state = if self.phase == Phase::Closed {
             Phase::Closed
@@ -107,7 +96,7 @@ impl Receipt {
             .map(|phrase| {
                 reqwest13::Url::parse(&self.resolver)
                     .map(|url| format!("{}/{phrase}", url.origin().ascii_serialization()))
-                    .map_err(|e| Fault::from(&e))
+                    .map_err(fault)
             })
             .transpose()?;
         Ok(
@@ -133,7 +122,7 @@ fn answer(result: Result<serde_json::Value, Fault>) -> Response {
 /// Status performs no resolver I/O, including after a restart.
 pub(crate) async fn status(State(at): State<Asking>, Query(q): Query<Request>) -> Response {
     answer((|| {
-        at.host.own_person(&q.group).map_err(|e| Fault::from(&e))?;
+        at.host.own_person(&q.group).map_err(fault)?;
         Receipt::read(&at.host, &q.group)?
             .map_or(Ok(serde_json::Value::Null), |r| r.shown(&at.host, &q.group))
     })())
@@ -150,11 +139,8 @@ pub(crate) async fn close(State(at): State<Asking>, Json(q): Json<Request>) -> R
 
 async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::Value, Fault> {
     let mut receipt = {
-        let _held = host
-            .minting
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        host.own_person(&q.group).map_err(|e| Fault::from(&e))?;
+        let _held = (host.minting.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
+        host.own_person(&q.group).map_err(fault)?;
         let old = Receipt::read(host, &q.group)?;
         let mut r = match old {
             Some(r)
@@ -167,8 +153,8 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
             _ if closing => return Err(Fault("no publication to close".into())),
             _ => {
                 let resolver = std::fs::read_to_string(host.rail.root().join("join-resolver"))
-                    .map_err(|e| Fault::from(&e))?;
-                let url = reqwest13::Url::parse(resolver.trim()).map_err(|e| Fault::from(&e))?;
+                    .map_err(fault)?;
+                let url = reqwest13::Url::parse(resolver.trim()).map_err(fault)?;
                 let local = url
                     .host_str()
                     .is_some_and(|h| h == "127.0.0.1" || h == "[::1]");
@@ -181,13 +167,11 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
                         "resolver must use HTTPS (HTTP only on loopback)".into(),
                     ));
                 }
-                let made = host
-                    .link_held(&q.group, false, None, None)
-                    .map_err(|e| Fault::from(&e))?;
+                let made = host.link_held(&q.group, false, None, None).map_err(fault)?;
                 let (_, invite) = host
                     .rail
                     .current_invite(&q.group)
-                    .map_err(|e| Fault::from(&e))?
+                    .map_err(fault)?
                     .ok_or_else(|| Fault("invitation absent".into()))?;
                 Receipt {
                     id: actor_of(&made.token.key()),
@@ -218,10 +202,7 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
     // No invitation mutex crosses an await. A concurrent link or close wins
     // over this response, even if the resolver accepted the old publication.
     let phrase = send(host, &q.group, &receipt, closing).await?;
-    let _held = host
-        .minting
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let _held = (host.minting.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
     let kept = Receipt::read(host, &q.group)?.ok_or_else(|| Fault("receipt disappeared".into()))?;
     if kept.id != receipt.id || kept.phase != receipt.phase {
         tracing::debug!(target: "publication", group = q.group, "publication: late response superseded by local receipt");
@@ -232,8 +213,7 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
         if current {
             // A fresh, undisclosed invitation supersedes this one by the
             // existing fold; a stale close never touches a newer link.
-            host.link_held(&q.group, false, None, None)
-                .map_err(|e| Fault::from(&e))?;
+            host.link_held(&q.group, false, None, None).map_err(fault)?;
         }
         receipt.phase = Phase::Closed;
     } else {
@@ -264,35 +244,35 @@ async fn send(
         "until": r.until,
         "page": r.page,
     }))
-    .map_err(|e| Fault::from(&e))?;
-    let app = svrngs_core::app::App::parse("onboarding").map_err(|e| Fault::from(&e))?;
+    .map_err(fault)?;
+    let app = svrngs_core::app::App::parse("onboarding").map_err(fault)?;
     let request = crate::http::builder()
         .map_err(Fault)?
         .redirect(reqwest13::redirect::Policy::none())
         .retry(reqwest13::retry::never())
         .build()
-        .map_err(|e| Fault::from(&e))?
+        .map_err(fault)?
         .post(&r.resolver)
         .header("x-svrngs-key", &host.actor)
         .header("x-svrngs-signature", app.sign(host.rail.signer(), &body))
         .header("content-type", "application/json")
         .body(body);
     let reply = tokio::time::timeout(std::time::Duration::from_secs(10), async {
-        let mut response = request.send().await.map_err(|e| Fault::from(&e))?;
+        let mut response = request.send().await.map_err(fault)?;
         if !response.status().is_success() || response.url().as_str() != r.resolver {
             return Err(Fault("resolver refused or redirected".into()));
         }
         let mut bytes = Vec::new();
-        while let Some(chunk) = response.chunk().await.map_err(|e| Fault::from(&e))? {
+        while let Some(chunk) = response.chunk().await.map_err(fault)? {
             if bytes.len() + chunk.len() > 8192 {
                 return Err(Fault("resolver response exceeds 8 KiB".into()));
             }
             bytes.extend_from_slice(&chunk);
         }
-        serde_json::from_slice::<serde_json::Value>(&bytes).map_err(|e| Fault::from(&e))
+        serde_json::from_slice::<serde_json::Value>(&bytes).map_err(fault)
     })
     .await
-    .map_err(|e| Fault::from(&e))??;
+    .map_err(fault)??;
     if reply["id"].as_str() != Some(&r.id) {
         return Err(Fault("resolver acknowledged another publication".into()));
     }

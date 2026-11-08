@@ -69,11 +69,7 @@ pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
     if targets.is_empty() {
         return None;
     }
-    Some(format!(
-        "{}@{}",
-        hex::encode(addr.id.as_bytes()),
-        targets.join(",")
-    ))
+    Some(format!("{}@{}", key_actor(&addr.id), targets.join(",")))
 }
 
 /// A peer to dial: its key, and whatever dial hints are known. Upstream's

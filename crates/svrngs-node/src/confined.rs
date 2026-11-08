@@ -65,18 +65,15 @@ impl Root {
         options.write(true).create_new(true);
         let file = self.0.open_with(&partial, &options)?;
         let mut file = tokio::fs::File::from_std(file.into_std());
-        use tokio::io::AsyncReadExt;
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
         let mut reader =
             tokio::io::BufReader::with_capacity(1024 * 1024, reader.take(size.saturating_add(1)));
         let copied = tokio::io::copy_buf(&mut reader, &mut file).await;
         let wrote = match copied {
-            Ok(n) if n == size => {
-                use tokio::io::AsyncWriteExt;
-                match file.flush().await {
-                    Ok(()) => file.sync_all().await,
-                    Err(e) => Err(e),
-                }
-            }
+            Ok(n) if n == size => match file.flush().await {
+                Ok(()) => file.sync_all().await,
+                Err(e) => Err(e),
+            },
             Ok(n) => {
                 tracing::debug!(target: "folder", path = %path.display(), size, got = n, "folder: refused — the blob's size is not its record's, so the partial is dropped");
                 Err(io::Error::other(
@@ -96,8 +93,6 @@ impl Root {
         });
         if let Err(e) = &wrote {
             tracing::debug!(target: "folder", path = %path.display(), error = %e, "folder: the fetched file not placed beneath the folder's root; its partial removed");
-        }
-        if wrote.is_err() {
             let _ = self.0.remove_file(&partial);
         }
         wrote

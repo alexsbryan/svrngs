@@ -92,7 +92,7 @@ async fn a_control_plane_body_must_match_its_proved_digest() {
 /// failing on the one store all origins shared (4,096 nonces in all).
 #[test]
 fn one_busy_origin_cannot_spend_anothers_window() {
-    let nonces = Nonces::new();
+    let nonces = Nonces::default();
     let now = 1_000;
     for n in 0..PER_ORIGIN as u128 {
         assert_eq!(nonces.spend("busy", now, n, now), Ok(()));

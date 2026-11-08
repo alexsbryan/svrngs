@@ -45,7 +45,7 @@ use crate::door::choices::{self, Said};
 use crate::door::LendRefusal;
 use crate::group::Namesake;
 use crate::node::{Asking, Lending, Unlisted};
-use crate::rail::{namespace_of, standing_of, RailQuery};
+use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
 use crate::seed::Seed;
 use crate::{register::RemovalSaid, Person};
@@ -253,15 +253,9 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
     let standing = standing_of(&at.host.rail, &namespace)?;
     let Some(own) = standing.get(&at.host.actor).map(|m| m.person.clone()) else {
         tracing::debug!(target: "surface", namespace, "surface: lends refused — this computer does not stand in the group");
-        return Err((
-            StatusCode::CONFLICT,
-            Json(serde_json::json!({
-                "error": format!("this computer is not in {namespace}, so nobody in it lends to it"),
-                "kind": "not_in_roster",
-                "namespace": namespace,
-            })),
-        )
-            .into_response());
+        let why = format!("this computer is not in {namespace}, so nobody in it lends to it");
+        let refused = refused_as(StatusCode::CONFLICT, &namespace, "not_in_roster", why);
+        return Err(refused);
     };
     let groups = [(namespace.clone(), standing)];
     let (lent, unlisted) = at.lent(&groups, &own, None).await?;
