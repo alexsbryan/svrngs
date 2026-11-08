@@ -107,6 +107,9 @@ down() {
 # load of 65 here (2026-10-05), so Demo A's are made once, by `films`.
 films() {
   local dir="$1" len="$2" ff="$JF_FFMPEG"
+  # Said apart, exit 4, as `jellyfin` says it: the films are made by
+  # Jellyfin's own ffmpeg (the taste scene, crates/svrngs/tests/scenes/taste.rs).
+  [ -x "$ff" ] || { echo "Jellyfin is not installed on this computer ($ff)" >&2; exit 4; }
   mkdir -p "$dir"
   # Each written aside and moved in whole, so a film cut short is made again.
   make() {

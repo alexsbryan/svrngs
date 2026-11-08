@@ -26,17 +26,26 @@ use crate::harness::{browsers, repo, Engine};
 use crate::load;
 use crate::people::{late, Scene};
 
-/// check.sh `<step> <scratch> <out>`, with Jellyfin on `port`.
-async fn check(step: &str, scratch: &Path, port: u16) -> std::process::Output {
+/// check.sh `<step> <scratch> <out>`, with Jellyfin on `port`, its films
+/// `media`'s when one is named (check.sh `MEDIA`), else its own.
+async fn check(
+    step: &str,
+    scratch: &Path,
+    port: u16,
+    media: Option<&Path>,
+) -> std::process::Output {
     let script = repo().join("apps/jellyfin/check/check.sh");
-    let run = tokio::process::Command::new(script)
-        .args([
-            step,
-            &scratch.join("r").to_string_lossy(),
-            &scratch.join("out").to_string_lossy(),
-        ])
-        .env("JF_PORT", port.to_string())
-        .output();
+    let mut run = tokio::process::Command::new(script);
+    run.args([
+        step,
+        &scratch.join("r").to_string_lossy(),
+        &scratch.join("out").to_string_lossy(),
+    ])
+    .env("JF_PORT", port.to_string());
+    if let Some(media) = media {
+        run.env("MEDIA", media);
+    }
+    let run = run.output();
     let ran = tokio::time::timeout(Duration::from_secs(300), run).await;
     ran.expect("check.sh ends within 300 s").unwrap()
 }
@@ -52,6 +61,12 @@ impl Jellyfin {
     /// Or check.sh's words where this computer has no Jellyfin (its exit
     /// 4): where Jellyfin is installed has one home, check.sh `JF_BIN`.
     pub async fn up(scratch: PathBuf) -> Result<Jellyfin, String> {
+        Jellyfin::up_with(scratch, None).await
+    }
+
+    /// As [`Jellyfin::up`], its library the films in `media`: the three
+    /// test patterns check.sh looks up by name among them.
+    pub async fn up_with(scratch: PathBuf, media: Option<&Path>) -> Result<Jellyfin, String> {
         // Its library's path as Jellyfin keeps it, with no `..` in it: a
         // library at `crates/svrngs/../../target/…` scans to no films.
         std::fs::create_dir_all(&scratch).unwrap();
@@ -61,7 +76,7 @@ impl Jellyfin {
         let port = free.local_addr().unwrap().port();
         drop(free);
         let jf = Jellyfin { scratch, port };
-        let ran = check("jellyfin", &jf.scratch, port).await;
+        let ran = check("jellyfin", &jf.scratch, port, media).await;
         if ran.status.code() == Some(4) {
             return Err(String::from_utf8_lossy(&ran.stderr).trim().to_string());
         }
