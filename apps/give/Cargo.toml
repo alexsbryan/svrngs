@@ -10,7 +10,10 @@
 # reach it.
 [package]
 name = "give"
-version = "0.1.0"
+# 0.2.0: the first that stops an app with a copy, and says so in its
+# `ready` (docs/APP_ACCESS_AND_STOP.md §4); the page offers a stop only
+# where the keeping computer's Give said it.
+version = "0.2.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
 publish = false

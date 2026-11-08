@@ -9,9 +9,11 @@
 //! record's order, as `GET /svrngs/acts` gives them to the page and the
 //! keeper program reads them from `/v1/rail/log`:
 //!
-//! - `ready`: the computer that wrote it can keep apps (it has Podman and
-//!   the keeper program). Any computer of any member may say it (who may
-//!   keep is the operator's to answer, CHARTER; any member until then).
+//! - `ready {cannot?, stops?}`: the computer that wrote it can keep apps
+//!   (it has Podman and the keeper program). Any computer of any member may
+//!   say it (who may keep is the operator's to answer, CHARTER; any member
+//!   until then). Its latest says whether its program stops an app with a
+//!   copy (`stops`), which a program from before that never says.
 //! - `started {app, card, agreed?}`: the writer's computer keeps an app
 //!   nobody keeps, from fresh state.
 //! - `moved {app, card, over, from, sum}`: the computer that keeps it, on
@@ -36,6 +38,16 @@
 //!   person of that computer says yes or no to the offer, a yes with their
 //!   own answer to the card's asks, since a game's terms bind whoever runs
 //!   it. A no leaves everything as it was.
+//! - `stop_asked {app, over}`: the person whose computer keeps it asks it
+//!   stopped with a copy (docs/APP_ACCESS_AND_STOP.md B): the keeping is
+//!   then stop pending, and nothing moves, takes or starts it until its
+//!   computer has stopped it. A waiting offer of it is over.
+//! - `stop_begun`, `stop_failed {step, why}` and `stopped {card, from,
+//!   sum}`, each `{app, over, stop}`: the computer that keeps it, and no
+//!   other, says it began the stop the act `stop` asked, that a step of it
+//!   failed (the stop still pending), or that it is stopped, unlent, and
+//!   its last copy kept at `from`. A stopped app starts again only by a
+//!   `taken` from exactly that copy, a person's explicit act.
 //!
 //! A `moved` is a copy too, the keeper's last. Each of the keeper's copies
 //! stands while it is among that computer's newest [`KEEP`]; one that did
@@ -155,13 +167,97 @@ pub struct Keeping {
     pub answered: i64,
     /// That the copy it started from did not start, as its computer said.
     pub failed: Option<Failed>,
+    pub state: State,
 }
 
 impl Keeping {
     /// Whether the computer that keeps it has gone [`GONE`] without
-    /// answering, at `now` in seconds.
+    /// answering, at `now` in seconds: only while it runs, since a stop
+    /// asked or done is no keeper gone, and nothing takes it over.
     pub fn gone(&self, now: i64) -> bool {
-        now.saturating_sub(self.answered) >= GONE as i64
+        self.state == State::Running && now.saturating_sub(self.answered) >= GONE as i64
+    }
+}
+
+/// Whether a kept app runs for its group, or its person asked it stopped
+/// with a copy (docs/APP_ACCESS_AND_STOP.md B4). No keeping is never kept,
+/// never stopped.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum State {
+    Running,
+    /// Asked; its computer has not said it is stopped.
+    StopPending(Stop),
+    /// Its computer stopped it and kept this copy, its last, to start again
+    /// from.
+    Stopped(Stop, Copy),
+}
+
+impl State {
+    fn as_str(&self) -> &'static str {
+        match self {
+            State::Running => "running",
+            State::StopPending(_) => "stop_pending",
+            State::Stopped(..) => "stopped",
+        }
+    }
+
+    /// Why nothing offers, answers, moves or takes a keeping stopping or
+    /// stopped; none while it runs.
+    fn refusal(&self) -> Option<Refusal> {
+        match self {
+            State::Running => None,
+            State::StopPending(s) => Some(Refusal::Stopping { stop: s.act.clone() }),
+            State::Stopped(s, _) => Some(Refusal::Stopped { stop: s.act.clone() }),
+        }
+    }
+}
+
+/// A person's stop of a kept app, and what its computer has said of it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Stop {
+    /// The `stop_asked` act, and its writer.
+    pub act: String,
+    pub person: String,
+    pub person_key: String,
+    pub since: i64,
+    /// The computer's `stop_begun`, once it said it began.
+    pub begun: Option<String>,
+    /// The latest step it said failed.
+    pub failed: Option<StopFailed>,
+}
+
+/// A step of a stop that failed, as the computer that keeps the app said.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct StopFailed {
+    pub act: String,
+    pub step: StopStep,
+    pub why: String,
+    pub since: i64,
+}
+
+/// The steps of a stop that can fail, in their order
+/// (docs/APP_ACCESS_AND_STOP.md §4): unlending it, stopping it, keeping
+/// its last copy.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StopStep {
+    Unlend,
+    Stop,
+    Copy,
+}
+
+impl StopStep {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            StopStep::Unlend => "unlend",
+            StopStep::Stop => "stop",
+            StopStep::Copy => "copy",
+        }
+    }
+
+    fn parse(step: &str) -> Option<StopStep> {
+        [StopStep::Unlend, StopStep::Stop, StopStep::Copy]
+            .into_iter()
+            .find(|s| s.as_str() == step)
     }
 }
 
@@ -198,6 +294,10 @@ pub struct Computer {
     pub person: String,
     pub person_key: String,
     pub since: i64,
+    /// Whether its latest `ready` says its program stops an app with a
+    /// copy: a program from before that cannot carry out a stop, so none
+    /// is asked of it, and it starts no stopped app again.
+    pub stops: bool,
 }
 
 /// Why an act counts nowhere.
@@ -255,6 +355,37 @@ pub enum Refusal {
     },
     /// A move that follows no yes to an offer.
     NoYes,
+    /// A stop asked by a person other than the one whose computer keeps it.
+    NotYoursToStop {
+        writer: String,
+        keeper: String,
+    },
+    /// Anything but its computer's word on it, while a stop is pending.
+    Stopping {
+        stop: String,
+    },
+    /// Anything but a start again from its copy, once stopped.
+    Stopped {
+        stop: String,
+    },
+    /// A start again of a stopped app from another copy than its last.
+    NotTheCopy {
+        copy: String,
+    },
+    /// A stop of an app whose computer's program can't carry one out, or a
+    /// start again on such a computer.
+    OldProgram {
+        computer: String,
+    },
+    /// A computer's word on a stop that is not the one pending.
+    NotThatStop {
+        names: String,
+        pending: Option<String>,
+    },
+    /// A stop step not among [`StopStep`]'s.
+    UnknownStep {
+        step: String,
+    },
 }
 
 /// An act the fold refused, and why.
@@ -283,6 +414,13 @@ impl Refused {
             Refusal::NotOffered { .. } => "not_offered",
             Refusal::NotAsked { .. } => "not_asked",
             Refusal::NoYes => "no_yes",
+            Refusal::NotYoursToStop { .. } => "not_yours",
+            Refusal::Stopping { .. } => "stopping",
+            Refusal::Stopped { .. } => "stopped",
+            Refusal::NotTheCopy { .. } => "not_the_copy",
+            Refusal::OldProgram { .. } => "old_program",
+            Refusal::NotThatStop { .. } => "not_that_stop",
+            Refusal::UnknownStep { .. } => "unknown_step",
         }
     }
 }
@@ -333,6 +471,31 @@ impl std::fmt::Display for Refused {
                 f,
                 "{act} moves {app} without a yes from the person of the computer it goes to"
             ),
+            Refusal::NotYoursToStop { writer, keeper } => write!(
+                f,
+                "{writer} asked to stop {app}, which {keeper}’s computer keeps: only {keeper} stops it"
+            ),
+            Refusal::Stopping { stop } => write!(f, "{app} is stopping: {stop} asked it"),
+            Refusal::Stopped { stop } => write!(
+                f,
+                "{app} is stopped, as {stop} asked: only a start again from its last copy follows"
+            ),
+            Refusal::NotTheCopy { copy } => write!(
+                f,
+                "{act} starts {app} again from another copy than {copy}, the one kept as it stopped"
+            ),
+            Refusal::OldProgram { computer } => write!(
+                f,
+                "{computer}’s Give program has not said it stops an app with a copy: it needs updating"
+            ),
+            Refusal::NotThatStop { names, pending } => {
+                let pending = pending.as_deref().unwrap_or("none");
+                write!(
+                    f,
+                    "{act} answers the stop {names}, and the stop of {app} pending is {pending}"
+                )
+            }
+            Refusal::UnknownStep { step } => write!(f, "{act} names the step {step}, which a stop has not"),
         }
     }
 }
@@ -385,13 +548,30 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
     let (writer, kind) = (text(&op["actor"]).unwrap_or_default(), payload["kind"].as_str());
     let (how, kind) = match kind {
         Some("ready") => {
+            let stops = payload["stops"] == true;
             let computer = Computer {
                 person: text(&op["person"]).unwrap_or_default(),
                 person_key: text(&op["person_key"]).unwrap_or_default(),
                 since: op["ts_unix"].as_i64().unwrap_or_default(),
+                stops,
             };
-            kept.can_keep.entry(writer).or_insert(computer);
+            // The first says since when; the latest, what its program does.
+            (kept.can_keep.entry(writer))
+                .and_modify(|c| c.stops = stops)
+                .or_insert(computer);
             return Ok(());
+        }
+        Some("stop_asked") => {
+            let person = (
+                text(&op["person"]).unwrap_or_default(),
+                text(&op["person_key"]).unwrap_or_default(),
+            );
+            let at = op["ts_unix"].as_i64().unwrap_or_default();
+            return stop_asked(kept, (&act, at), payload, person).map_err(refuse);
+        }
+        Some(kind @ ("stop_begun" | "stop_failed" | "stopped")) => {
+            let at = op["ts_unix"].as_i64().unwrap_or_default();
+            return stop_said(kept, (&act, kind, at), payload, writer).map_err(refuse);
         }
         Some(kind @ ("offered" | "accepted" | "declined")) => {
             let missing = Refusal::Missing {
@@ -438,6 +618,26 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
         let kept = now.map(|k| k.act.clone());
         return Err(refuse(Refusal::Stale { kept, over }));
     }
+    // A stopped app starts again only by a take from its last copy, on a
+    // computer whose program says it stops apps; nothing follows a stop
+    // pending but its computer's word on it.
+    match now.map(|k| &k.state) {
+        Some(State::Stopped(_, copy)) if how == How::Taken => {
+            let same = (from.as_ref(), sum.as_ref(), &card) == (Some(&copy.from), Some(&copy.sum), &copy.card);
+            if !same {
+                return Err(refuse(Refusal::NotTheCopy { copy: copy.act.clone() }));
+            }
+            if kept.can_keep.get(&writer).is_some_and(|c| !c.stops) {
+                return Err(refuse(Refusal::OldProgram { computer: writer }));
+            }
+        }
+        Some(state) => {
+            if let Some(why) = state.refusal() {
+                return Err(refuse(why));
+            }
+        }
+        None => {}
+    }
     let (mut to, mut agreed) = (writer.clone(), payload["agreed"] == true);
     if let (How::Moved, Some(now)) = (how, now) {
         if now.keeper != writer {
@@ -481,6 +681,7 @@ fn step(kept: &mut Kept, op: &Value) -> Result<(), Refused> {
         offer: None,
         answered: since,
         failed: None,
+        state: State::Running,
     };
     kept.apps.insert(app, keeping);
     Ok(())
@@ -576,6 +777,9 @@ fn offer(
         let over = text(if kind == "offered" { "over" } else { "offer" }).ok();
         return Err(Refusal::Stale { kept: None, over });
     };
+    if let Some(why) = keeping.state.refusal() {
+        return Err(why);
+    }
     if kind == "offered" {
         let (over, to) = (text("over")?, text("to")?);
         if over != keeping.act {
@@ -622,6 +826,141 @@ fn offer(
         "accepted" => (Answer::Yes, payload["agreed"] == true),
         _ => (Answer::No, false),
     };
+    Ok(())
+}
+
+/// A person's stop of a kept app, folded: `act` being the act's id and
+/// time, `person` its writer's name and key. Only the person whose computer
+/// keeps it asks it, as only they offer it, from any of their devices.
+fn stop_asked(
+    kept: &mut Kept,
+    (act, at): (&str, i64),
+    payload: &Value,
+    (writer, writer_key): (String, String),
+) -> Result<(), Refusal> {
+    let text = |field: &'static str| {
+        let missing = Refusal::Missing {
+            field,
+            kind: "stop_asked",
+        };
+        payload[field].as_str().map(String::from).ok_or(missing)
+    };
+    let (app, over) = (text("app")?, text("over")?);
+    let Kept { apps, can_keep, .. } = kept;
+    let Some(keeping) = apps.get_mut(&app) else {
+        return Err(Refusal::Stale {
+            kept: None,
+            over: Some(over),
+        });
+    };
+    if over != keeping.act {
+        let kept = Some(keeping.act.clone());
+        return Err(Refusal::Stale { kept, over: Some(over) });
+    }
+    if writer_key != keeping.person_key {
+        let keeper = keeping.person.clone();
+        return Err(Refusal::NotYoursToStop { writer, keeper });
+    }
+    if let Some(why) = keeping.state.refusal() {
+        return Err(why);
+    }
+    if let Some(yes) = keeping.offer.as_ref().filter(|o| o.answer == Answer::Yes) {
+        return Err(Refusal::Moving { offer: yes.act.clone() });
+    }
+    if !can_keep.get(&keeping.keeper).is_some_and(|c| c.stops) {
+        let computer = keeping.keeper.clone();
+        return Err(Refusal::OldProgram { computer });
+    }
+    keeping.offer = None;
+    keeping.state = State::StopPending(Stop {
+        act: act.into(),
+        person: writer,
+        person_key: writer_key,
+        since: at,
+        begun: None,
+        failed: None,
+    });
+    Ok(())
+}
+
+/// The keeping computer's word on a stop, folded: `stop_begun`,
+/// `stop_failed` or `stopped`, `act` being its id, kind and time, and
+/// `writer` the computer that wrote it. Only that computer says it, of the
+/// keeping that stands and the stop pending, whichever device asked it;
+/// one said twice changes nothing.
+fn stop_said(
+    kept: &mut Kept,
+    (act, kind, at): (&str, &str, i64),
+    payload: &Value,
+    writer: String,
+) -> Result<(), Refusal> {
+    let kind: &'static str = match kind {
+        "stop_begun" => "stop_begun",
+        "stop_failed" => "stop_failed",
+        _ => "stopped",
+    };
+    let text = |field: &'static str| {
+        let missing = Refusal::Missing { field, kind };
+        payload[field].as_str().map(String::from).ok_or(missing)
+    };
+    let (app, over, names) = (text("app")?, text("over")?, text("stop")?);
+    let Kept { apps, copies, .. } = kept;
+    let Some(keeping) = apps.get_mut(&app) else {
+        return Err(Refusal::Stale {
+            kept: None,
+            over: Some(over),
+        });
+    };
+    if over != keeping.act {
+        let kept = Some(keeping.act.clone());
+        return Err(Refusal::Stale { kept, over: Some(over) });
+    }
+    if writer != keeping.keeper {
+        let keeper = keeping.keeper.clone();
+        return Err(Refusal::NotTheKeeper { writer, keeper });
+    }
+    let stop = match &mut keeping.state {
+        State::StopPending(s) if s.act == names => s,
+        State::Stopped(s, _) if s.act == names => return Err(Refusal::Stopped { stop: s.act.clone() }),
+        State::StopPending(s) => {
+            let pending = Some(s.act.clone());
+            return Err(Refusal::NotThatStop { names, pending });
+        }
+        _ => return Err(Refusal::NotThatStop { names, pending: None }),
+    };
+    keeping.answered = at;
+    match kind {
+        "stop_begun" => {
+            stop.begun.get_or_insert_with(|| act.into());
+        }
+        "stop_failed" => {
+            let step = text("step")?;
+            let step = StopStep::parse(&step).ok_or(Refusal::UnknownStep { step })?;
+            stop.failed = Some(StopFailed {
+                act: act.into(),
+                step,
+                why: text("why")?,
+                since: at,
+            });
+        }
+        _ => {
+            let copy = Copy {
+                act: act.into(),
+                computer: writer,
+                person: keeping.person.clone(),
+                person_key: keeping.person_key.clone(),
+                from: text("from")?,
+                sum: text("sum")?,
+                card: text("card")?,
+                since: at,
+                had: false,
+                failed: false,
+            };
+            let stop = stop.clone();
+            copies.entry(app).or_default().push(copy.clone());
+            keeping.state = State::Stopped(stop, copy);
+        }
+    }
     Ok(())
 }
 
@@ -676,6 +1015,16 @@ impl Kept {
                 "from": c.from, "sum": c.sum, "card": c.card, "since": c.since,
             })
         };
+        let stop = |s: &Stop, kept: Option<&Copy>| {
+            json!({
+                "act": s.act, "person": s.person, "person_key": s.person_key, "since": s.since,
+                "begun": s.begun,
+                "failed": s.failed.as_ref().map(|f| json!({
+                    "act": f.act, "step": f.step.as_str(), "why": f.why, "since": f.since,
+                })),
+                "copy": kept.map(copy),
+            })
+        };
         let apps: serde_json::Map<_, _> = (self.apps.iter())
             .map(|(app, k)| {
                 let k = json!({
@@ -687,6 +1036,12 @@ impl Kept {
                         "since": o.since, "answer": o.answer.as_str(), "agreed": o.agreed,
                     })),
                     "answered": k.answered,
+                    "state": k.state.as_str(),
+                    "stop": match &k.state {
+                        State::Running => Value::Null,
+                        State::StopPending(s) => stop(s, None),
+                        State::Stopped(s, c) => stop(s, Some(c)),
+                    },
                     "gone": now.is_some_and(|now| k.gone(now)),
                     "failed": k.failed.as_ref().map(|f| json!({ "act": f.act, "since": f.since })),
                     "next": self.next(app).map(copy),
@@ -697,7 +1052,7 @@ impl Kept {
             .collect();
         let can_keep: serde_json::Map<_, _> = (self.can_keep.iter())
             .map(|(key, c)| {
-                let c = json!({ "person": c.person, "person_key": c.person_key, "since": c.since });
+                let c = json!({ "person": c.person, "person_key": c.person_key, "since": c.since, "stops": c.stops });
                 (key.clone(), c)
             })
             .collect();

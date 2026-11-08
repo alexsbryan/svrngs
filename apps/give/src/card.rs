@@ -34,6 +34,11 @@ pub struct Card {
     /// version that wrote it, and a copy is started only by that version
     /// (GIVE.md §4, "Versions and drift").
     pub version: String,
+    /// The file's bytes themselves, image digests and all: each snapshot
+    /// keeps them, so a copy names the exact card that wrote it, which a
+    /// start again parses by these same rules (docs/APP_ACCESS_AND_STOP.md
+    /// B5).
+    pub text: String,
 }
 
 /// Which published port is the app's door, and how it is spoken.
@@ -185,6 +190,7 @@ impl Card {
     pub fn parse(text: &str) -> Result<Card, Refused> {
         let card = read(text).map(|card| Card {
             version: blake3::hash(text.as_bytes()).to_hex().to_string(),
+            text: text.into(),
             ..card
         });
         if let Err(Refused::Field { field, why }) = &card {
@@ -273,6 +279,7 @@ fn read(text: &str) -> Result<Card, Refused> {
         asks,
         services: out,
         version: String::new(),
+        text: String::new(),
     })
 }
 

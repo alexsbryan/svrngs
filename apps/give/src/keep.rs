@@ -22,10 +22,17 @@
 //!   unlends and stops, and says did not start (`failed`), so the page
 //!   offers the copy before it. It never tries that copy again on its own;
 //! - back after the fold named another computer, it copies the state it
-//!   had (`had/`) before anything replaces it.
+//!   had (`had/`) before anything replaces it;
+//! - asked by its person to stop an app it keeps
+//!   (docs/APP_ACCESS_AND_STOP.md B), it says it began, unlends the app,
+//!   stops it, copies its stopped state apart under `stopped/`, which
+//!   nothing removes, and says it stopped naming that copy. A step that
+//!   fails is said, and the same stop tried again after [`RETRY`]; it
+//!   never starts the app again on its own, nor lends it.
 //!
-//! It says `ready` in each group once, so the fold counts this computer
-//! among those that can keep. What to do is [`plan`], pure over the folds
+//! It says `ready` in each group once, and that it stops apps with a copy,
+//! so the fold counts this computer among those that can keep. What to do
+//! is [`plan`], pure over the folds
 //! and what runs here; [`Keeper`] does it, and reads the clock.
 
 use std::collections::BTreeMap;
@@ -39,7 +46,7 @@ use crate::card::Card;
 use crate::lend::Svrngs;
 use crate::podman::Podman;
 use crate::record::{Group, Record};
-use crate::runtime::{Agreed, App, Name, RunError};
+use crate::runtime::{Agreed, App, CARD, Name, RunError};
 use crate::shelf::Shelf;
 
 /// How often a kept app's state is snapshotted into the group's folder:
@@ -127,6 +134,14 @@ pub enum Step {
         app: String,
         act: String,
     },
+    /// Carry out the stop with a copy its person asked of an app this
+    /// computer keeps: say it began, unlend it, stop it, copy its stopped
+    /// state apart, say it stopped naming that copy.
+    Halt {
+        group: String,
+        app: String,
+        keeping: Keeping,
+    },
     /// A keeping this computer will not take up, and why.
     Refuse {
         group: String,
@@ -136,14 +151,29 @@ pub enum Step {
 }
 
 /// Whether this computer, `me`, has to say again in a group what it can't
-/// run: what its latest `ready` among `acts` said, none being nothing, is
-/// not `cannot`. The page reads that latest `ready` (page/index.js `row`).
+/// run, or that it stops apps with a copy: what its latest `ready` among
+/// `acts` said, none being nothing, is not `cannot` and `stops`. The page
+/// and the fold read that latest `ready` (page/index.js `row`, give_fold
+/// `Computer::stops`).
 pub fn resay(acts: &[Value], me: &str, cannot: &Value) -> bool {
     let said = (acts.iter().rev())
         .find(|op| op["actor"] == me && op["payload"]["kind"] == "ready")
-        .map(|op| &op["payload"]["cannot"]);
+        .map(|op| &op["payload"]);
     let none = json!({});
-    said.map(|c| if c.is_null() { &none } else { c }) != Some(cannot)
+    let said = said.map(|p| {
+        (
+            if p["cannot"].is_null() { &none } else { &p["cannot"] },
+            p["stops"] == true,
+        )
+    });
+    said != Some((cannot, true))
+}
+
+/// What this computer says with its `ready`: what it can't run here, and
+/// that its program stops apps with a copy (docs/APP_ACCESS_AND_STOP.md
+/// §4, the version this contract needs).
+pub fn readiness(cannot: Value) -> Value {
+    json!({ "kind": "ready", "cannot": cannot, "stops": true })
 }
 
 /// What this computer does now: `folds` being each group's fold, `running`
@@ -161,13 +191,35 @@ pub fn plan(
     now: u64,
     every: Duration,
 ) -> Vec<Step> {
-    let (mut steps, mut starts) = (Vec::new(), Vec::new());
+    let (mut steps, mut starts, mut halts) = (Vec::new(), Vec::new(), Vec::new());
     let mut wanted: BTreeMap<&str, (&str, &Keeping)> = BTreeMap::new();
+    // What a stop holds here, by app and group: stopping or stopped, never
+    // wanted running, given up, nor copied as another's (docs/
+    // APP_ACCESS_AND_STOP.md §4, "Until completion, `plan` must not...").
+    let mut still: BTreeMap<&str, &str> = BTreeMap::new();
+    let waits = |app: &str, act: &str| {
+        (failed.get(app)).is_some_and(|(a, at)| a == act && now.saturating_sub(*at) < RETRY.as_secs())
+    };
     for (group, kept) in folds {
         if !kept.can_keep.contains_key(me) {
             steps.push(Step::Ready { group: group.clone() });
         }
         for (app, keeping) in kept.apps.iter().filter(|(_, k)| k.keeper == me) {
+            match &keeping.state {
+                give_fold::State::Running => {}
+                give_fold::State::StopPending(stop) => {
+                    still.insert(app, group);
+                    if !waits(app, &stop.act) {
+                        let (group, app, keeping) = (group.clone(), app.clone(), keeping.clone());
+                        halts.push(Step::Halt { group, app, keeping });
+                    }
+                    continue;
+                }
+                give_fold::State::Stopped(..) => {
+                    still.insert(app, group);
+                    continue;
+                }
+            }
             // svrngs lends a port to every group its person is in, under one
             // name, so this computer keeps one app of a kind at a time.
             if let Some((other, _)) = wanted.get(app.as_str()) {
@@ -182,10 +234,10 @@ pub fn plan(
             wanted.insert(app, (group, keeping));
         }
     }
-    let waits = |app: &str, act: &str| {
-        (failed.get(app)).is_some_and(|(a, at)| a == act && now.saturating_sub(*at) < RETRY.as_secs())
-    };
     for (app, r) in running {
+        if still.get(app.as_str()) == Some(&r.group.as_str()) {
+            continue;
+        }
         match wanted.get(app.as_str()) {
             Some((g, k)) if *g == r.group && k.act == r.act && k.failed.is_some() => steps.push(Step::Stop {
                 app: app.clone(),
@@ -221,7 +273,8 @@ pub fn plan(
             }),
         }
     }
-    for (app, h) in held.iter().filter(|(app, h)| !running.contains_key(*app) && !h.copied) {
+    let stopping = |app: &str, h: &Held| still.get(app) == Some(&h.group.as_str());
+    for (app, h) in (held.iter()).filter(|(app, h)| !running.contains_key(*app) && !h.copied && !stopping(app, h)) {
         let named = (wanted.get(app.as_str())).is_some_and(|(_, k)| k.act == h.act);
         if !named && !waits(app, &h.act) {
             steps.push(Step::Had {
@@ -251,6 +304,7 @@ pub fn plan(
             keeping: k.clone(),
         });
     }
+    steps.extend(halts);
     steps.extend(starts);
     steps
 }
@@ -283,6 +337,11 @@ pub enum StartError {
     Record(#[from] crate::record::RecordError),
     #[error("{path}: {why}")]
     File { path: PathBuf, why: String },
+    /// The card a copy keeps is not one this computer runs it by: refused
+    /// by the card's rules, or not the version the act names. The copy's,
+    /// as a copy that does not start is.
+    #[error("{app}'s copy keeps a card it can't start by: {why}")]
+    CopyCard { app: String, why: String },
 }
 
 /// The keeper program's state, and what it reaches through.
@@ -303,6 +362,9 @@ pub struct Keeper {
     folders: BTreeMap<String, PathBuf>,
     /// The refusals already traced, by act, so a round says each once.
     told: std::collections::BTreeSet<String>,
+    /// The failure last said of each stop, by its act, so a stop tried
+    /// again says one only when it changes.
+    said_stop: BTreeMap<String, String>,
 }
 
 impl Keeper {
@@ -319,6 +381,7 @@ impl Keeper {
             failed: BTreeMap::new(),
             folders: BTreeMap::new(),
             told: Default::default(),
+            said_stop: BTreeMap::new(),
         }
     }
 
@@ -333,7 +396,7 @@ impl Keeper {
             let kept = give_fold::fold(&acts);
             if kept.can_keep.contains_key(&groups.key) && resay(&acts, &groups.key, &cannot) {
                 tracing::debug!(group = id, %cannot, "keep: what this computer can't run changed, so said again");
-                if let Err(why) = self.record.write(id, json!({ "kind": "ready", "cannot": cannot })) {
+                if let Err(why) = self.record.write(id, readiness(cannot.clone())) {
                     eprintln!("give: could not say in {id} what this computer can't run: {why}");
                 }
             }
@@ -357,10 +420,7 @@ impl Keeper {
     fn step(&mut self, me: &str, step: Step, now: u64) {
         match step {
             Step::Ready { group } => match self.ready() {
-                Ok(()) => match self
-                    .record
-                    .write(&group, json!({ "kind": "ready", "cannot": self.cannot() }))
-                {
+                Ok(()) => match self.record.write(&group, readiness(self.cannot())) {
                     Ok(()) => println!("This computer can keep apps for {group} now."),
                     Err(why) => eprintln!("give: could not say so in {group}: {why}"),
                 },
@@ -385,7 +445,7 @@ impl Keeper {
                         println!("Waiting for {app}'s copy to reach this computer.");
                     }
                 }
-                Err(StartError::DidNotStart(why)) => {
+                Err(why @ (StartError::DidNotStart(_) | StartError::CopyCard { .. })) => {
                     tracing::debug!(group, app, act = keeping.act, %why, "keep: the copy did not start, so the record is told");
                     eprintln!("give: {app} did not start here from its copy: {why}");
                     self.failed.insert(app.clone(), (keeping.act.clone(), now));
@@ -410,6 +470,7 @@ impl Keeper {
             }
             Step::Check { app } => self.check(&app, now),
             Step::Move { app, keeping } => self.hand(me, &app, &keeping, now),
+            Step::Halt { group, app, keeping } => self.halt(me, &group, &app, &keeping, now),
             Step::Stop { app, why, copy } => {
                 tracing::debug!(app, why, copy, "keep: stopping");
                 self.stop(me, &app, copy.then_some(As::Had));
@@ -512,6 +573,7 @@ impl Keeper {
                 let (app, from) = (app.into(), from.clone());
                 return Err(StartError::NotHereYet { app, from });
             }
+            pinned(&folder.join(from), app, &k.card)?;
         }
         crate::machine::ensure(&self.podman, card)?;
         let run = App::new(&self.podman, card, self.name(app)?);
@@ -719,6 +781,168 @@ impl Keeper {
         }
     }
 
+    /// Carry out the stop its person asked of `app`, kept by `k` in `group`
+    /// (docs/APP_ACCESS_AND_STOP.md §4): the intention written down here
+    /// and said in the record before anything is done, then unlent,
+    /// stopped and seen gone, its stopped state copied apart, and the
+    /// stop said naming that copy. Each step is safe to take again, so a
+    /// crash at any point resumes here: a lend already gone, or a pod
+    /// already absent, is done; a copy already whole, awaiting its word in
+    /// the record, is said rather than taken again (`<dir>/<app>.stopping`).
+    fn halt(&mut self, me: &str, group: &str, app: &str, k: &Keeping, now: u64) {
+        let give_fold::State::StopPending(stop) = &k.state else {
+            return tracing::debug!(app, act = k.act, "keep: no stop pending, so none carried out");
+        };
+        let at = self.dir.join(format!("{app}.stopping"));
+        let kept = read_stopping(&at).filter(|(act, _)| *act == stop.act);
+        tracing::debug!(app, stop = stop.act, begun = ?stop.begun, ?kept, "keep: a stop to carry out, as it stands");
+        let wait = |keeper: &mut Keeper, why: String| {
+            tracing::debug!(app, stop = stop.act, why, "keep: the stop waits to be tried again");
+            eprintln!("give: {app} was not stopped yet: {why}");
+            keeper.failed.insert(app.into(), (stop.act.clone(), now));
+        };
+        if kept.is_none()
+            && let Err(why) = write(&at, &format!("{}\n", stop.act))
+        {
+            return wait(self, format!("the stop could not be written down here: {why}"));
+        }
+        if stop.begun.is_none() {
+            let begun = json!({ "kind": "stop_begun", "app": app, "over": k.act, "stop": stop.act });
+            if let Err(why) = self.record.write(group, begun) {
+                return wait(self, format!("the group could not be told it began: {why}"));
+            }
+        }
+        let step = |keeper: &mut Keeper, step: give_fold::StopStep, why: String| {
+            keeper.stop_failed(group, app, k, &stop.act, step, why, now)
+        };
+        match self.svrngs.unshare(app) {
+            Ok(()) => tracing::debug!(app, "keep: unlent, to stop it"),
+            Err(crate::lend::LendError::Failed { code: 1, said, .. }) => {
+                tracing::debug!(app, said, "keep: nothing lent here by that name, so unlent already")
+            }
+            Err(why) => return step(self, give_fold::StopStep::Unlend, why.to_string()),
+        }
+        let card = match self.card(app) {
+            Ok(card) => card.clone(),
+            Err(why) => return step(self, give_fold::StopStep::Stop, why.to_string()),
+        };
+        let gone = self.name(app).map_err(StartError::from).and_then(|name| {
+            App::new(&self.podman, &card, name.clone()).stop()?;
+            match self.podman.answers(&["pod", "exists", name.as_str()]) {
+                Ok(false) => Ok(()),
+                Ok(true) => Err(StartError::File {
+                    path: PathBuf::from(name.as_str()),
+                    why: "it still runs after it was stopped".into(),
+                }),
+                Err(why) => Err(RunError::from(why).into()),
+            }
+        });
+        if let Err(why) = gone {
+            return step(self, give_fold::StopStep::Stop, why.to_string());
+        }
+        tracing::debug!(app, "keep: stopped, and seen gone");
+        self.running.remove(app);
+        let whole = |(from, sum): &(String, String)| {
+            let folder = self.folders.get(group)?;
+            (crate::runtime::sum(&folder.join(from)).ok().as_ref() == Some(sum)).then_some(())
+        };
+        let copy = match kept.and_then(|(_, copy)| copy).filter(|c| whole(c).is_some()) {
+            Some(copy) => {
+                tracing::debug!(
+                    app,
+                    from = copy.0,
+                    "keep: the stopped copy is whole already, so said, not taken again"
+                );
+                Ok(copy)
+            }
+            None => self.last_copy(me, group, app, &card).and_then(|(from, sum)| {
+                write(&at, &format!("{}\n{from}\n{sum}\n", stop.act))?;
+                Ok((from, sum))
+            }),
+        };
+        let (from, sum) = match copy {
+            Ok(copy) => copy,
+            Err(why) => return step(self, give_fold::StopStep::Copy, why.to_string()),
+        };
+        let stopped = json!({ "kind": "stopped", "app": app, "over": k.act, "stop": stop.act, "card": card.version, "from": from, "sum": sum });
+        if let Err(why) = self.record.write(group, stopped) {
+            return wait(
+                self,
+                format!("it is stopped and copied, and the group could not be told: {why}"),
+            );
+        }
+        tracing::debug!(app, from, sum, "keep: stopped with a copy, and said");
+        let held = Held {
+            group: group.into(),
+            act: k.act.clone(),
+            copied: true,
+        };
+        if let Err(why) = write_held(&self.held_at(app), &held).and_then(|()| remove(&at)) {
+            eprintln!("give: {why}");
+        }
+        println!("Stopped {app} for the group; its last copy is kept in the group's folder.");
+    }
+
+    /// A step of the stop `stop` of `app` that failed: tried again after
+    /// [`RETRY`], the app neither started nor lent again, and said in the
+    /// record once for each failure that differs from the last.
+    #[expect(
+        clippy::too_many_arguments,
+        reason = "a stop's failure names its keeping, its stop, its step and why"
+    )]
+    fn stop_failed(
+        &mut self,
+        group: &str,
+        app: &str,
+        k: &Keeping,
+        stop: &str,
+        step: give_fold::StopStep,
+        why: String,
+        now: u64,
+    ) {
+        let step = step.as_str();
+        tracing::debug!(
+            app,
+            stop,
+            step,
+            why,
+            "keep: a step of the stop failed; it is tried again, the app not started"
+        );
+        eprintln!("give: {app} was not stopped with a copy: {step} failed: {why}");
+        self.failed.insert(app.into(), (stop.into(), now));
+        let said = format!("{step} {why}");
+        if self.said_stop.get(stop) == Some(&said) {
+            return tracing::debug!(app, stop, step, "keep: that failure is said already");
+        }
+        let failed =
+            json!({ "kind": "stop_failed", "app": app, "over": k.act, "stop": stop, "step": step, "why": why });
+        match self.record.write(group, failed) {
+            Ok(()) => drop(self.said_stop.insert(stop.into(), said)),
+            Err(e) => eprintln!("give: could not tell the group {app}'s stop failed: {e}"),
+        }
+    }
+
+    /// The stopped state of `app`, copied apart where nothing removes it,
+    /// `<folder>/give/<app>/<me>/stopped/<time>/`, and checked whole: each
+    /// file a copy is made of, its card's bytes among them. Its path in
+    /// the group's folder, and its sum.
+    fn last_copy(&self, me: &str, group: &str, app: &str, card: &Card) -> Result<(String, String), StartError> {
+        let folder = self.folder(group)?;
+        let into = folder.join("give").join(app).join(me).join("stopped");
+        let dir = App::new(&self.podman, card, self.name(app)?).snapshot(&into)?.dir;
+        let files = (card.state.iter()).flat_map(|v| [format!("{v}.tar"), format!("{v}.root")]);
+        for f in files.chain(["card".into(), CARD.into()]) {
+            if !dir.join(&f).is_file() {
+                let why = format!("the copy has no {f}");
+                return Err(StartError::File { path: dir, why });
+            }
+        }
+        let sum = crate::runtime::sum(&dir)?;
+        let from = dir.strip_prefix(folder).unwrap_or(&dir).to_string_lossy().to_string();
+        tracing::debug!(app, from, sum, "keep: the stopped state copied apart, whole");
+        Ok((from, sum))
+    }
+
     /// Unlend `app`, copy it `as` given, stop it: each step said if it
     /// fails, and the next still taken. A copy as it had it leaves nothing
     /// held here to copy again.
@@ -790,6 +1014,41 @@ fn read_held(path: &Path) -> Option<Held> {
 fn write_held(path: &Path, h: &Held) -> Result<(), StartError> {
     let copied = if h.copied { "copied\n" } else { "" };
     write(path, &format!("{}\n{}\n{copied}", h.act, h.group))
+}
+
+/// A stop written down at `path`: its act, and the copy taken of it once
+/// there is one, its path and sum.
+fn read_stopping(path: &Path) -> Option<(String, Option<(String, String)>)> {
+    let text = std::fs::read_to_string(path).ok()?;
+    let mut lines = text.lines().map(String::from);
+    let act = lines.next()?;
+    Some((act, lines.next().zip(lines.next())))
+}
+
+/// The card the copy at `copy` keeps, read by the card's rules and the
+/// version `card` names, before it is restored (docs/APP_ACCESS_AND_STOP.md
+/// B5). A copy from before copies kept their card has none to check.
+fn pinned(copy: &Path, app: &str, card: &str) -> Result<(), StartError> {
+    let at = copy.join(CARD);
+    let text = match std::fs::read_to_string(&at) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            tracing::debug!(app, copy = %copy.display(), "keep: a copy from before copies kept their card");
+            return Ok(());
+        }
+        read => read.map_err(|e| file(&at, e))?,
+    };
+    let refused = |why: String| {
+        tracing::debug!(app, copy = %copy.display(), why, "keep: refused: the copy's card");
+        StartError::CopyCard { app: app.into(), why }
+    };
+    let kept = Card::parse(&text).map_err(|e| refused(e.to_string()))?;
+    if kept.version != card {
+        return Err(refused(format!(
+            "it is version {}, and the act names {card}",
+            kept.version
+        )));
+    }
+    Ok(())
 }
 
 fn remove(path: &Path) -> Result<(), StartError> {

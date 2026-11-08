@@ -92,8 +92,9 @@ pub enum Made {
 }
 
 /// A snapshot on disk: `<dir>/<volume>.tar` for each state volume,
-/// `<dir>/<volume>.root`, its own folder's owner and mode, and `<dir>/card`,
-/// the version of the card that wrote it ([`Card::version`]).
+/// `<dir>/<volume>.root`, its own folder's owner and mode, `<dir>/card`,
+/// the version of the card that wrote it ([`Card::version`]), and
+/// `<dir>/compose.yaml`, that card's bytes ([`Card::text`]).
 #[derive(Debug, Clone)]
 pub struct Snapshot {
     pub dir: PathBuf,
@@ -396,6 +397,8 @@ impl<'a> App<'a> {
         }
         let at = partial.join("card");
         std::fs::write(&at, &self.card.version).map_err(|e| file(&at, e))?;
+        let at = partial.join(CARD);
+        std::fs::write(&at, &self.card.text).map_err(|e| file(&at, e))?;
         let copies = copies.into_iter().map(|(v, copy, _)| (v, copy)).collect();
         for v in &self.card.state {
             let tar = partial.join(format!("{v}.tar"));
@@ -632,6 +635,10 @@ impl<'a> App<'a> {
         Ok(())
     }
 }
+
+/// Where a snapshot keeps the bytes of the card that wrote it, inside what
+/// its sum covers.
+pub const CARD: &str = "compose.yaml";
 
 /// What a snapshot's files sum to: each file's name, length and bytes, in
 /// name order, hashed (blake3, hex). A move names it, so the computer it

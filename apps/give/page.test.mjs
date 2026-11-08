@@ -507,6 +507,127 @@ test('a kept web app opens on the computer that keeps it now, and says why not y
   }
 });
 
+// Stop running and keep a copy (docs/APP_ACCESS_AND_STOP.md B; §5 "Stop
+// ownership", "Program support"): the Stop is cy's alone, on any of her
+// computers, and only once the computer keeping Stand-in says its Give
+// carries one out; a Give from before says what to update instead. Every
+// page then says the stop as the keeping computer says it: waiting, begun,
+// each failed step, stopped with its copy, never Open; and anyone whose
+// Give can start it again does so from exactly that copy.
+test('the person whose computer keeps an app stops it with a copy, and every page says how the stop goes (chromium)', async () => {
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const { said, as, press, row, last } = drive(page, context, server);
+    const stops = () =>
+      page.getByRole('button', { name: 'Stop running and keep a copy', exact: true }).count();
+    const opens = () => page.getByRole('link', { name: 'Open Stand-in' }).count();
+    server.record('a1', 'cy', 'ka', { kind: 'ready' });
+    server.record('b1', 'bo', 'kb', { kind: 'ready', stops: true });
+    server.record('d1', 'di', 'kd', { kind: 'ready' });
+    server.record('a1', 'cy', 'ka', { kind: 'started', app: 'standin', card: 's1' });
+    const started = server.ops.at(-1).id;
+    server.opens.set('a1 standin', 204);
+
+    // Cy's computer's Give is from before stops: no Stop, but what to update.
+    await as('cy', 'ka', 'a2');
+    assert.match(await row('Stand-in'), /Update Give on your computer to stop it here\./);
+    assert.equal(await stops(), 0, 'a Give that can’t carry a stop is never offered one');
+
+    server.record('a1', 'cy', 'ka', { kind: 'ready', stops: true });
+    await as('bo', 'kb', 'b1');
+    assert.equal(await stops(), 0, 'no Stop for another person');
+    assert.doesNotMatch(await row('Stand-in'), /Update Give/);
+    await as('cy', 'ka', 'a2');
+    assert.match(
+      await row('Stand-in'),
+      /Stop running and keep a copy\s+Stops this app for the group\. Its data stays in the group’s shared folder\./,
+    );
+    await press('Stop running and keep a copy', 'Stand-in');
+    assert.deepEqual(
+      last(),
+      ['a2', { kind: 'stop_asked', app: 'standin', over: started }],
+      'asked from cy’s other computer, of the keeping that stands',
+    );
+    const stop = server.ops.at(-1).id;
+    assert.match(await row('Stand-in'), /Waiting for your computer to stop it\./);
+    assert.equal(await opens(), 0, 'no Open while it stops');
+    await as('bo', 'kb', 'b1');
+    assert.match(await row('Stand-in'), /Waiting for cy’s computer to stop it\./);
+
+    const word = (kind, more = {}) =>
+      server.record('a1', 'cy', 'ka', { kind, app: 'standin', over: started, stop, ...more });
+    word('stop_begun');
+    await as('bo', 'kb', 'b1');
+    assert.match(await row('Stand-in'), /Stopping and keeping a copy…/);
+    word('stop_failed', { step: 'unlend', why: 'svrngs on this computer did not answer.' });
+    await as('bo', 'kb', 'b1');
+    assert.match(
+      await row('Stand-in'),
+      /Cy’s computer could not stop lending it: svrngs on this computer did not answer\. It may still be running\.\s+Cy’s computer tries again by itself\./,
+    );
+    word('stop_failed', { step: 'copy', why: 'the group’s folder is full' });
+    await as('bo', 'kb', 'b1');
+    assert.match(
+      await row('Stand-in'),
+      /Stopped here, but the final copy could not be saved: the group’s folder is full\./,
+    );
+    assert.doesNotMatch(await row('Stand-in'), /A copy is saved/, 'no completion claimed');
+
+    const copy = { card: 's1', from: 'give/standin/a1/stopped/9000', sum: '5f1' };
+    word('stopped', copy);
+    await as('bo', 'kb', 'b1');
+    assert.match(
+      await row('Stand-in'),
+      /Stand-in · stopped\s+Stopped\. A copy is saved in the group’s folder on cy’s computer\.\s+Other computers receive it when they are online\./,
+    );
+    assert.equal(await opens(), 0, 'a stopped app has no Open');
+    await as('di', 'kd', 'd1');
+    assert.match(
+      await row('Stand-in'),
+      /Update Give on your computer to start Stand-in again here\./,
+    );
+    assert.equal(
+      await page.getByRole('button', { name: 'Start again on this computer' }).count(),
+      0,
+    );
+    await as('bo', 'kb', 'b1');
+    await press('Start again on this computer', 'Stand-in');
+    assert.deepEqual(
+      last(),
+      ['b1', { kind: 'taken', app: 'standin', over: started, agreed: false, ...copy }],
+      'from exactly its copy',
+    );
+    assert.match(
+      await row('Stand-in'),
+      /Stand-in · kept by your computer\s+Starting on your computer…/,
+    );
+
+    // Bo offers it to cy's computer, cy says yes, and a stop bo pressed on a
+    // page that had not read the yes reaches the group after it: refused,
+    // and said.
+    const again = server.ops.at(-1).id;
+    server.record('b1', 'bo', 'kb', { kind: 'offered', app: 'standin', over: again, to: 'a1' });
+    server.record('a1', 'cy', 'ka', {
+      kind: 'accepted',
+      app: 'standin',
+      offer: server.ops.at(-1).id,
+    });
+    server.record('b1', 'bo', 'kb', { kind: 'stop_asked', app: 'standin', over: again });
+    await as('bo', 'kb', 'b1');
+    assert.match(await row('Stand-in'), /Moving to cy’s computer…\s+Already moving\./);
+    assert.equal(await stops(), 0, 'no Stop while it moves');
+    for (const s of said) assert.doesNotMatch(s, NOT_SAID);
+    assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});
+
 /** A time as the page says it: hours and minutes today, with the day before. */
 function when(ts) {
   const d = new Date(ts * 1000);

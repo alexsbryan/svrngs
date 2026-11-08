@@ -39,10 +39,13 @@ fn podman_here() -> Podman {
 /// The record API svrngs serves on loopback, as give reads it, for each
 /// of `computers` by its token: its key, its person and their key, and its
 /// folder of the one group, `g1`. One thread owns the record; `/test/act`
-/// writes an act as another computer would have, for the test.
+/// writes an act as another computer would have, for the test. A write of
+/// a kind last sent on `refuse` is answered 500, as a record that could not
+/// write it.
 struct Svrngs {
     port: u16,
     stop: mpsc::Sender<()>,
+    refuse: mpsc::Sender<Vec<String>>,
 }
 
 fn answer(mut s: &TcpStream, status: u16, body: &Value) {
@@ -61,9 +64,13 @@ fn record(computers: Vec<Computer>) -> Svrngs {
     let port = listener.local_addr().unwrap().port();
     listener.set_nonblocking(true).unwrap();
     let (stop, stopped) = mpsc::channel();
+    let (refuse, refusals) = mpsc::channel::<Vec<String>>();
     std::thread::spawn(move || {
-        let mut ops: Vec<Value> = Vec::new();
+        let (mut ops, mut refused): (Vec<Value>, Vec<String>) = (Vec::new(), Vec::new());
         while stopped.try_recv().is_err() {
+            if let Some(r) = refusals.try_iter().last() {
+                refused = r;
+            }
             let Ok((s, _)) = listener.accept() else {
                 std::thread::sleep(Duration::from_millis(20));
                 continue;
@@ -102,6 +109,11 @@ fn record(computers: Vec<Computer>) -> Svrngs {
                     &json!({ "key": actor, "groups": [{ "id": "g1", "name": "Elm", "folders": [folder] }] }),
                 ),
                 ("GET", "/v1/rail/log?namespace=g1") => answer(&s, 200, &json!({ "ops": ops })),
+                ("POST", "/v1/rail/append?namespace=g1")
+                    if refused.iter().any(|k| body["payload"]["kind"] == k.as_str()) =>
+                {
+                    answer(&s, 500, &json!({ "error": "the record could not be written" }))
+                }
                 ("POST", "/v1/rail/append?namespace=g1") => {
                     let op = json!({ "id": id, "actor": actor, "person": person, "person_key": key, "ts_unix": ts, "voided": false, "payload": body["payload"] });
                     ops.push(op);
@@ -119,7 +131,7 @@ fn record(computers: Vec<Computer>) -> Svrngs {
             }
         }
     });
-    Svrngs { port, stop }
+    Svrngs { port, stop, refuse }
 }
 
 impl Svrngs {
@@ -323,7 +335,7 @@ fn snapshots(p: &Places, app: &str) -> Vec<PathBuf> {
             d.flatten()
                 .map(|e| e.path())
                 .filter(|p| !p.file_name().unwrap().to_string_lossy().starts_with('.'))
-                .filter(|p| p.file_name().unwrap() != "had")
+                .filter(|p| p.file_name().unwrap() != "had" && p.file_name().unwrap() != "stopped")
                 .collect()
         })
         .unwrap_or_default();
@@ -949,4 +961,423 @@ fn the_keeper_gone_then_back() {
     );
     let _ = std::fs::remove_dir_all(&a.root);
     let _ = std::fs::remove_dir_all(&b.root);
+}
+
+/// Cy's other computer, which keeps nothing: a stop asked from it is Cy's.
+const CYS_OTHER: (&str, &str, &str) = ("a2", "cy", "ka");
+
+/// The copies `actor`'s computer kept of `app` as it stopped it, oldest first.
+fn kept_stopped(p: &Places, app: &str, actor: &str) -> Vec<PathBuf> {
+    let at = p.folder.join("give").join(app).join(actor).join("stopped");
+    let mut out: Vec<PathBuf> = std::fs::read_dir(at)
+        .map(|d| d.flatten().map(|e| e.path()).collect())
+        .unwrap_or_default();
+    out.retain(|p| !p.file_name().unwrap().to_string_lossy().starts_with('.'));
+    out.sort();
+    out
+}
+
+/// A file of the stand-in's state, as a copy holds it, if it holds it.
+fn file_in(copy: &Path, name: &str) -> Option<String> {
+    let mut tar = tar::Archive::new(std::fs::File::open(copy.join("data.tar")).unwrap());
+    for e in tar.entries().unwrap() {
+        let mut e = e.unwrap();
+        if e.path().unwrap().file_name().is_some_and(|n| n == name) {
+            let mut out = String::new();
+            e.read_to_string(&mut out).unwrap();
+            return Some(out);
+        }
+    }
+    None
+}
+
+/// Stop running and keep a copy (docs/APP_ACCESS_AND_STOP.md B2, B3, B5,
+/// B6; §5 "Final-copy ordering", "Stop means stopped", "Retention and
+/// restart"). Cy's computer keeps the stand-in, and copies it while it
+/// runs; then a last write lands, and Cy, from her other computer, asks it
+/// stopped. Cy's computer says it began, unlends it, stops it, and keeps
+/// its stopped state apart, whole, with its card's bytes, and says it
+/// stopped naming that copy: the last write is in it. Nothing lends or
+/// runs it after, through copies' pruning and the program's restart. Bo's
+/// computer starts it again from that copy, waiting while the copy has not
+/// reached it or is torn, and the state there is the stopped state, with
+/// the one start Bo's gave it.
+#[test]
+fn a_stop_keeps_the_last_write_and_stays_stopped_until_started_again() {
+    let podman = podman_here();
+    let card = Card::parse(STANDIN).unwrap();
+    let (a, b) = (places("halt-a"), places("halt-b"));
+    let svrngs = record(vec![(TOKEN, CY, a.folder.clone()), (BOS, BO, b.folder.clone())]);
+    point(&a, &svrngs, TOKEN);
+    point(&b, &svrngs, BOS);
+    let mut removed = Removed {
+        podman: &podman,
+        card: card.clone(),
+        test: "halt-a".into(),
+        keeper: Some(keep(&a, "halt-a")),
+        root: a.root.clone(),
+        more: vec![("halt-b".into(), Some(keep(&b, "halt-b")), b.root.clone())],
+    };
+    let of = |kind: &str, actor: &str| {
+        (svrngs.ops().into_iter())
+            .filter(|o| o["payload"]["kind"] == format!("give/{kind}") && o["actor"] == actor)
+            .collect::<Vec<_>>()
+    };
+    let kept = || give_fold::fold(&give::record::gives(&svrngs.ops()));
+    until(
+        "both computers say they can keep, and stop",
+        Duration::from_secs(30),
+        || {
+            let stops = |actor| of("ready", actor).last().is_some_and(|r| r["payload"]["stops"] == true);
+            (stops("a1") && stops("b1")).then_some(())
+        },
+    );
+    let started = svrngs.act(
+        CY,
+        json!({ "kind": "started", "app": "standin", "card": card.version, "agreed": true }),
+    );
+    let shared = until("cy's computer lends standin", Duration::from_secs(180), || {
+        asked(&a).into_iter().find(|l| l.starts_with("share "))
+    });
+    let port: u16 = shared.split(' ').nth(1).unwrap().parse().unwrap();
+    until("a copy while it runs", Duration::from_secs(60), || {
+        of("copied", "a1").pop()
+    });
+    // The last write, after the copy taken while it ran.
+    let web = format!("{}standin-web", prefix("halt-a"));
+    podman
+        .run(&["exec", &web, "sh", "-c", "echo last > /data/last"])
+        .unwrap();
+    assert_eq!(get(port, "/last").as_deref(), Some("last\n"));
+
+    let stop = svrngs.act(
+        CYS_OTHER,
+        json!({ "kind": "stop_asked", "app": "standin", "over": started }),
+    );
+    let stopped = until("cy's computer says it stopped", Duration::from_secs(120), || {
+        of("stopped", "a1").pop()
+    });
+    let pod = |test: &str| format!("{}standin", prefix(test));
+    assert!(
+        !podman.answers(&["pod", "exists", &pod("halt-a")]).unwrap(),
+        "stopped: no pod"
+    );
+    let ops = svrngs.ops();
+    let at = |id: &Value| ops.iter().position(|o| o["id"] == *id).unwrap();
+    let begun = of("stop_begun", "a1");
+    assert_eq!(begun.len(), 1, "it said it began, once: {begun:?}");
+    assert!(at(&begun[0]["id"]) < at(&stopped["id"]), "began before it stopped");
+    assert_eq!(begun[0]["payload"]["stop"], json!(stop));
+    assert_eq!(
+        asked(&a),
+        [shared.clone(), "unshare standin".to_string()],
+        "unlent, and lent no more"
+    );
+    let p = &stopped["payload"];
+    assert_eq!(
+        (&p["over"], &p["stop"], &p["card"]),
+        (&json!(started), &json!(stop), &json!(card.version))
+    );
+    let from = p["from"].as_str().unwrap().to_string();
+    let copy = a.folder.join(&from);
+    assert_eq!(
+        kept_stopped(&a, "standin", "a1"),
+        std::slice::from_ref(&copy),
+        "kept apart, under stopped/"
+    );
+    assert_eq!(
+        p["sum"].as_str().unwrap(),
+        give::runtime::sum(&copy).unwrap(),
+        "whole: its sum is its files'"
+    );
+    assert_eq!(
+        std::fs::read_to_string(copy.join("compose.yaml")).unwrap(),
+        STANDIN,
+        "with its card's bytes"
+    );
+    assert_eq!(
+        file_in(&copy, "last").as_deref(),
+        Some("last\n"),
+        "the last write before the stop is in it"
+    );
+    assert_eq!(
+        starts_in(&copy).lines().count(),
+        1,
+        "the app never started again on the way"
+    );
+    let state = kept().apps["standin"].state.clone();
+    assert!(
+        matches!(&state, give_fold::State::Stopped(_, c) if c.from == from),
+        "{state:?}"
+    );
+    let copies = of("copied", "a1").len();
+
+    // Copies' pruning and the program's restart leave it stopped, and its copy.
+    std::thread::sleep(Duration::from_secs(9));
+    let mut cys = removed.keeper.take().unwrap();
+    signal(&cys, "-TERM");
+    assert!(cys.wait().unwrap().success());
+    removed.keeper = Some(keep(&a, "halt-a"));
+    std::thread::sleep(Duration::from_secs(9));
+    assert_eq!(
+        asked(&a),
+        [shared.clone(), "unshare standin".to_string()],
+        "nothing lent again"
+    );
+    assert!(
+        !podman.answers(&["pod", "exists", &pod("halt-a")]).unwrap(),
+        "nor started"
+    );
+    assert_eq!(
+        kept_stopped(&a, "standin", "a1"),
+        std::slice::from_ref(&copy),
+        "its copy stands"
+    );
+    assert_eq!(
+        (of("stopped", "a1").len(), of("copied", "a1").len()),
+        (1, copies),
+        "nor copied again"
+    );
+
+    // Bo starts it again on Bo's computer, from that copy: missing, then
+    // torn, it waits; whole, it starts from it.
+    let restart = json!({ "kind": "taken", "app": "standin", "card": card.version, "over": started, "from": from, "sum": p["sum"], "agreed": true });
+    let again = svrngs.act(BO, restart);
+    std::thread::sleep(Duration::from_secs(8));
+    assert!(asked(&b).is_empty(), "missing bytes start nothing: {:?}", asked(&b));
+    carry(&a, &b, &from, false);
+    std::thread::sleep(Duration::from_secs(8));
+    assert!(asked(&b).is_empty(), "torn bytes start nothing: {:?}", asked(&b));
+    assert!(
+        !podman.answers(&["pod", "exists", &pod("halt-b")]).unwrap(),
+        "never fresh"
+    );
+    carry(&a, &b, &from, true);
+    let shared = until("bo's computer lends standin", Duration::from_secs(180), || {
+        asked(&b).into_iter().find(|l| l.starts_with("share "))
+    });
+    let port: u16 = shared.split(' ').nth(1).unwrap().parse().unwrap();
+    assert_eq!(
+        get(port, "/last").as_deref(),
+        Some("last\n"),
+        "started from the stopped state"
+    );
+    let starts = get(port, "/starts").unwrap();
+    assert!(
+        starts.starts_with(&starts_in(&copy)) && starts.lines().count() == 2,
+        "{starts:?}"
+    );
+    assert_eq!(kept().apps["standin"].act, again);
+    assert_eq!(
+        kept_stopped(&a, "standin", "a1"),
+        std::slice::from_ref(&copy),
+        "the stopped copy kept through the start again"
+    );
+
+    // It comes back to Cy's computer, on Cy's yes, and is copied there
+    // past three times: the rolling copies' pruning leaves the stopped one.
+    let o = svrngs.act(
+        BO,
+        json!({ "kind": "offered", "app": "standin", "over": again, "to": "a1" }),
+    );
+    svrngs.act(
+        CY,
+        json!({ "kind": "accepted", "app": "standin", "offer": o, "agreed": true }),
+    );
+    let moved = until("bo's computer moves it", Duration::from_secs(120), || {
+        of("moved", "b1").pop()
+    });
+    let back = moved["payload"]["from"].as_str().unwrap().to_string();
+    carry(&b, &a, &back, true);
+    until(
+        "four copies on cy's computer, kept again",
+        Duration::from_secs(180),
+        || {
+            let mine = of("copied", "a1")
+                .into_iter()
+                .filter(|c| c["payload"]["over"] == moved["id"]);
+            (mine.count() >= 4).then_some(())
+        },
+    );
+    assert!(
+        snapshots(&a, "standin").len() <= 3,
+        "rolling copies pruned: {:?}",
+        snapshots(&a, "standin")
+    );
+    assert_eq!(
+        kept_stopped(&a, "standin", "a1"),
+        [copy],
+        "the stopped copy stands through pruning"
+    );
+    drop(removed);
+    let _ = std::fs::remove_dir_all(&a.root);
+    let _ = std::fs::remove_dir_all(&b.root);
+}
+
+/// A stop that fails says which step, and is no stop (B4; §5 "Failure
+/// truth", "Recovery"). Each step is made to fail in turn, the program
+/// killed and started again between them, as a crash at each boundary:
+/// unlending (svrngs's command fails), stopping (podman's `pod stop`
+/// fails), keeping the copy (the folder can't take it) and saying it
+/// stopped (the record refuses it). Each failure is said with its step, or,
+/// the record's own, written here; none is said stopped, the app's state
+/// is kept, and the app is never started nor lent again. With every fault
+/// gone, the same stop finishes: the copy made before the record's failure
+/// is the one said, and the app never started again on the way.
+#[test]
+fn a_stop_that_fails_names_its_step_and_finishes_the_same_stop_after_a_crash() {
+    let podman = podman_here();
+    let card = Card::parse(STANDIN).unwrap();
+    let a = places("halt-fail");
+    let svrngs = record(vec![(TOKEN, CY, a.folder.clone())]);
+    point(&a, &svrngs, TOKEN);
+    let fault = |name: &str| a.root.join(name);
+    std::fs::write(
+        a.bin.join("svrngs"),
+        format!(
+            "#!/bin/sh\necho \"$*\" >> '{}'\nif [ \"$1\" = unshare ] && [ -e '{}' ]; then echo 'svrngs: the lend could not be withdrawn' >&2; exit 2; fi\n",
+            a.asked.display(),
+            fault("unshare").display()
+        ),
+    )
+    .unwrap();
+    let real = String::from_utf8(
+        Command::new("sh")
+            .args(["-c", "command -v podman"])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
+    let podman_at = a.bin.join("podman");
+    std::fs::write(
+        &podman_at,
+        format!(
+            "#!/bin/sh\nif [ \"$1 $2\" = 'pod stop' ] && [ -e '{}' ]; then echo 'Error: the pod could not be stopped' >&2; exit 125; fi\nexec '{}' \"$@\"\n",
+            fault("pod-stop").display(),
+            real.trim()
+        ),
+    )
+    .unwrap();
+    std::fs::set_permissions(&podman_at, std::os::unix::fs::PermissionsExt::from_mode(0o755)).unwrap();
+    let mut removed = Removed {
+        podman: &podman,
+        card: card.clone(),
+        test: "halt-fail".into(),
+        keeper: Some(keep(&a, "halt-fail")),
+        root: a.root.clone(),
+        more: Vec::new(),
+    };
+    let of = |kind: &str| {
+        (svrngs.ops().into_iter())
+            .filter(|o| o["payload"]["kind"] == format!("give/{kind}") && o["actor"] == "a1")
+            .collect::<Vec<_>>()
+    };
+    until("cy's computer says it can keep", Duration::from_secs(30), || {
+        of("ready").pop()
+    });
+    let started = svrngs.act(
+        CY,
+        json!({ "kind": "started", "app": "standin", "card": card.version, "agreed": true }),
+    );
+    let shared = until("cy's computer lends standin", Duration::from_secs(180), || {
+        asked(&a).into_iter().find(|l| l.starts_with("share "))
+    });
+    let pod = format!("{}standin", prefix("halt-fail"));
+    let volume = format!("{pod}-data");
+    let crash = |removed: &mut Removed| {
+        let mut k = removed.keeper.take().unwrap();
+        signal(&k, "-KILL");
+        let _ = k.wait();
+    };
+
+    std::fs::write(fault("unshare"), "").unwrap();
+    svrngs.act(CY, json!({ "kind": "stop_asked", "app": "standin", "over": started }));
+    let said = |step: &str| {
+        until(&format!("its {step} said failed"), Duration::from_secs(60), || {
+            of("stop_failed").into_iter().find(|f| f["payload"]["step"] == step)
+        })
+    };
+    let unlend = said("unlend");
+    assert!(
+        unlend["payload"]["why"]
+            .as_str()
+            .unwrap()
+            .contains("could not be withdrawn"),
+        "{unlend}"
+    );
+    assert!(
+        podman.answers(&["pod", "exists", &pod]).unwrap(),
+        "unlent nothing, so it may still run, and it does"
+    );
+    crash(&mut removed);
+    std::fs::remove_file(fault("unshare")).unwrap();
+
+    std::fs::write(fault("pod-stop"), "").unwrap();
+    removed.keeper = Some(keep(&a, "halt-fail"));
+    let stop = said("stop");
+    assert!(
+        stop["payload"]["why"]
+            .as_str()
+            .unwrap()
+            .contains("could not be stopped"),
+        "{stop}"
+    );
+    crash(&mut removed);
+    std::fs::remove_file(fault("pod-stop")).unwrap();
+
+    let into = a.folder.join("give/standin/a1/stopped");
+    std::fs::create_dir_all(into.parent().unwrap()).unwrap();
+    std::fs::write(&into, "a file where the copy goes").unwrap();
+    removed.keeper = Some(keep(&a, "halt-fail"));
+    said("copy");
+    assert!(
+        !podman.answers(&["pod", "exists", &pod]).unwrap(),
+        "stopped before its copy failed"
+    );
+    crash(&mut removed);
+    std::fs::remove_file(&into).unwrap();
+
+    svrngs.refuse.send(vec!["give/stopped".into()]).unwrap();
+    removed.keeper = Some(keep(&a, "halt-fail"));
+    until(
+        "a whole copy, and the record refusing its word",
+        Duration::from_secs(60),
+        || {
+            let err = std::fs::read_to_string(a.root.join("keep.err")).unwrap_or_default();
+            (err.contains("the group could not be told") && kept_stopped(&a, "standin", "a1").len() == 1).then_some(())
+        },
+    );
+    crash(&mut removed);
+    let made = kept_stopped(&a, "standin", "a1");
+    assert!(of("stopped").is_empty(), "no false success at any step");
+    assert!(
+        podman.answers(&["volume", "exists", &volume]).unwrap(),
+        "its state is kept"
+    );
+
+    svrngs.refuse.send(Vec::new()).unwrap();
+    removed.keeper = Some(keep(&a, "halt-fail"));
+    let stopped = until("the same stop finishes", Duration::from_secs(60), || {
+        of("stopped").pop()
+    });
+    let copy = a.folder.join(stopped["payload"]["from"].as_str().unwrap());
+    assert_eq!(
+        made,
+        std::slice::from_ref(&copy),
+        "the copy made before the record's failure, said, not taken again"
+    );
+    assert_eq!(starts_in(&copy).lines().count(), 1, "never started again on the way");
+    assert_eq!(
+        asked(&a).iter().filter(|l| l.starts_with("share ")).collect::<Vec<_>>(),
+        [&shared],
+        "nor lent again"
+    );
+    assert_eq!(of("stop_begun").len(), 1, "one stop, begun once");
+    assert!(
+        podman.answers(&["volume", "exists", &volume]).unwrap(),
+        "its state is kept once stopped"
+    );
+    drop(removed);
+    let _ = std::fs::remove_dir_all(&a.root);
 }

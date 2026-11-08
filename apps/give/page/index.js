@@ -8,7 +8,10 @@
 // offers the copy the fold names, with the same question; a computer's
 // state from before another kept it is listed, to "Start instead"; a web
 // app kept now has "Open <its title>", on the computer keeping it now
-// (docs/APP_ACCESS_AND_STOP.md A4). It reads the group at its own
+// (docs/APP_ACCESS_AND_STOP.md A4); the person whose computer keeps one
+// has "Stop running and keep a copy", and the card then says how the stop
+// goes, as that computer says it, until "Start again on this computer"
+// (B). It reads the group at its own
 // origin, `svrngs/acts`, and writes there; svrngs writes each act as this
 // computer's person. Nothing here decides who keeps an app: the fold does,
 // the vendored build of the one the keeper program runs (vendor/), and this
@@ -165,6 +168,9 @@ const answer = (card, o, yes) =>
     `Your answer wasn’t saved`,
   );
 
+const stop = (card, keeping) =>
+  write({ kind: 'stop_asked', app: card.kind, over: keeping.act }, `${card.title} wasn’t stopped`);
+
 /** Keep `card` here from `copy`, the keeping it follows being `keeping`'s. */
 const take = (card, keeping, copy) =>
   write(
@@ -264,6 +270,120 @@ function opening(card, keeping, read, status, out) {
   out.append(el('p', why), button('Try again', show, true));
 }
 
+/** A sentence's first word. */
+const first = (s) => `${s[0].toUpperCase()}${s.slice(1)}`;
+
+/**
+ * Stop with a copy (docs/APP_ACCESS_AND_STOP.md B1), for the person whose
+ * computer keeps it, from any of their computers: or, where that computer's
+ * Give has not said it can carry one out, what to update. None while it
+ * moves; a stop the fold refused as it began moving is said.
+ */
+function halt(card, keeping, kept, read, out) {
+  const mine = keeping.person_key === read.you_key;
+  const moving = keeping.offer?.answer === 'yes';
+  const stops = kept.can_keep[keeping.keeper]?.stops === true;
+  const late = kept.refused.findLast(
+    (r) =>
+      r.app === card.kind &&
+      read.ops.some(
+        (o) =>
+          o.id === r.act &&
+          o.payload.kind === 'stop_asked' &&
+          o.payload.over === keeping.act &&
+          o.person_key === read.you_key,
+      ),
+  );
+  trace('the stop, as it can be asked', {
+    app: card.kind,
+    mine,
+    moving,
+    stops,
+    refused: late?.refusal ?? null,
+  });
+  if (late?.refusal === 'moving') out.append(el('p', 'Already moving.'));
+  if (!mine || moving) return;
+  if (!stops) return out.append(el('p', `Update Give on ${who(keeping, read)} to stop it here.`));
+  out.append(
+    button('Stop running and keep a copy', () => stop(card, keeping), true),
+    el('p', 'Stops this app for the group. Its data stays in the group’s shared folder.'),
+  );
+}
+
+/**
+ * A kept app stopping or stopped, as the computer that keeps it says
+ * (docs/APP_ACCESS_AND_STOP.md B3, B4): no Open, move or takeover while it
+ * is, and once stopped, its copy and the start again from it.
+ */
+function stopping(card, keeping, canKeep, kept, read, out) {
+  const s = keeping.stop;
+  const whose = who(keeping, read);
+  trace('the stop, as it stands', {
+    app: card.kind,
+    state: keeping.state,
+    stop: s.act,
+    begun: s.begun,
+    failed: s.failed?.step ?? null,
+  });
+  if (keeping.state === 'stop_pending') {
+    const f = s.failed;
+    if (!f)
+      return out.append(
+        el('p', s.begun ? 'Stopping and keeping a copy…' : `Waiting for ${whose} to stop it.`),
+      );
+    const why = f.why.replace(/\.$/, '');
+    const said =
+      f.step === 'copy'
+        ? `Stopped here, but the final copy could not be saved: ${why}.`
+        : `${first(whose)} could not ${f.step === 'unlend' ? 'stop lending it' : 'stop it'}: ${why}. It may still be running.`;
+    return out.append(el('p', said), el('p', `${first(whose)} tries again by itself.`));
+  }
+  out.append(
+    el('p', `Stopped. A copy is saved in the group’s folder on ${whose}.`),
+    el('p', 'Other computers receive it when they are online.'),
+    el('p', `The copy is from ${when(s.copy.since)}.`),
+  );
+  again(card, keeping, canKeep, kept, read, out);
+}
+
+/**
+ * A stopped app's start again, from exactly its copy (B6): by anyone
+ * whose computer can keep and whose Give says it carries a stop, with the
+ * card's asks; never from another copy, never fresh.
+ */
+function again(card, keeping, canKeep, kept, read, out) {
+  const copy = keeping.stop.copy;
+  const stops = Object.values(kept.can_keep).some((c) => c.person_key === read.you_key && c.stops);
+  trace('starting it again, as it can be', {
+    app: card.kind,
+    can_keep: canKeep,
+    stops,
+    copy: copy.card,
+    card: card.version,
+  });
+  if (!canKeep) return;
+  if (!stops)
+    return out.append(el('p', `Update Give on your computer to start ${card.title} again here.`));
+  if (copy.card !== card.version)
+    return out.append(
+      el(
+        'p',
+        `This copy was saved by another version of ${card.title} than Give has here, so it can’t start again here.`,
+      ),
+    );
+  if (taking !== copy.act)
+    return out.append(
+      button('Start again on this computer', () =>
+        card.asks.length ? ((taking = copy.act), show()) : take(card, keeping, copy),
+      ),
+    );
+  out.append(
+    ...asks(card),
+    button('Agree and start again', () => take(card, keeping, copy)),
+    button('Not now', () => ((taking = null), show()), true),
+  );
+}
+
 /**
  * A kept app's row past who keeps it, when its computer has stopped
  * answering or its copy didn't start: the copy the fold offers, to keep
@@ -331,7 +451,8 @@ function row(card, kept, read, opens) {
   const out = el('li', '', el('h2', card.title), el('p', card.about));
   const canKeep = Object.values(kept.can_keep).some((c) => c.person_key === read.you_key);
   if (keeping) {
-    out.append(el('p', `${card.title} · kept by ${who(keeping, read)}`));
+    const by = keeping.state === 'stopped' ? 'stopped' : `kept by ${who(keeping, read)}`;
+    out.append(el('p', `${card.title} · ${by}`));
     out.lastChild.className = 'kept';
     trace('who answers, as it stands', {
       app: card.kind,
@@ -341,9 +462,11 @@ function row(card, kept, read, opens) {
       next: keeping.next?.act ?? null,
       had: keeping.had.length,
     });
-    if (!takeover(card, keeping, canKeep, out)) {
+    if (keeping.state !== 'running') stopping(card, keeping, canKeep, kept, read, out);
+    else if (!takeover(card, keeping, canKeep, out)) {
       opening(card, keeping, read, opens[card.kind], out);
       move(card, keeping, kept, read, out);
+      halt(card, keeping, kept, read, out);
     }
     had(card, keeping, canKeep, read, out);
     return out;
@@ -438,7 +561,8 @@ async function show() {
   const kept = fold(read.ops, Math.floor(Date.now() / 1000));
   // Whether svrngs opens each web app kept now and answering, asked of it
   // once a round (A4): a keeping recorded is not proof its app answers.
-  const live = (c) => kept.apps[c.kind] && !kept.apps[c.kind].gone && !kept.apps[c.kind].failed;
+  const live = (c) =>
+    kept.apps[c.kind]?.state === 'running' && !kept.apps[c.kind].gone && !kept.apps[c.kind].failed;
   const web = cards.filter((c) => c.door === 'http' && live(c));
   const opens = Object.fromEntries(
     await Promise.all(web.map(async (c) => [c.kind, await reach(c, kept.apps[c.kind])])),

@@ -415,7 +415,18 @@ group, keeper's key and card kind, never a name, port or remembered
 address; until svrngs there lends it the card says **Starting on Jo's
 computer…** (or **Moving…**), or **Jo's computer did not answer**, with
 **Try again**, and a port's card keeps its own instructions
-(docs/APP_ACCESS_AND_STOP.md A4). Every move and every takeover is a person's yes, and a keeper that
+(docs/APP_ACCESS_AND_STOP.md A4). The person whose computer keeps an app
+may **Stop running and keep a copy**: a stop its computer keeps to across
+restarts, which nothing moves, takes or starts past. It is done only when
+that computer, and no other, says the app is unlent, stopped, and its last
+copy, with its card's bytes, kept apart under `stopped/` where no pruning
+reaches, by path and sum; until then every page says it waits, goes on,
+or which step failed, and once stopped it has no Open. Anyone whose Give
+carries a stop may **Start again on this computer** from exactly that
+copy, never fresh. Running, stop pending and stopped are the fold's, not
+svrngs's, and a stop is asked only of a computer whose latest `ready`
+says its Give stops apps (Give 0.2.0; docs/APP_ACCESS_AND_STOP.md B).
+Every move and every takeover is a person's yes, and a keeper that
 comes back after another took over keeps its later state as a copy anyone
 may start instead, never merged. Any member whose computer has Podman and
 Give's program may keep (the operator, 2026-10-26).

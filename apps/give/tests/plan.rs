@@ -409,7 +409,7 @@ fn the_later_of_two_takeovers_stops_with_a_copy_of_what_it_had() {
 #[test]
 fn what_a_computer_cannot_run_is_said_again_only_when_it_changes() {
     let ready = |actor: &str, cannot: Option<Value>| {
-        let mut payload = json!({ "kind": "ready" });
+        let mut payload = json!({ "kind": "ready", "stops": true });
         if let Some(c) = cannot {
             payload["cannot"] = c;
         }
@@ -423,4 +423,112 @@ fn what_a_computer_cannot_run_is_said_again_only_when_it_changes() {
     let later = [ready("b1", Some(off.clone())), ready("b1", Some(json!({})))];
     assert!(resay(&later, "b1", &off), "its latest said it can run it");
     assert!(!resay(&later, "b1", &json!({})));
+}
+
+/// A program that stops apps with a copy says so in its `ready`, once
+/// (docs/APP_ACCESS_AND_STOP.md §4): a `ready` from a program before it,
+/// which never says `stops`, is said again, so the fold and the page know
+/// this computer can carry out a stop. Planted, watched failing: `resay`
+/// reading `cannot` alone, plan.rs "a ready from before stops is said again".
+#[test]
+fn a_ready_from_a_program_before_stops_is_said_again_saying_it_stops() {
+    let old = [json!({ "actor": "a1", "payload": { "kind": "ready", "cannot": {} } })];
+    assert!(resay(&old, "a1", &json!({})), "a ready from before stops is said again");
+    let now = [json!({ "actor": "a1", "payload": give::keep::readiness(json!({})) })];
+    assert!(!resay(&now, "a1", &json!({})), "and once said, not again");
+    assert_eq!(now[0]["payload"]["stops"], json!(true));
+}
+
+/// A computer that says it can keep, and that its program stops apps.
+fn ready_stops(id: &str, actor: &str) -> Value {
+    op(id, actor, json!({ "kind": "ready", "stops": true }))
+}
+
+/// A stop its person asked (docs/APP_ACCESS_AND_STOP.md B2) is carried
+/// out, and nothing else is done of the app here until it is: not copied
+/// as kept, not checked, not stopped as another's, and, with the program
+/// started again and nothing running, not started again nor copied as
+/// another's. A stop that failed waits [`RETRY`] before it is tried again.
+/// Planted, watched failing: a stop pending taken as wanted running
+/// (plan.rs `Step::Start` where `Step::Halt` stood, "started again after a
+/// restart"), and the held state copied as another's (`Step::Had`).
+#[test]
+fn a_stop_pending_is_carried_out_and_nothing_starts_it_again() {
+    let kept = fold(&[
+        ready_stops("r1", "a1"),
+        started("s1", "a1", "mine"),
+        op("x1", "a1", json!({ "kind": "stop_asked", "app": "mine", "over": "s1" })),
+    ]);
+    let folds = [("g1".to_string(), kept)];
+    let halt =
+        |steps: &[Step]| matches!(steps, [Step::Halt { app, keeping, .. }] if app == "mine" && keeping.act == "s1");
+    let here = BTreeMap::from([("mine".to_string(), running("g1", "s1", 0))]);
+    let steps = plan("a1", &folds, &here, &HELD, &NONE, 10_000, EVERY);
+    assert!(halt(&steps), "running: carried out, not copied as kept: {steps:?}");
+    let steps = plan(
+        "a1",
+        &folds,
+        &BTreeMap::new(),
+        &held("g1", "s1", false),
+        &NONE,
+        10_000,
+        EVERY,
+    );
+    assert!(
+        halt(&steps),
+        "started again after a restart, and nothing runs: {steps:?}"
+    );
+    let failed = BTreeMap::from([("mine".to_string(), ("x1".to_string(), 10_000))]);
+    let steps = plan("a1", &folds, &BTreeMap::new(), &HELD, &failed, 10_001, EVERY);
+    assert_eq!(steps, [], "a failed stop waits");
+    let steps = plan(
+        "a1",
+        &folds,
+        &BTreeMap::new(),
+        &HELD,
+        &failed,
+        10_000 + RETRY.as_secs(),
+        EVERY,
+    );
+    assert!(halt(&steps), "and is tried again: {steps:?}");
+}
+
+/// A stopped app stays stopped here (B2, B6): the program started again,
+/// what its volumes hold, copied or not, starts nothing and is copied as
+/// nothing; a person's start again from its last copy starts it.
+/// Planted, watched failing: a stopped keeping taken as wanted running
+/// (`Step::Start`, "a stopped app stays stopped").
+#[test]
+fn a_stopped_app_stays_stopped_until_a_person_starts_it_again() {
+    let stop = [
+        ready_stops("r1", "a1"),
+        ready_stops("r2", "b1"),
+        started("s1", "a1", "mine"),
+        op("x1", "a1", json!({ "kind": "stop_asked", "app": "mine", "over": "s1" })),
+        op(
+            "k1",
+            "a1",
+            json!({ "kind": "stopped", "app": "mine", "over": "s1", "stop": "x1", "card": "v1", "from": "give/mine/a1/stopped/1", "sum": "5e2" }),
+        ),
+    ];
+    let folds = [("g1".to_string(), fold(&stop))];
+    for copied in [false, true] {
+        let steps = plan(
+            "a1",
+            &folds,
+            &BTreeMap::new(),
+            &held("g1", "s1", copied),
+            &NONE,
+            10_000,
+            EVERY,
+        );
+        assert_eq!(steps, [], "a stopped app stays stopped (copied {copied})");
+    }
+    let again = [&stop[..], &[taken("t1", "b1", "s1", "give/mine/a1/stopped/1")]].concat();
+    let folds = [("g1".to_string(), fold(&again))];
+    let steps = plan("b1", &folds, &BTreeMap::new(), &HELD, &NONE, 10_000, EVERY);
+    assert!(
+        matches!(&steps[..], [Step::Start { keeping, .. }] if keeping.from.as_deref() == Some("give/mine/a1/stopped/1")),
+        "started again from its last copy: {steps:?}"
+    );
 }

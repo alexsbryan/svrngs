@@ -11,8 +11,9 @@ carried page.
 This much has landed: the runtime on the computer that keeps an app, an
 author's check of a card, the one fold of who keeps what, Give's program for
 computers, and the carried page with the shelf, "Start it for the group",
-"Open", "Move it to…", "Keep it here?" and "Start instead", Give's scenes in the
-gate, and its program as an option of svrngs's line.
+"Open", "Move it to…", "Keep it here?", "Start instead", "Stop running and
+keep a copy" and "Start again on this computer", Give's scenes in the gate,
+and its program as an option of svrngs's line.
 
 ## A card
 
@@ -102,6 +103,34 @@ your computer stops lending the app, copies it to the group one last time,
 writes the move and stops it. The other computer starts it from that copy,
 and only once its own copy of it is whole.
 
+**Stop running and keep a copy.** The person whose computer keeps an app
+has this on its card, from any of their computers, with "Stops this app
+for the group. Its data stays in the group’s shared folder." Nobody else
+can stop it. It is a stop the computer keeps to, not an unlend: until it
+is done, nothing moves, takes over or starts the app, and the keeping
+computer carries it out across its own restarts. That computer says it
+began, stops lending the app, stops it and sees its pod gone, copies its
+stopped state, its card's bytes among it, to
+`give/<app>/<computer>/stopped/<time>/` in the group's folder, where no
+pruning reaches, and says it stopped naming that copy and its sum. Every
+page says how it goes: "Waiting for Sam’s computer to stop it.",
+"Stopping and keeping a copy…", which step failed (the app may still be
+running; it tries again by itself every minute, and never starts it again
+on its own), "Stopped here, but the final copy could not be saved: …", and
+at last "Stopped. A copy is saved in the group’s folder on Sam’s
+computer." and "Other computers receive it when they are online." A
+stopped app has no Open. Only the keeping computer's word counts, never a
+page's. A stop needs Give 0.2.0 or later on that computer, which says so
+in its `ready`; where it hasn't, the card says "Update Give on Sam’s
+computer to stop it here." A stop asked while the app is moving is
+refused, "Already moving."; a stop asked first ends a waiting offer.
+
+**Start again on this computer.** Any member whose computer runs a Give
+that stops apps can start a stopped app again, from exactly that copy, by
+its path and sum, with the card's asks. Their computer waits until the
+copy has fully arrived, checks the card it keeps, and never starts the
+app fresh. The copy stays in the folder after.
+
 **Keep it here?** If the computer keeping an app goes 15 minutes without
 copying it, everyone's page says when that computer last answered. Anyone
 whose computer runs `give keep` is offered the newest copy, with the
@@ -135,12 +164,14 @@ A lend reaches everyone in every group its person is in, under one name
   svrngs type.
 - `src/machine.rs`: Podman's machine on a Mac.
 - `src/check.rs`: `give check`.
-- `fold/`: who keeps each app, from give's acts in the record's order; the
+- `fold/`: who keeps each app, and whether it runs, stops or is stopped,
+  from give's acts in the record's order; the
   program links it, and the page runs `page/vendor/fold.js`, the same code
   built to JavaScript by `build.sh` and pinned in `page/vendor/README.md`.
   `fold/cases.json` is run against both builds (`fold/tests/cases.rs`,
   `fold.test.mjs`).
-- `src/keep.rs`: `give keep`, its `plan` decided apart from doing it;
+- `src/keep.rs`: `give keep`, its `plan` decided apart from doing it,
+  and its `halt`, a stop with a copy;
   `src/record.rs`, `src/lend.rs`: the record API and `svrngs share`, all of
   svrngs it reaches; `src/shelf.rs`: give's own cards and any `--card`.
 - `src/page.rs`, `page/`: Give's page, and `give page`, which brings it.
