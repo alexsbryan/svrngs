@@ -7,6 +7,22 @@ each person to sign in once, with an account you make them; `share` tells
 you how, and the catalogue's run measured it on one computer
 (`demo/runs/catalogue/2026-10-05/`).
 
+## Let apps that read it search it
+
+Movie Night, and any app lent with `--reads jellyfin`, can search your
+films only with an account Jellyfin knows. Jellyfin's API keys are an
+administrator's, so don't use one. Instead:
+
+1. In Jellyfin, make an account for your groups: your picture at the top
+   right, then **Dashboard**, **Users** and **+**. Give it a name and a
+   password, tick only the libraries your groups may see, and **Save**.
+2. Run `svrngs share 8096 --group <group> --readers`, and type that
+   account's name and password when it asks.
+
+Apps that read it now see what that account sees, and only look. Your
+friends opening Jellyfin themselves still sign in as themselves. To stop,
+delete the account in Jellyfin, or share it again without `--readers`.
+
 ## Set up Sign in with svrngs
 
 Turning on **Sign people in with svrngs**, or running

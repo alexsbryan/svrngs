@@ -85,7 +85,7 @@ use std::time::{Duration, Instant};
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::header::{self, HeaderMap, HeaderName, HeaderValue};
-use axum::http::{StatusCode, Version};
+use axum::http::{Method, StatusCode, Version};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{any, get};
 use axum::{Extension, Json};
@@ -867,8 +867,8 @@ fn rewrite_headers(
 
 /// The lend's secret as headers. A declared name or value that cannot be a
 /// header is skipped, named at warn by its header, never its value.
-fn secret_headers(door: &Door, lend: &LendName) -> Vec<(HeaderName, HeaderValue)> {
-    read_declared_in(&lend::secret_dir(&door.data_dir, lend))
+fn secret_headers(dir: &std::path::Path, lend: &LendName) -> Vec<(HeaderName, HeaderValue)> {
+    read_declared_in(dir)
         .into_iter()
         .filter_map(|(name, value)| {
             match (
@@ -1830,7 +1830,20 @@ async fn forward(
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
-    let secret = secret_headers(door, &lend.name);
+    let label = lend.label(&door.key);
+    // Another app reading this lend, by a GET or HEAD, is let in as the
+    // readers' account; a write, or a person's own use, never is: a reading
+    // page's one POST /Sessions/Logout ended Jellyfin's group token for all.
+    let reading =
+        app.is_some_and(|a| *a != label) && matches!(parts.method, Method::GET | Method::HEAD);
+    let readers = secret_headers(&lend::readers_dir(&door.data_dir, &lend.name), &lend.name);
+    tracing::debug!(target: "door", actor, lend = %lend.name, reading, readers = !readers.is_empty(),
+        "door: the readers' secret goes only to another app's GET or HEAD, in place of the lend's own");
+    let secret = if reading && !readers.is_empty() {
+        readers
+    } else {
+        secret_headers(&lend::secret_dir(&door.data_dir, &lend.name), &lend.name)
+    };
     let target = parts
         .uri
         .query()
@@ -1842,7 +1855,6 @@ async fn forward(
             .headers
             .insert(HeaderName::from_static(APP_HEADER), app);
     }
-    let label = lend.label(&door.key);
     let named = HeaderValue::from_str(label.as_str()).expect("a label is base32, so a header");
     let pages = pages(door, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
     let told = [(HeaderName::from_static(LABEL_HEADER), named)];

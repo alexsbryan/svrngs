@@ -1323,6 +1323,60 @@ async fn a_link_carries_a_pass_to_the_key_dialling_and_no_further() {
     pair.close().await;
 }
 
+/// The readers' secret (MOVIE_NIGHT_FOR_TEN, "The spike"): another app's
+/// GET or HEAD of a lend is let in as the account its lender keeps for
+/// readers, in place of the lend's own secret; that app's POST, the lend's
+/// own page and a member with no pass are sent the lend's own. A reading
+/// page's one POST /Sessions/Logout ended a Jellyfin group token for all.
+/// Planted: the method left unchecked (the POST let in as readers); the
+/// app left unchecked (the lend's own page let in as readers).
+#[tokio::test]
+async fn the_readers_secret_goes_only_to_another_app_s_get() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    const READERS: &str = r#"MediaBrowser Token="the-group""#;
+    let (pair, heads) = lending_heads().await;
+    let dir = lend::readers_dir(pair.dir.path(), &LendName::parse("shelf").unwrap());
+    declared::write_declared_in(&dir, "authorization", READERS).unwrap();
+    let a = *pair.a.endpoint().id().as_bytes();
+    let shelf = Label::of(&a, "shelf");
+    let holder = signing(9);
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let told = |app: &Label, method: &str| {
+        let pass = Pass::sign(
+            &signing(2),
+            &actor_of(&holder),
+            (app.clone(), vec![shelf.clone()]),
+            unix_now() + 3600,
+        );
+        format!("{method} /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", pass.encode())
+    };
+    let picks = Label::of(&a, "picks");
+    for (why, app, method, sent) in [
+        ("another app's GET", &picks, "GET", READERS),
+        ("another app's HEAD", &picks, "HEAD", READERS),
+        ("another app's POST", &picks, "POST", SECRET),
+        ("the lend's own page", &shelf, "GET", SECRET),
+    ] {
+        let reply = raw_to(bridge.local_addr(), told(app, method)).await;
+        assert_eq!(reply.status, 200, "{why}: {}", reply.text);
+        assert_eq!(
+            header_values(&last(&heads), "authorization"),
+            vec![sent],
+            "{why}"
+        );
+    }
+    let member = pair.get("/lend/shelf/whoami", "").await;
+    assert_eq!(member.status, 200, "{}", member.text);
+    assert_eq!(
+        header_values(&last(&heads), "authorization"),
+        vec![SECRET],
+        "a member with no pass"
+    );
+    pair.close().await;
+}
+
 /// The app a pass's holder asks for (su-1, `demo/runs/su/2026-10-09/`
 /// §5; sup-1): the service is told `x-svrngs-app`, the pass's `app` — the
 /// lend the person's page opened — whichever lend is asked, and the

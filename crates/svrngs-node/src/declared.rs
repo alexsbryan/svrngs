@@ -51,7 +51,11 @@ pub fn read_declared_in(dir: &Path) -> Vec<(String, String)> {
         return Vec::new();
     };
     let mut out: Vec<(String, String)> = Vec::new();
-    for entry in entries.flatten() {
+    // A directory holds secrets of its own (`crate::lend::readers_dir`).
+    for entry in entries
+        .flatten()
+        .filter(|e| e.file_type().is_ok_and(|t| !t.is_dir()))
+    {
         let name = entry.file_name().to_string_lossy().to_ascii_lowercase();
         if !valid_header_name(&name) {
             tracing::warn!(

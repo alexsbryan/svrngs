@@ -37,13 +37,14 @@ async function libraries() {
   };
 }
 
-// mn: plumbing ask — a library asked as the person. svrngs signs them in
-// (the door's sign-in, DESIGN §3 "The room" call 6), so Movie Night sends
-// no credential; what it must tell apart is svrngs's own answers from the
-// library's: the lend's worker answers 502 when the lender's computer did
-// not answer and 403 when the pass does not open the lend
-// (web/lend.js:268, :300-309), as origin.rs answers 502 on a computer. A
-// fetch that fails outright was not let read here, which is neither.
+// mn: plumbing ask — a library asked with no credential: the door lets
+// a reading app in as the account its lender keeps for readers (`svrngs
+// share --readers`, DESIGN §3 "Lent apps, as they come" 4), on a GET.
+// What it must tell apart is svrngs's own answers from the library's: the
+// lend's worker answers 502 when the lender's computer did not answer and
+// 403 when the pass does not open the lend (web/lend.js:268, :300-309), as
+// origin.rs answers 502 on a computer. A fetch that fails outright was not
+// let read here, which is neither.
 async function ask(url) {
   let res;
   try {

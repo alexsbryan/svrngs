@@ -1071,7 +1071,13 @@ Seven calls:
    that takes the person from `x-svrngs-user`, it prints what to set. Zero
    sign-in is the lender's to choose, outside the infra: an app that speaks
    OpenID Connect names svrngs once in its own settings, and the door signs
-   each person in as themselves ("The room", call 6).
+   each person in as themselves ("The room", call 6). Another app reading a
+   lend is not a person signing in: its lender may keep one account for
+   readers, signed in once as the table says (`svrngs share --readers`,
+   `share::readers_of`), and the door sends it in place of the lend's own
+   secret on another app's GET or HEAD alone. A reading page's one POST
+   ended a Jellyfin token kept for all, and a secret sent on every request
+   replaced each person's own sign-in.
 5. *Measured before built.* What a stock app does through the door — its
    sign-in, its live socket, two people's plays through one lend, whether
    any byte carries a secret the lend holds — is measured before anything is

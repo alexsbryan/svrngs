@@ -50,6 +50,7 @@ fn share(p: u16) -> Share {
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
     }
@@ -71,6 +72,13 @@ fn the_well_known_table_reads_whole() {
         let kind = Kind::parse(rest.split_whitespace().next().unwrap()).expect(row);
         assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
         let _ = kept_of(&kind);
+        if rest.contains(" readers: ") {
+            let how = readers_of(&kind).expect(row);
+            assert!(
+                how.path.starts_with('/') && how.sent.contains("{}"),
+                "{row}"
+            );
+        }
         if p != "-" {
             assert!(
                 well_known_kind(port(p.parse().expect(row))).is_some(),
@@ -79,6 +87,22 @@ fn the_well_known_table_reads_whole() {
         }
     }
     assert_eq!(well_known_kind(port(8096)).unwrap().as_str(), "jellyfin");
+    let jellyfin = readers_of(&Kind::parse("jellyfin").unwrap()).unwrap();
+    assert_eq!(
+        (
+            jellyfin.name,
+            jellyfin.password,
+            jellyfin.token,
+            jellyfin.sent
+        ),
+        (
+            "Username",
+            "Pw",
+            "AccessToken",
+            r#"MediaBrowser Token="{}""#
+        ),
+        "Jellyfin 12.0.0's sign-in, as MOVIE_NIGHT_FOR_TEN's spike ran it"
+    );
     assert_eq!(
         well_known_kind(port(8920)),
         None,

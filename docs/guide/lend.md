@@ -128,6 +128,7 @@ For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those t
 - `--upload 40`: your computer's upload speed in Mbit/s, as a speed test shows it. svrngs tells each person's browser, and the app, their share of it. A person sees it only if the app shows it.
 - `--ask "the films you have marked"`: an app can use this lend only after the person it acts for says yes. They're asked *"Let Ana’s movie-night use Sam’s taste?"* on their own home page, with your words, **Yes** and **Not now**, and can stop it later.
 - `--reads jellyfin`: for an app you lend that reads other lends. Its pages may open the Jellyfins your groups lend, as whoever opens the app. Beside it your friends read *"It also opens your friends’ jellyfin as you."*
+- `--readers`: for something other apps read, such as a Jellyfin that Movie Night searches. Make one account in it for your groups, and tick only what they may see. `share` asks for its name and password, signs in once, and keeps what it's given on this computer. Apps that read it then see what that account sees, and only look: anything else they send goes without it. A friend who opens it themselves still signs in as themselves. Sharing it again without `--readers`, or `unshare`, forgets the account.
 
 ## Stop lending something
 

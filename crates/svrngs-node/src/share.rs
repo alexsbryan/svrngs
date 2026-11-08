@@ -106,6 +106,9 @@ pub struct Share {
     /// `--sign-in-with-svrngs`: it signs each person in as themselves, with
     /// nothing typed (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
     pub sign_in: bool,
+    /// `--readers`: the account apps reading it are let in as, asked for
+    /// and kept (`lend::readers_dir`).
+    pub readers: bool,
     /// `--udp` or `--tcp`: lent as its own datagrams or bytes, not as a
     /// page (give-udp, give-tcp).
     pub raw: Option<Raw>,
@@ -131,32 +134,33 @@ pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
 
 /// The kinds [`WELL_KNOWN`] names, for a lender asked to say which.
 fn known_kinds() -> String {
-    rows()
-        .map(|(_, kind, _)| kind.to_string())
-        .collect::<Vec<_>>()
-        .join(", ")
+    let mut kinds: Vec<String> = rows().map(|(_, kind, _)| kind.to_string()).collect();
+    kinds.dedup(); // a kind's clauses are rows of their own, one after another
+    kinds.join(", ")
 }
 
-/// What [`WELL_KNOWN`]'s row for `kind` says past it: the word before its
-/// first `:` and the rest — the one reader of that clause, for
-/// [`accounts_of`] and [`kept_of`].
-fn says(kind: &Kind) -> Option<(&'static str, &'static str)> {
-    let (_, _, how) = rows().find(|(_, k, _)| k == kind)?;
-    how.split_once(':').map(|(what, rest)| (what, rest.trim()))
+/// What [`WELL_KNOWN`]'s row for `kind` says in its clause `word`, past
+/// the `:` — the one reader of a clause, for [`accounts_of`], [`kept_of`]
+/// and [`readers_of`]. A kind may have a row for each clause.
+fn says(kind: &Kind, word: &str) -> Option<&'static str> {
+    rows().find_map(|(_, k, how)| {
+        let (what, rest) = how.split_once(':')?;
+        (k == *kind && what == word).then_some(rest.trim())
+    })
 }
 
 /// The paths [`WELL_KNOWN`] keeps back of every lend of `kind`, its lender
 /// typing none; none when its row says no `keeps:`. Why each is kept back
 /// is the table's, beside its row.
 pub fn kept_of(kind: &Kind) -> Vec<RefusedPath> {
-    let kept: Vec<RefusedPath> = match says(kind) {
-        Some(("keeps", paths)) => paths
+    let kept: Vec<RefusedPath> = match says(kind, "keeps") {
+        Some(paths) => paths
             .split_whitespace()
             .map(|p| {
                 RefusedPath::parse(p).expect("the table's paths start with /, as its test holds")
             })
             .collect(),
-        _ => Vec::new(),
+        None => Vec::new(),
     };
     tracing::debug!(target: "share", kind = %kind, kept = kept.len(), "share: the paths the table keeps back of the kind");
     kept
@@ -171,13 +175,80 @@ pub fn kept_of(kind: &Kind) -> Vec<RefusedPath> {
 /// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3). A row saying
 /// neither `accounts:` nor `header:` says nothing.
 pub fn accounts_of(kind: &Kind) -> Option<Signs> {
-    let signs = match says(kind) {
-        Some(("accounts", how)) => Some(Signs::Accounts(how)),
-        Some(("header", what)) => Some(Signs::Header(what)),
-        _ => None,
-    };
+    let signs = (says(kind, "accounts").map(Signs::Accounts))
+        .or_else(|| says(kind, "header").map(Signs::Header));
     tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if the table says");
     signs
+}
+
+/// How [`WELL_KNOWN`] says a service trades the account its lender keeps
+/// for readers, a name and a password, for what an app reading it is let in
+/// with (`svrngs share --readers`, `lend::readers_dir`). Its row:
+/// `readers: <path> <name field> <password field> <token field> <sent>`,
+/// `{}` in `<sent>` the token, then ` | <Authorization>` if the sign-in
+/// wants one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ReadersSignIn {
+    pub path: &'static str,
+    pub name: &'static str,
+    pub password: &'static str,
+    pub token: &'static str,
+    pub sent: &'static str,
+    pub asked: Option<&'static str>,
+}
+
+/// [`ReadersSignIn`] for `kind`, if its row says one and the row parses.
+pub fn readers_of(kind: &Kind) -> Option<ReadersSignIn> {
+    let row = says(kind, "readers")?;
+    let (row, asked) = row
+        .split_once(" | ")
+        .map_or((row, None), |(r, a)| (r, Some(a)));
+    let words: Vec<&'static str> = row.splitn(5, ' ').collect();
+    let [path, name, password, token, sent] = words.try_into().ok()?;
+    Some(ReadersSignIn {
+        path,
+        name,
+        password,
+        token,
+        sent,
+        asked,
+    })
+}
+
+/// Sign in to the service at this computer's `port` as `name`, as `how`
+/// says, and say what an app reading it is let in with; or why not, the
+/// password never in it.
+pub async fn sign_in_readers(
+    port: NonZeroU16,
+    how: ReadersSignIn,
+    name: &str,
+    password: &str,
+) -> Result<String, String> {
+    let body = serde_json::json!({ how.name: name, how.password: password });
+    let url = format!("http://127.0.0.1:{port}{}", how.path);
+    let mut ask = crate::http::client()?.post(url).body(body.to_string());
+    ask = ask.header("content-type", "application/json");
+    if let Some(asked) = how.asked {
+        ask = ask.header("authorization", asked);
+    }
+    let answer = ask
+        .send()
+        .await
+        .map_err(|_| "it did not answer".to_string())?;
+    let status = answer.status();
+    tracing::debug!(target: "share", port, path = how.path, %status, "share: the readers' account asked to sign in");
+    if !status.is_success() {
+        return Err(format!(
+            "it did not take that name and password (it answered {status})"
+        ));
+    }
+    let answer = answer.bytes().await.map_err(|e| e.to_string())?;
+    let answer: serde_json::Value = serde_json::from_slice(&answer).unwrap_or_default();
+    let token = answer[how.token].as_str();
+    tracing::debug!(target: "share", port, path = how.path, given = token.is_some(),
+        "share: the readers' account signed in, its token in the answer or not");
+    let token = token.ok_or_else(|| format!("its answer has no {}", how.token))?;
+    Ok(how.sent.replace("{}", token))
 }
 
 /// Whether something on this computer accepts a TCP connection on `port`.

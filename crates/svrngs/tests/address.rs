@@ -316,6 +316,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
     };

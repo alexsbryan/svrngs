@@ -8,6 +8,8 @@
 #                    `x-svrngs-user` (crates/svrngs-node/src/door.rs,
 #                    USER_HEADER, an account's name unique by the person's
 #                    key); what its lender sets in it for that.
+#   readers: <how>   how `share --readers` signs in once as the account apps
+#                    reading it are let in as (share.rs, `ReadersSignIn`).
 #   keeps: <path>... the paths of it svrngs keeps from everyone it is lent
 #                    to, its lender typing none (`share` adds them to its
 #                    --refuse paths and says so): why, in the comment above it.
@@ -22,6 +24,12 @@
 # the user menu, Dashboard, Users, the + titled "Add User"; its name and
 # password, and its libraries, none ticked until the lender ticks them.
 8096 jellyfin accounts: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save
+# Its sign-in for the account apps reading it are let in as (`share
+# --readers`): Jellyfin 12.0.0 answered 400 to one asked with no
+# Authorization, or one naming its Client alone, and 200 with all four
+# (MOVIE_NIGHT_FOR_TEN, 2026-11-07). Its API key is an admin's with no
+# user (AuthorizationContext.cs L186-216), so a reader is never let in by one.
+8096 jellyfin readers: /Users/AuthenticateByName Username Pw AccessToken MediaBrowser Token="{}" | MediaBrowser Client="svrngs", Device="svrngs", DeviceId="svrngs-readers", Version="1"
 
 # Navidrome's port (its default, `ND_PORT`). ExtAuth's two settings, as
 # Navidrome 0.64.2 took them in Demo C's dry run (demo/runs/c/dry-2026-10-12/,

@@ -637,6 +637,7 @@ async fn lend_one(
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        readers: false,
         raw: None,
         audience: Audience::Selected(groups),
     };

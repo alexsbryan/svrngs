@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> --group G... [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -164,7 +164,7 @@ svrngs — keep what your group shares on your own computers.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
-  svrngs share <port> --group <group>... [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--udp | --tcp]
+  svrngs share <port> --group <group>... [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in each
       --group, by its name or the start of its id; say it again for more.
       Each reaches it through this computer, as themselves. It asks for the
@@ -189,6 +189,8 @@ svrngs — keep what your group shares on your own computers.
       Connect sign each person in as themselves, with nothing typed: it
       creates credentials, not the app's configuration. Follow the app's
       OpenID Connect setup guide; the secret stays on this computer.
+      --readers asks for an account you made in it for your groups: apps
+      that read it see what that account sees, and only look.
       --udp or --tcp lends a port that speaks UDP or TCP as it is, not
       as a page: it takes a --kind, and --name and --limit as any lend
       does.
@@ -387,6 +389,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut folder, mut group, mut groups) = (None, None, Vec::new());
     let mut asks = None;
     let mut sign_in = false;
+    let mut readers = false;
     let mut carries = None;
     let mut run = true;
     let mut device = false;
@@ -458,6 +461,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--device" if verb == "link" => device = true,
             "--print" if verb == "open" => print = true,
             "--sign-in-with-svrngs" if verb == "share" => sign_in = true,
+            "--readers" if verb == "share" => readers = true,
             "--udp" | "--tcp" if verb == "share" => {
                 let said = if arg == "--udp" { lend::Raw::Udp } else { lend::Raw::Tcp };
                 if carries.replace(said).is_some() {
@@ -577,6 +581,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     reads,
                     asks,
                     sign_in,
+                    readers,
                     raw: carries,
                     audience: Audience::Legacy,
                 },
@@ -670,6 +675,8 @@ pub enum Refusal {
     Share(#[from] ShareRefusal),
     #[error("cannot read the password: {0}")]
     Prompt(std::io::Error),
+    #[error("{0}'s readers were not let in: {1}")]
+    Readers(LendName, String),
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
     KeepLend(LendName),
     #[error("cannot make a sign-in for it on this computer: {0}")]
@@ -758,6 +765,7 @@ impl Refusal {
             | Refusal::RelayForNobody
             | Refusal::NotKept
             | Refusal::Older
+            | Refusal::Readers(..)
             | Refusal::Busy(_) => 1,
             Refusal::NoDataDir
             | Refusal::DataDir(..)
@@ -923,9 +931,12 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                     tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: it takes each person from the door's header");
                     None
                 }
-                (false, None) => prompt_secret(&lend.name)?,
+                (false, None) => prompt_secret(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
             };
             share_lend(&root, &lend, secret.as_deref())?;
+            if asked.readers {
+                share_readers(&root, &lend, asked.port).await?;
+            }
             let sharing = Sharing {
                 lend,
                 secret: secret.is_some(),
@@ -1564,13 +1575,11 @@ pub const SECRET_HEADER: &str = "authorization";
 /// Ask for the lend's password on this terminal, never echoed, and read
 /// one line from standard input: `None` for an empty line or none. The
 /// value is never traced, only whether there is one.
-fn prompt_secret(name: &LendName) -> Result<Option<String>, Refusal> {
+fn prompt_secret(name: &LendName, asked: &str, shown: bool) -> Result<Option<String>, Refusal> {
     use std::io::{BufRead, IsTerminal, Write};
     let stdin = std::io::stdin();
-    let terminal = stdin.is_terminal();
-    eprint!(
-        "If {name} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): "
-    );
+    let terminal = stdin.is_terminal() && !shown;
+    eprint!("{asked}");
     let _ = std::io::stderr().flush();
     let echo = |on: bool| {
         if terminal {
@@ -1592,6 +1601,36 @@ fn prompt_secret(name: &LendName) -> Result<Option<String>, Refusal> {
     let secret = line.trim().to_string();
     tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
     Ok((!secret.is_empty()).then_some(secret))
+}
+
+/// `svrngs share --readers`: the account apps reading `lend` are let in as,
+/// signed in once where the table says how (`share::readers_of`), else
+/// what its Authorization header takes, pasted; then kept.
+async fn share_readers(root: &Path, lend: &Lend, port: NonZeroU16) -> Result<(), Refusal> {
+    let name = &lend.name;
+    let ask = |words: String, shown| prompt_secret(name, &words, shown);
+    let refused = |why: String| Refusal::Readers(name.clone(), why);
+    let line = match share::readers_of(&lend.kind) {
+        Some(how) => {
+            let words =
+                format!("The name of the account in {name} that apps reading it are let in as: ");
+            let account = ask(words, true)?.unwrap_or_default();
+            let password = ask("Its password: ".into(), false)?.unwrap_or_default();
+            share::sign_in_readers(port, how, &account, &password)
+                .await
+                .map_err(refused)?
+        }
+        None => ask(
+            format!(
+                "Paste what an app reading {name} is let in with, in its Authorization header: "
+            ),
+            false,
+        )?
+        .ok_or_else(|| refused("nothing was given".into()))?,
+    };
+    lend::keep_readers(root, name, (SECRET_HEADER, &line)).map_err(|e| refused(e.to_string()))?;
+    eprintln!("Apps that read {name} are let in as that account, to look only; a person opening it still signs in as themselves.");
+    Ok(())
 }
 
 /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with

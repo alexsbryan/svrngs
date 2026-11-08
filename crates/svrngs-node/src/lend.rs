@@ -556,6 +556,27 @@ pub fn secret_dir(data_dir: &Path, name: &LendName) -> PathBuf {
     data_dir.join("secrets").join("lends").join(name.as_str())
 }
 
+/// Where the lend `name` keeps what another app reading it is let in as:
+/// the lender's account for the group, sent only on that app's GET or HEAD
+/// (`crate::door`'s carry), never on a person's own use of it. Inside the
+/// lend's secret, so declaring the lend again or unsharing it ends it too.
+pub fn readers_dir(data_dir: &Path, name: &LendName) -> PathBuf {
+    secret_dir(data_dir, name).join("readers")
+}
+
+/// Keep `(header, value)` as what apps reading the lend `name` are let in
+/// with ([`readers_dir`]), held as every change to the lend is.
+pub fn keep_readers(
+    data_dir: &Path,
+    name: &LendName,
+    (header, value): (&str, &str),
+) -> Result<(), LendError> {
+    let _held = lock_lend(data_dir, name)?;
+    let path = readers_dir(data_dir, name);
+    crate::declared::write_declared_in(&path, header, value)
+        .map_err(|source| LendError::Unwritable { path, source })
+}
+
 /// The lend `name` as its declaration says, or `None` when this computer
 /// lends nothing by that name.
 pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError> {

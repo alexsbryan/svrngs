@@ -50,6 +50,7 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         reads: Vec::new(),
         asks: None,
         sign_in: false,
+        readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
     }
@@ -956,6 +957,135 @@ fn a_service_with_its_own_accounts_is_lent_with_no_password() {
     );
     plain(&seen);
     drop(stand_in);
+}
+
+/// A stand-in sign-in on `listener`: each request's head and body kept,
+/// answered `AccessToken` `tok-1` when its body holds `pw-1`, else 401.
+fn sign_in_stand_in(listener: std::net::TcpListener) -> Arc<Mutex<Vec<(String, String)>>> {
+    use std::io::Write;
+    let asked = Arc::new(Mutex::new(Vec::new()));
+    let kept = asked.clone();
+    std::thread::spawn(move || {
+        for sock in listener.incoming().flatten() {
+            let mut sock = std::io::BufReader::new(sock);
+            let mut head = String::new();
+            while !head.ends_with("\r\n\r\n") {
+                if std::io::BufRead::read_line(&mut sock, &mut head).unwrap_or(0) == 0 {
+                    break;
+                }
+            }
+            let length = header(&head, "content-length").and_then(|l| l.parse().ok());
+            let mut body = vec![0; length.unwrap_or(0)];
+            let _ = sock.read_exact(&mut body);
+            let body = String::from_utf8_lossy(&body).into_owned();
+            let (status, answer) = match body.contains("pw-1") {
+                true => ("200 OK", r#"{"AccessToken":"tok-1"}"#),
+                false => ("401 Unauthorized", ""),
+            };
+            let n = answer.len();
+            let reply = format!(
+                "HTTP/1.1 {status}\r\nContent-Length: {n}\r\nConnection: close\r\n\r\n{answer}"
+            );
+            let _ = sock.get_mut().write_all(reply.as_bytes());
+            if !head.is_empty() {
+                kept.lock().unwrap().push((head, body));
+            }
+        }
+    });
+    asked
+}
+
+/// **The readers' account, signed in once** (MOVIE_NIGHT_FOR_TEN, "The
+/// spike"): `share --kind jellyfin --readers` asks the account's name and
+/// password and signs in as the table's row says, with the Authorization
+/// Jellyfin 12.0.0 answered 400 without; it keeps what apps reading it are
+/// let in with, owner-only, and the password nowhere. A wrong password is
+/// refused by name, and nothing is kept for readers. Planted: the row's
+/// Authorization dropped (the stand-in told no Client); the token field
+/// misnamed (refused: its answer has no such field).
+#[cfg(unix)]
+#[test]
+fn share_readers_signs_in_once_and_keeps_what_readers_are_let_in_with() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = stand_in.local_addr().unwrap().port().to_string();
+    let asked = sign_in_stand_in(stand_in);
+    holds_lab(dir.path(), logs.path());
+    let args = [
+        "share",
+        &port,
+        "--kind",
+        "jellyfin",
+        "--group",
+        "Lab",
+        "--readers",
+    ];
+    let readers = dir
+        .path()
+        .join("secrets/lends/jellyfin/readers/authorization");
+
+    let wrong = Program::start(
+        dir.path(),
+        &logs.path().join("wrong"),
+        &args,
+        "group\nnot-it\n",
+    );
+    let (code, seen) = wrong.ends();
+    assert_eq!(code, 1, "{seen:?}");
+    let said = std::fs::read_to_string(logs.path().join("wrong")).unwrap();
+    let words = "jellyfin's readers were not let in: it did not take that name and password";
+    assert!(said.contains(words), "{said}");
+    assert!(
+        !readers.exists(),
+        "a wrong password kept something for readers"
+    );
+
+    let log = logs.path().join("right");
+    let mut right = Program::start(dir.path(), &log, &args, "group\npw-1\n");
+    right.until("Leave this running");
+    let _ = right.child.kill();
+    let (_, seen) = right.ends();
+    let said = std::fs::read_to_string(&log).unwrap();
+    let words = "Apps that read jellyfin are let in as that account";
+    assert!(said.contains(words), "{said}");
+    assert_eq!(
+        std::fs::read_to_string(&readers).unwrap(),
+        r#"MediaBrowser Token="tok-1""#
+    );
+    assert_eq!(mode(&readers), 0o600);
+    let (head, body) = asked
+        .lock()
+        .unwrap()
+        .last()
+        .cloned()
+        .expect("the sign-in was asked");
+    assert!(
+        head.starts_with("POST /Users/AuthenticateByName HTTP/1.1\r\n"),
+        "{head}"
+    );
+    assert!(
+        header(&head, "authorization")
+            .is_some_and(|a| a.starts_with(r#"MediaBrowser Client="svrngs""#)),
+        "{head}"
+    );
+    let body: serde_json::Value = serde_json::from_str(&body).unwrap();
+    assert_eq!(
+        body,
+        serde_json::json!({ "Username": "group", "Pw": "pw-1" })
+    );
+    assert_eq!(
+        holding(dir.path(), b"pw-1", Path::new("")),
+        Vec::<String>::new()
+    );
+    assert!(
+        !std::fs::read_to_string(&log).unwrap().contains("pw-1"),
+        "the password was logged"
+    );
+    assert!(
+        !seen.iter().any(|l| l.contains("pw-1")),
+        "the password was said"
+    );
 }
 
 /// **Navidrome by its port alone** (bash-person (d); Demo C's dry run,

@@ -538,10 +538,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # reach (scripts/touched.py and its wiring, +159 .); and the page's opt-in
 # trace of iroh's own events (web/src/lib.rs `trace_iroh`, +25 ., +3 js).
 # . 20,651 to 20,835; js 8,385 to 8,396; core unchanged.
+# The readers' secret (operator, 2026-11-07: "12 lines is fine. Let's clear
+# the other blockers too"): the door's gate to another app's GET or HEAD
+# (door.rs carry), its store inside the lend's secret (lend.rs
+# `readers_dir`, `keep_readers`), `svrngs share --readers` and the table's
+# `readers:` row (share.rs `readers_of`, `sign_in_readers`), +115. Its
+# economizing pass (1bd95b84) cut 178 first, so no raise: . lowered from
+# 20,835 to one past where both land, 20,772.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20835,
+    ".": 20772,
 
     "js": 8396,
 
