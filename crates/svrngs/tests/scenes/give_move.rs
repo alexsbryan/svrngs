@@ -8,8 +8,9 @@
 //! "Cy wants to move Stand-in to your computer." Bo presses **Keep it
 //! here**. Cy's computer copies it one last time and stops it; Bo's starts
 //! from exactly that copy. Each row then reads who keeps it, and Cy opens
-//! it through Cy's own svrngs, now lent by Bo's computer: its page shows
-//! the start it had on Cy's computer, and the one on Bo's after it.
+//! it by Give's own "Open Stand-in", through Cy's own svrngs, now lent by
+//! Bo's computer: its page shows the start it had on Cy's computer, and the
+//! one on Bo's after it.
 //!
 //! The scene runs Give as scene 1 does (give.rs): its program beside this
 //! build's svrngs, on svrngs's surface alone. The copy goes from Cy's
@@ -24,7 +25,8 @@ use std::time::Duration;
 use serde_json::json;
 
 use crate::give::{
-    brings, give_at, give_built, keeps, no_podman, prefix, standin, steps, stop_cleanly, Removed,
+    brings, computer_of, give_at, give_built, keeps, no_podman, prefix, standin, steps,
+    stop_cleanly, Removed,
 };
 use crate::harness::Engine;
 use crate::people::{Browsers, Person, Scene};
@@ -96,7 +98,9 @@ scene!(
     /// fresh state, not the copy it was given (apps/give/src/keep.rs
     /// `start`, `(Some(from), false) => run.restore(..)` made
     /// `run.remove()`), and the stand-in Cy opens on Bo's computer shows
-    /// one start, not Cy's and Bo's.
+    /// one start, not Cy's and Bo's. And Give's Open built from the
+    /// address its page kept from before the move, Cy's (apps/give/page/
+    /// index.js `opener` from a stored keeper): no Open names Bo's.
     give_move
 );
 async fn give_move(engine: Engine) {
@@ -178,11 +182,37 @@ async fn give_move(engine: Engine) {
     )
     .await;
 
-    // Cy opens it through Cy's own svrngs, lent by Bo's computer now: the
-    // start it had on Cy's, and the one on Bo's after it.
+    // Cy opens it from Give's own row, "Open Stand-in" (docs/
+    // APP_ACCESS_AND_STOP.md A4, "Open after move"): its link names Bo's
+    // computer, which keeps it now, and never Cy's, and followed through
+    // Cy's own svrngs it lands at Bo's lend: the start it had on Cy's, and
+    // the one on Bo's after it.
     lenders(&cy, &elm, &["Bo"]).await;
     let on_bos = cy.lent_by(&elm, "Bo", "standin").await;
-    let after = starts(&mut browsers, "cy", &on_bos).await;
+    let (bo_key, cy_key) = (computer_of(&bo, &elm).await, computer_of(&cy, &elm).await);
+    let open = format!("svrngs-to?lender={bo_key}&lend=standin");
+    let done = steps(
+        &mut browsers,
+        "cy",
+        json!([
+            // From the home page, as a person comes to Give: its session
+            // is what opens a lend this browser has not opened (/to).
+            { "goto": cy.home_page() },
+            { "poll": cys, "re": "Open Stand-in", "within": 60_000, "every": 2_000 },
+            { "count": format!("main li a[href='{open}']") },
+            { "count": format!("main li a[href*='lender={cy_key}']") },
+            { "goto": format!("{cys}{open}") },
+        ]),
+    )
+    .await;
+    assert_eq!(
+        (&done[2]["value"], &done[3]["value"]),
+        (&json!(1), &json!(0)),
+        "Give's Open names the computer keeping it now, never the one before: {done:#?}"
+    );
+    let landed = done[4]["url"].as_str().unwrap_or_default().to_string();
+    assert_eq!(landed, on_bos, "Open lands at Bo's lend: {done:#?}");
+    let after = starts(&mut browsers, "cy", &landed).await;
     eprintln!("Cy opens the stand-in on Bo's computer: {after:?}");
     assert_eq!(
         after.get(..before.len()),

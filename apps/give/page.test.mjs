@@ -76,6 +76,9 @@ async function serve() {
   // the group (carried.rs `acts`, give-page-host): none here unless a test
   // names one.
   const said = { page: null };
+  // What svrngs opens, `<lender> <lend>` to its answer, and each ask of it.
+  const opens = new Map();
+  const asked = [];
   // Each act at its time, now unless the test names one: the page reads
   // the clock to say whether a computer has stopped answering.
   const record = (actor, person, person_key, payload, ts = Math.floor(Date.now() / 1000)) =>
@@ -112,6 +115,17 @@ async function serve() {
       record(computer, you, key, JSON.parse(body).op);
       return json(200, {});
     }
+    // svrngs's opener of one lend of the group (surface.rs `to`): whether
+    // it opens, by its lender and name as the test says, else not lent.
+    if (path === '/svrngs-to') {
+      const q = new URL(req.url, 'http://app').searchParams;
+      asked.push({
+        lender: q.get('lender'),
+        lend: q.get('lend'),
+        whether: q.get('whether'),
+      });
+      return res.writeHead(opens.get(`${q.get('lender')} ${q.get('lend')}`) ?? 404).end();
+    }
     if (path === '/cards.json') return json(200, CARDS);
     const file = join(HERE, 'page', normalize(path === '/' ? 'index.html' : path));
     try {
@@ -131,6 +145,8 @@ async function serve() {
   return {
     at: `http://127.0.0.1:${port}/`,
     ops,
+    opens,
+    asked,
     said,
     record,
     down,
@@ -407,6 +423,83 @@ test('a member moves an app to another computer on its person’s yes, and a no 
         `traced: ${what}`,
       );
     }
+    assert.deepEqual(errors, []);
+  } finally {
+    await close();
+    server.stop();
+  }
+});
+
+// Open (docs/APP_ACCESS_AND_STOP.md A4, "Open after move"): Stand-in, a
+// web app, is kept by cy's computer; every page offers "Open Stand-in",
+// svrngs's one opener at the page's own origin naming the computer the
+// fold says keeps it and the card's kind, never a person's name, a port
+// or an address kept from before. The page asks only whether it opens
+// (crates/svrngs-node/src/surface.rs `to`, `whether`). Moved to bo's computer, the
+// row says it is starting there, then that bo's computer did not answer,
+// with Try again, and never a link to cy's; once svrngs opens it there,
+// Open names bo's computer. Planted, watched failing: the opener built
+// from the keeping that started it, cy's, held across the move.
+test('a kept web app opens on the computer that keeps it now, and says why not yet (chromium)', async () => {
+  const server = await serve();
+  const { context, close } = await launch('chromium');
+  const errors = [];
+  try {
+    const page = await context.newPage();
+    page.on('pageerror', (e) => errors.push(String(e)));
+    const { as, press, row } = drive(page, context, server);
+    const opener = () =>
+      page.getByRole('link', { name: 'Open Stand-in', exact: true }).getAttribute('href');
+    const opens = () => page.getByRole('link', { name: 'Open Stand-in' }).count();
+    // The page's own round, every 3 s, with no reload: as a page left open.
+    const until = (re) =>
+      page.waitForFunction(
+        (r) => new RegExp(r).test(document.querySelector('main').innerText),
+        re,
+        {
+          timeout: 20_000,
+        },
+      );
+
+    server.record('a1', 'cy', 'ka', { kind: 'ready' });
+    server.record('b1', 'bo', 'kb', { kind: 'ready' });
+    server.record('a1', 'cy', 'ka', { kind: 'started', app: 'standin', card: 's1' });
+    const started = server.ops.at(-1).id;
+    server.opens.set('a1 standin', 204);
+    await as('cy', 'ka', 'a1');
+    assert.equal(await opener(), 'svrngs-to?lender=a1&lend=standin');
+    assert.doesNotMatch(await row('Minecraft'), /Open/, 'nothing kept, nothing to open');
+
+    // Moved to bo's computer while cy's page stays open; bo's has not lent it yet.
+    server.record('a1', 'cy', 'ka', { kind: 'offered', app: 'standin', over: started, to: 'b1' });
+    server.record('b1', 'bo', 'kb', {
+      kind: 'accepted',
+      app: 'standin',
+      offer: server.ops.at(-1).id,
+    });
+    await until('Moving to bo’s computer…');
+    assert.equal(await opens(), 0, 'no Open while it moves');
+    server.record('a1', 'cy', 'ka', {
+      kind: 'moved',
+      app: 'standin',
+      card: 's1',
+      over: started,
+      from: 'give/standin/a1/9000',
+      sum: 'f00',
+    });
+    await until('Starting on bo’s computer…');
+    assert.equal(await opens(), 0, 'never a link to the computer that kept it before');
+    server.opens.set('b1 standin', 502);
+    await press('Try again', 'Stand-in');
+    await until('Bo’s computer did not answer\\.');
+    assert.equal(await opens(), 0);
+    server.opens.set('b1 standin', 204);
+    await press('Try again', 'Stand-in');
+    assert.equal(await opener(), 'svrngs-to?lender=b1&lend=standin');
+    assert.ok(
+      server.asked.every((a) => a.whether === 'true'),
+      'the page only asks whether it opens; the tab goes there itself',
+    );
     assert.deepEqual(errors, []);
   } finally {
     await close();

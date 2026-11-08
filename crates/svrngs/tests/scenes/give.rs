@@ -188,16 +188,21 @@ pub(crate) async fn steps(browsers: &mut Browsers, who: &str, steps: Value) -> V
     done
 }
 
+/// The key of `who`'s computer in `group`, as their svrngs lists its people.
+pub(crate) async fn computer_of(who: &Person, group: &str) -> String {
+    let people = who.get(&format!("/v1/rail/people?namespace={group}")).await;
+    let people = people["people"].as_array().cloned().unwrap_or_default();
+    (people.iter())
+        .find(|p| p["person"] == who.name.as_str() && p["device"] == "computer")
+        .and_then(|p| p["key"].as_str().map(String::from))
+        .expect("the person's computer is in the group")
+}
+
 /// Where `who`'s browser opens their own computer's copy of Give, as their
 /// home page lists it: a write is signed by the computer the page is open
 /// on (crates/svrngs-node/src/carried.rs `acts`), so Cy starts it there.
 pub(crate) async fn give_at(who: &Person, group: &str) -> String {
-    let people = who.get(&format!("/v1/rail/people?namespace={group}")).await;
-    let people = people["people"].as_array().cloned().unwrap_or_default();
-    let key = (people.iter())
-        .find(|p| p["person"] == who.name.as_str() && p["device"] == "computer")
-        .map(|p| p["key"].clone())
-        .expect("the person's computer is in the group");
+    let key = computer_of(who, group).await;
     for _ in 0..120 {
         let lends = who.get(&format!("/v1/lends?namespace={group}")).await;
         let lends = lends["lent"].as_array().cloned().unwrap_or_default();

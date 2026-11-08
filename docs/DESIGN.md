@@ -409,7 +409,13 @@ program links and its page runs built to JavaScript, as House rules runs
 canon-core. svrngs learns no keeping; it lends what Give's program shares,
 a page or a port. An app is a card, its own `compose.yaml` with an
 `x-svrngs` block of five fields: `title`, `about`, `door`, `state` and
-`asks`. Every move and every takeover is a person's yes, and a keeper that
+`asks`. A web app kept now has **Open <its title>** on its card, which opens
+it as the person asking on the computer the current keeping names, by
+group, keeper's key and card kind, never a name, port or remembered
+address; until svrngs there lends it the card says **Starting on Jo's
+computer…** (or **Moving…**), or **Jo's computer did not answer**, with
+**Try again**, and a port's card keeps its own instructions
+(docs/APP_ACCESS_AND_STOP.md A4). Every move and every takeover is a person's yes, and a keeper that
 comes back after another took over keeps its later state as a copy anyone
 may start instead, never merged. Any member whose computer has Podman and
 Give's program may keep (the operator, 2026-10-26).
@@ -1193,7 +1199,18 @@ Seven calls:
    decides. A capability is never a session: whoever holds one is that page
    toward that one lend, and the person's yes is still judged on every
    request; the capability never authorizes signing a reply. Only the app's
-   own proved origin may discover its read capabilities. A page reaches its own lend and the kinds its lender
+   own proved origin may discover its read capabilities. A carried app's
+   own page opens one lend of its group by `GET /svrngs-to?lender=&lend=`
+   at its origin (`surface.rs`, `to`): only a lend of a computer standing in
+   that group, lent to it, as this computer's person is told it; followed,
+   it is sent on to that lend's plain origin, which opens as a bookmark does,
+   by the home page's `/to` and its session, any yes still asked there; asked
+   `whether=true`, it says only whether it would open, 204. Its address
+   carries no code, capability or proof, and a page cannot read where a
+   redirect goes, so no script gets anything to open with; it is no
+   registry, no frame and no read. A page's own fetch and its tab look alike
+   at the origin, its session worker sending both, so the page says which.
+   A page reaches its own lend and the kinds its lender
    declared it reads, in a group both lenders and this computer stand in,
    else `closed`. Another computer's app reaches them as this computer's
    person only on that person's yes, else `unasked`, "Say yes on your home

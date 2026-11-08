@@ -46,7 +46,7 @@ use crate::node::Asking;
 use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
 use crate::session::{Shown, AS_PATH};
-use crate::surface::{seed_of, STOP_SUFFIX};
+use crate::surface::{seed_of, READS_PATH, STOP_SUFFIX, TO_PATH};
 
 /// Whether a lent app's answer may write entries as the person asking
 /// ([`APPEND_HEADER`]), by what the request proved: decided by the door
@@ -296,18 +296,23 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
             "an origin's proof cannot name another app",
         ));
     }
-    if req.uri().path() == crate::surface::READS_PATH {
+    let path = req.uri().path();
+    let (reads, to) = (path == READS_PATH, path == TO_PATH);
+    if reads || to {
         if app != label {
-            tracing::debug!(target: "origin", %label, %app, "origin: refused — another app's page asks the lends this one reads");
+            tracing::debug!(target: "origin", %label, %app, to, "origin: refused — another app's page asks the lends this one reads, or opens one");
             return Err(LendRefusal::Closed.say(
                 StatusCode::FORBIDDEN,
                 "only an app's own origin may ask its capabilities",
             ));
         }
+        if to {
+            return crate::surface::to(&at, &label, req.uri().clone()).await;
+        }
         tracing::debug!(target: "origin", %label, "origin: its own page asks the lends it reads; reaching an app grants no authority over its capabilities");
         return crate::surface::reads(&at, &label).await;
     }
-    let stop = req.uri().path().strip_prefix(crate::surface::READS_PATH);
+    let stop = req.uri().path().strip_prefix(READS_PATH);
     let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix(STOP_SUFFIX));
     if let Some(lend) = stop
         .and_then(Label::parse)

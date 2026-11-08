@@ -177,7 +177,7 @@ fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
 type Yes = Json<(String, String)>;
 
 /// svrngs's answer, or its refusal.
-type Handled = Result<Response, Response>;
+pub(crate) type Handled = Result<Response, Response>;
 
 /// `POST /runs`: the asker's yes to the version of an app carried in their
 /// group that its files now are (canon-pin (c)), from the home page,

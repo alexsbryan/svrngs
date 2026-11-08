@@ -11,7 +11,7 @@ carried page.
 This much has landed: the runtime on the computer that keeps an app, an
 author's check of a card, the one fold of who keeps what, Give's program for
 computers, and the carried page with the shelf, "Start it for the group",
-"Move it to…", "Keep it here?" and "Start instead", Give's scenes in the
+"Open", "Move it to…", "Keep it here?" and "Start instead", Give's scenes in the
 gate, and its program as an option of svrngs's line.
 
 ## A card
@@ -85,6 +85,15 @@ the group's record, so everyone can see when the app was last copied.
 When the record names another computer, it stops lending the app, copies
 it one last time and stops it. That last copy is kept apart and never
 removed. Ctrl-C stops everything it keeps, each with a last copy.
+
+**Open.** A card whose door is a page has **Open <its title>** while it
+is kept. It opens the app in a tab of its own on the computer keeping it now, as you,
+through your own svrngs (`/svrngs-to` at Give's origin, which asks svrngs
+for that one computer's lend by its key and the card's kind). After a move
+it opens the new computer's, never an address from before. Until that
+computer lends it, the card says "Starting on Cy’s computer…", or "Cy’s
+computer did not answer", with **Try again**. A card whose door is a port
+keeps its own instructions.
 
 **Move it to…** on an app your computer keeps offers it to another computer
 that runs `give keep`. That computer's person is asked what the app's makers

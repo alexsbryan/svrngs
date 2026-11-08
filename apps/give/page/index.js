@@ -6,7 +6,9 @@
 // asks the same of the person whose computer it goes to. When the computer
 // that keeps one stops answering, or a copy doesn't start, "Keep it here?"
 // offers the copy the fold names, with the same question; a computer's
-// state from before another kept it is listed, to "Start instead". It reads the group at its own
+// state from before another kept it is listed, to "Start instead"; a web
+// app kept now has "Open <its title>", on the computer keeping it now
+// (docs/APP_ACCESS_AND_STOP.md A4). It reads the group at its own
 // origin, `svrngs/acts`, and writes there; svrngs writes each act as this
 // computer's person. Nothing here decides who keeps an app: the fold does,
 // the vendored build of the one the keeper program runs (vendor/), and this
@@ -30,6 +32,14 @@ const PLAIN = /^https?:\/\/[\w.~:/%@-]+$/;
 // Where this page remembers, on this computer, that it asked about the
 // install once and was told "Not now".
 const ASKED = 'give: asked to install';
+// svrngs's one opener of a lend of this group, at this page's own origin
+// (crates/svrngs-node/src/surface.rs `to`): followed, it sends the tab on to
+// the lend's own origin; asked `whether`, it says only whether it would
+// open (204), never where.
+const TO = 'svrngs-to';
+// Each keeping's last answer from svrngs, by its act and computer: opened
+// stays opened until the keeping changes; anything else is asked again.
+const reached = new Map();
 const fold = bind(build);
 // Each decision, at debug in the console, never on the page (AGENTS.md 1),
 // as House rules traces its own (apps/canon/index.js).
@@ -222,6 +232,38 @@ function move(card, keeping, kept, read, out) {
   out.append(button('Not now', () => ((moving = null), show()), true));
 }
 
+/** Where the app a keeping runs opens: by the computer the record names, never an address kept from before. */
+const opener = (card, keeping) =>
+  `${TO}?${new URLSearchParams({ lender: keeping.keeper, lend: card.kind })}`;
+
+/** Whether svrngs on this computer opens the app the keeping runs: its status, or null when svrngs isn't answering. */
+async function reach(card, keeping) {
+  const at = `${keeping.act} ${keeping.keeper}`;
+  if (reached.get(at) === 204) return 204;
+  const r = await fetch(`${opener(card, keeping)}&whether=true`).catch(() => null);
+  trace('whether the app opens, as svrngs answers', {
+    app: card.kind,
+    keeper: keeping.keeper,
+    status: r?.status ?? null,
+  });
+  reached.set(at, r?.status ?? null);
+  return r?.status ?? null;
+}
+
+/** A kept web app's way in (docs/APP_ACCESS_AND_STOP.md A4): Open, or why not yet, with Try again. */
+function opening(card, keeping, read, status, out) {
+  if (card.door !== 'http' || keeping.offer?.answer === 'yes') return;
+  const whose = who(keeping, read);
+  if (status === 204) return out.append(link(`Open ${card.title}`, opener(card, keeping)));
+  const why =
+    status === 404
+      ? `Starting on ${whose}…`
+      : status === 502
+        ? `${whose[0].toUpperCase()}${whose.slice(1)} did not answer.`
+        : `Whether ${card.title} opens can’t be told just now: svrngs on this computer ${status === null ? 'isn’t answering' : `answered ${status}`}.`;
+  out.append(el('p', why), button('Try again', show, true));
+}
+
 /**
  * A kept app's row past who keeps it, when its computer has stopped
  * answering or its copy didn't start: the copy the fold offers, to keep
@@ -284,7 +326,7 @@ function had(card, keeping, canKeep, read, out) {
 }
 
 /** One card's row: its name and line, and who keeps it, or how to start it. */
-function row(card, kept, read) {
+function row(card, kept, read, opens) {
   const keeping = kept.apps[card.kind];
   const out = el('li', '', el('h2', card.title), el('p', card.about));
   const canKeep = Object.values(kept.can_keep).some((c) => c.person_key === read.you_key);
@@ -299,7 +341,10 @@ function row(card, kept, read) {
       next: keeping.next?.act ?? null,
       had: keeping.had.length,
     });
-    if (!takeover(card, keeping, canKeep, out)) move(card, keeping, kept, read, out);
+    if (!takeover(card, keeping, canKeep, out)) {
+      opening(card, keeping, read, opens[card.kind], out);
+      move(card, keeping, kept, read, out);
+    }
     had(card, keeping, canKeep, read, out);
     return out;
   }
@@ -391,6 +436,13 @@ async function show() {
     );
   }
   const kept = fold(read.ops, Math.floor(Date.now() / 1000));
+  // Whether svrngs opens each web app kept now and answering, asked of it
+  // once a round (A4): a keeping recorded is not proof its app answers.
+  const live = (c) => kept.apps[c.kind] && !kept.apps[c.kind].gone && !kept.apps[c.kind].failed;
+  const web = cards.filter((c) => c.door === 'http' && live(c));
+  const opens = Object.fromEntries(
+    await Promise.all(web.map(async (c) => [c.kind, await reach(c, kept.apps[c.kind])])),
+  );
   for (const r of kept.refused.filter((r) => !told.has(r.act))) {
     told.add(r.act);
     trace('the fold refused an act', r);
@@ -403,7 +455,7 @@ async function show() {
       'Apps your group keeps on one of your computers at a time. Everyone in the group can use one while it’s kept.',
     ),
     ...(refused ? [el('p', refused)] : []),
-    el('ul', '', ...cards.map((card) => row(card, kept, read))),
+    el('ul', '', ...cards.map((card) => row(card, kept, read, opens))),
   );
 }
 

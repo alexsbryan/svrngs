@@ -27,14 +27,18 @@
 //!   [`reads`]): the lends of each kind its lender declared it reads, as a
 //!   phone's lend worker answers it from what the group's page handed
 //!   (`web/lend.js`, `told`).
+//! - `GET /svrngs-to?lender=&lend=`, at a carried app's own origin and to
+//!   its page ([`to`]; docs/APP_ACCESS_AND_STOP.md A4): one lend of the
+//!   app's group, sent on to its plain origin, or, with `whether`, told
+//!   only whether it opens.
 //! - `POST /v1/sign?app=<app>` — the body's bytes signed for the app by
 //!   this computer's own key, the one that signs its acts, answered as that
 //!   key and the signature, each in hex (onair-sign, [`sign`]). The core
 //!   says what is signed and how one is checked ([`svrngs_core::app`]).
 
 use axum::extract::{Query, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
+use axum::http::{StatusCode, Uri};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
@@ -43,7 +47,9 @@ use svrngs_core::pass::{Label, Whose};
 
 use crate::door::choices::{self, Said};
 use crate::door::LendRefusal;
+use crate::folder::carried::Handled;
 use crate::group::Namesake;
+use crate::lend::Source;
 use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
@@ -68,6 +74,11 @@ pub const READS_PATH: &str = "/svrngs-reads";
 /// origin: `reads` tells it, `crate::origin`'s `lent` takes it
 /// (`web/lend.js` spells it for a phone).
 pub const STOP_SUFFIX: &str = "/svrngs-stop";
+
+/// Where a carried app's page opens one lend of its own group, at its own
+/// origin, by its lender's key and its name (docs/APP_ACCESS_AND_STOP.md
+/// A4): no registry, frame or read; svrngs knows nothing of why it opens.
+pub const TO_PATH: &str = "/svrngs-to";
 
 /// The routes, for [`crate::api::router`] to serve behind its check, on
 /// the node's one state ([`Asking`]).
@@ -403,4 +414,63 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
     // A lent page is told each lender by name, as it always was.
     let unanswered: Vec<_> = unanswered.iter().map(|n| &n.person).collect();
     Ok(Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response())
+}
+
+/// The lend a carried app's page names at [`TO_PATH`]: its lender's key, in
+/// hex as the record spells an actor, and its name; and `whether`, true for
+/// a page asking only whether it opens.
+#[derive(Deserialize)]
+struct To {
+    lender: String,
+    lend: String,
+    #[serde(default)]
+    whether: bool,
+}
+
+/// `GET /svrngs-to?lender=&lend=` at the origin of the carried app `app`:
+/// the lend `lend` of the computer `lender`, a page and no app a group
+/// carries, as this computer's person is told it in the app's group
+/// ([`lends`]' list, so only a computer standing in that group, and only
+/// what it lends to that group). It is sent on to the lend's plain origin,
+/// which opens as a bookmark of it does ([`crate::origin`]'s `homeward`):
+/// the home page's session decides, its code is minted there and nowhere
+/// else, and any yes the lend asks is still asked. The address carries no
+/// code, capability or proof, and a page's own fetch cannot read where a
+/// redirect goes; so a script gets nothing to open with. With `whether`,
+/// a page is told only whether it would open, 204. A page's own fetch and
+/// its tab look alike here, its session worker sending both as fetches,
+/// so the page says which it asks. Not lent there is 404; a lender who did
+/// not say what it lends, `away`.
+pub(crate) async fn to(at: &Asking, app: &Label, uri: Uri) -> Handled {
+    let unlent = || LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
+    let Ok(Query(to)) = Query::<To>::try_from_uri(&uri) else {
+        return Err(LendRefusal::Path.say(StatusCode::BAD_REQUEST, "name a lender and a lend"));
+    };
+    let carried = (at.folders.carried().into_iter()).find_map(|l| match l.source {
+        Source::Carried(g) if Label::carried(l.kind.as_str(), &g) == *app => Some(g),
+        _ => None,
+    });
+    let Some(group) = carried else {
+        tracing::debug!(target: "surface", %app, "surface: to refused — not an app a group carries here");
+        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, "only a carried app opens this"));
+    };
+    let mut standing = standing_of(&at.host.rail, &group)?;
+    let own = standing.get(&at.host.actor).map(|m| m.person.clone());
+    let own = own.ok_or_else(unlent)?;
+    standing.retain(|key, _| *key == to.lender);
+    let groups = [(group.clone(), standing)];
+    let (lent, unlisted) = at.lent(&groups, &own, None).await?;
+    let found = (lent.iter())
+        .filter(|l| l.offered.group.is_none() && l.offered.raw.is_none())
+        .find(|l| l.key == to.lender && l.offered.name.as_str() == to.lend);
+    let origin = found.and_then(|l| at.host.origin(&l.key, &l.offered, l.version));
+    let silent = groups[0].1.values().any(|m| unlisted.names(&m.person_key));
+    tracing::debug!(target: "surface", %app, group, lender = to.lender, lend = to.lend, found = origin.is_some(), whether = to.whether, silent,
+        "surface: to — one lend of the carried app's group, sent on to its plain origin, or told only whether it opens");
+    match origin {
+        Some(_) if to.whether => Ok(StatusCode::NO_CONTENT.into_response()),
+        Some(origin) => Ok(Redirect::to(&origin).into_response()),
+        None if silent => Err(crate::origin::away()),
+        None => Err(unlent()),
+    }
 }

@@ -246,3 +246,130 @@ async fn an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again(engin
         "the pad is asked only once opened, twice: {seen:#}"
     );
 }
+
+in_chromium!(
+    /// **Consent/scope preserved** (docs/APP_ACCESS_AND_STOP.md A4, §5):
+    /// Probe, carried in house on ada's computer as Give is, asks svrngs's
+    /// opener at its own origin (`/svrngs-to`, surface.rs `to`) by fetch
+    /// whether cy's notes open, cy's `hidden`, lent to another group only,
+    /// and the notes of dee, whom ada removed from house: the first is
+    /// told only that it opens, 204, and each other is not lent there,
+    /// 404. Its link to cy's notes, followed in a tab, is sent on to their
+    /// plain origin, 303, no code, capability or proof in the address, and
+    /// opens there through the home page's `/to`; and there cy's notes,
+    /// which read `films`, are still refused cy's films, `unasked`, until
+    /// ada's yes on her home page: the open is no yes, and it hands Probe
+    /// nothing to read or sign with. Planted, watched failing: the opener
+    /// sending the tab on with a code for the lend's origin
+    /// (`Redirect::to(&at.sessions.open(..))`), and the lend found by its
+    /// name alone (`l.key == to.lender` dropped).
+    a_carried_app_opens_one_lend_of_its_group_and_no_more
+);
+async fn a_carried_app_opens_one_lend_of_its_group_and_no_more(engine: Engine) {
+    let relay = relay().await;
+    let dirs = [(); 3].map(|()| tempfile::tempdir().unwrap());
+    let ada = node(dirs[0].path(), &relay, &signing(9)).await;
+    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let dee = joined(dirs[2].path(), &relay, &ada, 3, "dee").await;
+    let notes = page_origin("<!doctype html><title>cy's notes</title><body>cy's notes").await;
+    let films = page_origin("<!doctype html><title>cy's films</title><body>").await;
+    let theirs = page_origin("<!doctype html><title>dee's notes</title><body>").await;
+    for (dir, name, port, kind, groups, reads) in [
+        (
+            dirs[1].path(),
+            "notes",
+            notes.port(),
+            "notes",
+            json!([NS]),
+            json!(["films"]),
+        ),
+        (
+            dirs[1].path(),
+            "films",
+            films.port(),
+            "films",
+            json!([NS]),
+            json!([]),
+        ),
+        (
+            dirs[1].path(),
+            "hidden",
+            films.port(),
+            "k",
+            json!(["elsewhere"]),
+            json!([]),
+        ),
+        (
+            dirs[2].path(),
+            "notes",
+            theirs.port(),
+            "notes",
+            json!([NS]),
+            json!([]),
+        ),
+    ] {
+        let lends = svrngs_node::lend::lends_dir(dir);
+        std::fs::create_dir_all(&lends).unwrap();
+        let body = json!({ "groups": groups, "port": port, "kind": kind, "limit": 3, "refused": [], "reads": reads });
+        std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    assert_eq!(
+        removal(&ada, "dee").await,
+        svrngs_node::removal::Outcome::Out
+    );
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let key = |seed: u8| hex::encode(signing(seed).verifying_key().as_bytes());
+    let probe = format!(
+        r#"const at = (lender, lend) => `/svrngs-to?${{new URLSearchParams({{ lender, lend }})}}`;
+const asked = async (who, lender, lend) => {{
+  const r = await fetch(`${{at(lender, lend)}}&whether=true`);
+  return `${{who}}'s ${{lend}}: ${{r.status}}`;
+}};
+Promise.all([asked('cy', '{cy}', 'notes'), asked('cy', '{cy}', 'hidden'), asked('dee', '{dee}', 'notes')]).then((said) => {{
+  const p = Object.assign(document.createElement('pre'), {{ id: 'said', textContent: said.join('\n') }});
+  const a = Object.assign(document.createElement('a'), {{ href: at('{cy}', 'notes'), target: '_blank', textContent: 'Open notes' }});
+  document.body.append(p, a);
+  document.title = 'tried';
+}});
+"#,
+        cy = key(2),
+        dee = key(3),
+    );
+    let page = "<!doctype html><title>trying</title><body><script src=probe.js></script>";
+    carried::carry(
+        &folder,
+        "Probe",
+        &[("index.html", page.into()), ("probe.js", probe)],
+    );
+    let origin = carried::carried_at(&ada, "Probe").await;
+    let port = ada.api_addr().port();
+    let read = format!("http://{}.localhost:{port}/", label(2, "films"));
+    let seen = drive(
+        engine,
+        "opens-one.mjs",
+        json!({ "url": origin, "read": read }),
+        None,
+    )
+    .await;
+    eprintln!("the open's run: {seen:#}");
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    assert_eq!(
+        seen["said"], "cy's notes: 204\ncy's hidden: 404\ndee's notes: 404",
+        "a page is told only whether one lend of its group opens:\n{seen:#}"
+    );
+    let plain = format!("http://{}.localhost:{port}/", label(2, "notes"));
+    assert_eq!(
+        seen["sent"][0],
+        json!({ "status": 303, "location": plain }),
+        "followed, it goes on to the lend's plain origin, no code, capability or proof in it:\n{seen:#}"
+    );
+    assert!(at_origin(&seen["url"], &label(2, "notes")), "{seen:#}");
+    assert_eq!(
+        seen["read"],
+        json!({ "status": 403, "refused": "unasked", "error": "Say yes on your home page: open this app from there." }),
+        "opened so, the notes still wait for ada's yes:\n{seen:#}"
+    );
+    drop((cy, dee));
+}
