@@ -151,9 +151,7 @@ impl Held {
     /// Fold in whatever the log gained since the last call; true when the
     /// fold began again from the top.
     fn catch_up(&mut self, oplog: &Oplog<SignedOp>, namespace: &str) -> Result<bool, RailError> {
-        let tail = oplog
-            .read_since(self.cursor)
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        let tail = oplog.read_since(self.cursor).map_err(io)?;
         if tail.restarted {
             *self = Held::default();
         }
@@ -204,7 +202,7 @@ impl Held {
         if !newly_named.is_empty() {
             // A key a `Remove` names for the first time: its acts already
             // held join the fold of standing, read once from the whole log.
-            let (all, _) = oplog.read_all_with_skips().map_err(|e| RailError::Io(e.to_string()))?;
+            let (all, _) = oplog.read_all_with_skips().map_err(io)?;
             let before = self.membership.len();
             self.membership.extend(
                 all.into_iter()
@@ -286,12 +284,18 @@ impl RingJournal {
         })
     }
 
+    /// The log, its write index caught up from its tail ([`Held`]), and
+    /// whether that fold began again from the top.
+    fn caught_up(&self) -> Result<(std::sync::MutexGuard<'_, Writer>, bool), RailError> {
+        let mut guard = self.log();
+        let log = &mut *guard;
+        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+        Ok((guard, restarted))
+    }
+
     /// Every op on disk, plus the lines that could not be read.
     pub fn read(&self) -> Result<(Vec<Op<SignedOp>>, Vec<SkippedLine>), RailError> {
-        self.log()
-            .oplog
-            .read_all_with_skips()
-            .map_err(|e| RailError::Io(e.to_string()))
+        self.log().oplog.read_all_with_skips().map_err(io)
     }
 
     /// The acts in the order every node applies them, and what could not be
@@ -321,9 +325,7 @@ impl RingJournal {
     /// scale instrument counts as the digest, kept or, when the fold began
     /// again from the top, rebuilt (`crates/svrngs-node/tests/scale.rs`).
     pub fn digest(&self) -> Result<Digest, RailError> {
-        let mut guard = self.log();
-        let log = &mut *guard;
-        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
+        let (mut log, restarted) = self.caught_up()?;
         tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
         Ok(log.held.digest.digest())
     }
@@ -339,9 +341,7 @@ impl RingJournal {
     /// answered from the register kept since the last call, false when
     /// folded now.
     pub(crate) fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
-        let mut guard = self.log();
-        let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let (mut log, _) = self.caught_up()?;
         let held = &mut log.held;
         if let Some((_, register)) = held.standing.as_ref().filter(|(from, _)| from == seed) {
             return Ok((register.clone(), true));
@@ -354,9 +354,7 @@ impl RingJournal {
     /// The `Remove` acts `actor` signed, from the acts that move membership
     /// as [`Held`] keeps them: a leave, which its leaver's round tells (#190).
     pub(crate) fn removes_by(&self, actor: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
-        let mut guard = self.log();
-        let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
+        let (log, _) = self.caught_up()?;
         let by = |op: &&Op<SignedOp>| op.actor == actor && matches!(op.kind.act, RailAct::Remove { .. });
         Ok(log.held.membership.iter().filter(by).cloned().collect())
     }
@@ -384,19 +382,15 @@ impl RingJournal {
         theirs: &Digest,
         budget_bytes: usize,
     ) -> Result<(Vec<Op<SignedOp>>, bool), RailError> {
-        let mut guard = self.log();
+        let (mut guard, restarted) = self.caught_up()?;
         let log = &mut *guard;
-        let restarted = log.held.catch_up(&log.oplog, &self.namespace)?;
         tracing::debug!(namespace = %self.namespace, restarted, "ring rail: digest caught up with the log");
         let newest = log.held.newest.iter().map(|(actor, n)| (actor.as_str(), n.seq));
         if log.held.digest.missing_nothing(theirs, newest) {
             tracing::debug!(namespace = %self.namespace, "ring rail: offer answered unread, the peer's digest is ours");
             return Ok((Vec::new(), false));
         }
-        let (ops, _) = log
-            .oplog
-            .read_all_with_skips()
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        let (ops, _) = log.oplog.read_all_with_skips().map_err(io)?;
         tracing::debug!(namespace = %self.namespace, lines = ops.len(), "ring rail: offer folded from the whole log");
         Ok(ops_missing_from_within(
             &ops,
@@ -418,9 +412,8 @@ impl RingJournal {
         if ops.is_empty() {
             return Ok(0);
         }
-        let mut guard = self.log();
+        let (mut guard, _) = self.caught_up()?;
         let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
         let mut batch = std::collections::BTreeSet::new();
         let mut fresh: Vec<Op<SignedOp>> = Vec::new();
         for op in ops {
@@ -442,7 +435,7 @@ impl RingJournal {
             );
             return Ok(0);
         }
-        log.oplog.append_all(&fresh).map_err(|e| RailError::Io(e.to_string()))?;
+        log.oplog.append_all(&fresh).map_err(io)?;
         log.held.after_write(&log.oplog, &self.namespace);
         tracing::debug!(
             namespace = %self.namespace,
@@ -473,10 +466,15 @@ impl RingJournal {
     }
 
     pub fn set_roster(&self, roster: &Roster) -> Result<(), RailError> {
-        std::fs::create_dir_all(&self.dir).map_err(|e| RailError::Io(e.to_string()))?;
-        let raw = serde_json::to_string_pretty(roster).map_err(|e| RailError::Io(e.to_string()))?;
-        std::fs::write(self.roster_path(), raw).map_err(|e| RailError::Io(e.to_string()))
+        std::fs::create_dir_all(&self.dir).map_err(io)?;
+        let raw = serde_json::to_string_pretty(roster).map_err(io)?;
+        std::fs::write(self.roster_path(), raw).map_err(io)
     }
+}
+
+/// The journal's I/O refusal, in `e`'s words.
+fn io(e: impl ToString) -> RailError {
+    RailError::Io(e.to_string())
 }
 
 /// The wall clock in Unix seconds: the one place the write side reads it.
@@ -501,13 +499,9 @@ impl svrngs_core::Store for RingJournal {
         actor: &str,
         f: impl FnOnce(&ActSet, Option<svrngs_core::Tip>) -> (Option<svrngs_core::Authored>, R),
     ) -> Result<R, RailError> {
-        let mut guard = self.log();
+        let (mut guard, _) = self.caught_up()?;
         let log = &mut *guard;
-        log.held.catch_up(&log.oplog, &self.namespace)?;
-        let (held_ops, _) = log
-            .oplog
-            .read_all_with_skips()
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        let (held_ops, _) = log.oplog.read_all_with_skips().map_err(io)?;
         let tip = log.held.newest.get(actor).map(|n| svrngs_core::Tip {
             seq: n.seq,
             lines: n.lines.clone(),
@@ -516,9 +510,7 @@ impl svrngs_core::Store for RingJournal {
         let Some(authored) = authored.filter(|a| !a.lines().is_empty()) else {
             return Ok(answer);
         };
-        log.oplog
-            .append_all(authored.lines())
-            .map_err(|e| RailError::Io(e.to_string()))?;
+        log.oplog.append_all(authored.lines()).map_err(io)?;
         log.held.after_write(&log.oplog, &self.namespace);
         for op in authored.lines() {
             tracing::debug!(namespace = %self.namespace, id = %op.id, actor = %op.actor,

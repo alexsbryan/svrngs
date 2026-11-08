@@ -326,16 +326,25 @@ impl RingRail {
     pub fn standing_anywhere(&self, actor: &str) -> Option<(String, Member)> {
         let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
         let held = held.ok()?;
-        let found = held.iter().find_map(|ns| match self.standing(ns) {
-            Ok(Standing::Members(m)) => Some((ns.clone(), m.get(actor)?.clone())),
+        let found = held
+            .iter()
+            .find_map(|ns| Some((ns.clone(), self.member_in(ns, actor)?)));
+        tracing::debug!(target: "register", actor, groups = held.len(), found = ?found, "register: the group held here the key stands in, and as whom, or none");
+        found
+    }
+
+    /// The [`Member`] `actor` stands as in the group `ns`; `None` when they
+    /// stand there not, and when its register is unreadable, which vouches
+    /// for nobody.
+    fn member_in(&self, ns: &str, actor: &str) -> Option<Member> {
+        match self.standing(ns) {
+            Ok(Standing::Members(m)) => m.get(actor).cloned(),
             Ok(_) => None,
             Err(e) => {
                 tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
                 None
             }
-        });
-        tracing::debug!(target: "register", actor, groups = held.len(), found = ?found, "register: the group held here the key stands in, and as whom, or none");
-        found
+        }
     }
 
     /// The first group held here that both `eligible` accepts and `actor`
@@ -349,19 +358,9 @@ impl RingRail {
     /// people are refused, never one picked by order.
     pub fn standing_in(&self, actor: &str, eligible: impl Fn(&str) -> bool) -> Option<(String, Member)> {
         let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to stand in one"));
-        let mut found = held.ok()?.into_iter().filter_map(|ns| {
-            if !eligible(&ns) {
-                return None;
-            }
-            match self.standing(&ns) {
-                Ok(Standing::Members(m)) => Some((ns.clone(), m.get(actor)?.clone())),
-                Ok(_) => None,
-                Err(e) => {
-                    tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
-                    None
-                }
-            }
-        });
+        let mut found = (held.ok()?.into_iter())
+            .filter(|ns| eligible(ns))
+            .filter_map(|ns| Some((ns.clone(), self.member_in(&ns, actor)?)));
         let first = found.next();
         let two = first
             .as_ref()

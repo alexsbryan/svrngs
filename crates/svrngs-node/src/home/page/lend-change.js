@@ -11,6 +11,7 @@
 // last in place of the one before.
 import { assertNever, go, no } from '../ui/machine.js?v=__VERSION__';
 import { post } from './routes.js?v=__VERSION__';
+import { chosen } from './group-choice.js?v=__VERSION__';
 /** @import { Machine, Step } from '../ui/machine.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
@@ -100,15 +101,7 @@ export const CHANGE = (lend, home) => ({
       case 'typed':
         return go(state, {}, { many: message.value });
       case 'choose':
-        return go(
-          state,
-          {},
-          {
-            groups: message.on
-              ? [...state.groups.filter((id) => id !== message.id), message.id]
-              : state.groups.filter((id) => id !== message.id),
-          },
-        );
+        return go(state, {}, { groups: chosen(state.groups, message) });
       case 'audience':
         return changing(state, {
           run: 'change',

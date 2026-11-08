@@ -10,6 +10,7 @@
 // there while it lends again.
 import { assertNever, go, no } from '../ui/machine.js?v=__VERSION__';
 import { post } from './routes.js?v=__VERSION__';
+import { chosen } from './group-choice.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Shown } from './running-look.js?v=__VERSION__' */
@@ -72,16 +73,7 @@ export const LEND = (home) => ({
       case 'typed':
         return go(state, {}, { [message.field]: message.value });
       case 'choose':
-        return go(
-          state,
-          {},
-          {
-            groups: message.on
-              ? [...state.groups.filter((id) => id !== message.id), message.id]
-              : state.groups.filter((id) => id !== message.id),
-            said: '',
-          },
-        );
+        return go(state, {}, { groups: chosen(state.groups, message), said: '' });
       case 'lend':
         if (state.at.lend === 'lending')
           return no(state, 'a lend is under way, and is answered first');

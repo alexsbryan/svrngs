@@ -705,10 +705,6 @@ pub fn declare(
     // change that read the lend before never writes it back over this.
     let _held = lock_lend(data_dir, &lend.name)?;
     let secrets = secret_dir(data_dir, &lend.name);
-    let unwritable = |path: &Path| {
-        let path = path.to_path_buf();
-        move |source| LendError::Unwritable { path, source }
-    };
     if secrets.exists() {
         std::fs::remove_dir_all(&secrets).map_err(unwritable(&secrets))?;
     }
@@ -766,15 +762,9 @@ pub fn mutate(
 /// (LENDING_SCOPE). A held lock is a visible busy, never a lost update.
 fn lock_lend(data_dir: &Path, name: &LendName) -> Result<std::fs::File, LendError> {
     let dir = data_dir.join("locks");
-    std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
-        path: dir.clone(),
-        source,
-    })?;
+    std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
     let path = dir.join(format!("{name}.lock"));
-    let file = std::fs::File::create(&path).map_err(|source| LendError::Unwritable {
-        path: path.clone(),
-        source,
-    })?;
+    let file = std::fs::File::create(&path).map_err(unwritable(&path))?;
     match file.try_lock() {
         Ok(()) => Ok(file),
         Err(source) => {
@@ -815,10 +805,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         Source::Carried(_) => return Err(LendError::Carried(lend.name.clone())),
     };
     let dir = lends_dir(data_dir);
-    std::fs::create_dir_all(&dir).map_err(|source| LendError::Unwritable {
-        path: dir.clone(),
-        source,
-    })?;
+    std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
     let file = LendFile {
         port,
         raw,
@@ -852,34 +839,29 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
 pub fn withdraw(data_dir: &Path, name: &LendName) -> Result<bool, LendError> {
     let _held = lock_lend(data_dir, name)?;
     let path = lends_dir(data_dir).join(format!("{name}.json"));
-    let declared = match std::fs::remove_file(&path) {
-        Ok(()) => true,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => false,
-        Err(source) => return Err(LendError::Unwritable { path, source }),
-    };
+    let declared = removed(std::fs::remove_file(&path), &path)?;
     let choices = choices_path(data_dir, name);
-    match std::fs::remove_file(&choices) {
-        Err(e) if e.kind() != std::io::ErrorKind::NotFound => {
-            return Err(LendError::Unwritable {
-                path: choices,
-                source: e,
-            })
-        }
-        _ => {}
-    }
+    removed(std::fs::remove_file(&choices), &choices)?;
     let secrets = secret_dir(data_dir, name);
-    match std::fs::remove_dir_all(&secrets) {
-        Ok(()) => {}
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(source) => {
-            return Err(LendError::Unwritable {
-                path: secrets,
-                source,
-            })
-        }
-    }
+    removed(std::fs::remove_dir_all(&secrets), &secrets)?;
     tracing::debug!(target: "lend", lend = %name, declared, "lend: withdrawn");
     Ok(declared)
+}
+
+/// Whether `path` was there for `removed`, its removal, to take: none
+/// there is no error, any other is [`unwritable`].
+fn removed(removed: std::io::Result<()>, path: &Path) -> Result<bool, LendError> {
+    match removed {
+        Ok(()) => Ok(true),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(false),
+        Err(source) => Err(unwritable(path)(source)),
+    }
+}
+
+/// A change's refusal where `path` could not be written or removed.
+fn unwritable(path: &Path) -> impl FnOnce(std::io::Error) -> LendError {
+    let path = path.to_path_buf();
+    move |source| LendError::Unwritable { path, source }
 }
 
 #[cfg(test)]

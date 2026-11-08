@@ -37,6 +37,16 @@ export const called = (group) => {
   return `${group.name ?? 'a group whose name this computer cannot read'}${made ? ` (${made})` : ''}`;
 };
 
+/**
+ * `groups` once a box sends `choose`: its group's id ticked, last, or not.
+ * @param {string[]} groups
+ * @param {{ id: string, on: boolean }} choose
+ */
+export const chosen = (groups, { id, on }) => {
+  const rest = groups.filter((group) => group !== id);
+  return on ? [...rest, id] : rest;
+};
+
 /** @param {GroupChoiceProps} props */
 export function GroupChoice({ groups, ticked, waiting = false, send }) {
   /** @param {string} id */

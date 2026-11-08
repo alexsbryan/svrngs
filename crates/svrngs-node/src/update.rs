@@ -97,9 +97,8 @@ pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
 /// Put the page’s release in place over this computer’s svrngs, unless it
 /// is the one running. The caller restarts the node after `Updated`.
 pub async fn apply(dir: &Path) -> Result<Outcome, UpdateError> {
-    let exe = std::env::current_exe().map_err(|e| {
-        UpdateError::Refused(format!("this computer cannot find the svrngs it runs: {e}"))
-    })?;
+    let exe =
+        std::env::current_exe().map_err(refused("this computer cannot find the svrngs it runs"))?;
     apply_at(dir, &exe).await
 }
 
@@ -120,8 +119,7 @@ pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
     }
     let temp = Temp::new(dir)?;
     let tarball = temp.0.join("svrngs.tar.gz");
-    fs::write(&tarball, &bytes)
-        .map_err(|e| UpdateError::Refused(format!("the update’s tarball cannot be kept: {e}")))?;
+    fs::write(&tarball, &bytes).map_err(refused("the update’s tarball cannot be kept"))?;
     let tar = Command::new("tar")
         .arg("-xzf")
         .arg(&tarball)
@@ -129,7 +127,7 @@ pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
         .arg(&temp.0)
         .arg("svrngs")
         .status()
-        .map_err(|e| UpdateError::Refused(format!("the update cannot be unpacked: {e}")))?;
+        .map_err(refused("the update cannot be unpacked"))?;
     if !tar.success() {
         tracing::debug!(target: "update", url, "update: refused — the tarball did not unpack");
         return Err(UpdateError::Refused(
@@ -137,28 +135,19 @@ pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
         ));
     }
     let unpacked = temp.0.join("svrngs");
-    let meta = fs::symlink_metadata(&unpacked)
-        .map_err(|e| UpdateError::Refused(format!("the new svrngs cannot be read: {e}")))?;
+    let meta = fs::symlink_metadata(&unpacked).map_err(refused("the new svrngs cannot be read"))?;
     if !meta.file_type().is_file() {
         tracing::debug!(target: "update", url, "update: refused — the tarball’s svrngs is not a regular file");
         return Err(UpdateError::Refused(
             "the new svrngs is not a regular file".to_string(),
         ));
     }
-    let program = fs::read(&unpacked)
-        .map_err(|e| UpdateError::Refused(format!("the new svrngs cannot be read: {e}")))?;
+    let program = fs::read(&unpacked).map_err(refused("the new svrngs cannot be read"))?;
     let new = exe.with_extension("new");
-    fs::write(&new, &program).map_err(|e| {
-        UpdateError::Refused(format!(
-            "the new svrngs cannot be put where svrngs runs: {e}"
-        ))
-    })?;
-    fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755)).map_err(
-        |e| UpdateError::Refused(format!("the new svrngs cannot be made runnable: {e}")),
-    )?;
-    fs::rename(&new, exe).map_err(|e| {
-        UpdateError::Refused(format!("the new svrngs cannot replace this one: {e}"))
-    })?;
+    fs::write(&new, &program).map_err(refused("the new svrngs cannot be put where svrngs runs"))?;
+    fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755))
+        .map_err(refused("the new svrngs cannot be made runnable"))?;
+    fs::rename(&new, exe).map_err(refused("the new svrngs cannot replace this one"))?;
     write_release(dir, &latest.want);
     tracing::info!(target: "update", exe = %exe.display(), release = %latest.want, "update: the new svrngs is in place");
     Ok(Outcome::Updated)
@@ -291,6 +280,11 @@ async fn fetch(client: &reqwest13::Client, url: &str, max: usize) -> Result<Vec<
 /// The SHA-256 of `bytes`, as the page spells it.
 fn hash(bytes: &[u8]) -> String {
     hex::encode(digest(&SHA256, bytes).as_ref())
+}
+
+/// The update refused where `what` could not be done, and the error why.
+fn refused(what: &str) -> impl FnOnce(std::io::Error) -> UpdateError + '_ {
+    move |e| UpdateError::Refused(format!("{what}: {e}"))
 }
 
 /// Why the update’s place, its lock or its folder, cannot be kept.
