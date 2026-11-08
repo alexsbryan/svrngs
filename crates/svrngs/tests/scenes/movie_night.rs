@@ -262,6 +262,16 @@ async fn movie_night(engine: Engine) {
         host(&jf_at),
         "she lands on Sam's Jellyfin: {seen:#}"
     );
+    // At the film's own page, once she signs in: Jellyfin's pages keep
+    // where they were sent in their address's fragment, `#/details?id=`
+    // (apps/movie-night/match.js `itemAt`).
+    let copy = seen["copy"].as_str().unwrap_or_default();
+    let film = copy.split("id=").nth(1).and_then(|r| r.split('&').next());
+    let film = film.unwrap_or_else(|| panic!("the copy names its film: {copy}"));
+    assert!(
+        landed.contains(film),
+        "she lands at the film she opened, {film}, not Jellyfin's home: {landed}"
+    );
 
     // No credential of Sam's reached Ana: in nothing her browser received,
     // nor in her svrngs's log or data.

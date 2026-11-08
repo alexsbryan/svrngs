@@ -111,7 +111,10 @@ if (typeof document !== 'undefined' && document.getElementById('svrngs-session-s
   // Found by the test above.
   const said = /** @type {HTMLElement} */ (document.getElementById('svrngs-session-state'));
   (async () => {
-    let at = location.pathname + location.search;
+    // The fragment too: the server never sees it, and a page that routes
+    // by it, as Jellyfin's `#/details?id=` does, opens where it was sent
+    // (crates/svrngs/tests/scenes/movie_night.rs, Movie Night's copy).
+    let at = location.pathname + location.search + location.hash;
     if (location.pathname === '/svrngs-open' && new URLSearchParams(location.search).has('code')) {
       const answer = await fetch(location.href, { method: 'POST', cache: 'no-store' });
       if (!answer.ok)
@@ -126,7 +129,7 @@ if (typeof document !== 'undefined' && document.getElementById('svrngs-session-s
           'sign',
         ]),
       );
-      at = enrolled.at;
+      at = enrolled.at + location.hash;
       history.replaceState(null, '', '/svrngs-open');
     }
     if (!(await session())) return;
