@@ -66,6 +66,8 @@ mod life;
 mod films;
 // Movie night (demo/b.md): a newcomer from the link to the film on a TV.
 mod night;
+// Movie Night (apps/movie-night): a newcomer searches a friend's films.
+mod movie_night;
 // The pantry (apps/pantry): friends' models and tools, found by protocol.
 mod pantry;
 // Ports (demo/factorio.md, demo/minecraft.md): each presses Play, bytes cross.

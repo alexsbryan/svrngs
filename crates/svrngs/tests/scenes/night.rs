@@ -29,7 +29,7 @@ use crate::harness::{relay_url, Engine};
 use crate::people::{at_page_host, late, Scene};
 
 /// Jellyfin's users by name, as Sam's own token reads them.
-async fn users(jf: &Jellyfin) -> Vec<String> {
+pub(crate) async fn users(jf: &Jellyfin) -> Vec<String> {
     let token = jf.read("secrets/admin_token");
     let auth = format!(
         r#"MediaBrowser Client="scenes", Device="Sam computer", DeviceId="scenes", Version="1", Token="{token}""#
