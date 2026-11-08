@@ -3614,10 +3614,10 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
         json!({ "read": "#home table.index td a", "all": "#home table.index td" }),
     )
     .await;
-    assert_eq!(seen["read"], "ada’s shelf (k)", "{seen:#}");
+    assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
     assert_eq!(
         seen["all"][0],
-        "ada’s shelf (k) It writes what you say there into your group’s record, as you.",
+        "Open ada’s shelf (k) It writes what you say there into your group’s record, as you.",
         "{seen:#}"
     );
     // The WiFi and the address for a program are below the group's
@@ -3658,11 +3658,11 @@ async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
         !seen["all"].to_string().contains("What apps use"),
         "{seen:#}"
     );
-    let lent = seen["links"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|l| l["text"].as_str().is_some_and(|t| t == "ada’s shelf (k)"));
+    let lent = seen["links"].as_array().unwrap().iter().find(|l| {
+        l["text"]
+            .as_str()
+            .is_some_and(|t| t == "Open ada’s shelf (k)")
+    });
     assert_eq!(
         lent.map(|l| &l["target"]),
         Some(&json!("_blank")),
@@ -4180,14 +4180,19 @@ async fn the_home_page_makes_a_link_to_invite_someone(engine: Engine) {
 }
 
 in_chromium!(
-    /// **The group's folder opened from the page** (start-home, from
-    /// start-measure's ranked row 12: the folder was a path read as words,
-    /// `demo/runs/start/2026-10-13/README.md` §3 (c) 14). Ada keeps house's
-    /// folder; her page's "Open this folder" asks this computer's file
-    /// browser to open it, and says so. The browser is a planted `open`
-    /// and `xdg-open`, first on the test's `PATH`, writing what it was
-    /// asked to open beside it, so no window opens. Planted, watched
-    /// failing: the page as ab6ef1f left it, with no such button.
+    /// **Open versus files** (docs/APP_ACCESS_AND_STOP.md A1, A2, §5; start-home,
+    /// from start-measure's ranked row 12: the folder was a path read as
+    /// words, `demo/runs/start/2026-10-13/README.md` §3 (c) 14). Ada lends
+    /// her shelf and keeps house's folder. Her page's "Open ada’s shelf
+    /// (k)" opens the shelf's own page in a tab, by the keyboard and by
+    /// the mouse; "Open shared files in Finder", or "in your file manager"
+    /// off a Mac, asks this computer's file browser to open the folder,
+    /// and says so. The browser is a planted `open` and `xdg-open`, first
+    /// on the test's `PATH`, writing what it was asked to open beside it,
+    /// so no window opens, and the open is judged by what it was asked,
+    /// never by the page staying still. Planted, watched failing: the
+    /// page as ab6ef1f left it, with no such button; and the link saying
+    /// only the lend's name, as lend-name.js did before A1.
     the_home_page_opens_the_group_s_folder
 );
 async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
@@ -4217,20 +4222,39 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
     std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
     drop(set);
     keep_folder(&ada, &folder).await;
+    let shelf =
+        page_origin("<!doctype html><title>ada's shelf</title><body>the shelf itself").await;
+    lend(dir.path(), "shelf", shelf.port());
     let seen = home_page(
         engine,
         &ada,
         json!({
             "all": "#home section p",
-            "do": [["#home section button:has-text('Open this folder')", null, true]],
+            "labelled": "Open ada’s shelf (k)",
+            "do": [["#home section button:has-text('Open shared files in ')", null, true]],
         }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
+    let tabs = seen["labelled"].as_array().cloned().unwrap_or_default();
+    assert_eq!(
+        tabs.len(),
+        2,
+        "the keyboard and the mouse each open it: {seen:#}"
+    );
+    for tab in &tabs {
+        assert!(at_origin(&tab["url"], &label(1, "shelf")), "{seen:#}");
+        assert_eq!(tab["words"], "the shelf itself", "{seen:#}");
+    }
+    let said = seen["after"][0].to_string();
+    let files = [
+        "Open shared files in Finder",
+        "Open shared files in your file manager",
+    ];
     assert!(
-        seen["after"][0]
-            .to_string()
-            .contains("Open this folder Opened, in a window of its own."),
+        files
+            .iter()
+            .any(|f| said.contains(&format!("{f} Opened, in a window of its own."))),
         "{seen:#}"
     );
     let asked = std::fs::read_to_string(&opened).unwrap_or_default();

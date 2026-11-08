@@ -54,7 +54,8 @@ the way a phone does (below).
 On your home page, under **Make a group**, type a name in *A name for the
 group* (`Lab`) and your own in *Your name in it* (`Sam`). Press **Make a
 group**. The page says *"You made Lab. Invite someone to it below."*, and
-shows where Lab's folder is on your computer, with **Open this folder**.
+shows **Open shared files in Finder** (in your file manager, off a Mac),
+which opens Lab's folder; **Folder location** says where it is.
 
 Under Lab you see who is in it, a list of what the group has (empty for
 now), and **Bring things to the table**: Money, Events and House rules,

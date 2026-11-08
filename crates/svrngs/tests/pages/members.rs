@@ -382,7 +382,7 @@ async fn hand_on_then_leave_with_no_reload(engine: Engine) {
 in_chromium!(
     /// **Two folder presses are said once** (page-members (f)). ada keeps
     /// house's folder; her home page offers to open it, and she presses
-    /// "Open this folder" twice, each answered: the page says it opened
+    /// "Open shared files in Finder" twice, each answered: the page says it opened
     /// once, the last press's answer, never one after the other. The
     /// openers are planted first on `PATH`, each answering done, so no
     /// window opens (browser/main.rs `the_home_page_opens_the_group_s_folder`).
@@ -416,14 +416,16 @@ async fn two_folder_presses_are_said_once(engine: Engine) {
         .unwrap();
     assert!(kept.status().is_success(), "{:?}", kept.text().await);
     let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let open = "#home section button:text-is('Open this folder')";
-    let args = json!({ "home": home, "shown": open, "press": [open, open], "said": "", "at": "#home p.folder + p", "traced": ["FOLDER: opened", 2], "within": 15_000 });
+    let open = "#home section button:text-matches('^Open shared files in ')";
+    let args = json!({ "home": home, "shown": open, "press": [open, open], "said": "", "at": "#home section p:has(> button)", "traced": ["FOLDER: opened", 2], "within": 15_000 });
     let seen = drive(engine, "pages/members.mjs", args, None).await;
     let text = seen["text"].as_str().unwrap_or_default();
     let wrong: Vec<&str> = [
         (seen["went"] != true, "both presses are answered"),
         (
-            text != "Open this folder Opened, in a window of its own.",
+            !(text.starts_with("Open shared files in ")
+                && text.ends_with(" Opened, in a window of its own."))
+                || text.matches("Opened").count() != 1,
             "the page says it opened once",
         ),
         (seen["reloads"] != 0, "with no reload"),

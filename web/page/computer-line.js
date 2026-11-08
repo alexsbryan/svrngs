@@ -9,7 +9,7 @@ import { Copy } from '../ui/copy.js?v=__VERSION__';
 
 const SAYS = {
   installs:
-    'Paste this line in a terminal on your Mac or Linux computer. It installs or updates svrngs, keeps your identity, joins the group and opens its local page with the shared folder’s exact path and Open this folder. It runs whenever you log in. If joining fails, wait a minute and retry this same line; your existing groups keep working.',
+    'Paste this line in a terminal on your Mac or Linux computer. It installs or updates svrngs, keeps your identity, joins the group and opens its local page, where Open shared files opens the group’s folder. It runs whenever you log in. If joining fails, wait a minute and retry this same line; your existing groups keep working.',
   joins:
     'On this computer, paste this line in a terminal: it gets svrngs, joins you, and opens your home page, with the group’s folder on your disk. If svrngs is on this computer already, paste the link you opened on your home page instead, under “Join a group from a link”.',
   founds:

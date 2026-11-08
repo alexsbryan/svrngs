@@ -58,7 +58,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     }
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-    let words = "cy’s notes It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.";
+    let words = "Open cy’s notes It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.";
 
     let seen = drive(
         engine,
@@ -83,8 +83,8 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     let cells = seen["cells"].as_array().cloned().unwrap_or_default();
     for cell in [
         words,
-        "cy’s plain (k) It writes what you say there into your group’s record, as you.",
-        "cy’s films It writes what you say there into your group’s record, as you.",
+        "Open cy’s plain (k) It writes what you say there into your group’s record, as you.",
+        "Open cy’s films It writes what you say there into your group’s record, as you.",
     ] {
         assert!(
             cells.contains(&json!(cell)),

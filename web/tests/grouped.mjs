@@ -265,13 +265,17 @@ try {
     assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 1);
     assert.equal(await group.isVisible(), true);
     await group.locator('table.index').waitFor();
-    await group.getByRole('button', { name: 'Open this folder', exact: true }).waitFor();
+    await group
+      .getByRole('button', { name: /^Open shared files in (Finder|your file manager)$/ })
+      .waitFor();
     assert.deepEqual(await links(), TWO, 'a group page has no Switch group, no tools row');
     assert.equal(await group.locator('h2').first().isVisible(), true, 'its banner heads the page');
     await shows('a group', {});
     assert.equal(await group.getByRole('button', { name: /^Leave / }).isVisible(), false);
     await drawn(`#group-${id}`, baselineGroups[i], 'all original group controls retained');
-    await group.getByRole('button', { name: 'Open this folder', exact: true }).click();
+    await group
+      .getByRole('button', { name: /^Open shared files in (Finder|your file manager)$/ })
+      .click();
     await group.getByText('Opened, in a window of its own.', { exact: false }).waitFor();
     const sent = await page.evaluate(() => JSON.parse(sessionStorage.getItem('grouped-writes')));
     assert.deepEqual(sent.at(-1), { path: '/folder', body: { group: id, dir: `/fixture/${id}` } });

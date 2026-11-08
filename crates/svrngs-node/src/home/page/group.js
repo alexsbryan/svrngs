@@ -135,18 +135,20 @@ function below(group, name, props) {
 
 // The section, in its group's colour (look.css `data-colour`), headed by
 // its name and whose it is; when this computer meets the group at its
-// fallback, said under it (surface.rs `Held::fallback`).
+// fallback (surface.rs `Held::fallback`), said after the group's controls
+// under Connection details, closed at first: how it reaches the group is
+// not what a person came to do (docs/APP_ACCESS_AND_STOP.md A3). A group
+// that cannot be read is said under the heading, where it stops them.
 /** @param {GroupProps} props */
 export function Group({ g: group, ...props }) {
   const name = group.name ?? 'this group';
   const heading = group.name ?? 'A group whose name this computer cannot read';
   const made = group.made && html`<small> (${whose(group.made)})</small>`;
-  const backup = group.fallback && html`<p class="said">${BACKUP[group.fallback](name)}</p>`;
   return html`
     <section id=${`group-${group.id}`} data-colour=${colour(group.id)} hidden=${props.hidden}>
       <h2>${heading}${made}</h2>
-      ${backup}
       ${below(group, name, props)}
+      ${group.fallback && html`<details class="said"><summary>Connection details</summary><p>${BACKUP[group.fallback](name)}</p></details>`}
     </section>
   `;
 }

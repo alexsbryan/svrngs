@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
 //
 // A `do` step's fourth element, `until`, is words `all`'s text holds before
 // it is read. `visible` hides the page, then shows it, once the `do` steps
@@ -241,6 +241,17 @@ try {
     await arrived(tab);
     opened = { url: tab.url(), title: await tab.title() };
   }
+  // With `labelled`, a link's whole name: the tab it opens by the keyboard,
+  // focused and Enter pressed, then by the mouse, each once loaded, its
+  // address and words (docs/APP_ACCESS_AND_STOP.md, "Open versus files").
+  const labelled = [];
+  for (const how of args.labelled ? ['keyboard', 'mouse'] : []) {
+    const link = page.getByRole('link', { name: args.labelled, exact: true });
+    const press = how === 'keyboard' ? link.press('Enter') : link.click();
+    const [tab] = await Promise.all([context.waitForEvent('page'), press]);
+    await arrived(tab);
+    labelled.push({ how, url: tab.url(), words: await tab.locator('body').innerText() });
+  }
   // With `text`, the page's words as a person reads them, each cell apart,
   // once what this computer lends is drawn below its heading: a lend made
   // by `do` draws it again (REVIEW-audit-v1ui-auto-1: read loaded, between).
@@ -275,6 +286,7 @@ try {
       drawn,
       text,
       opened,
+      labelled,
       opens,
       sent,
       logs,

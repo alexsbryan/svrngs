@@ -600,7 +600,9 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   answer", when it did not; "in from a phone" when their only keys are a
   browser's. Presence is only "on now", never when last seen.
 - **the index**: one table of what is in the group, on any port — each thing
-  by a link of its name, its kind in its lender's word when it differs,
+  by a link, **Open** and its name ("Open Sam’s llama-server"), so it reads
+  as the app's way in and never its files, a port by its name alone with
+  its Play; its kind in its lender's word when it differs,
   never one of svrngs's own (`scripts/vocab_check.py` reads the pages'
   scripts too), and beside it what opening it agrees to; whose; how it
   opens (in a tab, signing you in once when its lender's program does); and
@@ -626,7 +628,11 @@ is frozen at `/?ui=a`, linked from nowhere, and goes within a couple of weeks
 of 2026-11-06 (the operator). An old `/?ui=b` bookmark opens B
 (`home/page/home-reading.js` `first`, `home/page/grouped.js`).
 
-B's workspace leads with the existing app index and folder opener. **People**
+B's workspace leads with **Shared apps**, the app index, then **Shared
+files**: **Open shared files in Finder**, or "in your file manager" off a
+Mac, opens the group's folder in a window of its own, each of several
+folders named by its own name, and **Folder location**, closed at first,
+says where it is (`home/page/group-folder.js`). **People**
 holds presence, visitors and removals; **Add an app** holds the existing
 shelf; **Manage this group** holds every invitation and device-link control,
 WiFi sharing, program addresses, the presentation screen, handover and leave.
@@ -634,7 +640,11 @@ WiFi sharing, program addresses, the presentation screen, handover and leave.
 lending/sign-in/limit controls; terminal-only removal instructions are shown
 there, with **Check the connection now**, whose answer lands on that page, and
 the page's address. Joining, making a group, opening a link and groups left
-each have a destination from the overview. App-opening consent and every command remain the
+each have a destination from the overview. How this computer reaches a
+group the public way is said after the group's controls, under
+**Connection details**, closed at first, on both layouts (`home/page/group.js`);
+a group that cannot be read is said under its heading, where it stops the
+person. App-opening consent and every command remain the
 same components and routes as A. Hidden groups and home places stay mounted,
 so the computer-wide access view still receives every group's reads.
 
@@ -657,7 +667,8 @@ On either layout a person can:
   link from your group", once in a group;
 - join a group from a link someone sent, make one, and make a link to invite
   someone or to add their phone or another computer;
-- open the group's folder in the computer's file browser;
+- open the group's folder in the computer's file browser, **Open shared
+  files in Finder** (docs/APP_ACCESS_AND_STOP.md A2);
 - once in a group, lend what runs on their computer, under "Already running
   here": only when
   they press "Look for programs running on this computer", never as the
@@ -920,7 +931,7 @@ previously stopped service on failure or interruption, and retains its refusal
 exit status. Its optional `--at` is carried by `svrngs open <local destination>`
 to the existing `/v1/open {at}` boundary. At `/#group-<id>`, HOME reads the
 stable id once and draws a focused **Welcome to <group>**, the node's actual
-folder paths and existing **Open this folder** controls, including nondefault
+folder paths and existing **Open shared files** controls, including nondefault
 destinations. It explains how files reach the group and suggests a first hello;
 the host's optional `WELCOME.txt` stays ordinary group content, never presumed
 present. Other groups and management controls wait behind **All your groups**,

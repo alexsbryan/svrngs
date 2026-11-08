@@ -109,8 +109,10 @@ export function ArrivalLinks({ s: state, g: group }) {
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
 export function GroupPlaces({ draw }) {
   return html`
-    <h3>Shared apps and folder</h3>
-    ${draw(['index', 'folder'])}
+    <h3>Shared apps</h3>
+    ${draw(['index'])}
+    <h3>Shared files</h3>
+    ${draw(['folder'])}
     <details class="group-place"><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
     <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>
     <details class="group-place"><summary>Manage this group</summary>${draw(['links', 'wifi', 'show', 'leave'])}</details>

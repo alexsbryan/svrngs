@@ -65,7 +65,8 @@ invitation. The address and controls survive reloading and restarting.
 is, give their name, and copy one installation command. The command
 carries the ordinary invitation and chosen name through installation.
 It opens their authenticated local group page, with the actual local
-folder path and **Open this folder** easy to find. An existing installation
+folder path under **Folder location** and **Open shared files in Finder**
+easy to find. An existing installation
 is reused; retrying preserves identity and does not duplicate membership.
 
 The host prepares an ordinary `WELCOME.txt` and an example text file in

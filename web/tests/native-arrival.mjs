@@ -97,7 +97,7 @@ try {
   );
   await page.goto(args.open);
   const section = page.locator(`#group-${args.group}`);
-  await section.locator('.folder').waitFor();
+  await section.locator('.folder').waitFor({ state: 'attached' });
   assert.equal(
     await page.locator('#home section').count(),
     1,
@@ -110,18 +110,22 @@ try {
   assert.equal(await page.getByText('Invite people here', { exact: true }).count(), 0);
   assert.ok((await section.locator('.folder').textContent()).includes(args.folder));
   assert.equal(
-    await section.getByRole('button', { name: 'Open this folder', exact: true }).count(),
+    await section
+      .getByRole('button', { name: /^Open shared files in (Finder|your file manager)$/ })
+      .count(),
     1,
   );
   assert.equal(new URL(page.url()).hash, `#group-${args.group}`);
-  await section.getByRole('button', { name: 'Open this folder', exact: true }).click();
+  await section
+    .getByRole('button', { name: /^Open shared files in (Finder|your file manager)$/ })
+    .click();
   await page.waitForFunction(() => window.openedFolder);
   assert.deepEqual(await page.evaluate(() => window.openedFolder), {
     group: args.group,
     dir: args.folder,
   });
   await page.reload();
-  await section.locator('.folder').waitFor();
+  await section.locator('.folder').waitFor({ state: 'attached' });
   assert.equal(await page.locator('#home section').count(), 1, 'refresh keeps the welcome');
   await page.getByRole('link', { name: 'All your groups', exact: true }).click();
   await page.locator('.grouped-nav').waitFor();
@@ -160,7 +164,7 @@ try {
     if (mode === 'loading') {
       await page.waitForFunction(() => typeof window.releaseGroups === 'function');
       await page.evaluate(() => window.releaseGroups());
-      await section.locator('.folder').waitFor();
+      await section.locator('.folder').waitFor({ state: 'attached' });
     }
   }
   console.log(JSON.stringify({ line, kept, folder: args.folder, hash: new URL(page.url()).hash }));

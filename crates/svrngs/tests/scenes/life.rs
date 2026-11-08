@@ -33,6 +33,14 @@ const GROUP: &str = "lake-trip";
 /// Sam's films' open, by its name, what it may write as you said beside it
 /// (capability-signed, F1; question.js `named`, `agreed`).
 const OPEN_FILMS: &str = "Sam’s films";
+
+/// The home page's link to Sam's films: Open and its name, the app's way
+/// in (docs/APP_ACCESS_AND_STOP.md A1).
+const OPEN_FILMS_HERE: &str = "Open Sam’s films";
+
+/// The home page's way to the group's folder, Finder's on a Mac and the
+/// file manager's elsewhere (A2): its path is under Folder location, closed.
+const OPEN_FILES: &str = "Open shared files in ";
 const PHOTOS: usize = 30;
 
 /// The trip's photo `n`, bytes of its own.
@@ -135,11 +143,11 @@ async fn newcomer(browsers: &mut Browsers, who: &Person, trip: &[(String, Vec<u8
     // Each waited for: the page reads its groups and lends again each
     // second, and at a load of 155 it listed Sam's films before the
     // group's folder.
-    for words in ["Sam’s films", GROUP, "lake-trip’s folder", "Ana’s music"] {
+    for words in ["Sam’s films", GROUP, OPEN_FILES, "Ana’s music"] {
         home_says(browsers, who, words, Duration::from_secs(60)).await;
     }
     let got = browsers
-        .tell(json!({ "do": "follow", "who": who.name.to_lowercase(), "link": OPEN_FILMS }))
+        .tell(json!({ "do": "follow", "who": who.name.to_lowercase(), "link": OPEN_FILMS_HERE }))
         .await;
     assert_eq!(
         got["status"], 200,
@@ -322,7 +330,7 @@ async fn life(engine: Engine) {
     let asleep = "Ana's computer did not answer";
     home_says(&mut browsers, &eve, asleep, Duration::from_secs(60)).await;
     let got = browsers
-        .tell(json!({ "do": "follow", "who": "eve", "link": OPEN_FILMS }))
+        .tell(json!({ "do": "follow", "who": "eve", "link": OPEN_FILMS_HERE }))
         .await;
     assert_eq!(got["status"], 200, "Sam's films play on for Eve: {got:#}");
     drop((sam, alex, bo, dee, eve));
