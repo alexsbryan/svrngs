@@ -200,13 +200,14 @@ async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
     };
     let key = SigningKey::from_bytes(&[76; 32]);
     let relays = vec![one, two];
-    let node = Node::start_asking(
+    let node = Node::start_every(
         dir.path().to_path_buf(),
         key.clone(),
         &ours,
         &relays,
         group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
+        svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL,
     )
     .await
     .expect("a computer starts");

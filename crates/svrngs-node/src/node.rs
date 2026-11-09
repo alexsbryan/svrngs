@@ -275,30 +275,18 @@ impl Node {
         seeds: SeedText,
         api: SocketAddr,
     ) -> Result<Self, NodeError> {
-        Self::start_asking(data_dir, key, relay, &[], seeds, api).await
+        let every = DEFAULT_RING_SYNC_INTERVAL;
+        Self::start_every(data_dir, key, relay, &[], seeds, api, every).await
     }
 
     /// [`Node::start`], its endpoint built with `asked` among its groups'
     /// own relays, the relays `new --relay` or a link names: a computer in no
     /// group yet would else start at the build's, and offline wait out a
     /// report of relays that cannot answer (the run's modem-off rerun, 6.1 s
-    /// for a join, relay fallbacks).
-    pub async fn start_asking(
-        data_dir: PathBuf,
-        key: SigningKey,
-        relay: &RelayConfig,
-        asked: &[Url],
-        seeds: SeedText,
-        api: SocketAddr,
-    ) -> Result<Self, NodeError> {
-        let every = DEFAULT_RING_SYNC_INTERVAL;
-        Self::start_every(data_dir, key, relay, asked, seeds, api, every).await
-    }
-
-    /// [`Node::start_asking`], with the round every `every` rather than every
-    /// [`DEFAULT_RING_SYNC_INTERVAL`]. The scale instrument
-    /// (`tests/scale.rs`) passes a day, so that no node's own round runs
-    /// inside one it is timing.
+    /// for a join, relay fallbacks); and with the round every `every`, which
+    /// the command gives as [`DEFAULT_RING_SYNC_INTERVAL`]. The scale
+    /// instrument (`tests/scale.rs`) passes a day, so that no node's own
+    /// round runs inside one it is timing.
     pub async fn start_every(
         data_dir: PathBuf,
         key: SigningKey,

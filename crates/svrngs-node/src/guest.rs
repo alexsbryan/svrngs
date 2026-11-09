@@ -185,17 +185,16 @@ fn parse_relay_mode(relay_urls: &[String]) -> Option<iroh::RelayMode> {
     }
     let parsed: Vec<RelayUrl> = relay_urls
         .iter()
-        .filter_map(|u| match relay::parse(u) {
-            Ok(url) => Some(url),
-            Err(e) => {
+        .filter_map(|u| {
+            let parsed = relay::parse(u).inspect_err(|e| {
                 tracing::warn!(
                     target: "transport",
                     url = %u,
                     error = %e,
                     "iroh: ignoring unparseable relay_url — falling back to remaining/default relays"
                 );
-                None
-            }
+            });
+            parsed.ok()
         })
         .collect();
     if parsed.is_empty() {

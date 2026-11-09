@@ -240,9 +240,7 @@ impl IrohTransport {
         );
         lookup.then_some(ea)
     }
-}
 
-impl IrohTransport {
     /// `req` sent to the member `peer` names, on the members' protocol, on
     /// a bi-stream of the connection kept to it, or of one dialled within
     /// [`crate::dial::DIAL_WITHIN`]: its answer's head, its body still to
@@ -541,16 +539,14 @@ impl IrohAcceptor {
             while let Some(incoming) = endpoint.accept().await {
                 let (admit, accepted) = (admit.clone(), accepted.clone());
                 tokio::spawn(async move {
-                    let conn = match incoming.await {
-                        Ok(c) => c,
-                        Err(e) => {
-                            tracing::debug!(
-                                target: "transport",
-                                error = %e,
-                                "iroh acceptor: handshake failed"
-                            );
-                            return;
-                        }
+                    let Ok(conn) = incoming.await.inspect_err(|e| {
+                        tracing::debug!(
+                            target: "transport",
+                            error = %e,
+                            "iroh acceptor: handshake failed"
+                        );
+                    }) else {
+                        return;
                     };
                     accepted.send_modify(|a| {
                         a.retain(|c| c.close_reason().is_none());

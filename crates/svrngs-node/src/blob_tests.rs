@@ -132,7 +132,9 @@ async fn a_lapse_this_computer_was_given_outlasts_a_fetch_that_failed() {
         group: films.clone(),
         keep: None,
     };
-    let answer = get(State(ana.folders().clone()), Path(hash), Query(asked)).await;
+    let answer = get(State(ana.folders().clone()), Path(hash), Query(asked))
+        .await
+        .into_response();
     assert_eq!(
         answer.status(),
         StatusCode::BAD_GATEWAY,
@@ -177,7 +179,9 @@ async fn a_refused_put_and_a_get_that_asks_the_group_are_traced() {
         keep: None,
     };
     let bytes = axum::body::Bytes::from_static(b"kept for how long?");
-    let answer = put(State(ana.folders().clone()), Query(unkept), bytes).await;
+    let answer = put(State(ana.folders().clone()), Query(unkept), bytes)
+        .await
+        .into_response();
     assert_eq!(answer.status(), StatusCode::BAD_REQUEST);
 
     let hash = Hash::new(b"carried, not in the store");
@@ -187,7 +191,7 @@ async fn a_refused_put_and_a_get_that_asks_the_group_are_traced() {
         group: films.clone(),
         keep: None,
     };
-    get(State(ana.folders().clone()), Path(hash), Query(asked)).await;
+    let _ = get(State(ana.folders().clone()), Path(hash), Query(asked)).await;
 
     let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
     let line = |words: &str| {
@@ -233,14 +237,18 @@ async fn a_fetch_rides_the_connection_the_transport_keeps() {
             keep: Some(60),
         };
         let bytes = axum::body::Bytes::from_static(bytes);
-        let put = put(State(ben.folders().clone()), Query(kept), bytes.clone()).await;
+        let put = put(State(ben.folders().clone()), Query(kept), bytes.clone())
+            .await
+            .into_response();
         assert_eq!(put.status(), StatusCode::OK);
         let asked = BlobQuery {
             group: films.clone(),
             keep: None,
         };
         let hash = Hash::new(&bytes);
-        let answer = get(State(ana.folders().clone()), Path(hash), Query(asked)).await;
+        let answer = get(State(ana.folders().clone()), Path(hash), Query(asked))
+            .await
+            .into_response();
         assert_eq!(answer.status(), StatusCode::OK, "Ana gets it from Ben");
         let conns = ana.transport().conns.borrow();
         ids.push(conns.get(&at).map(|c| c.stable_id()));

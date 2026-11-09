@@ -1086,7 +1086,8 @@ async fn start(
         _ => Vec::new(),
     };
     let seeds = group::seed_text;
-    let node = Node::start_asking(root.clone(), key.clone(), relay, &asked, seeds, api);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let node = Node::start_every(root.clone(), key.clone(), relay, &asked, seeds, api, every);
     let node = node.await.map_err(|e: NodeError| {
         tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
         match e {

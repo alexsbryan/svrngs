@@ -178,17 +178,13 @@ impl Folders {
                     Err(FolderError::Synced(dir.clone()))
                 }
                 Ok(kept) => {
-                    let mut asks: Vec<FolderAsk> = kept
-                        .iter()
-                        .map(|((group, _), dir)| FolderAsk {
+                    let asks: Vec<FolderAsk> = (kept.iter().map(|((g, _), d)| (g, d)))
+                        .chain([(&group, &dir)])
+                        .map(|(group, dir)| FolderAsk {
                             dir: dir.clone(),
                             group: group.clone(),
                         })
                         .collect();
-                    asks.push(FolderAsk {
-                        dir: dir.clone(),
-                        group: group.clone(),
-                    });
                     let bytes = serde_json::to_vec(&asks).unwrap_or_default();
                     write_whole(&self.data_dir.join(SYNCED), &bytes)
                         .map(|()| kept.insert(key, dir.clone()).is_none())

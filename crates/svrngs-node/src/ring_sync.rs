@@ -293,12 +293,10 @@ pub async fn run_one_round(
 ) -> RoundOutcome {
     let mut outcome = RoundOutcome::default();
     let rail = &host.rail;
-    let namespaces = match rail.namespaces() {
-        Ok(n) => n,
-        Err(e) => {
-            warn!(error = %e, "ring sync: cannot enumerate namespaces");
-            return outcome;
-        }
+    let Ok(namespaces) = rail.namespaces().inspect_err(|e| {
+        warn!(error = %e, "ring sync: cannot enumerate namespaces");
+    }) else {
+        return outcome;
     };
     if namespaces.is_empty() {
         return outcome;
@@ -531,14 +529,6 @@ pub struct ExchangeOutcome {
     pub stop: Option<ExchangeStop>,
 }
 
-impl ExchangeOutcome {
-    /// Keep what moved; record why it stopped.
-    fn stopped(mut self, stop: ExchangeStop) -> Self {
-        self.stop = Some(stop);
-        self
-    }
-}
-
 /// The chunked exchange with one member: two calls per chunk, repeated
 /// until neither side moves or [`MAX_CHUNKS_PER_EXCHANGE`] is spent.
 ///
@@ -548,33 +538,38 @@ impl ExchangeOutcome {
 /// (something outstanding, nothing moved anywhere) warns — repeating that
 /// would repeat verbatim.
 pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeOutcome {
-    let peer = to.1.key;
     let mut out = ExchangeOutcome::default();
+    if let Err(stop) = chunks(to, rail, namespace, &mut out).await {
+        out.stop = Some(stop);
+    }
+    out
+}
+
+/// [`exchange`]'s chunks, each call's move kept in `out` as it lands; why a
+/// call stopped them, if one did.
+async fn chunks(
+    to: To<'_>,
+    rail: &RingRail,
+    namespace: &str,
+    out: &mut ExchangeOutcome,
+) -> Result<(), ExchangeStop> {
+    let peer = to.1.key;
+    let local = |e: RailError| ExchangeStop::Failed(format!("local journal: {e}"));
+    let call = |digest, ops| async move {
+        let body = RingSyncRequest {
+            namespace: namespace.to_string(),
+            digest,
+            ops,
+        };
+        post(to, &body).await
+    };
     let mut last_peer_digest: Option<crate::Digest> = None;
 
     for chunk in 1..=MAX_CHUNKS_PER_EXCHANGE {
         // ── Call 1 — learn what they have, take one chunk of what we lack.
-        let mine = match rail.digest(namespace) {
-            Ok(d) => d,
-            Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
-        };
-        let first = match post(
-            to,
-            &RingSyncRequest {
-                namespace: namespace.to_string(),
-                digest: mine,
-                ops: Vec::new(),
-            },
-        )
-        .await
-        {
-            Ok(r) => r,
-            Err(stop) => return out.stopped(stop),
-        };
-        let pulled = match rail.ingest_all(namespace, &first.ops) {
-            Ok(n) => n,
-            Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
-        };
+        let mine = rail.digest(namespace).map_err(local)?;
+        let first = call(mine, Vec::new()).await?;
+        let pulled = rail.ingest_all(namespace, &first.ops).map_err(local)?;
         out.pulled += pulled;
 
         // The peer's OWN report of what it holds — the one progress signal
@@ -584,36 +579,16 @@ pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeO
 
         // ── Call 2 — give them one chunk of what they lack, out of
         // everything we now hold.
-        let (for_peer, more_for_peer) = match rail.ops_missing_from_within(
-            namespace,
-            &first.digest,
-            RING_SYNC_OPS_BUDGET_BYTES,
-        ) {
-            Ok(v) => v,
-            Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
-        };
+        let (for_peer, more_for_peer) = rail
+            .ops_missing_from_within(namespace, &first.digest, RING_SYNC_OPS_BUDGET_BYTES)
+            .map_err(local)?;
         let offered = for_peer.len();
         let pushed = if for_peer.is_empty() {
             0
         } else {
-            let refreshed = match rail.digest(namespace) {
-                Ok(d) => d,
-                Err(e) => return out.stopped(ExchangeStop::Failed(format!("local journal: {e}"))),
-            };
-            match post(
-                to,
-                &RingSyncRequest {
-                    namespace: namespace.to_string(),
-                    digest: refreshed,
-                    ops: for_peer,
-                },
-            )
-            .await
-            {
-                Ok(second) => second.ingested,
-                // `out.pulled` is KEPT: call 1's ops are on disk already.
-                Err(stop) => return out.stopped(stop),
-            }
+            let refreshed = rail.digest(namespace).map_err(local)?;
+            // Stopped here, `out.pulled` is KEPT: call 1's ops are on disk already.
+            call(refreshed, for_peer).await?.ingested
         };
         out.pushed += pushed;
 
@@ -630,7 +605,7 @@ pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeO
         );
 
         if pulled == 0 && offered == 0 {
-            return out; // converged
+            return Ok(()); // converged
         }
         if pulled == 0 && pushed == 0 && !peer_digest_moved {
             warn!(
@@ -642,7 +617,7 @@ pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeO
                  and nothing was ingested, so repeating would repeat verbatim; \
                  leaving the rest to the next round"
             );
-            return out;
+            return Ok(());
         }
     }
     warn!(
@@ -654,7 +629,7 @@ pub async fn exchange(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeO
         "ring sync: exchange hit its chunk bound with work outstanding — every \
          op moved is already on disk, so the next round resumes here"
     );
-    out
+    Ok(())
 }
 
 pub(crate) async fn post(
@@ -663,10 +638,8 @@ pub(crate) async fn post(
 ) -> Result<RingSyncResponse, ExchangeStop> {
     // Serialised here rather than handed to `.json(body)` so the byte count
     // the receiver's limit judges is a number THIS side can name in a log.
-    let payload = match serde_json::to_vec(body) {
-        Ok(p) => p,
-        Err(e) => return Err(ExchangeStop::Failed(format!("local encode: {e}"))),
-    };
+    let payload =
+        serde_json::to_vec(body).map_err(|e| ExchangeStop::Failed(format!("local encode: {e}")))?;
     let sent_bytes = payload.len();
     let request = axum::http::Request::post(SYNC_ROUTE)
         .header(axum::http::header::CONTENT_TYPE, "application/json")

@@ -406,22 +406,18 @@ async fn userinfo(
     State(p): State<Provider>,
     Path(lend): Path<String>,
     headers: HeaderMap,
-) -> Response {
+) -> Result<Response, Response> {
     let Some((name, _declared, config)) = p.declared(&lend) else {
-        return missing(&lend);
+        return Err(missing(&lend));
     };
-    let token = match bearer(&headers) {
-        Ok(token) => token,
-        Err(why) => return refuse(StatusCode::UNAUTHORIZED, "invalid_token", why),
-    };
+    let invalid = |why| refuse(StatusCode::UNAUTHORIZED, "invalid_token", why);
+    let token = bearer(&headers).map_err(invalid)?;
     let issuer = issuer(p.port, name.as_str());
-    let mut claims = match p.key.verified(token, &issuer, &config.client_id, now()) {
-        Ok(claims) => claims,
-        Err(why) => return refuse(StatusCode::UNAUTHORIZED, "invalid_token", why),
-    };
+    let verified = p.key.verified(token, &issuer, &config.client_id, now());
+    let mut claims = verified.map_err(invalid)?;
     claims.nonce = None;
     tracing::debug!(target: "oidc", %issuer, client = %config.client_id, "oidc: userinfo answered");
-    Json(claims).into_response()
+    Ok(Json(claims).into_response())
 }
 
 /// The client and the secret it presented, by `client_secret_basic` or

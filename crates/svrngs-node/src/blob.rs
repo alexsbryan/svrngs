@@ -183,25 +183,21 @@ pub(super) async fn put(
     State(f): State<Folders>,
     Query(q): Query<BlobQuery>,
     bytes: axum::body::Bytes,
-) -> Response {
-    if let Err(refusal) = f.standing_in(&q.group) {
-        return refusal;
-    }
+) -> Result<Response, Response> {
+    f.standing_in(&q.group)?;
     let until = |k| Instant::now().checked_add(Duration::from_secs(k));
     let Some((keep, Some(until))) = q.keep.map(|k| (k, until(k))) else {
         let why = "how long the bytes are kept must be named, in seconds this computer's clock counts: &keep=<seconds>";
-        return err(StatusCode::BAD_REQUEST, why);
+        return Err(err(StatusCode::BAD_REQUEST, why));
     };
-    let tag = match f.store.add_bytes(bytes).temp_tag().await {
-        Ok(tag) => tag,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, format!("the store: {e}")),
-    };
+    let tag = f.store.add_bytes(bytes).temp_tag().await;
+    let tag = tag.map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, format!("the store: {e}")))?;
     let hash = tag.hash();
     // Placed before the tag goes, so the sweep never finds it unkept.
     f.carry(hash, &q.group, Some(until));
     drop(tag);
     tracing::debug!(target: "blob", %hash, group = q.group, keep, "blob: put, placed in the group until it lapses");
-    Json(json!({ "hash": hash })).into_response()
+    Ok(Json(json!({ "hash": hash })).into_response())
 }
 
 /// `GET /v1/blob/<hash>?group=<id>`: the bytes, from this computer's
@@ -216,20 +212,17 @@ pub(super) async fn get(
     State(f): State<Folders>,
     Path(hash): Path<Hash>,
     Query(BlobQuery { group, .. }): Query<BlobQuery>,
-) -> Response {
-    let people = match f.standing_in(&group) {
-        Ok(people) => people,
-        Err(refusal) => return refusal,
-    };
+) -> Result<Response, Response> {
+    let people = f.standing_in(&group)?;
     let lapsed = (StatusCode::GONE, "lapsed", "it lapsed");
     let unanswered = (StatusCode::BAD_GATEWAY, "unanswered", "no holder answered");
     // Whether this computer was given a lapse here before this get, which a
     // failed fetch then keeps (#148).
     let given = match f.held(hash, &group, Instant::now()) {
-        Holds::Lapsed => return refused(hash, lapsed, json!({})),
+        Holds::Lapsed => return Err(refused(hash, lapsed, json!({}))),
         Holds::For { .. } if matches!(f.lacks(hash).await, Ok(None)) => {
             tracing::debug!(target: "blob", %hash, group, "blob: held here, not lapsed");
-            return f.answer(hash, &f.host.actor).await;
+            return Ok(f.answer(hash, &f.host.actor).await);
         }
         held => held != Holds::NeverHeld,
     };
@@ -253,12 +246,12 @@ pub(super) async fn get(
             (0, _) => unanswered,
             _ => lapsed,
         };
-        return refused(hash, kind, asked.into());
+        return Err(refused(hash, kind, asked.into()));
     }
     // Carried while it is fetched, so the sweep never drops it half held.
     let until = Instant::now() + Duration::from_millis(left);
     f.carry(hash, &group, Some(until));
-    match f.hold(hash, &holders).await {
+    Ok(match f.hold(hash, &holders).await {
         Ok(from) => {
             let from = from.as_deref().unwrap_or(&f.host.actor);
             tracing::info!(target: "blob", %hash, group, holder = from, left_ms = left, "blob: held from a computer of the group, carried until it lapses there");
@@ -271,7 +264,7 @@ pub(super) async fn get(
             asked.extend(why.into_iter().map(|(k, w)| (k, w.into())));
             refused(hash, unanswered, asked.into())
         }
-    }
+    })
 }
 
 /// [`ASKED`]: what this computer holds of a hash in a group, to a dialer

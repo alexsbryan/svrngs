@@ -450,18 +450,12 @@ impl Sessions {
     /// Browser WebSockets cannot set a proof header: a proved fetch mints one use.
     pub(crate) fn socket(&self, name: &str, req: &mut Request) -> bool {
         let host = self.host(name);
+        let headers = req.headers();
+        let websocket =
+            |h: &axum::http::HeaderValue| h.as_bytes().eq_ignore_ascii_case(b"websocket");
         if req.method() != axum::http::Method::GET
-            || req
-                .headers()
-                .get(header::HOST)
-                .is_none_or(|h| h != host.as_str())
-        {
-            return false;
-        }
-        if !req
-            .headers()
-            .get(header::UPGRADE)
-            .is_some_and(|h| h.as_bytes().eq_ignore_ascii_case(b"websocket"))
+            || headers.get(header::HOST).is_none_or(|h| h != host.as_str())
+            || !headers.get(header::UPGRADE).is_some_and(websocket)
         {
             return false;
         }
@@ -470,9 +464,8 @@ impl Sessions {
         };
         let code = query
             .split('&')
-            .find_map(|p| p.strip_prefix("__svrngs_socket="))
-            .map(str::to_string);
-        let Some(code) = code else {
+            .find_map(|p| p.strip_prefix("__svrngs_socket="));
+        let Some(code) = code.map(str::to_string) else {
             return false;
         };
         let rest = query
@@ -503,12 +496,10 @@ impl Sessions {
             return self.refused("");
         }
         let host = self.host(name);
-        let own = req
-            .headers()
-            .get(header::ORIGIN)
+        let headers = req.headers();
+        let own = (headers.get(header::ORIGIN))
             .is_some_and(|h| h == format!("http://{host}").as_str())
-            && req
-                .headers()
+            && headers
                 .get(header::HOST)
                 .is_some_and(|h| h == host.as_str());
         if req.method() != axum::http::Method::POST || !own {

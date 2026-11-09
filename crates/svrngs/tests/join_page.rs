@@ -460,7 +460,7 @@ async fn sam_meeting_at(
 ) -> (tempfile::TempDir, Node, String) {
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[seed; 32]);
-    let sam = Node::start_asking(
+    let sam = Node::start_every(
         dir.path().to_path_buf(),
         key.clone(),
         &svrngs_node::iroh::RelayConfig {
@@ -471,6 +471,7 @@ async fn sam_meeting_at(
         &[own.clone()],
         svrngs::group::seed_text,
         "127.0.0.1:0".parse().unwrap(),
+        svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL,
     )
     .await
     .expect("Sam's computer starts");

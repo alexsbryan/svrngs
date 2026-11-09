@@ -106,12 +106,9 @@ pub(crate) fn namespace_of(q: &RailQuery) -> Result<String, Response> {
 /// since nobody can be shown to stand in it — PLAN §4, U3's inventory,
 /// "the roster becomes the register". Upstream opened any namespace that
 /// was a name.)
-fn group_of(rail: &RingRail, namespace: &str) -> Result<(), Response> {
-    standing_of(rail, namespace).map(|_| ())
-}
-
-/// The people standing in `namespace`, or the refusal [`group_of`] makes
-/// of a namespace that is not one, a group not held, or one with no seed.
+///
+/// The people standing in `namespace`, or the refusal of a namespace that is
+/// not one, a group not held, or one with no seed.
 pub(crate) fn standing_of(
     rail: &RingRail,
     namespace: &str,
@@ -218,20 +215,17 @@ pub(crate) async fn append_act(
     // A seal is an act like any other here: `Append` refuses it as not an
     // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
     let append = Append { act };
-    let appended = match rail.commit_said(namespace, &append) {
-        Ok(Ok(recorded)) => Ok(recorded.lines()[0].clone()),
+    match rail.commit_said(namespace, &append) {
         Ok(Err(AppendRefusal::NotAnAppAct)) => {
             tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
-            return refused(
+            refused(
                 namespace,
                 "not_an_app_act",
                 "an app writes records and corrections; admitting, removing, inviting and sealing are not an app's".into(),
-            );
+            )
         }
-        Err(e) => Err(e),
-    };
-    match appended {
-        Ok(op) => {
+        Ok(Ok(recorded)) => {
+            let op = &recorded.lines()[0];
             // The whole op rides beside the flat fields, so a dialing client
             // that speaks the rail's TYPES (the mesh round's port, since the
             // journals moved here) reads back an `Op<SignedOp>` instead of
@@ -485,7 +479,7 @@ pub async fn append(
     Json(body): Json<serde_json::Value>,
 ) -> Result<Response, Response> {
     let namespace = namespace_of(&q)?;
-    group_of(&api.rail, &namespace)?;
+    standing_of(&api.rail, &namespace)?;
     Ok(append_act(&api.rail, &namespace, body).await)
 }
 
@@ -495,7 +489,7 @@ pub async fn log(
     Query(q): Query<RailQuery>,
 ) -> Result<Response, Response> {
     let namespace = namespace_of(&q)?;
-    group_of(&api.rail, &namespace)?;
+    standing_of(&api.rail, &namespace)?;
     Ok(log_answer(&api.rail, &namespace).await)
 }
 

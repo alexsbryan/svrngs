@@ -13,7 +13,7 @@ use axum::http::StatusCode;
 
 use crate::{actor_of, Person, RingRail, Roster, SigningKey};
 
-use super::{append_act, drain_answer, group_of, push_answer, LiveBuffer, RailApi};
+use super::{append_act, drain_answer, push_answer, standing_of, LiveBuffer, RailApi};
 
 fn key(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -52,7 +52,7 @@ async fn body_of(resp: axum::response::Response) -> serde_json::Value {
 #[tokio::test]
 async fn append_signs_as_the_node_and_assigns_the_fields() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    group_of(&rail, "ledger").unwrap();
+    standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = serde_json::json!({
         "op": "record",
@@ -87,7 +87,7 @@ const GUESTS: &[(&str, u8)] = &[("alex", 7), ("halo", 3)];
 #[tokio::test]
 async fn an_append_writes_only_as_this_computer_s_own_person() {
     let (_dir, rail) = rail_with(GUESTS);
-    group_of(&rail, "ledger").unwrap();
+    standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = |named: serde_json::Value| serde_json::json!({ "op": "record", "payload": { "amount": 4 }, "on_behalf_of": named });
     for (named, kind) in [
@@ -123,7 +123,7 @@ async fn an_append_writes_only_as_this_computer_s_own_person() {
 #[tokio::test]
 async fn an_unstamped_append_carries_no_name() {
     let (_dir, rail) = rail_with(GUESTS);
-    group_of(&rail, "ledger").unwrap();
+    standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
     let resp = append_act(&rail, journal, body).await;
@@ -156,7 +156,7 @@ async fn append_outside_the_mesh_refuses_naming_the_join_verb() {
 #[tokio::test]
 async fn a_group_not_held_or_without_a_seed_is_refused_before_it_is_opened() {
     let (dir, rail) = rail_with(&[("alex", 7)]);
-    let refused = group_of(&rail, "elsewhere").err().unwrap();
+    let refused = standing_of(&rail, "elsewhere").err().unwrap();
     assert_eq!(refused.status(), StatusCode::NOT_FOUND);
     assert_eq!(body_of(refused).await["kind"], "not_held");
     assert!(
@@ -165,12 +165,12 @@ async fn a_group_not_held_or_without_a_seed_is_refused_before_it_is_opened() {
     );
 
     std::fs::create_dir_all(dir.path().join("rings/unseeded")).unwrap();
-    let refused = group_of(&rail, "unseeded").err().unwrap();
+    let refused = standing_of(&rail, "unseeded").err().unwrap();
     assert_eq!(refused.status(), StatusCode::CONFLICT);
     assert_eq!(body_of(refused).await["kind"], "no_seed");
 
     assert!(
-        group_of(&rail, "ledger").is_ok(),
+        standing_of(&rail, "ledger").is_ok(),
         "control: a held, seeded group opens"
     );
 }
@@ -183,7 +183,7 @@ async fn the_namespace_must_be_a_name_the_journal_can_open() {
     let q = super::RailQuery { namespace: None };
     let err = super::namespace_of(&q).unwrap_err();
     assert_eq!(err.status(), StatusCode::BAD_REQUEST);
-    let refused = group_of(&rail, "Not A Namespace");
+    let refused = standing_of(&rail, "Not A Namespace");
     assert!(
         refused.is_err(),
         "an unopenable namespace is refused, not sanitized"
@@ -196,7 +196,7 @@ async fn the_namespace_must_be_a_name_the_journal_can_open() {
 #[tokio::test]
 async fn log_ships_admitted_ops_gaps_and_the_roster() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    group_of(&rail, "ledger").unwrap();
+    standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
     let resp = append_act(&rail, journal, body).await;
@@ -291,7 +291,7 @@ async fn the_log_names_whom_an_act_for_another_spoke_for_by_the_one_person_of_th
 #[tokio::test]
 async fn an_apps_seal_is_refused_and_retires_nothing() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    group_of(&rail, "ledger").unwrap();
+    standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     for _ in 0..2 {
         let body = serde_json::json!({ "op": "record", "payload": { "amount": 1 } });
@@ -320,7 +320,7 @@ async fn an_apps_seal_is_refused_and_retires_nothing() {
 #[tokio::test]
 async fn the_people_door_answers_the_register_with_keys() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
-    group_of(&rail, "ledger").unwrap();
+    standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let admit_bo = crate::RailAct::Admit {
         person: Person::parse("bo").unwrap(),
