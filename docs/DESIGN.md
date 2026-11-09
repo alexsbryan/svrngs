@@ -357,8 +357,7 @@ another of the group's computers when this one never held it — and from
 **What it reads beside its own.** A carried app reads its group's lends of
 the kinds its `reads.txt` names, a file beside its `index.html`, each kind
 apart by spaces or lines. It is read from the files that run as the
-person, so a new version that reads more reads it only once they say yes
-to that version; an app with none, as the shelf's, reads nothing; and a
+person, so a new version reads only what that person accepted; an app with none, as the shelf's, reads nothing; and a
 word in it that is not a kind leaves the app off every list, said at warn,
 never read as reading less (`carried.rs`, `Folders::reads`). Its page may
 connect to its own origin alone, so svrngs carries each read there:
@@ -368,14 +367,23 @@ that lend as the person, as a lent page's read does ("Lent apps", call 6;
 `origin.rs`, `routed`). It reaches only a lend of a kind it declares, lent
 to its group by a computer standing in it, else `closed`; and only on the
 person's yes, which opening it from the home page says, else `unasked`,
-before the yes and after its Stop. Its GET or HEAD is let in as the lend's
-readers' account where one is kept, and a write never is. The app's
-origin, not a capability, says which app asks: a capability in an address
-is something the page could read. No cookie crosses either way, so nothing
-the lend keeps lands where the page reads it; an answer that is a script is
-refused, and any other is sandboxed and never sniffed, so all that runs at
-the app's origin is its own files. On a phone a carried app reads no lend
-yet (PLAN §2).
+before the yes and after its Stop. The yes is kept with the kinds the open
+named (`Choice::covers`), so a version reading another kind is `unasked`
+until its line has been read. The app's origin, not a capability, says which
+app asks: a capability in an address is something the page could read.
+
+At this origin a lend's answer is `'self'` to the browser, so `routed` does
+the job the origin's wall does elsewhere, by what it builds rather than what
+it filters (svrn-docs CARRIED_APP_READS). The request is made anew: GET or
+HEAD, no body, the page's `Accept` alone. The answer is made anew (`inert`):
+its status, a body under a `Content-Type` that is svrngs's own constant from a
+closed set of data types (`DATA`), and `sandbox`, `nosniff` and `no-store`.
+Another type is refused `closed`; no header of the lend's arrives. And once a
+person has said yes to an app reading lends, it writes nothing to the record
+for them, through a Stop or a later version, as what it read may be in its
+storage (`door.rs`). What it can still send is what a read's address holds,
+to lenders of the kinds it declared in its group, and the open says so. On a
+phone a carried app reads no lend yet (PLAN §2).
 
 Each act stays its signer's: its `person` says whose device wrote it, and
 its `person_key` whose person, the same from each of their devices; an
@@ -1257,14 +1265,16 @@ Seven calls:
    (`surface.rs`, `reaches`). Opening the app from the home page is the yes:
    its button names the app, "Sam’s notes"; the line beside it says what
    it reads and writes, "It writes what you say there into House’s record,
-   as you. It also opens your friends’ films as you."; and pressing the
+   as you. It also opens your friends’ films as you, and they can see what
+   it asks."; and pressing the
    button is the consent, posted before the app opens. On a phone the
    group page's open, with the same line beside it, is the yes, as the
    pass it signs names what the app reads. An app this computer lends
    reads what its person declared. Beside the open of an app the group
    carries is first what it is for, the shelf's words or "its own part of
    the group’s record", then "Opening it lets it read and write that, as
-   you.", then what it opens of your friends', as a lent app's line says
+   you." (or "read that, and never write it", where it reads lends), then
+   what it opens of your friends', as a lent app's line says
    it, so its first version runs as a person once they open it so named
    (`question.js`, `named` and `agreed`). Led by "It reads and writes", a
    newcomer read it as done on her behalf without her yes (the fifth xenia

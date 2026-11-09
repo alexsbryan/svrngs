@@ -24,7 +24,7 @@ export function LendName({ l: lend, shelf, g: group }) {
   const to = `/to?${new URLSearchParams({ lend: label(lend) })}`;
   const opener =
     lend.reads && lend.reads.length > 0
-      ? html`<${Reach} app=${label(lend)} words=${`Open ${named(lend)}`} />`
+      ? html`<${Reach} app=${label(lend)} words=${`Open ${named(lend)}`} reads=${lend.reads} />`
       : html`<a href=${to} target="_blank">Open ${named(lend)}</a>`;
   return html`<td>${opener}${` ${agreed(lend, shelf, group)}`}</td>`;
 }

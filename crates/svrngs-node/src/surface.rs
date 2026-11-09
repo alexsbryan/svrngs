@@ -48,11 +48,11 @@ use serde::{Deserialize, Serialize};
 use svrngs_core::app::App;
 use svrngs_core::pass::{Label, Whose};
 
-use crate::door::choices::{self, Said};
+use crate::door::choices;
 use crate::door::LendRefusal;
 use crate::folder::carried::Handled;
 use crate::group::Namesake;
-use crate::lend::Source;
+use crate::lend::{Kind, Source};
 use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
@@ -312,7 +312,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
 async fn read_by(
     at: &Asking,
     app: &Label,
-) -> Result<(Vec<Lending>, Unlisted, Vec<String>), Response> {
+) -> Result<(Vec<Lending>, Unlisted, Vec<String>, Vec<Kind>), Response> {
     let reader = match crate::origin::serving(at, app).await? {
         crate::origin::Serving::Own => at.host.actor.clone(),
         crate::origin::Serving::At(_, lender) => lender,
@@ -350,7 +350,7 @@ async fn read_by(
         .cloned()
         .collect();
     tracing::debug!(target: "surface", %app, group = ?reading.offered.group, read = read.len(), "surface: what the page reads, its kinds, a carried app's only in its own group");
-    Ok((read, unlisted, silent))
+    Ok((read, unlisted, silent, reading.offered.reads.clone()))
 }
 
 /// A lend's label, as its lender lists it ([`crate::lend::Offered::label`]).
@@ -365,7 +365,7 @@ fn named(l: &Lending) -> Option<Label> {
 /// this computer's own app reads what its person declared. A lend whose
 /// lender did not say is could-not-judge, refused `away`.
 pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
-    let (read, unlisted, silent) = read_by(at, app).await?;
+    let (read, unlisted, silent, kinds) = read_by(at, app).await?;
     if read.iter().any(|l| named(l).as_ref() == Some(label)) {
         // A carried app is its group's code, not this computer's person's:
         // it reaches on their yes, as another computer's app does.
@@ -377,8 +377,9 @@ pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(
         } else {
             choices::reaching(&at.door, app)?
         };
-        tracing::debug!(target: "surface", %app, %label, own, ?said, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person said yes to it");
-        if !own && said != Some(Said::Yes) {
+        let told = said.as_ref().is_some_and(|c| c.covers(&kinds));
+        tracing::debug!(target: "surface", %app, %label, own, ?said, told, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person's yes named every kind it reads");
+        if !own && !told {
             return Err(LendRefusal::Unasked.say(
                 StatusCode::FORBIDDEN,
                 "Say yes on your home page: open this app from there.",
@@ -412,7 +413,7 @@ pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(
 /// needs none to ask, and the address is all it builds on.
 pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
     let host = &at.host;
-    let (lent, Unlisted { unanswered, .. }, _) = read_by(at, label).await?;
+    let (lent, Unlisted { unanswered, .. }, ..) = read_by(at, label).await?;
     let read: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
             let lend = named(l)?;

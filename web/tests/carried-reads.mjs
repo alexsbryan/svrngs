@@ -32,11 +32,14 @@ const tried = (page) =>
     const at = (label, path) => `/svrngs-lend/${label}${path}`;
     const said = { reads: await read(await fetch('/svrngs-reads')) };
     for (const [name, label] of Object.entries(tries))
-      said[name] = await read(await fetch(at(label, '/films?n=1')));
+      said[name] = await read(
+        await fetch(at(label, '/films?n=1'), { headers: { 'x-page': 'said' } }),
+      );
     said.post = await read(
       await fetch(at(tries.films, '/films'), { method: 'POST', body: 'a film' }),
     );
     said.script = await read(await fetch(at(tries.films, '/code.js')));
+    said.act = await read(await fetch('/svrngs/acts', { method: 'POST', body: '{}' }));
     said.cookie = document.cookie;
     return said;
   }, args.tries);

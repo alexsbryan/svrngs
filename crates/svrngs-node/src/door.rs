@@ -1487,7 +1487,17 @@ pub(crate) async fn lend_for(
     let port = match &lend.source {
         Source::Port(port) => *port,
         Source::Carried(group) => {
-            tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, "door: a carried app, answered from this computer's store");
+            let writes =
+                service_path == crate::folder::carried::ACTS && req.method() != Method::GET;
+            // Sticky through a Stop or a later version: what it read may
+            // still sit in its storage. Reads and the record stay apart.
+            let reader = writes
+                && choices::reaching(door, &Label::carried(lend.kind.as_str(), group))?.is_some();
+            tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, reader, "door: a carried app, answered from this computer's store, unless it has read lends and asks to write");
+            if reader {
+                let why = "An app that reads your friends’ apps can’t write in the group’s record.";
+                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, why));
+            }
             let opened = (door.folders).open(&lend, (group, device.as_str(), &service_path), req);
             return Ok(opened.await);
         }

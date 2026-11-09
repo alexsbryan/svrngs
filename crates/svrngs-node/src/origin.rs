@@ -30,7 +30,7 @@
 
 use axum::body::Body;
 use axum::extract::{Request, State};
-use axum::http::header::{self, HeaderMap, HeaderValue};
+use axum::http::header::{self, HeaderMap, HeaderName, HeaderValue};
 use axum::http::{Method, StatusCode, Uri};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::Router;
@@ -348,15 +348,72 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     reached
 }
 
+/// What a carried app's page is handed of a lend, by type: data a browser
+/// runs nothing of. A closed set, and what the browser is told is one of
+/// these words, never the lend's own spelling of it, so no type a browser
+/// reads differently from this check can arrive (ARCH 9, 10).
+const DATA: [&str; 5] = [
+    "application/json",
+    "text/plain",
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+];
+
+/// What every answer through [`routed`] says, whatever the lend said: at
+/// this origin a lend's answer is `'self'` to the browser, so it stays
+/// inert, and a Stop isn't outlived by the browser's cache.
+const INERT: [(HeaderName, &str); 3] = [
+    (header::CONTENT_SECURITY_POLICY, "sandbox"),
+    (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+    (header::CACHE_CONTROL, "no-store"),
+];
+
+/// `answer` as a carried page may have it, made anew: its status, a type
+/// from [`DATA`], and its body. No other header of the lend's reaches a
+/// browser at this origin, where one could set a cookie or clear the app's
+/// storage. A type outside [`DATA`] is refused; with none, the body is
+/// dropped and the status kept.
+fn inert(answer: Response) -> Handled {
+    let (mut parts, body) = answer.into_parts();
+    let lent = std::mem::take(&mut parts.headers);
+    let given = lent.get(header::CONTENT_TYPE);
+    let essence = given
+        .map(|k| {
+            k.as_bytes()
+                .split(|b| *b == b';')
+                .next()
+                .unwrap_or_default()
+        })
+        .map(|k| String::from_utf8_lossy(k).trim().to_ascii_lowercase());
+    let data = (essence.as_deref()).and_then(|k| DATA.into_iter().find(|d| *d == k));
+    tracing::debug!(target: "origin", status = parts.status.as_u16(), ?essence, ?data, "origin: a lend's answer to a carried page: a data type named by svrngs, or refused, or no body");
+    if given.is_some() && data.is_none() {
+        let why = "a carried app reads data from a lend, nothing a browser runs";
+        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, why.to_string()));
+    }
+    parts
+        .headers
+        .extend(INERT.map(|(n, v)| (n, HeaderValue::from_static(v))));
+    if let Some(refused) = lent.get(REFUSED_HEADER) {
+        parts.headers.insert(REFUSED_HEADER, refused.clone());
+    }
+    let Some(data) = data else {
+        return Ok(Response::from_parts(parts, Body::empty()));
+    };
+    parts
+        .headers
+        .insert(header::CONTENT_TYPE, HeaderValue::from_static(data));
+    Ok(Response::from_parts(parts, body))
+}
+
 /// `req` at the carried app `label`'s [`LEND_PATH`]`/<read>/<path>`, from
-/// its own page alone: carried to the lend `read` at `path`, as this
-/// computer's person, as a page reading it reaches it at its origin
-/// ([`crate::surface::reaches`], [`reach`]), never signing its reply. No
-/// cookie crosses either way, so nothing the lend keeps lands where the
-/// page reads it; and none of the lend's pages or code runs here, so all a
-/// page here runs is its own files (COMMUNITY_APPS §6.2): an answer that is
-/// code is refused, any other sandboxed and never sniffed.
-async fn routed(at: &Asking, (label, app): (Label, Label), mut req: Request) -> Handled {
+/// its own page alone: a read of the lend `read` at `path`, as this
+/// computer's person ([`crate::surface::reaches`], [`reach`]), never
+/// signing its reply. The request is made anew too: GET or HEAD, no body,
+/// and of the page's headers only `Accept`, so "reads" is all it can
+/// express; the answer comes back through [`inert`].
+async fn routed(at: &Asking, (label, app): (Label, Label), req: Request) -> Handled {
     let closed = |why: &str| LendRefusal::Closed.say(StatusCode::FORBIDDEN, why.to_string());
     let asked = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let named = (asked.strip_prefix(LEND_PATH)).and_then(|r| r.strip_prefix('/'));
@@ -368,25 +425,19 @@ async fn routed(at: &Asking, (label, app): (Label, Label), mut req: Request) -> 
     tracing::debug!(target: "origin", %label, %app, read = ?read.as_ref().map(Label::as_str), "origin: a carried app's page reaches a lend at its own origin, refused from another page or naming none");
     let read =
         read.ok_or_else(|| closed("only an app's own page reads a lend through its origin"))?;
-    *req.uri_mut() = uri_of(&tail)?;
-    req.headers_mut().remove(header::COOKIE);
-    crate::surface::reaches(at, &label, &read).await?;
-    let appending = Appending::Denied(Unconsented::Capability);
-    let mut answer = reach(at, read.clone(), label.clone(), appending, req).await?;
-    let kind = (answer.headers().get(header::CONTENT_TYPE)).and_then(|k| k.to_str().ok());
-    let code = kind.is_some_and(|k| k.contains("script"));
-    tracing::debug!(target: "origin", %label, %read, status = answer.status().as_u16(), code, "origin: the lend's answer to a carried page, refused when it is code, else sandboxed and its cookies dropped");
-    if code {
-        return Err(closed("a lend's code never runs in a carried app"));
+    let reading = matches!(*req.method(), Method::GET | Method::HEAD);
+    tracing::debug!(target: "origin", %label, %read, method = %req.method(), reading, "origin: a carried app reads a lend, and asks nothing else of it");
+    if !reading {
+        return Err(closed("a carried app reads a lend; it never writes to one"));
     }
-    let headers = answer.headers_mut();
-    headers.remove(header::SET_COOKIE);
-    let sandboxed = [
-        (header::CONTENT_SECURITY_POLICY, "sandbox"),
-        (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
-    ];
-    headers.extend(sandboxed.map(|(name, v)| (name, HeaderValue::from_static(v))));
-    Ok(answer)
+    crate::surface::reaches(at, &label, &read).await?;
+    let (mut parts, _) = req.into_parts();
+    parts.uri = uri_of(&tail)?;
+    let accept = parts.headers.remove(header::ACCEPT);
+    parts.headers = accept.map(|a| (header::ACCEPT, a)).into_iter().collect();
+    let appending = Appending::Denied(Unconsented::Capability);
+    let asked = Request::from_parts(parts, Body::empty());
+    inert(reach(at, read, label, appending, asked).await?)
 }
 
 /// svrngs's own answer to the page of another lend that reads this one —

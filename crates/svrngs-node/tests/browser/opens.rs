@@ -58,7 +58,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     }
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-    let words = "Open cy’s notes It writes what you say there into your group’s record, as you. It also opens your friends’ films as you.";
+    let words = "Open cy’s notes It writes what you say there into your group’s record, as you. It also opens your friends’ films as you, and they can see what it asks.";
 
     let seen = drive(
         engine,
@@ -156,7 +156,7 @@ fn the_open_says_what_an_app_does_in_one_wording() {
         json!([
             ["Money", "Who owes whom, and for what. Opening it lets it read and write that, as you."],
             ["Quiz", "Its own part of the group’s record. Opening it lets it read and write that, as you."],
-            ["cy’s notes", "It writes what you say there into House’s record, as you. It also opens your friends’ films and music as you."],
+            ["cy’s notes", "It writes what you say there into House’s record, as you. It also opens your friends’ films and music as you, and they can see what it asks."],
             ["cy’s shelf (k)", "It writes what you say there into House’s record, as you."],
         ])
     );
@@ -399,12 +399,13 @@ async fn echoing() -> (std::net::SocketAddr, KeptHeads) {
                 let script = head.lines().next().is_some_and(|l| l.contains(".js "));
                 kept.lock().unwrap().push(head);
                 let (kind, body) = if script {
-                    ("text/javascript", "document.title = 'ran';")
+                    ("Text/JavaScript", "document.title = 'ran';")
                 } else {
                     ("application/json", r#"{"films":"cy's films"}"#)
                 };
                 let answer = format!(
                     "HTTP/1.1 200 OK\r\ncontent-type: {kind}\r\nx-echo: {auth}\r\n\
+                     clear-site-data: \"storage\"\r\n\
                      set-cookie: lend-session=kept-by-the-lend; Path=/\r\n\
                      content-length: {}\r\nconnection: close\r\n\r\n{body}",
                     body.len()
@@ -478,6 +479,15 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     carried::carry(&folder, "Probe", &files);
     let origin = carried::carried_at(&ada, "Probe").await;
     let port = ada.api_addr().port();
+    // A yes kept from a version that read only notes: it covers no films.
+    let app = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let narrower =
+        json!({ actor_of(&signing(1)): { app: { "said": "yes", "at": 1, "reads": ["notes"] } } });
+    std::fs::write(dirs[0].path().join("reaching.json"), narrower.to_string()).unwrap();
     let tries = json!({
         "films": label(2, "films"),
         "notes": label(2, "notes"),
@@ -512,18 +522,15 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     let unasked = (json!(403), json!("unasked"));
     for (step, name, said) in [
         ("before", "films", &unasked),
-        ("before", "post", &unasked),
         ("stopped", "films", &unasked),
     ]
     .into_iter()
-    .chain(
-        ["before", "yes", "stopped"]
-            .into_iter()
-            .flat_map(|step| ["notes", "elsewhere", "removed"].map(|name| (step, name, &closed))),
-    ) {
+    .chain(["before", "yes", "stopped"].into_iter().flat_map(|step| {
+        ["notes", "elsewhere", "removed", "post", "act"].map(|name| (step, name, &closed))
+    })) {
         assert_eq!(&refused(step, name), said, "{step}: {name}:\n{seen:#}");
     }
-    let cell = "Open Probe Its own part of the group’s record. Opening it lets it read and write that, as you. It also opens your friends’ films as you.";
+    let cell = "Open Probe Its own part of the group’s record. Opening it lets it read that, and never write it, as you. It also opens your friends’ films as you, and they can see what it asks.";
     assert!(
         seen["cells"]
             .as_array()
@@ -538,14 +545,25 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
         (&json!(200), &json!(r#"{"films":"cy's films"}"#)),
         "once said yes to, it reads its declared lend:\n{seen:#}"
     );
-    let headers = yes["films"]["headers"].to_string();
-    for header in [
-        "content-security-policy: sandbox",
-        "x-content-type-options: nosniff",
-    ] {
-        assert!(headers.contains(header), "{header}:\n{seen:#}");
-    }
-    assert_eq!(yes["post"]["status"], 200, "{seen:#}");
+    let mut names: Vec<_> = (yes["films"]["headers"].as_array().unwrap().iter())
+        .map(|h| h.as_str().unwrap())
+        .filter(|h| {
+            !["date:", "content-length:"]
+                .iter()
+                .any(|d| h.starts_with(d))
+        })
+        .collect();
+    names.sort_unstable();
+    assert_eq!(
+        names,
+        [
+            "cache-control: no-store",
+            "content-security-policy: sandbox",
+            "content-type: application/json",
+            "x-content-type-options: nosniff",
+        ],
+        "only what svrngs says reaches the page:\n{seen:#}"
+    );
     assert_eq!(
         refused("yes", "script"),
         closed,
@@ -564,13 +582,17 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
         "its GET is let in as cy's readers' account: {heads:#?}"
     );
     assert!(
-        !asked("POST /films").is_empty() && !asked("POST /films").contains("films-for-apps"),
-        "its POST carries no readers' secret: {heads:#?}"
+        !asked("GET /films?n=1").to_lowercase().contains("x-page"),
+        "of the page's headers only Accept is carried: {heads:#?}"
+    );
+    assert!(
+        asked("POST /films").is_empty(),
+        "its POST never reaches the lend: {heads:#?}"
     );
     assert_eq!(
         heads.len(),
-        3,
-        "cy's films are asked only after the yes, and only those three times: {heads:#?}"
+        2,
+        "cy's films are read only after the yes that names them, twice: {heads:#?}"
     );
     let said = seen.to_string();
     for kept in [

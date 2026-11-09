@@ -229,18 +229,24 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
 ```
 
 - **Each person says yes first.** The line beside your app's open says what
-  it reads: *"It also opens your friends’ jellyfin as you."* Opening it
-  there is the yes. Before it, and after its Stop, svrngs refuses with
+  it reads: *"It also opens your friends’ jellyfin as you, and they can see
+  what it asks."* Opening it there is the yes, for the kinds it named. Before it, and after its Stop, svrngs refuses with
   `x-svrngs-refused: unasked`.
 - **Only what you named, in your group.** Another kind, or a lend in
   another group, is refused with `closed`.
-- **A new version reads more only after a yes.** Each person keeps reading
-  what the version they said yes to names.
-- **It reads as you, never writes.** A `GET` or `HEAD` is let in with the
-  lender's readers' account if they keep one (`svrngs share --readers`). A
-  lend's answer can't write entries into the record.
-- **Data, not code.** svrngs refuses an answer that is a script, and keeps
-  the lend's cookies away from your page. Use what a lend answers as data.
+- **A new kind asks again.** A version that names another kind is refused
+  `unasked` until the person opens it from their home page and reads the new
+  line.
+- **It only reads.** `GET` and `HEAD` go through, with the page's `Accept` and
+  no other header, under the lender's readers' account if they keep one
+  (`svrngs share --readers`). Anything else is refused `closed`.
+- **Reading or writing the record, not both.** Once someone has said yes to
+  your app reading lends, a `POST` to `svrngs/acts` is refused for them, even
+  after a Stop or in a later version. An app that writes to the record reads no
+  lends.
+- **Data only.** Your page gets `application/json`, `text/plain`, or a JPEG,
+  PNG or WebP image, with its status and none of the lend's
+  other headers. Any other type is refused `closed`.
 
 If `reads.txt` names a word that isn't a kind (letters, digits, `-` and `_`),
 your app is left off the list until it's fixed.

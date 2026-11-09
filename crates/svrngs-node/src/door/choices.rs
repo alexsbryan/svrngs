@@ -41,7 +41,7 @@ use super::{
     PASS_HEADER,
 };
 use crate::iroh::Dialer;
-use crate::lend::{choices_path, Lend};
+use crate::lend::{choices_path, Kind, Lend};
 use svrngs_core::pass::Label;
 
 /// What a person says of an app: a closed set (AGENTS 9).
@@ -65,7 +65,21 @@ enum Stopping {
 pub struct Choice {
     pub said: Said,
     pub at: i64,
+    /// The kinds its open said it reads, for a yes to reaching: a yes
+    /// covers what the person was told and nothing since.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reads: Vec<Kind>,
 }
+
+impl Choice {
+    /// Whether this is a yes that named every kind in `reads`.
+    pub(crate) fn covers(&self, reads: &[Kind]) -> bool {
+        self.said == Said::Yes && reads.iter().all(|k| self.reads.contains(k))
+    }
+}
+
+/// What a person said, and the kinds of lend they were told it reads.
+pub(crate) type Told = (Said, Vec<Kind>);
 
 type Kept = BTreeMap<PersonKey, BTreeMap<Label, Choice>>;
 type Done = oneshot::Sender<Result<(), String>>;
@@ -215,11 +229,12 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
 }
 
 /// Keep what `person` said of `app` in the file at `path`.
-async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, said: Said) -> Response {
+async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: Told) -> Response {
+    let (said, reads) = told;
     let Some(at) = unix_now() else {
         return fault("this computer's clock cannot be read, so the choice is not kept");
     };
-    let choice = Choice { said, at };
+    let choice = Choice { said, at, reads };
     let one = [(person.clone(), [(app.clone(), choice.clone())].into())].into();
     let (done, kept) = oneshot::channel();
     let _ = door.choices.0.send((path.clone(), one, done));
@@ -244,7 +259,14 @@ async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u
             "an app may only stop; its person says yes",
         );
     }
-    keep(door, file(door, lend), person, app, Said::Stop).await
+    keep(
+        door,
+        file(door, lend),
+        person,
+        app,
+        (Said::Stop, Vec::new()),
+    )
+    .await
 }
 
 /// `person`'s own choices on `lend`.
@@ -290,7 +312,9 @@ pub(super) async fn choose(
         return Ok(stop(&door, &lend, person, app, &body).await);
     }
     match serde_json::from_slice::<Saying>(&body) {
-        Ok(Saying { app, said }) => Ok(keep(&door, file(&door, &lend), person, app, said).await),
+        Ok(Saying { app, said }) => {
+            Ok(keep(&door, file(&door, &lend), person, app, (said, Vec::new())).await)
+        }
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
             Err(LendRefusal::Path.say(
@@ -334,7 +358,7 @@ pub(super) async fn choices_of(
 /// no dial: the home page's and its origin's ([`crate::home`]).
 pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
     match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
-        Ok((person, lend)) => keep(door, file(door, &lend), person, app, said).await,
+        Ok((person, lend)) => keep(door, file(door, &lend), person, app, (said, Vec::new())).await,
         Err(refused) => refused,
     }
 }
@@ -348,8 +372,8 @@ fn reaching_path(door: &Door) -> PathBuf {
 /// What this computer's person said of `app` reaching others' lends as
 /// them, `None` when nothing; a file that cannot be read is svrngs's
 /// refusal, never no yes.
-pub(crate) fn reaching(door: &Door, app: &Label) -> Result<Option<Said>, Response> {
-    Ok(reachings(door)?.remove(app).map(|c| c.said))
+pub(crate) fn reaching(door: &Door, app: &Label) -> Result<Option<Choice>, Response> {
+    Ok(reachings(door)?.remove(app))
 }
 
 /// What this computer's person said of each app reaching others' lends as
@@ -365,9 +389,9 @@ pub(crate) fn reachings(door: &Door) -> Result<BTreeMap<Label, Choice>, Response
 
 /// This computer's person's `said` of `app` reaching others' lends as
 /// them: the home page's, when they open it there ([`crate::home`]).
-pub(crate) async fn own_reaching(door: &Door, app: Label, said: Said) -> Response {
+pub(crate) async fn own_reaching(door: &Door, app: Label, told: Told) -> Response {
     match own(door) {
-        Ok(person) => keep(door, reaching_path(door), person, app, said).await,
+        Ok(person) => keep(door, reaching_path(door), person, app, told).await,
         Err(refused) => refused,
     }
 }

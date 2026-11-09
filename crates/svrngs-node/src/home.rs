@@ -265,6 +265,8 @@ async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
 struct Opening {
     app: Label,
     said: Option<Said>,
+    /// The kinds its open told the person it reads, apart by spaces.
+    reads: Option<String>,
 }
 
 /// `POST /reaching`, a form the open button posts in a tab of its own:
@@ -274,7 +276,11 @@ struct Opening {
 /// request ([`crate::surface::reaches`]).
 async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response {
     let said = o.said.unwrap_or(Said::Yes);
-    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), said).await;
+    let told = (o.reads.as_deref().unwrap_or_default().split_whitespace()).map(Kind::parse);
+    let Ok(told) = told.collect::<Result<Vec<_>, _>>() else {
+        return StatusCode::BAD_REQUEST.into_response();
+    };
+    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), (said, told)).await;
     tracing::debug!(target: "home", app = %o.app, ?said, status = kept.status().as_u16(), "home: an app opened from its button or stopped, what was said kept");
     if !kept.status().is_success() {
         return kept;

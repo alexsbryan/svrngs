@@ -549,10 +549,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # /svrngs-lend at the app's own origin, the operator's "Same-origin route",
 # 2026-11-08), +72. Its economizing pass (cb414021) cut 117 first, so no
 # raise: . lowered from 20,772 to one past where both land, 20,723.
+# Its hardening after review (a read made anew, an answer made anew from data
+# types, a yes kept with what it named, readers kept off the record), +70 after
+# its own trims; an economizing pass of 72 first, so no raise: . to 20,721.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20723,
+    ".": 20721,
 
     "js": 8396,
 

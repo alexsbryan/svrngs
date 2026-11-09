@@ -123,14 +123,15 @@ export const agreed = (lend, shelf, group) => {
   const reads = lend.reads ?? [];
   const also =
     reads.length > 0
-      ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you.`
+      ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`
       : '';
   if (lend.group) {
     const words = does(lend.kind, shelf);
     // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
     // sentence for the app, or its own.
     const first = /** @type {string} */ (words[0]).toUpperCase();
-    return `${first}${words.slice(1)} Opening it lets it read and write that, as you.${also}`;
+    const may = reads.length > 0 ? 'read that, and never write it' : 'read and write that';
+    return `${first}${words.slice(1)} Opening it lets it ${may}, as you.${also}`;
   }
   return `It writes what you say there into ${group.name ?? 'your group'}’s record, as you.${also}`;
 };
