@@ -67,8 +67,8 @@ use svrngs_core::relay::{Meeting, Url};
 
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
-    actor_key, build_relayed_endpoint, format_dial_string, key_actor, Admit, Alpn, Contact, Dialer,
-    Endpoint, EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
+    actor_key, build_relayed_endpoint, key_actor, Admit, Alpn, Contact, Dialer, Endpoint,
+    EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
 use crate::rail::{carry, visiting, LiveBuffer, RailApi, CARRY_ROUTE};
@@ -76,8 +76,7 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, RingSyncHandle, RoundMembers,
-    Rounds, DEFAULT_RING_SYNC_INTERVAL,
+    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, OnlinePeer, RingSyncHandle, Rounds,
 };
 use crate::version::{SCOPE_HEADER, VERSION};
 use crate::{actor_of, Person, RingRail, SigningKey};
@@ -262,29 +261,17 @@ pub struct Host {
 
 impl Node {
     /// Start a node over `data_dir` (its journals under `rings/`), signing and
-    /// dialling with `key`, reaching the network as `relay` says,
-    /// answering a link's ask with the seed `seeds` reads, and serving the
-    /// record to this computer's apps on `api`, which must be loopback
-    /// ([`crate::api`]; port `0` takes any free one, [`Node::api_addr`]).
-    /// The round runs once now, then every [`DEFAULT_RING_SYNC_INTERVAL`],
-    /// and at once after an app's append.
-    pub async fn start(
-        data_dir: PathBuf,
-        key: SigningKey,
-        relay: &RelayConfig,
-        seeds: SeedText,
-        api: SocketAddr,
-    ) -> Result<Self, NodeError> {
-        let every = DEFAULT_RING_SYNC_INTERVAL;
-        Self::start_every(data_dir, key, relay, &[], seeds, api, every).await
-    }
-
-    /// [`Node::start`], its endpoint built with `asked` among its groups'
+    /// dialling with `key`, reaching the network as `relay` says, answering a
+    /// link's ask with the seed `seeds` reads, and serving the record to this
+    /// computer's apps on `api`, which must be loopback ([`crate::api`]; port
+    /// `0` takes any free one, [`Node::api_addr`]). The round runs once now,
+    /// then every `every`, and at once after an app's append. Its endpoint is
+    /// built with `asked` among its groups'
     /// own relays, the relays `new --relay` or a link names: a computer in no
     /// group yet would else start at the build's, and offline wait out a
     /// report of relays that cannot answer (the run's modem-off rerun, 6.1 s
     /// for a join, relay fallbacks); and with the round every `every`, which
-    /// the command gives as [`DEFAULT_RING_SYNC_INTERVAL`]. The scale
+    /// the command gives as [`crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL`]. The scale
     /// instrument (`tests/scale.rs`) passes a day, so that no node's own
     /// round runs inside one it is timing.
     pub async fn start_every(
@@ -422,7 +409,7 @@ impl Node {
             target: "node",
             actor,
             data_dir = %data_dir.display(),
-            dial = ?format_dial_string(&endpoint.addr()),
+            dial = ?endpoint.addr(),
             api = %api.addr(),
             "node: endpoint bound with the signing key"
         );
@@ -654,14 +641,17 @@ impl Host {
     /// with: every computer's key standing in a group this node holds, but
     /// this node's. A group whose register is unreadable adds nobody, as the
     /// round offers it to nobody.
-    pub(crate) async fn members(&self) -> Option<RoundMembers> {
+    pub(crate) async fn members(&self) -> Option<Vec<OnlinePeer>> {
         let peers = self.standing_peers(&self.standings()?);
-        Some(RoundMembers::of(
+        Some(
             peers
                 .into_iter()
-                .map(|(actor, n, contact)| (format!("{}/{}", n.person, &actor[..8]), contact))
+                .map(|(actor, n, contact)| OnlinePeer {
+                    name: format!("{}/{}", n.person, &actor[..8]),
+                    contact,
+                })
                 .collect(),
-        ))
+        )
     }
 
     /// Every group this node holds, with who stands in it; or `None` when

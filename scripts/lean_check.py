@@ -556,10 +556,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-08, docs/LESSONS_FROM_BITTORRENT.md): the home page's waiting line
 # +27, the Blobs dial's receive window +6. Its pass cut nothing already there;
 # both were tightened as written. . to 20,754, one past where they land.
+# (2026-11-09) An economizing pass cut RoundMembers and ring_sync/journal.rs
+# (28), moved Node::start, which only tests reach, to tests_support (10) and
+# cut format_dial_string (8, one trace its caller); . to 20,710.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20754,
+    ".": 20710,
 
     "js": 8396,
 

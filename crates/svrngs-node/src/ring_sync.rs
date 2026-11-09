@@ -94,13 +94,18 @@ use n0_future::task::AbortOnDropHandle;
 use tokio::sync::{watch, Notify};
 use tracing::{debug, info, warn};
 
-mod journal;
-use journal::OnlinePeer;
-pub use journal::RoundMembers;
-
-use crate::iroh::key_actor;
+use crate::iroh::{key_actor, Contact};
 use crate::node::Host;
 use axum::http::StatusCode;
+
+/// A member of a round, as the round sees it: the key and relay it dials
+/// ([`Contact`]), and the name its glassbox line prints. With no presence
+/// (PLAN §4, U1's "No presence") none is skipped as offline: an offline
+/// member costs its dial.
+pub(crate) struct OnlinePeer {
+    pub(crate) contact: Contact,
+    pub(crate) name: String,
+}
 
 /// Money does not need ten-second convergence, and the bandwidth argument in
 /// the module docs says it must not have it.
@@ -315,19 +320,13 @@ pub async fn run_one_round(
     if members.is_none() {
         debug!("ring sync: this node has no membership to round with");
     }
-    let RoundMembers {
-        peers,
-        exchanged_with,
-        skipped_offline,
-    } = members.unwrap_or_else(|| RoundMembers::of(Vec::new()));
-    // GLASSBOX: which members this round carried and which it passed over. A
-    // round that skips the only peer looks exactly like a round that had
-    // nothing to send, and room run 2 (2026-09-20) cost 85 s to a difference
-    // that was invisible in the log. Logged before any group is offered, so
-    // the skipped-everyone round is the one that says so.
+    let peers = members.unwrap_or_default();
+    // GLASSBOX: which members this round carries. A round with nobody looks
+    // exactly like a round that had nothing to send, and room run 2
+    // (2026-09-20) cost 85 s to a difference that was invisible in the log.
+    // Logged before any group is offered, so the empty round says so.
     info!(
-        exchanged_with = ?exchanged_with,
-        skipped_offline = ?skipped_offline,
+        exchanged_with = ?peers.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
         "ring sync: round membership"
     );
     let transport = &host.transport;

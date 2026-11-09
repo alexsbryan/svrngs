@@ -76,7 +76,7 @@ const VISIT_ROUTE: &str = "/visit";
 
 /// How the issuer's node reads a group's seed, in the group's directory,
 /// to answer an ask: `Ok(None)` when it keeps none there. The command's
-/// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start`].
+/// (`svrngs::group::seed_text`), handed to [`crate::node::Node::start_every`].
 pub type SeedText = fn(&Path) -> Result<Option<String>, String>;
 
 /// The one answer to every refusal: it names no group and no reason.

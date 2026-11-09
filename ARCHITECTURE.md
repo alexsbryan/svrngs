@@ -147,8 +147,8 @@ and the exchange budget); `alpn.rs` is `mesh-reach`'s `alpn.rs` with its one
 re-exported as `svrngs_node::alpn`; `guest.rs` is `mesh-reach`'s guest dialer and
 the relayed endpoint, its one loopback bridge (`HttpBridge`, `pump`) cut in
 arch-peer (a27e688b); `iroh.rs` is `commonwealth-transport`'s client side
-(`IrohTransport`, `format_dial_string`; `preferred_bridge_port` went with
-the bridge). Its edits: no IP transport;
+(`IrohTransport`; `format_dial_string` went when a trace was its one
+caller; `preferred_bridge_port` went with the bridge). Its edits: no IP transport;
 one ALPN, so the per-class ALPNs (`RPC_ALPN`, `CLIENT_ALPN`, `GUEST_ALPN`,
 `OFFER_ALPN`, `MEDIA_ALPN`, `APP_ALPN`) and `alpn_for_class` go, and the guest
 tunnel dialled `ALPN` until lean-3 deleted it (`guest/tunnel.rs`,
@@ -177,12 +177,12 @@ has not; `tests/accept.rs` tests the acceptor.
 iroh is pinned at `=1.0.2`; transitive lockfile versions include security
 updates rather than retaining vulnerable upstream-era resolutions.
 
-Ring sync came over the same way: `ring_sync.rs` and `ring_sync/journal.rs`
-are `commonwealth-rails`' round, chunked exchange and responder (`answer`),
+Ring sync came over the same way: `ring_sync.rs` is `commonwealth-rails`' round, chunked exchange and responder (`answer`),
 and the seam the round reads (`RingSyncHost`, `RingSyncJournal`, implemented
 for `RingRail`); `ring_routes.rs` is its sync route, with `rail.rs`'s `err`.
-Their edits cut the mesh ties: `RoundMembers` loses its walk of the mesh
-(`RoundMembers::of`), and is built from named keys instead, which the node
+Their edits cut the mesh ties: `RoundMembers` lost its walk of the mesh and
+then its seam (`ring_sync/journal.rs`), a round's members now a list of
+`OnlinePeer`s built from named keys, which the node
 reads from the register (PLAN §4, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses were its one `base_url`, cut with the bridge for a

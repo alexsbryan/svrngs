@@ -6,6 +6,19 @@
 use super::*;
 
 impl Node {
+    /// [`Node::start_every`] with the product's round. Only tests start a
+    /// node with no relays of its own to ask for.
+    pub async fn start(
+        data_dir: PathBuf,
+        key: SigningKey,
+        relay: &RelayConfig,
+        seeds: SeedText,
+        api: SocketAddr,
+    ) -> Result<Self, NodeError> {
+        let every = crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+        Self::start_every(data_dir, key, relay, &[], seeds, api, every).await
+    }
+
     /// The routes served at [`Node::api_addr`], behind their loopback
     /// check: what a test hands a request whose caller it names.
     pub fn api_routes(&self) -> axum::Router {

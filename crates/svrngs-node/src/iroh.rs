@@ -59,19 +59,6 @@ use svrngs_core::relay::{Meeting, Url};
 // loopback addresses a link's bare key resolves to (u2-8).
 pub use iroh::address_lookup::MemoryLookup;
 
-/// Render an endpoint's current dial info as a pairing string
-/// (`<64-hex-endpoint-id>@<target>[,<target>...]`). Relay URLs first (stable),
-/// then direct addresses. `None` while the endpoint has no
-/// reachable address yet.
-pub fn format_dial_string(addr: &EndpointAddr) -> Option<String> {
-    let mut targets: Vec<String> = addr.relay_urls().map(|r| r.to_string()).collect();
-    targets.extend(addr.ip_addrs().map(|a| a.to_string()));
-    if targets.is_empty() {
-        return None;
-    }
-    Some(format!("{}@{}", key_actor(&addr.id), targets.join(",")))
-}
-
 /// A peer to dial: its key, and whatever dial hints are known. Upstream's
 /// `PeerContact` was the mesh's gossiped record — a `NodeId`, IP addresses
 /// and an optional key; here the key is the peer and the hints are optional.
