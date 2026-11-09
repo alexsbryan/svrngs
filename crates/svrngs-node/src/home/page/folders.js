@@ -11,5 +11,10 @@ import { Folder } from './group-folder.js?v=__VERSION__';
 export function Folders({ g: group, s: state }) {
   if (!state.people) return null;
   if (group.folders === null) return html`<p>This computer cannot say where ${its(group)} is.</p>`;
-  return group.folders.map((dir) => html`<${Folder} key=${dir} g=${group} dir=${dir} />`);
+  const folders = group.folders.map((dir) => html`<${Folder} key=${dir} g=${group} dir=${dir} />`);
+  const waiting = group.waiting?.map(([who, files]) => {
+    const [count, they] = files === 1 ? ['1 file is', 'It'] : [`${files} files are`, 'They'];
+    return html`<p>${count} still only on ${who ?? 'someone'}’s computer. ${they}’ll arrive when it’s back on.</p>`;
+  });
+  return [folders, waiting ?? html`<p>This computer cannot say what is still on its way.</p>`];
 }

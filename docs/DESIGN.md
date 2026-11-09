@@ -1315,7 +1315,11 @@ Seven calls:
    what it lacks by verified range from the group's members, passing over a
    holder that does not answer within 3 s; who is taken as asleep is decided
    once (`ASLEEP_FOR`), and who stands where is the round's
-   (`Host::standings`). The index is the record, not
+   (`Host::standings`). A file no member gave waits, and the home page says
+   whose computer it is still only on and how many (`waiting` in
+   `/v1/groups`, `Folders::waiting_in`), a register that cannot be read said
+   as that, never as nothing waiting; a disk's own failure is not counted.
+   The index is the record, not
    iroh-docs, whose namespace would be a second decider of who reads. A
    group whose record cannot be read stops its folder by the group's name,
    never read as placing nothing; a kept state that cannot be read stops its

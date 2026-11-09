@@ -7,7 +7,7 @@
 mod common;
 #[path = "common/computers.rs"]
 mod computers;
-use common::{loopback_sockets, noise, Said};
+use common::{heard, loopback_sockets, noise};
 use computers::{found, http, known, round, seed, signing, start, until_on};
 
 use std::path::Path;
@@ -287,14 +287,7 @@ async fn a_hash_no_synced_folder_places_is_refused_though_the_store_holds_it() {
 #[tokio::test]
 async fn a_hash_the_record_stopped_placing_is_refused_at_the_next_get() {
     use svrngs_core::{Change, SyncPath};
-    let said = Said::default();
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter("folder=debug")
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let _said = tracing::subscriber::set_default(subscriber);
+    let (said, _heard) = heard("folder=debug");
     let group = Group::new().await;
     let ra = tempfile::tempdir().unwrap();
     let ana = both_ways(&group.ana, ra.path()).await;
@@ -1009,12 +1002,28 @@ struct Asking {
 impl Asking {
     async fn new(
         root: &Path,
-        (hash, size): (iroh_blobs::Hash, u64),
+        held: (iroh_blobs::Hash, u64),
         wire: Vec<u8>,
         pieces: usize,
         pause: Duration,
         silent: usize,
     ) -> Self {
+        Self::new_on(root, held, wire, pieces, pause, silent, false).await
+    }
+
+    /// As [`Self::new`], `Shared` read-only before the act lands when
+    /// `read_only`, so a file that arrives cannot be written.
+    #[allow(clippy::too_many_arguments)]
+    async fn new_on(
+        root: &Path,
+        (hash, size): (iroh_blobs::Hash, u64),
+        wire: Vec<u8>,
+        pieces: usize,
+        pause: Duration,
+        silent: usize,
+        read_only: bool,
+    ) -> Self {
+        use std::os::unix::fs::PermissionsExt as _;
         use svrngs_core::{Change, ContentHash, SyncPath};
         let dir = tempfile::tempdir().unwrap();
         let ana = start(1, dir.path()).await;
@@ -1078,6 +1087,9 @@ impl Asking {
         ana.endpoint().address_lookup().unwrap().add(book);
 
         let shared = synced_in(&ana, root, &ns).await;
+        if read_only {
+            std::fs::set_permissions(&shared, std::fs::Permissions::from_mode(0o555)).unwrap();
+        }
         let act = RailAct::Synced {
             folder: "Shared".into(),
             changes: vec![Change {
@@ -1107,6 +1119,107 @@ impl Asking {
     }
 }
 
+/// `node`'s `waiting` for its one group, as `/v1/groups` answers it.
+async fn waiting(node: &Node) -> serde_json::Value {
+    let answer = http()
+        .get(format!("http://{}/v1/groups", node.api_addr()))
+        .bearer_auth(node.token())
+        .send()
+        .await
+        .unwrap();
+    let groups: serde_json::Value = answer.json().await.unwrap();
+    groups["groups"][0]["waiting"].clone()
+}
+
+/// **A file only on a computer that is off is said, and the line goes when
+/// it arrives** (`docs/LESSONS_FROM_BITTORRENT.md` step 5): the only holder
+/// stays silent through two gets, so the record places a file no member
+/// gives; the status names its writer with one file, and is empty once the
+/// file is on disk. Red with `waiting` never recorded in `step`.
+#[tokio::test]
+async fn a_file_only_on_a_computer_that_is_off_is_said_and_goes_when_it_arrives() {
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(20_000, b"only on one");
+    let (hash, wire) = wire_of(&bytes).await;
+    let asking = Asking::new(ra.path(), (hash, 20_000), wire, 1, Duration::ZERO, 2).await;
+    let at = asking.shared.join("f.bin");
+    let (t0, mut said) = (std::time::Instant::now(), None);
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(30)
+    {
+        let w = waiting(&asking.ana).await;
+        if w.as_array().is_some_and(|a| !a.is_empty()) {
+            said = Some(w);
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    assert_eq!(
+        std::fs::read(&at).ok().as_deref(),
+        Some(&bytes[..]),
+        "the file arrives"
+    );
+    assert_eq!(
+        said,
+        Some(serde_json::json!([["ana", 1]])),
+        "the line named the writer"
+    );
+    let t0 = std::time::Instant::now();
+    while waiting(&asking.ana).await != serde_json::json!([])
+        && t0.elapsed() < Duration::from_secs(10)
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        waiting(&asking.ana).await,
+        serde_json::json!([]),
+        "and goes once it arrives"
+    );
+    asking.close().await;
+}
+
+/// **A file a disk would not take is never said to be waiting on a person**
+/// (step 5's plant): Ben answers, and `Shared` is read-only, so the store
+/// holds the file and the directory does not. The status stays empty,
+/// and the file lands once the directory can be written. Red with a write
+/// failure answered as `Unfetched::NoHolder`: the line names a writer who
+/// is on and sent the bytes.
+#[tokio::test]
+async fn a_file_a_disk_would_not_take_is_never_said_to_be_waiting_on_a_person() {
+    use std::os::unix::fs::PermissionsExt as _;
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(20_000, b"no disk");
+    let (hash, wire) = wire_of(&bytes).await;
+    let held = (hash, 20_000);
+    let asking = Asking::new_on(ra.path(), held, wire, 1, Duration::ZERO, 0, true).await;
+    let t0 = std::time::Instant::now();
+    while asking.asked() == 0 && t0.elapsed() < Duration::from_secs(15) {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert!(asking.asked() > 0, "Ben was asked for it");
+    tokio::time::sleep(Duration::from_millis(1_500)).await;
+    let at = asking.shared.join("f.bin");
+    assert!(!at.exists(), "a read-only directory took no file");
+    assert_eq!(
+        waiting(&asking.ana).await,
+        serde_json::json!([]),
+        "no writer is blamed"
+    );
+    let writable = std::fs::Permissions::from_mode(0o755);
+    std::fs::set_permissions(&asking.shared, writable).unwrap();
+    let t0 = std::time::Instant::now();
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(20)
+    {
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    assert_eq!(
+        std::fs::read(&at).ok().as_deref(),
+        Some(&bytes[..]),
+        "the file lands"
+    );
+    asking.close().await;
+}
+
 /// **A holder that sends a flipped byte is refused by name**: Ana's record
 /// places a file her store lacks, and Ben's key, the group's other member,
 /// answers her fetch with the file's encoding one byte flipped on the wire
@@ -1116,14 +1229,7 @@ impl Asking {
 /// bytes in her directory.
 #[tokio::test]
 async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name() {
-    let said = Said::default();
-    let writer = said.clone();
-    let subscriber = tracing_subscriber::fmt()
-        .with_env_filter("folder=debug")
-        .with_ansi(false)
-        .with_writer(move || writer.clone())
-        .finish();
-    let _said = tracing::subscriber::set_default(subscriber);
+    let (said, _heard) = heard("folder=debug");
 
     // Ben's key, answering any get with the file's encoding, flipped.
     let ra = tempfile::tempdir().unwrap();

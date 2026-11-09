@@ -542,8 +542,9 @@ An app on this computer asks the same of one group on the record API,
 `GET /v1/lends?namespace=` (`surface.rs`, u5-1, new code), through the one
 body (`node::Asking::lent`), with no asker left out; beside it `GET
 /v1/groups` answers each group held, its name from the seed the command
-keeps (the `SeedText` the redeem routes read) and this computer's person
-from the register; and `POST /v1/sign?app=` (onair-sign) has this
+keeps (the `SeedText` the redeem routes read), this computer's person
+from the register, and which files no member gave, by their writer
+(`waiting`, `synced.rs`); and `POST /v1/sign?app=` (onair-sign) has this
 computer's key sign an app's bytes, the bytes and their checking
 svrngs-core's (`app.rs`, `App`); and `PUT /v1/blob?group=&keep=` and
 `GET /v1/blob/<hash>?group=` (onair-blob, `blob.rs`, a module of

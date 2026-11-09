@@ -32,6 +32,7 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  * @property {boolean | null} keeps whether they keep its order of removals
  * @property {{ name: string, maker: string | null, since: number | null } | null} made who made it, `null` for this computer's key, and since when it is held here (group.rs `Namesake`)
  * @property {string[] | null} folders
+ * @property {[string | null, number][] | null} waiting a fetch that found no holder, by writer's person
  * @property {Visit[] | null} visiting
  * @property {'fallback' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
  */

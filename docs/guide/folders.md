@@ -53,6 +53,10 @@ two of your groups share a name. svrngs has to be running on your computer
 for this to work, and keeps the folder in step from then on, every time it
 runs.
 
+A file that lives only on a computer that's off can't arrive yet. Your home
+page says so: "3 files are still only on Ana's computer. They'll arrive when
+it's back on."
+
 ## A photo drop for a trip
 
 After a weekend away, Sam, Bo and Dee each run:

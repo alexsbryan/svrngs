@@ -131,6 +131,10 @@ struct Held {
     /// the home page says so. `null` when the list cannot be read here,
     /// said at warn, never read as none.
     folders: Option<Vec<std::path::PathBuf>>,
+    /// Which files no member gave, by their writer's person and how many
+    /// (synced.rs `waiting_in`): `null` when the register cannot be read,
+    /// said at warn, never read as none waiting.
+    waiting: Option<Vec<(Option<Person>, usize)>>,
     /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
     /// beside `removed`'s, or when this computer's clock cannot be read.
     visiting: Option<Vec<serde_json::Value>>,
@@ -190,6 +194,7 @@ async fn groups(State(at): State<Asking>) -> Response {
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
+        let waiting = at.folders.waiting_in(&id);
         tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps,
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
@@ -204,6 +209,7 @@ async fn groups(State(at): State<Asking>) -> Response {
             keeps,
             folders,
             visiting,
+            waiting,
         });
     }
     // This computer's key, so its home page tells its own devices from

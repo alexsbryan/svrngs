@@ -121,6 +121,8 @@ pub struct Folders {
     woken: watch::Sender<BTreeMap<String, u64>>,
     /// What apps placed, by hash and group, and when each lapses (blob.rs).
     carried: watch::Sender<blob::Carried>,
+    /// How many files no member gave, by each folder's writer (synced.rs).
+    waiting: watch::Sender<synced::Waiting>,
 }
 
 /// A group's synced folders' files where its record places them, what
@@ -198,6 +200,7 @@ impl Folders {
             layouts: watch::Sender::new(BTreeMap::new()),
             woken: watch::Sender::new(BTreeMap::new()),
             carried: watch::Sender::new(BTreeMap::new()),
+            waiting: watch::Sender::new(BTreeMap::new()),
         };
         let woken = folders.woken.clone();
         folders.host.rail.on_write(move |ns| {

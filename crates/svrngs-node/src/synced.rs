@@ -33,13 +33,25 @@ use iroh_blobs::Hash;
 use n0_future::{BufferedStreamExt as _, StreamExt as _};
 use notify::{RecursiveMode, Watcher as _};
 use serde::{Deserialize, Serialize};
-use svrngs_core::{Change, ContentHash, Placed, SyncFolder, SyncPath};
+use svrngs_core::{Change, ContentHash, Person, Placed, SyncFolder, SyncPath};
 use tokio::sync::mpsc;
 
 use super::{FolderAsk, FolderError, Folders};
 
 /// The keys standing in the group a step syncs with.
 type Holders = BTreeSet<String>;
+
+/// How many files each writer's key leaves unfetched in a group's folder, by
+/// the folder's group and name: what a step last found no member gave.
+pub(super) type Waiting = BTreeMap<(String, String), BTreeMap<String, usize>>;
+
+/// Why a file the layout places here was not written (AGENTS 9).
+enum Unfetched {
+    /// No member gave it: it is still only on its writer's computer.
+    NoHolder,
+    /// It arrived or could have, but the store or the disk would not take it.
+    NotWritten,
+}
 
 /// Where the directories this computer syncs are kept.
 const SYNCED: &str = "synced.json";
@@ -323,6 +335,21 @@ impl Folders {
         });
     }
 
+    /// Whose files no member gave in `group`'s folders here, each writer's
+    /// person (`None` for a key the register does not name) with how many,
+    /// as each folder's last step found: for `/v1/groups` (surface.rs).
+    /// `None`, said by the caller's register read, when it cannot be read.
+    pub(crate) fn waiting_in(&self, group: &str) -> Option<Vec<(Option<Person>, usize)>> {
+        let register = self.host.rail.register(group).ok()?;
+        let all = self.waiting.borrow();
+        let here = all.iter().filter(|((g, _), _)| g == group);
+        let who = |k: &String| register.members.get(k).map(|m| m.person.clone());
+        Some(
+            here.flat_map(|(_, on)| on.iter().map(|(k, n)| (who(k), *n)))
+                .collect(),
+        )
+    }
+
     /// Who stands in `group`, as [`crate::node::Host::standings`] reads it;
     /// a group it leaves out is one whose register cannot be read here.
     pub(super) fn holders(&self, group: &str) -> Result<Holders, FolderError> {
@@ -511,10 +538,12 @@ impl Folders {
             .iter()
             .filter(|p| p.folder == folder)
             .collect();
-        let (fetched, unwritten) = self
+        let (fetched, unwritten, waiting) = self
             .apply(dir, folder, &placed, &holders, held, &taken)
             .await;
         hold.extend(fetched);
+        self.waiting
+            .send_modify(|m| drop(m.insert((group.into(), folder.into()), waiting)));
         let (apply_ms, t) = (ms(t), Instant::now());
         // What this step took or fetched made durable before the kept state
         // names it: the store commits its writes in batches up to 500 ms
@@ -540,8 +569,9 @@ impl Folders {
     /// `taken` and sent is held as its entry, wherever the record places
     /// that entry: beside, when it met another edit, and the record's
     /// choice is then written at its path. What it fetched, held from the
-    /// store's sweep for the step to drop once the kept state names it, and
-    /// how many files it placed here it could not write.
+    /// store's sweep for the step to drop once the kept state names it, how
+    /// many files it placed here it could not write, and which of those no
+    /// member gave, by their writer.
     async fn apply(
         &self,
         dir: &Path,
@@ -550,13 +580,13 @@ impl Folders {
         standing: &Holders,
         held: &mut BTreeMap<SyncPath, Held>,
         taken: &BTreeMap<SyncPath, (ContentHash, SystemTime)>,
-    ) -> (Vec<TempTag>, usize) {
+    ) -> (Vec<TempTag>, usize, BTreeMap<String, usize>) {
         let mut hold = Vec::new();
         let root = match super::confined::Root::open(dir) {
             Ok(root) => root,
             Err(why) => {
                 tracing::warn!(target: "folder", folder, %why, "synced: the directory cannot be opened, so no incoming path is touched");
-                return (hold, placed.len());
+                return (hold, placed.len(), BTreeMap::new());
             }
         };
         tracing::debug!(target: "folder", folder, placed = placed.len(), "synced: the layout to write");
@@ -629,11 +659,17 @@ impl Folders {
             .buffered_unordered(FETCH_AT_ONCE)
             .collect::<Vec<_>>()
             .await;
-        let mut unwritten = 0;
+        let (mut unwritten, mut waiting) = (0, BTreeMap::new());
         for (p, tag) in fetched {
-            let Some(tag) = tag else {
-                unwritten += 1;
-                continue;
+            let tag = match tag {
+                Ok(tag) => tag,
+                Err(why) => {
+                    unwritten += 1;
+                    if matches!(why, Unfetched::NoHolder) {
+                        *waiting.entry(p.entry.key.clone()).or_default() += 1;
+                    }
+                    continue;
+                }
             };
             hold.push(tag);
             match root.metadata(Path::new(p.path.as_str())) {
@@ -644,13 +680,12 @@ impl Folders {
                 }
             }
         }
-        (hold, unwritten)
+        (hold, unwritten, waiting)
     }
 
     /// `p`'s version fetched from a member standing in the group, its
     /// writer first, and written at `at`; held from the store's sweep by
-    /// the tag it answers with, or `None`, said, when none gave it or it
-    /// could not be written.
+    /// the tag it answers with, or why not, said ([`Unfetched`]).
     #[expect(
         clippy::disallowed_methods,
         reason = "times each fetch and each export for their traces (perf-1); no decision reads it"
@@ -662,18 +697,18 @@ impl Folders {
         root: &super::confined::Root,
         standing: &Holders,
         expected: Option<(u64, SystemTime)>,
-    ) -> Option<TempTag> {
+    ) -> Result<TempTag, Unfetched> {
         let ms = |t: Instant| t.elapsed().as_millis() as u64;
         let hash = Hash::from_bytes(*p.hash.as_bytes());
         tracing::debug!(target: "folder", folder, path = %p.path, %hash, size = p.size, from = p.entry.key, seq = p.entry.seq, "synced: to fetch, the layout placing it here");
         let tag = self.store.tags().temp_tag(hash).await;
-        let tag = tag.inspect_err(|why| tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not fetched — the store cannot hold it from its sweep")).ok()?;
+        let tag = tag.inspect_err(|why| tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not fetched — the store cannot hold it from its sweep")).map_err(|_| Unfetched::NotWritten)?;
         let fetched = Instant::now();
         let mut from = vec![p.entry.key.clone()];
         from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
         if let Err(why) = self.hold(hash, &from).await {
             tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
-            return None;
+            return Err(Unfetched::NoHolder);
         }
         let (fetch_ms, exported) = (ms(fetched), Instant::now());
         let wrote = root
@@ -686,9 +721,9 @@ impl Folders {
             .await;
         if let Err(why) = wrote {
             tracing::warn!(target: "folder", folder, path = %p.path, %hash, %why, "synced: not written into the directory");
-            return None;
+            return Err(Unfetched::NotWritten);
         }
         tracing::info!(target: "folder", folder, path = %p.path, %hash, from = p.entry.key, seq = p.entry.seq, beside = p.beside, fetch_ms, export_ms = ms(exported), "synced: written into the directory");
-        Some(tag)
+        Ok(tag)
     }
 }
