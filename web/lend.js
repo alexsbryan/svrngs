@@ -81,7 +81,7 @@ const scope = /** @type {Scope} */ (self);
  */
 // A signed line not yet carried to the lend's computer: its group, and the
 // line, of which this worker reads its seq and id.
-/** @typedef {[string, { seq: number, id: string }]} Unsent */
+/** @typedef {[string, { seq: number, id: string, prev?: string }]} Unsent */
 // The lend a request is at (`at`), its path there, and whether it is one
 // this lend's pages read, asked under `READS`.
 /** @typedef {{ label: string, path: string, read?: boolean }} Where */
@@ -1164,6 +1164,14 @@ async function carried(lend) {
     trace(
       `RUNTIME: line ${carrying[1].seq} carried to ${lend.person}'s computer, answered ${res.status}`,
     );
+    if (res.status === 429) {
+      // Past the app's budget (carried.rs `spent`), never to be taken: this
+      // line and those signed after it are let go, so the next write signs
+      // its place in the chain afresh.
+      const { seq, prev } = carrying[1];
+      handed = { ...handed, line: prev ? { seq: seq - 1, id: prev } : undefined, unsent: [] };
+      await store.lendKeep(`pass ${OWN}`, handed);
+    }
     if (!res.ok) break;
     handed = {
       ...handed,

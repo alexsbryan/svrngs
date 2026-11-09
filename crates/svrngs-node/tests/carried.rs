@@ -1305,3 +1305,332 @@ async fn an_app_is_told_the_page_its_group_s_links_print_on() {
         node.endpoint().close().await;
     }
 }
+
+/// The most entries an app may write as one person in an hour: the
+/// budget's number (`carried.rs` `WRITES_AN_HOUR`), said here apart so a
+/// change to it is a change a test sees.
+const WRITES_AN_HOUR: usize = 200;
+
+/// A folder app's writes as fast as the computer takes them for up to
+/// `secs` seconds, from eight loops at once as a page's unawaited `fetch`
+/// loop is, each stopping at its first refusal when `stops`: how many were
+/// written, how many refused, and the last refused answer's status, header
+/// and body.
+async fn writing_loop(
+    node: &Node,
+    origin: &str,
+    secs: u64,
+    stops: bool,
+) -> (usize, usize, Option<(u16, String, String)>) {
+    let until_at = std::time::Instant::now() + Duration::from_secs(secs);
+    let one = |w: usize| async move {
+        let (mut wrote, mut refused, mut last) = (0, 0, None);
+        let mut n = 0u64;
+        while std::time::Instant::now() < until_at {
+            n += 1;
+            let op = json!({ "op": { "kind": "tick", "w": w, "n": n } });
+            let answer = at(node, origin, "POST", "/svrngs/acts", Some(op)).await;
+            if answer.status().is_success() {
+                wrote += 1;
+                continue;
+            }
+            refused += 1;
+            let status = answer.status().as_u16();
+            let word = answer
+                .headers()
+                .get("x-svrngs-refused")
+                .map(|v| v.to_str().unwrap().to_string())
+                .unwrap_or_default();
+            last = Some((status, word, answer.text().await.unwrap_or_default()));
+            if stops {
+                break;
+            }
+        }
+        (wrote, refused, last)
+    };
+    let all = tokio::join!(
+        one(0),
+        one(1),
+        one(2),
+        one(3),
+        one(4),
+        one(5),
+        one(6),
+        one(7)
+    );
+    let all = [all.0, all.1, all.2, all.3, all.4, all.5, all.6, all.7];
+    (all.into_iter()).fold((0, 0, None), |(w, r, l), (w2, r2, l2)| {
+        (w + w2, r + r2, l.or(l2))
+    })
+}
+
+/// The entries of `prefix` the record on `node` holds.
+async fn holds(node: &Node, group: &str, prefix: &str) -> usize {
+    let url = format!("http://{}/v1/rail/log?namespace={group}", node.api_addr());
+    let log: Value = http()
+        .get(url)
+        .bearer_auth(node.token().trim())
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let ops = log["ops"].as_array().expect("the log answers its ops");
+    ops.iter()
+        .filter(|o| {
+            o["payload"]["kind"]
+                .as_str()
+                .is_some_and(|k| k.starts_with(prefix))
+        })
+        .count()
+}
+
+/// Ana's computer carrying the apps `Loop` and `Other` in `house`, its
+/// nodes' rounds run, and `Loop`'s and `Other`'s origins on Ana's.
+async fn looping(salt: u8) -> (Vec<Node>, Vec<tempfile::TempDir>, String, String, String) {
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", salt, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), &group).await;
+    carry(&at_ana, "Loop");
+    carry(&at_ana, "Other");
+    std::mem::forget(root);
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if of_kind(&seen, "Loop").len() == 1 && of_kind(&seen, "Other").len() == 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let origin = |kind: &str| {
+        of_kind(&seen, kind)[0]["origin"]
+            .as_str()
+            .unwrap()
+            .to_string()
+    };
+    let (looped, other) = (origin("Loop"), origin("Other"));
+    (nodes, dirs, group, looped, other)
+}
+
+/// **A folder app writing as fast as it can stops at its budget, and every
+/// member's copy holds no more** (svrn-docs EXTENSION_POINT §6.1, here
+/// short of 60 s since the budget is met first; the run of the whole 60 s,
+/// [`a_folder_app_for_sixty_seconds`], is by hand): eight loops at once,
+/// each stopped at its first refusal: refused `limit` at 429, its words
+/// naming the limit, and Ben's copy holds exactly the budget of entries.
+/// Another app of the person's is untouched, so a budget is per app and a
+/// read goes on. Planted: `Budgeted::decide`'s check off, and the loop is
+/// never told no.
+#[tokio::test]
+async fn a_folder_app_writing_as_fast_as_it_can_stops_at_its_budget() {
+    let (nodes, _dirs, group, looped, other) = looping(41).await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let (wrote, refused, last) = writing_loop(ana, &looped, 120, true).await;
+    let (status, word, said) = last.expect("the loop was told no");
+    assert_eq!(
+        (wrote, status, word.as_str()),
+        (WRITES_AN_HOUR, 429, "limit"),
+        "a loop of 8 stops at the budget, refused limit: {said}"
+    );
+    assert!(refused >= 1, "{refused}");
+    let error: Value = serde_json::from_str(&said).unwrap();
+    assert_eq!(error["kind"], "limit", "{said}");
+    let words = error["error"].as_str().unwrap();
+    assert!(
+        words.contains(&format!("{WRITES_AN_HOUR} entries")) && words.contains("Loop"),
+        "the words name the limit: {words}"
+    );
+    let mut held = 0;
+    for _ in 0..60 {
+        for node in [ana, ben, cy, ben] {
+            round(node).await;
+        }
+        held = holds(ben, &group, "Loop/").await;
+        if held >= wrote {
+            break;
+        }
+    }
+    assert_eq!(
+        held, wrote,
+        "Ben's copy holds exactly what the budget let through"
+    );
+    let read = at(ana, &looped, "GET", "/svrngs/acts", None).await;
+    assert!(read.status().is_success(), "reading still works");
+    let write = json!({ "op": { "kind": "note" } });
+    let elsewhere = at(ana, &other, "POST", "/svrngs/acts", Some(write)).await;
+    assert!(
+        elsewhere.status().is_success(),
+        "a budget is one app's; another app of the same person's writes"
+    );
+    for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A phone's line is held to its app's budget** (svrn-docs
+/// EXTENSION_POINT §6.1's twin for a phone, `/carry`): Ben's phone-signed
+/// lines of Money, a chain of `WRITES_AN_HOUR`, all taken; the next
+/// refused `limit`, and not held. Kept: a line Ana's copy already counts,
+/// carried again, is taken again. A line that only voids is held to the
+/// same budget, the app found from what it corrects. Planted:
+/// `line_spent`'s check off, and the extra line is taken, 200; its
+/// `of_corrected` off, and the void is, 200.
+#[tokio::test]
+async fn a_phone_s_line_past_the_app_s_budget_is_refused() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 42, ana, &[(ben, 2)]);
+    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
+        let at = format!("http://{}/carry", bridge.local_addr());
+        http().post(at).json(&json!([group, line])).send()
+    };
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        + 1;
+    let act = |n: usize| {
+        RailAct::from_json(
+            json!({ "op": "record", "payload": { "kind": "Money/expense", "n": n } }),
+        )
+        .unwrap()
+    };
+    let mut lines = Vec::new();
+    let mut prev = None;
+    for n in 0..=WRITES_AN_HOUR {
+        let line = svrngs_core::sign_act(
+            &signing(2),
+            &group,
+            now,
+            n as u64,
+            prev.clone(),
+            act(n),
+            None,
+            None,
+            None,
+        );
+        prev = Some(line.id.clone());
+        lines.push(line);
+    }
+    for (n, line) in lines.iter().enumerate().take(WRITES_AN_HOUR) {
+        let answer = carry(line).await.unwrap();
+        assert_eq!(answer.status(), 200, "line {n}");
+    }
+    let past = carry(&lines[WRITES_AN_HOUR]).await.unwrap();
+    assert_eq!(past.status(), 429);
+    assert_eq!(past.headers()["x-svrngs-refused"], "limit");
+    let said = past.text().await.unwrap();
+    assert!(
+        said.contains("200 entries") && said.contains("Money"),
+        "{said}"
+    );
+    let held = holds(ana, &group, "Money/").await;
+    assert_eq!(held, WRITES_AN_HOUR, "the extra line is not held");
+    let void = RailAct::from_json(
+        json!({ "op": "correct", "corrects": lines[0].id, "replacement": null }),
+    )
+    .unwrap();
+    let last = lines[WRITES_AN_HOUR - 1].clone();
+    let voided = svrngs_core::sign_act(
+        &signing(2),
+        &group,
+        now,
+        WRITES_AN_HOUR as u64,
+        Some(last.id),
+        void,
+        None,
+        None,
+        None,
+    );
+    let past = carry(&voided).await.unwrap();
+    assert_eq!(past.status(), 429, "a void is an entry of the app it voids");
+    assert_eq!(past.headers()["x-svrngs-refused"], "limit");
+    let again = carry(&lines[0]).await.unwrap();
+    assert_eq!(again.status(), 200, "a line already held is taken again");
+    for node in [ana, ben] {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A loop voiding one of its own entries stops at the budget as well**
+/// (EXTENSION_POINT §7, G1): each void is an entry every member keeps. One
+/// record and then voids of that same record, the core taking each (a void
+/// of a voided entry is admitted, voiding nothing more): refused `limit` at
+/// the record's budget, 429. Planted: `spent` counting only entries that
+/// state something, and the loop is never told no.
+#[tokio::test]
+async fn a_loop_voiding_its_own_entry_stops_at_the_budget() {
+    let (nodes, _dirs, _group, looped, _) = looping(44).await;
+    let ana = &nodes[0];
+    let first = json!({ "op": { "kind": "tick" } });
+    let wrote = at(ana, &looped, "POST", "/svrngs/acts", Some(first)).await;
+    assert!(wrote.status().is_success(), "the record is written");
+    let id: Value = wrote.json().await.unwrap();
+    let void = json!({ "corrects": id["id"], "op": null });
+    let mut voided = 0;
+    let mut told = None;
+    for _ in 0..WRITES_AN_HOUR + 5 {
+        let answer = at(ana, &looped, "POST", "/svrngs/acts", Some(void.clone())).await;
+        if !answer.status().is_success() {
+            let word = answer.headers()["x-svrngs-refused"]
+                .to_str()
+                .unwrap()
+                .to_string();
+            told = Some((answer.status().as_u16(), word));
+            break;
+        }
+        voided += 1;
+    }
+    assert_eq!(
+        (voided, told),
+        (WRITES_AN_HOUR - 1, Some((429, "limit".to_string()))),
+        "the record and then voids of it reach the budget"
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
+/// EXTENSION_POINT §6.1 itself, by hand, 60 s by default: a folder app
+/// writes as fast as it can, and Ben's copy holds no more than the budget
+/// (`SVRNGS_WRITE_LOOP_SECS`). Before the budget a 60-second run wrote
+/// 624 entries and Ben held all 624 (`git log`, this test's commit).
+///
+/// `SVRNGS_WRITE_LOOP_SECS=60 cargo test -p svrngs-node --test carried
+/// a_folder_app_for_sixty_seconds -- --ignored --nocapture`
+#[tokio::test]
+#[ignore = "the 60-second run of §6.1; by hand"]
+async fn a_folder_app_for_sixty_seconds() {
+    let (nodes, _dirs, group, looped, _) = looping(43).await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let secs = std::env::var("SVRNGS_WRITE_LOOP_SECS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(60);
+    let (wrote, refused, last) = writing_loop(ana, &looped, secs, false).await;
+    let mut held = 0;
+    for _ in 0..120 {
+        for node in [ana, ben, cy, ben] {
+            round(node).await;
+        }
+        held = holds(ben, &group, "Loop/").await;
+        if held >= wrote {
+            break;
+        }
+    }
+    eprintln!(
+        "RESULT: {secs} s, wrote {wrote}, refused {refused}, last {last:?}, ben holds {held}"
+    );
+    assert_eq!(held, wrote);
+    assert_eq!(wrote, WRITES_AN_HOUR);
+    for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}

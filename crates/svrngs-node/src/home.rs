@@ -780,7 +780,7 @@ async fn stop(State(at): State<Asking>, Json([group, visit]): Json<[String; 2]>)
         Ok(true) => {
             let act =
                 serde_json::json!({ "op": "correct", "corrects": visit, "replacement": null });
-            crate::rail::append_act(&at.host.rail, &group, act).await
+            crate::rail::append_act(&at.host.rail, &group, act, None).await
         }
         Ok(false) => LendRefusal::closed("you host no such visit here"),
         Err(e) => LendRefusal::fault(e.to_string()),

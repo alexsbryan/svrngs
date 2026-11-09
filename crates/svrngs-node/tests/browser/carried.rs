@@ -307,6 +307,74 @@ async fn the_same_page_writes_through_the_next_computer_once_the_first_stops(eng
     drop(cy);
 }
 
+in_chromium!(
+    /// **A phone's line past its app's budget is let go, and its chain
+    /// rewound** (EXTENSION_POINT §7, G1; web/lend.js `carried`): bo's
+    /// computer already holds 200 of bo's Money entries from this hour, and
+    /// both of the phone's writes are refused `limit`, 429. The second is
+    /// signed where the first left off, as line 0 with one to carry, so a
+    /// refused line neither waits for a next write nor leaves a hole in
+    /// the chain. Planted, watched failing: the rewind taken out of
+    /// `carried`, and the second is signed as line 1, two to carry.
+    a_phone_s_line_past_the_budget_is_let_go_and_its_chain_rewound
+);
+async fn a_phone_s_line_past_the_budget_is_let_go_and_its_chain_rewound(engine: Engine) {
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    carry(
+        &folder,
+        "Money",
+        &[("index.html", "<!doctype html><title>Money</title>".into())],
+    );
+    carried_at(&ada, "Money").await;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let mut prev = None;
+    let mut lines = Vec::new();
+    for n in 0..200u64 {
+        let act = svrngs_core::RailAct::from_json(
+            json!({ "op": "record", "payload": { "kind": "Money/expense", "n": n } }),
+        )
+        .unwrap();
+        let line = svrngs_core::sign_act(&bo, NS, now, n, prev.take(), act, None, None, None);
+        prev = Some(line.id.clone());
+        lines.push(line);
+    }
+    ada.rail().ingest_all(NS, &lines).unwrap();
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "open": "Money",
+    });
+    let seen = drive(engine, "refused-line.mjs", args, None).await;
+    eprintln!("the phone's run: {seen:#}");
+    for write in [&seen["first"], &seen["second"]] {
+        assert_eq!(
+            (write["status"].clone(), write["refused"].clone()),
+            (json!(429), json!("limit")),
+            "{seen:#}"
+        );
+    }
+    let trace = seen["trace"].as_str().unwrap_or_default();
+    let signed = trace
+        .lines()
+        .filter(|l| l.contains("signed as line 0, 1 to carry"))
+        .count();
+    assert_eq!(
+        signed, 2,
+        "both writes signed at the same place, the refused line let go:\n{trace}"
+    );
+    drop(ada);
+}
+
 /// The files of the app in `apps/<dir>/` its page needs: its page, its
 /// script and its fold.
 fn files_of<'a>(dir: &str, fold: &'a str) -> Vec<(&'a str, String)> {

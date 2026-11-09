@@ -529,7 +529,8 @@ enum Unwritten {
 /// under the kind the lend declares, in a group its lender stands in too,
 /// and carried to the lender before the page sees the answer, which never
 /// carries the header on. One refused, none is written: the answer is
-/// withheld and the person told why.
+/// withheld and the person told why. Past the app's budget, though, the
+/// acts before it stay written.
 async fn appended(
     at: &Asking,
     label: &Label,
@@ -596,8 +597,14 @@ async fn appended(
         tracing::debug!(target: "origin", %label, ?why, ?named, "origin: refused — a lent app's act, not written as the person asking, and its answer withheld");
         LendRefusal::closed(format!("{what} {why}, so it was not saved."))
     })?;
+    // An app's bug reaches here as the person; a program with the token is
+    // the person, outside the budget (`carried::spent`).
+    let granted = lend
+        .as_ref()
+        .filter(|_| matches!(appending, Appending::Granted));
+    let budget = granted.map(|l| (l.kind.as_str(), at.host.actor.as_str()));
     for (group, act) in acts {
-        let written = crate::rail::append_act(rail, &group, act).await;
+        let written = crate::rail::append_act(rail, &group, act, budget).await;
         tracing::debug!(target: "origin", %label, group, status = written.status().as_u16(), carried = contact.is_some(), "origin: a lent app's act, written by this computer as its own person, then carried to the lender");
         if !written.status().is_success() {
             return Err(written);

@@ -203,7 +203,12 @@ What `svrngs/acts` gives you:
 - **`POST {"op": {...}}`** writes one entry as the person, signed on their
   own computer or phone. `op` needs a `kind`. **`POST {"corrects": "<id>",
   "op": {...}}`** replaces one of your app's entries; `"op": null` voids it.
-  An entry is at most about 64 KiB.
+  An entry is at most about 64 KiB, and an app writes at most 200 entries
+  as one person in any hour, voids included, counted from the record. Past that, `POST`
+  answers 429 with `x-svrngs-refused: limit` and words that say the limit;
+  your app writes again as that hour passes. The fastest we've recorded a
+  person using an app is 20 entries in a minute, so only a loop reaches it,
+  and that's what it's for: every member keeps every entry for good.
 
 ### Read your friends' apps
 
@@ -313,8 +318,8 @@ signs with ES256, and carries no email address, because svrngs has none.
 
 Whenever svrngs answers in your app's place, its answer carries
 `x-svrngs-refused`, naming why: `away` (the lending computer didn't answer),
-`closed`, `unlent`, `path`, `full`, `fault`, `unasked`, `stopped`, and a
-few more. Your app's own answers never carry it. A program gets JSON,
+`closed`, `unlent`, `path`, `full`, `fault`, `unasked`, `stopped`, `limit`
+(your app wrote its hour's entries), and a few more. Your app's own answers never carry it. A program gets JSON,
 `{"error": "...", "kind": "..."}`; a browser tab gets a page of the words.
 
 The loopback API answers programs only: a call from a page in a browser is
@@ -341,6 +346,10 @@ refused, and so is one without the token.
   browser"*: call the loopback API from your server, not from page code.
 - *"an act is JSON, {op} or {corrects, op}"*: your `POST` to `svrngs/acts`
   wasn't that shape.
+- *"guestbook wrote 200 entries as you in the last hour, the most an app
+  may; it can write again as that hour passes"*: your `POST`s to
+  `svrngs/acts`, or `x-svrngs-append` entries, reached the limit. Look for
+  a loop that writes.
 - *"Ana’s hello writes only its own part of the group’s record, so it was
   not saved."*, or *"… wrote in a group you and its lender are not both in,
   so it was not saved."*: an `x-svrngs-append` entry corrected something

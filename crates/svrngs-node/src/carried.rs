@@ -50,7 +50,8 @@ use axum::response::{IntoResponse, Response};
 use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Value};
-use svrngs_core::{Files, Placed, SyncPath};
+use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
+use svrngs_core::{RailAct, Reads, SignedOp, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -205,7 +206,7 @@ pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes
         return Ok(Json(json!({ "sign": act })).into_response());
     }
     at.door.folders.nudge.notify_one();
-    Ok(crate::rail::append_act(&at.host.rail, &group, act).await)
+    Ok(crate::rail::append_act(&at.host.rail, &group, act, None).await)
 }
 
 /// The act that says `asker`'s yes to the files of `app` in `group` now.
@@ -402,7 +403,7 @@ impl Folders {
         if (act.get("corrects")).is_some_and(|id| !of_kind(ops, kind.as_str(), id)) {
             return Err(NOT_ITS_OWN);
         }
-        let answer = crate::rail::append_act(rail, group, act).await;
+        let answer = crate::rail::append_act(rail, group, act, Some((kind.as_str(), key))).await;
         tracing::debug!(target: "folder", group, %kind, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
             self.nudge.notify_one();
@@ -419,6 +420,72 @@ pub(crate) fn of_kind(ops: &[Value], kind: &str, id: &Value) -> bool {
     let prefix = format!("{kind}/");
     let own = |o: &Value| (o["payload"]["kind"].as_str()).is_some_and(|k| k.starts_with(&prefix));
     ops.iter().any(|o| &o["id"] == id && own(o))
+}
+
+/// The most entries an app may write as one person in any hour, this
+/// number's one home: ten times the fastest use on record, 20 in a
+/// minute by a driven browser settling up in Money
+/// (`demo/runs/v1ui/2026-10-15-helper/data/summary.json`). A person's
+/// burst never reaches it; a loop's stops here, since every member keeps
+/// each entry for good (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G1).
+pub(crate) const WRITES_AN_HOUR: usize = 200;
+
+/// Whether one more entry of the app `app` from the key `key` passes
+/// [`WRITES_AN_HOUR`]: its person's entries of that app in the last hour,
+/// read from the record, so a restart forgets nothing. An entry is one
+/// under `<app>/` or, since each is kept by every member for good, a
+/// correction that only voids one of those ([`of_kind`] on what it voids).
+pub(crate) fn spent(read: &Admission, app: &str, key: &str) -> bool {
+    let first = read.membership().person_of(key).map_or(key, |(f, _)| f);
+    let since = crate::door::unix_now().unwrap_or(i64::MAX) - 3600;
+    let all = crate::rail::ops_json(read).unwrap_or_default();
+    let ops = all.as_array().map(Vec::as_slice).unwrap_or_default();
+    let recent = |o: &&Value| o["person_key"] == first && o["ts_unix"].as_i64() > Some(since);
+    let own = |o: &&Value| of_kind(std::slice::from_ref(*o), app, &o["id"]);
+    let voids = |o: &&Value| o.get("corrects").is_some_and(|c| of_kind(ops, app, c));
+    let entry = |o: &&Value| own(o) || voids(o);
+    let count = ops.iter().filter(recent).filter(entry).count();
+    tracing::debug!(target: "folder", app, key, count, "carried: this app's entries as this person in the last hour, against its budget");
+    count >= WRITES_AN_HOUR
+}
+
+/// The person told [`WRITES_AN_HOUR`] is spent, in words a developer can act on.
+pub(crate) fn budget_refused(app: &str) -> Response {
+    let words = format!("{app} wrote {WRITES_AN_HOUR} entries as you in the last hour, the most an app may; it can write again as that hour passes");
+    LendRefusal::Limit.say(StatusCode::TOO_MANY_REQUESTS, words)
+}
+
+/// A line a device signed, taken at [`crate::rail::carry`], past its app's
+/// budget: a phone's own lines reach the record only there. A line this
+/// copy already counts is not new, so never over.
+pub(crate) fn line_spent(read: &Admission, line: &Op<SignedOp>) -> Option<Response> {
+    let body = serde_json::to_value(line).ok()?;
+    let part = |v: &Value| Some(v["kind"].as_str()?.split_once('/')?.0.to_string());
+    let of_corrected = || {
+        let id = body.get("corrects")?;
+        let ops = crate::rail::ops_json(read)?;
+        part(&ops.as_array()?.iter().find(|o| &o["id"] == id)?["payload"])
+    };
+    let stated = part(&body["payload"]).or_else(|| part(&body["replacement"]));
+    let app = stated.or_else(of_corrected)?;
+    let held = read.membership().counts(&line.id);
+    (!held && spent(read, &app, line.stands_as())).then(|| budget_refused(&app))
+}
+
+/// [`Append`] under the group's write lock, an app's budget counted there
+/// so writes in flight at once cannot pass it between count and commit.
+pub(crate) struct Budgeted<'a>(pub(crate) Append, pub(crate) &'a str, pub(crate) &'a str);
+
+impl Command for Budgeted<'_> {
+    type Refusal = Option<AppendRefusal>;
+    const READS: Reads = Reads::All;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
+        if spent(before, self.1, self.2) {
+            return Err(None);
+        }
+        self.0.decide(before).map_err(Some)
+    }
 }
 
 fn content_type(file: &Path) -> &'static str {

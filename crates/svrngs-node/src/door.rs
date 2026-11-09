@@ -238,6 +238,9 @@ pub enum LendRefusal {
     /// The asker's visit has ended: at its time, by its host's Stop, or as
     /// its host left (guests-door).
     Ended,
+    /// An app wrote as many entries as its budget allows
+    /// (`crate::folder::carried::WRITES_AN_HOUR`).
+    Limit,
 }
 
 impl LendRefusal {
@@ -254,6 +257,7 @@ impl LendRefusal {
             LendRefusal::Stopped => "stopped",
             LendRefusal::Removed => "removed",
             LendRefusal::Ended => "ended",
+            LendRefusal::Limit => "limit",
         }
     }
 

@@ -358,6 +358,17 @@ another of the group's computers when this one never held it — and from
   anyone another device holds. A correction of another app's act is
   refused. A line the phone signed and no computer took yet is kept beside
   the pass and goes, the same bytes, with the next write.
+  An app writes at most `WRITES_AN_HOUR` entries (200) as one person in any
+  hour, the count read from the record, so a restart forgets nothing and no
+  store is added (`carried.rs`, `spent`, the number's one home): counted
+  under the group's write lock at this route (`Budgeted`), before a phone's
+  line is taken at `/carry`, and act by act on a lent app's
+  `x-svrngs-append` when the person's page asked for it. A program with the
+  token is the person, and outside it. Past it the app is refused `limit`,
+  429, with words naming the limit; on a phone the line is let go and its
+  chain rewound (`web/lend.js`, `carried`). A correction that only voids is
+  an entry every member keeps and is counted too, read by what it voids
+  (`of_kind`).
 
 **What it reads beside its own.** A carried app reads its group's lends of
 the kinds its `reads.txt` names, a file beside its `index.html`, each kind

@@ -51,13 +51,14 @@ use axum::Json;
 use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
+use crate::folder::carried::{budget_refused, line_spent, Budgeted};
 use crate::iroh::IrohTransport;
 use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
 use crate::ring_routes::err;
 use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
-use svrngs_core::{Admission, Append, AppendRefusal};
+use svrngs_core::{Admission, Append};
 
 /// What the doors read: the journals, the nudge that wakes the round
 /// after an append ([`crate::ring_sync::append`]), and the live lane's
@@ -201,6 +202,7 @@ pub(crate) async fn append_act(
     rail: &RingRail,
     namespace: &str,
     body: serde_json::Value,
+    budget: Option<(&str, &str)>,
 ) -> Response {
     if let Err(refusal) = stamp(rail, namespace, &body) {
         return refusal;
@@ -215,8 +217,17 @@ pub(crate) async fn append_act(
     // A seal is an act like any other here: `Append` refuses it as not an
     // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
     let append = Append { act };
-    match rail.commit_said(namespace, &append) {
-        Ok(Err(AppendRefusal::NotAnAppAct)) => {
+    let done = match budget {
+        Some((app, key)) => rail.commit_said(namespace, &Budgeted(append, app, key)),
+        None => rail
+            .commit_said(namespace, &append)
+            .map(|d| d.map_err(Some)),
+    };
+    if let (Ok(Err(None)), Some((app, _))) = (&done, budget) {
+        return budget_refused(app);
+    }
+    match done {
+        Ok(Err(_)) => {
             tracing::debug!(target: "rails", namespace, "rail: refused — the register's acts and a seal are not an app's to write");
             refused(
                 namespace,
@@ -350,6 +361,9 @@ pub(crate) async fn carry(
             "The group's keeper needs to open the new svrngs before apps can save entries.".into(),
         );
     }
+    if let Some(no) = read.as_ref().and_then(|a| line_spent(a, &line)) {
+        return no;
+    }
     if let Err(e) = rail.ingest_all(&group, std::slice::from_ref(&line)) {
         return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
     }
@@ -480,7 +494,7 @@ pub async fn append(
 ) -> Result<Response, Response> {
     let namespace = namespace_of(&q)?;
     standing_of(&api.rail, &namespace)?;
-    Ok(append_act(&api.rail, &namespace, body).await)
+    Ok(append_act(&api.rail, &namespace, body, None).await)
 }
 
 /// GET /v1/rail/log.

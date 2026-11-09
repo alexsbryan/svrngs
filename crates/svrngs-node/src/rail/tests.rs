@@ -63,7 +63,7 @@ async fn append_signs_as_the_node_and_assigns_the_fields() {
         "id": "forged",
         "ts_unix": 1,
     });
-    let resp = append_act(&rail, journal, body).await;
+    let resp = append_act(&rail, journal, body, None).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["seq"], 0, "the door assigns the sequence, not the body");
@@ -97,7 +97,7 @@ async fn an_append_writes_only_as_this_computer_s_own_person() {
         (serde_json::json!("a\u{1b}[2J"), "not_a_name"),
         (serde_json::json!(7), "not_a_name"),
     ] {
-        let resp = append_act(&rail, journal, body(named.clone())).await;
+        let resp = append_act(&rail, journal, body(named.clone()), None).await;
         assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY, "{named}");
         let said = body_of(resp).await;
         assert_eq!(said["kind"], kind, "{named}");
@@ -112,7 +112,7 @@ async fn an_append_writes_only_as_this_computer_s_own_person() {
     );
 
     // Kept: a local program appends as this computer's own person.
-    let resp = append_act(&rail, journal, body(serde_json::json!("alex"))).await;
+    let resp = append_act(&rail, journal, body(serde_json::json!("alex")), None).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
     assert_eq!((ops.len(), ops[0].person.as_str()), (1, "alex"));
@@ -126,7 +126,7 @@ async fn an_unstamped_append_carries_no_name() {
     standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
-    let resp = append_act(&rail, journal, body).await;
+    let resp = append_act(&rail, journal, body, None).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
     assert_eq!(ops[0].on_behalf_of, None);
@@ -142,7 +142,7 @@ async fn append_outside_the_mesh_refuses_naming_the_join_verb() {
     let (_dir, rail) = rail_with(&[("halo", 3)]);
     let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
-    let resp = append_act(&rail, journal, body).await;
+    let resp = append_act(&rail, journal, body, None).await;
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
     let out = body_of(resp).await;
     assert_eq!(out["kind"], "not_in_roster", "{out}");
@@ -199,7 +199,7 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
-    let resp = append_act(&rail, journal, body).await;
+    let resp = append_act(&rail, journal, body, None).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let resp = super::log_answer(&rail, journal).await;
     assert_eq!(resp.status(), StatusCode::OK);
@@ -296,11 +296,11 @@ async fn an_apps_seal_is_refused_and_retires_nothing() {
     for _ in 0..2 {
         let body = serde_json::json!({ "op": "record", "payload": { "amount": 1 } });
         assert_eq!(
-            append_act(&rail, journal, body).await.status(),
+            append_act(&rail, journal, body, None).await.status(),
             StatusCode::OK
         );
     }
-    let resp = append_act(&rail, journal, serde_json::json!({ "op": "seal" })).await;
+    let resp = append_act(&rail, journal, serde_json::json!({ "op": "seal" }), None).await;
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
     assert_eq!(body_of(resp).await["kind"], "not_an_app_act");
     let ops = svrngs_core::tests_support::wire_ops(&rail.admission(journal).unwrap());
