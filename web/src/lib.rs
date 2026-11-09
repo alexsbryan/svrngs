@@ -224,7 +224,7 @@ async fn bind(
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
         .relay_mode(iroh::RelayMode::custom(relays.clone()))
-        .transport_config(if held { dial::held() } else { Default::default() });
+        .transport_config(if held { dial::held(None) } else { Default::default() });
 
     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: {held})…");
@@ -273,7 +273,7 @@ async fn reach(
     // The issuer's dial is held as iroh holds one, a lender's as
     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
     // would end the issuer's before its cap did (v1ui-race (a)).
-    let held = if to.is_none() { Default::default() } else { dial::held() };
+    let held = if to.is_none() { Default::default() } else { dial::held(None) };
     let node_id = match to {
         None => match bound.issuer {
             Some(issuer) => issuer,

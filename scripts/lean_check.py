@@ -552,10 +552,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Its hardening after review (a read made anew, an answer made anew from data
 # types, a yes kept with what it named, readers kept off the record), +70 after
 # its own trims; an economizing pass of 72 first, so no raise: . to 20,721.
+# A raise of 33, inside the operator's "We can just add 35 lines here"
+# (2026-11-08, docs/LESSONS_FROM_BITTORRENT.md): the home page's waiting line
+# +27, the Blobs dial's receive window +6. Its pass cut nothing already there;
+# both were tightened as written. . to 20,754, one past where they land.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20721,
+    ".": 20754,
 
     "js": 8396,
 

@@ -56,8 +56,12 @@ pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
 /// (`demo/runs/wait/2026-10-14/`, the plant take). A computer's connection
 /// to a member is held so too, since it is kept across requests
 /// (arch-peer, `iroh.rs` `dialled`).
-pub fn held() -> iroh::endpoint::QuicTransportConfig {
+pub fn held(window: Option<u32>) -> iroh::endpoint::QuicTransportConfig {
     let idle = iroh::endpoint::VarInt::from_u32(DIAL_WITHIN.as_millis() as u32);
-    let held = iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
+    let mut held =
+        iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
+    if let Some(window) = window {
+        held = held.stream_receive_window(window.into());
+    }
     held.keep_alive_interval(DIAL_WITHIN / 4).build()
 }

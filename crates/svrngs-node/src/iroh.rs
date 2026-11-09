@@ -297,6 +297,12 @@ impl IrohTransport {
     }
 }
 
+/// What a fetcher grants a holder per stream on a Blobs dial, which bounds
+/// what waits in the holder's uplink: over 40 Mbit/s one fetcher's ping p95
+/// was 110 ms at this and 261 ms at iroh's default, and the fetch no slower
+/// (`demo/runs/swarm/2026-11-08/README.md`).
+const BLOBS_RECEIVE_WINDOW: u32 = 512 * 1024;
+
 /// A request held whole, so it can be sent again.
 pub type WholeRequest = axum::http::Request<axum::body::Bytes>;
 
@@ -357,7 +363,10 @@ pub(crate) async fn dialled(
     let (peer, cap) = (to.id.fmt_short(), within.unwrap_or(Duration::MAX));
     // Held only when capped: held, iroh gives up a handshake silent for the
     // cap too, and a joiner's dial is not capped (`crate::dial`).
-    let held = within.map_or_else(Default::default, |_| crate::dial::held());
+    // Only a fetcher's Blobs dial shrinks what the sender may queue, so the
+    // household's uplink keeps room for everything else; lends keep theirs.
+    let window = (alpn == Alpn::Blobs.bytes()).then_some(BLOBS_RECEIVE_WINDOW);
+    let held = within.map_or_else(Default::default, |_| crate::dial::held(window));
     let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
     let connect = async move {
         let connecting = e.connect_with_opts(to, alpn, held).await;
