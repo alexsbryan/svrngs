@@ -89,7 +89,7 @@ fn lend(name: &str, port: u16) -> Lend {
     Lend {
         name: LendName::parse(name).unwrap(),
         source: Source::Port(NonZeroU16::new(port).unwrap()),
-        kind: Kind::parse("k").unwrap(),
+        kind: Program::parse("k").unwrap(),
         audience: Audience::Selected(vec!["house".to_string()]),
         limit: NonZeroU16::new(3),
         refused: vec![refused("/admin")],
@@ -108,7 +108,10 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     let mut shelf = lend("shelf", 8096);
     shelf.upload = Some(Upload::from_mbit(NonZeroU32::new(30).unwrap()));
     // The kinds it reads (u5-2) come back too; planted: not written.
-    shelf.reads = vec![Kind::parse("films").unwrap(), Kind::parse("music").unwrap()];
+    shelf.reads = vec![
+        Program::parse("films").unwrap(),
+        Program::parse("music").unwrap(),
+    ];
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
@@ -349,7 +352,7 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
     let house = |g: &str| g == "house";
     let offered = |groups: Option<Vec<String>>, carried: Option<&str>| Offered {
         name: LendName::parse("jellyfin").unwrap(),
-        kind: Kind::parse("k").unwrap(),
+        kind: Program::parse("k").unwrap(),
         limit: None,
         using: 0,
         upload: None,
@@ -388,7 +391,7 @@ struct OldLendFile {
     port: NonZeroU16,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     raw: Option<Raw>,
-    kind: Kind,
+    kind: Program,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     limit: Option<NonZeroU16>,
     #[serde(default)]
@@ -400,7 +403,7 @@ struct OldLendFile {
     )]
     upload: Option<Upload>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    reads: Vec<Kind>,
+    reads: Vec<Program>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sign_in_with_svrngs: Option<SignInWithSvrngs>,
     #[serde(default, skip_serializing_if = "Option::is_none")]

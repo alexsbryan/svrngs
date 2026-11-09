@@ -31,7 +31,7 @@ use std::process::Stdio;
 use serde_json::{json, Value};
 use svrngs::cli;
 use svrngs::group::Name;
-use svrngs_node::lend::{self, Kind, Lend, LendName};
+use svrngs_node::lend::{self, Lend, LendName, Program};
 use svrngs_node::link::Origin;
 use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Device, RailAct, SigningKey};
@@ -203,7 +203,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     let shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
-        kind: Kind::parse("shelf").unwrap(),
+        kind: Program::parse("shelf").unwrap(),
         // Lent once Sam has made house, below (LENDING_SCOPE).
         audience: svrngs_node::lend::Audience::Legacy,
         limit: NonZeroU16::new(3),
@@ -589,7 +589,7 @@ async fn phone_joins_through(
     let shelf = Lend {
         name: LendName::parse("shelf").unwrap(),
         source: svrngs_node::lend::Source::Port(NonZeroU16::new(service().await).unwrap()),
-        kind: Kind::parse("shelf").unwrap(),
+        kind: Program::parse("shelf").unwrap(),
         // Lent to the group Sam's computer keeps (LENDING_SCOPE).
         audience: svrngs_node::lend::Audience::Selected(sam.rail().namespaces().unwrap()),
         limit: NonZeroU16::new(3),

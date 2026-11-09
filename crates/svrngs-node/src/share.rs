@@ -36,7 +36,7 @@
 use std::num::NonZeroU16;
 use std::time::Duration;
 
-use crate::lend::{Audience, Kind, Lend, LendName, Raw, RefusedPath, Source, Upload};
+use crate::lend::{Audience, Lend, LendName, Program, Raw, RefusedPath, Source, Upload};
 
 /// The well-known ports and the kind of service that listens on each, one
 /// `<port> <kind>` a line, then how its lender makes a person an account
@@ -71,7 +71,7 @@ pub enum At {
 /// parsed once for every reader (REVIEW_FINDINGS #64, #169), and the rest
 /// of the line, empty when there is none. A row whose port or kind does
 /// not parse is none.
-pub fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
+pub fn rows() -> impl Iterator<Item = (At, Program, &'static str)> {
     WELL_KNOWN
         .lines()
         .map(|l| l.split('#').next().unwrap_or("").trim())
@@ -84,7 +84,7 @@ pub fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
                 "-" => At::Named,
                 p => At::Port(p.parse().ok()?),
             };
-            Some((at, Kind::parse(kind).ok()?, how.trim()))
+            Some((at, Program::parse(kind).ok()?, how.trim()))
         })
 }
 
@@ -93,14 +93,14 @@ pub fn rows() -> impl Iterator<Item = (At, Kind, &'static str)> {
 pub struct Share {
     pub port: NonZeroU16,
     pub name: Option<LendName>,
-    pub kind: Option<Kind>,
+    pub kind: Option<Program>,
     pub limit: Option<NonZeroU16>,
     pub refused: Vec<RefusedPath>,
     /// This computer's upload, as its lender states it; none stated, none
     /// declared (u3-6).
     pub upload: Option<Upload>,
     /// The kinds of lend its pages read (u5-2).
-    pub reads: Vec<Kind>,
+    pub reads: Vec<Program>,
     /// What an app receives of it, in its lender's words (sup-2).
     pub asks: Option<String>,
     /// `--sign-in-with-svrngs`: it signs each person in as themselves, with
@@ -128,7 +128,7 @@ pub enum ShareRefusal {
 }
 
 /// The kind [`WELL_KNOWN`] names for `port`, if any.
-pub fn well_known_kind(port: NonZeroU16) -> Option<Kind> {
+pub fn well_known_kind(port: NonZeroU16) -> Option<Program> {
     rows().find_map(|(at, kind, _)| (at == At::Port(port)).then_some(kind))
 }
 
@@ -144,7 +144,7 @@ fn known_kinds() -> String {
 /// keeps for that program, so a person's mistake is said at share time,
 /// never refused (any app on a port stays lendable). A name differing from
 /// a row's only in case or by a slip names the row it likely meant.
-pub fn unrecognized(kind: &Kind) -> Option<String> {
+pub fn unrecognized(kind: &Program) -> Option<String> {
     if rows().any(|(_, known, _)| known == *kind) {
         return None;
     }
@@ -171,7 +171,7 @@ fn slipped(known: &str, said: &str) -> bool {
 /// What [`WELL_KNOWN`]'s row for `kind` says in its clause `word`, past
 /// the `:` — the one reader of a clause, for [`accounts_of`], [`kept_of`]
 /// and [`readers_of`]. A kind may have a row for each clause.
-fn says(kind: &Kind, word: &str) -> Option<&'static str> {
+fn says(kind: &Program, word: &str) -> Option<&'static str> {
     rows().find_map(|(_, k, how)| {
         let (what, rest) = how.split_once(':')?;
         (k == *kind && what == word).then_some(rest.trim())
@@ -181,16 +181,10 @@ fn says(kind: &Kind, word: &str) -> Option<&'static str> {
 /// The paths [`WELL_KNOWN`] keeps back of every lend of `kind`, its lender
 /// typing none; none when its row says no `keeps:`. Why each is kept back
 /// is the table's, beside its row.
-pub fn kept_of(kind: &Kind) -> Vec<RefusedPath> {
-    let kept: Vec<RefusedPath> = match says(kind, "keeps") {
-        Some(paths) => paths
-            .split_whitespace()
-            .map(|p| {
-                RefusedPath::parse(p).expect("the table's paths start with /, as its test holds")
-            })
-            .collect(),
-        None => Vec::new(),
-    };
+pub fn kept_of(kind: &Program) -> Vec<RefusedPath> {
+    let paths = says(kind, "keeps").unwrap_or_default().split_whitespace();
+    let parsed = |p: &str| RefusedPath::parse(p).expect("the table's paths start with /");
+    let kept: Vec<RefusedPath> = paths.map(parsed).collect();
     tracing::debug!(target: "share", kind = %kind, kept = kept.len(), "share: the paths the table keeps back of the kind");
     kept
 }
@@ -203,7 +197,7 @@ pub fn kept_of(kind: &Kind) -> Vec<RefusedPath> {
 /// (`demo/runs/a/dry-2026-10-04/README.md:39-50`;
 /// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3). A row saying
 /// neither `accounts:` nor `header:` says nothing.
-pub fn accounts_of(kind: &Kind) -> Option<Signs> {
+pub fn accounts_of(kind: &Program) -> Option<Signs> {
     let signs = (says(kind, "accounts").map(Signs::Accounts))
         .or_else(|| says(kind, "header").map(Signs::Header));
     tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if the table says");
@@ -227,7 +221,7 @@ pub struct ReadersSignIn {
 }
 
 /// [`ReadersSignIn`] for `kind`, if its row says one and the row parses.
-pub fn readers_of(kind: &Kind) -> Option<ReadersSignIn> {
+pub fn readers_of(kind: &Program) -> Option<ReadersSignIn> {
     let row = says(kind, "readers")?;
     let (row, asked) = row
         .split_once(" | ")
@@ -324,7 +318,7 @@ pub fn listening() -> Vec<NonZeroU16> {
 pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
-    well_known: Option<Kind>,
+    well_known: Option<Program>,
 ) -> Result<Lend, ShareRefusal> {
     // A UDP port answers no connection, so nothing tells whether a program
     // listens on it; a TCP port is probed as a page's is. The table's ports

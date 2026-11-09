@@ -21,7 +21,7 @@ use svrngs::cli::{self, Refusal, Said, Verb};
 use svrngs::group::{self, Name};
 use svrngs::share::{self, Share};
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
-use svrngs_node::lend::{Kind, LendName};
+use svrngs_node::lend::{LendName, Program as LentProgram};
 use svrngs_node::link::{Link, KEPT_WORDS};
 use svrngs_node::node::Node;
 use svrngs_node::SigningKey;
@@ -43,7 +43,7 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
     Share {
         port: std::num::NonZeroU16::new(origin.port()).unwrap(),
         name: None,
-        kind: Some(Kind::parse(kind).unwrap()),
+        kind: Some(LentProgram::parse(kind).unwrap()),
         limit: None,
         refused: Vec::new(),
         upload: None,
@@ -534,7 +534,8 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     }
     assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
     let dir = tempfile::tempdir().unwrap();
-    let lend = share::lend_of(&asked, |_| true, Some(Kind::parse("taste").unwrap())).unwrap();
+    let lend =
+        share::lend_of(&asked, |_| true, Some(LentProgram::parse("taste").unwrap())).unwrap();
     cli::share_lend(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
@@ -600,7 +601,7 @@ fn mode(path: &Path) -> u32 {
 /// `None` for every name.
 #[test]
 fn a_misspelled_program_is_told_at_share_time() {
-    let told = |name: &str| share::unrecognized(&svrngs_node::lend::Kind::parse(name).unwrap());
+    let told = |name: &str| share::unrecognized(&LentProgram::parse(name).unwrap());
     assert_eq!(
         told("jellyfin"),
         None,

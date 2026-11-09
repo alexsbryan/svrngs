@@ -16,7 +16,7 @@ use std::time::{Duration, Instant};
 
 use svrngs::cli;
 use svrngs::share::{self, Share};
-use svrngs_node::lend::Kind;
+use svrngs_node::lend::Program as LentProgram;
 
 /// The program, its output read line by line as it comes.
 struct Program {
@@ -309,7 +309,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
     let asked = Share {
         port: std::num::NonZeroU16::new(pad.local_addr().unwrap().port()).unwrap(),
         name: None,
-        kind: Some(Kind::parse("pad").unwrap()),
+        kind: Some(LentProgram::parse("pad").unwrap()),
         limit: None,
         refused: Vec::new(),
         upload: None,

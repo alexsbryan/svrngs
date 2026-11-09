@@ -42,7 +42,7 @@ use svrngs_core::pass::{Label, Pass, Whose};
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
 use crate::folder::carried::Handled;
 use crate::iroh::Contact;
-use crate::lend::{Kind, Offered};
+use crate::lend::{AppName, Offered, Program};
 use crate::node::Asking;
 use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
@@ -58,7 +58,7 @@ pub(crate) enum Appending {
     /// intent (`x-svrngs-intent: yes`, which the proof signs).
     Granted,
     /// A program with the token, accepting entries of the one kind it named.
-    Program(Kind),
+    Program(Program),
     /// No entry is written, and why.
     Denied(Unconsented),
 }
@@ -84,7 +84,7 @@ impl Appending {
         let intent = headers.get("x-svrngs-intent").is_some_and(|h| h == "yes");
         let appending = match (shown, headers.get(APPEND_HEADER)) {
             (Shown::Token, Some(kind)) => {
-                let kind = kind.to_str().ok().and_then(|k| Kind::parse(k).ok());
+                let kind = kind.to_str().ok().and_then(|k| Program::parse(k).ok());
                 Self::Program(kind.ok_or_else(|| {
                     tracing::debug!(target: "origin", "origin: refused — a program named no kind it accepts entries of that svrngs reads");
                     LendRefusal::Closed.say(
@@ -100,7 +100,7 @@ impl Appending {
         tracing::debug!(target: "origin", ?shown, ?appending, "origin: whether a lent app's answer may write entries as the person asking");
         Ok(appending)
     }
-    pub(crate) fn permits(&self, kind: &Kind) -> bool {
+    pub(crate) fn permits(&self, kind: &Program) -> bool {
         match self {
             Self::Granted => true,
             Self::Program(wanted) => wanted == kind,
@@ -564,7 +564,7 @@ async fn appended(
         LendRefusal::Closed.say(StatusCode::UNPROCESSABLE_ENTITY, format!("{what} answered with entries svrngs cannot read, so they were not saved."))
     })?;
     let judged = |act: &Value| {
-        let kind = lend.as_ref().ok_or(Unwritten::Unread)?.kind.as_str();
+        let kind = &lend.as_ref().ok_or(Unwritten::Unread)?.kind;
         let group = act["group"].as_str();
         let read = rail.admission(group.ok_or(Unwritten::Unread)?).ok();
         let both =
@@ -578,19 +578,20 @@ async fn appended(
             .is_some_and(|l| l.clone().listed(|g| Some(g) == group));
         reached.then_some(()).ok_or(Unwritten::NotLent)?;
         // A part the group's folders claim is theirs, whoever lends a
-        // server by that name; of the record, so every computer reads it alike.
-        let folder = read.runs().brought.contains_key(kind);
-        tracing::debug!(target: "origin", %label, kind, group, folder, "origin: whether a lent app's part is a folder in that group");
-        (!folder).then_some(()).ok_or(Unwritten::OtherPart)?;
+        // server by that name; of the record, so every computer reads it
+        // alike. It stays a check at run time: the word came off the wire.
+        let app = AppName::of_lent(kind, read.runs());
+        tracing::debug!(target: "origin", %label, %kind, group, folder = app.is_none(), "origin: whether a lent app's part is a folder in that group");
+        let app = app.ok_or(Unwritten::OtherPart)?;
         let body = serde_json::to_vec(act).unwrap_or_default();
-        let shaped = svrngs_core::grant::app_act(kind, &body).ok_or(Unwritten::Unread)?;
+        let shaped = app.act(&body).ok_or(Unwritten::Unread)?;
         let ops = serde_json::to_value(read.wire()).unwrap_or_default();
         let ops = ops.as_array().map_or(&[][..], Vec::as_slice);
         match shaped.get("corrects") {
-            Some(id) if !crate::folder::carried::of_kind(ops, kind, id) => {
+            Some(id) if !crate::folder::carried::of_kind(ops, app.as_str(), id) => {
                 Err(Unwritten::OtherPart)
             }
-            _ => Ok((group.unwrap_or_default().to_string(), shaped)),
+            _ => Ok((group.unwrap_or_default().to_string(), shaped, app)),
         }
     };
     let acts = acts.iter().map(judged).collect::<Result<Vec<_>, _>>().map_err(|why| {
@@ -599,11 +600,9 @@ async fn appended(
     })?;
     // An app's bug reaches here as the person; a program with the token is
     // the person, outside the budget (`carried::spent`).
-    let granted = lend
-        .as_ref()
-        .filter(|_| matches!(appending, Appending::Granted));
-    let budget = granted.map(|l| (l.kind.as_str(), at.host.actor.as_str()));
-    for (group, act) in acts {
+    let granted = matches!(appending, Appending::Granted);
+    for (group, act, app) in acts {
+        let budget = granted.then_some((&app, at.host.actor.as_str()));
         let written = crate::rail::append_act(rail, &group, act, budget).await;
         tracing::debug!(target: "origin", %label, group, status = written.status().as_u16(), carried = contact.is_some(), "origin: a lent app's act, written by this computer as its own person, then carried to the lender");
         if !written.status().is_success() {

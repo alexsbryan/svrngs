@@ -5,7 +5,7 @@
 //! decision, `lend_of`, and the well-known table.)
 use super::*;
 // The lend's names, as these tests read them before the move.
-use svrngs_node::lend::{Kind, LendName, RefusedPath};
+use svrngs_node::lend::{LendName, Program, RefusedPath};
 
 fn port(p: u16) -> NonZeroU16 {
     NonZeroU16::new(p).unwrap()
@@ -69,7 +69,7 @@ fn the_well_known_table_reads_whole() {
     assert!(!rows.is_empty());
     for row in rows {
         let (p, rest) = row.split_once(' ').expect(row);
-        let kind = Kind::parse(rest.split_whitespace().next().unwrap()).expect(row);
+        let kind = Program::parse(rest.split_whitespace().next().unwrap()).expect(row);
         assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
         let _ = kept_of(&kind);
         if rest.contains(" readers: ") {
@@ -87,7 +87,7 @@ fn the_well_known_table_reads_whole() {
         }
     }
     assert_eq!(well_known_kind(port(8096)).unwrap().as_str(), "jellyfin");
-    let jellyfin = readers_of(&Kind::parse("jellyfin").unwrap()).unwrap();
+    let jellyfin = readers_of(&Program::parse("jellyfin").unwrap()).unwrap();
     assert_eq!(
         (
             jellyfin.name,
@@ -135,14 +135,14 @@ fn the_table_names_no_sign_in_helper() {
 /// refused by name.
 #[test]
 fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
-    let jf = Kind::parse("jellyfin").unwrap();
+    let jf = Program::parse("jellyfin").unwrap();
     let lend = lend_of(&share(8096), |_| true, Some(jf.clone())).unwrap();
     assert_eq!(
         (lend.name.as_str(), lend.kind.as_str(), lend.limit),
         ("jellyfin", "jellyfin", None)
     );
     let mut typed = share(5000);
-    typed.kind = Some(Kind::parse("notes").unwrap());
+    typed.kind = Some(Program::parse("notes").unwrap());
     typed.name = Some(LendName::parse("pad").unwrap());
     typed.limit = Some(port(7));
     let lend = lend_of(&typed, |_| true, None).unwrap();
@@ -165,7 +165,7 @@ fn a_lend_is_decided_from_what_was_typed_and_what_listens() {
 /// with no row.
 #[test]
 fn a_kind_keeps_its_own_accounts_only_if_the_table_says_how() {
-    let Some(Signs::Accounts(how)) = accounts_of(&Kind::parse("jellyfin").unwrap()) else {
+    let Some(Signs::Accounts(how)) = accounts_of(&Program::parse("jellyfin").unwrap()) else {
         panic!("jellyfin keeps its own")
     };
     assert!(
@@ -175,7 +175,7 @@ fn a_kind_keeps_its_own_accounts_only_if_the_table_says_how() {
     for word in svrngs_node::link::KEPT_WORDS {
         assert!(!how.to_lowercase().contains(word), "{how} says {word}");
     }
-    assert_eq!(accounts_of(&Kind::parse("pad").unwrap()), None);
+    assert_eq!(accounts_of(&Program::parse("pad").unwrap()), None);
     assert_eq!(well_known_kind(port(8096)).unwrap().as_str(), "jellyfin");
 }
 
@@ -197,7 +197,7 @@ fn navidrome_and_calibre_web_take_the_person_from_the_door_s_header() {
             assert!(!what.to_lowercase().contains(word), "{what} says {word}");
         }
     }
-    let Some(Signs::Header(nd)) = accounts_of(&Kind::parse("navidrome").unwrap()) else {
+    let Some(Signs::Header(nd)) = accounts_of(&Program::parse("navidrome").unwrap()) else {
         unreachable!()
     };
     assert!(
@@ -219,7 +219,7 @@ fn a_lend_shared_with_no_limit_lets_a_fourth_in_at_once() {
     use std::time::Instant;
     use svrngs_node::door::limit::{Counts, Verdict};
     use svrngs_node::network::Whereabouts;
-    let jf = Kind::parse("jellyfin").unwrap();
+    let jf = Program::parse("jellyfin").unwrap();
     let lend = lend_of(&share(8096), |_| true, Some(jf)).unwrap();
     let (mut counts, now) = (Counts::default(), Instant::now());
     for who in ["ana", "bo", "cy", "dee"] {
@@ -243,7 +243,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
         "{said}"
     );
     let mut typed = share(8080);
-    typed.kind = Some(Kind::parse("llama-server").unwrap());
+    typed.kind = Some(Program::parse("llama-server").unwrap());
     typed.refused = ["/slots", "/admin"]
         .map(|p| RefusedPath::parse(p).unwrap())
         .to_vec();
@@ -265,5 +265,5 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
         ]
     );
     assert_eq!(lend.name.as_str(), "llama-server");
-    assert!(kept_of(&Kind::parse("jellyfin").unwrap()).is_empty());
+    assert!(kept_of(&Program::parse("jellyfin").unwrap()).is_empty());
 }

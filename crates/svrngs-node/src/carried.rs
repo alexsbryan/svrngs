@@ -56,7 +56,7 @@ use svrngs_core::{RailAct, Reads, SignedOp, SyncPath};
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
 use crate::iroh::Dialer;
-use crate::lend::{Kind, Lend, Source};
+use crate::lend::{AppName, Lend, Program, Source};
 use crate::node::Asking;
 use crate::register::{Member, Standing};
 
@@ -122,7 +122,7 @@ type Held = Result<Option<axum::body::Bytes>, Withheld>;
 /// `index.html`: each a kind, apart by spaces or lines (DESIGN §3, "Or a
 /// folder the group carries").
 pub const READS: &str = "reads.txt";
-const NOT_KINDS: Withheld = (Fault, 500, "a word in its reads.txt isn’t a program’s name");
+const NOT_PROGRAMS: Withheld = (Fault, 500, "a word in its reads.txt isn’t a program’s name");
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
@@ -260,21 +260,20 @@ impl Folders {
     /// reads it only once they said yes to it (canon-pin); none without
     /// one, as the shelf's apps have; refused, never read as fewer, when a
     /// word in it is not a kind (ARCH 6). A declared lend's, its own.
-    pub(crate) async fn reads(&self, lend: &Lend) -> Result<Vec<Kind>, Withheld> {
-        let Source::Carried(group) = &lend.source else {
+    pub(crate) async fn reads(&self, lend: &Lend) -> Result<Vec<Program>, Withheld> {
+        let Source::Carried(app, group) = &lend.source else {
             return Ok(lend.reads.clone());
         };
         let standing = (self.host.rail.standing(group)).map_err(|e| traced(group, UNREAD, &e))?;
         let me = standing.member(&self.host.actor).ok_or(NOT_IN)?;
-        let path = format!("apps/{}/{READS}", lend.kind);
-        let text = self.runs_at(group, &lend.kind, &path, &me.person_key);
-        let text = text.await?;
+        let path = format!("apps/{app}/{READS}");
+        let text = self.runs_at(group, app, &path, &me.person_key).await?;
         let words = String::from_utf8_lossy(text.as_deref().unwrap_or_default());
         let kinds = (words.split_whitespace())
-            .map(Kind::parse)
+            .map(Program::parse)
             .collect::<Result<_, _>>();
         tracing::debug!(target: "folder", lend = %lend.name, group, declared = text.is_some(), ?kinds, "carried: the kinds the app reads as it runs as this computer's person, none undeclared, or refused");
-        kinds.map_err(|e| traced(group, NOT_KINDS, &e))
+        kinds.map_err(|e| traced(group, NOT_PROGRAMS, &e))
     }
 
     /// Each app carried in `groups` whose files now are not those that run
@@ -303,12 +302,14 @@ impl Folders {
     /// `req`, asked at `path` of the app `lend` carried in `group` by the
     /// key `key` (the door's): refused unless that key stands in the group,
     /// else the route's answer or a file's; each under [`FLOOR`].
-    pub(crate) async fn open(&self, lend: &Lend, at: (&str, &str, &str), req: Request) -> Response {
-        let (group, key, path) = at;
+    pub(crate) async fn open(&self, lend: &Lend, at: (&str, &str), req: Request) -> Response {
+        let (Source::Carried(app, group), (key, path)) = (&lend.source, at) else {
+            return said(NOT_ITS_GROUP);
+        };
         let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match path {
-                ACTS => self.acts((&lend.kind, group), (&people, key), req).await,
-                _ => self.file(group, &lend.kind, path, &people[key]).await,
+                ACTS => self.acts((app, group), (&people, key), req).await,
+                _ => self.file(group, app, path, &people[key]).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
             Err(e) => Err(traced(group, UNREAD, &e)),
@@ -325,10 +326,10 @@ impl Folders {
     /// for a directory's, as the app runs as `asker`'s person
     /// ([`svrngs_core::Runs::of`]), from this computer's store, else
     /// fetched from a computer that stands in the group.
-    async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Given {
-        let path = format!("apps/{kind}{path}");
+    async fn file(&self, group: &str, app: &AppName, path: &str, asker: &Member) -> Given {
+        let path = format!("apps/{app}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
-        let held = self.runs_at(group, kind, &path, &asker.person_key).await?;
+        let held = self.runs_at(group, app, &path, &asker.person_key).await?;
         let kind = content_type(Path::new(&path));
         Ok(([(header::CONTENT_TYPE, kind)], held.ok_or(NOT_HERE)?).into_response())
     }
@@ -336,9 +337,9 @@ impl Folders {
     /// The bytes at `path` of the app `kind` carried in `group` as it runs
     /// as the person whose first key is `first`; none when those files have
     /// nothing there.
-    async fn runs_at(&self, group: &str, kind: &Kind, path: &str, first: &str) -> Held {
+    async fn runs_at(&self, group: &str, app: &AppName, path: &str, first: &str) -> Held {
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let files = read.runs.of(kind.as_str(), first);
+        let files = read.runs.of(app.as_str(), first);
         let at = (SyncPath::parse(path).ok()).and_then(|p| files?.get(&p).copied());
         let Some(at) = at else { return Ok(None) };
         let hash = Hash::from(*at.as_bytes());
@@ -355,9 +356,9 @@ impl Folders {
     /// The app `kind`'s route in `group`, for the key `key` of `people`:
     /// its own acts read, or one written as that key's person (the module
     /// docs).
-    async fn acts(&self, app: (&Kind, &str), asker: (&People, &str), req: Request) -> Given {
-        let ((kind, group), (people, key)) = (app, asker);
-        let (prefix, rail, person) = (format!("{kind}/"), &self.host.rail, &people[key].person);
+    async fn acts(&self, app: (&AppName, &str), asker: (&People, &str), req: Request) -> Given {
+        let ((app, group), (people, key)) = (app, asker);
+        let (prefix, rail, person) = (format!("{app}/"), &self.host.rail, &people[key].person);
         let admission = rail.admission(group).ok();
         let read = admission.as_ref().and_then(crate::rail::ops_json);
         let ops = read.as_ref().and_then(Value::as_array).ok_or(UNREAD)?;
@@ -380,11 +381,11 @@ impl Folders {
             // Who stood when is not judged on unsettled cuts (#124): none, never empty.
             let register = (admission.as_ref().map(|a| a.membership())).filter(|m| !m.unsettled);
             let spans = register.map(|m| m.spans());
-            tracing::debug!(target: "folder", group, %kind, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
+            tracing::debug!(target: "folder", group, %app, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
             // The page the group's https links print on, as `link` prints
             // them, so Give names it in its install line (give-page-host).
             let page = (self.host.printed_page(group)).map(|p| p.map(|p| p.as_str().to_owned()));
-            tracing::debug!(target: "folder", group, %kind, ?page, "carried: the page the group's links print on, none, or why it cannot be read");
+            tracing::debug!(target: "folder", group, %app, ?page, "carried: the page the group's links print on, none, or why it cannot be read");
             let page = page.map_or_else(|why| json!({ "unread": why }), |p| json!(p));
             let read = json!({ "you": person, "you_key": people[key].person_key, "group": group, "page": page, "people": all, "spans": spans, "ops": ops });
             return Ok(Json(read).into_response());
@@ -393,18 +394,18 @@ impl Folders {
         // computer signs only its own person's, and a phone signs its own
         // and carries it (`/carry`).
         let elsewhere = key != self.host.actor;
-        tracing::debug!(target: "folder", group, %kind, %person, elsewhere, "carried: a write as the person, refused from any device but this computer");
+        tracing::debug!(target: "folder", group, %app, %person, elsewhere, "carried: a write as the person, refused from any device but this computer");
         if elsewhere {
-            let why = format!("Open {kind} from your home page to write in it.");
+            let why = format!("Open {app} from your home page to write in it.");
             return Ok(LendRefusal::closed(why));
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
-        let act = svrngs_core::grant::app_act(kind.as_str(), &body).ok_or(NOT_AN_ACT)?;
-        if (act.get("corrects")).is_some_and(|id| !of_kind(ops, kind.as_str(), id)) {
+        let act = app.act(&body).ok_or(NOT_AN_ACT)?;
+        if (act.get("corrects")).is_some_and(|id| !of_kind(ops, app.as_str(), id)) {
             return Err(NOT_ITS_OWN);
         }
-        let answer = crate::rail::append_act(rail, group, act, Some((kind.as_str(), key))).await;
-        tracing::debug!(target: "folder", group, %kind, %person, status = answer.status().as_u16(), "carried: an act written as the person");
+        let answer = crate::rail::append_act(rail, group, act, Some((app, key))).await;
+        tracing::debug!(target: "folder", group, %app, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
             self.nudge.notify_one();
         }
@@ -474,14 +475,18 @@ pub(crate) fn line_spent(read: &Admission, line: &Op<SignedOp>) -> Option<Respon
 
 /// [`Append`] under the group's write lock, an app's budget counted there
 /// so writes in flight at once cannot pass it between count and commit.
-pub(crate) struct Budgeted<'a>(pub(crate) Append, pub(crate) &'a str, pub(crate) &'a str);
+pub(crate) struct Budgeted<'a>(
+    pub(crate) Append,
+    pub(crate) &'a AppName,
+    pub(crate) &'a str,
+);
 
 impl Command for Budgeted<'_> {
     type Refusal = Option<AppendRefusal>;
     const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
-        if spent(before, self.1, self.2) {
+        if spent(before, self.1.as_str(), self.2) {
             return Err(None);
         }
         self.0.decide(before).map_err(Some)

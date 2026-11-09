@@ -27,7 +27,7 @@ use std::time::Duration;
 use svrngs::cli;
 use svrngs::group::{self, Name};
 use svrngs_node::iroh::RelayConfig;
-use svrngs_node::lend::{self, Kind, Lend, LendName};
+use svrngs_node::lend::{self, Lend, LendName, Program};
 use svrngs_node::link::Origin;
 use svrngs_node::node::Node;
 use svrngs_node::SigningKey;
@@ -78,7 +78,7 @@ async fn sam_through_a_relay_on_this_computer() {
     let film = Lend {
         name: LendName::parse("film").unwrap(),
         source: svrngs_node::lend::Source::Port(port),
-        kind: Kind::parse("film").unwrap(),
+        kind: Program::parse("film").unwrap(),
         // Lent to House, the group just made (LENDING_SCOPE).
         audience: svrngs_node::lend::Audience::Selected(vec![house.id().to_string()]),
         limit: Some(limit),

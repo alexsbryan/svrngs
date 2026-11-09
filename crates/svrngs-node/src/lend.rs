@@ -38,16 +38,40 @@ use svrngs_core::pass::Label;
 #[serde(try_from = "String", into = "String")]
 pub struct LendName(String);
 
-/// What a lend is, for the apps that read the list of what members lend
-/// (DESIGN §3, "an opaque kind the app interprets"): a name of the same
-/// rule as [`LendName`]'s, which svrngs carries and never reads.
+/// Which program a lend is, for the apps that read the list of what members
+/// lend (DESIGN §3, "an opaque kind the app interprets"): a name of the same
+/// rule as [`LendName`]'s, which svrngs carries and never reads. Open: every
+/// Jellyfin shares the word, and it is the same word in a `reads.txt`, so
+/// it owns nothing. On the wire and in a lend's file it is the field `kind`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(try_from = "String", into = "String")]
-pub struct Kind(String);
+pub struct Program(String);
+
+/// Which app: the name of its folder under `apps/`, exclusive in its group,
+/// and of the part of the permanent record its entries go under,
+/// `<name>/…`. Not [`Program`], whose word anyone may lend under, so that
+/// a program's word never writes a part by accident; not
+/// [`svrngs_core::app::App`] either, the lowercase name an app signs under.
+///
+/// ```
+/// use svrngs_node::lend::AppName;
+/// let money = AppName::parse("Money").unwrap();
+/// assert_eq!(money.act(br#"{"op":{"kind":"note"}}"#).unwrap()["payload"]["kind"], "Money/note");
+/// ```
+///
+/// A lend's word is a [`Program`], and a program does not write a part:
+///
+/// ```compile_fail
+/// use svrngs_node::lend::{AppName, Program};
+/// let lent = Program::parse("Money").unwrap();
+/// AppName::act(&lent, br#"{"op":{"kind":"note"}}"#);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AppName(String);
 
 /// A name of a declared header's rule, the same bytes and bound — both
 /// become a file name under the data dir and a token on the wire — parsed
-/// once for [`LendName`] and [`Kind`], each refused by its own name.
+/// once for [`LendName`], [`Program`] and [`AppName`], each refused by its own name.
 macro_rules! header_named {
     ($($name:ident: $refused:ident, $not:literal);+) => {$(
         impl $name {
@@ -74,7 +98,27 @@ macro_rules! header_named {
         svrngs_core::text_newtype!($name);
     )+};
 }
-header_named!(LendName: NotAName, "lend: not a lend's name"; Kind: NotAKind, "lend: not a program's name");
+header_named!(LendName: NotAName, "lend: not a lend's name"; Program: NotAProgram, "lend: not a program's name"; AppName: NotAProgram, "lend: not an app's name");
+
+impl AppName {
+    /// A lent app, by the word it is lent under, as the owner of
+    /// `<word>/…` in the group whose folders are `runs`; none when a folder
+    /// there has that name. A lent app writing its own entries holds an
+    /// [`AppName`] and not a [`Program`], because it writes a part as a
+    /// folder's app does; and this is the one way from a word to an owner
+    /// of a part, since a word is anyone's until a group's own record says
+    /// no folder claims it, and that word came over the wire, so it is
+    /// asked each time.
+    pub(crate) fn of_lent(word: &Program, runs: &svrngs_core::Runs) -> Option<Self> {
+        (!runs.brought.contains_key(word.as_str())).then(|| Self(word.0.clone()))
+    }
+
+    /// The act this app's page asks for, `body` under `<name>/`
+    /// ([`svrngs_core::grant::app_act`]): the one way a word reaches a part.
+    pub fn act(&self, body: &[u8]) -> Option<serde_json::Value> {
+        svrngs_core::grant::app_act(self.as_str(), body)
+    }
+}
 
 /// A path the door refuses for one lend, and every path under it at a
 /// segment boundary. Kept as the lender wrote it, compared as
@@ -124,22 +168,16 @@ fn comparable(path: &str) -> String {
     let mut decoded = Vec::with_capacity(bytes.len());
     let mut i = 0;
     while i < bytes.len() {
-        match (bytes[i], escaped(i)) {
-            (b'%', Some(b)) => {
-                decoded.push(b);
-                i += 3;
-            }
-            (b, _) => {
-                decoded.push(b);
-                i += 1;
-            }
-        }
+        let (byte, read) = match (bytes[i], escaped(i)) {
+            (b'%', Some(b)) => (b, 3),
+            (b, _) => (b, 1),
+        };
+        decoded.push(byte);
+        i += read;
     }
-    let mut out = String::with_capacity(decoded.len());
-    for c in String::from_utf8_lossy(&decoded)
-        .to_ascii_lowercase()
-        .chars()
-    {
+    let lower = String::from_utf8_lossy(&decoded).to_ascii_lowercase();
+    let mut out = String::with_capacity(lower.len());
+    for c in lower.chars() {
         if !(c == '/' && out.ends_with('/')) {
             out.push(c);
         }
@@ -182,10 +220,10 @@ impl std::fmt::Display for Upload {
 pub enum Source {
     /// The service's port on 127.0.0.1.
     Port(NonZeroU16),
-    /// `apps/<kind>/` in a synced folder of the group whose id this is,
-    /// served by each computer holding it, from its store
+    /// `apps/<name>/` in a synced folder of the group whose id is the
+    /// `String`, served by each computer holding it, from its store
     /// ([`crate::folder::Folders::carried`]): lent to that group alone.
-    Carried(String),
+    Carried(AppName, String),
     /// A port on 127.0.0.1 carried as its own bytes, not a page's
     /// (give-udp, give-tcp; `svrngs share <port> --udp` or `--tcp`): the
     /// door's [`crate::alpn::Alpn::Port`], never its HTTP.
@@ -252,7 +290,7 @@ impl Audience {
 pub struct Lend {
     pub name: LendName,
     pub source: Source,
-    pub kind: Kind,
+    pub kind: Program,
     /// The groups its lender explicitly chose (LENDING_SCOPE). A carried
     /// app's audience is its own group ([`Source::Carried`]), never this.
     pub audience: Audience,
@@ -269,7 +307,7 @@ pub struct Lend {
     /// kind too, as that person (DESIGN §3, "Lent apps", call 6). A carried
     /// app's are its reads.txt's, read as each person runs it
     /// ([`crate::folder::Folders::reads`]), and none here.
-    pub reads: Vec<Kind>,
+    pub reads: Vec<Program>,
     /// Its sign-in with svrngs when it says so (SIGN_IN_WITH_SVRNGS §5,
     /// "Turning it on"): the client id and secret its lender copies into
     /// the app's own settings form. This is the one place the provider
@@ -289,7 +327,7 @@ impl Lend {
     /// lend's label, its [`Offered`]'s too.
     pub fn label(&self, lender: &[u8; 32]) -> Label {
         let carried = match &self.source {
-            Source::Carried(group) => Some((self.kind.as_str(), group.as_str())),
+            Source::Carried(app, group) => Some((app.as_str(), group.as_str())),
             Source::Port(_) | Source::Raw(..) => None,
         };
         Label::lent(lender, self.name.as_str(), carried)
@@ -299,7 +337,7 @@ impl Lend {
     /// group, a declared lend only a group its lender chose (LENDING_SCOPE).
     pub fn reaches(&self, group: &str) -> bool {
         match &self.source {
-            Source::Carried(own) => own == group,
+            Source::Carried(_, own) => own == group,
             Source::Port(_) | Source::Raw(..) => self.audience.reaches(group),
         }
     }
@@ -311,14 +349,15 @@ impl Lend {
     /// as left out (#167).
     pub fn carried(kind: &str, group: &str) -> Option<Self> {
         let name = svrngs_core::pass::carried_name(kind, group);
-        let (Ok(name), Ok(parsed)) = (LendName::parse(&name), Kind::parse(kind)) else {
+        let (Ok(name), Ok(app)) = (LendName::parse(&name), AppName::parse(kind)) else {
             tracing::debug!(target: "folder", kind, group, "carried: left out, a folder under apps/ whose name no app can have");
             return None;
         };
         Some(Self {
             name,
-            source: Source::Carried(group.into()),
-            kind: parsed,
+            // Listed under its own name: what a reader of it names.
+            kind: Program(app.0.clone()),
+            source: Source::Carried(app, group.into()),
             // A carried app's reach is its own group, by `Source::Carried`;
             // this audience is never consulted for one.
             audience: Audience::Selected(Vec::new()),
@@ -351,7 +390,7 @@ struct LendFile {
     /// Absent for a page's port, as every declaration before give-udp is.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     raw: Option<Raw>,
-    kind: Kind,
+    kind: Program,
     /// The groups this lend is lent to (LENDING_SCOPE), by their stable
     /// IDs. Absent is a legacy declaration that named none: paused, needing
     /// selection, never all groups (ARCH 6). Present and empty is paused;
@@ -371,7 +410,7 @@ struct LendFile {
     )]
     upload: Option<Upload>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    reads: Vec<Kind>,
+    reads: Vec<Program>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sign_in_with_svrngs: Option<SignInWithSvrngs>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -425,7 +464,7 @@ impl SignInWithSvrngs {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Offered {
     pub name: LendName,
-    pub kind: Kind,
+    pub kind: Program,
     /// None when its lender names no number: everyone at once. On the wire
     /// `null` then, and required on read, as `upload_bps` is.
     #[serde(deserialize_with = "Option::deserialize")]
@@ -440,7 +479,7 @@ pub struct Offered {
     #[serde(rename = "upload_bps", deserialize_with = "Option::deserialize")]
     pub upload: Option<Upload>,
     /// The kinds of lend it reads (u5-2).
-    pub reads: Vec<Kind>,
+    pub reads: Vec<Program>,
     /// Its lender's words for what an app receives, when it asks (sup-2):
     /// absent when it asks nobody.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -505,7 +544,7 @@ pub enum LendError {
     #[error("{0:?} is not a lend's name (letters, digits, - and _ only)")]
     NotAName(String),
     #[error("{0:?} is not a program's name (letters, digits, - and _ only)")]
-    NotAKind(String),
+    NotAProgram(String),
     #[error("{0:?} is not a path: a refused path starts with / and holds no control character")]
     NotAPath(String),
     #[error("{path} cannot be read: {source}")]
@@ -803,7 +842,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
     let (port, raw) = match lend.source {
         Source::Port(port) => (port, None),
         Source::Raw(raw, port) => (port, Some(raw)),
-        Source::Carried(_) => return Err(LendError::Carried(lend.name.clone())),
+        Source::Carried(..) => return Err(LendError::Carried(lend.name.clone())),
     };
     let dir = lends_dir(data_dir);
     std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;

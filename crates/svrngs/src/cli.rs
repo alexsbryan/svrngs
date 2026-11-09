@@ -108,7 +108,7 @@ use svrngs_node::invite::{Linked, Unminted};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};
 use svrngs_node::join::{Entered, JoinAsk, NotJoined, Outcome as JoinOutcome, JOINS_ROUTE};
 use svrngs_node::lend::{
-    self, Audience, Kind, Lend, LendName, RefusedPath, SignInWithSvrngs, Source, Upload,
+    self, Audience, Lend, LendName, Program, RefusedPath, SignInWithSvrngs, Source, Upload,
 };
 use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::relay::n0_relays;
@@ -363,7 +363,7 @@ pub enum Verb {
 
 /// What `--program` (and its older spelling, `--kind`) and `--reads` want,
 /// said alike.
-const A_KIND: &str = "a program's name: letters, digits, - and _ only";
+const A_PROGRAM: &str = "a program's name: letters, digits, - and _ only";
 
 /// Which of a keeper's two asks of a person in a group (U7): a closed set
 /// (AGENTS 9), each posted to its own route on svrngs running here.
@@ -431,7 +431,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 relays.push(svrngs_node::relay::parse(&url).map_err(|_| not("a relay's address"))?);
             }
             "--name" => name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?),
-            "--program" | "--kind" => kind = Some(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
+            "--program" | "--kind" => kind = Some(Program::parse(&raw).map_err(|_| not(A_PROGRAM))?),
             "--limit" => {
                 let what = "a number of people: 1 or more";
                 limit = Some(raw.parse::<NonZeroU16>().map_err(|_| not(what))?);
@@ -443,7 +443,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 let what = "an upload: a whole number of Mbit/s, 1 or more";
                 upload = Some(Upload::from_mbit(raw.parse().map_err(|_| not(what))?));
             }
-            "--reads" => reads.push(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
+            "--reads" => reads.push(Program::parse(&raw).map_err(|_| not(A_PROGRAM))?),
             "--sign-in" => {
                 return Err("--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own".into())
             }
@@ -1384,7 +1384,7 @@ impl std::fmt::Display for Said {
                 let (name, (port, raw)) = match &lend.source {
                     Source::Port(port) => (&lend.name, (port, String::new())),
                     Source::Raw(raw, port) => (&lend.name, (port, format!("{} ", raw.said()))),
-                    Source::Carried(_) => return writeln!(f, "{} is carried in its group's folder.", lend.name),
+                    Source::Carried(..) => return writeln!(f, "{} is carried in its group's folder.", lend.name),
                 };
                 match lend.limit {
                     Some(n) => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, up to {n} {} at once.",

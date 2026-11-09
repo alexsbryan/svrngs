@@ -557,7 +557,7 @@ pub(crate) async fn to(at: &Asking, app: &Label, uri: Uri) -> Handled {
         return Err(LendRefusal::bad_path("name a lender and a lend"));
     };
     let carried = (at.door.folders.carried().into_iter()).find_map(|l| match l.source {
-        Source::Carried(g) if Label::carried(l.kind.as_str(), &g) == *app => Some(g),
+        Source::Carried(a, g) if Label::carried(a.as_str(), &g) == *app => Some(g),
         _ => None,
     });
     let Some(group) = carried else {

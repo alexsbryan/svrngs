@@ -626,7 +626,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
         let Ok(reads) = reads else { continue };
         let (group, groups, raw) = match lend.source {
-            Source::Carried(group) => (Some(group.clone()), Some(vec![group]), None),
+            Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
             Source::Port(_) => (None, lend.audience.ids().map(<[String]>::to_vec), None),
             Source::Raw(raw, _) => (None, lend.audience.ids().map(<[String]>::to_vec), Some(raw)),
         };
@@ -1519,19 +1519,19 @@ pub(crate) async fn lend_for(
     let actor = whose.as_str();
     let port = match &lend.source {
         Source::Port(port) => *port,
-        Source::Carried(group) => {
+        Source::Carried(carried, group) => {
             let writes =
                 service_path == crate::folder::carried::ACTS && req.method() != Method::GET;
             // Sticky through a Stop or a later version: what it read may
             // still sit in its storage. Reads and the record stay apart.
             let reader = writes
-                && choices::reaching(door, &Label::carried(lend.kind.as_str(), group))?.is_some();
+                && choices::reaching(door, &Label::carried(carried.as_str(), group))?.is_some();
             tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, reader, "door: a carried app, answered from this computer's store, unless it has read lends and asks to write");
             if reader {
                 let why = "An app that reads your friends’ apps can’t write in the group’s record.";
                 return Err(LendRefusal::closed(why));
             }
-            let opened = (door.folders).open(&lend, (group, device.as_str(), &service_path), req);
+            let opened = (door.folders).open(&lend, (device.as_str(), &service_path), req);
             return Ok(opened.await);
         }
         Source::Raw(..) => {

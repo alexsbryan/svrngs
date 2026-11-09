@@ -202,7 +202,7 @@ pub(crate) async fn append_act(
     rail: &RingRail,
     namespace: &str,
     body: serde_json::Value,
-    budget: Option<(&str, &str)>,
+    budget: Option<(&crate::lend::AppName, &str)>,
 ) -> Response {
     if let Err(refusal) = stamp(rail, namespace, &body) {
         return refusal;
@@ -224,7 +224,7 @@ pub(crate) async fn append_act(
             .map(|d| d.map_err(Some)),
     };
     if let (Ok(Err(None)), Some((app, _))) = (&done, budget) {
-        return budget_refused(app);
+        return budget_refused(app.as_str());
     }
     match done {
         Ok(Err(_)) => {

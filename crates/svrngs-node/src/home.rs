@@ -72,7 +72,7 @@ use svrngs_core::pass::Label;
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
 use crate::join::{Entered, NotJoined};
-use crate::lend::{self, Audience, Kind, LendName, Source::Port};
+use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share, ShareRefusal};
 
@@ -579,7 +579,7 @@ async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) ->
 /// A port as the page shows it ([`share::listening`]): the kind the table
 /// knows, how that kind signs each person in, the paths svrngs keeps back
 /// of it, and its name once lent.
-fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
+fn shown(port: NonZeroU16, kind: Option<&Program>, name: Option<&LendName>) -> serde_json::Value {
     let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
     let unknown = kind.and_then(share::unrecognized);
     serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "unknown": unknown })
@@ -608,7 +608,7 @@ async fn running(State(at): State<Asking>) -> Response {
         .filter(|p| !taken(p))
         .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
         .collect();
-    let named: Vec<Kind> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
+    let named: Vec<Program> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
         .map(|(_, kind, _)| kind)
         .collect();
     tracing::debug!(target: "home", offered = rows.len(), lent = lent.len(), "home: what runs here, offered to lend");
@@ -654,7 +654,7 @@ async fn lend_one(
     let one = "one word: letters and digits, with - or _ between.";
     let name = name.as_deref().map(LendName::parse).transpose();
     let name = name.map_err(|e| refused(&format!("Give it a name of {one}"), &e))?;
-    let kind = kind.as_deref().map(Kind::parse).transpose();
+    let kind = kind.as_deref().map(Program::parse).transpose();
     let kind = kind.map_err(|e| refused(&format!("Say which program it is in {one}"), &e))?;
     let (known, dir) = (share::well_known_kind(port), &at.door.data_dir);
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");

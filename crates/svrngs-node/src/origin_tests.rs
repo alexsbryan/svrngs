@@ -2,8 +2,8 @@
 use super::*;
 #[test]
 fn reading_a_lend_is_not_authority_to_sign_its_reply_and_a_kind_cannot_expand() {
-    let model = Kind::parse("model").unwrap();
-    let money = Kind::parse("Money").unwrap();
+    let model = Program::parse("model").unwrap();
+    let money = Program::parse("Money").unwrap();
     assert!(!Appending::for_request(Shown::Token, &HeaderMap::new())
         .unwrap()
         .permits(&money));

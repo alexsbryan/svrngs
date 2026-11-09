@@ -152,7 +152,7 @@ fn served_only_on_the_network_it_was_turned_on_at() {
 fn the_room_door_consents_to_no_entry() {
     use crate::origin::{Appending, Unconsented};
     for kind in ["events", "Money", "model"] {
-        let kind = crate::lend::Kind::parse(kind).unwrap();
+        let kind = crate::lend::Program::parse(kind).unwrap();
         assert!(!IN_ROOM.permits(&kind), "{kind:?} written from the room");
     }
     assert!(matches!(
