@@ -4,9 +4,11 @@
 // in a tab of its own, and waits for taste's page to list her friends'
 // films. She marks each of `rates` (title and button words), choosing the
 // Letterboxd file `letterboxd` after, and reads what the page says. The page
-// then asks its own origin for /diary, as any script there could.
+// then asks its own origin for /diary, as any script there could. Last she
+// follows `watch`'s Watch link to its Jellyfin, comes back, and answers the
+// page's "How was…?" with `after`.
 //
-//   node taste.mjs '{"engine", "home", "opener", "rates", "letterboxd", "dump"}'
+//   node taste.mjs '{"engine", "home", "opener", "rates", "letterboxd", "watch", "after", "dump"}'
 //
 // Prints one JSON line: what the page said, or where it stopped and why.
 import { arrived, launch } from '../../../../web/tests/page.mjs';
@@ -36,6 +38,7 @@ const lists = (tab) =>
       rated: titles('rated'),
       because,
       guessed: document.getElementById('guessed').textContent,
+      heading: document.querySelector('#unguessed h2').textContent,
       said: document.getElementById('said').innerText,
     };
   });
@@ -87,6 +90,27 @@ try {
     const r = await fetch('/diary');
     return { status: r.status, refused: r.headers.get('x-svrngs-refused'), body: await r.text() };
   });
+
+  at = 'a film watched, and back';
+  const origin = new URL(tab.url()).origin;
+  const watch = tab.locator(`#likely li[data-title="${args.watch}"] a.watch`);
+  seen.watch = await watch.innerText();
+  await watch.click();
+  await tab.waitForURL((u) => !u.href.startsWith(origin), { timeout: 60_000 });
+  await arrived(tab, 90_000);
+  seen.watched = tab.url();
+  // Back the way she came; where the opening's steps leave no way back,
+  // she opens taste again, which asks as well.
+  await tab.goBack().catch(() => null);
+  seen.back = tab.url().startsWith(origin) ? 'back' : 'opened again';
+  if (seen.back !== 'back') await tab.goto(`${origin}/`);
+  await tab.waitForSelector('#after:not([hidden])', { timeout: 60_000 });
+  seen.after = await tab.locator('#after').innerText();
+  await tab.locator('#after').getByRole('button', { name: args.after, exact: true }).click();
+  await tab
+    .locator(`#rated li[data-title="${args.watch}"] button[aria-pressed="true"]`)
+    .waitFor({ timeout: 60_000 });
+  seen.asked_after = await tab.locator('#after').isVisible();
 } catch (e) {
   seen.stopped = { at, error: String(e).split('\n')[0], ms: Date.now() - t0 };
   seen.stopped.text = (await Promise.all(context.pages().map(words)))

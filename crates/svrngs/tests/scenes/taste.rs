@@ -224,11 +224,11 @@ fn readme_line() -> String {
 /// Ana's taste: apps/taste copied to her Downloads, as she put it there,
 /// and the README's `line` run in a shell in her home, with this build's
 /// svrngs on her `PATH` and nothing else of this computer's environment, as
-/// her terminal runs it. What it said, once it says taste is on; the
-/// program, killed on drop.
+/// her terminal runs it. What it said, once it says taste is on; her
+/// window, closed on drop.
 /// `taste:lender-token` writes `lender`, Sam's own token, into her copy of
 /// taste's page, which her browser is then sent.
-async fn starts_taste(ana: &Person, line: &str, lender: &str) -> (Vec<String>, Child) {
+async fn starts_taste(ana: &Person, line: &str, lender: &str) -> (Vec<String>, Window) {
     let downloads = ana.home.join("Downloads/taste");
     copy_dir(&repo().join("apps/taste"), &downloads);
     if plant().as_deref() == Some("lender-token") {
@@ -254,6 +254,7 @@ async fn starts_taste(ana: &Person, line: &str, lender: &str) -> (Vec<String>, C
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .process_group(0)
         .kill_on_drop(true);
     if let Some(p) = plant() {
         run.env("TASTE_PLANT", p);
@@ -268,7 +269,7 @@ async fn starts_taste(ana: &Person, line: &str, lender: &str) -> (Vec<String>, C
                 let on = l.starts_with("Keep this window open");
                 lines.push(l);
                 if on {
-                    return (lines, taste);
+                    return (lines, Window(taste));
                 }
             }
             _ => break,
@@ -280,6 +281,25 @@ async fn starts_taste(ana: &Person, line: &str, lender: &str) -> (Vec<String>, C
         let _ = tokio::time::timeout(Duration::from_secs(2), e.read_to_string(&mut err)).await;
     }
     panic!("taste did not say it is on: {lines:#?} {err}");
+}
+
+/// Ana's terminal window with the line running in it. Closing it hangs up
+/// on the line's process group, as a terminal does, not on `sh` alone:
+/// Ubuntu's sh, dash, runs `node` as its child rather than exec it as the
+/// Mac's does, so killing `sh` left taste holding its place, and pasting
+/// again said another program was using it (the gate image, 2026-11-08).
+/// The shell's own `kill`, not /bin/kill: Ubuntu's, procps-ng 4.0.4, given
+/// `-HUP -<pid>` hung up on the test's own group too.
+struct Window(Child);
+
+impl Drop for Window {
+    fn drop(&mut self) {
+        if let Some(pid) = self.0.id() {
+            let _ = std::process::Command::new("sh")
+                .args(["-c", &format!("kill -HUP -{pid}")])
+                .status();
+        }
+    }
 }
 
 fn copy_dir(from: &Path, to: &Path) {
@@ -528,7 +548,8 @@ async fn taste(engine: Engine) {
         .collect();
     let args = json!({
         "engine": Engine::Chromium.as_str(), "home": home, "opener": opener,
-        "rates": rates, "letterboxd": letterboxd, "dump": dump,
+        "rates": rates, "letterboxd": letterboxd, "watch": SCI_FI, "after": "Loved it",
+        "dump": dump,
     });
     let seen = ana_sees(&args).await;
     eprintln!("what Ana saw: {seen:#}");
@@ -548,6 +569,18 @@ async fn taste(engine: Engine) {
             .filter_map(|t| t.as_str().map(str::to_string))
             .collect()
     };
+    // The first time is an exercise: no guess until five films are rated
+    // (apps/taste/page/page.js `FIRST`).
+    let opened = &seen["opened"]["lists"];
+    assert_eq!(
+        (&opened["heading"], &opened["likely"], &opened["unlikely"]),
+        (
+            &json!("First, rate 5 films you’ve seen (0 of 5 so far)"),
+            &json!([]),
+            &json!([])
+        ),
+        "before she rates, taste asks for five and guesses nothing: {opened:#}"
+    );
     let rated = titles("rated");
     for f in FILMS.iter().filter(|f| f.said.is_some()) {
         assert!(
@@ -598,6 +631,39 @@ async fn taste(engine: Engine) {
         lists_sent.len(),
         order.len()
     );
+
+    // After watching: she follows the guess to Sam's Jellyfin, comes back,
+    // is asked how it was once, and her answer is kept with her ratings.
+    let host = |at: &str| at.split('/').nth(2).unwrap_or_default().to_string();
+    let jf_at = ana.lent_by(&group, "Sam", "jellyfin").await;
+    assert_eq!(
+        (
+            seen["watch"].as_str(),
+            host(seen["watched"].as_str().unwrap_or_default())
+        ),
+        (Some("Watch from Sam’s library"), host(&jf_at)),
+        "her guess opens at Sam's Jellyfin: {seen:#}"
+    );
+    assert_eq!(
+        (
+            seen["after"]
+                .as_str()
+                .map(|a| a.lines().next().unwrap_or_default()),
+            &seen["asked_after"]
+        ),
+        (Some(format!("How was {SCI_FI}?").as_str()), &json!(false)),
+        "back from watching, taste asks how it was, once: {seen:#}"
+    );
+    let rows: Value = serde_json::from_str(&diary).unwrap_or_default();
+    let kept = (rows["rows"].as_array().into_iter().flatten())
+        .find(|r| r["title"] == SCI_FI)
+        .map(|r| r["rating"].clone());
+    assert_eq!(
+        kept,
+        Some(json!(5)),
+        "Loved it, after watching, is kept: {diary}"
+    );
+    eprintln!("back from Jellyfin: {}", seen["back"]);
 
     // Prediction: of the films she never rated, the science fiction one
     // first, before the romantic comedy.

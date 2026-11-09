@@ -20,11 +20,17 @@ It says where to open it: on your svrngs home page, press **Open Ana's
 taste** under your group (your name in place of Ana's). Keep the window
 open while you use it; closing it turns taste off.
 
-On the page, mark films **Loved it**, **Liked it** or **Not for me**.
-Taste lists the films you'll probably like first, and says which of your
-ratings each guess comes from. To bring ratings from Letterboxd, export
-your data there (Settings, then Data), open the file it gives you, and
-choose `ratings.csv` on the page.
+The first time, the page asks you to rate five films you've seen: mark
+each **Loved it**, **Liked it** or **Not for me**. Then it lists the films
+you'll probably like first, and says which of your ratings each guess
+comes from. To bring ratings from Letterboxd instead, export your data
+there (Settings, then Data), open the file it gives you, and choose
+`ratings.csv` on the page.
+
+Each film has **Watch from Sam's library**. When you come back to taste
+after watching, it asks **How was it?** once, and keeps your answer with
+your other ratings. Which film you went to watch is kept in your browser
+until you answer.
 
 ## What stays on your computer
 

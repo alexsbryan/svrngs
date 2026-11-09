@@ -3,7 +3,8 @@
 // her taste and nowhere else. It reads each library her groups lend by the
 // account its lender keeps for apps that read it (`svrngs share
 // --readers`; DESIGN §3, "Lent apps, as they come" 4), hands taste the
-// whole list, and shows what taste says. It keeps nothing itself.
+// whole list, and shows what taste says. It keeps one thing itself, in
+// this browser: the film she went to watch, so it can ask how it was.
 const $ = (id) => document.getElementById(id);
 const said = $('said');
 const guessed = $('guessed');
@@ -11,6 +12,11 @@ const guessed = $('guessed');
 // What a library is asked: every film, with what describes it.
 const LIST =
   'Items?Recursive=true&IncludeItemTypes=Movie&Fields=Overview,Genres,People,ProviderIds,ProductionYear&EnableImages=false';
+// The first time is a short exercise: this many films rated before taste
+// shows a guess, since fewer say too little.
+const FIRST = 5;
+// The film she left to watch, kept in this browser until she says how it was.
+const WATCHING = 'taste-watching';
 
 const el = (tag, text, cls) => {
   const e = document.createElement(tag);
@@ -53,6 +59,9 @@ async function films(lib) {
       title: i.Name,
       year: i.ProductionYear ?? null,
       ids: i.ProviderIds ?? {},
+      // Its own page in its Jellyfin, as Movie Night opens a copy
+      // (apps/movie-night/match.js `itemAt`).
+      href: `${lib.address}web/#/details?id=${i.Id}&serverId=${i.ServerId}`,
       genres: i.Genres ?? [],
       overview: i.Overview ?? '',
       people: (i.People ?? []).map((p) => p.Name),
@@ -97,6 +106,13 @@ function row(f) {
   li.append(el('strong', f.year ? `${f.title} (${f.year})` : f.title));
   li.append(el('span', ` in ${f.whose}’s library`, 'whose'));
   if (f.because) li.append(el('span', `Because you ${f.becauseSaid} ${f.because}`, 'because'));
+  const href = f.mine === null && where.get(key(f));
+  if (href) {
+    const a = el('a', `Watch from ${f.whose}’s library`, 'watch');
+    a.href = href;
+    a.addEventListener('click', () => keepWatching(f));
+    li.append(a);
+  }
   const buttons = el('span', undefined, 'rate');
   for (const [said, words, stars] of RATINGS) {
     const b = el('button', words);
@@ -111,9 +127,10 @@ function row(f) {
   return li;
 }
 
-// Whose library each film is in, by its library and id: the page's own,
-// so taste is told nothing of who lends what.
+// Whose library each film is in, and where to watch it, by its library and
+// id: the page's own, so taste is told nothing of who lends what.
 const whose = new Map();
+const where = new Map();
 const key = (f) => `${f.library}\u0000${f.id}`;
 
 function show(ranked) {
@@ -129,10 +146,12 @@ function show(ranked) {
     else if (f.guess === null) parts.unguessed.push(f);
     else parts[f.guess > 0 ? 'likely' : 'unlikely'].push(f);
   }
-  // Nothing is guessed until she rates something.
-  $('unguessed').querySelector('h2').textContent = parts.rated.length
-    ? 'Not guessed yet'
-    : 'Rate a few films you’ve seen, and taste starts guessing';
+  // Until the first few are rated, every film she hasn't rated waits to be.
+  const first = parts.rated.length < FIRST;
+  if (first) parts.unguessed.push(...parts.likely.splice(0), ...parts.unlikely.splice(0));
+  $('unguessed').querySelector('h2').textContent = first
+    ? `First, rate ${FIRST} films you’ve seen (${parts.rated.length} of ${FIRST} so far)`
+    : 'Not guessed yet';
   for (const [id, list] of Object.entries(parts)) {
     $(id).hidden = list.length === 0;
     $(id)
@@ -168,6 +187,54 @@ async function rate(f, said) {
   await rank();
 }
 
+// After she watched: the film she left for, asked about once on her way
+// back, then forgotten. Kept in this browser alone; a failed read is none.
+const watching = () => {
+  try {
+    return JSON.parse(localStorage.getItem(WATCHING) ?? 'null');
+  } catch {
+    return null;
+  }
+};
+function keepWatching(f) {
+  try {
+    localStorage.setItem(WATCHING, JSON.stringify({ title: f.title, year: f.year, ids: f.ids }));
+  } catch {
+    // Not kept: she is simply not asked on her way back.
+  }
+}
+function after() {
+  const f = watching();
+  $('after').hidden = !f;
+  if (!f) return;
+  $('after').querySelector('h2').textContent = `How was ${f.title}?`;
+  const done = () => {
+    try {
+      localStorage.removeItem(WATCHING);
+    } catch {
+      // Not forgotten here: she is asked again next time, and can say so.
+    }
+    $('after').hidden = true;
+  };
+  const buttons = RATINGS.map(([said, words]) => {
+    const b = el('button', words);
+    b.type = 'button';
+    b.addEventListener('click', async () => {
+      done();
+      await rate(f, said);
+    });
+    return b;
+  });
+  const not = el('button', 'I didn’t watch it');
+  not.type = 'button';
+  not.addEventListener('click', done);
+  $('after')
+    .querySelector('p')
+    .replaceChildren(...buttons, not);
+}
+// Back from Jellyfin, the browser may show this page as it was left.
+window.addEventListener('pageshow', (e) => e.persisted && after());
+
 $('file').addEventListener('change', async (e) => {
   const file = e.target.files?.[0];
   if (!file) return;
@@ -201,9 +268,16 @@ async function start() {
     lines[i].textContent = WORDS[g.state](libs[i], g.films?.length ?? 0);
     lines[i].dataset.state = g.state;
   });
-  got.forEach((g, i) => g.films?.forEach((f) => whose.set(key(f), libs[i].lender)));
+  got.forEach((g, i) =>
+    g.films?.forEach((f) => {
+      whose.set(key(f), libs[i].lender);
+      where.set(key(f), f.href);
+      delete f.href;
+    }),
+  );
   all = got.flatMap((g) => g.films ?? []);
   await rank();
+  after();
   document.body.dataset.ready = 'yes';
 }
 

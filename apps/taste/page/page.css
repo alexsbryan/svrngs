@@ -13,3 +13,5 @@ li { padding: 0.35rem 0; }
 button { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.6rem; border: 1px solid black; background: white; color: black; }
 button[aria-pressed="true"] { background: black; color: white; }
 #bring { margin-top: 1.5rem; }
+.watch { display: block; font-size: 0.9rem; }
+#after { border: 2px solid black; padding: 0 0.75rem 0.75rem; margin: 0.75rem 0; background: white; }
