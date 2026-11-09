@@ -416,7 +416,7 @@ fn the_keeper_keeps_only_what_the_record_names_it_for() {
     let port: u16 = shared.split(' ').nth(1).unwrap().parse().unwrap();
     assert_eq!(
         shared,
-        format!("share {port} --name standin --kind standin --group g1"),
+        format!("share {port} --name standin --program standin --group g1"),
         "an HTTP door is lent as a page"
     );
     let starts = get(port, "/starts").expect("the lent port answers");

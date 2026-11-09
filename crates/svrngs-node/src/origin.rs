@@ -89,7 +89,7 @@ impl Appending {
                     tracing::debug!(target: "origin", "origin: refused — a program named no kind it accepts entries of that svrngs reads");
                     LendRefusal::Closed.say(
                         StatusCode::BAD_REQUEST,
-                        "name the app's kind when accepting its entries",
+                        "name the app in x-svrngs-append to accept its entries",
                     )
                 })?)
             }
@@ -551,7 +551,7 @@ async fn appended(
     if let Some(l) = lend.as_ref().filter(|l| !appending.permits(&l.kind)) {
         tracing::debug!(target: "origin", %label, kind = %l.kind.as_str(), ?appending, "origin: refused — the lend's declared kind is not the one the program accepts entries of");
         return Err(LendRefusal::closed(
-            "the app's kind changed; this program authorized no entry of that kind",
+            "this app is not the one x-svrngs-append named, so no entry was written",
         ));
     }
     let who = contact.and_then(|_| rail.standing_anywhere(lender));

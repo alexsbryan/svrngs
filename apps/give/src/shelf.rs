@@ -22,7 +22,7 @@ pub enum ShelfError {
     Unread(String, String),
     #[error("{0}: {1}")]
     Refused(String, Refused),
-    #[error("{0} is not a kind of app: lowercase letters, digits and -")]
+    #[error("{0} is not an app's name: lowercase letters, digits and -")]
     Kind(String),
 }
 

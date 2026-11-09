@@ -74,7 +74,7 @@ macro_rules! header_named {
         svrngs_core::text_newtype!($name);
     )+};
 }
-header_named!(LendName: NotAName, "lend: not a lend's name"; Kind: NotAKind, "lend: not a kind");
+header_named!(LendName: NotAName, "lend: not a lend's name"; Kind: NotAKind, "lend: not a program's name");
 
 /// A path the door refuses for one lend, and every path under it at a
 /// segment boundary. Kept as the lender wrote it, compared as
@@ -504,7 +504,7 @@ impl Offered {
 pub enum LendError {
     #[error("{0:?} is not a lend's name (letters, digits, - and _ only)")]
     NotAName(String),
-    #[error("{0:?} is not a kind (letters, digits, - and _ only)")]
+    #[error("{0:?} is not a program's name (letters, digits, - and _ only)")]
     NotAKind(String),
     #[error("{0:?} is not a path: a refused path starts with / and holds no control character")]
     NotAPath(String),

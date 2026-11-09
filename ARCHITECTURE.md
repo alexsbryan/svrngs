@@ -679,7 +679,7 @@ as `Host::keep_group`, so a running svrngs makes a group for the home page,
 and the command re-exports it as `svrngs::group`. `cli.rs` is new, in the shape of
 commonwealth-rails' `cli.rs` and `main.rs`: verbs parsed by hand (`svrngs`,
 `new <name> [--as] [--origin]`, `join <link> [--as]`, `link <group>
-[--origin]`, `share <port> [--name] [--kind] [--limit] [--refuse]...
+[--origin]`, `share <port> [--name] [--program] [--limit] [--refuse]...
 [--upload]`,
 `unshare <name>`, `room <name>...`); one svrngs per
 data dir (`$SVRNGS_DIR`, else `~/.svrngs`), held by a lock on
@@ -700,8 +700,8 @@ no app's noun; each row may say how the kind signs a person in, `Signs`:
 with accounts its lender makes, or from the door's `x-svrngs-user`, and
 then no password is asked; or the paths every lend of it keeps back,
 `kept_of`, added to `--refuse`'s; a row with `-` for its port is a kind
-known by `--kind` alone, as llama-server is) or `--kind`, its name from
-`--name` or the kind, its limit from `--limit` or none, its upload from `--upload` in Mbit/s or none (u3-6),
+known by `--program` alone, as llama-server is) or `--program`, its name from
+`--name` or the program's, its limit from `--limit` or none, its upload from `--upload` in Mbit/s or none (u3-6),
 and decides the lend in `lend_of`, which touches
 nothing; `cli` reads the password from a prompt, never argv, declares the
 lend through `svrngs_node::lend::declare`, and runs the node unless the

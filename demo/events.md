@@ -74,7 +74,7 @@ in the run (`apps/events/server.mjs:316`). Leave that window open: the app
 runs while it is. In a second terminal, with that number:
 
 ```
-~/.local/bin/svrngs share 65216 --kind events --name events --group <group>
+~/.local/bin/svrngs share 65216 --program events --name events --group <group>
 ```
 
 It asks *"If events takes a password on each request, paste what it takes

@@ -300,7 +300,7 @@ async function start() {
     String(port),
     '--name',
     'taste',
-    '--kind',
+    '--program',
     'taste',
     '--reads',
     'jellyfin',

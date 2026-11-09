@@ -44,7 +44,7 @@
 
 # llama-server, llama.cpp's own server (start-llama). Its default port, 8080,
 # is Open WebUI's and many dev servers' too, so svrngs does not take a port for
-# it: its lender says `--kind llama-server`, the program's own name, and types
+# it: its lender says `--program llama-server`, the program's own name, and types
 # nothing else. Kept back, as start-measure (b) read llama.cpp 11b068d06 and
 # asked each route (demo/runs/start/2026-10-13/README.md §3 (b) 6-10):
 #   /slots           when each person's chat runs, how long, with what

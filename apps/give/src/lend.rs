@@ -74,7 +74,16 @@ impl Svrngs {
     /// as it is for a TCP or UDP one.
     pub fn share(&self, port: u16, name: &str, door: Protocol, group: &str) -> Result<(), LendError> {
         let port = port.to_string();
-        let mut args = vec!["share", port.as_str(), "--name", name, "--kind", name, "--group", group];
+        let mut args = vec![
+            "share",
+            port.as_str(),
+            "--name",
+            name,
+            "--program",
+            name,
+            "--group",
+            group,
+        ];
         match door {
             Protocol::Http => {}
             Protocol::Tcp => args.push("--tcp"),

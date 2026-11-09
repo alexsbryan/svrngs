@@ -97,7 +97,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   })
     .then((at) =>
       console.log(
-        `lend ${at.url} with: svrngs share ${at.port} --kind whisper-server --name stt --group <group>`,
+        `lend ${at.url} with: svrngs share ${at.port} --program whisper-server --name stt --group <group>`,
       ),
     )
     .catch((e) => {

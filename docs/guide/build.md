@@ -105,7 +105,7 @@ use the record.
 {"kind": "...", ...}}`. The asker's own computer or phone signs each one as
 them, before the page sees your answer; the header never reaches the
 browser. svrngs files each under your lend's program, so `--program hello` writes
-`hello/visit` for an `op` of kind `visit`. A header carries ASCII only, so
+`hello/visit` for an `op` whose `kind` is `visit`. A header carries ASCII only, so
 escape anything else in the JSON as `\uXXXX`. If an entry can't be saved,
 svrngs withholds your answer and tells the person why.
 
@@ -119,7 +119,7 @@ curl -H "Authorization: Bearer $(cat ~/.svrngs/token)" "$(cat ~/.svrngs/api)/v1/
 ```
 
 `/v1/groups` lists your groups by `id`; `/v1/rail/log` answers every app's
-entries in the group as `ops` (yours are those whose kind begins
+entries in the group as `ops` (yours are those whose `kind` begins
 `hello/`), each with `id`, `ts_unix`, `person`, `person_key` and `payload`; `/v1/rail/people` lists who's in it. `apps/events/store.mjs`
 reads all three in about 40 lines, and `apps/events/server.mjs` writes with
 `x-svrngs-append`.
@@ -240,7 +240,7 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
 - **Only what you named, in your group.** Another program, or a lend in
   another group, is refused with `closed`.
 - **A new lend waits for the next open.** A friend's new library, or a
-  version that names another kind, is refused `unasked` until the person opens
+  version that names another program, is refused `unasked` until the person opens
   your app from their home page, where the line says it's new. Until then
   `GET svrngs-reads` lists it under `new`, with its `kind`, `name` and
   `lender` and no address, so your page can say *"Bo's films are new. Open
@@ -344,4 +344,4 @@ refused, and so is one without the token.
 - *"Ana’s hello writes only its own part of the group’s record, so it was
   not saved."*, or *"… wrote in a group you and its lender are not both in,
   so it was not saved."*: an `x-svrngs-append` entry corrected something
-  outside your lend's kind, or named the wrong group.
+  outside your app's own part, or named the wrong group.

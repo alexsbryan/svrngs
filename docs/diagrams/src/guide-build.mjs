@@ -419,7 +419,7 @@ export function guideBuild(k, draw) {
     b += k.rect(60, 222, 250, 76, { fill: C.app });
     b += M(76, 252, 'node hello.mjs', { size: 16 });
     b += M(76, 280, '127.0.0.1:4400', { size: 16 });
-    b += M(60, 338, 'svrngs share 4400 --kind hello', { size: 15 });
+    b += M(60, 338, 'svrngs share 4400 --program hello', { size: 15 });
     b += k.para(40, 450, 'Goes with Ana: opens while Ana’s computer is on.', { w: 470, size: 17 });
 
     // 2 — a carried folder
@@ -450,7 +450,7 @@ export function guideBuild(k, draw) {
       H,
       b,
       'Two shapes: a lent server, or a carried folder',
-      'A lent server runs on Ana’s computer at 127.0.0.1:4400, lent with svrngs share 4400 --kind hello; it goes with Ana and opens while Ana’s computer is on. A carried app is a folder apps/guestbook/ with index.html and index.js in Elm’s folder, reading and writing the record at svrngs/acts; every computer in Elm serves it, so it opens while any of them is on.',
+      'A lent server runs on Ana’s computer at 127.0.0.1:4400, lent with svrngs share 4400 --program hello; it goes with Ana and opens while Ana’s computer is on. A carried app is a folder apps/guestbook/ with index.html and index.js in Elm’s folder, reading and writing the record at svrngs/acts; every computer in Elm serves it, so it opens while any of them is on.',
     );
   }
 }

@@ -121,7 +121,7 @@ type Held = Result<Option<axum::body::Bytes>, Withheld>;
 /// `index.html`: each a kind, apart by spaces or lines (DESIGN §3, "Or a
 /// folder the group carries").
 pub const READS: &str = "reads.txt";
-const NOT_KINDS: Withheld = (Fault, 500, "its reads.txt names a word that is not a kind");
+const NOT_KINDS: Withheld = (Fault, 500, "a word in its reads.txt isn’t a program’s name");
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a

@@ -35,7 +35,7 @@ page"). Nobody is told them.
 2. The host lends that port, in a terminal on the host's computer:
 
    ```
-   ~/.local/bin/svrngs share 34197 --udp --kind factorio --name factorio --group <group>
+   ~/.local/bin/svrngs share 34197 --udp --program factorio --name factorio --group <group>
    ```
 
    It prints "You lend factorio (UDP port 34197) to everyone in your

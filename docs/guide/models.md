@@ -118,7 +118,7 @@ It says *"Point your interface at http://127.0.0.1:8787/v1"* (your number may di
 
 **Tools.** A friend's tool is any MCP server that speaks Streamable HTTP. Paste its address from `list`, with `/mcp` on the end, into your app's MCP settings. Like a program, your app needs to send your token, as the header `Authorization: Bearer <the text in ~/.svrngs/token>`.
 
-To lend your own model or tool for the pantry, run it on `127.0.0.1` and lend it with any kind: `svrngs share 8108 --program mcp --name tools --group <group>`. More recipes (speech, speech to text, a vision bridge) are in [apps/pantry/README.md](../../apps/pantry/README.md).
+To lend your own model or tool for the pantry, run it on `127.0.0.1` and lend it under any name: `svrngs share 8108 --program mcp --name tools --group <group>`. More recipes (speech, speech to text, a vision bridge) are in [apps/pantry/README.md](../../apps/pantry/README.md).
 
 ## Who sees what
 

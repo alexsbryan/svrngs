@@ -37,7 +37,7 @@ mapping's target nor a volume name can introduce a host bind at serialization.
 
 ## Checking a card
 
-    cargo run -p give -- check [--agree] apps/give/cards/<kind>
+    cargo run -p give -- check [--agree] apps/give/cards/<card>
 
 The check pulls the card's image by digest and starts the app. It waits for
 the app to be healthy, snapshots it, and stops it. Then it restores the
@@ -90,7 +90,7 @@ removed. Ctrl-C stops everything it keeps, each with a last copy.
 **Open.** A card whose door is a page has **Open <its title>** while it
 is kept. It opens the app in a tab of its own on the computer keeping it now, as you,
 through your own svrngs (`/svrngs-to` at Give's origin, which asks svrngs
-for that one computer's lend by its key and the card's kind). After a move
+for that one computer's lend by its key and the card's name). After a move
 it opens the new computer's, never an address from before. Until that
 computer lends it, the card says "Starting on Cy’s computer…", or "Cy’s
 computer did not answer", with **Try again**. A card whose door is a port
@@ -154,7 +154,7 @@ Any member's computer that runs `give keep` may keep an app (the operator,
 fine"). A successor the house names waits for a group that asks.
 
 A lend reaches everyone in every group its person is in, under one name
-(`svrngs share`), so one computer keeps one app of a kind at a time.
+(`svrngs share`), so one computer keeps one app by that name at a time.
 
 ## The files
 
