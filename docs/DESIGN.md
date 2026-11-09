@@ -562,9 +562,14 @@ alike:**
   (502) — never empty bytes. These bytes are neither the record nor a
   folder (§6). Carrying spends the carrier's upload, uncapped. A fetcher
   grants a holder 512 KiB at a time on each stream, so one fetcher leaves
-  the holder's uplink about 100 ms of queue where 40 Mbit/s is the limit;
-  several at once add up (`iroh.rs`, `BLOBS_RECEIVE_WINDOW`;
-  `demo/runs/swarm/2026-11-08/README.md`).
+  the holder's uplink about 100 ms of queue where 40 Mbit/s is the limit
+  (`iroh.rs`, `BLOBS_RECEIVE_WINDOW`; `demo/runs/swarm/2026-11-08/README.md`).
+  A computer sends one large file at a time, across all who ask, in turns of
+  about 3 s, the others going on a chunk a second so none looks asleep:
+  four fetchers at once read the same 116 ms. A file under one window takes
+  no turn. Its large sends together go at one stream's rate, so many medium
+  files over an open 40 ms path take longer (`folder.rs`, `Sends`;
+  `demo/runs/swarm/2026-11-09/README.md`).
 - *The services the group's members lend*, each by name and an opaque kind
   the app interprets (`jellyfin`), and how many people use each now.
 - *The share of the lender's upload* each request through the door may use

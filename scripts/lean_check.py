@@ -559,10 +559,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) An economizing pass cut RoundMembers and ring_sync/journal.rs
 # (28), moved Node::start, which only tests reach, to tests_support (10) and
 # cut format_dial_string (8, one trace its caller); . to 20,710.
+# (2026-11-09) Raised 77 by the operator's "Ok agreed" to funding the send
+# limit alone (demo/runs/swarm/2026-11-09/): folder.rs Sends, turns across
+# fetchers. The pass above found the 44 it could; what remains is new state
+# and a select loop no code there already held. . to 20,787.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20710,
+    ".": 20787,
 
     "js": 8396,
 

@@ -70,6 +70,7 @@ tower = { version = "0.5", features = ["util"] }
 # A group's folders (gf-1, sy-1): the store, its provider and verified range
 # fetch, without the rpc default, over the lock's iroh 1.0.2.
 iroh-blobs = { version = "=0.103.0", default-features = false, features = ["fs-store"] }
+irpc = { version = "=0.17.0", default-features = false }
 # The day a computer's person left a group, said by its old lend addresses
 # in this computer's time as the command says one (origin.rs `cut_from`,
 # #182), and read back by the home page's browser test (home.rs `WHEN`):

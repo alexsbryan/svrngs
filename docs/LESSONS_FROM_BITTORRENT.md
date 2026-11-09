@@ -4,7 +4,9 @@ Design brief, 8 November 2026. The package was run the same day
 (`demo/runs/swarm/2026-11-08/README.md`, §7 here says what held): part D is
 built and part C is the PLAN rule; part A failed step 1 (BBR3 no better than
 Cubic on this path) and did not land, and a smaller receive window on blob
-fetches landed in its place, which holds for one fetcher and not for four; part
+fetches landed in its place, which holds for one fetcher and not for four, and
+turns across fetchers landed on 9 November for the four
+(`demo/runs/swarm/2026-11-09/README.md`); part
 B missed step 3's bar, is over the 35 counted lines the operator gave the
 package, and lies as a patch (`demo/runs/swarm/2026-11-08/parts/`). `DESIGN.md`
 stays the current design.
@@ -190,9 +192,11 @@ ms, about fetchers × window (`demo/runs/swarm/2026-11-08/README.md`). That
 window landed (`iroh.rs`, `BLOBS_RECEIVE_WINDOW`, 6 counted lines). It applies
 to blob fetches alone, so lends keep theirs. Per stream it caps a path at 210
 Mbit/s at 20 ms and 52 Mbit/s at 80 ms. Several fetchers at once, or several
-files at once, still add up. Bounding that is what is left, by the LEDBAT
-fallback above or across fetchers on the holder's side (PLAN §2, the transfer
-row).
+files at once, added up. Turns across fetchers on the holder's side then
+bounded that (`folder.rs`, `Sends`; `demo/runs/swarm/2026-11-09/README.md`):
+four at once read 116 ms, the fetch no slower, and many medium files over an
+open 40 ms path took 41% longer. The LEDBAT fallback above stays for someone
+who wants svrngs always to yield (PLAN §2, the transfer row).
 
 ### Part B: slices
 
@@ -322,7 +326,8 @@ Part D's roughly 8 lines of JavaScript just fit; the core is untouched. The
 repository-wide cap has one line of room against about 95, so the package needs
 an economizing pass, and any remainder is a raise for the operator to approve
 (AGENTS, "Done"). As landed: +33 counted lines against the operator's +35, part
-D 27 and the window 6, `.` to 20,754.
+D 27 and the window 6, `.` to 20,754. The turns across fetchers then cost 77,
+after an economizing pass cut 44: `.` to 20,787.
 
 ## 9. Limits
 

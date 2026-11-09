@@ -288,7 +288,7 @@ impl IrohTransport {
 /// what waits in the holder's uplink: over 40 Mbit/s one fetcher's ping p95
 /// was 110 ms at this and 261 ms at iroh's default, and the fetch no slower
 /// (`demo/runs/swarm/2026-11-08/README.md`).
-const BLOBS_RECEIVE_WINDOW: u32 = 512 * 1024;
+pub(crate) const BLOBS_RECEIVE_WINDOW: u32 = 512 * 1024;
 
 /// A request held whole, so it can be sent again.
 pub type WholeRequest = axum::http::Request<axum::body::Bytes>;

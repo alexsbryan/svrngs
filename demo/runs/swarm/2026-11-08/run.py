@@ -16,6 +16,9 @@
   run.py fast LABEL BIN [SIZE_MB]
                                  step 2: SIZE_MB (100) between two members,
                                  no shaping and no delay
+  run.py many LABEL BIN [--flat] the send limit's cost: 100 files of 4 MiB
+                                 between two members, unshaped, 40 ms RTT
+                                 (no delay with --flat)
 BIN is a build of crates/svrngs-node/tests/perf.rs (`perf_node`). Each member
 is its own network namespace: a veth `uplink` to a bridge in the namespace
 `hub`, shaped with tbf to its rate over a buffer of 500 ms, and a 20 ms
@@ -265,6 +268,27 @@ def fast(label, bin_, size_mb=100):
     g.stop()
 
 
+def many(label, bin_, count=100, mb=4, delay=True):
+    size = mb << 20
+    net_up(2, delay=delay)
+    g = Group(label, 2, bin_)
+    g.up()
+    time.sleep(1)
+    g.share(0)
+    g.share(1)
+    names = [f"m{i:03}.bin" for i in range(count)]
+    t0 = time.time()
+    for name in names:
+        write_file(g.disk(0) / name, size)
+    held = sum(len(wait_for(g, [1], name, size, 600)) for name in names)
+    took = round(time.time() - t0, 3)
+    summary = {"label": label, "files": count, "size": size, "delay": delay, "took_s": took, "held": held,
+               "mb_s": round(count * size / took / 1e6, 1)}
+    (g.out / "summary.json").write_text(json.dumps(summary, indent=1))
+    print(json.dumps(summary), flush=True)
+    g.stop()
+
+
 def wave(label, bin_, size_mb=256, slow=None, bound=1200):
     n = 8
     size = size_mb * (1 << 20)
@@ -321,6 +345,8 @@ if __name__ == "__main__":
         quic(label, bin_, args[0], int(args[1]) if len(args) > 1 else 200)
     elif what == "fast":
         fast(label, bin_, int(args[0]) if args else 100)
+    elif what == "many":
+        many(label, bin_, delay="--flat" not in args)
     elif what == "slow":
         holder = int(args[args.index("--holder") + 1]) if "--holder" in args else 5
         bound = int(args[args.index("--bound") + 1]) if "--bound" in args else 1200

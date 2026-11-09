@@ -1,0 +1,8 @@
+{"label": "s4-t3", "size": 1073741824, "fetchers": 4, "took_s": 915.349, "arrived": {"1": 764.897, "2": 896.25, "4": 910.761, "3": 913.013}, "ping_idle_p95_ms": 40.1, "ping_idle_samples": 100, "ping_busy_p95_ms": 116.0, "ping_busy_samples": 4548, "ping_busy_max_ms": 216.0, "ping_verdict": ["passed", 140.1]}
+{"label": "s4-t6", "size": 1073741824, "fetchers": 4, "took_s": 915.098, "arrived": {"2": 734.863, "3": 890.235, "1": 907.749, "4": 912.753}, "ping_idle_p95_ms": 40.1, "ping_idle_samples": 100, "ping_busy_p95_ms": 114.0, "ping_busy_samples": 4548, "ping_busy_max_ms": 240.0, "ping_verdict": ["passed", 140.1]}
+{"label": "fast-sends", "size": 104857600, "took_s": 1.041, "arrived": {"1": 0.501}, "mb_s": 209.3}
+{"label": "fast-window", "size": 104857600, "took_s": 1.292, "arrived": {"1": 0.751}, "mb_s": 139.6}
+{"label": "many-window", "files": 100, "size": 4194304, "delay": true, "took_s": 26.114, "held": 100, "mb_s": 16.1}
+{"label": "many-sends", "files": 100, "size": 4194304, "delay": true, "took_s": 36.883, "held": 100, "mb_s": 11.4}
+{"label": "flat-window", "files": 100, "size": 4194304, "delay": false, "took_s": 28.762, "held": 100, "mb_s": 14.6}
+{"label": "flat-sends", "files": 100, "size": 4194304, "delay": false, "took_s": 26.218, "held": 100, "mb_s": 16.0}

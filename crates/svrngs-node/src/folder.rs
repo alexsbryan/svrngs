@@ -19,7 +19,7 @@
 //! rule serves a dialer a hash a synced folder or an app placed in a group
 //! it stands in.
 
-use std::collections::{BTreeMap, BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 use std::fs::Metadata;
 use std::io::Read as _;
 use std::path::{Path, PathBuf};
@@ -36,8 +36,8 @@ use iroh_blobs::api::remote::GetProgressItem;
 use iroh_blobs::api::{Store, TempTag};
 use iroh_blobs::protocol::GetRequest;
 use iroh_blobs::provider::events::{
-    AbortReason, ConnectMode, EventMask, EventSender, ObserveMode, ProviderMessage, RequestMode,
-    RequestUpdate,
+    AbortReason, ConnectMode, EventMask, EventResult, EventSender, ObserveMode, ProviderMessage,
+    RequestMode, RequestUpdate, ThrottleMode,
 };
 use iroh_blobs::store::fs::{options::Options, FsStore};
 use iroh_blobs::store::{GcConfig, ProtectCb, ProtectOutcome};
@@ -48,7 +48,7 @@ use std::convert::Infallible;
 use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded, Runs};
 use tokio::sync::{mpsc, oneshot, watch, Notify};
 
-use crate::iroh::{key_actor, Alpn, Unsent};
+use crate::iroh::{key_actor, Alpn, Unsent, BLOBS_RECEIVE_WINDOW};
 use crate::node::{Host, ANSWER_WITHIN};
 
 #[path = "blob.rs"]
@@ -621,6 +621,74 @@ enum Nothing {
     Said(String),
 }
 
+/// How often [`Sends`] looks at who is waiting: a waiting get must show its
+/// fetcher a byte within [`ANSWER_WITHIN`] or be taken as asleep.
+const SENDS_LOOK_EVERY: Duration = Duration::from_secs(1);
+
+/// How many looks a turn lasts, about 3 s. A change of turn briefly queues
+/// two windows, so a turn long beside that keeps it out of the ping's p95:
+/// over a 40 Mbit/s uplink four fetchers at once read 116 ms at 3 s and 114
+/// at 6 (`demo/runs/swarm/2026-11-09/`), so the shorter, which a small file
+/// waits less behind.
+const LOOKS_A_TURN: u32 = 3;
+
+/// A get, by its connection and its request on it.
+type Get = (u64, u64);
+
+/// One large get sends at a time, across every fetcher of this computer, so
+/// its uplink queues one receive window and not one for each get: four
+/// fetchers at once read a ping p95 of 430 ms without this and 116 with it,
+/// the fetch no slower (`demo/runs/swarm/2026-11-09/`). What it costs: this
+/// computer's sends together go at one stream's rate, window ÷ RTT, so many
+/// medium files over an open 40 ms path took 41% longer there. `A` is what
+/// answers a get's ask to send, a parameter so the turns are tested alone.
+struct Sends<A> {
+    turn: Option<Get>,
+    waiting: VecDeque<(Get, A)>,
+    sent: BTreeMap<Get, u64>,
+    looks: u32,
+}
+
+impl<A> Sends<A> {
+    /// `get` asks to send `size` more bytes; the answer is handed back if it
+    /// may. A get's first window goes without a turn: a small file cannot
+    /// queue more than itself, and would wait a turn for nothing.
+    fn ask(&mut self, get: Get, size: u64, asker: A) -> Option<A> {
+        let sent = self.sent.entry(get).or_default();
+        *sent += size;
+        if *sent > u64::from(BLOBS_RECEIVE_WINDOW) && *self.turn.get_or_insert(get) != get {
+            self.waiting.push_back((get, asker));
+            return None;
+        }
+        Some(asker)
+    }
+
+    /// The turn to whoever waited longest; none waiting frees it.
+    fn pass(&mut self) -> Option<A> {
+        let next = self.waiting.pop_front();
+        self.turn = next.as_ref().map(|(get, _)| *get);
+        tracing::debug!(target: "folder", turn = ?self.turn, waiting = self.waiting.len(), "folder: a send's turn");
+        next.map(|(_, asker)| asker)
+    }
+
+    /// `get` ended, however it ended.
+    fn ended(&mut self, get: Get) -> Option<A> {
+        self.sent.remove(&get);
+        self.waiting.retain(|(g, _)| *g != get);
+        (self.turn == Some(get)).then(|| self.pass()).flatten()
+    }
+
+    /// Every [`SENDS_LOOK_EVERY`]: the turn passes when it is up, and each
+    /// waiting get sends one more chunk, so its fetcher sees it is alive.
+    fn look(&mut self) -> Vec<A> {
+        self.looks = (self.looks + 1) % LOOKS_A_TURN;
+        let next = if self.looks == 0 { self.pass() } else { None };
+        next.into_iter()
+            .chain(self.waiting.drain(..).map(|(_, asker)| asker))
+            .collect()
+    }
+}
+
 /// The provider: every get asked of the record for its dialer, and its
 /// bytes logged. Each connection's dialer is kept by its id from its
 /// connect, which the provider awaits before it reads a request.
@@ -633,12 +701,39 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
         connected: ConnectMode::Intercept,
         get: RequestMode::InterceptLog,
         observe: ObserveMode::Intercept,
+        throttle: ThrottleMode::Intercept,
         ..EventMask::DEFAULT
     };
     let (events, mut rx) = EventSender::channel(32, mask);
     tokio::spawn(async move {
         let mut dialers: BTreeMap<u64, String> = BTreeMap::new();
-        while let Some(message) = rx.recv().await {
+        let mut sends: Sends<irpc::channel::oneshot::Sender<EventResult>> = Sends {
+            turn: None,
+            waiting: VecDeque::new(),
+            sent: BTreeMap::new(),
+            looks: 0,
+        };
+        let (ended, mut gets_ended) = mpsc::channel::<Get>(32);
+        let mut looks = tokio::time::interval(SENDS_LOOK_EVERY);
+        loop {
+            let message = tokio::select! {
+                message = rx.recv() => match message {
+                    Some(message) => message,
+                    None => break,
+                },
+                Some(get) = gets_ended.recv() => {
+                    if let Some(asker) = sends.ended(get) {
+                        asker.send(Ok(())).await.ok();
+                    }
+                    continue;
+                }
+                _ = looks.tick() => {
+                    for asker in sends.look() {
+                        asker.send(Ok(())).await.ok();
+                    }
+                    continue;
+                }
+            };
             // Every other request, an observe or a get of many, is refused by
             // its answer dropped.
             let asked = match message {
@@ -652,6 +747,16 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                     dialers.remove(&c.inner.connection_id);
                     continue;
                 }
+                ProviderMessage::Throttle(asked) => {
+                    let (get, size) = (
+                        (asked.inner.connection_id, asked.inner.request_id),
+                        asked.inner.size,
+                    );
+                    if let Some(asker) = sends.ask(get, size, asked.tx) {
+                        asker.send(Ok(())).await.ok();
+                    }
+                    continue;
+                }
                 ProviderMessage::GetRequestReceived(asked) => asked,
                 _ => continue,
             };
@@ -663,7 +768,8 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
             // Each get asked of the record in a task of its own, so gets at
             // once are answered at once: in this one task 10,000 gets of a
             // member fetching 8 at once queued 1,178 ms of checks (perf-2 g).
-            let (dialer, folders) = (dialers.get(&conn).cloned(), folders.clone());
+            let (dialer, folders, ended) =
+                (dialers.get(&conn).cloned(), folders.clone(), ended.clone());
             tokio::spawn(async move {
                 let t0 = Instant::now();
                 let shares = dialer.as_ref().is_some_and(|d| folders.serves(hash, d, t0));
@@ -688,6 +794,7 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                     };
                     tracing::info!(target: "folder", %hash, conn, request, done, last, payload = stats.payload_bytes_sent, other = stats.other_bytes_sent, "folder: sent");
                 }
+                ended.send((conn, request)).await.ok();
             });
         }
     });
@@ -742,3 +849,7 @@ async fn ask(State(f): State<Folders>, Json(asked): Json<FolderAsk>) -> Response
         Err(why) => (StatusCode::CONFLICT, why.to_string()).into_response(),
     }
 }
+
+#[cfg(test)]
+#[path = "folder_tests.rs"]
+mod tests;
