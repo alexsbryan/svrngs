@@ -205,6 +205,46 @@ What `svrngs/acts` gives you:
   "op": {...}}`** replaces one of your app's entries; `"op": null` voids it.
   An entry is at most about 64 KiB.
 
+### Read your friends' apps
+
+A carried app can read what your friends lend, such as their Jellyfin or
+their llama-server. Name each kind it reads in `reads.txt`, beside
+`index.html`, apart by spaces or lines:
+
+```
+jellyfin
+llama-server
+```
+
+Your page can only connect to its own address, so it reaches each lend
+there. `GET svrngs-reads` lists the lends of those kinds in your group, each
+with its `kind`, `name`, `lender` and `address`, like
+`http://<your app>.localhost:<port>/svrngs-lend/<label>/`. Add the lend's
+own path after it:
+
+```js
+const { lends } = await (await fetch('svrngs-reads')).json();
+const films = lends.find((l) => l.kind === 'jellyfin');
+const items = await (await fetch(`${films.address}Items?Recursive=true`)).json();
+```
+
+- **Each person says yes first.** The line beside your app's open says what
+  it reads: *"It also opens your friends’ jellyfin as you."* Opening it
+  there is the yes. Before it, and after its Stop, svrngs refuses with
+  `x-svrngs-refused: unasked`.
+- **Only what you named, in your group.** Another kind, or a lend in
+  another group, is refused with `closed`.
+- **A new version reads more only after a yes.** Each person keeps reading
+  what the version they said yes to names.
+- **It reads as you, never writes.** A `GET` or `HEAD` is let in with the
+  lender's readers' account if they keep one (`svrngs share --readers`). A
+  lend's answer can't write entries into the record.
+- **Data, not code.** svrngs refuses an answer that is a script, and keeps
+  the lend's cookies away from your page. Use what a lend answers as data.
+
+If `reads.txt` names a word that isn't a kind (letters, digits, `-` and `_`),
+your app is left off the list until it's fixed.
+
 Rules for carried pages:
 
 - **Load nothing from elsewhere.** Every answer carries a policy that lets

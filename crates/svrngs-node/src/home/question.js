@@ -101,10 +101,10 @@ export const named = (lend) => {
 // operator, 2026-10-26). An app the group carries reads and writes what the
 // shelf, `shelf`, says it is, else its own part of the group's record; an
 // app on a port writes what you say there as you, by naming it
-// (capability-signed's F1); a lend declared to read kinds (`--reads`) opens
-// your friends' lends of them as you. Made from what the lend declares,
-// never its kind of app. A carried app's says what it is for first, then
-// what opening it lets it do: led by "It reads and writes", Ana read it as
+// (capability-signed's F1); a lend declared to read kinds (`--reads`, or a
+// carried app's reads.txt) opens your friends' lends of them as you. Made
+// from what the lend declares, never its kind of app. A carried app's says
+// what it is for first, then what opening it lets it do: led by "It reads and writes", Ana read it as
 // done on her behalf without her yes ("Money can read and write who owes
 // whom on my behalf, and I never agreed to that", the fifth set, `together`
 // run 1; demo/xenia/findings/said-too-much-the-group-s-page.md).
@@ -120,18 +120,18 @@ const does = (kind, shelf) =>
  * @param {{ name?: string | null }} group
  */
 export const agreed = (lend, shelf, group) => {
-  if (lend.group) {
-    const words = does(lend.kind, shelf);
-    // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
-    // sentence for the app, or its own.
-    const first = /** @type {string} */ (words[0]).toUpperCase();
-    return `${first}${words.slice(1)} Opening it lets it read and write that, as you.`;
-  }
   const reads = lend.reads ?? [];
   const also =
     reads.length > 0
       ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you.`
       : '';
+  if (lend.group) {
+    const words = does(lend.kind, shelf);
+    // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
+    // sentence for the app, or its own.
+    const first = /** @type {string} */ (words[0]).toUpperCase();
+    return `${first}${words.slice(1)} Opening it lets it read and write that, as you.${also}`;
+  }
   return `It writes what you say there into ${group.name ?? 'your group'}’s record, as you.${also}`;
 };
 

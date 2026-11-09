@@ -40,13 +40,14 @@ use std::collections::BTreeMap;
 use svrngs_core::pass::{Label, Pass, Whose};
 
 use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
+use crate::folder::carried::Handled;
 use crate::iroh::Contact;
 use crate::lend::{Kind, Offered};
 use crate::node::Asking;
 use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
 use crate::session::{Shown, AS_PATH};
-use crate::surface::{seed_of, READS_PATH, STOP_SUFFIX, TO_PATH};
+use crate::surface::{seed_of, LEND_PATH, READS_PATH, STOP_SUFFIX, TO_PATH};
 
 /// Whether a lent app's answer may write entries as the person asking
 /// ([`APPEND_HEADER`]), by what the request proved: decided by the door
@@ -312,6 +313,9 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, "origin: its own page asks the lends it reads; reaching an app grants no authority over its capabilities");
         return crate::surface::reads(&at, &label).await;
     }
+    if path.starts_with(LEND_PATH) && matches!(label.whose(), Whose::Carried) {
+        return routed(&at, (label, app), req).await;
+    }
     let stop = req.uri().path().strip_prefix(READS_PATH);
     let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix(STOP_SUFFIX));
     if let Some(lend) = stop
@@ -342,6 +346,47 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         at.sessions.onward(name.as_str(), &proof, &method, answer);
     }
     reached
+}
+
+/// `req` at the carried app `label`'s [`LEND_PATH`]`/<read>/<path>`, from
+/// its own page alone: carried to the lend `read` at `path`, as this
+/// computer's person, as a page reading it reaches it at its origin
+/// ([`crate::surface::reaches`], [`reach`]), never signing its reply. No
+/// cookie crosses either way, so nothing the lend keeps lands where the
+/// page reads it; and none of the lend's pages or code runs here, so all a
+/// page here runs is its own files (COMMUNITY_APPS §6.2): an answer that is
+/// code is refused, any other sandboxed and never sniffed.
+async fn routed(at: &Asking, (label, app): (Label, Label), mut req: Request) -> Handled {
+    let closed = |why: &str| LendRefusal::Closed.say(StatusCode::FORBIDDEN, why.to_string());
+    let asked = req.uri().path_and_query().map_or("/", |p| p.as_str());
+    let named = (asked.strip_prefix(LEND_PATH)).and_then(|r| r.strip_prefix('/'));
+    let (read, tail) = named.and_then(|r| r.split_once('/')).unwrap_or_default();
+    let (read, tail) = (
+        Label::parse(read).filter(|_| app == label),
+        format!("/{tail}"),
+    );
+    tracing::debug!(target: "origin", %label, %app, read = ?read.as_ref().map(Label::as_str), "origin: a carried app's page reaches a lend at its own origin, refused from another page or naming none");
+    let read =
+        read.ok_or_else(|| closed("only an app's own page reads a lend through its origin"))?;
+    *req.uri_mut() = uri_of(&tail)?;
+    req.headers_mut().remove(header::COOKIE);
+    crate::surface::reaches(at, &label, &read).await?;
+    let appending = Appending::Denied(Unconsented::Capability);
+    let mut answer = reach(at, read.clone(), label.clone(), appending, req).await?;
+    let kind = (answer.headers().get(header::CONTENT_TYPE)).and_then(|k| k.to_str().ok());
+    let code = kind.is_some_and(|k| k.contains("script"));
+    tracing::debug!(target: "origin", %label, %read, status = answer.status().as_u16(), code, "origin: the lend's answer to a carried page, refused when it is code, else sandboxed and its cookies dropped");
+    if code {
+        return Err(closed("a lend's code never runs in a carried app"));
+    }
+    let headers = answer.headers_mut();
+    headers.remove(header::SET_COOKIE);
+    let sandboxed = [
+        (header::CONTENT_SECURITY_POLICY, "sandbox"),
+        (header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+    ];
+    headers.extend(sandboxed.map(|(name, v)| (name, HeaderValue::from_static(v))));
+    Ok(answer)
 }
 
 /// svrngs's own answer to the page of another lend that reads this one —

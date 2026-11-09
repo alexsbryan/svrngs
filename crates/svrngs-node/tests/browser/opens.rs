@@ -373,3 +373,222 @@ Promise.all([asked('cy', '{cy}', 'notes'), asked('cy', '{cy}', 'hidden'), asked(
     );
     drop((cy, dee));
 }
+
+/// cy's films as a reading app meets them: each request's head kept, and
+/// answered with its `authorization` echoed in a header of its own and a
+/// cookie of the lend's own set, as JSON, or as a script at a path ending
+/// `.js`.
+async fn echoing() -> (std::net::SocketAddr, KeptHeads) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let heads = KeptHeads::default();
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                let head = String::from_utf8_lossy(&head[..n]).into_owned();
+                let auth = (head.lines())
+                    .find(|l| l.to_ascii_lowercase().starts_with("authorization: "))
+                    .map(|l| l["authorization: ".len()..].to_string())
+                    .unwrap_or_else(|| "none".into());
+                let script = head.lines().next().is_some_and(|l| l.contains(".js "));
+                kept.lock().unwrap().push(head);
+                let (kind, body) = if script {
+                    ("text/javascript", "document.title = 'ran';")
+                } else {
+                    ("application/json", r#"{"films":"cy's films"}"#)
+                };
+                let answer = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: {kind}\r\nx-echo: {auth}\r\n\
+                     set-cookie: lend-session=kept-by-the-lend; Path=/\r\n\
+                     content-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    (addr, heads)
+}
+
+in_chromium!(
+    /// **A carried app reads the lends it declares, at its own origin, on
+    /// your yes** (the operator, 2026-11-08; svrn-docs COMMUNITY_APPS §6.2,
+    /// "It knows only what it's told"): Probe, carried in house on ada's
+    /// computer, declares `films` in its reads.txt; its page's policy lets
+    /// it ask its own origin alone, so it reaches lends at
+    /// `/svrngs-lend/<label>/` there. Its `/svrngs-reads` lists cy's films
+    /// at that address, holding no capability. Opened by its typed address,
+    /// every lend is refused before anything reaches them: cy's films
+    /// `unasked`; cy's notes, a kind it does not declare, ada's films, lent
+    /// to elsewhere alone, another group of ada's, and the films of dee,
+    /// whom ada removed, `closed`. Opened from the home page, whose line
+    /// beside it says "It also opens your friends’ films as you", the yes:
+    /// cy's films answer its GET, let in as cy's readers' account; its POST
+    /// carries no readers' secret; a script is refused; the answer is
+    /// sandboxed and never sniffed; and nothing the page can read holds
+    /// the readers' secret, which cy's films echo back, the lend's cookie,
+    /// a capability or ada's token. The others stay `closed`. After the
+    /// yes's Stop, cy's films are `unasked` again.
+    a_carried_app_reads_the_lends_it_declares_at_its_own_origin
+);
+async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Engine) {
+    let relay = relay().await;
+    let dirs = [(); 3].map(|()| tempfile::tempdir().unwrap());
+    let ada = node(dirs[0].path(), &relay, &signing(9)).await;
+    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let dee = joined(dirs[2].path(), &relay, &ada, 3, "dee").await;
+    // A second group, elsewhere, of ada's alone.
+    let ada_alone = [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])];
+    let seed = Roster::new(ada_alone.into_iter().collect());
+    ada.rail().set_seed("elsewhere", &seed).unwrap();
+    let (films, on_films) = echoing().await;
+    let notes = page_origin("<!doctype html><title>cy's notes</title><body>").await;
+    let (theirs, on_theirs) = kept_page("<!doctype html><title>dee's films</title><body>").await;
+    let (mine, on_mine) = kept_page("<!doctype html><title>ada's films</title><body>").await;
+    for (dir, name, port, kind, group) in [
+        (dirs[1].path(), "films", films.port(), "films", NS),
+        (dirs[1].path(), "notes", notes.port(), "notes", NS),
+        (dirs[2].path(), "films", theirs.port(), "films", NS),
+        (dirs[0].path(), "films", mine.port(), "films", "elsewhere"),
+    ] {
+        let lends = svrngs_node::lend::lends_dir(dir);
+        std::fs::create_dir_all(&lends).unwrap();
+        let body =
+            json!({ "groups": [group], "port": port, "kind": kind, "limit": 3, "refused": [] });
+        std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let readers = ("authorization", "Readers films-for-apps");
+    let name = svrngs_node::lend::LendName::parse("films").unwrap();
+    svrngs_node::lend::keep_readers(dirs[1].path(), &name, readers).unwrap();
+    assert_eq!(
+        removal(&ada, "dee").await,
+        svrngs_node::removal::Outcome::Out
+    );
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let page = "<!doctype html><title>Probe</title><body>Probe";
+    let files = [("index.html", page.into()), ("reads.txt", "films\n".into())];
+    carried::carry(&folder, "Probe", &files);
+    let origin = carried::carried_at(&ada, "Probe").await;
+    let port = ada.api_addr().port();
+    let tries = json!({
+        "films": label(2, "films"),
+        "notes": label(2, "notes"),
+        "elsewhere": label(1, "films"),
+        "removed": label(3, "films"),
+    });
+    let seen = drive(
+        engine,
+        "carried-reads.mjs",
+        json!({ "url": origin, "home": format!("http://svrngs.localhost:{port}/"), "words": "Open Probe", "tries": tries }),
+        None,
+    )
+    .await;
+    eprintln!("the carried app's reads: {seen:#}");
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+
+    let reads: Value =
+        serde_json::from_str(seen["before"]["reads"]["body"].as_str().unwrap()).unwrap();
+    let address = format!("{origin}svrngs-lend/{}/", label(2, "films"));
+    assert_eq!(
+        reads["lends"],
+        json!([{ "kind": "films", "name": "films", "lender": "cy", "address": address }]),
+        "its reads are its declared kind's lends of its group, at its own origin:\n{seen:#}"
+    );
+    let refused = |step: &str, name: &str| {
+        (
+            seen[step][name]["status"].clone(),
+            seen[step][name]["refused"].clone(),
+        )
+    };
+    let closed = (json!(403), json!("closed"));
+    let unasked = (json!(403), json!("unasked"));
+    for (step, name, said) in [
+        ("before", "films", &unasked),
+        ("before", "post", &unasked),
+        ("stopped", "films", &unasked),
+    ]
+    .into_iter()
+    .chain(
+        ["before", "yes", "stopped"]
+            .into_iter()
+            .flat_map(|step| ["notes", "elsewhere", "removed"].map(|name| (step, name, &closed))),
+    ) {
+        assert_eq!(&refused(step, name), said, "{step}: {name}:\n{seen:#}");
+    }
+    let cell = "Open Probe Its own part of the group’s record. Opening it lets it read and write that, as you. It also opens your friends’ films as you.";
+    assert!(
+        seen["cells"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .any(|c| c == cell),
+        "the open says what the app reads:\n{seen:#}"
+    );
+    let yes = &seen["yes"];
+    assert_eq!(
+        (&yes["films"]["status"], &yes["films"]["body"]),
+        (&json!(200), &json!(r#"{"films":"cy's films"}"#)),
+        "once said yes to, it reads its declared lend:\n{seen:#}"
+    );
+    let headers = yes["films"]["headers"].to_string();
+    for header in [
+        "content-security-policy: sandbox",
+        "x-content-type-options: nosniff",
+    ] {
+        assert!(headers.contains(header), "{header}:\n{seen:#}");
+    }
+    assert_eq!(yes["post"]["status"], 200, "{seen:#}");
+    assert_eq!(
+        refused("yes", "script"),
+        closed,
+        "a lend's script never runs here:\n{seen:#}"
+    );
+    let heads = on_films.lock().unwrap().clone();
+    let asked = |line: &str| {
+        heads
+            .iter()
+            .find(|h| h.starts_with(line))
+            .cloned()
+            .unwrap_or_default()
+    };
+    assert!(
+        asked("GET /films?n=1").contains("films-for-apps"),
+        "its GET is let in as cy's readers' account: {heads:#?}"
+    );
+    assert!(
+        !asked("POST /films").is_empty() && !asked("POST /films").contains("films-for-apps"),
+        "its POST carries no readers' secret: {heads:#?}"
+    );
+    assert_eq!(
+        heads.len(),
+        3,
+        "cy's films are asked only after the yes, and only those three times: {heads:#?}"
+    );
+    let said = seen.to_string();
+    for kept in [
+        "films-for-apps",
+        "lend-session",
+        "svrngs-as/",
+        ada.token().trim(),
+    ] {
+        assert!(
+            !said.contains(kept),
+            "the page reads nothing holding {kept:?}:\n{seen:#}"
+        );
+    }
+    for (whose, heads) in [("dee's", &on_theirs), ("ada's elsewhere", &on_mine)] {
+        assert!(
+            heads.lock().unwrap().is_empty(),
+            "{whose} films are never asked"
+        );
+    }
+    drop((cy, dee));
+}

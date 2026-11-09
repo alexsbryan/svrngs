@@ -266,7 +266,9 @@ pub struct Lend {
     pub upload: Option<Upload>,
     /// The kinds of lend its pages read (u5-2, `svrngs share --reads`):
     /// a phone's page passes whoever opens it to the group's lends of each
-    /// kind too, as that person (DESIGN §3, "Lent apps", call 6).
+    /// kind too, as that person (DESIGN §3, "Lent apps", call 6). A carried
+    /// app's are its reads.txt's, read as each person runs it
+    /// ([`crate::folder::Folders::reads`]), and none here.
     pub reads: Vec<Kind>,
     /// Its sign-in with svrngs when it says so (SIGN_IN_WITH_SVRNGS §5,
     /// "Turning it on"): the client id and secret its lender copies into
@@ -323,6 +325,8 @@ impl Lend {
             limit: None,
             refused: Vec::new(),
             upload: None,
+            // Read from its files as each person runs them, which a lookup
+            // reads none of ([`crate::folder::Folders::reads`]).
             reads: Vec::new(),
             sign_in_with_svrngs: None,
             asks: None,

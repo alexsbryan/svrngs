@@ -27,6 +27,9 @@
 //!   [`reads`]): the lends of each kind its lender declared it reads, as a
 //!   phone's lend worker answers it from what the group's page handed
 //!   (`web/lend.js`, `told`).
+//! - `<LEND_PATH>/<label>/…`, at a carried app's own origin and to its
+//!   page ([`LEND_PATH`]; `crate::origin`'s `routed`): a lend it reads,
+//!   reached there, since its page may ask nowhere else.
 //! - `GET /svrngs-to?lender=&lend=`, at a carried app's own origin and to
 //!   its page ([`to`]; docs/APP_ACCESS_AND_STOP.md A4): one lend of the
 //!   app's group, sent on to its plain origin, or, with `whether`, told
@@ -54,6 +57,7 @@ use crate::node::{Asking, Lending, Unlisted};
 use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
 use crate::seed::Seed;
+use crate::{origin::origin, session::AS_PATH};
 use crate::{register::RemovalSaid, Person};
 
 /// Where an app asks which groups this computer holds.
@@ -79,6 +83,11 @@ pub const STOP_SUFFIX: &str = "/svrngs-stop";
 /// origin, by its lender's key and its name (docs/APP_ACCESS_AND_STOP.md
 /// A4): no registry, frame or read; svrngs knows nothing of why it opens.
 pub const TO_PATH: &str = "/svrngs-to";
+
+/// Where a carried app's page reaches a lend it reads, at its own origin,
+/// `<LEND_PATH>/<label>/<path>`: its page's CSP lets it ask nowhere else
+/// (COMMUNITY_APPS §6.2), so svrngs carries it ([`crate::origin`]).
+pub const LEND_PATH: &str = "/svrngs-lend";
 
 /// The routes, for [`crate::api::router`] to serve behind its check, on
 /// the node's one state ([`Asking`]).
@@ -328,10 +337,19 @@ async fn read_by(
         tracing::debug!(target: "surface", %app, "surface: reads refused — the lend is not lent now");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    let read = (lent.iter())
+    // A carried app reads only in its own group: lent to it, by one standing in it.
+    let own = |l: &&Lending| {
+        (reading.offered.group.as_ref()).is_none_or(|g| {
+            let lent = (l.offered.groups.as_ref()).is_some_and(|ids| ids.contains(g));
+            lent && (groups.iter()).any(|(ns, s)| ns == g && s.contains_key(&l.key))
+        })
+    };
+    let read: Vec<_> = (lent.iter())
         .filter(|l| named(l).as_ref() != Some(app) && reading.offered.reads_one(&l.offered))
+        .filter(own)
         .cloned()
         .collect();
+    tracing::debug!(target: "surface", %app, group = ?reading.offered.group, read = read.len(), "surface: what the page reads, its kinds, a carried app's only in its own group");
     Ok((read, unlisted, silent))
 }
 
@@ -349,10 +367,11 @@ fn named(l: &Lending) -> Option<Label> {
 pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
     let (read, unlisted, silent) = read_by(at, app).await?;
     if read.iter().any(|l| named(l).as_ref() == Some(label)) {
-        let own = matches!(
-            crate::origin::serving(at, app).await?,
-            crate::origin::Serving::Own
-        );
+        // A carried app is its group's code, not this computer's person's:
+        // it reaches on their yes, as another computer's app does.
+        let serving = crate::origin::serving(at, app).await?;
+        let own = matches!(app.whose(), Whose::Computer(_))
+            && matches!(serving, crate::origin::Serving::Own);
         let said = if own {
             None
         } else {
@@ -397,13 +416,16 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
     let read: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
             let lend = named(l)?;
-            let address = crate::origin::origin(&lend, host.api_port) + &crate::session::AS_PATH[1..];
-            let address = address + &at.sessions.cap(label, &lend) + "/";
+            // A carried page reaches it at its own origin, holding no capability.
+            let address = match label.whose() {
+                Whose::Carried => format!("{}{}/{lend}", origin(label, host.api_port), &LEND_PATH[1..]),
+                Whose::Computer(_) => origin(&lend, host.api_port) + &AS_PATH[1..] + &at.sessions.cap(label, &lend),
+            } + "/";
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
             if let Some(words) = &l.offered.asks {
                 read["asks"] = words.as_str().into();
                 read["ask"] = crate::home::ask_address(host.api_port, &lend, label).into();
-                let page = crate::origin::origin(label, host.api_port);
+                let page = origin(label, host.api_port);
                 read["stop"] = format!("{page}{}/{lend}{STOP_SUFFIX}", &READS_PATH[1..]).into();
             }
             Some(read)

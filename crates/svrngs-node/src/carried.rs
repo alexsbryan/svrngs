@@ -55,7 +55,7 @@ use svrngs_core::{Files, Placed, SyncPath};
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
 use crate::iroh::Dialer;
-use crate::lend::{Kind, Lend};
+use crate::lend::{Kind, Lend, Source};
 use crate::node::Asking;
 use crate::register::{Member, Standing};
 
@@ -113,6 +113,15 @@ fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withhe
 
 /// A carried app's answer, or why the door gives its own.
 type Given = Result<Response, Withheld>;
+
+/// A file of a carried app, none where its files have none, or why not.
+type Held = Result<Option<axum::body::Bytes>, Withheld>;
+
+/// Where a carried app declares the kinds of lend it reads, beside its
+/// `index.html`: each a kind, apart by spaces or lines (DESIGN §3, "Or a
+/// folder the group carries").
+pub const READS: &str = "reads.txt";
+const NOT_KINDS: Withheld = (Fault, 500, "its reads.txt names a word that is not a kind");
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
@@ -244,6 +253,28 @@ impl Folders {
         found.into_values().collect()
     }
 
+    /// The kinds `lend` reads: a carried app's from its [`READS`] as its
+    /// files run as this computer's person, so a version that reads more
+    /// reads it only once they said yes to it (canon-pin); none without
+    /// one, as the shelf's apps have; refused, never read as fewer, when a
+    /// word in it is not a kind (ARCH 6). A declared lend's, its own.
+    pub(crate) async fn reads(&self, lend: &Lend) -> Result<Vec<Kind>, Withheld> {
+        let Source::Carried(group) = &lend.source else {
+            return Ok(lend.reads.clone());
+        };
+        let standing = (self.host.rail.standing(group)).map_err(|e| traced(group, UNREAD, &e))?;
+        let me = standing.member(&self.host.actor).ok_or(NOT_IN)?;
+        let path = format!("apps/{}/{READS}", lend.kind);
+        let text = self.runs_at(group, &lend.kind, &path, &me.person_key);
+        let text = text.await?;
+        let words = String::from_utf8_lossy(text.as_deref().unwrap_or_default());
+        let kinds = (words.split_whitespace())
+            .map(Kind::parse)
+            .collect::<Result<_, _>>();
+        tracing::debug!(target: "folder", lend = %lend.name, group, declared = text.is_some(), ?kinds, "carried: the kinds the app reads as it runs as this computer's person, none undeclared, or refused");
+        kinds.map_err(|e| traced(group, NOT_KINDS, &e))
+    }
+
     /// Each app carried in `groups` whose files now are not those that run
     /// as the person of the key `asker` there (canon-pin (c)): its group,
     /// its kind, who changed its files last, by name and first key, and
@@ -295,19 +326,28 @@ impl Folders {
     async fn file(&self, group: &str, kind: &Kind, path: &str, asker: &Member) -> Given {
         let path = format!("apps/{kind}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
+        let held = self.runs_at(group, kind, &path, &asker.person_key).await?;
+        let kind = content_type(Path::new(&path));
+        Ok(([(header::CONTENT_TYPE, kind)], held.ok_or(NOT_HERE)?).into_response())
+    }
+
+    /// The bytes at `path` of the app `kind` carried in `group` as it runs
+    /// as the person whose first key is `first`; none when those files have
+    /// nothing there.
+    async fn runs_at(&self, group: &str, kind: &Kind, path: &str, first: &str) -> Held {
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let files = read.runs.of(kind.as_str(), &asker.person_key);
-        let at = (SyncPath::parse(&path).ok()).and_then(|p| files?.get(&p).copied());
-        let hash = Hash::from(*at.ok_or(NOT_HERE)?.as_bytes());
+        let files = read.runs.of(kind.as_str(), first);
+        let at = (SyncPath::parse(path).ok()).and_then(|p| files?.get(&p).copied());
+        let Some(at) = at else { return Ok(None) };
+        let hash = Hash::from(*at.as_bytes());
         let holders: Vec<_> = self.holders(group).into_iter().flatten().collect();
         let fetched = self.hold(hash, &holders).await;
         let held = self.store.get_bytes(hash).await;
         // Not held yet only when the store says it lacks the file; else it failed to read it.
         let lacks = held.is_err() && matches!(self.store.has(hash).await, Ok(false));
         tracing::debug!(target: "folder", path, %hash, lacks, ?fetched, why = ?held.as_ref().err(), "carried: the file as the app runs as the person, from the store, or why not");
-        let held = held.map_err(|_| if lacks { NOT_YET } else { UNSTORED })?;
-        let kind = content_type(Path::new(&path));
-        Ok(([(header::CONTENT_TYPE, kind)], held).into_response())
+        held.map(Some)
+            .map_err(|_| if lacks { NOT_YET } else { UNSTORED })
     }
 
     /// The app `kind`'s route in `group`, for the key `key` of `people`:

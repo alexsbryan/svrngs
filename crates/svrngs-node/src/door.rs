@@ -616,13 +616,15 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             tracing::warn!(target: "door", lend = %lend.name, "door: lends — no count of who uses it, so it is left out");
             continue;
         };
+        let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
+        let Ok(reads) = reads else { continue };
         offered.push(Offered {
             name: lend.name,
             kind: lend.kind,
             limit: lend.limit,
             using,
             upload: lend.upload,
-            reads: lend.reads,
+            reads,
             asks: lend.asks,
             group: match &lend.source {
                 Source::Carried(group) => Some(group.clone()),

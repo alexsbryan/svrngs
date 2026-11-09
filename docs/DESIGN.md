@@ -354,6 +354,29 @@ another of the group's computers when this one never held it — and from
   refused. A line the phone signed and no computer took yet is kept beside
   the pass and goes, the same bytes, with the next write.
 
+**What it reads beside its own.** A carried app reads its group's lends of
+the kinds its `reads.txt` names, a file beside its `index.html`, each kind
+apart by spaces or lines. It is read from the files that run as the
+person, so a new version that reads more reads it only once they say yes
+to that version; an app with none, as the shelf's, reads nothing; and a
+word in it that is not a kind leaves the app off every list, said at warn,
+never read as reading less (`carried.rs`, `Folders::reads`). Its page may
+connect to its own origin alone, so svrngs carries each read there:
+`/svrngs-reads` answers each lend's address as `/svrngs-lend/<label>/` at
+the app's own origin, and a request there from the app's own page goes to
+that lend as the person, as a lent page's read does ("Lent apps", call 6;
+`origin.rs`, `routed`). It reaches only a lend of a kind it declares, lent
+to its group by a computer standing in it, else `closed`; and only on the
+person's yes, which opening it from the home page says, else `unasked`,
+before the yes and after its Stop. Its GET or HEAD is let in as the lend's
+readers' account where one is kept, and a write never is. The app's
+origin, not a capability, says which app asks: a capability in an address
+is something the page could read. No cookie crosses either way, so nothing
+the lend keeps lands where the page reads it; an answer that is a script is
+refused, and any other is sandboxed and never sniffed, so all that runs at
+the app's origin is its own files. On a phone a carried app reads no lend
+yet (PLAN §2).
+
 Each act stays its signer's: its `person` says whose device wrote it, and
 its `person_key` whose person, the same from each of their devices; an
 older act's `on_behalf_of` says whom its computer spoke for (§6), and the
@@ -379,7 +402,8 @@ from sending out what it reads, since a page that navigates carries what
 it holds, and a browser has other ways out. What protects what a carried
 app reads is that its people chose it: its files are pinned, each version
 runs as a person only on their yes, the record says who brought or
-changed it, and it reads its own kind alone, the trust a person already
+changed it, and it reads its own kind and, on each person's yes, the lends
+its files declare, the trust a person already
 gives the programs on their computer (svrn-docs
 `rings/current/WHAT_CAN_ACT_AS_YOU.md` §5). A sandbox earns its cost once
 code arrives from outside a person's rings (PLAN §2). A carried app comes to a group from the shelf
@@ -1225,7 +1249,9 @@ Seven calls:
    declared it reads, in a group both lenders and this computer stand in,
    else `closed`. Another computer's app reaches them as this computer's
    person only on that person's yes, else `unasked`, "Say yes on your home
-   page: open this app from there.": per person and per app, never per
+   page: open this app from there.", and so does a carried app, its group's
+   code, not its person's ("What it reads beside its own"): per person and
+   per app, never per
    version, since live code can't be pinned, kept beside the lends' yeses
    (`door/choices.rs`, `reaching`) and judged where the reach is
    (`surface.rs`, `reaches`). Opening the app from the home page is the yes:
@@ -1238,7 +1264,8 @@ Seven calls:
    reads what its person declared. Beside the open of an app the group
    carries is first what it is for, the shelf's words or "its own part of
    the group’s record", then "Opening it lets it read and write that, as
-   you.", so its first version runs as a person once they open it so named
+   you.", then what it opens of your friends', as a lent app's line says
+   it, so its first version runs as a person once they open it so named
    (`question.js`, `named` and `agreed`). Led by "It reads and writes", a
    newcomer read it as done on her behalf without her yes (the fifth xenia
    set, `demo/xenia/findings/said-too-much-the-group-s-page.md`). Each yes is
