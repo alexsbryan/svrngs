@@ -105,21 +105,16 @@ pub enum Outcome {
     Fault,
 }
 
-impl Outcome {
-    fn status(&self) -> StatusCode {
-        match self {
+impl IntoResponse for Outcome {
+    fn into_response(self) -> Response {
+        let status = match self {
             Outcome::Out | Outcome::Asked { .. } | Outcome::Handed | Outcome::Left => {
                 StatusCode::OK
             }
             Outcome::Fault => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::CONFLICT,
-        }
-    }
-}
-
-impl IntoResponse for Outcome {
-    fn into_response(self) -> Response {
-        (self.status(), Json(self)).into_response()
+        };
+        (status, Json(self)).into_response()
     }
 }
 

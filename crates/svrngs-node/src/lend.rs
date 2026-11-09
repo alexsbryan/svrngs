@@ -480,13 +480,6 @@ impl Offered {
         Some(Label::lent(&key, self.name.as_str(), carried))
     }
 
-    /// Whether this lend's pages read `other`: the one decider of what a
-    /// page reaches on a computer ([`crate::origin`]) and what
-    /// `/svrngs-reads` tells it ([`crate::surface::reads`]).
-    pub(crate) fn reads_one(&self, other: &Offered) -> bool {
-        self.reads.contains(&other.kind)
-    }
-
     /// Whether this lend is listed to an asker the groups `stands` answers
     /// yes to (LENDING_SCOPE §"Enforcement and disclosure"): a carried app
     /// only in its own group (COMMUNITY_APPS §7, found 3), a declared lend

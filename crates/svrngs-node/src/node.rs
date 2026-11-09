@@ -369,9 +369,7 @@ impl Node {
         let asking = Asking {
             host: host.clone(),
             door,
-            folders: folders.clone(),
             seeds,
-            oidc,
             room,
             plays,
             sessions: crate::session::Sessions::new(token.clone(), host.api_port),
@@ -396,7 +394,7 @@ impl Node {
                 .merge(crate::room::route::router(asking.clone()))
                 .merge(crate::play::router(asking.clone()))
                 .merge(crate::session::router(asking.sessions.clone())),
-            asking.oidc.clone().router(),
+            asking.door.oidc.clone().router(),
             crate::home::router(asking.clone(), rail_api),
             token,
         );
@@ -489,7 +487,7 @@ impl Node {
 
     /// This computer's folders, where `new` and `join` place a group's.
     pub fn folders(&self) -> &crate::folder::Folders {
-        &self.asking.folders
+        &self.asking.door.folders
     }
 
     /// What the round reads, and what makes a link ([`crate::invite`]).
@@ -933,9 +931,7 @@ pub struct Lending {
 pub(crate) struct Asking {
     pub(crate) host: Arc<Host>,
     pub(crate) door: crate::door::Door,
-    pub(crate) folders: crate::folder::Folders,
     pub(crate) seeds: SeedText,
-    pub(crate) oidc: crate::oidc::Provider,
     /// The room's handle: its turns, and what it serves now ([`crate::room`]).
     pub(crate) room: crate::room::owner::Room,
     /// Play's handle: its turns, and what it opens now ([`crate::play`]).
@@ -1021,7 +1017,7 @@ async fn people_lends(
     let people: BTreeMap<_, _> = groups.iter().flat_map(|(_, s)| s.clone()).collect();
     body["people"] = crate::rail::standing_json(&people);
     body["shelf"] = crate::folder::shelf();
-    body["changed"] = at.folders.changed(&groups, &asker);
+    body["changed"] = at.door.folders.changed(&groups, &asker);
     body["version"] = VERSION.into();
     Ok(Json(body).into_response())
 }

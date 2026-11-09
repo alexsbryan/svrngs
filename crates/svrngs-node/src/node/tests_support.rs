@@ -106,7 +106,7 @@ impl Node {
             .ok()
             .flatten();
         let through = read.and_then(|l| l.audience.ids()?.first().cloned());
-        self.asking.oidc.mint(crate::oidc::Code {
+        self.asking.door.oidc.mint(crate::oidc::Code {
             lend,
             client: client.into(),
             device: who.sub.clone(),

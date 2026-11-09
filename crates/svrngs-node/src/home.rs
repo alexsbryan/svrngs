@@ -241,7 +241,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
 /// happened.
 async fn connection(State(at): State<Asking>) -> Redirect {
     let said = at.host.check_now().await;
-    at.folders.nudge.notify_one();
+    at.door.folders.nudge.notify_one();
     Redirect::to(&format!("/?view=computer&{said}"))
 }
 
@@ -820,7 +820,7 @@ async fn join(State(at): State<Asking>, Json(j): Json<Joining>) -> Result<Respon
         Entered::In { seed, person } => (seed, Some(person.to_string())),
         Entered::AlreadyIn(seed) => (seed, None),
     };
-    let (_, placed) = at.folders.place(&seed);
+    let (_, placed) = at.door.folders.place(&seed);
     Ok(Json((seed.name().as_str(), person, placed.err())).into_response())
 }
 

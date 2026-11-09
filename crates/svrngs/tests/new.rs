@@ -489,7 +489,7 @@ fn refusals_use_only_a_persons_words() {
         Refusal::Busy("/home/sam/.svrngs/lock".into()),
         Refusal::Start,
         Refusal::NoName(name("house")),
-        Refusal::Keep(name("house")),
+        Refusal::Keep("house".into()),
         Refusal::NoGroup("work".into()),
         Refusal::Ambiguous {
             name: "house".into(),

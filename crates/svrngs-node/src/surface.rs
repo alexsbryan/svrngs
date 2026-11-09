@@ -196,7 +196,7 @@ async fn groups(State(at): State<Asking>) -> Response {
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
-        let waiting = at.folders.waiting_in(&id);
+        let waiting = at.door.folders.waiting_in(&id);
         tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps,
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
@@ -309,12 +309,12 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
     body["namespace"] = namespace.into();
     body["lent"] = lent.into();
     body["shelf"] = crate::folder::shelf();
-    body["changed"] = at.folders.changed(&groups, &at.host.actor);
+    body["changed"] = at.door.folders.changed(&groups, &at.host.actor);
     Ok(Json(body).into_response())
 }
 
 /// What the page of the lend `app` reads now: each lend of a kind its
-/// lender declared it reads ([`crate::lend::Offered::reads_one`]), in the
+/// lender declared it reads (`Offered.reads`), in the
 /// groups its lender and this computer stand in, and whose computer did not
 /// say what it lends. The one decider of what `/svrngs-reads` tells a page
 /// ([`reads`]) and what it reaches at another lend's origin ([`reaches`]).
@@ -371,7 +371,9 @@ fn reads_among<'a>(
             let lent = (l.offered.groups.as_ref()).is_some_and(|ids| ids.contains(g));
             lent && (groups.iter()).any(|(ns, s)| ns == g && s.contains_key(&l.key))
         });
-        in_group && named(l).as_ref() != Some(app) && reading.offered.reads_one(&l.offered)
+        in_group
+            && named(l).as_ref() != Some(app)
+            && reading.offered.reads.contains(&l.offered.kind)
     })
 }
 
@@ -550,7 +552,7 @@ pub(crate) async fn to(at: &Asking, app: &Label, uri: Uri) -> Handled {
     let Ok(Query(to)) = Query::<To>::try_from_uri(&uri) else {
         return Err(LendRefusal::bad_path("name a lender and a lend"));
     };
-    let carried = (at.folders.carried().into_iter()).find_map(|l| match l.source {
+    let carried = (at.door.folders.carried().into_iter()).find_map(|l| match l.source {
         Source::Carried(g) if Label::carried(l.kind.as_str(), &g) == *app => Some(g),
         _ => None,
     });

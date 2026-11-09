@@ -193,12 +193,6 @@ fn request(
     Ok(request)
 }
 
-/// Statuses whose response has no body, which a page's `Response` refuses
-/// one for (Fetch's "null body status").
-fn null_body(status: u16) -> bool {
-    matches!(status, 101 | 103 | 204 | 205 | 304)
-}
-
 /// Send one request on a new bi-stream of `conn` and answer the page's
 /// `Response`, its body a `ReadableStream` read off the stream as the page
 /// reads it.
@@ -259,7 +253,9 @@ pub async fn fetch(
     init.set_status(status);
     init.set_status_text(parts.status.canonical_reason().unwrap_or(""));
     init.set_headers(&headers);
-    let body = (!null_body(status)).then(|| {
+    // Statuses whose response has no body, which a page's `Response` refuses
+    // one for (Fetch's "null body status").
+    let body = (!matches!(status, 101 | 103 | 204 | 205 | 304)).then(|| {
         let chunks = incoming.into_data_stream().map(move |chunk| match chunk {
             Ok(bytes) => Ok(JsValue::from(js_sys::Uint8Array::from(&bytes[..]))),
             Err(e) => {

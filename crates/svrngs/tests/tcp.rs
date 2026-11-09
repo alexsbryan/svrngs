@@ -204,7 +204,6 @@ async fn share_tcp_lends_a_port_and_a_member_s_bytes_come_back() {
         lend: lend.clone(),
         secret: false,
         accounts: None,
-        running: true,
         client: None,
         issuer: None,
     };

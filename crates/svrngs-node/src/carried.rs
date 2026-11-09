@@ -162,7 +162,8 @@ pub(crate) async fn bring(at: State<Asking>, by: Option<Extension<Dialer>>, a: T
 fn brought(at: &Asking, group: &str, asker: &str, apps: &[String]) -> Given {
     let stands = at.host.rail.standing(group).is_ok_and(|s| s.names(asker));
     stands.then_some(()).ok_or(NOT_IN)?;
-    let dirs = dirs_of(&at.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
+    let dirs =
+        dirs_of(&at.door.folders.data_dir, group).map_err(|e| traced(group, NO_FOLDER, &e))?;
     let own = crate::surface::seed_of(at, group).map(|s| crate::group::folder_name(&s));
     let dir = dirs
         .iter()
@@ -203,7 +204,7 @@ pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes
     if by.is_some() {
         return Ok(Json(json!({ "sign": act })).into_response());
     }
-    at.folders.nudge.notify_one();
+    at.door.folders.nudge.notify_one();
     Ok(crate::rail::append_act(&at.host.rail, &group, act).await)
 }
 
@@ -212,7 +213,7 @@ fn says(at: &Asking, (group, app): (&str, &str), asker: &str) -> Result<Value, W
     let unread = |e: &dyn std::fmt::Display| traced(group, UNREAD, e);
     let standing = at.host.rail.standing(group).map_err(|e| unread(&e))?;
     standing.member(asker).ok_or(NOT_IN)?;
-    let read = at.folders.layout(group).map_err(|e| unread(&e))?;
+    let read = at.door.folders.layout(group).map_err(|e| unread(&e))?;
     let files = now(&read.placed, app);
     (!files.is_empty()).then_some(()).ok_or(NOT_HERE)?;
     Ok(json!({ "op": "runs", "app": app, "files": files }))

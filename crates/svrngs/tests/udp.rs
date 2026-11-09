@@ -179,7 +179,6 @@ async fn share_udp_lends_a_port_and_a_member_s_datagrams_come_back() {
         lend: lend.clone(),
         secret: false,
         accounts: None,
-        running: true,
         client: None,
         issuer: None,
     };

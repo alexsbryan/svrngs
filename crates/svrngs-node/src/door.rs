@@ -405,13 +405,6 @@ pub struct Door {
     pub(crate) oidc: crate::oidc::Provider,
 }
 
-impl Door {
-    /// [`reached`], asked of this door's groups.
-    pub(crate) fn reached(&self, lend: &Lend, group: &str) -> bool {
-        reached(&self.rail, lend, group)
-    }
-}
-
 /// Whether this computer's own key stands in `group` now: the one answer
 /// the door, the home page's selection and a code's redemption ask
 /// (ARCH 8; the key is the rail's signer, the one it dials with).
@@ -1255,7 +1248,7 @@ async fn holder_of(
     }
     // A group the lend does not reach grants nothing, so the signer's
     // identity is resolved only through a group this lend is lent to.
-    let eligible = |group: &str| door.reached(lend, group);
+    let eligible = |group: &str| reached(&door.rail, lend, group);
     let stands = || {
         let standing = door.rail.standing_in(&pass.person, eligible);
         standing.map(|(group, member)| (group, member.person, PersonKey(member.person_key)))
@@ -1473,7 +1466,7 @@ pub(crate) async fn lend_for(
     // explicit audience (LENDING_SCOPE). The audience is read from the
     // declaration just read, so a narrowing takes effect at the next
     // request (RUST_ARCH 8; LENDING_SCOPE §"Raw admission and sweep").
-    let eligible = |group: &str| door.reached(&lend, group);
+    let eligible = |group: &str| reached(&door.rail, &lend, group);
     let Asker {
         actor: whose,
         device,
@@ -1622,14 +1615,6 @@ pub(crate) async fn lend_for(
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return Err(LendRefusal::fault(UNCOUNTED));
     };
-    let (relay, rtt_ms, sent, received) = observed.as_ref().map_or((None, None, None, None), |o| {
-        (
-            o.relay.clone(),
-            Some(o.rtt.as_millis()),
-            Some(o.sent),
-            Some(o.received),
-        )
-    });
     let share = match verdict {
         Verdict::Full { using, limit } => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, using, limit,
@@ -1642,9 +1627,10 @@ pub(crate) async fn lend_for(
             None
         }
         Verdict::In { people, share } => {
+            let path = observed.as_ref();
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, people, share_bps = ?share,
-                declared_bps = ?lend.upload.map(lend::Upload::bps), relayed = ?observed.as_ref().map(|o| o.relay.is_some()), rtt_ms = ?rtt_ms,
-                sent = ?sent, received = ?received, relay = ?relay, "door: let in, and told their share of the declared upload");
+                declared_bps = ?lend.upload.map(lend::Upload::bps), relayed = ?path.map(|o| o.relay.is_some()), rtt_ms = ?path.map(|o| o.rtt.as_millis()),
+                sent = ?path.map(|o| o.sent), received = ?path.map(|o| o.received), relay = ?path.and_then(|o| o.relay.clone()), "door: let in, and told their share of the declared upload");
             if share.is_none() {
                 tracing::debug!(target: "door", lend = %lend.name, "door: the lend declares no upload, so no share is told");
             }
@@ -1797,7 +1783,7 @@ impl Drop for Carriage {
 /// held cannot be listed, and at debug when a page cannot be a header.
 fn pages(door: &Door, device: &DeviceKey, lend: &Lend) -> Option<HeaderValue> {
     let stands = |group: &String| {
-        if !door.reached(lend, group) {
+        if !reached(&door.rail, lend, group) {
             tracing::debug!(target: "door", group, lend = %lend.name, "door: a group the lend is not lent to, so its page is not told");
             return false;
         }

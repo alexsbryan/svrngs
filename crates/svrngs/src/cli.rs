@@ -659,7 +659,7 @@ pub enum Refusal {
     )]
     IssuerAway,
     #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
-    Keep(Name),
+    Keep(String),
     #[error("you're no longer in {0} on this computer, and you can't join it again from here yet: join from your phone or another computer instead")]
     Left(Name),
     #[error("you are in no group called {0} on this computer")]
@@ -676,8 +676,6 @@ pub enum Refusal {
     Prompt(std::io::Error),
     #[error("{0}'s readers were not let in: {1}")]
     Readers(LendName, String),
-    #[error("cannot keep {0} on this computer (RUST_LOG=debug says why)")]
-    KeepLend(LendName),
     #[error("cannot make a sign-in for it on this computer: {0}")]
     SignIn(#[from] svrngs_node::oidc::KeyFailure),
     #[error("cannot read what you lend on this computer: {0}")]
@@ -769,7 +767,6 @@ impl Refusal {
             | Refusal::Api(_)
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
-            | Refusal::KeepLend(_)
             | Refusal::SignIn(_)
             | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
@@ -1224,7 +1221,6 @@ impl Sharing {
             lend: self.lend.clone(),
             secret: self.secret,
             accounts: self.accounts,
-            running: true,
             issuer: self
                 .client
                 .as_ref()
@@ -1274,13 +1270,11 @@ pub enum Said {
     },
     /// `share`: `lend` declared, with a secret or none; `accounts`, how it
     /// signs each person in and what its lender does for that, when the
-    /// table of well-known ports says;
-    /// `running` when svrngs runs here already, so it is lent now.
+    /// table of well-known ports says.
     Shared {
         lend: Lend,
         secret: bool,
         accounts: Option<share::Signs>,
-        running: bool,
         /// The client its lender copies into the app's form, when it signs
         /// people in with svrngs: shown once, then never again.
         client: Option<SignInWithSvrngs>,
@@ -1383,7 +1377,6 @@ impl std::fmt::Display for Said {
                 lend,
                 secret,
                 accounts,
-                running,
                 client,
                 issuer,
             } => {
@@ -1454,12 +1447,10 @@ impl std::fmt::Display for Said {
                         client.client_id, client.client_secret.as_deref().unwrap_or_default())?;
                     writeln!(f, "{} Copy the secret now: it is not shown again. App setup guides: https://github.com/alexsbryan/svrngs/tree/main/apps", svrngs_node::oidc::DEVIATIONS)?;
                 }
-                if *running {
-                    writeln!(
-                        f,
-                        "svrngs is running here already, so they can open it now."
-                    )?;
-                }
+                writeln!(
+                    f,
+                    "svrngs is running here already, so they can open it now."
+                )?;
                 writeln!(f, "`svrngs unshare {}` stops lending it.", lend.name)
             }
             Said::Unshared(name) => writeln!(f, "You no longer lend {name}."),
@@ -1622,7 +1613,7 @@ async fn share_readers(root: &Path, lend: &Lend, port: NonZeroU16) -> Result<(),
 pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
     lend::declare(root, lend, secret.map(|s| (SECRET_HEADER, s))).map_err(|e| {
         tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
-        Refusal::KeepLend(lend.name.clone())
+        Refusal::Keep(lend.name.to_string())
     })
 }
 
@@ -1630,7 +1621,7 @@ pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), 
 pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, Refusal> {
     let keep = |e: lend::LendError| {
         tracing::debug!(target: "cli", lend = %name, error = %e, "cli: unshare — the lend cannot be withdrawn");
-        Refusal::KeepLend(name.clone())
+        Refusal::Keep(name.to_string())
     };
     let ids = groups.iter().map(|g| group_named(root, g).map(|s| s.id()));
     let ids = ids.collect::<Result<Vec<_>, _>>()?;
@@ -1787,7 +1778,7 @@ pub async fn join_group(
         Err(NotJoined::LinkRefused) => Err(Refusal::LinkRefused),
         Err(NotJoined::NameTaken { holder, group }) => Err(Refusal::NameTaken { holder, group }),
         Err(NotJoined::IssuerAway) => Err(Refusal::IssuerAway),
-        Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group)),
+        Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group.to_string())),
         Err(NotJoined::Left(group)) => Err(Refusal::Left(group)),
     }
 }
@@ -1865,7 +1856,7 @@ async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String,
             })
         }
         JoinOutcome::IssuerAway => return Err(Refusal::IssuerAway),
-        JoinOutcome::Keep { group } => return Err(Refusal::Keep(named(group)?)),
+        JoinOutcome::Keep { group } => return Err(Refusal::Keep(named(group)?.to_string())),
         JoinOutcome::Left { group } => return Err(Refusal::Left(named(group)?)),
     })
 }
@@ -2049,5 +2040,5 @@ async fn wait_online(node: &Node, tried: &[String]) {
 
 fn keep_refused(seed: &Seed, why: &str) -> Refusal {
     tracing::debug!(target: "cli", group = %seed.id(), why, "cli: refused — the group cannot be kept here");
-    Refusal::Keep(seed.name().clone())
+    Refusal::Keep(seed.name().to_string())
 }

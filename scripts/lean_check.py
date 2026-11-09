@@ -563,10 +563,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # limit alone (demo/runs/swarm/2026-11-09/): folder.rs Sends, turns across
 # fetchers. The pass above found the 44 it could; what remains is new state
 # and a select loop no code there already held. . to 20,787.
+# (2026-11-09) Economized ahead of capability connections steps 5 to 8, 33
+# counted lines: forwarding, one-caller wrappers, a field only ever true and
+# what the door and the record API each held a second handle of (the commit's
+# body names each cut). Lowered to one past where it landed; . to 20,857.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20890,
+    ".": 20857,
 
     "js": 8444,
 

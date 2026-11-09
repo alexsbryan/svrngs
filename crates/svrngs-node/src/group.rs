@@ -348,7 +348,7 @@ impl crate::node::Asking {
         let relay = self.host.made_at();
         self.host.keep_group(&seed, page.as_ref(), &relay)?;
         tracing::debug!(target: "group", group = %seed.id(), ?page, ?relay, "group: made for the home page");
-        Ok((self.folders.place(&seed), seed, beside))
+        Ok((self.door.folders.place(&seed), seed, beside))
     }
 }
 

@@ -206,7 +206,6 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         lend: lend.clone(),
         secret: true,
         accounts: None,
-        running: true,
         client: None,
         issuer: None,
     }
@@ -330,7 +329,6 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         lend: lend.clone(),
         secret: false,
         accounts: None,
-        running: true,
         client: None,
         issuer: None,
     }
@@ -549,7 +547,6 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         lend: read,
         secret: false,
         accounts: None,
-        running: false,
         client: None,
         issuer: None,
     };

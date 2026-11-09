@@ -243,18 +243,15 @@ impl Outcome {
             },
         }
     }
-
-    fn status(&self) -> StatusCode {
-        match self {
-            Outcome::In { .. } | Outcome::AlreadyIn { .. } => StatusCode::OK,
-            _ => StatusCode::CONFLICT,
-        }
-    }
 }
 
 impl IntoResponse for Outcome {
     fn into_response(self) -> Response {
-        (self.status(), Json(self)).into_response()
+        let status = match self {
+            Outcome::In { .. } | Outcome::AlreadyIn { .. } => StatusCode::OK,
+            _ => StatusCode::CONFLICT,
+        };
+        (status, Json(self)).into_response()
     }
 }
 
@@ -300,7 +297,7 @@ async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Re
         Entered::AlreadyIn(seed) => (seed, None),
     };
     tracing::debug!(target: "join", group = %seed.id(), ?person, "join: answered the command's join, by the svrngs running here");
-    let (dir, placed) = at.folders.place(&seed);
+    let (dir, placed) = at.door.folders.place(&seed);
     let (dir, placed) = (dir.display().to_string(), placed.err());
     let seed = seed.to_text();
     match person {

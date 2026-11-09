@@ -112,7 +112,9 @@ pub fn load_or_create(data_dir: &Path) -> Result<Key, KeyFailure> {
     let pair = EcdsaKeyPair::from_pkcs8(&ECDSA_P256_SHA256_FIXED_SIGNING, &bytes, &rng)
         .map_err(|e| KeyFailure::Rejected(path.clone(), e))?;
     let point = pair.public_key().as_ref().to_vec();
-    let kid = kid_of(&point);
+    // `kid`: the first 16 bytes of the point's SHA-256, in lowercase hex.
+    let digest = ring::digest::digest(&ring::digest::SHA256, &point);
+    let kid = hex::encode(&digest.as_ref()[..16]);
     tracing::debug!(target: "oidc", kid, "oidc: the sign-in key is ready");
     Ok(Key {
         pair,
@@ -188,12 +190,6 @@ impl Key {
         tracing::debug!(target: "oidc", kid = %self.kid, "oidc: the JWKS a client reads");
         jwks
     }
-}
-
-/// `point`'s `kid`: the first 16 bytes of its SHA-256, in lowercase hex.
-fn kid_of(point: &[u8]) -> String {
-    let digest = ring::digest::digest(&ring::digest::SHA256, point);
-    hex::encode(&digest.as_ref()[..16])
 }
 
 /// `bytes` base64url, unpadded: how a JWK spells `x` and `y`.
