@@ -273,7 +273,7 @@ async fn reach(
     // The issuer's dial is held as iroh holds one, a lender's as
     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
     // would end the issuer's before its cap did (v1ui-race (a)).
-    let held = if to.is_none() { Default::default() } else { dial::held(None) };
+    let held = to.as_ref().map_or_else(Default::default, |_| dial::held(None));
     let node_id = match to {
         None => match bound.issuer {
             Some(issuer) => issuer,

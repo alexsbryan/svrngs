@@ -321,7 +321,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "fallback": null }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }
@@ -361,7 +361,7 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "visiting": null, "folders": [], "fallback": null }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "visiting": null, "folders": [], "waiting": null, "fallback": null }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }
