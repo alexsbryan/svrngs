@@ -117,9 +117,9 @@ short name.
 
 ## Lending
 
-- **``svrngs: say what is on port 8080: `svrngs share 8080 --kind <kind>`, its own name if it is one svrngs knows: …``**
+- **``svrngs: say which program is on port 8080: `svrngs share 8080 --program <name>`, its own name if it is one svrngs knows: …``**
   svrngs can't tell what runs there by its number. Type the line again
-  with `--kind` and its name, such as `--kind llama-server`.
+  with `--program` and its name, such as `--program llama-server`.
 - **`svrngs: nothing answers on port 8096 on this computer: start it, then share it`**,
   or *"Nothing answers at http://localhost:8096 now: start it, then lend
   it."* on the home page. Start the program, then lend it again.
@@ -131,7 +131,7 @@ short name.
 - ***"You already lend something called jellyfin: give it another name."***
   Use `--name` with `svrngs share`, or stop lending the other one first.
 
-- ***"Give it a name and say what it is first: svrngs does not know what runs there."***
+- ***"Give it a name and say which program it is first: svrngs does not know what runs there."***
   On the home page, fill in **Its name:** and **What it is:**, one word
   each, such as `coder` and `llama-server`.
 - **`svrngs: you lend nothing called films from this computer; you lend …`**

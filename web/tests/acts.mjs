@@ -37,11 +37,11 @@ const unfold = async (page) => {
 // A fetch from `page` of the read lend at `path`, at the address the
 // page's `/svrngs-reads` gives it (a capability in the path, give-session),
 // or, `bare`, at its plain origin: svrngs's refusal is readable to the page.
-const fetched = (page, path, bare) =>
+const fetched = (page, path, bare, held) =>
   page.evaluate(
-    async ([read, path, bare]) => {
+    async ([read, path, bare, held]) => {
       const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
-      const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
+      const to = held ?? reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
       return fetch(`${to}${path}`).then(
         async (r) => ({
           status: r.status,
@@ -51,7 +51,7 @@ const fetched = (page, path, bare) =>
         (e) => ({ status: `${e}` }),
       );
     },
-    [args.read, path, bare],
+    [args.read, path, bare, held],
   );
 
 if (args.home) {
@@ -73,6 +73,17 @@ if (args.home) {
     await loaded();
     seen.folded = await unfold(home);
     seen.before = await section(home);
+    // The address it held before its Stop, as a page that kept one would:
+    // /svrngs-reads no longer lists a lend its person stopped.
+    const page = await context.newPage();
+    await page.goto(args.page);
+    const held = await page.evaluate(
+      async (read) =>
+        (await fetch('/svrngs-reads').then((r) => r.json())).lends.find((l) =>
+          l.address.startsWith(read),
+        )?.address,
+      args.read,
+    );
     await Promise.all([
       home.waitForEvent('load'),
       home
@@ -83,9 +94,7 @@ if (args.home) {
     await loaded();
     await unfold(home);
     seen.after = await section(home);
-    const page = await context.newPage();
-    await page.goto(args.page);
-    seen.stopped = await fetched(page, 'stopped');
+    seen.stopped = await fetched(page, 'stopped', false, held);
   } catch (e) {
     seen.error = `the page did not finish: ${e}`;
   }

@@ -1460,7 +1460,7 @@ async fn the_readers_secret_goes_only_to_another_app_s_get() {
         reply.text
     );
     assert!(
-        reply.text.contains("Only ada can change that"),
+        reply.text.contains("Apps can only read ada’s"),
         "the refusal names the lender: {}",
         reply.text
     );

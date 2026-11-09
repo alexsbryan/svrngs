@@ -64,12 +64,12 @@ Taste uses the first `llama-server` someone in your groups shares that
 answers, started with `--embeddings`, for example:
 
     llama-server -m nomic-embed-text-v1.5.Q8_0.gguf --embeddings --port 8080
-    svrngs share 8080 --kind llama-server --group <group>
+    svrngs share 8080 --program llama-server --group <group>
 
 ## How it's built
 
 - `taste.mjs` serves the page, keeps the diary, and lends itself with
-  `svrngs share <its place> --name taste --kind taste --reads jellyfin
+  `svrngs share <its place> --name taste --program taste --reads jellyfin
   --refuse /diary --group <each of your groups>`.
 - `page/` is the page. It reads each Jellyfin your groups share through
   the account its lender keeps for apps (`svrngs share --readers`,

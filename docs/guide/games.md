@@ -13,12 +13,12 @@ Sam runs Minecraft: Java Edition's server on their computer, on its usual
 port, 25565, and lends it to the group:
 
 ```
-~/.local/bin/svrngs share 25565 --tcp --kind minecraft --name minecraft --group <group>
+~/.local/bin/svrngs share 25565 --tcp --program minecraft --name minecraft --group <group>
 ```
 
 svrngs says *You lend minecraft (TCP port 25565) to everyone in your
 groups, …*. `--tcp` lends the port as it is, not as a web page. A game port
-needs `--kind` to say what it is; `--name` is what friends see. `--limit`
+needs `--program` to say which program it is; `--name` is what friends see. `--limit`
 works here too, if only so many may play at once.
 
 ## Lend your Factorio game
@@ -27,7 +27,7 @@ Factorio speaks UDP on port 34197. Bo hosts a game from Factorio's
 Multiplayer screen, then lends it with `--udp` in place of `--tcp`:
 
 ```
-~/.local/bin/svrngs share 34197 --udp --kind factorio --name factorio --group <group>
+~/.local/bin/svrngs share 34197 --udp --program factorio --name factorio --group <group>
 ```
 
 For any other game, use its port and whichever of the two it speaks.

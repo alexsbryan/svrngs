@@ -26,6 +26,7 @@ import { get } from './routes.js?v=__VERSION__';
  * @property {string | null} name
  * @property {Signs | null} signs
  * @property {string[] | null} keeps
+ * @property {string | null} [unknown]
  */
 
 /**
@@ -64,7 +65,7 @@ export const needs = (shown) => {
     shown.keeps &&
     shown.keeps.length > 0 &&
     `svrngs keeps these parts of it from everyone: ${shown.keeps.join(', ')}.`;
-  return [accounts, header, keeps].filter(Boolean).join(' ');
+  return [accounts, header, keeps, shown.unknown].filter(Boolean).join(' ');
 };
 
 /** @type {Machine<State, Message, Effect>} */

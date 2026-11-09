@@ -1606,7 +1606,7 @@ pub(crate) async fn lend_for(
         Admit::Refused => {
             let by = lender_of(door).map_or("the person who lends it".into(), |p| p.to_string());
             let name = &lend.name;
-            let words = format!("Apps can only read {name}. Only {by} can change that.");
+            let words = format!("Apps can only read {by}’s {name}.");
             return Err(LendRefusal::closed(words));
         }
         Admit::Readers => readers,

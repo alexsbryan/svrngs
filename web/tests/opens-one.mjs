@@ -6,11 +6,10 @@
 // `#said`, then draws a link to one by it, "Open notes". The link is
 // followed as a person follows it, in a tab of its own: where the opener
 // sent it, `sent`, its status and `Location` as the browser saw them, and
-// there the opened lend's page reads the lend of `args.read` it declared it
-// reads, as an app builds on /svrngs-reads.
+// there the opened lend's page asks /svrngs-reads what it may read, as an
+// app builds on it, and is told `read`.
 //
-//   node web/tests/opens-one.mjs '{"engine": "chromium"|"webkit", "url": "<the carried app's origin>",
-//     "read": "<the read lend's origin>"}'
+//   node web/tests/opens-one.mjs '{"engine": "chromium"|"webkit", "url": "<the carried app's origin>"}'
 //
 // Exit 0 with the JSON line, a step that did not finish said in it as
 // `error`; 3, naming the install command, when Playwright or its browser
@@ -36,13 +35,10 @@ try {
   ]);
   await arrived(tab);
   seen.url = tab.url();
-  seen.read = await tab.evaluate(async (read) => {
+  seen.read = await tab.evaluate(async () => {
     const reads = await fetch('/svrngs-reads').then((r) => r.json());
-    const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
-    const r = await fetch(to);
-    const error = (await r.json().catch(() => ({}))).error ?? null;
-    return { status: r.status, refused: r.headers.get('x-svrngs-refused'), error };
-  }, args.read);
+    return { addresses: reads.lends.length, new: (reads.new ?? []).map((l) => l.name) };
+  });
 } catch (e) {
   seen.error = `the page did not finish: ${e}`;
 }

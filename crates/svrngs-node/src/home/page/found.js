@@ -19,7 +19,7 @@ import { needs } from './running-look.js?v=__VERSION__';
 /** @type {[field: 'name' | 'kind', words: string][]} */
 const FIELDS = [
   ['name', 'Its name: '],
-  ['kind', 'What it is: '],
+  ['kind', 'Which program: '],
 ];
 
 /**
@@ -57,7 +57,7 @@ export function Found({ r: shown, named, groups, home }) {
   const known = named.length ? `; if it is ${named.join(' or ')}, say that` : '';
   const said = shown.kind
     ? `${shown.kind}, at ${at}. ${needs(shown)} `
-    : `Something at ${at}. To lend it, give it a name and say what it is, each one word${known}. `;
+    : `Something at ${at}. To lend it, give it a name and say which program it is, each one word${known}. `;
   const fields =
     !shown.kind &&
     FIELDS.map(

@@ -262,7 +262,7 @@ in_chromium!(
     /// Ada's home page is open, her page said yes to nowhere; she says yes
     /// to it elsewhere (its yes kept, as /to keeps it), and her page,
     /// hidden and shown again, says in "What acts as you" that her page
-    /// opens her friends' k as her, with no reload. Watched failing on v1
+    /// opens nothing yet (a yes the file kept names no lend), with no reload. Watched failing on v1
     /// (`UI` flipped), which reads /reaching once a load (acts.mjs:60
     /// reloads it).
     a_yes_in_another_tab_is_shown_on_visible
@@ -272,7 +272,7 @@ async fn a_yes_in_another_tab_is_shown_on_visible(engine: Engine) {
     let dir = tempfile::tempdir().unwrap();
     let (ada, home, _) = ada(dir.path(), &relay).await;
     let hold = dir.path().join("hold");
-    let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary"], "hold": hold, "said": "opens your friends’ k as you. Since", "at": "#acts", "within": 30_000 });
+    let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary"], "hold": hold, "said": "opens nothing of your friends’ as you", "at": "#acts", "within": 30_000 });
     let driven = tokio::spawn(drive(engine, "pages/members.mjs", args, None));
     let shown = hold.with_extension("shown");
     let told = tokio::time::timeout(Duration::from_secs(90), async {

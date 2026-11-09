@@ -11,7 +11,7 @@ fn argv(args: &[&str]) -> Vec<String> {
 }
 
 /// **Each flag taking a value wants one, and an argument that is no flag
-/// takes none** (#147): every one of the twelve, last on the line, is
+/// takes none** (#147): every one of the thirteen, last on the line, is
 /// refused as wanting a value; and an empty argument before a word leaves
 /// the word unexpected, never read as the empty argument's value. Red on
 /// the plant the finding names, a doubled space in the space-joined string
@@ -23,6 +23,7 @@ fn each_flag_taking_a_value_wants_one_and_no_other_argument_takes_one() {
         "--as",
         "--origin",
         "--name",
+        "--program",
         "--kind",
         "--limit",
         "--refuse",

@@ -9,7 +9,7 @@ computer answers again.
 Lend it from a checkout of svrngs, with svrngs running:
 
 ```
-node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --kind doc --group <group> < /dev/null
+node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --program doc --group <group> < /dev/null
 ```
 
 `--keep` is where the doc is kept, as one JSON line per edit

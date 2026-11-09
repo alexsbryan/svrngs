@@ -58,7 +58,7 @@ a port: Jellyfin and Navidrome for the library, Immich for photos,
 Audiobookshelf and Calibre-Web for books, Nextcloud and Paperless-ngx for
 files, Actual for money, Mealie and Grocy for plans, Home Assistant, and
 llama-server for a model. Run one on any member's computer, `svrngs share
-<port> --kind <name> --group <group>`, and everyone in that group can open it: no port
+<port> --program <name> --group <group>`, and everyone in that group can open it: no port
 opened, no tunnel, nothing for them to install. An app that takes the
 signed-in person from a request header lets each person straight in once
 its lender names `X-Svrngs-User` in its settings; `svrngs share` knows
@@ -212,7 +212,7 @@ through their own door's rules too, its secret injected and its limit
 counted (`door::Who::Own`).
 
 **A port, not a page.** A program that speaks UDP or TCP is lent with
-`svrngs share <port> --udp --kind <kind>`, or `--tcp`: its declaration says
+`svrngs share <port> --udp --program <name>`, or `--tcp`: its declaration says
 `"raw": "udp"` or `"raw": "tcp"`, and the door carries it on a protocol of
 its own (`Alpn::Port`), never as a page. A member's computer opens one
 connection for one lend, naming the lend and how it travels. Each use is
@@ -372,9 +372,17 @@ that lend as the person, as a lent page's read does ("Lent apps", call 6;
 `origin.rs`, `routed`). It reaches only a lend of a kind it declares, lent
 to its group by a computer standing in it, else `closed`; and only on the
 person's yes, which opening it from the home page says, else `unasked`,
-before the yes and after its Stop. The yes is kept with the kinds the open
-named (`Choice::covers`), so a version reading another kind is `unasked`
-until its line has been read. The app's origin, not a capability, says which
+before the yes and after its Stop. The yes names particular lends, the ones
+its open showed and left ticked (`Choice`'s `lends`; `left`, those the
+person unticked, so their next open draws them unticked), so a lend new
+since then is `unasked`, and `/svrngs-reads` lists it apart, under `new`,
+with no address, for the app to tell its person to open it from the home
+page; the next open from there names it, and needs no extra click, the Open
+button posting what its line shows. A yes from before this named kinds,
+under `reads`, and parses as naming none: `unasked` until the next open.
+This computer's own app needs no yes and reads what its person declared. A
+phone's open stays by kind for now, the pass it signs naming the lends then
+(PLAN §2, the plan's step 7). The app's origin, not a capability, says which
 app asks: a capability in an address is something the page could read.
 
 At this origin a lend's answer is `'self'` to the browser, so `routed` does
@@ -1024,11 +1032,15 @@ their page's self waits for a phone that makes a device link (PLAN §2).
 **Lent apps, as they come.** North star 2 holds for the apps people already
 self-host: `svrngs share 8096` lends Jellyfin as it comes, and someone who
 never used it opens it from the list, plays and seeks, on a computer or a
-phone. A friend's model is lent the same way: `svrngs share <port> --kind
+phone. A friend's model is lent the same way: `svrngs share <port> --program
 llama-server`, its chat page opened from the list and its OpenAI-compatible
-API given to a program. A kind is its lender's word, never guessed from a
-port the well-known table does not name — 8080 is many programs' — and
-`share` on a port it does not know names the kinds it does. What a lend keeps
+API given to a program. Which program a lend is, is its lender's word
+(`--program`, `--kind` kept as its older spelling, and every byte on the wire
+and in the record still spells it `kind`), never guessed from a port the
+well-known table does not name — 8080 is many programs' — and `share` on a port
+it does not know names the programs it does. A name the table has no row for is
+still lent, and said at share time, a slip naming the row it likely meant
+(`share::unrecognized`), since a typo otherwise drops every protection silently. What a lend keeps
 back is the table's, its lender typing none (`keeps:`, `share::kept_of`):
 for llama-server, the routes that would show one person's chats to the others
 or change the server for everyone (`/slots`, `/v1/stream`, `/v1/streams`,
@@ -1157,7 +1169,7 @@ Seven calls:
    account its lender keeps for readers, if one is kept, signed in once as
    the table says (`svrngs share --readers`, `share::readers_of`), and bare
    of every lender credential if not; anything else it sends is refused
-   `closed` before the service is asked, and says who can change that. A
+   `closed` before the service is asked, and says whose it is. A
    reading page's one POST ended a Jellyfin token kept for all, and a
    secret sent on every request replaced each person's own sign-in. The
    person opening a lend and a lend's own page go on as themselves, with
@@ -1234,8 +1246,10 @@ Seven calls:
    when someone says no is the real run's to record.
 
    So a lent page composes others: at its own origin, `GET /svrngs-reads`
-   answers each lend it reads — its kind, name, lender and the address to
-   ask it at — and the people whose computer did not answer, never the pass
+   answers each lend it reads and its person's yes names ("What it reads
+   beside its own") — its kind, name, lender and the address to ask it at,
+   and under `new` a lend the yes does not name yet, with no address — and
+   the people whose computer did not answer, never the pass
    or its key (`surface.rs`, `read_by`, one decider for a phone and a
    computer). On a phone, a page sent to such an address goes through the
    group's page, which signs that lend's pass, so a lend opens at a path on
@@ -1276,8 +1290,8 @@ Seven calls:
    A page reaches its own lend and the kinds its lender
    declared it reads, in a group both lenders and this computer stand in,
    else `closed`. Another computer's app reaches them as this computer's
-   person only on that person's yes, else `unasked`, "Say yes on your home
-   page: open this app from there.", and so does a carried app, its group's
+   person only on that person's yes, else `unasked`, "Open it from your home
+   page first.", and so does a carried app, its group's
    code, not its person's ("What it reads beside its own"): per person and
    per app, never per
    version, since live code can't be pinned, kept beside the lends' yeses

@@ -188,6 +188,8 @@ try {
   const links = () => nav.locator('a').allTextContents();
   // The page's foot, and #intro, where B shows them and nowhere else.
   const shows = async (name, { intro = false, foot = false }) => {
+    // Drawn last, once no feature's file holds it while it reads (home-page.js `Foot`).
+    if (foot) await page.locator('#home p.address').waitFor();
     const button = page.getByRole('button', { name: 'Check the connection now', exact: true });
     assert.equal(await page.locator('#intro').isVisible(), intro, `${name}: intro`);
     assert.equal(await button.count(), foot ? 1 : 0, `${name}: the connection button`);

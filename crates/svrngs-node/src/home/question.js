@@ -23,6 +23,7 @@
  * @property {string | null} [group]
  * @property {string} [asks] the lender's words, asking for a yes
  * @property {string[]} [reads] the kinds it opens as you (`--reads`)
+ * @property {ReadLend[]} [reading] what its open names, on a computer (surface.rs `opening`)
  * @property {number | null} [version] the lending computer's svrngs
  * @property {number} [limit] how many may have it open at once
  * @property {number} [using] how many have it open now
@@ -86,7 +87,7 @@ export const spoken = (kind) => kind.replaceAll('-', ' ');
  * @returns {string}
  */
 export const label = (lend) => /** @type {string} */ (new URL(lend.origin).hostname.split('.')[0]);
-/** @param {Lend} lend */
+/** @param {Pick<Lend, 'name' | 'kind' | 'person' | 'group' | 'called'>} lend */
 export const named = (lend) => {
   if (lend.group) return spoken(lend.kind);
   const name = lend.name === lend.kind ? lend.name : `${lend.name} (${lend.kind})`;
@@ -121,8 +122,10 @@ const does = (kind, shelf) =>
  */
 export const agreed = (lend, shelf, group) => {
   const reads = lend.reads ?? [];
+  // On a computer the open's own line names them (`readLine`); a phone's
+  // open is by kind until its yes names lends.
   const also =
-    reads.length > 0
+    reads.length > 0 && !lend.reading
       ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`
       : '';
   if (lend.group) {
@@ -374,20 +377,61 @@ export const namesakes = (same, name, verb) => {
 export const carrying = (kind, shelf) =>
   `${spoken(kind)} reads and writes ${does(kind, shelf).replace(/\.$/, '')}, when you open it.`;
 
-// What the person said, `said`, of `lend` opening their friends' lends of
-// the kinds it reads as them, since or on its day; `lend`
-// undefined when it is not lent now.
+// What the person said, `said`, of `lend` opening their friends' lends as
+// them, since or on its day; `lend` undefined when it is not lent now. A
+// computer's yes names its lends, so it says what they chose, and a yes
+// from before that named none reads as nothing until the next open; a
+// phone's has no list yet, and stays by kind.
 /**
  * @param {(Lend & { reads: string[] }) | undefined} lend
- * @param {{ said: string, at: number }} said
+ * @param {{ said: string, at: number, lends?: string[] }} said
  */
 export const reading = (lend, said) => {
   const who = lend ? named(lend) : 'An app not lent now';
-  const what = lend
-    ? `your friends’ ${lend.reads.map(spoken).join(' and ')}`
-    : 'your friends’ things';
-  if (said.said === 'yes') return `${who} opens ${what} as you. Since ${day(said.at)}. `;
-  return `${who} stopped opening ${what} as you on ${day(said.at)}. Opening it again says yes again.`;
+  const kinds = lend ? lend.reads.map(spoken).join(' and ') : 'things';
+  if (said.said === 'yes' && said.lends?.length === 0)
+    return `${who} opens nothing of your friends’ as you. To choose what it can, open it from your home page. `;
+  const chosen = said.lends ? `the ${kinds} you chose,` : `your friends’ ${kinds}`;
+  if (said.said === 'yes') return `${who} opens ${chosen} as you. Since ${day(said.at)}. `;
+  return `${who} stopped opening your friends’ ${kinds} as you on ${day(said.at)}. Opening it again says yes again.`;
+};
+
+// What the line beside a reading app's Open says: who it names, by person,
+// or by how many past a handful (`HANDFUL`, within the 20-word budget a
+// line was read to, demo/xenia findings); then what its last yes didn't
+// name, or who can see it. Kinds, `spoken`, say what it reads: svrngs
+// cannot say "films" for a program it does not know.
+const HANDFUL = 4;
+/** @param {string[]} words */
+const list = (words) =>
+  words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words.at(-1)}` : `${words[0]}`;
+/** @param {string[]} people */
+const owners = (people) => list(people.map((person) => `${person}’s`));
+/**
+ * A lend its open names, as /v1/lends answers it (surface.rs `opening`).
+ * @typedef {{ label: string, person: string, name: string, kind: string, ticked: boolean, new: boolean }} ReadLend
+ */
+/**
+ * @param {ReadLend[]} on  the lends left ticked
+ * @param {number} lent  how many it could read
+ * @param {string[]} kinds  what it reads, the program's names
+ */
+export const readLine = (on, lent, kinds) => {
+  const read = kinds.map(spoken).join(' and ');
+  if (lent === 0) return `Reads your friends’ ${read}. Nobody lends one now.`;
+  if (on.length === 0) return `Reads none of your friends’ ${read}.`;
+  /** @param {ReadLend[]} lends */
+  const persons = (lends) => [...new Set(lends.map((one) => one.person))];
+  const byKind = [...new Set(on.map((one) => one.kind))].map(
+    (kind) => `${owners(persons(on.filter((one) => one.kind === kind)))} ${spoken(kind)}`,
+  );
+  const said =
+    persons(on).length > HANDFUL ? `${read} from ${persons(on).length} friends` : list(byKind);
+  const fresh = persons(on.filter((one) => one.new));
+  const after = fresh.length
+    ? `${owners(fresh)} ${fresh.length > 1 ? 'are' : 'is'} new since you last opened it.`
+    : 'They can see it’s you, and what it asks for.';
+  return `Reads ${said}. ${after}`;
 };
 
 // Who can decide for you (§4): the devices holding a key of the person

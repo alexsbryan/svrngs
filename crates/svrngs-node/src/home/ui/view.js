@@ -23,7 +23,7 @@ import htm from '../vendor/htm.js?v=__VERSION__';
  */
 
 export const html = htm.bind(h);
-export { render, useEffect };
+export { render, useEffect, useState };
 
 // A machine's state (ui/machine.js), the view drawn again on each change.
 // `useSyncExternalStore` is preact/compat's alone, so it is `useState` with

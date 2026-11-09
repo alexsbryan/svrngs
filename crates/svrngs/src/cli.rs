@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> --group G... [--name N] [--kind K] [--limit L] [--refuse P]... [--upload M] [--reads K]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--program P] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -164,7 +164,7 @@ svrngs — keep what your group shares on your own computers.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
-  svrngs share <port> --group <group>... [--name <name>] [--kind <kind>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <kind>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+  svrngs share <port> --group <group>... [--name <name>] [--program <name>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in each
       --group, by its name or the start of its id; say it again for more.
       Each reaches it through this computer, as themselves. It asks for the
@@ -174,15 +174,16 @@ svrngs — keep what your group shares on your own computers.
       each person an account there: each signs in once. For one it knows
       takes each person from svrngs (Navidrome on 4533, Calibre-Web on
       8083) it asks none, and says what to set in it. --name is what
-      they see it as; else its kind. --kind says what it is, when svrngs
-      does not know the port; without it, svrngs says the kinds it knows.
-      Of a kind it knows, it keeps back, and says, what shows one person's
-      use of it to the others or changes it for everyone. --limit is how
+      they see it as; else its program's name. --program says which
+      program it is, when svrngs does not know the port; without it, svrngs
+      says the programs it knows. Of a program it knows, it keeps back, and
+      says, what shows one person's use of it to the others or changes it
+      for everyone. --limit is how
       many people may use it at once; else everyone in those groups. --refuse keeps a path of it from them; say it again
       for more. --upload is this computer's upload, in Mbit/s, as a speed
       test states it: each person using it is told their share of it.
       --reads lets it open, as whoever opens it, what your groups lend of
-      <kind>; say it again for more. --ask says, in your words,
+      <program>; say it again for more. --ask says, in your words,
       what an app receives from it: then an app uses it only once the
       person it acts for says yes, on their own home page, and stops when
       they say stop. --sign-in-with-svrngs lets an app that speaks OpenID
@@ -192,7 +193,7 @@ svrngs — keep what your group shares on your own computers.
       --readers asks for an account you made in it for your groups: apps
       that read it see what that account sees, and only look.
       --udp or --tcp lends a port that speaks UDP or TCP as it is, not
-      as a page: it takes a --kind, and --name and --limit as any lend
+      as a page: it takes a --program, and --name and --limit as any lend
       does.
 
   svrngs unshare <name> [--group <group>]...
@@ -360,8 +361,9 @@ pub enum Verb {
     Help,
 }
 
-/// What `--kind` and `--reads` want, said alike.
-const A_KIND: &str = "a kind: letters, digits, - and _ only";
+/// What `--program` (and its older spelling, `--kind`) and `--reads` want,
+/// said alike.
+const A_KIND: &str = "a program's name: letters, digits, - and _ only";
 
 /// Which of a keeper's two asks of a person in a group (U7): a closed set
 /// (AGENTS 9), each posted to its own route on svrngs running here.
@@ -406,8 +408,8 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--relay" => matches!(verb.as_str(), "new" | "link"),
             "--at" => verb == "relay",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
-            "--as" | "--origin" | "--name" | "--kind" | "--limit" | "--refuse" | "--upload"
-            | "--reads" | "--sign-in" | "--folder" | "--group" | "--ask" => true,
+            "--as" | "--origin" | "--name" | "--program" | "--kind" | "--limit" | "--refuse"
+            | "--upload" | "--reads" | "--sign-in" | "--folder" | "--group" | "--ask" => true,
             _ => false,
         };
         let raw = match valued {
@@ -429,7 +431,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 relays.push(svrngs_node::relay::parse(&url).map_err(|_| not("a relay's address"))?);
             }
             "--name" => name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?),
-            "--kind" => kind = Some(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
+            "--program" | "--kind" => kind = Some(Kind::parse(&raw).map_err(|_| not(A_KIND))?),
             "--limit" => {
                 let what = "a number of people: 1 or more";
                 limit = Some(raw.parse::<NonZeroU16>().map_err(|_| not(what))?);
@@ -499,7 +501,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         && verb != "share"
     {
         return Err(
-            "--name, --kind, --limit, --refuse, --upload, --reads, --ask and --sign-in-with-svrngs are `share` flags"
+            "--name, --program, --limit, --refuse, --upload, --reads, --ask and --sign-in-with-svrngs are `share` flags"
                 .into(),
         );
     }
@@ -1396,6 +1398,9 @@ impl std::fmt::Display for Said {
                         if n.get() == 1 { "person" } else { "people" })?,
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
+                }
+                if let Some(told) = share::unrecognized(&lend.kind).filter(|_| raw.is_empty()) {
+                    writeln!(f, "{told}")?;
                 }
                 match accounts {
                     Some(share::Signs::Accounts(how)) => writeln!(

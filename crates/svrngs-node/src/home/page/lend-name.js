@@ -6,7 +6,7 @@
 // not open in a tab: its Play is in the row.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { agreed, label, named } from '../question.js?v=__VERSION__';
-import { Reach } from './reach.js?v=__VERSION__';
+import { Opening, Reach } from './reach.js?v=__VERSION__';
 /** @import { Group, Lends, Lent } from './group.js?v=__VERSION__' */
 
 /**
@@ -22,9 +22,13 @@ export function LendName({ l: lend, shelf, g: group }) {
   // other through `/to` (home.rs), which gives its origin a code of its
   // own that becomes its session there.
   const to = `/to?${new URLSearchParams({ lend: label(lend) })}`;
-  const opener =
+  const words = `Open ${named(lend)}`;
+  const plain =
     lend.reads && lend.reads.length > 0
-      ? html`<${Reach} app=${label(lend)} words=${`Open ${named(lend)}`} reads=${lend.reads} />`
-      : html`<a href=${to} target="_blank">Open ${named(lend)}</a>`;
+      ? html`<${Reach} app=${label(lend)} words=${words} />`
+      : html`<a href=${to} target="_blank">${words}</a>`;
+  const opener = lend.reading
+    ? html`<${Opening} app=${label(lend)} words=${words} reading=${lend.reading} kinds=${lend.reads ?? []} />`
+    : plain;
   return html`<td>${opener}${` ${agreed(lend, shelf, group)}`}</td>`;
 }

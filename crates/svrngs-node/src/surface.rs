@@ -39,6 +39,8 @@
 //!   key and the signature, each in hex (onair-sign, [`sign`]). The core
 //!   says what is signed and how one is checked ([`svrngs_core::app`]).
 
+use std::collections::BTreeMap;
+
 use axum::extract::{Query, State};
 use axum::http::{StatusCode, Uri};
 use axum::response::{IntoResponse, Redirect, Response};
@@ -52,8 +54,8 @@ use crate::door::choices;
 use crate::door::LendRefusal;
 use crate::folder::carried::Handled;
 use crate::group::Namesake;
-use crate::lend::{Kind, Source};
-use crate::node::{Asking, Lending, Unlisted};
+use crate::lend::Source;
+use crate::node::{Asking, Groups, Lending, Unlisted};
 use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
 use crate::seed::Seed;
@@ -283,16 +285,22 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
         let refused = refused_as(StatusCode::CONFLICT, &namespace, "not_in_roster", why);
         return Err(refused);
     };
-    let groups = [(namespace.clone(), standing)];
+    let groups: Groups = vec![(namespace.clone(), standing)];
     let (lent, unlisted) = at.lent(&groups, &own, None).await?;
     let host = &at.host;
-    let lent: Vec<serde_json::Value> = lent
-        .into_iter()
+    // What each open says it reads needs the person's yeses: unreadable,
+    // it says only the kinds, and its open then names no lend.
+    let yeses = choices::reachings(&at.door).ok();
+    tracing::debug!(target: "surface", namespace, yeses = ?yeses.as_ref().map(BTreeMap::len), "surface: lends — the yeses each open is told, none when they cannot be read");
+    let lent: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
             let origin = host.origin(&l.key, &l.offered, l.version)?;
-            let mut l = serde_json::to_value(l).ok()?;
-            l["origin"] = origin.into();
-            Some(l)
+            let mut shown = serde_json::to_value(l).ok()?;
+            shown["origin"] = origin.into();
+            if let Some(reading) = opening(l, &lent, &groups, yeses.as_ref(), &host.actor) {
+                shown["reading"] = reading;
+            }
+            Some(shown)
         })
         .collect();
     tracing::debug!(target: "surface", namespace, lent = lent.len(), ?unlisted,
@@ -318,7 +326,7 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
 async fn read_by(
     at: &Asking,
     app: &Label,
-) -> Result<(Vec<Lending>, Unlisted, Vec<String>, Vec<Kind>), Response> {
+) -> Result<(Vec<Lending>, Unlisted, Vec<String>), Response> {
     let reader = match crate::origin::serving(at, app).await? {
         crate::origin::Serving::Own => at.host.actor.clone(),
         crate::origin::Serving::At(_, lender) => lender,
@@ -343,20 +351,64 @@ async fn read_by(
         tracing::debug!(target: "surface", %app, "surface: reads refused — the lend is not lent now");
         return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here"));
     };
-    // A carried app reads only in its own group: lent to it, by one standing in it.
-    let own = |l: &&Lending| {
-        (reading.offered.group.as_ref()).is_none_or(|g| {
+    let read: Vec<_> = reads_among(app, reading, &lent, &groups).cloned().collect();
+    tracing::debug!(target: "surface", %app, group = ?reading.offered.group, read = read.len(), "surface: what the page reads, its kinds, a carried app's only in its own group");
+    Ok((read, unlisted, silent))
+}
+
+/// What the lend `reading`, whose label is `app`, reads among `lent`: each
+/// lend of a kind it declares, never itself, a carried app's only in its
+/// own group, lent to it, by one standing in it. The one decider of
+/// [`read_by`] and of what an open names ([`opening`]).
+fn reads_among<'a>(
+    app: &'a Label,
+    reading: &'a Lending,
+    lent: &'a [Lending],
+    groups: &'a Groups,
+) -> impl Iterator<Item = &'a Lending> {
+    lent.iter().filter(move |l| {
+        let in_group = (reading.offered.group.as_ref()).is_none_or(|g| {
             let lent = (l.offered.groups.as_ref()).is_some_and(|ids| ids.contains(g));
             lent && (groups.iter()).any(|(ns, s)| ns == g && s.contains_key(&l.key))
+        });
+        in_group && named(l).as_ref() != Some(app) && reading.offered.reads_one(&l.offered)
+    })
+}
+
+/// What opening `l` reads, for its line and ticks on the home page: each
+/// lend it would name, whose, and whether it is ticked or new since the
+/// person's last yes. `None` for a lend reading nothing; for this
+/// computer's own app, which needs no yes ([`reaches`]), so it lists no
+/// ticks; and where the yeses cannot be read, as its open then names no lend.
+fn opening(
+    l: &Lending,
+    lent: &[Lending],
+    groups: &Groups,
+    yeses: Option<&BTreeMap<Label, choices::Choice>>,
+    me: &str,
+) -> Option<serde_json::Value> {
+    let own = l.key == me && l.offered.group.is_none();
+    if own || l.offered.reads.is_empty() {
+        return None;
+    }
+    let app = named(l)?;
+    // A yes from before this names no lend, so it says nothing is new.
+    let named_any = |c: &&choices::Choice| !(c.reads.is_empty() && c.left.is_empty());
+    let yes = yeses?
+        .get(&app)
+        .filter(named_any)
+        .filter(|c| c.said == choices::Said::Yes);
+    let reading: Vec<serde_json::Value> = reads_among(&app, l, lent, groups)
+        .filter_map(|read| {
+            let label = named(read)?;
+            let left = yes.is_some_and(|c| c.left.contains(&label));
+            let new = !left && yes.is_some_and(|c| !c.reads.contains(&label));
+            Some(serde_json::json!({ "label": label, "person": read.person, "name": read.offered.name,
+                "kind": read.offered.kind, "ticked": !left, "new": new }))
         })
-    };
-    let read: Vec<_> = (lent.iter())
-        .filter(|l| named(l).as_ref() != Some(app) && reading.offered.reads_one(&l.offered))
-        .filter(own)
-        .cloned()
         .collect();
-    tracing::debug!(target: "surface", %app, group = ?reading.offered.group, read = read.len(), "surface: what the page reads, its kinds, a carried app's only in its own group");
-    Ok((read, unlisted, silent, reading.offered.reads.clone()))
+    tracing::debug!(target: "surface", %app, reading = reading.len(), yes = yes.is_some(), "surface: lends — what its open names, ticked or new since the person's last yes");
+    Some(reading.into())
 }
 
 /// A lend's label, as its lender lists it ([`crate::lend::Offered::label`]).
@@ -364,32 +416,37 @@ fn named(l: &Lending) -> Option<Label> {
     l.offered.label(&l.key, l.version)
 }
 
+/// What the person said of `app` reaching others' lends: `None` for this
+/// computer's own app, which reads what its person declared; a carried app
+/// is its group's code, not this computer's person's, so it reaches on
+/// their yes, as another computer's app does.
+async fn said_of(at: &Asking, app: &Label) -> Result<Option<Option<choices::Choice>>, Response> {
+    let serving = crate::origin::serving(at, app).await?;
+    let own =
+        matches!(app.whose(), Whose::Computer(_)) && matches!(serving, crate::origin::Serving::Own);
+    Ok(if own {
+        None
+    } else {
+        Some(choices::reaching(&at.door, app)?)
+    })
+}
+
 /// Whether the page of the lend `app` may reach the lend `label`
 /// ([`crate::origin`]): `label` among what it reads ([`read_by`]), and,
-/// for another computer's app, its reach the person's yes, which opening
-/// it from the home page says (capability-open; [`choices::reaching`]):
+/// for another computer's app or one its group carries, named by the
+/// person's yes, which their last open from the home page said, ticking
+/// only what they left ticked (capability-open; [`choices::reaching`]):
 /// this computer's own app reads what its person declared. A lend whose
 /// lender did not say is could-not-judge, refused `away`.
 pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
-    let (read, unlisted, silent, kinds) = read_by(at, app).await?;
+    let (read, unlisted, silent) = read_by(at, app).await?;
     if read.iter().any(|l| named(l).as_ref() == Some(label)) {
-        // A carried app is its group's code, not this computer's person's:
-        // it reaches on their yes, as another computer's app does.
-        let serving = crate::origin::serving(at, app).await?;
-        let own = matches!(app.whose(), Whose::Computer(_))
-            && matches!(serving, crate::origin::Serving::Own);
-        let said = if own {
-            None
-        } else {
-            choices::reaching(&at.door, app)?
-        };
-        let told = said.as_ref().is_some_and(|c| c.covers(&kinds));
-        tracing::debug!(target: "surface", %app, %label, own, ?said, told, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person's yes named every kind it reads");
-        if !own && !told {
-            return Err(LendRefusal::Unasked.say(
-                StatusCode::FORBIDDEN,
-                "Say yes on your home page: open this app from there.",
-            ));
+        let said = said_of(at, app).await?;
+        let told = (said.as_ref()).is_none_or(|c| c.as_ref().is_some_and(|c| c.names(label)));
+        tracing::debug!(target: "surface", %app, %label, own = said.is_none(), ?said, told, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person's yes names this lend");
+        if !told {
+            return Err(LendRefusal::Unasked
+                .say(StatusCode::FORBIDDEN, "Open it from your home page first."));
         }
         return Ok(());
     }
@@ -419,7 +476,15 @@ pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(
 pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Response> {
     let host = &at.host;
     let (lent, Unlisted { unanswered, .. }, ..) = read_by(at, label).await?;
+    let said = said_of(at, label).await?;
+    let yes = said.as_ref().and_then(Option::as_ref);
+    // This computer's own app reads what its person declared, so every
+    // lend is named; another's, those its person's yes names ([`reaches`]).
+    let names = |l: &&Lending| {
+        named(l).is_some_and(|lend| said.is_none() || yes.is_some_and(|c| c.names(&lend)))
+    };
     let read: Vec<serde_json::Value> = (lent.iter())
+        .filter(&names)
         .filter_map(|l| {
             let lend = named(l)?;
             // A carried page reaches it at its own origin, holding no capability.
@@ -437,11 +502,22 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
             Some(read)
         })
         .collect();
-    tracing::debug!(target: "surface", %label, read = read.len(), unanswered = unanswered.len(),
-        "surface: reads — answered a lent page the lends of the kinds it reads, each at its origin here");
+    // What the person's yes does not name: no address, enough for the app to
+    // say to open it from the home page. A lend they unticked is not said.
+    let left = |l: &Lending| named(l).is_some_and(|x| yes.is_some_and(|c| c.left.contains(&x)));
+    let new: Vec<serde_json::Value> = (lent.iter())
+        .filter(|l| !names(l) && !left(l))
+        .map(|l| serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person }))
+        .collect();
+    tracing::debug!(target: "surface", %label, own = said.is_none(), read = read.len(), new = new.len(), unanswered = unanswered.len(),
+        "surface: reads — answered a lent page the lends its person's yes names, each at its origin here, and how many more it does not name");
     // A lent page is told each lender by name, as it always was.
     let unanswered: Vec<_> = unanswered.iter().map(|n| &n.person).collect();
-    Ok(Json(serde_json::json!({ "lends": read, "unanswered": unanswered })).into_response())
+    let mut body = serde_json::json!({ "lends": read, "unanswered": unanswered });
+    if !new.is_empty() {
+        body["new"] = new.into();
+    }
+    Ok(Json(body).into_response())
 }
 
 /// The lend a carried app's page names at [`TO_PATH`]: its lender's key, in

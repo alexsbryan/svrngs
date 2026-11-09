@@ -965,7 +965,7 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
         ),
         (
             format!(r#"{{"port":{port},"name":"pad","kind":"a pad","groups":["house"]}}"#),
-            "Say what it is in one word: letters and digits, with - or _ between.",
+            "Say which program it is in one word: letters and digits, with - or _ between.",
         ),
         (
             format!(r#"{{"port":{port},"name":"pad","kind":"pad"}}"#),

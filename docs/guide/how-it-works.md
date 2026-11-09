@@ -49,7 +49,7 @@ here**, Sam presses **Look for programs running on this computer**, then
 ticks who can open it and presses **Lend jellyfin to House**. Or, in a terminal:
 
 ```
-svrngs share 8096 --kind jellyfin --group <group>
+svrngs share 8096 --program jellyfin --group <group>
 ```
 
 What Bo and Ana see: a row **Sam’s jellyfin** in Lab's list. On Bo's

@@ -4617,7 +4617,7 @@ async fn the_home_page_lends_what_runs_here(engine: Engine) {
         assert!(line.contains(words), "{words}: {seen:#}");
     };
     lent(1, "You lent jellyfin");
-    lent(2, "Give it a name and say what it is first");
+    lent(2, "Give it a name and say which program it is first");
     lent(3, "You lent chores");
     let page = seen["text"].as_str().unwrap_or_default();
     assert!(

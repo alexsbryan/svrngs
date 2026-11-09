@@ -594,6 +594,32 @@ fn mode(path: &Path) -> u32 {
     std::fs::metadata(path).unwrap().permissions().mode() & 0o777
 }
 
+/// **A misspelled program is told at share time** (CAPABILITY_CONNECTIONS
+/// §3): a typo matches no `keeps:` row and silently loses every protection
+/// the table holds. A name the table has is told nothing; a slip, a case
+/// or a letter or two, names the row it likely meant; any other name is
+/// told to check its spelling, and is still lent (the lend's `kept_of`
+/// empties, never a refusal). Planted: `share::unrecognized` answering
+/// `None` for every name.
+#[test]
+fn a_misspelled_program_is_told_at_share_time() {
+    let told = |name: &str| share::unrecognized(&svrngs_node::lend::Kind::parse(name).unwrap());
+    assert_eq!(
+        told("jellyfin"),
+        None,
+        "a name the table knows needs no word"
+    );
+    for (name, ends) in [
+        ("llama-sever", "Did you mean llama-server?"),
+        ("Jellyfin", "Did you mean jellyfin?"),
+        ("jellyfim", "Did you mean jellyfin?"),
+        ("immich", "Check the spelling."),
+    ] {
+        let said = format!("svrngs doesn't know {name}, so it keeps nothing back. {ends}");
+        assert_eq!(told(name), Some(said), "{name}");
+    }
+}
+
 /// `svrngs share` as a person runs it, twice: with svrngs not running it
 /// declares the lend and runs; then, with that one running, a second
 /// share declares its lend and leaves. Each reads the password from its
@@ -635,7 +661,7 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     let argv2 = [
         "share",
         p2.as_str(),
-        "--kind",
+        "--program",
         "box",
         "--limit",
         "2",
@@ -659,6 +685,11 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
         said.iter()
             .any(|l| l.starts_with("You lend box (port") && l.ends_with("up to 2 people at once.")),
         "{said:?}"
+    );
+    assert!(
+        said.iter()
+            .any(|l| l == "svrngs doesn't know box, so it keeps nothing back. Check the spelling."),
+        "a name the table does not know is told at share time: {said:?}"
     );
     assert!(
         !said.iter().any(|l| l.contains("Leave this running")),

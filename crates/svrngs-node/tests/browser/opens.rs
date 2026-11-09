@@ -58,7 +58,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     }
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-    let words = "Open cy’s notes It writes what you say there into your group’s record, as you. It also opens your friends’ films as you, and they can see what it asks.";
+    let words = "Open cy’s notesReads cy’s films. They can see it’s you, and what it asks for. cy’s films It writes what you say there into your group’s record, as you.";
 
     let seen = drive(
         engine,
@@ -77,8 +77,13 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
 
     assert_eq!(
         seen["bookmark"],
-        json!({ "status": 403, "refused": "unasked", "error": "Say yes on your home page: open this app from there." }),
-        "a page opened another way waits for the person's yes:\n{seen:#}"
+        json!({ "status": "no address", "new": [{ "kind": "films", "name": "films", "lender": "cy" }] }),
+        "a page opened another way is given no address until the person's yes, and told what is new:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["unticked"],
+        json!({ "line": "Reads none of your friends’ films.", "reads": "", "left": label(2, "films").to_string() }),
+        "an unticked lend leaves the line and what the Open posts:\n{seen:#}"
     );
     let cells = seen["cells"].as_array().cloned().unwrap_or_default();
     for cell in [
@@ -345,14 +350,7 @@ Promise.all([asked('cy', '{cy}', 'notes'), asked('cy', '{cy}', 'hidden'), asked(
     );
     let origin = carried::carried_at(&ada, "Probe").await;
     let port = ada.api_addr().port();
-    let read = format!("http://{}.localhost:{port}/", label(2, "films"));
-    let seen = drive(
-        engine,
-        "opens-one.mjs",
-        json!({ "url": origin, "read": read }),
-        None,
-    )
-    .await;
+    let seen = drive(engine, "opens-one.mjs", json!({ "url": origin }), None).await;
     eprintln!("the open's run: {seen:#}");
     assert_eq!(seen["error"], Value::Null, "{seen:#}");
     assert_eq!(
@@ -368,8 +366,8 @@ Promise.all([asked('cy', '{cy}', 'notes'), asked('cy', '{cy}', 'hidden'), asked(
     assert!(at_origin(&seen["url"], &label(2, "notes")), "{seen:#}");
     assert_eq!(
         seen["read"],
-        json!({ "status": 403, "refused": "unasked", "error": "Say yes on your home page: open this app from there." }),
-        "opened so, the notes still wait for ada's yes:\n{seen:#}"
+        json!({ "addresses": 0, "new": ["films"] }),
+        "opened so, the notes still wait for ada's yes: no address, and told a lend is new:\n{seen:#}"
     );
     drop((cy, dee));
 }
@@ -504,11 +502,19 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     eprintln!("the carried app's reads: {seen:#}");
     assert_eq!(seen["error"], Value::Null, "{seen:#}");
 
-    let reads: Value =
-        serde_json::from_str(seen["before"]["reads"]["body"].as_str().unwrap()).unwrap();
+    let reads = |step: &str| -> Value {
+        serde_json::from_str(seen[step]["reads"]["body"].as_str().unwrap()).unwrap()
+    };
+    let before = reads("before");
+    assert_eq!(before["lends"], json!([]), "no yes, no address:\n{seen:#}");
+    assert_eq!(
+        before["new"],
+        json!([{ "kind": "films", "name": "films", "lender": "cy" }]),
+        "before the yes it is told what is new, with no address:\n{seen:#}"
+    );
     let address = format!("{origin}svrngs-lend/{}/", label(2, "films"));
     assert_eq!(
-        reads["lends"],
+        reads("yes")["lends"],
         json!([{ "kind": "films", "name": "films", "lender": "cy", "address": address }]),
         "its reads are its declared kind's lends of its group, at its own origin:\n{seen:#}"
     );
@@ -530,7 +536,7 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     })) {
         assert_eq!(&refused(step, name), said, "{step}: {name}:\n{seen:#}");
     }
-    let cell = "Open Probe Its own part of the group’s record. Opening it lets it read that, and never write it, as you. It also opens your friends’ films as you, and they can see what it asks.";
+    let cell = "Open ProbeReads cy’s films. They can see it’s you, and what it asks for. cy’s films Its own part of the group’s record. Opening it lets it read that, and never write it, as you.";
     assert!(
         seen["cells"]
             .as_array()

@@ -25,6 +25,10 @@ fn what_acts_as_you_is_said_in_one_wording() {
     let shelf = json!([{ "name": "Money", "words": "who paid for what, and who owes whom." }]);
     let notes = json!({ "person": "cy", "name": "notes", "kind": "notes", "reads": ["films"] });
     let at = chrono::Local::now().timestamp();
+    let friends: Vec<_> = ["Sam", "Bo", "Cy", "Dee", "Eli"]
+        .iter()
+        .map(|p| json!({ "person": p, "kind": "jellyfin", "new": false }))
+        .collect();
     let row = |key: &str, person: &str, first: &str, device: &str| json!({ "key": key, "person": person, "person_key": first, "device": device });
     let rows = json!([
         row("a1", "ada", "a1", "computer"),
@@ -34,14 +38,24 @@ fn what_acts_as_you_is_said_in_one_wording() {
     ]);
     assert_eq!(
         in_question(
-            "[q.carrying('Money', args.shelf), q.carrying('Quiz', args.shelf), q.reading(args.notes, { said: 'yes', at: args.at }), q.reading(args.notes, { said: 'stop', at: args.at }), q.deciders(args.rows, 'a1', 'computer'), q.deciders(args.rows, 'a2', 'browser'), q.deciders(args.rows, 'b1', 'browser')]",
-            json!({ "shelf": shelf, "notes": notes, "at": at, "rows": rows }),
+            "[q.carrying('Money', args.shelf), q.carrying('Quiz', args.shelf), q.reading(args.notes, { said: 'yes', at: args.at }), q.reading(args.notes, { said: 'stop', at: args.at }), q.reading(args.notes, { said: 'yes', at: args.at, lends: ['x'] }), q.reading(args.notes, { said: 'yes', at: args.at, lends: [] }), q.readLine([args.sam, args.bo], 2, ['jellyfin']), q.readLine([args.sam, { ...args.bo, new: true }], 2, ['jellyfin']), q.readLine([], 0, ['jellyfin']), q.readLine([], 2, ['jellyfin']), q.readLine(args.friends, 5, ['jellyfin']), q.deciders(args.rows, 'a1', 'computer'), q.deciders(args.rows, 'a2', 'browser'), q.deciders(args.rows, 'b1', 'browser')]",
+            json!({ "shelf": shelf, "notes": notes, "at": at, "rows": rows,
+                "sam": { "person": "Sam", "kind": "jellyfin", "new": false },
+                "bo": { "person": "Bo", "kind": "jellyfin", "new": false },
+                "friends": friends }),
         ),
         json!([
             "Money reads and writes who paid for what, and who owes whom, when you open it.",
             "Quiz reads and writes its own part of the group’s record, when you open it.",
             format!("cy’s notes opens your friends’ films as you. Since {}. ", today()),
             format!("cy’s notes stopped opening your friends’ films as you on {}. Opening it again says yes again.", today()),
+            format!("cy’s notes opens the films you chose, as you. Since {}. ", today()),
+            "cy’s notes opens nothing of your friends’ as you. To choose what it can, open it from your home page. ",
+            "Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what it asks for.",
+            "Reads Sam’s and Bo’s jellyfin. Bo’s is new since you last opened it.",
+            "Reads your friends’ jellyfin. Nobody lends one now.",
+            "Reads none of your friends’ jellyfin.",
+            "Reads jellyfin from 5 friends. They can see it’s you, and what it asks for.",
             "This computer, and your phone",
             "This phone, and your computer",
             "This phone",
@@ -116,7 +130,7 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
         "Opens friends’ things as you\n",
         "Each Stop holds from the app’s next request.",
         &format!(
-            "cy’s notes opens your friends’ films as you. Since {}.",
+            "cy’s notes opens the films you chose, as you. Since {}.",
             today()
         ),
         "Knows who you are\n",
@@ -139,7 +153,7 @@ async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) 
     );
     assert_eq!(
         seen["stopped"],
-        json!({ "status": 403, "refused": "unasked", "error": "Say yes on your home page: open this app from there." }),
+        json!({ "status": 403, "refused": "unasked", "error": "Open it from your home page first." }),
         "a Stop holds from the app's next request:\n{seen:#}"
     );
     let asked: Vec<String> = on_films

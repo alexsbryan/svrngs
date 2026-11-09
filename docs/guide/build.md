@@ -81,7 +81,7 @@ Run it, and lend it, with svrngs running:
 
 ```
 node hello.mjs &
-~/.local/bin/svrngs share 4400 --kind hello --group <group>
+~/.local/bin/svrngs share 4400 --program hello --group <group>
 ```
 
 svrngs asks *"If hello takes a password on each request, paste what it
@@ -104,7 +104,7 @@ use the record.
 `x-svrngs-append` header: a JSON array of `{"group": "<group id>", "op":
 {"kind": "...", ...}}`. The asker's own computer or phone signs each one as
 them, before the page sees your answer; the header never reaches the
-browser. svrngs files each under your lend's kind, so `--kind hello` writes
+browser. svrngs files each under your lend's program, so `--program hello` writes
 `hello/visit` for an `op` of kind `visit`. A header carries ASCII only, so
 escape anything else in the JSON as `\uXXXX`. If an entry can't be saved,
 svrngs withholds your answer and tells the person why.
@@ -208,7 +208,7 @@ What `svrngs/acts` gives you:
 ### Read your friends' apps
 
 A carried app can read what your friends lend, such as their Jellyfin or
-their llama-server. Name each kind it reads in `reads.txt`, beside
+their llama-server. Name each program it reads in `reads.txt`, beside
 `index.html`, apart by spaces or lines:
 
 ```
@@ -216,8 +216,12 @@ jellyfin
 llama-server
 ```
 
+Every program you lend has a name: `jellyfin`, `immich`, or whatever you call
+your own. Apps find your program by that name, so type its real name, or the
+name of the one it works like.
+
 Your page can only connect to its own address, so it reaches each lend
-there. `GET svrngs-reads` lists the lends of those kinds in your group, each
+there. `GET svrngs-reads` lists the lends of those programs in your group, each
 with its `kind`, `name`, `lender` and `address`, like
 `http://<your app>.localhost:<port>/svrngs-lend/<label>/`. Add the lend's
 own path after it:
@@ -229,14 +233,19 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
 ```
 
 - **Each person says yes first.** The line beside your app's open says what
-  it reads: *"It also opens your friends’ jellyfin as you, and they can see
-  what it asks."* Opening it there is the yes, for the kinds it named. Before it, and after its Stop, svrngs refuses with
+  it reads: *"Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what
+  it asks for."* Each lend can be unticked. Opening it there is the yes, for
+  the lends it named. Before it, and after its Stop, svrngs refuses with
   `x-svrngs-refused: unasked`.
-- **Only what you named, in your group.** Another kind, or a lend in
+- **Only what you named, in your group.** Another program, or a lend in
   another group, is refused with `closed`.
-- **A new kind asks again.** A version that names another kind is refused
-  `unasked` until the person opens it from their home page and reads the new
-  line.
+- **A new lend waits for the next open.** A friend's new library, or a
+  version that names another kind, is refused `unasked` until the person opens
+  your app from their home page, where the line says it's new. Until then
+  `GET svrngs-reads` lists it under `new`, with its `kind`, `name` and
+  `lender` and no address, so your page can say *"Bo's films are new. Open
+  Movie Night from your home page to search them."* `new` is there only when
+  something is new, and a phone never has it.
 - **It only reads.** `GET` and `HEAD` go through, with the page's `Accept` and
   no other header, under the lender's readers' account if they keep one
   (`svrngs share --readers`) and with no credential of the lender's if not.
@@ -249,7 +258,7 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
   PNG or WebP image, with its status and none of the lend's
   other headers. Any other type is refused `closed`.
 
-If `reads.txt` names a word that isn't a kind (letters, digits, `-` and `_`),
+If `reads.txt` names a word that isn't a program's name (letters, digits, `-` and `_`),
 your app is left off the list until it's fixed.
 
 Rules for carried pages:
@@ -275,7 +284,7 @@ Lend with `--ask` and your words, and no other app can use your lend for a
 person until that person says yes:
 
 ```
-svrngs share 4500 --kind notes --ask "your notes" --group <group>
+svrngs share 4500 --program notes --ask "your notes" --group <group>
 ```
 
 An app lent with `--reads notes` finds yours at `/svrngs-reads` on its own
@@ -290,7 +299,7 @@ app with `x-svrngs-refused: unasked`; after a stop, `stopped`.
 If your app already speaks OpenID Connect, add `--sign-in-with-svrngs`:
 
 ```
-svrngs share 4500 --kind myapp --sign-in-with-svrngs --group <group>
+svrngs share 4500 --program myapp --sign-in-with-svrngs --group <group>
 ```
 
 It prints an issuer, a client id and a secret for your app's settings
@@ -324,8 +333,8 @@ refused, and so is one without the token.
 
 - *"nothing answers on port 4400 on this computer: start it, then share
   it"*: start your server first.
-- *"say what is on port 4400: `svrngs share 4400 --kind <kind>` …"*: add
-  `--kind` with a name of your choosing.
+- *"say which program is on port 4400: `svrngs share 4400 --program <name>` …"*: add
+  `--program` with a name of your choosing.
 - *"send this computer's token, which … holds, as `Authorization: Bearer
   <token>`: …"*: read the `token` file and send it.
 - *"the record is served to this computer's apps, not to a page in a

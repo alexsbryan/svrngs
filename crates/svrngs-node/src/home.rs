@@ -265,8 +265,10 @@ async fn choose(State(at): State<Asking>, Json(c): Json<Choosing>) -> Response {
 struct Opening {
     app: Label,
     said: Option<Said>,
-    /// The kinds its open told the person it reads, apart by spaces.
+    /// The lends its open showed and left ticked, labels apart by spaces.
     reads: Option<String>,
+    /// The lends its open showed and the person unticked, the same way.
+    left: Option<String>,
 }
 
 /// `POST /reaching`, a form the open button posts in a tab of its own:
@@ -276,12 +278,19 @@ struct Opening {
 /// request ([`crate::surface::reaches`]).
 async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response {
     let said = o.said.unwrap_or(Said::Yes);
-    let told = (o.reads.as_deref().unwrap_or_default().split_whitespace()).map(Kind::parse);
-    let Ok(told) = told.collect::<Result<Vec<_>, _>>() else {
-        return StatusCode::BAD_REQUEST.into_response();
+    // A word no label parses (a tab from before a yes named lends, posting
+    // kinds) names no lend: the yes covers less, never more.
+    let labels = |field: Option<String>| -> Vec<Label> {
+        field
+            .iter()
+            .flat_map(|f| f.split_whitespace())
+            .filter_map(Label::parse)
+            .collect()
     };
-    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), (said, told)).await;
-    tracing::debug!(target: "home", app = %o.app, ?said, status = kept.status().as_u16(), "home: an app opened from its button or stopped, what was said kept");
+    let told = (said, labels(o.reads), labels(o.left));
+    let named = (told.1.len(), told.2.len());
+    let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), told).await;
+    tracing::debug!(target: "home", app = %o.app, ?said, ?named, status = kept.status().as_u16(), "home: an app opened from its button or stopped, what was said kept");
     if !kept.status().is_success() {
         return kept;
     }
@@ -322,16 +331,17 @@ async fn reached(State(at): State<Asking>) -> Response {
     answered
 }
 
+/// What `/update` answers, its one field said once.
+fn update_state(state: &str) -> Response {
+    Json(serde_json::json!({ "state": state })).into_response()
+}
+
 /// `GET /update`: whether the page this computer came from offers a svrngs
 /// it does not run; `unknown` when that cannot be judged, never `current`.
 async fn update_check(State(at): State<Asking>) -> Response {
     match crate::update::check(&at.door.data_dir).await {
-        Ok(crate::update::Check::Current) => {
-            Json(serde_json::json!({ "state": "current" })).into_response()
-        }
-        Ok(crate::update::Check::Available) => {
-            Json(serde_json::json!({ "state": "available" })).into_response()
-        }
+        Ok(crate::update::Check::Current) => update_state("current"),
+        Ok(crate::update::Check::Available) => update_state("available"),
         Err(e) => {
             tracing::debug!(target: "home", error = %e, "home: an update cannot be judged");
             Json(serde_json::json!({ "state": "unknown", "why": e.to_string() })).into_response()
@@ -344,11 +354,9 @@ async fn update_check(State(at): State<Asking>) -> Response {
 /// the running one and says why.
 async fn update_apply(State(at): State<Asking>) -> Response {
     match crate::update::apply(&at.door.data_dir).await {
-        Ok(crate::update::Outcome::Current) => {
-            Json(serde_json::json!({ "state": "current" })).into_response()
-        }
+        Ok(crate::update::Outcome::Current) => update_state("current"),
         Ok(crate::update::Outcome::Updated) => {
-            let answer = Json(serde_json::json!({ "state": "updated" })).into_response();
+            let answer = update_state("updated");
             tokio::spawn(async {
                 tokio::time::sleep(std::time::Duration::from_millis(250)).await;
                 tracing::info!(target: "home", "home: the new svrngs is in place, so this one stops for it to start");
@@ -536,7 +544,8 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
 /// of it, and its name once lent.
 fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serde_json::Value {
     let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
-    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps })
+    let unknown = kind.and_then(share::unrecognized);
+    serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "unknown": unknown })
 }
 
 /// Which read failed, said, and traced with its error (#160).
@@ -614,10 +623,11 @@ async fn lend_one(
     let name = name.as_deref().map(LendName::parse).transpose();
     let name = name.map_err(|e| refused(&format!("Give it a name of {one}"), &e))?;
     let kind = kind.as_deref().map(Kind::parse).transpose();
-    let kind = kind.map_err(|e| refused(&format!("Say what it is in {one}"), &e))?;
+    let kind = kind.map_err(|e| refused(&format!("Say which program it is in {one}"), &e))?;
     let (known, dir) = (share::well_known_kind(port), &at.door.data_dir);
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
-    let unknown = "Give it a name and say what it is first: svrngs does not know what runs there.";
+    let unknown =
+        "Give it a name and say which program it is first: svrngs does not know what runs there.";
     if known.is_none() && (name.is_none() || kind.is_none()) {
         return Err(refused(unknown, &port));
     }

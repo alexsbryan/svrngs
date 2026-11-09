@@ -12,7 +12,7 @@ keeps for apps that read it (`svrngs share --readers`,
 Lend it from any computer with its files served on a port, for example:
 
     python3 -m http.server 8597 --directory apps/movie-night
-    svrngs share 8597 --kind movie-night --reads jellyfin --group <group>
+    svrngs share 8597 --program movie-night --reads jellyfin --group <group>
 
 `match.js` decides which films a search names and which copies are one film
 (`match.test.mjs`); `crates/svrngs/tests/scenes/movie_night.rs` plays a person

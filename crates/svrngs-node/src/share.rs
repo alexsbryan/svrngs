@@ -123,7 +123,7 @@ pub struct Share {
 pub enum ShareRefusal {
     #[error("nothing answers on port {0} on this computer: start it, then share it")]
     NothingListens(NonZeroU16),
-    #[error("say what is on port {0}: `svrngs share {0} --kind <kind>`, its own name if it is one svrngs knows: {kinds}", kinds = known_kinds())]
+    #[error("say which program is on port {0}: `svrngs share {0} --program <name>`, its own name if it is one svrngs knows: {kinds}", kinds = known_kinds())]
     NoKind(NonZeroU16),
 }
 
@@ -137,6 +137,35 @@ fn known_kinds() -> String {
     let mut kinds: Vec<String> = rows().map(|(_, kind, _)| kind.to_string()).collect();
     kinds.dedup(); // a kind's clauses are rows of their own, one after another
     kinds.join(", ")
+}
+
+/// What its lender is told of a program name [`WELL_KNOWN`] has no row
+/// for, `None` for one it has: a typo costs every protection the table
+/// keeps for that program, so a person's mistake is said at share time,
+/// never refused (any app on a port stays lendable). A name differing from
+/// a row's only in case or by a slip names the row it likely meant.
+pub fn unrecognized(kind: &Kind) -> Option<String> {
+    if rows().any(|(_, known, _)| known == *kind) {
+        return None;
+    }
+    let near = rows().find(|(_, known, _)| slipped(known.as_str(), kind.as_str()));
+    tracing::debug!(target: "share", kind = %kind, near = ?near.as_ref().map(|(_, k, _)| k.as_str()), "share: a program the table does not know, its lender told");
+    let check = near.map_or("Check the spelling.".to_string(), |(_, known, _)| {
+        format!("Did you mean {known}?")
+    });
+    Some(format!(
+        "svrngs doesn't know {kind}, so it keeps nothing back. {check}"
+    ))
+}
+
+/// Whether `said` is `known` with the case changed or a letter or two
+/// slipped: what the two share, each end, leaves at most two letters over.
+fn slipped(known: &str, said: &str) -> bool {
+    let (known, said) = (known.to_ascii_lowercase(), said.to_ascii_lowercase());
+    let (a, b) = (known.as_bytes(), said.as_bytes());
+    let head = a.iter().zip(b).take_while(|(x, y)| x == y).count();
+    let tail = a[head..].iter().rev().zip(b[head..].iter().rev());
+    a.len().max(b.len()) - head - tail.take_while(|(x, y)| x == y).count() <= 2
 }
 
 /// What [`WELL_KNOWN`]'s row for `kind` says in its clause `word`, past

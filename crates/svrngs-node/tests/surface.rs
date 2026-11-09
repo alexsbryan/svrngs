@@ -461,6 +461,208 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     house.close().await;
 }
 
+/// The person's yes to the app `app`, as the home page's Open posts it to
+/// `POST /reaching`, at this computer's home origin, with the token.
+async fn says_yes(node: &Node, app: &str, reads: &[&str], left: &[&str]) -> u16 {
+    use tower::ServiceExt;
+    let own = format!("svrngs.localhost:{}", node.api_addr().port());
+    let form = format!(
+        "app={app}&reads={}&left={}",
+        reads.join("+"),
+        left.join("+")
+    );
+    let mut request = axum::http::Request::post("/reaching")
+        .header("host", own.clone())
+        .header("sec-fetch-site", "same-origin")
+        .header("origin", format!("http://{own}"))
+        .header("authorization", format!("Bearer {}", node.token().trim()))
+        .header("content-type", "application/x-www-form-urlencoded")
+        .body(axum::body::Body::from(form))
+        .unwrap();
+    let caller: SocketAddr = "127.0.0.1:50000".parse().unwrap();
+    request
+        .extensions_mut()
+        .insert(axum::extract::ConnectInfo(caller));
+    let answer = node.api_routes().oneshot(request).await.unwrap();
+    answer.status().as_u16()
+}
+
+/// **A yes names lends** (CAPABILITY_CONNECTIONS §6 bar 7; §2 "A grant's
+/// scope is explicit"). Sam lends a page, `reel`, reading `media`, and a
+/// `films`; Alex lends a `telly`, and unticks it on his open. At Alex's
+/// computer: `/svrngs-reads` lists only what the yes names, and says of a
+/// lend it doesn't name, with no address, that it is new; a new lend of
+/// Sam's, `more`, is unread until Alex's next open, while `films` keeps
+/// working; the unticked `telly` is refused, unnamed and not said new, and
+/// stays so through the next open; and a yes from before this, naming
+/// kinds, covers nothing. Planted: `Choice::names` answering true for
+/// every yes (surface.rs `reaches`), the `new`-lend reach is let through;
+/// `reads` listing every lend read (surface.rs `reads`), the new lend is
+/// addressed; the unticked lends' `left` dropped from the next open
+/// (choices.rs `own_reaching`), telly comes back ticked and said new.
+#[tokio::test]
+async fn a_yes_names_lends_so_a_new_one_waits_for_the_next_open() {
+    let house = House::new().await;
+    declare(
+        house.sam_dir.path(),
+        &house.id,
+        "reel",
+        8597,
+        "night",
+        &["media"],
+    );
+    declare(house.sam_dir.path(), &house.id, "films", 8097, "media", &[]);
+    declare(
+        house.alex_dir.path(),
+        &house.id,
+        "telly",
+        8096,
+        "media",
+        &[],
+    );
+    let label = |seed: u8, name: &str| {
+        svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
+    };
+    let (reel, films, telly, more) = (
+        label(2, "reel"),
+        label(2, "films"),
+        label(1, "telly"),
+        label(2, "more"),
+    );
+    let reads = svrngs_node::surface::READS_PATH;
+    let alex = &house.alex;
+    let (app, reel_str) = (reel.clone(), reel.to_string());
+    let listed = || at_origin(alex, &app, reads, None);
+    let reach = |to: svrngs_core::pass::Label| {
+        let reel = reel_str.clone();
+        async move {
+            let (status, body) = at_origin(alex, &to, "/x", Some(&reel)).await;
+            (status, body["kind"].as_str().map(str::to_string))
+        }
+    };
+    // Reached past the yes: the lender's door answers then, here refusing
+    // or not, as Sam's register hears of Alex no other way in this test.
+    let unasked = (403, Some("unasked".to_string()));
+    let lender_of =
+        |name: &str| serde_json::json!({ "kind": "media", "name": name, "lender": "sam" });
+
+    // Before any yes, nothing is reached, and each is told as new, unaddressed.
+    let (status, before) = listed().await;
+    assert_eq!(status, 200, "{before:#}");
+    assert_eq!(before["lends"], serde_json::json!([]), "{before:#}");
+    assert_eq!(
+        before["new"].as_array().map(Vec::len),
+        Some(2),
+        "telly and films, each with no address: {before:#}"
+    );
+    assert_eq!(reach(films.clone()).await, unasked, "no yes, no reach");
+
+    // Alex's open names `films` and leaves `telly` unticked.
+    let yes = says_yes(alex, reel.as_str(), &[films.as_str()], &[telly.as_str()]).await;
+    assert_eq!(yes, 303, "the yes kept, then the app's own page");
+    let (_, said) = listed().await;
+    assert_eq!(said["lends"].as_array().map(Vec::len), Some(1), "{said:#}");
+    assert_eq!(said["lends"][0]["name"], "films", "{said:#}");
+    assert_eq!(
+        said.get("new"),
+        None,
+        "the unticked lend is not said to be new: {said:#}"
+    );
+    assert_ne!(reach(films.clone()).await, unasked, "films, named, reached");
+    assert_eq!(
+        reach(telly.clone()).await,
+        unasked,
+        "the unticked lend is refused"
+    );
+
+    // Sam lends a new library; nothing about Alex's yes names it.
+    declare(house.sam_dir.path(), &house.id, "more", 8098, "media", &[]);
+    let (_, said) = listed().await;
+    assert_eq!(said["lends"].as_array().map(Vec::len), Some(1), "{said:#}");
+    assert_eq!(
+        said["new"],
+        serde_json::json!([lender_of("more")]),
+        "{said:#}"
+    );
+    assert_eq!(
+        reach(more.clone()).await,
+        unasked,
+        "new since the yes: unread"
+    );
+    assert_ne!(
+        reach(films.clone()).await,
+        unasked,
+        "Sam's films keep working"
+    );
+    let row = house.lends().await;
+    let reel_row = row["lent"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|l| l["name"] == "reel");
+    let told = &reel_row.expect("reel is listed")["reading"];
+    let of = |name: &str| {
+        (told.as_array().unwrap().iter())
+            .find(|l| l["name"] == name)
+            .unwrap_or_else(|| panic!("{name} in {told:#}"))
+            .clone()
+    };
+    assert_eq!(
+        (&of("films")["ticked"], &of("films")["new"]),
+        (&true.into(), &false.into()),
+        "{told:#}"
+    );
+    assert_eq!(
+        (&of("telly")["ticked"], &of("telly")["new"]),
+        (&false.into(), &false.into()),
+        "{told:#}"
+    );
+    assert_eq!(
+        (&of("more")["ticked"], &of("more")["new"]),
+        (&true.into(), &true.into()),
+        "{told:#}"
+    );
+
+    // Alex's next open posts what its line showed, `more` with it, no extra step.
+    let next = [films.as_str(), more.as_str()];
+    assert_eq!(
+        says_yes(alex, reel.as_str(), &next, &[telly.as_str()]).await,
+        303
+    );
+    assert_ne!(reach(more.clone()).await, unasked, "named at the next open");
+    assert_ne!(reach(films.clone()).await, unasked, "still named");
+    assert_eq!(reach(telly.clone()).await, unasked, "still unticked");
+
+    // A yes that says nothing about telly (a row that didn't show it) keeps its word.
+    assert_eq!(
+        says_yes(alex, reel.as_str(), &[more.as_str()], &[]).await,
+        303
+    );
+    assert_ne!(
+        reach(films.clone()).await,
+        unasked,
+        "films, not shown then, keeps its word"
+    );
+    assert_eq!(
+        reach(telly.clone()).await,
+        unasked,
+        "telly, not shown then, keeps its word"
+    );
+
+    // A yes from before this names kinds: it parses and names no lend.
+    let person = actor_of(&signing(1));
+    let old = serde_json::json!({ person: { reel.as_str(): { "said": "yes", "at": 1, "reads": ["media"] } } });
+    std::fs::write(house.alex_dir.path().join("reaching.json"), old.to_string()).unwrap();
+    assert_eq!(
+        reach(films.clone()).await,
+        unasked,
+        "an old yes covers nothing"
+    );
+    let (_, said) = listed().await;
+    assert_eq!(said["lends"], serde_json::json!([]), "{said:#}");
+    house.close().await;
+}
+
 /// **A lent page is not held by a computer that never answers**
 /// (asleep-1-none-held (b); `demo/runs/mnp/2026-10-09/README.md`, "What no
 /// prediction named" 2): as `a_lent_page_asks_at_its_own_origin_the_lends_it_reads`,

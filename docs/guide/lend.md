@@ -15,7 +15,7 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 The row then says *"You lent jellyfin, at http://localhost:8096: the groups you chose can open it now."*, and it shows under **What you lend**.
 
-If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say what it is, each one word…"*. Fill in **Its name:** and **What it is:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
+If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say which program it is, each one word…"*. Fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
 The home page never asks for a password. If the program wants one on every request, lend it from a terminal (below).
 
@@ -25,13 +25,13 @@ The home page never asks for a password. If the program wants one on every reque
 svrngs share 8096 --group <group>
 ```
 
-That's the port number from the program's address, and `--group` says who can open it: say it once for each group, by its name or the start of its id. With none, svrngs refuses and tells you this line; it never lends to all your groups. svrngs knows a few programs by their port: Jellyfin (8096), Navidrome (4533) and Calibre-Web (8083). For anything else, say what it is with `--kind`:
+That's the port number from the program's address, and `--group` says who can open it: say it once for each group, by its name or the start of its id. With none, svrngs refuses and tells you this line; it never lends to all your groups. svrngs knows a few programs by their port: Jellyfin (8096), Navidrome (4533) and Calibre-Web (8083). For anything else, say which program it is with `--program`:
 
 ```
-svrngs share 2283 --kind immich --group <group>
+svrngs share 2283 --program immich --group <group>
 ```
 
-Without `--kind` on a port it doesn't know, svrngs says *"say what is on port 2283: `svrngs share 2283 --kind <kind>`, its own name if it is one svrngs knows: jellyfin, navidrome, calibre-web, llama-server"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
+Without `--program` on a port it doesn't know, svrngs says *"say which program is on port 2283: `svrngs share 2283 --program <name>`, its own name if it is one svrngs knows: jellyfin, navidrome, calibre-web, llama-server"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 
@@ -68,18 +68,20 @@ then `svrngs share 4533 --group <group>`. Each friend who opens it is in as them
 
 ## Lend Immich, Actual, or anything else
 
-Say what it is in one word, and svrngs passes that word on as the app's kind:
+Every program you lend has a name: `jellyfin`, `immich`, or whatever you call your own. Apps find your program by that name, so type its real name, or the name of the one it works like:
 
 ```
-svrngs share 2283 --kind immich --group <group>
-svrngs share 5006 --kind actual --group <group>
+svrngs share 2283 --program immich --group <group>
+svrngs share 5006 --program actual --group <group>
 ```
+
+If svrngs doesn't recognize the name, it says so and lends it anyway: *"svrngs doesn't know immich, so it keeps nothing back. Check the spelling."* A slip like `Jellyfin` or `llama-sever` gets *"Did you mean jellyfin?"*, because a misspelled name loses what svrngs keeps back of that program.
 
 svrngs asks whether it takes a password on each request (next section). Immich keeps its own accounts, so press Enter and make each friend an account in Immich. Actual asks everyone for the one server password you set.
 
 ## Lend something that takes a password on each request
 
-For a kind it doesn't know, `share` asks:
+For a program it doesn't know, `share` asks:
 
 ```
 If immich takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):
@@ -93,7 +95,7 @@ Most apps with a sign-in page don't need this: press Enter. Paste something only
 svrngs share 8096 --name films --group <group>
 ```
 
-Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the kind: *"Sam’s jellyfin"*. A name is letters, digits, `-` and `_`.
+Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the program's: *"Sam’s jellyfin"*. A name is letters, digits, `-` and `_`.
 
 ## Let in only so many at once
 
@@ -106,7 +108,7 @@ On your home page, under **What you lend**, type a number in **How many people a
 ## Keep part of it back
 
 ```
-svrngs share 8000 --kind wiki --refuse /admin --refuse /settings --group <group>
+svrngs share 8000 --program wiki --refuse /admin --refuse /settings --group <group>
 ```
 
 Each path, and everything under it, stays closed to your friends: `/admin` closes `/admin` and `/admin/users`, but not `/administer`, however it's spelled. They see *"wiki is lent without /admin"*. Repeat `--refuse` for each path.
@@ -127,7 +129,7 @@ For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those t
 
 - `--upload 40`: your computer's upload speed in Mbit/s, as a speed test shows it. svrngs tells each person's browser, and the app, their share of it. A person sees it only if the app shows it.
 - `--ask "your notes"`: an app can use this lend only after the person it acts for says yes. They're asked *"Let Ana’s planner use Sam’s notes?"* on their own home page, with your words, **Yes** and **Not now**, and can stop it later.
-- `--reads jellyfin`: for an app you lend that reads other lends. Its pages may open the Jellyfins your groups lend, as whoever opens the app. Beside it your friends read *"It also opens your friends’ jellyfin as you, and they can see what it asks."*
+- `--reads jellyfin`: for an app you lend that reads other lends. Its pages may open the Jellyfins your groups lend, as whoever opens the app. Beside its Open your friends read *"Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what it asks for."*, and can untick each one. Opening it from the home page is the yes, and names those. A friend's new library joins at the next open from the home page.
 - `--readers`: for something other apps read, such as a Jellyfin that Movie Night searches. Make one account in it for your groups, and tick only what they may see. `share` asks for its name and password, signs in once, and keeps what it's given on this computer. Apps that read it then see what that account sees, and only look: anything else they send is refused before it reaches your computer's program, and they're told to ask you. Without `--readers`, an app that reads it sees what anyone who hasn't signed in sees. A friend who opens it themselves still signs in as themselves. Sharing it again without `--readers`, or `unshare`, forgets the account.
 
 ## Stop lending something
@@ -148,7 +150,7 @@ It says *"You no longer lend films."* Or press **Stop lending** beside it on you
 
 ## What svrngs keeps back on its own
 
-For some kinds, svrngs keeps back the parts that would show one person's use to the others, or change it for everyone, without you typing `--refuse`. `share` lists them: *"They cannot open /slots, …: svrngs keeps these back whenever a llama-server is lent…"*. Today llama-server is the only one; [models.md](models.md) says what each part is.
+For some programs, svrngs keeps back the parts that would show one person's use to the others, or change it for everyone, without you typing `--refuse`. `share` lists them: *"They cannot open /slots, …: svrngs keeps these back whenever a llama-server is lent…"*. Today llama-server is the only one; [models.md](models.md) says what each part is.
 
 Game servers and anything else that speaks UDP or TCP rather than web pages are lent with `--udp` or `--tcp`: see [games.md](games.md).
 

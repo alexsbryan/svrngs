@@ -29,7 +29,8 @@ const fetched = (page, path, bare) =>
   page.evaluate(
     async ([read, path, bare]) => {
       const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
-      const to = reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
+      const to = bare ? read : reads.lends.find((l) => l.address.startsWith(read))?.address;
+      if (!to) return { status: 'no address', new: reads.new ?? null };
       return fetch(`${to}${path}`).then(
         async (r) => ({
           status: r.status,
@@ -60,6 +61,17 @@ try {
     .first()
     .waitFor({ timeout: 60_000 });
   seen.cells = await home.locator('#home table.index tr td:first-child').allTextContents();
+  // Unticked, the line and what the Open would post say so; ticked again.
+  const row = home.locator('#home table.index tr', { hasText: args.words });
+  await row.locator('details summary').click({ timeout: 10_000 });
+  const box = row.locator('details input[type=checkbox]');
+  await box.uncheck();
+  seen.unticked = {
+    line: await row.locator('details summary').textContent(),
+    reads: await row.locator('input[name=reads]').inputValue(),
+    left: await row.locator('input[name=left]').inputValue(),
+  };
+  await box.check();
   const tab = await opened(
     home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }),
   );

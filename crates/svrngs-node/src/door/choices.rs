@@ -41,7 +41,7 @@ use super::{
     PASS_HEADER,
 };
 use crate::iroh::Dialer;
-use crate::lend::{choices_path, Kind, Lend};
+use crate::lend::{choices_path, Lend};
 use svrngs_core::pass::Label;
 
 /// What a person says of an app: a closed set (AGENTS 9).
@@ -65,21 +65,30 @@ enum Stopping {
 pub struct Choice {
     pub said: Said,
     pub at: i64,
-    /// The kinds its open said it reads, for a yes to reaching: a yes
-    /// covers what the person was told and nothing since.
+    /// The lends its open showed and the person left ticked, for a yes to
+    /// reaching (capability-connections §2): it covers these and nothing
+    /// since. Kept as `lends`, so a yes from before this, which named kinds
+    /// as `reads`, parses as naming none and covers nothing. Always written,
+    /// so "What acts as you" tells a computer's yes that names none from a
+    /// phone's, which has no list (question.js `reading`).
+    #[serde(rename = "lends", default)]
+    pub reads: Vec<Label>,
+    /// The lends its open showed and the person unticked: their next open
+    /// draws them unticked, and no app is told them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub reads: Vec<Kind>,
+    pub left: Vec<Label>,
 }
 
 impl Choice {
-    /// Whether this is a yes that named every kind in `reads`.
-    pub(crate) fn covers(&self, reads: &[Kind]) -> bool {
-        self.said == Said::Yes && reads.iter().all(|k| self.reads.contains(k))
+    /// Whether this is a yes that named the lend `label`.
+    pub(crate) fn names(&self, label: &Label) -> bool {
+        self.said == Said::Yes && self.reads.contains(label)
     }
 }
 
-/// What a person said, and the kinds of lend they were told it reads.
-pub(crate) type Told = (Said, Vec<Kind>);
+/// What a person said, and the lends their open named: ticked, and shown
+/// but left unticked.
+pub(crate) type Told = (Said, Vec<Label>, Vec<Label>);
 
 type Kept = BTreeMap<PersonKey, BTreeMap<Label, Choice>>;
 type Done = oneshot::Sender<Result<(), String>>;
@@ -226,13 +235,18 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
 
 /// Keep what `person` said of `app` in the file at `path`.
 async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: Told) -> Response {
-    let (said, reads) = told;
+    let (said, reads, left) = told;
     let Some(at) = unix_now() else {
         return LendRefusal::fault(
             "this computer's clock cannot be read, so the choice is not kept",
         );
     };
-    let choice = Choice { said, at, reads };
+    let choice = Choice {
+        said,
+        at,
+        reads,
+        left,
+    };
     let one = [(person.clone(), [(app.clone(), choice.clone())].into())].into();
     let (done, kept) = oneshot::channel();
     let _ = door.choices.0.send((path.clone(), one, done));
@@ -259,7 +273,7 @@ async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u
         file(door, lend),
         person,
         app,
-        (Said::Stop, Vec::new()),
+        (Said::Stop, Vec::new(), Vec::new()),
     )
     .await
 }
@@ -308,7 +322,8 @@ pub(super) async fn choose(
     }
     match serde_json::from_slice::<Saying>(&body) {
         Ok(Saying { app, said }) => {
-            Ok(keep(&door, file(&door, &lend), person, app, (said, Vec::new())).await)
+            let told = (said, Vec::new(), Vec::new());
+            Ok(keep(&door, file(&door, &lend), person, app, told).await)
         }
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
@@ -350,7 +365,10 @@ pub(super) async fn choices_of(
 /// no dial: the home page's and its origin's ([`crate::home`]).
 pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
     match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
-        Ok((person, lend)) => keep(door, file(door, &lend), person, app, (said, Vec::new())).await,
+        Ok((person, lend)) => {
+            let told = (said, Vec::new(), Vec::new());
+            keep(door, file(door, &lend), person, app, told).await
+        }
         Err(refused) => refused,
     }
 }
@@ -380,10 +398,24 @@ pub(crate) fn reachings(door: &Door) -> Result<BTreeMap<Label, Choice>, Response
 }
 
 /// This computer's person's `said` of `app` reaching others' lends as
-/// them: the home page's, when they open it there ([`crate::home`]).
+/// them: the home page's, when they open it there ([`crate::home`]). A yes
+/// says what this open showed, so it replaces the last yes's word on those
+/// lends alone: a lend its line did not show now, its lender not answering or
+/// in a group this row is not, keeps what was said of it.
 pub(crate) async fn own_reaching(door: &Door, app: Label, told: Told) -> Response {
+    let (said, mut reads, mut left) = told;
+    let shown: Vec<Label> = reads.iter().chain(&left).cloned().collect();
+    // A yes it cannot read beside this is said when it is kept (`load`).
+    if let Some(choice) = reaching(door, &app)
+        .ok()
+        .flatten()
+        .filter(|_| said == Said::Yes)
+    {
+        reads.extend(choice.reads.into_iter().filter(|l| !shown.contains(l)));
+        left.extend(choice.left.into_iter().filter(|l| !shown.contains(l)));
+    }
     match own(door) {
-        Ok(person) => keep(door, reaching_path(door), person, app, told).await,
+        Ok(person) => keep(door, reaching_path(door), person, app, (said, reads, left)).await,
         Err(refused) => refused,
     }
 }
