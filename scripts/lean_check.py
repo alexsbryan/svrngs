@@ -571,10 +571,11 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # watch::Sender has its own); . to 20,883, one past where it lands.
 # (2026-11-09) origin.rs dialled, one caller, inlined into home.rs at_door (5) and
 # parts.js Said, no product caller (3); . to 20,878, js to 8,472.
+# (2026-11-09) door/limit.rs share_of, one caller, inlined (3); . to 20,875.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20878,
+    ".": 20875,
 
     "js": 8472,
 

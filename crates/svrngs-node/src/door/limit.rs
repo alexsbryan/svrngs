@@ -30,7 +30,7 @@ use std::collections::BTreeMap;
 use std::num::{NonZeroU16, NonZeroU32};
 use std::time::{Duration, Instant};
 
-use crate::lend::{Lend, LendName, Upload};
+use crate::lend::{Lend, LendName};
 use crate::network::Whereabouts;
 
 /// How long a person whose last request ended is still counted on a lend:
@@ -74,14 +74,6 @@ impl Viewer {
 #[derive(Debug, Default)]
 pub struct Counts(BTreeMap<LendName, BTreeMap<String, Viewer>>);
 
-/// `upload` divided evenly among `people`, as `fair_share_cap` divides a
-/// budget among the active — floored, with no floor of its own: a share
-/// is what each may use, and an upload too small to divide is the lender's
-/// to raise.
-pub fn share_of(upload: Upload, people: NonZeroU32) -> u64 {
-    upload.bps() / u64::from(people.get())
-}
-
 impl Counts {
     /// `actor`, at `whereabouts`, asks for `lend` at `now`. Let in, a
     /// request of theirs begins and they are counted until [`Self::end`]
@@ -116,9 +108,13 @@ impl Counts {
         viewer.last = now;
         let people = NonZeroU32::new(u32::try_from(viewers.len()).unwrap_or(u32::MAX))
             .expect("this person is counted");
+        // The upload divided evenly among them, as `fair_share_cap` divides a
+        // budget among the active — floored, with no floor of its own: a share
+        // is what each may use, and an upload too small to divide is the
+        // lender's to raise.
         Verdict::In {
             people,
-            share: lend.upload.map(|u| share_of(u, people)),
+            share: lend.upload.map(|u| u.bps() / u64::from(people.get())),
         }
     }
 
