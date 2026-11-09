@@ -16,12 +16,14 @@ administrator's, so don't use one. Instead:
 1. In Jellyfin, make an account for your groups: your picture at the top
    right, then **Dashboard**, **Users** and **+**. Give it a name and a
    password, tick only the libraries your groups may see, and **Save**.
-2. Run `svrngs share 8096 --group <group> --readers`, and type that
-   account's name and password when it asks.
+2. On your home page, under **What you lend**, unfold **How to make the
+   account** on Jellyfin's row, type that account's name and password, and
+   press **Save the account**. From a terminal, `svrngs share 8096 --group
+   <group> --readers` asks for them instead.
 
 Apps that read it now see what that account sees, and only look. Your
 friends opening Jellyfin themselves still sign in as themselves. To stop,
-delete the account in Jellyfin, or share it again without `--readers`.
+delete the account in Jellyfin, or use **Stop lending** on its row and lend it again.
 
 ## Set up Sign in with svrngs
 

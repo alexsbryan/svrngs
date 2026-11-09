@@ -497,7 +497,7 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
             if let Some(words) = &l.offered.asks {
                 read["asks"] = words.as_str().into();
-                read["ask"] = crate::home::ask_address(host.api_port, &lend, label).into();
+                read["ask"] = format!("{}ask?lend={lend}&app={label}", crate::home::address(host.api_port)).into();
                 let page = origin(label, host.api_port);
                 read["stop"] = format!("{page}{}/{lend}{STOP_SUFFIX}", &READS_PATH[1..]).into();
             }

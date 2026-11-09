@@ -1167,7 +1167,8 @@ Seven calls:
    and has less (`door::admit`, its one home): a request naming an app that
    is not this lend, by a GET or HEAD and no protocol switch, goes as the
    account its lender keeps for readers, if one is kept, signed in once as
-   the table says (`svrngs share --readers`, `share::readers_of`), and bare
+   the table says (the home page's row for it or `svrngs share --readers`,
+   `share::readers_of`), and bare
    of every lender credential if not; anything else it sends is refused
    `closed` before the service is asked, and says whose it is. A
    reading page's one POST ended a Jellyfin token kept for all, and a

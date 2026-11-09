@@ -12,6 +12,8 @@ import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
 import { SigningOn } from './signing-on.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
+/** @import { AppsAccount } from './lent-read.js?v=__VERSION__' */
+/** @import { State, Message } from './lend-change.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
@@ -22,6 +24,7 @@ import { SigningOn } from './signing-on.js?v=__VERSION__';
  * @typedef {object} LentProps
  * @property {Lend} l
  * @property {boolean} signs
+ * @property {AppsAccount} [account]
  * @property {Choice[]} groups
  * @property {HOME.PlaceProps['home']} home
  */
@@ -45,8 +48,40 @@ export const lentTo = (lend, groups) => {
   return `Lent to ${names.join(' and ')}.`;
 };
 
+/**
+ * The account apps read a lend through: whether one is made, how to make
+ * it, and its name and password, typed here once (home.rs `readers`).
+ * @param {{ name: string, account?: AppsAccount, state: State, doing: { state: string }, send: (message: Message) => void }} props
+ */
+function Apps({ name, account, state, doing, send }) {
+  if (!account) return null;
+  const said = account.kept
+    ? `Apps your friends open can read your ${name} with the account you made. They can’t change anything.`
+    : `Apps can’t read your ${name} yet. To let them, make one account for your group.`;
+  const save = {
+    type: 'change',
+    to: { readers: { name: state.account ?? '', password: state.password ?? '' } },
+  };
+  return html`
+    <p>${said}</p>
+    <details>
+      <summary>${account.kept ? 'Use a different account' : 'How to make the account'}</summary>
+      <p>In ${name}: ${account.signs?.accounts}. Then type that account’s name and password here. svrngs signs in once and keeps only what ${name} gives it, not the password.</p>
+      <${Field} words="Account name: " name="account" value=${state.account ?? ''} send=${send} />
+      <${Field}
+        words="Its password: "
+        name="password"
+        value=${state.password ?? ''}
+        attrs=${{ type: 'password', autocomplete: 'off' }}
+        send=${send}
+      />
+      <${Act} words="Save the account" doing=${doing} on=${save} send=${send} />
+    </details>
+  `;
+}
+
 /** @param {LentProps} props */
-export function Lent({ l: lend, signs, groups, home }) {
+export function Lent({ l: lend, signs, account, groups, home }) {
   const [state, send] = useMachine(() =>
     machine('CHANGE', CHANGE(lend.name, home), {
       at: { change: 'idle' },
@@ -114,6 +149,7 @@ export function Lent({ l: lend, signs, groups, home }) {
         send=${send}
       />
       ${saveAudience}
+      <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
       ${signIn}
       ${stop}
       ${state.said}

@@ -24,9 +24,11 @@ import { chosen } from './group-choice.js?v=__VERSION__';
 /**
  * A change of a lend: how many it lets in at once, a number or everyone
  * (`null`); its audience, the group ids that can open it; or its lending
- * stopped. An audience-only change preserves every other setting
- * (SCOPE_PARALLEL.md, `POST /lent`).
- * @typedef {{ limit: number | null } | { groups: string[] } | 'stop'} To
+ * stopped; or the account apps read it through, its name and password
+ * typed on this row and sent once, to this computer alone. An audience-only
+ * change preserves every other setting (SCOPE_PARALLEL.md, `POST /lent`).
+ * @typedef {{ limit: number | null } | { groups: string[] } | 'stop'
+ *   | { readers: { name: string, password: string } }} To
  */
 
 /**
@@ -37,6 +39,8 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * @property {Record<string, number>} [asked]
  * @property {string} said
  * @property {string} [many]
+ * @property {string} [account]
+ * @property {string} [password]
  * @property {string[]} groups
  * @property {Signed} [shown]
  */
@@ -47,7 +51,7 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * pressed; the audience saved; Sign people in pressed; Let in this many
  * pressed, with the number; the change made, signing on, or refused, with
  * why.
- * @typedef {{ type: 'typed', value: string }
+ * @typedef {{ type: 'typed', field?: string, value: string }
  *   | { type: 'choose', id: string, on: boolean }
  *   | { type: 'change', to: To }
  *   | { type: 'audience' }
@@ -63,6 +67,10 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * @typedef {{ run: 'change', to: To, failed: 'refused' }
  *   | { run: 'sign', failed: 'refused' }} Effect
  */
+
+// What a change made clears: the typed fields, the password among them, and
+// what was said.
+const CLEARED = { many: undefined, account: undefined, password: undefined, said: '' };
 
 // The change asked, `effect` run, unless one is under way.
 /**
@@ -99,7 +107,7 @@ export const CHANGE = (lend, home) => ({
   step: (state, message) => {
     switch (message.type) {
       case 'typed':
-        return go(state, {}, { many: message.value });
+        return go(state, {}, { [message.field ?? 'many']: message.value });
       case 'choose':
         return go(state, {}, { groups: chosen(state.groups, message) });
       case 'audience':
@@ -121,7 +129,7 @@ export const CHANGE = (lend, home) => ({
           failed: 'refused',
         });
       case 'changed':
-        return go(state, { change: 'idle' }, { many: undefined, said: '' });
+        return go(state, { change: 'idle' }, CLEARED);
       case 'signed':
         return go(state, { change: 'idle' }, { shown: message.c });
       case 'refused':

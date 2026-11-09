@@ -17,7 +17,9 @@ The row then says *"You lent jellyfin, at http://localhost:8096: the groups you 
 
 If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say which program it is, each one word…"*. Fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
-The home page never asks for a password. If the program wants one on every request, lend it from a terminal (below).
+The home page asks for a password in one place only: the account apps read through, in the next paragraph. It goes to this computer and nowhere else. If a program wants a password on every request, lend it from a terminal (below).
+
+If apps read the program, as Movie Night reads Jellyfin, its row under **What you lend** says *"Apps can't read your jellyfin yet. To let them, make one account for your group."* Unfold **How to make the account**, make it the way that says, type its name and password, and press **Save the account**. svrngs signs in once and keeps only what the program gives it, not the password. The row then says *"Apps your friends open can read your jellyfin with the account you made. They can't change anything."*
 
 ## Lend it from a terminal
 
@@ -130,7 +132,7 @@ For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those t
 - `--upload 40`: your computer's upload speed in Mbit/s, as a speed test shows it. svrngs tells each person's browser, and the app, their share of it. A person sees it only if the app shows it.
 - `--ask "your notes"`: an app can use this lend only after the person it acts for says yes. They're asked *"Let Ana’s planner use Sam’s notes?"* on their own home page, with your words, **Yes** and **Not now**, and can stop it later.
 - `--reads jellyfin`: for an app you lend that reads other lends. Its pages may open the Jellyfins your groups lend, as whoever opens the app. Beside its Open your friends read *"Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what it asks for."*, and can untick each one. Opening it from the home page is the yes, and names those. A friend's new library joins at the next open from the home page.
-- `--readers`: for something other apps read, such as a Jellyfin that Movie Night searches. Make one account in it for your groups, and tick only what they may see. `share` asks for its name and password, signs in once, and keeps what it's given on this computer. Apps that read it then see what that account sees, and only look: anything else they send is refused before it reaches your computer's program, and they're told to ask you. Without `--readers`, an app that reads it sees what anyone who hasn't signed in sees. A friend who opens it themselves still signs in as themselves. Sharing it again without `--readers`, or `unshare`, forgets the account.
+- `--readers`: for something other apps read, such as a Jellyfin that Movie Night searches, the same as **Save the account** on your home page. Make one account in it for your groups, and tick only what they may see. `share` asks for its name and password, signs in once, and keeps what it's given on this computer. Apps that read it then see what that account sees, and only look: anything else they send is refused before it reaches your computer's program, and they're told to ask you. Without `--readers`, an app that reads it sees what anyone who hasn't signed in sees. A friend who opens it themselves still signs in as themselves. Sharing it again without `--readers`, or `unshare`, forgets the account.
 
 ## Stop lending something
 

@@ -124,11 +124,6 @@ pub fn address(port: u16) -> String {
     format!("http://{HOST}:{port}/")
 }
 
-/// Where the page of the lend `app` sends its person to say yes to `lend`.
-pub(crate) fn ask_address(port: u16, lend: &Label, app: &Label) -> String {
-    format!("{}ask?lend={lend}&app={app}", address(port))
-}
-
 /// The home page's routes, beside the lends' origins: a request naming it
 /// is answered here, any other at its lend's origin.
 pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
@@ -385,9 +380,10 @@ struct Changing {
 }
 
 /// A closed set (AGENTS 9): let in this many at once, none for everyone in
-/// its groups; the groups it is lent to (LENDING_SCOPE); or lend it no
-/// longer.
-#[derive(Debug, Deserialize)]
+/// its groups; the groups it is lent to (LENDING_SCOPE); the account apps
+/// read it through; or lend it no longer. No `Debug`, so a password typed
+/// here can't be traced.
+#[derive(Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum LendChange {
     Limit(Option<NonZeroU16>),
@@ -397,6 +393,11 @@ enum LendChange {
     /// The lender turns on signing people in with svrngs for it.
     #[serde(rename = "sign-in")]
     SignIn,
+    /// The account apps reading it are let in as, for one sign-in now.
+    Readers {
+        name: String,
+        password: String,
+    },
     Stop,
 }
 
@@ -413,13 +414,18 @@ async fn lent(State(at): State<Asking>) -> Response {
         (Err(refused), _) => return refused,
         (_, Err(e)) => return unread("it cannot read what you lend already", &e),
     };
-    let signing: Vec<String> = all
-        .into_iter()
-        .flatten()
-        .filter(|l| l.sign_in_with_svrngs.is_some())
+    let all: Vec<_> = all.into_iter().flatten().collect();
+    let signing: Vec<_> = (all.iter().filter(|l| l.sign_in_with_svrngs.is_some()))
         .map(|l| l.name.to_string())
         .collect();
-    Json(serde_json::json!({ "lent": lent, "signing": signing })).into_response()
+    let readers = |l: &lend::Lend| {
+        let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
+        let said = serde_json::json!({ "kept": kept, "signs": share::accounts_of(&l.kind) });
+        share::readers_of(&l.kind).map(|_| (l.name.to_string(), said))
+    };
+    let readers: serde_json::Map<_, _> = all.iter().filter_map(readers).collect();
+    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers }))
+        .into_response()
 }
 
 /// `POST /lent`: the person's change, written to the lend's declaration.
@@ -437,6 +443,9 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         },
         LendChange::Stop => lend::withdraw(dir, &c.lend),
         LendChange::SignIn => return sign_in(&at, &c.lend).await,
+        LendChange::Readers { name, password } => {
+            return readers(&at, &c.lend, &name, &password).await
+        }
     };
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
@@ -469,6 +478,7 @@ fn kind_of(change: &LendChange) -> &'static str {
         LendChange::Limit(_) => "limit",
         LendChange::Groups(_) => "groups",
         LendChange::SignIn => "sign-in",
+        LendChange::Readers { .. } => "readers",
         LendChange::Stop => "stop",
     }
 }
@@ -479,7 +489,7 @@ fn kind_of(change: &LendChange) -> &'static str {
 fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
     let held = at.door.rail.namespaces().map_err(|e| {
         tracing::warn!(target: "home", error = %e, "home: refused — the groups held cannot be listed");
-        fault("this computer cannot read which groups it holds")
+        LendRefusal::fault("this computer cannot read which groups it holds")
     })?;
     let stands = |id: &String| crate::door::stands_here(&at.door.rail, id);
     match groups.iter().find(|id| !held.contains(id) || !stands(id)) {
@@ -506,7 +516,7 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
         Ok(client) => client,
         Err(e) => {
             tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — no sign-in client can be made");
-            return fault("this computer cannot make a sign-in for it");
+            return LendRefusal::fault("this computer cannot make a sign-in for it");
         }
     };
     // Read, changed and written under the lend's lock, as every change is
@@ -539,6 +549,33 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
     .into_response()
 }
 
+/// `POST /lent` with `to: {"readers": ...}`: the account apps reading `name`
+/// are let in as, signed in to once as `svrngs share --readers` does, and
+/// what it gives kept ([`lend::keep_readers`]); the password nowhere.
+async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) -> Response {
+    let dir = &at.door.data_dir;
+    let found = lend::read(dir, name);
+    let Ok(Some(lent)) = found else {
+        return unchanged_said(name, found.map(|_| false));
+    };
+    let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind)) else {
+        tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");
+        return LendRefusal::closed(format!("svrngs doesn’t know how to sign in to {name}."));
+    };
+    let line = match share::sign_in_readers(port, how, account, password).await {
+        Ok(line) => line,
+        Err(why) => {
+            tracing::debug!(target: "home", lend = %name, why, "home: refused — the account was not let in");
+            return LendRefusal::closed(format!("{name} didn’t let that account in: {why}."));
+        }
+    };
+    tracing::debug!(target: "home", lend = %name, "home: the apps' account signed in once, what it gave kept");
+    match lend::keep_readers(dir, name, (lend::SECRET_HEADER, &line)) {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => unchanged_said(name, Err(e)),
+    }
+}
+
 /// A port as the page shows it ([`share::listening`]): the kind the table
 /// knows, how that kind signs each person in, the paths svrngs keeps back
 /// of it, and its name once lent.
@@ -551,12 +588,7 @@ fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serd
 /// Which read failed, said, and traced with its error (#160).
 fn unread(why: &str, error: &dyn std::fmt::Display) -> Response {
     tracing::warn!(target: "home", why, %error, "home: refused — what runs here not offered, nor lent");
-    fault(why)
-}
-
-/// svrngs's 500 on this computer, in `words`.
-fn fault(words: impl Into<String>) -> Response {
-    LendRefusal::fault(words)
+    LendRefusal::fault(why)
 }
 
 /// `GET /running`: what answers on this computer, less svrngs's own
@@ -673,7 +705,7 @@ async fn lend_one(
             &format!("You already lend something called {name}: give it another name."),
             name,
         ),
-        Err(e) | Ok(Some(Err(e))) => fault(e.to_string()),
+        Err(e) | Ok(Some(Err(e))) => LendRefusal::fault(e.to_string()),
     })
 }
 
@@ -730,7 +762,7 @@ pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Re
         }
         Err(e) => {
             tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made");
-            fault(format!("this computer cannot make a link: {e}"))
+            LendRefusal::fault(format!("this computer cannot make a link: {e}"))
         }
     }
 }

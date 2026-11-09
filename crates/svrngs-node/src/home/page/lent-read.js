@@ -10,13 +10,22 @@ import { get } from './routes.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 
 /**
+ * What home.rs `lent` says of a lend apps can read through an account:
+ * whether one is kept, and how its lender makes one.
+ * @typedef {{ kept: boolean, signs?: { accounts?: string } }} AppsAccount
+ */
+
+/**
  * The list's state: where its read is, what this computer lends, which of
- * them sign people in with svrngs, by name, and why it could not be read.
+ * them sign people in with svrngs, by name, which take an account apps read
+ * them through, each with whether one is kept and how to make it, by name,
+ * and why it could not be read.
  * @typedef {object} State
  * @property {{ lent: 'reading' | 'read' | 'unread' }} at
  * @property {Record<string, number>} [asked]
  * @property {Lend[]} [lent]
  * @property {string[]} [signing]
+ * @property {Record<string, AppsAccount>} [readers]
  * @property {string} [why]
  */
 
@@ -24,7 +33,7 @@ import { get } from './routes.js?v=__VERSION__';
  * The messages the list takes: read again; read `n` answered (home.rs
  * `lent`), or unread, with why.
  * @typedef {{ type: 'read' }
- *   | { type: 'answered', n: number, lent: Lend[], signing: string[], why: string }
+ *   | { type: 'answered', n: number, lent: Lend[], signing: string[], readers: Record<string, AppsAccount>, why: string }
  *   | { type: 'unread', n: number, why: string }} Message
  */
 
@@ -39,12 +48,13 @@ export const LENDING = {
   io: {
     read: ({ n: serial }) =>
       get('/lent').then(
-        /** @param {{ lent: Lend[], signing: string[] }} answer */
-        ({ lent, signing }) => ({
+        /** @param {{ lent: Lend[], signing: string[], readers: Record<string, AppsAccount> }} answer */
+        ({ lent, signing, readers }) => ({
           type: 'answered',
           n: serial,
           lent: lent.filter((lend) => !lend.group),
           signing,
+          readers,
           why: `${lent.length} lent`,
         }),
       ),
@@ -55,7 +65,7 @@ export const LENDING = {
     reading: 'reading',
     done: 'answered',
     at: 'read',
-    fields: ['lent', 'signing'],
+    fields: ['lent', 'signing', 'readers'],
     taker: 'what you lend',
   }),
 };

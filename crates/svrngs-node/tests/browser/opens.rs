@@ -620,3 +620,125 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     }
     drop((cy, dee));
 }
+
+in_chromium!(
+    /// **The apps' account, made from the home page, with no terminal**
+    /// (capability connections §5 step 5, §6 bar 1): ada lends a stand-in
+    /// Jellyfin. Her home page says apps can't read it yet and folds out
+    /// how to make the account for her group; she types its name and
+    /// password and saves it, and the row then says apps read it with the
+    /// account she made and can't change anything. The password crosses
+    /// only to her own computer, and what her home page reads back never
+    /// holds it or the token svrngs keeps. Planted, watched failing: the
+    /// row drawn from the words alone, the button posting nothing.
+    the_apps_account_is_made_from_the_home_page
+);
+async fn the_apps_account_is_made_from_the_home_page(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(9)).await;
+    let jellyfin = sign_in_stand_in().await;
+    let lends = svrngs_node::lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body =
+        json!({ "groups": [NS], "port": jellyfin.port(), "kind": "jellyfin", "refused": [] });
+    std::fs::write(lends.join("jellyfin.json"), body.to_string()).unwrap();
+    let row = "#lent li";
+    let kept = dir
+        .path()
+        .join("secrets/lends/jellyfin/readers/authorization");
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "unfold": true,
+            "all": "#lent li",
+            "do": [
+                [format!("{row} input[name=account]"), "films-group"],
+                [format!("{row} input[name=password]"), "pw-1"],
+                [format!("{row} button:has-text('Save the account')"), null, true, "account you made"],
+            ],
+            "text": true,
+        }),
+    )
+    .await;
+    eprintln!("ada's home page: {seen:#}");
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    let before = seen["all"].to_string();
+    assert!(
+        before.contains(
+            "Apps can’t read your jellyfin yet. To let them, make one account for your group."
+        ) && before.contains("Dashboard, Users"),
+        "the row says what is missing, and how:\n{seen:#}"
+    );
+    let after = seen["after"][0].to_string();
+    assert!(
+        after.contains("Apps your friends open can read your jellyfin with the account you made. They can’t change anything."),
+        "the row says what the account does:\n{seen:#}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(&kept).unwrap(),
+        r#"MediaBrowser Token="tok-1""#,
+        "kept as the command keeps it:\n{seen:#}"
+    );
+    let sent = seen["sent"].as_array().unwrap();
+    let gives_password = |s: &&Value| s[2].as_str().is_some_and(|b| b.contains("pw-1"));
+    let posts: Vec<_> = sent.iter().filter(gives_password).collect();
+    assert_eq!(posts.len(), 1, "the password is sent once:\n{seen:#}");
+    assert!(
+        posts[0][1].as_str().is_some_and(|u| u.ends_with("/lent")),
+        "and only to her own computer's /lent:\n{seen:#}"
+    );
+    let mut stack = vec![dir.path().to_path_buf()];
+    while let Some(at) = stack.pop() {
+        for entry in std::fs::read_dir(&at).into_iter().flatten().flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else if std::fs::read(&path)
+                .unwrap_or_default()
+                .windows(4)
+                .any(|w| w == b"pw-1")
+            {
+                panic!("the password is kept at {path:?}");
+            }
+        }
+    }
+    drop(ada);
+}
+
+/// A stand-in for Jellyfin's sign-in: `tok-1` for a body holding `pw-1`,
+/// else 401.
+async fn sign_in_stand_in() -> std::net::SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut got = Vec::new();
+                let mut chunk = [0u8; 4096];
+                loop {
+                    let n = tokio::io::AsyncReadExt::read(&mut sock, &mut chunk)
+                        .await
+                        .unwrap_or(0);
+                    got.extend_from_slice(&chunk[..n]);
+                    let text = String::from_utf8_lossy(&got);
+                    if n == 0 || text.contains("Pw") {
+                        break;
+                    }
+                }
+                let text = String::from_utf8_lossy(&got);
+                let (status, answer) = match text.contains("pw-1") {
+                    true => ("200 OK", r#"{"AccessToken":"tok-1"}"#),
+                    false => ("401 Unauthorized", ""),
+                };
+                let reply = format!(
+                    "HTTP/1.1 {status}\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{answer}",
+                    answer.len()
+                );
+                let _ = tokio::io::AsyncWriteExt::write_all(&mut sock, reply.as_bytes()).await;
+            });
+        }
+    });
+    addr
+}

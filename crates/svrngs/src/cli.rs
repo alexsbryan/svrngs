@@ -1543,10 +1543,6 @@ fn joined_said(joined: &Joined) -> String {
     }
 }
 
-/// The header a lend's password is sent in: the one HTTP gives a
-/// credential (RFC 9110 §11.6.2).
-pub const SECRET_HEADER: &str = "authorization";
-
 /// Ask for the lend's password on this terminal, never echoed, and read
 /// one line from standard input: `None` for an empty line or none. The
 /// value is never traced, only whether there is one.
@@ -1603,15 +1599,16 @@ async fn share_readers(root: &Path, lend: &Lend, port: NonZeroU16) -> Result<(),
         )?
         .ok_or_else(|| refused("nothing was given".into()))?,
     };
-    lend::keep_readers(root, name, (SECRET_HEADER, &line)).map_err(|e| refused(e.to_string()))?;
+    lend::keep_readers(root, name, (lend::SECRET_HEADER, &line))
+        .map_err(|e| refused(e.to_string()))?;
     eprintln!("Apps that read {name} are let in as that account, to look only; a person opening it still signs in as themselves.");
     Ok(())
 }
 
 /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
-/// `secret` sent as [`SECRET_HEADER`], or none.
+/// `secret` sent as [`lend::SECRET_HEADER`], or none.
 pub fn share_lend(root: &Path, lend: &Lend, secret: Option<&str>) -> Result<(), Refusal> {
-    lend::declare(root, lend, secret.map(|s| (SECRET_HEADER, s))).map_err(|e| {
+    lend::declare(root, lend, secret.map(|s| (lend::SECRET_HEADER, s))).map_err(|e| {
         tracing::debug!(target: "cli", lend = %lend.name, error = %e, "cli: share — the lend cannot be kept");
         Refusal::Keep(lend.name.to_string())
     })

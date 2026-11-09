@@ -1,6 +1,7 @@
 //! **Ana's taste** (apps/taste/README.md): Sam lends his Jellyfin to House
 //! and gives svrngs the account he made in it for apps that read it,
-//! `svrngs share <its port> --readers`, as in the Movie Night scene
+//! `svrngs share <its port> --readers`, the command's way of what the
+//! Movie Night scene does on Sam's home page
 //! (movie_night.rs). Bo lends a small model that turns a film's
 //! description into numbers, llama-server with `--embeddings`, `svrngs
 //! share <its port> --kind llama-server`. Ana joins House on her computer,

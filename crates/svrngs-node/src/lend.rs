@@ -561,6 +561,10 @@ pub fn readers_dir(data_dir: &Path, name: &LendName) -> PathBuf {
     secret_dir(data_dir, name).join("readers")
 }
 
+/// The header a lend's password is sent in: the one HTTP gives a
+/// credential (RFC 9110 §11.6.2).
+pub const SECRET_HEADER: &str = "authorization";
+
 /// Keep `(header, value)` as what apps reading the lend `name` are let in
 /// with ([`readers_dir`]), held as every change to the lend is.
 pub fn keep_readers(

@@ -3,8 +3,9 @@
 //! read it search it"): Sam makes House and lends his Jellyfin as it
 //! comes, `svrngs share <its port> --kind jellyfin`. In Jellyfin's own
 //! pages he makes an account for his groups that may see his films, and
-//! gives it to svrngs, `svrngs share <its port> --readers`, typing its
-//! name and password at the prompts. He lends Movie Night too, its page
+//! gives it to svrngs on his home page, typing its name and password,
+//! with no terminal (capability connections §6 bar 1). He lends Movie
+//! Night too, its page
 //! served by a plain static file server, `svrngs share <its port> --kind
 //! movie-night --reads jellyfin`. Ana, new to House, joins by its link on
 //! a computer of her own, opens Movie Night from her home page, which is
@@ -142,7 +143,7 @@ async fn me(jf: &Jellyfin, authorization: &str) -> (u16, Value) {
 
 scene!(
     /// Planted, watched failing, each by `SCENES_PLANT`: `movie_night:
-    /// no-readers`, Sam never runs `share --readers`; `movie_night:
+    /// no-readers`, Sam never gives the account; `movie_night:
     /// lender-token`, Movie Night served with Sam's own token in its
     /// plant.js; `movie_night:logout`, Movie Night asking each library to
     /// end its session, with a hand edit of door.rs `admit` that answers
@@ -189,14 +190,15 @@ async fn movie_night(engine: Engine) {
     let password = jf.read("secrets/readers_pw");
     let before = users(&jf).await;
 
-    // 3. Sam gives svrngs that account, typing its name and password.
+    // 3. Sam gives svrngs that account on his home page, its name and
+    // password typed there, no terminal (home.rs `readers`).
     let kept = sam
         .home
         .join(".svrngs/secrets/lends/jellyfin/readers/authorization");
     if !planted("no-readers") {
-        let readers = [&jellyfin[..], &["--readers"]].concat();
-        let typed = format!("readers\n{password}\n");
-        scene.command(&sam, &readers, &typed).await;
+        let to = json!({ "readers": { "name": "readers", "password": password } });
+        sam.on_home_page("/lent", &json!({ "lend": "jellyfin", "to": to }))
+            .await;
     }
     let readers = std::fs::read_to_string(&kept).unwrap_or_default();
 

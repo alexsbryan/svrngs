@@ -399,6 +399,170 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     alex.endpoint().close().await;
 }
 
+/// A stand-in for Jellyfin's sign-in on `listener`: `tok-1` for a body
+/// holding `pw-1`, else 401.
+fn sign_in_stand_in(listener: std::net::TcpListener) {
+    use std::io::{BufRead, Read, Write};
+    std::thread::spawn(move || {
+        for sock in listener.incoming().flatten() {
+            let mut sock = std::io::BufReader::new(sock);
+            let (mut head, mut length) = (String::new(), 0);
+            while !head.ends_with("\r\n\r\n") {
+                let mut line = String::new();
+                if sock.read_line(&mut line).unwrap_or(0) == 0 {
+                    break;
+                }
+                let lower = line.to_ascii_lowercase();
+                if let Some(n) = lower.strip_prefix("content-length:") {
+                    length = n.trim().parse().unwrap_or(0);
+                }
+                head += &line;
+            }
+            let mut body = vec![0; length];
+            let _ = sock.read_exact(&mut body);
+            let (status, answer) = match String::from_utf8_lossy(&body).contains("pw-1") {
+                true => ("200 OK", r#"{"AccessToken":"tok-1"}"#),
+                false => ("401 Unauthorized", ""),
+            };
+            let n = answer.len();
+            let reply = format!(
+                "HTTP/1.1 {status}\r\nContent-Length: {n}\r\nConnection: close\r\n\r\n{answer}"
+            );
+            let _ = sock.get_mut().write_all(reply.as_bytes());
+        }
+    });
+}
+
+/// **The account apps read through, set on the home page** (capability
+/// connections §5 step 5, §6 bar 1): `GET /lent` says which lends can have
+/// one, and whether one is kept, never what is kept. A wrong password is
+/// refused in words and keeps nothing; a right one is signed in with once
+/// and kept as `svrngs share --readers` keeps it; a program with no way to
+/// sign in is refused. The password is kept nowhere. Planted, watched
+/// failing: the change kept the password in the readers' file.
+#[tokio::test]
+async fn the_apps_account_is_given_on_the_home_page() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    sam.transport()
+        .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
+    tokio::time::timeout(Duration::from_secs(30), sam.round())
+        .await
+        .expect("Sam's computer hears it lets Sam in");
+    let jellyfin = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = jellyfin.local_addr().unwrap().port();
+    sign_in_stand_in(jellyfin);
+    let at = lend::lends_dir(sam_dir.path());
+    std::fs::create_dir_all(&at).unwrap();
+    for (name, kind) in [("films", "jellyfin"), ("notes", "notes")] {
+        let body = serde_json::json!({ "port": port, "kind": kind, "groups": [NS] });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let (browser, home) = (
+        &Browser::of(&sam),
+        format!("svrngs.localhost:{}", sam.api_addr().port()),
+    );
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let readers = sam_dir
+        .path()
+        .join("secrets/lends/films/readers/authorization");
+    let give = |lend: &str, pw: &str| {
+        format!(
+            r#"{{"lend":"{lend}","to":{{"readers":{{"name":"films-group","password":"{pw}"}}}}}}"#
+        )
+    };
+
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(listed["readers"]["films"]["kept"], false, "{listed:#}");
+    assert!(
+        listed["readers"]["films"]["signs"]["accounts"]
+            .as_str()
+            .is_some_and(|how| how.contains("Dashboard, Users")),
+        "the steps to make the account, from the table: {listed:#}"
+    );
+    assert_eq!(
+        listed["readers"]["notes"],
+        serde_json::Value::Null,
+        "{listed:#}"
+    );
+
+    let wrong = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &give("films", "not-it"),
+    )
+    .await;
+    assert_eq!(wrong.status, 403, "{}", wrong.body);
+    assert!(
+        wrong.json()["error"]
+            .as_str()
+            .is_some_and(|e| e.starts_with("films didn’t let that account in:")),
+        "{}",
+        wrong.body
+    );
+    assert!(!readers.exists(), "a wrong password kept something");
+
+    let none = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &give("notes", "pw-1"),
+    )
+    .await;
+    assert_eq!(none.status, 403, "{}", none.body);
+
+    let right = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &give("films", "pw-1"),
+    )
+    .await;
+    assert_eq!(right.status, 204, "{}", right.body);
+    assert_eq!(
+        std::fs::read_to_string(&readers).unwrap(),
+        r#"MediaBrowser Token="tok-1""#
+    );
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(listed["readers"]["films"]["kept"], true, "{listed:#}");
+    assert!(
+        !listed.to_string().contains("tok-1") && !listed.to_string().contains("pw-1"),
+        "what is kept is never answered: {listed:#}"
+    );
+    for entry in walkdir(sam_dir.path()) {
+        let held = std::fs::read(&entry).unwrap_or_default();
+        assert!(
+            !held.windows(4).any(|w| w == b"pw-1"),
+            "the password is kept at {entry:?}"
+        );
+    }
+    drop(alex);
+}
+
+/// Every file under `dir`.
+fn walkdir(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let mut stack = vec![dir.to_path_buf()];
+    let mut files = Vec::new();
+    while let Some(at) = stack.pop() {
+        for entry in std::fs::read_dir(&at).into_iter().flatten().flatten() {
+            let path = entry.path();
+            match path.is_dir() {
+                true => stack.push(path),
+                false => files.push(path),
+            }
+        }
+    }
+    files
+}
+
 /// **A lend's limit is changed on the home page, and the door takes it with
 /// no restart** (bash-limit (b)). Sam lends `shelf` to one person at once.
 /// Sam opens it at his own computer and is let in; Alex, through hers, is

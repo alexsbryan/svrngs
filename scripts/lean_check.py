@@ -570,9 +570,9 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20857,
+    ".": 20888,
 
-    "js": 8444,
+    "js": 8475,
 
     "swift": 1,
 }

@@ -32,12 +32,14 @@ export function Lending({ round, groups, home, told }) {
   }, [state.at.lent]);
   // `signing` is set with `lent`, by `answered`, so it is there with it.
   const signing = /** @type {string[]} */ (state.signing);
+  const readers = state.readers ?? {};
   const rows = state.lent?.map(
     (lend) => html`
       <${Lent}
         key=${lend.name}
         l=${lend}
         signs=${signing.includes(lend.name)}
+        account=${readers[lend.name]}
         groups=${groups}
         home=${home}
       />
