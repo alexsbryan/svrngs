@@ -111,7 +111,7 @@ test('a pass kept before relay fallbacks opens at its one relay', async () => {
 test('a relay the page refuses for a lend is said by name as it goes as none', () => {
   const said = [];
   const lent = [{ label: 'films.ab', name: 'Films', relay: 'http://10.0.0.2:3340/' }];
-  const context = { trace: (line) => said.push(line) };
+  const context = { trace: (line) => said.push(line), readingOf: () => [] };
   const passLends = runInNewContext(
     `${cut('page/hand.js', 'passLends')}${cut('page/hand.js', 'taken')}\npassLends;`,
     context,

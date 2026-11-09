@@ -737,8 +737,14 @@ fn kept_at(
                 kept.lock()
                     .unwrap()
                     .push(String::from_utf8_lossy(&head[..n]).into_owned());
+                // A page is HTML; a body that isn't is data a reader may have.
+                let kind = if html.starts_with('<') {
+                    "text/html; charset=utf-8"
+                } else {
+                    "text/plain"
+                };
                 let answer = format!(
-                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
+                    "HTTP/1.1 200 OK\r\ncontent-type: {kind}\r\n\
                      content-length: {}\r\nconnection: close\r\n\r\n{html}",
                     html.len()
                 );
@@ -1495,7 +1501,7 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
 
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
     assert_eq!(
-        seen["words"], "ada’s page (k) It writes what you say there into house’s record, as you. It also opens your friends’ k as you, and they can see what it asks.",
+        seen["words"], "ada’s page (k) Reads cy’s k. They can see it’s you, and what it asks for. It writes what you say there into house’s record, as you.",
         "the phone's open is its yes, and what it does is said beside it (capability-open):\n{seen:#}"
     );
     let told = &seen["told"];
@@ -1525,7 +1531,9 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
             && address.ends_with(&format!("/svrngs-reads/{}/", label(2, "shelf"))),
         "the address is under the page's own origin: {address}"
     );
-    assert_eq!(seen["asked"]["status"], 200, "{seen:#}");
+    // Asked by fetch, the shelf's HTML is refused at the page's own origin
+    // (web/lend.js `inert`), though cy's shelf is asked (`asked`, below).
+    assert_eq!(seen["asked"]["status"], 403, "{seen:#}");
     let landed = &seen["landed"];
     let shelf_at = landed["url"].as_str().unwrap_or_default();
     assert!(
@@ -1552,6 +1560,72 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
     assert!(
         at_origin(&seen["backAt"], &label(1, "page")),
         "one Back returns to ada's page:\n{seen:#}"
+    );
+    drop((ada, cy));
+}
+
+/// A service that answers a script at every path, with a cookie and a
+/// `Cache-Control` of its own.
+async fn script_origin() -> std::net::SocketAddr {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let _ = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
+                let body = "export const ran = 'ran in the page, at its origin';";
+                let answer = format!(
+                    "HTTP/1.1 200 OK\r\ncontent-type: text/javascript\r\ncache-control: public, max-age=3600\r\nset-cookie: lend=1\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    addr
+}
+
+in_webkit!(
+    /// **A lend's script is refused at a phone's page** (capability
+    /// connections §5 step 7; web/lend.js `inert`, found by the step 0
+    /// repro, where the script ran in the page at its origin): a page
+    /// reading a lend that answers a script is refused 403 `closed`, and
+    /// importing it fails. Planted: `inert` returning the lend's answer
+    /// whole, watched failing.
+    a_phone_page_is_handed_a_lend_s_script_refused_at_its_own_origin
+);
+async fn a_phone_page_is_handed_a_lend_s_script_refused_at_its_own_origin(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let page = page_origin("<!doctype html><title>ada's page</title>").await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
+    let script = script_origin().await;
+    lend(cy_dir.path(), "shelf", script.port());
+    let seen = drive(
+        engine,
+        "reads-script.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+        }),
+        None,
+    )
+    .await;
+    eprintln!("the script read: {seen:#}");
+    let script = &seen["script"];
+    assert_eq!(script["status"], 403, "{seen:#}");
+    assert_eq!(script["ran"], Value::Null, "it must not run: {seen:#}");
+    let headers = script["headers"].to_string();
+    assert!(
+        headers.contains("x-svrngs-refused: closed") && !headers.contains("set-cookie"),
+        "{seen:#}"
     );
     drop((ada, cy));
 }
@@ -1725,8 +1799,14 @@ async fn linking_app() -> (std::net::SocketAddr, KeptHeads) {
                 } else {
                     "<!doctype html><title>the app at a path</title>".into()
                 };
+                // A page is HTML; a body that isn't is data a reader may have.
+                let kind = if html.starts_with('<') {
+                    "text/html; charset=utf-8"
+                } else {
+                    "text/plain"
+                };
                 let answer = format!(
-                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\n\
+                    "HTTP/1.1 200 OK\r\ncontent-type: {kind}\r\n\
                      content-length: {}\r\nconnection: close\r\n\r\n{html}",
                     html.len()
                 );
@@ -2256,7 +2336,7 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
     let page = page_origin("<!doctype html><title>ada's page</title>").await;
     lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
-    let (shelf, heads) = kept_page("<!doctype html><title>cy's shelf</title>").await;
+    let (shelf, heads) = kept_page("what is on the shelf").await;
     let lends = svrngs_node::lend::lends_dir(cy_dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "k", "limit": 3, "refused": [], "asks": WORDS });

@@ -51,7 +51,7 @@ fn what_acts_as_you_is_said_in_one_wording() {
             format!("cy’s notes opens your friends’ films as you. Since {}. ", today()),
             format!("cy’s notes stopped opening your friends’ films as you on {}. Opening it again says yes again.", today()),
             format!("cy’s notes opens the films you chose, as you. Since {}. ", today()),
-            "cy’s notes opens nothing of your friends’ as you. To choose what it can, open it from your home page. ",
+            "cy’s notes opens nothing of your friends’ as you. Open it again to choose what it can. ",
             "Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what it asks for.",
             "Reads Sam’s and Bo’s jellyfin. Bo’s is new since you last opened it.",
             "Reads your friends’ jellyfin. Nobody lends one now.",
@@ -236,7 +236,7 @@ async fn the_group_page_says_what_acts_as_you_and_its_stop_holds_at_the_next_pas
         "Opens friends’ things as you\n",
         "A Stop here holds from the next pass this phone signs for the app, within 12 hours.",
         &format!(
-            "ada’s page (k) opens your friends’ k as you. Since {}.",
+            "ada’s page (k) opens the k you chose, as you. Since {}.",
             today()
         ),
         "Knows who you are\n",

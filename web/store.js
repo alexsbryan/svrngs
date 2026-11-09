@@ -46,7 +46,7 @@ const VERSION = 2;
 /**
  * A yes or a stop said here to what a lend reads as the person, and when,
  * in seconds (web/page/hand.js `handing`, web/page/acts.js `stopping`).
- * @typedef {{ said: 'yes' | 'stop', at: number }} Said
+ * @typedef {{ said: 'yes' | 'stop', at: number, lends?: string[] }} Said
  */
 
 /**

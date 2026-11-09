@@ -122,8 +122,8 @@ const does = (kind, shelf) =>
  */
 export const agreed = (lend, shelf, group) => {
   const reads = lend.reads ?? [];
-  // On a computer the open's own line names them (`readLine`); a phone's
-  // open is by kind until its yes names lends.
+  // The open's own line names them (`readLine`) where it was told what it
+  // reads; this computer's own app, which needs no yes, says it by kind.
   const also =
     reads.length > 0 && !lend.reading
       ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`
@@ -380,9 +380,8 @@ export const carrying = ({ kind, reads = [] }, shelf) =>
 
 // What the person said, `said`, of `lend` opening their friends' lends as
 // them, since or on its day; `lend` undefined when it is not lent now. A
-// computer's yes names its lends, so it says what they chose, and a yes
-// from before that named none reads as nothing until the next open; a
-// phone's has no list yet, and stays by kind.
+// yes names its lends, so it says what they chose, and a yes from before
+// that named none reads as nothing until the next open.
 /**
  * @param {(Lend & { reads: string[] }) | undefined} lend
  * @param {{ said: string, at: number, lends?: string[] }} said
@@ -391,7 +390,7 @@ export const reading = (lend, said) => {
   const who = lend ? named(lend) : 'An app not lent now';
   const kinds = lend ? lend.reads.map(spoken).join(' and ') : 'things';
   if (said.said === 'yes' && said.lends?.length === 0)
-    return `${who} opens nothing of your friends’ as you. To choose what it can, open it from your home page. `;
+    return `${who} opens nothing of your friends’ as you. Open it again to choose what it can. `;
   const chosen = said.lends ? `the ${kinds} you chose,` : `your friends’ ${kinds}`;
   if (said.said === 'yes') return `${who} opens ${chosen} as you. Since ${day(said.at)}. `;
   return `${who} stopped opening your friends’ ${kinds} as you on ${day(said.at)}. Opening it again says yes again.`;
@@ -410,7 +409,7 @@ const list = (words) =>
 const owners = (people) => list(people.map((person) => `${person}’s`));
 /**
  * A lend its open names, as /v1/lends answers it (surface.rs `opening`).
- * @typedef {{ label: string, person: string, name: string, kind: string, ticked: boolean, new: boolean }} ReadLend
+ * @typedef {{ label: string, person: string, name: string, kind: string, ticked?: boolean, new: boolean }} ReadLend
  */
 /**
  * @param {ReadLend[]} on  the lends left ticked

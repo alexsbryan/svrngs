@@ -49,3 +49,19 @@ fn an_origin_naming_another_lend_outweighs_a_same_origin_fetch_site() {
     assert_eq!(app_of(&from_own, &own), Some(own.clone()));
     assert_eq!(app_of(&headers(None), &own), Some(own.clone()));
 }
+
+/// **A phone holds what a computer holds, by one rule stated twice**
+/// (capability connections §5 step 7; web/lend.js `inert`): the two
+/// languages share no constant, so this reads the JS and fails when either
+/// list changes alone. Planted: a type added to [`DATA`], watched failing.
+#[test]
+fn a_phone_and_a_computer_hold_one_rule_for_a_lends_answer_at_a_page() {
+    let lend = include_str!("../../../web/lend.js");
+    let types: Vec<String> = DATA.iter().map(|d| format!("'{d}'")).collect();
+    let data = format!("const DATA = [{}];", types.join(", "));
+    assert!(lend.contains(&data), "web/lend.js DATA is not {data}");
+    for (name, value) in INERT {
+        let said = format!("'{}': '{value}'", name.as_str());
+        assert!(lend.contains(&said), "web/lend.js INERT lacks {said}");
+    }
+}

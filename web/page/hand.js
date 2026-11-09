@@ -72,7 +72,7 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
       label,
       lends.slice(1).map((one) => one.label),
     ),
-    writes: writesOf(core, lend, group, signed),
+    writes: writesOf(core, hand, lend, signed),
     group: group.id,
     holder,
     seed: seed && store.hex(seed),
@@ -92,24 +92,42 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
   location[at === undefined ? 'assign' : 'replace'](`${start}#${fragment}`);
   return { type: 'handed', why: `to ${start}` };
 }
+// The lends `lend` reads among `lent`, what its open names and its line
+// says (surface.rs `reads_among`, `opening`): each of a kind it declares,
+// never itself, new when the person's last yes, `said`, named lends and
+// not this one.
+/**
+ * @param {Lent} lend
+ * @param {Lent[]} lent
+ * @param {{ lends?: string[] }} [said]
+ */
+export const readingOf = (lend, lent, said) =>
+  lent
+    .filter((other) => other.label !== lend.label && (lend.reads ?? []).includes(other.kind))
+    .map((other) => ({ ...other, new: !!said?.lends && !said.lends.includes(other.label) }));
+
 // The yes the open is, kept with the group when the lend reads others'
-// and none was kept for a `#open=`: the group as it is kept now.
+// and none was kept for a `#open=`, naming each lend this open reads
+// (capability connections §6 bar 7; door/choices.rs `Choice`): the group
+// as it is kept now.
 /**
  * @param {Hand} hand
  * @param {Lent} lend
  */
-async function withYes({ group, label, at }, lend) {
+async function withYes({ group, label, at, lent }, lend) {
   const yes = lend.reads && lend.reads.length > 0 && (at === undefined || !group.reads?.[label]);
   // A guest's lends read none (web/page/visit.js `stay`), so the yes is a group's.
   if (!yes) return group;
+  const lends = [...new Set(readingOf(lend, lent).map((one) => one.label))];
   return store.opened({
     .../** @type {Group} */ (group),
-    reads: { ...group.reads, [label]: { said: 'yes', at: Math.floor(Date.now() / 1000) } },
+    reads: { ...group.reads, [label]: { said: 'yes', at: Math.floor(Date.now() / 1000), lends } },
   });
 }
 
-// The lends the pass names: the lend, and the lends of each kind it
-// reads, unless the group stopped its reads. A relay the page's policy
+// The lends the pass names: the lend, and those of its reads the person's
+// yes named, none after a stop or a yes from before lends were named, and
+// never one since (a pass re-signed at an `at` keeps the yes it had). A relay the page's policy
 // refuses goes as none, so the worker dials the taken routes instead of a
 // blocked one (a worker has no document to judge that itself).
 /**
@@ -119,15 +137,11 @@ async function withYes({ group, label, at }, lend) {
  * @param {Partial<Group>} opened
  */
 function passLends(core, { lent, label }, lend, opened) {
-  const stopped = opened.reads?.[label]?.said === 'stop';
-  if (stopped) trace(`PAGE: ${lend.name}'s reads were stopped here, so its pass names none`);
+  const said = opened.reads?.[label];
+  if (said?.said === 'stop') trace(`PAGE: ${lend.name}'s reads stopped, so its pass names none`);
+  const names = said?.said === 'yes' ? (said.lends ?? []) : [];
   return (
-    [
-      lend,
-      ...(stopped
-        ? []
-        : lent.filter((other) => other !== lend && (lend.reads ?? []).includes(other.kind))),
-    ]
+    [lend, ...readingOf(lend, lent).filter((one) => names.includes(one.label))]
       // One of each label: a carried app's other copies go as its `lenders`,
       // the only lends that share a label under another computer's key.
       .filter((other, i, all) => all.findIndex((one) => one.label === other.label) === i)
@@ -186,12 +200,17 @@ async function holderOf(core, label, lends) {
 /** @typedef {(grant: string, reads: string[]) => string} Signed */
 // An app on a port writes its kind's part of the record as you by naming
 // the act (DESIGN §3, "Lent apps"): the pass that lets it, `signed`. A
-// group's own lend, or a guest's open, naming no group, writes none.
+// group's own lend, or a guest's open, naming no group, writes none; nor
+// does a lent app named after a folder the group lists, whose part is that
+// folder's (origin.rs `judged`, §6 bar 8: a computer reads the record, this
+// phone what the group's list says now).
 /**
  * @param {typeof Wasm} core
+ * @param {Hand} hand
  * @param {Lent} lend
- * @param {Hand['group']} group
  * @param {Signed} signed
  */
-const writesOf = (core, lend, group, signed) =>
-  lend.group || !group.id ? null : signed(core.carried_label(lend.key, lend.kind, group.id), []);
+const writesOf = (core, { group, lent }, lend, signed) =>
+  lend.group || !group.id || lent.some((one) => !!one.group && one.kind === lend.kind)
+    ? null
+    : signed(core.carried_label(lend.key, lend.kind, group.id), []);

@@ -380,9 +380,12 @@ with no address, for the app to tell its person to open it from the home
 page; the next open from there names it, and needs no extra click, the Open
 button posting what its line shows. A yes from before this named kinds,
 under `reads`, and parses as naming none: `unasked` until the next open.
-This computer's own app needs no yes and reads what its person declared. A
-phone's open stays by kind for now, the pass it signs naming the lends then
-(PLAN §2, the plan's step 7). The app's origin, not a capability, says which
+This computer's own app needs no yes and reads what its person declared. On
+a phone the group's page keeps the same yes: the open, its line naming each
+lend it reads (`readLine`, with no ticks), writes the lends it named
+beside the group, and the pass names only those, so one lent since then
+waits for the next open, a pass signed afresh meanwhile keeping the last
+list (`web/page/hand.js`). The app's origin, not a capability, says which
 app asks: a capability in an address is something the page could read.
 
 At this origin a lend's answer is `'self'` to the browser, so `routed` does
@@ -396,7 +399,13 @@ person has said yes to an app reading lends, it writes nothing to the record
 for them, through a Stop or a later version, as what it read may be in its
 storage (`door.rs`). What it can still send is what a read's address holds,
 to lenders of the kinds it declared in its group, and the open says so. On a
-phone a carried app reads no lend yet (PLAN §2).
+phone the lend's worker makes the answer anew by the same rule (`inert`,
+`web/lend.js`), `DATA` and `INERT` written there too and held alike by a test
+(`origin_tests.rs`); a request is the page's as it was, so a POST goes
+as far as the door's `admit` allows. A lent app named after a folder the
+group lists gets no writing pass (`web/page/hand.js` `writesOf`, §6's bar 8
+of the plan: what a computer reads from the record, a phone from the
+group's listing, so a lender who hides a folder from it can hide that too).
 
 Each act stays its signer's: its `person` says whose device wrote it, and
 its `person_key` whose person, the same from each of their devices; an
@@ -1303,8 +1312,8 @@ Seven calls:
    as you. It also opens your friends’ films as you, and they can see what
    it asks."; and pressing the
    button is the consent, posted before the app opens. On a phone the
-   group page's open, with the same line beside it, is the yes, as the
-   pass it signs names what the app reads. An app this computer lends
+   group page's open, the line beside it naming what it reads (`readLine`,
+   as the computer's), is the yes, and the pass it signs names just that. An app this computer lends
    reads what its person declared. Beside the open of an app the group
    carries is first what it is for, the shelf's words or "its own part of
    the group’s record", then "Opening it lets it read and write that, as

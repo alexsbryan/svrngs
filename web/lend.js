@@ -597,6 +597,15 @@ const PAGE_COOKIES = 'x-svrngs-page-cookies';
 // door marks its own (door.rs, `LendRefusal`), so a page tells it from the
 // lend's.
 const REFUSED = 'x-svrngs-refused';
+// What a lend's answer may be at a page's own origin, where it is `'self'`
+// to the browser: origin.rs `DATA` and `INERT`, one rule in two languages,
+// held alike by origin_tests.rs `a_phone_and_a_computer_hold_one_rule_for_a_lends_answer_at_a_page`.
+const DATA = ['application/json', 'text/plain', 'image/jpeg', 'image/png', 'image/webp'];
+const INERT = {
+  'content-security-policy': 'sandbox',
+  'x-content-type-options': 'nosniff',
+  'cache-control': 'no-store',
+};
 // The acts a lent app writes as the person asking (`appended`).
 const APPEND = 'x-svrngs-append';
 /**
@@ -720,6 +729,7 @@ async function proxied(asked, held) {
   said?.(`answered ${res.status} ${range}${late}`);
   const set = res.headers.get('x-svrngs-set-cookies');
   if (set) await keepCookies(asked, set);
+  if (asked.where.read) return inert(res);
   const turned = (await refusedAppend(asked, res)) ?? redirected(asked, res);
   if (turned) return turned;
   return served(asked, res, said, set);
@@ -879,6 +889,23 @@ function served(asked, res, said, set) {
   if (html) return shimmed(asked, res, answer, headed);
   const body = said && answer ? counted(answer, said) : answer;
   return new Response(body, { status: res.status, statusText: res.statusText, headers: headed });
+}
+
+// A lend's answer `res` at the page's own origin (origin.rs `inert`), made
+// anew: its status, a type from `DATA` in svrngs's own spelling, and its
+// body; nothing else of the lend's, an answer naming acts refused as a
+// read's is (a read never signs). With no type, the status and no body.
+/** @param {Response} res */
+function inert(res) {
+  const given = res.headers.get('content-type');
+  const data = DATA.find((type) => type === given?.split(';')[0]?.trim().toLowerCase());
+  trace(`RUNTIME: a read answered ${res.status}, ${given}: ${data ?? 'not data, or no type'}`);
+  if ((given !== null && !data) || res.headers.has(APPEND)) return closed();
+  const refused = res.headers.get(REFUSED);
+  /** @type {Record<string, string>} */
+  const headers = { ...INERT, ...(data && { 'content-type': data }) };
+  if (refused) headers[REFUSED] = refused;
+  return new Response(data ? unpacked(res).answer : null, { status: res.status, headers });
 }
 
 // `res`'s body unpacked from gzip as a browser unpacks what it asked for
@@ -1398,7 +1425,7 @@ async function answered(fetchEvent, url, where) {
   // into the listener, so it reads `given` as still `null` here.
   return (
     /** @type {Response | PromiseLike<Response> | null} */ (given) ??
-    lent(fetchEvent.request, url, where, allowed)
+    lent(fetchEvent.request, url, where, allowed && !where.read)
   );
 }
 
