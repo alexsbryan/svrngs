@@ -62,7 +62,7 @@ use svrngs_core::pass::Label;
 pub(crate) const OPEN_PATH: &str = "/svrngs-open";
 pub(crate) const AS_PATH: &str = "/svrngs-as/";
 pub(crate) const HOME: &str = "svrngs";
-const PROOF: &str = "x-svrngs-browser";
+pub(crate) const PROOF: &str = "x-svrngs-browser";
 
 /// How far a proof's stamp may be from now, either way, in seconds.
 const FRESH: i64 = 60;
@@ -351,12 +351,6 @@ impl Sessions {
             return onward.then_some(()).ok_or(Unproven::Unsigned);
         }
         (self.nonces.spend(name, at, spent, now)).map_err(Unproven::Spent)
-    }
-
-    /// The proof `headers` show, read before they are stripped, for
-    /// [`Self::onward`].
-    pub(crate) fn proof_of(headers: &HeaderMap) -> Option<String> {
-        (headers.get(PROOF)?.to_str().ok()).map(str::to_string)
     }
 
     /// Where `answer`, to a request asked by `method` with `proof` at the

@@ -148,7 +148,13 @@ pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
     fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755))
         .map_err(refused("the new svrngs cannot be made runnable"))?;
     fs::rename(&new, exe).map_err(refused("the new svrngs cannot replace this one"))?;
-    write_release(dir, &latest.want);
+    // Keep the hash of the release now in place. A failure here is said and
+    // not fatal: the bytes are already the release, and the next check reads
+    // the page and the running bytes again.
+    let path = dir.join(RELEASE_FILE);
+    if let Err(e) = fs::write(&path, &latest.want) {
+        tracing::warn!(target: "update", path = %path.display(), error = %e, "update: the new svrngs is in place, but what it installed cannot be kept");
+    }
     tracing::info!(target: "update", exe = %exe.display(), release = %latest.want, "update: the new svrngs is in place");
     Ok(Outcome::Updated)
 }
@@ -322,16 +328,6 @@ impl Temp {
 impl Drop for Temp {
     fn drop(&mut self) {
         let _ = fs::remove_dir_all(&self.0);
-    }
-}
-
-/// Keep the hash of the release now in place. A failure here is said and
-/// not fatal: the bytes are already the release, and the next check reads
-/// the page and the running bytes again.
-fn write_release(dir: &Path, hash: &str) {
-    let path = dir.join(RELEASE_FILE);
-    if let Err(e) = fs::write(&path, hash) {
-        tracing::warn!(target: "update", path = %path.display(), error = %e, "update: the new svrngs is in place, but what it installed cannot be kept");
     }
 }
 

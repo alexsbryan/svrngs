@@ -242,7 +242,8 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     let mut appending = Appending::for_request(shown, req.headers())?;
     // The proof, before it is stripped: a redirect its answer names is
     // followed with it, once (`crate::session::Onwards`).
-    let proof = crate::session::Sessions::proof_of(req.headers());
+    let proof = req.headers().get(crate::session::PROOF);
+    let proof = proof.and_then(|p| p.to_str().ok()).map(str::to_string);
     at.sessions.strip(req.headers_mut());
     if let Some(cap) = cap.filter(|_| shown != Shown::Token) {
         own_proof = false;
