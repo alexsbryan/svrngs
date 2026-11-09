@@ -72,9 +72,9 @@ fn planted(plant: &str) -> bool {
 /// Movie Night's page, apps/movie-night's files as they are kept, copied
 /// to `dir` and served there on 127.0.0.1 by a plain static file server,
 /// as a person serves a page: its port, and the server, killed on drop.
-/// `lender-token` writes Sam's own token into plant.js, which app.js then
+/// `lender-token` writes Sam's own token into plant.js, which index.js then
 /// sends on each request (apps/movie-night/plant.js); `logout` adds a
-/// line to app.js that, once a card is drawn, asks each library it reads
+/// line to index.js that, once a card is drawn, asks each library it reads
 /// to end its session, by a POST, as the readers' page in the spike did
 /// (cc15b40f).
 async fn served(dir: &Path, token: &str) -> (u16, Child) {
@@ -92,8 +92,8 @@ async fn served(dir: &Path, token: &str) -> (u16, Child) {
     }
     if planted("logout") {
         let ends = "\nnew MutationObserver(() => results.childElementCount && told().then((t) => t?.lends.forEach((l) => fetch(`${l.address}Sessions/Logout`, { method: 'POST' })))).observe(results, { childList: true });\n";
-        let app = std::fs::read_to_string(dir.join("app.js")).unwrap();
-        std::fs::write(dir.join("app.js"), app + ends).unwrap();
+        let app = std::fs::read_to_string(dir.join("index.js")).unwrap();
+        std::fs::write(dir.join("index.js"), app + ends).unwrap();
     }
     let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let port = free.local_addr().unwrap().port();
@@ -242,7 +242,7 @@ async fn movie_night(engine: Engine) {
         panic!("Ana's steps did not go as the scene says: {seen:#}");
     }
     // Without the readers' account, Movie Night says whose it is to open,
-    // since Ana cannot (app.js `WORDS.closed`); her search then shows nothing.
+    // since Ana cannot (index.js `WORDS.closed`); her search then shows nothing.
     let said = seen["searched"]["said"].as_str().unwrap_or_default();
     if planted("no-readers") {
         assert_eq!(

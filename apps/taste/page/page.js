@@ -37,7 +37,7 @@ async function libraries() {
 }
 
 // A library's films, or what kept them from here, told apart as Movie
-// Night tells them (apps/movie-night/app.js `ask`): 502 and 504 are the
+// Night tells them (apps/movie-night/index.js `ask`): 502 and 504 are the
 // lender's computer not answering; 401, no account kept for apps.
 async function films(lib) {
   let res;

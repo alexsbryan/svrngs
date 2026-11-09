@@ -4,7 +4,7 @@
 // the address her svrngs opened it at, waits for Movie Night's button
 // there, `opener`, and presses it, which posts her yes in a tab of its
 // own; there she searches `film`, waits until every library has said
-// what it found (app.js `WORDS`), and follows the first copy's link,
+// what it found (index.js `WORDS`), and follows the first copy's link,
 // until the page there says `landed`.
 //
 //   node movie_night.mjs '{"engine", "home", "opener", "film", "landed", "dump"}'
