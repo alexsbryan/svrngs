@@ -6,6 +6,7 @@
 // (lent-row.js), each sending `choose` with the group's id and whether it
 // was ticked.
 import { html } from '../ui/view.js?v=__VERSION__';
+import { Tick } from '../ui/parts.js?v=__VERSION__';
 import { whose } from '../question.js?v=__VERSION__';
 
 /**
@@ -52,19 +53,12 @@ export function GroupChoice({ groups, ticked, waiting = false, send }) {
   /** @param {string} id */
   const tick = (id) => (/** @type {{ currentTarget: HTMLInputElement }} */ pressed) =>
     send({ type: 'choose', id, on: pressed.currentTarget.checked });
-  return groups.map((group) => {
-    return html`
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            disabled=${waiting}
-            checked=${ticked.includes(group.id)}
-            onChange=${tick(group.id)}
-          />
-          ${called(group)}
-        </label>
-      </p>
-    `;
-  });
+  return groups.map(
+    (group) =>
+      html`<${Tick}
+        disabled=${waiting}
+        on=${ticked.includes(group.id)}
+        change=${tick(group.id)}
+      >${called(group)}<//>`,
+  );
 }

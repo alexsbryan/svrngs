@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The pages' seven primitives, both pages' (ralph/next/page/CHARTER.md,
+// The pages' eight primitives, both pages' (ralph/next/page/CHARTER.md,
 // "The parts"). Each is a pure view: props in, vnodes out, and `send` for
 // what it asks. Their words, ids, classes and element kinds are pinned byte
 // for byte (web/tests/parts.test.mjs).
@@ -93,6 +93,27 @@ export function Fold({ id, summary, heading, open = false, fold, send, children 
       <summary>${head}</summary>
       ${children}
     </details>
+  `;
+}
+
+// A tick box and its words, a line of a list: the group a lend goes to, an
+// app brought, a lend an app may read.
+/**
+ * @typedef {object} TickProps
+ * @property {boolean} on
+ * @property {boolean} [disabled]
+ * @property {(ticked: Targeted<HTMLInputElement>) => void} change
+ * @property {Drawn} [children]
+ */
+/** @param {TickProps} props */
+export function Tick({ on, disabled, change, children }) {
+  return html`
+    <p>
+      <label>
+        <input type="checkbox" disabled=${disabled} checked=${on} onChange=${change} />
+        ${children}
+      </label>
+    </p>
   `;
 }
 

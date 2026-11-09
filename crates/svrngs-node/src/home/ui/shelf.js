@@ -16,7 +16,7 @@
 // then two, four and eight on, at the edge, and then no more (`listed`).
 import { html, useEffect, useMachine } from './view.js?v=__VERSION__';
 import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
-import { Act, Fold } from './parts.js?v=__VERSION__';
+import { Act, Fold, Tick } from './parts.js?v=__VERSION__';
 import { spoken } from '../question.js?v=__VERSION__';
 /** @import { Machine, Store } from './machine.js?v=__VERSION__' */
 /** @import { Drawn, Targeted } from './view.js?v=__VERSION__' */
@@ -233,19 +233,11 @@ export function drawn(state, send, { g: group, lent, shelf, joined }) {
     : '';
   const boxes = offered.map((app) => {
     const words = ` ${spoken(app.name)}: ${app.words}`;
-    return html`
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            disabled=${bringing}
-            checked=${state.ticked.includes(app.name)}
-            onChange=${tick(app.name)}
-          />
-          ${words}
-        </label>
-      </p>
-    `;
+    return html`<${Tick}
+      disabled=${bringing}
+      on=${state.ticked.includes(app.name)}
+      change=${tick(app.name)}
+    >${words}<//>`;
   });
   const apps = offered.map((app) => app.name).filter((app) => state.ticked.includes(app));
   const doing = { state: bringing ? 'busy' : state.at.bring, said: state.said && ` ${state.said}` };
