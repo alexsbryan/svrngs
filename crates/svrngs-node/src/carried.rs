@@ -454,12 +454,21 @@ pub(crate) fn spent(read: &Admission, app: &str, key: &str) -> i64 {
     let entry = |o: &&Value| o["person_key"] == first && (own(o) || voids(o));
     let entries = ops.iter().filter(entry);
     let stamps = entries.filter_map(|o| o["ts_unix"].as_i64());
-    let each = 3600 / WRITES_AN_HOUR;
-    let next = |due: i64, ts: i64| due.max(ts.min(now)) + each;
-    let due = stamps.fold(0, next);
-    let wait = (due - now - (WRITES_AN_HOUR - 1) * each).max(0);
+    let wait = wait_after(stamps, now);
     tracing::debug!(target: "folder", app, key, wait, "carried: this app's entries as this person, and the seconds before it may write again");
     wait
+}
+
+/// The seconds before an entry after `stamps`, in time order, is in budget
+/// at `now`. Entries a program wrote with the token are the person's and
+/// pass no budget, so they can overdraw it; an empty budget is as far as it
+/// goes, or a bulk import would hold the app's page back for days.
+pub(crate) fn wait_after(stamps: impl Iterator<Item = i64>, now: i64) -> i64 {
+    let each = 3600 / WRITES_AN_HOUR;
+    let empty_at = |ts: i64| ts + WRITES_AN_HOUR * each;
+    let next = |due: i64, ts: i64| (due.max(ts.min(now)) + each).min(empty_at(ts.min(now)));
+    let due = stamps.fold(0, next);
+    (due - now - (WRITES_AN_HOUR - 1) * each).max(0)
 }
 
 /// The person told [`WRITES_AN_HOUR`] is spent, in words a developer can

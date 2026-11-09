@@ -584,10 +584,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # over origin, update, http, oplog, api and the home page's effects
 # (2add1674, bbfeadbe; -65 of . of which 45 are tests moved where the count
 # does not read them, -2 of js): . +63 to 20,871, js +5 to 8,499.
+# The refill stops at empty, so a bulk import through the token cannot hold an
+# app back (+4), inside the operator's ceiling (cap 20,900, 2026-11-09); . to 20,873.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20871,
+    ".": 20873,
 
     "js": 8499,
 

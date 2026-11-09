@@ -72,3 +72,28 @@ fn a_get_that_ends_hands_on_its_turn_and_one_that_waited_is_forgotten() {
     assert_eq!(s.turn, None, "with none waiting the turn is free");
     assert!(s.sent.is_empty());
 }
+
+/// A program with the token passes no budget, so its entries can overdraw
+/// one; the app's next write waits one refill, not one for each of them.
+/// The rest of the refill is held at the route, tests/carried.rs.
+#[test]
+fn an_overdrawn_write_budget_waits_one_refill_and_no_more() {
+    use super::carried::wait_after;
+    let at = 1_000_000;
+    assert_eq!(wait_after(std::iter::repeat_n(at, 199), at), 0, "room left");
+    assert_eq!(
+        wait_after(std::iter::repeat_n(at, 200), at),
+        18,
+        "just empty"
+    );
+    assert_eq!(
+        wait_after(std::iter::repeat_n(at, 5_000), at),
+        18,
+        "overdrawn"
+    );
+    assert_eq!(
+        wait_after(std::iter::repeat_n(at, 5_000), at + 18),
+        0,
+        "refilled"
+    );
+}
