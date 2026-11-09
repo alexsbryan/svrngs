@@ -169,16 +169,14 @@ pub(crate) fn register_in(
         .keys()
         .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
         .collect();
-    let removals = removals_in(ops, &m, namespace);
-    let meets = m.meets_at();
     Ok(Register {
         members,
         removed,
+        removals: removals_in(ops, &m, namespace),
+        meets: m.meets_at(),
         keeper: m.keeper,
-        removals,
         visits: m.visits,
         cut: m.cut,
-        meets,
         signers: m.signers,
         holders: m.holders,
     })
@@ -284,7 +282,7 @@ impl RingRail {
         let Ok((journal, seed)) = self.seeded(namespace)? else {
             return Ok(Register::default());
         };
-        let register = journal.register(&seed)?;
+        let (register, _) = journal.folded(&seed)?;
         tracing::debug!(target: "register", namespace, standing = register.members.len(),
             removed = register.removed.len(), keeper = ?register.keeper, "register: the group's register");
         Ok(register)
@@ -337,14 +335,8 @@ impl RingRail {
     /// stand there not, and when its register is unreadable, which vouches
     /// for nobody.
     fn member_in(&self, ns: &str, actor: &str) -> Option<Member> {
-        match self.standing(ns) {
-            Ok(Standing::Members(m)) => m.get(actor).cloned(),
-            Ok(_) => None,
-            Err(e) => {
-                tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody");
-                None
-            }
-        }
+        let standing = self.standing(ns).inspect_err(|e| tracing::warn!(target: "register", actor, namespace = ns, error = %e, "register: a group's register is unreadable, so it vouches for nobody"));
+        standing.ok()?.member(actor).cloned()
     }
 
     /// The first group held here that both `eligible` accepts and `actor`
@@ -397,13 +389,12 @@ impl RingRail {
     /// [`Self::standing_anywhere`] says them.
     pub fn removed_anywhere(&self, actor: &str) -> Option<String> {
         let held = self.namespaces().inspect_err(|e| tracing::warn!(target: "register", actor, error = %e, "register: cannot list the groups held, so nobody can be shown to have been removed from one"));
-        let found = held.ok()?.into_iter().find(|ns| match self.register(ns) {
-            Ok(r) => r.removed.contains_key(actor),
-            Err(e) => {
+        let found = held.ok()?.into_iter().find(|ns| {
+            let register = self.register(ns).inspect_err(|e| {
                 tracing::warn!(target: "register", actor, namespace = ns, error = %e,
-                    "register: a group's register is unreadable, so it shows nobody removed");
-                false
-            }
+                "register: a group's register is unreadable, so it shows nobody removed")
+            });
+            register.is_ok_and(|r| r.removed.contains_key(actor))
         });
         tracing::debug!(target: "register", actor, group = ?found, "register: whether a group held here removed the key");
         found

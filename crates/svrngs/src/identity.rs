@@ -53,10 +53,6 @@ fn load_key(data_dir: &Path) -> std::io::Result<Option<SigningKey>> {
     }
 }
 
-fn save_key(data_dir: &Path, key: &SigningKey) -> std::io::Result<()> {
-    svrngs_node::declared::write_secret(&key_path(data_dir), &key.to_bytes()).map_err(|(_, e)| e)
-}
-
 /// Why this computer has no key to run as.
 #[derive(Debug, thiserror::Error)]
 pub enum KeyError {
@@ -93,7 +89,8 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError
             getrandom::fill(&mut seed)
                 .unwrap_or_else(|e| panic!("failed to generate node key entropy: {e}"));
             let fresh = SigningKey::from_bytes(&seed);
-            save_key(data_dir, &fresh).map_err(|source| {
+            let saved = svrngs_node::declared::write_secret(&key_path(data_dir), &fresh.to_bytes());
+            saved.map_err(|(_, source)| {
                 tracing::debug!(
                     target: "identity",
                     error = %source,

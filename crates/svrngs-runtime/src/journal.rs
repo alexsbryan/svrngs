@@ -330,11 +330,6 @@ impl RingJournal {
         Ok(log.held.digest.digest())
     }
 
-    /// The whole register, from the fold [`Self::folded`] keeps (U7).
-    pub(crate) fn register(&self, seed: &Roster) -> Result<crate::register::Register, RailError> {
-        self.folded(seed).map(|(register, _)| register)
-    }
-
     /// The group's register from `seed` ([`crate::register::register_in`]),
     /// who stands and who was cut, over the acts that move membership as
     /// [`Held`] caught them up, judged by [`Checked`]; and true when it was
@@ -456,12 +451,11 @@ impl RingJournal {
     /// this with an absent file read as empty.
     pub fn seed(&self) -> Result<Option<Roster>, RailError> {
         let path = self.roster_path();
+        let bad = |e: &dyn std::fmt::Display| RailError::Io(format!("{}: {e}", path.display()));
         match std::fs::read_to_string(&path) {
-            Ok(raw) => serde_json::from_str(&raw)
-                .map(Some)
-                .map_err(|e| RailError::Io(format!("{}: {e}", path.display()))),
+            Ok(raw) => serde_json::from_str(&raw).map(Some).map_err(|e| bad(&e)),
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(RailError::Io(format!("{}: {e}", path.display()))),
+            Err(e) => Err(bad(&e)),
         }
     }
 

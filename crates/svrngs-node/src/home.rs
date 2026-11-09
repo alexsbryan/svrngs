@@ -465,10 +465,7 @@ fn kind_of(change: &LendChange) -> &'static str {
 fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
     let held = at.door.rail.namespaces().map_err(|e| {
         tracing::warn!(target: "home", error = %e, "home: refused — the groups held cannot be listed");
-        LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "this computer cannot read which groups it holds",
-        )
+        fault("this computer cannot read which groups it holds")
     })?;
     let stands = |id: &String| crate::door::stands_here(&at.door.rail, id);
     match groups.iter().find(|id| !held.contains(id) || !stands(id)) {
@@ -495,10 +492,7 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
         Ok(client) => client,
         Err(e) => {
             tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — no sign-in client can be made");
-            return LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "this computer cannot make a sign-in for it",
-            );
+            return fault("this computer cannot make a sign-in for it");
         }
     };
     // Read, changed and written under the lend's lock, as every change is
@@ -542,7 +536,12 @@ fn shown(port: NonZeroU16, kind: Option<&Kind>, name: Option<&LendName>) -> serd
 /// Which read failed, said, and traced with its error (#160).
 fn unread(why: &str, error: &dyn std::fmt::Display) -> Response {
     tracing::warn!(target: "home", why, %error, "home: refused — what runs here not offered, nor lent");
-    LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, why)
+    fault(why)
+}
+
+/// svrngs's 500 on this computer, in `words`.
+fn fault(words: impl Into<String>) -> Response {
+    LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, words)
 }
 
 /// `GET /running`: what answers on this computer, less svrngs's own
@@ -658,9 +657,7 @@ async fn lend_one(
             &format!("You already lend something called {name}: give it another name."),
             name,
         ),
-        Err(e) | Ok(Some(Err(e))) => {
-            LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
-        }
+        Err(e) | Ok(Some(Err(e))) => fault(e.to_string()),
     })
 }
 
@@ -720,10 +717,7 @@ pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Re
         }
         Err(e) => {
             tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made");
-            LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("this computer cannot make a link: {e}"),
-            )
+            fault(format!("this computer cannot make a link: {e}"))
         }
     }
 }

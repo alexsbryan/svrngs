@@ -386,7 +386,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let (mut name, mut kind, mut limit, mut refused) = (None, None, None, Vec::new());
     let mut upload = None;
     let mut reads = Vec::new();
-    let (mut folder, mut group, mut groups) = (None, None, Vec::new());
+    let (mut folder, mut groups) = (None, Vec::new());
     let mut asks = None;
     let mut sign_in = false;
     let mut readers = false;
@@ -446,10 +446,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 return Err("--sign-in is gone: svrngs no longer runs a program of yours to sign people in; sign-in with svrngs is the door's own".into())
             }
             "--folder" => folder = Some(raw),
-            "--group" => {
-                groups.push(raw.clone());
-                group = Some(raw);
-            }
+            "--group" => groups.push(raw),
             "--ask" => {
                 if raw.trim().is_empty() || raw.chars().any(char::is_control) {
                     return Err("--ask wants words: what an app receives from it".into());
@@ -484,6 +481,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             other => return Err(format!("unexpected argument `{other}`")),
         }
     }
+    let group = groups.last().cloned();
     if person.is_some() && !matches!(verb.as_str(), "new" | "join") {
         return Err("--as is a `new` and `join` flag".into());
     }
@@ -505,8 +503,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                 .into(),
         );
     }
-    let removes = matches!(verb.as_str(), "remove" | "handover");
-    if removes && folder.is_none() {
+    if matches!(verb.as_str(), "remove" | "handover") && folder.is_none() {
         let raw = positional.ok_or(format!(
             "{verb} wants a name: `svrngs {verb} <name> --group <group>`"
         ))?;
@@ -739,13 +736,7 @@ impl Refusal {
     /// 1 for a refusal, 3 for a precondition absent (the module docs).
     pub fn exit_code(&self) -> u8 {
         match self {
-            Refusal::Update(e) => {
-                if e.judged() {
-                    1
-                } else {
-                    3
-                }
-            }
+            Refusal::Update(e) if e.judged() => 1,
             Refusal::NoName(_)
             | Refusal::NoNameToJoin
             | Refusal::LinkRefused
@@ -767,7 +758,8 @@ impl Refusal {
             | Refusal::Older
             | Refusal::Readers(..)
             | Refusal::Busy(_) => 1,
-            Refusal::NoDataDir
+            Refusal::Update(_)
+            | Refusal::NoDataDir
             | Refusal::DataDir(..)
             | Refusal::Key(_)
             | Refusal::Start
@@ -849,22 +841,12 @@ pub fn reach(at: MeetAt) -> RelayConfig {
 pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
     let said = match command {
         Verb::Help => format!("{USAGE}\n"),
-        Verb::Run => match claim(&root) {
-            Err(Refusal::Busy(_)) => {
-                let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
-                let home = svrngs_node::home::address(api.port());
-                tracing::debug!(target: "cli", %home, "cli: run — local home reminder");
-                format!("svrngs is already running. Your home page is at {home}\nRun `svrngs open` to open it in your browser.\n")
-            }
-            claimed => return start(Verb::Run, root, relay, claimed?, None).await,
-        },
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at, print) => open(&root, at.as_deref(), print).await?,
-        Verb::Update => match svrngs_node::update::apply(&root).await {
-            Ok(svrngs_node::update::Outcome::Current) => "This computer has the latest svrngs.\n",
-            Ok(svrngs_node::update::Outcome::Updated) => "Updated. `svrngs restart` uses it.\n",
-            Err(e) => return Err(Refusal::Update(e)),
+        Verb::Update => match svrngs_node::update::apply(&root).await? {
+            svrngs_node::update::Outcome::Current => "This computer has the latest svrngs.\n",
+            svrngs_node::update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n",
         }
         .to_string(),
         Verb::Restart => restart(&root)?,
@@ -903,13 +885,6 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             let group = seed.name().clone();
             said(&seed, &text, |outcome| Said::Left { group, outcome })?.to_string()
         }
-        Verb::Room(names) => match claim(&root) {
-            Err(Refusal::Busy(lock)) => {
-                tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
-                room(&root, names).await?.to_string()
-            }
-            claimed => return start(Verb::Room(names), root, relay, claimed?, None).await,
-        },
         Verb::Share(mut asked, groups) => {
             asked.audience = audience_of(&root, asked.port, &groups)?;
             let known = share::well_known_kind(asked.port);
@@ -952,18 +927,22 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
             }
         }
-        Verb::Join { link, person, run } => match claim(&root) {
-            Err(Refusal::Busy(lock)) => {
+        other => match (claim(&root), other) {
+            (Err(Refusal::Busy(_)), Verb::Run) => {
+                let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
+                let home = svrngs_node::home::address(api.port());
+                tracing::debug!(target: "cli", %home, "cli: run — local home reminder");
+                format!("svrngs is already running. Your home page is at {home}\nRun `svrngs open` to open it in your browser.\n")
+            }
+            (Err(Refusal::Busy(lock)), Verb::Room(names)) => {
+                tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
+                room(&root, names).await?.to_string()
+            }
+            (Err(Refusal::Busy(lock)), Verb::Join { link, person, .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: join — svrngs runs here already, so it is asked to join, as `room` is");
                 let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
                 join_running(&root, &link, &person).await?
             }
-            claimed => {
-                let join = Verb::Join { link, person, run };
-                return start(join, root, relay, claimed?, None).await;
-            }
-        },
-        other => match (claim(&root), other) {
             (Err(Refusal::Busy(lock)), link @ Verb::Link { origin: None, .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: link — svrngs runs here already, so it is asked, as `join` is");
                 link_running(&root, link).await?.to_string()
@@ -1117,8 +1096,7 @@ async fn start(
         }
     })?;
     if let Some(sharing) = sharing {
-        print!("{}", sharing.said(node.api_addr()));
-        println!();
+        println!("{}", sharing.said(node.api_addr()));
     }
     let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
@@ -1656,15 +1634,12 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
         }
     };
     tracing::debug!(target: "cli", lend = %name, groups = ids.len(), "cli: unshare — those groups only, or none named and it is withdrawn");
-    let done = match ids.is_empty() {
-        true => lend::withdraw(root, name),
-        false => lend::mutate(root, name, narrowed),
+    let (done, said): (_, fn(LendName) -> Said) = match ids.is_empty() {
+        true => (lend::withdraw(root, name), Said::Unshared),
+        false => (lend::mutate(root, name, narrowed), Said::Narrowed),
     };
     if done.map_err(keep)? {
-        if !ids.is_empty() {
-            return Ok(Said::Narrowed(name.clone()));
-        }
-        return Ok(Said::Unshared(name.clone()));
+        return Ok(said(name.clone()));
     }
     let lent = lend::all(root)
         .map_err(keep)?
@@ -1769,8 +1744,7 @@ async fn serve(
             unreachable!("answered in `run`")
         }
     };
-    print!("{said}");
-    println!();
+    println!("{said}");
     if !stays {
         tracing::debug!(target: "cli", "cli: join --no-run — stopping once in");
         return Ok(());
@@ -2028,11 +2002,10 @@ async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
     let seed = group_named(root, &group)?;
     let asked = serde_json::json!({ "group": seed.id(), "device": device, "relays": relays });
     let (ok, text) = ask_running(root, LINKS_ROUTE, &asked).await?;
-    let older = || Refusal::Older;
     let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
     tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
     let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {
-        let why = told["error"].as_str().ok_or_else(older)?;
+        let why = told["error"].as_str().ok_or(Refusal::Older)?;
         return Err(Refusal::Meet(why.to_string()));
     };
     let https: Option<String> = told["https"].as_str().map(Into::into);
@@ -2040,7 +2013,7 @@ async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
         .as_deref()
         .and_then(Link::parse)
         .and_then(|l| l.origin);
-    let device = serde_json::from_value(told["device"].clone()).map_err(|_| older())?;
+    let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refusal::Older)?;
     let link = Printed {
         client,
         https,

@@ -210,7 +210,7 @@ pub async fn fetch(
     body: Option<web_sys::ReadableStream>,
 ) -> Result<web_sys::Response, Refused> {
     let request = request(&method, &path, &headers, body)?;
-    let (send, recv) = conn.open_bi().await.map_err(|e| Refused::Stream(e.to_string()))?;
+    let (send, recv) = conn.open_bi().await.map_err(no_stream)?;
     emit(&format!("HTTP: {method} {path} — a bi-stream opened"));
     let duplex = Duplex {
         send,
@@ -232,7 +232,8 @@ pub async fn fetch(
     let (parts, incoming) = answer.into_parts();
     let status = parts.status.as_u16();
     emit(&format!("HTTP: {method} {path} answered {status}"));
-    let headers = web_sys::Headers::new().map_err(|e| Refused::Page(format!("{e:?}")))?;
+    let page = |e: JsValue| Refused::Page(format!("{e:?}"));
+    let headers = web_sys::Headers::new().map_err(page)?;
     // A page's `Response` drops `Set-Cookie`, so the lend's worker, which
     // keeps each lend's cookies (u5-2), is handed them under a name of its
     // own: a JSON array of each value.
@@ -244,15 +245,11 @@ pub async fn fetch(
         .collect();
     if !cookies.is_empty() {
         let json = serde_json::to_string(&cookies).unwrap_or_default();
-        headers
-            .append(COOKIES, &json)
-            .map_err(|e| Refused::Page(format!("{e:?}")))?;
+        headers.append(COOKIES, &json).map_err(page)?;
     }
     for (name, value) in &parts.headers {
         match value.to_str() {
-            Ok(value) => headers
-                .append(name.as_str(), value)
-                .map_err(|e| Refused::Page(format!("{e:?}")))?,
+            Ok(value) => headers.append(name.as_str(), value).map_err(page)?,
             Err(_) => emit(&format!(
                 "HTTP: {method} {path} — the header {name} is not text, so the page is not handed it"
             )),
@@ -272,8 +269,12 @@ pub async fn fetch(
         });
         wasm_streams::ReadableStream::from_stream(chunks).into_raw()
     });
-    web_sys::Response::new_with_opt_readable_stream_and_init(body.as_ref(), &init)
-        .map_err(|e| Refused::Page(format!("{e:?}")))
+    web_sys::Response::new_with_opt_readable_stream_and_init(body.as_ref(), &init).map_err(page)
+}
+
+/// A stream that failed, in its own words.
+fn no_stream(e: impl ToString) -> Refused {
+    Refused::Stream(e.to_string())
 }
 
 /// Ask on a new bi-stream of `conn` to switch `path` to another protocol,
@@ -291,10 +292,8 @@ pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Re
         head.push_str(&format!("Host: {UNNAMED_HOST}\r\n"));
     }
     head.push_str("\r\n");
-    let (mut send, mut recv) = conn.open_bi().await.map_err(|e| Refused::Stream(e.to_string()))?;
-    send.write_all(head.as_bytes())
-        .await
-        .map_err(|e| Refused::Stream(e.to_string()))?;
+    let (mut send, mut recv) = conn.open_bi().await.map_err(no_stream)?;
+    send.write_all(head.as_bytes()).await.map_err(no_stream)?;
     let mut got = Vec::new();
     let end = loop {
         if let Some(at) = got.windows(4).position(|w| w == b"\r\n\r\n") {
@@ -303,11 +302,7 @@ pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Re
         if got.len() > HEAD_MOST {
             return Err(Refused::Stream("the answer's head never ended".into()));
         }
-        match recv
-            .read_chunk(READ_CHUNK)
-            .await
-            .map_err(|e| Refused::Stream(e.to_string()))?
-        {
+        match recv.read_chunk(READ_CHUNK).await.map_err(no_stream)? {
             Some(chunk) => got.extend_from_slice(&chunk),
             None => return Err(Refused::Stream("the stream ended before its answer did".into())),
         }

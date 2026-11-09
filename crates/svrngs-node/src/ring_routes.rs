@@ -111,19 +111,17 @@ pub(crate) fn standing_asker(
         Ok(Standing::NotHeld) => {
             tracing::debug!(target: "rails", route, namespace, asker,
                 "ring: refused — this node holds no such ring, answered as a stranger is");
-            Err(refusal)
         }
         Ok(_) => {
             tracing::debug!(target: "rails", route, namespace, asker,
                 "ring: refused — the asker holds no standing in this ring");
-            Err(refusal)
         }
         Err(e) => {
             tracing::warn!(target: "rails", route, namespace, asker, error = %e,
                 "ring: refused — this ring's register is unreadable, so nobody can be shown to stand in it");
-            Err(refusal)
         }
     }
+    Err(refusal)
 }
 
 /// What a cut is told with (#179, #211), the one selection both the at-once
@@ -177,28 +175,22 @@ pub async fn ring_sync(
     State(state): State<RingInbound>,
     dialer: Option<Extension<Dialer>>,
     body: axum::body::Bytes,
-) -> Response {
+) -> Result<Response, Response> {
     let request_bytes = body.len();
-    let req: RingSyncRequest = match serde_json::from_slice(&body) {
-        Ok(r) => r,
-        Err(e) => return err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")),
-    };
+    let req: RingSyncRequest = serde_json::from_slice(&body)
+        .map_err(|e| err(StatusCode::BAD_REQUEST, format!("malformed body: {e}")))?;
     let dialer = dialer.map(|Extension(d)| d);
     let asker = dialer.map(|d| d.actor());
     if let Err(refusal) = standing_asker(&state.rail, dialer, "sync", &req.namespace) {
         if let Some(told) = told_cut(&state.rail, &req, asker.as_deref()) {
-            return told;
+            return Ok(told);
         }
-        return err(StatusCode::FORBIDDEN, refusal);
+        return Err(err(StatusCode::FORBIDDEN, refusal));
     }
-    let (response, more_for_caller) = match answer(state.rail.as_ref(), &req) {
-        Ok(pair) => pair,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
-    let bytes = match serde_json::to_vec(&response) {
-        Ok(b) => b,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
+    let (response, more_for_caller) = answer(state.rail.as_ref(), &req)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    let bytes = serde_json::to_vec(&response)
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     tracing::debug!(
         target: "rails",
         namespace = %req.namespace,
@@ -232,12 +224,12 @@ pub async fn ring_sync(
              carrying more history than one exchange holds"
         );
     }
-    (
+    Ok((
         StatusCode::OK,
         [(axum::http::header::CONTENT_TYPE, "application/json")],
         bytes,
     )
-        .into_response()
+        .into_response())
 }
 
 /// `POST /internal/ring/live` — buffer one peer's ephemeral payload under the
@@ -250,28 +242,25 @@ pub async fn ring_live(
     State(state): State<RingInbound>,
     dialer: Option<Extension<Dialer>>,
     body: axum::body::Bytes,
-) -> Response {
-    let LiveEnvelope { namespace, payload } = match serde_json::from_slice(&body) {
-        Ok(e) => e,
-        Err(e) => {
-            tracing::warn!(target: "rails", error = %e, "ring live: refused a malformed envelope");
-            return err(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                format!("live envelope is not {{\"namespace\", \"payload\"}} JSON ({e})"),
-            );
-        }
-    };
+) -> Result<Response, Response> {
+    let LiveEnvelope { namespace, payload } = serde_json::from_slice(&body).map_err(|e| {
+        tracing::warn!(target: "rails", error = %e, "ring live: refused a malformed envelope");
+        err(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!("live envelope is not {{\"namespace\", \"payload\"}} JSON ({e})"),
+        )
+    })?;
     if payload.len() > LIVE_PAYLOAD_MAX_BYTES {
         tracing::warn!(target: "rails", namespace, bytes = payload.len(),
             max = LIVE_PAYLOAD_MAX_BYTES, "ring live: refused an oversize payload");
-        return err(
+        return Err(err(
             StatusCode::PAYLOAD_TOO_LARGE,
             format!(
                 "live payload is {} bytes; this lane carries at most {}",
                 payload.len(),
                 LIVE_PAYLOAD_MAX_BYTES
             ),
-        );
+        ));
     }
     // svrngs: the dialer must stand in the group its envelope names, the
     // sync route's one question (`standing_asker`), where upstream asked
@@ -281,10 +270,8 @@ pub async fn ring_live(
     // onair-live: and the key it dialled with is kept with the payload,
     // with its person's first key, so a drain says who spoke (ON_AIR §4.3).
     let dialer = dialer.map(|Extension(d)| d);
-    let (key, member) = match standing_asker(&state.rail, dialer, "live", &namespace) {
-        Ok(asker) => asker,
-        Err(refusal) => return err(StatusCode::FORBIDDEN, refusal),
-    };
+    let (key, member) = standing_asker(&state.rail, dialer, "live", &namespace)
+        .map_err(|refusal| err(StatusCode::FORBIDDEN, refusal))?;
     let bytes = payload.len();
     let live = Live {
         payload,
@@ -293,7 +280,7 @@ pub async fn ring_live(
     };
     tracing::debug!(target: "rails", namespace, bytes, live.key, live.person_key, "ring live: buffered, with its sender");
     state.live.push(&namespace, live);
-    Json(serde_json::json!({ "buffered": bytes })).into_response()
+    Ok(Json(serde_json::json!({ "buffered": bytes })).into_response())
 }
 
 #[cfg(test)]

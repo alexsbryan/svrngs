@@ -33,25 +33,17 @@ done
 APP="web"
 WASM_BINDGEN_MIN="0.2.128"
 
-if ! rustup target list --installed 2>/dev/null | grep -q '^wasm32-unknown-unknown$'; then
-  echo "build-web: the wasm target is not installed — run:" >&2
-  echo "  rustup target add wasm32-unknown-unknown" >&2
-  exit 3
-fi
-if ! command -v wasm-bindgen >/dev/null; then
-  echo "build-web: wasm-bindgen is not on PATH — run:" >&2
-  echo "  cargo install wasm-bindgen-cli --version ${WASM_BINDGEN_MIN}" >&2
-  exit 3
-fi
+# A tool missing or skewed: what is wrong, then the line that fixes it.
+need() { echo "build-web: $1" >&2; echo "  $2" >&2; exit 3; }
+rustup target list --installed 2>/dev/null | grep -q '^wasm32-unknown-unknown$' \
+  || need "the wasm target is not installed — run:" "rustup target add wasm32-unknown-unknown"
+command -v wasm-bindgen >/dev/null \
+  || need "wasm-bindgen is not on PATH — run:" "cargo install wasm-bindgen-cli --version ${WASM_BINDGEN_MIN}"
 # A version skew between the CLI and the crate's wasm-bindgen is a loud,
 # confusing failure at run time; say it here where it is cheap to fix.
 cli="$(wasm-bindgen --version | awk '{print $2}')"
-if [ "$cli" != "$WASM_BINDGEN_MIN" ]; then
-  echo "build-web: wasm-bindgen CLI is ${cli}, the crate pins \
-=${WASM_BINDGEN_MIN} — install the matching CLI:" >&2
-  echo "  cargo install wasm-bindgen-cli --version ${WASM_BINDGEN_MIN} --force" >&2
-  exit 3
-fi
+[ "$cli" = "$WASM_BINDGEN_MIN" ] || need "wasm-bindgen CLI is ${cli}, the crate pins =${WASM_BINDGEN_MIN} — install the matching CLI:" \
+  "cargo install wasm-bindgen-cli --version ${WASM_BINDGEN_MIN} --force"
 
 if [ -n "$LINT" ]; then echo "linting $APP for wasm32-unknown-unknown…"; else echo "building $APP for wasm32-unknown-unknown (release)…"; fi
 # The dependency tree compiles C for the wasm target through cc-rs, and

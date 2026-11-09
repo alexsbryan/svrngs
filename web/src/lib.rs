@@ -116,10 +116,8 @@ struct Bound {
 
 /// The computer whose key is `bytes`, refused where they name no key.
 fn computer(bytes: &[u8; 32]) -> Result<iroh::PublicKey, JsError> {
-    match iroh::PublicKey::from_bytes(bytes) {
-        Ok(p) => Ok(p),
-        Err(e) => refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}"),
-    }
+    iroh::PublicKey::from_bytes(bytes)
+        .or_else(|e| refuse!("LAYER parse: REFUSED — node id is not a valid public key: {e}"))
 }
 
 /// Whether this page's policy upgrades insecure requests: the tests' page

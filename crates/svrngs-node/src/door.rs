@@ -595,16 +595,13 @@ async fn lends(
 /// cannot be read is left out, named at warn; a lend whose count cannot be
 /// had is left out too, never answered as used by none.
 pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
-    let declared = match lend::all(&door.data_dir) {
-        Ok(d) => d,
-        Err(e) => {
-            tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
-            return Err(err(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "the computer you reached cannot read what it lends",
-            ));
-        }
-    };
+    let declared = lend::all(&door.data_dir).map_err(|e| {
+        tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
+        err(
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "the computer you reached cannot read what it lends",
+        )
+    })?;
     let mut offered = Vec::new();
     let carried = door.folders.carried().into_iter().map(Ok);
     for lend in declared.into_iter().chain(carried) {
@@ -1143,14 +1140,6 @@ struct Asker {
     until: Option<i64>,
 }
 
-/// Who asks, decided before the lend is found or after: a member or the
-/// lender itself by the key it dials with — resolved only once the lend's
-/// audience is known — or a holder solely by a pass for the lend it names.
-enum Pending {
-    Member(String),
-    Pass(Dialer),
-}
-
 /// One request through the door on the pass holders' protocol.
 async fn through_pass(
     State(door): State<Door>,
@@ -1441,10 +1430,6 @@ pub(crate) async fn lend_for(
             LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name")
         );
     };
-    let pending = match &who {
-        Who::Member(_) | Who::Own(_) => Pending::Member(actor.clone()),
-        Who::Holder(dialer) => Pending::Pass(*dialer),
-    };
     let lend = choices::found(door, raw_name)?;
     // A carried app's reach is its own group; a declared lend's is its
     // explicit audience (LENDING_SCOPE). The audience is read from the
@@ -1459,46 +1444,42 @@ pub(crate) async fn lend_for(
         mut app,
         host,
         until,
-    } = match pending {
-        Pending::Member(key) => match &who {
-            // The lender's own page at its own origin is not a group grant:
-            // its administration stays its own (LENDING_SCOPE). It is let
-            // in as this computer's person, as before.
-            Who::Own(label) => {
-                let Some((group, person, whose)) = PersonKey::resolved(door, &key) else {
-                    tracing::debug!(target: "door", actor = key, "door: refused — the lender stands in no group held here");
-                    return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
-                };
-                Asker {
-                    actor: whose,
-                    device: DeviceKey(key),
-                    group,
-                    person,
-                    app: Some(label.clone()),
-                    host: None,
-                    until: None,
-                }
+    } = match &who {
+        // The lender's own page at its own origin is not a group grant:
+        // its administration stays its own (LENDING_SCOPE). It is let
+        // in as this computer's person, as before.
+        Who::Own(label) => {
+            let Some((group, person, whose)) = PersonKey::resolved(door, &actor) else {
+                tracing::debug!(target: "door", actor, "door: refused — the lender stands in no group held here");
+                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
+            };
+            Asker {
+                actor: whose,
+                device: DeviceKey(actor),
+                group,
+                person,
+                app: Some(label.clone()),
+                host: None,
+                until: None,
             }
-            Who::Member(_) => {
-                let Some((group, member)) = door.rail.standing_in(&key, eligible) else {
-                    tracing::debug!(target: "door", actor = key, lend = %lend.name,
-                        "door: refused — the dialer stands in no group this lend is lent to");
-                    return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
-                };
-                let whose = PersonKey(member.person_key);
-                Asker {
-                    actor: whose,
-                    device: DeviceKey(key),
-                    group,
-                    person: member.person,
-                    app: None,
-                    host: None,
-                    until: None,
-                }
+        }
+        Who::Member(_) => {
+            let Some((group, member)) = door.rail.standing_in(&actor, eligible) else {
+                tracing::debug!(target: "door", actor, lend = %lend.name,
+                    "door: refused — the dialer stands in no group this lend is lent to");
+                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
+            };
+            Asker {
+                actor: PersonKey(member.person_key),
+                device: DeviceKey(actor),
+                group,
+                person: member.person,
+                app: None,
+                host: None,
+                until: None,
             }
-            Who::Holder(_) => unreachable!("a holder is resolved through its pass"),
-        },
-        Pending::Pass(holder) => holder_of(door, &holder, req.headers(), &lend).await?,
+        }
+        Who::Holder(dialer) => holder_of(door, dialer, req.headers(), &lend).await?,
     };
     let actor = whose.as_str();
     let port = match &lend.source {
@@ -1690,17 +1671,11 @@ async fn send_to(
     lend: &str,
 ) -> Option<axum::http::Response<hyper::body::Incoming>> {
     let tcp = connected(to, lend).await?;
-    let (mut sender, conn) = match hyper::client::conn::http1::handshake(
-        hyper_util::rt::TokioIo::new(tcp),
-    )
-    .await
-    {
-        Ok(pair) => pair,
-        Err(e) => {
-            tracing::warn!(target: "door", lend, error = %e, "door: no HTTP/1 connection to the lend's service");
-            return None;
-        }
-    };
+    let handshake = hyper::client::conn::http1::handshake(hyper_util::rt::TokioIo::new(tcp));
+    let shaken = handshake.await.inspect_err(|e| {
+        tracing::warn!(target: "door", lend, error = %e, "door: no HTTP/1 connection to the lend's service");
+    });
+    let (mut sender, conn) = shaken.ok()?;
     // Drives the connection until the response body is read to its end.
     let name = lend.to_string();
     tokio::spawn(async move {
@@ -1708,13 +1683,10 @@ async fn send_to(
             tracing::debug!(target: "door", lend = %name, error = %e, "door: the connection to the lend's service ended in error");
         }
     });
-    match sender.send_request(request).await {
-        Ok(a) => Some(a),
-        Err(e) => {
-            tracing::warn!(target: "door", lend, error = %e, "door: the lend's service did not answer");
-            None
-        }
-    }
+    let answer = sender.send_request(request).await.inspect_err(|e| {
+        tracing::warn!(target: "door", lend, error = %e, "door: the lend's service did not answer");
+    });
+    answer.ok()
 }
 
 /// One request's carriage, traced at debug under `carriage` from asked to

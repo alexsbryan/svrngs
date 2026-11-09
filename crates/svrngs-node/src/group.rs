@@ -405,23 +405,17 @@ fn called(seed: &Seed, name: &str) -> bool {
 /// A directory whose seed does not hash to its name is left out, at warn:
 /// its record is not the group its seed names.
 pub fn groups(root: &Path) -> Vec<Seed> {
-    let namespaces = match namespaces_in(root) {
-        Ok(n) => n,
-        Err(e) => {
-            tracing::warn!(target: "group", error = %e, "group: cannot list the groups held");
-            return Vec::new();
-        }
-    };
+    let namespaces = namespaces_in(root).inspect_err(|e| {
+        tracing::warn!(target: "group", error = %e, "group: cannot list the groups held");
+    });
     let mut out = Vec::new();
-    for ns in namespaces {
+    for ns in namespaces.unwrap_or_default() {
         // `namespaces_in` lists only names a journal opens, and opening
         // creates nothing: this is the rail's spelling of the directory.
-        let dir = match crate::group_dir_in(root, &ns) {
-            Ok(dir) => dir,
-            Err(e) => {
-                tracing::warn!(target: "group", namespace = %ns, error = %e, "group: a directory the rail will not open, left out");
-                continue;
-            }
+        let Ok(dir) = crate::group_dir_in(root, &ns).inspect_err(|e| {
+            tracing::warn!(target: "group", namespace = %ns, error = %e, "group: a directory the rail will not open, left out");
+        }) else {
+            continue;
         };
         match read_seed(&dir) {
             Ok(Some(seed)) if seed.id() == ns => out.push(seed),

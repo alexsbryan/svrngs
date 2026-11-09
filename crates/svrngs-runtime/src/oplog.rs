@@ -169,8 +169,7 @@ impl<K: Journaled> Oplog<K> {
             .create(true)
             .read(true)
             .append(true)
-            .open(&self.path)
-            .map_err(OplogError::Io)?;
+            .open(&self.path)?;
         let mut buf = Self::lines(ops)?;
         // A torn last line — power lost mid-write, a full disk — is ended
         // first, so this batch starts a line of its own and is read whole;
@@ -248,7 +247,6 @@ impl<K: Journaled> Oplog<K> {
     /// the same rules as [`Self::read_all_with_skips`]; skipped ones are warned
     /// and counted in its trace, with line numbers counted from where this read began.
     pub fn read_since(&self, cursor: Cursor) -> Result<Tail<K>> {
-        use std::io::{Read, Seek, SeekFrom};
         let mut file = match fs::File::open(&self.path) {
             Ok(f) => f,
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {

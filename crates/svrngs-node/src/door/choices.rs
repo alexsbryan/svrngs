@@ -196,26 +196,22 @@ fn write(path: &Path, said: Kept) -> Result<(), String> {
 
 /// The lend `raw` names here, or svrngs's refusal.
 pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
-    match find(door, raw) {
-        Ok(Some(lend)) => Ok(lend),
-        Ok(None) => {
-            // A carried app's label before wire version 6 named this
-            // computer's copy: a page kept from then is told where it went.
-            let was = |l: &Lend| Label::parse(raw) == Some(Label::of(&door.key, l.name.as_str()));
-            let moved = door.folders.carried().into_iter().find(was);
-            tracing::debug!(target: "door", lend = raw, moved = ?moved.as_ref().map(|l| l.name.to_string()), "door: refused — no lend declared by that name, or a carried app's label from before it had one in its group");
-            Err(match moved {
-                Some(l) => LendRefusal::Unlent.say(StatusCode::GONE, format!("{} has one address for the whole group now: open it again from your group’s page.", l.kind.as_str())),
-                None => LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name"),
-            })
-        }
-        Err(e) => {
-            tracing::warn!(target: "door", lend = raw, error = %e, "door: refused — the lend's declaration cannot be read");
-            Err(fault(
-                "this lend cannot be read on the computer that lends it",
-            ))
-        }
-    }
+    let Some(lend) = find(door, raw).map_err(|e| {
+        tracing::warn!(target: "door", lend = raw, error = %e, "door: refused — the lend's declaration cannot be read");
+        fault("this lend cannot be read on the computer that lends it")
+    })?
+    else {
+        // A carried app's label before wire version 6 named this
+        // computer's copy: a page kept from then is told where it went.
+        let was = |l: &Lend| Label::parse(raw) == Some(Label::of(&door.key, l.name.as_str()));
+        let moved = door.folders.carried().into_iter().find(was);
+        tracing::debug!(target: "door", lend = raw, moved = ?moved.as_ref().map(|l| l.name.to_string()), "door: refused — no lend declared by that name, or a carried app's label from before it had one in its group");
+        return Err(match moved {
+            Some(l) => LendRefusal::Unlent.say(StatusCode::GONE, format!("{} has one address for the whole group now: open it again from your group’s page.", l.kind.as_str())),
+            None => LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here by that name"),
+        });
+    };
+    Ok(lend)
 }
 
 /// Keep what `person` said of `app` in the file at `path`.
