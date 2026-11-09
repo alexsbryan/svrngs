@@ -1,0 +1,14 @@
+--- base/crates/svrngs-node/src/synced.rs	2026-11-08 19:40:02.000000000 -0800
++++ plant/crates/svrngs-node/src/synced.rs	2026-11-08 23:20:21.998161035 -0800
+@@ -675,6 +675,11 @@
+         let fetched = Instant::now();
+         let mut from = vec![p.entry.key.clone()];
+         from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
++        if let Ok(i) = std::fs::read_to_string(self.data_dir.join("plant-first")) {
++            let key = ed25519_dalek::SigningKey::from_bytes(&[i.trim().parse::<u8>().unwrap() + 1; 32]);
++            let first = hex::encode(key.verifying_key().as_bytes());
++            from.sort_by_key(|k| *k != first);
++        }
+         if let Err(why) = self.hold(hash, &from).await {
+             tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
+             return None;

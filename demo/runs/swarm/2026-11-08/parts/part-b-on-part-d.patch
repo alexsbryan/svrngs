@@ -1,0 +1,402 @@
+diff --git crates/svrngs-node/src/folder.rs crates/svrngs-node/src/folder.rs
+index 7a63406..b63bce4 100644
+--- crates/svrngs-node/src/folder.rs
++++ crates/svrngs-node/src/folder.rs
+@@ -31,10 +31,11 @@ use axum::http::StatusCode;
+ use axum::response::{IntoResponse, Response};
+ use axum::routing::post;
+ use axum::{Json, Router};
++use iroh::endpoint::Connection;
+ use iroh_blobs::api::blobs::{AddPathOptions, ImportMode};
+ use iroh_blobs::api::remote::GetProgressItem;
+-use iroh_blobs::api::{Store, TempTag};
+-use iroh_blobs::protocol::GetRequest;
++use iroh_blobs::api::{proto::Bitfield, Store, TempTag};
++use iroh_blobs::protocol::{ChunkRanges, ChunkRangesExt, GetRequest, ObserveRequest};
+ use iroh_blobs::provider::events::{
+     AbortReason, ConnectMode, EventMask, EventSender, ObserveMode, ProviderMessage, RequestMode,
+     RequestUpdate,
+@@ -48,7 +49,7 @@ use std::convert::Infallible;
+ use svrngs_core::{Command, ContentHash, Digest, Placed, Recorded, Runs};
+ use tokio::sync::{mpsc, oneshot, watch, Notify};
+ 
+-use crate::iroh::{key_actor, Alpn, Unsent};
++use crate::iroh::{key_actor, Alpn, Contact, Unsent};
+ use crate::node::{Host, ANSWER_WITHIN};
+ 
+ #[path = "blob.rs"]
+@@ -69,10 +70,23 @@ mod synced;
+ /// turn, and would wait out an asleep writer at every file.
+ const ASLEEP_FOR: Duration = Duration::from_secs(60);
+ 
++/// How much of a large file one get asks of one holder before the next
++/// slice is chosen (`docs/LESSONS_FROM_BITTORRENT.md` §5, part B): at 4 MiB a
++/// 1 GB file is 238 slices, one bitfield round trip per holder each.
++const SLICE: u64 = 4 << 20;
++
++/// How long one get of a [`SLICE`] may take before its holder is moved last:
++/// five of [`ANSWER_WITHIN`], about what 40 Mbit/s shared by eight costs
++/// (`demo/runs/swarm/2026-11-08/` steps 3, 4). What it delivered stays.
++const SLICE_WITHIN: Duration = Duration::from_secs(15);
++
+ /// How often the store asks whether what it keeps has changed, and drops
+ /// what it no longer keeps if so (syp-4 b).
+ const SWEEP: Duration = Duration::from_secs(1);
+ 
++/// Each holder a fetch asked and why it gave nothing.
++type Fail = Vec<(String, String)>;
++
+ /// What the store's sweep asks the node: what to keep, or `None` to keep
+ /// everything this time.
+ type KeepAsk = oneshot::Sender<Option<HashSet<Hash>>>;
+@@ -489,59 +503,141 @@ impl Folders {
+         false
+     }
+ 
+-    /// Make `hash` held here whole, verified, in one get of what the store
+-    /// lacks, asking each holder in turn, one that did not answer lately
+-    /// last; a holder that stops mid-file leaves what the store still lacks
+-    /// to the next (perf-2 a). `Ok` names the holder it came from, or none
+-    /// when the store held it; `Err` names each holder asked and why it gave
+-    /// nothing.
++    /// [`Self::hold_sized`] for a hash a whole-file caller holds: blob.rs.
++    pub(crate) async fn hold(
++        &self,
++        hash: Hash,
++        holders: &[String],
++    ) -> Result<Option<String>, Fail> {
++        self.hold_sized(hash, holders, None).await
++    }
++
++    /// Make `hash` held here whole, verified, from `holders`, one that did
++    /// not answer lately last. A file of unknown size or of at most one
++    /// [`SLICE`] is one get of what the store lacks, each holder in turn, and
++    /// one that stops mid-file leaves what is lacking to the next (perf-2 a).
++    /// A larger file is its slices, each from a holder whose bitfield covers
++    /// it, chosen in turn by the slice's place (part B of
++    /// `docs/LESSONS_FROM_BITTORRENT.md`): each computer walks from its own
++    /// point, so a writer sends each part roughly once and members trade the
++    /// rest; a holder that fails, or takes [`SLICE_WITHIN`] over a slice, is
++    /// passed over for the rest of the fetch, what it delivered kept. `Ok`
++    /// names the last holder, or none when the store held it; `Err` names
++    /// each holder asked and why it gave nothing.
+     #[expect(
+         clippy::disallowed_methods,
+         reason = "the fetch is an adapter: it times what a holder takes, and when one did not answer"
+     )]
+-    async fn hold(
++    pub(super) async fn hold_sized(
+         &self,
+         hash: Hash,
+         holders: &[String],
+-    ) -> Result<Option<String>, Vec<(String, String)>> {
+-        let mut lacks = self.lacks(hash).await?;
++        size: Option<u64>,
++    ) -> Result<Option<String>, Fail> {
+         let mut order: Vec<&String> = holders.iter().filter(|k| **k != self.host.actor).collect();
+-        let lately = self.unanswered.borrow().clone();
+-        order.sort_by_key(|k| lately.get(*k).is_some_and(|t| t.elapsed() < ASLEEP_FOR));
+-        let mut why = Vec::new();
+-        for key in order {
+-            let Some(missing) = lacks else {
+-                return Ok(None);
++        order.sort_by_key(|k| self.lately(k));
++        let count = size.filter(|s| *s > SLICE).map_or(1, |s| s.div_ceil(SLICE));
++        let walk = Hash::new([self.host.actor.as_bytes(), hash.as_bytes()].concat());
++        let mut at =
++            (walk.as_bytes().iter().take(8)).fold(0, |a, b| a << 8 | u64::from(*b)) % count;
++        let (mut quiet, mut from, mut why, mut gone) = (0, None, Vec::new(), BTreeSet::new());
++        while quiet < count * order.len().max(1) as u64 {
++            let Some(lacking) = self.lacks(hash).await? else {
++                return Ok(from);
++            };
++            let slice = at;
++            (at, quiet) = ((at + 1) % count, quiet + 1);
++            let rest = lacking.ranges.iter().next().cloned().unwrap_or_default();
++            let want = match count {
++                1 => rest,
++                _ => ChunkRanges::bytes(slice * SLICE..(slice + 1) * SLICE) & rest,
++            };
++            if want.is_empty() {
++                continue;
++            }
++            let unasked = order.iter().filter(|k| !gone.contains(*k));
++            let mut covers: Vec<&String> = Vec::new();
++            if count == 1 {
++                covers.extend(unasked);
++            } else {
++                let asks = (unasked.filter(|k| !self.lately(k)))
++                    .map(|k| async move { (*k, self.bits(k, hash).await) });
++                let mut passed = Vec::new();
++                for (key, bits) in n0_future::join_all(asks).await {
++                    match bits {
++                        Ok(b) if b.ranges.is_superset(&want) => covers.push(key),
++                        Ok(_) => passed.push((key, "holds none of this slice".to_string())),
++                        Err(n) => passed.push((key, self.said(key, n, Instant::now()))),
++                    }
++                }
++                tracing::debug!(target: "folder", %hash, slice, ?covers, ?passed, "folder: a slice's holders, kept and passed over");
++            }
++            let Some(&key) = covers.get(slice as usize % covers.len().max(1)) else {
++                continue;
+             };
+             let t0 = Instant::now();
+-            let said = match self.fetch(key, missing).await {
++            let get = self.fetch(key, GetRequest::blob_ranges(hash, want));
++            let cut = Nothing::Said(format!("no slice within {SLICE_WITHIN:?}"));
++            let within = if count > 1 {
++                SLICE_WITHIN
++            } else {
++                Duration::MAX
++            };
++            match tokio::time::timeout(within, get).await.unwrap_or(Err(cut)) {
+                 Ok(stats) => {
+                     self.unanswered
+                         .send_if_modified(|m| m.remove(key).is_some());
+-                    tracing::info!(target: "folder", hash = %hash, holder = %key, payload = stats.payload_bytes_read, other = stats.other_bytes_read, ms = t0.elapsed().as_millis() as u64, "folder: fetched, verified");
+-                    return Ok(Some(key.clone()));
++                    tracing::info!(target: "folder", hash = %hash, holder = %key, slice, payload = stats.payload_bytes_read, other = stats.other_bytes_read, ms = t0.elapsed().as_millis() as u64, "folder: fetched, verified");
++                    from = Some(key.clone());
++                    quiet = 0;
+                 }
+-                Err(Nothing::Said(e)) => e,
+-                Err(Nothing::Silent) => {
+-                    // Kept whether new or not; nothing waits on a change.
+-                    let at = Instant::now();
+-                    self.unanswered
+-                        .send_if_modified(|m| m.insert(key.clone(), at).is_none());
+-                    format!("did not answer within {ANSWER_WITHIN:?}")
++                Err(nothing) => {
++                    let said = self.said(key, nothing, Instant::now());
++                    tracing::warn!(target: "folder", hash = %hash, holder = %key, slice, why = %said, "folder: a holder gave nothing of what the store lacks, and is passed over for the rest of this fetch");
++                    why.push((key.clone(), said));
++                    gone.insert(key);
+                 }
+-            };
+-            tracing::warn!(target: "folder", hash = %hash, holder = %key, why = %said, "folder: a holder gave nothing of what the store lacks");
+-            why.push((key.clone(), said));
+-            lacks = self.lacks(hash).await?;
++            }
+         }
+-        match lacks {
+-            None => Ok(None),
++        match self.lacks(hash).await? {
++            None => Ok(from),
+             Some(_) => Err(why),
+         }
+     }
+ 
++    /// Whether `key` did not answer within [`ASLEEP_FOR`] of now.
++    fn lately(&self, key: &str) -> bool {
++        (self.unanswered.borrow().get(key)).is_some_and(|t| t.elapsed() < ASLEEP_FOR)
++    }
++
++    /// What a holder gave instead of an answer said, one who did not answer
++    /// taken as asleep for [`ASLEEP_FOR`] (kept whether new or not; nothing
++    /// waits on a change).
++    fn said(&self, key: &str, nothing: Nothing, now: Instant) -> String {
++        match nothing {
++            Nothing::Said(e) => e,
++            Nothing::Silent => {
++                self.unanswered
++                    .send_if_modified(|m| m.insert(key.into(), now).is_none());
++                format!("did not answer within {ANSWER_WITHIN:?}")
++            }
++        }
++    }
++
++    /// What `key` holds of `hash`, its first bitfield only, on the connection
++    /// kept to it, or why it gave none.
++    async fn bits(&self, key: &str, hash: Hash) -> Result<Bitfield, Nothing> {
++        let (_, conn) = self.connected(key).await?;
++        let mut seen = std::pin::pin!(self.store.remote().observe(conn, ObserveRequest::new(hash)));
++        match tokio::time::timeout(ANSWER_WITHIN, seen.next()).await {
++            Ok(Some(Ok(bits))) => Ok(bits),
++            Err(_) => Err(Nothing::Silent),
++            Ok(other) => Err(Nothing::Said(format!("no bitfield: {other:?}"))),
++        }
++    }
++
+     /// What of `hash` the store lacks, as a get; `None` when it holds it whole.
+-    async fn lacks(&self, hash: Hash) -> Result<Option<GetRequest>, Vec<(String, String)>> {
++    async fn lacks(&self, hash: Hash) -> Result<Option<GetRequest>, Fail> {
+         let local = self
+             .store
+             .remote()
+@@ -552,6 +648,20 @@ impl Folders {
+         Ok((!local.is_complete()).then(|| local.missing()))
+     }
+ 
++    /// `key`'s contact and the connection kept to it, else one dialled.
++    async fn connected(&self, key: &str) -> Result<(Contact, Connection), Nothing> {
++        // By its key and the relay its group names (relay-in-record), on
++        // the connection the transport keeps to it (#177).
++        let peer =
++            (self.host.contact(key)).ok_or(Nothing::Said("not a computer of the group".into()))?;
++        let kept = self.host.transport.kept(&peer, Alpn::Blobs, ANSWER_WITHIN);
++        match kept.await {
++            Ok(conn) => Ok((peer, conn)),
++            Err(Unsent::Asleep(_)) => Err(Nothing::Silent),
++            Err(e) => Err(Nothing::Said(format!("the dial: {e}"))),
++        }
++    }
++
+     /// `request` asked of `key` on its open connection, else one dialled;
+     /// its dial, first byte and last byte, and the path iroh selected for
+     /// the connection, traced (perf-1). The dial and the first byte wait
+@@ -569,16 +679,7 @@ impl Folders {
+     ) -> Result<iroh_blobs::get::Stats, Nothing> {
+         let t0 = Instant::now();
+         let ms = |t: Instant| t.elapsed().as_micros() as f64 / 1000.0;
+-        // By its key and the relay its group names (relay-in-record), on
+-        // the connection the transport keeps to it (#177).
+-        let peer =
+-            (self.host.contact(key)).ok_or(Nothing::Said("not a computer of the group".into()))?;
+-        let kept = self.host.transport.kept(&peer, Alpn::Blobs, ANSWER_WITHIN);
+-        let conn = match kept.await {
+-            Ok(conn) => conn,
+-            Err(Unsent::Asleep(_)) => return Err(Nothing::Silent),
+-            Err(e) => return Err(Nothing::Said(format!("the dial: {e}"))),
+-        };
++        let (peer, conn) = self.connected(key).await?;
+         let dial_ms = ms(t0);
+         let paths = conn.paths();
+         let path = paths.iter().find(|p| p.is_selected());
+@@ -653,6 +754,28 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
+                     continue;
+                 }
+                 ProviderMessage::GetRequestReceived(asked) => asked,
++                // A bitfield is answered under a get's own check: a dialer who
++                // may not fetch a hash may not learn what is held of it either.
++                ProviderMessage::ObserveRequestReceived(asked) => {
++                    let (hash, dialer) = (
++                        asked.inner.request.hash,
++                        dialers.get(&asked.inner.connection_id).cloned(),
++                    );
++                    let folders = folders.clone();
++                    tokio::spawn(async move {
++                        let shares = dialer
++                            .as_ref()
++                            .is_some_and(|d| folders.serves(hash, d, Instant::now()));
++                        tracing::debug!(target: "folder", %hash, ?dialer, shares, "folder: an observe, answered as a get is");
++                        let answer = if shares {
++                            Ok(())
++                        } else {
++                            Err(AbortReason::Permission)
++                        };
++                        asked.tx.send(answer).await.ok();
++                    });
++                    continue;
++                }
+                 _ => continue,
+             };
+             let (hash, ranges) = (
+diff --git crates/svrngs-node/src/synced.rs crates/svrngs-node/src/synced.rs
+index 2c11342..aadb48c 100644
+--- crates/svrngs-node/src/synced.rs
++++ crates/svrngs-node/src/synced.rs
+@@ -710,7 +710,7 @@ impl Folders {
+         let fetched = Instant::now();
+         let mut from = vec![p.entry.key.clone()];
+         from.extend(standing.iter().filter(|k| **k != p.entry.key).cloned());
+-        if let Err(why) = self.hold(hash, &from).await {
++        if let Err(why) = self.hold_sized(hash, &from, Some(p.size)).await {
+             tracing::warn!(target: "folder", folder, path = %p.path, %hash, ?why, "synced: not written — no member gave it, verified");
+             return Err(Unfetched::NoHolder);
+         }
+diff --git crates/svrngs-node/tests/folders.rs crates/svrngs-node/tests/folders.rs
+index 2b3de5d..fca1790 100644
+--- crates/svrngs-node/tests/folders.rs
++++ crates/svrngs-node/tests/folders.rs
+@@ -1227,6 +1227,91 @@ async fn a_file_a_disk_would_not_take_is_never_said_to_be_waiting_on_a_person()
+     asking.close().await;
+ }
+ 
++/// `from` asks `holder` what it holds of `hash`: the first bitfield's
++/// `(size, whether complete)`, or why none came.
++async fn asked_bits(
++    from: &Node,
++    holder: &Node,
++    hash: iroh_blobs::Hash,
++    dir: &Path,
++) -> Result<(u64, bool), String> {
++    use n0_future::StreamExt as _;
++    let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
++    let conn = from
++        .endpoint()
++        .connect(holder.endpoint().id(), b"/iroh-bytes/4")
++        .await;
++    let conn = conn.map_err(|e| format!("the dial: {e}"))?;
++    let asked = iroh_blobs::protocol::ObserveRequest::new(hash);
++    let mut seen = std::pin::pin!(store.remote().observe(conn, asked));
++    match tokio::time::timeout(Duration::from_secs(10), seen.next()).await {
++        Ok(Some(Ok(bits))) => Ok((bits.size(), bits.is_complete())),
++        Ok(Some(Err(e))) => Err(format!("{e}")),
++        Ok(None) => Err("no bitfield".into()),
++        Err(_) => Err("no answer".into()),
++    }
++}
++
++/// **What a member holds of a hash is told only as a get of it would be
++/// served** (part B's authority): Ana's file in `films` is held by her; Ben,
++/// in `films`, is told her bitfield, and Cy, who stands with her only in
++/// `house`, is refused. Red with the provider's observe arm answering
++/// without `serves`: Cy learns what Ana holds of a hash no group of theirs
++/// places.
++#[tokio::test]
++async fn a_bitfield_is_told_only_as_a_get_would_be_served() {
++    let group = Group::computers().await;
++    let films = found("films", 9, &group.ana, &[(&group.ben, 2)]);
++    found("house", 7, &group.ana, &[(&group.cy, 3)]);
++    group.settle().await;
++    let root = tempfile::tempdir().unwrap();
++    let ana = synced_in(&group.ana, root.path(), &films).await;
++    let bytes = noise(30_000, b"bits");
++    std::fs::write(ana.join("f.bin"), &bytes).unwrap();
++    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&bytes).as_bytes());
++    let asked = tempfile::tempdir().unwrap();
++    let t0 = std::time::Instant::now();
++    let told = loop {
++        let told = asked_bits(&group.ben, &group.ana, hash, &asked.path().join("ben")).await;
++        if told == Ok((30_000, true)) || t0.elapsed() > Duration::from_secs(15) {
++            break told;
++        }
++        tokio::time::sleep(Duration::from_millis(200)).await;
++    };
++    assert_eq!(
++        told,
++        Ok((30_000, true)),
++        "Ana tells Ben, in films, what she holds"
++    );
++    let cy = asked_bits(&group.cy, &group.ana, hash, &asked.path().join("cy")).await;
++    assert!(
++        cy.is_err(),
++        "Ana refuses Cy, in no group placing it: {cy:?}"
++    );
++    group.close().await;
++}
++
++/// **A file past one slice arrives whole at two members** (part B): 9 MiB,
++/// three slices of 4 MiB. Red with a slice's request cut short of its end.
++#[tokio::test]
++async fn a_file_past_one_slice_arrives_whole_at_two_members() {
++    let group = Group::new().await;
++    let roots: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
++    let (ana, ben, cy) = (
++        both_ways(&group.ana, roots[0].path()).await,
++        both_ways(&group.ben, roots[1].path()).await,
++        both_ways(&group.cy, roots[2].path()).await,
++    );
++    let bytes = noise(9 << 20, b"sliced");
++    std::fs::write(ana.join("big.bin"), &bytes).unwrap();
++    let at = |d: &Path| std::fs::read(d.join("big.bin")).ok().as_ref() == Some(&bytes);
++    assert!(
++        until(&group, || at(&ben) && at(&cy)).await,
++        "the whole file reaches Ben and Cy"
++    );
++    group.close().await;
++}
++
+ /// **A holder that sends a flipped byte is refused by name**: Ana's record
+ /// places a file her store lacks, and Ben's key, the group's other member,
+ /// answers her fetch with the file's encoding one byte flipped on the wire

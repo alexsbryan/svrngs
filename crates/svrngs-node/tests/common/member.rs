@@ -78,7 +78,14 @@ pub async fn node() {
             loopback_only: true,
         },
         "n0" => RelayConfig::default(),
-        other => panic!("PERF_PATH {other}: loopback, relay or n0"),
+        // A computer of a shaped network's own namespace (demo/runs/swarm):
+        // no relay, no lookup, each told the others' PERF_IP sockets.
+        "lan" => RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: false,
+        },
+        other => panic!("PERF_PATH {other}: loopback, relay, n0 or lan"),
     };
     let node = Node::start(
         dir.clone(),
@@ -111,10 +118,16 @@ pub async fn node() {
             .await
             .ok();
     }
+    let mut sockets = loopback_sockets(node.endpoint());
+    if path == "lan" {
+        let ip: std::net::IpAddr = env("PERF_IP").parse().unwrap();
+        sockets.retain(|a| a.is_ipv4());
+        sockets.iter_mut().for_each(|a| a.set_ip(ip));
+    }
     let addr = Addr {
         me,
         id: node.endpoint().id().to_string(),
-        sockets: loopback_sockets(node.endpoint()),
+        sockets,
         api: node.api_addr(),
         token: node.token(),
     };
@@ -134,7 +147,7 @@ pub async fn node() {
                         let key: PublicKey = other.id.parse().unwrap();
                         let mut ea = EndpointAddr::new(key);
                         match path.as_str() {
-                            "loopback" => {
+                            "loopback" | "lan" => {
                                 for s in &other.sockets {
                                     ea = ea.with_ip_addr(*s);
                                 }

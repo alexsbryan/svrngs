@@ -1,0 +1,21 @@
+{
+ "label": "w-four",
+ "size": 1073741824,
+ "fetchers": 4,
+ "took_s": 917.09,
+ "arrived": {
+  "3": 912.39,
+  "4": 913.141,
+  "1": 913.391,
+  "2": 914.142
+ },
+ "ping_idle_p95_ms": 40.1,
+ "ping_idle_samples": 100,
+ "ping_busy_p95_ms": 430.0,
+ "ping_busy_samples": 4553,
+ "ping_busy_max_ms": 442.0,
+ "ping_verdict": [
+  "failed",
+  140.1
+ ]
+}

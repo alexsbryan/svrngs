@@ -1,0 +1,167 @@
+=== cubic
+{
+ "label": "cubic",
+ "size": 1073741824,
+ "took_s": 233.788,
+ "arrived": {
+  "1": 230.436
+ },
+ "ping_idle_p95_ms": 40.1,
+ "ping_idle_samples": 100,
+ "ping_busy_p95_ms": 261.0,
+ "ping_busy_samples": 1148,
+ "ping_busy_max_ms": 263.0,
+ "ping_verdict": [
+  "failed",
+  140.1
+ ]
+}
+=== bbr3
+{
+ "label": "bbr3",
+ "size": 1073741824,
+ "took_s": 239.384,
+ "arrived": {
+  "1": 236.2
+ },
+ "ping_idle_p95_ms": 40.1,
+ "ping_idle_samples": 100,
+ "ping_busy_p95_ms": 261.0,
+ "ping_busy_samples": 1175,
+ "ping_busy_max_ms": 271.0,
+ "ping_verdict": [
+  "failed",
+  140.1
+ ]
+}
+=== wave-today
+{
+ "label": "wave-today",
+ "members": 8,
+ "size": 268435456,
+ "fetchers": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "slow_holder": null,
+ "slow_holder_took_s": 0,
+ "took_s": 399.79,
+ "arrived": {
+  "1": 299.354,
+  "3": 356.916,
+  "6": 371.682,
+  "5": 385.445,
+  "4": 392.952,
+  "2": 394.954,
+  "7": 398.707
+ }
+}
+=== wave-bd
+{
+ "label": "wave-bd",
+ "members": 8,
+ "size": 268435456,
+ "fetchers": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7
+ ],
+ "slow_holder": null,
+ "slow_holder_took_s": 0,
+ "took_s": 200.967,
+ "arrived": {
+  "4": 180.208,
+  "5": 187.466,
+  "6": 192.471,
+  "1": 193.722,
+  "7": 194.974,
+  "3": 198.977,
+  "2": 199.978
+ }
+}
+=== slow-bd
+{
+ "label": "slow-bd",
+ "members": 8,
+ "size": 268435456,
+ "fetchers": [
+  1,
+  2,
+  3,
+  4,
+  6,
+  7
+ ],
+ "slow_holder": 5,
+ "slow_holder_took_s": 63.54,
+ "took_s": 186.207,
+ "arrived": {
+  "4": 160.932,
+  "7": 165.437,
+  "6": 175.197,
+  "2": 177.199,
+  "1": 179.201,
+  "3": 185.957
+ }
+}
+=== q
+{"label": "q-cubic", "cc": "cubic", "ping_p95_ms": 258.0, "samples": 189}
+{"label": "q-bbr3", "cc": "bbr3", "ping_p95_ms": 262.0, "samples": 195}
+QUIC t=10 cwnd=8222825 lost=0 controller=Cubic
+QUIC t=40 cwnd=12027065 lost=0 controller=Cubic
+QUIC t=10 cwnd=206562346 lost=0 controller=Bbr3
+QUIC t=40 cwnd=839042322 lost=0 controller=Bbr3
+PLANT no-waiting-recorded
+PLANT write-failure-as-no-holder
+PLANT observe-without-check
+p0 id 8a88e3dd
+=== wave-bd fetched per holder (holder prefix, count)
+    184 8a88e3dd
+     49 ca93ac17
+     47 8a875fff
+     41 6e7a1cdd
+     36 8139770e
+     34 1398f62c
+     30 ea4a6c63
+     27 ed4928c6
+=== slow-bd p5 served per dialer
+      1 139770ea
+      1 398f62c6
+      1 a4a6c63e
+      1 a93ac170
+      1 d4928c62
+      1 e7a1cdd2
+=== slow-bd no slice within
+3
+PLANT observe-without-check
+  test a_bitfield_is_told_only_as_a_get_would_be_served ... FAILED
+  thread 'a_bitfield_is_told_only_as_a_get_would_be_served' (4173360) panicked at crates/svrngs-node/tests/folders.rs:1287:5:
+  Ana refuses Cy, in no group placing it: Ok((30000, true))
+  test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 28 filtered out; finished in 0.28s
+UNPLANTED observe-without-check ['test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 28 filtered out; finished in 0.30s']
+{
+ "label": "slow-plant",
+ "members": 8,
+ "size": 268435456,
+ "fetchers": [
+  1,
+  2,
+  3,
+  4,
+  6,
+  7
+ ],
+ "slow_holder": 5,
+ "slow_holder_took_s": 59.113,
+ "took_s": 300.106,
+ "arrived": {}
+}

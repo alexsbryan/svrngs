@@ -1,0 +1,110 @@
+diff --git a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/src/guest.rs b/crates/svrngs-node/src/guest.rs
+index f75cfde..ef016fc 100644
+--- a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/src/guest.rs
++++ b/crates/svrngs-node/src/guest.rs
+@@ -24,6 +24,16 @@ use crate::relay::{self, DotlessLookup};
+ #[cfg(test)]
+ mod tests;
+ 
++/// A transport config running BBR3 where the noq default runs Cubic: Cubic
++/// grows until packets drop, which on a home router means after its buffer
++/// fills, and every call in the house queues behind the transfer
++/// (`docs/LESSONS_FROM_BITTORRENT.md` lesson 1). BBR3 paces to a model of the
++/// path and competes for a fair share; `demo/runs/swarm/2026-11-08/` step 1.
++pub(crate) fn paced() -> iroh::endpoint::QuicTransportConfigBuilder {
++    let bbr3 = Arc::new(noq_proto::congestion::Bbr3Config::default());
++    iroh::endpoint::QuicTransportConfig::builder().congestion_controller_factory(bbr3)
++}
++
+ /// The rustls crypto provider for `EndpointBuilder::crypto_provider`.
+ /// iroh's `Builder::empty()` deliberately sets no provider (only
+ /// presets choose one), and `bind()` errors without it — pass this.
+@@ -143,6 +153,7 @@ fn relayed_endpoint_builder(
+         .crypto_provider(ring_crypto_provider())
+         .secret_key(secret_key)
+         .alpns(alpns)
++        .transport_config(paced().build())
+         // Honor corporate HTTP(S) proxies on the relay dial. No-op when
+         // the env vars are unset, so it's safe on every deployment.
+         .proxy_from_env();
+diff --git a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/src/dial.rs b/crates/svrngs-node/src/dial.rs
+index e7c575b..2b7a747 100644
+--- a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/src/dial.rs
++++ b/crates/svrngs-node/src/dial.rs
+@@ -25,6 +25,8 @@
+ //! of which was measured: those are the operator's, and a dial slower than
+ //! this is said away when it would have answered.
+ 
++use iroh::endpoint::QuicTransportConfigBuilder as QuicBuilder;
++
+ /// How long a dial to a lend's computer waits for its handshake before the
+ /// computer is taken as asleep.
+ pub const DIAL_WITHIN: std::time::Duration = std::time::Duration::from_secs(4);
+@@ -55,9 +57,10 @@ pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
+ /// dial to a computer that froze, as a lid closing, was told only after 30 s
+ /// (`demo/runs/wait/2026-10-14/`, the plant take). A computer's connection
+ /// to a member is held so too, since it is kept across requests
+-/// (arch-peer, `iroh.rs` `dialled`).
+-pub fn held() -> iroh::endpoint::QuicTransportConfig {
++/// (arch-peer, `iroh.rs` `dialled`). On a computer `base` is `guest::paced`, so a
++/// dial runs what its endpoint does; a page's dial starts from iroh's own.
++pub fn held(base: QuicBuilder) -> iroh::endpoint::QuicTransportConfig {
+     let idle = iroh::endpoint::VarInt::from_u32(DIAL_WITHIN.as_millis() as u32);
+-    let held = iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
++    let held = base.max_idle_timeout(Some(idle.into()));
+     held.keep_alive_interval(DIAL_WITHIN / 4).build()
+ }
+diff --git a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/src/iroh.rs b/crates/svrngs-node/src/iroh.rs
+index 9302d5f..e3a4f37 100644
+--- a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/src/iroh.rs
++++ b/crates/svrngs-node/src/iroh.rs
+@@ -358,8 +358,10 @@ pub(crate) async fn dialled(
+ ) -> Result<Connection, Unsent> {
+     let (peer, cap) = (to.id.fmt_short(), within.unwrap_or(Duration::MAX));
+     // Held only when capped: held, iroh gives up a handshake silent for the
+-    // cap too, and a joiner's dial is not capped (`crate::dial`).
+-    let held = within.map_or_else(Default::default, |_| crate::dial::held());
++    // cap too, and a joiner's dial is not capped (`crate::dial`). Passing a
++    // config replaces the endpoint's, so each is paced as the endpoint is.
++    let paced = crate::guest::paced;
++    let held = within.map_or_else(|| paced().build(), |_| crate::dial::held(paced()));
+     let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
+     let connect = async move {
+         let connecting = e.connect_with_opts(to, alpn, held).await;
+diff --git a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/web/src/lib.rs b/web/src/lib.rs
+index bbd19a2..71dda71 100644
+--- a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/web/src/lib.rs
++++ b/web/src/lib.rs
+@@ -224,7 +224,7 @@ async fn bind(
+     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
+         .secret_key(secret)
+         .relay_mode(iroh::RelayMode::custom(relays.clone()))
+-        .transport_config(if held { dial::held() } else { Default::default() });
++        .transport_config(if held { dial::held(iroh::endpoint::QuicTransportConfig::builder()) } else { Default::default() });
+ 
+     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
+     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: {held})…");
+@@ -273,7 +273,7 @@ async fn reach(
+     // The issuer's dial is held as iroh holds one, a lender's as
+     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
+     // would end the issuer's before its cap did (v1ui-race (a)).
+-    let held = if to.is_none() { Default::default() } else { dial::held() };
++    let held = if to.is_none() { Default::default() } else { dial::held(iroh::endpoint::QuicTransportConfig::builder()) };
+     let node_id = match to {
+         None => match bound.issuer {
+             Some(issuer) => issuer,
+diff --git a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/Cargo.toml b/crates/svrngs-node/Cargo.toml
+index cbbd3ab..4154b66 100644
+--- a/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/f79f03ba-4c19-41ee-b8f3-6314cb130ec3/scratchpad/base/crates/svrngs-node/Cargo.toml
++++ b/crates/svrngs-node/Cargo.toml
+@@ -22,6 +22,10 @@ getrandom = "0.3"
+ # lock takes compatible security updates of its tree. scripts/advisories.py
+ # checks both workspaces; upstream's vulnerable transitive versions are not pins.
+ iroh = "=1.0.2"
++# Bbr3Config in place of noq's default Cubic (guest.rs `paced`): iroh
++# re-exports only the controller traits (iroh-1.0.2/src/endpoint/quic.rs:68-71).
++# The version the lock already holds through iroh.
++noq-proto = "=1.0.1"
+ # The stream an address lookup answers with, as iroh names it (src/relay.rs):
+ # iroh's own, at the version the lock already holds.
+ n0-future = "0.3"

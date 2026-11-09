@@ -1,0 +1,18 @@
+{
+ "label": "w-one",
+ "size": 1073741824,
+ "fetchers": 1,
+ "took_s": 234.002,
+ "arrived": {
+  "1": 230.685
+ },
+ "ping_idle_p95_ms": 40.1,
+ "ping_idle_samples": 100,
+ "ping_busy_p95_ms": 110.0,
+ "ping_busy_samples": 1150,
+ "ping_busy_max_ms": 110.0,
+ "ping_verdict": [
+  "passed",
+  140.1
+ ]
+}

@@ -1,0 +1,68 @@
+diff --git crates/svrngs-node/src/dial.rs crates/svrngs-node/src/dial.rs
+index e7c575b..9501342 100644
+--- crates/svrngs-node/src/dial.rs
++++ crates/svrngs-node/src/dial.rs
+@@ -56,8 +56,12 @@ pub const LINK_WITHIN: std::time::Duration = std::time::Duration::from_secs(10);
+ /// (`demo/runs/wait/2026-10-14/`, the plant take). A computer's connection
+ /// to a member is held so too, since it is kept across requests
+ /// (arch-peer, `iroh.rs` `dialled`).
+-pub fn held() -> iroh::endpoint::QuicTransportConfig {
++pub fn held(window: Option<u32>) -> iroh::endpoint::QuicTransportConfig {
+     let idle = iroh::endpoint::VarInt::from_u32(DIAL_WITHIN.as_millis() as u32);
+-    let held = iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
++    let mut held =
++        iroh::endpoint::QuicTransportConfig::builder().max_idle_timeout(Some(idle.into()));
++    if let Some(window) = window {
++        held = held.stream_receive_window(window.into());
++    }
+     held.keep_alive_interval(DIAL_WITHIN / 4).build()
+ }
+diff --git crates/svrngs-node/src/iroh.rs crates/svrngs-node/src/iroh.rs
+index 8403b97..4a1265c 100644
+--- crates/svrngs-node/src/iroh.rs
++++ crates/svrngs-node/src/iroh.rs
+@@ -297,6 +297,10 @@ impl IrohTransport {
+     }
+ }
+ 
++/// What a fetcher grants a holder per stream on a Blobs dial: the in-flight
++/// bound behind `demo/runs/swarm/2026-11-08/` (the patch, not landed).
++const BLOBS_RECEIVE_WINDOW: u32 = 512 * 1024;
++
+ /// A request held whole, so it can be sent again.
+ pub type WholeRequest = axum::http::Request<axum::body::Bytes>;
+ 
+@@ -357,7 +361,10 @@ pub(crate) async fn dialled(
+     let (peer, cap) = (to.id.fmt_short(), within.unwrap_or(Duration::MAX));
+     // Held only when capped: held, iroh gives up a handshake silent for the
+     // cap too, and a joiner's dial is not capped (`crate::dial`).
+-    let held = within.map_or_else(Default::default, |_| crate::dial::held());
++    // Only a fetcher's Blobs dial shrinks what the sender may queue, so the
++    // household's uplink keeps room for everything else; lends keep theirs.
++    let window = (alpn == Alpn::Blobs.bytes()).then_some(BLOBS_RECEIVE_WINDOW);
++    let held = within.map_or_else(Default::default, |_| crate::dial::held(window));
+     let held = iroh::endpoint::ConnectOptions::new().with_transport_config(held);
+     let connect = async move {
+         let connecting = e.connect_with_opts(to, alpn, held).await;
+diff --git web/src/lib.rs web/src/lib.rs
+index bbd19a2..0e092ed 100644
+--- web/src/lib.rs
++++ web/src/lib.rs
+@@ -224,7 +224,7 @@ async fn bind(
+     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
+         .secret_key(secret)
+         .relay_mode(iroh::RelayMode::custom(relays.clone()))
+-        .transport_config(if held { dial::held() } else { Default::default() });
++        .transport_config(if held { dial::held(None) } else { Default::default() });
+ 
+     // ── LAYER 2: wasm bindgen / iroh endpoint construction ─────────────────
+     t!("LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: {held})…");
+@@ -273,7 +273,7 @@ async fn reach(
+     // The issuer's dial is held as iroh holds one, a lender's as
+     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
+     // would end the issuer's before its cap did (v1ui-race (a)).
+-    let held = if to.is_none() { Default::default() } else { dial::held() };
++    let held = if to.is_none() { Default::default() } else { dial::held(None) };
+     let node_id = match to {
+         None => match bound.issuer {
+             Some(issuer) => issuer,
