@@ -150,11 +150,11 @@ pub fn unrecognized(kind: &Kind) -> Option<String> {
     }
     let near = rows().find(|(_, known, _)| slipped(known.as_str(), kind.as_str()));
     tracing::debug!(target: "share", kind = %kind, near = ?near.as_ref().map(|(_, k, _)| k.as_str()), "share: a program the table does not know, its lender told");
-    let check = near.map_or("Check the spelling.".to_string(), |(_, known, _)| {
-        format!("Did you mean {known}?")
+    let mean = near.map_or(String::new(), |(_, known, _)| {
+        format!(" Did you mean {known}?")
     });
     Some(format!(
-        "svrngs doesn't know {kind}, so it keeps nothing back. {check}"
+        "svrngs doesn't know {kind}, so your friends can reach every part of it that its own sign-in allows.{mean}"
     ))
 }
 

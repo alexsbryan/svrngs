@@ -610,12 +610,12 @@ fn a_misspelled_program_is_told_at_share_time() {
         "a name the table knows needs no word"
     );
     for (name, ends) in [
-        ("llama-sever", "Did you mean llama-server?"),
-        ("Jellyfin", "Did you mean jellyfin?"),
-        ("jellyfim", "Did you mean jellyfin?"),
-        ("immich", "Check the spelling."),
+        ("llama-sever", " Did you mean llama-server?"),
+        ("Jellyfin", " Did you mean jellyfin?"),
+        ("jellyfim", " Did you mean jellyfin?"),
+        ("immich", ""),
     ] {
-        let said = format!("svrngs doesn't know {name}, so it keeps nothing back. {ends}");
+        let said = format!("svrngs doesn't know {name}, so your friends can reach every part of it that its own sign-in allows.{ends}");
         assert_eq!(told(name), Some(said), "{name}");
     }
 }
@@ -688,7 +688,7 @@ fn share_runs_when_svrngs_does_not_and_leaves_when_it_does() {
     );
     assert!(
         said.iter()
-            .any(|l| l == "svrngs doesn't know box, so it keeps nothing back. Check the spelling."),
+            .any(|l| l == "svrngs doesn't know box, so your friends can reach every part of it that its own sign-in allows."),
         "a name the table does not know is told at share time: {said:?}"
     );
     assert!(

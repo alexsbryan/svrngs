@@ -75,7 +75,7 @@ svrngs share 2283 --program immich --group <group>
 svrngs share 5006 --program actual --group <group>
 ```
 
-If svrngs doesn't recognize the name, it says so and lends it anyway: *"svrngs doesn't know immich, so it keeps nothing back. Check the spelling."* A slip like `Jellyfin` or `llama-sever` gets *"Did you mean jellyfin?"*, because a misspelled name loses what svrngs keeps back of that program.
+If svrngs doesn't recognize the name, it says so and lends it anyway: *"svrngs doesn't know immich, so your friends can reach every part of it that its own sign-in allows."* A slip like `Jellyfin` or `llama-sever` gets *"Did you mean jellyfin?"*, because a misspelled name loses what svrngs keeps back of that program.
 
 svrngs asks whether it takes a password on each request (next section). Immich keeps its own accounts, so press Enter and make each friend an account in Immich. Actual asks everyone for the one server password you set.
 
