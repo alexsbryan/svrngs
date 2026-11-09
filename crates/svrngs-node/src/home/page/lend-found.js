@@ -9,7 +9,7 @@
 // refusal is said beside the button, after the ones before it, and kept
 // there while it lends again.
 import { assertNever, go, no } from '../ui/machine.js?v=__VERSION__';
-import { post } from './routes.js?v=__VERSION__';
+import { groupsAgain, post } from './routes.js?v=__VERSION__';
 import { chosen } from './group-choice.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
@@ -63,10 +63,7 @@ export const LEND = (home) => ({
         l: lend,
         why: lend.name,
       })),
-    again: () => {
-      home({ type: 'again' });
-      return { type: 'told', why: 'the groups read again' };
-    },
+    again: groupsAgain(home),
   },
   step: (state, message) => {
     switch (message.type) {

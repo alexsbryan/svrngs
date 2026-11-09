@@ -7,7 +7,7 @@
 // groups are read again; a Stop on what apps use reads the groups again,
 // and so the section.
 import { ask, assertNever, go, late, no } from '../ui/machine.js?v=__VERSION__';
-import { get, post } from './routes.js?v=__VERSION__';
+import { get, groupsAgain, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
@@ -116,10 +116,7 @@ export const ACTS = (home) => ({
         () => ({ type: 'stopped', why: `${app} stopped using ${lend}` }),
         (error) => ({ type: 'unstopped', lend, app, why: error.message }),
       ),
-    again: () => {
-      home({ type: 'again' });
-      return { type: 'told', why: 'the groups read again' };
-    },
+    again: groupsAgain(home),
   },
   step: (state, message) => {
     switch (message.type) {

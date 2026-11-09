@@ -576,12 +576,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # inlined (5); . to 20,873.
 # (2026-11-09) update.rs's and http.rs's test modules moved to their own files
 # (update/tests.rs, http/tests.rs), where the count does not read them (45); . to 20,828.
+# (2026-11-09) oplog.rs read a log's lines one way in two places; api.rs's Bound and
+# Serving each gave a field through a getter; the home page's `again` effect, two
+# copies. . to 20,808, js to 8,494, one past where each lands.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20828,
+    ".": 20808,
 
-    "js": 8496,
+    "js": 8494,
 
     "swift": 1,
 }

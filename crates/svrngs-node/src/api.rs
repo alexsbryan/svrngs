@@ -280,15 +280,9 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
 /// port its config named; the node binds whatever port the command asks,
 /// `0` among them, so the address bound is answered too.)
 pub struct Serving {
-    addr: SocketAddr,
-    _task: AbortOnDropHandle<()>,
-}
-
-impl Serving {
     /// Where an app on this computer reaches the API.
-    pub fn addr(&self) -> SocketAddr {
-        self.addr
-    }
+    pub addr: SocketAddr,
+    _task: AbortOnDropHandle<()>,
 }
 
 /// A listener bound on loopback, not yet served. (svrngs: upstream's
@@ -297,14 +291,8 @@ impl Serving {
 /// the endpoint's transport exists, which the live lane dials through.)
 pub struct Bound {
     listener: tokio::net::TcpListener,
-    addr: SocketAddr,
-}
-
-impl Bound {
     /// Where it listens.
-    pub fn addr(&self) -> SocketAddr {
-        self.addr
-    }
+    pub addr: SocketAddr,
 }
 
 /// Bind. Refuses a non-loopback address by name, and one another program

@@ -88,7 +88,7 @@
 //! introducing a fourth (ARCH §19).
 
 use std::fs::{self, OpenOptions};
-use std::io::{BufRead, BufReader, Read, Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
@@ -217,21 +217,25 @@ impl<K: Journaled> Oplog<K> {
         if !self.path.exists() {
             return Ok((Vec::new(), Vec::new()));
         }
-        let file = fs::File::open(&self.path).map_err(OplogError::Io)?;
-        let reader = BufReader::new(file);
-        let mut out = Vec::new();
-        let mut skipped = Vec::new();
-        for (lineno, line) in reader.lines().enumerate() {
-            let line = line.map_err(OplogError::Io)?;
+        let text = fs::read_to_string(&self.path).map_err(OplogError::Io)?;
+        Ok(self.judged(&text))
+    }
+
+    /// Each line of `text` that is not blank, judged by [`Self::parse_line`]:
+    /// the ops, and the lines this build could not use. The one reading of
+    /// lines both [`Self::read_all_with_skips`] and [`Self::read_since`] make.
+    fn judged(&self, text: &str) -> (Vec<Op<K>>, Vec<SkippedLine>) {
+        let (mut ops, mut skipped) = (Vec::new(), Vec::new());
+        for (lineno, line) in text.lines().enumerate() {
             if line.trim().is_empty() {
                 continue;
             }
-            match self.parse_line(&line, lineno as u64 + 1) {
-                Ok(op) => out.push(op),
+            match self.parse_line(line, lineno as u64 + 1) {
+                Ok(op) => ops.push(op),
                 Err(skip) => skipped.push(skip),
             }
         }
-        Ok((out, skipped))
+        (ops, skipped)
     }
 
     /// The ops appended since `cursor`, and the cursor after them.
@@ -268,24 +272,14 @@ impl<K: Journaled> Oplog<K> {
         let whole = bytes.iter().rposition(|b| *b == b'\n').map_or(0, |i| i + 1);
         let text = std::str::from_utf8(&bytes[..whole])
             .map_err(|e| OplogError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e)))?;
-        let mut ops = Vec::new();
-        let mut skipped = 0usize;
-        for (lineno, line) in text.lines().enumerate() {
-            if line.trim().is_empty() {
-                continue;
-            }
-            match self.parse_line(line, lineno as u64 + 1) {
-                Ok(op) => ops.push(op),
-                Err(_) => skipped += 1,
-            }
-        }
+        let (ops, skipped) = self.judged(text);
         tracing::debug!(
             log = K::LABEL,
             path = %self.path.display(),
             from = start,
             bytes = whole,
             ops = ops.len(),
-            skipped,
+            skipped = skipped.len(),
             restarted,
             "oplog: read since cursor"
         );

@@ -333,7 +333,7 @@ impl Node {
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             build: relay.build(),
             held: tokio::sync::watch::Sender::new(held),
-            api_port: api.addr().port(),
+            api_port: api.addr.port(),
             minting: Default::default(),
         });
         let held = rail.namespaces().inspect_err(|why| {
@@ -399,7 +399,7 @@ impl Node {
             token,
         );
         let api = crate::api::serve(routes.clone(), api);
-        if let Err(e) = crate::api::write_address(&data_dir, api.addr()) {
+        if let Err(e) = crate::api::write_address(&data_dir, api.addr) {
             endpoint.close().await;
             return Err(e.into());
         }
@@ -408,7 +408,7 @@ impl Node {
             actor,
             data_dir = %data_dir.display(),
             dial = ?endpoint.addr(),
-            api = %api.addr(),
+            api = %api.addr,
             "node: endpoint bound with the signing key"
         );
         // The members' protocol serves sync and the live lane, the door to
@@ -477,7 +477,7 @@ impl Node {
     /// Where an app on this computer reaches the record: a loopback
     /// address ([`crate::api`]).
     pub fn api_addr(&self) -> SocketAddr {
-        self.api.addr()
+        self.api.addr
     }
 
     /// The endpoint this node dials and is dialled on.

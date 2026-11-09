@@ -52,6 +52,17 @@ export async function post(path, body) {
   throw refusal(response, answer);
 }
 
+// An `io` effect that has HOME read the groups again and says so: asked by
+// the sections whose own act changed what the groups' read shows.
+/**
+ * @param {(message: { type: 'again' }) => void} home
+ * @returns {() => { type: 'told', why: string }}
+ */
+export const groupsAgain = (home) => () => {
+  home({ type: 'again' });
+  return { type: 'told', why: 'the groups read again' };
+};
+
 // A route's answer, or its words when it refuses, never read as empty;
 // refused for the page's lapsed session, said as `ENDED`.
 /**
