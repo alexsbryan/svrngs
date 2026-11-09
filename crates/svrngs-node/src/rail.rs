@@ -219,12 +219,10 @@ pub(crate) async fn append_act(
     let append = Append { act };
     let done = match budget {
         Some((app, key)) => rail.commit_said(namespace, &Budgeted(append, app, key)),
-        None => rail
-            .commit_said(namespace, &append)
-            .map(|d| d.map_err(Some)),
+        None => rail.commit_said(namespace, &append).map(|d| d.map_err(Ok)),
     };
-    if let (Ok(Err(None)), Some((app, _))) = (&done, budget) {
-        return budget_refused(app.as_str());
+    if let (Ok(Err(Err(wait))), Some((app, _))) = (&done, budget) {
+        return budget_refused(app.as_str(), *wait);
     }
     match done {
         Ok(Err(_)) => {

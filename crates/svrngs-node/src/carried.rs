@@ -423,37 +423,51 @@ pub(crate) fn of_kind(ops: &[Value], kind: &str, id: &Value) -> bool {
     ops.iter().any(|o| &o["id"] == id && own(o))
 }
 
-/// The most entries an app may write as one person in any hour, this
-/// number's one home: ten times the fastest use on record, 20 in a
-/// minute by a driven browser settling up in Money
+/// How many entries an app may write as one person at once, and, since one
+/// refills every `3600 / WRITES_AN_HOUR` seconds, in an hour: this number's
+/// one home. Ten times the fastest use on record, 20 in a minute by a
+/// driven browser settling up in Money
 /// (`demo/runs/v1ui/2026-10-15-helper/data/summary.json`). A person's
 /// burst never reaches it; a loop's stops here, since every member keeps
 /// each entry for good (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G1).
-pub(crate) const WRITES_AN_HOUR: usize = 200;
+pub(crate) const WRITES_AN_HOUR: i64 = 200;
 
-/// Whether one more entry of the app `app` from the key `key` passes
-/// [`WRITES_AN_HOUR`]: its person's entries of that app in the last hour,
-/// read from the record, so a restart forgets nothing. An entry is one
-/// under `<app>/` or, since each is kept by every member for good, a
+/// How many seconds before one more entry of the app `app` from the key
+/// `key` passes [`WRITES_AN_HOUR`], none if it does now: a refill, read
+/// from the record so a restart forgets nothing, walking its person's
+/// entries of that app in time order as GCRA does in integers. An entry
+/// is one under `<app>/` or, since each is kept by every member for good, a
 /// correction that only voids one of those ([`of_kind`] on what it voids).
-pub(crate) fn spent(read: &Admission, app: &str, key: &str) -> bool {
+/// A stamp ahead of this computer's clock counts as now: `stamp` looks only
+/// at `on_behalf_of` and `/carry` only at the signature and standing
+/// (rail.rs), so a phone's fast clock reaches this walk, and must not lock
+/// its person out.
+pub(crate) fn spent(read: &Admission, app: &str, key: &str) -> i64 {
     let first = read.membership().person_of(key).map_or(key, |(f, _)| f);
-    let since = crate::door::unix_now().unwrap_or(i64::MAX) - 3600;
+    // An unreadable clock is said at warn (`unix_secs`) and lets the write
+    // through, as the window did: read as far past every stamp, not as 0.
+    let now = crate::door::unix_now().unwrap_or(i64::MAX / 2);
     let all = crate::rail::ops_json(read).unwrap_or_default();
     let ops = all.as_array().map(Vec::as_slice).unwrap_or_default();
-    let recent = |o: &&Value| o["person_key"] == first && o["ts_unix"].as_i64() > Some(since);
     let own = |o: &&Value| of_kind(std::slice::from_ref(*o), app, &o["id"]);
     let voids = |o: &&Value| o.get("corrects").is_some_and(|c| of_kind(ops, app, c));
-    let entry = |o: &&Value| own(o) || voids(o);
-    let count = ops.iter().filter(recent).filter(entry).count();
-    tracing::debug!(target: "folder", app, key, count, "carried: this app's entries as this person in the last hour, against its budget");
-    count >= WRITES_AN_HOUR
+    let entry = |o: &&Value| o["person_key"] == first && (own(o) || voids(o));
+    let entries = ops.iter().filter(entry);
+    let stamps = entries.filter_map(|o| o["ts_unix"].as_i64());
+    let each = 3600 / WRITES_AN_HOUR;
+    let next = |due: i64, ts: i64| due.max(ts.min(now)) + each;
+    let due = stamps.fold(0, next);
+    let wait = (due - now - (WRITES_AN_HOUR - 1) * each).max(0);
+    tracing::debug!(target: "folder", app, key, wait, "carried: this app's entries as this person, and the seconds before it may write again");
+    wait
 }
 
-/// The person told [`WRITES_AN_HOUR`] is spent, in words a developer can act on.
-pub(crate) fn budget_refused(app: &str) -> Response {
-    let words = format!("{app} wrote {WRITES_AN_HOUR} entries as you in the last hour, the most an app may; it can write again as that hour passes");
-    LendRefusal::Limit.say(StatusCode::TOO_MANY_REQUESTS, words)
+/// The person told [`WRITES_AN_HOUR`] is spent, in words a developer can
+/// act on, and `Retry-After`, since agents and fetch wrappers read that.
+pub(crate) fn budget_refused(app: &str, wait: i64) -> Response {
+    let words = format!("{app} is writing faster than an app may here, about {WRITES_AN_HOUR} entries an hour, because every member keeps each one for good. It can write again in {wait} seconds.");
+    let refused = LendRefusal::Limit.say(StatusCode::TOO_MANY_REQUESTS, words);
+    ([(header::RETRY_AFTER, wait.to_string())], refused).into_response()
 }
 
 /// A line a device signed, taken at [`crate::rail::carry`], past its app's
@@ -469,8 +483,8 @@ pub(crate) fn line_spent(read: &Admission, line: &Op<SignedOp>) -> Option<Respon
     };
     let stated = part(&body["payload"]).or_else(|| part(&body["replacement"]));
     let app = stated.or_else(of_corrected)?;
-    let held = read.membership().counts(&line.id);
-    (!held && spent(read, &app, line.stands_as())).then(|| budget_refused(&app))
+    let wait = (!read.membership().counts(&line.id)).then(|| spent(read, &app, line.stands_as()));
+    (wait.filter(|w| *w > 0)).map(|w| budget_refused(&app, w))
 }
 
 /// [`Append`] under the group's write lock, an app's budget counted there
@@ -482,14 +496,13 @@ pub(crate) struct Budgeted<'a>(
 );
 
 impl Command for Budgeted<'_> {
-    type Refusal = Option<AppendRefusal>;
+    type Refusal = Result<AppendRefusal, i64>;
     const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
-        if spent(before, self.1.as_str(), self.2) {
-            return Err(None);
-        }
-        self.0.decide(before).map_err(Some)
+        let wait = spent(before, self.1.as_str(), self.2);
+        (wait == 0).then_some(()).ok_or(Err(wait))?;
+        self.0.decide(before).map_err(Ok)
     }
 }
 

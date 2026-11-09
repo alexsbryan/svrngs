@@ -358,14 +358,18 @@ another of the group's computers when this one never held it — and from
   anyone another device holds. A correction of another app's act is
   refused. A line the phone signed and no computer took yet is kept beside
   the pass and goes, the same bytes, with the next write.
-  An app writes at most `WRITES_AN_HOUR` entries (200) as one person in any
-  hour, the count read from the record, so a restart forgets nothing and no
-  store is added (`carried.rs`, `spent`, the number's one home): counted
+  An app writes up to `WRITES_AN_HOUR` entries (200) as one person at once,
+  then one every 18 seconds (3600 / 200, the one number), so a loop's long
+  run is still 200 an hour and a mistaken stop costs seconds: a refill, as
+  GCRA walks it in integers over that person's entries of that app, read
+  from the record, so a restart forgets nothing and no store is added
+  (`carried.rs`, `spent`, the number's one home; a stamp ahead of this
+  computer's clock counts as now, since nothing refuses one): counted
   under the group's write lock at this route (`Budgeted`), before a phone's
   line is taken at `/carry`, and act by act on a lent app's
   `x-svrngs-append` when the person's page asked for it. A program with the
   token is the person, and outside it. Past it the app is refused `limit`,
-  429, with words naming the limit; on a phone the line is let go and its
+  429, with `Retry-After` and words naming the limit and the seconds; on a phone the line is let go and its
   chain rewound (`web/lend.js`, `carried`). A correction that only voids is
   an entry every member keeps and is counted too, read by what it voids
   (`of_kind`).

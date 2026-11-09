@@ -203,12 +203,14 @@ What `svrngs/acts` gives you:
 - **`POST {"op": {...}}`** writes one entry as the person, signed on their
   own computer or phone. `op` needs a `kind`. **`POST {"corrects": "<id>",
   "op": {...}}`** replaces one of your app's entries; `"op": null` voids it.
-  An entry is at most about 64 KiB, and an app writes at most 200 entries
-  as one person in any hour, voids included, counted from the record. Past that, `POST`
-  answers 429 with `x-svrngs-refused: limit` and words that say the limit;
-  your app writes again as that hour passes. The fastest we've recorded a
-  person using an app is 20 entries in a minute, so only a loop reaches it,
-  and that's what it's for: every member keeps every entry for good.
+  An entry is at most about 64 KiB, and an app writes up to 200 entries as
+  one person at once, then one every 18 seconds, voids included, counted
+  from the record. Past that, `POST` answers 429 with
+  `x-svrngs-refused: limit`, a `Retry-After` in seconds, and words that say
+  the limit; your app writes again after that wait. The fastest we've
+  recorded a person using an app is 20 entries in a minute, so only a loop
+  reaches it, and that's what it's for: every member keeps every entry for
+  good.
 
 ### Read your friends' apps
 
@@ -346,10 +348,11 @@ refused, and so is one without the token.
   browser"*: call the loopback API from your server, not from page code.
 - *"an act is JSON, {op} or {corrects, op}"*: your `POST` to `svrngs/acts`
   wasn't that shape.
-- *"guestbook wrote 200 entries as you in the last hour, the most an app
-  may; it can write again as that hour passes"*: your `POST`s to
-  `svrngs/acts`, or `x-svrngs-append` entries, reached the limit. Look for
-  a loop that writes.
+- *"guestbook is writing faster than an app may here, about 200 entries an
+  hour, because every member keeps each one for good. It can write again in
+  18 seconds."*: your `POST`s to `svrngs/acts`, or `x-svrngs-append`
+  entries, reached the limit. Look for a loop that writes. To save on every
+  change, wait for a pause first.
 - *"Ana’s hello writes only its own part of the group’s record, so it was
   not saved."*, or *"… wrote in a group you and its lender are not both in,
   so it was not saved."*: an `x-svrngs-append` entry corrected something

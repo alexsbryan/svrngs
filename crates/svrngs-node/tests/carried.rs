@@ -1418,6 +1418,12 @@ async fn looping(salt: u8) -> (Vec<Node>, Vec<tempfile::TempDir>, String, String
     (nodes, dirs, group, looped, other)
 }
 
+/// The most a run of `elapsed` may have written: the budget at once, and
+/// one for every 18 seconds it took (`carried.rs` `spent`, 3600 / 200).
+fn at_most(elapsed: Duration) -> usize {
+    WRITES_AN_HOUR + elapsed.as_secs() as usize / 18 + 1
+}
+
 /// **A folder app writing as fast as it can stops at its budget, and every
 /// member's copy holds no more** (svrn-docs EXTENSION_POINT §6.1, here
 /// short of 60 s since the budget is met first; the run of the whole 60 s,
@@ -1431,12 +1437,14 @@ async fn looping(salt: u8) -> (Vec<Node>, Vec<tempfile::TempDir>, String, String
 async fn a_folder_app_writing_as_fast_as_it_can_stops_at_its_budget() {
     let (nodes, _dirs, group, looped, other) = looping(41).await;
     let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let started = std::time::Instant::now();
     let (wrote, refused, last) = writing_loop(ana, &looped, 120, true).await;
     let (status, word, said) = last.expect("the loop was told no");
-    assert_eq!(
-        (wrote, status, word.as_str()),
-        (WRITES_AN_HOUR, 429, "limit"),
-        "a loop of 8 stops at the budget, refused limit: {said}"
+    assert!(
+        wrote >= WRITES_AN_HOUR
+            && wrote <= at_most(started.elapsed())
+            && (status, word.as_str()) == (429, "limit"),
+        "a loop of 8 stops at the budget, refused limit: wrote {wrote}, {status} {word}: {said}"
     );
     assert!(refused >= 1, "{refused}");
     let error: Value = serde_json::from_str(&said).unwrap();
@@ -1526,6 +1534,15 @@ async fn a_phone_s_line_past_the_app_s_budget_is_refused() {
     let past = carry(&lines[WRITES_AN_HOUR]).await.unwrap();
     assert_eq!(past.status(), 429);
     assert_eq!(past.headers()["x-svrngs-refused"], "limit");
+    let retry: u64 = past.headers()["retry-after"]
+        .to_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!(
+        (1..=18).contains(&retry),
+        "the wait, at most one refill: {retry}"
+    );
     let said = past.text().await.unwrap();
     assert!(
         said.contains("200 entries") && said.contains("Money"),
@@ -1570,6 +1587,7 @@ async fn a_loop_voiding_its_own_entry_stops_at_the_budget() {
     let (nodes, _dirs, _group, looped, _) = looping(44).await;
     let ana = &nodes[0];
     let first = json!({ "op": { "kind": "tick" } });
+    let started = std::time::Instant::now();
     let wrote = at(ana, &looped, "POST", "/svrngs/acts", Some(first)).await;
     assert!(wrote.status().is_success(), "the record is written");
     let id: Value = wrote.json().await.unwrap();
@@ -1588,12 +1606,101 @@ async fn a_loop_voiding_its_own_entry_stops_at_the_budget() {
         }
         voided += 1;
     }
-    assert_eq!(
-        (voided, told),
-        (WRITES_AN_HOUR - 1, Some((429, "limit".to_string()))),
-        "the record and then voids of it reach the budget"
+    let in_all = voided + 1;
+    assert!(
+        in_all >= WRITES_AN_HOUR
+            && in_all <= at_most(started.elapsed())
+            && told == Some((429, "limit".to_string())),
+        "the record and then voids of it reach the budget: {in_all}, {told:?}"
     );
     for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A burst to the limit is told its wait, and a write after it is taken.**
+/// A phone's lines, stamped directly: the budget at once, then the next
+/// refused `limit` with a `Retry-After`; after waiting that long a new line
+/// is taken and the one after it waits again, so the refill is one entry
+/// and proved, not assumed. A line stamped far ahead of this computer's
+/// clock does not lock its person out: neither `stamp` nor `/carry` refuses
+/// one, so `spent` clamps it. Planted: the walk's `max(ts)` taken out and
+/// the wait read from the count alone, so a burst never recovers: the
+/// write after the wait is refused. The clamp `ts.min(now)` taken out: the
+/// line after the far-stamped one is refused.
+#[tokio::test]
+async fn a_burst_is_told_its_wait_and_a_write_after_it_is_taken() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 45, ana, &[(ben, 2)]);
+    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
+        let at = format!("http://{}/carry", bridge.local_addr());
+        http().post(at).json(&json!([group, line])).send()
+    };
+    let clock = || {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_secs() as i64
+    };
+    let sign = |kind: &str, seq: u64, ts: i64, prev: Option<_>| {
+        let body = json!({ "op": "record", "payload": { "kind": kind, "n": seq } });
+        let act = RailAct::from_json(body).unwrap();
+        svrngs_core::sign_act(&signing(2), &group, ts, seq, prev, act, None, None, None)
+    };
+    // After the stamp ben joined at, or the record does not count his lines.
+    let now = clock() + 1;
+    let (mut seq, mut prev) = (0u64, None);
+    for _ in 0..WRITES_AN_HOUR {
+        let line = sign("Money/expense", seq, now, prev.clone());
+        assert_eq!(carry(&line).await.unwrap().status(), 200, "line {seq}");
+        prev = Some(line.id.clone());
+        seq += 1;
+    }
+    let past = carry(&sign("Money/expense", seq, now, prev.clone()))
+        .await
+        .unwrap();
+    assert_eq!(past.status(), 429);
+    assert_eq!(past.headers()["x-svrngs-refused"], "limit");
+    let wait: u64 = past.headers()["retry-after"]
+        .to_str()
+        .unwrap()
+        .parse()
+        .unwrap();
+    assert!((1..=18).contains(&wait), "the stated wait: {wait}");
+    let said = past.text().await.unwrap();
+    assert!(said.contains(&format!("in {wait} seconds")), "{said}");
+    tokio::time::sleep(Duration::from_secs(wait + 1)).await;
+    let after = sign("Money/expense", seq, clock(), prev.clone());
+    assert_eq!(
+        carry(&after).await.unwrap().status(),
+        200,
+        "the wait refilled one"
+    );
+    prev = Some(after.id.clone());
+    seq += 1;
+    let next = sign("Money/expense", seq, clock(), prev.clone());
+    assert_eq!(
+        carry(&next).await.unwrap().status(),
+        429,
+        "one refilled, so the next waits"
+    );
+    let far = sign("Far/note", seq, clock() + 100_000, prev.clone());
+    assert_eq!(
+        carry(&far).await.unwrap().status(),
+        200,
+        "the far stamp is taken"
+    );
+    prev = Some(far.id.clone());
+    seq += 1;
+    let then = sign("Far/note", seq, clock(), prev.clone());
+    assert_eq!(
+        carry(&then).await.unwrap().status(),
+        200,
+        "a far stamp locks no one out"
+    );
+    for node in [ana, ben] {
         node.endpoint().close().await;
     }
 }
@@ -1629,7 +1736,8 @@ async fn a_folder_app_for_sixty_seconds() {
         "RESULT: {secs} s, wrote {wrote}, refused {refused}, last {last:?}, ben holds {held}"
     );
     assert_eq!(held, wrote);
-    assert_eq!(wrote, WRITES_AN_HOUR);
+    let at_most = WRITES_AN_HOUR + secs as usize / 18 + 1;
+    assert!(wrote >= WRITES_AN_HOUR && wrote <= at_most, "{wrote}");
     for node in [ana, ben, cy] {
         node.endpoint().close().await;
     }
