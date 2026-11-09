@@ -567,10 +567,12 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # counted lines: forwarding, one-caller wrappers, a field only ever true and
 # what the door and the record API each held a second handle of (the commit's
 # body names each cut). Lowered to one past where it landed; . to 20,857.
+# (2026-11-09) A derive for origin.rs Lenders' hand-written Default (tokio's
+# watch::Sender has its own); . to 20,883, one past where it lands.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20888,
+    ".": 20883,
 
     "js": 8475,
 

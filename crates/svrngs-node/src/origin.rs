@@ -705,14 +705,8 @@ fn lender_of(at: &Asking, label: &Label, keys: Vec<String>) -> Result<String, Re
 /// Which computers carry each carried app, as the last listing of lends
 /// here said ([`Asking::lent`]): this computer's own copy first, then each
 /// other's; one that did not answer goes last ([`Self::away`]).
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub(crate) struct Lenders(tokio::sync::watch::Sender<BTreeMap<Label, Vec<String>>>);
-
-impl Default for Lenders {
-    fn default() -> Self {
-        Self(tokio::sync::watch::Sender::new(BTreeMap::new()))
-    }
-}
 
 impl Lenders {
     /// What a listing of lends said, each carried app's computers in its order.
