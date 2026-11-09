@@ -176,13 +176,9 @@ fn comparable(path: &str) -> String {
         i += read;
     }
     let lower = String::from_utf8_lossy(&decoded).to_ascii_lowercase();
-    let mut out = String::with_capacity(lower.len());
-    for c in lower.chars() {
-        if !(c == '/' && out.ends_with('/')) {
-            out.push(c);
-        }
-    }
-    out
+    let mut out: Vec<char> = lower.chars().collect();
+    out.dedup_by(|a, b| *a == '/' && *b == '/');
+    out.into_iter().collect()
 }
 
 /// The upload a lend's lender says it may use, in bits a second: stated,
