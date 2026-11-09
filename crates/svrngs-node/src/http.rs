@@ -26,9 +26,4 @@ pub(crate) fn builder() -> Result<reqwest13::ClientBuilder, String> {
 }
 
 #[cfg(test)]
-mod tests {
-    #[test]
-    fn the_client_builds() {
-        super::client().expect("a client");
-    }
-}
+mod tests;
