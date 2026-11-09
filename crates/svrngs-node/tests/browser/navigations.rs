@@ -38,8 +38,9 @@ in_both_engines!(
     /// posted as the whole tab: the fetch is refused, the shelf because the
     /// page does not read it and the box because ada said no yes, and so are
     /// the frame and the form, which before this test reached each as the
-    /// person going there; the notes, which the page reads, are reached all
-    /// three ways, as the page. Kept: the typed address, the page moving
+    /// person going there; the notes, which the page reads, are reached by
+    /// its fetch and frame, as the page, and by its form never (door.rs
+    /// `admit`: another app only reads). Kept: the typed address, the page moving
     /// within itself, and a link from the page into each, which the person
     /// follows as themselves. Planted: `app_of` taking every navigation for
     /// the lend's own page again, and the frame and the form reach the
@@ -109,13 +110,17 @@ async fn a_navigation_from_another_lend_s_page_is_judged_as_its_fetch(engine: En
             "the {name} is never reached at its plain origin by a fetch: {heads:?}\n{seen:#}"
         );
         let read = name == "notes";
-        for reached in ["GET /fetched", "GET /framed", "POST /posted"] {
+        for reached in ["GET /fetched", "GET /framed"] {
             assert_eq!(
                 heads.iter().any(|l| l == reached),
                 read,
                 "the page reached the {name} as `{reached}` only if it reads it: {heads:?}\n{seen:#}"
             );
         }
+        assert!(
+            !heads.iter().any(|l| l == "POST /posted"),
+            "the page's form never reaches the {name}, read or not (door.rs `admit`): {heads:?}\n{seen:#}"
+        );
     }
     drop(ada);
 }

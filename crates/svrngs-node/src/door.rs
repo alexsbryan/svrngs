@@ -619,12 +619,8 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
     let mut offered = Vec::new();
     let carried = door.folders.carried().into_iter().map(Ok);
     for lend in declared.into_iter().chain(carried) {
-        let lend = match lend {
-            Ok(l) => l,
-            Err(e) => {
-                tracing::warn!(target: "door", error = %e, "door: lends — a declaration cannot be read, so it is left out");
-                continue;
-            }
+        let Ok(lend) = lend.inspect_err(|e| tracing::warn!(target: "door", error = %e, "door: lends — a declaration cannot be read, so it is left out")) else {
+            continue;
         };
         let Some(using) = door.using.people(&lend.name).await else {
             tracing::warn!(target: "door", lend = %lend.name, "door: lends — no count of who uses it, so it is left out");
@@ -888,17 +884,13 @@ fn secret_headers(dir: &std::path::Path, lend: &LendName) -> Vec<(HeaderName, He
     read_declared_in(dir)
         .into_iter()
         .filter_map(|(name, value)| {
-            match (
-                HeaderName::try_from(name.as_str()),
-                HeaderValue::try_from(value),
-            ) {
-                (Ok(n), Ok(v)) => Some((n, v)),
-                _ => {
-                    tracing::warn!(target: "door", lend = %lend, header = %name,
-                        "door: a declared secret cannot be a header, so it is not sent");
-                    None
-                }
+            let pair =
+                (HeaderName::try_from(name.as_str()).ok()).zip(HeaderValue::try_from(value).ok());
+            if pair.is_none() {
+                tracing::warn!(target: "door", lend = %lend, header = %name,
+                    "door: a declared secret cannot be a header, so it is not sent");
             }
+            pair
         })
         .collect()
 }
@@ -1416,6 +1408,41 @@ async fn through(
     lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
 }
 
+/// What a request for a lend may carry to its service: a closed set
+/// (AGENTS 9). The lender's own secret goes only with the person opening
+/// the lend or its own page.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Admit {
+    Own,
+    Readers,
+    /// No lender credential: the service answers as it would anyone.
+    Bare,
+    /// The service is never asked.
+    Refused,
+}
+
+/// Attenuation (svrn-docs `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §2):
+/// one rule at the lender's door. A request naming an app that is not this
+/// lend reads as the readers' account or as no one, and writes nothing, so
+/// a reading page's one POST cannot end the group's sign-in; `read` is GET
+/// or HEAD and no protocol switch ([`upgrade_of`]). `own` is this lend's
+/// label; an app absent is a person's own open ([`Asker`]).
+pub(crate) fn admit(app: Option<&Label>, own: &Label, read: bool, readers: bool) -> Admit {
+    match (app.is_some_and(|a| a != own), read, readers) {
+        (false, ..) => Admit::Own,
+        (true, true, true) => Admit::Readers,
+        (true, true, false) => Admit::Bare,
+        (true, false, _) => Admit::Refused,
+    }
+}
+
+/// The person this computer's key stands as, by whom a refusal names the
+/// lend's lender; none when it stands in no group held here.
+fn lender_of(door: &Door) -> Option<Person> {
+    let me = hex::encode(door.key);
+    door.rail.standing_anywhere(&me).map(|(_, m)| m.person)
+}
+
 /// One request for a lend, from `who`: refused by name, or carried to the
 /// lend's service and its answer streamed back.
 pub(crate) async fn lend_for(
@@ -1567,6 +1594,24 @@ pub(crate) async fn lend_for(
             format!("{} is lent without {}", lend.name, refused.as_str()),
         ));
     }
+    let read =
+        matches!(*req.method(), Method::GET | Method::HEAD) && upgrade_of(req.headers()).is_none();
+    let readers = secret_headers(&lend::readers_dir(&door.data_dir, &lend.name), &lend.name);
+    let own = lend.label(&door.key);
+    let admitted = admit(app.as_ref(), &own, read, !readers.is_empty());
+    tracing::debug!(target: "door", actor, lend = %lend.name, app = ?app.as_ref().map(Label::as_str), method = %req.method(), read, readers = !readers.is_empty(), ?admitted,
+        "door: what an app may do with this lend, and the lender's credential that goes with it");
+    let secret = match admitted {
+        Admit::Refused => {
+            let by = lender_of(door).map_or("the person who lends it".into(), |p| p.to_string());
+            let name = &lend.name;
+            let words = format!("Apps can only read {name}. Only {by} can change that.");
+            return Err(LendRefusal::closed(words));
+        }
+        Admit::Readers => readers,
+        Admit::Bare => Vec::new(),
+        Admit::Own => secret_headers(&lend::secret_dir(&door.data_dir, &lend.name), &lend.name),
+    };
     let observed = via.and_then(|v| v.observe());
     if observed.is_none() {
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
@@ -1616,6 +1661,7 @@ pub(crate) async fn lend_for(
         share,
         held,
         watched,
+        secret,
     };
     forward(
         door,
@@ -1642,6 +1688,9 @@ struct Told {
     /// Whose use the answer is cut by, and when the pass that let it in
     /// lapses ([`Asker`]'s `until`); none for an owner's ([`withdrawn`]).
     watched: Option<(Watched, Option<i64>)>,
+    /// The headers [`admit`]'s credential sends, the lend's own or the
+    /// readers', none for an app's bare read.
+    secret: Vec<(HeaderName, HeaderValue)>,
 }
 
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:
@@ -1793,6 +1842,7 @@ async fn forward(
         share,
         held,
         watched,
+        secret,
     }: Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
@@ -1829,27 +1879,13 @@ async fn forward(
         (HeaderName::from_static(DEVICE_HEADER), device_value),
     ];
     tracing::debug!(target: "door", actor, user = ?identity[2].1, "door: the account the lend is told");
-    let (me, name) = (hex::encode(door.key), &lend.name);
-    let lender = door.rail.standing_anywhere(&me).map(|(_, m)| m.person);
+    let (lender, name) = (lender_of(door), &lend.name);
     tracing::debug!(target: "door", actor, lender = ?lender.as_ref().map(|p| p.as_str()), "door: the lend's lender, by whom a refusal names it; none here names this computer, so \"Its lender\"");
     let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
     let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let label = lend.label(&door.key);
-    // Another app reading this lend, by a GET or HEAD, is let in as the
-    // readers' account; a write, or a person's own use, never is: a reading
-    // page's one POST /Sessions/Logout ended Jellyfin's group token for all.
-    let reading =
-        app.is_some_and(|a| *a != label) && matches!(parts.method, Method::GET | Method::HEAD);
-    let readers = secret_headers(&lend::readers_dir(&door.data_dir, &lend.name), &lend.name);
-    tracing::debug!(target: "door", actor, lend = %lend.name, reading, readers = !readers.is_empty(),
-        "door: the readers' secret goes only to another app's GET or HEAD, in place of the lend's own");
-    let secret = if reading && !readers.is_empty() {
-        readers
-    } else {
-        secret_headers(&lend::secret_dir(&door.data_dir, &lend.name), &lend.name)
-    };
     let target = parts
         .uri
         .query()

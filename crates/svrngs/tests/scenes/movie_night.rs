@@ -145,8 +145,9 @@ scene!(
     /// no-readers`, Sam never runs `share --readers`; `movie_night:
     /// lender-token`, Movie Night served with Sam's own token in its
     /// plant.js; `movie_night:logout`, Movie Night asking each library to
-    /// end its session, with a hand edit of door.rs `reading` that lets a
-    /// POST be a read, reverted after.
+    /// end its session, with a hand edit of door.rs `admit` that answers
+    /// `Readers` to a POST, reverted after (else the door refuses it and
+    /// the readers' account outlives the plant).
     movie_night
 );
 async fn movie_night(engine: Engine) {

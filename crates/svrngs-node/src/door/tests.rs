@@ -212,3 +212,30 @@ fn port_80_names_no_port() {
     assert!(path("http://localhost.evil.example/x", 80).is_err());
     assert!(path("http://localhost/x", 8096).is_err());
 }
+
+/// The rule of [`admit`] (svrn-docs `rings/current/CAPABILITY_CONNECTIONS_PLAN.md`
+/// §2), row by row: another app's read goes as the readers' account or bare,
+/// and nothing else of its ever reaches the service; a person's own and a
+/// lend's own page are untouched.
+#[test]
+fn admit_is_the_rule_for_every_request_naming_another_app() {
+    let own = Label::of(&[1; 32], "shelf");
+    let other = Label::of(&[2; 32], "picks");
+    for (app, read, readers, want) in [
+        (None, false, false, Admit::Own),
+        (None, false, true, Admit::Own),
+        (None, true, true, Admit::Own),
+        (Some(&own), false, true, Admit::Own),
+        (Some(&own), true, false, Admit::Own),
+        (Some(&other), true, true, Admit::Readers),
+        (Some(&other), true, false, Admit::Bare),
+        (Some(&other), false, true, Admit::Refused),
+        (Some(&other), false, false, Admit::Refused),
+    ] {
+        assert_eq!(
+            admit(app, &own, read, readers),
+            want,
+            "{app:?} {read} {readers}"
+        );
+    }
+}

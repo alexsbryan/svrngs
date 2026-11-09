@@ -239,7 +239,8 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
   line.
 - **It only reads.** `GET` and `HEAD` go through, with the page's `Accept` and
   no other header, under the lender's readers' account if they keep one
-  (`svrngs share --readers`). Anything else is refused `closed`.
+  (`svrngs share --readers`) and with no credential of the lender's if not.
+  Anything else is refused `closed`.
 - **Reading or writing the record, not both.** Once someone has said yes to
   your app reading lends, a `POST` to `svrngs/acts` is refused for them, even
   after a Stop or in a later version. An app that writes to the record reads no

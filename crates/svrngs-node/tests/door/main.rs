@@ -1323,13 +1323,96 @@ async fn a_link_carries_a_pass_to_the_key_dialling_and_no_further() {
     pair.close().await;
 }
 
-/// The readers' secret (MOVIE_NIGHT_FOR_TEN, "The spike"): another app's
-/// GET or HEAD of a lend is let in as the account its lender keeps for
-/// readers, in place of the lend's own secret; that app's POST, the lend's
-/// own page and a member with no pass are sent the lend's own. A reading
-/// page's one POST /Sessions/Logout ended a Jellyfin group token for all.
-/// Planted: the method left unchecked (the POST let in as readers); the
-/// app left unchecked (the lend's own page let in as readers).
+/// **An app reads a lend and nothing more, whichever way it came** (svrn-docs
+/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §6 3 and 4). A lend with its
+/// own secret and no readers' account: another app's GET arrives bare, through
+/// a phone's pass and a computer's own alike; a raw `Upgrade` GET is that same
+/// GET, its protocol switch never asked; a POST and a WebSocket upgrade are
+/// refused `closed`, the service never asked. Planted, each watched failing:
+/// the lend's own secret sent in place of none (door.rs `admit`'s `Bare`
+/// arm answering `Own`); an upgrade let through as a read (`read` left at
+/// the method alone).
+#[tokio::test]
+async fn an_app_reads_a_lend_bare_and_never_writes_or_upgrades_it() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (pair, heads) = lending_heads().await;
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, picks) = (Label::of(&a, "shelf"), Label::of(&a, "picks"));
+    let (bo, holder) = (signing(2), signing(9));
+    let pass_to = |key: &SigningKey| {
+        let pass = Pass::sign(
+            &bo,
+            &actor_of(key),
+            (picks.clone(), vec![shelf.clone()]),
+            unix_now() + 3600,
+        );
+        pass.encode()
+    };
+    let by_phone = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let by_computer = bridge_as(&bo, &pair.a, Alpn::Member).await;
+    for (how, addr, pass) in [
+        ("a phone's pass", by_phone.local_addr(), pass_to(&holder)),
+        (
+            "a computer's own pass",
+            by_computer.local_addr(),
+            pass_to(&bo),
+        ),
+    ] {
+        let head =
+            format!("/lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {pass}\r\n");
+        let get = raw_to(addr, format!("GET {head}Connection: close\r\n\r\n")).await;
+        assert_eq!(get.status, 200, "{how}: {}", get.text);
+        assert!(
+            header_values(&last(&heads), "authorization").is_empty(),
+            "{how}: the lend's own secret went to another app: {}",
+            last(&heads)
+        );
+        let raw = raw_to(
+            addr,
+            format!("GET {head}Upgrade: websocket\r\nConnection: close\r\n\r\n"),
+        )
+        .await;
+        assert_eq!(raw.status, 200, "{how}: {}", raw.text);
+        assert!(
+            header_values(&last(&heads), "upgrade").is_empty(),
+            "{how}: a GET naming a protocol is only that GET: {}",
+            last(&heads)
+        );
+        let asked = heads.lock().unwrap().len();
+        for (what, request) in [
+            (
+                "POST /Sessions/Logout",
+                format!("POST {head}Content-Length: 0\r\nConnection: close\r\n\r\n"),
+            ),
+            (
+                "a WebSocket upgrade",
+                format!("GET {head}Connection: Upgrade, close\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\n\r\n"),
+            ),
+        ] {
+            let refused = raw_to(addr, request).await;
+            assert_eq!(refused.status, 403, "{how}: {what}: {}", refused.text);
+            assert_eq!(
+                header_values(&refused.text, "x-svrngs-refused"),
+                vec!["closed"],
+                "{how}: {what}"
+            );
+            assert_eq!(heads.lock().unwrap().len(), asked, "{how}: {what}: the service was asked");
+        }
+    }
+    pair.close().await;
+}
+
+/// The readers' secret (MOVIE_NIGHT_FOR_TEN, "The spike"; the rule, svrn-docs
+/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §2): another app's GET or
+/// HEAD of a lend goes as the account its lender keeps for readers, in place
+/// of the lend's own secret; that app's POST is refused before the service
+/// is asked, and names the lender; the lend's own page and a member with
+/// no pass are sent the lend's own, a POST included. A reading page's one
+/// POST /Sessions/Logout ended a Jellyfin group token for all. Planted: the
+/// method left unchecked (the POST let in as readers); the app left
+/// unchecked (the lend's own page let in as readers).
 #[tokio::test]
 async fn the_readers_secret_goes_only_to_another_app_s_get() {
     use svrngs_core::alpn::Alpn;
@@ -1356,8 +1439,8 @@ async fn the_readers_secret_goes_only_to_another_app_s_get() {
     for (why, app, method, sent) in [
         ("another app's GET", &picks, "GET", READERS),
         ("another app's HEAD", &picks, "HEAD", READERS),
-        ("another app's POST", &picks, "POST", SECRET),
         ("the lend's own page", &shelf, "GET", SECRET),
+        ("the lend's own page's POST", &shelf, "POST", SECRET),
     ] {
         let reply = raw_to(bridge.local_addr(), told(app, method)).await;
         assert_eq!(reply.status, 200, "{why}: {}", reply.text);
@@ -1367,13 +1450,35 @@ async fn the_readers_secret_goes_only_to_another_app_s_get() {
             "{why}"
         );
     }
-    let member = pair.get("/lend/shelf/whoami", "").await;
-    assert_eq!(member.status, 200, "{}", member.text);
+    let asked = heads.lock().unwrap().len();
+    let reply = raw_to(bridge.local_addr(), told(&picks, "POST")).await;
+    assert_eq!(reply.status, 403, "{}", reply.text);
     assert_eq!(
-        header_values(&last(&heads), "authorization"),
-        vec![SECRET],
-        "a member with no pass"
+        header_values(&reply.text, "x-svrngs-refused"),
+        vec!["closed"],
+        "{}",
+        reply.text
     );
+    assert!(
+        reply.text.contains("Only ada can change that"),
+        "the refusal names the lender: {}",
+        reply.text
+    );
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        asked,
+        "another app's POST never reaches the service"
+    );
+    for (why, method) in [("a member's GET", "GET"), ("a member's own POST", "POST")] {
+        let request = format!("{method} /lend/shelf/whoami HTTP/1.1\r\nHost: local\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+        let member = pair.raw(request.as_bytes()).await;
+        assert_eq!(member.status, 200, "{why}: {}", member.text);
+        assert_eq!(
+            header_values(&last(&heads), "authorization"),
+            vec![SECRET],
+            "{why}"
+        );
+    }
     pair.close().await;
 }
 
