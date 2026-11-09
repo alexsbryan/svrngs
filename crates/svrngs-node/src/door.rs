@@ -262,6 +262,20 @@ impl LendRefusal {
         self.said(status, serde_json::json!({ "error": words.into() }))
     }
 
+    /// The door's common answers, each kind's status said once: closed, 403;
+    /// a fault of this computer, 500; a path it cannot read, 400.
+    pub(crate) fn closed(words: impl Into<String>) -> Response {
+        Self::Closed.say(StatusCode::FORBIDDEN, words)
+    }
+
+    pub(crate) fn fault(words: impl Into<String>) -> Response {
+        Self::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, words)
+    }
+
+    pub(crate) fn bad_path(words: impl Into<String>) -> Response {
+        Self::Path.say(StatusCode::BAD_REQUEST, words)
+    }
+
     /// svrngs's answer, `status` and `body`, its kind in the body and the
     /// header, its words kept for [`paged`].
     fn said(self, status: StatusCode, mut body: serde_json::Value) -> Response {
@@ -618,6 +632,11 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         };
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
         let Ok(reads) = reads else { continue };
+        let (group, groups, raw) = match lend.source {
+            Source::Carried(group) => (Some(group.clone()), Some(vec![group]), None),
+            Source::Port(_) => (None, lend.audience.ids().map(<[String]>::to_vec), None),
+            Source::Raw(raw, _) => (None, lend.audience.ids().map(<[String]>::to_vec), Some(raw)),
+        };
         offered.push(Offered {
             name: lend.name,
             kind: lend.kind,
@@ -626,18 +645,9 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             upload: lend.upload,
             reads,
             asks: lend.asks,
-            group: match &lend.source {
-                Source::Carried(group) => Some(group.clone()),
-                Source::Port(_) | Source::Raw(..) => None,
-            },
-            groups: match &lend.source {
-                Source::Carried(group) => Some(vec![group.clone()]),
-                Source::Port(_) | Source::Raw(..) => lend.audience.ids().map(<[String]>::to_vec),
-            },
-            raw: match lend.source {
-                Source::Raw(raw, _) => Some(raw),
-                _ => None,
-            },
+            group,
+            groups,
+            raw,
         });
     }
     Ok(offered)
@@ -1158,7 +1168,7 @@ async fn through_pass(
 fn dialed(dialer: Option<Extension<Dialer>>, words: &str) -> Result<Dialer, Response> {
     dialer.map(|Extension(d)| d).ok_or_else(|| {
         tracing::warn!(target: "door", "door: refused — no verified dialer, so the request did not come on an iroh stream");
-        LendRefusal::Closed.say(StatusCode::FORBIDDEN, words)
+        LendRefusal::closed(words)
     })
 }
 
@@ -1325,7 +1335,7 @@ fn guest_of(
     let host = register.members.get(&guest.host).map(|m| &m.person);
     let Some(host) = host.or(register.removed.get(&guest.host)).cloned() else {
         tracing::debug!(target: "door", guest = key, host = guest.host, "door: refused — a visit whose host is bound to nobody here");
-        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nobody here hosts your visit"));
+        return Err(LendRefusal::closed("nobody here hosts your visit"));
     };
     let live = guest.live(&register.cut, now);
     let gone = register.cut.get(&guest.host).is_some_and(|c| c.at <= now);
@@ -1421,8 +1431,7 @@ pub(crate) async fn lend_for(
     let path = req.uri().path().to_string();
     if can_step_out(&path) {
         tracing::debug!(target: "door", actor, path, "door: refused — a path that can step out of its lend");
-        return Err(LendRefusal::Path.say(
-            StatusCode::BAD_REQUEST,
+        return Err(LendRefusal::bad_path(
             "the computer you reached refuses an address that could step outside what it lends",
         ));
     }
@@ -1453,7 +1462,7 @@ pub(crate) async fn lend_for(
         Who::Own(label) => {
             let Some((group, person, whose)) = PersonKey::resolved(door, &actor) else {
                 tracing::debug!(target: "door", actor, "door: refused — the lender stands in no group held here");
-                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
+                return Err(LendRefusal::closed(LENDS_NOTHING));
             };
             Asker {
                 actor: whose,
@@ -1469,7 +1478,7 @@ pub(crate) async fn lend_for(
             let Some((group, member)) = door.rail.standing_in(&actor, eligible) else {
                 tracing::debug!(target: "door", actor, lend = %lend.name,
                     "door: refused — the dialer stands in no group this lend is lent to");
-                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING));
+                return Err(LendRefusal::closed(LENDS_NOTHING));
             };
             Asker {
                 actor: PersonKey(member.person_key),
@@ -1496,7 +1505,7 @@ pub(crate) async fn lend_for(
             tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, reader, "door: a carried app, answered from this computer's store, unless it has read lends and asks to write");
             if reader {
                 let why = "An app that reads your friends’ apps can’t write in the group’s record.";
-                return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, why));
+                return Err(LendRefusal::closed(why));
             }
             let opened = (door.folders).open(&lend, (group, device.as_str(), &service_path), req);
             return Ok(opened.await);
@@ -1565,7 +1574,7 @@ pub(crate) async fn lend_for(
     let whereabouts = crate::network::guess(observed.as_ref().and_then(|o| o.addr));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
-        return Err(LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCOUNTED));
+        return Err(LendRefusal::fault(UNCOUNTED));
     };
     let (relay, rtt_ms, sent, received) = observed.as_ref().map_or((None, None, None, None), |o| {
         (
@@ -1809,8 +1818,7 @@ async fn forward(
         HeaderValue::from_str(device.as_str()),
     ) else {
         tracing::warn!(target: "door", actor, "door: refused — the person's name cannot be a header");
-        return Err(LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return Err(LendRefusal::fault(
             "the computer that lends this cannot tell it who you are",
         ));
     };
@@ -1875,8 +1883,7 @@ async fn forward(
         Ok(r) => r,
         Err(e) => {
             tracing::debug!(target: "door", actor, error = %e, "door: refused — the request target is not a path");
-            return Err(LendRefusal::Path.say(
-                StatusCode::BAD_REQUEST,
+            return Err(LendRefusal::bad_path(
                 "the computer that lends this cannot read that address",
             ));
         }

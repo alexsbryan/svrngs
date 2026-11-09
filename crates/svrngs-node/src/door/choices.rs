@@ -120,12 +120,8 @@ fn file(door: &Door, lend: &Lend) -> PathBuf {
 fn read(door: &Door, lend: &Lend) -> Result<Kept, Response> {
     load(&file(door, lend)).map_err(|why| {
         tracing::warn!(target: "door", lend = %lend.name, why, "door: the lend's choices cannot be read");
-        fault("who said yes to this cannot be read on the computer that lends it")
+        LendRefusal::fault("who said yes to this cannot be read on the computer that lends it")
     })
-}
-
-fn fault(words: &str) -> Response {
-    LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, words.to_string())
 }
 
 /// The door's one check, by the design's §4 table: a lend that asks
@@ -212,7 +208,7 @@ fn write(path: &Path, said: Kept) -> Result<(), String> {
 pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
     let Some(lend) = find(door, raw).map_err(|e| {
         tracing::warn!(target: "door", lend = raw, error = %e, "door: refused — the lend's declaration cannot be read");
-        fault("this lend cannot be read on the computer that lends it")
+        LendRefusal::fault("this lend cannot be read on the computer that lends it")
     })?
     else {
         // A carried app's label before wire version 6 named this
@@ -232,7 +228,9 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
 async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: Told) -> Response {
     let (said, reads) = told;
     let Some(at) = unix_now() else {
-        return fault("this computer's clock cannot be read, so the choice is not kept");
+        return LendRefusal::fault(
+            "this computer's clock cannot be read, so the choice is not kept",
+        );
     };
     let choice = Choice { said, at, reads };
     let one = [(person.clone(), [(app.clone(), choice.clone())].into())].into();
@@ -245,7 +243,7 @@ async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: T
         }
         failed => {
             tracing::warn!(target: "door", at = %path.display(), ?failed, "door: a choice could not be kept");
-            fault("this could not be kept on the computer that lends it")
+            LendRefusal::fault("this could not be kept on the computer that lends it")
         }
     }
 }
@@ -254,10 +252,7 @@ async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: T
 async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u8]) -> Response {
     if let Err(e) = serde_json::from_slice::<AppBody>(body) {
         tracing::debug!(target: "door", lend = %lend.name, %app, error = %e, "door: refused — an app's pass says only stop");
-        return LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
-            "an app may only stop; its person says yes",
-        );
+        return LendRefusal::closed("an app may only stop; its person says yes");
     }
     keep(
         door,
@@ -287,7 +282,7 @@ fn member(
     dialer: Option<Extension<Dialer>>,
     raw: &str,
 ) -> Result<(Dialer, PersonKey, Lend), Response> {
-    let closed = || LendRefusal::Closed.say(StatusCode::FORBIDDEN, LENDS_NOTHING);
+    let closed = || LendRefusal::closed(LENDS_NOTHING);
     let Extension(dialer) = dialer.ok_or_else(closed)?;
     let key = dialer.actor();
     let Some((_, _, person)) = PersonKey::resolved(door, &key) else {
@@ -317,8 +312,7 @@ pub(super) async fn choose(
         }
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
-            Err(LendRefusal::Path.say(
-                StatusCode::BAD_REQUEST,
+            Err(LendRefusal::bad_path(
                 "a choice is {app, said: yes or stop}",
             ))
         }
@@ -335,9 +329,7 @@ pub(super) async fn stop_with_pass(
     body: Bytes,
 ) -> Result<Response, Response> {
     let (Some(Extension(dialer)), Ok(lend)) = (dialer, found(&door, &raw)) else {
-        return Err(
-            LendRefusal::Closed.say(StatusCode::FORBIDDEN, "nothing is lent to you by that name")
-        );
+        return Err(LendRefusal::closed("nothing is lent to you by that name"));
     };
     let Asker { actor, app, .. } = holder_of(&door, &dialer, &headers, &lend).await?;
     let app = app.expect("a pass names its app");
@@ -382,7 +374,7 @@ pub(crate) fn reachings(door: &Door) -> Result<BTreeMap<Label, Choice>, Response
     let person = own(door)?;
     let mut kept = load(&reaching_path(door)).map_err(|why| {
         tracing::warn!(target: "door", why, "door: the yeses to apps reaching others' lends cannot be read");
-        fault("whether you said yes to this app cannot be read on this computer")
+        LendRefusal::fault("whether you said yes to this app cannot be read on this computer")
     })?;
     Ok(kept.remove(&person).unwrap_or_default())
 }
@@ -410,7 +402,7 @@ fn own(door: &Door) -> Result<PersonKey, Response> {
     let own = PersonKey::resolved(door, &hex::encode(door.key));
     own.map(|(_, _, person)| person).ok_or_else(|| {
         tracing::debug!(target: "door", "door: choices refused — this computer stands in no group held here");
-        LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this computer stands in no group")
+        LendRefusal::closed("this computer stands in no group")
     })
 }
 

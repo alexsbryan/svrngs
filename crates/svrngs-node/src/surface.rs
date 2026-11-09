@@ -403,8 +403,7 @@ pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(
         return Err(crate::origin::away());
     }
     tracing::debug!(target: "surface", %app, %label, "surface: refused — the page does not read the lend, or it is not lent now");
-    Err(LendRefusal::Closed.say(
-        StatusCode::FORBIDDEN,
+    Err(LendRefusal::closed(
         "this page does not read that; only what its lender declared it reads",
     ))
 }
@@ -473,7 +472,7 @@ struct To {
 pub(crate) async fn to(at: &Asking, app: &Label, uri: Uri) -> Handled {
     let unlent = || LendRefusal::Unlent.say(StatusCode::NOT_FOUND, "nothing is lent here");
     let Ok(Query(to)) = Query::<To>::try_from_uri(&uri) else {
-        return Err(LendRefusal::Path.say(StatusCode::BAD_REQUEST, "name a lender and a lend"));
+        return Err(LendRefusal::bad_path("name a lender and a lend"));
     };
     let carried = (at.folders.carried().into_iter()).find_map(|l| match l.source {
         Source::Carried(g) if Label::carried(l.kind.as_str(), &g) == *app => Some(g),
@@ -481,7 +480,7 @@ pub(crate) async fn to(at: &Asking, app: &Label, uri: Uri) -> Handled {
     });
     let Some(group) = carried else {
         tracing::debug!(target: "surface", %app, "surface: to refused — not an app a group carries here");
-        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, "only a carried app opens this"));
+        return Err(LendRefusal::closed("only a carried app opens this"));
     };
     let mut standing = standing_of(&at.host.rail, &group)?;
     let own = standing.get(&at.host.actor).map(|m| m.person.clone());

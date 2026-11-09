@@ -691,8 +691,7 @@ impl Host {
     /// (ralph/REVIEW_FINDINGS.md #103).
     pub(crate) fn shared_with(&self, actor: &str) -> Result<(Groups, Option<Person>), Response> {
         let Some(mut groups) = self.standings() else {
-            return Err(crate::door::LendRefusal::Fault.say(
-                StatusCode::INTERNAL_SERVER_ERROR,
+            return Err(crate::door::LendRefusal::fault(
                 "the groups this computer is in cannot be read on it",
             ));
         };

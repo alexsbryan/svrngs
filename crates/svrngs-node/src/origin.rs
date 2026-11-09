@@ -277,23 +277,20 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         && !matches!(*req.method(), Method::GET | Method::HEAD)
     {
         tracing::debug!(target: "origin", %label, method = %req.method(), ?appending, "origin: refused — a write with this origin's proof but not from its own page's intent");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
+        return Err(LendRefusal::closed(
             "only this origin's client may submit a write",
         ));
     }
     let program = (shown == Shown::Token).then(|| label.clone());
     let Some(app) = program.or_else(|| app_of(req.headers(), &label)) else {
         tracing::debug!(target: "origin", %label, "origin: refused — from another page that names no origin");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
+        return Err(LendRefusal::closed(
             "a page reaches another lend only by fetch, which says where it is from",
         ));
     };
     if own_proof && app != label {
         tracing::debug!(target: "origin", %label, %app, "origin: refused — this origin's proof, from a page its fetch names as another app's");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
+        return Err(LendRefusal::closed(
             "an origin's proof cannot name another app",
         ));
     }
@@ -302,8 +299,7 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
     if reads || to {
         if app != label {
             tracing::debug!(target: "origin", %label, %app, to, "origin: refused — another app's page asks the lends this one reads, or opens one");
-            return Err(LendRefusal::Closed.say(
-                StatusCode::FORBIDDEN,
+            return Err(LendRefusal::closed(
                 "only an app's own origin may ask its capabilities",
             ));
         }
@@ -390,7 +386,7 @@ fn inert(answer: Response) -> Handled {
     tracing::debug!(target: "origin", status = parts.status.as_u16(), ?essence, ?data, "origin: a lend's answer to a carried page: a data type named by svrngs, or refused, or no body");
     if given.is_some() && data.is_none() {
         let why = "a carried app reads data from a lend, nothing a browser runs";
-        return Err(LendRefusal::Closed.say(StatusCode::FORBIDDEN, why.to_string()));
+        return Err(LendRefusal::closed(why.to_string()));
     }
     parts
         .headers
@@ -414,7 +410,7 @@ fn inert(answer: Response) -> Handled {
 /// and of the page's headers only `Accept`, so "reads" is all it can
 /// express; the answer comes back through [`inert`].
 async fn routed(at: &Asking, (label, app): (Label, Label), req: Request) -> Handled {
-    let closed = |why: &str| LendRefusal::Closed.say(StatusCode::FORBIDDEN, why.to_string());
+    let closed = |why: &str| LendRefusal::closed(why.to_string());
     let asked = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let named = (asked.strip_prefix(LEND_PATH)).and_then(|r| r.strip_prefix('/'));
     let (read, tail) = named.and_then(|r| r.split_once('/')).unwrap_or_default();
@@ -495,8 +491,7 @@ pub(crate) async fn reach(
         return appended(at, &label, &Serving::Own, answer.await?, appending).await;
     };
     let Some(pass) = own_pass(at, &app, &label) else {
-        return Err(LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
+        return Err(LendRefusal::fault(
             "this computer could not say which app asks",
         ));
     };
@@ -546,8 +541,7 @@ async fn appended(
     };
     if let Appending::Denied(why) = appending {
         tracing::debug!(target: "origin", %label, ?why, "origin: refused — a lent app's answer named entries this request did not consent to, so none is written and the answer withheld");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
+        return Err(LendRefusal::closed(
             "this request did not authorize entries from the app",
         ));
     }
@@ -555,8 +549,7 @@ async fn appended(
     let lend = declared(at, label, serving).await;
     if let Some(l) = lend.as_ref().filter(|l| !appending.permits(&l.kind)) {
         tracing::debug!(target: "origin", %label, kind = %l.kind.as_str(), ?appending, "origin: refused — the lend's declared kind is not the one the program accepts entries of");
-        return Err(LendRefusal::Closed.say(
-            StatusCode::FORBIDDEN,
+        return Err(LendRefusal::closed(
             "the app's kind changed; this program authorized no entry of that kind",
         ));
     }
@@ -595,7 +588,7 @@ async fn appended(
     };
     let acts = acts.iter().map(judged).collect::<Result<Vec<_>, _>>().map_err(|why| {
         tracing::debug!(target: "origin", %label, ?why, ?named, "origin: refused — a lent app's act, not written as the person asking, and its answer withheld");
-        LendRefusal::Closed.say(StatusCode::FORBIDDEN, format!("{what} {why}, so it was not saved."))
+        LendRefusal::closed(format!("{what} {why}, so it was not saved."))
     })?;
     for (group, act) in acts {
         let written = crate::rail::append_act(rail, &group, act).await;
@@ -748,12 +741,9 @@ impl Lenders {
 
 /// `target` as the address a lend is asked at, or refused as no path.
 fn uri_of(target: &str) -> Result<Uri, Response> {
-    target.parse().map_err(|_| {
-        LendRefusal::Path.say(
-            StatusCode::BAD_REQUEST,
-            "your computer cannot read that address",
-        )
-    })
+    target
+        .parse()
+        .map_err(|_| LendRefusal::bad_path("your computer cannot read that address"))
 }
 
 /// The computer lending `label`, to be dialled as this computer's key,
@@ -761,8 +751,7 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
 pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<Contact, Response> {
     match serving(at, label).await? {
         Serving::At(contact, _) => Ok(contact),
-        Serving::Own => Err(LendRefusal::Fault.say(
-            StatusCode::INTERNAL_SERVER_ERROR,
+        Serving::Own => Err(LendRefusal::fault(
             "this computer's own lend is not dialled",
         )),
     }

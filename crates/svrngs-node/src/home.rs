@@ -212,7 +212,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
         .headers()
         .get("x-svrngs-intent")
         .is_some_and(|h| h == "yes");
-    let closed = || LendRefusal::Closed.say(StatusCode::FORBIDDEN, "this page answers only itself");
+    let closed = || LendRefusal::closed("this page answers only itself");
     let answer = if opening {
         at.sessions.redeem(crate::session::HOME, &req)
     } else if shown == crate::session::Shown::Neither {
@@ -449,7 +449,7 @@ fn unchanged_said(name: &LendName, done: Result<bool, lend::LendError>) -> Respo
         }
         Err(e) => {
             tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — the lend's declaration cannot be changed");
-            LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, UNCHANGED)
+            LendRefusal::fault(UNCHANGED)
         }
     }
 }
@@ -547,7 +547,7 @@ fn unread(why: &str, error: &dyn std::fmt::Display) -> Response {
 
 /// svrngs's 500 on this computer, in `words`.
 fn fault(words: impl Into<String>) -> Response {
-    LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, words)
+    LendRefusal::fault(words)
 }
 
 /// `GET /running`: what answers on this computer, less svrngs's own
@@ -694,7 +694,7 @@ pub const LINKS_ROUTE: &str = "/v1/links";
 pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Response {
     if let Err(why) = at.host.meet(&l.group, &l.relays) {
         tracing::debug!(target: "home", group = l.group, why, "home: refused — where the group meets stays");
-        return LendRefusal::Closed.say(StatusCode::FORBIDDEN, why);
+        return LendRefusal::closed(why);
     }
     // Its home first, as `svrngs link` waits (cli.rs `link_to`): with none
     // yet, a link names a relay this computer may never register at.
@@ -716,10 +716,7 @@ pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Re
         }
         Err(crate::invite::Unminted::NotIn) => {
             tracing::debug!(target: "home", group = l.group, "home: refused — no link, this computer is not in that group");
-            LendRefusal::Closed.say(
-                StatusCode::FORBIDDEN,
-                "you are not in that group on this computer",
-            )
+            LendRefusal::closed("you are not in that group on this computer")
         }
         Err(e) => {
             tracing::warn!(target: "home", group = l.group, error = %e, "home: refused — no link made");
@@ -743,8 +740,8 @@ async fn stop(State(at): State<Asking>, Json([group, visit]): Json<[String; 2]>)
                 serde_json::json!({ "op": "correct", "corrects": visit, "replacement": null });
             crate::rail::append_act(&at.host.rail, &group, act).await
         }
-        Ok(false) => LendRefusal::Closed.say(StatusCode::FORBIDDEN, "you host no such visit here"),
-        Err(e) => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
+        Ok(false) => LendRefusal::closed("you host no such visit here"),
+        Err(e) => LendRefusal::fault(e.to_string()),
     }
 }
 
@@ -871,10 +868,8 @@ async fn open(State(at): State<Asking>, Json(o): Json<crate::folder::FolderAsk>)
     tracing::debug!(target: "home", group = o.group, dir = %o.dir.display(), listed, ?by, "home: a folder asked opened");
     match (listed, by) {
         (true, Some(_)) => StatusCode::NO_CONTENT.into_response(),
-        (false, _) => {
-            LendRefusal::Closed.say(StatusCode::FORBIDDEN, "that is not this group's folder")
-        }
-        _ => LendRefusal::Fault.say(StatusCode::INTERNAL_SERVER_ERROR, "no program opens it"),
+        (false, _) => LendRefusal::closed("that is not this group's folder"),
+        _ => LendRefusal::fault("no program opens it"),
     }
 }
 

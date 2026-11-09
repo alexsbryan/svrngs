@@ -394,7 +394,7 @@ impl Folders {
         tracing::debug!(target: "folder", group, %kind, %person, elsewhere, "carried: a write as the person, refused from any device but this computer");
         if elsewhere {
             let why = format!("Open {kind} from your home page to write in it.");
-            return Ok(Closed.say(StatusCode::FORBIDDEN, why));
+            return Ok(LendRefusal::closed(why));
         }
         let body = (to_bytes(req.into_body(), WRITE_MOST).await).map_err(|_| TOO_LARGE)?;
         let act = svrngs_core::grant::app_act(kind.as_str(), &body).ok_or(NOT_AN_ACT)?;
