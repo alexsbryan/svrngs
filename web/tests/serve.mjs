@@ -1,5 +1,5 @@
 // The built page served on localhost, for the app checks
-// (apps/jellyfin/check/check.sh, apps/movie-night/check/check.sh): `serve`
+// (apps/jellyfin/check/check.sh): `serve`
 // from U4's dry run's driver, demo/runs/u4/2026-10-05/drive.mjs:18-29,
 // which stays there as it ran.
 //

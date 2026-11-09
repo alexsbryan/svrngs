@@ -41,8 +41,7 @@ choose `ratings.csv` on the page.
   whose model it is can tell that you asked, and when; not what you rated.
 - **Your guesses.** The page runs at your own address, served by taste on
   your computer, so the list and its reasons ("because you loved…") reach
-  no page of anyone else's. Another app you say yes to gets the films back
-  in order, with no reasons and no ratings.
+  no page of anyone else's. Taste answers its own page and no other app's.
 
 Only you can rate or see guesses: taste asks svrngs which person this
 computer is, and refuses anyone else. Your friends in the group see taste
@@ -56,14 +55,11 @@ answers, started with `--embeddings`, for example:
     llama-server -m nomic-embed-text-v1.5.Q8_0.gguf --embeddings --port 8080
     svrngs share 8080 --kind llama-server --group <group>
 
-To use one on your own computer instead, start taste with
-`--embed http://127.0.0.1:8080`.
-
 ## How it's built
 
 - `taste.mjs` serves the page, keeps the diary, and lends itself with
   `svrngs share <its place> --name taste --kind taste --reads jellyfin
-  --refuse /diary --ask "…" --group <each of your groups>`.
+  --refuse /diary --group <each of your groups>`.
 - `page/` is the page. It reads each Jellyfin your groups share through
   the account its lender keeps for apps (`svrngs share --readers`,
   apps/jellyfin/README.md) and hands taste the whole list.
@@ -75,6 +71,5 @@ To use one on your own computer instead, start taste with
 - `svrngs.mjs` asks svrngs on this computer, with the `token` beside its
   `api` file, as apps/pantry does.
 
-`node taste.mjs <port> <dir>` serves without lending, as su's check
-(`check/check.sh`) runs it. The taste scene,
+The taste scene,
 `crates/svrngs/tests/scenes/taste.rs`, plays Ana's evening end to end.

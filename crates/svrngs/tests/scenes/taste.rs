@@ -6,7 +6,7 @@
 //! share <its port> --kind llama-server`. Ana joins House on her computer,
 //! puts taste in her Downloads and pastes the README's one line, which
 //! starts taste and lends it, `--kind taste --reads jellyfin --refuse
-//! /diary --ask`. She opens it from her home page, which is her yes to
+//! /diary`. She opens it from her home page, which is her yes to
 //! what it reads, marks five of Sam's films, chooses her Letterboxd file,
 //! and sees "You'll probably like" with the science fiction film she never
 //! rated above the romantic comedy she never rated.

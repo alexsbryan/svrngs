@@ -75,7 +75,7 @@ const RUN = 64;
 let kept = null;
 
 /// Each film's numbers from `model` (a lend of a friend's, reached as Ana
-/// through svrngs, or her own `--embed`), in the catalog's order: the whole
+/// through svrngs), in the catalog's order: the whole
 /// list, never a part of it.
 export async function numbers(list, model, log) {
   if (!(list instanceof Catalog)) throw new Error('only a Catalog is sent to a model');
