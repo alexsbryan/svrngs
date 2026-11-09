@@ -545,10 +545,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # `readers:` row (share.rs `readers_of`, `sign_in_readers`), +115. Its
 # economizing pass (1bd95b84) cut 178 first, so no raise: . lowered from
 # 20,835 to one past where both land, 20,772.
+# Carried apps read lends (998a3047: reads.txt, /svrngs-reads and
+# /svrngs-lend at the app's own origin, the operator's "Same-origin route",
+# 2026-11-08), +72. Its economizing pass (cb414021) cut 117 first, so no
+# raise: . lowered from 20,772 to one past where both land, 20,723.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20772,
+    ".": 20723,
 
     "js": 8396,
 
