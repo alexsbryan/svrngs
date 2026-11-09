@@ -85,5 +85,6 @@ export function films(copies) {
 }
 
 // mn: own choose — the item's own page in its Jellyfin: jellyfin-web's
-// route to an item, under the library's address.
-export const itemAt = (base, copy) => `${base}web/#/details?id=${copy.id}&serverId=${copy.server}`;
+// route to an item, at `open`, where the page opens that library (index.js
+// `libraries`).
+export const itemAt = (open, copy) => `${open}#/details?id=${copy.id}&serverId=${copy.server}`;

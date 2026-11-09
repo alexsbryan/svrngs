@@ -61,7 +61,7 @@ const partsOf = (state, send) => {
   const lent = /** @type {Lent[]} */ (state.lent);
   const carried = once(lent)
     .filter((lend) => lend.group)
-    .map((lend) => html`<p>${carrying(lend.kind, state.shelf)}</p>`);
+    .map((lend) => html`<p>${carrying(lend, state.shelf)}</p>`);
   const yeses = Object.keys(state.acted ?? {}).filter((key) => key.startsWith('yes '));
   const changes = Changes({
     g: state.group,

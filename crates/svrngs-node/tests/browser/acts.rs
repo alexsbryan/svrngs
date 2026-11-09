@@ -38,7 +38,7 @@ fn what_acts_as_you_is_said_in_one_wording() {
     ]);
     assert_eq!(
         in_question(
-            "[q.carrying('Money', args.shelf), q.carrying('Quiz', args.shelf), q.reading(args.notes, { said: 'yes', at: args.at }), q.reading(args.notes, { said: 'stop', at: args.at }), q.reading(args.notes, { said: 'yes', at: args.at, lends: ['x'] }), q.reading(args.notes, { said: 'yes', at: args.at, lends: [] }), q.readLine([args.sam, args.bo], 2, ['jellyfin']), q.readLine([args.sam, { ...args.bo, new: true }], 2, ['jellyfin']), q.readLine([], 0, ['jellyfin']), q.readLine([], 2, ['jellyfin']), q.readLine(args.friends, 5, ['jellyfin']), q.deciders(args.rows, 'a1', 'computer'), q.deciders(args.rows, 'a2', 'browser'), q.deciders(args.rows, 'b1', 'browser')]",
+            "[q.carrying({ kind: 'Money' }, args.shelf), q.carrying({ kind: 'Quiz' }, args.shelf), q.carrying({ kind: 'Movie-Night', reads: ['jellyfin'] }, args.shelf), q.reading(args.notes, { said: 'yes', at: args.at }), q.reading(args.notes, { said: 'stop', at: args.at }), q.reading(args.notes, { said: 'yes', at: args.at, lends: ['x'] }), q.reading(args.notes, { said: 'yes', at: args.at, lends: [] }), q.readLine([args.sam, args.bo], 2, ['jellyfin']), q.readLine([args.sam, { ...args.bo, new: true }], 2, ['jellyfin']), q.readLine([], 0, ['jellyfin']), q.readLine([], 2, ['jellyfin']), q.readLine(args.friends, 5, ['jellyfin']), q.deciders(args.rows, 'a1', 'computer'), q.deciders(args.rows, 'a2', 'browser'), q.deciders(args.rows, 'b1', 'browser')]",
             json!({ "shelf": shelf, "notes": notes, "at": at, "rows": rows,
                 "sam": { "person": "Sam", "kind": "jellyfin", "new": false },
                 "bo": { "person": "Bo", "kind": "jellyfin", "new": false },
@@ -47,6 +47,7 @@ fn what_acts_as_you_is_said_in_one_wording() {
         json!([
             "Money reads and writes who paid for what, and who owes whom, when you open it.",
             "Quiz reads and writes its own part of the group’s record, when you open it.",
+            "Movie Night reads its own part of the group’s record, when you open it.",
             format!("cy’s notes opens your friends’ films as you. Since {}. ", today()),
             format!("cy’s notes stopped opening your friends’ films as you on {}. Opening it again says yes again.", today()),
             format!("cy’s notes opens the films you chose, as you. Since {}. ", today()),

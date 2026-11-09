@@ -495,6 +495,10 @@ pub(crate) async fn reads(at: &Asking, label: &Label) -> Result<Response, Respon
                 Whose::Computer(_) => origin(&lend, host.api_port) + &AS_PATH[1..] + &at.sessions.cap(label, &lend),
             } + "/";
             let mut read = serde_json::json!({ "kind": l.offered.kind, "name": l.offered.name, "lender": l.person, "address": address });
+            // A carried page opens a lender's own page by svrngs's `to`, no capability in it.
+            if matches!(label.whose(), Whose::Carried) {
+                read["to"] = format!("{}{}?lender={}&lend={}", origin(label, host.api_port), &TO_PATH[1..], l.key, l.offered.name).into();
+            }
             if let Some(words) = &l.offered.asks {
                 read["asks"] = words.as_str().into();
                 read["ask"] = format!("{}ask?lend={lend}&app={label}", crate::home::address(host.api_port)).into();

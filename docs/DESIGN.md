@@ -753,7 +753,7 @@ On either layout a person can:
   ticked the lend is refused, so joining a group later never widens it, and
   two groups of one name are told apart by who made each;
 - bring things to the table: the shelf, svrngs's own apps (Money, Events,
-  House rules), listed as data in `crates/svrngs-node/src/shelf.txt` and
+  House rules, Movie Night), listed as data in `crates/svrngs-node/src/shelf.txt` and
   embedded at build so svrngs's code names none, each brought into the
   group's own folder by one button, never over one there already: the
   folder of the group's name (or that name and `-<id8>` where it was

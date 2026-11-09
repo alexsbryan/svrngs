@@ -34,8 +34,14 @@ async function libraries() {
       library: l.lender,
       who: many(l) ? `${l.lender}’s library “${l.name}”` : `${l.lender}’s library`,
       base: l.address,
+      // Carried, a lender's own page opens by svrngs's `to`; lent, under
+      // the address it reads.
+      open: l.to ?? `${l.address}web/`,
     })),
     unanswered: t.unanswered,
+    // Libraries this page may read once its person opens it from their
+    // home page and leaves them ticked: no address yet.
+    fresh: [...new Set((t.new ?? []).map((l) => l.lender))],
   };
 }
 
@@ -101,7 +107,12 @@ async function search(query) {
     who: `${p}’s computer`,
     state: 'unanswered',
   }));
-  const state = { query, films: [], libs: found ? [...asking, ...away] : [{ state: 'untold' }] };
+  const fresh = (found?.fresh ?? []).map((library) => ({ library, state: 'new' }));
+  const state = {
+    query,
+    films: [],
+    libs: found ? [...asking, ...away, ...fresh] : [{ state: 'untold' }],
+  };
   const copies = [];
   render(state);
   if (!libs.length) return;
@@ -112,7 +123,7 @@ async function search(query) {
       const near = (got.copies ?? []).map((c) => ({ ...c, d: distance(query, c.title) }));
       const mine = near.filter((c) => c.d !== null);
       // mn: own choose — each copy's address in its own Jellyfin
-      for (const c of mine) c.href = itemAt(lib.base, c);
+      for (const c of mine) c.href = itemAt(lib.open, c);
       // mn: own cards — each library's count is of the films shown, the
       // nearest of every library's, so it is counted again with each answer
       copies.push(...mine.map((c) => ({ ...c, who: lib.who, at: i })));
@@ -146,6 +157,7 @@ const WORDS = {
   refused: (l) => `${l.who} would not let you in.`,
   failed: (l) => `${l.who} could not be read from here.`,
   unanswered: (l) => `${l.who} did not answer, so no library of theirs is here.`,
+  new: (l) => `${l.library}’s films are new. Open Movie Night from your home page to search them.`,
   untold: () =>
     'Movie Night could not learn which libraries are open to it. Open it again from your group’s page.',
 };

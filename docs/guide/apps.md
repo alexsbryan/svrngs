@@ -1,8 +1,8 @@
 # The apps that come with svrngs
 
 svrngs comes with a few small apps your group can use straight away: Money
-for who owes whom, Events for nights out, and House rules for what your
-house agrees. This page shows how to bring them to your group and what each
+for who owes whom, Events for nights out, House rules for what your house
+agrees, and Movie Night for the films your friends lend. This page shows how to bring them to your group and what each
 one does. Two more, the grapevine and the doc, are for people happy to run
 something from a terminal.
 
@@ -16,6 +16,7 @@ Each app is listed with a tick box and a line saying what it's for:
 - **Money**: who owes whom, and for what.
 - **Events**: the get-togethers people post, and who’s coming.
 - **House rules**: the rules your house agrees, and how you agree them.
+- **Movie Night**: the films your friends lend, and who has each. It reads what they lend, once you open it from your home page, and writes nothing.
 
 Tick the ones you want and press **Bring the ticked ones to Elm** (the
 button names your group). The page says *"You brought Money to Elm:

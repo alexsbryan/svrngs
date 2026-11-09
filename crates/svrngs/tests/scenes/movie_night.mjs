@@ -1,13 +1,14 @@
 // Ana's browser for the Movie Night scene (movie_night.rs): a computer's
 // Chromium, every response it receives written to `dump`
 // (apps/jellyfin/check/person.mjs `record`). Ana opens her home page by
-// the address her svrngs opened it at, waits for Movie Night's button
-// there, `opener`, and presses it, which posts her yes in a tab of its
-// own; there she searches `film`, waits until every library has said
-// what it found (index.js `WORDS`), and follows the first copy's link,
-// until the page there says `landed`.
+// the address her svrngs opened it at; in a tab of its own, Movie Night by
+// its address, `at`, as she has said no yes, and searches `film`; then
+// waits for Movie Night's button on her home page, `opener`, and presses
+// it, which posts her yes in a tab of its own; there she searches `film`,
+// waits until every library has said what it found (index.js `WORDS`),
+// and follows the first copy's link, until the page there says `landed`.
 //
-//   node movie_night.mjs '{"engine", "home", "opener", "film", "landed", "dump"}'
+//   node movie_night.mjs '{"engine", "home", "at", "opener", "film", "landed", "dump"}'
 //
 // Prints one JSON line: what each page said, or where it stopped and why.
 import { arrived, launch } from '../../../../web/tests/page.mjs';
@@ -26,6 +27,20 @@ try {
   page.on('pageerror', (e) => seen.errors.push(String(e).slice(0, 300)));
   await page.goto(args.home);
   await arrived(page, 90_000);
+
+  at = 'Movie Night, by its address';
+  const typed = await context.newPage();
+  typed.on('pageerror', (e) => seen.errors.push(String(e).slice(0, 300)));
+  await typed.goto(args.at);
+  await arrived(typed, 90_000);
+  await typed.getByRole('heading', { name: 'Movie Night' }).waitFor({ timeout: 90_000 });
+  await typed.fill('#q', args.film);
+  await typed.getByRole('button', { name: 'Search', exact: true }).click();
+  await typed.locator('#said li').first().waitFor({ timeout: 90_000 });
+  seen.before = { said: await typed.locator('#said').innerText() };
+  await typed.close();
+
+  at = 'her home page';
   // The home page reads its groups and lends again each second.
   const button = page.getByRole('button', { name: args.opener, exact: true });
   await button.waitFor({ timeout: 60_000 });

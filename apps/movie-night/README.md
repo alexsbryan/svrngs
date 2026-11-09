@@ -9,10 +9,10 @@ tells it at `/svrngs-reads`, and each library through the account its lender
 keeps for apps that read it (`svrngs share --readers`,
 [Jellyfin](../jellyfin/README.md)).
 
-Lend it from any computer with its files served on a port, for example:
-
-    python3 -m http.server 8597 --directory apps/movie-night
-    svrngs share 8597 --program movie-night --reads jellyfin --group <group>
+It comes with svrngs: bring it to a group from your home page, as you do
+Money, and everyone in the group opens it from theirs. Anyone can still lend
+their own copy from a port (`svrngs share <port> --program movie-night
+--reads jellyfin --group <group>`, its files served by any plain file server).
 
 `match.js` decides which films a search names and which copies are one film
 (`match.test.mjs`); `crates/svrngs/tests/scenes/movie_night.rs` plays a person

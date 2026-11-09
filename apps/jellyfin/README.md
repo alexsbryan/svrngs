@@ -9,7 +9,7 @@ you how, and the catalogue's run measured it on one computer
 
 ## Let apps that read it search it
 
-Movie Night, and any app lent with `--reads jellyfin`, can search your
+Movie Night, and any app that reads `jellyfin`, can search your
 films only with an account Jellyfin knows. Jellyfin's API keys are an
 administrator's, so don't use one. Instead:
 

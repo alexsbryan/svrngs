@@ -6,10 +6,10 @@ yours to copy and bend.
 
 **On the shelf.** They come with svrngs and are one tap to bring to a group
 ([Apps](../docs/guide/apps.md)): `expenses/` (Money), `events/` (Events),
-`canon/` (House rules).
+`canon/` (House rules), `movie-night/` (Movie Night, which reads the groups' lent Jellyfins).
 
 **Examples to run yourself.** Each from svrngs's source, with its own README:
-`doc/`, `grapevine/`, `give/`, `movie-night/`, `pantry/`, `taste/`.
+`doc/`, `grapevine/`, `give/`, `pantry/`, `taste/`.
 
 **Notes for a program you already run.** `jellyfin/`: lending it, and the
 account apps read it by.

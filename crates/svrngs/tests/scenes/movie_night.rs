@@ -1,39 +1,34 @@
-//! **Movie Night finds a friend's films** (apps/movie-night; DESIGN §3,
-//! "Lent apps, as they come" 4; apps/jellyfin/README.md, "Let apps that
-//! read it search it"): Sam makes House and lends his Jellyfin as it
-//! comes, `svrngs share <its port> --kind jellyfin`. In Jellyfin's own
-//! pages he makes an account for his groups that may see his films, and
-//! gives it to svrngs on his home page, typing its name and password,
-//! with no terminal (capability connections §6 bar 1). He lends Movie
-//! Night too, its page
-//! served by a plain static file server, `svrngs share <its port> --kind
-//! movie-night --reads jellyfin`. Ana, new to House, joins by its link on
-//! a computer of her own, opens Movie Night from her home page, which is
-//! her yes to what it reads, searches a film that is in Sam's library,
-//! and sees its card with Sam's copy under it. She opens that copy and
-//! lands on Sam's Jellyfin, where signing in as herself is the films
+//! **Movie Night finds a friend's films** (apps/movie-night; capability
+//! connections §5 step 6, the shelf): Sam makes House and lends his
+//! Jellyfin as it comes, `svrngs share <its port> --kind jellyfin`. In
+//! Jellyfin's own pages he makes an account for his groups that may see
+//! his films, and gives it to svrngs on his home page, typing its name and
+//! password, with no terminal (§6 bar 1). He brings Movie Night to House
+//! from his home page, as he brings Money, typing nothing. Ana, new to
+//! House, joins by its link on a computer of her own. Opened by its address
+//! before she has said yes, Movie Night tells her Sam's films are new and
+//! to open it from her home page, not that nobody lends any. From her home
+//! page, her yes to what it reads, she searches a film that is in Sam's
+//! library and sees its card with Sam's copy under it. She opens that copy
+//! and lands on Sam's Jellyfin, where signing in as herself is the films
 //! scene's (films.rs).
 //!
 //! Sam's Jellyfin is the films check's scratch one (films.rs
-//! [`Jellyfin`]), never-ran where Jellyfin is not installed. Movie Night
-//! is lent, not carried: a carried app's reads are not built (lend.rs,
-//! a carried lend's `reads: Vec::new()`). Ana's browser is
-//! movie_night.mjs, every response it receives written down
+//! [`Jellyfin`]), never-ran where Jellyfin is not installed. Ana's browser
+//! is movie_night.mjs, every response it receives written down
 //! (apps/jellyfin/check/person.mjs `record`).
 //!
-//! The invariant it relies on: **a reading app is let in as the account
-//! its lender keeps for readers, and only to look** (door.rs `reading`):
-//! the readers' secret goes only to another app's GET or HEAD, so no
-//! credential of Sam's reaches Ana's browser or her svrngs, Jellyfin's
-//! users after are those Sam made, and the readers' account is still
-//! signed in after Ana's visit.
+//! The invariant it relies on: **a carried app is let in as the account its
+//! lender keeps for readers, and only to look** (origin.rs `routed`, door.rs
+//! `admit`): no credential of Sam's reaches Ana's browser or her svrngs,
+//! Jellyfin's users after are those Sam made, and the readers' account is
+//! still signed in after Ana's visit.
 
 use std::path::Path;
-use std::process::Stdio;
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use tokio::process::{Child, Command};
+use tokio::process::Command;
 
 use crate::films::{holding, node, Jellyfin};
 use crate::harness::{browsers, repo, Engine};
@@ -69,62 +64,20 @@ fn planted(plant: &str) -> bool {
     std::env::var("SCENES_PLANT").as_deref() == Ok(&format!("movie_night:{plant}"))
 }
 
-/// Movie Night's page, apps/movie-night's files as they are kept, copied
-/// to `dir` and served there on 127.0.0.1 by a plain static file server,
-/// as a person serves a page: its port, and the server, killed on drop.
-/// `lender-token` writes Sam's own token into plant.js, which index.js then
-/// sends on each request (apps/movie-night/plant.js); `logout` adds a
-/// line to index.js that, once a card is drawn, asks each library it reads
-/// to end its session, by a POST, as the readers' page in the spike did
-/// (cc15b40f).
-async fn served(dir: &Path, token: &str) -> (u16, Child) {
-    std::fs::create_dir_all(dir).unwrap();
+/// Movie Night's files in Sam's group folder as the shelf brings them, but
+/// for `plant.js`, which holds Sam's own token, so the page sends it on each
+/// request (index.js `planted`): `movie_night:lender-token`.
+fn bring_with_token(folder: &Path, token: &str) {
+    let to = folder.join("apps/Movie-Night");
+    std::fs::create_dir_all(&to).unwrap();
     let kept = repo().join("apps/movie-night");
     for file in std::fs::read_dir(&kept).unwrap().flatten() {
         if file.path().is_file() {
-            std::fs::copy(file.path(), dir.join(file.file_name())).unwrap();
+            std::fs::copy(file.path(), to.join(file.file_name())).unwrap();
         }
     }
-    if planted("lender-token") {
-        let plant =
-            format!("export const PLANT = 'lender-token';\nexport const TOKEN = '{token}';\n");
-        std::fs::write(dir.join("plant.js"), plant).unwrap();
-    }
-    if planted("logout") {
-        let ends = "\nnew MutationObserver(() => results.childElementCount && told().then((t) => t?.lends.forEach((l) => fetch(`${l.address}Sessions/Logout`, { method: 'POST' })))).observe(results, { childList: true });\n";
-        let app = std::fs::read_to_string(dir.join("index.js")).unwrap();
-        std::fs::write(dir.join("index.js"), app + ends).unwrap();
-    }
-    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    let port = free.local_addr().unwrap().port();
-    drop(free);
-    let server = Command::new("python3")
-        .args([
-            "-m",
-            "http.server",
-            &port.to_string(),
-            "--bind",
-            "127.0.0.1",
-        ])
-        .current_dir(dir)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .kill_on_drop(true)
-        .spawn()
-        .expect("python3 runs");
-    for _ in 0..100 {
-        if tokio::net::TcpStream::connect(("127.0.0.1", port))
-            .await
-            .is_ok()
-        {
-            return (port, server);
-        }
-        tokio::time::sleep(Duration::from_millis(100)).await;
-    }
-    late(format!(
-        "Movie Night's page was not served on {port} within 10 s"
-    ))
-    .await
+    let plant = format!("export const PLANT = 'lender-token';\nexport const TOKEN = '{token}';\n");
+    std::fs::write(to.join("plant.js"), plant).unwrap();
 }
 
 /// Who Jellyfin says `authorization` signs in as: its status and name.
@@ -144,11 +97,11 @@ async fn me(jf: &Jellyfin, authorization: &str) -> (u16, Value) {
 scene!(
     /// Planted, watched failing, each by `SCENES_PLANT`: `movie_night:
     /// no-readers`, Sam never gives the account; `movie_night:
-    /// lender-token`, Movie Night served with Sam's own token in its
-    /// plant.js; `movie_night:logout`, Movie Night asking each library to
-    /// end its session, with a hand edit of door.rs `admit` that answers
-    /// `Readers` to a POST, reverted after (else the door refuses it and
-    /// the readers' account outlives the plant).
+    /// lender-token`, Movie Night brought with Sam's own token in its
+    /// plant.js. A `logout` plant is gone with the lent form: a carried
+    /// app's POST is refused at its own origin before any door
+    /// (origin.rs `routed`; `a_carried_app_reads_the_lends_it_declares_at_its_own_origin`'s
+    /// `before: post` plant).
     movie_night
 );
 async fn movie_night(engine: Engine) {
@@ -202,31 +155,35 @@ async fn movie_night(engine: Engine) {
     }
     let readers = std::fs::read_to_string(&kept).unwrap_or_default();
 
-    // 4. Sam lends Movie Night, which reads his and his friends' Jellyfins.
-    let (mn_port, _page) = served(&scene.scratch("movie-night"), &admin).await;
-    let mn_port = mn_port.to_string();
-    let lends = [
-        "share",
-        &mn_port,
-        "--kind",
-        "movie-night",
-        "--reads",
-        "jellyfin",
-        "--group",
-        "House",
-    ];
-    let shared = scene.command(&sam, &lends, "\n").await;
-    assert!(shared.contains("You lend movie-night"), "{shared}");
+    // 4. Sam brings Movie Night to House from his home page, typing nothing
+    // (crates/svrngs-node/src/shelf.txt; carried.rs `bring`).
+    if planted("lender-token") {
+        let groups = sam.get("/v1/groups").await;
+        let house = (groups["groups"].as_array().into_iter().flatten())
+            .find(|g| g["id"] == group.as_str())
+            .unwrap_or_else(|| panic!("Sam holds House: {groups:#}"));
+        bring_with_token(Path::new(house["folders"][0].as_str().unwrap()), &admin);
+    } else {
+        let brought = sam
+            .on_home_page("/shelf", &json!([group, ["Movie-Night"]]))
+            .await;
+        assert_eq!(
+            brought,
+            json!([{ "app": "Movie-Night", "already": false }]),
+            "Sam's home page brings Movie Night"
+        );
+    }
 
-    // 5. Ana joins House by its link, on a computer of her own, opens
-    // Movie Night from her home page, and searches a film of Sam's.
+    // 5. Ana joins House by its link, on a computer of her own. Opened by
+    // its address, Movie Night is not yet opened from her home page; from
+    // there it is, and she searches a film of Sam's.
     let link = sam.invites(&group).await;
     let ana = scene.joins("Ana", &link, "House").await;
     let jf_at = ana.lent_by(&group, "Sam", "jellyfin").await;
-    ana.lent_by(&group, "Sam", "movie-night").await;
+    let at = ana.opens(&group, "Movie-Night").await;
     let home = open_of(&ana.home_page()).expect("svrngs opens it").1;
     let args = json!({
-        "engine": Engine::Chromium.as_str(), "home": home, "opener": "Open Sam’s movie-night",
+        "engine": Engine::Chromium.as_str(), "home": home, "at": at, "opener": "Open Movie Night",
         "film": FILM, "landed": "Sign In", "dump": dump,
     });
     let seen = ana_sees(&args).await;
@@ -241,6 +198,12 @@ async fn movie_night(engine: Engine) {
         }
         panic!("Ana's steps did not go as the scene says: {seen:#}");
     }
+    // Not yet opened from her home page, §4's line, never "nobody lends one".
+    assert_eq!(
+        seen["before"]["said"],
+        "Sam’s films are new. Open Movie Night from your home page to search them.",
+        "Movie Night says what to do before Ana's yes: {seen:#}"
+    );
     // Without the readers' account, Movie Night says whose it is to open,
     // since Ana cannot (index.js `WORDS.closed`); her search then shows nothing.
     let said = seen["searched"]["said"].as_str().unwrap_or_default();

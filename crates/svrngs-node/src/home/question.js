@@ -369,13 +369,14 @@ export const namesakes = (same, name, verb) => {
 };
 
 // An app the group carries, as "What acts as you" says it: what it reads
-// and writes, the shelf's words, and no Stop, as it runs only when opened.
+// and, unless it reads friends' lends, writes (CARRIED_APP_READS §5.5), the
+// shelf's words, and no Stop, as it runs only when opened.
 /**
- * @param {string} kind
+ * @param {Pick<Lend, 'kind' | 'reads'>} lend
  * @param {Shelved[]} shelf
  */
-export const carrying = (kind, shelf) =>
-  `${spoken(kind)} reads and writes ${does(kind, shelf).replace(/\.$/, '')}, when you open it.`;
+export const carrying = ({ kind, reads = [] }, shelf) =>
+  `${spoken(kind)} ${reads.length ? 'reads' : 'reads and writes'} ${does(kind, shelf).replace(/\.$/, '')}, when you open it.`;
 
 // What the person said, `said`, of `lend` opening their friends' lends as
 // them, since or on its day; `lend` undefined when it is not lent now. A

@@ -515,7 +515,8 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     let address = format!("{origin}svrngs-lend/{}/", label(2, "films"));
     assert_eq!(
         reads("yes")["lends"],
-        json!([{ "kind": "films", "name": "films", "lender": "cy", "address": address }]),
+        json!([{ "kind": "films", "name": "films", "lender": "cy", "address": address,
+            "to": format!("{origin}svrngs-to?lender={}&lend=films", actor_of(&signing(2))) }]),
         "its reads are its declared kind's lends of its group, at its own origin:\n{seen:#}"
     );
     let refused = |step: &str, name: &str| {

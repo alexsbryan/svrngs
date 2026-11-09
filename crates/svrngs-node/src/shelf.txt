@@ -13,3 +13,4 @@
 Money	expenses	expenses.js	who owes whom, and for what.
 Events	events	events.js	the get-togethers people post, and who’s coming.
 House-rules	canon	house.js vendor/canon.js vendor/call.mjs vendor/LICENSE	the rules your house agrees, and how you agree them.
+Movie-Night	movie-night	match.js plant.js style.css reads.txt	the films your friends lend, and who has each.
