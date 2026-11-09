@@ -10,7 +10,7 @@ import { register } from 'node:module';
 import { test } from 'node:test';
 
 register('./pages/layout.mjs', import.meta.url);
-const { Act, Field, Fold, Heading, Keep, Row, Said } =
+const { Act, Field, Fold, Heading, Keep, Row } =
   await import('../../crates/svrngs-node/src/home/ui/parts.js?v=__VERSION__');
 import { v1 } from './pages/before.mjs';
 
@@ -186,7 +186,7 @@ test('Field: the join’s label and box, the home page’s wrapped ones and its 
   assert.deepEqual(said, [{ type: 'typed', field: 'link', value: 'https://x/#y' }]);
 });
 
-test('Heading and Said are the phone’s #status, #response and #why', () => {
+test('Heading is the phone’s #status', () => {
   assert.equal(
     out(Heading({ words: 'Opening…' })),
     '<h1 id="status">Opening…</h1>',
@@ -195,14 +195,5 @@ test('Heading and Said are the phone’s #status, #response and #why', () => {
   assert.equal(
     out(Heading({ words: 'This browser could not open the page.', tone: 'bad' })),
     '<h1 class="bad" id="status">This browser could not open the page.</h1>',
-  );
-  assert.equal(
-    out(Said({ tag: 'pre', id: 'response', words: '' })),
-    '<pre id="response"></pre>',
-    'web/index.html@19b63b2b:98',
-  );
-  assert.equal(
-    out(Said({ id: 'why', class: 'bad', words: 'That name is taken.' })),
-    '<p class="bad" id="why">That name is taken.</p>',
   );
 });

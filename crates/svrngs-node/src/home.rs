@@ -951,16 +951,20 @@ pub(crate) async fn say(
 }
 
 /// `/choices/<lend>` at the lender's door, dialled as this computer's key
-/// ([`crate::origin::dialled`]): posting `body`, else asking; with `pass`
-/// for an app's stop. Its answer, svrngs's mark kept.
+/// ([`crate::origin::serving`]; its own lend is not dialled): posting
+/// `body`, else asking; with `pass` for an app's stop. Its answer, svrngs's
+/// mark kept.
 async fn at_door(
     at: &Asking,
     lend: &Label,
     body: Option<serde_json::Value>,
     pass: Option<HeaderValue>,
 ) -> Response {
-    let contact = match crate::origin::dialled(at, lend).await {
-        Ok(contact) => contact,
+    let contact = match crate::origin::serving(at, lend).await {
+        Ok(crate::origin::Serving::At(contact, _)) => contact,
+        Ok(crate::origin::Serving::Own) => {
+            return LendRefusal::fault("this computer's own lend is not dialled")
+        }
         Err(refused) => return refused,
     };
     let method = body.as_ref().map_or(Method::GET, |_| Method::POST);

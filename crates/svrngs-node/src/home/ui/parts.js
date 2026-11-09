@@ -51,19 +51,6 @@ export function Act({ words, doing = IDLE, on, type, answer = 'beside', send }) 
   `;
 }
 
-// Words from one region, in one element.
-/**
- * @typedef {object} SaidProps
- * @property {string} [tag]
- * @property {string} [id]
- * @property {'good' | 'bad'} [class] its tone
- * @property {Drawn} words
- */
-/** @param {SaidProps} props */
-export function Said({ tag = 'p', id, class: tone, words }) {
-  return html`<${tag} id=${id} class=${tone}>${words}</${tag}>`;
-}
-
 // A <details> whose open is in the store: a toggle, a driver's `open =`
 // too (web/tests/home.mjs), is said once, and the open it was drawn with
 // is not said back.

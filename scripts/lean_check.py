@@ -569,12 +569,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # body names each cut). Lowered to one past where it landed; . to 20,857.
 # (2026-11-09) A derive for origin.rs Lenders' hand-written Default (tokio's
 # watch::Sender has its own); . to 20,883, one past where it lands.
+# (2026-11-09) origin.rs dialled, one caller, inlined into home.rs at_door (5) and
+# parts.js Said, no product caller (3); . to 20,878, js to 8,472.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20883,
+    ".": 20878,
 
-    "js": 8475,
+    "js": 8472,
 
     "swift": 1,
 }

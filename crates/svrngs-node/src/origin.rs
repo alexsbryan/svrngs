@@ -745,17 +745,6 @@ fn uri_of(target: &str) -> Result<Uri, Response> {
         .map_err(|_| LendRefusal::bad_path("your computer cannot read that address"))
 }
 
-/// The computer lending `label`, to be dialled as this computer's key,
-/// or [`refused`].
-pub(crate) async fn dialled(at: &Asking, label: &Label) -> Result<Contact, Response> {
-    match serving(at, label).await? {
-        Serving::At(contact, _) => Ok(contact),
-        Serving::Own => Err(LendRefusal::fault(
-            "this computer's own lend is not dialled",
-        )),
-    }
-}
-
 /// A lender standing in no group held here refused, so no page makes this
 /// computer dial a stranger; said as this computer's person reads it where
 /// a group held here cut this computer and the lender stands in it (#182):
