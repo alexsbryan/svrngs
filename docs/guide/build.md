@@ -228,10 +228,10 @@ Lend with `--ask` and your words, and no other app can use your lend for a
 person until that person says yes:
 
 ```
-svrngs share 4500 --kind taste --ask "your film ratings" --group <group>
+svrngs share 4500 --kind notes --ask "your notes" --group <group>
 ```
 
-An app lent with `--reads taste` finds yours at `/svrngs-reads` on its own
+An app lent with `--reads notes` finds yours at `/svrngs-reads` on its own
 address, with an `ask` address. It sends the person there, adding
 `&back=<its path>`. Their home page, or their phone's group page, asks them,
 and sends them back. Each yes is listed under **What acts as you**, with a

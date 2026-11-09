@@ -3,14 +3,19 @@
 Rate films you've seen, and taste guesses what else in your friends'
 libraries you'll like. Your ratings stay on your computer.
 
+An example to copy and bend, not part of svrngs: nothing installs it, and
+svrngs knows nothing of films or ratings. It uses what any app can (a lend,
+`--reads`, `--refuse`, the door's word for who asks), and keeps its own rules
+for what leaves your computer.
+
 ## Start it
 
 Taste needs Node 20 or later. If you don't have it, get the installer from
 [nodejs.org](https://nodejs.org) (the button marked LTS), open it, and click
 through.
 
-Put the `taste` folder (this one, `apps/taste` in svrngs's source) in your
-Downloads folder. Then open Terminal and paste:
+Get svrngs's source (on its repository page, **Code**, then **Download
+ZIP**), open it, and put its `apps/taste` folder in your Downloads folder. Then open Terminal and paste:
 
     node ~/Downloads/taste/taste.mjs
 
