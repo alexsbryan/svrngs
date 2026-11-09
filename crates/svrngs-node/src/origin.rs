@@ -575,6 +575,11 @@ async fn appended(
             .as_ref()
             .is_some_and(|l| l.clone().listed(|g| Some(g) == group));
         reached.then_some(()).ok_or(Unwritten::NotLent)?;
+        // A part the group's folders claim is theirs, whoever lends a
+        // server by that name; of the record, so every computer reads it alike.
+        let folder = read.runs().brought.contains_key(kind);
+        tracing::debug!(target: "origin", %label, kind, group, folder, "origin: whether a lent app's part is a folder in that group");
+        (!folder).then_some(()).ok_or(Unwritten::OtherPart)?;
         let body = serde_json::to_vec(act).unwrap_or_default();
         let shaped = svrngs_core::grant::app_act(kind, &body).ok_or(Unwritten::Unread)?;
         let ops = serde_json::to_value(read.wire()).unwrap_or_default();

@@ -1074,3 +1074,100 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     sam.endpoint().close().await;
     alex.endpoint().close().await;
 }
+
+/// **A lent app writes no part that is a folder in its group** (svrn-docs
+/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §3, §6 8). `Money` is a
+/// folder in the house (`apps/Money/`, the shelf's); Sam lends a server of
+/// his as `--kind Money` and his events server as `events`, beside the
+/// shelf's `apps/Events/`. A write in `Money/` and a void of Alex's own
+/// `Money/paid`, both named by Sam's `Money` server in its answer, are
+/// refused: nothing written, the answer withheld. The events server, a
+/// part apart from the folder `Events` by its case, writes as before.
+#[tokio::test]
+async fn a_lent_app_named_for_a_folder_writes_nothing_in_its_part() {
+    use svrngs_core::tests_support::Fixture;
+    use svrngs_core::{Change, ContentHash, SyncPath};
+
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    for folder in ["Money", "Events"] {
+        let path = SyncPath::parse(&format!("apps/{folder}/index.html")).unwrap();
+        let hash = ContentHash::from_bytes(*blake3::hash(folder.as_bytes()).as_bytes());
+        let placed = RailAct::Synced {
+            folder: "Shared".into(),
+            changes: vec![Change {
+                path,
+                now: Some((hash, 4)),
+                base: None,
+            }],
+        };
+        alex.rail()
+            .commit(NS, &Fixture { act: placed })
+            .unwrap()
+            .unwrap();
+    }
+    let record = RailAct::from_json(
+        serde_json::json!({ "op": "record", "payload": { "kind": "Money/paid" } }),
+    )
+    .unwrap();
+    let paid = alex.rail().commit(NS, &Fixture { act: record });
+    let paid = paid.unwrap().unwrap().lines()[0].id.clone();
+    let server = appending_origin().await.port();
+    declare(sam_dir.path(), "ledger", server, "Money", &[]);
+    declare(sam_dir.path(), "events", server, "events", &[]);
+    let api = alex.api_addr();
+    let on = &Browser::of(&alex);
+    let sam_s = |name: &str| {
+        let label = Label::of(&signing(2).verifying_key().to_bytes(), name);
+        format!("{label}.localhost:{}", api.port())
+    };
+    let post = |kind: &str, acts: serde_json::Value| {
+        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nx-svrngs-append: {kind}\r\nx-test-append: {acts}\r\n")
+    };
+    let wrote = serde_json::json!([{ "group": NS, "op": { "kind": "paid", "by": "sam" } }]);
+    let voided = serde_json::json!([{ "group": NS, "corrects": paid, "op": null }]);
+    for (row, acts) in [
+        ("a write in Money's part", wrote),
+        ("a void of its entry", voided),
+    ] {
+        let (head, sock) = asked(on, &sam_s("ledger"), &post("Money", acts)).await;
+        let page = format!("{head}{}", body(sock).await);
+        eprintln!("{row}: {page}");
+        assert!(page.starts_with("HTTP/1.1 403"), "{row}: {page}");
+        assert!(
+            page.contains("sam’s ledger writes only its own part of the group’s record"),
+            "{row}: {page}"
+        );
+    }
+    let of_money = |k: &str| k == "Money/paid";
+    let money = written(&alex);
+    assert_eq!(
+        money
+            .iter()
+            .filter(|(k, _, _)| k.starts_with("Money/"))
+            .count(),
+        1,
+        "only Alex's own Money/paid stands: {money:?}"
+    );
+    assert!(money.iter().any(|(k, _, _)| of_money(k)));
+    assert_eq!(
+        money.iter().filter(|(k, _, _)| k == "a correction").count(),
+        0,
+        "nothing voided: {money:?}"
+    );
+
+    let coming = serde_json::json!([{ "group": NS, "op": { "kind": "coming", "event": "e1" } }]);
+    let (head, sock) = asked(on, &sam_s("events"), &post("events", coming)).await;
+    body(sock).await;
+    assert!(
+        head.starts_with("HTTP/1.1 303"),
+        "a lend whose part is no folder writes as before, the shelf's Events no matter: {head}"
+    );
+    assert!(
+        written(&alex).iter().any(|(k, _, _)| k == "events/coming"),
+        "{:?}",
+        written(&alex)
+    );
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}

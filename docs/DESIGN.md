@@ -307,7 +307,12 @@ was opened from, under a second pass the group page signs at the open,
 whose app is that kind's part of the group (`Label::carried`), so the
 fold's `Grant` lets the holder write that part alone. A correction of an
 act outside that kind, or a group the two do not share, withholds the
-answer and says why; nothing of it is written. A browser request must have
+answer and says why; nothing of it is written. A lend's kind that names a
+folder in that group (`Runs::brought`) writes nothing there, as it would
+void that app's entries: the part is the folder's, and a computer refuses
+it (`appended`, `Unwritten::OtherPart`). A phone holds no such check yet:
+its write pass is the group page's (`web/page/hand.js` `writesOf`), the
+known gap until the phone's own step. A browser request must have
 an own-origin client authorized to write; a navigation alone authorizes no
 entry. A program must explicitly accept the lend's kind in the request's
 `x-svrngs-append: <kind>`; its token alone grants no response-driven signing.
@@ -1429,9 +1434,11 @@ assume no screen, a TV one device among others.
      need a centre (north star 3).
    - *The front channel* is the lend's own origin,
      `http://localhost:<lend port>/.svrngs/oidc/authorize`. The door
-     answers it itself, after the asker is known and before the lend's
-     refusals and its limit, and never carries it to the app. So a
-     stranger or a removed member is refused before any code. It checks
+     answers it itself, after the asker is known and after the lend's
+     refusals and a person's yes (`--refuse`, `--asks`), and before its
+     limit, and never carries it to the app. So a stranger, a removed
+     member, or an app without its person's yes is refused before any code.
+     It checks
      `response_type=code`, the lend's client, the app's own redirect — on
      its own address, `http://localhost:<lend port>` (or `127.0.0.1` or
      `[::1]`, the hosts by which the door also turns a service's redirect

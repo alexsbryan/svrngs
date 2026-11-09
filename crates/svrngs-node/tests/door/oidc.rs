@@ -34,14 +34,21 @@ const CHALLENGE: &str = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
 /// A's declaration of `name` on `port`, signing people in with svrngs as
 /// `client` with `secret` (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
 fn signs_in(pair: &Pair, name: &str, port: u16, client: &str, secret: &str) {
+    signs_in_with(pair, name, port, client, secret, json!({}));
+}
+
+/// [`signs_in`], the declaration's `extra` fields beside what it says.
+fn signs_in_with(pair: &Pair, name: &str, port: u16, client: &str, secret: &str, extra: Value) {
     let dir = lend::lends_dir(pair.dir.path());
     std::fs::create_dir_all(&dir).unwrap();
-    let body = json!({
+    let mut body = json!({
         "port": port,
         "kind": "k",
         "groups": [NS],
         "sign_in_with_svrngs": { "client_id": client, "client_secret": secret },
     });
+    let fields = body.as_object_mut().unwrap();
+    fields.extend(extra.as_object().unwrap().clone());
     std::fs::write(dir.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
@@ -322,6 +329,92 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         heads.lock().unwrap()
     );
 
+    pair.close().await;
+}
+
+/// **The authorize path holds to what a lend refuses and asks** (svrn-docs
+/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §5 step 2): a lend that
+/// `--refuse`s the path, or `--asks` for a person's yes, answers a member
+/// no code it would not let in. A lend refusing `/.svrngs` is refused; a
+/// lend that asks refuses a member naming no app or another app without
+/// their yes, and gives a code to the lend's own page.
+#[tokio::test]
+async fn a_lend_that_refuses_or_asks_answers_the_authorize_path_no_code_of_its_own() {
+    let pair = Pair::new().await;
+    let (origin, heads) = origins::head_origin().await;
+    let port = origin.port();
+    let (refusing, asking) = ("refusing", "asking");
+    signs_in_with(
+        &pair,
+        refusing,
+        port,
+        CLIENT,
+        SECRET,
+        json!({ "refused": ["/.svrngs"] }),
+    );
+    signs_in_with(
+        &pair,
+        asking,
+        port,
+        CLIENT,
+        SECRET,
+        json!({ "asks": "the app reads your films" }),
+    );
+    let bo = bridge_as(&signing(2), &pair.a, Alpn::Member).await;
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (label, night) = (Label::of(&a, asking), Label::of(&a, "night"));
+    let passed = |app: &Label| {
+        let pass = Pass::sign(
+            &signing(2),
+            &svrngs_node::actor_of(&signing(2)),
+            (app.clone(), vec![label.clone()]),
+            unix_now() + 3600,
+        );
+        format!("x-svrngs-pass: {}\r\n", pass.encode())
+    };
+    let authorize = |lend: &str| {
+        format!(
+            "/lend/{lend}/.svrngs/oidc/authorize?{}",
+            ask(port, CLIENT, "")
+        )
+    };
+    for (row, lend, headers, refused) in [
+        (
+            "a path the lend refuses",
+            refusing,
+            String::new(),
+            Some("path"),
+        ),
+        (
+            "a member naming no app",
+            asking,
+            String::new(),
+            Some("unasked"),
+        ),
+        (
+            "another app, unsaid",
+            asking,
+            passed(&night),
+            Some("unasked"),
+        ),
+        ("the lend's own page", asking, passed(&label), None),
+    ] {
+        let reply = get(bo.local_addr(), &authorize(lend), &headers).await;
+        eprintln!("{row}: {}", reply.text);
+        match refused {
+            Some(kind) => {
+                assert_eq!(reply.status, 403, "{row}: {}", reply.text);
+                assert!(location(&reply).is_none(), "{row}: {}", reply.text);
+                assert_eq!(
+                    header_values(&reply.text, "x-svrngs-refused"),
+                    vec![kind],
+                    "{row}"
+                );
+            }
+            None => assert!(location(&reply).is_some(), "{row}: {}", reply.text),
+        }
+    }
+    assert!(heads.lock().unwrap().is_empty(), "no authorize is carried");
     pair.close().await;
 }
 

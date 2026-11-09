@@ -1543,6 +1543,21 @@ pub(crate) async fn lend_for(
             return Err(LendRefusal::Unlent.say(StatusCode::NOT_FOUND, words));
         }
     };
+    // Before sign-in: an app asks and a path refused hold there too.
+    if let Who::Member(dialer) = &who {
+        app = own_app(door, dialer, req.headers(), &lend)?;
+    }
+    if let Some(refused) = choices::check(door, &lend, &whose, app.as_ref()) {
+        return Err(refused);
+    }
+    if let Some(refused) = lend.refusing(&service_path) {
+        tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),
+            "door: refused — the lend refuses this path");
+        return Err(LendRefusal::Path.say(
+            StatusCode::FORBIDDEN,
+            format!("{} is lent without {}", lend.name, refused.as_str()),
+        ));
+    }
     if service_path == crate::oidc::AUTHORIZE_PATH {
         let Some(client) = lend.sign_in_with_svrngs.as_ref() else {
             tracing::debug!(target: "door", actor, lend = %lend.name, "door: refused — the authorize path on a lend that does not sign people in with svrngs");
@@ -1578,20 +1593,6 @@ pub(crate) async fn lend_for(
             browser.as_deref(),
             (who, group, device.to_string()),
             req.uri().query(),
-        ));
-    }
-    if let Who::Member(dialer) = &who {
-        app = own_app(door, dialer, req.headers(), &lend)?;
-    }
-    if let Some(refused) = choices::check(door, &lend, &whose, app.as_ref()) {
-        return Err(refused);
-    }
-    if let Some(refused) = lend.refusing(&service_path) {
-        tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),
-            "door: refused — the lend refuses this path");
-        return Err(LendRefusal::Path.say(
-            StatusCode::FORBIDDEN,
-            format!("{} is lent without {}", lend.name, refused.as_str()),
         ));
     }
     let read =
