@@ -695,7 +695,7 @@ with what the people of its groups lend (`Node::lends`): "Sam's <name>"
 and an address on this computer. `share.rs` is `svrn publish`'s
 `resolve_target` and `svrn mesh media offer`'s `probe_origin` at
 `e1a43bcd2`, then changed (u3-5): `share <port>` takes a port alone,
-probes it, names its kind from `well_known.txt` (data, so the infra holds
+probes it, names its kind from `src/programs/` (data, so the infra holds
 no app's noun; each row may say how the kind signs a person in, `Signs`:
 with accounts its lender makes, or from the door's `x-svrngs-user`, and
 then no password is asked; or the paths every lend of it keeps back,

@@ -1,5 +1,5 @@
 // The lender makes each person an account, as `svrngs share 8096` tells
-// them to (crates/svrngs/src/well_known.txt, its jellyfin row; u5-4): in
+// them to (crates/svrngs-node/src/programs/jellyfin.txt, its accounts row; u5-4): in
 // their own Jellyfin's pages, on their own computer, signed in as
 // themselves. Each step is found by what the printed line names, so a
 // line that drifts from Jellyfin's pages, or pages that drift from the

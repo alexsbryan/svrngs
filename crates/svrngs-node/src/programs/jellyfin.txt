@@ -1,0 +1,15 @@
+# Jellyfin's HTTP port (commonwealth-ai
+# sovereign/crates/sovereign-cli-mesh/src/mesh_media/offer.rs:94-97 at
+# e1a43bcd2). Upstream also tried its HTTPS port, 8920; the door speaks plain
+# HTTP to a lend's port, so that one is not shared by its number alone.
+#
+# Jellyfin 12.0.0's own pages, as apps/jellyfin/check/lender.mjs follows them:
+# the user menu, Dashboard, Users, the + titled "Add User"; its name and
+# password, and its libraries, none ticked until the lender ticks them.
+8096 jellyfin accounts: your picture at the top right, then Dashboard, Users and +; give it a name and a password, tick the libraries they may watch, and Save
+# Its sign-in for the account apps reading it are let in as (`share
+# --readers`): Jellyfin 12.0.0 answered 400 to one asked with no
+# Authorization, or one naming its Client alone, and 200 with all four
+# (MOVIE_NIGHT_FOR_TEN, 2026-11-07). Its API key is an admin's with no
+# user (AuthorizationContext.cs L186-216), so a reader is never let in by one.
+8096 jellyfin readers: /Users/AuthenticateByName Username Pw AccessToken MediaBrowser Token="{}" | MediaBrowser Client="svrngs", Device="svrngs", DeviceId="svrngs-readers", Version="1"

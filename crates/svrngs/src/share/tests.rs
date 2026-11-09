@@ -61,8 +61,9 @@ fn share(p: u16) -> Share {
 /// paths each a path (`kept_of` panics on one that is not).
 #[test]
 fn the_well_known_table_reads_whole() {
-    let rows: Vec<&str> = WELL_KNOWN
-        .lines()
+    let rows: Vec<&str> = PROGRAMS
+        .iter()
+        .flat_map(|(_, file)| file.lines())
         .map(|l| l.split('#').next().unwrap().trim())
         .filter(|l| !l.is_empty())
         .collect();
@@ -117,8 +118,9 @@ fn the_well_known_table_reads_whole() {
 /// after the row and the app went.
 #[test]
 fn the_table_names_no_sign_in_helper() {
-    let helpers: Vec<&str> = WELL_KNOWN
-        .lines()
+    let helpers: Vec<&str> = PROGRAMS
+        .iter()
+        .flat_map(|(_, file)| file.lines())
         .map(|l| l.split('#').next().unwrap_or("").trim())
         .filter(|l| l.starts_with("helper "))
         .collect();
@@ -128,6 +130,20 @@ fn the_table_names_no_sign_in_helper() {
         None,
         "the retired helper's port names no kind"
     );
+}
+
+/// Row order is the file names', never the filesystem's listing (build.rs):
+/// a lender reads it in `NoKind`'s list, and `unrecognized` takes the first
+/// slip it finds. Planted: build.rs's sorted paths walked in reverse.
+#[test]
+fn the_programs_are_read_in_file_name_order() {
+    let names: Vec<&str> = PROGRAMS.iter().map(|(word, _)| *word).collect();
+    let mut sorted = names.clone();
+    sorted.sort();
+    assert_eq!(names, sorted);
+    let mut words: Vec<String> = super::rows().map(|(_, k, _)| k.to_string()).collect();
+    words.dedup();
+    assert_eq!(words, names, "the rows come in the files' order");
 }
 
 /// The kind is the one given, else the port's; the name, else the kind;
@@ -239,7 +255,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
     assert_eq!(well_known_kind(port(8080)), None);
     let said = ShareRefusal::NoKind(port(8080)).to_string();
     assert!(
-        said.ends_with("jellyfin, navidrome, calibre-web, llama-server"),
+        said.ends_with("calibre-web, jellyfin, llama-server, navidrome"),
         "{said}"
     );
     let mut typed = share(8080);

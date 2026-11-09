@@ -12,7 +12,7 @@
 //! dials ([`crate::lend`]); upstream's loopback `host:port` goes. The
 //! probe asks one port, the one given, and the well-known ports name the
 //! kind of what listens there, from a table kept as data
-//! ([`WELL_KNOWN`]), so a lend of a service svrngs recognises needs no
+//! ([`PROGRAMS`]), so a lend of a service svrngs recognises needs no
 //! more than its port. [`lend_of`] decides the lend from what was typed and
 //! what the probe saw, and touches nothing.
 //!
@@ -38,14 +38,32 @@ use std::time::Duration;
 
 use crate::lend::{Audience, Lend, LendName, Program, Raw, RefusedPath, Source, Upload};
 
-/// The well-known ports and the kind of service that listens on each, one
-/// `<port> <kind>` a line, then how its lender makes a person an account
-/// in it if it keeps its own, `#` for a comment: data, not code, since a
-/// kind is an app's word the infra does not hold (DESIGN §5, the nouns
-/// gate).
-pub const WELL_KNOWN: &str = include_str!("well_known.txt");
+/// The programs svrngs ships terms for, one file each under `src/programs/`,
+/// `<word>.txt`, so adding a program is adding a file; each holds that word's
+/// rows and no other's, refused at build (build.rs), and they are read in
+/// file-name order, so which row comes first is not the filesystem's to say.
+///
+/// A row is `<port> <word>`, `-` for its port when it is known by its
+/// lender's word alone, then how it signs each person in, if svrngs knows
+/// (`Signs`), and `share` lends it with no password and prints the rest of
+/// the line, in DESIGN §1's words; `#` starts a comment, and each row's
+/// evidence is the comment above it. The rest of a row is a clause:
+///
+/// - `accounts: <how>`: it keeps its own accounts; how its lender makes one.
+/// - `header: <what>`: it takes the person from the header svrngs's door
+///   sets, `x-svrngs-user` (door.rs, `USER_HEADER`, an account's name unique
+///   by the person's key); what its lender sets in it for that.
+/// - `readers: <how>`: how `share --readers` signs in once as the account
+///   apps reading it are let in as (`ReadersSignIn`).
+/// - `keeps: <path>...`: the paths of it svrngs keeps from everyone it is
+///   lent to, its lender typing none (`share` adds them to its `--refuse`
+///   paths and says so): why, in the comment above it.
+///
+/// Data, not code, since a program's word is one the infra does not hold
+/// (DESIGN §5, the nouns gate).
+pub const PROGRAMS: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/programs.rs"));
 
-/// How a kind [`WELL_KNOWN`] names signs each person in, and what its
+/// How a kind [`PROGRAMS`] names signs each person in, and what its
 /// lender does for it, in their words: either way it is lent with no
 /// password, since one sent on each request makes everyone one person to it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
@@ -58,7 +76,7 @@ pub enum Signs {
     Header(&'static str),
 }
 
-/// What [`WELL_KNOWN`]'s first column says a row is (REVIEW_FINDINGS #169):
+/// What [`PROGRAMS`]'s first column says a row is (REVIEW_FINDINGS #169):
 /// a kind at its well-known port, or a kind known by its lender's word
 /// alone (`-`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,13 +85,14 @@ pub enum At {
     Named,
 }
 
-/// [`WELL_KNOWN`]'s rows: the first column ([`At`]) and the kind, each
+/// [`PROGRAMS`]'s rows: the first column ([`At`]) and the kind, each
 /// parsed once for every reader (REVIEW_FINDINGS #64, #169), and the rest
 /// of the line, empty when there is none. A row whose port or kind does
 /// not parse is none.
 pub fn rows() -> impl Iterator<Item = (At, Program, &'static str)> {
-    WELL_KNOWN
-        .lines()
+    PROGRAMS
+        .iter()
+        .flat_map(|(_, file)| file.lines())
         .map(|l| l.split('#').next().unwrap_or("").trim())
         .filter(|l| !l.is_empty())
         .filter_map(|l| {
@@ -123,23 +142,16 @@ pub struct Share {
 pub enum ShareRefusal {
     #[error("nothing answers on port {0} on this computer: start it, then share it")]
     NothingListens(NonZeroU16),
-    #[error("say which program is on port {0}: `svrngs share {0} --program <name>`, its own name if it is one svrngs knows: {kinds}", kinds = known_kinds())]
+    #[error("say which program is on port {0}: `svrngs share {0} --program <name>`, its own name if it is one svrngs knows: {kinds}", kinds = PROGRAMS.iter().map(|(word, _)| *word).collect::<Vec<_>>().join(", "))]
     NoKind(NonZeroU16),
 }
 
-/// The kind [`WELL_KNOWN`] names for `port`, if any.
+/// The kind [`PROGRAMS`] names for `port`, if any.
 pub fn well_known_kind(port: NonZeroU16) -> Option<Program> {
     rows().find_map(|(at, kind, _)| (at == At::Port(port)).then_some(kind))
 }
 
-/// The kinds [`WELL_KNOWN`] names, for a lender asked to say which.
-fn known_kinds() -> String {
-    let mut kinds: Vec<String> = rows().map(|(_, kind, _)| kind.to_string()).collect();
-    kinds.dedup(); // a kind's clauses are rows of their own, one after another
-    kinds.join(", ")
-}
-
-/// What its lender is told of a program name [`WELL_KNOWN`] has no row
+/// What its lender is told of a program name [`PROGRAMS`] has no row
 /// for, `None` for one it has: a typo costs every protection the table
 /// keeps for that program, so a person's mistake is said at share time,
 /// never refused (any app on a port stays lendable). A name differing from
@@ -168,7 +180,7 @@ fn slipped(known: &str, said: &str) -> bool {
     a.len().max(b.len()) - head - tail.take_while(|(x, y)| x == y).count() <= 2
 }
 
-/// What [`WELL_KNOWN`]'s row for `kind` says in its clause `word`, past
+/// What [`PROGRAMS`]'s row for `kind` says in its clause `word`, past
 /// the `:` — the one reader of a clause, for [`accounts_of`], [`kept_of`]
 /// and [`readers_of`]. A kind may have a row for each clause.
 fn says(kind: &Program, word: &str) -> Option<&'static str> {
@@ -178,7 +190,7 @@ fn says(kind: &Program, word: &str) -> Option<&'static str> {
     })
 }
 
-/// The paths [`WELL_KNOWN`] keeps back of every lend of `kind`, its lender
+/// The paths [`PROGRAMS`] keeps back of every lend of `kind`, its lender
 /// typing none; none when its row says no `keeps:`. Why each is kept back
 /// is the table's, beside its row.
 pub fn kept_of(kind: &Program) -> Vec<RefusedPath> {
@@ -189,7 +201,7 @@ pub fn kept_of(kind: &Program) -> Vec<RefusedPath> {
     kept
 }
 
-/// How a service of `kind` signs each person in, if [`WELL_KNOWN`] says:
+/// How a service of `kind` signs each person in, if [`PROGRAMS`] says:
 /// with accounts of its own, each signing in once with one its lender made,
 /// or from the door's header. Either is lent with no password: one sent on
 /// each request makes everyone one person to it, so one person's sign-in
@@ -204,7 +216,7 @@ pub fn accounts_of(kind: &Program) -> Option<Signs> {
     signs
 }
 
-/// How [`WELL_KNOWN`] says a service trades the account its lender keeps
+/// How [`PROGRAMS`] says a service trades the account its lender keeps
 /// for readers, a name and a password, for what an app reading it is let in
 /// with (`svrngs share --readers`, `lend::readers_dir`). Its row:
 /// `readers: <path> <name field> <password field> <token field> <sent>`,

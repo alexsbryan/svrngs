@@ -586,10 +586,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # does not read them, -2 of js): . +63 to 20,871, js +5 to 8,499.
 # The refill stops at empty, so a bulk import through the token cannot hold an
 # app back (+4), inside the operator's ceiling (cap 20,900, 2026-11-09); . to 20,873.
+# Programs as files: build.rs embeds one file per program and refuses a row of
+# another program (+10), inside the operator's ceiling (cap 20,900, 2026-11-09),
+# after searching the touched files; . to 20,883.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20873,
+    ".": 20883,
 
     "js": 8499,
 

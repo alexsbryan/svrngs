@@ -1,0 +1,4 @@
+# Calibre-Web's port (its default). Its reverse-proxy sign-in, by the names
+# its settings page gives them; read, not run here: whether it signs in a
+# name it holds no account for is not judged (DESIGN §1).
+8083 calibre-web header: Admin, Edit Basic Configuration, Feature Configuration; tick Allow Reverse Proxy Authentication, set Reverse Proxy Header Name to X-Svrngs-User, and Save

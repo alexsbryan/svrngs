@@ -33,7 +33,7 @@ That's the port number from the program's address, and `--group` says who can op
 svrngs share 2283 --program immich --group <group>
 ```
 
-Without `--program` on a port it doesn't know, svrngs says *"say which program is on port 2283: `svrngs share 2283 --program <name>`, its own name if it is one svrngs knows: jellyfin, navidrome, calibre-web, llama-server"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
+Without `--program` on a port it doesn't know, svrngs says *"say which program is on port 2283: `svrngs share 2283 --program <name>`, its own name if it is one svrngs knows: calibre-web, jellyfin, llama-server, navidrome"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 

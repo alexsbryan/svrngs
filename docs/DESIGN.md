@@ -63,7 +63,7 @@ opened, no tunnel, nothing for them to install. An app that takes the
 signed-in person from a request header lets each person straight in once
 its lender names `X-Svrngs-User` in its settings; `svrngs share` knows
 Navidrome (4533) and Calibre-Web (8083) by their ports and prints what to
-set (`crates/svrngs-node/src/well_known.txt`). An app that keeps its own
+set (`crates/svrngs-node/src/programs/`). An app that keeps its own
 accounts asks each person once. Each serves its pages from its own root, so
 on a phone it needs a page host that gives every app an address of its own,
 as ours does. Which apps are named here, and why others are not yet, is the
@@ -1178,7 +1178,7 @@ Seven calls:
    in `apps/<app>/`, whose nouns `scripts/vocab_check.py` keeps out of the
    infra (§5), and what the door gains for it is general: any app. An app's
    words and paths are the well-known table's alone
-   (`crates/svrngs-node/src/well_known.txt`).
+   (`crates/svrngs-node/src/programs/`).
 4. *Sign in once, or none.* Lent as it comes, a lend carries no secret and
    each person signs in once with an account the lender made: `svrngs share`
    asks no password for a kind its table says keeps its own accounts, and

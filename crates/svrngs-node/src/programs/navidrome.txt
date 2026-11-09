@@ -1,0 +1,5 @@
+# Navidrome's port (its default, `ND_PORT`). ExtAuth's two settings, as
+# Navidrome 0.64.2 took them in Demo C's dry run (demo/runs/c/dry-2026-10-12/,
+# run.py) and as its binary names them (`ExtAuth.UserHeader`,
+# `ExtAuth.TrustedSources`): the door asks it from 127.0.0.1.
+4533 navidrome header: ND_EXTAUTH_USERHEADER=X-Svrngs-User and ND_EXTAUTH_TRUSTEDSOURCES=127.0.0.1/32 in its environment, then start it again
