@@ -614,10 +614,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # landed: e05c81c2 to 56d62e46 cut 39 lines of code, b047c0fc moved
 # `svrngs --help`'s 125 lines of words out of cli.rs into a file, as the
 # guide is: . to 20,961.
+# (2026-11-09) Row 12, a group's own programs/<word>.txt read through its
+# record (+125), inside the operator's ceiling for rows 10 and 12: . to
+# 21,086.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20961,
+    ".": 21086,
 
     "js": 8491,
 

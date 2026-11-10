@@ -1640,3 +1640,113 @@ async fn a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold() {
     );
     group.close().await;
 }
+
+// ── A group's own programs/<word>.txt, read through its record (row 12) ──
+
+/// What `node` answers `svrngs share`'s ask for `films`'s
+/// `programs/<word>.txt` (`/v1/programs`): its status and its text.
+async fn programs(node: &Node, word: &str) -> (u16, String) {
+    let answer = http()
+        .post(format!(
+            "http://{}{}",
+            node.api_addr(),
+            svrngs_node::folder::PROGRAMS_ROUTE
+        ))
+        .bearer_auth(node.token())
+        .json(&serde_json::json!([seed("films", 9).id(), word]))
+        .send()
+        .await
+        .unwrap();
+    (answer.status().as_u16(), answer.text().await.unwrap())
+}
+
+/// Up to 30 s of rounds until `node`'s answer for `word` is `status` with
+/// `text` in it: whether it came.
+async fn answers(group: &Group, node: &Node, word: &str, status: u16, text: &str) -> bool {
+    for _ in 0..60 {
+        let (got, said) = programs(node, word).await;
+        if got == status && said.contains(text) {
+            return true;
+        }
+        group.settle().await;
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    false
+}
+
+/// **A group's own terms are read through its record, and refused, never
+/// read as none, when they can't be trusted** (CONTRACTS §2, "Reading a
+/// contract"). With no file, Ana's computer answers no terms. Ben writes
+/// `programs/notes.txt`; Ana's computer answers its text, fetched by the
+/// hash her record places, though nothing of hers was synced to a
+/// directory. A file outside the closed set is refused, its line named.
+/// Ana and Ben each write `programs/kokoro.txt` at once: two copies in
+/// conflict, refused. Cy writes `programs/pad.txt` and is removed: a file
+/// whose writer no longer stands is refused. Planted, each watched failing:
+/// `terms` taking the first copy at the path however many there are (the
+/// conflict read as `/b`'s terms); and its writer's standing unasked (Cy's
+/// file read as terms after Cy was removed).
+#[tokio::test]
+async fn a_group_s_programs_file_is_read_through_its_record_or_refused() {
+    let group = Group::new().await;
+    let roots = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let ben = both_ways(&group.ben, roots[1].path()).await;
+    let cy = both_ways(&group.cy, roots[2].path()).await;
+    assert_eq!(
+        programs(&group.ana, "notes").await,
+        (200, String::new()),
+        "no file, no terms"
+    );
+
+    std::fs::create_dir_all(ben.join("programs")).unwrap();
+    let notes = "- notes keeps: /admin\n";
+    std::fs::write(ben.join("programs/notes.txt"), notes).unwrap();
+    assert!(
+        answers(&group, &group.ana, "notes", 200, notes).await,
+        "Ben's file, read on Ana's computer"
+    );
+    std::fs::write(ben.join("programs/notes.txt"), "- notes opens: /admin\n").unwrap();
+    assert!(
+        answers(
+            &group,
+            &group.ana,
+            "notes",
+            409,
+            "`notes opens: /admin` is no term"
+        )
+        .await,
+        "{:?}",
+        programs(&group.ana, "notes").await
+    );
+
+    let ana = both_ways(&group.ana, roots[0].path()).await;
+    std::fs::create_dir_all(ana.join("programs")).unwrap();
+    std::fs::write(ana.join("programs/kokoro.txt"), "- kokoro keeps: /a\n").unwrap();
+    std::fs::write(ben.join("programs/kokoro.txt"), "- kokoro keeps: /b\n").unwrap();
+    assert!(
+        answers(&group, &group.ana, "kokoro", 409, "two copies in conflict").await,
+        "{:?}",
+        programs(&group.ana, "kokoro").await
+    );
+
+    std::fs::create_dir_all(cy.join("programs")).unwrap();
+    std::fs::write(cy.join("programs/pad.txt"), "- pad keeps: /c\n").unwrap();
+    assert!(
+        answers(&group, &group.ana, "pad", 200, "/c").await,
+        "Cy's file, while Cy stands"
+    );
+    let removed = http()
+        .post(format!("http://{}/v1/removals", group.ana.api_addr()))
+        .bearer_auth(group.ana.token())
+        .json(&serde_json::json!({ "group": seed("films", 9).id(), "person": "cy" }))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(removed.status().as_u16(), 200, "{:?}", removed.text().await);
+    assert!(
+        answers(&group, &group.ana, "pad", 409, "no longer in the group").await,
+        "{:?}",
+        programs(&group.ana, "pad").await
+    );
+    group.close().await;
+}

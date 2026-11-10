@@ -486,7 +486,13 @@ async fn app_reads_with_a_key(engine: Engine, port: u16, key: &str, path: &str) 
     std::fs::write(lends.join("photos.json"), body.to_string()).unwrap();
     let name = svrngs_node::lend::LendName::parse("photos").unwrap();
     let program = svrngs_node::lend::Program::parse("immich").unwrap();
-    assert!(svrngs_node::share::keep_key(dirs[1].path(), &name, &program, key).unwrap());
+    assert!(svrngs_node::share::keep_key(
+        dirs[1].path(),
+        &name,
+        svrngs_node::share::key_of(&program, ""),
+        key
+    )
+    .unwrap());
     let folder = dirs[0].path().join("house");
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;

@@ -132,7 +132,7 @@ fn share_udp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
     asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();
     assert_eq!(asked.raw, Some(Raw::Udp));
     // A UDP port answers no connection, so it is lent unprobed.
-    let lend = share::lend_of(&asked, |_| false, share::well_known_kind(asked.port))
+    let lend = share::lend_of(&asked, |_| false, share::well_known_kind(asked.port), "")
         .expect("a UDP port and its kind");
     assert_eq!(lend.source, Source::Raw(Raw::Udp, asked.port));
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
@@ -181,6 +181,7 @@ async fn share_udp_lends_a_port_and_a_member_s_datagrams_come_back() {
         accounts: None,
         client: None,
         issuer: None,
+        terms: Some(""),
     };
     let said = said.to_string();
     assert!(

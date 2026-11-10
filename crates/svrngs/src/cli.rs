@@ -103,7 +103,7 @@ use ed25519_dalek::VerifyingKey;
 use std::num::NonZeroU16;
 
 use svrngs_node::api::{ApiError, API_FILE};
-use svrngs_node::folder::FolderAsk;
+use svrngs_node::folder::{FolderAsk, PROGRAMS_ROUTE};
 use svrngs_node::home::LINKS_ROUTE;
 use svrngs_node::home::WHEN;
 use svrngs_node::invite::{Linked, Unminted};
@@ -123,7 +123,7 @@ use svrngs_node::{Joined, Person, SigningKey};
 use crate::group::{self, Name, Seed};
 use crate::identity::{self, KeyError};
 use crate::relay::{self, Relay};
-use crate::share::{self, Share, ShareRefusal};
+use crate::share::{self, Share, ShareRefusal, Terms};
 use svrngs_node::link::{client_link, https_link, Link, Origin};
 
 pub const USAGE: &str = include_str!("help.txt");
@@ -552,6 +552,9 @@ pub enum Refusal {
     Prompt(std::io::Error),
     #[error("{0}'s readers were not let in: {1}")]
     Readers(LendName, String),
+    /// A group's own terms for the program refused, in their words.
+    #[error("{0}")]
+    Terms(String),
     #[error("cannot make a sign-in for it on this computer: {0}")]
     SignIn(#[from] svrngs_node::oidc::KeyFailure),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
@@ -635,6 +638,7 @@ impl Refusal {
             | Refusal::NotKept
             | Refusal::Older
             | Refusal::Readers(..)
+            | Refusal::Terms(_)
             | Refusal::Busy(_) => 1,
             Refusal::Update(_)
             | Refusal::NoDataDir
@@ -766,8 +770,17 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
         Verb::Share(mut asked, groups) => {
             asked.audience = audience_of(&root, asked.port, &groups)?;
             let known = share::well_known_kind(asked.port);
-            let mut lend = share::lend_of(&asked, share::listens, known)?;
-            let accounts = share::accounts_of(&lend.kind);
+            let claimed = claim(&root);
+            let terms = match (&claimed, share::kind_of(&asked, known.clone())) {
+                (Err(Refusal::Busy(_)), Some(kind)) => Some(terms_of(&root, &kind, &groups).await?),
+                (claimed, kind) => {
+                    tracing::debug!(target: "cli", busy = claimed.is_err(), ?kind, "cli: share — no group's terms asked: svrngs is not running here to read them, or no program is named");
+                    None
+                }
+            };
+            let theirs = terms.unwrap_or_default();
+            let mut lend = share::lend_of(&asked, share::listens, known, theirs)?;
+            let accounts = share::accounts_of(&lend.kind, theirs);
             let client = asked.sign_in.then(svrngs_node::oidc::client).transpose()?;
             if let Some(client) = &client {
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
@@ -784,7 +797,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             };
             share_lend(&root, &lend, secret.as_deref())?;
             if asked.readers {
-                share_readers(&root, &lend, asked.port).await?;
+                share_readers(&root, &lend, (asked.port, theirs)).await?;
             }
             let sharing = Said::Shared {
                 lend,
@@ -792,8 +805,9 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 accounts,
                 client,
                 issuer: None,
+                terms,
             };
-            match claim(&root) {
+            match claimed {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
                     let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
@@ -1164,6 +1178,9 @@ pub enum Said {
         client: Option<SignInWithSvrngs>,
         /// The issuer that client names, when it has one.
         issuer: Option<String>,
+        /// Its groups' own terms for its program, as read ([`terms_of`]),
+        /// empty for none; none when svrngs was not running to read them.
+        terms: Option<Terms>,
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
@@ -1263,6 +1280,7 @@ impl std::fmt::Display for Said {
                 accounts,
                 client,
                 issuer,
+                terms,
             } => {
                 // `share` lends a port; a group's folder carries an app.
                 let (name, (port, raw)) = match &lend.source {
@@ -1276,8 +1294,13 @@ impl std::fmt::Display for Said {
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
-                if let Some(told) = share::unrecognized(&lend.kind).filter(|_| raw.is_empty()) {
+                let (theirs, kind) = (terms.unwrap_or_default(), &lend.kind);
+                let unknown = raw.is_empty() && theirs.is_empty();
+                if let Some(told) = share::unrecognized(&lend.kind).filter(|_| unknown) {
                     writeln!(f, "{told}")?;
+                }
+                if terms.is_none() {
+                    writeln!(f, "svrngs wasn't running, so this keeps only the terms svrngs ships for {kind}. A programs/{kind}.txt in your groups' folders is read once it runs: share it again then.")?;
                 }
                 match accounts {
                     Some(share::Signs::Accounts(how)) => writeln!(
@@ -1292,10 +1315,12 @@ impl std::fmt::Display for Said {
                     )?,
                     None => {}
                 }
-                let table = share::kept_of(&lend.kind);
+                let (table, group) = (share::kept_of(kind, ""), share::kept_of(kind, theirs));
                 let (kept, typed): (Vec<_>, Vec<_>) = lend.refused.iter().partition(|p| table.contains(p));
+                let said = format!(": your groups' programs/{kind}.txt keeps it back");
                 for path in typed {
-                    writeln!(f, "They cannot open {}.", path.as_str())?;
+                    let why = if group.contains(path) { said.as_str() } else { "" };
+                    writeln!(f, "They cannot open {}{why}.", path.as_str())?;
                 }
                 if !kept.is_empty() {
                     let paths: Vec<&str> = kept.iter().map(|p| p.as_str()).collect();
@@ -1461,18 +1486,19 @@ fn prompt_secret(name: &LendName, asked: &str, shown: bool) -> Result<Option<Str
 /// `svrngs share --readers`: the account apps reading `lend` are let in as,
 /// signed in once where the table says how (`share::readers_of`), else
 /// what its Authorization header takes, pasted; then kept.
-async fn share_readers(root: &Path, lend: &Lend, port: NonZeroU16) -> Result<(), Refusal> {
+async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Result<(), Refusal> {
+    let (port, terms) = at;
     let name = &lend.name;
     let ask = |words: String, shown| prompt_secret(name, &words, shown);
     let refused = |why: String| Refusal::Readers(name.clone(), why);
-    if share::key_of(&lend.kind).is_some() {
+    if let Some(how) = share::key_of(&lend.kind, terms) {
         let key = ask(format!("Paste the key you made in {name}: "), false)?;
         let key = key.ok_or_else(|| refused("nothing was given".into()))?;
-        share::keep_key(root, name, &lend.kind, &key).map_err(|e| refused(e.to_string()))?;
+        share::keep_key(root, name, Some(how), &key).map_err(|e| refused(e.to_string()))?;
         eprintln!("Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
         return Ok(());
     }
-    let line = match share::readers_of(&lend.kind) {
+    let line = match share::readers_of(&lend.kind, terms) {
         Some(how) => {
             let words =
                 format!("The name of the account in {name} that apps reading it are let in as: ");
@@ -1494,6 +1520,34 @@ async fn share_readers(root: &Path, lend: &Lend, port: NonZeroU16) -> Result<(),
         .map_err(|e| refused(e.to_string()))?;
     eprintln!("Apps that read {name} are let in as that account, to look only; a person opening it still signs in as themselves.");
     Ok(())
+}
+
+/// The terms the groups named `groups` hold for `kind` in their own
+/// `programs/<kind>.txt`, asked of svrngs running here, which reads each
+/// through its group's record (CONTRACTS §2), each held to what a file may
+/// say ([`share::fits`]); empty for none. Refused, never read as no terms,
+/// when one can't be read or doesn't hold, or two groups say different
+/// things. Kept for the life of this command, as the terms svrngs ships are.
+async fn terms_of(root: &Path, kind: &Program, groups: &[String]) -> Result<Terms, Refusal> {
+    let mut found: Vec<(&String, String)> = Vec::new();
+    for name in groups {
+        let group = group_named(root, name)?.id();
+        let (ok, text) = ask_running(root, PROGRAMS_ROUTE, &(group, kind)).await?;
+        tracing::debug!(target: "cli", group = name, %kind, ok, text, "cli: share — a group's own terms for the program, read through its record, or why not");
+        match (ok, text.is_empty()) {
+            (true, true) => {}
+            (true, false) => found.push((name, text)),
+            (false, true) => return Err(Refusal::Older),
+            (false, false) => return Err(Refusal::Terms(format!("In {name}, {text}"))),
+        }
+    }
+    let rows = |text| share::rows_in(text).flatten();
+    let differs = found.iter().find(|(_, t)| !rows(t).eq(rows(&found[0].1)));
+    if let (Some((a, _)), Some((b, _))) = (found.first(), differs) {
+        tracing::debug!(target: "cli", %kind, "cli: share — refused, its groups' own terms differ");
+        return Err(Refusal::Terms(format!("{a} and {b} say different things in programs/{kind}.txt, so svrngs can't tell which to keep: make them the same, or share to one of them at a time.")));
+    }
+    Ok(found.into_iter().next().map_or("", |(_, text)| text.leak()))
 }
 
 /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with

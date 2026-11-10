@@ -82,6 +82,15 @@ const POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self' 'u
     img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; \
     frame-src 'self'; worker-src 'self'";
 
+/// `POST /v1/programs`, `[group, word]`: the text of `programs/<word>.txt`
+/// in `group` ([`Folders::terms`]), empty for none; or, 409, why not.
+pub(super) async fn terms(State(f): State<Folders>, Json(at): Json<(String, Program)>) -> Response {
+    match f.terms(&at.0, &at.1).await {
+        Ok(text) => text.into_response(),
+        Err(why) => (StatusCode::CONFLICT, why).into_response(),
+    }
+}
+
 /// Why the door answers a carried app's request itself: its kind, status
 /// and words, said and traced once ([`Folders::open`]).
 type Withheld = (LendRefusal, u16, &'static str);
@@ -281,6 +290,37 @@ impl Folders {
         }
         tracing::debug!(target: "folder", found = ?found.keys(), "carried: the apps the groups' folders carry here");
         found.into_values().collect()
+    }
+
+    /// The text of `programs/<word>.txt` in `group` where its record places
+    /// it, from this computer's store, else fetched from a computer that
+    /// stands in the group, never read from a directory, so half a sync is
+    /// never read as terms (CONTRACTS §2, "Reading a contract"); empty when
+    /// it places none. Refused, never read as no terms, and said with what to
+    /// do: two copies in conflict, a writer who no longer stands in the
+    /// group, bytes not here yet, or terms a group's file can't hold
+    /// ([`crate::share::fits`]).
+    async fn terms(&self, group: &str, word: &Program) -> Result<String, String> {
+        let path = format!("programs/{word}.txt");
+        let read = self.layout(group).map_err(|e| e.to_string())?;
+        let holders = self.holders(group).map_err(|e| e.to_string())?;
+        let at = |p: &&Placed| p.entry.path.as_str() == path;
+        let copies: Vec<&Placed> = read.placed.iter().filter(at).collect();
+        let standing = copies.iter().all(|p| holders.contains(&p.entry.key));
+        tracing::debug!(target: "folder", group, path, copies = copies.len(), standing, "carried: a group's programs file, as its record places it");
+        let hash = match copies[..] {
+            [] => return Ok(String::new()),
+            [_, _, ..] => return Err(format!("{path} has two copies in conflict. Keep the one you mean, delete the other, then share again.")),
+            [_] if !standing => return Err(format!("{path} was last written by someone no longer in the group. Someone in it writes it again, or deletes it, then share again.")),
+            [one] => Hash::from(*one.hash.as_bytes()),
+        };
+        let fetched = self.hold(hash, &Vec::from_iter(holders)).await;
+        let held = self.store.get_bytes(hash).await;
+        tracing::debug!(target: "folder", group, path, %hash, ?fetched, why = ?held.as_ref().err(), "carried: a group's programs file from the store, or why not");
+        let held = held.map_err(|_| format!("{path} isn't on this computer yet: it is still being fetched from the group. Wait a moment, then share again."))?;
+        let text = String::from_utf8(held.to_vec()).map_err(|_| format!("{path} is not text."));
+        let fits = text.and_then(|t| crate::share::fits(word, &t).map(|()| t));
+        fits.map_err(|why| format!("{path} can't be used: {why}. Change it, then share again."))
     }
 
     /// The kinds `lend` reads: a carried app's from its [`READS`] as its

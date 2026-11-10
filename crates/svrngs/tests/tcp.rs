@@ -160,12 +160,12 @@ fn share_tcp(sam: &Computer, port: u16, args: &[&str]) -> Lend {
     asked.audience = cli::audience_of(sam.dir.path(), asked.port, &named).unwrap();
     assert_eq!(asked.raw, Some(Raw::Tcp));
     // A TCP port answers a connection, so it is lent only when one does.
-    let unanswered = share::lend_of(&asked, |_| false, None);
+    let unanswered = share::lend_of(&asked, |_| false, None, "");
     assert!(
         matches!(unanswered, Err(ShareRefusal::NothingListens(_))),
         "a TCP port nothing listens on is refused: {unanswered:?}"
     );
-    let lend = share::lend_of(&asked, |_| true, share::well_known_kind(asked.port))
+    let lend = share::lend_of(&asked, |_| true, share::well_known_kind(asked.port), "")
         .expect("a TCP port and its kind");
     assert_eq!(lend.source, Source::Raw(Raw::Tcp, asked.port));
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
@@ -206,6 +206,7 @@ async fn share_tcp_lends_a_port_and_a_member_s_bytes_come_back() {
         accounts: None,
         client: None,
         issuer: None,
+        terms: Some(""),
     };
     let said = said.to_string();
     assert!(

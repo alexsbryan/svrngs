@@ -422,10 +422,9 @@ async fn lent(State(at): State<Asking>) -> Response {
         .collect();
     let readers = |l: &lend::Lend| {
         let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
-        let key = share::key_of(&l.kind).is_some();
-        let said =
-            serde_json::json!({ "kept": kept, "signs": share::accounts_of(&l.kind), "key": key });
-        (key || share::readers_of(&l.kind).is_some()).then(|| (l.name.to_string(), said))
+        let key = share::key_of(&l.kind, "").is_some();
+        let said = serde_json::json!({ "kept": kept, "signs": share::accounts_of(&l.kind, ""), "key": key });
+        (key || share::readers_of(&l.kind, "").is_some()).then(|| (l.name.to_string(), said))
     };
     let readers: serde_json::Map<_, _> = all.iter().filter_map(readers).collect();
     Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers }))
@@ -460,7 +459,7 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         }
         LendChange::Key(key) => lend::read(dir, &c.lend).and_then(|lent| {
             lent.map_or(Ok(false), |l| {
-                share::keep_key(dir, &c.lend, &l.kind, key.trim())
+                share::keep_key(dir, &c.lend, share::key_of(&l.kind, ""), key.trim())
             })
         }),
     };
@@ -576,7 +575,7 @@ async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) ->
     let Ok(Some(lent)) = found else {
         return unchanged_said(name, found.map(|_| false));
     };
-    let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind)) else {
+    let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, "")) else {
         tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");
         return LendRefusal::closed(format!("svrngs doesn’t know how to sign in to {name}."));
     };
@@ -598,7 +597,8 @@ async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) ->
 /// knows, how that kind signs each person in, the paths svrngs keeps back
 /// of it, and its name once lent.
 fn shown(port: NonZeroU16, kind: Option<&Program>, name: Option<&LendName>) -> serde_json::Value {
-    let (signs, keeps) = (kind.and_then(share::accounts_of), kind.map(share::kept_of));
+    let signs = kind.and_then(|k| share::accounts_of(k, ""));
+    let keeps = kind.map(|k| share::kept_of(k, ""));
     let unknown = kind.and_then(share::unrecognized);
     serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "unknown": unknown })
 }
@@ -709,9 +709,9 @@ async fn lend_one(
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
-    let lend = share::lend_of(&asked, share::listens, known).map_err(|e| match e {
+    let lend = share::lend_of(&asked, share::listens, known, "").map_err(|e| match e {
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
-        ShareRefusal::NoKind(_) => refused(unknown, &e),
+        ShareRefusal::NoKind(_) | ShareRefusal::Carries(..) => refused(unknown, &e),
     })?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");

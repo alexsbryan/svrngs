@@ -1087,6 +1087,17 @@ or change the server for everyone (`/slots`, `/v1/stream`, `/v1/streams`,
 `/cors-proxy`, `/models`). The door refuses a path for every method alike,
 and never changes an answer: llama-server's `/props`, which its chat page
 reads, shows everyone where the model's file is on the lender's disk.
+A group writes its own terms as a file in its folder, `programs/<word>.txt`,
+in the table's form (svrn-docs `rings/current/CONTRACTS.md` §2). `svrngs
+share` under that word asks svrngs running here for it, which reads it
+through the group's record, never the disk, and refuses it by name when it
+is still being fetched, has two copies in conflict, was written by someone
+no longer in the group, or says anything the door can't enforce
+(`share::fits`); two groups a lend goes to must say the same. For a word
+svrngs ships, a group's file may only add `keeps:`. The lend copies what is
+kept, so its door reads its own file alone, and a changed `programs/` file
+changes nothing until it is lent again. With svrngs stopped, `share` keeps
+what ships and says so.
 
 **A model or a tool is lent like any app.** A server that answers OpenAI's
 `/v1/models` is a model, and one that answers MCP's `initialize` over

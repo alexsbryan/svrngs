@@ -820,6 +820,7 @@ pub(crate) fn router(folders: Folders) -> Router {
     let put = axum::routing::put(blob::put).layer(axum::extract::DefaultBodyLimit::disable());
     Router::new()
         .route("/v1/folders", post(ask))
+        .route(PROGRAMS_ROUTE, post(carried::terms))
         .route("/v1/blob", put)
         .route("/v1/blob/{hash}", axum::routing::get(blob::get))
         .with_state(folders)
@@ -848,6 +849,10 @@ async fn ask(State(f): State<Folders>, Json(asked): Json<FolderAsk>) -> Response
         Err(why) => (StatusCode::CONFLICT, why.to_string()).into_response(),
     }
 }
+
+/// Where `svrngs share` asks the node running here for a group's own terms
+/// for a program (carried.rs `terms`).
+pub const PROGRAMS_ROUTE: &str = "/v1/programs";
 
 #[cfg(test)]
 #[path = "folder_tests.rs"]

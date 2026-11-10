@@ -199,8 +199,13 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         audience: lent_to,
         ..share_of(origin, "pad")
     };
-    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
-        .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(
+        &asked,
+        share::listens,
+        share::well_known_kind(asked.port),
+        "",
+    )
+    .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, Some(SECRET)).unwrap();
     let mut said = vec![Said::Shared {
         lend: lend.clone(),
@@ -208,6 +213,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         accounts: None,
         client: None,
         issuer: None,
+        terms: Some(""),
     }
     .to_string()];
 
@@ -322,8 +328,13 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         audience: lent_to,
         ..share_of(origin, "llama-server")
     };
-    let lend = share::lend_of(&asked, share::listens, share::well_known_kind(asked.port))
-        .expect("something listens there, and its kind is given");
+    let lend = share::lend_of(
+        &asked,
+        share::listens,
+        share::well_known_kind(asked.port),
+        "",
+    )
+    .expect("something listens there, and its kind is given");
     cli::share_lend(sam.dir.path(), &lend, None).unwrap();
     let shared = Said::Shared {
         lend: lend.clone(),
@@ -331,6 +342,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         accounts: None,
         client: None,
         issuer: None,
+        terms: Some(""),
     }
     .to_string();
 
@@ -534,8 +546,13 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
     }
     assert!(cli::parse(argv(&["link", "x", "--ask", words])).is_err());
     let dir = tempfile::tempdir().unwrap();
-    let lend =
-        share::lend_of(&asked, |_| true, Some(LentProgram::parse("taste").unwrap())).unwrap();
+    let lend = share::lend_of(
+        &asked,
+        |_| true,
+        Some(LentProgram::parse("taste").unwrap()),
+        "",
+    )
+    .unwrap();
     cli::share_lend(dir.path(), &lend, None).unwrap();
     let name = LendName::parse("taste").unwrap();
     let read = svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap();
@@ -550,6 +567,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         accounts: None,
         client: None,
         issuer: None,
+        terms: Some(""),
     };
     assert!(said.to_string().contains(words), "{said}");
     cli::unshare(dir.path(), &name, &[]).unwrap();
@@ -1267,7 +1285,7 @@ async fn a_share_names_who_can_open_it_and_unshare_takes_one_group_away() {
         audience: both,
         ..share_of(origin, "pad")
     };
-    let pad = share::lend_of(&asked, share::listens, None).unwrap();
+    let pad = share::lend_of(&asked, share::listens, None, "").unwrap();
     cli::share_lend(dir, &pad, Some(SECRET)).unwrap();
     let narrowed = cli::unshare(dir, &pad.name, &named(&["trip"])).unwrap();
     assert_eq!(narrowed, Said::Narrowed(pad.name.clone()));
@@ -1316,10 +1334,188 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     let made = cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &relay);
     made.await.expect("Sam makes house");
     let (origin, _heads) = service().await;
-    let pad = share::lend_of(&share_of(origin, "pad"), share::listens, None).unwrap();
+    let pad = share::lend_of(&share_of(origin, "pad"), share::listens, None, "").unwrap();
     cli::share_lend(sam.dir.path(), &pad, None).unwrap();
     let said = cli::unshare(sam.dir.path(), &pad.name, &["house".to_string()]);
     said.expect("true already: a legacy lend reaches no group");
     let kept = lend::read(sam.dir.path(), &pad.name).unwrap().unwrap();
     assert_eq!(kept.audience, Audience::Legacy);
+}
+
+/// What svrngs running over `dir` answers `svrngs share`'s ask for
+/// `programs/<word>.txt` in `group` (`/v1/programs`): its status line and
+/// its body.
+fn programs_of(dir: &Path, group: &str, word: &str) -> (String, String) {
+    let api = std::fs::read_to_string(dir.join("api")).unwrap();
+    let token = std::fs::read_to_string(dir.join("token")).unwrap();
+    let mut sock = std::net::TcpStream::connect(api.trim().trim_start_matches("http://")).unwrap();
+    let body = serde_json::json!([group, word]).to_string();
+    let ask = format!("POST {} HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", svrngs_node::folder::PROGRAMS_ROUTE, body.len());
+    sock.write_all(ask.as_bytes()).unwrap();
+    let mut answer = String::new();
+    sock.read_to_string(&mut answer).unwrap();
+    let (head, body) = answer.split_once("\r\n\r\n").unwrap_or((&answer, ""));
+    (
+        head.lines().next().unwrap_or("").to_string(),
+        body.to_string(),
+    )
+}
+
+/// Up to 30 s, until svrngs running over `dir` answers `group`'s
+/// `programs/<word>.txt` with `text` in it, as its record now places it.
+fn until_read(dir: &Path, group: &str, word: &str, text: &str) {
+    for _ in 0..60 {
+        if programs_of(dir, group, word).1.contains(text) {
+            return;
+        }
+        std::thread::sleep(Duration::from_millis(500));
+    }
+    panic!("{word}: {:?}", programs_of(dir, group, word));
+}
+
+/// **`svrngs share` keeps what a group's own `programs/<word>.txt` adds,
+/// and says whose words they are** (CONTRACTS §2), a `$HOME` of the test's
+/// own holding Lab's and Trip's folders: with svrngs stopped,
+/// `share` keeps only what ships and says so, then runs. Sam writes
+/// `programs/kokoro.txt` in Lab's folder; once svrngs reads it through
+/// Lab's record, `share --program kokoro` keeps back `/admin`, saying
+/// Lab's file keeps it, beside the paths svrngs ships for kokoro; the lend's
+/// own file holds it, so the door needs no file of the group's. A file
+/// outside the closed set is refused, its line and group named, and nothing
+/// lent; Lab and Trip each with a different `programs/notes.txt` refuse a
+/// lend to both, naming them. Planted, each watched failing: `share`
+/// asking no terms of svrngs running here (`terms_of` never called: no
+/// `/admin` line, the bad file lent); and `terms_of` without its
+/// comparison of groups (lent to both under Lab's terms).
+#[cfg(unix)]
+#[test]
+fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
+    let [dir, logs, home] = [(); 3].map(|_| tempfile::tempdir().unwrap());
+    let start = |at: &str, argv: &[&str], input: &str| {
+        Program::at(
+            dir.path(),
+            &logs.path().join(at),
+            argv,
+            input,
+            Some(home.path()),
+        )
+    };
+    for group in ["Lab", "Trip"] {
+        let mut made = start(group, &["new", group, "--as", "Sam"], "");
+        made.until("Leave this running");
+        let _ = made.child.kill();
+        let _ = made.ends();
+    }
+    let ports: Vec<_> = (0..4)
+        .map(|_| std::net::TcpListener::bind("127.0.0.1:0").unwrap())
+        .collect();
+    let port = |i: usize| ports[i].local_addr().unwrap().port().to_string();
+    let share = |at: &str, args: &[&str]| {
+        let argv: Vec<&str> = ["share"]
+            .iter()
+            .copied()
+            .chain(args.iter().copied())
+            .collect();
+        start(at, &argv, "").ends()
+    };
+
+    let first = ["share", &port(0), "--program", "pad", "--group", "Lab"];
+    let mut running = start("running", &first, "\n");
+    running.until("Leave this running");
+    assert!(
+        running.seen.iter().any(|l| l.starts_with(
+            "svrngs wasn't running, so this keeps only the terms svrngs ships for pad."
+        )),
+        "{:?}",
+        running.seen
+    );
+
+    let ids: std::collections::BTreeMap<String, String> = group::groups(dir.path())
+        .into_iter()
+        .map(|s| (s.name().to_string(), s.id()))
+        .collect();
+    let (lab, trip) = (
+        home.path().join("svrngs/Lab/programs"),
+        home.path().join("svrngs/Trip/programs"),
+    );
+    std::fs::create_dir_all(&lab).unwrap();
+    std::fs::create_dir_all(&trip).unwrap();
+    std::fs::write(
+        lab.join("kokoro.txt"),
+        "# Lab's kokoro\n- kokoro keeps: /admin\n",
+    )
+    .unwrap();
+    until_read(dir.path(), &ids["Lab"], "kokoro", "/admin");
+    let (code, said) = share(
+        "kokoro",
+        &[&port(1), "--program", "kokoro", "--group", "Lab"],
+    );
+    assert_eq!(code, 0, "{said:?}");
+    assert!(
+        said.iter().any(
+            |l| l == "They cannot open /admin: your groups' programs/kokoro.txt keeps it back."
+        ),
+        "{said:?}"
+    );
+    assert!(
+        said.iter().any(
+            |l| l.starts_with("They cannot open /docs, /openapi.json: svrngs keeps these back")
+        ),
+        "{said:?}"
+    );
+    let lent = std::fs::read_to_string(dir.path().join("lends/kokoro.json")).unwrap();
+    assert!(lent.contains("/admin") && lent.contains("/docs"), "{lent}");
+
+    std::fs::write(lab.join("kokoro.txt"), "- kokoro opens: /admin\n").unwrap();
+    until_read(dir.path(), &ids["Lab"], "kokoro", "is no term");
+    let (code, said) = share(
+        "bad",
+        &[
+            &port(2),
+            "--program",
+            "kokoro",
+            "--name",
+            "bad",
+            "--group",
+            "Lab",
+        ],
+    );
+    let told = std::fs::read_to_string(logs.path().join("bad")).unwrap();
+    assert_eq!(code, 1, "{said:?}");
+    assert!(
+        told.contains(
+            "In Lab, programs/kokoro.txt can't be used: `kokoro opens: /admin` is no term"
+        ),
+        "{told}"
+    );
+    assert!(!dir.path().join("lends/bad.json").exists(), "nothing lent");
+
+    std::fs::write(lab.join("notes.txt"), "- notes keeps: /lab\n").unwrap();
+    std::fs::write(trip.join("notes.txt"), "- notes keeps: /trip\n").unwrap();
+    until_read(dir.path(), &ids["Lab"], "notes", "/lab");
+    until_read(dir.path(), &ids["Trip"], "notes", "/trip");
+    let both = [
+        port(3),
+        "--program".into(),
+        "notes".into(),
+        "--group".into(),
+        "Lab".into(),
+        "--group".into(),
+        "Trip".into(),
+    ];
+    let (code, said) = share("both", &both.iter().map(String::as_str).collect::<Vec<_>>());
+    let told = std::fs::read_to_string(logs.path().join("both")).unwrap();
+    assert_eq!(code, 1, "{said:?}");
+    assert!(
+        told.contains("Lab and Trip say different things in programs/notes.txt"),
+        "{told}"
+    );
+    assert!(
+        !dir.path().join("lends/notes.json").exists(),
+        "nothing lent"
+    );
+
+    let _ = running.child.kill();
+    let _ = running.ends();
+    drop(ports);
 }
