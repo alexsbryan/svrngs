@@ -77,8 +77,9 @@ fn what_an_assistant_writes_first_is_found_by_file_and_line() {
 
 /// **A page of its own files is told nothing**: its script and style sheet
 /// beside it, a font of its own, an inline style, an image written into
-/// the page or named by a style sheet, JSON data in a script tag, a link
-/// out, and a module imported from beside it. Planted, watched failing:
+/// the page or named by a style sheet beside it, JSON data in a script
+/// tag, a link out, a page opened elsewhere, a module imported from beside
+/// it, and a fetch of its own address. Planted, watched failing:
 /// every `<script>` read as written inside the page, and `index.html:3` is
 /// said.
 #[test]
@@ -91,8 +92,8 @@ fn a_page_of_its_own_files_is_told_nothing() {
 <p style="color: red"><img src="data:image/png;base64,AAAA" alt="">
 <a href="https://example.org/">a link out is a navigation, not a load</a>
 "#;
-    let css = "@font-face { font-family: Own; src: url(own.woff2); }\nbody { background: url(https://example.org/bg.png); }\n";
-    let js = "// import('https://example.org/x.js') is never run\nimport { x } from './x.js';\n";
+    let css = "@font-face { font-family: Own; src: url(own.woff2); }\nbody { background: url(bg.png); }\n";
+    let js = "// import('https://example.org/x.js') is never run\nimport { x } from './x.js';\nconst r = await fetch('svrngs-reads');\nwindow.open('https://example.org/', '_blank');\n";
     let files = [("index.html", page), ("look.css", css), ("index.js", js)];
     assert_eq!(said(&files), []);
 }
@@ -133,4 +134,47 @@ fn the_style_sheets_and_scripts_beside_it_are_read_too() {
     let none = tempfile::tempdir().unwrap();
     std::fs::write(none.path().join("app.js"), js).unwrap();
     assert_eq!(check(none.path()), None);
+}
+
+/// **An image or data from another server is found too** (svrn-docs
+/// `rings/current/EXTENSION_POINT.md` §5, "Not said: an image or a `fetch`
+/// to another server"): an `<img>` and an icon from elsewhere, a style's
+/// `url(…)` naming an image there, written in the page or beside it, and a
+/// script's `fetch`, `XMLHttpRequest`, `WebSocket` and `EventSource` at an
+/// address written out, each by file and line in the words approved for
+/// the rest, a font's `url(…)` still a font. Planted, watched failing:
+/// `fetched` never set, and every one of them is said as a font, a script
+/// or a style sheet, or not at all.
+#[test]
+fn an_image_or_data_from_another_server_is_found_too() {
+    let page = "<!doctype html>\n<link rel=icon href=https://cdn.example.org/i.png>\n<img src=\"https://pics.example.org/cat.jpg\" alt=\"\">\n<style>body { background: url(https://pics.example.org/bg.png) }</style>\n";
+    let css = "h1 { background: url('https://pics.example.org/h.png'); }\n@font-face { src: url(https://fonts.gstatic.com/a.woff2); }\n";
+    let js = "const r = await fetch('https://api.example.org/v1/weather');\nconst x = new XMLHttpRequest();\nx.open('GET', \"https://api.example.org/x\");\nconst w = new WebSocket('wss://live.example.org/socket');\nconst e = new EventSource(`https://news.example.org/feed`);\n";
+    let image = |host: &str| Refused::Image(host.into());
+    let data = |host: &str| Refused::Data(host.into());
+    assert_eq!(
+        said(&[("index.html", page), ("look.css", css), ("app.js", js)]),
+        [
+            ("app.js:1".to_string(), data("api.example.org")),
+            ("app.js:3".to_string(), data("api.example.org")),
+            ("app.js:4".to_string(), data("live.example.org")),
+            ("app.js:5".to_string(), data("news.example.org")),
+            ("index.html:2".to_string(), image("cdn.example.org")),
+            ("index.html:3".to_string(), image("pics.example.org")),
+            ("index.html:4".to_string(), image("pics.example.org")),
+            ("look.css:1".to_string(), image("pics.example.org")),
+            (
+                "look.css:2".to_string(),
+                Refused::Font("fonts.gstatic.com".into())
+            ),
+        ]
+    );
+    assert_eq!(
+        image("pics.example.org").words(),
+        "This page asks pics.example.org for an image, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, save the image beside index.html and point to it there."
+    );
+    assert_eq!(
+        data("api.example.org").words(),
+        "This page asks api.example.org for data, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, have a friend lend that service to your group, name its program in reads.txt beside index.html, and ask it through its lend: `svrngs guide` shows how."
+    );
 }

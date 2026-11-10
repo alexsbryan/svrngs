@@ -180,9 +180,11 @@ your app is left off the list until it's fixed.
 
 - **Load nothing from elsewhere.** Every answer carries a policy that lets
   the page load from and connect to its own address only: no CDN, no
-  inline `<script>` (inline styles are fine), no camera, microphone or
-  location. Put every script in a file beside `index.html`, and every font
-  too, as a `.woff2`. A page that asks for anything else is blank or broken,
+  inline `<script>` (inline styles are fine), no image or data from
+  another server, no camera, microphone or location. Put every script in a
+  file beside `index.html`, and every font and image too, the font as a
+  `.woff2`. To read another server's data, a friend lends it to your group
+  and your app reads it through its lend, as above. A page that asks for anything else is blank or broken,
   and the browser says why only in its console, so run `svrngs check
   ~/svrngs/<group>/apps/<name>`: it says each thing by file and line, and
   what to change, and the app's line on the home page says the same.

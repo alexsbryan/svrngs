@@ -20,6 +20,14 @@ pub enum Refused {
     Script(String),
     /// A style sheet from another server, by its host.
     Style(String),
+    /// An image from another server, by its host: an `<img>` or an icon
+    /// `<link>`, or a style's `url(…)` that names no font
+    /// (`img-src 'self' data:`).
+    Image(String),
+    /// Data from another server, by its host: a script's `fetch`,
+    /// `XMLHttpRequest`, `WebSocket` or `EventSource` at an address written
+    /// out on that line (`connect-src 'self'`).
+    Data(String),
     /// A script written inside the page: a `<script>` with no `src`, a
     /// handler such as `onclick=`, or a `javascript:` address.
     Inline,
@@ -33,6 +41,8 @@ impl Refused {
             Refused::Font(host) => (host, "a font", "save the .woff2 beside index.html and point @font-face at it"),
             Refused::Script(host) => (host, "a script", "save the script beside index.html and load it from there"),
             Refused::Style(host) => (host, "a style sheet", "save the style sheet beside index.html and load it from there"),
+            Refused::Image(host) => (host, "an image", "save the image beside index.html and point to it there"),
+            Refused::Data(host) => (host, "data", "have a friend lend that service to your group, name its program in reads.txt beside index.html, and ask it through its lend: `svrngs guide` shows how"),
         };
         format!("This page asks {host} for {what}, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, {fix}.")
     }
@@ -57,12 +67,13 @@ pub fn check(dir: &Path) -> Option<Vec<Finding>> {
         let body = &body[..body.find("</").unwrap_or(0)];
         let script = tag.starts_with("script");
         let sheet = tag.starts_with("link") && tag.contains("stylesheet");
+        let img = tag.starts_with("img") || tag.starts_with("link") && tag.contains("icon");
         let on = |a: &str| a.starts_with("on") && a.contains('=');
         let handler = tag.split_ascii_whitespace().any(on) || tag.contains("javascript:");
         // A `<script>` with a `src` loads that; one of JSON is data, not run.
         let elsewhere = tag.contains("src=") || tag.contains("json");
         let inline = script && !elsewhere && !body.trim().is_empty();
-        let asked = away(tag, script).filter(|_| script || sheet);
+        let asked = away(tag, script, img).filter(|_| script || sheet || img);
         let inline = (inline || handler).then_some(Refused::Inline);
         let styled = asks(body, line, false).filter(|_| tag.starts_with("style"));
         let said = (asked.into_iter().chain(inline))
@@ -92,30 +103,42 @@ const ENDS: [char; 7] = ['/', '?', '#', '"', '\'', ')', '>'];
 const FONTS: [&str; 4] = ["font", ".woff", ".ttf", ".otf"];
 
 /// What loading the first address in `text` is refused as, when it names
-/// another server: a script where one is asked, else a font where it names
-/// one, else a style sheet.
-fn away(text: &str, script: bool) -> Option<Refused> {
+/// another server: data where a script `fetched` it, else a script where
+/// one is asked; else a font where it names one, else an image where it
+/// was `fetched`, else a style sheet.
+fn away(text: &str, script: bool, fetched: bool) -> Option<Refused> {
     let host = text[text.find("//")? + 2..].split(ENDS).next()?.trim();
     let font = FONTS.iter().any(|f| text.contains(f));
     let host =
         Some(host.to_string()).filter(|h| !h.is_empty() && !h.contains(char::is_whitespace))?;
-    Some(match (script, font) {
-        (true, _) => Refused::Script(host),
-        (false, true) => Refused::Font(host),
-        (false, false) => Refused::Style(host),
+    Some(match (script, font, fetched) {
+        (true, _, true) => Refused::Data(host),
+        (true, _, false) => Refused::Script(host),
+        (false, true, _) => Refused::Font(host),
+        (false, false, true) => Refused::Image(host),
+        (false, false, false) => Refused::Style(host),
     })
 }
 
+/// What a script asks another server for data with, apart by spaces, the
+/// address on the same line: `XMLHttpRequest`'s is its `.open(`, but not `window.open(`,
+/// which opens a page and loads nothing into this one.
+const CALLS: &str = "fetch( XMLHttpRequest .open( WebSocket( EventSource(";
+
 /// Each thing `text`, a style sheet or a script, asks of another server,
-/// by its line, `first` being its first's: what it imports, and a font a
-/// style sheet names; an image it names is said nowhere.
+/// by its line, `first` being its first's: what it imports; a font or an
+/// image a style sheet's `url(…)` names; and data a script asks for at an
+/// address written out ([`CALLS`]). An address built as the script runs
+/// is not judged.
 fn asks(text: &str, first: usize, script: bool) -> impl Iterator<Item = (usize, Refused)> + '_ {
     text.lines().zip(first..).filter_map(move |(line, at)| {
         let code = line.trim_start();
         let import =
             code.starts_with("import") || code.contains("import(") || code.contains("@import");
-        let font = |r: &Refused| matches!(r, Refused::Font(_)) && code.contains("url(");
-        let asked = away(code, script).filter(|r| import || font(r));
+        let url = !script && code.contains("url(");
+        let called = CALLS.split(' ').any(|c| code.contains(c)) && !code.contains("window.open");
+        let data = script && called;
+        let asked = away(code, script, (url || data) && !import).filter(|_| import || url || data);
         Some((at, asked.filter(|_| !code.starts_with("//"))?))
     })
 }
