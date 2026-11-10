@@ -668,11 +668,18 @@ pub fn data_dir() -> Result<PathBuf, Refusal> {
         tracing::debug!(target: "cli", dir = ?dir, "cli: data dir from $SVRNGS_DIR");
         return Ok(PathBuf::from(dir));
     }
-    let home = std::env::var_os("HOME")
-        .filter(|h| !h.is_empty())
-        .ok_or(Refusal::NoDataDir)?;
+    let home = home().ok_or(Refusal::NoDataDir)?;
     tracing::debug!(target: "cli", home = ?home, "cli: data dir ~/.svrngs");
-    Ok(PathBuf::from(home).join(".svrngs"))
+    Ok(home.join(".svrngs"))
+}
+
+/// `$HOME`, read here alone, at the edge: the data dir is under it, and
+/// the node places each group's folder in its `svrngs` (svrngs-node
+/// folder.rs `places`). None when it is unset or empty.
+fn home() -> Option<PathBuf> {
+    std::env::var_os("HOME")
+        .filter(|h| !h.is_empty())
+        .map(PathBuf::from)
 }
 
 /// Hold `<root>/lock` for as long as the file lives: one svrngs per data
@@ -994,7 +1001,10 @@ async fn start(
     };
     let seeds = group::seed_text;
     let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-    let node = Node::start_every(root.clone(), key.clone(), relay, &asked, seeds, api, every);
+    let places = home().map(|h| h.join("svrngs"));
+    tracing::debug!(target: "cli", ?places, "cli: where a group's folder is placed, or none with no $HOME");
+    let dirs = (root.clone(), places);
+    let node = Node::start_every(dirs, key.clone(), relay, &asked, seeds, api, every);
     let node = node.await.map_err(|e: NodeError| {
         tracing::debug!(target: "cli", error = %e, "cli: refused — the node did not start");
         match e {

@@ -273,9 +273,11 @@ impl Node {
     /// for a join, relay fallbacks); and with the round every `every`, which
     /// the command gives as [`crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL`]. The scale
     /// instrument (`tests/scale.rs`) passes a day, so that no node's own
-    /// round runs inside one it is timing.
+    /// round runs inside one it is timing. A group's folder is placed under
+    /// `places` ([`crate::folder::Folders::place`]): the command's `~/svrngs`,
+    /// a test's own.
     pub async fn start_every(
-        data_dir: PathBuf,
+        (data_dir, places): (PathBuf, Option<PathBuf>),
         key: SigningKey,
         relay: &RelayConfig,
         asked: &[Url],
@@ -347,7 +349,7 @@ impl Node {
         let homes = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().moved()));
         let tiers = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().check()));
         let (folders, blobs) =
-            crate::folder::Folders::start(&data_dir, host.clone(), nudge.clone())
+            crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())
                 .await
                 .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());

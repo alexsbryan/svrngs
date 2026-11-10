@@ -589,7 +589,7 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     for (i, d) in dirs.iter().enumerate() {
         nodes.push(
             Node::start_every(
-                d.path().to_path_buf(),
+                (d.path().to_path_buf(), Some(d.path().join("svrngs"))),
                 signing(i as u8 + 1),
                 &no_relay,
                 &[],

@@ -253,7 +253,7 @@ fn held_again(from: &std::path::Path, to: &std::path::Path) {
 /// `tests/scale.rs` passes a day, so what reaches it between is told.
 async fn computer(dir: &std::path::Path, key: &SigningKey, ours: &RelayConfig) -> Node {
     let node = Node::start_every(
-        dir.to_path_buf(),
+        (dir.to_path_buf(), Some(dir.join("svrngs"))),
         key.clone(),
         ours,
         &[],

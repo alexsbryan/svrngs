@@ -207,7 +207,7 @@ async fn a_keeper_taking_away_the_last_relay_is_met_nowhere_near_it_again() {
     );
     let every = Duration::from_secs(1);
     let node = Node::start_every(
-        dir.path().into(),
+        (dir.path().into(), Some(dir.path().join("svrngs"))),
         key.clone(),
         &at(&way),
         &[],

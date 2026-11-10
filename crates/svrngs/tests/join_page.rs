@@ -461,7 +461,7 @@ async fn sam_meeting_at(
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[seed; 32]);
     let sam = Node::start_every(
-        dir.path().to_path_buf(),
+        (dir.path().to_path_buf(), Some(dir.path().join("svrngs"))),
         key.clone(),
         &svrngs_node::iroh::RelayConfig {
             relay_urls: vec![build.to_string()],

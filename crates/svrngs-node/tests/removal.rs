@@ -387,7 +387,7 @@ mod leave_race {
     async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
         let api = "127.0.0.1:0".parse().unwrap();
         Node::start_every(
-            dir.path().to_path_buf(),
+            (dir.path().to_path_buf(), Some(dir.path().join("svrngs"))),
             signing(seed),
             &no_relay(),
             &[],

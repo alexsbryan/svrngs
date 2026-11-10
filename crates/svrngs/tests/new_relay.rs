@@ -29,8 +29,6 @@ fn kept(sam: &Node, name: &str) -> Option<Vec<String>> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn svrngs_new_keeps_the_relay_a_group_made_on_the_home_page_keeps() {
-    let home = tempfile::tempdir().unwrap();
-    std::env::set_var("HOME", home.path());
     let mut config = ServerConfig::default();
     config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
     let relay = Server::spawn(config).await.expect("a relay on 127.0.0.1");

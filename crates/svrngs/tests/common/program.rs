@@ -18,12 +18,14 @@ pub struct Program {
 
 impl Program {
     /// `svrngs <args>` over `dir`, tracing everything to `log`, with `input`
-    /// on its standard input. (Allowed dead: this file is included by each
-    /// test binary whole, as the browser harness is, and not each one runs
-    /// the program without a home of its own — pages/main.rs's allow.)
+    /// on its standard input, and `dir` its `$HOME`, so a group's folder is
+    /// placed in `dir/svrngs`, never the person's own `~/svrngs`. (Allowed
+    /// dead: this file is included by each test binary whole, as the
+    /// browser harness is, and not each one runs the program with a home
+    /// it names — pages/main.rs's allow.)
     #[allow(dead_code)]
     pub fn start(dir: &Path, log: &Path, args: &[&str], input: &str) -> Self {
-        Self::at(dir, log, args, input, None)
+        Self::at(dir, log, args, input, Some(dir))
     }
 
     /// [`Program::start`], with `$HOME` set to `home` when one is given, so

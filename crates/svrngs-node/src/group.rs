@@ -273,18 +273,12 @@ pub(crate) fn filed(rail: &crate::RingRail, group: &str) -> Option<Url> {
     read.ok().flatten().map(Into::into)
 }
 
-/// Where `new` and joining put a group's folder (v1-onboarding (d);
-/// bash-first-minute (d)): `~/svrngs/`
-/// and the group's name, which every member who joined derives alike, so
-/// their folders are one; `/`, `\` and `:` read as `-` and leading dots
-/// dropped, so the name stays one directory under it, else the id's start.
-pub fn folder_place(seed: &Seed) -> Option<PathBuf> {
-    let home = std::env::var_os("HOME").filter(|h| !h.is_empty())?;
-    Some(PathBuf::from(home).join("svrngs").join(folder_name(seed)))
-}
-
-/// The name of `seed`'s group's folder, which every member derives alike
-/// ([`folder_place`]), and which brought apps go into (carried.rs `brought`).
+/// The name of `seed`'s group's folder, where `new` and joining put it
+/// under the node's `places` (v1-onboarding (d); bash-first-minute (d)),
+/// which every member derives alike, so their folders are one; `/`, `\`
+/// and `:` read as `-` and leading dots dropped, so the name stays one
+/// directory, else the id's start. Brought apps go into it (carried.rs
+/// `brought`).
 pub(crate) fn folder_name(seed: &Seed) -> String {
     let name = seed.name().as_str().replace(['/', '\\', ':'], "-");
     match name.trim_start_matches('.') {
@@ -302,12 +296,13 @@ pub(crate) fn apart(id: &str) -> String {
 }
 
 impl crate::folder::Folders {
-    /// The group's folder kept the same at [`folder_place`] as everyone's,
-    /// as `share --folder` keeps one; or why not, said beside the join or
-    /// the `new`, which stands either way. Moved from svrngs's cli.rs
-    /// `folder_at_join`, which asked it of this node's own API.
+    /// The group's folder kept the same, at its [`folder_name`] in this
+    /// node's `places`, as everyone's, as `share --folder` keeps one; or why
+    /// not, said beside the join or the `new`, which stands either way.
+    /// Moved from svrngs's cli.rs `folder_at_join`, which asked it of this
+    /// node's own API.
     pub fn place(&self, seed: &Seed) -> (PathBuf, Result<(), String>) {
-        let Some(dir) = folder_place(seed) else {
+        let Some(dir) = self.places.as_ref().map(|at| at.join(folder_name(seed))) else {
             tracing::debug!(target: "group", group = %seed.id(), "group: no $HOME, so no folder placed");
             let why = "this computer names no home folder ($HOME)".to_string();
             return (PathBuf::from("~/svrngs"), Err(why));

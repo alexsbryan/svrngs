@@ -109,6 +109,11 @@ pub struct Folders {
     host: Arc<Host>,
     pub(crate) nudge: Arc<Notify>,
     pub(crate) data_dir: PathBuf,
+    /// Where a group's folder is placed ([`Self::place`]): `~/svrngs`, read
+    /// from `$HOME` once by the command, the edge, so no test that starts a
+    /// node can place one in the person's own (it gives its own); none when
+    /// the computer names no home.
+    pub(crate) places: Option<PathBuf>,
     /// The directories this computer syncs (syp-4 e), written by `both_ways`
     /// alone.
     syncing: watch::Sender<synced::Syncing>,
@@ -156,9 +161,10 @@ type ReadAt = (
 );
 
 impl Folders {
-    /// The store under `data_dir/blobs`, its sweep, and its provider.
+    /// The store under `data_dir/blobs`, its sweep, and its provider; a
+    /// group's folder placed under `places`.
     pub(crate) async fn start(
-        data_dir: &Path,
+        (data_dir, places): (&Path, Option<PathBuf>),
         host: Arc<Host>,
         nudge: Arc<Notify>,
     ) -> Result<(Self, BlobsProtocol), String> {
@@ -197,6 +203,7 @@ impl Folders {
             host,
             nudge,
             data_dir: data_dir.to_path_buf(),
+            places,
             syncing: watch::Sender::new(synced::syncing_in(data_dir)),
             unanswered: watch::Sender::new(BTreeMap::new()),
             layouts: watch::Sender::new(BTreeMap::new()),

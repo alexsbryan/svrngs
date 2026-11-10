@@ -201,7 +201,7 @@ async fn every_relay_down_a_join_ends_bounded_and_leaves_nothing_running() {
     let key = SigningKey::from_bytes(&[76; 32]);
     let relays = vec![one, two];
     let node = Node::start_every(
-        dir.path().to_path_buf(),
+        (dir.path().to_path_buf(), Some(dir.path().join("svrngs"))),
         key.clone(),
         &ours,
         &relays,

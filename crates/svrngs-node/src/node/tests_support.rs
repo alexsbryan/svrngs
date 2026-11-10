@@ -7,7 +7,8 @@ use super::*;
 
 impl Node {
     /// [`Node::start_every`] with the product's round. Only tests start a
-    /// node with no relays of its own to ask for.
+    /// node with no relays of its own to ask for. Its groups' folders are
+    /// placed in `data_dir`'s `svrngs`, never the person's own `~/svrngs`.
     pub async fn start(
         data_dir: PathBuf,
         key: SigningKey,
@@ -16,7 +17,16 @@ impl Node {
         api: SocketAddr,
     ) -> Result<Self, NodeError> {
         let every = crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-        Self::start_every(data_dir, key, relay, &[], seeds, api, every).await
+        let places = Some(data_dir.join("svrngs"));
+        Self::start_every((data_dir, places), key, relay, &[], seeds, api, every).await
+    }
+
+    /// This node's folders, a group's placed under `places` instead: two
+    /// computers sharing one home, as two data dirs on one computer do.
+    pub fn placing_in(&self, places: PathBuf) -> crate::folder::Folders {
+        let mut folders = self.asking.door.folders.clone();
+        folders.places = Some(places);
+        folders
     }
 
     /// The routes served at [`Node::api_addr`], behind their loopback
