@@ -331,10 +331,8 @@ impl Folders {
         let Some((name, text, by)) = found.into_iter().next() else {
             return Ok(Default::default());
         };
-        Ok((
-            text,
-            format!(", as {by} wrote in {name}'s programs/{word}.txt"),
-        ))
+        let by = format!(", as {by} wrote in {name}'s programs/{word}.txt");
+        Ok((text, by))
     }
 
     /// The text of `programs/<word>.txt` in `group` where its record places

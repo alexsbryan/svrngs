@@ -588,10 +588,8 @@ impl Folders {
         let dial_ms = ms(t0);
         let paths = conn.paths();
         let path = paths.iter().find(|p| p.is_selected());
-        let (relayed, addr) = (
-            path.as_ref().map(|p| p.is_relay()),
-            path.as_ref().map(|p| format!("{:?}", p.remote_addr())),
-        );
+        let relayed = path.as_ref().map(|p| p.is_relay());
+        let addr = path.as_ref().map(|p| format!("{:?}", p.remote_addr()));
         let rtt_ms = path.as_ref().map(|p| p.rtt().as_micros() as f64 / 1000.0);
         drop(paths);
         let mut got = std::pin::pin!(self.store.remote().execute_get(conn, request).stream());
@@ -754,11 +752,8 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                     continue;
                 }
                 ProviderMessage::Throttle(asked) => {
-                    let (get, size) = (
-                        (asked.inner.connection_id, asked.inner.request_id),
-                        asked.inner.size,
-                    );
-                    if let Some(asker) = sends.ask(get, size, asked.tx) {
+                    let get = (asked.inner.connection_id, asked.inner.request_id);
+                    if let Some(asker) = sends.ask(get, asked.inner.size, asked.tx) {
                         asker.send(Ok(())).await.ok();
                     }
                     continue;
@@ -766,10 +761,8 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
                 ProviderMessage::GetRequestReceived(asked) => asked,
                 _ => continue,
             };
-            let (hash, ranges) = (
-                asked.inner.request.hash,
-                format!("{:?}", asked.inner.request.ranges),
-            );
+            let hash = asked.inner.request.hash;
+            let ranges = format!("{:?}", asked.inner.request.ranges);
             let (conn, request) = (asked.inner.connection_id, asked.inner.request_id);
             // Each get asked of the record in a task of its own, so gets at
             // once are answered at once: in this one task 10,000 gets of a
