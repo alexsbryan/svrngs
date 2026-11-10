@@ -338,7 +338,10 @@ fn a_key_row_may_name_only_a_header_of_the_service_s_own() {
         assert!(!key_header_fits(no), "a key row naming {no:?} is refused");
     }
     let immich = Program::parse("immich").unwrap();
-    assert_eq!(key_of(&immich, ""), Some(("x-api-key", "{}", "/api/users/me")));
+    assert_eq!(
+        key_of(&immich, ""),
+        Some(("x-api-key", "{}", "/api/users/me"))
+    );
     let books = Program::parse("audiobookshelf").unwrap();
     assert_eq!(
         key_of(&books, ""),
