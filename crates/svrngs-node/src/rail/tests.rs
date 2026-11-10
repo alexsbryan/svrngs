@@ -13,7 +13,9 @@ use axum::http::StatusCode;
 
 use crate::{actor_of, Person, RingRail, Roster, SigningKey};
 
-use super::{append_act, live_drain, live_push, standing_of, LiveBuffer, RailApi, RailQuery};
+use super::{
+    append_act, live_drain, live_push, log, people, standing_of, LiveBuffer, RailApi, RailQuery,
+};
 use axum::extract::{Query, State};
 
 fn key(seed: u8) -> SigningKey {
@@ -202,7 +204,7 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     let body = serde_json::json!({ "op": "record", "payload": { "amount": 4 } });
     let resp = append_act(&rail, journal, body, None).await;
     assert_eq!(resp.status(), StatusCode::OK);
-    let resp = super::log_answer(&rail, journal).await;
+    let resp = answer(&rail, journal, log).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["complete"], true);
@@ -270,7 +272,7 @@ async fn the_log_names_whom_an_act_for_another_spoke_for_by_the_one_person_of_th
         ));
     }
     rail.ingest_all("ledger", &ops).unwrap();
-    let out = body_of(super::log_answer(&rail, "ledger").await).await;
+    let out = body_of(answer(&rail, "ledger", log).await).await;
     let whose = |what: &str| {
         let op = (out["ops"].as_array().unwrap().iter()).find(|o| o["payload"]["what"] == what);
         op.map(|o| o["on_behalf_of_key"].clone())
@@ -354,7 +356,7 @@ async fn the_people_door_answers_the_register_with_keys() {
     };
     let fixture = svrngs_core::tests_support::Fixture { act: admit_cy };
     rail.commit(journal, &fixture).unwrap().unwrap();
-    let out = body_of(super::people_answer(&rail, "ledger")).await;
+    let out = body_of(answer(&rail, "ledger", people).await).await;
     // When bo joined: the time on the `Admit` this computer stamped
     // (bash-same-name); alex started the group.
     let bo_joined = (out["people"].as_array().unwrap().iter())
@@ -374,7 +376,7 @@ async fn the_people_door_answers_the_register_with_keys() {
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want));
-    let refused = super::people_answer(&rail, "elsewhere");
+    let refused = answer(&rail, "elsewhere", people).await;
     assert_eq!(refused.status(), StatusCode::NOT_FOUND);
 }
 
@@ -407,6 +409,32 @@ fn the_live_buffer_evicts_the_oldest_and_reports_it() {
     live.push("other", said("x".into()));
     let (mine, _) = live.drain("room");
     assert!(mine.is_empty());
+}
+
+/// The record API over `rail`, as the node serves it, its transport an
+/// endpoint of this process alone.
+async fn api_of(rail: &Arc<RingRail>) -> RailApi {
+    let endpoint = crate::iroh::tests::hermetic_endpoint(7, Vec::new()).await;
+    RailApi {
+        rail: rail.clone(),
+        nudge: Arc::new(tokio::sync::Notify::new()),
+        live: Arc::new(LiveBuffer::default()),
+        transport: Arc::new(crate::iroh::IrohTransport::new(endpoint)),
+        build: Vec::new(),
+    }
+}
+
+/// What `door`, a handler of the record API's `?namespace=` routes, answers
+/// for `namespace` over `rail`, refused or not.
+async fn answer<
+    F: std::future::Future<Output = Result<axum::response::Response, axum::response::Response>>,
+>(
+    rail: &Arc<RingRail>,
+    namespace: &str,
+    door: impl FnOnce(State<RailApi>, Query<RailQuery>) -> F,
+) -> axum::response::Response {
+    let answered = door(State(api_of(rail).await), named(namespace)).await;
+    answered.unwrap_or_else(|refused| refused)
 }
 
 /// `?namespace=` naming `namespace`.

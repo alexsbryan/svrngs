@@ -415,19 +415,22 @@ pub(crate) fn ops_json(admission: &Admission) -> Option<serde_json::Value> {
 /// the roster the ops were admitted against. (svrngs: the people standing
 /// after those ops, from the register over the same read, in place of the
 /// seed they were admitted from.)
-async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
+pub async fn log(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    let namespace = &namespace_of(&q)?;
+    standing_of(&api.rail, namespace)?;
     // ONE read, admitted once: the ops, the gaps and the people all come from
     // the same admission, so no write can land between them.
-    let admission = match rail.admission(namespace) {
-        Ok(a) => a,
-        Err(e) => return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()),
-    };
+    let admission = (api.rail.admission(namespace))
+        .map_err(|e| err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     let Some(ops) = ops_json(&admission) else {
         tracing::warn!(target: "rails", namespace, "rail: the log refused — its acts could not be written out");
-        return err(
+        return Err(err(
             StatusCode::INTERNAL_SERVER_ERROR,
             "the group's acts could not be written out",
-        );
+        ));
     };
     let gaps: Vec<serde_json::Value> = admission
         .gaps()
@@ -447,7 +450,7 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
             Some((key, person, first, register.joined(first), device))
         })
         .collect();
-    Json(serde_json::json!({
+    Ok(Json(serde_json::json!({
         "namespace": namespace,
         "ops": ops,
         "gaps": gaps,
@@ -457,30 +460,24 @@ async fn log_answer(rail: &RingRail, namespace: &str) -> Response {
         // listed as standing; the `unsettled` gap says why.
         "people": (!register.unsettled).then(|| people_json(people)),
     }))
-    .into_response()
+    .into_response())
 }
 
 /// GET /v1/rail/people — the people standing in the group, each with the
 /// key they stand by, from the register (svrngs, DESIGN §3: an app needs
 /// no second source for who is in its group, nor for a key to seal to).
 /// New: upstream's apps read the mesh's roster door instead.
-fn people_answer(rail: &RingRail, namespace: &str) -> Response {
-    match standing_of(rail, namespace) {
-        Ok(people) => Json(serde_json::json!({
-            "namespace": namespace,
-            "people": standing_json(&people),
-        }))
-        .into_response(),
-        Err(refusal) => refusal,
-    }
-}
-
-/// GET /v1/rail/people.
 pub async fn people(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
 ) -> Result<Response, Response> {
-    Ok(people_answer(&api.rail, &namespace_of(&q)?))
+    let namespace = namespace_of(&q)?;
+    let people = standing_of(&api.rail, &namespace)?;
+    Ok(Json(serde_json::json!({
+        "namespace": namespace,
+        "people": standing_json(&people),
+    }))
+    .into_response())
 }
 
 /// POST /v1/rail/append.
@@ -492,16 +489,6 @@ pub async fn append(
     let namespace = namespace_of(&q)?;
     standing_of(&api.rail, &namespace)?;
     Ok(append_act(&api.rail, &namespace, body, None).await)
-}
-
-/// GET /v1/rail/log.
-pub async fn log(
-    State(api): State<RailApi>,
-    Query(q): Query<RailQuery>,
-) -> Result<Response, Response> {
-    let namespace = namespace_of(&q)?;
-    standing_of(&api.rail, &namespace)?;
-    Ok(log_answer(&api.rail, &namespace).await)
 }
 
 // ── The live lane ────────────────────────────────────────────
