@@ -610,10 +610,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) G5, an author's own change runs for them at once, carried.rs
 # `runs_as` (+15), inside the operator's ceiling for rows 10 and 12: . to
 # 21,125.
+# (2026-11-09) The economizing pass before row 12 lowers it to where it
+# landed: e05c81c2 to 56d62e46 cut 39 lines of code, b047c0fc moved
+# `svrngs --help`'s 125 lines of words out of cli.rs into a file, as the
+# guide is: . to 20,961.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 21125,
+    ".": 20961,
 
     "js": 8491,
 
