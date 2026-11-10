@@ -536,10 +536,7 @@ impl Folders {
             why.push((key.clone(), said));
             lacks = self.lacks(hash).await?;
         }
-        match lacks {
-            None => Ok(None),
-            Some(_) => Err(why),
-        }
+        lacks.map_or(Ok(None), |_| Err(why))
     }
 
     /// What of `hash` the store lacks, as a get; `None` when it holds it whole.
