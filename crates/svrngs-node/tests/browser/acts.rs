@@ -261,3 +261,75 @@ async fn the_group_page_says_what_acts_as_you_and_its_stop_holds_at_the_next_pas
     );
     drop((ada, cy));
 }
+
+in_webkit!(
+    /// **A phone's page reading a lend past the rate is refused with the
+    /// words** (EXTENSION_POINT §7, G2: "a refill at the lender's door, so
+    /// phones and computers meet one check"; until now held below the
+    /// browser alone, door/limit.rs `READS_A_MINUTE`). Ada lends a page
+    /// reading kind `k`; cy lends a shelf of it. Bo's phone opens ada's page
+    /// from the group's page, the yes, and the page reads cy's shelf at the
+    /// address it is told as fast as it can: past 600 at once it is refused
+    /// 429, `limit`, with a `Retry-After` and the words cy's door says to a
+    /// computer, and cy's shelf was asked no more than were taken. Planted,
+    /// watched failing: the door counting no reads (`lend_for` never asking
+    /// `Reads::read`), and 1,000 reads were taken.
+    a_phone_s_page_reading_past_the_rate_is_refused_with_the_words
+);
+async fn a_phone_s_page_reading_past_the_rate_is_refused_with_the_words(engine: Engine) {
+    let relay = relay().await;
+    let bo = signing(7);
+    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let ada = node(ada_dir.path(), &relay, &bo).await;
+    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
+    let page = page_origin("<!doctype html><title>ada's page</title>").await;
+    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
+    let (shelf, asked) = kept_page("cy's shelf, as text").await;
+    lend(cy_dir.path(), "shelf", shelf.port());
+
+    let seen = drive(
+        engine,
+        "read-rate.mjs",
+        json!({
+            "site": site(),
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            "read": "shelf",
+            "most": 1000,
+        }),
+        None,
+    )
+    .await;
+    eprintln!(
+        "the phone's reads: {}",
+        json!({ "taken": seen["taken"], "status": seen["status"], "refused": seen["refused"], "retry": seen["retry"], "words": seen["words"], "error": seen["error"] })
+    );
+    let taken = seen["taken"].as_u64().unwrap_or_default();
+    assert!(
+        (600..1000).contains(&taken),
+        "600 at once, then ten a second: {taken} taken"
+    );
+    assert_eq!(
+        (seen["status"].clone(), seen["refused"].clone()),
+        (json!(429), json!("limit")),
+        "{seen:#}"
+    );
+    assert!(
+        seen["retry"]
+            .as_str()
+            .is_some_and(|r| r.parse::<u64>().is_ok()),
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["words"],
+        "This app is reading shelf faster than an app may, about 600 times a minute, because cy’s computer serves it. It can read again in 1 second. Read once and keep the answer, rather than on a timer.",
+        "{seen:#}"
+    );
+    let served = asked.lock().unwrap().len() as u64;
+    assert!(
+        served <= taken,
+        "cy's shelf asked {served} times, {taken} taken"
+    );
+    drop((ada, cy));
+}
