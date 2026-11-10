@@ -1569,11 +1569,7 @@ pub(crate) async fn lend_for(
             ));
         };
         let (name, username) = told_as(&person, host.as_ref(), actor);
-        let kind = if host.is_some() {
-            Group::Guest
-        } else {
-            Group::Member
-        };
+        let kind = host.as_ref().map_or(Group::Member, |_| Group::Guest);
         let who = svrngs_core::token::Subject {
             sub: actor.to_string(),
             name,
