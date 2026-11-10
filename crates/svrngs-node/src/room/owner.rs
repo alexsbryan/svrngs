@@ -81,14 +81,12 @@ async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom>
             },
             closed => closed,
         };
-        let person = rail.standing_anywhere(&o.key).map(|(_, m)| m.person);
-        let (key, name, said) = (o.key.clone(), o.name.clone(), served.said());
         room.push(InRoom {
-            person,
-            key,
-            name,
+            person: rail.standing_anywhere(&o.key).map(|(_, m)| m.person),
+            key: o.key.clone(),
+            name: o.name.clone(),
+            said: served.said(),
             served,
-            said,
         });
     }
     room

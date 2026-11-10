@@ -210,13 +210,12 @@ pub(crate) async fn append_act(
     // Taken as a `Value` and converted here rather than as `Json<RailAct>`,
     // so a refusal is the rail's own sentence instead of axum's rejection
     // prose (ARCH §10.6).
-    let act = match RailAct::from_json(body) {
-        Ok(act) => act,
-        Err(e) => return err(StatusCode::UNPROCESSABLE_ENTITY, e.to_string()),
-    };
     // A seal is an act like any other here: `Append` refuses it as not an
     // app's (arch-seal (b); WHO_KNOWS_WHOM §3).
-    let append = Append { act };
+    let append = match RailAct::from_json(body) {
+        Ok(act) => Append { act },
+        Err(e) => return err(StatusCode::UNPROCESSABLE_ENTITY, e.to_string()),
+    };
     let done = match budget {
         Some((app, key)) => rail.commit_said(namespace, &Budgeted(append, app, key)),
         None => rail.commit_said(namespace, &append).map(|d| d.map_err(Ok)),

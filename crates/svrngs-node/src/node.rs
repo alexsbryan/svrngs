@@ -221,15 +221,12 @@ pub struct Node {
     routes: axum::Router,
     _acceptor: IrohAcceptor,
     _round: RingSyncHandle,
-    /// The room's one owner ([`crate::room::owner::spawn`]), stopped with the node.
-    _room: n0_future::task::AbortOnDropHandle<()>,
-    /// The watch on where this computer meets its groups, which says each
-    /// move ([`Host::moved`]), and the ask of its groups' own relays
-    /// ([`Host::check`]), stopped with the node.
-    _homes: n0_future::task::AbortOnDropHandle<()>,
-    _tiers: n0_future::task::AbortOnDropHandle<()>,
-    /// Play's one owner ([`crate::play::spawn`]), stopped with the node.
-    _play: n0_future::task::AbortOnDropHandle<()>,
+    /// Stopped with the node, in this order: the room's one owner
+    /// ([`crate::room::owner::spawn`]); the watch on where this computer
+    /// meets its groups, which says each move ([`Host::moved`]), and the ask
+    /// of its groups' own relays ([`Host::check`]); and play's one owner
+    /// ([`crate::play::spawn`]).
+    _tasks: [n0_future::task::AbortOnDropHandle<()>; 4],
 }
 
 /// What the round reads: the journals, the endpoint's transport, and the key
@@ -465,10 +462,7 @@ impl Node {
             routes,
             _acceptor: acceptor,
             _round: round,
-            _room: room,
-            _homes: homes,
-            _tiers: tiers,
-            _play: play,
+            _tasks: [room, homes, tiers, play],
         })
     }
 

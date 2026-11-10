@@ -314,8 +314,7 @@ async fn to(State(at): State<Asking>, Query(t): Query<To>) -> Redirect {
 /// lends as them, and when, for "What acts as you"; nothing on a computer
 /// in no group, which has no person to say it.
 async fn reached(State(at): State<Asking>) -> Response {
-    let kept = crate::door::choices::reachings(&at.door);
-    let answered = match kept {
+    let answered = match crate::door::choices::reachings(&at.door) {
         Ok(kept) => Json(kept).into_response(),
         Err(r) if r.status() == StatusCode::FORBIDDEN => {
             Json(serde_json::json!({})).into_response()
@@ -989,8 +988,7 @@ async fn at_door(
         });
     let ask = ask.method(method).uri(format!("/choices/{lend}"));
     let ask = ask.header(header::CONTENT_TYPE, "application/json");
-    let ask = ask.body(body.map_or_else(Default::default, |b| b.to_string().into()));
-    let answer = match ask {
+    let answer = match ask.body(body.map_or_else(Default::default, |b| b.to_string().into())) {
         Ok(ask) => (at.host.transport.fetch(&contact, ask).await).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),
     };

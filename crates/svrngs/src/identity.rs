@@ -33,12 +33,8 @@ use svrngs_node::actor_of;
 /// §1 keeps "node" and "key" from them; upstream's was `node_key`.)
 pub const NODE_KEY_FILE: &str = "identity";
 
-fn key_path(data_dir: &Path) -> std::path::PathBuf {
-    data_dir.join(NODE_KEY_FILE)
-}
-
-fn load_key(data_dir: &Path) -> std::io::Result<Option<SigningKey>> {
-    match fs::read(key_path(data_dir)) {
+fn load_key(path: &Path) -> std::io::Result<Option<SigningKey>> {
+    match fs::read(path) {
         Ok(bytes) => {
             let seed: [u8; 32] = bytes.as_slice().try_into().map_err(|_| {
                 std::io::Error::new(
@@ -73,7 +69,8 @@ pub enum KeyError {
 /// be read, and a fresh key that cannot be written, refuse.
 #[expect(clippy::disallowed_methods, reason = "draws a device key")]
 pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError> {
-    match load_key(data_dir) {
+    let path = data_dir.join(NODE_KEY_FILE);
+    match load_key(&path) {
         Ok(Some(key)) => {
             tracing::debug!(
                 target: "identity",
@@ -89,17 +86,14 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError
             getrandom::fill(&mut seed)
                 .unwrap_or_else(|e| panic!("failed to generate node key entropy: {e}"));
             let fresh = SigningKey::from_bytes(&seed);
-            let saved = svrngs_node::declared::write_secret(&key_path(data_dir), &fresh.to_bytes());
+            let saved = svrngs_node::declared::write_secret(&path, &fresh.to_bytes());
             saved.map_err(|(_, source)| {
                 tracing::debug!(
                     target: "identity",
                     error = %source,
                     "node_key: refused — a fresh key that cannot be kept is not this computer's"
                 );
-                KeyError::Unsaved {
-                    path: key_path(data_dir),
-                    source,
-                }
+                KeyError::Unsaved { path, source }
             })?;
             tracing::info!(
                 node_pubkey = %actor_of(&fresh),
@@ -113,10 +107,7 @@ pub fn load_or_generate_node_key(data_dir: &Path) -> Result<SigningKey, KeyError
                 error = %source,
                 "node_key: refused — the persisted key cannot be read, and no new one is made"
             );
-            Err(KeyError::Unreadable {
-                path: key_path(data_dir),
-                source,
-            })
+            Err(KeyError::Unreadable { path, source })
         }
     }
 }

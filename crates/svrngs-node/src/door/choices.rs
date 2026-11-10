@@ -145,8 +145,7 @@ pub(crate) fn judge(
 ) -> Result<(), LendRefusal> {
     match (app, said) {
         _ if !asks => Ok(()),
-        (Some(app), _) if app == own => Ok(()),
-        (Some(_), Some(Said::Yes)) => Ok(()),
+        (Some(app), _) if app == own || said == Some(Said::Yes) => Ok(()),
         (Some(_), Some(Said::Stop)) => Err(LendRefusal::Stopped),
         _ => Err(LendRefusal::Unasked),
     }

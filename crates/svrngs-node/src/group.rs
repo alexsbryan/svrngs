@@ -251,8 +251,7 @@ impl crate::node::Host {
 /// or a file that cannot be read is said at warn, and the group met at the
 /// build's relays alone.
 pub(crate) fn meeting(rail: &crate::RingRail, group: &str, build: &[Url]) -> Meeting {
-    let named = rail.register(group).map(|r| r.meets);
-    let own = match named {
+    let own = match rail.register(group).map(|r| r.meets) {
         Ok(Some(own)) => own,
         Ok(None) => filed(rail, group).into_iter().collect(),
         Err(e) => {

@@ -161,15 +161,13 @@ async fn play(at: &Asking, on: &[On], open: &mut Opened) -> Vec<Playing> {
             (Ok(_), None) => opened(at, o, (label, port), open).await,
         };
         tracing::debug!(target: "play", key = o.key, lend = %o.name, port, ?now, "play: open only while its person and its lender stand in a group together, at its label's port");
-        let person = (at.host.rail.standing_anywhere(&o.key)).map(|(_, m)| m.person);
-        let (key, name, said) = (o.key.clone(), o.name.clone(), now.said(port));
         plays.push(Playing {
-            person,
-            key,
-            name,
+            person: (at.host.rail.standing_anywhere(&o.key)).map(|(_, m)| m.person),
+            key: o.key.clone(),
+            name: o.name.clone(),
             port,
+            said: now.said(port),
             open: now,
-            said,
         });
     }
     plays
