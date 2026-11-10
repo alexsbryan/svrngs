@@ -1071,9 +1071,7 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
             got.ok()
         }
     };
-    let Some(ours) = get(page.as_str().to_string()).await else {
-        return Err(unjudged());
-    };
+    let ours = get(page.as_str().to_string()).await.ok_or_else(unjudged)?;
     let mut nobodys = [0u8; 16];
     getrandom::fill(&mut nobodys).expect("failed to draw a name nobody made");
     let theirs = get(format!("{scheme}://{}.{authority}/", hex::encode(nobodys))).await;
@@ -1644,14 +1642,12 @@ async fn serve(
             // The one rule for a name, asked before the group is kept (#138).
             let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
             let (seed, link) = new_group(node, name, person, page.as_ref(), &kept, relay).await?;
-            println!(
-                "{}",
-                Said::Made {
-                    seed: seed.clone(),
-                    link,
-                    beside
-                }
-            );
+            let made = Said::Made {
+                seed: seed.clone(),
+                link,
+                beside,
+            };
+            println!("{made}");
             // The founder's folder, where every joiner's is, so what the
             // founder puts in it is shared with no `share --folder` (Demo
             // C's dry run, finding 7).
@@ -1787,22 +1783,16 @@ async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String,
         } => {
             let seed = held(seed)?;
             let person = named(person)?;
-            format!(
-                "{}{}",
-                Said::Joined {
-                    seed: seed.clone(),
-                    person
-                },
-                folder(&seed, dir, placed)
-            )
+            let joined = Said::Joined {
+                seed: seed.clone(),
+                person,
+            };
+            format!("{joined}{}", folder(&seed, dir, placed))
         }
         JoinOutcome::AlreadyIn { seed, dir, placed } => {
             let seed = held(seed)?;
-            format!(
-                "{}{}",
-                Said::AlreadyIn(seed.clone()),
-                folder(&seed, dir, placed)
-            )
+            let already = Said::AlreadyIn(seed.clone());
+            format!("{already}{}", folder(&seed, dir, placed))
         }
         JoinOutcome::LinkRefused => return Err(Refusal::LinkRefused),
         JoinOutcome::NameTaken { holder, group } => {
