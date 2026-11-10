@@ -89,13 +89,23 @@ pub fn write_seed(dir: &Path, seed: &Seed) -> Result<(), SeedError> {
 
 /// Read the seed in `dir`, or `None` when the directory holds none.
 pub fn read_seed(dir: &Path) -> Result<Option<Seed>, SeedError> {
-    let path = dir.join(SEED_FILE);
-    let Some(raw) = kept(&path)? else {
+    read_kept(&dir.join(SEED_FILE), Seed::from_text)
+}
+
+/// The file at `path` read by `parse`, or `None` when it is not there: how
+/// the seed and the relay are read back.
+fn read_kept<T, E: ToString>(
+    path: &Path,
+    parse: impl FnOnce(&str) -> Result<T, E>,
+) -> Result<Option<T>, SeedError> {
+    let Some(raw) = kept(path)? else {
         return Ok(None);
     };
-    Seed::from_text(&raw)
-        .map(Some)
-        .map_err(|why| SeedError::Read { path, why })
+    let why = |e: E| SeedError::Read {
+        path: path.into(),
+        why: e.to_string(),
+    };
+    parse(&raw).map(Some).map_err(why)
 }
 
 /// The seed in `dir` as written, or `None` when the directory holds none:
@@ -123,16 +133,7 @@ pub fn write_relay(dir: &Path, relay: &RelayUrl) -> Result<(), SeedError> {
 
 /// The relay kept in `dir`, read dotless, or `None` when it keeps none.
 pub fn read_relay(dir: &Path) -> Result<Option<RelayUrl>, SeedError> {
-    let path = dir.join(RELAY_FILE);
-    let Some(raw) = kept(&path)? else {
-        return Ok(None);
-    };
-    crate::relay::parse(&raw)
-        .map(Some)
-        .map_err(|e| SeedError::Read {
-            path,
-            why: e.to_string(),
-        })
+    read_kept(&dir.join(RELAY_FILE), crate::relay::parse)
 }
 
 /// Write `contents` to `path`, a file in `dir`, the group's directory,
