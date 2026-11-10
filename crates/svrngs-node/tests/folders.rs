@@ -1750,3 +1750,36 @@ async fn a_group_s_programs_file_is_read_through_its_record_or_refused() {
     );
     group.close().await;
 }
+
+/// **A group's programs file whose bytes aren't here yet is refused as
+/// still being fetched, never read as no terms** (CONTRACTS §2, "Reading a
+/// contract": "a file still being fetched"). Ben writes
+/// `programs/late.txt`, and Ana's record places it; then Ben's computer
+/// stops before Ana's has its bytes, and Cy's, syncing no directory, never
+/// held them. Ana's computer refuses the file, 409, saying it is still
+/// being fetched and to share again in a moment. Planted, watched failing:
+/// bytes the store can't give read as an empty file, and Ana's computer
+/// answers 200 with no terms.
+#[tokio::test]
+async fn a_programs_file_not_here_yet_is_refused_as_still_being_fetched() {
+    let group = Group::new().await;
+    let root = tempfile::tempdir().unwrap();
+    let ben = both_ways(&group.ben, root.path()).await;
+    let (id, ben_key) = (seed("films", 9).id(), actor_of(&signing(2)));
+    let mark = |n: &Node| n.rail().digest(&id).unwrap().get(&ben_key).cloned();
+    let before = mark(&group.ben);
+    std::fs::create_dir_all(ben.join("programs")).unwrap();
+    std::fs::write(ben.join("programs/late.txt"), "- late keeps: /admin\n").unwrap();
+    let placed = || mark(&group.ben) != before && mark(&group.ana) == mark(&group.ben);
+    assert!(
+        until(&group, placed).await,
+        "Ana's record places Ben's file"
+    );
+    group.ben.endpoint().close().await;
+    let (status, said) = programs(&group.ana, "late").await;
+    assert_eq!(
+        (status, said.as_str()),
+        (409, "programs/late.txt isn't on this computer yet: it is still being fetched from the group. Wait a moment, then share again.")
+    );
+    group.close().await;
+}
