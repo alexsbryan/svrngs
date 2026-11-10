@@ -202,7 +202,7 @@ pub(crate) async fn append_act(
     rail: &RingRail,
     namespace: &str,
     body: serde_json::Value,
-    budget: Option<(&crate::lend::AppName, &str)>,
+    budget: Option<(&crate::lend::AppName, &str, usize)>,
 ) -> Response {
     if let Err(refusal) = stamp(rail, namespace, &body) {
         return refusal;
@@ -217,10 +217,10 @@ pub(crate) async fn append_act(
         Err(e) => return err(StatusCode::UNPROCESSABLE_ENTITY, e.to_string()),
     };
     let done = match budget {
-        Some((app, key)) => rail.commit_said(namespace, &Budgeted(append, app, key)),
+        Some((app, key, n)) => rail.commit_said(namespace, &Budgeted(append, app, key, n)),
         None => rail.commit_said(namespace, &append).map(|d| d.map_err(Ok)),
     };
-    if let (Ok(Err(Err(wait))), Some((app, _))) = (&done, budget) {
+    if let (Ok(Err(Err(wait))), Some((app, ..))) = (&done, budget) {
         return budget_refused(app.as_str(), *wait);
     }
     match done {

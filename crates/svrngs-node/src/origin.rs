@@ -531,8 +531,9 @@ enum Unwritten {
 /// under the kind the lend declares, in a group its lender stands in too,
 /// and carried to the lender before the page sees the answer, which never
 /// carries the header on. One refused, none is written: the answer is
-/// withheld and the person told why. Past the app's budget, though, the
-/// acts before it stay written.
+/// withheld and the person told why. Past the app's budget, the same: its
+/// first act of an app in a group is written only if all of that answer's
+/// fit (EXTENSION_POINT §7, G1).
 async fn appended(
     at: &Asking,
     label: &Label,
@@ -603,8 +604,13 @@ async fn appended(
     // An app's bug reaches here as the person; a program with the token is
     // the person, outside the budget (`carried::spent`).
     let granted = matches!(appending, Appending::Granted);
-    for (group, act, app) in acts {
-        let budget = granted.then_some((&app, at.host.actor.as_str()));
+    // How many of the answer's acts of each one's group and app are still
+    // to be written, so the first is refused unless all of them fit.
+    let of = |i: usize| (&acts[i].0, &acts[i].2);
+    let left = |i: usize| (acts[i..].iter()).filter(|o| (&o.0, &o.2) == of(i)).count();
+    let left: Vec<usize> = (0..acts.len()).map(left).collect();
+    for ((group, act, app), left) in acts.into_iter().zip(left) {
+        let budget = granted.then_some((&app, at.host.actor.as_str(), left));
         let written = crate::rail::append_act(rail, &group, act, budget).await;
         tracing::debug!(target: "origin", %label, group, status = written.status().as_u16(), carried = contact.is_some(), "origin: a lent app's act, written by this computer as its own person, then carried to the lender");
         if !written.status().is_success() {

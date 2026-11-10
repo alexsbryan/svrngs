@@ -498,7 +498,7 @@ impl Folders {
         if (act.get("corrects")).is_some_and(|id| !of_kind(ops, app.as_str(), id)) {
             return Err(NOT_ITS_OWN);
         }
-        let answer = crate::rail::append_act(rail, group, act, Some((app, key))).await;
+        let answer = crate::rail::append_act(rail, group, act, Some((app, key, 1))).await;
         tracing::debug!(target: "folder", group, %app, %person, status = answer.status().as_u16(), "carried: an act written as the person");
         if answer.status().is_success() {
             self.nudge.notify_one();
@@ -526,8 +526,9 @@ pub(crate) fn of_kind(ops: &[Value], kind: &str, id: &Value) -> bool {
 /// each entry for good (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G1).
 pub(crate) const WRITES_AN_HOUR: i64 = 200;
 
-/// How many seconds before one more entry of the app `app` from the key
-/// `key` passes [`WRITES_AN_HOUR`], none if it does now: a refill, read
+/// How many seconds before `more` entries of the app `app` from the key
+/// `key` pass [`WRITES_AN_HOUR`], none if they do now, so one answer's acts
+/// fit whole or none is written: a refill, read
 /// from the record so a restart forgets nothing, walking its person's
 /// entries of that app in time order as GCRA does in integers. An entry
 /// is one under `<app>/` or, since each is kept by every member for good, a
@@ -536,7 +537,7 @@ pub(crate) const WRITES_AN_HOUR: i64 = 200;
 /// at `on_behalf_of` and `/carry` only at the signature and standing
 /// (rail.rs), so a phone's fast clock reaches this walk, and must not lock
 /// its person out.
-pub(crate) fn spent(read: &Admission, app: &str, key: &str) -> i64 {
+pub(crate) fn spent(read: &Admission, app: &str, key: &str, more: usize) -> i64 {
     let first = read.membership().person_of(key).map_or(key, |(f, _)| f);
     // An unreadable clock is said at warn (`unix_secs`) and lets the write
     // through, as the window did: read as far past every stamp, not as 0.
@@ -548,8 +549,8 @@ pub(crate) fn spent(read: &Admission, app: &str, key: &str) -> i64 {
     let entry = |o: &&Value| o["person_key"] == first && (own(o) || voids(o));
     let entries = ops.iter().filter(entry);
     let stamps = entries.filter_map(|o| o["ts_unix"].as_i64());
-    let wait = wait_after(stamps, now);
-    tracing::debug!(target: "folder", app, key, wait, "carried: this app's entries as this person, and the seconds before it may write again");
+    let wait = wait_after(stamps.chain(std::iter::repeat_n(now, more - 1)), now);
+    tracing::debug!(target: "folder", app, key, more, wait, "carried: this app's entries as this person, and the seconds before it may write as many more");
     wait
 }
 
@@ -586,16 +587,20 @@ pub(crate) fn line_spent(read: &Admission, line: &Op<SignedOp>) -> Option<Respon
     };
     let stated = part(&body["payload"]).or_else(|| part(&body["replacement"]));
     let app = stated.or_else(of_corrected)?;
-    let wait = (!read.membership().counts(&line.id)).then(|| spent(read, &app, line.stands_as()));
+    let wait =
+        (!read.membership().counts(&line.id)).then(|| spent(read, &app, line.stands_as(), 1));
     (wait.filter(|w| *w > 0)).map(|w| budget_refused(&app, w))
 }
 
 /// [`Append`] under the group's write lock, an app's budget counted there
-/// so writes in flight at once cannot pass it between count and commit.
+/// so writes in flight at once cannot pass it between count and commit:
+/// the app, the key, and how many of one answer's acts are still to be
+/// written, this one and those after it ([`spent`]'s `more`).
 pub(crate) struct Budgeted<'a>(
     pub(crate) Append,
     pub(crate) &'a AppName,
     pub(crate) &'a str,
+    pub(crate) usize,
 );
 
 impl Command for Budgeted<'_> {
@@ -603,7 +608,7 @@ impl Command for Budgeted<'_> {
     const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
-        let wait = spent(before, self.1.as_str(), self.2);
+        let wait = spent(before, self.1.as_str(), self.2, self.3);
         (wait == 0).then_some(()).ok_or(Err(wait))?;
         self.0.decide(before).map_err(Ok)
     }

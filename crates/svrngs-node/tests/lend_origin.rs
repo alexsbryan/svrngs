@@ -1075,6 +1075,63 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     alex.endpoint().close().await;
 }
 
+/// **A lent app's answer is written whole or not at all at its budget**
+/// (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G1, "Left: at the
+/// limit a lent app's earlier acts in that answer stay written"). Alex has
+/// written 199 of Sam's `events` entries this hour, one short of the
+/// budget, and Sam's app answers his press with two acts: neither is
+/// written, and he is told the limit's words with a `Retry-After`. One act
+/// then fits, and is written. Planted, watched failing: each act counted
+/// alone (`left` always 1), and the first of the two is written before the
+/// second is refused.
+#[tokio::test]
+async fn a_lent_app_s_answer_is_written_whole_or_not_at_all_at_its_budget() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    let port = appending_origin().await.port();
+    declare(sam_dir.path(), "events", port, "events", &[]);
+    for n in 0..199 {
+        let act =
+            serde_json::json!({ "op": "record", "payload": { "kind": "events/old", "n": n } });
+        let act = RailAct::from_json(act).unwrap();
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        alex.rail().commit(NS, &fixture).unwrap().unwrap();
+    }
+    let host = {
+        let label = Label::of(&signing(2).verifying_key().to_bytes(), "events");
+        format!("{label}.localhost:{}", alex.api_addr().port())
+    };
+    let post = |acts: serde_json::Value| {
+        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\nx-test-append: {acts}\r\n")
+    };
+    let coming = |n: u8| serde_json::json!({ "group": NS, "op": { "kind": "coming", "event": n } });
+    let on = &Browser::of(&alex);
+    let written = |node: &Node| {
+        written(node)
+            .iter()
+            .filter(|(k, ..)| k == "events/coming")
+            .count()
+    };
+
+    let (head, sock) = asked(on, &host, &post(serde_json::json!([coming(1), coming(2)]))).await;
+    let page = format!("{head}{}", body(sock).await);
+    eprintln!("two acts, room for one: {page}");
+    assert!(page.starts_with("HTTP/1.1 429"), "{page}");
+    assert!(
+        page.contains("is writing faster than an app may here"),
+        "{page}"
+    );
+    assert!(!header_values(&head, "retry-after").is_empty(), "{head}");
+    assert_eq!(written(&alex), 0, "neither of the two is written");
+
+    let (head, sock) = asked(on, &host, &post(serde_json::json!([coming(3)]))).await;
+    body(sock).await;
+    assert!(head.starts_with("HTTP/1.1 303"), "one act fits: {head}");
+    assert_eq!(written(&alex), 1, "and is written");
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}
+
 /// **A lent app writes no part that is a folder in its group** (svrn-docs
 /// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §3, §6 8). `Money` is a
 /// folder in the house (`apps/Money/`, the shelf's); Sam lends a server of
