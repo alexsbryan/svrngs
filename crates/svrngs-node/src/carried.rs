@@ -59,6 +59,7 @@ use crate::iroh::Dialer;
 use crate::lend::{AppName, Lend, Program, Source};
 use crate::node::Asking;
 use crate::register::{Member, Standing};
+use crate::surface::AppRoute;
 
 /// Where a carried app's page asks its own acts, and writes one, at its
 /// own origin.
@@ -111,6 +112,10 @@ fn traced(group: &str, refused: Withheld, why: &dyn std::fmt::Display) -> Withhe
     tracing::warn!(target: "folder", group, %why, said = refused.2, "carried: refused, and the cause");
     refused
 }
+
+/// What the door asks of a carried app: the key asking, the path asked,
+/// and the route that path names, parsed once by the door.
+pub(crate) type Opened<'a> = (&'a str, &'a str, AppRoute);
 
 /// A carried app's answer, or why the door gives its own.
 type Given = Result<Response, Withheld>;
@@ -300,15 +305,16 @@ impl Folders {
     }
 
     /// `req`, asked at `path` of the app `lend` carried in `group` by the
-    /// key `key` (the door's): refused unless that key stands in the group,
-    /// else the route's answer or a file's; each under [`FLOOR`].
-    pub(crate) async fn open(&self, lend: &Lend, at: (&str, &str), req: Request) -> Response {
-        let (Source::Carried(app, group), (key, path)) = (&lend.source, at) else {
+    /// key `key` (the door's), the route it names `route`: refused unless
+    /// that key stands in the group, else the route's answer or a file's;
+    /// each under [`FLOOR`].
+    pub(crate) async fn open(&self, lend: &Lend, at: Opened<'_>, req: Request) -> Response {
+        let (Source::Carried(app, group), (key, path, route)) = (&lend.source, at) else {
             return said(NOT_ITS_GROUP);
         };
         let answered = match self.host.rail.standing(group) {
-            Ok(Standing::Members(people)) if people.contains_key(key) => match path {
-                ACTS => self.acts((app, group), (&people, key), req).await,
+            Ok(Standing::Members(people)) if people.contains_key(key) => match route {
+                AppRoute::Acts => self.acts((app, group), (&people, key), req).await,
                 _ => self.file(group, app, path, &people[key]).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),

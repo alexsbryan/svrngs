@@ -72,3 +72,36 @@ fn a_phone_and_a_computer_hold_one_rule_for_a_lends_answer_at_a_page() {
         "web/lend.js inert does not keep {kept}"
     );
 }
+
+/// **An app's routes parse once, as the paths they replaced were read**
+/// (svrn-docs EXTENSION_POINT §8, ARCH 9): `/svrngs/acts` and the two
+/// exact routes by their path alone, the query aside; a stop only with a
+/// label and the suffix; any path beginning `/svrngs-lend` a read, its
+/// label none when it names none and its tail the rest with the query, as
+/// `routed` split it; every other path the app's own. Planted: the query
+/// left on the path, and `/svrngs-reads?x=1` is the app's own; watched
+/// failing.
+#[test]
+fn an_app_s_routes_parse_once_as_the_paths_they_replaced() {
+    let films = Label::of(&[2; 32], "films");
+    let stop = format!("/svrngs-reads/{films}/svrngs-stop");
+    for (asked, route) in [
+        ("/svrngs/acts", AppRoute::Acts),
+        ("/svrngs/acts?n=1", AppRoute::Acts),
+        ("/svrngs-reads", AppRoute::Reads),
+        ("/svrngs-reads?x=1", AppRoute::Reads),
+        ("/svrngs-reads/", AppRoute::Own),
+        (&stop, AppRoute::Stop(films.clone())),
+        ("/svrngs-reads/not a label/svrngs-stop", AppRoute::Own),
+        ("/svrngs-to?lender=a&lend=b", AppRoute::To),
+        ("/svrngs-lendx", AppRoute::Lend(None, "/".into())),
+        ("/svrngs-lend/films", AppRoute::Lend(None, "/".into())),
+        ("/index.html", AppRoute::Own),
+        ("/", AppRoute::Own),
+    ] {
+        assert_eq!(AppRoute::of(asked), route, "{asked}");
+    }
+    let read = format!("/svrngs-lend/{films}/Items?x=/y");
+    let tail = "/Items?x=/y".to_string();
+    assert_eq!(AppRoute::of(&read), AppRoute::Lend(Some(films), tail));
+}

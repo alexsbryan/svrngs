@@ -39,7 +39,8 @@ use std::collections::BTreeMap;
 
 use svrngs_core::pass::{Label, Pass, Whose};
 
-use crate::door::{self, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER, REFUSED_HEADER};
+use crate::door::REFUSED_HEADER;
+use crate::door::{self, choices::Said, Door, LendRefusal, Who, LEND_ROUTE, PASS_HEADER};
 use crate::folder::carried::Handled;
 use crate::iroh::Contact;
 use crate::lend::{AppName, Offered, Program};
@@ -47,7 +48,7 @@ use crate::node::Asking;
 use crate::oidc::provider::same;
 use crate::register::{Register, RemovalSaid};
 use crate::session::{Shown, AS_PATH};
-use crate::surface::{seed_of, LEND_PATH, READS_PATH, STOP_SUFFIX, TO_PATH};
+use crate::surface::{seed_of, AppRoute};
 
 /// Whether a lent app's answer may write entries as the person asking
 /// ([`APPEND_HEADER`]), by what the request proved: decided by the door
@@ -295,8 +296,8 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
             "an origin's proof cannot name another app",
         ));
     }
-    let path = req.uri().path();
-    let (reads, to) = (path == READS_PATH, path == TO_PATH);
+    let route = AppRoute::of(req.uri().path_and_query().map_or("/", |p| p.as_str()));
+    let (reads, to) = (route == AppRoute::Reads, route == AppRoute::To);
     if reads || to {
         if app != label {
             tracing::debug!(target: "origin", %label, %app, to, "origin: refused — another app's page asks the lends this one reads, or opens one");
@@ -310,18 +311,16 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         tracing::debug!(target: "origin", %label, "origin: its own page asks the lends it reads; reaching an app grants no authority over its capabilities");
         return crate::surface::reads(&at, &label).await;
     }
-    if path.starts_with(LEND_PATH) && matches!(label.whose(), Whose::Carried) {
-        return routed(&at, (label, app), req).await;
-    }
-    let stop = req.uri().path().strip_prefix(READS_PATH);
-    let stop = stop.and_then(|p| p.strip_prefix('/')?.strip_suffix(STOP_SUFFIX));
-    if let Some(lend) = stop
-        .and_then(Label::parse)
-        .filter(|_| req.method() == Method::POST)
-    {
-        tracing::debug!(target: "origin", %label, %app, %lend, "origin: a page stops its app using a lend");
-        let pass = own_pass(&at, &app, &lend);
-        return Ok(crate::home::say(&at, &lend, app, crate::door::choices::Said::Stop, pass).await);
+    match route {
+        AppRoute::Lend(read, tail) if matches!(label.whose(), Whose::Carried) => {
+            return routed(&at, (label, app), (read, tail), req).await;
+        }
+        AppRoute::Stop(lend) if req.method() == Method::POST => {
+            tracing::debug!(target: "origin", %label, %app, %lend, "origin: a page stops its app using a lend");
+            let pass = own_pass(&at, &app, &lend);
+            return Ok(crate::home::say(&at, &lend, app, Said::Stop, pass).await);
+        }
+        _ => {}
     }
     if app != label {
         // A page that reads the lend is told its person's yes is missing,
@@ -408,21 +407,20 @@ fn inert(answer: Response) -> Handled {
     Ok(Response::from_parts(parts, body))
 }
 
-/// `req` at the carried app `label`'s [`LEND_PATH`]`/<read>/<path>`, from
-/// its own page alone: a read of the lend `read` at `path`, as this
+/// `req` at the carried app `label`'s [`AppRoute::Lend`], `read` at `tail`,
+/// from its own page alone: a read of the lend `read` at `tail`, as this
 /// computer's person ([`crate::surface::reaches`], [`reach`]), never
 /// signing its reply. The request is made anew too: GET or HEAD, no body,
 /// and of the page's headers only `Accept`, so "reads" is all it can
 /// express; the answer comes back through [`inert`].
-async fn routed(at: &Asking, (label, app): (Label, Label), req: Request) -> Handled {
+async fn routed(
+    at: &Asking,
+    (label, app): (Label, Label),
+    (read, tail): (Option<Label>, String),
+    req: Request,
+) -> Handled {
     let closed = |why: &str| LendRefusal::closed(why.to_string());
-    let asked = req.uri().path_and_query().map_or("/", |p| p.as_str());
-    let named = (asked.strip_prefix(LEND_PATH)).and_then(|r| r.strip_prefix('/'));
-    let (read, tail) = named.and_then(|r| r.split_once('/')).unwrap_or_default();
-    let (read, tail) = (
-        Label::parse(read).filter(|_| app == label),
-        format!("/{tail}"),
-    );
+    let read = read.filter(|_| app == label);
     tracing::debug!(target: "origin", %label, %app, read = ?read.as_ref().map(Label::as_str), "origin: a carried app's page reaches a lend at its own origin, refused from another page or naming none");
     let read =
         read.ok_or_else(|| closed("only an app's own page reads a lend through its origin"))?;

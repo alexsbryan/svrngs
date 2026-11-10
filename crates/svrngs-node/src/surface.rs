@@ -34,6 +34,9 @@
 //!   its page ([`to`]; docs/APP_ACCESS_AND_STOP.md A4): one lend of the
 //!   app's group, sent on to its plain origin, or, with `whether`, told
 //!   only whether it opens.
+//!
+//!   These three at an app's origin, and a carried app's own `/svrngs/acts`
+//!   (`crate::folder::carried`), are parsed once, into [`AppRoute`].
 //! - `POST /v1/sign?app=<app>` — the body's bytes signed for the app by
 //!   this computer's own key, the one that signs its acts, answered as that
 //!   key and the signature, each in hex (onair-sign, [`sign`]). The core
@@ -52,7 +55,7 @@ use svrngs_core::pass::{Label, Whose};
 
 use crate::door::choices;
 use crate::door::LendRefusal;
-use crate::folder::carried::Handled;
+use crate::folder::carried::{Handled, ACTS};
 use crate::group::Namesake;
 use crate::lend::Source;
 use crate::node::{Asking, Groups, Lending, Unlisted};
@@ -90,6 +93,48 @@ pub const TO_PATH: &str = "/svrngs-to";
 /// `<LEND_PATH>/<label>/<path>`: its page's CSP lets it ask nowhere else
 /// (COMMUNITY_APPS §6.2), so svrngs carries it ([`crate::origin`]).
 pub const LEND_PATH: &str = "/svrngs-lend";
+
+/// What a page asks of svrngs at its app's own origin, parsed once from
+/// the path and query asked, a closed set (ARCH 9; svrn-docs
+/// `rings/current/EXTENSION_POINT.md` §3, §8): [`crate::origin`]'s `lent`
+/// and `routed`, and the door's carried app, `crate::folder::carried`,
+/// each read this, never the path again.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum AppRoute {
+    /// [`ACTS`]: a carried app's own part of the record.
+    Acts,
+    /// [`READS_PATH`]: the lends it reads ([`reads`]).
+    Reads,
+    /// `<READS_PATH>/<label><STOP_SUFFIX>`: its own stop of that lend.
+    Stop(Label),
+    /// [`TO_PATH`]: one lend of its group, opened ([`to`]).
+    To,
+    /// `<LEND_PATH>/<label>/<path>`: a read of that lend at that path, its
+    /// query kept; no label when the path names none.
+    Lend(Option<Label>, String),
+    /// Anything else: the app's own, a file or its lend's own path.
+    Own,
+}
+
+impl AppRoute {
+    /// The route `asked`, a path and its query, names.
+    pub(crate) fn of(asked: &str) -> Self {
+        let path = asked.split('?').next().unwrap_or_default();
+        let stop = (path.strip_prefix(READS_PATH)).and_then(|p| p.strip_prefix('/'));
+        let stop = stop.and_then(|p| Label::parse(p.strip_suffix(STOP_SUFFIX)?));
+        match path {
+            ACTS => Self::Acts,
+            READS_PATH => Self::Reads,
+            TO_PATH => Self::To,
+            _ if path.starts_with(LEND_PATH) => {
+                let named = (asked.strip_prefix(LEND_PATH)).and_then(|r| r.strip_prefix('/'));
+                let (read, tail) = named.and_then(|r| r.split_once('/')).unwrap_or_default();
+                Self::Lend(Label::parse(read), format!("/{tail}"))
+            }
+            _ => stop.map_or(Self::Own, Self::Stop),
+        }
+    }
+}
 
 /// The routes, for [`crate::api::router`] to serve behind its check, on
 /// the node's one state ([`Asking`]).

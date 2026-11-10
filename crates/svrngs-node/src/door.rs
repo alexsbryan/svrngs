@@ -101,6 +101,7 @@ use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered, Source};
 use crate::network::Whereabouts;
 use crate::ring_routes::err;
+use crate::surface::AppRoute;
 use crate::{register::Visiting, Person, RingRail};
 use limit::{Counts, Reads, Verdict, READS_A_MINUTE};
 use svrngs_core::pass::{Label, Pass};
@@ -1527,8 +1528,8 @@ pub(crate) async fn lend_for(
     let port = match &lend.source {
         Source::Port(port) => *port,
         Source::Carried(carried, group) => {
-            let writes =
-                service_path == crate::folder::carried::ACTS && req.method() != Method::GET;
+            let route = AppRoute::of(&service_path);
+            let writes = route == AppRoute::Acts && req.method() != Method::GET;
             // Sticky through a Stop or a later version: what it read may
             // still sit in its storage. Reads and the record stay apart.
             let reader = writes
@@ -1538,7 +1539,7 @@ pub(crate) async fn lend_for(
                 let why = "An app that reads your friends’ apps can’t write in the group’s record.";
                 return Err(LendRefusal::closed(why));
             }
-            let opened = (door.folders).open(&lend, (device.as_str(), &service_path), req);
+            let opened = (door.folders).open(&lend, (device.as_str(), &service_path, route), req);
             return Ok(opened.await);
         }
         Source::Raw(..) => {

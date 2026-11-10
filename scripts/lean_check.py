@@ -601,10 +601,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) G2, an app's reads of a lend: 600 at once, then ten a second
 # (+36, js +2), inside the operator's ceiling for rows 10 and 12: . to 20,964,
 # js to 8,492.
+# (2026-11-09) An app's routes parsed once, surface.rs `AppRoute` (+27, the
+# enum and its parser in place of 12 lines of comparisons), inside the
+# operator's ceiling for rows 10 and 12: . to 20,991.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20964,
+    ".": 20991,
 
     "js": 8492,
 
