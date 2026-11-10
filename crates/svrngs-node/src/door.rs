@@ -72,9 +72,13 @@
 //! out of its lend — a `..` segment, an encoded `.` or `/` — as
 //! `route_by_prefix` refuses one (`iroh_routed_forward.rs:318-337`); a lend
 //! this computer does not declare; a path the lend refuses
-//! ([`crate::lend::RefusedPath::covers`]); and a newcomer past the lend's
-//! limit. Each refusal, and the answer for a service that does not answer,
-//! is marked as svrngs's, which ([`LendRefusal`]); the service's own answers never are.
+//! ([`crate::lend::RefusedPath::covers`]); a newcomer past the lend's
+//! limit; and another app's read past [`limit::READS_A_MINUTE`] as one
+//! person, `429` with `Retry-After` (G2): counted here, at the lender's
+//! door, which every app's read reaches, a computer's page by its own pass
+//! and a phone's by the pass it holds. Each refusal, and the answer for a
+//! service that does not answer, is marked as svrngs's, which
+//! ([`LendRefusal`]); the service's own answers never are.
 //! A browser's tab asking for a page is shown svrngs's own answer as one ([`paged`]).
 
 use std::num::NonZeroU16;
@@ -98,7 +102,7 @@ use crate::lend::{self, Lend, LendName, Offered, Source};
 use crate::network::Whereabouts;
 use crate::ring_routes::err;
 use crate::{register::Visiting, Person, RingRail};
-use limit::{Counts, Verdict};
+use limit::{Counts, Reads, Verdict, READS_A_MINUTE};
 use svrngs_core::pass::{Label, Pass};
 use svrngs_core::token::Group;
 
@@ -239,7 +243,8 @@ pub enum LendRefusal {
     /// its host left (guests-door).
     Ended,
     /// An app wrote as many entries as its budget allows
-    /// (`crate::folder::carried::WRITES_AN_HOUR`).
+    /// (`crate::folder::carried::WRITES_AN_HOUR`), or read a lend as often
+    /// as its rate allows ([`limit::READS_A_MINUTE`]).
     Limit,
 }
 
@@ -459,13 +464,15 @@ pub fn holders_router(door: Door) -> axum::Router {
 pub struct Using(mpsc::UnboundedSender<Use>);
 
 enum Use {
-    /// A person, at a guessed whereabouts, asks for a lend; the verdict is
-    /// answered with the hold of a use let in, which ends it when dropped
-    /// — so an asker gone before hearing ends its own.
+    /// A person, at a guessed whereabouts, asks for a lend, through the
+    /// app reading it, if one is; the verdict is answered with the hold of
+    /// a use let in, which ends it when dropped — so an asker gone before
+    /// hearing ends its own.
     Ask(
         Box<Lend>,
         String,
         Whereabouts,
+        Option<Label>,
         oneshot::Sender<(Verdict, Option<InFlight>)>,
     ),
     Ended(LendName, String),
@@ -486,12 +493,16 @@ impl Using {
         let (tx, mut rx) = mpsc::unbounded_channel::<Use>();
         let hold = tx.downgrade();
         tokio::spawn(async move {
-            let mut counts = Counts::default();
+            let (mut counts, mut reads) = (Counts::default(), Reads::default());
             while let Some(u) = rx.recv().await {
                 let now = now();
                 match u {
-                    Use::Ask(lend, actor, whereabouts, answer) => {
-                        let verdict = counts.ask(&lend, &actor, whereabouts, now);
+                    Use::Ask(lend, actor, whereabouts, app, answer) => {
+                        // An app's read is held to its rate before its person is counted.
+                        let at = |app| (lend.name.clone(), actor.clone(), app);
+                        let wait = app.and_then(|app| reads.read(at(app), now));
+                        let verdict = (wait.map(Verdict::TooFast))
+                            .unwrap_or_else(|| counts.ask(&lend, &actor, whereabouts, now));
                         let held = match (verdict, hold.upgrade()) {
                             (Verdict::In { .. }, Some(using)) => Some(InFlight {
                                 using,
@@ -517,24 +528,20 @@ impl Using {
         Self(tx)
     }
 
-    /// `actor`, at `whereabouts`, asks for `lend`: the verdict, and the
-    /// hold of a use let in; `None` when the count's task is gone, which is
-    /// no verdict at all.
+    /// `actor`, at `whereabouts`, asks for `lend`, through the app `app`
+    /// reading it, if one is: the verdict, and the hold of a use let in;
+    /// `None` when the count's task is gone, which is no verdict at all.
     async fn ask(
         &self,
         lend: &Lend,
         actor: &str,
         whereabouts: Whereabouts,
+        app: Option<&Label>,
     ) -> Option<(Verdict, Option<InFlight>)> {
         let (answer, told) = oneshot::channel();
-        self.0
-            .send(Use::Ask(
-                Box::new(lend.clone()),
-                actor.to_string(),
-                whereabouts,
-                answer,
-            ))
-            .ok()?;
+        let (lend, actor) = (Box::new(lend.clone()), actor.to_string());
+        let asked = Use::Ask(lend, actor, whereabouts, app.cloned(), answer);
+        self.0.send(asked).ok()?;
         told.await.ok()
     }
 
@@ -1615,7 +1622,12 @@ pub(crate) async fn lend_for(
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
     let whereabouts = crate::network::guess(observed.as_ref().and_then(|o| o.addr));
-    let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts).await else {
+    // Another app's read is held to its rate: a person's own open, and a
+    // program with the token, which is theirs, are not an app's reads.
+    let reading = app
+        .as_ref()
+        .filter(|_| matches!(admitted, Admit::Readers | Admit::Bare));
+    let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts, reading).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return Err(LendRefusal::fault(UNCOUNTED));
     };
@@ -1624,6 +1636,11 @@ pub(crate) async fn lend_for(
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, using, limit,
                 "door: refused — as many people as the lend's limit are using it");
             return Err(busy(&lend, using, limit));
+        }
+        Verdict::TooFast(wait) => {
+            tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, app = ?reading.map(Label::as_str), ?wait,
+                "door: refused — an app reading this lend as this person faster than its rate");
+            return Err(read_too_fast(door, &lend, wait));
         }
         Verdict::Home => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.as_ref().and_then(|o| o.addr),
@@ -1682,6 +1699,18 @@ struct Told {
     /// The headers [`admit`]'s credential sends, the lend's own or the
     /// readers', none for an app's bare read.
     secret: Vec<(HeaderName, HeaderValue)>,
+}
+
+/// An app past [`READS_A_MINUTE`] of `lend` told so, `wait` before it may
+/// read again, in `Retry-After` too, since agents and fetch wrappers read it.
+fn read_too_fast(door: &Door, lend: &Lend, wait: Duration) -> Response {
+    let secs = wait.as_secs() + u64::from(wait.subsec_nanos() > 0);
+    let by = lender_of(door).map_or("the lender’s computer".into(), |p| {
+        format!("{p}’s computer")
+    });
+    let words = format!("This app is reading {} faster than an app may, about {READS_A_MINUTE} times a minute, because {by} serves it. It can read again in {secs} {}. Read once and keep the answer, rather than on a timer.", lend.name, if secs == 1 { "second" } else { "seconds" });
+    let refused = LendRefusal::Limit.say(StatusCode::TOO_MANY_REQUESTS, words);
+    ([(header::RETRY_AFTER, secs.to_string())], refused).into_response()
 }
 
 /// The refusal of a newcomer past `lend`'s `limit`, `using` people counted:

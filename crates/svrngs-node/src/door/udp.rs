@@ -249,7 +249,7 @@ pub(super) async fn admitted(lent: &Lending<'_>, what: &str) -> Result<Option<In
     };
     let whose = member.person_key;
     let at = crate::network::guess(Via(conn.clone()).observe().and_then(|o| o.addr));
-    match door.using.ask(lend, &whose, at).await {
+    match door.using.ask(lend, &whose, at, None).await {
         Some((Verdict::Full { using, limit }, _)) => {
             tracing::info!(target: "door", person = whose, lend = %lend.name, what, using, limit,
                 "raw: a use refused — as many people as the lend's limit are using it");

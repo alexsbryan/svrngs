@@ -598,12 +598,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # . to 20,925, js to 8,490.
 # (2026-11-09) Each rung printed by a name a person reads (+3, this file is
 # counted), inside the operator's ceiling of 21,150: . to 20,928.
+# (2026-11-09) G2, an app's reads of a lend: 600 at once, then ten a second
+# (+36, js +2), inside the operator's ceiling for rows 10 and 12: . to 20,964,
+# js to 8,492.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20928,
+    ".": 20964,
 
-    "js": 8490,
+    "js": 8492,
 
     "swift": 1,
 }

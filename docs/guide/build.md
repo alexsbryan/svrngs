@@ -261,6 +261,12 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
   your app reading lends, a `POST` to `svrngs/acts` is refused for them, even
   after a Stop or in a later version. An app that writes to the record reads no
   lends.
+- **About ten times a second.** Your app reads each lend up to 600 times at
+  once as one person, then ten times a second. Past that, svrngs answers 429 with
+  `x-svrngs-refused: limit`, a `Retry-After` in seconds, and words that say
+  why. Movie Night reads each library once a search, so only a loop or a
+  timer reaches it, and that's what it's for: a friend's computer answers
+  every read.
 - **Data only.** Your page gets `application/json`, `text/plain`, or a JPEG,
   PNG or WebP image, with its status and none of the lend's
   other headers. Any other type is refused `closed`.
@@ -321,7 +327,8 @@ signs with ES256, and carries no email address, because svrngs has none.
 Whenever svrngs answers in your app's place, its answer carries
 `x-svrngs-refused`, naming why: `away` (the lending computer didn't answer),
 `closed`, `unlent`, `path`, `full`, `fault`, `unasked`, `stopped`, `limit`
-(your app wrote its hour's entries), and a few more. Your app's own answers never carry it. A program gets JSON,
+(your app wrote its hour's entries, or read a lend faster than once a
+second), and a few more. Your app's own answers never carry it. A program gets JSON,
 `{"error": "...", "kind": "..."}`; a browser tab gets a page of the words.
 
 The loopback API answers programs only: a call from a page in a browser is
@@ -353,6 +360,10 @@ refused, and so is one without the token.
   18 seconds."*: your `POST`s to `svrngs/acts`, or `x-svrngs-append`
   entries, reached the limit. Look for a loop that writes. To save on every
   change, wait for a pause first.
+- *"This app is reading films faster than an app may, about 600 times a
+  minute, because Sam’s computer serves it. It can read again in 1 second.
+  Read once and keep the answer, rather than on a timer."*: your app's reads
+  of one lend reached the limit. Look for a loop or a timer that reads.
 - *"Ana’s hello writes only its own part of the group’s record, so it was
   not saved."*, or *"… wrote in a group you and its lender are not both in,
   so it was not saved."*: an `x-svrngs-append` entry corrected something

@@ -1742,3 +1742,223 @@ async fn a_folder_app_for_sixty_seconds() {
         node.endpoint().close().await;
     }
 }
+
+/// A lent service that counts each request it is asked and answers each
+/// with JSON: its port, and the count.
+async fn counting() -> (u16, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+    use std::sync::atomic::Ordering::Relaxed;
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let asked = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let count = asked.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let count = count.clone();
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
+                if n.is_ok_and(|n| n > 0) {
+                    count.fetch_add(1, Relaxed);
+                }
+                let body = r#"{"films":[]}"#;
+                let answer = format!("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
+                let _ = tokio::io::AsyncWriteExt::write_all(&mut sock, answer.as_bytes()).await;
+            });
+        }
+    });
+    (port, asked)
+}
+
+/// Ben lends `films` to a [`counting`] service; Ana's computer carries
+/// `Reader`, whose reads.txt names films, and Ana's yes names Ben's films:
+/// the nodes, Reader's origin, the films' label and the service's count.
+async fn reading(
+    salt: u8,
+) -> (
+    Vec<Node>,
+    Vec<tempfile::TempDir>,
+    String,
+    String,
+    std::sync::Arc<std::sync::atomic::AtomicUsize>,
+) {
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", salt, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let (port, asked) = counting().await;
+    let declared = svrngs_node::lend::lends_dir(dirs[1].path());
+    std::fs::create_dir_all(&declared).unwrap();
+    let films = json!({ "groups": [group], "port": port, "kind": "films", "refused": [] });
+    std::fs::write(declared.join("films.json"), films.to_string()).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), &group).await;
+    carry(&at_ana, "Reader");
+    std::fs::write(at_ana.join("apps/Reader/reads.txt"), "films\n").unwrap();
+    std::mem::forget(root);
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if of_kind(&seen, "Reader").len() == 1 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let origin = of_kind(&seen, "Reader")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let app = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let label =
+        svrngs_core::pass::Label::of(signing(2).verifying_key().as_bytes(), "films").to_string();
+    let yes =
+        json!({ actor_of(&signing(1)): { app: { "said": "yes", "at": 1, "lends": [label] } } });
+    std::fs::write(dirs[0].path().join("reaching.json"), yes.to_string()).unwrap();
+    (nodes, dirs, origin, label, asked)
+}
+
+/// `secs` seconds of eight loops at once, as a page's unawaited `fetch`
+/// loop is, each reading `label` through `origin`'s `/svrngs-lend/`: how
+/// many were answered 2xx, how many refused, and the last refusal's status,
+/// word, body and `Retry-After`, each stopping at its first when `stops`.
+async fn reading_loop(
+    node: &Node,
+    origin: &str,
+    label: &str,
+    secs: u64,
+    stops: bool,
+) -> (usize, usize, Option<(u16, String, String, Option<u64>)>) {
+    let until_at = std::time::Instant::now() + Duration::from_secs(secs);
+    let url = format!("http://{}/svrngs-lend/{label}/films", node.api_addr());
+    let host = origin.trim_start_matches("http://").trim_end_matches('/');
+    // One client, its connections kept: a refusal is answered so fast that
+    // a connection each runs this computer out of ports within a minute.
+    let client = http();
+    let one = || async {
+        let (mut read, mut refused, mut last) = (0, 0, None);
+        while std::time::Instant::now() < until_at {
+            let ask = client.get(&url).header("host", host);
+            let answer = ask.bearer_auth(node.token().trim()).send().await.unwrap();
+            if answer.status().is_success() {
+                read += 1;
+                continue;
+            }
+            refused += 1;
+            let status = answer.status().as_u16();
+            let word = (answer.headers().get("x-svrngs-refused"))
+                .map(|v| v.to_str().unwrap().to_string())
+                .unwrap_or_default();
+            let wait =
+                (answer.headers().get("retry-after")).and_then(|v| v.to_str().ok()?.parse().ok());
+            last = Some((status, word, answer.text().await.unwrap_or_default(), wait));
+            if stops {
+                break;
+            }
+        }
+        (read, refused, last)
+    };
+    let all = tokio::join!(one(), one(), one(), one(), one(), one(), one(), one());
+    let all = [all.0, all.1, all.2, all.3, all.4, all.5, all.6, all.7];
+    (all.into_iter()).fold((0, 0, None), |(w, r, l), (w2, r2, l2)| {
+        (w + w2, r + r2, l.or(l2))
+    })
+}
+
+/// The rate's number (door/limit.rs `READS_A_MINUTE`), said here apart so
+/// a change to it is a change to this test too.
+const READS_A_MINUTE: usize = 600;
+
+/// The most a service may be asked in `elapsed`: the burst at once, and one
+/// for each refill in the seconds it took, a minute's being the burst again.
+fn read_at_most(elapsed: Duration) -> usize {
+    READS_A_MINUTE + READS_A_MINUTE * (elapsed.as_secs() as usize + 1) / 60
+}
+
+/// **A folder app reading a lend as fast as it can stops at the rate, and
+/// the service is asked no more** (svrn-docs EXTENSION_POINT §6.2, short
+/// of 60 s; the whole 60 s, [`a_folder_app_reading_for_sixty_seconds`], is
+/// by hand): eight loops at once through Reader's own `/svrngs-lend/`,
+/// until refused `limit` at 429 with `Retry-After` and words saying why
+/// and what to change. Ana opening Ben's films herself, at their own
+/// origin with the token, is not an app's read and goes on. Planted: the
+/// door's check in `lend_for` off, and the loop runs its whole 20 s
+/// unrefused; `Retry-After` left out of origin.rs `inert`, and the page is
+/// not told when.
+#[tokio::test]
+async fn a_folder_app_reading_as_fast_as_it_can_stops_at_the_rate() {
+    use std::sync::atomic::Ordering::Relaxed;
+    let (nodes, _dirs, origin, label, asked) = reading(45).await;
+    let started = std::time::Instant::now();
+    let (read, _, last) = reading_loop(&nodes[0], &origin, &label, 20, true).await;
+    let served = asked.load(Relaxed);
+    let (status, word, said, wait) = last.expect("the loop was told no");
+    assert!(
+        read >= READS_A_MINUTE
+            && served <= read_at_most(started.elapsed())
+            && (status, word.as_str()) == (429, "limit"),
+        "a loop of 8 stops at the rate, refused limit: read {read}, served {served}, {status} {word}: {said}"
+    );
+    assert!(
+        wait.is_some_and(|w| w >= 1),
+        "Retry-After says when: {wait:?}"
+    );
+    let error: Value = serde_json::from_str(&said).unwrap();
+    let words = error["error"].as_str().unwrap();
+    assert!(
+        words.contains("reading films faster than an app may")
+            && words.contains("ben’s computer serves it")
+            && words.contains("Read once and keep the answer"),
+        "the words say what, why and what to change: {words}"
+    );
+    let own = at(
+        &nodes[0],
+        &format!("http://{label}.localhost/"),
+        "GET",
+        "/films",
+        None,
+    )
+    .await;
+    assert!(
+        own.status().is_success(),
+        "Ana's own open is no app's read: {}",
+        own.status()
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
+/// EXTENSION_POINT §6.2 itself, by hand, 60 s by default: a folder app
+/// reads a lend as fast as it can, and the lent service is asked no more
+/// than the rate (`SVRNGS_WRITE_LOOP_SECS`). Before the rate a 60-second
+/// run read 24,824 times and the service was asked all 24,824 (`git log`,
+/// this test's commit).
+///
+/// `SVRNGS_WRITE_LOOP_SECS=60 cargo test -p svrngs-node --test carried
+/// a_folder_app_reading_for_sixty_seconds -- --ignored --nocapture`
+#[tokio::test]
+#[ignore = "the 60-second run of §6.2; by hand"]
+async fn a_folder_app_reading_for_sixty_seconds() {
+    use std::sync::atomic::Ordering::Relaxed;
+    let (nodes, _dirs, origin, label, asked) = reading(44).await;
+    let secs = std::env::var("SVRNGS_WRITE_LOOP_SECS")
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(60);
+    let started = std::time::Instant::now();
+    let (read, refused, last) = reading_loop(&nodes[0], &origin, &label, secs, false).await;
+    let served = asked.load(Relaxed);
+    eprintln!("RESULT: {secs} s, read {read}, refused {refused}, last {last:?}, the service asked {served}");
+    assert!(
+        served >= READS_A_MINUTE && served <= read_at_most(started.elapsed()),
+        "{served}"
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}

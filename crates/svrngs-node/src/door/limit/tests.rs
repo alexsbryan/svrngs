@@ -171,3 +171,33 @@ fn an_end_of_no_one_s_request_frees_nothing() {
     counts.end(&lend.name, "dee", t0);
     assert_eq!(counts.people(&lend.name, t0 + WINDOW), 3);
 }
+
+/// **An app reads a lend a burst at once, then one each refill** (G2): the
+/// read past the burst waits one refill, and is let in after it; the same
+/// app reading another lend, another app, or another person, each has its
+/// own. Planted: `Reads::read` always none, and the read past it is let in.
+#[test]
+fn an_app_reads_a_burst_at_once_then_one_each_refill() {
+    let (t0, each) = (Instant::now(), Duration::from_secs(60) / READS_A_MINUTE);
+    let (films, notes) = (
+        LendName::parse("films").unwrap(),
+        LendName::parse("notes").unwrap(),
+    );
+    let (app, other) = (Label::of(&[1; 32], "night"), Label::of(&[1; 32], "other"));
+    let at = |lend: &LendName, who: &str, app: &Label| (lend.clone(), who.to_string(), app.clone());
+    let mut reads = Reads::default();
+    for _ in 0..READS_A_MINUTE {
+        assert_eq!(reads.read(at(&films, "ada", &app), t0), None);
+    }
+    assert_eq!(reads.read(at(&films, "ada", &app), t0), Some(each));
+    assert_eq!(reads.read(at(&notes, "ada", &app), t0), None);
+    assert_eq!(reads.read(at(&films, "ada", &other), t0), None);
+    assert_eq!(reads.read(at(&films, "ben", &app), t0), None);
+    assert_eq!(reads.read(at(&films, "ada", &app), t0 + each), None);
+    assert_eq!(reads.read(at(&films, "ada", &app), t0 + each), Some(each));
+    assert_eq!(
+        reads.read(at(&films, "ada", &app), t0 + each * (READS_A_MINUTE + 1)),
+        None,
+        "a minute idle is a whole burst again"
+    );
+}

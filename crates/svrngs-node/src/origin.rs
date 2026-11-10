@@ -367,9 +367,10 @@ const INERT: [(HeaderName, &str); 3] = [
 ];
 
 /// `answer` as a carried page may have it, made anew: its status, a type
-/// from [`DATA`], and its body. No other header of the lend's reaches a
-/// browser at this origin, where one could set a cookie or clear the app's
-/// storage. A type outside [`DATA`] is refused; with none, the body is
+/// from [`DATA`], and its body; svrngs's own refusal's kind and
+/// `Retry-After` (web/lend.js `inert` too). No other header of the lend's
+/// reaches a browser at this origin, where one could set a cookie or clear
+/// the app's storage. A type outside [`DATA`] is refused; with none, the body is
 /// dropped and the status kept.
 fn inert(answer: Response) -> Handled {
     let (mut parts, body) = answer.into_parts();
@@ -392,8 +393,11 @@ fn inert(answer: Response) -> Handled {
     parts
         .headers
         .extend(INERT.map(|(n, v)| (n, HeaderValue::from_static(v))));
-    if let Some(refused) = lent.get(REFUSED_HEADER) {
-        parts.headers.insert(REFUSED_HEADER, refused.clone());
+    // svrngs's own refusal keeps its kind, and past a limit when to ask again.
+    for name in [REFUSED_HEADER, header::RETRY_AFTER.as_str()] {
+        if let Some(value) = lent.get(REFUSED_HEADER).and(lent.get(name)) {
+            parts.headers.insert(name, value.clone());
+        }
     }
     let Some(data) = data else {
         return Ok(Response::from_parts(parts, Body::empty()));

@@ -417,7 +417,22 @@ to lenders of the kinds it declared in its group, and the open says so. On a
 phone the lend's worker makes the answer anew by the same rule (`inert`,
 `web/lend.js`), `DATA` and `INERT` written there too and held alike by a test
 (`origin_tests.rs`); a request is the page's as it was, so a POST goes
-as far as the door's `admit` allows. A lent app named after a folder the
+as far as the door's `admit` allows.
+
+**How often it reads.** An app reads one lend as one person up to
+`READS_A_MINUTE` times (600) at once, then ten a second: a refill, as the
+write budget is, so a number set on thin evidence costs seconds when it is
+wrong. It is counted at the lender's door (`door/limit.rs`, `Reads`, the
+number's one home; `door.rs`, `lend_for`), which every app's read reaches:
+a page's on a computer by the pass that computer signs for it, a phone's by
+the pass it holds. A person opening the lend, and a program with the token,
+which is the person, are not an app's reads. Reads leave no entry, so the
+count is the door's own, in memory: a restart forgets it, and each app may
+read a whole burst again. Past it the read is refused `limit`, 429, with
+`Retry-After` and words naming the lend, the rate, whose computer serves
+it, the seconds, and what to change. `inert` keeps svrngs's refusal's kind
+and `Retry-After`, on a computer and on a phone, and nothing else of the
+lend's headers. A lent app named after a folder the
 group lists gets no writing pass (`web/page/hand.js` `writesOf`, §6's bar 8
 of the plan: what a computer reads from the record, a phone from the
 group's listing, so a lender who hides a folder from it can hide that too).

@@ -893,18 +893,22 @@ function served(asked, res, said, set) {
 
 // A lend's answer `res` at the page's own origin (origin.rs `inert`), made
 // anew: its status, a type from `DATA` in svrngs's own spelling, and its
-// body; nothing else of the lend's, an answer naming acts refused as a
-// read's is (a read never signs). With no type, the status and no body.
+// body, and svrngs's own refusal's kind and `Retry-After`; nothing else of
+// the lend's, an answer naming acts refused as a read's is (a read never
+// signs). With no type, the status and no body.
 /** @param {Response} res */
 function inert(res) {
   const given = res.headers.get('content-type');
   const data = DATA.find((type) => type === given?.split(';')[0]?.trim().toLowerCase());
   trace(`RUNTIME: a read answered ${res.status}, ${given}: ${data ?? 'not data, or no type'}`);
   if ((given !== null && !data) || res.headers.has(APPEND)) return closed();
-  const refused = res.headers.get(REFUSED);
   /** @type {Record<string, string>} */
   const headers = { ...INERT, ...(data && { 'content-type': data }) };
-  if (refused) headers[REFUSED] = refused;
+  // svrngs's own refusal keeps its kind, and past a limit when to ask again.
+  for (const name of res.headers.has(REFUSED) ? [REFUSED, 'retry-after'] : []) {
+    const value = res.headers.get(name);
+    if (value) headers[name] = value;
+  }
   return new Response(data ? unpacked(res).answer : null, { status: res.status, headers });
 }
 

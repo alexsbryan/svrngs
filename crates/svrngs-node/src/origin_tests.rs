@@ -53,7 +53,9 @@ fn an_origin_naming_another_lend_outweighs_a_same_origin_fetch_site() {
 /// **A phone holds what a computer holds, by one rule stated twice**
 /// (capability connections §5 step 7; web/lend.js `inert`): the two
 /// languages share no constant, so this reads the JS and fails when either
-/// list changes alone. Planted: a type added to [`DATA`], watched failing.
+/// list changes alone, and when the phone stops keeping `Retry-After` on
+/// svrngs's refusal as `inert` does. Planted: a type added to [`DATA`];
+/// `'retry-after'` dropped from web/lend.js; each watched failing.
 #[test]
 fn a_phone_and_a_computer_hold_one_rule_for_a_lends_answer_at_a_page() {
     let lend = include_str!("../../../web/lend.js");
@@ -64,4 +66,9 @@ fn a_phone_and_a_computer_hold_one_rule_for_a_lends_answer_at_a_page() {
         let said = format!("'{}': '{value}'", name.as_str());
         assert!(lend.contains(&said), "web/lend.js INERT lacks {said}");
     }
+    let kept = "res.headers.has(REFUSED) ? [REFUSED, 'retry-after'] : []";
+    assert!(
+        lend.contains(kept),
+        "web/lend.js inert does not keep {kept}"
+    );
 }
