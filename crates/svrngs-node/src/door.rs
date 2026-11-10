@@ -1179,12 +1179,10 @@ fn find(door: &Door, raw: &str) -> Result<Option<Lend>, lend::LendError> {
         tracing::debug!(target: "door", label = raw, found = ?found.as_ref().map(|l| l.name.to_string()), "door: a lend named by its label");
         return Ok(found);
     }
-    match LendName::parse(raw) {
-        Ok(name) => {
-            Ok(lend::read(&door.data_dir, &name)?.or_else(|| carried().find(|l| l.name == name)))
-        }
-        Err(_) => Ok(None),
-    }
+    let Ok(name) = LendName::parse(raw) else {
+        return Ok(None);
+    };
+    Ok(lend::read(&door.data_dir, &name)?.or_else(|| carried().find(|l| l.name == name)))
 }
 
 #[expect(
@@ -1232,17 +1230,10 @@ async fn holder_of(
             ),
         )
     };
-    let Some(pass) = headers
-        .get(PASS_HEADER)
-        .and_then(|v| v.to_str().ok())
-        .and_then(Pass::decode)
-    else {
-        return Err(refused("no pass, or none that reads"));
-    };
+    let pass = (headers.get(PASS_HEADER)).and_then(|v| Pass::decode(v.to_str().ok()?));
+    let pass = pass.ok_or_else(|| refused("no pass, or none that reads"))?;
     let label = lend.label(&door.key);
-    let Some(now) = unix_now() else {
-        return Err(refused("this computer's clock cannot be read"));
-    };
+    let now = unix_now().ok_or_else(|| refused("this computer's clock cannot be read"))?;
     // A link carried lapses no later than its pass ([`Pass::carries`]).
     let (checked, until) = match headers
         .get(LINK_HEADER)
@@ -1294,9 +1285,8 @@ async fn holder_of(
     } else {
         standing
     };
-    let Some((group, person, actor)) = standing else {
-        return Err(refused("its signer stands in no group this lends to"));
-    };
+    let (group, person, actor) =
+        standing.ok_or_else(|| refused("its signer stands in no group this lends to"))?;
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until,
         "door: a pass opens this lend until the earlier of its and its link's time, so its holder asks as the person who signed it");
     Ok(Asker {
@@ -1921,20 +1911,15 @@ async fn forward(
         tracing::debug!(target: "door", actor, lend = %lend.name, ?protocol, "door: the request asks to switch protocols, carried");
         keep_upgrade(&mut parts.headers, protocol);
     }
-    let mut request = match axum::http::Request::builder()
+    let mut request = axum::http::Request::builder()
         .method(parts.method)
         .uri(&target)
         .version(Version::HTTP_11)
         .body(body)
-    {
-        Ok(r) => r,
-        Err(e) => {
+        .map_err(|e| {
             tracing::debug!(target: "door", actor, error = %e, "door: refused — the request target is not a path");
-            return Err(LendRefusal::bad_path(
-                "the computer that lends this cannot read that address",
-            ));
-        }
-    };
+            LendRefusal::bad_path("the computer that lends this cannot read that address")
+        })?;
     tell_share(&mut parts.headers, share);
     *request.headers_mut() = parts.headers;
     // The use began when the person was let in, and lasts until the member
