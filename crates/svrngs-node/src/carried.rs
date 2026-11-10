@@ -242,7 +242,6 @@ pub(crate) async fn yes(at: State<Asking>, by: Option<Extension<Dialer>>, a: Yes
     if by.is_some() {
         return Ok(Json(json!({ "sign": act })).into_response());
     }
-    at.door.folders.nudge.notify_one();
     Ok(crate::rail::append_act(&at.host.rail, &group, act, None).await)
 }
 
@@ -565,9 +564,6 @@ impl Folders {
         }
         let answer = crate::rail::append_act(rail, group, act, Some((app, key, 1))).await;
         tracing::debug!(target: "folder", group, %app, %person, status = answer.status().as_u16(), "carried: an act written as the person");
-        if answer.status().is_success() {
-            self.nudge.notify_one();
-        }
         Ok(answer)
     }
 }

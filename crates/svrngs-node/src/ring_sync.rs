@@ -31,10 +31,10 @@
 //! affordable for a latency-sensitive writer — `RailsDaemon::ring_nudge`
 //! starts a round when the append door signs onto a journal or a member comes
 //! back Online, so the sixty seconds
-//! is a ceiling on idleness rather than on a write. (svrngs: the record
-//! API's append door nudges, [`append`]; the redeem route once it writes
-//! an `Admit`; and the member door when a pass's signer is unknown to it,
-//! [`AskRound`], waiting on the round it starts.)
+//! is a ceiling on idleness rather than on a write. (svrngs: node startup
+//! installs one [`RingRail::on_write`] callback for folder application and
+//! the round, for local writes and new peer lines alike. The member door
+//! can also ask a round explicitly, [`AskRound`].)
 //!
 //! # The exchange
 //!
@@ -132,7 +132,7 @@ pub const MAX_CHUNKS_PER_EXCHANGE: usize = 16;
 /// the daemon's `GossipHandle` so the daemon tears both
 /// down the same way.
 pub struct RingSyncHandle {
-    _task: AbortOnDropHandle<()>,
+    pub(crate) _task: AbortOnDropHandle<()>,
 }
 
 /// What one round moved. Returned rather than only logged so a test can
@@ -187,8 +187,8 @@ impl AskRound {
         Self { nudge, rounds }
     }
 
-    /// Wake the round now, waiting on nothing: a write that must reach the
-    /// group before the next interval (U7, a removal and a hand-on).
+    /// Ask a round explicitly, waiting on nothing. Journal changes wake it
+    /// through the node's write callback without a caller's help.
     pub fn wake(&self) {
         self.nudge.notify_one();
     }
@@ -221,16 +221,11 @@ impl AskRound {
 /// restarted peer confidently reporting a total over a subset for that whole
 /// minute.
 ///
-/// `nudge` is the wake-up a local writer fires after it signs onto a journal
-/// (`POST /v1/rail/append`, the donor loop, a peer coming back). A mesh-store
-/// write reaches its journal on cw-rails' pump tick and waits for the next
-/// round; nothing nudges for it (fp-83). Sixty seconds is the right cadence for anti-entropy
-/// and the wrong one for "I just wrote something", and the two do not have to
-/// be the same number: the nudge starts a round now, and the round is the same
-/// round. **Nothing about the sender census changes** — the pump does not talk
-/// to a peer, it asks this loop to. (svrngs: of those writers, the record
-/// API's append door, [`append`]; beside it the member door asks one,
-/// [`AskRound`], and `rounds` counts them begun and ended for it.)
+/// `nudge` is shared by the node's journal-change callback and explicit
+/// refresh requests ([`AskRound`]). A change during a round leaves a permit
+/// for the next round. No-op commits and duplicate ingestion notify nothing,
+/// so a converged exchange returns to the interval. `rounds` counts rounds
+/// begun and ended for a waiting door.
 pub fn spawn_ring_sync_loop(
     host: Arc<Host>,
     interval: Duration,
@@ -271,7 +266,7 @@ pub fn spawn_ring_sync_loop(
             tokio::select! {
                 _ = tokio::time::sleep(interval) => {}
                 _ = nudge.notified() => {
-                    debug!("ring sync: woken by a local write rather than the interval");
+                    debug!("ring sync: woken by a journal change or explicit ask rather than the interval");
                 }
             }
         }
@@ -688,28 +683,6 @@ pub fn answer(
         },
         more_for_caller,
     ))
-}
-
-/// `POST /v1/rail/append`, then wake the round: an act this node just signed
-/// is the one that most needs to go, and sixty seconds is the cadence for
-/// anti-entropy, not for a write (the daemon's `ring_write_nudge`, here).
-/// A refused append wakes nothing. (svrngs: the nudge is the one the node
-/// builds for its round, held by the record API's state, `RailApi`, where
-/// upstream's was `RailsDaemon::ring_nudge`.)
-pub async fn append(
-    axum::extract::State(api): axum::extract::State<crate::rail::RailApi>,
-    query: axum::extract::Query<crate::rail::RailQuery>,
-    body: axum::Json<serde_json::Value>,
-) -> axum::response::Response {
-    let nudge = api.nudge.clone();
-    let answer = crate::rail::append(axum::extract::State(api), query, body)
-        .await
-        .unwrap_or_else(|refused| refused);
-    if answer.status().is_success() {
-        nudge.notify_one();
-        info!(target: "rails", "ring sync: an append woke the round");
-    }
-    answer
 }
 
 #[cfg(test)]

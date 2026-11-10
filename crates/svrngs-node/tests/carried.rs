@@ -1070,6 +1070,9 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
     use svrngs_core::pass::{Label, Pass};
     let (nodes, _dirs) = computers().await;
     let (ana, ben) = (&nodes[0], &nodes[1]);
+    // This route's pre-cutover refusal needs an intentionally old record;
+    // writes now wake the round that would upgrade the keeper's record.
+    ana.stop_sync();
     let group = found("house", 11, ana, &[(ben, 2)]);
     let holder = signing(9);
     let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
@@ -1574,8 +1577,9 @@ async fn a_folder_app_writing_as_fast_as_it_can_stops_at_its_budget() {
 
 /// **A phone's line is held to its app's budget** (svrn-docs
 /// EXTENSION_POINT §6.1's twin for a phone, `/carry`): Ben's phone-signed
-/// lines of Money, a chain of `WRITES_AN_HOUR`, all taken; the next
-/// refused `limit`, and not held. Kept: a line Ana's copy already counts,
+/// lines of Money, a chain of `WRITES_AN_HOUR`: its prefix replicated in
+/// one batch, its last carried and taken, the next refused `limit` and not
+/// held. Kept: a line Ana's copy already counts,
 /// carried again, is taken again. A line that only voids is held to the
 /// same budget, the app found from what it corrects. Planted:
 /// `line_spent`'s check off, and the extra line is taken, 200; its
@@ -1618,10 +1622,14 @@ async fn a_phone_s_line_past_the_app_s_budget_is_refused() {
         prev = Some(line.id.clone());
         lines.push(line);
     }
-    for (n, line) in lines.iter().enumerate().take(WRITES_AN_HOUR) {
-        let answer = carry(line).await.unwrap();
-        assert_eq!(answer.status(), 200, "line {n}");
-    }
+    // Replicate the prefix in one batch: hundreds of HTTP round trips under
+    // load can outlast a refill, so they would no longer describe a burst.
+    let prefix = &lines[..WRITES_AN_HOUR - 1];
+    assert_eq!(ana.rail().ingest_all(&group, prefix).unwrap(), prefix.len());
+    assert_eq!(
+        carry(&lines[WRITES_AN_HOUR - 1]).await.unwrap().status(),
+        200
+    );
     let past = carry(&lines[WRITES_AN_HOUR]).await.unwrap();
     assert_eq!(past.status(), 429);
     assert_eq!(past.headers()["x-svrngs-refused"], "limit");
@@ -1710,7 +1718,8 @@ async fn a_loop_voiding_its_own_entry_stops_at_the_budget() {
 }
 
 /// **A burst to the limit is told its wait, and a write after it is taken.**
-/// A phone's lines, stamped directly: the budget at once, then the next
+/// A phone's lines, stamped directly and their prefix replicated in one
+/// batch: the budget at once, then the next
 /// refused `limit` with a `Retry-After`; after waiting that long a new line
 /// is taken and the one after it waits again, so the refill is one entry
 /// and proved, not assumed. A line stamped far ahead of this computer's
@@ -1743,12 +1752,22 @@ async fn a_burst_is_told_its_wait_and_a_write_after_it_is_taken() {
     // After the stamp ben joined at, or the record does not count his lines.
     let now = clock() + 1;
     let (mut seq, mut prev) = (0u64, None);
-    for _ in 0..WRITES_AN_HOUR {
+    let mut burst = Vec::new();
+    for _ in 0..WRITES_AN_HOUR - 1 {
         let line = sign("Money/expense", seq, now, prev.clone());
-        assert_eq!(carry(&line).await.unwrap().status(), 200, "line {seq}");
         prev = Some(line.id.clone());
+        burst.push(line);
         seq += 1;
     }
+    assert_eq!(ana.rail().ingest_all(&group, &burst).unwrap(), burst.len());
+    let last = sign("Money/expense", seq, now, prev.clone());
+    assert_eq!(
+        carry(&last).await.unwrap().status(),
+        200,
+        "last allowed line"
+    );
+    prev = Some(last.id.clone());
+    seq += 1;
     let past = carry(&sign("Money/expense", seq, now, prev.clone()))
         .await
         .unwrap();

@@ -20,6 +20,42 @@ fn open(dir: &std::path::Path) -> RingJournal {
     RingJournal::open(dir, NS).unwrap()
 }
 
+#[test]
+fn the_write_teller_reports_changes_not_successful_no_ops() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let dir = tempfile::tempdir().unwrap();
+    let rail = RingRail::new(dir.path(), Arc::new(key(1)));
+    rail.set_seed(NS, &ring()).unwrap();
+    let writes = Arc::new(AtomicUsize::new(0));
+    let told = writes.clone();
+    rail.on_write(move |ns| {
+        assert_eq!(ns, NS);
+        told.fetch_add(1, Ordering::SeqCst);
+    });
+    let recorded = rail.commit(NS, &Batch(vec![record("one")])).unwrap().unwrap();
+    assert_eq!(writes.load(Ordering::SeqCst), 1);
+    assert_eq!(rail.ingest_all(NS, recorded.lines()).unwrap(), 0);
+    assert_eq!(rail.ingest_all(NS, &[]).unwrap(), 0);
+    assert!(rail.commit(NS, &Batch(vec![])).unwrap().unwrap().is_empty());
+    assert_eq!(writes.load(Ordering::SeqCst), 1, "a no-op notified the write teller");
+    assert!(rail
+        .commit(
+            NS,
+            &svrngs_core::HandOnTo {
+                person: Person::parse("Nobody").unwrap(),
+                joined: None,
+            }
+        )
+        .unwrap()
+        .is_err());
+    assert!(rail.commit("../bad", &Batch(vec![])).is_err());
+    assert_eq!(writes.load(Ordering::SeqCst), 1, "a refusal notified the write teller");
+    rail.on_write(|_| panic!("a second teller replaced the node's"));
+    let peer = sign_act(&key(2), NS, 1000, 0, None, record("peer"), None, None, None);
+    assert_eq!(rail.ingest_all(NS, &[peer]).unwrap(), 1);
+    assert_eq!(writes.load(Ordering::SeqCst), 2);
+}
+
 /// A journal holding one whole line, "whole", with `tail` written after it
 /// as a peer's malformed line or a torn write leaves it; its directory
 /// with it, kept for as long as the journal is read.

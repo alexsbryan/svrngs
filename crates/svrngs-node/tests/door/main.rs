@@ -892,6 +892,9 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
 #[tokio::test]
 async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key() {
     let (pair, _heads) = lending_heads().await;
+    // The fixture names a relay this endpoint is not actually homed at.
+    // Keep its record still rather than racing the round's correction.
+    pair.a.stop_sync();
     let (cy, cy_dir) = beside(&pair, NS, 3, "cy").await;
     lends_on(cy_dir.path(), "pad", 1);
     let (eve, eve_dir) = beside(&pair, "work", 4, "eve").await;

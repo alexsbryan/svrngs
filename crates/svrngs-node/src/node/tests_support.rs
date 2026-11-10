@@ -6,6 +6,12 @@
 use super::*;
 
 impl Node {
+    /// Hold a deliberately historical or synthetic journal fixture still
+    /// while exercising its live routes. Normal startup and writes wake sync.
+    pub fn stop_sync(&self) {
+        self._round._task.abort();
+    }
+
     /// [`Node::start_every`] with the product's round. Only tests start a
     /// node with no relays of its own to ask for. Its groups' folders are
     /// placed in `data_dir`'s `svrngs`, never the person's own `~/svrngs`.

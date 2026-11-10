@@ -265,7 +265,7 @@ impl Node {
     /// link's ask with the seed `seeds` reads, and serving the record to this
     /// computer's apps on `api`, which must be loopback ([`crate::api`]; port
     /// `0` takes any free one, [`Node::api_addr`]). The round runs once now,
-    /// then every `every`, and at once after an app's append. Its endpoint is
+    /// then every `every`, and at once after a journal change. Its endpoint is
     /// built with `asked` among its groups'
     /// own relays, the relays `new --relay` or a link names: a computer in no
     /// group yet would else start at the build's, and offline wait out a
@@ -297,10 +297,8 @@ impl Node {
         crate::lend::stamp(&data_dir, &stood_in);
         // Bound before the endpoint, so a refused address leaves no endpoint
         // dropped open.
-        // One nudge, the round's, which the append door fires so a write
-        // goes now rather than at the next interval: upstream built one
-        // (`lib.rs:421`) and handed it to the round and the door; until u3-2
-        // the node built one for the round alone.
+        // Notify holds a permit for a change during a round, so the next
+        // round carries it rather than waiting on the interval.
         let nudge = Arc::new(Notify::new());
         // One live buffer: the live route fills it, the loopback drain empties it.
         let live = Arc::new(LiveBuffer::default());
@@ -338,20 +336,29 @@ impl Node {
             api_port: api.addr.port(),
             minting: Default::default(),
         });
+        let (folders, blobs) =
+            crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())
+                .await
+                .map_err(NodeError::Endpoint)?;
+        let (woken, changed) = (folders.woken.clone(), nudge.clone());
+        rail.on_write(move |ns| {
+            tracing::debug!(target: "node", namespace = ns, "node: journal changed; folder application and sync woken");
+            woken.send_modify(|m| *m.entry(ns.into()).or_default() += 1);
+            changed.notify_one();
+        });
         let held = rail.namespaces().inspect_err(|why| {
             tracing::warn!(target: "node", %why, "node: groups unreadable at startup; their delegated writes remain closed")
         });
         for group in held.unwrap_or_default() {
             host.cut_over(&group);
         }
+        // Resumed folders can write immediately on another runtime thread.
+        // Their writer must not start before the notification path exists.
+        folders.resume();
         // Its groups' own relays asked whether they answer, and each move of
         // this computer's home said (relay fallbacks).
         let homes = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().moved()));
         let tiers = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().check()));
-        let (folders, blobs) =
-            crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())
-                .await
-                .map_err(NodeError::Endpoint)?;
         let rounds = Rounds::new(Default::default());
         // One provider, its key and its code store, shared by the door that
         // mints a code and the API that redeems it.
@@ -382,7 +389,6 @@ impl Node {
         // The record, and beside it what an app asks of this computer (u5-1).
         let rail_api = RailApi {
             rail: rail.clone(),
-            nudge: nudge.clone(),
             live: live.clone(),
             transport,
             build: host.build.clone(),

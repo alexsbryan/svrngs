@@ -125,7 +125,7 @@ pub struct Folders {
     /// Each group's acts taken since the node started, counted by the
     /// rail's teller: a synced directory's loop waits on its group's
     /// (perf-2 d).
-    woken: watch::Sender<BTreeMap<String, u64>>,
+    pub(crate) woken: watch::Sender<BTreeMap<String, u64>>,
     /// What apps placed, by hash and group, and when each lapses (blob.rs).
     carried: watch::Sender<blob::Carried>,
     /// How many files no member gave, by each folder's writer (synced.rs).
@@ -211,10 +211,6 @@ impl Folders {
             carried: watch::Sender::new(BTreeMap::new()),
             waiting: watch::Sender::new(BTreeMap::new()),
         };
-        let woken = folders.woken.clone();
-        folders.host.rail.on_write(move |ns| {
-            woken.send_modify(|m| *m.entry(ns.into()).or_default() += 1);
-        });
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let keeper = folders.clone();
         tokio::spawn(async move {
@@ -250,7 +246,6 @@ impl Folders {
             let _keep = fs;
             std::future::pending::<()>().await
         });
-        folders.resume();
         let blobs = provider(&store, folders.clone());
         Ok((folders, blobs))
     }
@@ -467,7 +462,6 @@ impl Folders {
             Err(e) => return Err(FolderError::Record(e.to_string())),
         };
         tracing::info!(target: "folder", namespace = group, folder, files, "folder: written to the record");
-        self.nudge.notify_one();
         Ok(done)
     }
 

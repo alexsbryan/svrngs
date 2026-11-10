@@ -417,7 +417,6 @@ async fn api_of(rail: &Arc<RingRail>) -> RailApi {
     let endpoint = crate::iroh::tests::hermetic_endpoint(7, Vec::new()).await;
     RailApi {
         rail: rail.clone(),
-        nudge: Arc::new(tokio::sync::Notify::new()),
         live: Arc::new(LiveBuffer::default()),
         transport: Arc::new(crate::iroh::IrohTransport::new(endpoint)),
         build: Vec::new(),
@@ -463,7 +462,6 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
     let endpoint = crate::iroh::tests::hermetic_endpoint(7, Vec::new()).await;
     let api = RailApi {
         rail,
-        nudge: Arc::new(tokio::sync::Notify::new()),
         live: Arc::new(LiveBuffer::default()),
         transport: Arc::new(crate::iroh::IrohTransport::new(endpoint.clone())),
         build: Vec::new(),

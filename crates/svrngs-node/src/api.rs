@@ -156,7 +156,7 @@ pub fn router(api: RailApi, apps: Router, signin: Router, lends: Router, token: 
         // The ring rail's doors (FIVE_PROGRAMS fp-44): durable append and
         // the log, and the live lane's local buffer half. The bodies mirror
         // the daemon's `routes_rail` doors.
-        .route("/v1/rail/append", post(crate::ring_sync::append))
+        .route("/v1/rail/append", post(crate::rail::append))
         .route("/v1/rail/log", get(crate::rail::log))
         .route(
             "/v1/rail/live",

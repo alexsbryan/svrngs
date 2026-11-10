@@ -186,9 +186,11 @@ then its seam (`ring_sync/journal.rs`), a round's members now a list of
 reads from the register (PLAN §4, U1); the mesh proof stamp the exchange
 carried goes; `RingSyncHost::transport` is the concrete `IrohTransport`, and a
 contact's addresses were its one `base_url`, cut with the bridge for a
-request on the connection kept to it (`ring_sync::post`). The append
-wrapper that nudges the round (`ring_sync::append`) came over in U3 with the
-record API, which routes the append door through it. The live route
+request on the connection kept to it (`ring_sync::post`). The record API
+routes directly to `rail::append`. Node startup installs the rail's one
+write callback before startup writes: every non-empty commit and fresh
+peer ingestion wakes both folder application and the sync round; no-op
+commits, refusals and duplicate ingestion wake neither. The live route
 (`ring_live`) came over in U3, with `RingInbound`'s live buffer; it refused
 an envelope for a group the rail does not hold, where upstream asked the
 origin registry's live registrations, which did not come over. Then it

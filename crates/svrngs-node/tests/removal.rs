@@ -373,9 +373,9 @@ async fn an_unreadable_register_is_said_on_a_hand_on() {
 
 /// #211, a leave that outruns its leaver's last act (the survey,
 /// demo/runs/leave/2026-10-21/SURVEY.md, whose `leave_race_node.rs` this
-/// is): three computers, each one's round a day apart (`Node::start_every`),
-/// so only a wake or a round the test asks moves anything, and no sleep
-/// decides what a copy holds, only polls for what a wake already sent.
+/// is): three computers with background sync stopped, so the test controls
+/// which writes have travelled before a cut. Leave and removal each drive
+/// the writer's real round after their HTTP response.
 mod leave_race {
     use super::*;
     use svrngs_core::tests_support::{applied, record, Batch};
@@ -386,7 +386,7 @@ mod leave_race {
 
     async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
         let api = "127.0.0.1:0".parse().unwrap();
-        Node::start_every(
+        let node = Node::start_every(
             (dir.path().to_path_buf(), Some(dir.path().join("svrngs"))),
             signing(seed),
             &no_relay(),
@@ -396,7 +396,9 @@ mod leave_race {
             DAY,
         )
         .await
-        .expect("a node starts")
+        .expect("a node starts");
+        node.stop_sync();
+        node
     }
 
     /// Oak: Ana's key (1) its seed, so Ana keeps it; Kim (2) and Bo (3)
@@ -413,9 +415,8 @@ mod leave_race {
         nodes
     }
 
-    /// `node` writes a money entry, `what`, and the lines it wrote; no round
-    /// is woken (`RingRail::commit` wakes none, as a Visit's write wakes none,
-    /// #212).
+    /// `node` writes a money entry, `what`, and the lines it wrote. Sync is
+    /// stopped in this fixture, so it remains local until the test rounds.
     fn writes(node: &Node, what: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
         let done = node
             .rail()
@@ -437,7 +438,9 @@ mod leave_race {
             .send()
             .await
             .unwrap();
-        answer.json().await.unwrap()
+        let outcome = answer.json().await.unwrap();
+        node.round().await;
+        outcome
     }
 
     async fn removes(node: &Node, person: &str) -> Outcome {
@@ -453,7 +456,9 @@ mod leave_race {
             .send()
             .await
             .unwrap();
-        answer.json().await.unwrap()
+        let outcome = answer.json().await.unwrap();
+        node.round().await;
+        outcome
     }
 
     /// Whether `node`'s copy holds `seed`'s key cut, polled for up to 10 s:
@@ -694,7 +699,16 @@ mod leave_race {
 #[tokio::test]
 async fn the_keepers_computer_cuts_over_once() {
     let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
-    let [sam, ana, _bo] = three(&dirs).await;
+    let nodes = [
+        start(1, &dirs[0]).await,
+        start(2, &dirs[1]).await,
+        start(3, &dirs[2]).await,
+    ];
+    for node in &nodes {
+        node.stop_sync();
+    }
+    knit(&nodes, NS, &sams(), [("ana", 2), ("bo", 3)]).await;
+    let [sam, ana, _bo] = nodes;
     let cutover = |n: &Node| n.rail().register(NS).unwrap().signers;
     let written = |n: &Node| {
         let journal = n.rail().group_dir(NS).unwrap().join("ring_oplog.jsonl");

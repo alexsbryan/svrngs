@@ -198,10 +198,6 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
     let left = cut.contains(&at.host.actor);
     tracing::debug!(target: "removal", group, written = recorded.lines().len(), ?cut, left,
         "removal: written — the cut when this computer decides or leaves, else an ask; the round woken");
-    // Now, not at the next round: every other lender refuses the removed
-    // person only once its computer holds the cut, and the keeper sees an
-    // ask only once it holds it (demo/runs/u7/2026-10-11, take 1: 43.3 s).
-    at.door.ring.wake();
     if cut.is_empty() {
         return Outcome::Asked {
             decides: decides(&after),
@@ -293,10 +289,7 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
     let group = asked.group.as_str();
     let joined = asked.joined;
     let outcome = match rail.commit(group, &HandOnTo { person, joined }) {
-        Ok(Ok(_)) => {
-            at.door.ring.wake();
-            Outcome::Handed
-        }
+        Ok(Ok(_)) => Outcome::Handed,
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Unsettled)) => Outcome::Fault,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,

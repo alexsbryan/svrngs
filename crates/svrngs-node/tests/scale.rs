@@ -14,8 +14,8 @@
 //! member has a run of its own to sync, as in a group where everyone has
 //! written. (Until arch-view each act also carried a view naming every
 //! member, `svrngs-core` `SignedOp::view`; a commit signs none now.)
-//! Each node is started with a round every day (`Node::start_every`), so no
-//! node's own round runs inside one being timed.
+//! Background sync is stopped before filling the journals, so a write's
+//! notification cannot run another round inside one being timed.
 //!
 //! Run, one point at a time, in release:
 //!
@@ -577,7 +577,7 @@ async fn timed_round(node: &Node) -> Cost {
 }
 
 /// A converged group of `members` real nodes, `acts` record acts written
-/// in equal shares, each node rounding once a day.
+/// in equal shares, with background sync stopped before setup writes.
 async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<Node>) {
     let dirs: Vec<_> = (0..members).map(|_| tempfile::tempdir().unwrap()).collect();
     let no_relay = RelayConfig {
@@ -600,6 +600,7 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
             .await
             .expect("a node starts"),
         );
+        nodes.last().unwrap().stop_sync();
     }
     let founded = Roster::new(
         [(Person::parse("p1").unwrap(), vec![actor_of(&signing(1))])]

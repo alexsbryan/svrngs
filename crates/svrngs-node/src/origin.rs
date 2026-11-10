@@ -655,7 +655,6 @@ async fn appended(
         if !written.status().is_success() {
             return Err(written);
         }
-        at.door.folders.nudge.notify_one();
         let Some(contact) = contact else { continue };
         let line = axum::body::to_bytes(written.into_body(), usize::MAX)
             .await

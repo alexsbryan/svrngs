@@ -60,15 +60,14 @@ use crate::ring_routes::err;
 use crate::{actor_of, Device, Joined, Person, RailAct, RailError, RingRail};
 use svrngs_core::{Admission, Append};
 
-/// What the doors read: the journals, the nudge that wakes the round
-/// after an append ([`crate::ring_sync::append`]), and the live lane's
-/// buffer, which the live route fills ([`crate::ring_routes::ring_live`]).
+/// What the doors read: the journals and the live lane's buffer, which the
+/// live route fills ([`crate::ring_routes::ring_live`]). Journal-change
+/// notifications belong to node startup, not the append door.
 /// (Upstream's handlers read them from `RailsDaemon`, which did not come
 /// over, PLAN §4, U1's inventory.)
 #[derive(Clone)]
 pub struct RailApi {
     pub rail: Arc<RingRail>,
-    pub nudge: Arc<tokio::sync::Notify>,
     pub live: Arc<LiveBuffer>,
     /// The node's dial-by-key transport, the live lane's fan-out rides it.
     pub transport: Arc<IrohTransport>,
@@ -364,7 +363,6 @@ pub(crate) async fn carry(
     if let Err(e) = rail.ingest_all(&group, std::slice::from_ref(&line)) {
         return err(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
     }
-    at.door.folders.nudge.notify_one();
     let counted = (rail.admission(&group)).is_ok_and(|a| a.membership().counts(&id));
     Json(serde_json::json!({ "id": id, "counted": counted })).into_response()
 }

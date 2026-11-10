@@ -167,15 +167,6 @@ async fn redeem_route(
     Json(req): Json<RedeemRequest>,
 ) -> Response {
     let redeemed = serve_redeem(&at.host.rail, dialer.map(|Extension(d)| d.actor()), &req);
-    // The group's other computers hear of the newcomer now, not at the
-    // round's next interval: until they hold the `Admit` each refuses the
-    // newcomer's computer, and waiting on the interval was 56 of a
-    // newcomer's 57 s (`demo/runs/first-minute/2026-10-12/README.md`).
-    if let Ok(Redeemed::Admitted(admit)) = &redeemed {
-        tracing::debug!(target: "redeem", key = %req.key, admit = %admit,
-            "redeem: the round woken, so the group's computers hear of the newcomer now");
-        at.door.ring.wake();
-    }
     answer("redeem", &req.key, redeemed)
 }
 

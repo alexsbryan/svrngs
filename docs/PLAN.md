@@ -15,6 +15,13 @@
 folder and a program is a word, and no beginner's bug does lasting harm to anyone
 else. Its queue is svrn-docs `rings/current/EXTENSION_POINT.md` §10, in order.
 
+The operator selected one contained economizing unit on 2026-11-10:
+svrn-docs `rings/current/ECONOMIZING_PLAN.md`, stage 1, row 2(a), one node-owned notification of
+journal changes to folder application and sync, retiring callers' write
+nudges. Its recorded regression and convergence checks are in
+`demo/runs/economize/2026-11-10-write-notifications/`. The remaining
+economizing stages still wait for scheduling.
+
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
 groups, grapevine; V1 on n0" and "arch → groups → grapevine"; svrn-docs

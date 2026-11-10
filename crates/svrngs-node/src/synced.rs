@@ -219,7 +219,7 @@ impl Folders {
 
     /// Every directory kept as synced resumed, at the node's start; none
     /// when the list kept cannot be read, said by its path.
-    pub(super) fn resume(&self) {
+    pub(crate) fn resume(&self) {
         let kept = self.syncing.borrow().clone();
         match kept {
             Ok(kept) => {

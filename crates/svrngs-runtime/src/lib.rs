@@ -61,10 +61,8 @@ pub struct RingRail {
         reason = "the open-journal map; an actor per journal replaces it (DESIGN §5)"
     )]
     open: Mutex<BTreeMap<String, Arc<RingJournal>>>,
-    /// Told a group's name after the group's journal takes an act, written
-    /// here or ingested from a peer (perf-2 d): what wakes a synced
-    /// folder's apply, where it waited up to a second (svrngs-node
-    /// synced.rs).
+    /// Told a group's name after its journal changes, written here or
+    /// ingested from a peer. The node owns the reactions to that change.
     on_write: OnceLock<Teller>,
 }
 
@@ -197,7 +195,7 @@ impl RingRail {
             now: now_unix(namespace)?,
         };
         let done = svrngs_core::commit(&*journal, command, &author);
-        if matches!(done, Ok(Ok(_))) {
+        if matches!(&done, Ok(Ok(recorded)) if !recorded.is_empty()) {
             self.wrote(namespace);
         }
         done

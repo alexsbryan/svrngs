@@ -1789,6 +1789,13 @@ One property test stands behind every fold: permuting or duplicating
 `admit`'s input changes nothing. A decider's contract is given / when / then
 rows.
 
+**A journal change tells its consumers once.** Node startup installs
+`RingRail::on_write` before startup writes, telling both the group's folder
+application and the sync round. A non-empty commit or fresh peer ingestion
+tells it; a refusal, successful no-op or duplicate ingestion does not.
+Handlers never need a second call to announce their writes. Explicit
+connection checks and a door's ask for a round still wake it without a write.
+
 **Two gates keep the apps out of the infra.** Every app lists its own nouns
 in `apps/<app>/nouns.txt`, and `scripts/vocab_check.py` refuses any of them
 in infra code — comments and tests apart, where an example is fine. So the
