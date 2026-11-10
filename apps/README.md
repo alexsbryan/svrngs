@@ -9,7 +9,10 @@ yours to copy and bend.
 `canon/` (House rules), `movie-night/` (Movie Night, which reads the groups' lent Jellyfins).
 
 **Examples to run yourself.** Each from svrngs's source, with its own README:
-`doc/`, `grapevine/`, `give/`, `pantry/`, `taste/`.
+`doc/`, `grapevine/`, `give/`, `pantry/`.
+
+**Examples to copy into a group's folder.** `taste/` (Taste, which reads
+the groups' lent Jellyfins and sends to a lent llama-server).
 
 **Notes for a program you already run.** `jellyfin/`: lending it, and the
 account apps read it by.

@@ -1,6 +1,6 @@
 // The browser half of crates/svrngs-node/tests/browser/sends.rs
 // `a_carried_taste_sends_and_draws_what_comes_back` (row 13;
-// apps/taste/carried): on the person's home page, `args.home`, the row of
+// apps/taste): on the person's home page, `args.home`, the row of
 // the index's button reading `args.words`, its fold opened and its send
 // ticked, the Open pressed; in Taste's tab, once it says what it did,
 // `said`, the films it lists, `films`; then `args.rate` rated `args.as`,

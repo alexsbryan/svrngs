@@ -2,9 +2,8 @@
 
 `scripts/check.sh` is the definition of done (AGENTS.md). The Containerfile
 here is what it needs on a Linux computer that has none of it: Rust, Node,
-Playwright's Chromium and WebKit, the wasm tools, Jellyfin, and
-llama-server with the taste scene's embedding model, every one pinned, in
-a rootless podman image. Its command runs `npm ci --prefix web`,
+Playwright's Chromium and WebKit, the wasm tools and Jellyfin, every one
+pinned, in a rootless podman image. Its command runs `npm ci --prefix web`,
 then `scripts/check.sh`, in the checkout at `/work`; its output and exit are
 check.sh's.
 

@@ -23,7 +23,7 @@
 # Sends: an app its person opens on their own computer may ask it for the
 # numbers that describe a text, POST /v1/embeddings, as the readers' account
 # if its lender keeps one, else as no one (svrn-docs
-# rings/current/CONTRACTS.md §4, §7; apps/taste/model.mjs). Kept in a lend
+# rings/current/CONTRACTS.md §4, §7; apps/taste/index.js). Kept in a lend
 # only on its lender's yes: `svrngs share` asks at a terminal, the home page
 # shows it before Lend is pressed again.
 - llama-server sends: POST /v1/embeddings

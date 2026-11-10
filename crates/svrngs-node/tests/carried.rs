@@ -2147,7 +2147,7 @@ async fn sent(
     (status, word, answer.text().await.unwrap_or_default())
 }
 
-/// A JSON body of Taste's shape (apps/taste/model.mjs), `{"input": [..]}`.
+/// A JSON body of Taste's shape (apps/taste/index.js), `{"input": [..]}`.
 fn texts(said: &str) -> Option<(&'static str, Vec<u8>)> {
     let body = json!({ "model": "embed", "input": [said] }).to_string();
     Some(("application/json; charset=utf-8", body.into_bytes()))
@@ -2286,7 +2286,7 @@ async fn a_yes_to_reading_never_covers_a_send() {
 /// §10 row 13): Ben lends a real llama-server with `--embeddings`, its
 /// lend decided from the terms svrngs ships (`share::lend_of`, the row
 /// `POST /v1/embeddings`) and kept, as his yes keeps it; Ana's computer
-/// carries apps/taste/carried as `Taste`, whose sends.txt names
+/// carries apps/taste as `Taste`, whose sends.txt names
 /// llama-server. Her open shows the send under Ben's llama-server; with
 /// her yes ticking it, a run of 64 films, as Taste's page sends one, goes
 /// through Taste's own origin and comes back as 64 lists of numbers.
@@ -2370,7 +2370,7 @@ async fn a_carried_taste_sends() {
     let at_ana = synced_in(ana, root.path(), &group).await;
     let taste = at_ana.join("apps/Taste");
     std::fs::create_dir_all(&taste).unwrap();
-    let carried = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/taste/carried");
+    let carried = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/taste");
     for file in ["index.html", "index.js", "reads.txt", "sends.txt"] {
         std::fs::copy(carried.join(file), taste.join(file)).unwrap();
     }

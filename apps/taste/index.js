@@ -1,11 +1,11 @@
 // Taste, carried in a group's folder (svrn-docs rings/current/CONTRACTS.md
 // §4, §7): no server of its own. It reads each Jellyfin its person said yes
 // to (reads.txt), sends the whole list of films, described, to the first
-// llama-server it may send to (sends.txt) at /v1/embeddings, in runs of 64
-// as ../model.mjs does, and guesses from the ratings kept in this browser
-// (../score.mjs's rule: the sum of rated films' numbers, weighted by
-// rating, against each film by cosine). Nothing it rates leaves this
-// browser: the list sent is every film, in one order, whatever was rated.
+// llama-server it may send to (sends.txt) at /v1/embeddings, in runs of 64,
+// and guesses from the ratings kept in this browser: the sum of rated
+// films' numbers, weighted by rating, against each film by cosine. Nothing
+// it rates leaves this browser: the list sent is every film, in one order,
+// whatever was rated.
 const $ = (id) => document.getElementById(id);
 const LIST =
   'Items?Recursive=true&IncludeItemTypes=Movie&Fields=Overview,Genres,People,ProductionYear&EnableImages=false';
@@ -18,7 +18,8 @@ const say = (words) => {
   $('said').textContent = words;
 };
 
-// What a model reads of a film, as ../model.mjs `describe` says it.
+// What a model reads of a film: its name and year, genres, overview, and
+// the first six people in it.
 const describe = (f) =>
   [
     f.ProductionYear ? `${f.Name} (${f.ProductionYear}).` : `${f.Name}.`,

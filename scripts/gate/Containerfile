@@ -57,24 +57,6 @@ RUN set -e; cd /tmp; \
     mkdir /opt/binaryen; tar -xzf "$f" -C /opt/binaryen --strip-components=1; \
     ln -s /opt/binaryen/bin/wasm-opt /usr/local/bin/wasm-opt; rm -rf /tmp/*
 
-# Bo's model in the taste scene (crates/svrngs/tests/scenes/taste.rs):
-# llama-server at the build the Mac runs (`llama-server --version`, 10180,
-# 11b068d06), llama.cpp's own CPU build of it, and nomic-embed-text v1.5 at
-# Q8_0 (146 MB, Apache-2.0) from nomic-ai's repo at one revision, the file
-# whose sha256 the Mac's copy has. ldd fails the build on a library the
-# image lacks.
-RUN set -e; cd /tmp; f=llama-b10180-bin-ubuntu-x64.tar.gz; \
-    curl -fsSLO "https://github.com/ggml-org/llama.cpp/releases/download/b10180/$f"; \
-    echo "e7872142509bf32ad5888b490bfd6abdce08dbf3a0afb3dc73c6f97c5e48daea  $f" | sha256sum -c -; \
-    mkdir /opt/llama; tar -xzf "$f" -C /opt/llama --strip-components=1; rm "$f"; \
-    if ldd /opt/llama/llama-server | grep 'not found'; then exit 1; fi; \
-    /opt/llama/llama-server --version; \
-    m=/opt/models/nomic-embed-text-v1.5.Q8_0.gguf; mkdir /opt/models; \
-    curl -fsSLo "$m" https://huggingface.co/nomic-ai/nomic-embed-text-v1.5-GGUF/resolve/0188c9bf409793f810680a5a431e7b899c46104c/nomic-embed-text-v1.5.Q8_0.gguf; \
-    echo "3e24342164b3d94991ba9692fdc0dd08e3fd7362e0aacc396a9a5c54a544c3b7  $m" | sha256sum -c -; \
-    chmod a+r "$m"
-ENV PATH=/opt/llama:$PATH SCENES_EMBED_GGUF=/opt/models/nomic-embed-text-v1.5.Q8_0.gguf
-
 # The gate runs as `gate`, uid 1000, not root: a test that makes a file
 # unreadable and expects it unread would pass as root for the wrong reason.
 # README.md's `keep-id` maps the host's user onto it.

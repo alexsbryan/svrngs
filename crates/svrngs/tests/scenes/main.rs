@@ -70,8 +70,6 @@ mod night;
 mod movie_night;
 // The pantry (apps/pantry): friends' models and tools, found by protocol.
 mod pantry;
-// Taste (apps/taste): a friend's model guesses Ana's films, her ratings home.
-mod taste;
 // Ports (demo/factorio.md, demo/minecraft.md): each presses Play, bytes cross.
 mod ports;
 // Give, scene 1 (apps/give): Cy starts an app for the group, Bo opens it.

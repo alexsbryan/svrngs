@@ -186,10 +186,10 @@ fn embeddings(request: &str) -> (&'static str, String) {
 
 in_both_engines!(
     /// **A carried Taste sends its films through its own origin and draws
-    /// what comes back** (EXTENSION_POINT §10 row 13; apps/taste/carried):
+    /// what comes back** (EXTENSION_POINT §10 row 13; apps/taste):
     /// Sam lends a stand-in Jellyfin of three films and a stand-in
     /// llama-server, its `sends:` row `POST /v1/embeddings`. Ada's computer
-    /// carries apps/taste/carried as Taste, unchanged; on her home page she
+    /// carries apps/taste as Taste, unchanged; on her home page she
     /// ticks its send under Sam's llama-server and opens it. Its page reads
     /// the films at its own origin, sends them, described, in one POST to
     /// the llama-server's `/v1/embeddings` there, and lists them; she rates
@@ -216,7 +216,7 @@ async fn a_carried_taste_sends_and_draws_what_comes_back(engine: Engine) {
     let folder = dirs[0].path().join("house");
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;
-    let taste = repo().join("apps/taste/carried");
+    let taste = repo().join("apps/taste");
     let files: Vec<(&str, String)> = ["index.html", "index.js", "reads.txt", "sends.txt"]
         .into_iter()
         .map(|f| (f, std::fs::read_to_string(taste.join(f)).unwrap()))

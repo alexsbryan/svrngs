@@ -363,7 +363,7 @@ const SEND: [&str; 1] = ["application/json"];
 
 /// The most a carried app's page sends a lend at once, read whole before
 /// anything is dialed, so a service never sees part of a request: 1 MiB,
-/// past Taste's batches of 64 films (apps/taste/model.mjs `RUN`).
+/// past Taste's batches of 64 films (apps/taste/index.js `RUN`).
 pub(crate) const SEND_MAX: usize = 1 << 20;
 
 /// A `Content-Type`'s essence, as [`inert`] and [`routed`] match one: before
