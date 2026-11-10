@@ -589,12 +589,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # Programs as files: build.rs embeds one file per program and refuses a row of
 # another program (+10), inside the operator's ceiling (cap 20,900, 2026-11-09),
 # after searching the touched files; . to 20,883.
+# (2026-11-09) AddressCopy's own copy machine, a second COPY beside ui/copy.js's
+# (address-copying.js, 37 lines), became link-copy.js LinkCopy, which also says
+# only its last answer, with the same words: js to 8,465, one past where it lands.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
     ".": 20883,
 
-    "js": 8499,
+    "js": 8465,
 
     "swift": 1,
 }

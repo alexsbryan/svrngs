@@ -240,7 +240,9 @@ async fn a_copied_address_is_said_once(engine: Engine) {
     let press = json!([
         "#home section ul.wifi li button:has-text('Copy its address for a program')",
         null,
-        "COPY: copied"
+        // The clipboard refuses here (web/tests/pages/index.mjs grants it
+        // no permission), so the answer each press waits for is this one.
+        "COPY: unwritten"
     ]);
     let args = json!({ "home": home, "read": "#home section ul.wifi li", "steps": [press, press] });
     let seen = drive(engine, "pages/index.mjs", args, None).await;
