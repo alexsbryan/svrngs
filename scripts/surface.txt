@@ -1,0 +1,39 @@
+# The surface (svrn-docs rings/current/EXTENSION_POINT.md §3, §8 "One list"):
+# everything an app in a folder asks of svrngs at its own address, the limits
+# on what it asks, and every word svrngs refuses it with. The one list, on the
+# model of scripts/trust_floor.txt. crates/svrngs-node/src/surface_list_tests.rs,
+# in scripts/check.sh's `tests` step, holds the code to it and it to the code,
+# and the guide's reference (docs/guide/build.md, "The reference", which
+# `svrngs guide` prints from the binary) to it and it to the guide: a line here
+# and not there fails, and the reverse. The interface only grows (§3): a line
+# here changes or goes only with every app pinned to it.
+#
+# route <path>: a route surface.rs `AppRoute::of` names, `<label>` a lend's
+#   label and `<path>` any path of it.
+# limit <name> <number> | <the most, as the guide's table says it>: carried.rs
+#   `WRITES_AN_HOUR`, door/limit.rs `READS_A_MINUTE`, svrngs-core payload.rs
+#   `MAX_PAYLOAD_BYTES`.
+# refused <word>: an `x-svrngs-refused` word, door.rs `LendRefusal::as_str`.
+
+route /svrngs/acts
+route /svrngs-reads
+route /svrngs-reads/<label>/svrngs-stop
+route /svrngs-to
+route /svrngs-lend/<label>/<path>
+
+limit entry 65536 | 64 KiB
+limit writes 200 | 200 entries at once, then one every 18 seconds
+limit reads 600 | 600 reads at once, then 10 a second
+
+refused away
+refused pass
+refused closed
+refused unlent
+refused path
+refused full
+refused fault
+refused unasked
+refused stopped
+refused removed
+refused ended
+refused limit

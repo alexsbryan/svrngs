@@ -105,3 +105,8 @@ fn an_app_s_routes_parse_once_as_the_paths_they_replaced() {
     let tail = "/Items?x=/y".to_string();
     assert_eq!(AppRoute::of(&read), AppRoute::Lend(Some(films), tail));
 }
+
+// scripts/surface.txt's gate, beside `AppRoute::of`'s own test above: a
+// module here, so the list costs surface.rs no line of code.
+#[path = "surface_list_tests.rs"]
+mod surface_list;
