@@ -1096,7 +1096,10 @@ no longer in the group, or says anything the door can't enforce
 (`share::fits`); two groups a lend goes to must say the same. For a word
 svrngs ships, a group's file may only add `keeps:`. Its `accounts:` and
 `header:` are advice, not terms, and `share` says them as the words of the
-member who wrote the file, in that group. The lend copies what is
+member who wrote the file, in that group. Its port column is not read:
+the file is found by its word, so a port can't name it before the word is
+known, and the word a lend goes under is its lender's, never another
+member's file's. The lend copies what is
 kept, so its door reads its own file alone, and a changed `programs/` file
 changes nothing until it is lent again. With svrngs stopped, `share` keeps
 what ships and says so.

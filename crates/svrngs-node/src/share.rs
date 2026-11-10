@@ -65,6 +65,12 @@ use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath
 ///
 /// A group's own `programs/<word>.txt`, in the same form, is read after
 /// these when `share` lends under its word ([`fits`], [`says`]; CONTRACTS §2).
+/// Its first column is not read, `-` or a port alike: the port's hint
+/// ([`well_known_kind`]) names the word when its lender types none, and a
+/// group's file is found by that word, read through the running svrngs one
+/// group and word at a time, so it can't be found by a port before the word
+/// is known; and a hint from it would let one member's file name what runs
+/// on another's computer, where the word a lend goes under is its lender's.
 ///
 /// Data, not code, since a program's word is one the infra does not hold
 /// (DESIGN §5, the nouns gate).
