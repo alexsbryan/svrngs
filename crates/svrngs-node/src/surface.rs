@@ -65,6 +65,12 @@ use crate::seed::Seed;
 use crate::{origin::origin, session::AS_PATH};
 use crate::{register::RemovalSaid, Person};
 
+/// The guide to building an app, docs/guide/build.md, in the binary, so
+/// `svrngs guide` prints it to an agent holding only the command (svrn-docs
+/// `rings/current/EXTENSION_POINT.md` §7, G4: in one agent run `--help` was
+/// all it read).
+pub const GUIDE: &str = include_str!("../../../docs/guide/build.md");
+
 /// Where an app asks which groups this computer holds.
 pub const GROUPS_ROUTE: &str = "/v1/groups";
 

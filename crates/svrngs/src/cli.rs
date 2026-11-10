@@ -27,6 +27,7 @@
 //!                                          asked of svrngs running here
 //! svrngs relay <name> [--open] [--staging] a relay, for the groups this computer is in
 //!                                          or everyone ([`crate::relay`])
+//! svrngs guide                             print the guide to building an app
 //! ```
 //!
 //! `remove` and `handover` ask the node running here, as `share --folder`
@@ -127,6 +128,14 @@ use svrngs_node::link::{client_link, https_link, Link, Origin};
 pub const USAGE: &str = "\
 svrngs — keep what your group shares on your own computers.
 
+To build an app for your group, make a folder with an index.html in it:
+~/svrngs/<group>/apps/<name>/index.html. Within seconds it is on everyone's
+home page. Plain HTML and JavaScript, no build step: the page reads and
+writes its entries with fetch('svrngs/acts'). Every file in the group's
+folder goes to every member and stays in the group's record for good, as
+every entry does, so try things in a group of your own first (`svrngs new`).
+`svrngs guide` prints the whole guide.
+
   svrngs
       Run for every group you are in. Leave it running.
       Already running? Show your home page's address and how to open it.
@@ -148,8 +157,7 @@ svrngs — keep what your group shares on your own computers.
 
   svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
-      must be on. --as is the name the group knows you by; else your full
-      name as this computer shows it, or its user name. The group's folder is put at ~/svrngs/<group>.
+      must be on. --as is as for `new`. The group's folder is put at ~/svrngs/<group>.
       Where svrngs runs here already, as on a computer it runs at login,
       that svrngs joins for you and this command leaves, running nothing.
       --no-run stops once you are in, rather than run.
@@ -218,8 +226,6 @@ svrngs — keep what your group shares on your own computers.
       Keep <dir> the same on every computer in <group> that shares a folder
       of its name, whenever svrngs runs here, from now on: anyone in it may
       add, change and delete in it, and nobody outside it receives a byte.
-      <group> is its name, or the first 8 letters of its id, as `link`
-      takes it.
 
   svrngs room <name>...
       Open the lends named <name> to this computer's WiFi, so a TV, a phone
@@ -360,6 +366,8 @@ pub enum Verb {
     Restart,
     Relay(Relay),
     Help,
+    /// `guide`: the guide to building an app, as this build holds it.
+    Guide,
 }
 
 /// What `--program` (and its older spelling, `--kind`) and `--reads` want,
@@ -617,6 +625,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "open" => Ok(Verb::Open(positional, print)),
         "update" => Ok(Verb::Update),
         "restart" => Ok(Verb::Restart),
+        "guide" => Ok(Verb::Guide),
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -679,8 +688,6 @@ pub enum Refusal {
     Readers(LendName, String),
     #[error("cannot make a sign-in for it on this computer: {0}")]
     SignIn(#[from] svrngs_node::oidc::KeyFailure),
-    #[error("cannot read what you lend on this computer: {0}")]
-    Lends(lend::LendError),
     #[error("you lend nothing called {name} from this computer{}", lent_now(.lent))]
     NotLent { name: LendName, lent: Vec<LendName> },
     #[error("{0} gives each app no address of its own, so on a phone every app would open where your group's page keeps who each person is. Use a host that serves your page at every name under it, as group.svrnme.sh does")]
@@ -769,7 +776,6 @@ impl Refusal {
             | Refusal::IssuerAway
             | Refusal::Prompt(_)
             | Refusal::SignIn(_)
-            | Refusal::Lends(_)
             | Refusal::CannotCheck(_)
             | Refusal::NotRunning
             | Refusal::Unopened(_)
@@ -841,6 +847,7 @@ pub fn reach(at: MeetAt) -> RelayConfig {
 pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
     let said = match command {
         Verb::Help => format!("{USAGE}\n"),
+        Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at, print) => open(&root, at.as_deref(), print).await?,
@@ -898,12 +905,8 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             let raw = matches!(lend.source, Source::Raw(..));
             let secret = match (client.is_some() || raw, accounts) {
                 (true, _) => None,
-                (false, Some(share::Signs::Accounts(_))) => {
-                    tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes");
-                    None
-                }
-                (false, Some(share::Signs::Header(_))) => {
-                    tracing::debug!(target: "cli", lend = %lend.name, "cli: share — no password asked: it takes each person from the door's header");
+                (false, Some(signs)) => {
+                    tracing::debug!(target: "cli", lend = %lend.name, ?signs, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes (Accounts), or it takes each person from the door's header (Header)");
                     None
                 }
                 (false, None) => prompt_secret(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
@@ -912,17 +915,18 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             if asked.readers {
                 share_readers(&root, &lend, asked.port).await?;
             }
-            let sharing = Sharing {
+            let sharing = Said::Shared {
                 lend,
                 secret: secret.is_some(),
                 accounts,
                 client,
+                issuer: None,
             };
             match claim(&root) {
                 Err(Refusal::Busy(lock)) => {
                     tracing::debug!(target: "cli", lock = %lock.display(), "cli: share — svrngs runs here already, and reads the lend from its declaration");
                     let api = svrngs_node::api::kept_address(&root)?.ok_or(Refusal::NotRunning)?;
-                    sharing.said(api).to_string()
+                    issued(sharing, api).to_string()
                 }
                 claimed => return start(Verb::Run, root, relay, claimed?, Some(sharing)).await,
             }
@@ -1071,7 +1075,7 @@ async fn start(
     root: PathBuf,
     relay: &RelayConfig,
     _claimed: File,
-    sharing: Option<Sharing>,
+    sharing: Option<Said>,
 ) -> Result<(), Refusal> {
     let key = identity::load_or_generate_node_key(&root)?;
     // Where the API, the home page and each lend's address here listened
@@ -1097,7 +1101,7 @@ async fn start(
         }
     })?;
     if let Some(sharing) = sharing {
-        println!("{}", sharing.said(node.api_addr()));
+        println!("{}", issued(sharing, node.api_addr()));
     }
     let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
@@ -1204,31 +1208,21 @@ impl std::fmt::Display for Printed {
     }
 }
 
-/// What `share` says once the node it started knows where its API listens:
-/// the lend it declared and the sign-in it made, if any
-/// (SIGN_IN_WITH_SVRNGS §5 "Turning it on").
-struct Sharing {
-    lend: Lend,
-    secret: bool,
-    accounts: Option<share::Signs>,
-    client: Option<SignInWithSvrngs>,
-}
-
-impl Sharing {
-    /// The words for the API at `api`: the one issuer string is made from
-    /// its port, the same string the door and discovery say.
-    fn said(&self, api: SocketAddr) -> Said {
-        Said::Shared {
-            lend: self.lend.clone(),
-            secret: self.secret,
-            accounts: self.accounts,
-            issuer: self
-                .client
-                .as_ref()
-                .map(|_| svrngs_node::oidc::issuer(api.port(), self.lend.name.as_str())),
-            client: self.client.clone(),
-        }
+/// What `share` says, `said`, once the node it started knows where its API
+/// listens, `api`: a sign-in it made names its issuer, made from that port,
+/// the same string the door and discovery say (SIGN_IN_WITH_SVRNGS §5
+/// "Turning it on").
+fn issued(mut said: Said, api: SocketAddr) -> Said {
+    if let Said::Shared {
+        lend,
+        client: Some(_),
+        issuer,
+        ..
+    } = &mut said
+    {
+        *issuer = Some(svrngs_node::oidc::issuer(api.port(), lend.name.as_str()));
     }
+    said
 }
 
 /// What a verb tells the person, in DESIGN §1's words alone.
@@ -1734,6 +1728,7 @@ async fn serve(
         Verb::Run => running(root, node).await,
         Verb::Room(names) => room(root, names).await?,
         Verb::Help
+        | Verb::Guide
         | Verb::Share(..)
         | Verb::Unshare(..)
         | Verb::Relay(_)
@@ -1997,8 +1992,13 @@ pub async fn link_to(
 /// is; its refusal, a non-keeper's among them, in its words. One that
 /// answers no link is an older build, said as [`join_running`] says it.
 async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
-    let device = matches!(link, Verb::Link { device: true, .. });
-    let Verb::Link { group, relays, .. } = link else {
+    let Verb::Link {
+        group,
+        relays,
+        device,
+        ..
+    } = link
+    else {
         unreachable!("asked only of a link")
     };
     let seed = group_named(root, &group)?;

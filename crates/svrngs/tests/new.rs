@@ -462,6 +462,41 @@ fn the_verbs_parse() {
     assert_eq!(cli::parse(argv("--help")).unwrap(), Verb::Help);
 }
 
+/// **`--help` opens with how to build an app, and `guide` prints the
+/// guide whole** (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G4,
+/// G6): in one agent run (2026-11-09), `--help` was all it read, and it
+/// never learned of a folder app or that the group's folder is kept by
+/// every member. The help's first paragraph names the folder, the route,
+/// the permanence, a group of one's own and `svrngs guide`, which the
+/// binary answers with docs/guide/build.md byte for byte. Planted, watched
+/// failing: the help as 25444fb6 left it, and `guide` as an unknown command.
+#[test]
+fn the_help_opens_with_how_to_build_an_app_and_the_guide_prints_whole() {
+    let opening = cli::USAGE.split("\n\n").nth(1).unwrap();
+    for said in [
+        "~/svrngs/<group>/apps/<name>/index.html",
+        "fetch('svrngs/acts')",
+        "goes to every member",
+        "for good",
+        "(`svrngs new`)",
+        "`svrngs guide`",
+    ] {
+        assert!(
+            opening.contains(said),
+            "the help's opening lacks {said}: {opening}"
+        );
+    }
+    assert_eq!(cli::parse(argv("guide")).unwrap(), Verb::Guide);
+    let printed = std::process::Command::new(env!("CARGO_BIN_EXE_svrngs"))
+        .arg("guide")
+        .output()
+        .unwrap();
+    assert!(printed.status.success(), "{printed:?}");
+    let guide = concat!(env!("CARGO_MANIFEST_DIR"), "/../../docs/guide/build.md");
+    let guide = std::fs::read_to_string(guide).unwrap();
+    assert_eq!(String::from_utf8(printed.stdout).unwrap(), guide);
+}
+
 /// Every one of these is a guess some hand-rolled parser has made: a
 /// missing value, an unknown flag, a flag on the wrong verb, a typo'd verb.
 #[test]
