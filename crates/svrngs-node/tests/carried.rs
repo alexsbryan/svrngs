@@ -2371,7 +2371,13 @@ async fn a_carried_taste_sends() {
     let taste = at_ana.join("apps/Taste");
     std::fs::create_dir_all(&taste).unwrap();
     let carried = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/taste");
-    for file in ["index.html", "index.js", "reads.txt", "sends.txt"] {
+    for file in [
+        "index.html",
+        "index.js",
+        "style.css",
+        "reads.txt",
+        "sends.txt",
+    ] {
         std::fs::copy(carried.join(file), taste.join(file)).unwrap();
     }
     let mut seen = lends(ana, &group).await;

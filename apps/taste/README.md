@@ -16,16 +16,27 @@ the group has it. Then on your svrngs home page, open Taste. Under a
 friend's llama-server, the line says *"Sends to Bo’s llama-server at
 /v1/embeddings. Bo can see what it sends."* Tick it, and press **Open**.
 
-Taste lists the films in your friends' libraries. Mark any you've seen
-**Loved it**, **Liked it** or **Not for me**, and it lists the ones you'll
-probably like.
+Taste lists the films in your friends' libraries. The first time, it asks
+you to rate five films you've seen (all but one, in a smaller library):
+mark each **Loved it**, **Liked it** or **Not for me**. Then it lists the
+films you'll probably like first, and says which of your ratings each guess
+comes from. To bring ratings from Letterboxd instead, export your data
+there (Settings, then Data), open the file it gives you, and choose
+`ratings.csv` on the page.
+
+Each film has **Watch from Sam's library**, which opens it in Sam's
+Jellyfin. When you come back to Taste after watching, it asks **How was
+it?** once, and keeps your answer with your other ratings.
 
 Before you share a change with the group, `svrngs check <the folder>` says
 what svrngs will refuse.
 
 ## What stays in your browser
 
-- **Your ratings.** They're kept in this browser and sent nowhere.
+- **Your ratings.** They're kept in this browser and sent nowhere, so
+  another browser or computer starts without them; bring your Letterboxd
+  file there too. Which film you went to watch is kept the same way, until
+  you say how it was.
 - **Which films you rated.** To guess, Taste asks a model for a list of
   numbers that describes each film. It sends the whole list of films in
   your friends' libraries, in one order (by library, then by the library's
@@ -46,10 +57,13 @@ yes, apps can only read it, and Taste says what's missing.
 
 ## How it's built
 
-- `index.html` is the page and `index.js` all of its code: it reads each
-  Jellyfin, sends the films to the model, and scores them. Your taste is
-  the sum of your rated films' numbers, each weighted by your rating;
-  an unrated film scores by how near it is (cosine).
+- `index.html` and `style.css` are the page, and `index.js` all of its
+  code: it reads each Jellyfin, sends the films to the model, scores them,
+  and reads a Letterboxd export. Your taste is the sum of your rated films'
+  numbers, each weighted by your rating (5 stars pulls toward, 1 pushes
+  away); an unrated film scores by how near it is (cosine). A film is the
+  same film by a provider id both name, else by title and year, so a
+  rating counts in every library that has it.
 - `reads.txt` and `sends.txt` name the programs Taste asks to read and send
   to. svrngs shows each on your home page and lets Taste reach only those
   you tick.

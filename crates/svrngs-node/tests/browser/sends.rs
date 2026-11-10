@@ -155,6 +155,15 @@ async fn the_send_tick_is_the_yes_to_a_send(engine: Engine) {
     drop((ada, sam));
 }
 
+/// Taste's files, as a group's folder carries them (apps/taste).
+const TASTE: [&str; 5] = [
+    "index.html",
+    "index.js",
+    "style.css",
+    "reads.txt",
+    "sends.txt",
+];
+
 /// Three films, as Jellyfin's `/Items` lists a library's: two science
 /// fiction, one not.
 const FILMS: &str = r#"{"Items":[
@@ -192,11 +201,17 @@ in_both_engines!(
     /// carries apps/taste as Taste, unchanged; on her home page she
     /// ticks its send under Sam's llama-server and opens it. Its page reads
     /// the films at its own origin, sends them, described, in one POST to
-    /// the llama-server's `/v1/embeddings` there, and lists them; she rates
-    /// Alien "Loved it" and it guesses Aliens, from the numbers that came
-    /// back. The stand-in was asked that one POST, its `input` the three
-    /// films in Jellyfin's order. Planted, watched failing: Taste's page
-    /// posting to `v1/embedding`, a path its `sends:` row does not name.
+    /// the llama-server's `/v1/embeddings` there, and lists them. She brings
+    /// a Letterboxd file that loves Alien and rates Heat, which no library
+    /// here has, and rates Amélie "Not for me": two rated of three, the
+    /// first guess's mark, so it guesses Aliens because she loved Alien,
+    /// from the numbers that came back, with Sam's Jellyfin to watch it in
+    /// by svrngs's `to`. Back from watching, it asks how Aliens was, and
+    /// keeps her answer. The stand-in was asked one POST each time the page
+    /// opened, its `input` the three films in Jellyfin's order. Planted,
+    /// watched failing: Taste's page posting to `v1/embedding`, a path its
+    /// `sends:` row does not name; and the page before the retired served
+    /// Taste's features came back (8b636ad9), which has no Letterboxd file.
     a_carried_taste_sends_and_draws_what_comes_back
 );
 async fn a_carried_taste_sends_and_draws_what_comes_back(engine: Engine) {
@@ -217,7 +232,7 @@ async fn a_carried_taste_sends_and_draws_what_comes_back(engine: Engine) {
     std::fs::create_dir(&folder).unwrap();
     keep_folder(&ada, &folder).await;
     let taste = repo().join("apps/taste");
-    let files: Vec<(&str, String)> = ["index.html", "index.js", "reads.txt", "sends.txt"]
+    let files: Vec<(&str, String)> = TASTE
         .into_iter()
         .map(|f| (f, std::fs::read_to_string(taste.join(f)).unwrap()))
         .collect();
@@ -229,7 +244,11 @@ async fn a_carried_taste_sends_and_draws_what_comes_back(engine: Engine) {
         engine,
         "taste-sends.mjs",
         json!({ "home": format!("http://svrngs.localhost:{api}/"), "words": "Open Taste",
-            "rate": "Alien", "as": "Loved it" }),
+            "csv": "Date,Name,Year,Letterboxd URI,Rating\n\
+                2026-11-01,Alien,1979,https://boxd.it/a,5\n\
+                2026-11-02,Heat,1995,https://boxd.it/h,4\n\
+                2026-11-03,Brazil,1985,https://boxd.it/b,\n",
+            "rates": [["Amélie", "Not for me"]], "after": "Liked it" }),
         None,
     )
     .await;
@@ -245,15 +264,43 @@ async fn a_carried_taste_sends_and_draws_what_comes_back(engine: Engine) {
         "it lists the films it read:\n{seen:#}"
     );
     assert_eq!(
-        seen["likely"],
-        json!(["Aliens"]),
-        "it guesses from the numbers that came back:\n{seen:#}"
+        seen["brought"], "Kept 2 ratings from Letterboxd.",
+        "a Letterboxd file's rated lines are kept, its unrated one not:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["waiting"], "First, rate 2 films you’ve seen (1 of 2 so far)",
+        "one rated of three guesses nothing yet:\n{seen:#}"
+    );
+    assert_eq!(
+        (&seen["likely"], &seen["because"]),
+        (&json!(["Aliens"]), &json!(["Because you loved Alien"])),
+        "it guesses from the numbers that came back, and says why:\n{seen:#}"
+    );
+    assert_eq!(
+        seen["guessed"],
+        "Guesses use Sam’s llama-server. It gets the list of films in your friends’ libraries, \
+         never what you rated. You also rated 1 film no library here has.",
+        "{seen:#}"
+    );
+    let watch = seen["watch"].as_str().unwrap_or_default();
+    assert!(
+        watch.contains("/svrngs-to?") && watch.ends_with("#/details?id=2"),
+        "Aliens is watched in Sam's own Jellyfin, opened by svrngs's `to`:\n{seen:#}"
+    );
+    assert_eq!(
+        (&seen["after"], &seen["rated"]),
+        (
+            &json!("How was Aliens?"),
+            &json!(["Alien", "Aliens", "Amélie"])
+        ),
+        "back from watching, it asks how it was and keeps the answer:\n{seen:#}"
     );
     let model_asked = on_model.lock().unwrap().clone();
     assert_eq!(
         firsts(&on_model),
-        ["POST /v1/embeddings"],
-        "Taste sends once, through its own origin, to its row's path: {model_asked:#?}"
+        ["POST /v1/embeddings", "POST /v1/embeddings"],
+        "Taste sends once each time it opens, through its own origin, to its row's path: \
+         {model_asked:#?}"
     );
     let body = model_asked[0].split_once("\r\n\r\n").map_or("", |(_, b)| b);
     let sent: Value = serde_json::from_str(body).unwrap();

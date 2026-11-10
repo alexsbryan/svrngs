@@ -1,0 +1,17 @@
+/* Taste's page: one dense column in the browser's own type, readable on a phone. */
+body { font: 17px/1.4 system-ui, sans-serif; margin: 0 auto; max-width: 42rem; padding: 1rem; color: black; background: ivory; }
+h1 { font-size: 1.5rem; margin: 0 0 0.5rem; }
+h2 { font-size: 1.1rem; margin: 1.25rem 0 0.4rem; border-bottom: 2px solid black; }
+ul#libraries { list-style: none; margin: 0.5rem 0; padding: 0; color: dimgray; font-size: 0.9rem; }
+[data-state="away"], [data-state="closed"], [data-state="refused"], [data-state="failed"] { color: firebrick; }
+#guessed { color: dimgray; font-size: 0.9rem; }
+ol { padding-left: 1.5rem; margin: 0; }
+li { padding: 0.35rem 0; }
+.whose { color: dimgray; }
+.because { display: block; color: darkgreen; font-size: 0.9rem; }
+.rate { display: flex; gap: 0.4rem; margin-top: 0.25rem; flex-wrap: wrap; }
+button { font: inherit; font-size: 0.85rem; padding: 0.2rem 0.6rem; border: 1px solid black; background: white; color: black; }
+button[aria-pressed="true"] { background: black; color: white; }
+#bring { margin-top: 1.5rem; }
+.watch { display: block; font-size: 0.9rem; }
+#after { border: 2px solid black; padding: 0 0.75rem 0.75rem; margin: 0.75rem 0; background: white; }
