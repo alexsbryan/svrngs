@@ -775,16 +775,17 @@ pub fn mutate(
 }
 
 /// Hold the per-lend lock while a read/modify/write of `name`'s
-/// declaration runs; let it go when the returned file drops. The standard
-/// library's `File::try_lock`, as `cli::claim` uses it: no new lock crate
-/// (LENDING_SCOPE). A held lock is a visible busy, never a lost update.
-fn lock_lend(data_dir: &Path, name: &LendName) -> Result<std::fs::File, LendError> {
+/// declaration runs; let it go when the returned [`Held`] drops. The
+/// standard library's `File::try_lock`, as `cli::claim` uses it: no new
+/// lock crate (LENDING_SCOPE). A held lock is a visible busy, never a lost
+/// update.
+fn lock_lend(data_dir: &Path, name: &LendName) -> Result<Held, LendError> {
     let dir = data_dir.join("locks");
     std::fs::create_dir_all(&dir).map_err(unwritable(&dir))?;
     let path = dir.join(format!("{name}.lock"));
     let file = std::fs::File::create(&path).map_err(unwritable(&path))?;
     match file.try_lock() {
-        Ok(()) => Ok(file),
+        Ok(()) => Ok(Held(file)),
         Err(source) => {
             let source = match source {
                 std::fs::TryLockError::WouldBlock => {
@@ -796,6 +797,20 @@ fn lock_lend(data_dir: &Path, name: &LendName) -> Result<std::fs::File, LendErro
                 "lend: refused — another change holds its lock");
             Err(LendError::Busy { path, source })
         }
+    }
+}
+
+/// A lend's lock, held until this drops, which unlocks it before the file
+/// closes: a program started while it was held shares the open file until
+/// that program runs, so closing alone left the lock held a moment, and
+/// the next change refused busy (lend/tests.rs
+/// `a_change_let_go_is_never_held_by_a_program_starting_at_the_time`).
+struct Held(std::fs::File);
+
+impl Drop for Held {
+    fn drop(&mut self) {
+        let unlocked = self.0.unlock();
+        tracing::debug!(target: "lend", ?unlocked, "lend: its lock let go");
     }
 }
 

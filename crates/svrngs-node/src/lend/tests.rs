@@ -570,3 +570,45 @@ fn a_redeclaration_while_a_change_holds_the_lend_is_busy_never_undone() {
     let kept = read(root.path(), &shelf.name).unwrap().unwrap().audience;
     assert_eq!(kept, narrowed.audience, "taken once let go");
 }
+
+/// **A change let go is never held by a program starting at the time**
+/// (the full check's `a_lend_that_asks_keeps_its_lender_s_words`, share.rs,
+/// refused `Keep("taste")` at its `unshare`: `Busy`, WouldBlock, on a lock
+/// file no other change opened). A program started while a change holds
+/// the lock shares its open file until it runs, so the change's close
+/// alone leaves the lock held a moment, and the next change, its own, is
+/// refused busy. Here one thread starts programs while this one
+/// declares and withdraws one lend, each at least 100 times. Planted, watched
+/// failing: the lock let go by its close alone, as before, refused busy
+/// within the first dozen changes.
+#[test]
+fn a_change_let_go_is_never_held_by_a_program_starting_at_the_time() {
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+    use std::sync::Arc;
+    let root = tempfile::tempdir().unwrap();
+    let pad = lend("pad", 9000);
+    let (started, done) = (
+        Arc::new(AtomicUsize::new(0)),
+        Arc::new(AtomicBool::new(false)),
+    );
+    let starting = std::thread::spawn({
+        let (started, done) = (started.clone(), done.clone());
+        move || {
+            while !done.load(Ordering::Relaxed) {
+                std::process::Command::new("/usr/bin/true")
+                    .status()
+                    .unwrap();
+                started.fetch_add(1, Ordering::Relaxed);
+            }
+        }
+    });
+    let mut changes = 0;
+    while changes < 100 || started.load(Ordering::Relaxed) < 100 {
+        let changed =
+            declare(root.path(), &pad, None).and_then(|()| withdraw(root.path(), &pad.name));
+        assert!(changed.is_ok(), "change {changes}: {changed:?}");
+        changes += 1;
+    }
+    done.store(true, Ordering::Relaxed);
+    starting.join().unwrap();
+}
