@@ -1223,7 +1223,10 @@ Seven calls:
    is not this lend, by a GET or HEAD and no protocol switch, goes as the
    account its lender keeps for readers, if one is kept, signed in once as
    the table says, or the key its lender pasted (the home page's row for it
-   or `svrngs share --readers`, `share::readers_of`, `share::key_of`), and bare
+   or `svrngs share --readers`, `share::readers_of`, `share::key_of`), which
+   is tried once as it is pasted, at the path its row names on the lender's
+   own service and nowhere else (`share::tried`), and kept only if that
+   service did not refuse it (`share::key_said`), and bare
    of every lender credential if not; anything else it sends is refused
    `closed` before the service is asked, and says whose it is. A
    reading page's one POST ended a Jellyfin token kept for all, and a

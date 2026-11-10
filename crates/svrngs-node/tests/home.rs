@@ -399,6 +399,26 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     alex.endpoint().close().await;
 }
 
+/// A stand-in for Immich's `GET /api/users/me` on `listener`: 200 for
+/// `x-api-key: k-1`, else 401.
+fn key_stand_in(listener: std::net::TcpListener) {
+    use std::io::{BufRead, Write};
+    std::thread::spawn(move || {
+        for mut sock in listener.incoming().flatten() {
+            let mut head = String::new();
+            let mut lines = std::io::BufReader::new(&sock);
+            while !head.ends_with("\r\n\r\n") && lines.read_line(&mut head).unwrap_or(0) > 0 {}
+            let lower = head.to_ascii_lowercase();
+            let took =
+                lower.starts_with("get /api/users/me ") && lower.contains("\r\nx-api-key: k-1\r\n");
+            let status = if took { "200 OK" } else { "401 Unauthorized" };
+            let reply =
+                format!("HTTP/1.1 {status}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+            let _ = sock.write_all(reply.as_bytes());
+        }
+    });
+}
+
 /// A stand-in for Jellyfin's sign-in on `listener`: `tok-1` for a body
 /// holding `pw-1`, else 401.
 fn sign_in_stand_in(listener: std::net::TcpListener) {
@@ -433,13 +453,17 @@ fn sign_in_stand_in(listener: std::net::TcpListener) {
     });
 }
 
-/// **A readers' key is pasted on the home page, kept, and never told** (a
-/// lender with no terminal; `readers: key x-api-key`, CONTRACTS §4): `/lent`
-/// says the program takes a key, and how to make one (`signs.accounts`);
-/// `POST /lent` `{"key": ...}` keeps the pasted key as the file `x-api-key`,
-/// which no answer reads back; a blank paste is told to paste one, and
-/// keeps and deletes nothing; a key for a program whose file names none is refused. Planted,
-/// watched failing: the change kept the key under `authorization`.
+/// **A readers' key is pasted on the home page, tried, kept, and never
+/// told** (a lender with no terminal; `readers: key x-api-key
+/// /api/users/me`, CONTRACTS §4): `/lent` says the program takes a key, and
+/// how to make one (`signs.accounts`); `POST /lent` `{"key": ...}` tries the
+/// key once at its service's `/api/users/me`, a stand-in taking `k-1` alone:
+/// one it refuses is refused in words saying what it answered, and kept
+/// nowhere; one it takes is kept as the file `x-api-key`, which no answer
+/// reads back; a blank paste is told to paste one, and keeps and deletes
+/// nothing; a key for a program whose file names none is refused. Planted,
+/// watched failing: the change kept the key under `authorization`; and the
+/// key kept whatever its service answered (the wrong one kept).
 #[tokio::test]
 async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -451,8 +475,11 @@ async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
         .expect("Sam's computer hears it lets Sam in");
     let at = lend::lends_dir(sam_dir.path());
     std::fs::create_dir_all(&at).unwrap();
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    key_stand_in(listener);
     for (name, kind) in [("photos", "immich"), ("notes", "notes")] {
-        let body = serde_json::json!({ "port": 2283, "kind": kind, "groups": [NS] });
+        let body = serde_json::json!({ "port": port, "kind": kind, "groups": [NS] });
         std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
     }
     let (browser, home) = (
@@ -516,6 +543,23 @@ async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
         "a program with no key row keeps none"
     );
 
+    let wrong = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &paste("photos", "k-2"),
+    )
+    .await;
+    assert_eq!(wrong.status, 403, "{}", wrong.body);
+    assert_eq!(
+        wrong.json()["error"],
+        "immich refused this key: it answered 401. Make a new API key in immich, then paste that.",
+        "{}",
+        wrong.body
+    );
+    assert!(!kept.exists(), "a key its service refused is kept nowhere");
     let right = ask(
         browser,
         "POST",

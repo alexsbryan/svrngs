@@ -74,7 +74,7 @@ fn the_well_known_table_reads_whole() {
         assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
         let _ = kept_of(&kind, "");
         if rest.contains(" readers: key ") {
-            let (header, sent) = svrngs_node::share::key_of(&kind, "").expect(row);
+            let (header, sent, _) = svrngs_node::share::key_of(&kind, "").expect(row);
             assert!(key_header_fits(header) && sent.contains("{}"), "{row}");
         } else if rest.contains(" readers: ") {
             let how = readers_of(&kind, "").expect(row);
@@ -338,9 +338,12 @@ fn a_key_row_may_name_only_a_header_of_the_service_s_own() {
         assert!(!key_header_fits(no), "a key row naming {no:?} is refused");
     }
     let immich = Program::parse("immich").unwrap();
-    assert_eq!(key_of(&immich, ""), Some(("x-api-key", "{}")));
+    assert_eq!(key_of(&immich, ""), Some(("x-api-key", "{}", "/api/users/me")));
     let books = Program::parse("audiobookshelf").unwrap();
-    assert_eq!(key_of(&books, ""), Some(("authorization", "Bearer {}")));
+    assert_eq!(
+        key_of(&books, ""),
+        Some(("authorization", "Bearer {}", "/api/me"))
+    );
     assert_eq!(key_of(&Program::parse("jellyfin").unwrap(), ""), None);
 }
 
@@ -435,7 +438,7 @@ fn a_group_s_readers_row_sends_its_sign_in_only_to_its_own_service() {
     let key = "- notes readers: key x-api-key";
     assert_eq!(refused("notes", key), None);
     let notes = program("notes");
-    assert_eq!(key_of(&notes, key), Some(("x-api-key", "{}")));
+    assert_eq!(key_of(&notes, key), Some(("x-api-key", "{}", "")));
     assert_eq!(key_of(&notes, ""), None, "no file, no key");
     let sign_in = "- notes readers: /login Username Pw AccessToken Bearer {}";
     assert_eq!(refused("notes", sign_in), None);

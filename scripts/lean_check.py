@@ -617,10 +617,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) Row 12, a group's own programs/<word>.txt read through its
 # record (+125), inside the operator's ceiling for rows 10 and 12: . to
 # 21,086.
+# (2026-11-09) The gaps after row 12 (d1c0c0e7 to 6695b96a): an economizing
+# pass of -42 (d1c0c0e7, 2221a146, 70830209) paid for gaps 1, 2, 3, 4 and 7
+# (+38), leaving 21,081. Gap 5, a pasted key tried once against the
+# lender's own service (+34), inside the operator's ceiling for rows 10 and
+# 12: . to 21,116.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 21086,
+    ".": 21116,
 
     "js": 8491,
 

@@ -12,5 +12,6 @@
 # The key goes in Authorization as a Bearer token. Run against that image on
 # the Fedora box under Podman, 2026-11-09: GET /api/me answered 200 with
 # Authorization: Bearer <an API key made at POST /api/api-keys>, 401 with no
-# header, 401 with x-api-key: <that key>.
-13378 audiobookshelf readers: key authorization Bearer {}
+# header, 401 with x-api-key: <that key>. So a pasted key is tried at
+# /api/me, as it was then.
+13378 audiobookshelf readers: key authorization Bearer {} /api/me

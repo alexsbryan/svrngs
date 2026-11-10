@@ -135,8 +135,9 @@ const CLAUSES: [&str; 5] = ["keeps", "readers", "carries", "accounts", "header"]
 /// as long as the terms svrngs ships, by the one `share` that reads it.
 pub type Terms = &'static str;
 
-/// The header a readers' key goes in, and how, `{}` the key ([`key_of`]).
-pub type Key = Option<(&'static str, &'static str)>;
+/// The header a readers' key goes in, how, `{}` the key, and the path it
+/// is tried at as it is pasted, empty for none ([`key_of`], [`tried`]).
+pub type Key = Option<(&'static str, &'static str, &'static str)>;
 
 /// Whether `text`, a group's own `programs/<word>.txt`, holds as terms for
 /// `word` (CONTRACTS §2, §6.2, §6.3), or what in it does not, in words its
@@ -354,25 +355,60 @@ pub fn key_of(kind: &Program, terms: Terms) -> Key {
     says(kind, "readers", terms).next().and_then(key_in)
 }
 
-/// The header and how (`{}` the key) a `readers: key` row says, if it
-/// [`key_header_fits`]; the one reader of that form. A row naming a header
-/// it refuses is no row at all.
-fn key_in(row: &str) -> Option<(&str, &str)> {
+/// The header, how (`{}` the key) and the path a `readers: key` row says,
+/// `key <header> [<sent>] [<path>]`, if it [`key_header_fits`]; the one
+/// reader of that form. Its last word, when it starts with `/`, is the path
+/// on the lender's own service a key is tried at as it is pasted
+/// ([`tried`]). A row naming a header it refuses is no row at all.
+fn key_in(row: &str) -> Option<(&str, &str, &str)> {
     let row = row.strip_prefix("key ")?.trim();
+    let at = |(_, p): &(&str, &str)| p.starts_with('/');
+    let (row, path) = row.rsplit_once(' ').filter(at).unwrap_or((row, ""));
     let (header, sent) = row.split_once(' ').unwrap_or((row, "{}"));
     let fits = key_header_fits(header) && sent.contains("{}");
     tracing::debug!(target: "share", header, fits, "share: a readers' key row, read or refused");
-    fits.then_some((header, sent))
+    fits.then_some((header, sent, path))
 }
 
 /// Keep `key` for apps reading the lend `name`, as `how`, its program's
 /// [`key_of`], says to send it ([`crate::lend::keep_readers`]); false when it names no
 /// key or `key` is empty, so a blank paste can't delete what is kept.
 pub fn keep_key(dir: &Path, name: &LendName, how: Key, key: &str) -> Result<bool, LendError> {
-    let Some((header, sent)) = how.filter(|_| !key.is_empty()) else {
+    let Some((header, sent, _)) = how.filter(|_| !key.is_empty()) else {
         return Ok(false);
     };
     crate::lend::keep_readers(dir, name, (header, &sent.replace("{}", key))).map(|()| true)
+}
+
+/// What the service at this computer's `port` answers `key`, sent as `how`
+/// says, at its path, followed nowhere else: its status; none when `how`
+/// names no path or nothing answers. Asked once, as the key is pasted.
+pub async fn tried(port: NonZeroU16, how: Key, key: &str) -> Option<u16> {
+    let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
+    let client = crate::http::builder()
+        .ok()?
+        .redirect(reqwest13::redirect::Policy::none());
+    let asked = client
+        .build()
+        .ok()?
+        .get(format!("http://127.0.0.1:{port}{path}"));
+    let answered = asked.header(header, sent.replace("{}", key)).send().await;
+    let status = answered.ok().map(|a| a.status().as_u16());
+    tracing::debug!(target: "share", port, path, ?status, "share: a pasted key tried once on its own service, or none answered");
+    status
+}
+
+/// What a lender is told of the key their `name`, its program's word,
+/// answered `status` to ([`tried`]), and whether it is kept: refused, 401 or 403, it
+/// is not, so a mistyped paste never replaces a key that works, as a
+/// readers' account that is not let in is not kept (home.rs `readers`).
+pub fn key_said(name: &Program, status: Option<u16>) -> Result<String, String> {
+    match status {
+        Some(s @ (401 | 403)) => Err(format!("{name} refused this key: it answered {s}. Make a new API key in {name}, then paste that.")),
+        Some(s) if s < 300 => Ok(format!("{name} took this key.")),
+        Some(s) => Ok(format!("{name} answered {s} to this key, so svrngs keeps it, not knowing it works.")),
+        None => Ok(format!("{name} didn't answer, so svrngs keeps the key, not knowing it works.")),
+    }
 }
 
 /// Sign in to the service at this computer's `port` as `name`, as `how`

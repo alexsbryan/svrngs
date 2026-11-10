@@ -15,5 +15,6 @@
 # (sha256:c0a8e008ad9befe8af0e3a515e3b3661e98d38c37eadb6efee18a6d5098136c1),
 # on the Fedora box under Podman, 2026-11-09: GET /api/users/me answered 200
 # with x-api-key: <key>, 401 with no header, 401 with the same key in
-# Authorization: Bearer, 401 with a wrong key.
-2283 immich readers: key x-api-key
+# Authorization: Bearer, 401 with a wrong key. So a pasted key is tried at
+# /api/users/me, as it was then.
+2283 immich readers: key x-api-key /api/users/me

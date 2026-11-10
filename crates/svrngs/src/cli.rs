@@ -1508,8 +1508,10 @@ async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Res
     if let Some(how) = share::key_of(&lend.kind, terms) {
         let key = ask(format!("Paste the key you made in {name}: "), false)?;
         let key = key.ok_or_else(|| refused("nothing was given".into()))?;
+        let said = share::key_said(&lend.kind, share::tried(port, Some(how), &key).await);
+        let said = said.map_err(&refused)?;
         share::keep_key(root, name, Some(how), &key).map_err(|e| refused(e.to_string()))?;
-        eprintln!("Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
+        eprintln!("{said} Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
         return Ok(());
     }
     let line = match share::readers_of(&lend.kind, terms) {

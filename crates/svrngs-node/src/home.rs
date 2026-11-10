@@ -456,11 +456,20 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         LendChange::Key(key) if key.trim().is_empty() => {
             return LendRefusal::closed("Paste the key first.".to_string());
         }
-        LendChange::Key(key) => lend::read(dir, &c.lend).and_then(|lent| {
-            lent.map_or(Ok(false), |l| {
-                share::keep_key(dir, &c.lend, share::key_of(&l.kind, ""), key.trim())
-            })
-        }),
+        LendChange::Key(key) => match lend::read(dir, &c.lend) {
+            Ok(Some(lent)) => {
+                let how = share::key_of(&lent.kind, "");
+                // Tried once on the lender's own service; refused, not kept.
+                if let Port(port) = lent.source {
+                    let tried = share::tried(port, how, key.trim()).await;
+                    if let Err(why) = share::key_said(&lent.kind, tried) {
+                        return LendRefusal::closed(why);
+                    }
+                }
+                share::keep_key(dir, &c.lend, how, key.trim())
+            }
+            read => read.map(|_| false),
+        },
     };
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
