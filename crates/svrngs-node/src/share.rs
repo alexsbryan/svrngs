@@ -81,12 +81,12 @@ pub const PROGRAMS: &[(&str, &str)] = include!(concat!(env!("OUT_DIR"), "/progra
 /// password, since one sent on each request makes everyone one person to it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "lowercase")]
-pub enum Signs {
+pub enum Signs<'a> {
     /// It keeps its own accounts: how its lender makes a person one.
-    Accounts(&'static str),
+    Accounts(&'a str),
     /// It takes the person from the door's `x-svrngs-user`: what its
     /// lender sets in it.
-    Header(&'static str),
+    Header(&'a str),
 }
 
 /// What [`PROGRAMS`]'s first column says a row is (REVIEW_FINDINGS #169):
@@ -137,7 +137,7 @@ pub type Terms = &'static str;
 
 /// The header a readers' key goes in, how, `{}` the key, and the path it
 /// is tried at as it is pasted, empty for none ([`key_of`], [`tried`]).
-pub type Key = Option<(&'static str, &'static str, &'static str)>;
+pub type Key<'a> = Option<(&'a str, &'a str, &'a str)>;
 
 /// Whether `text`, a group's own `programs/<word>.txt`, holds as terms for
 /// `word` (CONTRACTS §2, §6.2, §6.3), or what in it does not, in words its
@@ -257,8 +257,10 @@ fn slipped(known: &str, said: &str) -> bool {
 /// that [`fits`] (empty for none), say in the clause `word`, past the `:`,
 /// shipped first — the one reader of a clause, for [`accounts_of`],
 /// [`kept_of`] and [`readers_of`]. A kind may have a row for each clause.
-fn says(kind: &Program, word: &'static str, terms: Terms) -> impl Iterator<Item = &'static str> {
-    let (kind, rows) = (kind.clone(), rows().chain(rows_in(terms).flatten()));
+fn says<'a>(kind: &Program, word: &'a str, terms: &'a str) -> impl Iterator<Item = &'a str> + 'a {
+    let shipped = PROGRAMS.iter().map(|&(_, f)| -> &'a str { f });
+    let rows = shipped.chain([terms]).flat_map(|f| rows_in(f).flatten());
+    let kind = kind.clone();
     rows.filter_map(move |(_, k, how)| {
         let (what, rest) = how.split_once(':')?;
         (k == kind && what == word).then_some(rest.trim())
@@ -268,7 +270,7 @@ fn says(kind: &Program, word: &'static str, terms: Terms) -> impl Iterator<Item 
 /// The paths [`PROGRAMS`] and `terms` ([`says`]) keep back of every lend of
 /// `kind`, its lender typing none; none when no row says `keeps:`. Why each
 /// is kept back is the file's, beside its row.
-pub fn kept_of(kind: &Program, terms: Terms) -> Vec<RefusedPath> {
+pub fn kept_of(kind: &Program, terms: &str) -> Vec<RefusedPath> {
     let paths = says(kind, "keeps", terms).flat_map(str::split_whitespace);
     let parsed = |p: &str| RefusedPath::parse(p).expect("a file's paths start with /, as it fits");
     let kept: Vec<RefusedPath> = paths.map(parsed).collect();
@@ -285,7 +287,7 @@ pub fn kept_of(kind: &Program, terms: Terms) -> Vec<RefusedPath> {
 /// (`demo/runs/a/dry-2026-10-04/README.md:39-50`;
 /// `demo/runs/u5/2026-10-05-jellyfin/README.md`, finding 3). A row saying
 /// neither `accounts:` nor `header:` says nothing.
-pub fn accounts_of(kind: &Program, terms: Terms) -> Option<Signs> {
+pub fn accounts_of<'a>(kind: &Program, terms: &'a str) -> Option<Signs<'a>> {
     let accounts = says(kind, "accounts", terms).next().map(Signs::Accounts);
     let signs = accounts.or_else(|| says(kind, "header", terms).next().map(Signs::Header));
     tracing::debug!(target: "share", kind = %kind, ?signs, "share: how the kind signs each person in, if its files say");
@@ -310,7 +312,7 @@ pub struct ReadersSignIn<'a> {
 
 /// [`ReadersSignIn`] for `kind`, if its files' row says one that
 /// [`readers_in`] reads.
-pub fn readers_of(kind: &Program, terms: Terms) -> Option<ReadersSignIn<'static>> {
+pub fn readers_of<'a>(kind: &Program, terms: &'a str) -> Option<ReadersSignIn<'a>> {
     says(kind, "readers", terms).next().and_then(readers_in)
 }
 
@@ -351,7 +353,7 @@ pub fn key_header_fits(header: &str) -> bool {
 
 /// The header a key its lender pastes goes in, and how (`{}` the key), if
 /// `kind`'s files' `readers:` row is a `key` row [`key_in`] reads.
-pub fn key_of(kind: &Program, terms: Terms) -> Key {
+pub fn key_of<'a>(kind: &Program, terms: &'a str) -> Key<'a> {
     says(kind, "readers", terms).next().and_then(key_in)
 }
 
@@ -373,7 +375,7 @@ fn key_in(row: &str) -> Option<(&str, &str, &str)> {
 /// Keep `key` for apps reading the lend `name`, as `how`, its program's
 /// [`key_of`], says to send it ([`crate::lend::keep_readers`]); false when it names no
 /// key or `key` is empty, so a blank paste can't delete what is kept.
-pub fn keep_key(dir: &Path, name: &LendName, how: Key, key: &str) -> Result<bool, LendError> {
+pub fn keep_key(dir: &Path, name: &LendName, how: Key<'_>, key: &str) -> Result<bool, LendError> {
     let Some((header, sent, _)) = how.filter(|_| !key.is_empty()) else {
         return Ok(false);
     };
@@ -383,7 +385,7 @@ pub fn keep_key(dir: &Path, name: &LendName, how: Key, key: &str) -> Result<bool
 /// What the service at this computer's `port` answers `key`, sent as `how`
 /// says, at its path, followed nowhere else: its status; none when `how`
 /// names no path or nothing answers. Asked once, as the key is pasted.
-pub async fn tried(port: NonZeroU16, how: Key, key: &str) -> Option<u16> {
+pub async fn tried(port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
     let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
     let client = crate::http::builder()
         .ok()?
@@ -503,7 +505,7 @@ pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
     well_known: Option<Program>,
-    terms: Terms,
+    terms: &str,
 ) -> Result<Lend, ShareRefusal> {
     // A UDP port answers no connection, so nothing tells whether a program
     // listens on it; a TCP port is probed as a page's is. The table's ports
@@ -523,7 +525,10 @@ pub fn lend_of(
         Some(n) => n.clone(),
         None => LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule"),
     };
-    let carries = says(&kind, "carries", terms).next();
+    // The word as `fits` holds it, one of these two, kept as long as the refusal.
+    let carries = ["tcp", "udp"]
+        .into_iter()
+        .find(|w| says(&kind, "carries", terms).any(|c| c == *w));
     if carries.is_some_and(|c| raw.is_none_or(|r| !r.said().eq_ignore_ascii_case(c))) {
         tracing::debug!(target: "share", kind = %kind, carries, "share: refused — its terms carry it as bytes, and it is lent otherwise");
         return Err(ShareRefusal::Carries(kind, carries.unwrap_or_default()));

@@ -1182,7 +1182,7 @@ pub enum Said {
     Shared {
         lend: Lend,
         secret: bool,
-        accounts: Option<share::Signs>,
+        accounts: Option<share::Signs<'static>>,
         /// The client its lender copies into the app's form, when it signs
         /// people in with svrngs: shown once, then never again.
         client: Option<SignInWithSvrngs>,
@@ -1539,40 +1539,23 @@ async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Res
 }
 
 /// The terms the groups named `groups` hold for `kind` in their own
-/// `programs/<kind>.txt`, asked of svrngs running here, which reads each
-/// through its group's record (CONTRACTS §2), each held to what a file may
-/// say ([`share::fits`]); empty for none; and who wrote them where, as its
-/// lender is told it beside their words (CONTRACTS §2: `accounts:` and
-/// `header:` are that person's). Refused, never read as no terms,
-/// when one can't be read or doesn't hold, or two groups say different
-/// things. Kept for the life of this command, as the terms svrngs ships are.
+/// `programs/<kind>.txt`, asked of svrngs running here, which reads them
+/// through each group's record and holds them to what a file may say
+/// (folder/carried.rs `Folders::agreed`, CONTRACTS §2); empty for none; and
+/// who wrote them where, as its lender is told it beside their words.
+/// Refused, never read as no terms, in its words. Kept for the life of this
+/// command, as the terms svrngs ships are.
 async fn terms_of(root: &Path, kind: &Program, groups: &[String]) -> Result<Read, Refusal> {
-    let mut found: Vec<(&String, String, String)> = Vec::new();
-    for name in groups {
-        let group = group_named(root, name)?.id();
-        let (ok, text) = ask_running(root, PROGRAMS_ROUTE, &(group, kind)).await?;
-        tracing::debug!(target: "cli", group = name, %kind, ok, text, "cli: share — a group's own terms for the program, read through its record, or why not");
-        // The text and who wrote it; an older svrngs answers the text alone.
-        match (ok, serde_json::from_str::<(String, String)>(&text).ok()) {
-            (true, Some((text, _))) if text.is_empty() => {}
-            (true, Some((text, by))) => found.push((name, text, by)),
-            (false, _) if !text.is_empty() => Err(Refusal::Terms(format!("In {name}, {text}")))?,
-            _ => Err(Refusal::Older)?,
-        }
+    let named = |name: &String| group_named(root, name).map(|g| g.id());
+    let ids: Vec<String> = groups.iter().map(named).collect::<Result<_, _>>()?;
+    let (ok, text) = ask_running(root, PROGRAMS_ROUTE, &(ids, kind)).await?;
+    tracing::debug!(target: "cli", ?groups, %kind, ok, text, "cli: share — its groups' own terms for the program, read through their records, or why not");
+    // An older svrngs answers what it can't read in words, not JSON.
+    match (ok, serde_json::from_str::<(String, String)>(&text)) {
+        (true, Ok((text, by))) => Ok((text.leak(), by)),
+        (false, _) => Err(serde_json::from_str(&text).map_or(Refusal::Older, Refusal::Terms)),
+        (true, Err(_)) => Err(Refusal::Older),
     }
-    let rows = |text| share::rows_in(text).flatten();
-    let differs = (found.iter()).find(|(_, t, _)| !rows(t).eq(rows(&found[0].1)));
-    if let (Some((a, ..)), Some((b, ..))) = (found.first(), differs) {
-        tracing::debug!(target: "cli", %kind, "cli: share — refused, its groups' own terms differ");
-        return Err(Refusal::Terms(format!("{a} and {b} say different things in programs/{kind}.txt, so svrngs can't tell which to keep: make them the same, or share to one of them at a time.")));
-    }
-    let Some((name, text, by)) = found.into_iter().next() else {
-        return Ok(Default::default());
-    };
-    Ok((
-        text.leak(),
-        format!(", as {by} wrote in {name}'s programs/{kind}.txt"),
-    ))
 }
 
 /// A group's own terms ([`terms_of`]), and who wrote them where, as its

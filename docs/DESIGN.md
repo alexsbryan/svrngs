@@ -1088,12 +1088,17 @@ or change the server for everyone (`/slots`, `/v1/stream`, `/v1/streams`,
 and never changes an answer: llama-server's `/props`, which its chat page
 reads, shows everyone where the model's file is on the lender's disk.
 A group writes its own terms as a file in its folder, `programs/<word>.txt`,
-in the table's form (svrn-docs `rings/current/CONTRACTS.md` §2). `svrngs
-share` under that word asks svrngs running here for it, which reads it
-through the group's record, never the disk, and refuses it by name when it
-is still being fetched, has two copies in conflict, was written by someone
-no longer in the group, or says anything the door can't enforce
-(`share::fits`); two groups a lend goes to must say the same. For a word
+in the table's form (svrn-docs `rings/current/CONTRACTS.md` §2). A lend
+under that word, from `svrngs share` or the home page, has svrngs running
+here read it through each group's record, never the disk (one reader,
+`Folders::agreed`), and refuse it by name when it is still being fetched,
+has two copies in conflict, was written by someone no longer in the group,
+or says anything the door can't enforce (`share::fits`); two groups a lend
+goes to must say the same. The home page draws a group's terms, and who
+wrote them, before it lends; the press after posts back the text it drew,
+and the lend keeps that, so a file edited in between changes nothing. How
+apps read a lend on the home page follows its groups' terms read then, or
+says why they can't be read. For a word
 svrngs ships, a group's file may only add `keeps:`. Its `accounts:` and
 `header:` are advice, not terms, and `share` says them as the words of the
 member who wrote the file, in that group. Its port column is not read:

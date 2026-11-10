@@ -62,6 +62,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::get;
 use axum::{Form, Json, Router};
 use serde::Deserialize;
+use serde_json::Value;
 use std::ffi::OsStr;
 use std::num::NonZeroU16;
 use std::process::{Command, Stdio};
@@ -419,13 +420,30 @@ async fn lent(State(at): State<Asking>) -> Response {
     let signing: Vec<_> = (all.iter().filter(|l| l.sign_in_with_svrngs.is_some()))
         .map(|l| l.name.to_string())
         .collect();
-    let readers = |l: &lend::Lend| {
+    // How apps read each, by its groups' own terms as well as svrngs's; a
+    // lend whose groups' terms can't be read says why in their place.
+    let mut readers = serde_json::Map::new();
+    for l in &all {
+        let (terms, by) = match terms_of(&at, l).await {
+            Ok(read) => read,
+            Err(why) => {
+                readers.insert(l.name.to_string(), serde_json::json!({ "why": why }));
+                continue;
+            }
+        };
         let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
-        let key = share::key_of(&l.kind, "").is_some();
-        let said = serde_json::json!({ "kept": kept, "signs": share::accounts_of(&l.kind, ""), "key": key });
-        (key || share::readers_of(&l.kind, "").is_some()).then(|| (l.name.to_string(), said))
-    };
-    let readers: serde_json::Map<_, _> = all.iter().filter_map(readers).collect();
+        let key = share::key_of(&l.kind, &terms).is_some();
+        let (signs, shipped) = (
+            share::accounts_of(&l.kind, &terms),
+            share::accounts_of(&l.kind, ""),
+        );
+        // Said as who wrote them only where they are not what svrngs ships.
+        let by = Some(by).filter(|_| signs != shipped).unwrap_or_default();
+        let said = serde_json::json!({ "kept": kept, "signs": signs, "key": key, "by": by });
+        let read = key || share::readers_of(&l.kind, &terms).is_some();
+        tracing::debug!(target: "home", lend = %l.name, read, by, "home: how apps read a lend, by its groups' terms and svrngs's, or why those can't be read");
+        readers.extend(read.then(|| (l.name.to_string(), said)));
+    }
     Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers }))
         .into_response()
 }
@@ -458,7 +476,11 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         }
         LendChange::Key(key) => match lend::read(dir, &c.lend) {
             Ok(Some(lent)) => {
-                let how = share::key_of(&lent.kind, "");
+                let terms = match terms_of(&at, &lent).await {
+                    Ok((terms, _)) => terms,
+                    Err(why) => return LendRefusal::closed(why),
+                };
+                let how = share::key_of(&lent.kind, &terms);
                 // Tried once on the lender's own service; refused, not kept.
                 if let Port(port) = lent.source {
                     let tried = share::tried(port, how, key.trim()).await;
@@ -583,7 +605,11 @@ async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) ->
     let Ok(Some(lent)) = found else {
         return unchanged_said(name, found.map(|_| false));
     };
-    let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, "")) else {
+    let terms = match terms_of(at, &lent).await {
+        Ok((terms, _)) => terms,
+        Err(why) => return LendRefusal::closed(why),
+    };
+    let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, &terms)) else {
         tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");
         return LendRefusal::closed(format!("svrngs doesn’t know how to sign in to {name}."));
     };
@@ -603,11 +629,14 @@ async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) ->
 
 /// A port as the page shows it ([`share::listening`]): the kind the table
 /// knows, how that kind signs each person in, the paths svrngs keeps back
-/// of it, and its name once lent.
-fn shown(port: NonZeroU16, kind: Option<&Program>, name: Option<&LendName>) -> serde_json::Value {
-    let signs = kind.and_then(|k| share::accounts_of(k, ""));
-    let keeps = kind.map(|k| share::kept_of(k, ""));
-    let unknown = kind.and_then(share::unrecognized);
+/// of it, by svrngs's terms and `terms`, its groups' own (empty for none),
+/// and its name once lent.
+fn shown(port: NonZeroU16, kind: Option<&Program>, name: Option<&LendName>, terms: &str) -> Value {
+    let signs = kind.and_then(|k| share::accounts_of(k, terms));
+    let keeps = kind.map(|k| share::kept_of(k, terms));
+    let unknown = kind
+        .and_then(share::unrecognized)
+        .filter(|_| terms.is_empty());
     serde_json::json!({ "port": port, "kind": kind, "name": name, "signs": signs, "keeps": keeps, "unknown": unknown })
 }
 
@@ -632,7 +661,7 @@ async fn running(State(at): State<Asking>) -> Response {
         |p: &NonZeroU16| p.get() == at.host.api_port || lent.iter().any(|l| l.source == Port(*p));
     let rows: Vec<_> = (found.into_iter())
         .filter(|p| !taken(p))
-        .map(|p| shown(p, share::well_known_kind(p).as_ref(), None))
+        .map(|p| shown(p, share::well_known_kind(p).as_ref(), None, ""))
         .collect();
     let named: Vec<Program> = (share::rows().filter(|(at, ..)| *at == share::At::Named))
         .map(|(_, kind, _)| kind)
@@ -655,6 +684,10 @@ struct ToLend {
     /// explicit empty list is paused. `Option` distinguishes absent from
     /// paused, which a plain `Vec` could not.
     groups: Option<Vec<String>>,
+    /// The text of its groups' own `programs/<word>.txt` the page drew
+    /// ([`drawn`]), posted back so the lend keeps what its lender saw, not
+    /// the file as it is when they press (CONTRACTS §6.8); none before.
+    terms: Option<String>,
 }
 
 /// `POST /running`: the lend decided as `svrngs share` decides one
@@ -673,7 +706,7 @@ async fn lend_one(
     };
     // What the page sent: a port that is none, 0 or past 65535, else a
     // body the page never sends.
-    let Json(ToLend { port, name, kind, groups }) = asked.map_err(|e| match e {
+    let Json(ToLend { port, name, kind, groups, terms }) = asked.map_err(|e| match e {
         JsonRejection::JsonDataError(_) => refused("That is not something running on this computer: look again, then lend it from the list.", &e),
         _ => refused("This computer could not read what the page sent: reload the page, then try again.", &e),
     })?;
@@ -686,9 +719,10 @@ async fn lend_one(
     tracing::debug!(target: "home", port, ?known, ?name, ?kind, "home: asked to lend what runs here");
     let unknown =
         "Give it a name and say which program it is first: svrngs does not know what runs there.";
-    if known.is_none() && (name.is_none() || kind.is_none()) {
+    let word = kind.clone().or(known.clone());
+    let Some(word) = word.filter(|_| known.is_some() || name.is_some()) else {
         return Err(refused(unknown, &port));
-    }
+    };
     // The audience is required and explicit (SCOPE_PARALLEL.md): an absent
     // selection is refused, never defaulted to all groups; every ID is
     // checked against the groups this computer holds. A present empty list
@@ -712,27 +746,68 @@ async fn lend_one(
         sign_in: false,
         readers: false,
         raw: None,
-        audience: Audience::Selected(groups),
+        audience: Audience::Selected(groups.clone()),
     };
+    // The terms it keeps: those the page drew, posted back, so a file
+    // changed since changes nothing (CONTRACTS §6.8); else its groups' own,
+    // read now and drawn first when there are any, so its lender sees them.
+    tracing::debug!(target: "home", %word, drawn = terms.is_some(), "home: the lend keeps the terms the page drew, else its groups' read now");
+    let showed =
+        |why| format!("The terms this page showed can't be kept: {why}. Look again, then lend it.");
+    let terms = match terms {
+        Some(drawn) => share::fits(&word, &drawn).map(|()| drawn).map_err(showed),
+        None => match at.door.folders.agreed(&groups, &word).await {
+            Ok((text, by)) if !text.is_empty() => return Ok(drawn(&word, text, &by)),
+            read => read.map(|(text, _)| text),
+        },
+    };
+    let terms = terms.map_err(|why| refused(&why, &"its groups' own terms"))?;
     // Each of the lend's refusals in a person's words: a kind is known or
     // given above, so `NoKind` is not met here.
     let silent = format!("Nothing answers at http://localhost:{port} now: start it, then lend it.");
-    let lend = share::lend_of(&asked, share::listens, known, "").map_err(|e| match e {
+    let lend = share::lend_of(&asked, share::listens, known, &terms).map_err(|e| match e {
         ShareRefusal::NothingListens(_) => refused(&silent, &e),
-        ShareRefusal::NoKind(_) | ShareRefusal::Carries(..) => refused(unknown, &e),
+        ShareRefusal::NoKind(_) => refused(unknown, &e),
+        ShareRefusal::Carries(..) => refused(&e.to_string(), &e),
     })?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
     let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));
     let name = &lend.name;
     Ok(match declared {
-        Ok(Some(Ok(()))) => Json(shown(port, Some(&lend.kind), Some(name))).into_response(),
+        Ok(Some(Ok(()))) => Json(shown(port, Some(&lend.kind), Some(name), &terms)).into_response(),
         Ok(None) => refused(
             &format!("You already lend something called {name}: give it another name."),
             name,
         ),
         Err(e) | Ok(Some(Err(e))) => LendRefusal::fault(e.to_string()),
     })
+}
+
+/// A group's own terms for `word`, `text`, drawn for its lender before
+/// any is kept: its rows, who wrote them where (`by`), and the text the page
+/// posts back with the next press, so the lend keeps what they saw
+/// (CONTRACTS §2, "The lend is the yes"; §6.8).
+fn drawn(word: &Program, text: String, by: &str) -> Response {
+    let rows: Vec<String> = (share::rows_in(&text).flatten())
+        .map(|(_, k, how)| format!("{k} {how}"))
+        .collect();
+    tracing::debug!(target: "home", %word, rows = rows.len(), "home: its groups' own terms drawn; nothing lent until its lender presses again");
+    let rows = rows.join("; ");
+    let said = format!(
+        "Your group's terms for {word}{by}: {rows}. To lend it with these, press Lend again."
+    );
+    Json(serde_json::json!({ "terms": text, "said": said })).into_response()
+}
+
+/// The terms the groups `lend` is lent to agree on for its program, and
+/// who wrote them where ([`crate::folder::Folders::agreed`]), read now, for
+/// how apps read it; none for a lend to no group.
+async fn terms_of(at: &Asking, lend: &lend::Lend) -> crate::folder::carried::Said {
+    let Audience::Selected(groups) = &lend.audience else {
+        return Ok(Default::default());
+    };
+    at.door.folders.agreed(groups, &lend.kind).await
 }
 
 /// What the person asks a link for: to invite someone to `group`, or,
@@ -979,7 +1054,7 @@ pub(crate) async fn say(
 async fn at_door(
     at: &Asking,
     lend: &Label,
-    body: Option<serde_json::Value>,
+    body: Option<Value>,
     pass: Option<HeaderValue>,
 ) -> Response {
     let contact = match crate::origin::serving(at, lend).await {

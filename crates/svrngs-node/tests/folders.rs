@@ -14,6 +14,7 @@ use std::path::Path;
 use std::time::Duration;
 
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
+use svrngs_node::lend::LendName;
 use svrngs_node::node::Node;
 use svrngs_node::{actor_of, Person, RailAct};
 
@@ -1657,7 +1658,7 @@ async fn programs_said(node: &Node, word: &str) -> (u16, String) {
             svrngs_node::folder::PROGRAMS_ROUTE
         ))
         .bearer_auth(node.token())
-        .json(&serde_json::json!([seed("films", 9).id(), word]))
+        .json(&serde_json::json!([[seed("films", 9).id()], word]))
         .send()
         .await
         .unwrap();
@@ -1668,8 +1669,9 @@ async fn programs_said(node: &Node, word: &str) -> (u16, String) {
 /// who wrote it.
 async fn programs(node: &Node, word: &str) -> (u16, String) {
     let (status, said) = programs_said(node, word).await;
-    let read = serde_json::from_str::<(String, String)>(&said);
-    (status, read.map_or(said, |(text, _)| text))
+    let read = serde_json::from_str::<(String, String)>(&said).map(|(text, _)| text);
+    let why = || serde_json::from_str::<String>(&said).unwrap_or(said.clone());
+    (status, read.unwrap_or_else(|_| why()))
 }
 
 /// Up to 30 s of rounds until `node`'s answer for `word` is `status` with
@@ -1719,7 +1721,11 @@ async fn a_group_s_programs_file_is_read_through_its_record_or_refused() {
     );
     let (_, said) = programs_said(&group.ana, "notes").await;
     let said: serde_json::Value = serde_json::from_str(&said).unwrap();
-    assert_eq!(said, serde_json::json!([notes, "ben"]), "and who wrote it");
+    assert_eq!(
+        said,
+        serde_json::json!([notes, ", as ben wrote in films's programs/notes.txt"]),
+        "and who wrote it where"
+    );
     std::fs::write(ben.join("programs/notes.txt"), "- notes opens: /admin\n").unwrap();
     assert!(
         answers(
@@ -1772,7 +1778,7 @@ async fn a_group_s_programs_file_is_read_through_its_record_or_refused() {
 /// `programs/late.txt`, and Ana's record places it; then Ben's computer
 /// stops before Ana's has its bytes, and Cy's, syncing no directory, never
 /// held them. Ana's computer refuses the file, 409, saying it is still
-/// being fetched and to share again in a moment. Planted, watched failing:
+/// being fetched and to try again in a moment. Planted, watched failing:
 /// bytes the store can't give read as an empty file, and Ana's computer
 /// answers 200 with no terms.
 #[tokio::test]
@@ -1794,7 +1800,179 @@ async fn a_programs_file_not_here_yet_is_refused_as_still_being_fetched() {
     let (status, said) = programs(&group.ana, "late").await;
     assert_eq!(
         (status, said.as_str()),
-        (409, "programs/late.txt isn't on this computer yet: it is still being fetched from the group. Wait a moment, then share again.")
+        (409, "In films, programs/late.txt isn't on this computer yet: it is still being fetched from the group. Wait a moment, then try again.")
+    );
+    group.close().await;
+}
+
+/// `body` posted to `node`'s home page at `/running`, as its own page asks,
+/// with the token: the status and the answer.
+async fn lend_from_the_page(node: &Node, body: serde_json::Value) -> (u16, serde_json::Value) {
+    on_the_page(node, reqwest::Method::POST, "/running", body).await
+}
+
+/// `body` sent to `node`'s home page at `path`, as its own page asks, with
+/// the token: the status and the answer.
+async fn on_the_page(
+    node: &Node,
+    method: reqwest::Method,
+    path: &str,
+    body: serde_json::Value,
+) -> (u16, serde_json::Value) {
+    let home = format!("svrngs.localhost:{}", node.api_addr().port());
+    let http = reqwest::Client::builder()
+        .no_proxy()
+        .resolve("svrngs.localhost", node.api_addr());
+    let answer = (http
+        .build()
+        .unwrap()
+        .request(method, format!("http://{home}{path}")))
+    .bearer_auth(node.token().trim())
+    .header("sec-fetch-site", "same-origin")
+    .header("sec-fetch-mode", "cors")
+    .header("origin", format!("http://{home}"))
+    .json(&body)
+    .send()
+    .await
+    .unwrap();
+    (answer.status().as_u16(), answer.json().await.unwrap())
+}
+
+/// **The home page's lend keeps its groups' own terms, the ones it drew**
+/// (CONTRACTS §2, "The lend is the yes", "The terms kept are the terms
+/// shown"; §6.8; EXTENSION_POINT §10 row 12, gap 6). Ben writes
+/// `programs/notes.txt`, keeping `/admin`, in films. On Ana's home page the
+/// first press to lend notes to films draws those terms, naming who wrote
+/// them where, and lends nothing; the next, posting the text drawn, lends
+/// notes keeping `/admin`. Ben changes the file to keep `/other`; a press
+/// posting the text drawn before keeps `/admin`, not `/other`. Text no file
+/// may hold is refused, saying so. Planted, each watched failing: the lend
+/// made with `""` for its terms (it keeps only what ships, no `/admin`);
+/// and the posted text set aside for the groups' file read at the press (the
+/// lend keeps `/other`).
+#[tokio::test]
+async fn the_home_page_s_lend_keeps_its_group_s_terms_as_drawn() {
+    let group = Group::new().await;
+    let root = tempfile::tempdir().unwrap();
+    let ben = both_ways(&group.ben, root.path()).await;
+    std::fs::create_dir_all(ben.join("programs")).unwrap();
+    let drawn = "- notes keeps: /admin\n";
+    std::fs::write(ben.join("programs/notes.txt"), drawn).unwrap();
+    assert!(
+        answers(&group, &group.ana, "notes", 200, drawn).await,
+        "Ben's file, read on Ana's computer"
+    );
+    let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = running.local_addr().unwrap().port();
+    let films = seed("films", 9).id();
+    let asked = |name: &str, terms: Option<&str>| serde_json::json!({ "port": port, "name": name, "kind": "notes", "groups": [films], "terms": terms });
+    let (status, first) = lend_from_the_page(&group.ana, asked("notes", None)).await;
+    assert_eq!(
+        (status, first["terms"].as_str()),
+        (200, Some(drawn)),
+        "{first}"
+    );
+    assert_eq!(
+        first["said"],
+        "Your group's terms for notes, as ben wrote in films's programs/notes.txt: notes keeps: /admin. To lend it with these, press Lend again."
+    );
+    let kept = |name: &str| {
+        let lend = svrngs_node::lend::read(group._dirs[0].path(), &LendName::parse(name).unwrap());
+        lend.unwrap().map(|l| {
+            l.refused
+                .iter()
+                .map(|p| p.as_str().to_string())
+                .collect::<Vec<_>>()
+        })
+    };
+    assert_eq!(
+        kept("notes"),
+        None,
+        "nothing lent until it is pressed again"
+    );
+    let (status, lent) = lend_from_the_page(&group.ana, asked("notes", Some(drawn))).await;
+    assert_eq!(
+        (status, &lent["keeps"]),
+        (200, &serde_json::json!(["/admin"])),
+        "{lent}"
+    );
+    assert_eq!(kept("notes"), Some(vec!["/admin".to_string()]));
+
+    std::fs::write(ben.join("programs/notes.txt"), "- notes keeps: /other\n").unwrap();
+    assert!(
+        answers(&group, &group.ana, "notes", 200, "/other").await,
+        "Ben's change, read on Ana's computer"
+    );
+    let (status, lent) = lend_from_the_page(&group.ana, asked("again", Some(drawn))).await;
+    assert_eq!(status, 200, "{lent}");
+    assert_eq!(
+        kept("again"),
+        Some(vec!["/admin".to_string()]),
+        "kept as drawn"
+    );
+
+    let (status, refused) =
+        lend_from_the_page(&group.ana, asked("odd", Some("- notes opens: /x"))).await;
+    assert_eq!(status, 400, "{refused}");
+    assert!(
+        (refused["error"].as_str().unwrap_or_default())
+            .starts_with("The terms this page showed can't be kept: `notes opens: /x` is no term"),
+        "{refused}"
+    );
+    assert_eq!(kept("odd"), None);
+    group.close().await;
+}
+
+/// **How apps read a lend from the page follows its groups' own terms, or
+/// says why they can't be read** (CONTRACTS §2, `readers:`; gap 6, `/lent`).
+/// Ben's `programs/notes.txt` says notes takes a key in `x-notes-key`; Ana's
+/// lend of notes to films is then listed by her home page as read with a
+/// key, said as Ben wrote it in films; once Ben writes a row no file may
+/// hold, the lend says why in its place, and what to do. Planted, watched
+/// failing: `/lent` reading svrngs's terms alone (notes takes no key).
+#[tokio::test]
+async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
+    let group = Group::new().await;
+    let root = tempfile::tempdir().unwrap();
+    let ben = both_ways(&group.ben, root.path()).await;
+    std::fs::create_dir_all(ben.join("programs")).unwrap();
+    let terms = "- notes readers: key x-notes-key\n- notes accounts: Settings, Keys, New\n";
+    std::fs::write(ben.join("programs/notes.txt"), terms).unwrap();
+    assert!(
+        answers(&group, &group.ana, "notes", 200, terms).await,
+        "Ben's file, read on Ana's computer"
+    );
+    let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = running.local_addr().unwrap().port();
+    let asked = serde_json::json!({ "port": port, "name": "notes", "kind": "notes", "groups": [seed("films", 9).id()], "terms": terms });
+    assert_eq!(lend_from_the_page(&group.ana, asked).await.0, 200);
+    let lent = || {
+        on_the_page(
+            &group.ana,
+            reqwest::Method::GET,
+            "/lent",
+            serde_json::Value::Null,
+        )
+    };
+    let (status, said) = lent().await;
+    assert_eq!(status, 200, "{said}");
+    assert_eq!(
+        said["readers"]["notes"],
+        serde_json::json!({
+            "kept": false,
+            "key": true,
+            "signs": { "accounts": "Settings, Keys, New" },
+            "by": ", as ben wrote in films's programs/notes.txt",
+        })
+    );
+    std::fs::write(ben.join("programs/notes.txt"), "- notes opens: /x\n").unwrap();
+    assert!(answers(&group, &group.ana, "notes", 409, "is no term").await);
+    let (_, said) = lent().await;
+    let why = said["readers"]["notes"]["why"].as_str().unwrap_or_default();
+    assert!(
+        why.starts_with("In films, programs/notes.txt can't be used: `notes opens: /x` is no term")
+            && why.ends_with("Change it, then try again."),
+        "{said}"
     );
     group.close().await;
 }

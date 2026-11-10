@@ -57,8 +57,43 @@ test('a new lend chooses its groups and sends exactly those stable ids', () => {
   );
   assert.deepEqual(s.groups, ['house'], 'only the ticked group, by id');
   assert.deepEqual(out[3], [
-    { run: 'lend', port: 8096, name: null, kind: null, groups: ['house'], failed: 'refused' },
+    {
+      run: 'lend',
+      port: 8096,
+      name: null,
+      kind: null,
+      groups: ['house'],
+      terms: null,
+      failed: 'refused',
+    },
   ]);
+});
+
+// The terms a group's own programs file adds, drawn by the first press
+// (home.rs `drawn`), are posted back by the next, so the lend keeps what its
+// lender saw (CONTRACTS §6.8); a tick lets them go, to be read again.
+// Planted, watched failing: the effect's `terms` always null.
+test('terms drawn are posted back with the next press, and a tick lets them go', () => {
+  const drawn = { type: 'drawn', terms: '- notes keeps: /admin\n', why: 'Your group’s terms…' };
+  const [s, out] = run(
+    LEND,
+    NEW,
+    { type: 'choose', id: 'house', on: true },
+    { type: 'lend' },
+    drawn,
+    { type: 'lend' },
+  );
+  assert.deepEqual([s.at.lend, out[2]], ['lending', []]);
+  assert.equal(out[3][0].terms, '- notes keeps: /admin\n', 'the text drawn, posted back');
+  const [after, again] = run(
+    LEND,
+    s,
+    { type: 'refused', why: 'no' },
+    { type: 'choose', id: 'trip', on: true },
+    { type: 'lend' },
+  );
+  assert.equal(after.terms, undefined);
+  assert.equal(again[2][0].terms, null, 'read again for the groups ticked now');
 });
 
 test('a new lend with no group chosen is refused, never made to everyone', () => {

@@ -1337,7 +1337,7 @@ fn programs_of(dir: &Path, group: &str, word: &str) -> (String, String) {
     let api = std::fs::read_to_string(dir.join("api")).unwrap();
     let token = std::fs::read_to_string(dir.join("token")).unwrap();
     let mut sock = std::net::TcpStream::connect(api.trim().trim_start_matches("http://")).unwrap();
-    let body = serde_json::json!([group, word]).to_string();
+    let body = serde_json::json!([[group], word]).to_string();
     let ask = format!("POST {} HTTP/1.1\r\nHost: 127.0.0.1\r\nAuthorization: Bearer {token}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", svrngs_node::folder::PROGRAMS_ROUTE, body.len());
     sock.write_all(ask.as_bytes()).unwrap();
     let mut answer = String::new();

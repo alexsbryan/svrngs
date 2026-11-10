@@ -82,15 +82,24 @@ const POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self' 'u
     img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; \
     frame-src 'self'; worker-src 'self'";
 
-/// `POST /v1/programs`, `[group, word]`: the text of `programs/<word>.txt`
-/// in `group` and the name of who wrote it ([`Folders::terms`]), both empty
-/// for none; or, 409, why not.
-pub(super) async fn terms(State(f): State<Folders>, Json(at): Json<(String, Program)>) -> Response {
-    match f.terms(&at.0, &at.1).await {
+/// `POST /v1/programs`, `[groups, word]`: the text of `programs/<word>.txt`
+/// the groups agree on and who wrote it where ([`Folders::agreed`]), both
+/// empty for none; or, 409, why not, a JSON string, so an older svrngs's
+/// plain answer to an ask it can't read is not taken for one.
+pub(super) async fn terms(State(f): State<Folders>, Json(at): Json<Asked>) -> Response {
+    match f.agreed(&at.0, &at.1).await {
         Ok(said) => Json(said).into_response(),
-        Err(why) => (StatusCode::CONFLICT, why).into_response(),
+        Err(why) => (StatusCode::CONFLICT, Json(why)).into_response(),
     }
 }
+
+/// What `/v1/programs` is asked: the ids of the groups a lend goes to, and
+/// the word it goes under.
+type Asked = (Vec<String>, Program);
+
+/// The text of a group's programs file and who wrote it ([`Folders::terms`],
+/// [`Folders::agreed`]), or why it can't be used, in words to act on.
+pub(crate) type Said = Result<(String, String), String>;
 
 /// Why the door answers a carried app's request itself: its kind, status
 /// and words, said and traced once ([`Folders::open`]).
@@ -293,6 +302,41 @@ impl Folders {
         found.into_values().collect()
     }
 
+    /// The text of `programs/<word>.txt` that `groups`, by id, agree on
+    /// ([`Self::terms`]), the one reader of a lend's groups' own terms, the
+    /// command's and the home page's; and who wrote it where, said after
+    /// their `accounts:` or `header:` words: ", as Sam wrote in Lab's
+    /// programs/tea.txt" (CONTRACTS §2: those are that person's). Both empty
+    /// for none. Refused, never read as no terms, naming the group: one that
+    /// can't be read, or two whose rows differ, comments aside.
+    pub(crate) async fn agreed(&self, groups: &[String], word: &Program) -> Said {
+        let held = crate::group::groups(&self.data_dir);
+        let names: BTreeMap<_, _> = held
+            .iter()
+            .map(|s| (s.id(), s.name().to_string()))
+            .collect();
+        let named = |id: &String| names.get(id).unwrap_or(id).clone();
+        let mut found = Vec::new();
+        for group in groups {
+            let read = self.terms(group, word).await;
+            let (text, by) = read.map_err(|why| format!("In {}, {why}", named(group)))?;
+            found.extend((!text.is_empty()).then(|| (named(group), text, by)));
+        }
+        let rows = |text| crate::share::rows_in(text).flatten();
+        let differs = (found.iter()).find(|(_, t, _)| !rows(t).eq(rows(&found[0].1)));
+        tracing::debug!(target: "folder", %word, groups = groups.len(), found = found.len(), differs = differs.is_some(), "carried: the terms a lend's groups agree on, or the two that differ");
+        if let (Some((a, ..)), Some((b, ..))) = (found.first(), differs) {
+            return Err(format!("{a} and {b} say different things in programs/{word}.txt, so svrngs can't tell which to keep: make them the same, or lend it to one of them at a time."));
+        }
+        let Some((name, text, by)) = found.into_iter().next() else {
+            return Ok(Default::default());
+        };
+        Ok((
+            text,
+            format!(", as {by} wrote in {name}'s programs/{word}.txt"),
+        ))
+    }
+
     /// The text of `programs/<word>.txt` in `group` where its record places
     /// it, and the name of who wrote it, from this computer's store, else fetched from a computer that
     /// stands in the group, never read from a directory, so half a sync is
@@ -301,7 +345,7 @@ impl Folders {
     /// do: two copies in conflict, a writer who no longer stands in the
     /// group, bytes not here yet, or terms a group's file can't hold
     /// ([`crate::share::fits`]).
-    async fn terms(&self, group: &str, word: &Program) -> Result<(String, String), String> {
+    async fn terms(&self, group: &str, word: &Program) -> Said {
         let path = format!("programs/{word}.txt");
         let read = self.layout(group).map_err(|e| e.to_string())?;
         let holders = self.holders(group).map_err(|e| e.to_string())?;
@@ -311,8 +355,8 @@ impl Folders {
         tracing::debug!(target: "folder", group, path, copies = copies.len(), standing, "carried: a group's programs file, as its record places it");
         let (hash, key) = match copies[..] {
             [] => return Ok(Default::default()),
-            [_, _, ..] => return Err(format!("{path} has two copies in conflict. Keep the one you mean, delete the other, then share again.")),
-            [_] if !standing => return Err(format!("{path} was last written by someone no longer in the group. Someone in it writes it again, or deletes it, then share again.")),
+            [_, _, ..] => return Err(format!("{path} has two copies in conflict. Keep the one you mean, delete the other, then try again.")),
+            [_] if !standing => return Err(format!("{path} was last written by someone no longer in the group. Someone in it writes it again, or deletes it, then try again.")),
             [one] => (Hash::from(*one.hash.as_bytes()), &one.entry.key),
         };
         let named =
@@ -320,11 +364,11 @@ impl Folders {
         let fetched = self.hold(hash, &Vec::from_iter(holders)).await;
         let held = self.store.get_bytes(hash).await;
         tracing::debug!(target: "folder", group, path, %hash, ?fetched, why = ?held.as_ref().err(), "carried: a group's programs file from the store, or why not");
-        let held = held.map_err(|_| format!("{path} isn't on this computer yet: it is still being fetched from the group. Wait a moment, then share again."))?;
+        let held = held.map_err(|_| format!("{path} isn't on this computer yet: it is still being fetched from the group. Wait a moment, then try again."))?;
         let text = String::from_utf8(held.to_vec()).map_err(|_| format!("{path} is not text."));
         let by = named.ok().flatten().unwrap_or_default();
         let fits = text.and_then(|t| crate::share::fits(word, &t).map(|()| (t, by)));
-        fits.map_err(|why| format!("{path} can't be used: {why}. Change it, then share again."))
+        fits.map_err(|why| format!("{path} can't be used: {why}. Change it, then try again."))
     }
 
     /// The kinds `lend` reads: a carried app's from its [`READS`] as its

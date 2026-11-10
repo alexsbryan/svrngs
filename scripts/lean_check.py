@@ -622,12 +622,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (+38), leaving 21,081. Gap 5, a pasted key tried once against the
 # lender's own service (+34), inside the operator's ceiling for rows 10 and
 # 12: . to 21,116.
+# (2026-11-09) The operator raised the ceilings for gap 6 and row 13 to
+# . 21,350 and js 8,560, core unchanged. Gap 6, the home page's lend keeps
+# a group's own terms as shown (+73), after the pass f03cbf64 (js -7, which
+# lowers js to where gap 6 lands, 8,487): . to 21,189, js to 8,488.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 21116,
+    ".": 21189,
 
-    "js": 8491,
+    "js": 8488,
 
     "swift": 1,
 }

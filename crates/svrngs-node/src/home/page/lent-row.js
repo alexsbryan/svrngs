@@ -61,6 +61,7 @@ export const lentTo = (lend, groups) => {
 function Apps(props) {
   const { account } = props;
   if (!account) return null;
+  if (account.why) return html`<p>${account.why}</p>`;
   return account.key ? html`<${AppsKey} ...${props} />` : html`<${AppsAccount} ...${props} />`;
 }
 
@@ -77,7 +78,7 @@ function AppsKey({ name, account, state, doing, send }) {
     <p>${said}</p>
     <details>
       <summary>${account.kept ? 'Use a different key' : 'How to make the key'}</summary>
-      <p>In ${name}: ${account.signs?.accounts}. Paste the key here. It stays on this computer and goes only to ${name}.</p>
+      <p>In ${name}${account.by}: ${account.signs?.accounts}. Paste the key here. It stays on this computer and goes only to ${name}.</p>
       <${Field}
         words="The key: "
         name="password"
@@ -103,7 +104,7 @@ function AppsAccount({ name, account, state, doing, send }) {
     <p>${said}</p>
     <details>
       <summary>${account.kept ? 'Use a different account' : 'How to make the account'}</summary>
-      <p>In ${name}: ${account.signs?.accounts}. Then type that account’s name and password here. svrngs signs in once and keeps only what ${name} gives it, not the password.</p>
+      <p>In ${name}${account.by}: ${account.signs?.accounts}. Then type that account’s name and password here. svrngs signs in once and keeps only what ${name} gives it, not the password.</p>
       <${Field} words="Account name: " name="account" value=${state.account ?? ''} send=${send} />
       <${Field}
         words="Its password: "
