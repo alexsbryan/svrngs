@@ -1,0 +1,11 @@
+# Audiobookshelf, audiobooks. Port 13378 is the one its docker-compose.yml
+# publishes ("ABS runs on port 13378 by default",
+# https://raw.githubusercontent.com/advplyr/audiobookshelf/master/docker-compose.yml,
+# read 2026-11-09).
+#
+# Its users and API keys are its own settings pages, read in the client of
+# ghcr.io/advplyr/audiobookshelf:latest, 2.37.2
+# (sha256:37c2057e150694970442579815c646fe6bdc01c95b9d1547c4c9068be8844ef3):
+# /config/users and /config/api-keys, and its English strings "Add User" and
+# "Add API Key".
+13378 audiobookshelf accounts: Settings, Users, Add User for each person. For apps, Settings, API Keys, Add API Key

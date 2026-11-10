@@ -27,13 +27,13 @@ If apps read the program, as Movie Night reads Jellyfin, its row under **What yo
 svrngs share 8096 --group <group>
 ```
 
-That's the port number from the program's address, and `--group` says who can open it: say it once for each group, by its name or the start of its id. With none, svrngs refuses and tells you this line; it never lends to all your groups. svrngs knows a few programs by their port: Jellyfin (8096), Navidrome (4533) and Calibre-Web (8083). For anything else, say which program it is with `--program`:
+That's the port number from the program's address, and `--group` says who can open it: say it once for each group, by its name or the start of its id. With none, svrngs refuses and tells you this line; it never lends to all your groups. svrngs knows a few programs by their port: Jellyfin (8096), Navidrome (4533), Calibre-Web (8083), Immich (2283) and Audiobookshelf (13378). For anything else, say which program it is with `--program`:
 
 ```
-svrngs share 2283 --program immich --group <group>
+svrngs share 5006 --program actual --group <group>
 ```
 
-Without `--program` on a port it doesn't know, svrngs says *"say which program is on port 2283: `svrngs share 2283 --program <name>`, its own name if it is one svrngs knows: calibre-web, jellyfin, llama-server, navidrome"*. If nothing is running there, it says *"nothing answers on port 2283 on this computer: start it, then share it"*.
+Without `--program` on a port it doesn't know, svrngs says *"say which program is on port 5006: `svrngs share 5006 --program <name>`, its own name if it is one svrngs knows: audiobookshelf, calibre-web, factorio, immich, jellyfin, kokoro, llama-server, minecraft, navidrome"*. If nothing is running there, it says *"nothing answers on port 5006 on this computer: start it, then share it"*.
 
 If svrngs isn't running yet, `share` starts it and says *"Leave this running; Ctrl-C stops it."* Usually it already runs, and `share` ends with *"svrngs is running here already, so they can open it now."*
 
@@ -77,16 +77,16 @@ svrngs share 2283 --program immich --group <group>
 svrngs share 5006 --program actual --group <group>
 ```
 
-If svrngs doesn't recognize the name, it says so and lends it anyway: *"svrngs doesn't know immich, so your friends can reach every part of it that its own sign-in allows."* A slip like `Jellyfin` or `llama-sever` gets *"Did you mean jellyfin?"*, because a misspelled name loses what svrngs keeps back of that program.
+If svrngs doesn't recognize the name, it says so and lends it anyway: *"svrngs doesn't know wiki, so your friends can reach every part of it that its own sign-in allows."* A slip like `Jellyfin` or `llama-sever` gets *"Did you mean jellyfin?"*, because a misspelled name loses what svrngs keeps back of that program.
 
-svrngs asks whether it takes a password on each request (next section). Immich keeps its own accounts, so press Enter and make each friend an account in Immich. Actual asks everyone for the one server password you set.
+svrngs knows Immich keeps its own accounts, so it asks for no password and tells you how to make each friend one. For a program it doesn't know, it asks whether it takes a password on each request (next section). Actual asks everyone for the one server password you set.
 
 ## Lend something that takes a password on each request
 
 For a program it doesn't know, `share` asks:
 
 ```
-If immich takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):
+If actual takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none):
 ```
 
 Most apps with a sign-in page don't need this: press Enter. Paste something only if the program wants a header on every request, such as llama-server started with `--api-key abc123`: then paste `Bearer abc123`, the whole header value. What you type isn't shown. svrngs then says *"Its password stays on this computer; nobody you lend it to receives it."* Your friends never see it, but to the program they all arrive as that one password, so it can't tell them apart.

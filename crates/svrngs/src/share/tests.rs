@@ -132,6 +132,17 @@ fn the_table_names_no_sign_in_helper() {
     );
 }
 
+/// **A recipe needs no list a file holds** (apps/pantry/README.md): a lend
+/// under `kokoro` refuses what demo/runs/models/2026-10-22-scope/SCOPE.md
+/// §1.4 kept back, its lender typing none. Planted, watched failing:
+/// kokoro.txt's `keeps:` row removed.
+#[test]
+fn kokoro_is_lent_without_the_paths_its_file_keeps() {
+    let kept = kept_of(&Program::parse("kokoro").unwrap());
+    let kept: Vec<&str> = kept.iter().map(RefusedPath::as_str).collect();
+    assert_eq!(kept, ["/docs", "/openapi.json"]);
+}
+
 /// Row order is the file names', never the filesystem's listing (build.rs):
 /// a lender reads it in `NoKind`'s list, and `unrecognized` takes the first
 /// slip it finds. Planted: build.rs's sorted paths walked in reverse.
@@ -143,7 +154,14 @@ fn the_programs_are_read_in_file_name_order() {
     assert_eq!(names, sorted);
     let mut words: Vec<String> = super::rows().map(|(_, k, _)| k.to_string()).collect();
     words.dedup();
-    assert_eq!(words, names, "the rows come in the files' order");
+    // A file may hold only comments, its place kept until its clause can be
+    // read (minecraft.txt, factorio.txt): no row, so no word on either list.
+    let with_rows: Vec<&str> = names
+        .iter()
+        .copied()
+        .filter(|name| words.iter().any(|word| word == name))
+        .collect();
+    assert_eq!(words, with_rows, "the rows come in the files' order");
 }
 
 /// The kind is the one given, else the port's; the name, else the kind;
@@ -255,7 +273,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
     assert_eq!(well_known_kind(port(8080)), None);
     let said = ShareRefusal::NoKind(port(8080)).to_string();
     assert!(
-        said.ends_with("calibre-web, jellyfin, llama-server, navidrome"),
+        said.ends_with("audiobookshelf, calibre-web, factorio, immich, jellyfin, kokoro, llama-server, minecraft, navidrome"),
         "{said}"
     );
     let mut typed = share(8080);

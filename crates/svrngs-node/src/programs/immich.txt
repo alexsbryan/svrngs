@@ -1,0 +1,12 @@
+# Immich, photos. Port 2283 is the one its own docker-compose.yml publishes
+# (https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml,
+# read 2026-11-09, release v3.3.6).
+#
+# Who signs in: each person with an account of their own, made by its admin
+# (https://docs.immich.app/administration/user-management, read 2026-11-09:
+# "On the Administration > Users page, you can click on the Create user
+# button"). The key's menu words are i18n/en.json at tag v3.3.6:
+# account_settings "Account Settings", api_keys "API Keys", new_api_key
+# "New API Key"; the guide's "user setting panel"
+# (https://docs.immich.app/features/command-line-interface#obtain-the-api-key).
+2283 immich accounts: Administration, Users, Create user for each person. For apps, your picture at the top right, then Account Settings, API Keys, New API Key

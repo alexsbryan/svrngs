@@ -1,0 +1,7 @@
+# Factorio server, port 34197, UDP, lent as a port, not a page:
+# `svrngs share 34197 --udp --program factorio`, the steps of demo/factorio.md
+# (GIVE.md §6, DESIGN §3 "A port, not a page"). No row yet: `carries: udp` (CONTRACTS §4) has no
+# reader, so nothing here is enforceable. A `34197 factorio` row would lend the
+# port as a page for anyone typing no --udp; a `-` row would offer the word
+# on the home page's page-lend form (home.rs `running`). Both wrong; this file
+# holds its place, and its port and word, for that clause.

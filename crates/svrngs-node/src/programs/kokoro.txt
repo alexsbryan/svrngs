@@ -1,0 +1,6 @@
+# Kokoro FastAPI, ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0, the speech-out
+# recipe of apps/pantry/README.md. No port: its image listens on 8880 and the
+# recipe publishes another (`-p 127.0.0.1:8107:8880`). Kept back, as
+# demo/runs/models/2026-10-22-scope/SCOPE.md §1.4 ran it: /docs and
+# /openapi.json answered 200 directly and 403 through a lend refusing them.
+- kokoro keeps: /docs /openapi.json

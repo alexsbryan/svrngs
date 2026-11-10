@@ -61,15 +61,17 @@ tool's address from `list`, with `/mcp` on the end
 
 ## Recipes: two shell lines per server
 
-Each row serves on 127.0.0.1, then lends the port. The `--refuse` paths are
-the routes that change the lender's computer; the door answers them 403.
-Add a row with a pull request, not a pantry change.
+Each row serves on 127.0.0.1, then lends the port. svrngs keeps back the
+routes of each that change the lender's computer, without your typing them
+(`crates/svrngs-node/src/programs/`, and "What svrngs keeps back on its own" in
+docs/guide/lend.md); the door answers them 403. Add a row with a pull request,
+not a pantry change.
 
 | What | Serve on your computer | Lent to your groups |
 |---|---|---|
-| Chat and vision (the curated pair) | `llama-server -m Qwen3.6-35B-A3B-UD-IQ4_NL.gguf --jinja --alias ana/coder --host 127.0.0.1 --port 8101 -c 8192 -ngl 99`<br>(vision: add `--mmproj mmproj-F16.gguf`, the Gemma-4-26B projector) | `svrngs share 8101 --program llama-server --name ana-coder --refuse /slots --refuse /v1/stream --refuse /v1/streams --refuse /v1/chat/completions/control --refuse /lora-adapters --refuse /metrics --refuse /tools --refuse /cors-proxy --refuse /models --group <group>` |
-| Speech out (Kokoro v0.9.0) | `podman run --rm -p 127.0.0.1:8107:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | `svrngs share 8107 --program kokoro --name sam-voice --refuse /docs --refuse /openapi.json --group <group>` |
-| Speech to text (whisper.cpp + wrapper) | `whisper-server -m ggml-base.en.bin --host 127.0.0.1 --port 8106 -l en` then `node apps/pantry/examples/whisper/server.mjs --upstream http://127.0.0.1:8106 --port 8110` | `svrngs share 8110 --program whisper --name sam-stt --group <group>` |
+| Chat and vision (the curated pair) | `llama-server -m Qwen3.6-35B-A3B-UD-IQ4_NL.gguf --jinja --alias ana/coder --host 127.0.0.1 --port 8101 -c 8192 -ngl 99`<br>(vision: add `--mmproj mmproj-F16.gguf`, the Gemma-4-26B projector) | `svrngs share 8101 --program llama-server --name ana-coder --group <group>` |
+| Speech out (Kokoro v0.9.0) | `podman run --rm -p 127.0.0.1:8107:8880 ghcr.io/remsky/kokoro-fastapi-cpu:v0.9.0` | `svrngs share 8107 --program kokoro --name sam-voice --group <group>` |
+| Speech to text (whisper.cpp + wrapper) | `whisper-server -m ggml-base.en.bin --host 127.0.0.1 --port 8106 -l en` then `node apps/pantry/examples/whisper/server.mjs --upstream http://127.0.0.1:8106 --port 8110` | `svrngs share 8110 --program whisper-server --name sam-stt --group <group>` |
 | Tools (any native MCP Streamable HTTP server) | serve it on `127.0.0.1:8108` with its endpoint at `/mcp` | `svrngs share 8108 --program mcp --name sam-tools --group <group>` |
 
 The curated pair is `unsloth/Qwen3.6-35B-A3B-MTP-GGUF` and

@@ -611,7 +611,7 @@ fn a_misspelled_program_is_told_at_share_time() {
         ("llama-sever", " Did you mean llama-server?"),
         ("Jellyfin", " Did you mean jellyfin?"),
         ("jellyfim", " Did you mean jellyfin?"),
-        ("immich", ""),
+        ("wiki", ""),
     ] {
         let said = format!("svrngs doesn't know {name}, so your friends can reach every part of it that its own sign-in allows.{ends}");
         assert_eq!(told(name), Some(said), "{name}");
