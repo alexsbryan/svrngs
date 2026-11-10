@@ -66,6 +66,18 @@ answers, started with `--embeddings`, for example:
     llama-server -m nomic-embed-text-v1.5.Q8_0.gguf --embeddings --port 8080
     svrngs share 8080 --program llama-server --group <group>
 
+## Or carried in your group's folder
+
+`carried/` is taste with no server: copy it into your group's folder as
+`apps/Taste/`, and everyone in the group has it. Its `reads.txt` names
+jellyfin and its `sends.txt` names llama-server, so when someone opens it
+from their home page, the line under a friend's llama-server says *"Sends
+to Bo’s llama-server at /v1/embeddings. Bo can see what it sends."* Tick
+that, and it sends the whole list of films, described, to that model, 64 at
+a time, and keeps your ratings in your browser. Bo's llama-server takes it
+only if Bo said yes to apps sending to it when he lent it (`svrngs share`
+asks).
+
 ## How it's built
 
 - `taste.mjs` serves the page, keeps the diary, and lends itself with

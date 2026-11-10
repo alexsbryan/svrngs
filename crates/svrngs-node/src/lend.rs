@@ -181,6 +181,57 @@ fn comparable(path: &str) -> String {
     out.into_iter().collect()
 }
 
+/// A `sends:` row a lend accepts (svrn-docs `rings/current/CONTRACTS.md`
+/// §2, §7): one method that writes and one exact path, `POST /v1/embeddings`,
+/// another app on its person's own computer may send to. Its path is
+/// `/`-led segments of `[A-Za-z0-9._~-]`, none empty, `.` or `..`, so no
+/// row holds an encoding; it is compared byte for byte ([`Self::is`]), never
+/// as [`RefusedPath::covers`] compares, since a decoder would widen an exact
+/// allow. Parsed where a programs file is read and again as a lend's file is.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(try_from = "String", into = "String")]
+pub struct SendRow(String);
+
+impl SendRow {
+    pub fn parse(raw: &str) -> Result<Self, LendError> {
+        let (method, path) = raw.split_once(' ').unwrap_or_default();
+        let unreserved = |b: u8| b.is_ascii_alphanumeric() || b"._~-".contains(&b);
+        let segment = |s: &str| !matches!(s, "" | "." | "..") && s.bytes().all(unreserved);
+        let at = path
+            .strip_prefix('/')
+            .is_some_and(|p| p.split('/').all(segment));
+        let fits = at && ["POST", "PUT", "PATCH", "DELETE"].contains(&method);
+        tracing::debug!(target: "lend", raw, fits, "lend: a sends: row, read or refused");
+        let refused = || LendError::NotASend(raw.to_string());
+        fits.then(|| Self(raw.to_string())).ok_or_else(refused)
+    }
+
+    /// Whether a request of `method` at `path`, its spelling as it came and
+    /// before any query, is this row, byte for byte.
+    pub fn is(&self, method: &str, path: &str) -> bool {
+        self.0.split_once(' ') == Some((method, path))
+    }
+
+    /// Its path, as a person is told where an app sends.
+    pub fn path(&self) -> &str {
+        self.0.split_once(' ').map_or("", |(_, path)| path)
+    }
+}
+
+impl TryFrom<String> for SendRow {
+    type Error = LendError;
+    fn try_from(raw: String) -> Result<Self, LendError> {
+        Self::parse(&raw)
+    }
+}
+
+impl From<SendRow> for String {
+    fn from(row: SendRow) -> String {
+        row.0
+    }
+}
+svrngs_core::text_newtype!(SendRow);
+
 /// The upload a lend's lender says it may use, in bits a second: stated,
 /// never measured (DESIGN §3, "The upload is declared"), so the share the
 /// door tells each request is a declared figure and says so.
@@ -314,6 +365,10 @@ pub struct Lend {
     /// yes ([`crate::door::choices`]). svrngs carries the words to every
     /// list and never reads them.
     pub asks: Option<String>,
+    /// Its `sends:` rows, its lender's yes to its terms' (CONTRACTS §2, "The
+    /// lend is the yes"): where a carried app may send to it, as its person
+    /// says ([`crate::door::admit`]). None for a carried app's own.
+    pub sends: Vec<SendRow>,
 }
 
 impl Lend {
@@ -365,6 +420,7 @@ impl Lend {
             reads: Vec::new(),
             sign_in_with_svrngs: None,
             asks: None,
+            sends: Vec::new(),
         })
     }
 
@@ -411,6 +467,11 @@ struct LendFile {
     sign_in_with_svrngs: Option<SignInWithSvrngs>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     asks: Option<String>,
+    /// Each parsed as it is read ([`SendRow`]); an svrngs from before sends
+    /// refuses a file that holds one (`deny_unknown_fields`), never reading
+    /// it as a lend that sends nothing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    sends: Vec<SendRow>,
 }
 
 /// The characters a sign-in client's id and secret may be made of
@@ -497,6 +558,11 @@ pub struct Offered {
     /// and from a computer whose svrngs lends no port.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub raw: Option<Raw>,
+    /// Its `sends:` rows ([`Lend::sends`]), so a person's computer shows
+    /// where an app would send before they say yes. Absent for none, and
+    /// passed over by an svrngs from before sends.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sends: Vec<SendRow>,
 }
 
 impl Offered {
@@ -543,6 +609,8 @@ pub enum LendError {
     NotAProgram(String),
     #[error("{0:?} is not a path: a refused path starts with / and holds no control character")]
     NotAPath(String),
+    #[error("{0:?} is not a send: POST, PUT, PATCH or DELETE, a space, then a path such as /v1/embeddings, of letters, digits, . _ ~ and - between its slashes")]
+    NotASend(String),
     #[error("{path} cannot be read: {source}")]
     Unreadable {
         path: PathBuf,
@@ -647,6 +715,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         reads: file.reads,
         sign_in_with_svrngs,
         asks: file.asks,
+        sends: file.sends,
     }))
 }
 
@@ -850,6 +919,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         reads: lend.reads.clone(),
         sign_in_with_svrngs: lend.sign_in_with_svrngs.clone(),
         asks: lend.asks.clone(),
+        sends: lend.sends.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));

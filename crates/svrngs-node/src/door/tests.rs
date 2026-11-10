@@ -214,28 +214,41 @@ fn port_80_names_no_port() {
 }
 
 /// The rule of [`admit`] (svrn-docs `rings/current/CAPABILITY_CONNECTIONS_PLAN.md`
-/// §2), row by row: another app's read goes as the readers' account or bare,
-/// and nothing else of its ever reaches the service; a person's own and a
-/// lend's own page are untouched.
+/// §2; `CONTRACTS.md` §6.7), row by row: another app's read goes as the
+/// readers' account or bare, and nothing else of its ever reaches the
+/// service; a send on a `sends:` row goes the same way, but only for an app
+/// its group carries and never for a pass's holder: a lent app's send, and
+/// a phone's or a pass and link's, are refused; a person's own and a lend's
+/// own page are untouched. Planted: `sends` in `admit` true for any app
+/// (the lent page's and the holder's sends let in).
 #[test]
 fn admit_is_the_rule_for_every_request_naming_another_app() {
+    use Asked::{Read, Send, Write};
     let own = Label::of(&[1; 32], "shelf");
     let other = Label::of(&[2; 32], "picks");
-    for (app, read, readers, want) in [
-        (None, false, false, Admit::Own),
-        (None, false, true, Admit::Own),
-        (None, true, true, Admit::Own),
-        (Some(&own), false, true, Admit::Own),
-        (Some(&own), true, false, Admit::Own),
-        (Some(&other), true, true, Admit::Readers),
-        (Some(&other), true, false, Admit::Bare),
-        (Some(&other), false, true, Admit::Refused),
-        (Some(&other), false, false, Admit::Refused),
+    let carried = Label::carried("Taste", "the-group-s-id-0123");
+    for (app, asked, readers, holder, want) in [
+        (None, Write, false, false, Admit::Own),
+        (None, Write, true, false, Admit::Own),
+        (None, Read, true, false, Admit::Own),
+        (Some(&own), Write, true, false, Admit::Own),
+        (Some(&own), Read, false, false, Admit::Own),
+        (Some(&other), Read, true, false, Admit::Readers),
+        (Some(&other), Read, false, false, Admit::Bare),
+        (Some(&other), Write, true, false, Admit::Refused),
+        (Some(&other), Write, false, false, Admit::Refused),
+        (Some(&carried), Send, true, false, Admit::Readers),
+        (Some(&carried), Send, false, false, Admit::Bare),
+        (Some(&carried), Write, true, false, Admit::Refused),
+        (Some(&carried), Send, true, true, Admit::Refused),
+        (Some(&carried), Read, true, true, Admit::Readers),
+        (Some(&other), Send, true, false, Admit::Refused),
+        (Some(&other), Send, false, true, Admit::Refused),
     ] {
         assert_eq!(
-            admit(app, &own, read, readers),
+            admit(app, &own, asked, readers, holder),
             want,
-            "{app:?} {read} {readers}"
+            "{app:?} {asked:?} {readers} {holder}"
         );
     }
 }

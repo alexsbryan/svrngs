@@ -10,6 +10,7 @@ use svrngs_core::pass::Label;
 use crate::door::limit::READS_A_MINUTE;
 use crate::door::LendRefusal::{self, *};
 use crate::folder::carried::{ACTS, WRITES_AN_HOUR};
+use crate::origin::SEND_MAX;
 use crate::surface::{AppRoute, GUIDE, LEND_PATH, READS_PATH, STOP_SUFFIX, TO_PATH};
 
 /// The list's lines of `kind`, each after its word.
@@ -70,6 +71,7 @@ fn limits() -> BTreeSet<String> {
             "reads {reads} | {reads} reads at once, then {} a second",
             reads / 60
         ),
+        format!("send {SEND_MAX} | {} MiB", SEND_MAX >> 20),
     ]
     .into_iter()
     .collect()

@@ -150,7 +150,16 @@ type Held = Result<Option<axum::body::Bytes>, Withheld>;
 /// `index.html`: each a kind, apart by spaces or lines (DESIGN §3, "Or a
 /// folder the group carries").
 pub const READS: &str = "reads.txt";
-const NOT_PROGRAMS: Withheld = (Fault, 500, "a word in its reads.txt isn’t a program’s name");
+/// Where a carried app declares the kinds of lend it sends to, the same way
+/// (svrn-docs `rings/current/CONTRACTS.md` §2, "App side"): apart from
+/// [`READS`], whose every word an older svrngs reads as a kind. Each word
+/// is read too, so a send never needs a kind the open won't show.
+pub const SENDS: &str = "sends.txt";
+const NOT_PROGRAMS: Withheld = (
+    Fault,
+    500,
+    "a word in its reads.txt or sends.txt isn’t a program’s name",
+);
 
 /// The shelf (V1_UI_BUILD §3.4; v1ui-shelf (c)): svrngs's own reference
 /// apps, which ship with it, and nothing else — nothing on it is a
@@ -369,21 +378,35 @@ impl Folders {
         fits.map_err(|why| format!("{path} can't be used: {why}. Change it, then try again."))
     }
 
-    /// The kinds `lend` reads: a carried app's from its [`READS`] as its
-    /// files run as this computer's person, so a version that reads more
-    /// reads it only once they said yes to it (canon-pin); none without
-    /// one, as the shelf's apps have; refused, never read as fewer, when a
-    /// word in it is not a kind (ARCH 6). A declared lend's, its own.
+    /// The kinds `lend` reads: a carried app's from its [`READS`] and
+    /// [`SENDS`] ([`Self::words`]), so a version that reads more reads it
+    /// only once its person said yes to it (canon-pin). A declared lend's,
+    /// its own.
     pub(crate) async fn reads(&self, lend: &Lend) -> Result<Vec<Program>, Withheld> {
-        let Source::Carried(app, group) = &lend.source else {
+        if !matches!(lend.source, Source::Carried(..)) {
             return Ok(lend.reads.clone());
+        }
+        let mut kinds = self.words(lend, READS).await?;
+        kinds.extend(self.words(lend, SENDS).await?);
+        Ok(kinds)
+    }
+
+    /// The kinds a carried `lend` names in its `file`, [`READS`] or
+    /// [`SENDS`], as its files run as this computer's person, never as
+    /// another computer lists them (CONTRACTS §7); none without one, as the
+    /// shelf's apps have, and none for a declared lend; refused, never read
+    /// as fewer, when a word in it is not a kind (ARCH 6). The one reader of
+    /// both.
+    pub(crate) async fn words(&self, lend: &Lend, file: &str) -> Result<Vec<Program>, Withheld> {
+        let Source::Carried(app, group) = &lend.source else {
+            return Ok(Vec::new());
         };
         let standing = (self.host.rail.standing(group)).map_err(|e| traced(group, UNREAD, &e))?;
         standing.member(&self.host.actor).ok_or(NOT_IN)?;
         let Standing::Members(people) = &standing else {
             return Err(NOT_IN);
         };
-        let path = format!("apps/{app}/{READS}");
+        let path = format!("apps/{app}/{file}");
         let text = self
             .runs_at(group, app, &path, (people, &self.host.actor))
             .await?;
@@ -391,7 +414,7 @@ impl Folders {
         let kinds = (words.split_whitespace())
             .map(Program::parse)
             .collect::<Result<_, _>>();
-        tracing::debug!(target: "folder", lend = %lend.name, group, declared = text.is_some(), ?kinds, "carried: the kinds the app reads as it runs as this computer's person, none undeclared, or refused");
+        tracing::debug!(target: "folder", lend = %lend.name, group, file, declared = text.is_some(), ?kinds, "carried: the kinds the app names in its file as it runs as this computer's person, none undeclared, or refused");
         kinds.map_err(|e| traced(group, NOT_PROGRAMS, &e))
     }
 

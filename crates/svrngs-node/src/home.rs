@@ -265,6 +265,9 @@ struct Opening {
     reads: Option<String>,
     /// The lends its open showed and the person unticked, the same way.
     left: Option<String>,
+    /// Of those ticked, the lends ticked apart for it to send to, the same
+    /// way (svrn-docs `rings/current/CONTRACTS.md` §6.6).
+    sends: Option<String>,
 }
 
 /// `POST /reaching`, a form the open button posts in a tab of its own:
@@ -283,8 +286,8 @@ async fn reaching(State(at): State<Asking>, Form(o): Form<Opening>) -> Response 
             .filter_map(Label::parse)
             .collect()
     };
-    let told = (said, labels(o.reads), labels(o.left));
-    let named = (told.1.len(), told.2.len());
+    let told = (said, labels(o.reads), labels(o.left), labels(o.sends));
+    let named = (told.1.len(), told.2.len(), told.3.len());
     let kept = crate::door::choices::own_reaching(&at.door, o.app.clone(), told).await;
     tracing::debug!(target: "home", app = %o.app, ?said, ?named, status = kept.status().as_u16(), "home: an app opened from its button or stopped, what was said kept");
     if !kept.status().is_success() {
@@ -747,7 +750,9 @@ async fn lend_one(
     let terms = match terms {
         Some(drawn) => share::fits(&word, &drawn).map(|()| drawn).map_err(showed),
         None => match at.door.folders.agreed(&groups, &word).await {
-            Ok((text, by)) if !text.is_empty() => return Ok(drawn(&word, text, &by)),
+            Ok((text, by)) if !text.is_empty() || !share::sends_of(&word, &text).is_empty() => {
+                return Ok(drawn(&word, text, &by));
+            }
             read => read.map(|(text, _)| text),
         },
     };
@@ -775,18 +780,27 @@ async fn lend_one(
 }
 
 /// A group's own terms for `word`, `text`, drawn for its lender before
-/// any is kept: its rows, who wrote them where (`by`), and the text the page
+/// any is kept: its rows, who wrote them where (`by`), where apps may send
+/// to it by those and svrngs's ([`share::sends_of`]), and the text the page
 /// posts back with the next press, so the lend keeps what they saw
-/// (CONTRACTS §2, "The lend is the yes"; §6.8).
+/// (CONTRACTS §2, "The lend is the yes"; §6.8). That press is the yes to
+/// its sends: a lend with any is drawn first, even with no group's file.
 fn drawn(word: &Program, text: String, by: &str) -> Response {
     let rows: Vec<String> = (share::rows_in(&text).flatten())
         .map(|(_, k, how)| format!("{k} {how}"))
         .collect();
-    tracing::debug!(target: "home", %word, rows = rows.len(), "home: its groups' own terms drawn; nothing lent until its lender presses again");
-    let rows = rows.join("; ");
-    let said = format!(
-        "Your group's terms for {word}{by}: {rows}. To lend it with these, press Lend again."
-    );
+    let sends = share::sends_of(word, &text);
+    tracing::debug!(target: "home", %word, rows = rows.len(), sends = sends.len(), "home: its groups' own terms and its sends drawn; nothing lent until its lender presses again");
+    let paths: Vec<&str> = sends.iter().map(|s| s.path()).collect();
+    let terms = match rows.is_empty() {
+        true => String::new(),
+        false => format!("Your group's terms for {word}{by}: {}. ", rows.join("; ")),
+    };
+    let sends = match paths.is_empty() {
+        true => String::new(),
+        false => format!("Apps your friends open on their computers can send to {word} at {}, if each says yes. ", paths.join(" and ")),
+    };
+    let said = format!("{terms}{sends}To lend it with these, press Lend again.");
     Json(serde_json::json!({ "terms": text, "said": said })).into_response()
 }
 

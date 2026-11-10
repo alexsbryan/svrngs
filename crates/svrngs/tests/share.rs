@@ -1524,3 +1524,49 @@ fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
     let _ = running.ends();
     drop(ports);
 }
+
+/// **A `sends:` is kept only on its lender's yes** (svrn-docs
+/// `rings/current/CONTRACTS.md` §2, "The lend is the yes"): llama-server's
+/// terms let apps send to `POST /v1/embeddings`, and `svrngs share` with
+/// no terminal to answer y keeps none of it: the lend reads only, and its
+/// lender is told so and how to say yes. Planted, watched failing:
+/// `sends_said` answering yes with no terminal (the declaration holds the
+/// row).
+#[cfg(unix)]
+#[test]
+fn a_send_is_kept_only_on_its_lender_s_yes() {
+    let dir = tempfile::tempdir().unwrap();
+    let logs = tempfile::tempdir().unwrap();
+    let stand_in = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = stand_in.local_addr().unwrap().port().to_string();
+    let log = logs.path().join("share");
+    holds_lab(dir.path(), logs.path());
+    let mut running = Program::start(
+        dir.path(),
+        &log,
+        &[
+            "share",
+            port.as_str(),
+            "--program",
+            "llama-server",
+            "--group",
+            "Lab",
+        ],
+        "\n",
+    );
+    running.until("Leave this running");
+    let _ = running.child.kill();
+    let _ = running.ends();
+    let declared = std::fs::read_to_string(dir.path().join("lends/llama-server.json")).unwrap();
+    assert!(!declared.contains("sends"), "{declared}");
+    let log = std::fs::read_to_string(&log).unwrap();
+    assert!(
+        log.contains("llama-server is lent without sending: apps can only read it. To let them send, run this again in a terminal and type y."),
+        "its lender is told: {log}"
+    );
+    assert!(
+        log.contains("cli: share — its lender's yes to apps sending to it, or none"),
+        "the branch is traced: {log}"
+    );
+    drop(stand_in);
+}

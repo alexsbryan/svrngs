@@ -1976,3 +1976,40 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     );
     group.close().await;
 }
+
+/// **The home page shows where apps would send before it keeps a send**
+/// (svrn-docs `rings/current/CONTRACTS.md` §2, "The lend is the yes"):
+/// llama-server's shipped terms let apps send to `POST /v1/embeddings`, so
+/// the first Lend of it lends nothing and says so, with no group's file at
+/// all; the press after that line is its lender's yes, and the lend keeps
+/// the row. Planted, watched failing: `lend_one` drawing only a group's
+/// own file (the first press lends it, the send kept unshown).
+#[tokio::test]
+async fn the_home_page_says_where_apps_send_before_it_keeps_a_send() {
+    let group = Group::new().await;
+    let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = running.local_addr().unwrap().port();
+    let films = seed("films", 9).id();
+    let asked = |terms: Option<&str>| serde_json::json!({ "port": port, "name": "model", "kind": "llama-server", "groups": [films], "terms": terms });
+    let (status, first) = lend_from_the_page(&group.ana, asked(None)).await;
+    assert_eq!(
+        (status, first["terms"].as_str()),
+        (200, Some("")),
+        "{first}"
+    );
+    assert_eq!(
+        first["said"],
+        "Apps your friends open on their computers can send to llama-server at /v1/embeddings, if each says yes. To lend it with these, press Lend again."
+    );
+    let sends = || {
+        let lend =
+            svrngs_node::lend::read(group._dirs[0].path(), &LendName::parse("model").unwrap());
+        lend.unwrap()
+            .map(|l| l.sends.iter().map(|s| s.to_string()).collect::<Vec<_>>())
+    };
+    assert_eq!(sends(), None, "nothing lent until it is pressed again");
+    let (status, lent) = lend_from_the_page(&group.ana, asked(Some(""))).await;
+    assert_eq!(status, 200, "{lent}");
+    assert_eq!(sends(), Some(vec!["POST /v1/embeddings".to_string()]));
+    drop(running);
+}

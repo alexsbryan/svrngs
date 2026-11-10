@@ -1804,3 +1804,91 @@ async fn a_removed_person_is_refused_as_removed_by_pass_and_by_dial() {
     assert!(said.contains(told), "{told}: {said}");
     pair.close().await;
 }
+
+/// **A send is a carried app's, from its person's own computer** (svrn-docs
+/// `rings/current/CONTRACTS.md` §6.7): A lends shelf with the `sends:` row
+/// `POST /whoami`. Bo's computer's own pass for a page his group carries
+/// sends there, as no one, since shelf keeps no readers' account; the
+/// service is asked. Its pass for a lent page, whose person ticked shelf,
+/// is refused; so is a phone's pass and link for the carried page, as a
+/// holder; so is the carried page's send with a query. Each refused
+/// `closed`, naming the row, the service never asked. Planted, watched
+/// failing: `admit`'s `sends` true for any app (the lent page's and the
+/// holder's sends reach the service).
+#[tokio::test]
+async fn a_send_is_a_carried_app_s_from_its_person_s_own_computer() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    let (pair, heads) = lending_heads().await;
+    let dir = lend::lends_dir(pair.dir.path());
+    let mut shelf_file: serde_json::Value =
+        serde_json::from_str(&std::fs::read_to_string(dir.join("shelf.json")).unwrap()).unwrap();
+    shelf_file["sends"] = serde_json::json!(["POST /whoami"]);
+    std::fs::write(dir.join("shelf.json"), shelf_file.to_string()).unwrap();
+    let a = *pair.a.endpoint().id().as_bytes();
+    let shelf = Label::of(&a, "shelf");
+    let (carried, lent) = (Label::carried("Taste", NS), Label::of(&a, "picks"));
+    let bo = actor_of(&signing(2));
+    let posted = |pass: &Pass, at: &str| {
+        format!("POST /lend/{shelf}{at} HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nContent-Type: application/json\r\nContent-Length: 2\r\nConnection: close\r\n\r\n{{}}", pass.encode())
+    };
+    let own = |app: &Label| {
+        Pass::sign(
+            &signing(2),
+            &bo,
+            (app.clone(), vec![shelf.clone()]),
+            unix_now() + 300,
+        )
+    };
+    let sent = pair.raw(posted(&own(&carried), "/whoami").as_bytes()).await;
+    assert_eq!(sent.status, 200, "{}", sent.text);
+    let head = last(&heads);
+    assert!(head.starts_with("POST /whoami HTTP/1.1\r\n"), "{head}");
+    assert!(
+        header_values(&head, "authorization").is_empty(),
+        "a send goes as no one where no readers' account is kept: {head}"
+    );
+    let asked = heads.lock().unwrap().len();
+    let holder = signing(9);
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let phone = Pass::sign(
+        &signing(2),
+        &actor_of(&holder),
+        (carried.clone(), vec![shelf.clone()]),
+        unix_now() + 300,
+    );
+    for (why, reply) in [
+        (
+            "a lent page's send",
+            pair.raw(posted(&own(&lent), "/whoami").as_bytes()).await,
+        ),
+        (
+            "a pass and link's send",
+            raw_to(bridge.local_addr(), posted(&phone, "/whoami")).await,
+        ),
+        (
+            "a send with a query",
+            pair.raw(posted(&own(&carried), "/whoami?_method=DELETE").as_bytes())
+                .await,
+        ),
+    ] {
+        assert_eq!(reply.status, 403, "{why}: {}", reply.text);
+        assert_eq!(
+            header_values(&reply.text, "x-svrngs-refused"),
+            vec!["closed"],
+            "{why}"
+        );
+        assert!(
+            reply.text.contains("only as POST /whoami, exactly"),
+            "{why}: the refusal names where it sends: {}",
+            reply.text
+        );
+    }
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        asked,
+        "no refused send reached shelf"
+    );
+    pair.close().await;
+}

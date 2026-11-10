@@ -2049,3 +2049,457 @@ async fn a_folder_app_reading_for_sixty_seconds() {
         node.endpoint().close().await;
     }
 }
+
+/// A lent service that keeps each request it is asked, whole as it came,
+/// and answers JSON, or a page with a script in it when the request says
+/// `script`: a send's answer svrngs must not hand a page.
+async fn keeping() -> (u16, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = listener.local_addr().unwrap().port();
+    let asked = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
+    let kept = asked.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let mut read = Vec::new();
+                let mut buf = [0u8; 65536];
+                // The head, then as much body as its length says.
+                loop {
+                    let Ok(n) = tokio::io::AsyncReadExt::read(&mut sock, &mut buf).await else {
+                        return;
+                    };
+                    read.extend_from_slice(&buf[..n]);
+                    let text = String::from_utf8_lossy(&read).to_string();
+                    let Some(end) = text.find("\r\n\r\n") else {
+                        if n == 0 {
+                            return;
+                        }
+                        continue;
+                    };
+                    let length = (text[..end].lines())
+                        .find_map(|l| {
+                            l.to_ascii_lowercase()
+                                .strip_prefix("content-length:")
+                                .map(|v| v.trim().parse::<usize>().unwrap_or(0))
+                        })
+                        .unwrap_or(0);
+                    if n == 0 || read.len() >= end + 4 + length {
+                        break;
+                    }
+                }
+                let text = String::from_utf8_lossy(&read).to_string();
+                let (kind, body) = match text.contains("script") {
+                    true => ("text/html", "<script>alert(1)</script>"),
+                    false => ("application/json", r#"{"data":[{"embedding":[0.5,0.25]}]}"#),
+                };
+                kept.lock().unwrap().push(text);
+                let answer = format!("HTTP/1.1 200 OK\r\ncontent-type: {kind}\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
+                let _ = tokio::io::AsyncWriteExt::write_all(&mut sock, answer.as_bytes()).await;
+            });
+        }
+    });
+    (port, asked)
+}
+
+/// Ben lends `embed`, a [`keeping`] service, its lend's `sends:` row
+/// `POST /v1/embeddings` (as `share` keeps it on Ben's yes, CONTRACTS §2);
+/// Ana's computer carries `Sender`, whose sends.txt names embed and which
+/// reads nothing else. Ana's yes, as her last open from the home page said
+/// it: `yes`, its JSON. The nodes, Sender's origin, embed's label, what
+/// the service was asked, and the group.
+async fn sending(
+    salt: u8,
+    yes: impl Fn(&str) -> Value,
+) -> (
+    Vec<Node>,
+    Vec<tempfile::TempDir>,
+    String,
+    String,
+    std::sync::Arc<std::sync::Mutex<Vec<String>>>,
+    String,
+) {
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", salt, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let (port, asked) = keeping().await;
+    let declared = svrngs_node::lend::lends_dir(dirs[1].path());
+    std::fs::create_dir_all(&declared).unwrap();
+    let embed = json!({ "groups": [group], "port": port, "kind": "embed", "refused": ["/admin"],
+        "sends": ["POST /v1/embeddings"] });
+    std::fs::write(declared.join("embed.json"), embed.to_string()).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), &group).await;
+    carry(&at_ana, "Sender");
+    std::fs::write(at_ana.join("apps/Sender/sends.txt"), "embed\n").unwrap();
+    std::mem::forget(root);
+    let label =
+        svrngs_core::pass::Label::of(signing(2).verifying_key().as_bytes(), "embed").to_string();
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        let reading = of_kind(&seen, "Sender")
+            .first()
+            .map(|s| s["reading"].clone());
+        if reading.is_some_and(|r| r.as_array().is_some_and(|r| !r.is_empty())) {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let sender = of_kind(&seen, "Sender")[0].clone();
+    let origin = sender["origin"].as_str().unwrap().to_string();
+    let app = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let said = json!({ actor_of(&signing(1)): { app: yes(&label) } });
+    std::fs::write(dirs[0].path().join("reaching.json"), said.to_string()).unwrap();
+    (nodes, dirs, origin, label, asked, group)
+}
+
+/// What Ana's home page's open of Sender says of Ben's embed (surface.rs
+/// `opening`): the one lend it names.
+async fn opened(ana: &Node, group: &str) -> Value {
+    let seen = lends(ana, group).await;
+    let reading = &of_kind(&seen, "Sender")[0]["reading"];
+    assert_eq!(reading.as_array().map(Vec::len), Some(1), "{seen:#}");
+    reading[0].clone()
+}
+
+/// `body` sent by `method` to `path` of the lend `label`, from the carried
+/// app at `origin` on `node`, as its page's `fetch` sends it: its status,
+/// its refusal's word, its body.
+async fn sent(
+    node: &Node,
+    origin: &str,
+    (method, label, path): (&str, &str, &str),
+    body: Option<(&str, Vec<u8>)>,
+) -> (u16, String, String) {
+    let host = origin.trim_start_matches("http://").trim_end_matches('/');
+    let url = format!("http://{}/svrngs-lend/{label}{path}", node.api_addr());
+    let mut ask = (http().request(method.parse().unwrap(), url))
+        .header("host", host)
+        .bearer_auth(node.token().trim());
+    if let Some((kind, body)) = body {
+        ask = ask.header("content-type", kind).body(body);
+    }
+    let answer = ask.send().await.unwrap();
+    let status = answer.status().as_u16();
+    let word = (answer.headers().get("x-svrngs-refused"))
+        .map(|v| v.to_str().unwrap().to_string())
+        .unwrap_or_default();
+    (status, word, answer.text().await.unwrap_or_default())
+}
+
+/// A JSON body of Taste's shape (apps/taste/model.mjs), `{"input": [..]}`.
+fn texts(said: &str) -> Option<(&'static str, Vec<u8>)> {
+    let body = json!({ "model": "embed", "input": [said] }).to_string();
+    Some(("application/json; charset=utf-8", body.into_bytes()))
+}
+
+/// **A carried app sends one method to one exact path, and nothing else
+/// reaches the service** (svrn-docs `rings/current/CONTRACTS.md` §6.4,
+/// §6.5): Ana said yes to Sender sending to Ben's embed, and her home
+/// page's open shows its row, ticked. Its `POST /v1/embeddings` of JSON
+/// reaches the service as Ana's computer built it (the body whole, typed
+/// `application/json`, none of the page's headers but Accept) and its JSON
+/// answer comes back. Each of `/V1/embeddings`, `/v1//embeddings`,
+/// `/v1/%65mbeddings`, `/v1/embeddings/`, `/v1/embeddings?x=1`, a PUT, a
+/// body not JSON, and one past 1 MiB is refused, the service never asked;
+/// so is a send whose answer is a page with a script in it (§6.5, `inert`).
+/// Planted, each watched failing: the door's `Asked::Send` arm matching
+/// `RefusedPath::covers`'s spelling (the five reach the service); `inert`
+/// skipped for a send (the script reaches the page); `to_bytes` unbounded
+/// (the 1 MiB + 1 body reaches the service).
+#[tokio::test]
+async fn a_carried_app_sends_one_method_to_one_exact_path() {
+    let yes = |label: &str| json!({ "said": "yes", "at": 1, "lends": [label], "sends": [label] });
+    let (nodes, _dirs, origin, label, asked, group) = sending(51, yes).await;
+    let ana = &nodes[0];
+    let open = opened(ana, &group).await;
+    assert_eq!(
+        (&open["sends"], &open["sending"]),
+        (&json!(["POST /v1/embeddings"]), &json!(true)),
+        "the open shows where it sends, ticked by the last yes: {open}"
+    );
+    let embed = |path| ("POST", label.as_str(), path);
+    let (status, word, said) = sent(ana, &origin, embed("/v1/embeddings"), texts("a film")).await;
+    assert_eq!((status, word.as_str()), (200, ""), "{said}");
+    assert_eq!(said, r#"{"data":[{"embedding":[0.5,0.25]}]}"#);
+    let first = asked.lock().unwrap().clone();
+    assert_eq!(first.len(), 1, "{first:#?}");
+    let head = first[0].to_ascii_lowercase();
+    assert!(
+        head.starts_with("post /v1/embeddings http/1.1")
+            && head.contains("content-type: application/json\r\n")
+            && head.ends_with(r#"{"input":["a film"],"model":"embed"}"#),
+        "the send reaches the service as svrngs built it: {head}"
+    );
+    let big = Some(("application/json", vec![b' '; (1 << 20) + 1]));
+    for (method, path, body) in [
+        ("POST", "/V1/embeddings", texts("a")),
+        ("POST", "/v1//embeddings", texts("a")),
+        ("POST", "/v1/%65mbeddings", texts("a")),
+        ("POST", "/v1/embeddings/", texts("a")),
+        ("POST", "/v1/embeddings?x=1", texts("a")),
+        ("PUT", "/v1/embeddings", texts("a")),
+        (
+            "POST",
+            "/v1/embeddings",
+            Some(("text/plain", b"a film".to_vec())),
+        ),
+        ("POST", "/v1/embeddings", big),
+    ] {
+        let (status, word, said) = sent(ana, &origin, (method, &label, path), body).await;
+        assert_eq!(
+            (status, word.as_str()),
+            (403, "closed"),
+            "{method} {path}: {said}"
+        );
+    }
+    assert_eq!(
+        asked.lock().unwrap().len(),
+        1,
+        "nothing refused reached the service"
+    );
+    let (status, word, said) = sent(ana, &origin, embed("/v1/embeddings"), texts("script")).await;
+    assert_eq!(
+        (status, word.as_str()),
+        (403, "closed"),
+        "a script in a send's answer never reaches the page: {said}"
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A yes to reading never covers a send** (CONTRACTS §6.6): Ana's yes
+/// names Ben's embed to read and not to send to, so the open shows its row
+/// unticked; Sender's GET of embed goes, its POST on the row's own path is
+/// refused `unasked`, with what to do, the service never asked. A yes kept
+/// from before sends, with no `sends` at all, is the same. Planted, watched
+/// failing: origin.rs `reach`'s check off (the POST reaches the service).
+#[tokio::test]
+async fn a_yes_to_reading_never_covers_a_send() {
+    let yes = |label: &str| json!({ "said": "yes", "at": 1, "lends": [label] });
+    let (nodes, dirs, origin, label, asked, group) = sending(52, yes).await;
+    let ana = &nodes[0];
+    let open = opened(ana, &group).await;
+    assert_eq!(
+        (&open["sends"], &open["sending"]),
+        (&json!(["POST /v1/embeddings"]), &json!(false)),
+        "never preticked but by a yes that named it: {open}"
+    );
+    let (status, _, said) = sent(ana, &origin, ("GET", &label, "/v1/models"), None).await;
+    assert_eq!(status, 200, "a read goes: {said}");
+    for told in [
+        json!({ "said": "yes", "at": 1, "lends": [label] }),
+        json!({ "said": "yes", "at": 1, "lends": [label], "sends": [] }),
+    ] {
+        let app = origin
+            .trim_start_matches("http://")
+            .split('.')
+            .next()
+            .unwrap();
+        let kept = json!({ actor_of(&signing(1)): { app: told } });
+        std::fs::write(dirs[0].path().join("reaching.json"), kept.to_string()).unwrap();
+        let (status, word, said) = sent(
+            ana,
+            &origin,
+            ("POST", &label, "/v1/embeddings"),
+            texts("a film"),
+        )
+        .await;
+        assert_eq!((status, word.as_str()), (403, "unasked"), "{told}: {said}");
+        assert!(
+            said.contains("open it from your home page, and tick where it sends"),
+            "it says what to do: {said}"
+        );
+    }
+    assert_eq!(
+        asked.lock().unwrap().len(),
+        1,
+        "only the read reached the service"
+    );
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
+/// **A carried Taste sends** (svrn-docs `rings/current/EXTENSION_POINT.md`
+/// §10 row 13): Ben lends a real llama-server with `--embeddings`, its
+/// lend decided from the terms svrngs ships (`share::lend_of`, the row
+/// `POST /v1/embeddings`) and kept, as his yes keeps it; Ana's computer
+/// carries apps/taste/carried as `Taste`, whose sends.txt names
+/// llama-server. Her open shows the send under Ben's llama-server; with
+/// her yes ticking it, a run of 64 films, as Taste's page sends one, goes
+/// through Taste's own origin and comes back as 64 lists of numbers.
+/// Never-ran where llama-server or the model is not on this computer.
+///
+/// `cargo test -p svrngs-node --test carried a_carried_taste_sends --
+/// --ignored --nocapture`
+#[tokio::test]
+#[ignore = "a real llama-server and its model; by hand"]
+async fn a_carried_taste_sends() {
+    let home = std::path::PathBuf::from(std::env::var_os("HOME").unwrap_or_default());
+    let gguf = home.join("models/nomic-embed-text-v1.5-gguf/nomic-embed-text-v1.5.Q8_0.gguf");
+    let found = std::process::Command::new("which")
+        .arg("llama-server")
+        .output();
+    if !gguf.is_file() || !found.is_ok_and(|o| o.status.success()) {
+        eprintln!(
+            "RESULT: never-ran: llama-server or {} is not on this computer",
+            gguf.display()
+        );
+        return;
+    }
+    let free = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = free.local_addr().unwrap().port();
+    drop(free);
+    let mut llama = tokio::process::Command::new("llama-server")
+        .args([
+            "-m",
+            &gguf.to_string_lossy(),
+            "--embeddings",
+            "--host",
+            "127.0.0.1",
+            "--port",
+            &port.to_string(),
+        ])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .kill_on_drop(true)
+        .spawn()
+        .unwrap();
+    let health = format!("http://127.0.0.1:{port}/health");
+    let mut up = false;
+    for _ in 0..120 {
+        if http()
+            .get(&health)
+            .send()
+            .await
+            .is_ok_and(|a| a.status().is_success())
+        {
+            up = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    assert!(up, "llama-server answers /health within a minute");
+
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found_group(ana, ben, cy).await;
+    let asked = svrngs_node::share::Share {
+        port: std::num::NonZeroU16::new(port).unwrap(),
+        name: None,
+        kind: Some(svrngs_node::lend::Program::parse("llama-server").unwrap()),
+        limit: None,
+        refused: Vec::new(),
+        upload: None,
+        reads: Vec::new(),
+        asks: None,
+        sign_in: false,
+        readers: false,
+        raw: None,
+        audience: svrngs_node::lend::Audience::Selected(vec![group.clone()]),
+    };
+    let lend = svrngs_node::share::lend_of(&asked, |_| true, None, "").unwrap();
+    assert_eq!(
+        lend.sends.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+        ["POST /v1/embeddings"]
+    );
+    svrngs_node::lend::declare(dirs[1].path(), &lend, None).unwrap();
+    let root = tempfile::tempdir().unwrap();
+    let at_ana = synced_in(ana, root.path(), &group).await;
+    let taste = at_ana.join("apps/Taste");
+    std::fs::create_dir_all(&taste).unwrap();
+    let carried = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../apps/taste/carried");
+    for file in ["index.html", "index.js", "reads.txt", "sends.txt"] {
+        std::fs::copy(carried.join(file), taste.join(file)).unwrap();
+    }
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        let reading = of_kind(&seen, "Taste")
+            .first()
+            .map(|s| s["reading"].clone());
+        if reading.is_some_and(|r| r.as_array().is_some_and(|r| !r.is_empty())) {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let taste_lend = of_kind(&seen, "Taste")[0].clone();
+    let open = &taste_lend["reading"][0];
+    assert_eq!(
+        (&open["kind"], &open["sends"], &open["sending"]),
+        (
+            &json!("llama-server"),
+            &json!(["POST /v1/embeddings"]),
+            &json!(false)
+        ),
+        "the open shows the send, unticked until her yes: {seen:#}"
+    );
+    let origin = taste_lend["origin"].as_str().unwrap().to_string();
+    let app = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let label = open["label"].as_str().unwrap().to_string();
+    let yes = json!({ actor_of(&signing(1)): { app: { "said": "yes", "at": 1, "lends": [label], "sends": [label] } } });
+    std::fs::write(dirs[0].path().join("reaching.json"), yes.to_string()).unwrap();
+
+    let input: Vec<String> = (0..64)
+        .map(|i| format!("Film {i} ({}). Science Fiction. A crew aboard a failing station reroutes power, take {i}.", 1990 + i))
+        .collect();
+    let body = json!({ "input": input, "encoding_format": "float" }).to_string();
+    let started = std::time::Instant::now();
+    let (status, word, said) = sent(
+        ana,
+        &origin,
+        ("POST", &label, "/v1/embeddings"),
+        Some(("application/json", body.into_bytes())),
+    )
+    .await;
+    assert_eq!(
+        (status, word.as_str()),
+        (200, ""),
+        "{}",
+        &said[..said.len().min(400)]
+    );
+    let answer: Value = serde_json::from_str(&said).unwrap();
+    let data = answer["data"].as_array().unwrap();
+    let widths: std::collections::BTreeSet<usize> = data
+        .iter()
+        .map(|d| d["embedding"].as_array().map_or(0, Vec::len))
+        .collect();
+    eprintln!(
+        "RESULT: a carried Taste sent 64 films to Ben's llama-server through its own origin in {} ms: {} answered, widths {widths:?}",
+        started.elapsed().as_millis(),
+        data.len()
+    );
+    assert_eq!(data.len(), 64);
+    assert!(
+        widths.len() == 1 && widths.first().is_some_and(|w| *w > 0),
+        "{widths:?}"
+    );
+    let _ = llama.kill().await;
+    for node in &nodes {
+        node.endpoint().close().await;
+    }
+}
+
+/// Ana founds House with Ben and Cy in it, each standing, as `reading` and
+/// `sending` stand them up: the group.
+async fn found_group(ana: &Node, ben: &Node, cy: &Node) -> String {
+    let group = found("house", 53, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    group
+}

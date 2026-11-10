@@ -104,7 +104,7 @@ use crate::ring_routes::err;
 use crate::surface::AppRoute;
 use crate::{register::Visiting, Person, RingRail};
 use limit::{Counts, Reads, Verdict, READS_A_MINUTE};
-use svrngs_core::pass::{Label, Pass};
+use svrngs_core::pass::{Label, Pass, Whose};
 use svrngs_core::token::Group;
 
 pub mod choices;
@@ -649,6 +649,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             group,
             groups,
             raw,
+            sends: lend.sends,
         });
     }
     Ok(offered)
@@ -1413,18 +1414,45 @@ pub(crate) enum Admit {
     Refused,
 }
 
+/// What a request asks of a lend's service, as [`admit`] reads it: a
+/// closed set (AGENTS 9).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum Asked {
+    /// GET or HEAD, and no protocol switch ([`upgrade_of`]).
+    Read,
+    /// A method and path one of the lend's `sends:` rows names byte for
+    /// byte ([`crate::lend::SendRow::is`]), no query, which can carry
+    /// `_method=DELETE` to a framework that honors it, and no protocol
+    /// switch (svrn-docs `rings/current/CONTRACTS.md` §7).
+    Send,
+    /// Anything else.
+    Write,
+}
+
 /// Attenuation (svrn-docs `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §2):
 /// one rule at the lender's door. A request naming an app that is not this
 /// lend reads as the readers' account or as no one, and writes nothing, so
-/// a reading page's one POST cannot end the group's sign-in; `read` is GET
-/// or HEAD and no protocol switch ([`upgrade_of`]). `own` is this lend's
-/// label; an app absent is a person's own open ([`Asker`]).
-pub(crate) fn admit(app: Option<&Label>, own: &Label, read: bool, readers: bool) -> Admit {
-    match (app.is_some_and(|a| a != own), read, readers) {
+/// a reading page's one POST cannot end the group's sign-in. It sends
+/// (CONTRACTS §7) only where the lend's own rows say, only for an app its
+/// group carries, and never for a pass's `holder`, a phone or a delegated
+/// program: from a member's computer or this one's own page, whose person's
+/// yes their computer checked (`crate::origin::reach`), as the readers'
+/// account or as no one, as a read is. `own` is this lend's label; an app
+/// absent is a person's own open ([`Asker`]).
+pub(crate) fn admit(
+    app: Option<&Label>,
+    own: &Label,
+    asked: Asked,
+    readers: bool,
+    holder: bool,
+) -> Admit {
+    let sends = !holder && app.is_some_and(|a| matches!(a.whose(), Whose::Carried));
+    match (app.is_some_and(|a| a != own), asked, readers) {
         (false, ..) => Admit::Own,
-        (true, true, true) => Admit::Readers,
-        (true, true, false) => Admit::Bare,
-        (true, false, _) => Admit::Refused,
+        (true, Asked::Write, _) => Admit::Refused,
+        (true, Asked::Send, _) if !sends => Admit::Refused,
+        (true, Asked::Read | Asked::Send, true) => Admit::Readers,
+        (true, Asked::Read | Asked::Send, false) => Admit::Bare,
     }
 }
 
@@ -1583,18 +1611,27 @@ pub(crate) async fn lend_for(
             req.uri().query(),
         ));
     }
-    let read =
-        matches!(*req.method(), Method::GET | Method::HEAD) && upgrade_of(req.headers()).is_none();
+    let row = |m: &str| lend.sends.iter().any(|s| s.is(m, &service_path));
+    let asked = match (upgrade_of(req.headers()), req.method().as_str()) {
+        (None, "GET" | "HEAD") => Asked::Read,
+        (None, m) if row(m) && req.uri().query().is_none() => Asked::Send,
+        _ => Asked::Write,
+    };
     let readers = secret_headers(&lend::readers_dir(&door.data_dir, &lend.name), &lend.name);
     let own = lend.label(&door.key);
-    let admitted = admit(app.as_ref(), &own, read, !readers.is_empty());
-    tracing::debug!(target: "door", actor, lend = %lend.name, app = ?app.as_ref().map(Label::as_str), method = %req.method(), read, readers = !readers.is_empty(), ?admitted,
+    let holder = matches!(who, Who::Holder(_));
+    let admitted = admit(app.as_ref(), &own, asked, !readers.is_empty(), holder);
+    tracing::debug!(target: "door", actor, lend = %lend.name, app = ?app.as_ref().map(Label::as_str), method = %req.method(), ?asked, holder, readers = !readers.is_empty(), ?admitted,
         "door: what an app may do with this lend, and the lender's credential that goes with it");
     let secret = match admitted {
         Admit::Refused => {
             let by = lender_of(door).map_or("the person who lends it".into(), |p| p.to_string());
             let name = &lend.name;
-            let words = format!("Apps can only read {by}’s {name}.");
+            let mut words = format!("Apps can only read {by}’s {name}.");
+            // Where it sends, said exactly, for an app off by a slash.
+            for row in &lend.sends {
+                words += &format!(" An app on a computer sends to it only as {row}, exactly.");
+            }
             return Err(LendRefusal::closed(words));
         }
         Admit::Readers => readers,

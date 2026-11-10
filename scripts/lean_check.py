@@ -626,12 +626,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # . 21,350 and js 8,560, core unchanged. Gap 6, the home page's lend keeps
 # a group's own terms as shown (+73), after the pass f03cbf64 (js -7, which
 # lowers js to where gap 6 lands, 8,487): . to 21,189, js to 8,488.
+# (2026-11-09) Row 13, `sends:` and `sends.txt` (+166, js +29), after the
+# pass b97e31ec to bfad7743 (. -59, js -16, to 21,129 and 8,471), inside
+# the operator's ceilings for gap 6 and row 13: . to 21,296, js to 8,501.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 21189,
+    ".": 21296,
 
-    "js": 8488,
+    "js": 8501,
 
     "swift": 1,
 }

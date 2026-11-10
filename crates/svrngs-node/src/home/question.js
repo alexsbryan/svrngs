@@ -416,8 +416,10 @@ const list = (words) =>
 /** @param {string[]} people */
 const owners = (people) => list(people.map((person) => `${person}’s`));
 /**
- * A lend its open names, as /v1/lends answers it (surface.rs `opening`).
- * @typedef {{ label: string, person: string, name: string, kind: string, ticked?: boolean, new: boolean }} ReadLend
+ * A lend its open names, as /v1/lends answers it (surface.rs `opening`):
+ * `sends`, the rows it may send to, ticked apart, `sending` when the last
+ * yes named it.
+ * @typedef {{ label: string, person: string, name: string, kind: string, ticked?: boolean, new: boolean, sends?: string[], sending?: boolean }} ReadLend
  */
 /**
  * @param {ReadLend[]} on  the lends left ticked
@@ -440,6 +442,14 @@ export const readLine = (on, lent, kinds) => {
     ? `${owners(fresh)} ${fresh.length > 1 ? 'are' : 'is'} new since you last opened it.`
     : 'They can see it’s you, and what it asks for.';
   return `Reads ${said}. ${after}`;
+};
+
+// The line under a send's tick (svrn-docs CONTRACTS §7), in its words:
+// where the app sends, by each row's path, and who can see it.
+/** @param {ReadLend} one */
+export const sendLine = (one) => {
+  const paths = (one.sends ?? []).map((row) => row.slice(row.indexOf(' ') + 1));
+  return `Sends to ${named(one)} at ${list(paths)}. ${one.person} can see what it sends.`;
 };
 
 // Who can decide for you (§4): the devices holding a key of the person

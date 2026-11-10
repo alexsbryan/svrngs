@@ -406,18 +406,46 @@ app asks: a capability in an address is something the page could read.
 At this origin a lend's answer is `'self'` to the browser, so `routed` does
 the job the origin's wall does elsewhere, by what it builds rather than what
 it filters (svrn-docs CARRIED_APP_READS). The request is made anew: GET or
-HEAD, no body, the page's `Accept` alone. The answer is made anew (`inert`):
+HEAD, no body, the page's `Accept` alone, but for a send, below. The answer is made anew (`inert`):
 its status, a body under a `Content-Type` that is svrngs's own constant from a
 closed set of data types (`DATA`), and `sandbox`, `nosniff` and `no-store`.
 Another type is refused `closed`; no header of the lend's arrives. And once a
 person has said yes to an app reading lends, it writes nothing to the record
 for them, through a Stop or a later version, as what it read may be in its
 storage (`door.rs`). What it can still send is what a read's address holds,
-to lenders of the kinds it declared in its group, and the open says so. On a
+to lenders of the kinds it declared in its group, and the open says so, and
+what a send carries, below. On a
 phone the lend's worker makes the answer anew by the same rule (`inert`,
 `web/lend.js`), `DATA` and `INERT` written there too and held alike by a test
 (`origin_tests.rs`); a request is the page's as it was, so a POST goes
 as far as the door's `admit` allows.
+
+**A send, where a lend's terms say** (svrn-docs `rings/current/CONTRACTS.md`
+§7). A program's terms may hold `sends: <method> <path>` (`share::fits`): POST,
+PUT, PATCH or DELETE, and a path of `/`-led segments of `[A-Za-z0-9._~-]`, none
+empty, `.` or `..`, to no path its `keeps:` holds back (`lend::SendRow`).
+llama-server ships `POST /v1/embeddings`. A lend keeps its rows only on its
+lender's yes: `svrngs share` asks y at a terminal and, with none, keeps none
+and says so (`cli.rs`, `sends_said`); the home page's first Lend of a
+program whose terms send lends nothing and says where apps would send, and
+the press after is the yes (`home.rs`, `drawn`). A carried app sends to a
+kind its `sends.txt` names, a file beside `reads.txt` in the same form, each
+word read too (`Folders::words`), as its files run as the person, never as
+another computer lists it. The open shows a tick apart under each such lend
+that keeps a row, "Sends to Sam’s llama-server at /v1/embeddings. Sam can
+see what it sends.", never ticked but by the last yes that named it, and
+posted only with its read's tick (`Choice`'s `sends`; a yes from before names
+none). `reach` carries a carried app's non-GET only when that yes names the
+lend to send to, else `unasked`; `routed` builds it anew, its method, the
+page's `Accept`, a body read whole under `SEND_MAX`, 1 MiB, before anything
+is dialed, and `Content-Type: application/json` for a body, any other type
+refused `closed`; the answer comes back through `inert`. The lender's door
+decides the rest in `admit`, one match: a send is a method and path that a
+row of its own lend names byte for byte (`SendRow::is`, never `covers`'s
+decoded spelling), no query and no upgrade (`Asked::Send`), from an app its
+group carries, never from a pass's holder, and goes as the readers' account
+or as no one; anything else from another app is refused before the service
+is asked, the refusal naming the row. A lent app and a phone never send.
 
 **How often it reads.** An app reads one lend as one person up to
 `READS_A_MINUTE` times (600) at once, then ten a second: a refill, as the
@@ -1099,7 +1127,7 @@ wrote them, before it lends; the press after posts back the text it drew,
 and the lend keeps that, so a file edited in between changes nothing. How
 apps read a lend on the home page follows its groups' terms read then, or
 says why they can't be read. For a word
-svrngs ships, a group's file may only add `keeps:`. Its `accounts:` and
+svrngs ships, a group's file may only add `keeps:` and `sends:`. Its `accounts:` and
 `header:` are advice, not terms, and `share` says them as the words of the
 member who wrote the file, in that group. Its port column is not read:
 the file is found by its word, so a port can't name it before the word is

@@ -787,6 +787,9 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
             let mut lend = share::lend_of(&asked, share::listens, known, theirs)?;
+            if !lend.sends.is_empty() && !sends_said(&lend)? {
+                lend.sends.clear();
+            }
             let accounts = share::accounts_of(&lend.kind, theirs);
             let client = asked.sign_in.then(svrngs_node::oidc::client).transpose()?;
             if let Some(client) = &client {
@@ -1493,6 +1496,25 @@ fn prompt_secret(name: &LendName, asked: &str, shown: bool) -> Result<Option<Str
     let secret = line.trim().to_string();
     tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
     Ok((!secret.is_empty()).then_some(secret))
+}
+
+/// Whether `lend`'s lender says yes, y at this terminal, to apps sending to
+/// it where its terms say (svrn-docs `rings/current/CONTRACTS.md` §2, "The
+/// lend is the yes"): with no terminal to answer, no, and said so.
+fn sends_said(lend: &Lend) -> Result<bool, Refusal> {
+    use std::io::IsTerminal;
+    let paths: Vec<&str> = lend.sends.iter().map(|s| s.path()).collect();
+    let (name, at) = (&lend.name, paths.join(" and "));
+    let terminal = std::io::stdin().is_terminal();
+    let words = format!("Apps your friends open on their computers can send to {name} at {at}, if each says yes. Let them? Type y, then press Enter: ");
+    let yes = terminal
+        && prompt_secret(name, &words, true)?
+            .is_some_and(|y| ["y", "yes"].contains(&y.to_lowercase().as_str()));
+    tracing::debug!(target: "cli", lend = %name, terminal, yes, "cli: share — its lender's yes to apps sending to it, or none");
+    if !yes {
+        eprintln!("{name} is lent without sending: apps can only read it. To let them send, run this again in a terminal and type y.");
+    }
+    Ok(yes)
 }
 
 /// `svrngs share --readers`: the account apps reading `lend` are let in as,

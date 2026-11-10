@@ -155,10 +155,22 @@ const items = await (await fetch(`${films.address}Items?Recursive=true`)).json()
   `lender` and no address, so your page can say *"Bo's films are new. Open
   Movie Night from your home page to search them."* `new` is there only when
   something is new, and a phone never has it.
-- **It only reads.** `GET` and `HEAD` go through, with the page's `Accept` and
-  no other header, under the lender's readers' account if they keep one
-  (`svrngs share --readers`) and with no credential of the lender's if not.
-  Anything else is refused `closed`.
+- **It only reads, unless it sends.** `GET` and `HEAD` go through, with the
+  page's `Accept` and no other header, under the lender's readers' account if
+  they keep one (`svrngs share --readers`) and with no credential of the
+  lender's if not. Anything else is refused `closed`, but a send.
+- **A send, where the lender's terms say.** A lend whose program's terms have
+  a `sends:` row, `llama-server sends: POST /v1/embeddings`, kept when its
+  lender said yes, takes that one method at that exact path, byte for byte
+  and with no query, from an app whose folder holds a `sends.txt` naming the
+  program, a word on each line, as `reads.txt` does (a word in it is read too).
+  The person ticks the send apart under the lend on their home page: *"Sends
+  to Sam’s llama-server at /v1/embeddings. Sam can see what it sends."*
+  Before that tick, a send is refused `unasked`. It goes from a computer,
+  never a phone, as the readers' account or no one, as JSON of 1 MiB at most
+  (`Content-Type: application/json`), and its answer comes back as a read's
+  does. Another method, path, spelling or type is refused `closed`, and the
+  lend's service never sees it.
 - **Reading or writing the record, not both.** Once someone has said yes to
   your app reading lends, a `POST` to `svrngs/acts` is refused for them, even
   after a Stop or in a later version. An app that writes to the record reads no
@@ -214,6 +226,7 @@ runs as they accepted it.
 | `POST svrngs/acts` | One entry, signed as the person: `{op}`, or `{corrects, op}` for one of its own | `closed` for a reader or another app's entry; `limit` past the count; `path` for anything else |
 | `GET svrngs-reads` | The lends this person said yes to: `kind`, `name`, `lender`, `address`, `stop`; `new`, `unanswered` | `closed`, `unlent`, `away` |
 | `GET svrngs-lend/<label>/<path>` | That lend's answer at that path, rebuilt: JSON, plain text, JPEG, PNG or WebP | `unasked`, `stopped`, `closed`, `away`, `limit` |
+| `POST svrngs-lend/<label>/<path>` | A send, JSON, where that lend's `sends:` row says and its person ticked it; answered as a read is | `unasked`, `stopped`, `closed`, `away`, `limit` |
 | `POST svrngs-reads/<label>/svrngs-stop` | This person's yes to that lend taken back, as Stop on their home page does | `closed` |
 | `GET svrngs-to?lender=&lend=` | One lend of this group, opened; with `whether`, only whether it opens | 404 |
 
@@ -224,6 +237,7 @@ The limits:
 | One entry | 64 KiB |
 | Entries an app writes as one person | 200 entries at once, then one every 18 seconds |
 | Reads of one lend by an app as one person | 600 reads at once, then 10 a second |
+| What an app sends a lend at once | 1 MiB |
 
 When svrngs answers in your app's place, its answer carries
 `x-svrngs-refused`, one of these words, and your app's own answers never do.

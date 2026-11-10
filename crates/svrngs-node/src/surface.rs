@@ -55,9 +55,9 @@ use svrngs_core::pass::{Label, Whose};
 
 use crate::door::choices;
 use crate::door::LendRefusal;
-use crate::folder::carried::{Handled, ACTS};
+use crate::folder::carried::{Handled, ACTS, SENDS};
 use crate::group::Namesake;
-use crate::lend::Source;
+use crate::lend::{Program, SendRow, Source};
 use crate::node::{Asking, Groups, Lending, Unlisted};
 use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
@@ -343,6 +343,14 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
     // it says only the kinds, and its open then names no lend.
     let yeses = choices::reachings(&at.door).ok();
     tracing::debug!(target: "surface", namespace, yeses = ?yeses.as_ref().map(BTreeMap::len), "surface: lends — the yeses each open is told, none when they cannot be read");
+    // What each app carried here sends to, by its files as this computer's
+    // person runs them, never as another computer lists it (CONTRACTS §7):
+    // unreadable, it shows no send.
+    let mut sending = BTreeMap::new();
+    for lend in at.door.folders.carried() {
+        let kinds = (at.door.folders).words(&lend, SENDS).await;
+        sending.insert(lend.label(&at.door.key), kinds.unwrap_or_default());
+    }
     let lent: Vec<serde_json::Value> = (lent.iter())
         .filter_map(|l| {
             let origin = host.origin(&l.key, &l.offered, l.version)?;
@@ -351,7 +359,8 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
             // What `svrngs check` finds in a carried app's folder, for its card.
             let (group, kind) = (l.offered.group.as_deref(), l.offered.kind.as_str());
             shown["check"] = group.and_then(|g| at.door.folders.checked(g, kind)).into();
-            if let Some(reading) = opening(l, &lent, &groups, yeses.as_ref(), &host.actor) {
+            let yes = yeses.as_ref();
+            if let Some(reading) = opening(l, &lent, &groups, yes, &host.actor, &sending) {
                 shown["reading"] = reading;
             }
             Some(shown)
@@ -433,15 +442,19 @@ fn reads_among<'a>(
 
 /// What opening `l` reads, for its line and ticks on the home page: each
 /// lend it would name, whose, and whether it is ticked or new since the
-/// person's last yes. `None` for a lend reading nothing; for this
-/// computer's own app, which needs no yes ([`reaches`]), so it lists no
-/// ticks; and where the yeses cannot be read, as its open then names no lend.
+/// person's last yes; and, for a lend with `sends:` rows of a kind the app
+/// sends to (`sending`, by app), the rows, ticked apart only where that yes
+/// named it to send to (CONTRACTS §6.6). `None` for a lend reading nothing;
+/// for this computer's own app, which needs no yes ([`reaches`]), so it
+/// lists no ticks; and where the yeses cannot be read, as its open then
+/// names no lend.
 fn opening(
     l: &Lending,
     lent: &[Lending],
     groups: &Groups,
     yeses: Option<&BTreeMap<Label, choices::Choice>>,
     me: &str,
+    sending: &BTreeMap<Label, Vec<Program>>,
 ) -> Option<serde_json::Value> {
     let own = l.key == me && l.offered.group.is_none();
     if own || l.offered.reads.is_empty() {
@@ -454,16 +467,20 @@ fn opening(
         .get(&app)
         .filter(named_any)
         .filter(|c| c.said == choices::Said::Yes);
+    let to = sending.get(&app).map_or(&[][..], Vec::as_slice);
     let reading: Vec<serde_json::Value> = reads_among(&app, l, lent, groups)
         .filter_map(|read| {
             let label = named(read)?;
             let left = yes.is_some_and(|c| c.left.contains(&label));
             let new = !left && yes.is_some_and(|c| !c.reads.contains(&label));
+            let rows = read.offered.sends.iter().filter(|_| to.contains(&read.offered.kind));
+            let sends: Vec<&str> = rows.map(SendRow::as_str).collect();
+            let sent = !sends.is_empty() && yes.is_some_and(|c| c.sends.contains(&label));
             Some(serde_json::json!({ "label": label, "person": read.person, "name": read.offered.name,
-                "kind": read.offered.kind, "ticked": !left, "new": new }))
+                "kind": read.offered.kind, "ticked": !left, "new": new, "sends": sends, "sending": sent }))
         })
         .collect();
-    tracing::debug!(target: "surface", %app, reading = reading.len(), yes = yes.is_some(), "surface: lends — what its open names, ticked or new since the person's last yes");
+    tracing::debug!(target: "surface", %app, reading = reading.len(), yes = yes.is_some(), sends_to = ?to, "surface: lends — what its open names, ticked or new since the person's last yes, and what it may send to, ticked apart");
     Some(reading.into())
 }
 

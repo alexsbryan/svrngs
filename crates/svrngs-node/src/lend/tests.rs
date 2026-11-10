@@ -41,6 +41,45 @@ fn a_lend_name_cannot_express_a_path() {
     }
 }
 
+/// **A `sends:` row matches one method and one exact path, byte for byte**
+/// (svrn-docs `rings/current/CONTRACTS.md` §6.4): `POST /v1/embeddings`
+/// is `POST` at `/v1/embeddings` and nothing else, a spelling a service
+/// might read as the same path included; and a row is parsed again as a
+/// lend's file is read, so one holding an encoding or a GET is refused
+/// there, never read as a lend that sends nothing. Planted, watched
+/// failing: `is` comparing as `RefusedPath::covers` does (`/V1/embeddings`,
+/// `/v1//embeddings`, `/v1/%65mbeddings`, `/v1/embeddings/` match).
+#[test]
+fn a_send_is_one_method_and_one_exact_path() {
+    let row = SendRow::parse("POST /v1/embeddings").unwrap();
+    assert!(row.is("POST", "/v1/embeddings"));
+    assert_eq!(row.path(), "/v1/embeddings");
+    for (method, path) in [
+        ("POST", "/V1/embeddings"),
+        ("POST", "/v1//embeddings"),
+        ("POST", "/v1/%65mbeddings"),
+        ("POST", "/v1/embeddings/"),
+        ("POST", "/v1/embeddings?x=1"),
+        ("PUT", "/v1/embeddings"),
+        ("post", "/v1/embeddings"),
+    ] {
+        assert!(!row.is(method, path), "{method} {path}");
+    }
+    let root = tempfile::tempdir().unwrap();
+    let name = LendName::parse("model").unwrap();
+    std::fs::create_dir_all(lends_dir(root.path())).unwrap();
+    let file = lends_dir(root.path()).join("model.json");
+    for (sends, read_back) in [
+        (r#"["POST /v1/embeddings"]"#, true),
+        (r#"["GET /v1/models"]"#, false),
+        (r#"["POST /v1/%65mbeddings"]"#, false),
+    ] {
+        let text = format!(r#"{{"port": 8080, "kind": "llama-server", "sends": {sends}}}"#);
+        std::fs::write(&file, text).unwrap();
+        assert_eq!(read(root.path(), &name).is_ok(), read_back, "{sends}");
+    }
+}
+
 /// A field the door does not know is refused, so a misspelt refusal is
 /// never read as none; a missing file is no lend, not an error.
 #[test]
@@ -97,6 +136,7 @@ fn lend(name: &str, port: u16) -> Lend {
         reads: Vec::new(),
         sign_in_with_svrngs: None,
         asks: None,
+        sends: Vec::new(),
     }
 }
 
@@ -364,6 +404,7 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
         group: carried.map(str::to_string),
         groups,
         raw: None,
+        sends: Vec::new(),
     };
     assert!(offered(Some(vec!["house".into()]), None).listed(house));
     assert!(!offered(Some(vec!["house".into()]), None).listed(|g| g == "trip"));

@@ -356,6 +356,25 @@ const DATA: [&str; 5] = [
     "image/webp",
 ];
 
+/// What a carried app's page may send a lend, by type (svrn-docs
+/// `rings/current/CONTRACTS.md` §7): its essence matched, svrngs's spelling
+/// sent, as [`DATA`] is.
+const SEND: [&str; 1] = ["application/json"];
+
+/// The most a carried app's page sends a lend at once, read whole before
+/// anything is dialed, so a service never sees part of a request: 1 MiB,
+/// past Taste's batches of 64 films (apps/taste/model.mjs `RUN`).
+pub(crate) const SEND_MAX: usize = 1 << 20;
+
+/// A `Content-Type`'s essence, as [`inert`] and [`routed`] match one: before
+/// any `;`, trimmed, lowercase.
+fn essence(given: &HeaderValue) -> String {
+    let essence = given.as_bytes().split(|b| *b == b';').next();
+    String::from_utf8_lossy(essence.unwrap_or_default())
+        .trim()
+        .to_ascii_lowercase()
+}
+
 /// What every answer through [`routed`] says, whatever the lend said: at
 /// this origin a lend's answer is `'self'` to the browser, so it stays
 /// inert, and a Stop isn't outlived by the browser's cache.
@@ -375,14 +394,7 @@ fn inert(answer: Response) -> Handled {
     let (mut parts, body) = answer.into_parts();
     let lent = std::mem::take(&mut parts.headers);
     let given = lent.get(header::CONTENT_TYPE);
-    let essence = given
-        .map(|k| {
-            k.as_bytes()
-                .split(|b| *b == b';')
-                .next()
-                .unwrap_or_default()
-        })
-        .map(|k| String::from_utf8_lossy(k).trim().to_ascii_lowercase());
+    let essence = given.map(essence);
     let data = (essence.as_deref()).and_then(|k| DATA.into_iter().find(|d| *d == k));
     tracing::debug!(target: "origin", status = parts.status.as_u16(), ?essence, ?data, "origin: a lend's answer to a carried page: a data type named by svrngs, or refused, or no body");
     if given.is_some() && data.is_none() {
@@ -408,11 +420,13 @@ fn inert(answer: Response) -> Handled {
 }
 
 /// `req` at the carried app `label`'s [`AppRoute::Lend`], `read` at `tail`,
-/// from its own page alone: a read of the lend `read` at `tail`, as this
-/// computer's person ([`crate::surface::reaches`], [`reach`]), never
-/// signing its reply. The request is made anew too: GET or HEAD, no body,
-/// and of the page's headers only `Accept`, so "reads" is all it can
-/// express; the answer comes back through [`inert`].
+/// from its own page alone: a read of the lend `read` at `tail`, or a send
+/// to it, as this computer's person ([`crate::surface::reaches`], [`reach`]),
+/// never signing its reply. The request is made anew too: its method, and
+/// of the page's headers only `Accept`, so "reads" is all it can express,
+/// or, for a send, JSON of [`SEND_MAX`] at most, typed as [`SEND`] spells
+/// it; what the method and path may be is the lender's door's ([`door::admit`],
+/// CONTRACTS §7). The answer comes back through [`inert`].
 async fn routed(
     at: &Asking,
     (label, app): (Label, Label),
@@ -425,17 +439,31 @@ async fn routed(
     let read =
         read.ok_or_else(|| closed("only an app's own page reads a lend through its origin"))?;
     let reading = matches!(*req.method(), Method::GET | Method::HEAD);
-    tracing::debug!(target: "origin", %label, %read, method = %req.method(), reading, "origin: a carried app reads a lend, and asks nothing else of it");
-    if !reading {
-        return Err(closed("a carried app reads a lend; it never writes to one"));
+    let typed = req.headers().get(header::CONTENT_TYPE).map(essence);
+    let json = (typed.as_deref()).and_then(|t| SEND.into_iter().find(|s| *s == t));
+    tracing::debug!(target: "origin", %label, %read, method = %req.method(), reading, ?typed, "origin: a carried app reads a lend, or sends it JSON, and asks nothing else of it");
+    let only = "a carried app sends a lend JSON of 1 MiB at most, and nothing else";
+    if !reading && typed.is_some() && json.is_none() {
+        return Err(closed(only));
     }
     crate::surface::reaches(at, &label, &read).await?;
-    let (mut parts, _) = req.into_parts();
+    let (mut parts, body) = req.into_parts();
     parts.uri = uri_of(&tail)?;
     let accept = parts.headers.remove(header::ACCEPT);
     parts.headers = accept.map(|a| (header::ACCEPT, a)).into_iter().collect();
+    // Read whole under the cap, a read's none, before anything is dialed.
+    let cap = if reading { 0 } else { SEND_MAX };
+    let body = axum::body::to_bytes(body, cap)
+        .await
+        .map_err(|_| closed(only));
+    tracing::debug!(target: "origin", %label, %read, sent = ?body.as_ref().map(|b| b.len()), "origin: what a carried app sends, refused past the cap, or nothing for a read");
+    let body = body?;
+    if !body.is_empty() {
+        let json = json.ok_or_else(|| closed(only))?;
+        (parts.headers).insert(header::CONTENT_TYPE, HeaderValue::from_static(json));
+    }
     let appending = Appending::Denied(Unconsented::Capability);
-    let asked = Request::from_parts(parts, Body::empty());
+    let asked = Request::from_parts(parts, Body::from(body));
     inert(reach(at, read, label, appending, asked).await?)
 }
 
@@ -486,6 +514,20 @@ pub(crate) async fn reach(
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
     let door: &Door = &at.door;
+    // A carried app's send carries only on its person's own yes to it
+    // sending to this lend (CONTRACTS §6.6), checked here, where every
+    // request a page makes of another lend passes; the lender's door holds
+    // the rest ([`door::admit`]). Another app's write is the door's to refuse.
+    let sending = matches!(app.whose(), Whose::Carried) && app != label;
+    if sending && !matches!(*req.method(), Method::GET | Method::HEAD) {
+        let yes = door::choices::reaching(door, &app)?;
+        let sends = yes.is_some_and(|c| c.sends_to(&label));
+        tracing::debug!(target: "origin", %label, %app, sends, "origin: a carried app's send, carried only when its person's yes names this lend to send to");
+        if !sends {
+            let why = "This app sends here only once you say so: open it from your home page, and tick where it sends.";
+            return Err(LendRefusal::Unasked.say(StatusCode::FORBIDDEN, why));
+        }
+    }
     let Serving::At(contact, lender) = serving(at, &label).await? else {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();

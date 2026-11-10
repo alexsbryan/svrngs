@@ -546,3 +546,90 @@ fn a_program_carried_as_bytes_is_lent_only_so() {
     asked.raw = Some(svrngs_node::lend::Raw::Tcp);
     assert!(lend_of(&asked, |_| true, None, terms).is_ok());
 }
+
+/// **A `sends:` the door can't hold can't be written** (CONTRACTS §6.2): a
+/// send with GET, or with a method no row may name, a path holding an
+/// encoding, an empty, `.` or `..` segment, or a query, a send to a path
+/// its own `keeps:` holds back (whether the group's or what ships), and
+/// `carries:` beside `sends:`: each refused where the file is read, the row
+/// named. A group's file may add a `sends:` to a word svrngs ships, as it
+/// may add `keeps:`. Planted, watched failing: the `sends` arm of `fits`
+/// dropped (the GET and encoded rows fit), and the kept check after the
+/// loop dropped (the send to /admin and to /slots fit).
+#[test]
+fn a_group_s_sends_row_says_only_what_the_door_holds() {
+    let one = "sends one method that writes";
+    for (word, text, named) in [
+        (
+            "notes",
+            "- notes sends: GET /export",
+            "`notes sends: GET /export` sends one method",
+        ),
+        ("notes", "- notes sends: OPTIONS /export", one),
+        ("notes", "- notes sends: POST /v1/%65mbeddings", one),
+        ("notes", "- notes sends: POST /v1//embeddings", one),
+        ("notes", "- notes sends: POST /v1/embeddings/", one),
+        ("notes", "- notes sends: POST /v1/../admin", one),
+        ("notes", "- notes sends: POST /v1/embeddings?x=1", one),
+        ("notes", "- notes sends: POST v1/embeddings", one),
+        (
+            "notes",
+            "- notes keeps: /admin\n- notes sends: POST /admin/users",
+            "`notes sends: POST /admin/users` sends to a path its keeps: holds back",
+        ),
+        (
+            "llama-server",
+            "- llama-server sends: DELETE /slots/0",
+            "sends to a path its keeps: holds back",
+        ),
+        (
+            "notes",
+            "- notes sends: POST /notes\n- notes carries: tcp",
+            "`carries:` lends notes as bytes",
+        ),
+    ] {
+        let said = refused(word, text);
+        assert!(
+            said.as_deref().is_some_and(|s| s.contains(named)),
+            "{text:?}: {said:?}"
+        );
+    }
+    assert_eq!(refused("notes", "- notes sends: PUT /notes/today"), None);
+    assert_eq!(
+        refused("llama-server", "- llama-server sends: POST /v1/rerank"),
+        None,
+        "a group's file adds a send to what ships"
+    );
+}
+
+/// **A lend keeps the sends its terms say, as a page's alone** (CONTRACTS
+/// §2): llama-server's shipped `POST /v1/embeddings`, a group's added row
+/// beside it, kept in the lend's own declaration and read back as rows;
+/// none for a lend as bytes. Whether its lender said yes is its caller's:
+/// the command clears them without one (cli.rs `sends_said`). Planted,
+/// watched failing: `lend_of` keeping no `sends` (the declaration reads
+/// none back).
+#[test]
+fn a_lend_keeps_the_sends_its_terms_say() {
+    let root = tempfile::tempdir().unwrap();
+    let mut asked = share(8080);
+    asked.kind = Some(program("llama-server"));
+    let lend = lend_of(
+        &asked,
+        |_| true,
+        None,
+        "- llama-server sends: POST /v1/rerank",
+    )
+    .unwrap();
+    svrngs_node::lend::declare(root.path(), &lend, None).unwrap();
+    let read = svrngs_node::lend::read(root.path(), &lend.name)
+        .unwrap()
+        .unwrap();
+    let rows: Vec<&str> = read.sends.iter().map(|s| s.as_str()).collect();
+    assert_eq!(rows, ["POST /v1/embeddings", "POST /v1/rerank"]);
+    asked.raw = Some(svrngs_node::lend::Raw::Tcp);
+    assert!(lend_of(&asked, |_| true, None, "")
+        .unwrap()
+        .sends
+        .is_empty());
+}

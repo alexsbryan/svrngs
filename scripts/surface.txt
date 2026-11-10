@@ -12,7 +12,7 @@
 #   label and `<path>` any path of it.
 # limit <name> <number> | <the most, as the guide's table says it>: carried.rs
 #   `WRITES_AN_HOUR`, door/limit.rs `READS_A_MINUTE`, svrngs-core payload.rs
-#   `MAX_PAYLOAD_BYTES`.
+#   `MAX_PAYLOAD_BYTES`, origin.rs `SEND_MAX`.
 # refused <word>: an `x-svrngs-refused` word, door.rs `LendRefusal::as_str`.
 
 route /svrngs/acts
@@ -24,6 +24,7 @@ route /svrngs-lend/<label>/<path>
 limit entry 65536 | 64 KiB
 limit writes 200 | 200 entries at once, then one every 18 seconds
 limit reads 600 | 600 reads at once, then 10 a second
+limit send 1048576 | 1 MiB
 
 refused away
 refused pass

@@ -77,6 +77,11 @@ pub struct Choice {
     /// draws them unticked, and no app is told them.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub left: Vec<Label>,
+    /// Of those ticked, the lends the person ticked apart for it to send to
+    /// (svrn-docs `rings/current/CONTRACTS.md` §6.6): a yes to reading never
+    /// covers a send, and one from before this names none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub sends: Vec<Label>,
 }
 
 impl Choice {
@@ -84,11 +89,16 @@ impl Choice {
     pub(crate) fn names(&self, label: &Label) -> bool {
         self.said == Said::Yes && self.reads.contains(label)
     }
+
+    /// Whether this is a yes that named `label` to read and to send to.
+    pub(crate) fn sends_to(&self, label: &Label) -> bool {
+        self.names(label) && self.sends.contains(label)
+    }
 }
 
-/// What a person said, and the lends their open named: ticked, and shown
-/// but left unticked.
-pub(crate) type Told = (Said, Vec<Label>, Vec<Label>);
+/// What a person said, and the lends their open named: ticked, shown but
+/// left unticked, and ticked to send to.
+pub(crate) type Told = (Said, Vec<Label>, Vec<Label>, Vec<Label>);
 
 type Kept = BTreeMap<PersonKey, BTreeMap<Label, Choice>>;
 type Done = oneshot::Sender<Result<(), String>>;
@@ -234,7 +244,7 @@ pub(super) fn found(door: &Door, raw: &str) -> Result<Lend, Response> {
 
 /// Keep what `person` said of `app` in the file at `path`.
 async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: Told) -> Response {
-    let (said, reads, left) = told;
+    let (said, reads, left, sends) = told;
     let Some(at) = unix_now() else {
         return LendRefusal::fault(
             "this computer's clock cannot be read, so the choice is not kept",
@@ -245,6 +255,7 @@ async fn keep(door: &Door, path: PathBuf, person: PersonKey, app: Label, told: T
         at,
         reads,
         left,
+        sends,
     };
     let one = [(person.clone(), [(app.clone(), choice.clone())].into())].into();
     let (done, kept) = oneshot::channel();
@@ -272,7 +283,7 @@ async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u
         file(door, lend),
         person,
         app,
-        (Said::Stop, Vec::new(), Vec::new()),
+        (Said::Stop, Vec::new(), Vec::new(), Vec::new()),
     )
     .await
 }
@@ -321,7 +332,7 @@ pub(super) async fn choose(
     }
     match serde_json::from_slice::<Saying>(&body) {
         Ok(Saying { app, said }) => {
-            let told = (said, Vec::new(), Vec::new());
+            let told = (said, Vec::new(), Vec::new(), Vec::new());
             Ok(keep(&door, file(&door, &lend), person, app, told).await)
         }
         Err(e) => {
@@ -365,7 +376,7 @@ pub(super) async fn choices_of(
 pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
     match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
         Ok((person, lend)) => {
-            let told = (said, Vec::new(), Vec::new());
+            let told = (said, Vec::new(), Vec::new(), Vec::new());
             keep(door, file(door, &lend), person, app, told).await
         }
         Err(refused) => refused,
@@ -402,7 +413,7 @@ pub(crate) fn reachings(door: &Door) -> Result<BTreeMap<Label, Choice>, Response
 /// lends alone: a lend its line did not show now, its lender not answering or
 /// in a group this row is not, keeps what was said of it.
 pub(crate) async fn own_reaching(door: &Door, app: Label, told: Told) -> Response {
-    let (said, mut reads, mut left) = told;
+    let (said, mut reads, mut left, mut sends) = told;
     let shown: Vec<Label> = reads.iter().chain(&left).cloned().collect();
     // A yes it cannot read beside this is said when it is kept (`load`).
     if let Some(choice) = reaching(door, &app)
@@ -412,9 +423,11 @@ pub(crate) async fn own_reaching(door: &Door, app: Label, told: Told) -> Respons
     {
         reads.extend(choice.reads.into_iter().filter(|l| !shown.contains(l)));
         left.extend(choice.left.into_iter().filter(|l| !shown.contains(l)));
+        sends.extend(choice.sends.into_iter().filter(|l| !shown.contains(l)));
     }
+    let told = (said, reads, left, sends);
     match own(door) {
-        Ok(person) => keep(door, reaching_path(door), person, app, (said, reads, left)).await,
+        Ok(person) => keep(door, reaching_path(door), person, app, told).await,
         Err(refused) => refused,
     }
 }

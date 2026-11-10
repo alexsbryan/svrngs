@@ -28,6 +28,7 @@ fn shelf(upload: Option<u64>) -> Lend {
         reads: Vec::new(),
         sign_in_with_svrngs: None,
         asks: None,
+        sends: Vec::new(),
     }
 }
 

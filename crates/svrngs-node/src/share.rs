@@ -37,6 +37,7 @@ use std::num::NonZeroU16;
 use std::path::Path;
 use std::time::Duration;
 
+use crate::lend::SendRow;
 use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
@@ -62,6 +63,9 @@ use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath
 ///   paths and says so): why, in the comment above it.
 /// - `carries: tcp` or `udp`: lent as bytes, not as a page; `share` refuses
 ///   to lend it otherwise.
+/// - `sends: <method> <path>`: where an app its person opens on their own
+///   computer may send to it ([`SendRow`]), kept in the lend only on its
+///   lender's yes ([`sends_of`]; CONTRACTS §2, "The lend is the yes").
 ///
 /// A group's own `programs/<word>.txt`, in the same form, is read after
 /// these when `share` lends under its word ([`fits`], [`says`]; CONTRACTS §2).
@@ -129,7 +133,7 @@ fn row(l: &str) -> Option<(At, Program, &str)> {
 
 /// The clauses a program's file may hold (CONTRACTS §2), the one list: a
 /// set closed, so a term svrngs can't enforce can't be written ([`fits`]).
-const CLAUSES: [&str; 5] = ["keeps", "readers", "carries", "accounts", "header"];
+const CLAUSES: [&str; 6] = ["keeps", "readers", "carries", "accounts", "header", "sends"];
 
 /// A group's own `programs/<word>.txt` that [`fits`], empty for none: kept
 /// as long as the terms svrngs ships, by the one `share` that reads it.
@@ -143,11 +147,12 @@ pub type Key<'a> = Option<(&'a str, &'a str, &'a str)>;
 /// `word` (CONTRACTS §2, §6.2, §6.3), or what in it does not, in words its
 /// writer can act on: each line a row of `word`, its clause one of
 /// [`CLAUSES`] and said the way its reader reads it. For a word svrngs ships
-/// terms for, `keeps:` alone, so a group's file only adds to what ships and
-/// no member opens `/slots` by writing a shorter file. A `readers:` holds
-/// the `{}` its credential goes in, its sign-in a path on the lender's own
-/// service ([`readers_in`]). `carries:` is never beside `keeps:` or
-/// `readers:`: a lend of bytes has no door to hold them to.
+/// terms for, `keeps:` and `sends:` alone, so a group's file only adds to
+/// what ships and no member opens `/slots` by writing a shorter file. A
+/// `readers:` holds the `{}` its credential goes in, its sign-in a path on
+/// the lender's own service ([`readers_in`]). A `sends:` is one [`SendRow`],
+/// to a path no `keeps:` holds back. `carries:` is never beside `keeps:`,
+/// `readers:` or `sends:`: a lend of bytes has no door to hold them to.
 pub fn fits(word: &Program, text: &str) -> Result<(), String> {
     let shipped = rows().any(|(_, k, _)| k == *word);
     let mut said = Vec::new();
@@ -158,12 +163,13 @@ pub fn fits(word: &Program, text: &str) -> Result<(), String> {
         let what = what.trim();
         let why = match clause {
             _ if kind != *word => "is another program's",
-            c if !CLAUSES.contains(&c) => "is no term svrngs holds anyone to: those are keeps:, readers:, carries:, accounts: and header:",
-            c if shipped && c != "keeps" => "changes the terms svrngs ships for it: a group's file may only add keeps: paths",
+            c if !CLAUSES.contains(&c) => "is no term svrngs holds anyone to: those are keeps:, readers:, sends:, carries:, accounts: and header:",
+            c if shipped && !["keeps", "sends"].contains(&c) => "changes the terms svrngs ships for it: a group's file may only add keeps: paths and sends: rows",
             _ if what.is_empty() => "says nothing after its colon",
             "keeps" if what.split_whitespace().any(|p| RefusedPath::parse(p).is_err()) => "keeps something that is not a path: each starts with /",
             "readers" if key_in(what).is_none() && readers_in(what).is_none() => "is neither `key <header>` nor a sign-in on its own service: a path starting with /, and {} where its token goes",
             "carries" if !matches!(what, "tcp" | "udp") => "carries tcp or udp, nothing else",
+            "sends" if SendRow::parse(what).is_err() => "sends one method that writes, POST, PUT, PATCH or DELETE, to one exact path: `sends: POST /v1/embeddings`",
             _ => {
                 said.push(clause);
                 continue;
@@ -172,9 +178,20 @@ pub fn fits(word: &Program, text: &str) -> Result<(), String> {
         tracing::debug!(target: "share", %word, row = how, why, "share: a group's programs file refused, its row named");
         return Err(format!("`{kind} {how}` {why}"));
     }
-    let bytes = said.contains(&"carries") && said.iter().any(|c| ["keeps", "readers"].contains(c));
-    tracing::debug!(target: "share", %word, ?said, bytes, "share: a group's programs file, each row in the closed set, or carries: beside a door's term");
-    let mixed = format!("`carries:` lends {word} as bytes, with no door for keeps: or readers:");
+    let door = ["keeps", "readers", "sends"];
+    let bytes = said.contains(&"carries") && said.iter().any(|c| door.contains(c));
+    let kept = kept_of(word, text);
+    let hidden = sends_of(word, text)
+        .into_iter()
+        .find(|s| kept.iter().any(|k| k.covers(s.path())));
+    tracing::debug!(target: "share", %word, ?said, bytes, ?hidden, "share: a group's programs file, each row in the closed set, or carries: beside a door's term, or a send to a path it keeps");
+    if let Some(row) = hidden {
+        return Err(format!(
+            "`{word} sends: {row}` sends to a path its keeps: holds back from everyone"
+        ));
+    }
+    let mixed =
+        format!("`carries:` lends {word} as bytes, with no door for keeps:, readers: or sends:");
     (!bytes).then_some(()).ok_or(mixed)
 }
 
@@ -276,6 +293,15 @@ pub fn kept_of(kind: &Program, terms: &str) -> Vec<RefusedPath> {
     let kept: Vec<RefusedPath> = paths.map(parsed).collect();
     tracing::debug!(target: "share", kind = %kind, kept = kept.len(), group = !terms.is_empty(), "share: the paths the files keep back of the kind");
     kept
+}
+
+/// The `sends:` rows [`PROGRAMS`] and `terms` ([`says`]) say for `kind`:
+/// where an app may send to a lend of it once its lender says yes, which
+/// [`lend_of`] keeps and `svrngs share` asks at a terminal.
+pub fn sends_of(kind: &Program, terms: &str) -> Vec<SendRow> {
+    says(kind, "sends", terms)
+        .filter_map(|s| SendRow::parse(s).ok())
+        .collect()
 }
 
 /// How a service of `kind` signs each person in, if [`PROGRAMS`] or
@@ -500,7 +526,9 @@ pub fn kind_of(share: &Share, well_known: Option<Program>) -> Option<Program> {
 /// `share` says so); the paths refused, those given and those the table
 /// and `terms` keep back of the kind, copied into the lend, so its door
 /// reads only its own lend's file and a file changed after changes nothing
-/// until it is lent again (CONTRACTS §6.1).
+/// until it is lent again (CONTRACTS §6.1); and where its terms let apps
+/// send to it ([`sends_of`]), a page's alone, which its caller keeps only
+/// on its lender's yes (CONTRACTS §2).
 pub fn lend_of(
     share: &Share,
     listens: impl Fn(NonZeroU16) -> bool,
@@ -540,8 +568,10 @@ pub fn lend_of(
             refused.push(path);
         }
     }
+    let sends = sends_of(&kind, terms).into_iter().filter(|_| raw.is_none());
+    let sends: Vec<SendRow> = sends.collect();
     tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit, refused = refused.len(),
-        named = share.name.is_some(), kind_given = share.kind.is_some(), limit_given = share.limit.is_some(),
+        named = share.name.is_some(), kind_given = share.kind.is_some(), limit_given = share.limit.is_some(), sends = sends.len(),
         "share: the lend decided");
     Ok(Lend {
         name,
@@ -554,5 +584,6 @@ pub fn lend_of(
         reads: share.reads.clone(),
         sign_in_with_svrngs: None,
         asks: share.asks.clone(),
+        sends,
     })
 }
