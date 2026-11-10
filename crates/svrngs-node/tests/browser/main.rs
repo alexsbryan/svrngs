@@ -37,7 +37,12 @@ mod navigations;
 mod opens;
 // What acts as you, and its Stop (capability-what-acts).
 mod acts;
+// A carried app's send, on the person's tick (row 13).
+mod sends;
+// A lent service keeping what it is sent, tests/carried.rs's too.
 mod grouped;
+#[path = "../common/keeping.rs"]
+mod keeping;
 // A way to a relay a test can cut, relay_tiers.rs's too.
 #[path = "../common/cuttable.rs"]
 mod cuttable;
