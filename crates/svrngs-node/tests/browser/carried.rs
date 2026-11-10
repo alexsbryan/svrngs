@@ -310,12 +310,14 @@ async fn the_same_page_writes_through_the_next_computer_once_the_first_stops(eng
 in_chromium!(
     /// **A phone's line past its app's budget is let go, and its chain
     /// rewound** (EXTENSION_POINT §7, G1; web/lend.js `carried`): bo's
-    /// computer already holds 200 of bo's Money entries from this hour, and
-    /// both of the phone's writes are refused `limit`, 429. The second is
-    /// signed where the first left off, as line 0 with one to carry, so a
-    /// refused line neither waits for a next write nor leaves a hole in
-    /// the chain. Planted, watched failing: the rewind taken out of
-    /// `carried`, and the second is signed as line 1, two to carry.
+    /// computer already holds 200 of bo's Money entries, stamped ahead so
+    /// they stay this hour's however slow the run, and both of the phone's
+    /// writes are refused `limit`, 429. The second is signed where the
+    /// first left off, as line 0 with one to carry, so a refused line
+    /// neither waits for a next write nor leaves a hole in the chain.
+    /// Planted, watched failing: the rewind taken out of `carried`, and the
+    /// second is signed as line 1, two to carry; the entries stamped now and
+    /// a 19 s wait before the phone opens, and its first write is taken.
     a_phone_s_line_past_the_budget_is_let_go_and_its_chain_rewound
 );
 async fn a_phone_s_line_past_the_budget_is_let_go_and_its_chain_rewound(engine: Engine) {
@@ -332,10 +334,15 @@ async fn a_phone_s_line_past_the_budget_is_let_go_and_its_chain_rewound(engine: 
         &[("index.html", "<!doctype html><title>Money</title>".into())],
     );
     carried_at(&ada, "Money").await;
-    let now = std::time::SystemTime::now()
+    // Stamped an hour ahead, as a fast clock would: `spent` (carried.rs)
+    // reads a stamp ahead of the clock as now, so the budget is still spent
+    // however long the phone takes to open. Stamped now, it refilled one
+    // entry 18 s later, and a slow run's first write was taken.
+    let ahead = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
-        .as_secs() as i64;
+        .as_secs() as i64
+        + 3600;
     let mut prev = None;
     let mut lines = Vec::new();
     for n in 0..200u64 {
@@ -343,7 +350,7 @@ async fn a_phone_s_line_past_the_budget_is_let_go_and_its_chain_rewound(engine: 
             json!({ "op": "record", "payload": { "kind": "Money/expense", "n": n } }),
         )
         .unwrap();
-        let line = svrngs_core::sign_act(&bo, NS, now, n, prev.take(), act, None, None, None);
+        let line = svrngs_core::sign_act(&bo, NS, ahead, n, prev.take(), act, None, None, None);
         prev = Some(line.id.clone());
         lines.push(line);
     }
