@@ -480,11 +480,8 @@ async fn said_of(at: &Asking, app: &Label) -> Result<Option<Option<choices::Choi
     let serving = crate::origin::serving(at, app).await?;
     let own =
         matches!(app.whose(), Whose::Computer(_)) && matches!(serving, crate::origin::Serving::Own);
-    Ok(if own {
-        None
-    } else {
-        Some(choices::reaching(&at.door, app)?)
-    })
+    let reaching = (!own).then(|| choices::reaching(&at.door, app));
+    reaching.transpose()
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`
