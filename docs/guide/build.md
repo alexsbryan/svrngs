@@ -191,8 +191,10 @@ your app is left off the list until it's fixed.
   `voided` is set whoever made the correction; Money and Events count a
   correction only from the entry's own author (`voids` in `expenses.js`).
 - **New versions wait for each person's yes.** Once brought, a change to
-  the files runs for nobody until they press **Open the new version**.
-  Test on a copy before you change the one your group uses.
+  the files runs for nobody else until they press **Open the new version**.
+  A change you made yourself runs for you at once, so you can edit and
+  reload; once someone else's change is in it too, you're asked like
+  everyone. Test on a copy before you change the one your group uses.
 - **Check what the record will accept before you send it**, as Money and
   Events do: each entry stays in the group's record for good, and a
   correction counts only from the person who wrote the entry.

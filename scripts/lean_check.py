@@ -607,10 +607,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) G3, `svrngs check <folder>` and the card's words from one
 # function, folder/check.rs (+119, js -1), inside the operator's ceiling for
 # rows 10 and 12: . to 21,110, js to 8,491.
+# (2026-11-09) G5, an author's own change runs for them at once, carried.rs
+# `runs_as` (+15), inside the operator's ceiling for rows 10 and 12: . to
+# 21,125.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 21110,
+    ".": 21125,
 
     "js": 8491,
 

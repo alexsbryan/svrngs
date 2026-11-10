@@ -701,6 +701,93 @@ async fn a_carried_app_runs_as_it_was_brought_after_a_member_changes_it() {
     }
 }
 
+/// What `node`, of the seed `seed`, serves its own person as Money's
+/// script in `group`, and whether it lists Money as changed for them.
+async fn served(node: &Node, group: &str, seed: u8) -> (String, bool) {
+    let listed = lends(node, group).await;
+    let own = of_kind(&listed, "Money")
+        .into_iter()
+        .find(|l| l["key"] == actor_of(&signing(seed)));
+    let origin = own.expect("its own copy")["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let js = at(node, &origin, "GET", "/app.js", None)
+        .await
+        .text()
+        .await
+        .unwrap();
+    let changed = listed["changed"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|c| c["app"] == "Money");
+    (js, changed)
+}
+
+/// **An author's own change runs for them at once, and anyone else's still
+/// waits on their yes** (svrn-docs `rings/current/EXTENSION_POINT.md` §7,
+/// G5: an agent editing and retrying can't stop for a click each time).
+/// Ana brings Money; Ben replaces its `app.js`. Ben's computer serves Ben
+/// his own `app.js`, and lists no new version for him to open, while Ana's
+/// still serves her Money as brought and lists Ben's change. Then Cy changes
+/// its `index.html`: Ben's own `app.js` no longer runs for him alone, since
+/// a change of Cy's would run with it, so he is served Money as brought and
+/// asked again. Planted, watched failing: `runs_as` as `Runs::of` alone, and
+/// Ben is served Money as Ana brought it.
+#[tokio::test]
+async fn an_author_s_own_change_runs_for_them_and_anyone_else_s_waits_on_their_yes() {
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 9, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+    let mut folders = Vec::new();
+    for (node, root) in [ana, ben, cy].into_iter().zip(&roots) {
+        folders.push(synced_in(node, root.path(), &group).await);
+    }
+    carry(&folders[0], "Money");
+    let read = |i: usize, f: &str| std::fs::read_to_string(folders[i].join("apps/Money").join(f));
+    let brought = "// Money's script\n";
+    let all = [ana, ben, cy];
+    assert!(
+        until(&all, || (0..3)
+            .all(|i| read(i, "app.js").is_ok_and(|s| s == brought)))
+        .await
+    );
+    let bens = "// Ben's script, his own change\n";
+    std::fs::write(folders[1].join("apps/Money/app.js"), bens).unwrap();
+    assert!(
+        until(&all, || [0, 2]
+            .iter()
+            .all(|&i| read(i, "app.js").is_ok_and(|s| s == bens)))
+        .await
+    );
+    assert_eq!(
+        served(ben, &group, 2).await,
+        (bens.to_string(), false),
+        "Ben runs his own change"
+    );
+    assert_eq!(
+        served(ana, &group, 1).await,
+        (brought.to_string(), true),
+        "Ana runs Money as brought"
+    );
+    let cys = "<!doctype html><title>Cy's Money</title><script type=module src=app.js></script>";
+    std::fs::write(folders[2].join("apps/Money/index.html"), cys).unwrap();
+    assert!(until(&all, || read(1, "index.html").is_ok_and(|s| s == cys)).await);
+    assert_eq!(
+        served(ben, &group, 2).await,
+        (brought.to_string(), true),
+        "Cy's change waits on Ben's yes"
+    );
+    for node in [ana, ben, cy] {
+        node.endpoint().close().await;
+    }
+}
+
 /// **A computer that never held an app as it was brought fetches it**
 /// (canon-pin (b)): Ana brings Money and Ben changes its script before Cy
 /// keeps a folder of the group, so Cy's folder and store take Ben's

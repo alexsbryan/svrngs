@@ -58,7 +58,7 @@ use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unl
 use crate::iroh::Dialer;
 use crate::lend::{AppName, Lend, Program, Source};
 use crate::node::Asking;
-use crate::register::{Member, Standing};
+use crate::register::Standing;
 use crate::surface::AppRoute;
 
 /// Where a carried app's page asks its own acts, and writes one, at its
@@ -119,6 +119,10 @@ pub(crate) type Opened<'a> = (&'a str, &'a str, AppRoute);
 
 /// A carried app's answer, or why the door gives its own.
 type Given = Result<Response, Withheld>;
+
+/// Who asks: the people standing in the group, and the key asking among
+/// them.
+type Who<'a> = (&'a People, &'a str);
 
 /// A file of a carried app, none where its files have none, or why not.
 type Held = Result<Option<axum::body::Bytes>, Withheld>;
@@ -232,6 +236,25 @@ fn now(placed: &[Placed], kind: &str) -> Files {
     placed.iter().filter(under).map(file).collect()
 }
 
+/// The files of the app `app` that run as `asker`, the person of `people`
+/// whose first key it is: those they last said yes to, else those it was
+/// brought with ([`svrngs_core::Runs::of`]); or its files now, when every
+/// file that differs from those is one a device of theirs placed, and none
+/// is gone (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G5). So an
+/// author's own change runs for them at once, as an agent editing and
+/// retrying needs, and anyone else's change still runs for them only after
+/// their yes: rule 2 is untouched, and so is everyone else's yes.
+fn runs_as(read: &super::Layout, (people, key): Who, app: &str) -> Option<Files> {
+    let first = people.get(key)?.person_key.as_str();
+    let (said, now) = (read.runs.of(app, first)?, now(&read.placed, app));
+    let mine = |k: &String| people.get(k).is_some_and(|m| m.person_key == first);
+    let new = |p: &&Placed| now.get(&p.path) == Some(&p.hash) && said.get(&p.path) != Some(&p.hash);
+    let gone = said.keys().any(|path| !now.contains_key(path));
+    let own = !gone && read.placed.iter().filter(new).all(|p| mine(&p.entry.key));
+    tracing::debug!(target: "folder", app, first, own, "carried: the app's files now run as the person when every change since their yes is their own, else their yes");
+    Some(if own { now } else { said.clone() })
+}
+
 /// The kind of the app whose page `placed` is, `apps/<kind>/index.html`;
 /// none for any other file, or one beside it as a conflict.
 fn app_of(placed: &Placed) -> Option<&str> {
@@ -270,9 +293,14 @@ impl Folders {
             return Ok(lend.reads.clone());
         };
         let standing = (self.host.rail.standing(group)).map_err(|e| traced(group, UNREAD, &e))?;
-        let me = standing.member(&self.host.actor).ok_or(NOT_IN)?;
+        standing.member(&self.host.actor).ok_or(NOT_IN)?;
+        let Standing::Members(people) = &standing else {
+            return Err(NOT_IN);
+        };
         let path = format!("apps/{app}/{READS}");
-        let text = self.runs_at(group, app, &path, &me.person_key).await?;
+        let text = self
+            .runs_at(group, app, &path, (people, &self.host.actor))
+            .await?;
         let words = String::from_utf8_lossy(text.as_deref().unwrap_or_default());
         let kinds = (words.split_whitespace())
             .map(Program::parse)
@@ -293,8 +321,7 @@ impl Folders {
             let Ok(read) = self.layout(group).map_err(|e| traced(group, UNREAD, &e)) else {
                 return Value::Null;
             };
-            let first = people[asker].person_key.as_str();
-            let new = |k: &&str| read.runs.of(k, first) != Some(&now(&read.placed, k));
+            let new = |k: &&str| runs_as(&read, (people, asker), k) != Some(now(&read.placed, k));
             for kind in read.placed.iter().filter_map(app_of).filter(new) {
                 let (key, by, at) = &read.runs.changed[kind];
                 out.push(json!({ "group": group, "app": kind, "by": by, "by_key": key, "at": at }));
@@ -332,7 +359,7 @@ impl Folders {
         let answered = match self.host.rail.standing(group) {
             Ok(Standing::Members(people)) if people.contains_key(key) => match route {
                 AppRoute::Acts => self.acts((app, group), (&people, key), req).await,
-                _ => self.file(group, app, path, &people[key]).await,
+                _ => self.file(group, app, path, (&people, key)).await,
             },
             Ok(_) => Err(NOT_ITS_GROUP),
             Err(e) => Err(traced(group, UNREAD, &e)),
@@ -347,22 +374,22 @@ impl Folders {
 
     /// The file at `path` of the app `kind` carried in `group`, `index.html`
     /// for a directory's, as the app runs as `asker`'s person
-    /// ([`svrngs_core::Runs::of`]), from this computer's store, else
-    /// fetched from a computer that stands in the group.
-    async fn file(&self, group: &str, app: &AppName, path: &str, asker: &Member) -> Given {
+    /// ([`runs_as`]), from this computer's store, else fetched from a
+    /// computer that stands in the group.
+    async fn file(&self, group: &str, app: &AppName, path: &str, asker: Who<'_>) -> Given {
         let path = format!("apps/{app}{path}");
         let path = (path.strip_suffix('/')).map_or(path.clone(), |dir| format!("{dir}/index.html"));
-        let held = self.runs_at(group, app, &path, &asker.person_key).await?;
+        let held = self.runs_at(group, app, &path, asker).await?;
         let kind = content_type(Path::new(&path));
         Ok(([(header::CONTENT_TYPE, kind)], held.ok_or(NOT_HERE)?).into_response())
     }
 
     /// The bytes at `path` of the app `kind` carried in `group` as it runs
-    /// as the person whose first key is `first`; none when those files have
-    /// nothing there.
-    async fn runs_at(&self, group: &str, app: &AppName, path: &str, first: &str) -> Held {
+    /// as `asker`, the person of `people` whose first key it is ([`runs_as`]);
+    /// none when those files have nothing there.
+    async fn runs_at(&self, group: &str, app: &AppName, path: &str, asker: Who<'_>) -> Held {
         let read = self.layout(group).map_err(|e| traced(group, UNREAD, &e))?;
-        let files = read.runs.of(app.as_str(), first);
+        let files = runs_as(&read, asker, app.as_str());
         let at = (SyncPath::parse(path).ok()).and_then(|p| files?.get(&p).copied());
         let Some(at) = at else { return Ok(None) };
         let hash = Hash::from(*at.as_bytes());
