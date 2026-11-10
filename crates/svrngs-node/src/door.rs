@@ -1836,10 +1836,7 @@ fn pages(door: &Door, device: &DeviceKey, lend: &Lend) -> Option<HeaderValue> {
 /// the service and of its answer ([`SHARE_HEADER`]).
 fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
     if let Some(share) = share {
-        headers.insert(
-            HeaderName::from_static(SHARE_HEADER),
-            HeaderValue::from(share),
-        );
+        headers.insert(SHARE_HEADER, HeaderValue::from(share));
     }
 }
 
