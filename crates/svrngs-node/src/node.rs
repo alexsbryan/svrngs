@@ -81,8 +81,11 @@ use crate::ring_sync::{
 use crate::version::{SCOPE_HEADER, VERSION};
 use crate::{actor_of, Person, RingRail, SigningKey};
 
-/// Groups held here, each by its namespace with who stands in it.
-pub(crate) type Groups = Vec<(String, BTreeMap<String, Member>)>;
+/// A group held here, by its namespace with who stands in it.
+pub(crate) type Group = (String, BTreeMap<String, Member>);
+
+/// Groups held here, each a [`Group`].
+pub(crate) type Groups = Vec<Group>;
 
 /// A lend another computer of this one's groups lends, as it answered.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -695,10 +698,7 @@ impl Host {
     /// never a browser's (u4-1) — but this node's, once each, by its
     /// actor, with the person the first group naming it names and the
     /// relay `groups` name for it ([`relay_of`]).
-    fn standing_peers(
-        &self,
-        groups: &[(String, BTreeMap<String, Member>)],
-    ) -> Vec<(String, Named, Contact)> {
+    fn standing_peers(&self, groups: &[Group]) -> Vec<(String, Named, Contact)> {
         let mut keys: BTreeMap<String, (Named, Contact)> = BTreeMap::new();
         let relay = |a: &str| relay_of(groups, a);
         for (namespace, standing) in groups {
@@ -725,11 +725,7 @@ impl Host {
     /// `asker`'s, which knows its own, each computer asked now and all at
     /// once, each for at most [`ANSWER_WITHIN`], and where this computer
     /// reaches each lend. Nothing is kept between asks.
-    pub(crate) async fn lends_in(
-        &self,
-        groups: &[(String, BTreeMap<String, Member>)],
-        asker: Option<&str>,
-    ) -> Lends {
+    pub(crate) async fn lends_in(&self, groups: &[Group], asker: Option<&str>) -> Lends {
         let mut peers = self.standing_peers(groups);
         peers.retain(|(actor, _, _)| Some(actor.as_str()) != asker);
         let mut asks = Vec::with_capacity(peers.len());
@@ -785,10 +781,7 @@ impl Host {
 /// `key` is reached never stands for one that has. Two that name different
 /// relays are not told apart by age; `say_relay` writes in every group, so
 /// they agree once each has synced.
-pub(crate) fn relay_of<'a>(
-    groups: &'a [(String, BTreeMap<String, Member>)],
-    key: &str,
-) -> Option<&'a Url> {
+pub(crate) fn relay_of<'a>(groups: &'a [Group], key: &str) -> Option<&'a Url> {
     let named = (groups.iter()).find_map(|(ns, m)| Some((ns, m.get(key)?.relay.as_ref()?)));
     tracing::debug!(target: "node", key, group = named.map(|(ns, _)| ns.as_str()), "node: the relay a key is dialled through, from the first group naming one");
     named.map(|(_, url)| url)
@@ -1031,7 +1024,7 @@ impl Asking {
     /// be read.
     pub(crate) async fn lent(
         &self,
-        groups: &[(String, BTreeMap<String, Member>)],
+        groups: &[Group],
         own: &Person,
         asker: Option<&str>,
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
