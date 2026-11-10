@@ -9,3 +9,8 @@
 # /config/users and /config/api-keys, and its English strings "Add User" and
 # "Add API Key".
 13378 audiobookshelf accounts: Settings, Users, Add User for each person. For apps, Settings, API Keys, Add API Key
+# The key goes in Authorization as a Bearer token. Run against that image on
+# the Fedora box under Podman, 2026-11-09: GET /api/me answered 200 with
+# Authorization: Bearer <an API key made at POST /api/api-keys>, 401 with no
+# header, 401 with x-api-key: <that key>.
+13378 audiobookshelf readers: key authorization Bearer {}

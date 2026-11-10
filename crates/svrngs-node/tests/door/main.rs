@@ -1404,6 +1404,51 @@ async fn an_app_reads_a_lend_bare_and_never_writes_or_upgrades_it() {
     pair.close().await;
 }
 
+/// **A readers' key goes in its own header, on another app's read alone**
+/// (`readers: key x-api-key`, CONTRACTS §4): `admit` is what adds it, the
+/// file's name the header; the door strips a client's own `x-api-key` first
+/// (`rewrite_headers`), so a page can't send its own in its place. The
+/// lend's own page, and a member with no pass, go without it. Planted:
+/// `Admit::Readers` answering the lend's secret dropped the key.
+#[tokio::test]
+async fn a_readers_key_goes_in_its_own_header_only_on_another_app_s_read() {
+    use svrngs_core::alpn::Alpn;
+    use svrngs_core::pass::{Label, Pass};
+
+    const KEY: &str = "immich-api-key-for-apps";
+    let (pair, heads) = lending_heads().await;
+    let dir = lend::readers_dir(pair.dir.path(), &LendName::parse("shelf").unwrap());
+    declared::write_declared_in(&dir, "x-api-key", KEY).unwrap();
+    let a = *pair.a.endpoint().id().as_bytes();
+    let (shelf, picks) = (Label::of(&a, "shelf"), Label::of(&a, "picks"));
+    let holder = signing(9);
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let asked_by = |app: &Label, method: &str| {
+        let pass = Pass::sign(
+            &signing(2),
+            &actor_of(&holder),
+            (app.clone(), vec![shelf.clone()]),
+            unix_now() + 3600,
+        );
+        format!("{method} /lend/{shelf}/whoami HTTP/1.1\r\nHost: local\r\nx-svrngs-pass: {}\r\nx-api-key: the-page-s-own\r\nContent-Length: 0\r\nConnection: close\r\n\r\n", pass.encode())
+    };
+    let reply = raw_to(bridge.local_addr(), asked_by(&picks, "GET")).await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let told = last(&heads);
+    assert_eq!(header_values(&told, "x-api-key"), vec![KEY], "{told}");
+    assert!(
+        !told.contains("the-page-s-own"),
+        "a client's own x-api-key never reaches the service: {told}"
+    );
+    let reply = raw_to(bridge.local_addr(), asked_by(&shelf, "GET")).await;
+    assert_eq!(reply.status, 200, "{}", reply.text);
+    let told = last(&heads);
+    assert!(
+        !told.contains(KEY),
+        "the lend's own page goes without the readers' key: {told}"
+    );
+}
+
 /// The readers' secret (MOVIE_NIGHT_FOR_TEN, "The spike"; the rule, svrn-docs
 /// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §2): another app's GET or
 /// HEAD of a lend goes as the account its lender keeps for readers, in place

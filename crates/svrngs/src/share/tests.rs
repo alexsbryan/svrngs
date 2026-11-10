@@ -73,7 +73,10 @@ fn the_well_known_table_reads_whole() {
         let kind = Program::parse(rest.split_whitespace().next().unwrap()).expect(row);
         assert!(super::rows().any(|(_, k, _)| k == kind), "{row}");
         let _ = kept_of(&kind);
-        if rest.contains(" readers: ") {
+        if rest.contains(" readers: key ") {
+            let (header, sent) = svrngs_node::share::key_of(&kind).expect(row);
+            assert!(key_header_fits(header) && sent.contains("{}"), "{row}");
+        } else if rest.contains(" readers: ") {
             let how = readers_of(&kind).expect(row);
             assert!(
                 how.path.starts_with('/') && how.sent.contains("{}"),
@@ -300,4 +303,43 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
     );
     assert_eq!(lend.name.as_str(), "llama-server");
     assert!(kept_of(&Program::parse("jellyfin").unwrap()).is_empty());
+}
+
+/// **A key row may name no header the door keeps** (CONTRACTS §4,
+/// `readers: key <header>`): a key can go in `x-api-key` or `authorization`,
+/// and a row naming a person's cookie, the address, the length, anything
+/// the door says itself (`x-svrngs-`), or a hop-by-hop header is refused
+/// where the row is read, by [`key_header_fits`], so `key_of` answers none and the
+/// door never sends it. Plants, each watched failing: the cookie arm of
+/// `matches!` dropped; the door check dropped; the name check dropped.
+#[test]
+fn a_key_row_may_name_only_a_header_of_the_service_s_own() {
+    for ok in ["x-api-key", "authorization", "X-Api-Key"] {
+        assert!(key_header_fits(ok), "{ok}");
+    }
+    for no in [
+        "cookie",
+        "COOKIE",
+        "host",
+        "content-length",
+        "x-svrngs-user",
+        "X-Svrngs-Anything",
+        "connection",
+        "keep-alive",
+        "proxy-authorization",
+        "te",
+        "trailer",
+        "transfer-encoding",
+        "upgrade",
+        "x api key",
+        "a/b",
+        "",
+    ] {
+        assert!(!key_header_fits(no), "a key row naming {no:?} is refused");
+    }
+    let immich = Program::parse("immich").unwrap();
+    assert_eq!(key_of(&immich), Some(("x-api-key", "{}")));
+    let books = Program::parse("audiobookshelf").unwrap();
+    assert_eq!(key_of(&books), Some(("authorization", "Bearer {}")));
+    assert_eq!(key_of(&Program::parse("jellyfin").unwrap()), None);
 }

@@ -190,8 +190,9 @@ svrngs — keep what your group shares on your own computers.
       Connect sign each person in as themselves, with nothing typed: it
       creates credentials, not the app's configuration. Follow the app's
       OpenID Connect setup guide; the secret stays on this computer.
-      --readers asks for an account you made in it for your groups: apps
-      that read it see what that account sees, and only look.
+      --readers asks for an account you made in it for your groups, or a
+      key you made in it: apps that read it see what that account or key
+      sees, and only look.
       --udp or --tcp lends a port that speaks UDP or TCP as it is, not
       as a page: it takes a --program, and --name and --limit as any lend
       does.
@@ -1581,6 +1582,13 @@ async fn share_readers(root: &Path, lend: &Lend, port: NonZeroU16) -> Result<(),
     let name = &lend.name;
     let ask = |words: String, shown| prompt_secret(name, &words, shown);
     let refused = |why: String| Refusal::Readers(name.clone(), why);
+    if share::key_of(&lend.kind).is_some() {
+        let key = ask(format!("Paste the key you made in {name}: "), false)?;
+        let key = key.ok_or_else(|| refused("nothing was given".into()))?;
+        share::keep_key(root, name, &lend.kind, &key).map_err(|e| refused(e.to_string()))?;
+        eprintln!("Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
+        return Ok(());
+    }
     let line = match share::readers_of(&lend.kind) {
         Some(how) => {
             let words =

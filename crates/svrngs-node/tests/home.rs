@@ -433,6 +433,123 @@ fn sign_in_stand_in(listener: std::net::TcpListener) {
     });
 }
 
+/// **A readers' key is pasted on the home page, kept, and never told** (a
+/// lender with no terminal; `readers: key x-api-key`, CONTRACTS §4): `/lent`
+/// says the program takes a key, and how to make one (`signs.accounts`);
+/// `POST /lent` `{"key": ...}` keeps the pasted key as the file `x-api-key`,
+/// which no answer reads back; a blank paste is told to paste one, and
+/// keeps and deletes nothing; a key for a program whose file names none is refused. Planted,
+/// watched failing: the change kept the key under `authorization`.
+#[tokio::test]
+async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    sam.transport()
+        .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
+    tokio::time::timeout(Duration::from_secs(30), sam.round())
+        .await
+        .expect("Sam's computer hears it lets Sam in");
+    let at = lend::lends_dir(sam_dir.path());
+    std::fs::create_dir_all(&at).unwrap();
+    for (name, kind) in [("photos", "immich"), ("notes", "notes")] {
+        let body = serde_json::json!({ "port": 2283, "kind": kind, "groups": [NS] });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let (browser, home) = (
+        &Browser::of(&sam),
+        format!("svrngs.localhost:{}", sam.api_addr().port()),
+    );
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let kept = sam_dir
+        .path()
+        .join("secrets/lends/photos/readers/x-api-key");
+    let paste = |lend: &str, key: &str| format!(r#"{{"lend":"{lend}","to":{{"key":"{key}"}}}}"#);
+
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(listed["readers"]["photos"]["key"], true, "{listed:#}");
+    assert_eq!(listed["readers"]["photos"]["kept"], false, "{listed:#}");
+    assert!(
+        listed["readers"]["photos"]["signs"]["accounts"]
+            .as_str()
+            .is_some_and(|how| how.contains("New API Key")),
+        "the steps to make the key, from the table: {listed:#}"
+    );
+    assert_eq!(
+        listed["readers"]["notes"],
+        serde_json::Value::Null,
+        "{listed:#}"
+    );
+
+    let blank = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &paste("photos", "  "),
+    )
+    .await;
+    assert_eq!(blank.status, 403, "{}", blank.body);
+    assert_eq!(
+        blank.json()["error"],
+        "Paste the key first.",
+        "{}",
+        blank.body
+    );
+    assert!(!kept.exists(), "a blank paste keeps nothing");
+    let none = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &paste("notes", "k-1"),
+    )
+    .await;
+    assert_eq!(none.status, 404, "{}", none.body);
+    assert!(
+        !sam_dir
+            .path()
+            .join("secrets/lends/notes/readers/x-api-key")
+            .exists(),
+        "a program with no key row keeps none"
+    );
+
+    let right = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &paste("photos", "k-1"),
+    )
+    .await;
+    assert_eq!(right.status, 204, "{}", right.body);
+    assert_eq!(std::fs::read_to_string(&kept).unwrap(), "k-1");
+    let again = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &paste("photos", "  "),
+    )
+    .await;
+    assert_eq!(again.status, 403, "{}", again.body);
+    assert_eq!(
+        std::fs::read_to_string(&kept).unwrap(),
+        "k-1",
+        "a blank paste after one deletes nothing"
+    );
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(listed["readers"]["photos"]["kept"], true, "{listed:#}");
+    assert!(
+        !listed.to_string().contains("k-1"),
+        "what is kept is never answered: {listed:#}"
+    );
+}
+
 /// **The account apps read through, set on the home page** (capability
 /// connections §5 step 5, §6 bar 1): `GET /lent` says which lends can have
 /// one, and whether one is kept, never what is kept. A wrong password is

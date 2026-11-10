@@ -49,12 +49,49 @@ export const lentTo = (lend, groups) => {
 };
 
 /**
- * The account apps read a lend through: whether one is made, how to make
- * it, and its name and password, typed here once (home.rs `readers`).
- * @param {{ name: string, account?: AppsAccount, state: State, doing: { state: string }, send: (message: Message) => void }} props
+ * @typedef {{ name: string, account: AppsAccount, state: State, doing: { state: string }, send: (message: Message) => void }} AppsProps
  */
-function Apps({ name, account, state, doing, send }) {
+
+/**
+ * How apps read a lend through its lender: whether an account or key is
+ * made, how to make it, and its name and password, or the key, typed here
+ * once (home.rs `readers`, `change`).
+ * @param {Omit<AppsProps, 'account'> & { account?: AppsAccount }} props
+ */
+function Apps(props) {
+  const { account } = props;
   if (!account) return null;
+  return account.key ? html`<${AppsKey} ...${props} />` : html`<${AppsAccount} ...${props} />`;
+}
+
+// What Apps draws when its program takes a key its lender makes (home.rs
+// `lent`, `key`, share.rs `key_of`): pasted here, sent once to this
+// computer, and never drawn back.
+/** @param {AppsProps} props */
+function AppsKey({ name, account, state, doing, send }) {
+  const save = { type: 'change', to: { key: state.password ?? '' } };
+  const said = account.kept
+    ? `Apps your friends open can read your ${name} with the key you made. They can’t change anything.`
+    : `Apps can’t read your ${name} yet. To let them, make a key in ${name} and paste it here.`;
+  return html`
+    <p>${said}</p>
+    <details>
+      <summary>${account.kept ? 'Use a different key' : 'How to make the key'}</summary>
+      <p>In ${name}: ${account.signs?.accounts}. Paste the key here. It stays on this computer and goes only to ${name}.</p>
+      <${Field}
+        words="The key: "
+        name="password"
+        value=${state.password ?? ''}
+        attrs=${{ type: 'password', autocomplete: 'off' }}
+        send=${send}
+      />
+      <${Act} words="Save the key" doing=${doing} on=${save} send=${send} />
+    </details>
+  `;
+}
+
+/** @param {AppsProps} props */
+function AppsAccount({ name, account, state, doing, send }) {
   const said = account.kept
     ? `Apps your friends open can read your ${name} with the account you made. They can’t change anything.`
     : `Apps can’t read your ${name} yet. To let them, make one account for your group.`;

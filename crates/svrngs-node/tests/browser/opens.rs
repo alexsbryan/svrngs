@@ -372,6 +372,157 @@ Promise.all([asked('cy', '{cy}', 'notes'), asked('cy', '{cy}', 'hidden'), asked(
     drop((cy, dee));
 }
 
+in_chromium!(
+    /// **A carried app reads a program that takes a key** (CONTRACTS §4,
+    /// `readers: key x-api-key`, EXTENSION_POINT §10 row 9). Cy lends
+    /// `photos`, program immich, on a service that answers only the exact
+    /// `x-api-key` the lender keeps (`share::keep_key`, the row in
+    /// src/programs/immich.txt) and 401 to anything else. Ada's carried
+    /// app, whose reads.txt names immich, reads it through its own
+    /// origin's `/svrngs-lend/` after her yes. A fake: this is the gate's
+    /// run; `a_carried_app_reads_a_real_immich` is the same body against
+    /// one. Planted, watched failing: the door sending the lend's own
+    /// secret in its place (`Admit::Readers => Vec::new()`) answers 401.
+    a_carried_app_reads_a_program_that_takes_a_key
+);
+async fn a_carried_app_reads_a_program_that_takes_a_key(engine: Engine) {
+    let (service, heads) = keyed_service("apps-key-1").await;
+    let seen = app_reads_with_a_key(engine, service.port(), "apps-key-1", "/photos?n=1").await;
+    assert_eq!(
+        (
+            &seen["yes"]["films"]["status"],
+            &seen["yes"]["films"]["body"]
+        ),
+        (&json!(200), &json!(r#"{"photos":"cy's photos"}"#)),
+        "{seen:#}"
+    );
+    assert!(
+        heads
+            .lock()
+            .unwrap()
+            .iter()
+            .any(|h| h.to_ascii_lowercase().contains("x-api-key: apps-key-1")),
+        "it reached the service with the exact key: {heads:?}"
+    );
+}
+
+/// The same read as [`a_carried_app_reads_a_program_that_takes_a_key`],
+/// against a real Immich run by hand: a real one is not in the gate, so
+/// this is ignored and needs `SVRNGS_TEST_IMMICH_PORT`, a loopback port its
+/// `/api/users/me` answers on (an `ssh -L` tunnel to one), and
+/// `SVRNGS_TEST_IMMICH_KEY`, an API key of its. The kept key is the bytes
+/// the lender pasted, exactly as a real paste is.
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "needs a real Immich: SVRNGS_TEST_IMMICH_PORT and SVRNGS_TEST_IMMICH_KEY"]
+async fn a_carried_app_reads_a_real_immich() {
+    let port = std::env::var("SVRNGS_TEST_IMMICH_PORT").expect("SVRNGS_TEST_IMMICH_PORT");
+    let key = std::env::var("SVRNGS_TEST_IMMICH_KEY").expect("SVRNGS_TEST_IMMICH_KEY");
+    let seen = app_reads_with_a_key(
+        Engine::Chromium,
+        port.parse().unwrap(),
+        &key,
+        "/api/users/me",
+    )
+    .await;
+    assert_eq!(seen["yes"]["films"]["status"], json!(200), "{seen:#}");
+    let body = seen["yes"]["films"]["body"].as_str().unwrap_or_default();
+    let body: serde_json::Value = serde_json::from_str(body).expect("a JSON answer");
+    eprintln!("the app read this from a real Immich's /api/users/me: {body:#}");
+    assert!(body["email"].as_str().is_some(), "{body:#}");
+    assert!(
+        !seen.to_string().contains(&key),
+        "the key never reached the page: {seen:#}"
+    );
+}
+
+/// A service refusing, 401, any request without exactly `x-api-key: key`,
+/// each request's head kept; `{"photos":"cy's photos"}` for one that has it.
+async fn keyed_service(key: &'static str) -> (std::net::SocketAddr, KeptHeads) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    let heads = KeptHeads::default();
+    let kept = heads.clone();
+    tokio::spawn(async move {
+        while let Ok((mut sock, _)) = listener.accept().await {
+            let kept = kept.clone();
+            tokio::spawn(async move {
+                let mut head = [0u8; 8192];
+                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
+                    .await
+                    .unwrap_or(0);
+                let head = String::from_utf8_lossy(&head[..n]).into_owned();
+                let has = head
+                    .lines()
+                    .any(|l| l.eq_ignore_ascii_case(&format!("x-api-key: {key}")));
+                kept.lock().unwrap().push(head);
+                let (status, body) = if has {
+                    ("200 OK", r#"{"photos":"cy's photos"}"#)
+                } else {
+                    ("401 Unauthorized", r#"{"error":"no key"}"#)
+                };
+                let answer = format!(
+                    "HTTP/1.1 {status}\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = sock.write_all(answer.as_bytes()).await;
+            });
+        }
+    });
+    (addr, heads)
+}
+
+/// Cy lends `photos` (program `immich`) at `port` with the key kept as
+/// `key`; ada carries an app whose reads.txt names immich and opens it from
+/// her home page, her yes; what the app's page read at `path` through its
+/// own `/svrngs-lend/`, by the driver `carried-reads.mjs`, as "films".
+async fn app_reads_with_a_key(engine: Engine, port: u16, key: &str, path: &str) -> Value {
+    let relay = relay().await;
+    let dirs = [(); 2].map(|()| tempfile::tempdir().unwrap());
+    let ada = node(dirs[0].path(), &relay, &signing(9)).await;
+    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let lends = svrngs_node::lend::lends_dir(dirs[1].path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = json!({ "groups": [NS], "port": port, "kind": "immich", "limit": 3, "refused": [] });
+    std::fs::write(lends.join("photos.json"), body.to_string()).unwrap();
+    let name = svrngs_node::lend::LendName::parse("photos").unwrap();
+    let program = svrngs_node::lend::Program::parse("immich").unwrap();
+    assert!(svrngs_node::share::keep_key(dirs[1].path(), &name, &program, key).unwrap());
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let page = "<!doctype html><title>Probe</title><body>Probe";
+    let files = [
+        ("index.html", page.into()),
+        ("reads.txt", "immich\n".into()),
+    ];
+    carried::carry(&folder, "Probe", &files);
+    let origin = carried::carried_at(&ada, "Probe").await;
+    let api = ada.api_addr().port();
+    let seen = drive(
+        engine,
+        "carried-reads.mjs",
+        json!({ "url": origin, "home": format!("http://svrngs.localhost:{api}/"), "words": "Open Probe",
+            "tries": { "films": label(2, "photos") }, "path": path }),
+        None,
+    )
+    .await;
+    eprintln!("the carried app's read of the keyed program: {seen:#}");
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    assert_eq!(
+        seen["before"]["films"]["refused"],
+        json!("unasked"),
+        "{seen:#}"
+    );
+    assert_eq!(
+        seen["stopped"]["films"]["refused"],
+        json!("unasked"),
+        "{seen:#}"
+    );
+    drop(cy);
+    drop(ada);
+    seen
+}
+
 /// cy's films as a reading app meets them: each request's head kept, and
 /// answered with its `authorization` echoed in a header of its own and a
 /// cookie of the lend's own set, as JSON, or as a script at a path ending
@@ -705,6 +856,71 @@ async fn the_apps_account_is_made_from_the_home_page(engine: Engine) {
             }
         }
     }
+    drop(ada);
+}
+
+in_chromium!(
+    /// **A key is pasted on the home page, with no terminal** (a lender
+    /// with no terminal; `readers: key x-api-key`, CONTRACTS §4): ada lends
+    /// a stand-in Immich. Her home page says apps can't read it yet and
+    /// how to make a key; she pastes it into the one box and saves it, and
+    /// the row then says apps read it with the key she made. It crosses
+    /// only to her own computer, and what her home page reads back never
+    /// holds it. Planted, watched failing: the row drawn from the words
+    /// alone, the button posting nothing.
+    a_readers_key_is_pasted_on_the_home_page
+);
+async fn a_readers_key_is_pasted_on_the_home_page(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(9)).await;
+    let immich = page_origin("<!doctype html><title>Immich</title><body>").await;
+    let lends = svrngs_node::lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    let body = json!({ "groups": [NS], "port": immich.port(), "kind": "immich", "refused": [] });
+    std::fs::write(lends.join("immich.json"), body.to_string()).unwrap();
+    let row = "#lent li";
+    let seen = home_page(
+        engine,
+        &ada,
+        json!({
+            "unfold": true,
+            "all": "#lent li",
+            "do": [
+                [format!("{row} input[name=password]"), "pasted-key-1"],
+                [format!("{row} button:has-text('Save the key')"), null, true, "key you made"],
+            ],
+            "text": true,
+        }),
+    )
+    .await;
+    eprintln!("ada's home page: {seen:#}");
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    let before = seen["all"].to_string();
+    assert!(
+        before.contains(
+            "Apps can’t read your immich yet. To let them, make a key in immich and paste it here."
+        ) && before.contains("New API Key"),
+        "the row says what is missing, and how:\n{seen:#}"
+    );
+    let after = seen["after"][0].to_string();
+    assert!(
+        after.contains("Apps your friends open can read your immich with the key you made. They can’t change anything."),
+        "the row says what the key does:\n{seen:#}"
+    );
+    assert_eq!(
+        std::fs::read_to_string(dir.path().join("secrets/lends/immich/readers/x-api-key")).unwrap(),
+        "pasted-key-1",
+        "kept as the command keeps it:\n{seen:#}"
+    );
+    let sent = seen["sent"].as_array().unwrap();
+    let gives_key = |s: &&Value| s[2].as_str().is_some_and(|b| b.contains("pasted-key-1"));
+    let posts: Vec<_> = sent.iter().filter(gives_key).collect();
+    assert_eq!(posts.len(), 1, "the key is sent once:\n{seen:#}");
+    assert!(
+        posts[0][1].as_str().is_some_and(|u| u.ends_with("/lent")),
+        "and only to her own computer's /lent:\n{seen:#}"
+    );
     drop(ada);
 }
 

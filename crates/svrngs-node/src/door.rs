@@ -377,7 +377,7 @@ const CONNECT_WITHIN: Duration = Duration::from_secs(10);
 /// `content-length` (kept, so a `HEAD` and a `206` keep their length).
 /// A message asking to switch protocols asks again on the far side
 /// ([`upgrade_of`], u5-2), so a WebSocket crosses the door.
-const HOP_BY_HOP: [&str; 8] = [
+pub(crate) const HOP_BY_HOP: [&str; 8] = [
     "connection",
     "keep-alive",
     "proxy-authorization",

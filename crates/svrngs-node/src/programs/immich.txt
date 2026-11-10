@@ -10,3 +10,10 @@
 # "New API Key"; the guide's "user setting panel"
 # (https://docs.immich.app/features/command-line-interface#obtain-the-api-key).
 2283 immich accounts: Administration, Users, Create user for each person. For apps, your picture at the top right, then Account Settings, API Keys, New API Key
+# The account apps reading it are let in as is an API key in x-api-key. Run
+# against a real Immich, ghcr.io/immich-app/immich-server:v3.3.6
+# (sha256:c0a8e008ad9befe8af0e3a515e3b3661e98d38c37eadb6efee18a6d5098136c1),
+# on the Fedora box under Podman, 2026-11-09: GET /api/users/me answered 200
+# with x-api-key: <key>, 401 with no header, 401 with the same key in
+# Authorization: Bearer, 401 with a wrong key.
+2283 immich readers: key x-api-key

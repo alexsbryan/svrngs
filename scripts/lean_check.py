@@ -592,12 +592,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) AddressCopy's own copy machine, a second COPY beside ui/copy.js's
 # (address-copying.js, 37 lines), became link-copy.js LinkCopy, which also says
 # only its last answer, with the same words: js to 8,465, one past where it lands.
+# (2026-11-09) The operator raised the ceiling to . 21,150 for queue rows 9, 10 and 12
+# of EXTENSION_POINT §10, js unchanged at 8,500. readers: key, a pasted key for a
+# program that takes one (+42 of ., +25 of js), after 2add1674, bbfeadbe and 59d67bd2;
+# . to 20,925, js to 8,490.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20883,
+    ".": 20925,
 
-    "js": 8465,
+    "js": 8490,
 
     "swift": 1,
 }

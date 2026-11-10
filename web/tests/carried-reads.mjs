@@ -11,7 +11,7 @@
 // you".
 //
 //   node web/tests/carried-reads.mjs '{"engine": "chromium"|"webkit", "url": "<the carried app's origin>",
-//     "home": "<url>", "words": "<its button's words>", "tries": {"<name>": "<a lend's label>", …}}'
+//     "home": "<url>", "words": "<its button's words>", "tries": {"<name>": "<a lend's label>", …}, "path": "<the path a lend is asked for>"}'
 //
 // Exit 0 with the JSON line, a step that did not finish said in it as
 // `error`; 3, naming the install command, when Playwright or its browser
@@ -22,27 +22,28 @@ const args = JSON.parse(process.argv[2]);
 const { context, close } = await launch(args.engine);
 // Everything the page can read of what it asked, by name.
 const tried = (page) =>
-  page.evaluate(async (tries) => {
-    const read = async (r) => ({
-      status: r.status,
-      refused: r.headers.get('x-svrngs-refused'),
-      headers: [...r.headers].map(([name, value]) => `${name}: ${value}`),
-      body: await r.text(),
-    });
-    const at = (label, path) => `/svrngs-lend/${label}${path}`;
-    const said = { reads: await read(await fetch('/svrngs-reads')) };
-    for (const [name, label] of Object.entries(tries))
-      said[name] = await read(
-        await fetch(at(label, '/films?n=1'), { headers: { 'x-page': 'said' } }),
+  page.evaluate(
+    async ([tries, path]) => {
+      const read = async (r) => ({
+        status: r.status,
+        refused: r.headers.get('x-svrngs-refused'),
+        headers: [...r.headers].map(([name, value]) => `${name}: ${value}`),
+        body: await r.text(),
+      });
+      const at = (label, path) => `/svrngs-lend/${label}${path}`;
+      const said = { reads: await read(await fetch('/svrngs-reads')) };
+      for (const [name, label] of Object.entries(tries))
+        said[name] = await read(await fetch(at(label, path), { headers: { 'x-page': 'said' } }));
+      said.post = await read(
+        await fetch(at(tries.films, '/films'), { method: 'POST', body: 'a film' }),
       );
-    said.post = await read(
-      await fetch(at(tries.films, '/films'), { method: 'POST', body: 'a film' }),
-    );
-    said.script = await read(await fetch(at(tries.films, '/code.js')));
-    said.act = await read(await fetch('/svrngs/acts', { method: 'POST', body: '{}' }));
-    said.cookie = document.cookie;
-    return said;
-  }, args.tries);
+      said.script = await read(await fetch(at(tries.films, '/code.js')));
+      said.act = await read(await fetch('/svrngs/acts', { method: 'POST', body: '{}' }));
+      said.cookie = document.cookie;
+      return said;
+    },
+    [args.tries, args.path ?? '/films?n=1'],
+  );
 const seen = {};
 try {
   const page = await context.newPage();

@@ -25,10 +25,11 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * A change of a lend: how many it lets in at once, a number or everyone
  * (`null`); its audience, the group ids that can open it; or its lending
  * stopped; or the account apps read it through, its name and password
- * typed on this row and sent once, to this computer alone. An audience-only
- * change preserves every other setting (SCOPE_PARALLEL.md, `POST /lent`).
+ * typed on this row and sent once, to this computer alone, or the key
+ * pasted there. An audience-only change preserves every other setting
+ * (SCOPE_PARALLEL.md, `POST /lent`).
  * @typedef {{ limit: number | null } | { groups: string[] } | 'stop'
- *   | { readers: { name: string, password: string } }} To
+ *   | { readers: { name: string, password: string } } | { key: string }} To
  */
 
 /**

@@ -398,6 +398,8 @@ enum LendChange {
         name: String,
         password: String,
     },
+    /// The key apps reading it are let in with, kept as pasted.
+    Key(String),
     Stop,
 }
 
@@ -420,8 +422,10 @@ async fn lent(State(at): State<Asking>) -> Response {
         .collect();
     let readers = |l: &lend::Lend| {
         let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
-        let said = serde_json::json!({ "kept": kept, "signs": share::accounts_of(&l.kind) });
-        share::readers_of(&l.kind).map(|_| (l.name.to_string(), said))
+        let key = share::key_of(&l.kind).is_some();
+        let said =
+            serde_json::json!({ "kept": kept, "signs": share::accounts_of(&l.kind), "key": key });
+        (key || share::readers_of(&l.kind).is_some()).then(|| (l.name.to_string(), said))
     };
     let readers: serde_json::Map<_, _> = all.iter().filter_map(readers).collect();
     Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers }))
@@ -446,6 +450,14 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
         LendChange::Readers { name, password } => {
             return readers(&at, &c.lend, &name, &password).await
         }
+        LendChange::Key(key) if key.trim().is_empty() => {
+            return LendRefusal::closed("Paste the key first.".to_string());
+        }
+        LendChange::Key(key) => lend::read(dir, &c.lend).and_then(|lent| {
+            lent.map_or(Ok(false), |l| {
+                share::keep_key(dir, &c.lend, &l.kind, key.trim())
+            })
+        }),
     };
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
     match done {
@@ -479,6 +491,7 @@ fn kind_of(change: &LendChange) -> &'static str {
         LendChange::Groups(_) => "groups",
         LendChange::SignIn => "sign-in",
         LendChange::Readers { .. } => "readers",
+        LendChange::Key(_) => "key",
         LendChange::Stop => "stop",
     }
 }

@@ -34,9 +34,10 @@
 //! often another's.
 
 use std::num::NonZeroU16;
+use std::path::Path;
 use std::time::Duration;
 
-use crate::lend::{Audience, Lend, LendName, Program, Raw, RefusedPath, Source, Upload};
+use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
 /// `<word>.txt`, so adding a program is adding a file; each holds that word's
@@ -54,7 +55,8 @@ use crate::lend::{Audience, Lend, LendName, Program, Raw, RefusedPath, Source, U
 ///   sets, `x-svrngs-user` (door.rs, `USER_HEADER`, an account's name unique
 ///   by the person's key); what its lender sets in it for that.
 /// - `readers: <how>`: how `share --readers` signs in once as the account
-///   apps reading it are let in as (`ReadersSignIn`).
+///   apps reading it are let in as (`ReadersSignIn`), or `key <header>
+///   [<sent>]`, a key its lender pastes, `{}` in `<sent>` the key (`key_of`).
 /// - `keeps: <path>...`: the paths of it svrngs keeps from everyone it is
 ///   lent to, its lender typing none (`share` adds them to its `--refuse`
 ///   paths and says so): why, in the comment above it.
@@ -248,6 +250,39 @@ pub fn readers_of(kind: &Program) -> Option<ReadersSignIn> {
         sent,
         asked,
     })
+}
+
+/// Whether a `readers: key` row may name `header`. The door keeps its own
+/// (`crate::door::IDENTITY_PREFIX`, its hop-by-hop list, RFC 9110 §7.6.1), and
+/// the person's cookie, the address and the length are never a lend's secret.
+pub fn key_header_fits(header: &str) -> bool {
+    let name = header.to_ascii_lowercase();
+    let door = name.starts_with(crate::door::IDENTITY_PREFIX)
+        || crate::door::HOP_BY_HOP.contains(&name.as_str());
+    crate::declared::valid_header_name(&name)
+        && !door
+        && !matches!(name.as_str(), "cookie" | "host" | "content-length")
+}
+
+/// The header a key its lender pastes goes in, and how (`{}` the key), if
+/// `kind`'s `readers:` row is a `key` row that [`key_header_fits`]; the one
+/// reader of that form. A row naming a header it refuses is no row at all.
+pub fn key_of(kind: &Program) -> Option<(&'static str, &'static str)> {
+    let row = says(kind, "readers")?.strip_prefix("key ")?.trim();
+    let (header, sent) = row.split_once(' ').unwrap_or((row, "{}"));
+    let fits = key_header_fits(header) && sent.contains("{}");
+    tracing::debug!(target: "share", kind = %kind, header, fits, "share: a readers' key row, read or refused");
+    fits.then_some((header, sent))
+}
+
+/// Keep `key` for apps reading the lend `name` of `kind`, as [`key_of`]
+/// says to send it ([`crate::lend::keep_readers`]); false when it names no
+/// key or `key` is empty, so a blank paste can't delete what is kept.
+pub fn keep_key(dir: &Path, name: &LendName, kind: &Program, key: &str) -> Result<bool, LendError> {
+    let Some((header, sent)) = key_of(kind).filter(|_| !key.is_empty()) else {
+        return Ok(false);
+    };
+    crate::lend::keep_readers(dir, name, (header, &sent.replace("{}", key))).map(|()| true)
 }
 
 /// Sign in to the service at this computer's `port` as `name`, as `how`

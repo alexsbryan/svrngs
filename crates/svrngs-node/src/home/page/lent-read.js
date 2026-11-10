@@ -10,9 +10,10 @@ import { get } from './routes.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 
 /**
- * What home.rs `lent` says of a lend apps can read through an account:
- * whether one is kept, and how its lender makes one.
- * @typedef {{ kept: boolean, signs?: { accounts?: string } }} AppsAccount
+ * What home.rs `lent` says of a lend apps can read through an account or
+ * a key: whether one is kept, how its lender makes one, and whether it is
+ * a key its lender pastes.
+ * @typedef {{ kept: boolean, signs?: { accounts?: string }, key?: boolean }} AppsAccount
  */
 
 /**
