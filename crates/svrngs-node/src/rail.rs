@@ -587,7 +587,12 @@ impl LiveBuffer {
 /// `delivered` counts them, so a lane half up is never read as "everyone
 /// saw it". A group this computer does not hold, or holds with no seed, is
 /// refused as the append door refuses it ([`standing_of`]), nothing sent.)
-async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) -> Response {
+pub async fn live_push(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+    body: axum::body::Bytes,
+) -> Result<Response, Response> {
+    let namespace = &namespace_of(&q)?;
     if body.len() > LIVE_PAYLOAD_MAX_BYTES {
         tracing::debug!(
             target: "rails",
@@ -595,7 +600,7 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
             bytes = body.len(),
             "rail live: refused an oversize payload"
         );
-        return err(
+        return Err(err(
             StatusCode::PAYLOAD_TOO_LARGE,
             format!(
                 "live payload is {} bytes; the lane carries at most {} — \
@@ -603,25 +608,19 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
                 body.len(),
                 LIVE_PAYLOAD_MAX_BYTES
             ),
-        );
+        ));
     }
-    let payload = match std::str::from_utf8(&body) {
-        Ok(s) => s,
-        Err(e) => {
-            tracing::debug!(target: "rails", namespace, error = %e, "rail live: refused a non-UTF-8 payload");
-            return err(
-                StatusCode::UNPROCESSABLE_ENTITY,
-                format!(
-                    "live payload is not UTF-8 ({e}) — the lane carries text \
-                     (base64 your bytes, as a rail act does)"
-                ),
-            );
-        }
-    };
-    let standing = match standing_of(&api.rail, namespace) {
-        Ok(people) => people,
-        Err(refusal) => return refusal,
-    };
+    let payload = std::str::from_utf8(&body).map_err(|e| {
+        tracing::debug!(target: "rails", namespace, error = %e, "rail live: refused a non-UTF-8 payload");
+        err(
+            StatusCode::UNPROCESSABLE_ENTITY,
+            format!(
+                "live payload is not UTF-8 ({e}) — the lane carries text \
+                 (base64 your bytes, as a rail act does)"
+            ),
+        )
+    })?;
+    let standing = standing_of(&api.rail, namespace)?;
     let meeting = crate::group::meeting(&api.rail, namespace, &api.build);
     let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing, &meeting);
     let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
@@ -634,12 +633,12 @@ async fn push_answer(api: &RailApi, namespace: &str, body: axum::body::Bytes) ->
         delivered,
         "rail live: fanned out one payload"
     );
-    Json(serde_json::json!({
+    Ok(Json(serde_json::json!({
         "bytes": body.len(),
         "peers": peers,
         "delivered": delivered,
     }))
-    .into_response()
+    .into_response())
 }
 
 /// The peers a live payload in `namespace` is offered to: every key
@@ -668,8 +667,12 @@ fn live_peers(
 
 /// GET /v1/rail/live — drain the caller's namespace since the last call,
 /// each payload with its sender ([`Live`]): `{payload, key, person_key}`.
-fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
-    let (payloads, dropped) = live.drain(namespace);
+pub async fn live_drain(
+    State(api): State<RailApi>,
+    Query(q): Query<RailQuery>,
+) -> Result<Response, Response> {
+    let namespace = namespace_of(&q)?;
+    let (payloads, dropped) = api.live.drain(&namespace);
     if dropped > 0 {
         tracing::warn!(
             target: "rails",
@@ -680,28 +683,11 @@ fn drain_answer(live: &LiveBuffer, namespace: &str) -> Response {
              a hole in it"
         );
     }
-    Json(serde_json::json!({
+    Ok(Json(serde_json::json!({
         "payloads": payloads,
         "dropped": dropped,
     }))
-    .into_response()
-}
-
-/// POST /v1/rail/live.
-pub async fn live_push(
-    State(api): State<RailApi>,
-    Query(q): Query<RailQuery>,
-    body: axum::body::Bytes,
-) -> Result<Response, Response> {
-    Ok(push_answer(&api, &namespace_of(&q)?, body).await)
-}
-
-/// GET /v1/rail/live.
-pub async fn live_drain(
-    State(api): State<RailApi>,
-    Query(q): Query<RailQuery>,
-) -> Result<Response, Response> {
-    Ok(drain_answer(&api.live, &namespace_of(&q)?))
+    .into_response())
 }
 
 #[cfg(test)]

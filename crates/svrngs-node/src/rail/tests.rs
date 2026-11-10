@@ -13,7 +13,8 @@ use axum::http::StatusCode;
 
 use crate::{actor_of, Person, RingRail, Roster, SigningKey};
 
-use super::{append_act, drain_answer, push_answer, standing_of, LiveBuffer, RailApi};
+use super::{append_act, live_drain, live_push, standing_of, LiveBuffer, RailApi, RailQuery};
+use axum::extract::{Query, State};
 
 fn key(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -408,6 +409,19 @@ fn the_live_buffer_evicts_the_oldest_and_reports_it() {
     assert!(mine.is_empty());
 }
 
+/// `?namespace=` naming `namespace`.
+fn named(namespace: &str) -> Query<RailQuery> {
+    Query(RailQuery {
+        namespace: Some(namespace.into()),
+    })
+}
+
+/// What `live_push` answers `body` for `namespace`, refused or not.
+async fn pushed(api: &RailApi, namespace: &str, body: Vec<u8>) -> axum::response::Response {
+    let pushed = live_push(State(api.clone()), named(namespace), body.into()).await;
+    pushed.unwrap_or_else(|refused| refused)
+}
+
 /// The live lane's refusals are named, and its success honestly reports
 /// what was fanned out. (svrngs: upstream's daemon carried no fabric, and
 /// reported `peers: []`; here the push is offered to each key standing in
@@ -427,16 +441,16 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
         build: Vec::new(),
     };
     let oversize = vec![b'x'; 4097];
-    let resp = push_answer(&api, "ledger", oversize.into()).await;
+    let resp = pushed(&api, "ledger", oversize).await;
     assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
     let not_text = vec![0xff, 0xfe, 0x00];
-    let resp = push_answer(&api, "ledger", not_text.into()).await;
+    let resp = pushed(&api, "ledger", not_text).await;
     assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
-    let resp = push_answer(&api, "elsewhere", b"a".to_vec().into()).await;
+    let resp = pushed(&api, "elsewhere", b"a".to_vec()).await;
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
     assert_eq!(body_of(resp).await["kind"], "not_held");
     let fits = vec![b'a'; 4096];
-    let resp = push_answer(&api, "ledger", fits.into()).await;
+    let resp = pushed(&api, "ledger", fits).await;
     assert_eq!(resp.status(), StatusCode::OK);
     let out = body_of(resp).await;
     assert_eq!(out["bytes"], 4096);
@@ -447,7 +461,12 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
     assert_eq!(peers[0]["delivered"], false);
     assert!(peers[0]["error"].as_str().is_some_and(|e| !e.is_empty()));
     assert_eq!(out["delivered"], 0);
-    let out = body_of(drain_answer(&api.live, "ledger")).await;
+    let out = body_of(
+        live_drain(State(api.clone()), named("ledger"))
+            .await
+            .unwrap(),
+    )
+    .await;
     assert_eq!(out["payloads"].as_array().unwrap().len(), 0);
     assert_eq!(out["dropped"], 0);
     endpoint.close().await;
