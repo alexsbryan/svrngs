@@ -26,10 +26,12 @@ macro_rules! in_both_engines {
         mod $test {
             #[tokio::test(flavor = "multi_thread")]
             async fn chromium() {
+                $crate::harness::own_home();
                 super::$test($crate::harness::Engine::Chromium).await
             }
             #[tokio::test(flavor = "multi_thread")]
             async fn webkit() {
+                $crate::harness::own_home();
                 super::$test($crate::harness::Engine::Webkit).await
             }
         }
@@ -48,6 +50,7 @@ macro_rules! in_chromium {
         mod $test {
             #[tokio::test(flavor = "multi_thread")]
             async fn chromium() {
+                $crate::harness::own_home();
                 super::$test($crate::harness::Engine::Chromium).await
             }
         }
@@ -63,6 +66,7 @@ macro_rules! in_webkit {
         mod $test {
             #[tokio::test(flavor = "multi_thread")]
             async fn webkit() {
+                $crate::harness::own_home();
                 super::$test($crate::harness::Engine::Webkit).await
             }
         }
@@ -93,6 +97,7 @@ pub fn browsers() -> &'static str {
     let (_, said) = SHARED.get_or_init(|| {
         let mut run = std::process::Command::new("node")
             .arg(repo().join("web/tests/browsers.mjs"))
+            .envs(own_home().0.as_ref().map(|h| ("HOME", h)))
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
             .spawn()
@@ -109,6 +114,22 @@ pub fn browsers() -> &'static str {
     said
 }
 
+/// The person's own `$HOME`, as this binary was started with it, and this
+/// binary's own, which `$HOME` names from the first ask on: a computer a test
+/// starts places its group's folder under `~/svrngs` (svrngs-node group.rs
+/// `folder_place`), which must never be the person's own. Planted, watched
+/// failing: without it, `pages join::a_group_made_is_drawn_with_no_reload`
+/// left a `Lab-<id>` folder in the person's `~/svrngs`. The build and the
+/// browsers are given the person's own, since they find their tools under it.
+pub fn own_home() -> &'static (Option<std::ffi::OsString>, tempfile::TempDir) {
+    static HOMES: OnceLock<(Option<std::ffi::OsString>, tempfile::TempDir)> = OnceLock::new();
+    HOMES.get_or_init(|| {
+        let (person, own) = (std::env::var_os("HOME"), tempfile::tempdir().unwrap());
+        std::env::set_var("HOME", own.path());
+        (person, own)
+    })
+}
+
 pub fn repo() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -120,6 +141,7 @@ pub fn site() -> &'static Path {
     SITE.get_or_init(|| {
         let out = repo().join("target/web/site");
         let built = std::process::Command::new(repo().join("scripts/build-web.sh"))
+            .envs(own_home().0.as_ref().map(|h| ("HOME", h)))
             .arg("--out")
             .arg(&out)
             .output()
@@ -187,6 +209,7 @@ fn traced() {
 /// in the clear, as before.
 pub async fn relay() -> Server {
     traced();
+    own_home();
     let mut config = ServerConfig::default();
     config.relay = Some(RelayServer::new(([127, 0, 0, 1], 0)));
     let server = Server::spawn(config)
