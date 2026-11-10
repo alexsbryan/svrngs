@@ -181,7 +181,11 @@ your app is left off the list until it's fixed.
 - **Load nothing from elsewhere.** Every answer carries a policy that lets
   the page load from and connect to its own address only: no CDN, no
   inline `<script>` (inline styles are fine), no camera, microphone or
-  location. Put every script in a file beside `index.html`.
+  location. Put every script in a file beside `index.html`, and every font
+  too, as a `.woff2`. A page that asks for anything else is blank or broken,
+  and the browser says why only in its console, so run `svrngs check
+  ~/svrngs/<group>/apps/<name>`: it says each thing by file and line, and
+  what to change, and the app's line on the home page says the same.
 - **Your app reads and corrects only its own entries.** Correcting another
   app's is refused: *"an app corrects only its own acts"*. Within your app,
   `voided` is set whoever made the correction; Money and Events count a

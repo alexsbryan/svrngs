@@ -348,6 +348,9 @@ async fn lends(State(at): State<Asking>, Query(q): Query<RailQuery>) -> Result<R
             let origin = host.origin(&l.key, &l.offered, l.version)?;
             let mut shown = serde_json::to_value(l).ok()?;
             shown["origin"] = origin.into();
+            // What `svrngs check` finds in a carried app's folder, for its card.
+            let (group, kind) = (l.offered.group.as_deref(), l.offered.kind.as_str());
+            shown["check"] = group.and_then(|g| at.door.folders.checked(g, kind)).into();
             if let Some(reading) = opening(l, &lent, &groups, yeses.as_ref(), &host.actor) {
                 shown["reading"] = reading;
             }

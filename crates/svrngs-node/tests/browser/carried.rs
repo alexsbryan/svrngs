@@ -1097,3 +1097,87 @@ document.title = 'ready';
         "four entries count as bo's, under two opens' approvers: {money:#?}"
     );
 }
+
+in_chromium!(
+    /// **A font in the folder loads** (svrn-docs
+    /// `rings/current/EXTENSION_POINT.md` §3: a font is a `.woff2` in the
+    /// folder, which no test loaded; §7, G3): Lettered, carried in house,
+    /// names `own.woff2` beside its page in an `@font-face` of its own
+    /// style sheet, and the browser loads it under the policy every answer
+    /// carries. `own.woff2` is one box glyph at `O`, 288 bytes, made with
+    /// fontTools' FontBuilder (4.63.0) as a woff2. Planted, watched
+    /// failing: the policy given `font-src 'none'`, and the page says
+    /// "refused".
+    a_font_in_the_folder_loads
+);
+async fn a_font_in_the_folder_loads(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let folder = dir.path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let page = "<!doctype html><title>trying</title><link rel=stylesheet href=look.css>\
+        <p style=\"font-family: Own\">O</p><script type=module src=probe.js></script>";
+    let look = "@font-face { font-family: Own; src: url(own.woff2) format('woff2'); }";
+    let probe = "document.fonts.load('16px Own', 'O').then(\
+        (f) => f.map((x) => x.status).join() || 'none', (e) => `refused: ${e}`)\
+        .then((said) => { document.body.textContent = said; document.title = 'tried'; });";
+    // The font first, so the page is never listed before it is placed.
+    std::fs::create_dir_all(folder.join("apps/Lettered")).unwrap();
+    std::fs::write(
+        folder.join("apps/Lettered/own.woff2"),
+        include_bytes!("own.woff2"),
+    )
+    .unwrap();
+    let files = [
+        ("look.css", look.into()),
+        ("probe.js", probe.into()),
+        ("index.html", page.into()),
+    ];
+    carry(&folder, "Lettered", &files);
+    let origin = carried_at(&ada, "Lettered").await;
+    let seen = drive(
+        engine,
+        "carried.mjs",
+        json!({ "url": origin, "title": "tried" }),
+        None,
+    )
+    .await;
+    assert_eq!(seen["said"], "loaded", "{seen:#}");
+    drop(ada);
+}
+
+in_chromium!(
+    /// **A folder app the policy blanks is told so on its card, before
+    /// anyone opens it** (svrn-docs `rings/current/EXTENSION_POINT.md`
+    /// §6.3; §7, G3): Blank, carried in house, has a script written in its
+    /// page and a font from fonts.googleapis.com. Its row on ada's home
+    /// page says both, with what to change, in the words `svrngs check`
+    /// prints (folder/check.rs `Refused::words`), and nobody has opened it.
+    /// Planted, watched failing: surface.rs `lends` sending no `check`, and
+    /// the row says only what opening it lets it do.
+    a_folder_app_the_policy_blanks_is_told_so_on_its_card
+);
+async fn a_folder_app_the_policy_blanks_is_told_so_on_its_card(engine: Engine) {
+    let relay = relay().await;
+    let dir = tempfile::tempdir().unwrap();
+    let ada = node(dir.path(), &relay, &signing(7)).await;
+    let folder = dir.path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let page = "<!doctype html><title>Blank</title>\n\
+        <link rel=stylesheet href=\"https://fonts.googleapis.com/css2?family=Inter\">\n\
+        <script>document.body.textContent = 'ran';</script>\n";
+    carry(&folder, "Blank", &[("index.html", page.into())]);
+    carried_at(&ada, "Blank").await;
+    let seen = home_page(engine, &ada, json!({ "all": "#home table.index td" })).await;
+    let row = seen["all"][0].as_str().unwrap_or_default();
+    for said in [
+        "This page asks fonts.googleapis.com for a font, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, save the .woff2 beside index.html and point @font-face at it.",
+        "This page has a script written inside it, and apps run scripts only from their own files. Move it to a .js file beside index.html.",
+    ] {
+        assert!(row.contains(said), "the card lacks {said:?}: {seen:#}");
+    }
+    drop(ada);
+}

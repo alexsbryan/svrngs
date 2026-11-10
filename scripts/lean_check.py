@@ -604,12 +604,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) An app's routes parsed once, surface.rs `AppRoute` (+27, the
 # enum and its parser in place of 12 lines of comparisons), inside the
 # operator's ceiling for rows 10 and 12: . to 20,991.
+# (2026-11-09) G3, `svrngs check <folder>` and the card's words from one
+# function, folder/check.rs (+119, js -1), inside the operator's ceiling for
+# rows 10 and 12: . to 21,110, js to 8,491.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20991,
+    ".": 21110,
 
-    "js": 8492,
+    "js": 8491,
 
     "swift": 1,
 }

@@ -500,8 +500,9 @@ fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
     serde_json::from_slice(&out.stdout).expect("node answers JSON")
 }
 
-/// **The index's row judged in one place** (v1ui-findings (c); #158): how
-/// a lend opens and whether it is full now are question.js's `opens`,
+/// **The index's row judged in one place** (v1ui-findings (c); #158):
+/// whether a lend is full now is question.js's `opens` (how it opens, which
+/// it once also answered, is the home page's one word, "In a tab", G3),
 /// which both pages draw the index from, so a change to either lands on
 /// both; neither page judges them itself. Planted, watched failing: the
 /// pages as v1ui-door left them, each with its own `l.using >= l.limit`
@@ -522,11 +523,8 @@ fn the_index_s_row_is_judged_once_for_both_pages() {
     let full = json!({ "person": "cy", "limit": 1, "using": 1 });
     let open = json!({ "person": "cy", "limit": null, "using": 4 });
     assert_eq!(
-        in_question(
-            "args.map((l) => q.opens(l, 'In a tab'))",
-            json!([full, open])
-        ),
-        json!([["In a tab", "full"], ["In a tab", "on"]])
+        in_question("args.map((l) => q.opens(l))", json!([full, open])),
+        json!(["full", "on"])
     );
 }
 

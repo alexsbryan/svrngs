@@ -37,7 +37,7 @@ const kept = (state, lend) => {
 
 /** @param {LendLineProps} props */
 export function LendLine({ state, lend, send }) {
-  const full = opens(lend)[1] === 'full' ? ' Full now.' : '';
+  const full = opens(lend) === 'full' ? ' Full now.' : '';
   const reads = lend.reads ?? [];
   const lent = /** @type {Lent[]} */ (state.lent);
   const reading = reads.length ? readingOf(lend, lent, state.group.reads?.[lend.label]) : undefined;

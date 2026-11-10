@@ -55,6 +55,8 @@ use crate::node::{Host, ANSWER_WITHIN};
 mod blob;
 #[path = "carried.rs"]
 pub(crate) mod carried;
+#[path = "check.rs"]
+pub mod check;
 pub(crate) use carried::{bring, shelf, yes};
 #[path = "confined.rs"]
 mod confined;

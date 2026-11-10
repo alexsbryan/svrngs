@@ -14,7 +14,7 @@ import { LendName } from './lend-name.js?v=__VERSION__';
 
 /** @param {LendRowProps} props */
 export function LendRow({ l: lend, shelf, g: group, s: state, send, home, me }) {
-  const [opened, now] = opens(lend, 'In a tab');
+  const now = opens(lend);
   return html`
     <tr>
       <${LendName} l=${lend} shelf=${shelf} g=${group} />
@@ -22,7 +22,7 @@ export function LendRow({ l: lend, shelf, g: group, s: state, send, home, me }) 
       <td>
         <${HowItOpens}
           l=${lend}
-          opened=${opened}
+          opened=${'In a tab'}
           g=${group}
           s=${state}
           send=${send}

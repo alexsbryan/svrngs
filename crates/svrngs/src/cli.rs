@@ -28,6 +28,7 @@
 //! svrngs relay <name> [--open] [--staging] a relay, for the groups this computer is in
 //!                                          or everyone ([`crate::relay`])
 //! svrngs guide                             print the guide to building an app
+//! svrngs check <folder>                    what in an app's page the policy refuses
 //! ```
 //!
 //! `remove` and `handover` ask the node running here, as `share --folder`
@@ -134,7 +135,8 @@ home page. Plain HTML and JavaScript, no build step: the page reads and
 writes its entries with fetch('svrngs/acts'). Every file in the group's
 folder goes to every member and stays in the group's record for good, as
 every entry does, so try things in a group of your own first (`svrngs new`).
-`svrngs guide` prints the whole guide.
+`svrngs guide` prints the whole guide; `svrngs check <folder>` says what in
+an app's page svrngs won't load, and what to change.
 
   svrngs
       Run for every group you are in. Leave it running.
@@ -368,6 +370,8 @@ pub enum Verb {
     Help,
     /// `guide`: the guide to building an app, as this build holds it.
     Guide,
+    /// `check`: what in the app at that folder the policy refuses.
+    Check(PathBuf),
 }
 
 /// What `--program` (and its older spelling, `--kind`) and `--reads` want,
@@ -626,6 +630,10 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         "update" => Ok(Verb::Update),
         "restart" => Ok(Verb::Restart),
         "guide" => Ok(Verb::Guide),
+        "check" => {
+            let dir = positional.ok_or("check wants an app's folder: `svrngs check <folder>`")?;
+            Ok(Verb::Check(dir.into()))
+        }
         "help" | "-h" | "--help" => Ok(Verb::Help),
         other => Err(format!("unknown command `{other}`")),
     }
@@ -699,6 +707,9 @@ pub enum Refusal {
     NotRunning,
     #[error("svrngs running here did not open your home page: {0}")]
     Unopened(String),
+    /// `check`'s findings, or the folder holding no page.
+    #[error("{0}")]
+    Unfit(String),
     #[error("the folder was refused: {0}")]
     Folder(String),
     #[error("cannot ask svrngs running here: no HTTP client ({0})")]
@@ -759,6 +770,7 @@ impl Refusal {
             | Refusal::NoAppAddress(_)
             | Refusal::Room(_)
             | Refusal::Folder(_)
+            | Refusal::Unfit(_)
             | Refusal::Removal(_)
             | Refusal::Meet(_)
             | Refusal::RelayForNobody
@@ -848,6 +860,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
     let said = match command {
         Verb::Help => format!("{USAGE}\n"),
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
+        Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => return relay::run(asked, &root).await,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at, print) => open(&root, at.as_deref(), print).await?,
@@ -956,6 +969,24 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
     };
     print!("{said}");
     Ok(())
+}
+
+/// `check`: what in the app at `dir` the policy every app's answer carries
+/// refuses, each by file and line, refused when anything is, so an agent's
+/// loop reads it by the exit code (svrn-docs
+/// `rings/current/EXTENSION_POINT.md` §7, G3).
+fn checked(dir: &Path) -> Result<String, Refusal> {
+    let shown = dir.display();
+    let none = format!("{shown} holds no index.html: an app is a folder with an index.html in it");
+    let found = svrngs_node::folder::check::check(dir).ok_or(Refusal::Unfit(none))?;
+    let said: Vec<_> = (found.iter())
+        .map(|(file, line, r)| format!("{file}:{line}: {}", r.words()))
+        .collect();
+    let fix = "this page asks for what apps can't load, so it won't work as it is";
+    match said.is_empty() {
+        true => Ok(format!("Nothing in {shown} that apps can't load.\n")),
+        false => Err(Refusal::Unfit(format!("{fix}:\n{}", said.join("\n")))),
+    }
 }
 
 /// `share --folder --group`, asked of the node running here
@@ -1729,6 +1760,7 @@ async fn serve(
         Verb::Room(names) => room(root, names).await?,
         Verb::Help
         | Verb::Guide
+        | Verb::Check(_)
         | Verb::Share(..)
         | Verb::Unshare(..)
         | Verb::Relay(_)

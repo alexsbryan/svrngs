@@ -304,6 +304,23 @@ impl Folders {
         Value::Array(out)
     }
 
+    /// What `svrngs check` finds in the app `kind` in a folder of `group`
+    /// here, in words for its card, so a page the policy blanks is told so
+    /// before anyone opens it (svrn-docs `rings/current/EXTENSION_POINT.md`
+    /// §6.3); none when it finds nothing, or no folder here holds its page.
+    pub(crate) fn checked(&self, group: &str, kind: &str) -> Option<String> {
+        let dirs = dirs_of(&self.data_dir, group).unwrap_or_default();
+        let mut apps = dirs.iter().map(|d| d.join("apps").join(kind));
+        let app = apps.find(|d| d.join("index.html").is_file());
+        let found = app
+            .as_deref()
+            .and_then(super::check::check)
+            .unwrap_or_default();
+        let words: BTreeSet<_> = found.iter().map(|(.., refused)| refused.words()).collect();
+        tracing::debug!(target: "folder", group, kind, ?app, found = found.len(), "carried: what svrngs check finds in the app's folder here, for its card");
+        (!words.is_empty()).then(|| words.into_iter().collect::<Vec<_>>().join(" "))
+    }
+
     /// `req`, asked at `path` of the app `lend` carried in `group` by the
     /// key `key` (the door's), the route it names `route`: refused unless
     /// that key stands in the group, else the route's answer or a file's;

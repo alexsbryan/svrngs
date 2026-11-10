@@ -31,6 +31,8 @@
  *   open it, in the owner's own `/lent` answer: `[]` paused, `null` legacy
  *   and needing selection (SCOPE_PARALLEL.md, owner `GET /lent`)
  * @property {string} [called] its lender, as `called` tells namesakes apart
+ * @property {string | null} [check] what `svrngs check` finds in a carried
+ *   app's folder here, in words for its card (surface.rs `lends`)
  */
 
 /**
@@ -137,7 +139,10 @@ export const agreed = (lend, shelf, group) => {
     // sentence for the app, or its own.
     const first = /** @type {string} */ (words[0]).toUpperCase();
     const may = reads.length > 0 ? 'read that, and never write it' : 'read and write that';
-    return `${first}${words.slice(1)} Opening it lets it ${may}, as you.${also}`;
+    // What its page asks that apps can't load, before anyone opens it
+    // (EXTENSION_POINT §6.3): else a blank page says nothing.
+    const told = lend.check ? ` ${lend.check}` : '';
+    return `${first}${words.slice(1)} Opening it lets it ${may}, as you.${also}${told}`;
   }
   return `Opening it lets it write its own part of ${group.name ?? 'your group'}’s record, as you.${also}`;
 };
@@ -467,17 +472,14 @@ export const deciders = (rows, me, here) => {
     .replace(/, ([^,]*)$/, ', and $1');
 };
 
-// How `lend` opens, `where`, and whether it is full now: the index's row
+// Whether `lend` is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).
 // A lend with no count of who is using it is not full: `undefined >=` is
 // false. Nor is one with no limit (`null` on the wire; never 0, lend.rs
 // `Offered::limit` is a `NonZeroU16`): none reaches `Infinity`.
 /**
  * @param {Lend} lend
- * @param {string} [where]
- * @returns {[string | undefined, 'full' | 'on']}
+ * @returns {'full' | 'on'}
  */
-export const opens = (lend, where) => [
-  where,
-  /** @type {number} */ (lend.using) >= (lend.limit ?? Infinity) ? 'full' : 'on',
-];
+export const opens = (lend) =>
+  /** @type {number} */ (lend.using) >= (lend.limit ?? Infinity) ? 'full' : 'on';
