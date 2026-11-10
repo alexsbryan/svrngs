@@ -757,14 +757,10 @@ pub(crate) async fn link(State(at): State<Asking>, Json(l): Json<Linking>) -> Re
     tracing::debug!(target: "home", group = l.group, online, "home: a link, once this computer's home relay is reached or waited for");
     match at.host.link(&l.group, l.device, None, l.visit) {
         Ok(made) => {
+            // A visit's link carries `visit=` past its `#`; any other, the `#` it has.
+            let mark = if l.visit.is_some() { "#visit=" } else { "#" };
             let https = made.page.map(|p| https_link(&p, &made.token));
-            let https = https.map(|h| {
-                if l.visit.is_some() {
-                    h.replacen('#', "#visit=", 1)
-                } else {
-                    h
-                }
-            });
+            let https = https.map(|h| h.replacen('#', mark, 1));
             let (client, device) = (client_link(&made.token), made.device);
             let made = serde_json::json!({ "client": client, "https": https, "device": device });
             Json(made).into_response()
