@@ -54,10 +54,7 @@ async function numbers(list, model) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ input, encoding_format: 'float' }),
     });
-    if (!res.ok)
-      throw new Error(
-        `${model.lender}’s ${model.kind} answered ${res.status}: ${await res.text()}`,
-      );
+    if (!res.ok) throw new Error(await refusal(res, model));
     const data = [...((await res.json()).data ?? [])].sort((a, b) => a.index - b.index);
     vectors.push(...data.map((d) => d.embedding));
   }
@@ -106,6 +103,20 @@ function draw(list, vectors) {
         return li;
       }),
     );
+}
+
+// What a refused send says to its person: svrngs's own words when it held
+// the line (its JSON `error`, which says what to do), else the service's
+// status and answer as given.
+async function refusal(res, model) {
+  const text = await res.text();
+  let said;
+  try {
+    said = JSON.parse(text).error;
+  } catch {
+    said = undefined;
+  }
+  return said ?? `${model.lender}’s ${model.kind} answered ${res.status}: ${text}`;
 }
 
 // What its person said yes to it reading, and sending to, each at its address.
