@@ -596,16 +596,23 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # of EXTENSION_POINT §10, js unchanged at 8,500. readers: key, a pasted key for a
 # program that takes one (+42 of ., +25 of js), after 2add1674, bbfeadbe and 59d67bd2;
 # . to 20,925, js to 8,490.
+# (2026-11-09) Each rung printed by a name a person reads (+3, this file is
+# counted), inside the operator's ceiling of 21,150: . to 20,928.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
-    ".": 20925,
+    ".": 20928,
 
     "js": 8490,
 
     "swift": 1,
 }
 CODE = {".rs", ".ts", ".py", ".sh"}
+# Each rung as a person reads it; the keys above stay paths, as this file's
+# history names them (the operator, 2026-11-09: "can we do better than
+# whatever `.` means?").
+LABEL = {"crates/svrngs-core": "the core (svrngs-core)", ".": "all code but JavaScript",
+         "js": "JavaScript", "swift": "Swift"}
 RUNG_KINDS = {"js": {".js", ".mjs"}, "swift": {".swift"}}
 
 
@@ -672,11 +679,12 @@ def main():
     core_lib = ROOT / "crates" / "svrngs-core" / "src" / "lib.rs"
     if core_lib.exists() and "#![cfg_attr(not(test), no_std)]" not in core_lib.read_text():
         broken.append("crates/svrngs-core/src/lib.rs lost #![cfg_attr(not(test), no_std)]: the core is no_std")
+    print("Lines of code, tests and apps/ not counted, and the most each may have:")
     for rung, cap in BUDGET.items():
         n = code_lines(ROOT, RUNG_KINDS[rung]) if rung in RUNG_KINDS else code_lines(ROOT / rung)
-        print(f"{rung:<20} {n:>6} / {cap} lines")
+        print(f"  {LABEL[rung]:<24} {n:>7,}   most {cap - 1:>7,}")
         if n >= cap:
-            broken.append(f"{rung} has {n} lines of code, budget {cap}: raised only by the operator, with the reason in the commit")
+            broken.append(f"{LABEL[rung]} has {n:,} lines of code, over the {cap - 1:,} it may have: raised only by the operator, with the reason in the commit")
     for b in broken: print(f"BROKEN  {b}")
     return 1 if broken else 0
 
