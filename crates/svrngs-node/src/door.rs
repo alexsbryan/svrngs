@@ -952,12 +952,9 @@ pub(crate) fn scheme_of(host: &str) -> &'static str {
 /// takes its base URL from `X-Forwarded-Host` and refuses every post whose
 /// `Origin` differs, and [`own_origin`] tells `Origin` as the service's own.
 fn tell_origin(headers: &mut HeaderMap, signs_in: bool) {
-    let (forwarded_host, forwarded_proto) = (
-        HeaderName::from_static("x-forwarded-host"),
-        HeaderName::from_static("x-forwarded-proto"),
-    );
-    headers.remove(&forwarded_host);
-    headers.remove(&forwarded_proto);
+    let (forwarded_host, forwarded_proto) = ("x-forwarded-host", "x-forwarded-proto");
+    headers.remove(forwarded_host);
+    headers.remove(forwarded_proto);
     let Some((value, host)) = (headers.get(header::HOST).filter(|_| signs_in))
         .and_then(|h| Some((h.clone(), h.to_str().ok()?.to_owned())))
     else {
