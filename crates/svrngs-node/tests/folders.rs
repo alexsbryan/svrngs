@@ -75,7 +75,9 @@ async fn ask(node: &Node, body: serde_json::Value) -> (u16, String) {
         .send()
         .await
         .unwrap();
-    (answer.status().as_u16(), answer.text().await.unwrap())
+    let (status, text) = (answer.status().as_u16(), answer.text().await.unwrap());
+    let read = serde_json::from_str::<(String, String)>(&text);
+    (status, read.map_or(text, |(text, _)| text))
 }
 
 // ── A folder synced both ways (sy-1, the mesh-Dropbox spike) ──────────
@@ -1395,7 +1397,9 @@ async fn put_blob(node: &Node, group: &str, keep: u64, bytes: &[u8]) -> (u16, St
         .send()
         .await
         .unwrap();
-    (answer.status().as_u16(), answer.text().await.unwrap())
+    let (status, text) = (answer.status().as_u16(), answer.text().await.unwrap());
+    let read = serde_json::from_str::<(String, String)>(&text);
+    (status, read.map_or(text, |(text, _)| text))
 }
 
 /// `node`'s `GET /v1/blob/<hash>` in `group`: its status, the holder its
@@ -1644,8 +1648,8 @@ async fn a_leave_stops_the_group_reaching_them_and_keeps_what_they_hold() {
 // ── A group's own programs/<word>.txt, read through its record (row 12) ──
 
 /// What `node` answers `svrngs share`'s ask for `films`'s
-/// `programs/<word>.txt` (`/v1/programs`): its status and its text.
-async fn programs(node: &Node, word: &str) -> (u16, String) {
+/// `programs/<word>.txt` (`/v1/programs`): its status and its body.
+async fn programs_said(node: &Node, word: &str) -> (u16, String) {
     let answer = http()
         .post(format!(
             "http://{}{}",
@@ -1658,6 +1662,14 @@ async fn programs(node: &Node, word: &str) -> (u16, String) {
         .await
         .unwrap();
     (answer.status().as_u16(), answer.text().await.unwrap())
+}
+
+/// [`programs_said`], the file's text alone where it answers the text and
+/// who wrote it.
+async fn programs(node: &Node, word: &str) -> (u16, String) {
+    let (status, said) = programs_said(node, word).await;
+    let read = serde_json::from_str::<(String, String)>(&said);
+    (status, read.map_or(said, |(text, _)| text))
 }
 
 /// Up to 30 s of rounds until `node`'s answer for `word` is `status` with
@@ -1705,6 +1717,9 @@ async fn a_group_s_programs_file_is_read_through_its_record_or_refused() {
         answers(&group, &group.ana, "notes", 200, notes).await,
         "Ben's file, read on Ana's computer"
     );
+    let (_, said) = programs_said(&group.ana, "notes").await;
+    let said: serde_json::Value = serde_json::from_str(&said).unwrap();
+    assert_eq!(said, serde_json::json!([notes, "ben"]), "and who wrote it");
     std::fs::write(ben.join("programs/notes.txt"), "- notes opens: /admin\n").unwrap();
     assert!(
         answers(

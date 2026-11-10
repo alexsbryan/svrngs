@@ -201,7 +201,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
         accounts: None,
         client: None,
         issuer: None,
-        terms: Some(""),
+        terms: Some(Default::default()),
     }
     .to_string()];
 
@@ -330,7 +330,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
         accounts: None,
         client: None,
         issuer: None,
-        terms: Some(""),
+        terms: Some(Default::default()),
     }
     .to_string();
 
@@ -555,7 +555,7 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
         accounts: None,
         client: None,
         issuer: None,
-        terms: Some(""),
+        terms: Some(Default::default()),
     };
     assert!(said.to_string().contains(words), "{said}");
     cli::unshare(dir.path(), &name, &[]).unwrap();
@@ -1368,13 +1368,17 @@ fn until_read(dir: &Path, group: &str, word: &str, text: &str) {
 /// `programs/kokoro.txt` in Lab's folder; once svrngs reads it through
 /// Lab's record, `share --program kokoro` keeps back `/admin`, saying
 /// Lab's file keeps it, beside the paths svrngs ships for kokoro; the lend's
-/// own file holds it, so the door needs no file of the group's. A file
+/// own file holds it, so the door needs no file of the group's. Lab's
+/// `programs/tea.txt` says how tea's lender makes each person an account,
+/// and `share` says it as Sam's words, in Lab's file (CONTRACTS §2:
+/// `accounts:` and `header:` are shown with who wrote them). A file
 /// outside the closed set is refused, its line and group named, and nothing
 /// lent; Lab and Trip each with a different `programs/notes.txt` refuse a
 /// lend to both, naming them. Planted, each watched failing: `share`
 /// asking no terms of svrngs running here (`terms_of` never called: no
 /// `/admin` line, the bad file lent); and `terms_of` without its
-/// comparison of groups (lent to both under Lab's terms).
+/// comparison of groups (lent to both under Lab's terms); and who wrote the
+/// file left out of what `share` says (tea's words said as svrngs's own).
 #[cfg(unix)]
 #[test]
 fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
@@ -1394,7 +1398,7 @@ fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
         let _ = made.child.kill();
         let _ = made.ends();
     }
-    let ports: Vec<_> = (0..4)
+    let ports: Vec<_> = (0..5)
         .map(|_| std::net::TcpListener::bind("127.0.0.1:0").unwrap())
         .collect();
     let port = |i: usize| ports[i].local_addr().unwrap().port().to_string();
@@ -1453,6 +1457,19 @@ fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
     );
     let lent = std::fs::read_to_string(dir.path().join("lends/kokoro.json")).unwrap();
     assert!(lent.contains("/admin") && lent.contains("/docs"), "{lent}");
+
+    std::fs::write(
+        lab.join("tea.txt"),
+        "- tea accounts: Settings, People, Add for each person\n",
+    )
+    .unwrap();
+    until_read(dir.path(), &ids["Lab"], "tea", "Add for each person");
+    let (code, said) = share("tea", &[&port(4), "--program", "tea", "--group", "Lab"]);
+    assert_eq!(code, 0, "{said:?}");
+    assert!(
+        said.iter().any(|l| l == "tea asks each person to sign in once, with an account you make them. In tea, as Sam wrote in Lab's programs/tea.txt: Settings, People, Add for each person. Then tell each person theirs."),
+        "{said:?}"
+    );
 
     std::fs::write(lab.join("kokoro.txt"), "- kokoro opens: /admin\n").unwrap();
     until_read(dir.path(), &ids["Lab"], "kokoro", "is no term");

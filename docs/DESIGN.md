@@ -1094,7 +1094,9 @@ through the group's record, never the disk, and refuses it by name when it
 is still being fetched, has two copies in conflict, was written by someone
 no longer in the group, or says anything the door can't enforce
 (`share::fits`); two groups a lend goes to must say the same. For a word
-svrngs ships, a group's file may only add `keeps:`. The lend copies what is
+svrngs ships, a group's file may only add `keeps:`. Its `accounts:` and
+`header:` are advice, not terms, and `share` says them as the words of the
+member who wrote the file, in that group. The lend copies what is
 kept, so its door reads its own file alone, and a changed `programs/` file
 changes nothing until it is lent again. With svrngs stopped, `share` keeps
 what ships and says so.

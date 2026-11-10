@@ -785,7 +785,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                     None
                 }
             };
-            let theirs = terms.unwrap_or_default();
+            let theirs = terms.as_ref().map_or("", |(t, _)| *t);
             let mut lend = share::lend_of(&asked, share::listens, known, theirs)?;
             let accounts = share::accounts_of(&lend.kind, theirs);
             let client = asked.sign_in.then(svrngs_node::oidc::client).transpose()?;
@@ -1189,8 +1189,9 @@ pub enum Said {
         /// The issuer that client names, when it has one.
         issuer: Option<String>,
         /// Its groups' own terms for its program, as read ([`terms_of`]),
-        /// empty for none; none when svrngs was not running to read them.
-        terms: Option<Terms>,
+        /// empty for none, and who wrote them where; none when svrngs was
+        /// not running to read them.
+        terms: Option<Read>,
     },
     /// `unshare`: no longer lent.
     Unshared(LendName),
@@ -1304,7 +1305,10 @@ impl std::fmt::Display for Said {
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
                 }
-                let (theirs, kind) = (terms.unwrap_or_default(), &lend.kind);
+                let ((theirs, by), kind) = (terms.clone().unwrap_or_default(), &lend.kind);
+                // How its people sign in, in the words of who wrote the group's file.
+                let shipped = share::accounts_of(kind, "");
+                let by = Some(by).filter(|_| *accounts != shipped).unwrap_or_default();
                 let unknown = raw.is_empty() && theirs.is_empty();
                 if let Some(told) = share::unrecognized(&lend.kind).filter(|_| unknown) {
                     writeln!(f, "{told}")?;
@@ -1315,12 +1319,12 @@ impl std::fmt::Display for Said {
                 match accounts {
                     Some(share::Signs::Accounts(how)) => writeln!(
                         f,
-                        "{} asks each person to sign in once, with an account you make them. In {}: {how}. Then tell each person theirs.",
+                        "{} asks each person to sign in once, with an account you make them. In {}{by}: {how}. Then tell each person theirs.",
                         lend.name, lend.kind
                     )?,
                     Some(share::Signs::Header(what)) => writeln!(
                         f,
-                        "{} signs each person in as themselves, with nothing typed, once it takes them from svrngs: in {}, {what}.",
+                        "{} signs each person in as themselves, with nothing typed, once it takes them from svrngs: in {}{by}, {what}.",
                         lend.name, lend.kind
                     )?,
                     None => {}
@@ -1535,30 +1539,43 @@ async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Res
 /// The terms the groups named `groups` hold for `kind` in their own
 /// `programs/<kind>.txt`, asked of svrngs running here, which reads each
 /// through its group's record (CONTRACTS §2), each held to what a file may
-/// say ([`share::fits`]); empty for none. Refused, never read as no terms,
+/// say ([`share::fits`]); empty for none; and who wrote them where, as its
+/// lender is told it beside their words (CONTRACTS §2: `accounts:` and
+/// `header:` are that person's). Refused, never read as no terms,
 /// when one can't be read or doesn't hold, or two groups say different
 /// things. Kept for the life of this command, as the terms svrngs ships are.
-async fn terms_of(root: &Path, kind: &Program, groups: &[String]) -> Result<Terms, Refusal> {
-    let mut found: Vec<(&String, String)> = Vec::new();
+async fn terms_of(root: &Path, kind: &Program, groups: &[String]) -> Result<Read, Refusal> {
+    let mut found: Vec<(&String, String, String)> = Vec::new();
     for name in groups {
         let group = group_named(root, name)?.id();
         let (ok, text) = ask_running(root, PROGRAMS_ROUTE, &(group, kind)).await?;
         tracing::debug!(target: "cli", group = name, %kind, ok, text, "cli: share — a group's own terms for the program, read through its record, or why not");
-        match (ok, text.is_empty()) {
-            (true, true) => {}
-            (true, false) => found.push((name, text)),
-            (false, true) => return Err(Refusal::Older),
-            (false, false) => return Err(Refusal::Terms(format!("In {name}, {text}"))),
+        // The text and who wrote it; an older svrngs answers the text alone.
+        match (ok, serde_json::from_str::<(String, String)>(&text).ok()) {
+            (true, Some((text, _))) if text.is_empty() => {}
+            (true, Some((text, by))) => found.push((name, text, by)),
+            (false, _) if !text.is_empty() => Err(Refusal::Terms(format!("In {name}, {text}")))?,
+            _ => Err(Refusal::Older)?,
         }
     }
     let rows = |text| share::rows_in(text).flatten();
-    let differs = found.iter().find(|(_, t)| !rows(t).eq(rows(&found[0].1)));
-    if let (Some((a, _)), Some((b, _))) = (found.first(), differs) {
+    let differs = (found.iter()).find(|(_, t, _)| !rows(t).eq(rows(&found[0].1)));
+    if let (Some((a, ..)), Some((b, ..))) = (found.first(), differs) {
         tracing::debug!(target: "cli", %kind, "cli: share — refused, its groups' own terms differ");
         return Err(Refusal::Terms(format!("{a} and {b} say different things in programs/{kind}.txt, so svrngs can't tell which to keep: make them the same, or share to one of them at a time.")));
     }
-    Ok(found.into_iter().next().map_or("", |(_, text)| text.leak()))
+    let Some((name, text, by)) = found.into_iter().next() else {
+        return Ok(Default::default());
+    };
+    Ok((
+        text.leak(),
+        format!(", as {by} wrote in {name}'s programs/{kind}.txt"),
+    ))
 }
+
+/// A group's own terms ([`terms_of`]), and who wrote them where, as its
+/// lender is told it after their `accounts:` or `header:` words.
+type Read = (Terms, String);
 
 /// `svrngs share`'s write: `lend` declared in the data dir at `root`, with
 /// `secret` sent as [`lend::SECRET_HEADER`], or none.

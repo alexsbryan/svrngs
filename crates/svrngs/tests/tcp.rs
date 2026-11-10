@@ -206,7 +206,7 @@ async fn share_tcp_lends_a_port_and_a_member_s_bytes_come_back() {
         accounts: None,
         client: None,
         issuer: None,
-        terms: Some(""),
+        terms: Some(Default::default()),
     };
     let said = said.to_string();
     assert!(
