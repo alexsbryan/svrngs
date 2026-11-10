@@ -85,6 +85,13 @@ const changing = (state, effect) => {
   return go(state, { change: 'changing' }, {}, effect);
 };
 
+// The lend changed `to` what the person asked, unless one is under way.
+/**
+ * @param {State} state
+ * @param {To} to
+ */
+const change = (state, to) => changing(state, { run: 'change', to, failed: 'refused' });
+
 /**
  * @param {string} lend
  * @param {HOME.PlaceProps['home']} home
@@ -112,23 +119,15 @@ export const CHANGE = (lend, home) => ({
       case 'choose':
         return go(state, {}, { groups: chosen(state.groups, message) });
       case 'audience':
-        return changing(state, {
-          run: 'change',
-          to: { groups: state.groups },
-          failed: 'refused',
-        });
+        return change(state, { groups: state.groups });
       case 'change':
-        return changing(state, { run: 'change', to: message.to, failed: 'refused' });
+        return change(state, message.to);
       case 'sign':
         return changing(state, { run: 'sign', failed: 'refused' });
       case 'many':
         if (!/^[1-9][0-9]*$/.test(message.value))
           return go(state, { change: 'refused' }, { said: ' Say how many: 1 or more.' });
-        return changing(state, {
-          run: 'change',
-          to: { limit: Number(message.value) },
-          failed: 'refused',
-        });
+        return change(state, { limit: Number(message.value) });
       case 'changed':
         return go(state, { change: 'idle' }, CLEARED);
       case 'signed':
