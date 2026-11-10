@@ -437,7 +437,12 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
     let dir = &at.door.data_dir;
     let to = kind_of(&c.to);
     let done = match c.to {
-        LendChange::Limit(limit) => lend::limit(dir, &c.lend, limit),
+        // Its limit, through `mutate` like every change, so it never
+        // restores an audience another narrowed (LENDING_SCOPE).
+        LendChange::Limit(limit) => lend::mutate(dir, &c.lend, |lend| {
+            tracing::debug!(target: "lend", lend = %c.lend, was = ?lend.limit, now = ?limit, "lend: its limit changed");
+            lend.limit = limit;
+        }),
         LendChange::Groups(groups) => match chosen(&at, &groups) {
             Ok(()) => lend::set_audience(dir, &c.lend, groups),
             Err(refused) => {

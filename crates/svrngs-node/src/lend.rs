@@ -756,24 +756,6 @@ pub fn declare(
     Ok(())
 }
 
-/// Let in `limit` people at once to the lend `name`, none for everyone in
-/// its selected groups (bash-limit; the home page's `/lent`): its
-/// declaration rewritten whole, its secret and choices kept, so the door
-/// takes it at its next request. `false` when this computer lends nothing
-/// by that name. Serialized with every other change through [`mutate`], so
-/// a limit edit never restores an audience another narrowed (LENDING_SCOPE
-/// §"Updates, migration and mixed versions").
-pub fn limit(
-    data_dir: &Path,
-    name: &LendName,
-    limit: Option<NonZeroU16>,
-) -> Result<bool, LendError> {
-    mutate(data_dir, name, |lend| {
-        tracing::debug!(target: "lend", lend = %name, was = ?lend.limit, now = ?limit, "lend: its limit changed");
-        lend.limit = limit;
-    })
-}
-
 /// Change the lend `name` in place: read it, let `edit` rewrite it, write it
 /// whole — the whole read/modify/write held under one per-lend lock, so a
 /// change never loses another's (LENDING_SCOPE). `false` when this computer

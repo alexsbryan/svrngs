@@ -334,7 +334,10 @@ fn an_audience_edit_keeps_the_rest_and_a_limit_edit_keeps_the_audience() {
     let bytes_before = std::fs::read_to_string(&file).unwrap();
     assert!(bytes_before.contains("trip"), "the audience is written");
 
-    limit(root.path(), &jellyfin.name, NonZeroU16::new(5)).unwrap();
+    mutate(root.path(), &jellyfin.name, |l| {
+        l.limit = NonZeroU16::new(5)
+    })
+    .unwrap();
     let after_limit = read(root.path(), &jellyfin.name).unwrap().unwrap();
     assert_eq!(
         after_limit.audience,
