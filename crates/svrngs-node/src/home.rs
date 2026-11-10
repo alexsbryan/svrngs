@@ -433,10 +433,8 @@ async fn lent(State(at): State<Asking>) -> Response {
         };
         let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
         let key = share::key_of(&l.kind, &terms).is_some();
-        let (signs, shipped) = (
-            share::accounts_of(&l.kind, &terms),
-            share::accounts_of(&l.kind, ""),
-        );
+        let signs = share::accounts_of(&l.kind, &terms);
+        let shipped = share::accounts_of(&l.kind, "");
         // Said as who wrote them only where they are not what svrngs ships.
         let by = Some(by).filter(|_| signs != shipped).unwrap_or_default();
         let said = serde_json::json!({ "kept": kept, "signs": signs, "key": key, "by": by });
@@ -539,18 +537,14 @@ fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
         LendRefusal::fault("this computer cannot read which groups it holds")
     })?;
     let stands = |id: &String| crate::door::stands_here(&at.door.rail, id);
-    match groups.iter().find(|id| !held.contains(id) || !stands(id)) {
-        None => Ok(()),
-        Some(unknown) => {
-            tracing::debug!(target: "home", group = unknown, "home: refused — an audience names a group not held here, or one this computer does not stand in");
-            Err(LendRefusal::Closed.say(
-                StatusCode::BAD_REQUEST,
-                format!(
-                    "{unknown} is not a group you are in on this computer: choose one of the groups shown."
-                ),
-            ))
-        }
-    }
+    let Some(unknown) = groups.iter().find(|id| !held.contains(id) || !stands(id)) else {
+        return Ok(());
+    };
+    tracing::debug!(target: "home", group = unknown, "home: refused — an audience names a group not held here, or one this computer does not stand in");
+    let words = format!(
+        "{unknown} is not a group you are in on this computer: choose one of the groups shown."
+    );
+    Err(LendRefusal::Closed.say(StatusCode::BAD_REQUEST, words))
 }
 
 /// `POST /lent` with `to: "sign-in"`: a client id and secret for `name`,
@@ -727,12 +721,8 @@ async fn lend_one(
     // selection is refused, never defaulted to all groups; every ID is
     // checked against the groups this computer holds. A present empty list
     // is a deliberate pause.
-    let Some(groups) = groups else {
-        return Err(refused(
-            "Choose which groups can open this first.",
-            &"no selection",
-        ));
-    };
+    let groups = groups
+        .ok_or_else(|| refused("Choose which groups can open this first.", &"no selection"))?;
     chosen(&at, &groups)?;
     let asked = Share {
         port,
@@ -1065,11 +1055,8 @@ async fn at_door(
         Err(refused) => return refused,
     };
     let method = body.as_ref().map_or(Method::GET, |_| Method::POST);
-    let ask = pass
-        .into_iter()
-        .fold(axum::http::Request::builder(), |a, p| {
-            a.header(PASS_HEADER, p)
-        });
+    let ask = axum::http::Request::builder();
+    let ask = (pass.into_iter()).fold(ask, |a, p| a.header(PASS_HEADER, p));
     let ask = ask.method(method).uri(format!("/choices/{lend}"));
     let ask = ask.header(header::CONTENT_TYPE, "application/json");
     let answer = match ask.body(body.map_or_else(Default::default, |b| b.to_string().into())) {

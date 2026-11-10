@@ -619,11 +619,8 @@ impl Host {
         let meeting = theirs
             .map(|(ns, _)| self.meeting(ns))
             .reduce(Meeting::join)?;
-        Some(Contact::named(
-            actor_key(actor)?,
-            &meeting,
-            relay_of(&groups, actor),
-        ))
+        let key = actor_key(actor)?;
+        Some(Contact::named(key, &meeting, relay_of(&groups, actor)))
     }
 
     /// Where this computer's browser opens the lend `offered` of the
@@ -640,15 +637,11 @@ impl Host {
     /// round offers it to nobody.
     pub(crate) async fn members(&self) -> Option<Vec<OnlinePeer>> {
         let peers = self.standing_peers(&self.standings()?);
-        Some(
-            peers
-                .into_iter()
-                .map(|(actor, n, contact)| OnlinePeer {
-                    name: format!("{}/{}", n.person, &actor[..8]),
-                    contact,
-                })
-                .collect(),
-        )
+        let peers = peers.into_iter().map(|(actor, n, contact)| OnlinePeer {
+            name: format!("{}/{}", n.person, &actor[..8]),
+            contact,
+        });
+        Some(peers.collect())
     }
 
     /// Every group this node holds, with who stands in it; or `None` when
@@ -677,11 +670,9 @@ impl Host {
     /// Groups that cannot be listed are svrngs's refusal, never no group
     /// (ralph/REVIEW_FINDINGS.md #103).
     pub(crate) fn shared_with(&self, actor: &str) -> Result<(Groups, Option<Person>), Response> {
-        let Some(mut groups) = self.standings() else {
-            return Err(crate::door::LendRefusal::fault(
-                "the groups this computer is in cannot be read on it",
-            ));
-        };
+        let mut groups = self.standings().ok_or_else(|| {
+            crate::door::LendRefusal::fault("the groups this computer is in cannot be read on it")
+        })?;
         groups.retain(|(_, standing)| standing.contains_key(actor));
         let own = groups
             .iter()

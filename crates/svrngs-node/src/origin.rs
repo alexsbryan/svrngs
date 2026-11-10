@@ -493,11 +493,8 @@ pub(crate) async fn reach(
         let answer = door::lend_for(door, Who::Own(app), None, Request::from_parts(parts, body));
         return appended(at, &label, &Serving::Own, answer.await?, appending).await;
     };
-    let Some(pass) = own_pass(at, &app, &label) else {
-        return Err(LendRefusal::fault(
-            "this computer could not say which app asks",
-        ));
-    };
+    let pass = own_pass(at, &app, &label)
+        .ok_or_else(|| LendRefusal::fault("this computer could not say which app asks"))?;
     req.headers_mut().insert(PASS_HEADER, pass);
     tracing::debug!(target: "origin", %label, %app, lender, "origin: another computer's lend, through the dial to its door, the app in this computer's own pass");
     let answer = carried(at, req, &contact, &target, label.as_str()).await;
