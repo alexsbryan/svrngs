@@ -40,7 +40,7 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt, BufReader};
 /// Sam's shelf as the phone's page offers it, its open and the line beside
 /// it: a port lend writes as the person opening it, said beside its open
 /// (svrngs-node home/question.js `named`, `agreed`).
-const SHELF: &str = "Sam’s shelf It writes what you say there into house’s record, as you.";
+const SHELF: &str = "Sam’s shelf Opening it lets it write its own part of house’s record, as you.";
 
 /// A service on 127.0.0.1 answering every request `200 hi`.
 async fn service() -> u16 {
@@ -305,7 +305,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     // 5c6e3b0d left it, its heading naming the maker (`in_house` above).
     assert_eq!(
         first["look"],
-        "Sam’s shelf Bring more to house What acts as you You’re in house, as Pia It writes what you say",
+        "Sam’s shelf Bring more to house What acts as you You’re in house, as Pia Opening it lets it write",
         "{seen:#}"
     );
 

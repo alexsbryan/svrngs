@@ -1501,7 +1501,7 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
 
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
     assert_eq!(
-        seen["words"], "ada’s page (k) Reads cy’s k. They can see it’s you, and what it asks for. It writes what you say there into house’s record, as you.",
+        seen["words"], "ada’s page (k) Reads cy’s k. They can see it’s you, and what it asks for. Opening it lets it write its own part of house’s record, as you.",
         "the phone's open is its yes, and what it does is said beside it (capability-open):\n{seen:#}"
     );
     let told = &seen["told"];
@@ -3697,7 +3697,7 @@ async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
     assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
     assert_eq!(
         seen["all"][0],
-        "Open ada’s shelf (k) It writes what you say there into your group’s record, as you.",
+        "Open ada’s shelf (k) Opening it lets it write its own part of your group’s record, as you.",
         "{seen:#}"
     );
     // The WiFi and the address for a program are below the group's
@@ -4103,7 +4103,7 @@ async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
     let index = seen["index"][0][0].as_str().unwrap_or_default();
     let (row, kept) = index.split_once(" http://").unwrap_or((index, ""));
     assert_eq!(
-        row, "cy’s shelf (k) It writes what you say there into house’s record, as you.",
+        row, "cy’s shelf (k) Opening it lets it write its own part of house’s record, as you.",
         "{seen:#}"
     );
     // A phone keeps the group's page on its Home Screen, so no row of

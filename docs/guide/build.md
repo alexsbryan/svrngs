@@ -1,21 +1,252 @@
 # Build an app for your group
 
-If it runs on localhost, your group can use it. This page is for developers:
-what svrngs hands your app, the two shapes an app can take, and a small
-working example of each. [`docs/DESIGN.md`](../DESIGN.md) §3, "What an app
-gets", is the whole surface; this page is the part you need first.
+An app for your group is a folder with an `index.html` in it, inside your
+group's folder: `~/svrngs/<group>/apps/<name>/index.html`. Save it, and
+within seconds it's on the home page and the phone of everyone in the group,
+and it opens while any of their computers is on. It's plain HTML and
+JavaScript: no build step, no SDK, no login. Your page reads and writes the
+group's entries with `fetch`, and svrngs signs each one as the person using
+it.
 
-On this page: [what your app gets](#what-your-app-gets) ·
-[a lent server](#shape-one-lend-a-server-on-a-port) ·
-[a carried folder](#shape-two-a-folder-the-group-carries) ·
-[asking for a yes](#ask-for-a-yes-before-another-app-uses-yours) ·
-[sign in with svrngs](#sign-people-in-with-svrngs-openid-connect) ·
-[svrngs's answers](#telling-svrngss-answer-from-your-apps) ·
+Everything you put in the group's folder goes to every member's computer and
+stays in the group's record for good, even once you delete it. That includes
+code you're trying out, and anything you meant to keep to yourself. So try
+things in a group of your own first: `svrngs new <name>` makes one, with its
+folder at `~/svrngs/<name>`, and you can bring the finished app to your real
+group after.
+
+On this page: [a guestbook](#a-guestbook) ·
+[what `svrngs/acts` gives you](#what-svrngsacts-gives-you) ·
+[read your friends' apps](#read-your-friends-apps) ·
+[rules for a folder app](#rules-for-a-folder-app) ·
+[the reference](#the-reference) ·
+[or lend a server on a port](#or-lend-a-server-on-a-port) ·
 [apps to copy](#copy-one-to-start).
+
+## A guestbook
+
+Here's a guestbook. `~/svrngs/Elm/apps/guestbook/index.html`:
+
+```html
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guestbook</title>
+<script type="module" src="index.js"></script>
+</head>
+<body>
+<h1>Guestbook</h1>
+<ul id="list"></ul>
+<p><input id="words"> <button id="sign">Sign it</button></p>
+<p id="said"></p>
+</body>
+</html>
+```
+
+And `index.js` beside it:
+
+```js
+// A guestbook the group carries: each note is one of this app's acts.
+const ACTS = 'svrngs/acts';
+const $ = (id) => document.getElementById(id);
+const say = (words) => { $('said').textContent = words; };
+
+async function show() {
+  const r = await fetch(ACTS);
+  const read = await r.json().catch(() => ({}));
+  if (!r.ok) return say(`Can't read the guestbook: ${read.error ?? r.status}`);
+  const notes = read.ops.filter((o) => o.payload?.kind === 'note' && !o.voided);
+  $('list').replaceChildren(...notes.map((o) => {
+    const li = document.createElement('li');
+    li.textContent = `${o.person}: ${o.payload.words}`;
+    return li;
+  }));
+}
+
+$('sign').onclick = async () => {
+  const words = $('words').value.trim();
+  if (!words) return;
+  const body = JSON.stringify({ op: { kind: 'note', words } });
+  const w = await fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
+  if (!w.ok) return say(`Not saved: ${(await w.json().catch(() => ({}))).error ?? w.status}`);
+  $('words').value = '';
+  say('');
+  show();
+};
+
+show();
+setInterval(show, 5000);
+```
+
+Save both, and within seconds **guestbook** appears in the group's list on
+everyone's home page and phone (a `-` in the folder name shows as a space).
+Opening it shows each note with the name of whoever wrote it: svrngs says who
+is asking, so the page needs no name field and nobody can sign as someone
+else.
+
+## What `svrngs/acts` gives you
+
+Your page asks `svrngs/acts`, at its own address.
+
+- **`GET`** answers your app's own entries as `ops`, with `kind` as you
+  wrote it, plus `you` and `you_key` (who's asking), `group`, `people`
+  (names), and `spans` (each person's time in the group: `person`,
+  `person_key`, `joined`, `left`; null while svrngs is still settling who's
+  in). Each entry has `id`, `ts_unix`, `person`, `person_key`, `payload`
+  and `voided`. It answers every entry each time, so fold them all on each
+  read. Key on `you_key` and `person_key`, show `person`: two people can
+  share a name.
+- **`POST {"op": {...}}`** writes one entry as the person, signed on their
+  own computer or phone. `op` needs a `kind`. Every member sees each entry,
+  and keeps it for good: a correction or a void is one more entry, and the
+  first stays. So send your test entries in a group of your own
+  (`svrngs new <name>`), never in the group you share with friends.
+- **`POST {"corrects": "<id>", "op": {...}}`** replaces one of your app's
+  entries; `"op": null` voids it.
+
+An entry is at most 64 KiB, and an app writes up to 200 entries as one
+person at once, then one every 18 seconds, voids included, counted from the
+record. Past that, `POST` answers 429 with `x-svrngs-refused: limit`, a
+`Retry-After` in seconds, and words that say the limit; your app writes
+again after that wait. The fastest we've recorded a person using an app is
+20 entries in a minute, so only a loop reaches it, and that's what it's for:
+every member keeps every entry for good.
+
+## Read your friends' apps
+
+A carried app can read what your friends lend, such as their Jellyfin or
+their llama-server. Name each program it reads in `reads.txt`, beside
+`index.html`, apart by spaces or lines:
+
+```
+jellyfin
+llama-server
+```
+
+Every program you lend has a name: `jellyfin`, `immich`, or whatever you call
+your own. Apps find your program by that name, so type its real name, or the
+name of the one it works like.
+
+Your page can only connect to its own address, so it reaches each lend
+there. `GET svrngs-reads` lists the lends of those programs in your group, each
+with its `kind`, `name`, `lender` and `address`, like
+`http://<your app>.localhost:<port>/svrngs-lend/<label>/`. Add the lend's
+own path after it:
+
+```js
+const { lends } = await (await fetch('svrngs-reads')).json();
+const films = lends.find((l) => l.kind === 'jellyfin');
+const items = await (await fetch(`${films.address}Items?Recursive=true`)).json();
+```
+
+- **Each person says yes first.** The line beside your app's open says what
+  it reads: *"Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what
+  it asks for."* Each lend can be unticked. Opening it there is the yes, for
+  the lends it named. Before it, and after its Stop, svrngs refuses with
+  `x-svrngs-refused: unasked`.
+- **Only what you named, in your group.** Another program, or a lend in
+  another group, is refused with `closed`.
+- **A new lend waits for the next open.** A friend's new library, or a
+  version that names another program, is refused `unasked` until the person opens
+  your app from their home page, where the line says it's new. Until then
+  `GET svrngs-reads` lists it under `new`, with its `kind`, `name` and
+  `lender` and no address, so your page can say *"Bo's films are new. Open
+  Movie Night from your home page to search them."* `new` is there only when
+  something is new, and a phone never has it.
+- **It only reads.** `GET` and `HEAD` go through, with the page's `Accept` and
+  no other header, under the lender's readers' account if they keep one
+  (`svrngs share --readers`) and with no credential of the lender's if not.
+  Anything else is refused `closed`.
+- **Reading or writing the record, not both.** Once someone has said yes to
+  your app reading lends, a `POST` to `svrngs/acts` is refused for them, even
+  after a Stop or in a later version. An app that writes to the record reads no
+  lends.
+- **About ten times a second.** Your app reads each lend up to 600 times at
+  once as one person, then 10 a second. Past that, svrngs answers 429 with
+  `x-svrngs-refused: limit`, a `Retry-After` in seconds, and words that say
+  why. Movie Night reads each library once a search, so only a loop or a
+  timer reaches it, and that's what it's for: a friend's computer answers
+  every read.
+- **Data only.** Your page gets `application/json`, `text/plain`, or a JPEG,
+  PNG or WebP image, with its status and none of the lend's
+  other headers. Any other type is refused `closed`.
+
+If `reads.txt` names a word that isn't a program's name (letters, digits, `-` and `_`),
+your app is left off the list until it's fixed.
+
+## Rules for a folder app
+
+- **Load nothing from elsewhere.** Every answer carries a policy that lets
+  the page load from and connect to its own address only: no CDN, no
+  inline `<script>` (inline styles are fine), no camera, microphone or
+  location. Put every script in a file beside `index.html`.
+- **Your app reads and corrects only its own entries.** Correcting another
+  app's is refused: *"an app corrects only its own acts"*. Within your app,
+  `voided` is set whoever made the correction; Money and Events count a
+  correction only from the entry's own author (`voids` in `expenses.js`).
+- **New versions wait for each person's yes.** Once brought, a change to
+  the files runs for nobody until they press **Open the new version**.
+  Test on a copy before you change the one your group uses.
+- **Check what the record will accept before you send it**, as Money and
+  Events do: each entry stays in the group's record for good, and a
+  correction counts only from the person who wrote the entry.
+
+## The reference
+
+This is everything an app in a folder can ask of svrngs. It only grows: a
+call here never changes or goes away, since each person's copy of your app
+runs as they accepted it.
+
+| Call | Gives | Refused with |
+|---|---|---|
+| Files beside `index.html` | Each file, as the version this person accepted | the browser, for anything from another server or written inside the page |
+| `GET svrngs/acts` | This app's entries, and `you`, `you_key`, `group`, `people`, `spans`, `page` | `closed` outside the group |
+| `POST svrngs/acts` | One entry, signed as the person: `{op}`, or `{corrects, op}` for one of its own | `closed` for a reader or another app's entry; `limit` past the count; `path` for anything else |
+| `GET svrngs-reads` | The lends this person said yes to: `kind`, `name`, `lender`, `address`, `stop`; `new`, `unanswered` | `closed`, `unlent`, `away` |
+| `GET svrngs-lend/<label>/<path>` | That lend's answer at that path, rebuilt: JSON, plain text, JPEG, PNG or WebP | `unasked`, `stopped`, `closed`, `away`, `limit` |
+| `POST svrngs-reads/<label>/svrngs-stop` | This person's yes to that lend taken back, as Stop on their home page does | `closed` |
+| `GET svrngs-to?lender=&lend=` | One lend of this group, opened; with `whether`, only whether it opens | 404 |
+
+The limits:
+
+| Limit | Most |
+|---|---|
+| One entry | 64 KiB |
+| Entries an app writes as one person | 200 entries at once, then one every 18 seconds |
+| Reads of one lend by an app as one person | 600 reads at once, then 10 a second |
+
+When svrngs answers in your app's place, its answer carries
+`x-svrngs-refused`, one of these words, and your app's own answers never do.
+A program gets JSON, `{"error": "...", "kind": "..."}`, the words in `error`;
+a browser tab gets a page of the words.
+
+| Word | What happened | What to do |
+|---|---|---|
+| `away` | The lending computer, or the service on it, didn't answer | Try again later; say whose computer is off |
+| `pass` | What a phone showed doesn't open the lend now | Open it again from the group's page |
+| `closed` | Not open to this person, or not from where it asks | Ask only your app's own address, as someone in the group |
+| `unlent` | Nothing is lent by that name | Read `svrngs-reads` again for what's lent now |
+| `path` | A path the lend keeps back, or a request svrngs can't read | Ask another path, or send `{op}` or `{corrects, op}` |
+| `full` | As many people as the lend allows are using it | Try again when someone stops |
+| `fault` | The computer answering can't read its own copy | Try again later; its person sees why with `RUST_LOG=debug` |
+| `unasked` | This person hasn't said yes to your app using the lend | Send them to open your app from their home page |
+| `stopped` | This person stopped your app using the lend | Say so; they can say yes again from their home page |
+| `removed` | This person was removed from the group | Nothing; they're no longer in it |
+| `ended` | This guest's visit ended | Nothing; the visit is over |
+| `limit` | Your app wrote, or read a lend, faster than the limits above | Wait the `Retry-After` seconds; look for a loop |
+
+## Or lend a server on a port
+
+Some apps need a process: a server on your computer, which you lend. It goes
+with you: it opens while your computer is on, and it runs outside the rules
+above. What your server does with what it's sent is yours to answer for,
+since svrngs only carries it.
 
 ![The two shapes: a lent server goes with its lender and opens while that computer is on; a carried folder, an index.html under apps/ in the group's folder, is served by every computer and reads and writes svrngs/acts.](../diagrams/guide/build-shapes.svg)
 
-## What your app gets
+### What your server gets
 
 ![A request from Bo's browser reaches Ana's computer, which strips any x-svrngs- header sent and sets x-svrngs-key, x-svrngs-person and x-svrngs-user before your app on 127.0.0.1:4400 sees it; entries your answer names in x-svrngs-append are signed by Bo's own computer into the group's record.](../diagrams/guide/build-headers.svg)
 
@@ -43,11 +274,6 @@ Key on `x-svrngs-key`, show `x-svrngs-person`. Never key on the name. A
 guest arrives as `Sam (Kim's guest)`, with a key of their own and an
 `x-svrngs-user` ending in `.guest`. svrngs writes the name as UTF-8 bytes;
 in Node, read it with `Buffer.from(value, 'latin1').toString('utf8')`.
-
-## Shape one: lend a server on a port
-
-Your app is a server on your computer, and you lend it. It goes with you:
-it opens while your computer is on.
 
 Here's `hello.mjs`. It greets each person by name and counts their visits:
 
@@ -124,174 +350,7 @@ entries in the group as `ops` (yours are those whose `kind` begins
 reads all three in about 40 lines, and `apps/events/server.mjs` writes with
 `x-svrngs-append`.
 
-## Shape two: a folder the group carries
-
-Your app is static files that the group carries. It stays with the group:
-every computer in the group serves it, so it opens while any of them is on.
-svrngs runs none of its code; the browser does.
-
-A carried app is a folder `apps/<name>/` holding an `index.html`, inside a
-folder your group shares, usually its own at `~/svrngs/<group>`. It reads
-and writes its entries at `svrngs/acts`, at its own address. Here's a
-guestbook. `~/svrngs/Elm/apps/guestbook/index.html`:
-
-```html
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guestbook</title>
-<script type="module" src="index.js"></script>
-</head>
-<body>
-<h1>Guestbook</h1>
-<ul id="list"></ul>
-<p><input id="words"> <button id="sign">Sign it</button></p>
-<p id="said"></p>
-</body>
-</html>
-```
-
-And `index.js` beside it:
-
-```js
-// A guestbook the group carries: each note is one of this app's acts.
-const ACTS = 'svrngs/acts';
-const $ = (id) => document.getElementById(id);
-const say = (words) => { $('said').textContent = words; };
-
-async function show() {
-  const r = await fetch(ACTS);
-  const read = await r.json().catch(() => ({}));
-  if (!r.ok) return say(`Can't read the guestbook: ${read.error ?? r.status}`);
-  const notes = read.ops.filter((o) => o.payload?.kind === 'note' && !o.voided);
-  $('list').replaceChildren(...notes.map((o) => {
-    const li = document.createElement('li');
-    li.textContent = `${o.person}: ${o.payload.words}`;
-    return li;
-  }));
-}
-
-$('sign').onclick = async () => {
-  const words = $('words').value.trim();
-  if (!words) return;
-  const body = JSON.stringify({ op: { kind: 'note', words } });
-  const w = await fetch(ACTS, { method: 'POST', headers: { 'content-type': 'application/json' }, body });
-  if (!w.ok) return say(`Not saved: ${(await w.json().catch(() => ({}))).error ?? w.status}`);
-  $('words').value = '';
-  say('');
-  show();
-};
-
-show();
-setInterval(show, 5000);
-```
-
-Save both, and within seconds **guestbook** appears in the group's list on
-everyone's home page and phone (a `-` in the folder name shows as a space).
-
-What `svrngs/acts` gives you:
-
-- **`GET`** answers your app's own entries as `ops`, with `kind` as you
-  wrote it, plus `you` and `you_key` (who's asking), `group`, `people`
-  (names), and `spans` (each person's time in the group: `person`,
-  `person_key`, `joined`, `left`; null while svrngs is still settling who's
-  in). Each entry has `id`, `ts_unix`, `person`, `person_key`, `payload`
-  and `voided`. It answers every entry each time, so fold them all on each
-  read.
-- **`POST {"op": {...}}`** writes one entry as the person, signed on their
-  own computer or phone. `op` needs a `kind`. **`POST {"corrects": "<id>",
-  "op": {...}}`** replaces one of your app's entries; `"op": null` voids it.
-  An entry is at most about 64 KiB, and an app writes up to 200 entries as
-  one person at once, then one every 18 seconds, voids included, counted
-  from the record. Past that, `POST` answers 429 with
-  `x-svrngs-refused: limit`, a `Retry-After` in seconds, and words that say
-  the limit; your app writes again after that wait. The fastest we've
-  recorded a person using an app is 20 entries in a minute, so only a loop
-  reaches it, and that's what it's for: every member keeps every entry for
-  good.
-
-### Read your friends' apps
-
-A carried app can read what your friends lend, such as their Jellyfin or
-their llama-server. Name each program it reads in `reads.txt`, beside
-`index.html`, apart by spaces or lines:
-
-```
-jellyfin
-llama-server
-```
-
-Every program you lend has a name: `jellyfin`, `immich`, or whatever you call
-your own. Apps find your program by that name, so type its real name, or the
-name of the one it works like.
-
-Your page can only connect to its own address, so it reaches each lend
-there. `GET svrngs-reads` lists the lends of those programs in your group, each
-with its `kind`, `name`, `lender` and `address`, like
-`http://<your app>.localhost:<port>/svrngs-lend/<label>/`. Add the lend's
-own path after it:
-
-```js
-const { lends } = await (await fetch('svrngs-reads')).json();
-const films = lends.find((l) => l.kind === 'jellyfin');
-const items = await (await fetch(`${films.address}Items?Recursive=true`)).json();
-```
-
-- **Each person says yes first.** The line beside your app's open says what
-  it reads: *"Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what
-  it asks for."* Each lend can be unticked. Opening it there is the yes, for
-  the lends it named. Before it, and after its Stop, svrngs refuses with
-  `x-svrngs-refused: unasked`.
-- **Only what you named, in your group.** Another program, or a lend in
-  another group, is refused with `closed`.
-- **A new lend waits for the next open.** A friend's new library, or a
-  version that names another program, is refused `unasked` until the person opens
-  your app from their home page, where the line says it's new. Until then
-  `GET svrngs-reads` lists it under `new`, with its `kind`, `name` and
-  `lender` and no address, so your page can say *"Bo's films are new. Open
-  Movie Night from your home page to search them."* `new` is there only when
-  something is new, and a phone never has it.
-- **It only reads.** `GET` and `HEAD` go through, with the page's `Accept` and
-  no other header, under the lender's readers' account if they keep one
-  (`svrngs share --readers`) and with no credential of the lender's if not.
-  Anything else is refused `closed`.
-- **Reading or writing the record, not both.** Once someone has said yes to
-  your app reading lends, a `POST` to `svrngs/acts` is refused for them, even
-  after a Stop or in a later version. An app that writes to the record reads no
-  lends.
-- **About ten times a second.** Your app reads each lend up to 600 times at
-  once as one person, then ten times a second. Past that, svrngs answers 429 with
-  `x-svrngs-refused: limit`, a `Retry-After` in seconds, and words that say
-  why. Movie Night reads each library once a search, so only a loop or a
-  timer reaches it, and that's what it's for: a friend's computer answers
-  every read.
-- **Data only.** Your page gets `application/json`, `text/plain`, or a JPEG,
-  PNG or WebP image, with its status and none of the lend's
-  other headers. Any other type is refused `closed`.
-
-If `reads.txt` names a word that isn't a program's name (letters, digits, `-` and `_`),
-your app is left off the list until it's fixed.
-
-Rules for carried pages:
-
-- **Load nothing from elsewhere.** Every answer carries a policy that lets
-  the page load from and connect to its own address only: no CDN, no
-  inline `<script>` (inline styles are fine), no camera, microphone or
-  location. Put every script in a file beside `index.html`.
-- **Your app reads and corrects only its own entries.** Correcting another
-  app's is refused: *"an app corrects only its own acts"*. Within your app,
-  `voided` is set whoever made the correction; Money and Events count a
-  correction only from the entry's own author (`voids` in `expenses.js`).
-- **New versions wait for each person's yes.** Once brought, a change to
-  the files runs for nobody until they press **Open the new version**.
-  Test on a copy before you change the one your group uses.
-- **Check what the record will accept before you send it**, as Money and
-  Events do: each entry stays in the group's record for good, and a
-  correction counts only from the person who wrote the entry.
-
-## Ask for a yes before another app uses yours
+### Ask for a yes before another app uses yours
 
 Lend with `--ask` and your words, and no other app can use your lend for a
 person until that person says yes:
@@ -307,7 +366,7 @@ and sends them back. Each yes is listed under **What acts as you**, with a
 Stop. Your own pages are never held back. Without a yes, svrngs refuses the
 app with `x-svrngs-refused: unasked`; after a stop, `stopped`.
 
-## Sign people in with svrngs (OpenID Connect)
+### Sign people in with svrngs (OpenID Connect)
 
 If your app already speaks OpenID Connect, add `--sign-in-with-svrngs`:
 
@@ -322,14 +381,11 @@ as themselves with nothing typed. The token says `sub` (their
 `groups`, `["member"]` or `["guest"]`. It is plain http on your computer,
 signs with ES256, and carries no email address, because svrngs has none.
 
-## Telling svrngs's answer from your app's
+### Tell svrngs's answer from your server's
 
-Whenever svrngs answers in your app's place, its answer carries
-`x-svrngs-refused`, naming why: `away` (the lending computer didn't answer),
-`closed`, `unlent`, `path`, `full`, `fault`, `unasked`, `stopped`, `limit`
-(your app wrote its hour's entries, or read a lend faster than once a
-second), and a few more. Your app's own answers never carry it. A program gets JSON,
-`{"error": "...", "kind": "..."}`; a browser tab gets a page of the words.
+Whenever svrngs answers in your server's place, its answer carries
+`x-svrngs-refused`, one of the words in [the reference](#the-reference).
+Your server's own answers never carry it.
 
 The loopback API answers programs only: a call from a page in a browser is
 refused, and so is one without the token.

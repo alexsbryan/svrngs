@@ -101,8 +101,11 @@ export const named = (lend) => {
 // (demo/xenia/findings/first-set/after-join-reads-as-permissions.md; the
 // operator, 2026-10-26). An app the group carries reads and writes what the
 // shelf, `shelf`, says it is, else its own part of the group's record; an
-// app on a port writes what you say there as you, by naming it
-// (capability-signed's F1); a lend declared to read kinds (`--reads`, or a
+// app on a port may write its own part as you, by naming it
+// (capability-signed's F1), which svrngs cannot know it does until it does,
+// so the words say what opening it allows, never that it writes (one agent
+// run, 2026-11-09: the page said a guestbook that wrote nothing "writes what
+// you say there into Friends’s record"); a lend declared to read kinds (`--reads`, or a
 // carried app's reads.txt) opens your friends' lends of them as you. Made
 // from what the lend declares, never its kind of app. A carried app's says
 // what it is for first, then what opening it lets it do: led by "It reads and writes", Ana read it as
@@ -136,7 +139,7 @@ export const agreed = (lend, shelf, group) => {
     const may = reads.length > 0 ? 'read that, and never write it' : 'read and write that';
     return `${first}${words.slice(1)} Opening it lets it ${may}, as you.${also}`;
   }
-  return `It writes what you say there into ${group.name ?? 'your group'}’s record, as you.${also}`;
+  return `Opening it lets it write its own part of ${group.name ?? 'your group'}’s record, as you.${also}`;
 };
 
 // Until when a guest visits (svrn-docs GUESTS §5 "The pages"), as

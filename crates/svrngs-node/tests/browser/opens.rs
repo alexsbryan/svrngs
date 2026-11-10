@@ -58,7 +58,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     }
     let port = ada.api_addr().port();
     let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-    let words = "Open cy’s notesReads cy’s films. They can see it’s you, and what it asks for. cy’s films It writes what you say there into your group’s record, as you.";
+    let words = "Open cy’s notesReads cy’s films. They can see it’s you, and what it asks for. cy’s films Opening it lets it write its own part of your group’s record, as you.";
 
     let seen = drive(
         engine,
@@ -88,8 +88,8 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     let cells = seen["cells"].as_array().cloned().unwrap_or_default();
     for cell in [
         words,
-        "Open cy’s plain (k) It writes what you say there into your group’s record, as you.",
-        "Open cy’s films It writes what you say there into your group’s record, as you.",
+        "Open cy’s plain (k) Opening it lets it write its own part of your group’s record, as you.",
+        "Open cy’s films Opening it lets it write its own part of your group’s record, as you.",
     ] {
         assert!(
             cells.contains(&json!(cell)),
@@ -128,7 +128,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
 /// record", then that opening it lets it read and write that as you, so its
 /// first version runs as a person only once they open it so named; a lend
 /// reading other kinds opens your friends' lends of them as you; one doing
-/// neither writes what you say there as you. Both pages draw the line
+/// neither may write its own part of the record as you. Both pages draw the line
 /// beside the open from question.js's `agreed`, and the open by `named`,
 /// each in its `page/index.js` since page-switchover. The call is read, not
 /// its argument's name: js-lint (a) named the lend `lend` (75e95f3a), and
@@ -161,8 +161,8 @@ fn the_open_says_what_an_app_does_in_one_wording() {
         json!([
             ["Money", "Who owes whom, and for what. Opening it lets it read and write that, as you."],
             ["Quiz", "Its own part of the group’s record. Opening it lets it read and write that, as you."],
-            ["cy’s notes", "It writes what you say there into House’s record, as you. It also opens your friends’ films and music as you, and they can see what it asks."],
-            ["cy’s shelf (k)", "It writes what you say there into House’s record, as you."],
+            ["cy’s notes", "Opening it lets it write its own part of House’s record, as you. It also opens your friends’ films and music as you, and they can see what it asks."],
+            ["cy’s shelf (k)", "Opening it lets it write its own part of House’s record, as you."],
         ])
     );
 }
