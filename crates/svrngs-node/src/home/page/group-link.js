@@ -62,6 +62,9 @@ import { get, post } from './routes.js?v=__VERSION__';
  *   | { run: 'publicationChange', action: 'publish' | 'close', id?: string, failed: 'publicationFailed' }} Effect
  */
 
+// The publication read again, after any change to it or a link made.
+const REREAD = /** @type {Effect} */ ({ run: 'publicationRead', failed: 'publicationUnread' });
+
 /**
  * LINK, for the group of id `group`.
  * @param {string} group
@@ -94,12 +97,7 @@ export const LINK = (group) => ({
         if (state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication))
           return no(state, 'the invitation request is answered first');
         return message.action === 'read'
-          ? go(
-              state,
-              { publication: 'reading' },
-              { publicationWhy: undefined },
-              { run: 'publicationRead', failed: 'publicationUnread' },
-            )
+          ? go(state, { publication: 'reading' }, { publicationWhy: undefined }, REREAD)
           : go(
               state,
               { publication: 'working' },
@@ -116,12 +114,7 @@ export const LINK = (group) => ({
       case 'publicationFailed':
         // A failed mutation may have committed remotely. Read the persisted
         // local receipt, never mint again or guess whether joining ended.
-        return go(
-          state,
-          { publication: 'reading' },
-          { publicationWhy: message.why },
-          { run: 'publicationRead', failed: 'publicationUnread' },
-        );
+        return go(state, { publication: 'reading' }, { publicationWhy: message.why }, REREAD);
       case 'publicationUnread':
         return go(state, { publication: 'refused' }, { publicationWhy: message.why });
       case 'guest':
@@ -147,7 +140,7 @@ export const LINK = (group) => ({
           state,
           { link: 'made', publication: 'reading' },
           { shown: message, publicationWhy: undefined },
-          { run: 'publicationRead', failed: 'publicationUnread' },
+          REREAD,
         );
       case 'refused':
         return go(state, { link: 'refused' }, { why: message.why });

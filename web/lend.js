@@ -1091,22 +1091,17 @@ async function approved(group, line) {
 async function writeSigned(lend, group, act, grant) {
   const at = handed.line ?? { seq: -1, id: null };
   const stamp = Math.floor(Date.now() / 1000);
-  const draft = unsigned_line(handed.holder, group, stamp, at.seq + 1, at.id, act, grant)[0];
+  // The line as it is signed, by `by`: the grant asked, then the one approved.
+  /** @param {string} by */
+  const lineBy = (by) => unsigned_line(handed.holder, group, stamp, at.seq + 1, at.id, act, by);
+  const draft = lineBy(grant)[0];
   let permitted;
   try {
     permitted = await approved(group, draft);
   } catch (/** @type {any} */ error) {
     return Response.json({ error: error.message }, { status: 403 });
   }
-  const [unsigned, message] = unsigned_line(
-    handed.holder,
-    group,
-    stamp,
-    at.seq + 1,
-    at.id,
-    act,
-    permitted,
-  );
+  const [unsigned, message] = lineBy(permitted);
   const sig = await crypto.subtle.sign('Ed25519', handed.key, message);
   const line = { ...JSON.parse(unsigned), sig: store.hex(new Uint8Array(sig)) };
   handed = {
