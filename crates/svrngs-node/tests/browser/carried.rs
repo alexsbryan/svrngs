@@ -1188,3 +1188,97 @@ async fn a_folder_app_the_policy_blanks_is_told_so_on_its_card(engine: Engine) {
     }
     drop(ada);
 }
+
+in_both_engines!(
+    /// **A carried app that read a friend's lend writes nothing on a phone**
+    /// (svrn-docs rings/current/CARRIED_APP_READS.md §5 item 5; the
+    /// computer's hold is door.rs `reader`). Ada's computer carries Reader,
+    /// whose reads.txt names `k`; cy lends a shelf of `k`. Bo's phone opens
+    /// Reader from the group's page, the yes: it is told cy's shelf, reads
+    /// it, and saves an entry. Then the yes's Stop, and Reader saves under
+    /// the pass it holds, and under the next one, opened at `#open=`. The
+    /// rule: none of the three is counted in ada's copy.
+    a_carried_app_that_read_friends_lends_writes_on_a_phone
+);
+async fn a_carried_app_that_read_friends_lends_writes_on_a_phone(engine: Engine) {
+    let relay = relay().await;
+    let bo = signing(7);
+    let dirs: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let ada = node(dirs[0].path(), &relay, &bo).await;
+    let cy = joined(dirs[1].path(), &relay, &ada, 2, "cy").await;
+    let (shelf, on_shelf) = kept_page("cy's shelf, as text").await;
+    lend(dirs[1].path(), "shelf", shelf.port());
+    let folder = dirs[0].path().join("house");
+    std::fs::create_dir(&folder).unwrap();
+    keep_folder(&ada, &folder).await;
+    let script = "window.save = async (what) => {
+  const r = await fetch('svrngs/acts', { method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ op: { kind: 'expense', amount_cents: 1, description: what } }) });
+  return { status: r.status, said: await r.text() };
+};
+document.title = 'ready';
+";
+    let page = "<!doctype html><title>…</title><script type=module src=app.js></script>";
+    carry(
+        &folder,
+        "Reader",
+        &[
+            ("index.html", page.into()),
+            ("app.js", script.into()),
+            ("reads.txt", "k\n".into()),
+        ],
+    );
+    let origin = carried_at(&ada, "Reader").await;
+    let host = origin.split("//").nth(1).unwrap_or_default();
+    let reader = host.split('.').next().unwrap_or_default().to_string();
+    let args = json!({
+        "site": site(),
+        "key": hex::encode(bo.to_bytes()),
+        "token": token(&signing(1), &relay),
+        "open": "Reader",
+        "label": reader,
+        "ask": "probe?n=1",
+    });
+    let seen = drive(engine, "reader-writes.mjs", args, None).await;
+    let shown = json!({ "told": seen["told"], "read": seen["read"], "saved": seen["saved"],
+        "held": seen["held"], "after": seen["after"], "stopped": seen["stopped"], "error": seen["error"] });
+    eprintln!("the reader's run: {shown:#}");
+    let words = [
+        "SIGN",
+        "RUNTIME: an act",
+        "carried to",
+        "reads were stopped",
+        "PAGE: opening",
+    ];
+    for line in seen["logs"].as_array().into_iter().flatten() {
+        let line = line.as_str().unwrap_or_default();
+        if words.iter().any(|w| line.contains(w)) {
+            eprintln!("  log: {line}");
+        }
+    }
+    assert_eq!(seen["error"], Value::Null, "{seen:#}");
+    let asked = on_shelf.lock().unwrap().len();
+    eprintln!("cy's shelf was asked {asked} time(s)");
+    assert_eq!(
+        seen["read"]["status"], 200,
+        "Reader read cy's shelf: {shown:#}"
+    );
+    let admitted = ada.rail().admission(NS).unwrap();
+    let ops = svrngs_core::tests_support::wire_ops(&admitted);
+    let bos: Vec<_> = ops
+        .iter()
+        .filter(|o| o.payload.is_some() && o.person.as_str() == "bo")
+        .map(|o| serde_json::to_string(&o.payload).unwrap_or_default())
+        .collect();
+    eprintln!("bo's entries counted in ada's copy: {bos:#?}");
+    let told = "An app that reads your friends’ apps can’t write in the group’s record.";
+    for step in ["saved", "held", "stopped"] {
+        let said = seen[step]["said"].as_str().unwrap_or_default();
+        assert!(said.contains(told), "{step} was told why: {shown:#}");
+    }
+    assert!(
+        bos.is_empty(),
+        "an app that read a friend's lend wrote in the group's record: {bos:#?}\n{shown:#}"
+    );
+    drop((ada, cy));
+}

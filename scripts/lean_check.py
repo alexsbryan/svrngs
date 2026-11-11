@@ -629,12 +629,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-09) Row 13, `sends:` and `sends.txt` (+166, js +29), after the
 # pass b97e31ec to bfad7743 (. -59, js -16, to 21,129 and 8,471), inside
 # the operator's ceilings for gap 6 and row 13: . to 21,296, js to 8,501.
+# (2026-11-10) The operator's raise ("Raise by 6"): a phone's carried app
+# once let read friends' lends has no entry approved (hand.js `writesBlocked`,
+# its trace; sign.js the refusal, its words, `Told`, `AGAIN`), +6 js. The pass
+# cut the draft from 14 to 6 lines; the signer's two lapsed-record sweeps
+# differ, and nothing else in hand.js or sign.js is said twice: js to 8,507.
 BUDGET = {
     "crates/svrngs-core": 3511,
 
     ".": 21265,
 
-    "js": 8501,
+    "js": 8507,
 
     "swift": 1,
 }

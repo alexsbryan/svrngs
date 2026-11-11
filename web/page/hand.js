@@ -59,9 +59,10 @@ export async function handing(hand, key, until = Math.floor(Date.now() / 1000) +
   // seed sealed into the open and its sealing key left in a cookie for the
   // group's signer alone, which approves the app's entries with it.
   const approver = crypto.getRandomValues(new Uint8Array(32));
-  const approves = core.actor(approver);
+  const approves = writesBlocked(lend, opened) ? null : core.actor(approver);
+  if (!approves) trace(`PAGE: ${lend.name} was let read lends, so its entries are never approved`);
   // Each pass of this open: signed by `key`, to `holder`, until `until`,
-  // naming this open's approver.
+  // naming this open's approver, unless its entries are blocked.
   /** @type {Signed} */
   const signed = (grant, reads) => core.pass(key, holder, grant, reads, until, approves);
   /** @type {Handoff} */
@@ -105,6 +106,20 @@ export const readingOf = (lend, lent, said) =>
   lent
     .filter((other) => other.label !== lend.label && (lend.reads ?? []).includes(other.kind))
     .map((other) => ({ ...other, new: !!said?.lends && !said.lends.includes(other.label) }));
+
+// Whether `lend`, a carried app, can't have its entries approved because
+// its person once said yes to it reading friends' lends. This holds through
+// a Stop or a later version, as at a computer's door (door.rs `reader`;
+// svrn-docs CARRIED_APP_READS §5 item 5), because what it read may still be
+// in its storage. This page keeps that yes and its Stop (store.js `Said`).
+// The group's signer can't read them, because WebKit gives its frame another
+// partition, so the open's passes name no approver. A lent app is not held
+// to this (§6).
+/**
+ * @param {Lent} lend
+ * @param {Partial<Group>} opened
+ */
+const writesBlocked = (lend, opened) => !!lend.group && !!opened.reads?.[lend.label];
 
 // The yes the open is, kept with the group when the lend reads others'
 // and none was kept for a `#open=`, naming each lend this open reads

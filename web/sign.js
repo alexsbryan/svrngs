@@ -158,10 +158,15 @@ addEventListener('message', (asked) => {
     console.debug(`SIGN: refused: ${error.message}`);
     port.postMessage({
       opened: false,
-      error: 'Open this app again from your group’s page to write in it.',
+      error: error instanceof Told ? error.message : AGAIN,
     });
   });
 });
+
+// A refusal written for the person, said as it is, because opening the app
+// again would not help. Every other refusal is told `AGAIN`.
+class Told extends Error {}
+const AGAIN = 'Open this app again from your group’s page to write in it.';
 
 // What the app framing this signer `asked`, answered on `port`: its open
 // adopted, or an entry approved; anything else refused, by a throw.
@@ -196,6 +201,10 @@ async function answered(asked, port) {
  */
 async function entryApproved(data, label, now) {
   const { group, reach, line, authority } = entryAsked(data, label);
+  // A pass naming no approver is a carried app that was let read
+  // friends' lends (web/page/hand.js `writesBlocked`), so it is told that.
+  if (typeof decode(reach).approver !== 'string')
+    throw new Told('An app that reads your friends’ apps can’t write in the group’s record.');
   const kept = await approver(label, authority, now);
   for (const grant of [authority.pass, authority.writes].filter(Boolean)) {
     let made;

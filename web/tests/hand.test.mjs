@@ -6,7 +6,8 @@
 // its text (as lend-frames.test.mjs does). Planted, watched failing: the
 // pass naming every lend of a kind whatever the yes names, Cy's new library
 // in the pass (the first test); `writesOf` without its `lent` test, a
-// writes pass signed for a server called Money (the last).
+// writes pass signed for a server called Money; `writesBlocked` without its
+// `lend.group` test, a lent server's entries blocked (the last).
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
@@ -29,11 +30,12 @@ const arrow = (name) => {
 const parts = [
   arrow('readingOf'),
   arrow('writesOf'),
+  arrow('writesBlocked'),
   defined('withYes'),
   defined('passLends'),
   defined('taken'),
 ].join('\n');
-const SOURCE = `${parts}\n({ readingOf, writesOf, withYes, passLends })`;
+const SOURCE = `${parts}\n({ readingOf, writesOf, writesBlocked, withYes, passLends })`;
 const kept = [];
 const store = {
   opened: async (group) => {
@@ -41,7 +43,7 @@ const store = {
     return group;
   },
 };
-const { readingOf, writesOf, withYes, passLends } = runInNewContext(SOURCE, {
+const { readingOf, writesOf, writesBlocked, withYes, passLends } = runInNewContext(SOURCE, {
   store,
   trace: () => {},
   Date,
@@ -119,4 +121,14 @@ test('a lent server named after a folder of the group is signed no writes', () =
   assert.equal(writesOf(core, { group, lent: [server, folder] }, server, signed), null);
   assert.equal(writesOf(core, { group, lent: [server] }, server, signed), 'signed');
   assert.equal(writesOf(core, { group, lent: [folder] }, folder, signed), null, 'a folder its own');
+});
+
+test('a carried app once let read lends has no entry approved, through its Stop', () => {
+  const folder = { label: 'folder', key: 'ana', kind: 'Reader', group: 'g', reads: ['films'] };
+  const yes = { reads: { folder: { said: 'yes', at: 1, lends: ['sam'] } } };
+  const stop = { reads: { folder: { said: 'stop', at: 2, lends: ['sam'] } } };
+  assert.equal(writesBlocked(folder, yes), true, 'after the yes');
+  assert.equal(writesBlocked(folder, stop), true, 'after its Stop');
+  assert.equal(writesBlocked(folder, { reads: {} }), false, 'never let read');
+  assert.equal(writesBlocked({ ...page, label: 'folder' }, yes), false, 'a lent app, §6');
 });
