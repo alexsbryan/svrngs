@@ -17,12 +17,13 @@ the record to the computer's apps over loopback (U3, `rail.rs`).
 ## Code map
 
 **`crates/svrngs-core`**: the group's record — signed acts (`Record`,
-`Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Invite`, `Synced`, `Relay`), the lines a computer holds as
+`Correct`, `Seal`, `Admit`, `Remove`, `HandOn`, `Accept`, `Invite`, `Synced`, `Relay`), the lines a computer holds as
 a set (`ActSet`, `act_set.rs`), admission of that set into one total order
 (`admit.rs`; only `admit` makes an `Admission`), whose state leaves the core
 only as a fold made there (`Admission::membership`, `Admission::invites`, `Admission::current_invite`
 in `project.rs`) or as
-`Wire`, the acts serialized for an app to fold, membership (`membership.rs`), the per-actor sync digest
+`Wire`, the acts serialized for an app to fold, membership (`membership.rs`, the
+interpreter's facts as every consumer reads them), the per-actor sync digest
 (`sync.rs`, `view.rs`), the write side (`command.rs`: `Command`, `commit`, the
 `Store` port, `Authored` and `Recorded`, which only `commit` makes), the
 register's commands (`register.rs`: `MintInvite`, `Redeem`), the
@@ -54,30 +55,35 @@ at seq − 1 (`SignedOp::prev`), and admission names one that does not a
 `WrongPrevious` gap and admits it not. Membership, the view and sync take the
 id admission derived (`derive_id`), never the line's. A link is in the record
 (DESIGN §6 "A link admits each person once"): an `Invite` names its key and
-lapse, and `membership` counts an `Admit` redeeming one only under the rule
-in `membership.rs`'s module docs, naming each refusal a `RefusedRedemption`.
-An issuer's newer `Invite` closes their older one from its place in the
-order, so what the older link admitted keeps standing. A redemption names
-what holds the new key (`Device`, u4-1): a browser's ships at line version
-4, and `Membership::device` answers each standing key, a computer's unless
-the counting `Admit` that last bound it named a browser. A person is their
-first key in the group (bash-devices): a seed row's first, or the key an
-`Admit` binds, so two people of one name are two people; a device link — an
-`Invite` naming that person (`device_of`, line version 8) — counts only from
-a key standing as them, and a key it admits is theirs, under their name.
-`Membership::person_of` answers each key's first key and name, `joined`
-when a person joined — the time on the `Admit` that made their first key a
-person, or that they started the group (bash-same-name) — and `one_named`
-the one person a name and, of two people of one name, that time name;
-`Removal` and `HandOnTo` take it, refusing an ask that names no one person
-with when each person of the name joined (`Which`), never guessing. Forks void nothing
-(U7): both branches count, the fork named a `SequenceFork` beside a complete
-answer. Removal has one decider (U7, `membership.rs`'s module docs): the
-group's keeper — the seed's key, moved only by its own `HandOn` — cuts by
-its `Remove`; anyone else's is an ask that cuts nobody. The cut names the
-removed key's acts by id (`Remove::through`) and covers them and their
-ancestors by `prev`; any other act of the key is `Removed`, and a cut naming
-an act a copy lacks is `UnheldCut`. A `Correct` voids nothing that moves
+lapse. Who stands, and which act counts, is decided by one interpreter,
+Eudoxia's (`eudoxia-community`), through the adapter
+`authority/evidence.rs`, which projects its facts once into `Membership`;
+a group an older svrngs made, its seed naming no policy (`Roster::older`),
+stands nobody and counts no act (`RailGap::Older`). The interpreter counts
+an `Admit` only redeeming an `Invite`, under its issuer's open link, with
+the joiner's consent covering its device; an issuer's newer `Invite`
+closes their older one, and what the older link admitted keeps standing. A
+redemption names what holds the new key (`Device`, u4-1): a browser's ships
+at line version 4, and `Membership::device` answers each standing key. A
+person is their first key in the group (bash-devices): a seed row's first,
+or the key a redemption binds, so two people of one name are two people; a
+device link — an `Invite` naming that person (`device_of`, line version 8)
+— counts only from a key standing as them, and a key it admits is theirs,
+under their name. `Membership::person_of` answers each key's first key and
+name, `joined` when a person joined — the time on the `Admit` that made
+their first key a person, or that they started the group (bash-same-name)
+— and `one_named` the one person a name and, of two people of one name,
+that time name; `Removal` and `HandOnTo` take it, refusing an ask that
+names no one person with when each person of the name joined (`Which`),
+never guessing. Forks void nothing (U7): both branches of a member's data
+count, the fork named a `SequenceFork` beside a complete answer; a keeper's
+fork freezes the office. Removal has one decider (DESIGN §6): the group's
+keeper — the seed's key, moved by its `HandOn` once the recipient's
+computer signs an `Accept` — cuts by its `Remove`; anyone else's is an ask
+that cuts nobody. The cut names the removed key's acts by id
+(`Remove::through`) and covers them and their ancestors by `prev`; any
+other act of the key is `Removed`, and a cut naming an act a copy lacks is
+`UnheldCut`. A `Correct` voids nothing that moves
 membership, so nothing undoes a cut; voids fold after the walk. Each
 key's relay is its own newest `Relay` act (relay-in-record): the fold
 answers it for a standing key (`Membership::relay`, read by `relay::parse`),
@@ -88,11 +94,10 @@ the person signs a pass naming its open's `approver`; `approving` names one
 entry's id without its grant (`op`), and the approver signs pass and id
 (`approval`). The holder signs the resulting line; `admit` verifies all
 three. The signer checks expiry by its own clock at approval, so a later
-delivery doesn't trust the holder's clock. `Cutover::Holders` (`register.rs`)
-writes keeper-signed `Holders {through}` tips, freezing broad-grant legacy
-history by ancestry before voids or membership can depend on a rejected
-correction. Both new shapes use line version 13. Nodes run cutover on start,
-group creation and rounds; `/carry` refuses new holder entries without it.
+delivery doesn't trust the holder's clock. Every group starts cut over:
+`admit` drops a holder's entry no approver approved before voids or
+membership can depend on it, and `/carry` refuses one (`not_approved`). The
+approved shape uses line version 13.
 The node/page protocol is v4.
 
 **`crates/svrngs-runtime`**: the journal, its write index, the open-journal map
@@ -126,12 +131,11 @@ ours is answered unread when it holds nothing the slow path would send
 (ceiling-3) the write index keeps each signature that passed as its line
 entered, and the offer read whole judges by those (`Checked`), checking
 again only a line it did not see enter. Then (ceiling-4) the write index
-keeps the acts that move membership, with every act of a key a `Remove`
-names (`standing_reads`; U7), in the log's order, and the standing
-last folded from them with the seed it was folded from (`RingJournal::folded`):
-the register answers from it until an act that moves membership arrives
-or the seed changes, judged by `Ed25519Verifier`, which `standing` no
-longer takes. Then (northstar) an id is held once a line of it verifies,
+kept the register last folded, with the seed it was folded from
+(`RingJournal::folded`); since release 2 that is the interpreter's fold of
+every line held, kept until any line arrives or the seed changes (P8), and
+the write index keeps every `Remove` held beside it, which the register
+shows, judged by `Ed25519Verifier`, which `standing` no longer takes. Then (northstar) an id is held once a line of it verifies,
 a line that does not kept by id and signature, so a forged copy that lands
 first never stands for the act (#189); an append after a torn last line
 ends it first, so the act it writes is read whole (#191); and
@@ -265,10 +269,11 @@ that does not parse, answered with why, and a name a standing person goes by
 stands is answered `AlreadyIn`, nothing written.
 
 Who is in a group is the register's (`register.rs`, DESIGN §6, "The group decides who is in it"):
-`RingRail::standing` answers a group's standing keys from `membership` over
-its seed — the group's `roster.json`, the founder's key alone — and the acts
-admission authenticates; a group the node does not hold answers `NotHeld`,
-and one with no seed `NoSeed`, which refuses everyone. Each standing key
+`RingRail::standing` answers a group's standing keys from the interpreter
+over its seed — the group's `roster.json`, the founder's key alone — and the
+acts admission authenticates; a group the node does not hold answers
+`NotHeld`, one with no seed `NoSeed`, which refuses everyone, and one an
+older svrngs made `Older`, in which nobody stands. Each standing key
 comes with its person and what holds it (`Member`, u4-1). Its four callers: the
 round dials every computer's key standing in a group the node holds — never
 a browser's, by `Device::dialled` — by key, through

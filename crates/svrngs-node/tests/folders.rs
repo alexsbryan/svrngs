@@ -16,7 +16,7 @@ use std::time::Duration;
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::lend::LendName;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct};
+use svrngs_node::{actor_of, RailAct};
 
 /// Ana's group `films`, Ben and Cy admitted, each computer knowing where
 /// the others listen, for the round and for a dial by key alike.
@@ -1031,14 +1031,12 @@ impl Asking {
         let dir = tempfile::tempdir().unwrap();
         let ana = start(1, dir.path()).await;
         let ns = found("films", 9, &ana, &[]);
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse("ben").unwrap(),
-                key: actor_of(&signing(2)),
-                invite: None,
-            },
-        };
-        ana.rail().commit(&ns, &admit).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(&ns, &signing(2), "ben", |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            ana.rail().commit(&ns, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
         let relay = RelayConfig {
             relay_urls: Vec::new(),
             n0_services: false,

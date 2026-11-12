@@ -222,71 +222,6 @@ async fn log_ships_admitted_ops_gaps_and_the_roster() {
     );
 }
 
-/// **Whom an old act spoke for is told by key too** (keys-names): alex's
-/// computer wrote records for others, as it wrote a phone's before
-/// capability-signed: one for bo; one for dee before a second dee was let
-/// in, and one after; one for eve, who never stood. The log names, as
-/// `on_behalf_of_key`, the first key of the one person of that name who
-/// had joined by each act's time, so an app keeps bo's old entries and his
-/// own together; the second dee's none, since the record cannot say which
-/// dee, nor eve's, and an app reads those by name as before. An act naming
-/// its signer's own person names no second key. Red at 0c9dc094: an act
-/// for another named only the name.
-#[tokio::test]
-async fn the_log_names_whom_an_act_for_another_spoke_for_by_the_one_person_of_that_name_then() {
-    use svrngs_core::{sign_act, Op, RailAct, SignedOp};
-    let (_dir, rail) = rail_with(&[("alex", 1), ("bo", 2)]);
-    let dee = |k: u8| RailAct::Admit {
-        person: Person::parse("dee").unwrap(),
-        key: actor_of(&key(k)),
-        invite: None,
-    };
-    let record = |what: &str| RailAct::Record {
-        payload: svrngs_core::Payload::new(serde_json::json!({ "kind": "thing", "what": what }))
-            .unwrap(),
-    };
-    let acts = [
-        (100, dee(6), None),
-        (101, record("for bo"), Some("bo")),
-        (102, record("for dee"), Some("dee")),
-        (200, dee(8), None),
-        (201, record("dee again"), Some("dee")),
-        (202, record("for eve"), Some("eve")),
-        (300, record("own"), Some("alex")),
-    ];
-    let mut ops: Vec<Op<SignedOp>> = Vec::new();
-    for (ts, act, named) in acts {
-        let (seq, prev) = ops
-            .last()
-            .map_or((0, None), |o| (o.kind.seq + 1, Some(o.id.clone())));
-        ops.push(sign_act(
-            &key(1),
-            "ledger",
-            ts,
-            seq,
-            prev,
-            act,
-            named,
-            None,
-            None,
-        ));
-    }
-    rail.ingest_all("ledger", &ops).unwrap();
-    let out = body_of(answer(&rail, "ledger", log).await).await;
-    let whose = |what: &str| {
-        let op = (out["ops"].as_array().unwrap().iter()).find(|o| o["payload"]["what"] == what);
-        op.map(|o| o["on_behalf_of_key"].clone())
-    };
-    let said = ["for bo", "for dee", "dee again", "for eve", "own"].map(whose);
-    let null = Some(serde_json::Value::Null);
-    let first = |k: u8| Some(serde_json::json!(actor_of(&key(k))));
-    assert_eq!(
-        said,
-        [first(2), first(6), null.clone(), null.clone(), null],
-        "{out:#}"
-    );
-}
-
 /// An app's `{"op":"seal"}` is refused as not an app's to write, and retires
 /// nothing (arch-seal (b); WHO_KNOWS_WHOM §3, bar 10): the journal holds both
 /// records after it, and no seal. The failing input: the route seals, as it
@@ -325,13 +260,6 @@ async fn the_people_door_answers_the_register_with_keys() {
     let (_dir, rail) = rail_with(&[("alex", 7)]);
     standing_of(&rail, "ledger").unwrap();
     let journal = "ledger";
-    let admit_bo = crate::RailAct::Admit {
-        person: Person::parse("bo").unwrap(),
-        key: actor_of(&key(3)),
-        invite: None,
-    };
-    let fixture = svrngs_core::tests_support::Fixture { act: admit_bo };
-    rail.commit(journal, &fixture).unwrap().unwrap();
     let invite = svrngs_core::tests_support::Fixture {
         act: crate::RailAct::Invite {
             key: actor_of(&key(9)),
@@ -342,6 +270,22 @@ async fn the_people_door_answers_the_register_with_keys() {
     let invite = rail.commit(journal, &invite).unwrap().unwrap().lines()[0]
         .id
         .clone();
+    // Bo by the link from a computer, cy from a browser: no bare `Admit`
+    // counts.
+    let bo = Person::parse("bo").unwrap();
+    let admit_bo = crate::RailAct::Admit {
+        invite: Some(crate::Redemption::sign(
+            &key(3),
+            journal,
+            &invite,
+            &bo,
+            crate::Device::Computer,
+        )),
+        person: bo,
+        key: actor_of(&key(3)),
+    };
+    let fixture = svrngs_core::tests_support::Fixture { act: admit_bo };
+    rail.commit(journal, &fixture).unwrap().unwrap();
     let cy = Person::parse("cy").unwrap();
     let admit_cy = crate::RailAct::Admit {
         invite: Some(crate::Redemption::sign(
@@ -350,7 +294,6 @@ async fn the_people_door_answers_the_register_with_keys() {
             &invite,
             &cy,
             crate::Device::Browser,
-            None,
         )),
         person: cy,
         key: actor_of(&key(4)),

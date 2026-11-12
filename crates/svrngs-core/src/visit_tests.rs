@@ -4,7 +4,7 @@
 //! so every copy agrees who is visiting as it agrees who is a member.
 use super::*;
 use crate::tests_support::{key, p, run, NS};
-use crate::{actor_of, admit, Admission, Ed25519Verifier};
+use crate::{actor_of, admit, Admission, Ed25519Verifier, Roster};
 
 /// Friday evening, and the hour.
 const FRI: i64 = 1_000_000;
@@ -255,13 +255,6 @@ fn the_hosts_leave_or_stop_ends_the_visit() {
     assert!(
         a.membership().counts(&came[0].id),
         "and the visit stays in the record, seen"
-    );
-    let reads: Vec<Op<SignedOp>> = standing_reads(&stopped, &Roster::default())
-        .cloned()
-        .collect();
-    assert!(
-        names(&folded(&reads), FRI + HOUR).is_empty(),
-        "the register's fold reads the Stop"
     );
 }
 

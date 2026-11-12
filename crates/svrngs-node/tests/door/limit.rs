@@ -21,7 +21,7 @@ use svrngs_node::door::SHARE_HEADER;
 use svrngs_node::iroh::Contact;
 use svrngs_node::lend;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster};
+use svrngs_node::{actor_of, Person, Roster};
 
 /// A third of 30 Mbit/s, in bits a second.
 const A_THIRD: &str = "10000000";
@@ -50,14 +50,12 @@ impl Crowd {
         let (mut members, mut bridges) = (Vec::new(), Vec::new());
         for (i, who) in PEOPLE.iter().enumerate() {
             let key = 2 + u8::try_from(i).unwrap();
-            let admit = svrngs_core::tests_support::Fixture {
-                act: RailAct::Admit {
-                    person: Person::parse(who).unwrap(),
-                    key: actor_of(&signing(key)),
-                    invite: None,
-                },
-            };
-            a.rail().commit(NS, &admit).unwrap().unwrap();
+            svrngs_core::tests_support::let_in_by(NS, &signing(key), who, |act| {
+                let act = svrngs_core::tests_support::Fixture { act };
+                a.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                    .id
+                    .clone()
+            });
             let member = start(key, dirs[i + 1].path()).await;
             let base = member
                 .transport()

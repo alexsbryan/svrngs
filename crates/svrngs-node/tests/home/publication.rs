@@ -237,7 +237,6 @@ async fn publication_survives_reload_and_closes_only_its_invitation() {
                 &invite,
                 &person,
                 svrngs_core::Device::Computer,
-                None,
             )
             .sig,
             person,
@@ -266,7 +265,7 @@ async fn publication_survives_reload_and_closes_only_its_invitation() {
     assert!(matches!(
         node.rail().commit(NS, &redeem(3, "cy")).unwrap(),
         Err(svrngs_core::Refused::Command(
-            svrngs_core::RedeemRefusal::Fault(svrngs_core::InviteFault::Closed { .. })
+            svrngs_core::RedeemRefusal::Uncounted
         ))
     ));
     assert!(

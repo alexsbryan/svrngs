@@ -68,7 +68,7 @@ use crate::op::{Op, OpId};
 use crate::sig::derive_id;
 
 use crate::payload::Payload;
-use crate::{authority::SourceRoots, Decided, Person, RailAct, RingVerifier, Roster, SignedOp};
+use crate::{authority::SourceRoots, Person, RailAct, RingVerifier, Roster, SignedOp};
 
 /// Something the rail could not account for. Never fatal, always reported.
 ///
@@ -153,17 +153,16 @@ pub enum RailGap {
     /// forever (ROOT_CAUSE_FIXES A2).
     #[error("a correction of {}, which this node does not hold", crate::short_id(&.missing.to_string()))]
     DanglingCorrection { by: OpId, missing: OpId },
-    /// The signer is bound in the record but held no standing at this act's
-    /// position — before their own [`Admit`](crate::RailAct::Admit) in the
-    /// order (an act of a key the keeper cut is [`Self::Removed`]). The act
-    /// counts for nothing and is named rather than dropped: it may be real
-    /// data under an `Admit` this copy does not hold yet.
-    #[error("an op by actor {actor} was written while they held no standing in the ring")]
+    /// The signer is bound in the record, and the group's interpreter does
+    /// not count the act (`Membership::uncounted` says why; an act of a key
+    /// out is [`Self::Removed`]). It counts for nothing and is named rather
+    /// than dropped: it may be real data on a line this copy does not hold
+    /// yet.
+    #[error("an op by actor {actor} does not count in the group")]
     NotAMember { id: OpId, actor: String },
-    /// The signer was cut by the group's keeper, and the cut does not cover
-    /// this act (svrngs, U7; DESIGN §6): written after the removal, or
-    /// beside or above the acts the removal names. Nothing undoes a cut, so
-    /// the act is refused for good.
+    /// The signer's key is out of the group, cut or left, and the act does
+    /// not count (svrngs, U7; DESIGN §6). Nothing undoes a cut, so the act
+    /// is refused for good.
     #[error("an act by {}… after they were removed from the group does not count", crate::actor_prefix(.actor))]
     Removed { id: OpId, actor: String },
     /// A counting cut names an act of the removed key this copy does not
@@ -178,44 +177,20 @@ pub enum RailGap {
     /// when one is held; a parent not yet here is the [`Self::SequenceHole`].
     #[error("an act from {}… does not follow the one before it (#{seq})", crate::actor_prefix(.actor))]
     WrongPrevious { id: OpId, actor: String, seq: u64 },
-    /// A standing member's [`Admit`](crate::RailAct::Admit) that redeems an
-    /// [`Invite`](crate::RailAct::Invite), refused for the named fault
-    /// (svrngs, U2; DESIGN §6 "A link admits each person once"). It gives
-    /// its key no standing; it may be real data under an `Invite` this copy
-    /// does not yet hold.
-    #[error("a joining by link admitted by {}… does not count — {fault}", crate::actor_prefix(.actor))]
-    RefusedRedemption {
-        id: OpId,
-        actor: String,
-        fault: crate::membership::InviteFault,
-    },
-    /// The keeper's cuts did not settle to one answer (#124): who stands,
-    /// and so which acts count, cannot be judged on this copy.
-    #[error("the removals do not come to one answer, so who is in cannot be told")]
-    Unsettled,
+    /// An older svrngs made the group ([`Roster::older`]): nobody stands in
+    /// it, so no act counts.
+    #[error("{}", crate::made_older("This group"))]
+    Older,
     /// A holder's line its pass does not grant (capability-signed; DESIGN
     /// §1): written outside its app's own part, after its pass lapsed, as a
-    /// decision, or under a pass its person did not sign or that names
-    /// another key. It counts as nobody's act.
+    /// decision, under a pass its person did not sign or that names another
+    /// key, or naming no approved content. It counts as nobody's act.
     #[error("an entry an app wrote as {}… does not count — {why}", crate::actor_prefix(.actor))]
     Ungranted {
         id: OpId,
         actor: String,
         why: crate::grant::Why,
     },
-    /// An act naming another person than its signer's, `named`, written
-    /// past what the keeper's cutover covers (capability-signed; DESIGN
-    /// §1): a computer's word for someone else, which counts as nobody's.
-    #[error("an entry {}… wrote as {named} does not count — only their own phone or computer writes as them", crate::actor_prefix(.actor))]
-    CarriedForAnother {
-        id: OpId,
-        actor: String,
-        named: String,
-    },
-    /// Source-aware bytes are held but cannot be interpreted by an unadopted
-    /// legacy view. Schema recognition must never select the legacy authorizer.
-    #[error("this entry needs the group's signed permission upgrade before it can count")]
-    AuthorityUnavailable { id: OpId },
 }
 
 /// A [`RailGap::SequenceHole`]'s words: one act missing, or a run of them.
@@ -263,14 +238,12 @@ impl RailGap {
         match self {
             Self::MalformedLine { .. }
             | Self::NewerVersionLine { .. }
-            | Self::AuthorityUnavailable { .. }
+            | Self::Older
             | Self::BadSignature { .. }
             | Self::UnknownSigner { .. }
             | Self::NotAMember { .. }
             | Self::UnheldCut { .. }
             | Self::WrongPrevious { .. }
-            | Self::RefusedRedemption { .. }
-            | Self::Unsettled
             | Self::Ungranted {
                 why: crate::grant::Why::Unheld,
                 ..
@@ -280,7 +253,6 @@ impl RailGap {
             | Self::DanglingCorrection { .. }
             | Self::SequenceFork { .. }
             | Self::Ungranted { .. }
-            | Self::CarriedForAnother { .. }
             | Self::Removed { .. } => GapClass::Contradiction,
         }
     }
@@ -429,20 +401,6 @@ struct Candidate<'a> {
     op: &'a Op<SignedOp>,
 }
 
-fn cutoff(acts: &BTreeMap<OpId, &Op<SignedOp>>, by: &OpId) -> BTreeSet<OpId> {
-    let mut pending = match acts.get(by).map(|op| &op.kind.act) {
-        Some(RailAct::Signers { through } | RailAct::Holders { through }) => through.clone(),
-        _ => Vec::new(),
-    };
-    let mut seen = BTreeSet::new();
-    while let Some(id) = pending.pop() {
-        if let Some(op) = acts.get(&id).filter(|_| seen.insert(id.clone())) {
-            pending.extend(op.kind.prev.clone());
-        }
-    }
-    seen
-}
-
 /// Turn a bag of journal lines into the order every node applies them in.
 ///
 /// `roster`, `namespace` and `verifier` are *parameters*, never folded state.
@@ -510,27 +468,27 @@ pub fn admit(
         authentic.insert(derived, op);
     }
 
-    // The group's one decider: the seed's policy. The old fold holds the
-    // new kinds without meaning.
-    let (decided, roots) = match roster.policy {
-        Some(_) => (
-            Decided::Founded,
-            Some(SourceRoots::seeded(roster, namespace)),
-        ),
-        None => (Decided::Legacy, None),
-    };
-    tracing::debug!(target: "rail:admit", namespace, ?decided, "admit: the seed's policy picks the decider");
-    authentic.retain(|id, op| {
-        let new = matches!(op.kind.act, RailAct::Authority { .. } | RailAct::Accept { .. });
-        let held = decided.interpreted() || !new;
-        if !held {
-            tracing::debug!(target: "rail:admit", %id, actor = %op.actor,
-                "source: held without authority — a legacy view cannot activate source-aware meaning");
-            gaps.push(RailGap::AuthorityUnavailable { id: id.clone() });
-        }
-        held
-    });
-    let cut_over = roots.is_some().then(BTreeSet::new);
+    // An older svrngs's group stands nobody (EUDOXIA_JUDGE §2a): no act
+    // counts, and what its links say is read, so an old link is refused in
+    // words. Its lines are held and read on disk as they are.
+    if roster.older() {
+        tracing::debug!(target: "rail:admit", namespace, held = acts.len(),
+            "admit: an older svrngs made this group, so nobody stands in it and no act counts");
+        let all: Vec<_> = authentic.iter().map(|(id, op)| (id, *op)).collect();
+        let membership = crate::Membership {
+            invites: crate::membership::invites(&all),
+            ..Default::default()
+        };
+        return Admission {
+            ops: Vec::new(),
+            gaps: alloc::vec![RailGap::Older],
+            held: acts.len(),
+            membership,
+            synced: Default::default(),
+            tips: BTreeMap::new(),
+        };
+    }
+    let roots = SourceRoots::seeded(roster, namespace);
 
     // ── a holder: what the pass on its line grants (capability-signed) ──
     //
@@ -564,32 +522,17 @@ pub fn admit(
     }
     let mut authentic = selected;
 
-    // The signed cutover names old history by hash, never by a forgeable clock.
-    // Apply it before membership/voids so a rejected correction has no effect.
-    // A sources-v1 group starts cut over (EUDOXIA_JUDGE §2c, G3): it covers
-    // none.
-    let holders = |o: &&Op<SignedOp>| matches!(o.kind.act, RailAct::Holders { .. });
-    let frozen = match cut_over.clone() {
-        Some(covered) => Some(covered),
-        None if authentic.values().any(holders) => crate::membership::membership(
-            authentic.iter().map(|(id, op)| (id, *op)),
-            roster,
-            namespace,
-        )
-        .holders
-        .map(|cut| cutoff(&authentic, &cut)),
-        None => None,
-    };
-    if let Some(covered) = frozen {
-        authentic.retain(|id, op| {
-            let allowed = op.kind.grant.as_ref().is_none_or(|p| p.op.is_some() || covered.contains(id));
-            if !allowed {
-                tracing::debug!(target: "rail:admit", %id, "grant: rejected legacy holder authority outside its signed cutoff");
-                gaps.push(RailGap::Ungranted { id: id.clone(), actor: op.actor.clone(), why: crate::grant::Why::Unapproved });
-            }
-            allowed
-        });
-    }
+    // A group starts cut over (EUDOXIA_JUDGE §2c, G3): a holder's line
+    // counts only with its person's approval of its exact content. Applied
+    // before membership and voids, so a rejected correction has no effect.
+    authentic.retain(|id, op| {
+        let allowed = op.kind.grant.as_ref().is_none_or(|p| p.op.is_some());
+        if !allowed {
+            tracing::debug!(target: "rail:admit", %id, "grant: refused — a holder's line naming no approved content");
+            gaps.push(RailGap::Ungranted { id: id.clone(), actor: op.actor.clone(), why: crate::grant::Why::Unapproved });
+        }
+        allowed
+    });
 
     // ── the chain: each act names its author's act at seq − 1 ─────────
     //
@@ -649,26 +592,13 @@ pub fn admit(
         }
     }
 
-    // ── membership: the seed plus two act kinds, one function ─────────
+    // ── membership: the interpreter, from the seed's roots ─────────
     //
     // `roster` is the SEED (RING_APPLICATIONS.md "Amendment 2026-09-18"):
-    // what is in the ring is decided by `membership`, and an act resolves
-    // through the bindings its own record carries — so key churn cannot
-    // re-flip the past (leg 4 of `ra-membership-is-order-free`). The seed's
-    // decider says which: the old fold, or the interpreter from its roots.
-    let mut m = match roots {
-        None => crate::membership::membership(
-            authentic.iter().map(|(id, op)| (id, *op)),
-            roster,
-            namespace,
-        ),
-        Some(roots) => crate::authority::interpreted(&authentic, forged, roots),
-    };
-    m.decided = decided;
-
-    if m.unsettled {
-        gaps.push(RailGap::Unsettled);
-    }
+    // what is in the ring is decided by Eudoxia's interpreter, and an act
+    // resolves through the bindings its own record carries, so key churn
+    // cannot re-flip the past.
+    let m = crate::authority::interpreted(&authentic, forged, roots);
     for cut in m.cut.values() {
         gaps.extend(cut.unheld.iter().map(|missing| RailGap::UnheldCut {
             by: cut.by.clone(),
@@ -685,12 +615,6 @@ pub fn admit(
         let of = seqs.entry(op.actor.as_str()).or_default();
         of.entry(op.kind.seq).or_default().push(id.clone());
     }
-    // ── the keeper's cutover (capability-signed; DESIGN §1) ──────────
-    //
-    // An act naming another person than its signer's counts only where the
-    // keeper's `Signers` covers it, by ancestry as a cut covers; until the
-    // keeper writes one, as before.
-    let cover = cut_over.or_else(|| m.signers.as_ref().map(|by| cutoff(&authentic, by)));
     let mut admitted: BTreeMap<OpId, Candidate<'_>> = BTreeMap::new();
     for (id, op) in authentic {
         let Some((first, person)) = m.person_of(op.stands_as()) else {
@@ -700,14 +624,6 @@ pub fn admit(
             });
             continue;
         };
-        if let Some(fault) = m.refused.get(&id) {
-            gaps.push(RailGap::RefusedRedemption {
-                id,
-                actor: op.actor.clone(),
-                fault: fault.clone(),
-            });
-            continue;
-        }
         if !m.counted.contains(&id) && !m.voided.contains(&id) {
             let actor = op.actor.clone();
             gaps.push(match m.cut.contains_key(op.stands_as()) {
@@ -715,21 +631,6 @@ pub fn admit(
                 false => RailGap::NotAMember { id, actor },
             });
             continue;
-        }
-        let named = (op.kind.on_behalf_of.as_deref()).filter(|n| *n != person.as_str());
-        let past = cover.as_ref().is_some_and(|c| !c.contains(&id));
-        if let Some(named) = named {
-            tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, named, cutover = cover.is_some(), past,
-                "admit: an act naming another person counts only where the keeper's cutover covers it, and as before until there is one");
-            if past {
-                let actor = op.actor.clone();
-                gaps.push(RailGap::CarriedForAnother {
-                    id,
-                    actor,
-                    named: named.into(),
-                });
-                continue;
-            }
         }
         admitted.insert(
             id.clone(),

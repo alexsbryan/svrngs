@@ -16,8 +16,8 @@ use tracing_subscriber::layer::SubscriberExt;
 
 use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::removal::{Outcome, RemovalAsk, HANDOVERS_ROUTE, REMOVALS_ROUTE};
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::removal::{Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, REMOVALS_ROUTE};
+use svrngs_node::{actor_of, Person, Roster, SigningKey};
 
 const NS: &str = "trip";
 
@@ -63,12 +63,15 @@ fn sams() -> Roster {
     )
 }
 
-fn admit(person: &str, joining: u8) -> RailAct {
-    RailAct::Admit {
-        person: Person::parse(person).unwrap(),
-        key: actor_of(&signing(joining)),
-        invite: None,
-    }
+/// `joining` let in as `person` in `ns` by a link `node` mints: no bare
+/// `Admit` counts (release 2).
+fn admit(node: &Node, ns: &str, person: &str, joining: u8) {
+    svrngs_core::tests_support::let_in_by(ns, &signing(joining), person, |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        node.rail().commit(ns, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
 }
 
 /// What the command asks `node` at `route`, and the node's answer.
@@ -118,13 +121,8 @@ async fn knit(nodes: &[Node; 3], ns: &str, seed: &Roster, admitted: [(&str, u8);
     for n in nodes {
         n.rail().set_seed(ns, seed).unwrap();
     }
-    let fixture = |act| svrngs_core::tests_support::Batch(vec![act]);
     for (person, k) in admitted {
-        nodes[0]
-            .rail()
-            .commit(ns, &fixture(admit(person, k)))
-            .unwrap()
-            .unwrap();
+        admit(&nodes[0], ns, person, k);
     }
     for (i, n) in nodes.iter().enumerate() {
         for (j, m) in nodes.iter().enumerate() {
@@ -187,8 +185,8 @@ async fn the_keeper_removes_and_the_removed_computer_is_told() {
 }
 
 /// **Only the person who decides hands deciding on** (U7 (e)). Ana's
-/// hand-on is refused, naming Sam; Sam's to Ana is done, and then Ana's
-/// removal of Sam is the cut. A person not in the group is said so.
+/// hand-on is refused, naming Sam; Sam's to Ana is offered, Ana accepts it,
+/// and then Ana's removal of Sam is the cut. A person not in the group is said so.
 #[tokio::test]
 async fn only_the_keeper_hands_on() {
     let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
@@ -212,11 +210,13 @@ async fn only_the_keeper_hands_on() {
     );
     assert_eq!(
         ask(&sam, HANDOVERS_ROUTE, "ana").await,
-        (200, Outcome::Handed)
+        (200, Outcome::Offered)
     );
     tokio::time::timeout(Duration::from_secs(30), ana.round())
         .await
         .unwrap();
+    // The office passes at Ana's own Accept, on her computer.
+    assert_eq!(ask(&ana, ACCEPTS_ROUTE, "").await, (200, Outcome::Taken));
     assert_eq!(ask(&ana, REMOVALS_ROUTE, "sam").await, (200, Outcome::Out));
 }
 
@@ -282,10 +282,11 @@ async fn a_removal_reaches_every_computer_without_waiting_for_a_round() {
 
     assert_eq!(
         ask(&sam, HANDOVERS_ROUTE, "ana").await,
-        (200, Outcome::Handed)
+        (200, Outcome::Offered)
     );
+    let to_ana = |office| matches!(office, svrngs_node::Office::Pending { to, .. } if to == actor_of(&signing(2)));
     let handed = tokio::time::timeout(soon, async {
-        while ana.rail().register(NS).unwrap().keeper != Some(actor_of(&signing(2))) {
+        while !to_ana(ana.rail().register(NS).unwrap().office) {
             tokio::time::sleep(Duration::from_millis(50)).await;
         }
     })
@@ -647,8 +648,7 @@ mod leave_race {
                 .set_seed(NS, &Roster::new(rows.clone().into()))
                 .unwrap();
         }
-        let bo = Batch(vec![admit("bo", 3)]);
-        nodes[0].rail().commit(NS, &bo).unwrap().unwrap();
+        admit(&nodes[0], NS, "bo", 3);
         for (i, n) in nodes.iter().enumerate() {
             for (j, m) in nodes.iter().enumerate() {
                 // Kim's first computer (index 1) never reaches her second (3).
@@ -687,50 +687,4 @@ mod leave_race {
         assert!(cut(4), "the second computer reads itself out");
         assert!(cut(2), "and the key that signed the leave");
     }
-}
-
-/// **The keeper's computer cuts over once** (capability-signed; demo/runs/
-/// authorship/2026-10-24/DESIGN.md §5): on its round Sam's computer, which
-/// keeps the group, writes its `Signers`; Ana's and Bo's, which do not,
-/// write none; a second round writes no other; and Ana's copy holds Sam's
-/// after her next round, so her fold refuses what Sam's does. Planted,
-/// watched failing: the round not asking for the cutover (node.rs
-/// `say_relay`'s `cut_over`).
-#[tokio::test]
-async fn the_keepers_computer_cuts_over_once() {
-    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
-    let nodes = [
-        start(1, &dirs[0]).await,
-        start(2, &dirs[1]).await,
-        start(3, &dirs[2]).await,
-    ];
-    for node in &nodes {
-        node.stop_sync();
-    }
-    knit(&nodes, NS, &sams(), [("ana", 2), ("bo", 3)]).await;
-    let [sam, ana, _bo] = nodes;
-    let cutover = |n: &Node| n.rail().register(NS).unwrap().signers;
-    let written = |n: &Node| {
-        let journal = n.rail().group_dir(NS).unwrap().join("ring_oplog.jsonl");
-        let text = std::fs::read_to_string(journal).unwrap_or_default();
-        text.matches(r#""op":"signers""#).count()
-    };
-    assert_eq!(
-        cutover(&ana),
-        None,
-        "a computer not keeping the group writes none"
-    );
-    assert_eq!(written(&ana), 0);
-    for _ in 0..2 {
-        tokio::time::timeout(Duration::from_secs(30), sam.round())
-            .await
-            .unwrap();
-    }
-    let first = cutover(&sam).expect("the keeper's computer cuts over on its round");
-    assert_eq!(written(&sam), 1, "once");
-    tokio::time::timeout(Duration::from_secs(30), ana.round())
-        .await
-        .unwrap();
-    assert_eq!(cutover(&ana), Some(first));
-    assert_eq!(written(&ana), 1, "carried, and none of Ana's own");
 }

@@ -15,7 +15,7 @@ use std::time::Duration;
 
 use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, Roster, SigningKey};
 
 const GROUP: &str = "house";
 
@@ -65,14 +65,12 @@ fn founded_by_sam() -> Roster {
 /// Sam's computer lets `person`'s key in to `group`, as a test admits a
 /// member by hand (PLAN §4, U1).
 fn admit(sam: &Node, group: &str, person: &str, joining: u8) {
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(joining)),
-            invite: None,
-        },
-    };
-    sam.rail().commit(group, &fixture).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(group, &signing(joining), person, |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        sam.rail().commit(group, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
 }
 
 /// The people of the group, each by the seed of their own computer's key.

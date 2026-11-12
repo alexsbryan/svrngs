@@ -36,14 +36,12 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let kim = computer(dir.path(), &relay, &signing(BO), KIM, "Kim").await;
-    let cy = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("Cy").unwrap(),
-            key: actor_of(&signing(CY)),
-            invite: None,
-        },
-    };
-    kim.rail().commit(NS, &cy).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(CY), "Cy", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        kim.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let mp4 = dir.path().join("title.mp4");
     let size = film(&mp4);
     let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
@@ -323,15 +321,13 @@ in_chromium!(
 async fn the_phones_page_shows_sam_visiting_and_kims_stop_ends_it(engine: Engine) {
     let relay = relay().await;
     let (kim_dir, bo_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ana = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("Ana").unwrap(),
-            key: actor_of(&signing(ANA)),
-            invite: None,
-        },
-    };
     let (kim, bo, day) = sam_visiting(kim_dir.path(), bo_dir.path(), &relay).await;
-    kim.rail().commit(NS, &ana).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(ANA), "Ana", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        kim.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let synced = bo.host().sync_with(NS, &kim.endpoint().addr()).await;
     assert!(
         synced.stop.is_none(),

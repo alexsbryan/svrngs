@@ -548,6 +548,9 @@ pub enum Refusal {
     Left(Name),
     #[error("you are in no group called {0} on this computer")]
     NoGroup(String),
+    /// An older svrngs made the group: nothing in it changes now.
+    #[error("{}", svrngs_node::made_older(.0.as_str()))]
+    MadeOlder(Name),
     #[error("say which groups can open it: `svrngs share {0} --group <group>`, once for each")]
     NoAudience(NonZeroU16),
     #[error("more than one group here is called {name}; say which by the start of its id: {}", ids.join(", "))]
@@ -631,6 +634,7 @@ impl Refusal {
             | Refusal::NameTaken { .. }
             | Refusal::Left(_)
             | Refusal::NoGroup(_)
+            | Refusal::MadeOlder(_)
             | Refusal::NoAudience(_)
             | Refusal::Ambiguous { .. }
             | Refusal::NotIn(_)
@@ -1191,6 +1195,8 @@ pub enum Said {
     /// computer's apps reach them, and what the people in them lend.
     Running {
         groups: Vec<Name>,
+        /// Groups an older svrngs made: held, and changing nothing.
+        older: Vec<Name>,
         api: SocketAddr,
         lends: Lends,
     },
@@ -1272,7 +1278,10 @@ impl std::fmt::Display for Said {
                     dir.display()
                 ),
             },
-            Said::Running { groups, api, lends } => {
+            Said::Running { groups, older, api, lends } => {
+                for group in older {
+                    writeln!(f, "{}", svrngs_node::made_older(group.as_str()))?;
+                }
                 if groups.is_empty() {
                     writeln!(
                         f,
@@ -1651,11 +1660,11 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
 /// What the bare command prints: the groups held, where apps reach them,
 /// and what the people in them lend, asked now.
 pub async fn running(root: &Path, node: &Node) -> Said {
+    let (older, groups): (Vec<_>, Vec<_>) = group::groups(root).into_iter().partition(Seed::older);
+    let named = |seeds: Vec<Seed>| seeds.iter().map(|s| s.name().clone()).collect();
     Said::Running {
-        groups: group::groups(root)
-            .iter()
-            .map(|s| s.name().clone())
-            .collect(),
+        groups: named(groups),
+        older: named(older),
         api: node.api_addr(),
         lends: node.lends().await,
     }
@@ -1778,6 +1787,7 @@ pub async fn join_group(
         Err(NotJoined::IssuerAway) => Err(Refusal::IssuerAway),
         Err(NotJoined::Keep(group)) => Err(Refusal::Keep(group.to_string())),
         Err(NotJoined::Left(group)) => Err(Refusal::Left(group)),
+        Err(NotJoined::Older(group)) => Err(Refusal::MadeOlder(group)),
     }
 }
 
@@ -1850,6 +1860,7 @@ async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String,
         JoinOutcome::IssuerAway => return Err(Refusal::IssuerAway),
         JoinOutcome::Keep { group } => return Err(Refusal::Keep(named(group)?.to_string())),
         JoinOutcome::Left { group } => return Err(Refusal::Left(named(group)?)),
+        JoinOutcome::Older { group } => return Err(Refusal::MadeOlder(named(group)?)),
     })
 }
 
@@ -1941,6 +1952,10 @@ fn group_named(root: &Path, reference: &str) -> Result<Seed, Refusal> {
         [] => {
             tracing::debug!(target: "cli", reference, held = held.len(), "cli: refused — no group by that name");
             Err(Refusal::NoGroup(reference.to_string()))
+        }
+        [one] if one.older() => {
+            tracing::debug!(target: "cli", reference, "cli: refused — an older svrngs made the group, so nothing in it changes");
+            Err(Refusal::MadeOlder(one.name().clone()))
         }
         [one] => Ok((*one).clone()),
         many => {

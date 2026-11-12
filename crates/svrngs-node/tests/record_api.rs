@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::{Node, NodeError};
 use svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, Roster, SigningKey};
 
 const NS: &str = "house";
 
@@ -77,14 +77,12 @@ fn admit(node: &Node, person: &str, joining: u8) {
 
 /// [`admit`], to the group `ns`.
 fn admit_to(node: &Node, ns: &str, person: &str, joining: u8) {
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(joining)),
-            invite: None,
-        },
-    };
-    node.rail().commit(ns, &fixture).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(ns, &signing(joining), person, |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        node.rail().commit(ns, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
 }
 
 /// An app's HTTP client: loopback, never a proxy.

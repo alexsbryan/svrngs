@@ -351,8 +351,8 @@ another of the group's computers when this one never held it — and from
   Their times are stamps on acts, never a computer's clock, so every copy
   says the same; `joined` is null for whoever started the group, `left`
   while they stand, and one who leaves and comes back does so by a new key,
-  with two stretches. `spans` is null while who stands is unsettled, never
-  empty. The route answers every act each time, from no cursor, since a
+  with two stretches. `spans` is null when the group's record cannot be
+  read here, never empty. The route answers every act each time, from no cursor, since a
   round may place an act before one already read.
 - `POST {op}` records one act; `{corrects, op}` corrects one of its own,
   `op` null to void it. svrngs puts the prefix on (`grant::app_act`, one
@@ -1797,7 +1797,7 @@ open journals sits behind a `Mutex`, which an actor per journal replaces.
 
 | Invariant | Held by | State |
 |---|---|---|
-| Same acts, same state: a group's state is a pure function of its set of acts, and of its seed, which its namespace hashes (`Seed::id`) | svrngs-core is `no_std`, and `lean_check` keeps it so; an adapter reads a group only through the runtime's queries (`admission`, `standing`, `invite_for`), since the journal is crate-private to svrngs-runtime; and it reads an admission only as a fold made in svrngs-core (`Admission::membership`, `Admission::invites`) or as `wire()`, the acts serialized for an app to fold, since the acts are private to the core | holds for every adapter; `wire()`'s JSON can be parsed back into acts, and no gate refuses that; inside the core, `membership` still sorts the acts admission hands it |
+| Same acts, same state: a group's state is a pure function of its set of acts, and of its seed, which its namespace hashes (`Seed::id`) | svrngs-core is `no_std`, and `lean_check` keeps it so; an adapter reads a group only through the runtime's queries (`admission`, `standing`, `invite_for`), since the journal is crate-private to svrngs-runtime; and it reads an admission only as a fold made in svrngs-core (`Admission::membership`, `Admission::invites`) or as `wire()`, the acts serialized for an app to fold, since the acts are private to the core | holds for every adapter; `wire()`'s JSON can be parsed back into acts, and no gate refuses that; inside the core, the projection of the interpreter's facts still sorts the counted acts by time, for visits and relays |
 | No act, no effect: nothing that cannot be undone to a group happens but from an act in its record. What is one computer's own — its keys, its lends and their secrets, a person's yes and stop to them, its folders' kept state, an app's blob and its lifetime — is kept in that computer's files (the State column above) and never in the record; a lent service's own state is its own, and the member door only carries a request to it | a store appends only `Authored` lines, which only `commit` makes after a `Command` decided under the write lock; a peer's lines enter by `ingest_all` unjudged, and every fold judges them; nothing deletes a line, and a `Seal` an older build wrote is held as an act that does nothing; what follows an act is written after it and driven by its writer: a cut told to the computers it cut, a leave told by the leaver's round until each computer answers | every act this computer signs goes through `commit`, a peer's through `ingest_all`; the journal's `append` is a test fixture |
 | Both | the core never depends on the node; the clock, randomness and locks live only where an adapter holds one (`clippy.toml` bans them; each site carries `#[expect(…, reason)]`, which fails once the site is gone) | holds |
 
@@ -1950,19 +1950,21 @@ at the end of `docs/principles/ARCH_PRINCIPLES.md` maps them.
 ## 6. The record
 
 Signed acts admitted into one total order by `(ts_unix, actor, seq, id)`:
-`Record`, `Correct`, `Admit`, `Remove`, `HandOn`, `Invite`, `Relay`,
-`Synced` (a folder's changes), `Runs`, `Visit`, `Signers`, the keeper's
-cutover, `Holders` and `Meets`, where the group meets (`RailAct`,
+`Record`, `Correct`, `Admit`, `Remove`, `HandOn`, `Accept`, `Authority`
+(a recovery's acts), `Invite`, `Relay`, `Synced` (a folder's changes),
+`Runs`, `Visit` and `Meets`, where the group meets (`RailAct`,
 `crates/svrngs-core/src/lib.rs`). `Correct` voids without erasing. A
 per-actor digest lets sync send only what is missing. Upstream's `Seal`
 retired everything its signer wrote before it, on every copy it reached;
 here it does nothing. The variant stays so an older journal still parses,
-no command writes one, and an app's is refused (`NotAnAppAct`). Forgetting
+no command writes one, and an app's is refused (`NotAnAppAct`); so do
+`Signers` and `Holders`, an older svrngs's cutovers, which nothing writes
+now and which move nothing. Forgetting
 from the journal waits in PLAN §2.
 
 - **The group decides who is in it.** Who may connect and who is synced come
-  only from the group's register — the key that seeds it, and its `Admit`
-  and `Remove` acts as `membership` folds them — never a mesh or a list a
+  only from the group's register — the key that seeds it, and its acts as
+  Eudoxia's interpreter resolves them (`admit`) — never a mesh or a list a
   door keeps. The seed is the founder's key alone, bound to the founder's
   name; a group's id is the hash of its seed, so a seed the issuer answers
   for a link proves the id (`Seed::id`). The round, the acceptor, the sync
@@ -2022,13 +2024,10 @@ from the journal waits in PLAN §2.
   pass lapses. The signer keeps repeat approvals of one entry stable for
   the five minutes, so a newer open can't give one entry two ids.
 
-  New holder entries and `Holders {through}` ship at line version 13. On
-  the keeper's first upgraded start, new group, or round, `Cutover::Holders`
-  signs the held legacy history's tips; broad old grants count only within
-  that ancestry. Admission drops unapproved legacy entries before
-  corrections can void anything. A computer refuses a new holder entry by
-  `/carry` until it holds the keeper's cutover (`upgrade_keeper`), and one
-  no approver approved (`not_approved`). The keeper upgrades first: the
+  New holder entries ship at line version 13. Every group starts cut over:
+  admission drops a holder's entry no approver approved before corrections
+  can void anything, and a computer refuses one by `/carry`
+  (`not_approved`). The keeper upgrades first: the
   protocol is version 5, and a computer answering below it is older
   (`version.rs`). 5 is lending to chosen groups: a list of lends is
   asked with `x-svrngs-version: 5`, and a computer refuses one asked
@@ -2039,12 +2038,8 @@ from the journal waits in PLAN §2.
 - **An entry's author is its signer.** A line counts as its signer's
   person, or a holder's as the person its pass names. A line naming
   another person, as an older svrngs wrote a phone's act (`on_behalf_of`),
-  counts as before only where the keeper's cutover covers it: `Signers
-  {through}`, each key's newest acts the keeper's computer held, written
-  once per group on its first round at the new version (`Cutover`; node.rs
-  `cut_over`), the keeper's office as a cut is, and covering by ancestry
-  as a cut does. Past it such a line is `RailGap::CarriedForAnother`, a
-  contradiction, and counts as nobody's (`admit.rs`). A yes, a `Runs`,
+  counts as nobody's: the interpreter reads no line said for another. A
+  yes, a `Runs`,
   counts only from its person's own device and only naming bytes a folder
   act placed at those paths (`synced.rs`, `written`), whenever it was
   written, so a phone person's yes that went through another computer
@@ -2057,44 +2052,33 @@ from the journal waits in PLAN §2.
   its design and what a fold costs.
 - **Removal has one decider.** Anyone may ask to remove anyone; the group's
   keeper — one person's key, handed on by an act — sequences each request.
-  A removed key cannot remove. The seed's policy picks the one decider of a
-  group's history (`admit`): a group made now, sources-v1, is read by
-  Eudoxia's interpreter (`eudoxia-community` `history.rs`, through
+  A removed key cannot remove. Every group's history is read by one
+  interpreter, Eudoxia's (`eudoxia-community` `history.rs`, through
   `crates/svrngs-core/src/authority/evidence.rs`), from what its lines
-  carry, never their times. There the office passes only when its recipient
-  signs an `Accept` of the hand-on on their own computer (`svrngs accept`,
-  or Accept it on the home page); until then nobody keeps it, and the giver
-  may take it back with a hand-on to its own key. A keeper's fork freezes
-  the office rather than pick a branch; a keeper's own leave always counts
-  and leaves it vacant; a frozen, vacant or unaccepted office is recovered
-  by everyone else's yes. The write side asks the same interpreter whether
-  each line it would write counts (`Refused::Uncounted`). A group made
-  before keeps the legacy fold below, which has no recovery inside a group
-  (`crates/svrngs-core/src/membership.rs`, its module docs the rule).
-
-  The legacy fold:
-  - The keeper at the seed is the maker's key, moved only by the keeper's own
-    `HandOn` to a standing key. An act that follows its author's own `HandOn`
-    by `prev` carries no keeper's authority, so an ex-keeper's backdated
-    second hand-on moves nothing. The office isn't the person: a hand-on that
-    made a keeper survives its giver's removal.
-  - The keeper's `Remove` of a standing key not its own is the cut; so is a
-    person's own, their leave (below); anyone else's is an ask, counted as an
-    act, cutting nobody.
-  - A removal names the removed key's acts by hash, never by position or
-    time: `Remove{key, through}` names the removed key's newest acts its
-    signer held, and the cut covers them and every act they descend from.
-    Any other act of the key counts nowhere (`RailGap::Removed`), wherever
-    its timestamp puts it, so it cannot remove, ask or hand on. Which cuts
-    count turns on the walk, so the walk runs again until the cuts settle; a
-    cut naming an act a copy lacks is `UnheldCut`, an absence; a cut that
-    cycles is said unsettled (`Membership::unsettled`), and nothing is
-    decided on it. The register folds standing from the acts that move
-    membership, every act of a key a `Remove` names, and every `Correct`,
-    since one may be a visit's Stop (`svrngs_core::standing_reads`).
-  - A `Correct` voids nothing that moves membership.
-  - The keeper can equivocate, signing two acts on one parent; that is the
-    trust risk 2 names (§8).
+  carry, never their times (`admit`). The office passes only when its
+  recipient signs an `Accept` of the hand-on on their own computer
+  (`svrngs accept`, or Accept it on the home page); until then nobody keeps
+  it, and the giver may take it back with a hand-on to its own key. The
+  keeper's `Remove` of a standing key not its own is the cut, naming the
+  key's newest acts by hash (`Remove{key, through}`), and a person's own is
+  their leave (below); anyone else's is an ask, cutting nobody. An act of a
+  cut key it does not cover counts nowhere (`RailGap::Removed`); a cut
+  naming an act a copy lacks is `UnheldCut`, an absence. A keeper's fork
+  freezes the office rather than pick a branch; a keeper's own leave always
+  counts and leaves it vacant; a frozen, vacant or unaccepted office is
+  recovered by everyone else's yes. A `Correct` voids nothing that moves
+  membership. The write side asks the same interpreter whether each line it
+  would write counts (`Refused::Uncounted`).
+- **A group an older svrngs made changes nothing.** Its seed names no policy
+  (`Roster::older`, the one home of that answer). It stays on disk and
+  readable, and nobody stands in it (`Standing::Older`; admission names
+  `RailGap::Older` and counts no act), so nothing is synced or written for
+  it (`Refused::Older`). Its home page entry, the command where it names a
+  group, and a joiner opening one of its links each say the same: "Pier was
+  made by an older svrngs, so nothing in it changes now. To carry on, make
+  it again and invite people by link." (`made_older`). Each computer says
+  so at warn once per such group as it starts, and at debug on every other
+  read.
 
   A person removes someone, or asks it, in the command: `svrngs remove
   <name> --group <group>` and `svrngs handover <name> --group <group>` ask
@@ -2124,9 +2108,10 @@ from the journal waits in PLAN §2.
   `Remove` signed by a key standing as the person it removes is the cut, by
   them alone: no new kind of act, one more line of the fold. svrngs-core's
   `Leave` writes a `Remove` of every key standing as the person, the
-  signer's own last. The keeper hands on first: their leave is refused while
-  anyone else stands (`Keeps`). The last person in a group leaves freely,
-  and every copy stays with whoever held it. `svrngs leave <group>`, or the
+  signer's own last. A keeper who leaves without handing on leaves the
+  office vacant, and the home page says so before Leave; the others
+  recover it together. The last person in a group leaves freely, and every
+  copy stays with whoever held it. `svrngs leave <group>`, or the
   home page, commits the leave and tells it at once to the leaver's other
   computers; every other computer standing in the group is told it by the
   leaver's round, each round until it answers. A leave goes with the
@@ -2161,12 +2146,13 @@ from the journal waits in PLAN §2.
   `crates/svrngs-core/src/lib.rs`). A link admits everyone who opens it,
   each once, until it lapses or its issuer closes it.
   - *Only the issuer redeems*, so one computer decides every use, and a link
-    works while its issuer's computer is reachable. The fold counts a
-    redeeming `Admit` only under an `Invite` its signer signed, held,
-    counted earlier in the order, with no newer `Invite` of the issuer's
-    counted before the `Admit`, the `Admit` timed before `until`, and the
-    co-signature verifying; otherwise admission names a `RefusedRedemption`
-    gap with its `InviteFault`.
+    works while its issuer's computer is reachable. The interpreter counts a
+    redeeming `Admit` only under an `Invite` its signer signed and holds,
+    the issuer's open link at the `Admit`'s place on the issuer's chain, the
+    `Admit` timed before `until`, and the joiner's consent covering its
+    device (`source_redemption_message`); otherwise it counts nowhere, the
+    interpreter's reason kept (`Membership::uncounted`). No `Admit` naming no
+    `Invite` counts.
   - *A new link closes the old one.* An issuer has one open link per group;
     minting another closes the last from its place in the order, and
     everyone the old link admitted keeps standing. A leaked link is closed
@@ -2174,7 +2160,8 @@ from the journal waits in PLAN §2.
   - *The redemption* (`crates/svrngs-node/src/redeem.rs`), on a protocol of
     its own: the joiner, holding only the link, first asks, proving the
     link's key, and the issuer answers the group's id, its seed and the
-    `Invite`'s id, the seed believed only when it hashes to the id. The
+    `Invite`'s id, the seed believed only when it hashes to the id; a seed
+    an older svrngs made is refused there, in `made_older`'s words. The
     joiner then presents a person's name, its new key — the key it dials
     with — that key's consent, and whether a computer or a browser holds
     it, all signed by the link's key; a browser's `Admit` ships at line
@@ -2195,7 +2182,7 @@ from the journal waits in PLAN §2.
 - **A key per device per group, bound to the person.** Each device keeps its
   own key, since a key shared by a person's devices would fork their chain,
   so a cut in one group touches no other. A person is their first key in the
-  group — a seed row's first, or the key a plain `Admit` binds — so two
+  group — a seed row's first, or the key a link's redemption binds — so two
   people of one name are two people, never merged. A device link, an
   `Invite` naming the person, counts only from a key standing as them, and a
   key it admits is theirs, asked no name (`Membership::person_of`). Of two

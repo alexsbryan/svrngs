@@ -120,11 +120,16 @@ hand it on. On the home page, the person who decides sees this beside
 **Leave House**: *You keep the order of removals in House. Choose who keeps
 it after you, then leave:* with a list of names and **Hand it on**.
 
-A group made before this svrngs hands it on at once, with no yes:
-*Bo now decides who is removed from House, instead of you.*
-
 If you leave while you decide who is removed, nobody does until the others
 agree together on who; svrngs says so when you leave.
+
+## A group made by an older svrngs
+
+If your home page says *Pier was made by an older svrngs, so nothing in it
+changes now. To carry on, make it again and invite people by link.*, Pier
+stays on your computer as it was, but nothing new reaches it and nobody
+joins it. To carry on together, make a new group on your home page and send
+everyone its link.
 
 ## Leave a group
 

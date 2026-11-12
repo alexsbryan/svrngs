@@ -132,46 +132,6 @@ fn a_correction_that_arrives_first_still_voids_its_target() {
     assert_eq!(applied(&fix_first), vec!["right"]);
 }
 
-/// A correction naming an op this node does not hold is not fatal — the void
-/// is recorded and applies the moment the target arrives — but it means we
-/// are missing an op, and that gets said.
-#[test]
-fn a_correction_pointing_at_an_op_we_do_not_hold_is_reported() {
-    let orphan = signed(
-        &key(1),
-        100,
-        0,
-        RailAct::Correct {
-            corrects: stray_id(0xde),
-            replacement: None,
-        },
-    );
-    let f = admitted(&[orphan.clone()]);
-    assert_eq!(
-        f.gaps(),
-        vec![RailGap::DanglingCorrection {
-            by: orphan.id.clone(),
-            missing: stray_id(0xde),
-        }]
-    );
-    assert!(applied(&f).is_empty());
-
-    // And when the target does arrive, the void applies with no repair step.
-    let target = signed(&key(2), 99, 0, record("wrong"));
-    let fix = signed(
-        &key(1),
-        100,
-        0,
-        RailAct::Correct {
-            corrects: target.id.clone(),
-            replacement: None,
-        },
-    );
-    let healed = admitted(&[fix, target]);
-    assert!(healed.is_complete(), "{:?}", healed.gaps());
-    assert!(applied(&healed).is_empty(), "the target is voided");
-}
-
 /// The total order is `(ts_unix, actor, seq, id)`, but the void set does not
 /// consult it at all — so a correction stamped in the past still corrects.
 #[test]
@@ -304,42 +264,6 @@ fn a_voided_op_is_still_visible_but_is_never_applied() {
 
 // ── lines this build cannot read ─────────────────────────────
 
-/// **A dangling correction is named beside a complete answer.** One typo'd
-/// `Correct` citing an op nobody holds must not flip every node's
-/// completeness bit forever (ROOT_CAUSE_FIXES A2): nothing is hidden from
-/// the fold — the record cites what nobody here can resolve, and that is a
-/// contradiction to name, not an absence to carry. It heals when the cited
-/// op arrives; until then the answer is complete and contested.
-#[test]
-fn a_dangling_correction_is_named_beside_a_complete_answer() {
-    let target = stray_id(0x5e);
-    let fine = signed(&key(1), 100, 0, record("fine"));
-    let f = admitted(&[
-        fine.clone(),
-        after(
-            &key(1),
-            &fine,
-            101,
-            RailAct::Correct {
-                corrects: target,
-                replacement: None,
-            },
-        ),
-    ]);
-    assert!(
-        f.is_complete(),
-        "a citation nobody can resolve hides no data: {:?}",
-        f.gaps()
-    );
-    assert!(
-        f.gaps()
-            .iter()
-            .any(|g| matches!(g, RailGap::DanglingCorrection { .. })),
-        "and the contradiction is named: {:?}",
-        f.gaps()
-    );
-}
-
 /// **Every gap kind has a named verdict.** One classification table (ARCH
 /// §10.6), split by coverage: can this gap hide acts that belong in the
 /// fold? A refused act CAN — it may be real data the fold turned away (the
@@ -434,28 +358,28 @@ fn every_gap_class_is_classified() {
 #[test]
 fn a_replacement_key_leaves_every_past_act_admitted() {
     let old = signed(&key(4), 100, 0, record("old-key-writes"));
-    let past = signed(&key(4), 101, 1, record("more-past"));
-    let admit_new = signed(
-        &key(1),
+    let past = after(&key(4), &old, 101, record("more-past"));
+    // The replacement key, let in by dee's own device link: no bare
+    // `Admit` counts (release 2).
+    let link = invite_of(&key(9), 1_000, Some(actor_of(&key(4))));
+    let link = after(&key(4), &past, 102, link);
+    let admit_new = after(
+        &key(4),
+        &link,
         102,
-        0,
-        RailAct::Admit {
-            person: Person::parse("dee").unwrap(),
-            key: actor_of(&key(5)),
-            invite: None,
-        },
+        redeeming(&link, "dee", &key(5), Device::Computer),
     );
     let cut_old = signed(
         &key(1),
         103,
-        1,
+        0,
         RailAct::Remove {
             key: actor_of(&key(4)),
-            through: vec![old.id.clone(), past.id.clone()],
+            through: vec![admit_new.id.clone()],
         },
     );
     let new_writes = signed(&key(5), 104, 0, record("new-key-writes"));
-    let old_after_cut = signed(&key(4), 105, 2, record("after-the-cut"));
+    let old_after_cut = after(&key(4), &admit_new, 105, record("after-the-cut"));
     let after_cut_id = old_after_cut.id.clone();
 
     // The seed names dee with the OLD key — the replacement changes the key,
@@ -469,6 +393,7 @@ fn a_replacement_key_leaves_every_past_act_admitted() {
         &crate::ActSet::of(&[
             old.clone(),
             past,
+            link,
             admit_new,
             cut_old,
             new_writes.clone(),
@@ -1059,12 +984,11 @@ fn an_op_id_reads_short_enough_to_say() {
 /// an act named only the name.
 #[test]
 fn each_act_names_its_writer_s_first_key_beside_their_name() {
-    let dee = |k: u8| RailAct::Admit {
-        person: p("dee"),
-        key: actor_of(&key(k)),
-        invite: None,
-    };
-    let mut ops = run(&key(1), 100, [dee(6), dee(8)]);
+    // Two people let in as dee by alex's link, each a person of their own.
+    let link = signed(&key(1), 100, 0, invite_of(&key(9), 1_000, None));
+    let dee = |k: u8| redeeming(&link, "dee", &key(k), Device::Computer);
+    let six = after(&key(1), &link, 101, dee(6));
+    let mut ops = vec![link.clone(), six.clone(), after(&key(1), &six, 102, dee(8))];
     ops.extend([6, 8, 4].map(|k| signed(&key(k), 110, 0, record(&format!("by {k}")))));
     let mut seed = ring().members;
     seed.entry(p("bo")).or_default().push(actor_of(&key(4)));

@@ -255,7 +255,7 @@ async fn cut_and_contribute(public_only: bool) {
     // Bo let in by a link Ada's computer mints: the group is sources-v1.
     let (ns, rail) = (house.id(), ada.rail());
     svrngs_core::tests_support::let_in(
-        (&ns, house.policy(), &actor_of(rail.signer())),
+        (&ns, &actor_of(rail.signer())),
         (
             &SigningKey::from_bytes(&[6; 32]),
             "bo",

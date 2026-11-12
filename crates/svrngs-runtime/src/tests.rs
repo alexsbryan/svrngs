@@ -286,9 +286,20 @@ fn an_admit_naming_no_person_is_a_gap_on_every_copy() {
             );
         }
     }
+    // A name that parses, redeemed under alex's link: no bare `Admit` counts
+    // (release 2).
     let dir = tempfile::tempdir().unwrap();
     let journal = open(dir.path());
-    write_lines(&journal, &admit_line(&key(1), &joining, "Zoë Ann"));
+    let link = signed(
+        &key(1),
+        1,
+        0,
+        svrngs_core::tests_support::invite_of(&key(9), i64::MAX, None),
+    );
+    let zoe = svrngs_core::tests_support::redeeming(&link, "Zoë Ann", &joining, crate::Device::Computer);
+    let zoe = svrngs_core::tests_support::after(&key(1), &link, 2, zoe);
+    let lines = [link, zoe].map(|l| serde_json::to_string(&l).unwrap());
+    write_lines(&journal, &lines.join("\n"));
     let f = journal.admit(&r, &Ed25519Verifier).unwrap();
     assert!(f.gaps().is_empty(), "{:?}", f.gaps());
     let m = f.membership();

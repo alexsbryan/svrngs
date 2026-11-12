@@ -670,14 +670,12 @@ async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
         svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
     alex.transport().add_known_peer(cy, at_cy);
     for (person, seed) in [("sam", 2), ("cy", 3)] {
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(seed)),
-                invite: None,
-            },
-        };
-        alex.rail().commit(NS, &admit).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(seed), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     // Sam's computer holds its own admission, as a round would carry it.
     let theirs = sam.rail().digest(NS).unwrap();
@@ -822,14 +820,12 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
     let cy =
         svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
     alex.transport().add_known_peer(cy, at_cy);
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("cy").unwrap(),
-            key: actor_of(&signing(3)),
-            invite: None,
-        },
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(3), "cy", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let api = alex.api_addr();
     let on = &Browser::of(&alex);
     let host = format!(

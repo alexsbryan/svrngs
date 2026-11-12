@@ -27,7 +27,9 @@ const CLIENT: &str = "svrngs-media";
 const SECRET: &str = "media-secret_2026.10";
 const PUBLIC: &str = "public";
 const PUBLIC_CLIENT: &str = "svrngs-public";
-const SUB: &str = "9f2c0a1b3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8";
+/// Ana's device key, `signing(2)`'s: a seed's keys are real ed25519 keys,
+/// or the group's interpreter stands nobody up (release 2).
+const SUB: &str = "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394";
 const NAME: &str = "Ana";
 const USER: &str = "Ana-9f2c0a1b3d4e5f60";
 const REDIRECT: &str = "http://localhost:8096/signin-oidc";

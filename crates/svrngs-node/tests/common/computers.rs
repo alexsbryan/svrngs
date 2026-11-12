@@ -10,7 +10,7 @@ use std::time::Duration;
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::node::Node;
 use svrngs_node::seed::Seed;
-use svrngs_node::{actor_of, Name, Person, RailAct, SigningKey};
+use svrngs_node::{Name, SigningKey};
 
 use crate::common::loopback_sockets;
 
@@ -65,14 +65,12 @@ pub fn found(name: &str, salt: u8, ana: &Node, others: &[(&Node, u8)]) -> String
     }
     for &(_, n) in others {
         let person = ["", "", "ben", "cy"][n as usize];
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(n)),
-                invite: None,
-            },
-        };
-        ana.rail().commit(&id, &admit).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(&id, &signing(n), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            ana.rail().commit(&id, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     id
 }

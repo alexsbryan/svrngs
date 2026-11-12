@@ -86,12 +86,12 @@ fn append(node: &Node, ns: &str, act: RailAct) -> Op<SignedOp> {
         .clone()
 }
 
-fn admit(person: &str, joining: u8) -> RailAct {
-    RailAct::Admit {
-        person: Person::parse(person).unwrap(),
-        key: actor_of(&signing(joining)),
-        invite: None,
-    }
+/// `joining` let in as `person` by a link `node` mints: no bare `Admit`
+/// counts (release 2).
+fn admit(node: &Node, ns: &str, person: &str, joining: u8) {
+    svrngs_core::tests_support::let_in_by(ns, &signing(joining), person, |act| {
+        append(node, ns, act).id
+    });
 }
 
 fn record(n: u32) -> RailAct {
@@ -135,7 +135,7 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
     let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (a, b) = (start(1, &da).await, start(2, &db).await);
     hold(&a, NS, 1);
-    append(&a, NS, admit("bo", 2));
+    admit(&a, NS, "bo", 2);
     append(&a, NS, record(0));
     hold(&b, NS, 1);
     assert_ne!(
@@ -198,7 +198,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
     for node in [&a, &b, &p] {
         hold(node, NS, 1);
     }
-    append(&a, NS, admit("bo", 2));
+    admit(&a, NS, "bo", 2);
     let link = signing(9);
     let invite = append(
         &a,
@@ -220,7 +220,6 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
                 &invite.id,
                 &pia,
                 Device::Browser,
-                None,
             )),
             person: pia,
             key: actor_of(&signing(3)),
@@ -283,7 +282,7 @@ async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
         hold(node, NS, 1);
     }
     for (person, k) in [("bo", 2), ("cy", 3), ("dee", 4)] {
-        append(&a, NS, admit(person, k));
+        admit(&a, NS, person, k);
     }
     // Cy's lends cannot be read: where its declarations go is a file.
     std::fs::write(
@@ -333,7 +332,7 @@ async fn a_stranger_is_closed_and_a_member_of_another_group_is_refused() {
     let d = start(4, &dirs[2]).await;
     hold(&a, NS, 1);
     hold(&a, OTHER, 1);
-    append(&a, OTHER, admit("dee", 4));
+    admit(&a, OTHER, "dee", 4);
     let http = reqwest::Client::builder().no_proxy().build().unwrap();
     let sync = |base: &str, ns: &str, claim: Option<String>| {
         let mut req = http

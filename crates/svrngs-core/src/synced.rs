@@ -18,7 +18,7 @@ use core::convert::Infallible;
 
 use serde::{Deserialize, Serialize};
 
-use crate::command::{Command, Reads};
+use crate::command::Command;
 use crate::{Admission, ContentHash, Person};
 
 /// A path under a synced folder (syp-4 c): named parts joined by `/`, so
@@ -128,7 +128,6 @@ pub struct SyncFolder {
 
 impl Command for SyncFolder {
     type Refusal = Infallible;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, _before: &Admission) -> Result<Vec<crate::RailAct>, Infallible> {
         Ok(vec![crate::RailAct::Synced {

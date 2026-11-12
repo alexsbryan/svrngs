@@ -24,8 +24,7 @@ impl Group {
     /// Ana (key 1) founds it.
     fn founded() -> Self {
         let name = |n: &str| Name::parse(n).unwrap();
-        let seed = Seed::from_parts(name("House"), name("Ana"), key(1).verifying_key(), [3; 16])
-            .with_source_policy();
+        let seed = Seed::from_parts(name("House"), name("Ana"), key(1).verifying_key(), [3; 16]);
         let roster = seed.roster();
         assert_eq!(roster.policy, V1, "the seed's policy reaches its roster");
         Self {
@@ -91,13 +90,15 @@ impl Group {
         policy: Option<GroupPolicy>,
         now: i64,
     ) -> Result<Recorded, Refused<RedeemRefusal>> {
-        let consent =
-            Redemption::sign(&key(joining), &self.ns, &invite, &p(person), device, policy);
+        let consent = match policy {
+            Some(_) => Redemption::sign(&key(joining), &self.ns, &invite, &p(person), device).sig,
+            None => legacy_consent(&key(joining), &self.ns, &invite, person),
+        };
         let redeem = Redeem {
             invite,
             person: p(person),
             key: actor_of(&key(joining)),
-            cosig: consent.sig,
+            cosig: consent,
             device,
             link: actor_of(&key(link)),
             issuer: actor_of(&key(issuer)),
@@ -158,6 +159,19 @@ fn authority(change: AuthorityChange) -> Fixture {
     Fixture {
         act: RailAct::Authority { change },
     }
+}
+
+/// The consent an older svrngs signed, which covers no device: the
+/// redemption binding its domain, the group, the `Invite`'s id, the person
+/// and the key, each variable field length-prefixed, as `sig.rs`'s
+/// `redemption_message` built it before release 2.
+fn legacy_consent(joining: &SigningKey, ns: &str, invite: &OpId, person: &str) -> String {
+    let mut msg = b"svrngs-redemption-binding:".to_vec();
+    crate::field(&mut msg, ns.as_bytes());
+    msg.extend_from_slice(invite.as_bytes());
+    crate::field(&mut msg, person.as_bytes());
+    crate::field(&mut msg, actor_of(joining).as_bytes());
+    crate::sign_message(joining, &msg)
 }
 
 /// Bo and Cy joined Ana's group by link; Bo's phone (key 4) by Bo's device link.

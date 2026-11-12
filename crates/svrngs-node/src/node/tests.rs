@@ -34,7 +34,7 @@ async fn write_fixture() -> (Asking, axum::Router, crate::seed::Seed, tempfile::
     node.host.keep_group(&seed, None, &[]).unwrap();
     let (ns, rail) = (seed.id(), &node.host.rail);
     let_in(
-        (&ns, seed.policy(), &node.host.actor),
+        (&ns, &node.host.actor),
         (
             &SigningKey::from_bytes(&[93; 32]),
             "Cy",
@@ -268,7 +268,7 @@ async fn a_write_reaches_a_peer_without_the_timer_and_both_rounds_settle() {
     ada.host.keep_group(&seed, None, &[]).unwrap();
     let ns = seed.id();
     let_in(
-        (&ns, seed.policy(), &ada.host.actor),
+        (&ns, &ada.host.actor),
         (&other, "Bo", crate::Device::Computer),
         |mint| {
             ada.rail().commit(&ns, mint).unwrap().unwrap().lines()[0]

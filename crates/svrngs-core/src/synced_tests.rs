@@ -345,13 +345,14 @@ fn a_yes_naming_files_no_folder_placed_counts_nowhere() {
 fn two_people_of_one_name_keep_their_own_yes() {
     let mut ops = brought_then_changed();
     let new = money([("index.html", 7), ("app.js", 9)]);
-    let dee = |k: u8| RailAct::Admit {
-        person: p("dee"),
-        key: actor_of(&key(k)),
-        invite: None,
-    };
-    let first = after(&key(1), &ops[2], 1_011, dee(6));
-    ops.extend([first.clone(), after(&key(1), &first, 1_012, dee(8))]);
+    let link = after(&key(1), &ops[2], 1_010, invite_of(&key(9), 5_000, None));
+    let dee = |k: u8| redeeming(&link, "dee", &key(k), Device::Computer);
+    let first = after(&key(1), &link, 1_011, dee(6));
+    ops.extend([
+        link.clone(),
+        first.clone(),
+        after(&key(1), &first, 1_012, dee(8)),
+    ]);
     ops.push(signed(&key(6), 1_020, 0, yes(&new)));
     let runs = admitted(&ops).runs().clone();
     let brought = money([("index.html", 7), ("app.js", 8)]);

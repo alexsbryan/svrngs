@@ -9,15 +9,6 @@ use alloc::vec::Vec;
 use crate::{actor_of, RingVerifier, Roster, SigningKey};
 use crate::{admit, derive_id, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
 
-/// Which of the held acts a command's decision reads.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Reads {
-    /// The acts the register folds ([`crate::standing_reads`]).
-    Membership,
-    /// Every act held: a removal names the removed key's newest acts (U7).
-    All,
-}
-
 /// A request to change a group's record. A type implements this once, so a
 /// command has exactly one decider.
 ///
@@ -37,7 +28,6 @@ pub enum Reads {
 )]
 pub trait Command {
     type Refusal;
-    const READS: Reads;
 
     /// The acts to write, decided over what the group holds now.
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Self::Refusal>;
@@ -70,13 +60,13 @@ pub struct Held<'a> {
 /// Why a commit wrote nothing.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Refused<R> {
+    /// An older svrngs made the group ([`Roster::older`]): nothing in it
+    /// changes, so nothing is written. Said by [`crate::made_older`].
+    Older,
     /// The signer holds no standing in the group.
     NoStanding,
-    /// The group's cuts do not settle, before the acts or after them
-    /// (#124): nothing is judged on that, so nothing is written.
-    Unsettled,
-    /// A sources-v1 group's interpreter would not count a line the command
-    /// asks for, so nothing is written: the write side is the replay.
+    /// The group's interpreter would not count a line the command asks
+    /// for, so nothing is written: the write side is the replay.
     Uncounted(Uncounted),
     Command(R),
 }
@@ -96,8 +86,8 @@ impl Authored {
         &self.0
     }
 
-    /// A sources-v1 group's fold with these lines in it, for a store to
-    /// keep as the fold of what it now holds: one fold per write (P8).
+    /// The group's fold with these lines in it, for a store to keep as the
+    /// fold of what it now holds: one fold per write (P8).
     pub fn after(self) -> Option<(Roster, Admission)> {
         self.1
     }
@@ -170,17 +160,17 @@ fn authored<C: Command>(
     a: &Author<'_>,
 ) -> Result<Authored, Refused<C::Refusal>> {
     let actor = actor_of(a.signer);
-    let fold = |acts: &ActSet| {
-        let read = read::<C>(acts, a.roster);
-        admit(&read, &[], a.roster, a.namespace, held.verifier)
-    };
+    if a.roster.older() {
+        tracing::debug!(target: "rail:door", ns = a.namespace, %actor,
+            "commit refused — an older svrngs made the group, so nothing in it changes");
+        return Err(Refused::Older);
+    }
+    let fold = |acts: &ActSet| admit(acts, &[], a.roster, a.namespace, held.verifier);
     // The interpreter reads every line, so the store's kept fold of what it
-    // holds, which a store keeps only then, is this decision's, and the
-    // write folds once (P8).
+    // holds is this decision's, and the write folds once (P8).
     let kept = held.kept.filter(|(seed, _)| *seed == a.roster);
     let before = kept.map_or_else(|| fold(held.acts), |(_, kept)| kept.clone());
     tracing::debug!(target: "rail:door", ns = a.namespace, %actor, kept = kept.is_some(), "commit: the fold decided over, the store's kept one when it keeps one");
-    settled(&before, a.namespace)?;
     if !before.membership().standing.contains(&actor) {
         tracing::debug!(target: "rail:door", ns = a.namespace, %actor,
             "commit refused — the signer holds no standing in the group");
@@ -198,40 +188,19 @@ fn authored<C: Command>(
         with.insert(line.clone());
     }
     let after = fold(&with);
-    settled(&after, a.namespace)?;
     let ids: Vec<OpId> = lines.iter().map(|l| l.id.clone()).collect();
     command.confirm(&after, &ids).map_err(Refused::Command)?;
     // Write side equals replay (EUDOXIA_JUDGE §2): past the command's own
     // refusals, the group's interpreter says whether each line would count,
     // never a rule here.
-    let v1 = after.membership().decided.interpreted();
-    if let Some(id) = ids.iter().find(|id| v1 && !after.membership().counts(id)) {
+    if let Some(id) = ids.iter().find(|id| !after.membership().counts(id)) {
         let why = after.membership().uncounted.get(id).cloned();
         tracing::debug!(target: "rail:door", ns = a.namespace, %actor, %id, ?why,
             "commit refused — the group's interpreter would not count the line");
         let line = lines.iter().find(|l| l.id == *id).expect("written");
         return Err(Refused::Uncounted(Uncounted::of(&after, line, why)));
     }
-    Ok(Authored(lines, v1.then(|| (a.roster.clone(), after))))
-}
-
-/// Refuses a fold whose cuts did not settle (#124), said at warn.
-fn settled<R>(fold: &Admission, ns: &str) -> Result<(), Refused<R>> {
-    if !fold.membership().unsettled {
-        return Ok(());
-    }
-    tracing::warn!(target: "rail:door", ns, "commit refused — the group's removals do not come to one answer, so nothing is judged on them");
-    Err(Refused::Unsettled)
-}
-
-fn read<C: Command>(held: &ActSet, seed: &Roster) -> ActSet {
-    match C::READS {
-        Reads::Membership => {
-            let all: Vec<Op<SignedOp>> = held.iter().cloned().collect();
-            ActSet::of(crate::standing_reads(&all, seed))
-        }
-        Reads::All => held.clone(),
-    }
+    Ok(Authored(lines, Some((a.roster.clone(), after))))
 }
 
 /// How far past the writer's clock a line held may be timed and still be
@@ -299,7 +268,7 @@ fn sign_lines(
     lines
 }
 
-/// Why a sources-v1 group's interpreter would not count a line a command
+/// Why the group's interpreter would not count a line a command
 /// asked for, with whose line it was and, for a correction, whose entry it
 /// names. Its `Display` is the one sentence a person reads: what stopped,
 /// why, and what to do.

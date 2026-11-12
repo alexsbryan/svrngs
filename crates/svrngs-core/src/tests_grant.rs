@@ -29,13 +29,20 @@ fn app(kind: &str) -> Label {
     Label::of(&lender, &format!("{kind}-{}", NS.get(..16).unwrap_or(NS)))
 }
 
-/// `by`'s pass for `HOLDER` in the app `kind`, lapsing at `until`.
+/// `by`'s pass for `HOLDER` in the app `kind`, lapsing at `until`, naming
+/// [`APPROVER`] as its open's approver.
 fn pass(by: u8, kind: &str, until: i64) -> Pass {
-    Pass::sign(
+    approvable(by, app(kind), until)
+}
+
+fn approvable(by: u8, label: Label, until: i64) -> Pass {
+    let approver = Some(actor_of(&key(APPROVER)));
+    Pass::approvable(
         &key(by),
         &actor_of(&key(HOLDER)),
-        (app(kind), vec![]),
+        (label, vec![]),
         until,
+        approver,
     )
 }
 
@@ -44,8 +51,40 @@ fn act(kind: &str, what: &str) -> RailAct {
     RailAct::Record { payload }
 }
 
-/// `act`, signed by `holder` at `seq` after `prev`, carrying `pass`.
+/// `act`, signed by `holder` at `seq` after `prev`, carrying `pass` as its
+/// approver approved this exact entry by its own time, where the pass lets
+/// it: a group counts no holder's entry but an approved one (release 2;
+/// every group starts cut over). One it does not approve carries `pass`.
 fn held(
+    holder: u8,
+    pass: &Pass,
+    ts: i64,
+    prev: Option<&Op<SignedOp>>,
+    act: RailAct,
+) -> Op<SignedOp> {
+    let seq = prev.map_or(0, |p| p.kind.seq + 1);
+    let prev = prev.map(|p| p.id.clone());
+    let sign = |grant: &Pass| {
+        let grant = Some(grant.clone());
+        sign_act(
+            &key(holder),
+            NS,
+            ts,
+            seq,
+            prev.clone(),
+            act.clone(),
+            None,
+            None,
+            grant,
+        )
+    };
+    let draft = sign(pass);
+    pass.approve(&key(APPROVER), &draft, NS, ts)
+        .map_or(draft, |exact| sign(&exact))
+}
+
+/// `act`, signed by `holder` after `prev`, carrying `pass` as given.
+fn held_as(
     holder: u8,
     pass: &Pass,
     ts: i64,
@@ -136,12 +175,7 @@ fn a_holder_writes_only_its_own_app_s_part() {
 /// the new label, and the dinner before it no longer counts.
 #[test]
 fn the_group_s_one_label_writes_its_kind_as_a_copy_s_did() {
-    let new = Pass::sign(
-        &key(2),
-        &actor_of(&key(HOLDER)),
-        (Label::carried("money", NS), vec![]),
-        2_000,
-    );
+    let new = approvable(2, Label::carried("money", NS), 2_000);
     let dinner = held(
         HOLDER,
         &pass(2, "money", 2_000),
@@ -329,22 +363,22 @@ const APPROVER: u8 = 8;
 /// delivery, never makes a reach pass, has one spelling, and binds the
 /// entry's content: a changed entry, an unapproved one, one approved by
 /// another key or by the person in the approver's place, and approval asked
-/// after the pass lapsed, count nowhere. The keeper's `Holders` cut keeps
-/// the entry before it, approved or not.
+/// after the pass lapsed, count nowhere; so does the broad entry no approver
+/// approved, as every group starts cut over (release 2).
 #[test]
 fn exact_approval_survives_delivery_delay_but_cannot_be_forged_after_expiry() {
     let lends = (app("money"), vec![]);
     let approver = Some(actor_of(&key(APPROVER)));
     let broad = Pass::approvable(&key(2), &actor_of(&key(HOLDER)), lends, 2000, approver);
-    let old = held(HOLDER, &broad, 100, None, act("money/expense", "old"));
+    let old = held_as(HOLDER, &broad, 100, None, act("money/expense", "old"));
     let next =
-        |pass: &Pass, ts, what| held(HOLDER, pass, ts, Some(&old), act("money/expense", what));
+        |pass: &Pass, ts, what| held_as(HOLDER, pass, ts, Some(&old), act("money/expense", what));
     let (draft, late) = (next(&broad, 101, "approved"), next(&broad, 2000, "late"));
     let undo = RailAct::Correct {
         corrects: old.id.clone(),
         replacement: None,
     };
-    let undo = held(HOLDER, &broad, 101, Some(&old), undo);
+    let undo = held_as(HOLDER, &broad, 101, Some(&old), undo);
     let approve = |pass: &Pass, by: u8, line, now| pass.approve(&key(by), line, NS, now);
     assert!(
         approve(&broad, APPROVER, &draft, 2000).is_none(),
@@ -362,7 +396,12 @@ fn exact_approval_survives_delivery_delay_but_cannot_be_forged_after_expiry() {
         approve(&broad, 2, &draft, 101).is_none(),
         "the person's key is not the approver the pass names"
     );
-    let unnamed = pass(2, "money", 2000);
+    let unnamed = Pass::sign(
+        &key(2),
+        &actor_of(&key(HOLDER)),
+        (app("money"), vec![]),
+        2000,
+    );
     assert!(
         approve(&unnamed, APPROVER, &draft, 101).is_none(),
         "a pass naming no approver approves nothing"
@@ -386,22 +425,9 @@ fn exact_approval_survives_delivery_delay_but_cannot_be_forged_after_expiry() {
         next(&broad, 101, "backdated"),
         next(&stranger, 101, "approved"),
     );
-    let cut = signed(
-        &key(1),
-        102,
-        0,
-        RailAct::Holders {
-            through: vec![old.id.clone()],
-        },
-    );
-    let ops = vec![old, approved, changed, forged, other, undo, cut];
+    let ops = vec![old, approved, changed, forged, other, undo];
     let a = admitted(&ops);
-    assert_eq!(
-        whose(&a),
-        vec![mine("old", "bo"), mine("approved", "bo")],
-        "{:?}",
-        a.gaps()
-    );
+    assert_eq!(whose(&a), vec![mine("approved", "bo")], "{:?}", a.gaps());
     let reversed = admitted(&ops.into_iter().rev().collect::<Vec<_>>());
     assert_eq!(whose(&a), whose(&reversed));
 }
@@ -420,7 +446,7 @@ fn an_unheld_correction_does_not_hide_an_invalid_or_wrong_content_grant() {
         Some(actor_of(&key(APPROVER))),
     );
     let target = signed(&key(2), 99, 0, act("money/expense", "not held"));
-    let draft = held(HOLDER, &broad, 100, None, act("money/expense", "approved"));
+    let draft = held_as(HOLDER, &broad, 100, None, act("money/expense", "approved"));
     let exact = broad.approve(&key(APPROVER), &draft, NS, 100).unwrap();
     let mut forged = broad.clone();
     forged.sig.replace_range(..2, "ff");
@@ -431,7 +457,7 @@ fn an_unheld_correction_does_not_hide_an_invalid_or_wrong_content_grant() {
         (forged, Why::Unsigned),
         (exact, Why::Unapproved),
     ] {
-        let line = held(
+        let line = held_as(
             HOLDER,
             &grant,
             100,

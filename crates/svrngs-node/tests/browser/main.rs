@@ -166,14 +166,12 @@ async fn computer_on(
     founder: &str,
 ) -> Node {
     let node = seeded(dir, relay, me, founder, me).await;
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("bo").unwrap(),
-            key: actor_of(admitted),
-            invite: None,
-        },
-    };
-    node.rail().commit(NS, &fixture).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, admitted, "bo", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        node.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
@@ -185,14 +183,12 @@ async fn computer_on(
 /// the other's people (u5-2: the page lists cy's lends, and a pass names
 /// them, only when cy is in the group the phone opened).
 async fn joined(dir: &Path, relay: &Server, ada: &Node, me: u8, person: &str) -> Node {
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(me)),
-            invite: None,
-        },
-    };
-    ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(me), person, |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     standing(dir, relay, ada, me, person).await
 }
 
@@ -293,7 +289,7 @@ async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, Stri
     // bo let in by a link ada's computer mints: house is sources-v1.
     let (ns, rail) = (seed.id(), node.rail());
     svrngs_core::tests_support::let_in(
-        (&ns, seed.policy(), &actor_of(&signing(1))),
+        (&ns, &actor_of(&signing(1))),
         (admitted, "bo", svrngs_node::Device::Computer),
         |mint| {
             rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
@@ -529,14 +525,12 @@ async fn a_page_speaks_http_through_the_door_streaming_both_ways(engine: Engine)
     // was cut when the page's took the key back, 16-24 s on (arch-stream
     // (a), demo/runs/stream/2026-10-15/README.md, 1).
     let cy = signing(2);
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("cy").unwrap(),
-            key: actor_of(&cy),
-            invite: None,
-        },
-    };
-    node.rail().commit(NS, &fixture).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &cy, "cy", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        node.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let file = dir.path().join("title.bin");
     std::fs::write(
         &file,
@@ -1368,14 +1362,12 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
     let ada = node(ada_dir.path(), &relay, &bo).await;
     let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
     // Dee stands in the group; no computer of hers ever answers.
-    let dee = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("dee").unwrap(),
-            key: actor_of(&signing(3)),
-            invite: None,
-        },
-    };
-    ada.rail().commit(NS, &dee).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(3), "dee", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let page = page_origin("<!doctype html><title>ada's page</title>").await;
     lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
     let (shelf, heads) = kept_page("<!doctype html><title>cy's shelf</title>").await;
@@ -2608,14 +2600,12 @@ async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
     let dir = tempfile::tempdir().unwrap();
     let ada = node(dir.path(), &relay, &signing(7)).await;
     for me in [3, 4] {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse("cy").unwrap(),
-                key: actor_of(&signing(me)),
-                invite: None,
-            },
-        };
-        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(me), "cy", |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
         tokio::time::sleep(Duration::from_millis(1_100)).await;
     }
     let seen = home_page(engine, &ada, json!({ "all": "#home .door strong" })).await;
@@ -2696,10 +2686,8 @@ async fn two_people_of_one_name_are_told_apart_on_the_home_page(engine: Engine) 
         ada.rail().commit(NS, &fixture).unwrap().unwrap()
     };
     let brought = commit(synced(1, None)).lines()[0].clone();
-    commit(RailAct::Admit {
-        person: Person::parse("ada").unwrap(),
-        key: actor_of(&signing(4)),
-        invite: None,
+    svrngs_core::tests_support::let_in_by(NS, &signing(4), "ada", |act| {
+        commit(act).lines()[0].id.clone()
     });
     let key = brought.actor.clone();
     let base = Some(Entry {
@@ -2753,13 +2741,12 @@ async fn whose_computer_did_not_answer_and_who_asked_are_told_by_key(engine: Eng
     let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
     tokio::time::sleep(Duration::from_millis(1_100)).await;
     for (person, me) in [("cy", 4), ("dee", 5)] {
-        let act = RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(me)),
-            invite: None,
-        };
-        let fixture = svrngs_core::tests_support::Fixture { act };
-        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(me), person, |act| {
+            let fixture = svrngs_core::tests_support::Fixture { act };
+            ada.rail().commit(NS, &fixture).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -2812,14 +2799,12 @@ async fn whose_computer_did_not_answer_and_who_asked_are_told_by_key(engine: Eng
 /// of dee through `/v1/removals`.
 async fn removals_held(ada: &Node) {
     for (person, me) in [("cy", 3), ("dee", 4)] {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(me)),
-                invite: None,
-            },
-        };
-        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(me), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -3076,14 +3061,12 @@ async fn unlisted_held(
 ) -> (Node, [Node; 2]) {
     let ada = node(dirs[0].path(), relay, admitted).await;
     for (person, me) in [("dee", 4), ("eve", 5)] {
-        let fixture = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(me)),
-                invite: None,
-            },
-        };
-        ada.rail().commit(NS, &fixture).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(me), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     let eve = computer(dirs[1].path(), relay, &signing(9), 5, "eve").await;
     let addrs = eve.endpoint().addr().ip_addrs().copied().collect();
@@ -3643,7 +3626,6 @@ fn from_a_phone(ada: &Node, person: &str, joining: u8) {
         &invite.id,
         &person,
         svrngs_node::Device::Browser,
-        None,
     );
     commit(RailAct::Admit {
         invite: Some(signed),
@@ -4794,14 +4776,12 @@ async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engi
         tempfile::tempdir().unwrap(),
     );
     let ada = node(ada_dir.path(), &relay, &bo).await;
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("cy").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-    };
-    ada.rail().commit(NS, &fixture).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(2), "cy", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let cy = standing_on(cy_dir.path(), cys, &ada, 2, "cy", "ada").await;
     lend(cy_dir.path(), "room", socket_page().await.port());
     let (ready, again) = (kept.path().join("ready"), kept.path().join("again"));

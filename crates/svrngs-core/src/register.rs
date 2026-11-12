@@ -9,10 +9,10 @@ use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::command::{Command, Reads};
+use crate::command::Command;
 use core::convert::Infallible;
 
-use crate::{Admission, Device, InviteFault, Joined, Office, OpId, Person, RailAct, Redemption};
+use crate::{Admission, Device, Joined, Office, OpId, Person, RailAct, Redemption};
 
 /// The issuer's node asked to admit `key` as `person` through its `Invite`.
 /// Decided at the issuer's write, where a link holder's name arrives, and
@@ -39,9 +39,7 @@ pub enum RedeemRefusal {
     NoInvite,
     NotOwn,
     OtherLink,
-    /// The register would not count the `Admit`.
-    Fault(InviteFault),
-    /// The register neither counted the `Admit` nor said why.
+    /// The group's interpreter would not count the `Admit`.
     Uncounted,
     /// A standing person goes by the name, in some case: a name binds once
     /// where a stranger gives one (bash-person), so a link lets no one in
@@ -54,7 +52,6 @@ pub enum RedeemRefusal {
 
 impl Command for Redeem {
     type Refusal = RedeemRefusal;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RedeemRefusal> {
         let register = before.membership();
@@ -103,9 +100,6 @@ impl Command for Redeem {
     fn confirm(&self, after: &Admission, written: &[OpId]) -> Result<(), RedeemRefusal> {
         let register = after.membership();
         let admit = &written[0];
-        if let Some(fault) = register.refused.get(admit) {
-            return Err(RedeemRefusal::Fault(fault.clone()));
-        }
         if !register.counts(admit) || !register.standing.contains(&self.key) {
             return Err(RedeemRefusal::Uncounted);
         }
@@ -125,7 +119,6 @@ pub struct MintInvite {
 
 impl Command for MintInvite {
     type Refusal = Infallible;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
         Ok(vec![RailAct::Invite {
@@ -141,7 +134,6 @@ impl Command for MintInvite {
 /// past a bound is written, seen, and a visit nowhere (§3.7).
 impl Command for crate::Visit {
     type Refusal = Infallible;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
         Ok(vec![RailAct::Visit(self.clone())])
@@ -180,7 +172,6 @@ pub enum RemovalRefusal {
 
 impl Command for Removal {
     type Refusal = RemovalRefusal;
-    const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
         let m = before.membership();
@@ -213,14 +204,13 @@ impl Command for Removal {
 /// The person the key stands as leaves the group (groups-leave; DESIGN
 /// §6, "Leaving a group"): a `Remove` of every key standing as them, each
 /// naming its newest acts, this key's own last, since its cut covers its
-/// acts only through the `Remove` of it. The fold decides it: the keeper's
-/// leave cuts nobody while others stand, so is refused `Keeps`.
+/// acts only through the `Remove` of it. The interpreter decides it; one it
+/// does not count is refused `Keeps`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Leave(pub String);
 
 impl Command for Leave {
     type Refusal = RemovalRefusal;
-    const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, RemovalRefusal> {
         let m = before.membership();
@@ -246,45 +236,6 @@ fn removes<'a>(before: &Admission, keys: impl Iterator<Item = &'a String>) -> Ve
         .collect();
     tracing::debug!(target: "register", removes = acts.len(), "removal: a Remove of each key, in order");
     acts
-}
-
-/// The keeper freezes legacy authorship or holder authority by the held tips,
-/// not a timestamp a writer can backdate. Each cutover counts only once.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Cutover {
-    Authors,
-    Holders,
-}
-
-impl Cutover {
-    fn written(&self, before: &Admission) -> bool {
-        match self {
-            Self::Authors => before.membership().signers.is_some(),
-            Self::Holders => before.membership().holders.is_some(),
-        }
-    }
-}
-
-impl Command for Cutover {
-    type Refusal = HandOnRefusal;
-    const READS: Reads = Reads::All;
-
-    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
-        let written = self.written(before);
-        tracing::debug!(target: "register", cutover = ?self, written, "cutover: written once, naming every key's newest acts held");
-        let through = before.tips.values().flatten().cloned().collect();
-        let act = match self {
-            Self::Authors => RailAct::Signers { through },
-            Self::Holders => RailAct::Holders { through },
-        };
-        let signers = (!written).then_some(act);
-        Ok(Vec::from_iter(signers))
-    }
-
-    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
-        let written = self.written(after);
-        written.then_some(()).ok_or(HandOnRefusal::NotKeeper)
-    }
 }
 
 /// The keeper hands the group's keeping to `person`'s computer (U7): of
@@ -327,7 +278,6 @@ impl HandOnTo {
 
 impl Command for HandOnTo {
     type Refusal = HandOnRefusal;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
         let key = self.key(before.membership());
@@ -335,7 +285,7 @@ impl Command for HandOnTo {
         Ok(vec![RailAct::HandOn { key: key?.clone() }])
     }
 
-    /// Moved, or in a sources-v1 group offered: it moves at their Accept.
+    /// Offered: it moves at their Accept; or moved already.
     fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
         let m = after.membership();
         let offered = |k: &String| matches!(&m.office, Office::Pending { to, .. } if to == k);
@@ -347,7 +297,7 @@ impl Command for HandOnTo {
     }
 }
 
-/// This computer, `0`, takes the office a hand-on left waiting (sources-v1;
+/// This computer, `0`, takes the office a hand-on left waiting (
 /// EUDOXIA_JUDGE §2c): its person's own yes, an `Accept` naming a hand-on
 /// to it; or, for the holder that wrote the hand-on, taking it back, a
 /// `HandOn` to its own key. The interpreter decides either.
@@ -356,7 +306,6 @@ pub struct Take(pub String);
 
 impl Command for Take {
     type Refusal = HandOnRefusal;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
         let office = &before.membership().office;
@@ -391,7 +340,6 @@ pub struct RelayAt {
 
 impl Command for RelayAt {
     type Refusal = Infallible;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Infallible> {
         let said = before.membership().relay(&self.key);
@@ -412,7 +360,6 @@ pub struct MeetsAt(pub BTreeSet<crate::relay::Url>);
 
 impl Command for MeetsAt {
     type Refusal = HandOnRefusal;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
         let said = before.membership().meets_at();

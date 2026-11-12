@@ -36,13 +36,13 @@ fn admit(node: &svrngs_node::node::Node, id: &str, who: &str, seed: u8) {
     use svrngs_node::{actor_of, Device, SigningKey};
     let rail = node.rail();
     let groups = svrngs_node::group::groups(rail.root());
-    let policy = groups
+    let _policy = groups
         .iter()
         .find(|s| s.id() == id)
         .and_then(|s| s.policy());
     let joining = SigningKey::from_bytes(&[seed; 32]);
     svrngs_core::tests_support::let_in(
-        (id, policy, &actor_of(rail.signer())),
+        (id, &actor_of(rail.signer())),
         (&joining, who, Device::Computer),
         |mint| {
             rail.commit(id, mint).unwrap().unwrap().lines()[0]

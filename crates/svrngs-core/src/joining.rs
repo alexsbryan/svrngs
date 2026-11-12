@@ -102,7 +102,7 @@ pub struct RedeemRequest {
 impl RedeemRequest {
     /// `joining`, held by `device`, asks to join `group` as `person`,
     /// through the link whose secret is `link` and whose `Invite` is
-    /// `invite`, consenting as the group's seed `policy` asks.
+    /// `invite`.
     pub fn sign(
         link: &SigningKey,
         joining: &SigningKey,
@@ -110,9 +110,8 @@ impl RedeemRequest {
         invite: &OpId,
         person: &Person,
         device: Device,
-        policy: Option<crate::authority::GroupPolicy>,
     ) -> Self {
-        let consent = Redemption::sign(joining, group, invite, person, device, policy);
+        let consent = Redemption::sign(joining, group, invite, person, device);
         let mut req = Self {
             group: group.to_string(),
             invite: invite.clone(),

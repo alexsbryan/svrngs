@@ -89,14 +89,12 @@ impl Pair {
                 .collect(),
         );
         a.rail().set_seed(NS, &seed).unwrap();
-        let fixture = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse("bo").unwrap(),
-                key: actor_of(&signing(2)),
-                invite: None,
-            },
-        };
-        a.rail().commit(NS, &fixture).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(2), "bo", |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            a.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
         Self::dialling(a, b, dir, db).await
     }
 
@@ -778,14 +776,12 @@ async fn a_member_asks_what_is_lent_and_how_many_use_it_now() {
 #[tokio::test]
 async fn a_member_s_computer_lists_what_is_lent_with_where_to_reach_it() {
     let (pair, heads) = lending_heads().await;
-    let ghost = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("cy").unwrap(),
-            key: actor_of(&signing(9)),
-            invite: None,
-        },
-    };
-    pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(9), "cy", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        pair.a.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let seed = Roster::new(
         [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
             .into_iter()
@@ -866,14 +862,12 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
     if ns != NS {
         pair.a.rail().set_seed(ns, &roster).unwrap();
     }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(seed)),
-            invite: None,
-        },
-    };
-    pair.a.rail().commit(ns, &admit).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(ns, &signing(seed), person, |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        pair.a.rail().commit(ns, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     pair.a
         .transport()
         .add_known_peer(node.endpoint().id(), loopback_sockets(node.endpoint()));
@@ -899,14 +893,12 @@ async fn a_member_asks_what_the_group_s_people_lend_each_with_its_lender_s_key()
     lends_on(cy_dir.path(), "pad", 1);
     let (eve, eve_dir) = beside(&pair, "work", 4, "eve").await;
     lends_on(eve_dir.path(), "desk", 1);
-    let ghost = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("dan").unwrap(),
-            key: actor_of(&signing(9)),
-            invite: None,
-        },
-    };
-    pair.a.rail().commit(NS, &ghost).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(9), "dan", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        pair.a.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     // Ada's relay in the record, with the root's dot (relay-in-record).
     let at = svrngs_core::RelayAt {
         key: actor_of(&signing(1)),
@@ -984,14 +976,12 @@ async fn a_key_in_two_groups_that_disagree_is_dialled_and_told_by_one_relay() {
     );
     pair.a.rail().set_seed("work", &roster).unwrap();
     for (person, me) in [("bo", 2), ("cy", 3)] {
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(me)),
-                invite: None,
-            },
-        };
-        pair.a.rail().commit("work", &admit).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by("work", &signing(me), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            pair.a.rail().commit("work", &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     let relay = "https://relay.work.example/";
     let said = RailAct::Relay {

@@ -12,7 +12,7 @@ use crate::iroh::tests::{loopback_sockets, Said};
 use crate::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use crate::node::Node;
 use crate::seed::Seed;
-use crate::{actor_of, Name, Person, RailAct, SigningKey};
+use crate::{actor_of, Name, SigningKey};
 
 fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -66,14 +66,18 @@ async fn ana_and_ben(dirs: [&FsPath; 2]) -> (Node, Node, String) {
         let dir = node.rail().group_dir(&id).unwrap();
         std::fs::write(dir.join("seed.json"), seed.to_text()).unwrap();
     }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("ben").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
+    // Ben let in by a link Ana's computer mints: no bare `Admit` counts.
+    let ana_rail = nodes[0].rail();
+    svrngs_core::tests_support::let_in(
+        (&id, &actor_of(&signing(1))),
+        (&signing(2), "ben", svrngs_core::Device::Computer),
+        |mint| {
+            ana_rail.commit(&id, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
         },
-    };
-    nodes[0].rail().commit(&id, &admit).unwrap().unwrap();
+        |redeem| drop(ana_rail.commit(&id, redeem).unwrap().unwrap()),
+    );
     for node in [&nodes[1], &nodes[0]] {
         let round = tokio::time::timeout(Duration::from_secs(30), node.round());
         round.await.expect("a round finishes");

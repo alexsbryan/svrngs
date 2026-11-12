@@ -8,7 +8,7 @@ use std::path::Path;
 
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, Roster, SigningKey};
 
 use crate::common::loopback_sockets;
 
@@ -52,14 +52,12 @@ pub async fn alex_lets_sam_in(alex_dir: &Path, sam_dir: &Path) -> (Node, Node) {
     for node in [&alex, &sam] {
         node.rail().set_seed(NS, &seed).unwrap();
     }
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(2)),
-            invite: None,
-        },
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(2), "sam", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     // Sam's computer holds its own admission, as a round would carry it:
     // a lend reaches a group only while its lender stands there.
     let theirs = sam.rail().digest(NS).unwrap();

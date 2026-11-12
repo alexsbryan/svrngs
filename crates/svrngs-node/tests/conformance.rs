@@ -39,7 +39,7 @@ use svrngs_core::pass::Label;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend::{self, LendName};
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, declared, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, declared, Person, Roster, SigningKey};
 use tokio::io::AsyncBufReadExt;
 
 const NS: &str = "house";
@@ -144,14 +144,12 @@ async fn group(relay: &Server) -> Group {
     let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
     let sam = start(dirs[0].path(), relay, SAM).await;
     for (person, key) in [("bo", BO), ("alex", ALEX), ("alex", PHONE)] {
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse(person).unwrap(),
-                key: actor_of(&signing(key)),
-                invite: None,
-            },
-        };
-        sam.rail().commit(NS, &admit).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(NS, &signing(key), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            sam.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
     }
     let bo = start(dirs[1].path(), relay, BO).await;
     let alex = start(dirs[2].path(), relay, ALEX).await;

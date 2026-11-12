@@ -202,11 +202,15 @@ struct Held {
     #[serde(skip_serializing_if = "Option::is_none")]
     offered: Option<Offer>,
     /// Whether this computer's person keeps the order of removals in a
-    /// sources-v1 group others stand in, so leaving without handing it on
-    /// leaves nobody keeping it: the home page says so before Leave.
-    /// Absent when not, as a legacy group refuses that leave instead.
+    /// group others stand in, so leaving without handing it on leaves
+    /// nobody keeping it: the home page says so before Leave. Absent when
+    /// not.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     vacates: bool,
+    /// What the home page says of a group an older svrngs made, in
+    /// `svrngs_core::made_older`'s words; absent for every other group.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    older: Option<String>,
 }
 
 /// A waiting hand-on as the home page says it (`Office::Pending`).
@@ -233,7 +237,9 @@ async fn groups(State(at): State<Asking>) -> Response {
     let me = at.host.actor.as_str();
     for id in namespaces {
         let seed = seed_of(&at, &id);
-        let v1 = seed.as_ref().is_some_and(|s| s.policy().is_some());
+        let older = (seed.as_ref())
+            .filter(|s| s.older())
+            .map(|s| crate::made_older(s.name().as_str()));
         let name = seed.as_ref().map(|s| s.name().as_str().to_string());
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
@@ -270,7 +276,7 @@ async fn groups(State(at): State<Asking>) -> Response {
                     Some(keeps),
                     visiting,
                     offered,
-                    keeps && v1 && others,
+                    keeps && others,
                 )
             }
             Err(e) => {
@@ -282,7 +288,7 @@ async fn groups(State(at): State<Asking>) -> Response {
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
         let waiting = at.door.folders.waiting_in(&id);
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps, ?offered,
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps, ?offered, older = older.is_some(),
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
             fallback: at.host.at_fallback(&id),
@@ -299,6 +305,7 @@ async fn groups(State(at): State<Asking>) -> Response {
             waiting,
             offered,
             vacates,
+            older,
         });
     }
     // This computer's key, so its home page tells its own devices from

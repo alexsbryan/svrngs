@@ -207,7 +207,6 @@ impl<'a> NativeAuthority<'a> {
                 by: by.clone(),
                 at: at(by),
                 unheld: unheld.cloned().collect(),
-                handed_on: Vec::new(),
                 left: *left,
             };
             (key.clone(), cut)
@@ -254,8 +253,6 @@ impl<'a> NativeAuthority<'a> {
                     drop(m.relays.insert(op.actor.clone(), url.clone()))
                 }
                 RailAct::Relay { url: None } => drop(m.relays.remove(&op.actor)),
-                RailAct::Signers { .. } => drop(m.signers.get_or_insert((*id).clone())),
-                RailAct::Holders { .. } => drop(m.holders.get_or_insert((*id).clone())),
                 RailAct::Meets { relays } => m.meets = Some(relays.clone()),
                 _ => {}
             }
@@ -268,9 +265,8 @@ impl<'a> NativeAuthority<'a> {
 
 /// A group's membership by its interpreter (EUDOXIA_JUDGE §2a): its facts
 /// over the lines admission verified, chained and granted, from the seed's
-/// roots, folded once and projected once. Roots
-/// that cannot be given stand nobody up, said at warn: never a legacy fold
-/// in their place.
+/// roots, folded once and projected once. Roots that cannot be given stand
+/// nobody up, said at warn: never another decider in their place.
 pub(crate) fn interpreted(
     lines: &Lines<'_>,
     forged: BTreeSet<OpId>,

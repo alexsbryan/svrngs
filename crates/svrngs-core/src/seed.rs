@@ -32,25 +32,26 @@ pub struct Seed {
 }
 
 impl Seed {
+    /// A sources-v1 seed, the only kind svrngs makes now. Its policy is part
+    /// of its identity, and an older svrngs refuses its seed field.
     pub fn from_parts(name: Name, founder: Name, key: VerifyingKey, salt: [u8; 16]) -> Self {
         Self {
             name,
             founder,
             key,
             salt,
-            policy: None,
+            policy: Some(GroupPolicy::SourcesV1),
         }
-    }
-
-    /// A distinct new realm. This cannot upgrade an existing legacy group: the
-    /// policy is part of its identity and old readers refuse its seed field.
-    pub fn with_source_policy(mut self) -> Self {
-        self.policy = Some(GroupPolicy::SourcesV1);
-        self
     }
 
     pub fn policy(&self) -> Option<GroupPolicy> {
         self.policy
+    }
+
+    /// Whether an older svrngs made the group, as its roster says
+    /// ([`Roster::older`]).
+    pub fn older(&self) -> bool {
+        self.roster().older()
     }
 
     /// The group's id: the whole BLAKE3 hash, 64 lowercase hex, of
@@ -100,7 +101,8 @@ impl Seed {
         }
     }
 
-    /// The seed from its four fields as text, as `seed.json` holds them.
+    /// The seed from its four fields as text, as `seed.json` holds them,
+    /// sources-v1 until [`Self::from_text`] reads its file's policy.
     pub fn parse(name: &str, founder: &str, key_hex: &str, salt_hex: &str) -> Option<Self> {
         let key: [u8; 32] = hex::decode(key_hex).ok()?.try_into().ok()?;
         let key = VerifyingKey::from_bytes(&key).ok()?;

@@ -64,6 +64,10 @@ pub enum NotJoined {
     /// stands again (groups-leave; DESIGN §6, "Leaving a group").
     #[error("You’re no longer in {0} on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead.")]
     Left(Name),
+    /// An older svrngs made the group, so nobody joins it now (svrn-docs
+    /// EUDOXIA_JUDGE §2a).
+    #[error("{}", svrngs_core::made_older(.0.as_str()))]
+    Older(Name),
 }
 
 impl Host {
@@ -80,6 +84,10 @@ impl Host {
             tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
             return Err(NotJoined::LinkRefused);
         };
+        if seed.older() {
+            tracing::debug!(target: "join", group = %seed.id(), "join: refused — an older svrngs made the group, so nothing is redeemed");
+            return Err(NotJoined::Older(seed.name().clone()));
+        }
         match self.rail.standing(&seed.id()) {
             Ok(Standing::Left(_)) => {
                 tracing::debug!(target: "join", group = %seed.id(), "join: refused — this computer's key was cut in the group, so nothing is redeemed");
@@ -110,7 +118,6 @@ impl Host {
         }
         // A device link's person is who this computer joins as, asked no name
         // (bash-devices); else the name given.
-        let policy = seed.policy();
         let person = asked.person.unwrap_or_else(|| Person::from(person.clone()));
         tracing::debug!(target: "join", group = %id, %person, "join: redeeming as this person");
         let request = RedeemRequest::sign(
@@ -120,7 +127,6 @@ impl Host {
             &asked.invite,
             &person,
             Device::Computer,
-            policy,
         );
         let redeemed = redeem(&self.endpoint, issuer.clone(), &request)
             .await
@@ -225,6 +231,9 @@ pub enum Outcome {
     Left {
         group: String,
     },
+    Older {
+        group: String,
+    },
 }
 
 impl Outcome {
@@ -241,6 +250,9 @@ impl Outcome {
                 group: group.to_string(),
             },
             NotJoined::Left(group) => Outcome::Left {
+                group: group.to_string(),
+            },
+            NotJoined::Older(group) => Outcome::Older {
                 group: group.to_string(),
             },
         }

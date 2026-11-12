@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
 use crate::sig::{
-    verify_ring_op, ASK_DOMAIN, LABEL_DOMAIN, PASS_DOMAIN, REDEMPTION_DOMAIN, REQUEST_DOMAIN,
-    RING_OP_DOMAIN,
+    verify_ring_op, ASK_DOMAIN, LABEL_DOMAIN, PASS_DOMAIN, REQUEST_DOMAIN, RING_OP_DOMAIN,
+    SOURCE_REDEMPTION_DOMAIN,
 };
 use crate::tests_support::key;
 use crate::{act_id, actor_of, sign_ring_op};
@@ -62,7 +62,7 @@ fn an_apps_signature_is_no_act_link_pass_or_label() {
     assert!(!verify_ring_op(&actor_of(&k), &id, &as_act), "an act's");
     for domain in [
         RING_OP_DOMAIN,
-        REDEMPTION_DOMAIN,
+        SOURCE_REDEMPTION_DOMAIN,
         REQUEST_DOMAIN,
         ASK_DOMAIN,
         PASS_DOMAIN,

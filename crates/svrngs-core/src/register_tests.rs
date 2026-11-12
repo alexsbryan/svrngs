@@ -38,7 +38,7 @@ fn redeem_from(invite: &Op<SignedOp>, device: Device) -> Redeem {
         invite: id.clone(),
         person: p("hal"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("hal"), device, None).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("hal"), device).sig,
         device,
         link: actor_of(&link()),
         issuer: actor_of(&issuer()),
@@ -145,10 +145,7 @@ fn a_lapsed_invite_is_refused_by_the_register_and_nothing_is_written() {
     let store = Memory::holding(&[invite.clone()]);
     let roster = ring();
     let refused = commit(&store, &redeem(&invite), &author(&issuer(), &roster, 1_000)).unwrap();
-    assert_eq!(
-        refused,
-        Err(Refused::Command(RedeemRefusal::Fault(InviteFault::Lapsed)))
-    );
+    assert_eq!(refused, Err(Refused::Command(RedeemRefusal::Uncounted)));
     assert_eq!(store.0.borrow().len(), 1);
     assert!(!stands(&store, &joining()));
 }
@@ -170,12 +167,12 @@ fn a_signer_without_standing_writes_nothing() {
 /// an act of bo's on each key.
 fn alexs_group() -> (Roster, Memory) {
     let seed = Roster::new([(p("alex"), vec![actor_of(&key(1))])].into_iter().collect());
-    let admit = |person: &str, k: u8| RailAct::Admit {
-        person: p(person),
-        key: actor_of(&key(k)),
-        invite: None,
-    };
-    let ins = run(&key(1), 100, [admit("bo", 2), admit("cy", 3)]);
+    // Bo and cy let in by alex's link: no bare `Admit` counts (release 2).
+    let open = signed(&key(1), 100, 0, invite_of(&key(10), 10_000, None));
+    let admit = |person: &str, k: u8| redeeming(&open, person, &key(k), Device::Computer);
+    let bo = after(&key(1), &open, 101, admit("bo", 2));
+    let cy = after(&key(1), &bo, 102, admit("cy", 3));
+    let ins = vec![open, bo, cy];
     // Bo's second computer joins by a device link of bo's (bash-devices):
     // before, alex admitted it as `bo` by hand, which now makes another
     // person of that name.
@@ -198,14 +195,7 @@ fn device_link(of: &SigningKey, new: &SigningKey, ts: i64) -> (Op<SignedOp>, Op<
     let admit = RailAct::Admit {
         person: p("bo"),
         key: actor_of(new),
-        invite: Some(Redemption::sign(
-            new,
-            NS,
-            &id,
-            &p("bo"),
-            Device::Computer,
-            None,
-        )),
+        invite: Some(Redemption::sign(new, NS, &id, &p("bo"), Device::Computer)),
     };
     let redeemed = after(of, &link, ts + 1, admit);
     (link, redeemed)
@@ -215,6 +205,43 @@ fn register(store: &Memory, seed: &Roster) -> Membership {
     admit(&store.0.borrow(), &[], seed, NS, &Ed25519Verifier)
         .membership()
         .clone()
+}
+
+/// `by`'s link to `link()` in `store`, minted through `commit` at `now`, so
+/// it follows `by`'s chain: its `Invite`.
+fn mint(store: &Memory, seed: &Roster, by: &SigningKey, now: i64) -> Op<SignedOp> {
+    let mint = MintInvite {
+        key: actor_of(&link()),
+        until: 10_000,
+        device_of: None,
+    };
+    let done = commit(store, &mint, &author(by, seed, now))
+        .unwrap()
+        .unwrap();
+    done.lines()[0].clone()
+}
+
+/// `by`'s newest `Invite` in `store`: its one open link.
+fn newest_invite(store: &Memory, by: &SigningKey) -> Op<SignedOp> {
+    let held = store.0.borrow();
+    let theirs = held.iter().filter(|o| o.actor == actor_of(by));
+    let invites = theirs.filter(|o| matches!(o.kind.act, RailAct::Invite { .. }));
+    invites.max_by_key(|o| o.kind.seq).cloned().unwrap()
+}
+
+/// The hand-on waiting in `store` taken by its recipient, one of `keys`,
+/// as its computer's Accept: the office passes only so.
+fn accepted(store: &Memory, seed: &Roster, keys: &[SigningKey], now: i64) -> String {
+    let Office::Pending { to, .. } = register(store, seed).office else {
+        panic!("a hand-on waits: {:?}", register(store, seed).office)
+    };
+    let Some(by) = keys.iter().find(|k| actor_of(k) == to) else {
+        panic!("the hand-on went to none of these: {to}")
+    };
+    commit(store, &Take(to.clone()), &author(by, seed, now))
+        .unwrap()
+        .unwrap();
+    to
 }
 
 /// **The keeper's removal cuts every key of the person, through what the
@@ -358,8 +385,9 @@ fn the_keeper_hands_on_and_is_removed_only_after() {
     )
     .unwrap()
     .unwrap();
-    let keeper = register(&store, &seed).keeper.unwrap();
     let bos = [key(2), key(5)];
+    accepted(&store, &seed, &bos, 201);
+    let keeper = register(&store, &seed).keeper.unwrap();
     let Some(bo_keeps) = bos.iter().find(|k| actor_of(k) == keeper) else {
         panic!("one of bo's computers keeps")
     };
@@ -386,14 +414,12 @@ fn the_keeper_hands_on_and_is_removed_only_after() {
 /// `name`, redeemed by `joiner` through the keeper's link in
 /// [`alexs_group`], as the keeper's computer writes it.
 fn redeem_in_alexs_group(store: &Memory, seed: &Roster, name: &str, joiner: &SigningKey) -> bool {
-    let invite = invite_by(&key(1), &link(), 10_000);
-    store.0.borrow_mut().insert(invite.clone());
-    let id = derive_id(&invite, NS);
+    let id = mint(store, seed, &key(1), 999).id.clone();
     let asked = Redeem {
         invite: id.clone(),
         person: p(name),
         key: actor_of(joiner),
-        cosig: Redemption::sign(joiner, NS, &id, &p(name), Device::Computer, None).sig,
+        cosig: Redemption::sign(joiner, NS, &id, &p(name), Device::Computer).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&key(1)),
@@ -414,17 +440,18 @@ fn a_link_refuses_a_name_a_standing_person_holds_in_any_case() {
         .into_iter()
         .map(|name| {
             let (seed, store) = alexs_group();
+            let before = store.0.borrow().len();
             redeem_in_alexs_group(&store, &seed, name, &joining());
             let stands = register(&store, &seed)
                 .standing
                 .contains(&actor_of(&joining()));
-            let held = store.0.borrow().len();
+            let held = store.0.borrow().len() - before;
             (name, stands, held)
         })
         .collect();
     assert_eq!(
         let_in,
-        [("cy", false, 6), ("CY", false, 6)],
+        [("cy", false, 1), ("CY", false, 1)],
         "(name, the stranger stands, acts held): nothing past the Invite"
     );
 }
@@ -479,7 +506,7 @@ fn a_hand_on_to_a_name_never_reaches_a_strangers_computer() {
         &author(&key(1), &seed, 1_001),
     )
     .unwrap();
-    let keeper = register(&store, &seed).keeper.unwrap();
+    let keeper = accepted(&store, &seed, &[key(2), key(5), stranger], 1_002);
     assert!(bos.contains(&keeper), "a stranger keeps: {keeper}");
 }
 
@@ -489,14 +516,12 @@ fn a_hand_on_to_a_name_never_reaches_a_strangers_computer() {
 #[test]
 fn a_removed_persons_name_is_free_again() {
     let (seed, store) = alexs_group();
-    let invite = invite_by(&key(1), &link(), 10_000);
-    store.0.borrow_mut().insert(invite.clone());
-    let id = derive_id(&invite, NS);
+    let id = mint(&store, &seed, &key(1), 999).id.clone();
     let asked = Redeem {
         invite: id.clone(),
         person: p("Cy"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("Cy"), Device::Computer, None).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("Cy"), Device::Computer).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&key(1)),
@@ -541,13 +566,19 @@ fn a_removed_persons_name_is_free_again() {
 #[test]
 fn two_people_a_race_gave_one_name_are_not_taken_as_one() {
     let seed = Roster::new([(p("alex"), vec![actor_of(&key(1))])].into_iter().collect());
-    let admit = |person: &str, k: u8| RailAct::Admit {
-        person: p(person),
-        key: actor_of(&key(k)),
-        invite: None,
-    };
-    let alexs = run(&key(1), 100, [admit("bo", 2), admit("dee", 6)]);
-    let bos = run(&key(2), 120, [admit("dee", 8)]);
+    // Alex's link lets bo and a dee in; bo's own link lets another dee in,
+    // neither computer having seen the other's.
+    let alexs_link = signed(&key(1), 100, 0, invite_of(&key(10), 10_000, None));
+    let admit = |person: &str, k: u8| redeeming(&alexs_link, person, &key(k), Device::Computer);
+    let bo = after(&key(1), &alexs_link, 101, admit("bo", 2));
+    let alexs = vec![
+        alexs_link.clone(),
+        bo.clone(),
+        after(&key(1), &bo, 102, admit("dee", 6)),
+    ];
+    let bos_link = signed(&key(2), 120, 0, invite_of(&key(11), 10_000, None));
+    let dee = redeeming(&bos_link, "dee", &key(8), Device::Computer);
+    let bos = vec![bos_link.clone(), after(&key(2), &bos_link, 121, dee)];
     let raced = || Memory::holding(&[alexs.clone(), bos.clone()].concat());
     let alex = key(1);
     let as_alex = author(&alex, &seed, 200);
@@ -608,7 +639,7 @@ fn a_persons_second_device_stands_as_them_by_a_link_of_theirs() {
         invite: id.clone(),
         person: p("whoever"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("whoever"), Device::Computer, None).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("whoever"), Device::Computer).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&cy),
@@ -661,7 +692,7 @@ fn a_device_link_counts_only_from_a_key_standing_as_its_person() {
         invite: id.clone(),
         person: p("bo"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("bo"), Device::Computer, None).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("bo"), Device::Computer).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&cy),
@@ -670,12 +701,7 @@ fn a_device_link_counts_only_from_a_key_standing_as_its_person() {
     let m = register(&store, &seed);
     assert_eq!(
         (redeemed, m.standing.contains(&actor_of(&joining()))),
-        (
-            Err(Refused::Command(RedeemRefusal::Fault(
-                InviteFault::Uncounted
-            ))),
-            false
-        ),
+        (Err(Refused::Command(RedeemRefusal::Uncounted)), false),
         "(the redemption, the key stands)"
     );
 }
@@ -689,11 +715,14 @@ fn a_device_link_counts_only_from_a_key_standing_as_its_person() {
 fn a_plain_redemption_is_a_new_person_keyed_by_its_own_key() {
     let (seed, store) = alexs_group();
     redeem_in_alexs_group(&store, &seed, "dee", &joining());
-    let by_hand = RailAct::Admit {
-        person: p("dee"),
-        key: actor_of(&key(6)),
-        invite: None,
-    };
+    // Another dee let in under the same link at once, as by a second
+    // computer of alex's group: no bare `Admit` counts (release 2).
+    let by_hand = redeeming(
+        &newest_invite(&store, &key(1)),
+        "dee",
+        &key(6),
+        Device::Computer,
+    );
     let alexs = (store.0.borrow().iter())
         .filter(|o| o.actor == actor_of(&key(1)))
         .max_by_key(|o| o.kind.seq)
@@ -748,11 +777,14 @@ fn the_keeper_names_one_of_two_people_of_one_name_by_when_they_joined() {
         .max_by_key(|o| o.kind.seq)
         .cloned()
         .unwrap();
-    let by_hand = RailAct::Admit {
-        person: p("dee"),
-        key: actor_of(&key(6)),
-        invite: None,
-    };
+    // Another dee let in under the same link at once, as by a second
+    // computer of alex's group: no bare `Admit` counts (release 2).
+    let by_hand = redeeming(
+        &newest_invite(&store, &key(1)),
+        "dee",
+        &key(6),
+        Device::Computer,
+    );
     let by_hand = after(&key(1), &alexs, 1_002, by_hand);
     store.0.borrow_mut().insert(by_hand);
     let alexs_key = key(1);
@@ -800,6 +832,7 @@ fn the_keeper_names_one_of_two_people_of_one_name_by_when_they_joined() {
     assert!(commit(&store, &to_dee(Some(Joined::At(1_000))), &as_alex)
         .unwrap()
         .is_ok());
+    accepted(&store, &seed, &[joining()], 1_004);
     assert_eq!(register(&store, &seed).keeper, Some(actor_of(&joining())));
 }
 
@@ -898,20 +931,13 @@ fn a_persons_leave_cuts_every_key_of_theirs() {
     }
 }
 
-/// **The keeper's leave is refused until they hand on, and writes nothing**
-/// (groups-leave (a)). Alex leaves: `Keeps`, nothing written. Alex hands on
-/// to bo and leaves: alex is out. Bo removing bo with `svrngs remove` is
-/// refused `Own`, not read as half a leave.
+/// **The keeper hands on and leaves** (groups-leave (a)). Alex hands on to
+/// cy, cy accepts, and alex leaves: alex is out. Bo removing bo with
+/// `svrngs remove` is refused `Own`, not read as half a leave.
 #[test]
-fn the_keepers_leave_waits_for_the_hand_on() {
+fn the_keeper_hands_on_then_leaves() {
     let (seed, store) = alexs_group();
     let alex = Leave(actor_of(&key(1)));
-    let held = store.0.borrow().len();
-    assert_eq!(
-        commit(&store, &alex, &author(&key(1), &seed, 200)).unwrap(),
-        Err(Refused::Command(RemovalRefusal::Keeps))
-    );
-    assert_eq!(store.0.borrow().len(), held, "nothing written");
     let to_cy = HandOnTo {
         person: p("cy"),
         joined: None,
@@ -919,6 +945,7 @@ fn the_keepers_leave_waits_for_the_hand_on() {
     commit(&store, &to_cy, &author(&key(1), &seed, 201))
         .unwrap()
         .unwrap();
+    accepted(&store, &seed, &[key(3)], 201);
     commit(&store, &alex, &author(&key(1), &seed, 202))
         .unwrap()
         .unwrap();

@@ -203,8 +203,8 @@ impl RingRail {
     /// [`Self::commit`], with the two refusals no command's decider makes
     /// said as the rail's errors, as the rail's appends and the redeem
     /// protocol say them: this computer standing nowhere in the group
-    /// [`RailError::NotInRoster`], its journal unsettled
-    /// [`RailError::Unsettled`]. What is left is the command's own refusal.
+    /// [`RailError::NotInRoster`], a group an older svrngs made
+    /// [`RailError::Older`]. What is left is the command's own refusal.
     pub fn commit_said<C: Command>(
         &self,
         namespace: &str,
@@ -217,7 +217,7 @@ impl RingRail {
                 actor: actor_of(self.signer()),
                 namespace: namespace.to_string(),
             }),
-            Err(Refused::Unsettled) => Err(RailError::Unsettled(namespace.to_string())),
+            Err(Refused::Older) => Err(RailError::Older),
             Err(Refused::Uncounted(why)) => Err(RailError::Rejected(why.to_string())),
         }
     }
@@ -230,8 +230,7 @@ impl RingRail {
         for namespace in self.namespaces()? {
             let journal = self.journal(&namespace)?;
             let (ops, roster) = (journal.read()?.0, journal.roster_file()?);
-            let register = ActSet::of(svrngs_core::standing_reads(&ops, &roster));
-            let admission = admit(&register, &[], &roster, &namespace, &Ed25519Verifier);
+            let admission = admit(&ActSet::of(&ops), &[], &roster, &namespace, &Ed25519Verifier);
             if let Some(id) = admission.invites().newest(&me, link) {
                 let m = admission.membership();
                 let of = m.invites.get(id).and_then(|i| i.device_of.as_deref());
@@ -248,11 +247,7 @@ impl RingRail {
     pub fn current_invite(&self, namespace: &str) -> Result<Option<(OpId, svrngs_core::Invited)>, RailError> {
         let journal = self.journal(namespace)?;
         let (ops, roster) = (journal.read()?.0, journal.roster_file()?);
-        let register = ActSet::of(svrngs_core::standing_reads(&ops, &roster));
-        let a = admit(&register, &[], &roster, namespace, &Ed25519Verifier);
-        if a.membership().unsettled {
-            return Err(RailError::Unsettled(namespace.into()));
-        }
+        let a = admit(&ActSet::of(&ops), &[], &roster, namespace, &Ed25519Verifier);
         Ok(a.current_invite(&actor_of(self.signer())))
     }
 

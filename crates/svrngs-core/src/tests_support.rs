@@ -279,7 +279,6 @@ pub struct Fixture {
 
 impl crate::Command for Fixture {
     type Refusal = core::convert::Infallible;
-    const READS: crate::Reads = crate::Reads::Membership;
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
         Ok(vec![self.act.clone()])
@@ -291,7 +290,6 @@ pub struct Batch(pub Vec<RailAct>);
 
 impl crate::Command for Batch {
     type Refusal = core::convert::Infallible;
-    const READS: crate::Reads = crate::Reads::Membership;
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
         Ok(self.0.clone())
@@ -333,14 +331,60 @@ impl<K: crate::Journaled> crate::Op<K> {
     }
 }
 
+/// A redeeming `Admit` of `joining` as `person` under the `Invite` `inv`,
+/// its joiner's consent covering `device`: how a key comes to stand now
+/// that no bare `Admit` counts.
+pub fn redeeming(
+    inv: &Op<SignedOp>,
+    person: &str,
+    joining: &SigningKey,
+    device: Device,
+) -> RailAct {
+    RailAct::Admit {
+        person: p(person),
+        key: actor_of(joining),
+        invite: Some(Redemption::sign(joining, NS, &inv.id, &p(person), device)),
+    }
+}
+
+/// An `Invite` of the link whose key is `link`, open until `until`; a device
+/// link of the person whose first key is `device_of`.
+pub fn invite_of(link: &SigningKey, until: i64, device_of: Option<String>) -> RailAct {
+    RailAct::Invite {
+        key: actor_of(link),
+        until,
+        device_of,
+    }
+}
+
+/// `joining`, a computer, let in as `person` in `ns` by a link the
+/// committer mints: `commit` writes each act as a fixture and answers its
+/// line's id. The `Admit` is written as given, so no name is weighed, as a
+/// key let in by hand was before release 2 counted no bare `Admit`.
+pub fn let_in_by(
+    ns: &str,
+    joining: &SigningKey,
+    person: &str,
+    mut commit: impl FnMut(RailAct) -> OpId,
+) {
+    let link = SigningKey::from_bytes(&[0xa5; 32]);
+    let invite = commit(invite_of(&link, i64::MAX, None));
+    let consent = Redemption::sign(joining, ns, &invite, &p(person), Device::Computer);
+    let admit = RailAct::Admit {
+        person: p(person),
+        key: actor_of(joining),
+        invite: Some(consent),
+    };
+    commit(admit);
+}
+
 /// `joining` let in as `person`, held by `device`, by a link the issuer
 /// (the committer's key, `issuer`) mints, as a link does with no network:
 /// `mint` commits the [`MintInvite`] and answers its `Invite`'s id, and
-/// `redeem` commits the redeeming [`Redeem`], its consent as the seed's
-/// `policy` asks. A sources-v1 group counts no `Admit` but one under an
-/// invitation its joiner consented to.
+/// `redeem` commits the redeeming [`Redeem`]. A group counts no `Admit`
+/// but one under an invitation its joiner consented to.
 pub fn let_in(
-    (ns, policy, issuer): (&str, Option<authority::GroupPolicy>, &str),
+    (ns, issuer): (&str, &str),
     (joining, person, device): (&SigningKey, &str, Device),
     mint: impl FnOnce(&MintInvite) -> OpId,
     redeem: impl FnOnce(&Redeem),
@@ -351,7 +395,7 @@ pub fn let_in(
         until: i64::MAX,
         device_of: None,
     });
-    let consent = Redemption::sign(joining, ns, &invite, &p(person), device, policy);
+    let consent = Redemption::sign(joining, ns, &invite, &p(person), device);
     redeem(&Redeem {
         invite,
         person: p(person),

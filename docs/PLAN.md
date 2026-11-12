@@ -15,12 +15,10 @@
 folder and a program is a word, and no beginner's bug does lasting harm to anyone
 else. Its queue is svrn-docs `rings/current/EXTENSION_POINT.md` §10, in order.
 
-**Current authority replacement** (operator, 2026-11-12, choice A): build the
-complete Eudoxia R1–R5 replacement, then cut over the native paths as one unit.
-Eudoxia owns authority; svrngs keeps its native formats and real effects, with
-small hooks between them, and its production code gets smaller. The caps stay
-fixed. The handoff, ownership map and deletion ledger are svrn-docs
-`rings/current/EUDOXIA_HANDOFF.md` and `EUDOXIA_OWNERSHIP.md`.
+**Current authority replacement**: Eudoxia owns authority, and every group is
+decided by its interpreter alone; a group an older svrngs made changes nothing
+(release 2). The decision and what follows it are svrn-docs
+`rings/current/EUDOXIA_JUDGE.md` §2a.
 
 **The next UX slice** (operator, 2026-11-11): a lightly technical creator builds
 for their community, and a friend opens it without learning an authority system.

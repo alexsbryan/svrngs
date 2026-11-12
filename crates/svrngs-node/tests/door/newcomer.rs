@@ -15,7 +15,7 @@ use super::{
 use svrngs_core::alpn::Alpn;
 use svrngs_core::pass::{Label, Pass};
 use svrngs_node::iroh::EndpointAddr;
-use svrngs_node::{actor_of, Person, RailAct, Roster};
+use svrngs_node::{actor_of, Person, Roster};
 
 /// Nia, admitted at A, asks B's `shelf` with her pass seconds after, and
 /// is answered as nia within [`WITHIN`]: B's door, meeting a signer it does
@@ -65,14 +65,12 @@ async fn a_newcomer_s_first_request_through_a_second_lender_is_answered_within_s
     // Dee's was when Movie Night's people joined: a round in flight as nia
     // is admitted would carry her.
     tokio::time::sleep(Duration::from_secs(2)).await;
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("nia").unwrap(),
-            key: actor_of(&signing(7)),
-            invite: None,
-        },
-    };
-    pair.a.rail().commit(NS, &admit).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(7), "nia", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        pair.a.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     let joined = Instant::now();
     let mut refused = 0;
     let answered = loop {
@@ -135,14 +133,15 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
             .collect(),
     );
     pair.b.rail().set_seed(NS, &seed).unwrap();
-    let admit = |person: &str, key: u8| svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(key)),
-            invite: None,
-        },
+    let admit = |person: &str, key: u8| {
+        svrngs_core::tests_support::let_in_by(NS, &signing(key), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            pair.a.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        })
     };
-    pair.a.rail().commit(NS, &admit("cy", cy)).unwrap().unwrap();
+    admit("cy", cy);
     let (_asleep, at_cy) = super::common::never_answers();
     let cy_key =
         svrngs_node::iroh::PublicKey::from_bytes(signing(cy).verifying_key().as_bytes()).unwrap();
@@ -179,7 +178,7 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
     };
 
     tokio::time::sleep(Duration::from_secs(2)).await;
-    pair.a.rail().commit(NS, &admit("nia", 7)).unwrap().unwrap();
+    admit("nia", 7);
     let joined = Instant::now();
     let mut refused = 0;
     let answered = loop {

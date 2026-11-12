@@ -1004,17 +1004,14 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
             .filter(|o| o.payload.is_some())
             .collect::<Vec<_>>()
     };
-    // Every line but the keeper's two cutovers, of authorship and of
-    // holders, and where the group meets, which ana's computer, keeping the
-    // group, writes once each on a round of its own (capability-signed;
-    // HOLDER_APPROVAL §5; relay fallbacks).
+    // Every line but where the group meets, which ana's computer, keeping
+    // the group, writes once on a round of its own (relay fallbacks).
     let all = || {
         let (mut ops, _) = ana
             .rail()
             .ops_missing_from_within(&group, &Default::default(), usize::MAX)
             .unwrap();
-        use svrngs_core::RailAct::{Holders, Meets, Signers};
-        ops.retain(|o| !matches!(o.kind.act, Signers { .. } | Holders { .. } | Meets { .. }));
+        ops.retain(|o| !matches!(o.kind.act, svrngs_core::RailAct::Meets { .. }));
         ops
     };
     let anas = || {
@@ -1063,16 +1060,12 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
 /// (HOLDER_APPROVAL §3.D). Refused, `not_signed`, and not held: a holder
 /// line under a pass a stranger signed, and one under Ben's pass with its
 /// person rewritten to Ana's key; `not_approved`: Ben's line its approver
-/// never approved; `upgrade_keeper`: the approved line before the keeper,
-/// Ana, wrote the holders' cutover.
+/// never approved.
 #[tokio::test]
 async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
     use svrngs_core::pass::{Label, Pass};
     let (nodes, _dirs) = computers().await;
     let (ana, ben) = (&nodes[0], &nodes[1]);
-    // This route's pre-cutover refusal needs an intentionally old record;
-    // writes now wake the round that would upgrade the keeper's record.
-    ana.stop_sync();
     let group = found("house", 11, ana, &[(ben, 2)]);
     let holder = signing(9);
     let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
@@ -1118,15 +1111,6 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
         .approve(&approver, &line(pass(2)), &group, now)
         .unwrap();
     let own = line(approved);
-    let said: Value = carry(&own).await.unwrap().json().await.unwrap();
-    assert_eq!(
-        said["kind"], "upgrade_keeper",
-        "not before the keeper's holders cutover: {said}"
-    );
-    ana.rail()
-        .commit(&group, &svrngs_core::Cutover::Holders)
-        .unwrap()
-        .unwrap();
     let said: Value = carry(&own).await.unwrap().json().await.unwrap();
     assert_eq!(said["counted"], true, "{said}");
     // Its answer lost, the phone carries the same bytes with its next entry
@@ -1288,7 +1272,7 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
         device_of: None,
     });
     let bo = Person::parse("bo").unwrap();
-    let redeemed = Redemption::sign(&signing(7), &group, &invite.id, &bo, Device::Browser, None);
+    let redeemed = Redemption::sign(&signing(7), &group, &invite.id, &bo, Device::Browser);
     append(RailAct::Admit {
         invite: Some(redeemed),
         person: bo,

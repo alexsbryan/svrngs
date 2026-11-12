@@ -610,18 +610,19 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     for node in &nodes {
         node.rail().set_seed(GROUP, &founded).unwrap();
     }
-    let admits: Vec<RailAct> = (2..=members)
-        .map(|i| RailAct::Admit {
-            person: Person::parse(&format!("p{i}")).unwrap(),
-            key: actor_of(&signing(i as u8)),
-            invite: None,
-        })
-        .collect();
-    nodes[0]
-        .rail()
-        .commit(GROUP, &Batch(admits))
-        .unwrap()
-        .unwrap();
+    for i in 2..=members {
+        let person = format!("p{i}");
+        svrngs_core::tests_support::let_in_by(GROUP, &signing(i as u8), &person, |act| {
+            nodes[0]
+                .rail()
+                .commit(GROUP, &Batch(vec![act]))
+                .unwrap()
+                .unwrap()
+                .lines()[0]
+                .id
+                .clone()
+        });
+    }
     for (i, a) in nodes.iter().enumerate() {
         for (k, b) in nodes.iter().enumerate() {
             if i != k {
@@ -659,13 +660,10 @@ async fn stand_up(members: usize, acts: usize) -> (Vec<tempfile::TempDir>, Vec<N
     for w in writes {
         w.await.unwrap();
     }
-    // The keeper's two cutovers, of authorship and of holders, and where
-    // the group meets (relay fallbacks), which its computer writes on its
-    // first round (node.rs `cut_over`), written here so the rounds measured
-    // below are a group's past its first: none of them writes or moves any.
-    for cutover in [svrngs_core::Cutover::Authors, svrngs_core::Cutover::Holders] {
-        nodes[0].rail().commit(GROUP, &cutover).unwrap().unwrap();
-    }
+    // Where the group meets (relay fallbacks), which its computer writes on
+    // its first round (node.rs `cut_over`), written here so the rounds
+    // measured below are a group's past its first: none of them writes or
+    // moves any.
     let meets = svrngs_core::MeetsAt(Default::default());
     nodes[0].rail().commit(GROUP, &meets).unwrap().unwrap();
     converge(&nodes).await;
@@ -909,7 +907,7 @@ async fn the_account_matches_a_hand_count() {
     //   landing the two (`ingest_all`, `Held::after_write`): 23 + 2 + 2 x 2
     //   = 29; every register read below catches up first
     //   (journal.rs `RingJournal::folded`), 11; node 0's question of
-    //   whether its cutover is written (node.rs `cut_over`), 1; and its two
+    //   whether the group says where it meets (node.rs `cut_over`), 1; and its two
     //   questions of where the group meets (group.rs `meeting`), once for
     //   its endpoint at the round's start and once to dial it (relay
     //   fallbacks), 2: 43.
@@ -922,8 +920,11 @@ async fn the_account_matches_a_hand_count() {
     //   3 + (1 + 3) x 2 = 11. Each member's first read folds (nothing asked
     //   its register before the round), and node 0's was folded before its
     //   first by `cut_over`'s read of the whole register, which traces no
-    //   line counted here; the rest are kept: the two acts node 0 pushes are
-    //   records, which move no membership: kept 3 + 3 x 2, rebuilt 2.
+    //   line counted here. The interpreter reads every act, so the two
+    //   records node 0 pushes at post 1 make each member's next check fold
+    //   again (release 2; before, records moved no membership and kept
+    //   it): node 0's 3 kept, each member's admit and post 2 rebuilt, its
+    //   posts 1 and 3 kept: kept 3 + 2 x 2, rebuilt 2 x 2.
     let hand = serde_json::json!({
         "dialled": 3, "reached": 2, "asleep": 1, "refused": 0,
         "acts_moved": 4,
@@ -932,7 +933,7 @@ async fn the_account_matches_a_hand_count() {
             "write_index": {"kept": 43, "rebuilt": 0},
             "digest": {"kept": 23, "rebuilt": 0},
             "offer": {"kept": 6, "rebuilt": 4},
-            "register": {"kept": 9, "rebuilt": 2},
+            "register": {"kept": 7, "rebuilt": 4},
         },
     });
     assert_eq!(account, hand, "the round's account against the hand count");

@@ -51,7 +51,7 @@ use axum::{Extension, Json};
 use iroh_blobs::Hash;
 use serde_json::{json, Value};
 use svrngs_core::{Admission, Append, AppendRefusal, Command, Files, Op, Placed};
-use svrngs_core::{RailAct, Reads, SignedOp, SyncPath};
+use svrngs_core::{RailAct, SignedOp, SyncPath};
 
 use super::{blob::People, dirs_of, Folders};
 use crate::door::LendRefusal::{self, Away, Closed, Fault, Path as Malformed, Unlent};
@@ -536,10 +536,8 @@ impl Folders {
             });
             let (all, ops): (BTreeSet<_>, Vec<_>) =
                 (people.values().map(|m| &m.person).collect(), ops.collect());
-            // Who stood when is not judged on unsettled cuts (#124): none, never empty.
-            let register = (admission.as_ref().map(|a| a.membership())).filter(|m| !m.unsettled);
-            let spans = register.map(|m| m.spans());
-            tracing::debug!(target: "folder", group, %app, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none, their standing unsettled");
+            let spans = admission.as_ref().map(|a| a.membership().spans());
+            tracing::debug!(target: "folder", group, %app, spans = ?spans.as_ref().map(Vec::len), "carried: each person's time in the group, or none when its record is unread");
             // The page the group's https links print on, as `link` prints
             // them, so Give names it in its install line (give-page-host).
             let page = (self.host.printed_page(group)).map(|p| p.map(|p| p.as_str().to_owned()));
@@ -666,7 +664,6 @@ pub(crate) struct Budgeted<'a>(
 
 impl Command for Budgeted<'_> {
     type Refusal = Result<AppendRefusal, i64>;
-    const READS: Reads = Reads::All;
 
     fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Self::Refusal> {
         let wait = spent(before, self.1.as_str(), self.2, self.3);

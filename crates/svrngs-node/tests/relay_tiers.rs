@@ -386,11 +386,7 @@ async fn the_door_says_which_relay_carried_an_action() {
     // Sam let in by a link Ada's computer mints: the group is sources-v1.
     let ada = svrngs_node::actor_of(rail.signer());
     svrngs_core::tests_support::let_in(
-        (
-            &group,
-            Some(svrngs_node::authority::GroupPolicy::SourcesV1),
-            &ada,
-        ),
+        (&group, &ada),
         (&sam, "sam", svrngs_node::Device::Computer),
         |mint| {
             rail.commit(&group, mint).unwrap().unwrap().lines()[0]

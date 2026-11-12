@@ -67,7 +67,7 @@ pub fn draw(name: Name, founder: Name, key: VerifyingKey) -> Seed {
     // As identity.rs: getrandom failing is a host with no entropy, and
     // no group can be made on it.
     getrandom::fill(&mut salt).expect("failed to draw a group's salt");
-    Seed::from_parts(name, founder, key, salt).with_source_policy()
+    Seed::from_parts(name, founder, key, salt)
 }
 
 /// Why a group's seed or origin could not be written or read.

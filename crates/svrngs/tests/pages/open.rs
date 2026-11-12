@@ -76,7 +76,7 @@ in_webkit!(
 );
 async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
     use std::time::Duration;
-    use svrngs_node::{actor_of, iroh::RelayConfig, node::Node, Person, RailAct, Roster};
+    use svrngs_node::{actor_of, iroh::RelayConfig, node::Node, Person, Roster};
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let (ada, bo) = (
@@ -104,14 +104,12 @@ async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
             .collect(),
     );
     node.rail().set_seed("house", &seed).unwrap();
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("bo").unwrap(),
-            key: actor_of(&bo),
-            invite: None,
-        },
-    };
-    node.rail().commit("house", &admit).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by("house", &bo, "bo", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        node.rail().commit("house", &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");

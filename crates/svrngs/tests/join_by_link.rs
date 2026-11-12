@@ -26,8 +26,8 @@ use svrngs_node::redeem::{
     ask, redeem, AskRequest, Asked, RedeemError, RedeemRequest, Redeemed, REFUSAL,
 };
 use svrngs_node::{
-    actor_of, derive_id, redemption_message, sign_message, Device, OpId, Person, RailAct,
-    SigningKey, BROWSER_LINE_VERSION, LINK_LINE_VERSION,
+    actor_of, derive_id, sign_message, Device, OpId, Person, RailAct, SigningKey,
+    BROWSER_LINE_VERSION, LINK_LINE_VERSION,
 };
 
 #[path = "common/program.rs"]
@@ -37,10 +37,6 @@ use program::Program;
 #[path = "../../svrngs-node/tests/common/mod.rs"]
 mod node_common;
 use node_common::heard;
-
-/// Every group here is founded by `svrngs new`: sources-v1.
-const V1: Option<svrngs_node::authority::GroupPolicy> =
-    Some(svrngs_node::authority::GroupPolicy::SourcesV1);
 
 /// The lines a group's journal holds on disk, as written.
 fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
@@ -210,7 +206,6 @@ async fn present_from(
         invite,
         &Person::parse(person).unwrap(),
         device,
-        V1,
     );
     send(who, link, &req).await
 }
@@ -400,7 +395,6 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         &open_invite,
         &Person::parse("Gus").unwrap(),
         Device::Computer,
-        V1,
     );
     req.link = actor_of(&open.token.key());
     let unsigned = send(&gus, &open, &req).await;
@@ -497,6 +491,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     said.push(
         Said::Running {
             groups: vec![name("house")],
+            older: vec![name("pier")],
             api,
             lends: Default::default(),
         }
@@ -505,6 +500,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     said.push(
         Said::Running {
             groups: Vec::new(),
+            older: Vec::new(),
             api,
             lends: Default::default(),
         }
@@ -563,13 +559,10 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
             &invite,
             &Person::parse("Hal").unwrap(),
             Device::Computer,
-            V1,
         );
+        // No `Person` holds the name, so the consent stays Hal's: the issuer
+        // refuses the name before it reads a consent.
         req.person = bad.clone();
-        req.cosig = sign_message(
-            &hal.key,
-            &redemption_message(&group, &invite, &bad, &actor_of(&hal.key)),
-        );
         req.sig = sign_message(&link.token.key(), &req.message());
         let answer = send(&hal, &link, &req).await;
         assert_eq!(

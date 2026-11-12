@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The register (DESIGN §6, "The group decides who is in it"): who stands in a group, read from the group
-//! itself — its seed and its `Admit` and `Remove` acts, as
-//! [`membership`](crate::membership::membership) folds them over the acts
-//! admission authenticates. One answer, asked by all four callers: the round
+//! itself — its seed and its acts, as Eudoxia's interpreter resolves them
+//! over the acts admission authenticates (`svrngs_core::admit`). One answer, asked by all four callers: the round
 //! offers a group to its standing keys, the acceptor admits a dialer standing
 //! in any group the node holds, the sync route serves a dialer standing in
 //! the group its request names, and the door signs only for a standing key.
@@ -17,8 +16,8 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 use crate::{
-    actor_of, admit, ring_dir, valid_namespace, Cut, Device, Guest, Joined, Membership, Op, OpId, Person, RailAct,
-    RailError, RingJournal, RingRail, RingVerifier, Roster, SignedOp,
+    actor_of, ring_dir, valid_namespace, Cut, Device, Guest, Joined, Membership, Op, OpId, Person, RailAct, RailError,
+    RingJournal, RingRail, Roster, SignedOp,
 };
 
 /// Who stands in one group, on this node.
@@ -30,6 +29,9 @@ pub enum Standing {
     /// be shown to stand, so everyone is refused — never an empty roster
     /// read as an answer (ARCH 6).
     NoSeed,
+    /// An older svrngs made the group (`Roster::older`): it is held and
+    /// read, and nobody stands in it, so no round, sync or lend reaches it.
+    Older,
     /// The keys standing now, each with the person it is bound to and
     /// what holds it.
     Members(BTreeMap<String, Member>),
@@ -50,18 +52,12 @@ pub struct Register {
     pub members: BTreeMap<String, Member>,
     pub removed: BTreeMap<String, Person>,
     pub keeper: Option<String>,
-    /// The office beside `keeper` (`Membership::office`): a sources-v1
-    /// group's hand-on waiting on its Accept, among others.
+    /// The office beside `keeper` (`Membership::office`): a hand-on
+    /// waiting on its Accept, among others.
     pub office: svrngs_core::Office,
-    /// Which decider folded it (`Membership::decided`).
-    pub decided: svrngs_core::Decided,
     pub removals: Vec<Removing>,
     pub visits: BTreeMap<OpId, Guest>,
     pub cut: BTreeMap<String, Cut>,
-    /// The keeper's cutover, once written (capability-signed;
-    /// `Membership::signers`).
-    pub signers: Option<OpId>,
-    pub holders: Option<OpId>,
     /// The relays the keeper says the group meets at, `None` while the
     /// keeper has said none (relay fallbacks; `Membership::meets_at`).
     pub meets: Option<std::collections::BTreeSet<svrngs_core::relay::Url>>,
@@ -134,28 +130,12 @@ impl Standing {
     }
 }
 
-/// The keys standing in `namespace` after `ops`, from `seed`: membership
-/// over the acts admission authenticates, each with its person and device;
-/// and beside them each key the group's keeper cut, with the person it was
+/// The register `m` says, its removals read among `removes`, every
+/// `Remove` held: who stands, each key the group cut with the person it was
 /// bound to, and the keeper (U7). The one decider: [`RingRail::standing`]
 /// and [`RingRail::register`] answer with it, through the journal's kept
-/// fold (`RingJournal::standing`), which asks it under its write lock.
-pub(crate) fn register_in(
-    ops: &[Op<SignedOp>],
-    seed: &Roster,
-    namespace: &str,
-    verifier: &dyn RingVerifier,
-) -> Result<Register, RailError> {
-    register_of(&membership_in(ops, seed, namespace, verifier)?, ops, namespace)
-}
-
-/// The register `m` says, its removals read among `ops`, which hold every
-/// `Remove` (`svrngs_core::standing_reads`).
-pub(crate) fn register_of(m: &Membership, ops: &[Op<SignedOp>], namespace: &str) -> Result<Register, RailError> {
-    if m.unsettled {
-        tracing::warn!(target: "register", namespace, "register: the group's removals do not come to one answer, so nobody is read as standing");
-        return Err(RailError::Unsettled(namespace.to_string()));
-    }
+/// fold (`RingJournal::folded`).
+pub(crate) fn register_of(m: &Membership, removes: &[Op<SignedOp>], namespace: &str) -> Register {
     let members = m
         .standing
         .iter()
@@ -179,19 +159,16 @@ pub(crate) fn register_of(m: &Membership, ops: &[Op<SignedOp>], namespace: &str)
         .keys()
         .filter_map(|key| Some((key.clone(), m.bindings.get(key)?.clone())))
         .collect();
-    Ok(Register {
+    Register {
         members,
         removed,
-        removals: removals_in(ops, m, namespace),
+        removals: removals_in(removes, m, namespace),
         meets: m.meets_at(),
         keeper: m.keeper.clone(),
         office: m.office.clone(),
-        decided: m.decided.clone(),
         visits: m.visits.clone(),
         cut: m.cut.clone(),
-        signers: m.signers.clone(),
-        holders: m.holders.clone(),
-    })
+    }
 }
 
 /// Every `Remove` among `ops` that counts in `m`, by time: the cut when it
@@ -230,27 +207,6 @@ fn removals_in(ops: &[Op<SignedOp>], m: &Membership, namespace: &str) -> Vec<Rem
     out
 }
 
-/// `membership` over the acts admission authenticates among `ops`, from
-/// `seed`: what [`register_in`] reads, and what a redemption asks of the
-/// journal with its `Admit` in it (`crate::redeem`).
-pub(crate) fn membership_in(
-    ops: &[Op<SignedOp>],
-    seed: &Roster,
-    namespace: &str,
-    verifier: &dyn RingVerifier,
-) -> Result<Membership, RailError> {
-    // Standing turns only on the acts `membership` reads
-    // (`svrngs_core::standing_reads`, beside it in svrngs-core's
-    // membership.rs), so the rest are left out before admission verifies
-    // each signature — the sync route asks this per request, of journals of
-    // tens of thousands of acts (ring_sync's ceiling tests timed out
-    // verifying them all).
-    let acts: Vec<Op<SignedOp>> = svrngs_core::standing_reads(ops, seed).cloned().collect();
-    Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
-        .membership()
-        .clone())
-}
-
 impl RingRail {
     /// Who stands in `namespace` on this node — the ONE accessor the round,
     /// the acceptor and the sync route ask (ARCH 8). Its signatures are
@@ -287,8 +243,8 @@ impl RingRail {
 
     /// The register of `namespace` (U7; DESIGN §6): who stands, each key
     /// its keeper cut with its person, and the keeper; from the journal's
-    /// kept fold, as [`Self::standing`] is. A group not held here or with
-    /// no seed is the empty register, said as
+    /// kept fold, as [`Self::standing`] is. A group not held here, with no
+    /// seed, or made by an older svrngs is the empty register, said as
     /// [`Self::standing`] says it.
     pub fn register(&self, namespace: &str) -> Result<Register, RailError> {
         let Ok((journal, seed)) = self.seeded(namespace)? else {
@@ -302,8 +258,8 @@ impl RingRail {
 
     /// The journal of `namespace` and its seed, or why nobody stands in it
     /// here: the one check [`Self::standing`] and [`Self::register`] make.
-    /// A group not held is said at debug; a held group with no seed at
-    /// warn, since it refuses everyone.
+    /// A group not held, or one an older svrngs made, is said at debug; a
+    /// held group with no seed at warn, since it refuses everyone.
     fn seeded(&self, namespace: &str) -> Result<Result<(Arc<RingJournal>, Roster), Standing>, RailError> {
         if !valid_namespace(namespace) || !ring_dir(&self.root, namespace).is_dir() {
             tracing::debug!(
@@ -324,6 +280,11 @@ impl RingRail {
             );
             return Ok(Err(Standing::NoSeed));
         };
+        if seed.older() {
+            tracing::debug!(target: "register", namespace,
+                "register: an older svrngs made this group, so it is held and read, and nobody stands in it");
+            return Ok(Err(Standing::Older));
+        }
         Ok(Ok((journal, seed)))
     }
 

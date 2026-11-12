@@ -6,9 +6,7 @@
 //! writing `EACH` records, folded `ROUNDS` times; each prints one JSON line,
 //! the lines folded and the median fold's milliseconds. Before: each
 //! person's computer signs its own. After: each person's phone's holder
-//! signs, its pass on every line, verified once per distinct pass; and
-//! the computers' records past the keeper's cutover, whose cover is walked
-//! by ancestry on every fold.
+//! signs, its pass on every line, verified once per distinct pass.
 //!
 //! Run: `cargo test --release -p svrngs-core --test cost -- --ignored --nocapture`.
 
@@ -100,38 +98,4 @@ fn a_fold_of_holders_records() {
         })
         .collect();
     timed("holders", &ops, &roster(&computers));
-}
-
-/// After: the computers' records, then the keeper's cutover naming each
-/// key's newest, which every fold walks back through each chain.
-#[test]
-#[ignore = "an instrument: run with --ignored --nocapture"]
-fn a_fold_past_the_keepers_cutover() {
-    let computers = keys(1);
-    let mut ops: Vec<_> = computers.iter().flat_map(|k| records(k, None)).collect();
-    let through = (ops.iter().filter(|o| o.kind.seq == EACH - 1))
-        .map(|o| o.id.clone())
-        .collect();
-    let keeper = ops.iter().rfind(|o| o.actor == actor_of(&computers[0]));
-    let prev = keeper.map(|o| o.id.clone());
-    let act = RailAct::Signers { through };
-    let ts = 1_760_000_000 + EACH as i64;
-    ops.push(sign_act(
-        &computers[0],
-        NS,
-        ts,
-        EACH,
-        prev,
-        act,
-        None,
-        None,
-        None,
-    ));
-    let set = ActSet::of(&ops);
-    let a = svrngs_core::admit(&set, &[], &roster(&computers), NS, &Ed25519Verifier);
-    assert!(
-        a.membership().signers.is_some(),
-        "the keeper's cutover counts"
-    );
-    timed("cutover", &ops, &roster(&computers));
 }

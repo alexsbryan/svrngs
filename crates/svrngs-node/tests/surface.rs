@@ -16,7 +16,7 @@ use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend;
 use svrngs_node::node::Node;
 use svrngs_node::seed::Seed;
-use svrngs_node::{actor_of, Name, Person, RailAct, SigningKey};
+use svrngs_node::{actor_of, Name, SigningKey};
 
 fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
@@ -163,14 +163,12 @@ impl House {
             let dir = node.rail().group_dir(&id).unwrap();
             std::fs::write(dir.join("seed.json"), seed.to_text()).unwrap();
         }
-        let admit = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse("sam").unwrap(),
-                key: actor_of(&signing(2)),
-                invite: None,
-            },
-        };
-        alex.rail().commit(&id, &admit).unwrap().unwrap();
+        svrngs_core::tests_support::let_in_by(&id, &signing(2), "sam", |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            alex.rail().commit(&id, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
         alex.transport()
             .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
         House {
@@ -322,7 +320,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }
@@ -693,19 +691,18 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
         &[],
     );
     declare(house.sam_dir.path(), &house.id, "films", 8097, "media", &[]);
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("cy").unwrap(),
-            key: actor_of(&signing(3)),
-            invite: None,
-        },
-    };
-    house
-        .alex
-        .rail()
-        .commit(&house.id, &admit)
-        .unwrap()
-        .unwrap();
+    svrngs_core::tests_support::let_in_by(&house.id, &signing(3), "cy", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        house
+            .alex
+            .rail()
+            .commit(&house.id, &act)
+            .unwrap()
+            .unwrap()
+            .lines()[0]
+            .id
+            .clone()
+    });
     let (_asleep, at_cy) = common::never_answers();
     let cy =
         svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();

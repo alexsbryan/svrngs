@@ -5,7 +5,7 @@
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::command::{Command, Reads};
+use crate::command::Command;
 use crate::{Admission, RailAct};
 
 /// An app's act, written by this computer as its own person: another
@@ -24,7 +24,6 @@ pub enum AppendRefusal {
 
 impl Command for Append {
     type Refusal = AppendRefusal;
-    const READS: Reads = Reads::Membership;
 
     fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, AppendRefusal> {
         let app_act = matches!(self.act, RailAct::Record { .. } | RailAct::Correct { .. });

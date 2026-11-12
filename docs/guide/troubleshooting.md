@@ -62,6 +62,11 @@ short name.
 - ***"You’re no longer in Lab on this computer, and you can’t join it again from here yet."***
   You left Lab from this computer, which can't rejoin yet. Join from your
   phone or another computer, with a new link.
+- ***"Pier was made by an older svrngs, so nothing in it changes now. To carry on, make it again and invite people by link."***
+  The group's link, its section on your home page, or the terminal says
+  this of a group made before this version of svrngs. Nothing in it
+  changes and nobody joins it. Whoever wants to carry on makes a new group
+  and sends everyone its link. [People](people.md).
 - **`svrngs: svrngs is in /Users/<you>/.local/bin, and did not join the group: it said why above.`**
   svrngs installed, but the join was refused. The line above it says why;
   find it in this section.
@@ -154,10 +159,10 @@ short name.
 
 - ***"You asked Sam to remove Dee from House. Dee stays in it until Sam does."***
   Not an error. Only the person who decides removes; they've been asked.
-- **`svrngs: … you cannot leave it yet: hand that to someone else first`**,
-  or on the home page *"You keep the order of removals in House: choose who
-  keeps it after you, then leave."* You decide who is removed, so hand that
-  on first: `svrngs handover <name> --group House`. [People](people.md).
+- ***"If you leave without handing it on, nobody keeps the order of removals until the others agree on who does."***
+  You decide who is removed. Hand that on first if you want someone to
+  decide straight away: `svrngs handover <name> --group House`.
+  [People](people.md).
 - ***"Nobody handed you who is removed from House, so there is nothing to accept."***
   The hand-on was taken back, or someone else accepted it first. Your home
   page shows who decides now.

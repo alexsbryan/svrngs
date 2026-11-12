@@ -244,6 +244,8 @@ async function asking(token, native) {
   const told = native ? JSON.stringify(welcome.asked) : reply;
   if (native && typeof welcome.inviter !== 'string') throw saying(AWAY);
   const group = core.believe(told);
+  // An older svrngs made the group: nobody joins it now, said in its words.
+  if (group.older) throw saying(group.older);
   const devices = group.person ? `, for ${group.person}’s devices` : '';
   return {
     type: 'asked',

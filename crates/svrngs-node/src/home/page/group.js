@@ -35,8 +35,9 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  * @property {[string | null, number][] | null} waiting a fetch that found no holder, by writer's person
  * @property {Visit[] | null} visiting
  * @property {'fallback' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
- * @property {true} [vacates] whether they keep its order of removals and leaving without handing it on leaves nobody keeping it (a group made before sources-v1 refuses that leave instead)
+ * @property {true} [vacates] whether they keep its order of removals and leaving without handing it on leaves nobody keeping it
  * @property {{ to_you: boolean, person: string | null }} [offered] a hand-on of its order of removals waiting on its Accept, to this computer or from it, and who is at its other end
+ * @property {string} [older] what is said of a group an older svrngs made, which nothing in changes now (svrngs-core `made_older`)
  */
 
 /**
@@ -122,14 +123,16 @@ export const colour = (id) => {
   for (const char of id) hash = (hash * 31 + char.charCodeAt(0)) % 12;
   return hash;
 };
-// Below a group's heading: who is in it could not be read, this person
-// was removed from it, so nothing is read, or the section as read.
+// Below a group's heading: an older svrngs made it, who is in it could not
+// be read, this person was removed from it, so nothing is read, or the
+// section as read.
 /**
  * @param {Group} group
  * @param {string} name
  * @param {Omit<GroupProps, 'g'>} props
  */
 function below(group, name, props) {
+  if (group.older) return html`<p>${group.older}</p>`;
   if (group.removed === null) return html`<p>This computer could not read who is in ${name}.</p>`;
   if (group.removed)
     return html`<p>You are no longer in ${name}. What you already have stays on this computer; nothing new reaches it.</p>`;

@@ -132,6 +132,14 @@ pub(crate) fn standing_of(
                 format!("this computer is in no group {namespace}"),
             ))
         }
+        Ok(Standing::Older) => {
+            tracing::debug!(target: "rails", namespace, "rail: refused — an older svrngs made the group, so nobody stands in it");
+            Err(refused(
+                StatusCode::GONE,
+                "older",
+                RailError::Older.to_string(),
+            ))
+        }
         Ok(Standing::NoSeed) => {
             tracing::warn!(target: "rails", namespace, "rail: refused — the group is held with no seed, so nobody can be shown to be in it");
             Err(refused(
@@ -345,18 +353,6 @@ pub(crate) async fn carry(
             "An app's new entry needs its person's approval of that exact content.".into(),
         );
     }
-    if line.kind.grant.is_some()
-        && read
-            .as_ref()
-            .is_none_or(|a| a.membership().holders.is_none())
-    {
-        tracing::debug!(target: "rails", group, %id, signer = %line.actor, "rail: refused — a holder's line in a group whose keeper has written no holder cutover, so legacy holder authority is still open");
-        return refused(
-            &group,
-            "upgrade_keeper",
-            "The group's keeper needs to open the new svrngs before apps can save entries.".into(),
-        );
-    }
     if let Some(no) = read.as_ref().and_then(|a| line_spent(a, &line)) {
         return no;
     }
@@ -379,32 +375,13 @@ pub(crate) fn refused_as(status: StatusCode, namespace: &str, kind: &str, why: S
     (status, Json(said)).into_response()
 }
 
-/// `admission`'s ops as the wire spells them, each an older computer wrote
-/// for another person (`on_behalf_of`) with `on_behalf_of_key`: the first
-/// key of the one person of that name who had joined by its time, cut or
-/// standing, so an app keeps what was written for them with what they
-/// wrote (keys-names); none where two had, and an app reads it by name.
-/// The log's and a carried app's route alike; `None` when the ops cannot
-/// be written out, which each route refuses, never an empty list.
+/// `admission`'s ops as the wire spells them: the log's and a carried
+/// app's route alike; `None` when the ops cannot be written out, which each
+/// route refuses, never an empty list. (An act an older computer wrote for
+/// another person counts nowhere since release 2, so none names whom it
+/// spoke for.)
 pub(crate) fn ops_json(admission: &Admission) -> Option<serde_json::Value> {
-    let m = admission.membership();
-    let mut ops = serde_json::to_value(admission.wire()).ok()?;
-    for o in ops.as_array_mut().into_iter().flatten() {
-        let other = o["on_behalf_of"].as_str().filter(|n| o["person"] != *n);
-        let (Some(named), Some(ts)) = (other, o["ts_unix"].as_i64()) else {
-            continue;
-        };
-        let firsts =
-            (m.bindings.iter()).filter(|(k, p)| p.as_str() == named && !m.devices.contains_key(*k));
-        let mut by = firsts.filter(|(k, _)| !matches!(m.joined(k), Joined::At(t) if t > ts));
-        let (one, two) = (by.next(), by.next());
-        let one = one.filter(|_| two.is_none()).map(|(k, _)| k.clone());
-        tracing::debug!(target: "rails", named, ts, ?one, "rail: whom an act for another spoke for, the one person of that name joined by then, or none");
-        if let Some(k) = one {
-            o["on_behalf_of_key"] = k.into();
-        }
-    }
-    Some(ops)
+    serde_json::to_value(admission.wire()).ok()
 }
 
 /// GET /v1/rail/log — the namespace's acts, in one order, and its gaps:
@@ -454,9 +431,7 @@ pub async fn log(
         "gaps": gaps,
         "held": admission.held(),
         "complete": admission.is_complete(),
-        // Unsettled cuts (#124): who stands is not judged, so nobody is
-        // listed as standing; the `unsettled` gap says why.
-        "people": (!register.unsettled).then(|| people_json(people)),
+        "people": people_json(people),
     }))
     .into_response())
 }

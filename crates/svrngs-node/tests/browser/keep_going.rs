@@ -453,11 +453,7 @@ async fn the_house_keeps_going_through_the_home_relay_and_comes_back(engine: Eng
     let rail = ada.rail();
     for (person, me) in [("cy", 2), ("dee", 3)] {
         svrngs_core::tests_support::let_in(
-            (
-                &id,
-                Some(svrngs_node::authority::GroupPolicy::SourcesV1),
-                &actor_of(&signing(1)),
-            ),
+            (&id, &actor_of(&signing(1))),
             (&signing(me), person, svrngs_node::Device::Computer),
             |mint| {
                 rail.commit(&id, mint).unwrap().unwrap().lines()[0]

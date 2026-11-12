@@ -48,7 +48,6 @@ fn request(link: &SigningKey, joining: &SigningKey, invite: &Op<SignedOp>) -> Re
         &derive_id(invite, GROUP),
         &hal(),
         Device::Computer,
-        None,
     )
 }
 
@@ -80,7 +79,6 @@ fn a_redemption_is_parsed_before_anything_is_read() {
         &req.invite,
         &hal(),
         Device::Computer,
-        None,
     );
     unnamed.person = String::new();
     unnamed.sig = sign_message(&link, &unnamed.message());

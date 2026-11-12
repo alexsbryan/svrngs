@@ -126,10 +126,9 @@ impl Host {
                 tracing::debug!(target: "link", group, "link: refused — this computer does not stand in the group");
                 return Err(Unminted::NotIn);
             }
-            Ok(Err(Refused::Unsettled)) => {
-                return Err(Unminted::Unkept(
-                    RailError::Unsettled(group.to_string()).to_string(),
-                ))
+            Ok(Err(Refused::Older)) => {
+                tracing::debug!(target: "link", group, "link: refused — an older svrngs made the group");
+                return Err(Unminted::Unkept(RailError::Older.to_string()));
             }
             Ok(Err(Refused::Uncounted(_))) => {
                 return Err(Unminted::Unkept(format!(

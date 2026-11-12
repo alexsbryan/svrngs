@@ -46,14 +46,16 @@ pub fn ask(key: Vec<u8>, token: String) -> Result<String, JsError> {
 }
 
 /// A group the issuer answered, believed: its id and its name, a device
-/// link's person, whom the phone joins as (bash-devices), and who made it,
-/// so two of one name are told apart (v1ui-door (d)).
+/// link's person, whom the phone joins as (bash-devices), who made it, so
+/// two of one name are told apart (v1ui-door (d)), and, for one an older
+/// svrngs made, the words that say nobody joins it now.
 #[wasm_bindgen]
 pub struct Group {
     id: String,
     name: String,
     person: Option<String>,
     maker: String,
+    older: Option<String>,
 }
 
 #[wasm_bindgen]
@@ -77,6 +79,11 @@ impl Group {
     pub fn maker(&self) -> String {
         self.maker.clone()
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn older(&self) -> Option<String> {
+        self.older.clone()
+    }
 }
 
 /// The issuer's answer to an ask, believed only when its seed hashes to
@@ -89,14 +96,17 @@ pub fn believe(asked: String) -> Result<Group, JsError> {
         return Err(refuse("the answer's seed does not hash to the group it names"));
     };
     emit(&format!(
-        "JOIN: the answer is believed — the group {}, a device link of {:?}",
-        asked.group, asked.person
+        "JOIN: the answer is believed — the group {}, a device link of {:?}, made by an older svrngs: {}",
+        asked.group,
+        asked.person,
+        seed.older()
     ));
     Ok(Group {
         id: asked.group,
         name: seed.name().to_string(),
         person: asked.person.map(|p| p.to_string()),
         maker: seed.founder().to_string(),
+        older: seed.older().then(|| svrngs_core::made_older(seed.name().as_str())),
     })
 }
 
@@ -110,9 +120,6 @@ pub fn redemption(key: Vec<u8>, token: String, asked: String, name: String) -> R
     let link = link(&token)?;
     let asked: Asked = serde_json::from_str(&asked).map_err(|e| refuse(&format!("the answer is not an ask's: {e}")))?;
     let name = Name::parse(&name).map_err(|why| refuse(&why.to_string()))?;
-    // The consent the seed's policy asks, as `believe` believed the seed.
-    let seed = answered(&asked.group, &asked.seed)
-        .ok_or_else(|| refuse("the answer's seed does not hash to the group it names"))?;
     let req = RedeemRequest::sign(
         &link.key(),
         &joining,
@@ -120,7 +127,6 @@ pub fn redemption(key: Vec<u8>, token: String, asked: String, name: String) -> R
         &asked.invite,
         &Person::from(name),
         Device::Browser,
-        seed.policy(),
     );
     emit(&format!(
         "JOIN: redeeming the link as {:?}, {}, a browser's key",

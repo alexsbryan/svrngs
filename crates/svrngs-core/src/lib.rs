@@ -123,19 +123,19 @@ pub use act_set::ActSet;
 pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use authority::{approve_in_open, ApprovalFault};
 pub use command::{
-    commit, Author, Authored, Command, Held, Reads, Recorded, Refused, Store, Tip, Uncounted,
+    commit, Author, Authored, Command, Held, Recorded, Refused, Store, Tip, Uncounted,
 };
 pub use membership::*;
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt,
-    Removal, RemovalRefusal, Take,
+    HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
+    RemovalRefusal, Take,
 };
 pub use sig::{
-    act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
-    sign_message, sign_ring_op, source_redemption_message, unsigned_act, verify_hex,
+    act_id, actor_of, derive_id, field, ring_op_message, sign_act, sign_message, sign_ring_op,
+    source_redemption_message, unsigned_act, verify_hex,
 };
 pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};
@@ -297,19 +297,37 @@ pub struct Roster {
     /// Person → the hex node public keys that person signs with. Two laptops
     /// is two keys in one row.
     pub members: BTreeMap<Person, Vec<String>>,
-    /// The seed's policy, which picks the group's one decider: `None`, the
-    /// legacy fold (`membership.rs`); sources-v1, Eudoxia's interpreter.
+    /// The seed's policy: sources-v1, read by Eudoxia's interpreter; or
+    /// none, a group an older svrngs made ([`Self::older`]).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub policy: Option<authority::GroupPolicy>,
 }
 
 impl Roster {
+    /// A sources-v1 seed: every roster svrngs makes now. An older svrngs's
+    /// comes only from its file.
     pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
         Self {
             members,
-            policy: None,
+            policy: Some(authority::GroupPolicy::SourcesV1),
         }
     }
+
+    /// Whether an older svrngs made this group, its seed naming no policy
+    /// (svrn-docs `rings/current/EUDOXIA_JUDGE.md` §2a): the one home of
+    /// that answer. Such a group is held and read, and changes nothing:
+    /// nobody stands in it ([`admit`]), so nothing is written
+    /// ([`Refused::Older`]) or synced for it.
+    pub fn older(&self) -> bool {
+        self.policy.is_none()
+    }
+}
+
+/// What a person reads of a group an older svrngs made, `group` its name
+/// as said: the one sentence the home page, a link, the command and a
+/// refused write say.
+pub fn made_older(group: &str) -> String {
+    alloc::format!("{group} was made by an older svrngs, so nothing in it changes now. To carry on, make it again and invite people by link.")
 }
 
 // ── What a line says ─────────────────────────────────────────
@@ -485,7 +503,8 @@ pub struct Visit {
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
 /// redeems, and the admitted key's signature over the namespace, that
-/// `Invite`'s id, the person and the key ([`sig::redemption_message`]). The
+/// `Invite`'s id, the person, the key and the device
+/// ([`sig::source_redemption_message`]). The
 /// issuer's signature on the `Admit` says the issuer let this key in; this
 /// one says the key asked to join, as this person, through this link — so
 /// no issuer can redeem its own link for a key that never opened it.
@@ -545,35 +564,23 @@ impl Device {
 
 impl Redemption {
     /// `joining`, held by `device`, consents to join `namespace` as
-    /// `person` under the `Invite` whose id is `invite`, as the group's seed
-    /// `policy` asks: a sources-v1 group's consent covers the device too
-    /// ([`sig::source_redemption_message`]), so the joiner, not the issuer,
-    /// says whether its key may hold office.
+    /// `person` under the `Invite` whose id is `invite`: the consent covers
+    /// the device ([`sig::source_redemption_message`]), so the joiner, not
+    /// the issuer, says whether its key may hold office.
     pub fn sign(
         joining: &SigningKey,
         namespace: &str,
         invite: &OpId,
         person: &Person,
         device: Device,
-        policy: Option<authority::GroupPolicy>,
     ) -> Self {
         let key = actor_of(joining);
-        let msg = match policy {
-            None => sig::redemption_message(namespace, invite, person.as_str(), &key),
-            Some(_) => sig::source_redemption_message(namespace, invite, person, &key, device),
-        };
+        let msg = sig::source_redemption_message(namespace, invite, person, &key, device);
         Self {
             id: invite.clone(),
             sig: sig::sign_message(joining, &msg),
             device,
         }
-    }
-
-    /// Whether `sig` is `key`'s signature over this redemption of `person`
-    /// in `namespace`. `false` on anything malformed.
-    pub(crate) fn verifies(&self, namespace: &str, person: &Person, key: &str) -> bool {
-        let msg = sig::redemption_message(namespace, &self.id, person.as_str(), key);
-        sig::verify_hex(key, &msg, &self.sig)
     }
 }
 
@@ -824,10 +831,10 @@ pub enum RailError {
     Clock,
     #[error("ring rail io: {0}")]
     Io(String),
-    /// The keeper's cuts in this group do not settle to one answer (#124),
-    /// so who stands in it is not judged: never read as anyone standing.
-    #[error("who is in `{0}` cannot be judged: its removals do not come to one answer")]
-    Unsettled(String),
+    /// An older svrngs made the group ([`Roster::older`]): nothing in it
+    /// changes.
+    #[error("{}", made_older("This group"))]
+    Older,
     /// The door refused to author this act. The string is a sentence, because
     /// it is the 422 body an app shows a person.
     #[error("refused: {0}")]
@@ -928,9 +935,6 @@ mod tests_source_graph;
 mod tests_source_recovery;
 #[cfg(test)]
 mod tests_sources_live;
-
-#[cfg(test)]
-mod tests_cutover;
 
 /// The rail's ONE set of op fixtures.
 ///

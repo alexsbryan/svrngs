@@ -2,8 +2,7 @@
 //! What a sources-v1 group costs on a computer's journal (EUDOXIA_JUDGE §6,
 //! P8), as the node pays it: one commit of an app's record, and the kept
 //! fold read again after a journal change ([`RingRail::register`]), at
-//! `HELD` lines on disk, beside a legacy group of the same people and
-//! records. An instrument, not a check: `#[ignore]`d. Each prints one JSON
+//! `HELD` lines on disk. An instrument, not a check: `#[ignore]`d. Each prints one JSON
 //! line, medians of `ROUNDS`.
 //!
 //! Run: `cargo test --release -p svrngs-runtime --test sources_cost -- --ignored --nocapture`.
@@ -16,8 +15,8 @@ use std::time::Instant;
 
 use svrngs_runtime::seed::Seed;
 use svrngs_runtime::{
-    actor_of, sign_act, Append, Device, MintInvite, Name, Op, Person, RailAct, Redeem, Redemption, RingRail, Roster,
-    SignedOp, SigningKey,
+    actor_of, sign_act, Append, Device, MintInvite, Name, Op, Person, RailAct, Redeem, Redemption, RingRail, SignedOp,
+    SigningKey,
 };
 
 const ROUNDS: usize = 5;
@@ -67,7 +66,7 @@ fn records(ns: &str, before: &[Op<SignedOp>], held: usize) -> Vec<Op<SignedOp>> 
 /// Ana's sources-v1 group on her computer, Bo, Cy and Di let in by link.
 fn sources(dir: &std::path::Path) -> (RingRail, String) {
     let name = |n: &str| Name::parse(n).unwrap();
-    let seed = Seed::from_parts(name("House"), name("Ana"), key(1).verifying_key(), [5; 16]).with_source_policy();
+    let seed = Seed::from_parts(name("House"), name("Ana"), key(1).verifying_key(), [5; 16]);
     let (rail, ns) = (RingRail::new(dir, Arc::new(key(1))), seed.id());
     rail.set_seed(&ns, &seed.roster()).unwrap();
     for (k, person) in [(2u8, "Bo"), (3, "Cy"), (4, "Di")] {
@@ -79,8 +78,7 @@ fn sources(dir: &std::path::Path) -> (RingRail, String) {
         };
         let invite = rail.commit(&ns, &mint).unwrap().unwrap().lines()[0].id.clone();
         let person = Person::parse(person).unwrap();
-        let policy = seed.policy();
-        let consent = Redemption::sign(&key(k), &ns, &invite, &person, Device::Computer, policy);
+        let consent = Redemption::sign(&key(k), &ns, &invite, &person, Device::Computer);
         let redeem = Redeem {
             invite,
             person,
@@ -92,14 +90,6 @@ fn sources(dir: &std::path::Path) -> (RingRail, String) {
         };
         assert!(rail.commit(&ns, &redeem).unwrap().is_ok());
     }
-    (rail, ns)
-}
-
-/// The same four people as a legacy seed.
-fn legacy(dir: &std::path::Path) -> (RingRail, String) {
-    let people = (1..=4u8).map(|k| (Person::parse(&format!("p{k}")).unwrap(), vec![actor_of(&key(k))]));
-    let (rail, ns) = (RingRail::new(dir, Arc::new(key(1))), String::from("legacy-cost"));
-    rail.set_seed(&ns, &Roster::new(people.collect())).unwrap();
     (rail, ns)
 }
 
@@ -146,8 +136,7 @@ fn measure(kind: &str, (rail, ns): (RingRail, String), held: usize) {
 #[ignore = "an instrument: run with --ignored --nocapture"]
 fn a_sources_group_written_and_refolded_at_each_size() {
     for held in [100, 1_000, 10_000] {
-        let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+        let a = tempfile::tempdir().unwrap();
         measure("sources-v1", sources(a.path()), held);
-        measure("legacy", legacy(b.path()), held);
     }
 }

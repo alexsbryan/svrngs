@@ -116,8 +116,10 @@ pub enum Outcome {
     NotDeciderUnread,
     /// This computer is not in the group.
     NotIn,
-    /// The group's record could not be read or written here, or who is in
-    /// it cannot be judged, its removals unsettled (#124): said at warn.
+    /// An older svrngs made the group, so nothing in it changes
+    /// (`svrngs_core::made_older`).
+    Older,
+    /// The group's record could not be read or written here: said at warn.
     Fault,
 }
 
@@ -193,8 +195,8 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
         Ok(Err(refused)) => {
             tracing::debug!(target: "removal", group, ?refused, "removal: refused");
             return match refused {
+                Refused::Older => Outcome::Older,
                 Refused::NoStanding => Outcome::NotIn,
-                Refused::Unsettled => Outcome::Fault,
                 Refused::Uncounted(_) => Outcome::Uncounted,
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
                 Refused::Command(RemovalRefusal::Which(joined)) => Outcome::Which { joined },
@@ -344,8 +346,8 @@ fn handing<C: Command<Refusal = HandOnRefusal>>(
                 Outcome::Fault
             }
         },
+        Ok(Err(Refused::Older)) => Outcome::Older,
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
-        Ok(Err(Refused::Unsettled)) => Outcome::Fault,
         Ok(Err(Refused::Uncounted(_))) => Outcome::Uncounted,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
         Ok(Err(Refused::Command(HandOnRefusal::Which(joined)))) => Outcome::Which { joined },

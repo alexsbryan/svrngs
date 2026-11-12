@@ -31,7 +31,7 @@ use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend::{self, LendName};
 use svrngs_node::node::Node;
 use svrngs_node::room;
-use svrngs_node::{actor_of, declared, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, declared, Person, Roster, SigningKey};
 
 const NS: &str = "house";
 const SAMS: &str = "Bearer sams-secret-61";
@@ -77,14 +77,12 @@ fn here() -> Ipv4Addr {
 async fn alex(dir: &Path, sam: u8) -> Node {
     let alex = start(ALEX, dir).await;
     founded(&alex);
-    let admit = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("sam").unwrap(),
-            key: actor_of(&signing(sam)),
-            invite: None,
-        },
-    };
-    alex.rail().commit(NS, &admit).unwrap().unwrap();
+    svrngs_core::tests_support::let_in_by(NS, &signing(sam), "sam", |act| {
+        let act = svrngs_core::tests_support::Fixture { act };
+        alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+            .id
+            .clone()
+    });
     alex
 }
 

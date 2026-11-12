@@ -350,6 +350,11 @@ impl Node {
             tracing::warn!(target: "node", %why, "node: groups unreadable at startup; their delegated writes remain closed")
         });
         for group in held.unwrap_or_default() {
+            // Once per group at boot: its every other read says so at debug.
+            if let Ok(crate::register::Standing::Older) = host.rail.standing(&group) {
+                tracing::warn!(target: "node", namespace = group, "node: an older svrngs made this group, so it is held and read, nobody stands in it and nothing in it changes; making it again and inviting people by link is the way on");
+                continue;
+            }
             host.cut_over(&group);
         }
         // Resumed folders can write immediately on another runtime thread.
@@ -588,23 +593,14 @@ impl Host {
         wrote
     }
 
-    /// The keeper's cutover in `namespace`, written by this computer when
-    /// it keeps the group and none is written yet, past which a computer's
-    /// act for another person counts nowhere (svrngs-core's `Cutover`;
-    /// capability-signed). Asked of the kept register, as the relay is.
+    /// Where the group meets, said in `namespace` by this computer when it
+    /// keeps the group and none is said yet (relay fallbacks): from the
+    /// relay its file keeps. Asked of the kept register, as the relay is.
     pub(crate) fn cut_over(&self, namespace: &str) {
         let Ok(r) = self.rail.register(namespace) else {
             return;
         };
         let keeps = r.keeper.as_deref() == Some(self.actor.as_str());
-        if keeps && r.signers.is_none() {
-            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover::Authors);
-            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: the keeper's cutover, once per group");
-        }
-        if keeps && r.holders.is_none() {
-            let wrote = self.rail.commit(namespace, &svrngs_core::Cutover::Holders);
-            tracing::debug!(target: "node", namespace, written = matches!(wrote, Ok(Ok(_))), "node: legacy holder history frozen; new entries require exact-content approval");
-        }
         if keeps && r.meets.is_none() {
             let own = crate::group::filed(&self.rail, namespace)
                 .into_iter()

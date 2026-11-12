@@ -75,20 +75,12 @@ struct Writer {
 /// happens to the file; what restarts the fold restarts this with it all
 /// the same, and a file replaced from outside has its lines checked again.
 ///
-/// And the register ([`RingRail::standing`]) is caught up the same way: the
-/// acts that move membership and every `Correct` ([`read_by_standing`]), a
-/// handful among thousands, and every act of a key a `Remove` names (U7),
-/// kept as the tail brings them in, and the
-/// register last folded from them, with the seed it was folded from. A key
-/// named for the first time has its acts already held added from the whole
-/// log, after the tail's, so they are not in the log's order, and an act
-/// of it after the `Remove` in the same tail is kept twice; the fold reads
-/// them as a set (`ActSet::of`), so neither moves it. Read whole on every
-/// connection, sync request and round, it was what an idle round still
-/// paid for (26 reads of 10,000 acts, 5.5 s; scale.rs, ceiling-3's runs;
-/// THE_CEILING.md fix 3).
-/// An act kept so voids the standing; a seed unlike the one it
-/// was folded from folds it again.
+/// And the register ([`RingRail::standing`]) is kept: the group's fold of
+/// every line held, made once per journal change and read until the next
+/// (P8), the register last read from it, with the seed both were folded
+/// from, and every `Remove` held, which the register shows and a leaver's
+/// round tells. A line entering voids the fold and the register; a seed
+/// unlike the one they were folded from folds them again.
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
@@ -97,26 +89,13 @@ struct Held {
     forged: std::collections::HashSet<(OpId, String)>,
     digest: DigestFold,
     passed: Passed,
-    membership: Vec<Op<SignedOp>>,
-    /// The keys some held `Remove` names: their every act is kept in
-    /// `membership` too, since a cut covers a key's acts along their chain
-    /// (U7; `svrngs_core::standing_reads`).
-    named: std::collections::HashSet<String>,
+    /// Every `Remove` held, in the log's order.
+    removes: Vec<Op<SignedOp>>,
     standing: Option<(Roster, crate::register::Register)>,
-    /// A sources-v1 group's fold of every line held, and the seed it was
-    /// folded under: what the next commit decides over, and what the
-    /// register reads, until a line enters (P8: one fold per change).
+    /// The group's fold of every line held, and the seed it was folded
+    /// under: what the next commit decides over, and what the register
+    /// reads, until a line enters (P8: one fold per change).
     kept: Option<(Roster, svrngs_core::Admission)>,
-}
-
-/// Whether a fold of standing reads `op` whoever a `Remove` names: asked
-/// of [`svrngs_core::standing_reads`], the rule's one home, which keeps a
-/// visit's Stop, a `Correct` (guests-door). Until then [`Held`] kept only
-/// the acts that move membership, so a stopped visit read as live here.
-fn read_by_standing(op: &Op<SignedOp>) -> bool {
-    svrngs_core::standing_reads(std::slice::from_ref(op), &Roster::default())
-        .next()
-        .is_some()
 }
 
 /// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
@@ -164,7 +143,6 @@ impl Held {
         // Held, but not verified under its claimed actor: no part of the
         // digest (svrngs-core sync.rs `digest`).
         let mut unverified = 0usize;
-        let mut newly_named: Vec<String> = Vec::new();
         for op in &tail.ops {
             let id = derive_id(op, namespace);
             let line = (id.clone(), op.kind.sig.clone());
@@ -194,36 +172,16 @@ impl Held {
                 self.forged.insert((id.clone(), op.kind.sig.clone()));
                 unverified += 1;
             }
-            if let Some(key) = op.kind.act.names().filter(|k| self.named.insert(k.to_string())) {
-                newly_named.push(key.to_string());
-            }
-            if read_by_standing(op) || self.named.contains(&op.actor) {
-                self.membership.push(op.clone());
-                self.standing = None;
+            if matches!(op.kind.act, RailAct::Remove { .. }) {
+                self.removes.push(op.clone());
             }
             if verified {
                 self.ids.insert(id);
             }
         }
-        // A sources-v1 group's fold reads every act (G2), so any act moves it.
-        if !tail.ops.is_empty() && self.kept.take().is_some() {
-            self.standing = None;
-        }
-        if !newly_named.is_empty() {
-            // A key a `Remove` names for the first time: its acts already
-            // held join the fold of standing, read once from the whole log.
-            let (all, _) = oplog.read_all_with_skips().map_err(io)?;
-            let before = self.membership.len();
-            self.membership.extend(
-                all.into_iter()
-                    .filter(|op| newly_named.contains(&op.actor) && !read_by_standing(op)),
-            );
-            tracing::debug!(
-                namespace,
-                ?newly_named,
-                kept = self.membership.len() - before,
-                "ring rail: a key a Remove names — its acts held join the fold of standing"
-            );
+        // The fold reads every act (G2), so any act moves it.
+        if !tail.ops.is_empty() {
+            (self.kept, self.standing) = (None, None);
         }
         tracing::debug!(
             namespace,
@@ -340,47 +298,45 @@ impl RingJournal {
         Ok(log.held.digest.digest())
     }
 
-    /// The group's register from `seed` ([`crate::register::register_in`]),
-    /// who stands and who was cut, over the acts that move membership as
-    /// [`Held`] caught them up, judged by [`Checked`]; and true when it was
-    /// answered from the register kept since the last call, false when
-    /// folded now.
+    /// The group's register from `seed` ([`crate::register::register_of`]):
+    /// who stands and who was cut, read from the kept fold of every line
+    /// held, else one made now and kept, judged by [`Checked`]; and true
+    /// when it was answered from the register kept since the last call,
+    /// false when read now.
     pub(crate) fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
         let (mut log, _) = self.caught_up()?;
         if let Some((_, register)) = log.held.standing.as_ref().filter(|(from, _)| from == seed) {
             return Ok((register.clone(), true));
         }
-        let held = &log.held;
-        // The interpreter reads the whole log (G2), for a sources-v1 seed:
-        // the kept fold, else one made now and kept.
-        let register = match seed.policy.is_some() {
-            false => crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?,
-            true => {
-                if held.kept.as_ref().is_none_or(|(from, _)| from != seed) {
-                    let (all, _) = log.oplog.read_all_with_skips().map_err(io)?;
-                    let a = admit(
-                        &ActSet::of(&all),
-                        &[],
-                        seed,
-                        &self.namespace,
-                        &Checked(&log.held.passed),
-                    );
-                    log.held.kept = Some((seed.clone(), a));
-                }
-                let m = log.held.kept.as_ref().map(|(_, a)| a.membership()).expect("kept above");
-                crate::register::register_of(m, &log.held.membership, &self.namespace)?
-            }
-        };
+        // The interpreter reads the whole log (G2).
+        if log.held.kept.as_ref().is_none_or(|(from, _)| from != seed) {
+            let (all, _) = log.oplog.read_all_with_skips().map_err(io)?;
+            let a = admit(
+                &ActSet::of(&all),
+                &[],
+                seed,
+                &self.namespace,
+                &Checked(&log.held.passed),
+            );
+            log.held.kept = Some((seed.clone(), a));
+        }
+        let m = log.held.kept.as_ref().map(|(_, a)| a.membership()).expect("kept above");
+        let register = crate::register::register_of(m, &log.held.removes, &self.namespace);
         log.held.standing = Some((seed.clone(), register.clone()));
         Ok((register, false))
     }
 
-    /// The `Remove` acts `actor` signed, from the acts that move membership
-    /// as [`Held`] keeps them: a leave, which its leaver's round tells (#190).
+    /// The `Remove` acts `actor` signed, as [`Held`] keeps them: a leave,
+    /// which its leaver's round tells (#190).
     pub(crate) fn removes_by(&self, actor: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
         let (log, _) = self.caught_up()?;
-        let by = |op: &&Op<SignedOp>| op.actor == actor && matches!(op.kind.act, RailAct::Remove { .. });
-        Ok(log.held.membership.iter().filter(by).cloned().collect())
+        Ok(log
+            .held
+            .removes
+            .iter()
+            .filter(|op| op.actor == actor)
+            .cloned()
+            .collect())
     }
 
     /// Every op this node holds that `theirs` says the peer is missing,

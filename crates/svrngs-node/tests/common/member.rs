@@ -10,7 +10,7 @@ use super::common::loopback_sockets;
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, PublicKey, RelayConfig};
 use svrngs_node::node::Node;
 use svrngs_node::seed::Seed;
-use svrngs_node::{actor_of, Name, Person, RailAct, SigningKey};
+use svrngs_node::{Name, SigningKey};
 
 pub fn env(name: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| panic!("{name} is not set"))
@@ -102,14 +102,12 @@ pub async fn node() {
     let admitted = group.join("perf-admitted");
     if me == 0 && !admitted.exists() {
         for i in 1..members {
-            let admit = svrngs_core::tests_support::Fixture {
-                act: RailAct::Admit {
-                    person: Person::parse(&format!("p{i}")).unwrap(),
-                    key: actor_of(&signing(i)),
-                    invite: None,
-                },
-            };
-            node.rail().commit(&id, &admit).unwrap().unwrap();
+            svrngs_core::tests_support::let_in_by(&id, &signing(i), &format!("p{i}"), |act| {
+                let act = svrngs_core::tests_support::Fixture { act };
+                node.rail().commit(&id, &act).unwrap().unwrap().lines()[0]
+                    .id
+                    .clone()
+            });
         }
         std::fs::write(&admitted, b"").unwrap();
     }

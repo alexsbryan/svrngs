@@ -67,11 +67,6 @@ pub(crate) const RING_OP_DOMAIN: &[u8] = b"svrngs-act-id-binding:";
 /// anything else the record hashes (a view head, a payload).
 const ACT_ID_DOMAIN: &[u8] = b"svrngs/act/v1\0";
 
-/// Domain separator for a redemption's co-signature (svrngs, U2), so the
-/// admitted key's consent is never valid as an act's signature, nor one as
-/// the other.
-pub(crate) const REDEMPTION_DOMAIN: &[u8] = b"svrngs-redemption-binding:";
-
 /// Domain separator for the link key's signature over a request
 /// ([`crate::joining`]), so it is never valid as an act's signature or a
 /// consent, nor either as it.
@@ -91,11 +86,14 @@ pub(crate) const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
 /// ([`crate::app`]): bytes the app chose, never an act's, a link's, a
 /// pass's or a consent.
 pub(crate) const APP_DOMAIN: &[u8] = b"svrngs-app:";
+/// Domain separator for a redemption's co-signature (svrngs, U2), so the
+/// admitted key's consent is never valid as an act's signature, nor one as
+/// the other.
 pub(crate) const SOURCE_REDEMPTION_DOMAIN: &[u8] = b"svrngs-source-redemption-binding:";
 
 /// Domain separator for a group id's hash ([`crate::seed`]), so an id is
 /// never the hash of anything else svrngs hashes (an act id is
-/// `svrngs/act/v1`).
+/// `svrngs/act/v1`). An older svrngs's group's id still names its directory.
 pub(crate) const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
 pub(crate) const SOURCE_GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/sources-v1\0";
 
@@ -197,24 +195,12 @@ pub fn ring_op_message(id: &OpId) -> Vec<u8> {
     [RING_OP_DOMAIN, id.as_bytes().as_slice()].concat()
 }
 
-/// The bytes a redeeming `Admit`'s new key signs:
-/// `DOMAIN || ns || invite[32] || person || key`, every variable field
-/// length-prefixed. The namespace keeps a consent from being replayed into
-/// another group, the `Invite`'s id from being moved to another link, and
-/// the person from being renamed. `person` is the name's text, so a test
-/// can sign a consent to one no `Person` holds, as a hand could.
-pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &str) -> Vec<u8> {
-    let mut msg = Vec::with_capacity(REDEMPTION_DOMAIN.len() + 160);
-    msg.extend_from_slice(REDEMPTION_DOMAIN);
-    field(&mut msg, namespace.as_bytes());
-    msg.extend_from_slice(invite.as_bytes());
-    field(&mut msg, person.as_bytes());
-    field(&mut msg, key.as_bytes());
-    msg
-}
-
-/// A sources-v1 joining consent: [`redemption_message`]'s fields and the
-/// device, so the joiner, not the issuer, says whether its key may hold office.
+/// The bytes a redeeming `Admit`'s new key signs: `DOMAIN || ns` and the
+/// `Invite`'s id, the person, the key and the device. The namespace keeps a
+/// consent from being replayed into another group, the `Invite`'s id from
+/// being moved to another link, and the person from being renamed; the
+/// device lets the joiner, not the issuer, say whether its key may hold
+/// office.
 pub fn source_redemption_message(
     namespace: &str,
     invite: &OpId,
