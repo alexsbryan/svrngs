@@ -199,10 +199,14 @@ document.title = `Money: ${ops.length} by ${ops.map((o) => o.on_behalf_of ?? o.p
     // operator, 2026-10-26).
     assert_eq!(listed["lent"], json!(["Money"]), "{seen:#}");
     let text = listed["text"].as_str().unwrap_or_default();
+    // Independent exact copy lives in the fast question contract. This check
+    // establishes that the real phone renders the shared formatter's result.
+    let consent = in_question(
+        "`Money ${q.agreed({group: 'g', kind: 'Money'}, [{name: 'Money', words: 'who owes whom, and for what.'}], {name: 'house'})}`",
+        Value::Null,
+    );
     assert!(
-        text.contains(
-            "Money Who owes whom, and for what. Opening it lets it read and write that, as you."
-        ),
+        text.contains(consent.as_str().expect("the formatter returns text")),
         "{seen:#}"
     );
     assert!(

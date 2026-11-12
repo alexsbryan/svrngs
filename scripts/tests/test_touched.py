@@ -49,9 +49,28 @@ class Plans(unittest.TestCase):
     def test_a_test_file_reaches_its_binary_alone(self):
         self.assertEqual(plan("crates/svrngs-node/tests/browser/keep_going.rs"), ({"browser", "clippy"}, ""))
         self.assertEqual(plan("crates/svrngs-node/tests/carried.rs"), ({"tests", "clippy"}, "-p svrngs-node --test carried"))
+        self.assertEqual(plan("crates/svrngs-node/tests/seek_judgment.rs"), ({"tests", "clippy"}, "-p svrngs-node --test seek_judgment"))
 
     def test_what_the_cheap_steps_alone_read_reaches_no_slow_one(self):
         self.assertEqual(plan("docs/DESIGN.md", "scripts/lean_check.py"), (set(), ""))
+
+    def test_node_resource_suites_and_their_helper_reach_node_integration(self):
+        for path in ["web/tests/resolver.integration.test.mjs", "web/tests/page-server.integration.test.mjs", "web/tests/resolver-fixture.mjs"]:
+            with self.subTest(path=path):
+                self.assertEqual(plan(path), ({"page integration"}, ""))
+
+    def test_resolver_sources_reach_the_real_store_contract(self):
+        for path in ["resolver/handler.mjs", "resolver/store.mjs"]:
+            with self.subTest(path=path):
+                self.assertEqual(plan(path), ({"page integration"}, ""))
+
+    def test_pure_question_contracts_do_not_require_native_binaries(self):
+        self.assertEqual(plan("web/tests/question.test.mjs"), (set(), ""))
+        self.assertEqual(plan("resolver/adapter.test.mjs"), (set(), ""))
+
+    def test_shared_catalog_and_seek_instrument_keep_the_conservative_gate(self):
+        self.assertIsNone(plan("web/tests/run.mjs"))
+        self.assertIsNone(plan("crates/svrngs-node/tests/browser/load.rs"))
 
     def test_the_gate_itself_and_a_file_nothing_places_run_every_step(self):
         self.assertIsNone(plan("scripts/check.sh"))

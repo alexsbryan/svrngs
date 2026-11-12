@@ -1,0 +1,438 @@
+[
+ {
+  "key": "benefit · soft · stuck · Home",
+  "scene": "benefit",
+  "kind": "stuck",
+  "hard": false,
+  "screen": "Home",
+  "element": "",
+  "read": "All your groups / This computer / Seed swap (Sam’s, since 7 Nov) / Join a group / Make a group / Open a link",
+  "often": [
+   "`benefit`: 3 of 3 accounts (Sam run 1, Jo run 1, Ren run 1)"
+  ],
+  "happened": [
+   "`benefit` run 1, Sam: failed, ran out of patience. their last acts: look · back · tell · tell · tell · tell",
+   "`benefit` run 1, Jo: failed, ran out of patience. their last acts: look · say “Thanks Mira — I've seen the notebook: Saturday 15 Nov, outside number 41, bring spare envelopes. All clear from my side.” · tell · tell · tell · tell",
+   "`benefit` run 1, Ren: failed, ran out of patience. their last acts: tap “Sam’s notebook” · look · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Sam, `benefit` run 1: “I got stuck at the Seed swap group page: I couldn't tell which link opened the Neighbourhood notebook, and after tapping \"Sam's notebook\" everything ended with \"You've given up\", so I never got to read the seed swap details or say anything in the street chat. I'd need help reopening the group and finding the right notebook link.”",
+   "Jo, `benefit` run 1: “I got stuck twice. First, \"Open this folder\" didn't seem to change the screen — I couldn't tell whether Sam's notebook had actually opened, and the page text was too small to read comfortably. Second, after I tapped \"Sam's notebook\" and saw the notebook, the session switched to \"You've given up\", so I couldn't post in the street chat. Somebody would need to confirm the notebook is the right place and let me back into the chat to reply to Mira.”",
+   "Ren, `benefit` run 1: “I got stuck right after tapping \"Sam's notebook\": the page said I'd given up, so I never got to read when and where the seed swap is. I need help finding the Neighbourhood notebook in the Seed swap group, or someone to tell me the details.”"
+  ],
+  "file": "benefit-said-stuck-home",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/xenia/neighbourhood.rs:266` holds “Sam's notebook”",
+   "demo/xenia/findings/instrument/money-opened-as-patience-ran-out.md:17` holds “You've given up”",
+   "demo/xenia/findings/instrument/money-opened-as-patience-ran-out.md:21` holds “You've given up”",
+   "crates/svrngs/tests/pages/members.rs:385` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:419` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:426` holds “Open this folder”"
+  ]
+ },
+ {
+  "key": "benefit · soft · missing · Home",
+  "scene": "benefit",
+  "kind": "missing",
+  "hard": false,
+  "screen": "Home",
+  "element": "",
+  "read": "All your groups / This computer / Seed swap (Sam’s, since 7 Nov) / Join a group / Make a group / Open a link",
+  "often": [
+   "`benefit`: 3 of 3 accounts (Sam run 1, Jo run 1, Ren run 1)"
+  ],
+  "happened": [
+   "`benefit` run 1, Sam: failed, ran out of patience. their last acts: look · back · tell · tell · tell · tell",
+   "`benefit` run 1, Jo: failed, ran out of patience. their last acts: look · say “Thanks Mira — I've seen the notebook: Saturday 15 Nov, outside number 41, bring spare envelopes. All clear from my side.” · tell · tell · tell · tell",
+   "`benefit` run 1, Ren: failed, ran out of patience. their last acts: tap “Sam’s notebook” · look · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Sam, `benefit` run 1: “Yes — I wanted to open the Neighbourhood notebook in Seed swap to check the seed swap's date and place, and then reply to Mira in the street chat to say it's clear. The group page didn't let me get there: my tap on Sam's notebook ended the session instead of opening the notebook.”",
+   "Jo, `benefit` run 1: “Yes — I wanted to open Sam's notebook folder properly: \"Open this folder\" didn't visibly open anything, so I ended up tapping the notebook's name instead. And I wanted to answer Mira in the street chat that the details were clear, but the session had already gone to \"You've given up\" and wouldn't let me say it.”",
+   "Ren, `benefit` run 1: “Yes — I wanted to read the Neighbourhood notebook to learn when and where the seed swap is, then say in the street chat if anything was unclear. The pages didn't let me read it: after I tapped \"Sam's notebook\" it just said I'd given up, so I couldn't see the details.”"
+  ],
+  "file": "benefit-said-missing-home",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/pages/members.rs:385` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:419` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:426` holds “Open this folder”",
+   "demo/xenia/findings/instrument/money-opened-as-patience-ran-out.md:17` holds “You've given up”",
+   "demo/xenia/findings/instrument/money-opened-as-patience-ran-out.md:21` holds “You've given up”",
+   "crates/svrngs/tests/xenia/neighbourhood.rs:266` holds “Sam's notebook”"
+  ]
+ },
+ {
+  "key": "benefit · inert · Home · Open this folder",
+  "scene": "benefit",
+  "kind": "inert",
+  "hard": true,
+  "screen": "Home",
+  "element": "Open this folder",
+  "read": "All your groups / This computer / Seed swap (Sam’s, since 7 Nov) / Join a group / Make a group / Open a link",
+  "often": [
+   "`benefit`: 1 of 3 accounts (Jo run 1)"
+  ],
+  "happened": [
+   "`benefit` run 1, Jo: failed, ran out of patience. inert {\"tap\":\"Open this folder\"}; their last acts: look · tap “Seed swap (Sam’s, since 7 Nov)” · tap “Open this folder” · scroll · tap “Open this folder”"
+  ],
+  "said": [
+   "Jo, `benefit` run 1: “stuck: I got stuck twice. First, \"Open this folder\" didn't seem to change the screen — I couldn't tell whether Sam's notebook had actually opened, and the page text was too small to read comfortably. Second, after I tapped \"Sam's notebook\" and saw the notebook, the session switched to \"You've given up\", so I couldn't post in the street chat. Somebody would need to confirm the notebook is the right place and let me back into the chat to reply to Mira.”",
+   "Jo, `benefit` run 1: “missing: Yes — I wanted to open Sam's notebook folder properly: \"Open this folder\" didn't visibly open anything, so I ended up tapping the notebook's name instead. And I wanted to answer Mira in the street chat that the details were clear, but the session had already gone to \"You've given up\" and wouldn't let me say it.”"
+  ],
+  "file": "benefit-inert-home-open-this-folder",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/pages/members.rs:385` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:419` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:426` holds “Open this folder”",
+   "crates/svrngs-node/src/home/page/grouped.js:62` holds “All your groups”",
+   "crates/svrngs-node/src/home/page/grouped.js:81` holds “All your groups”",
+   "crates/svrngs-node/src/home/page/grouped.js:106` holds “All your groups”",
+   "RELEASES.md:35` holds “This computer”",
+   "apps/canon/index.js:104` holds “This computer”",
+   "apps/events/server.mjs:189` holds “This computer”"
+  ]
+ },
+ {
+  "key": "retain · inert · Home · Open this folder",
+  "scene": "retain",
+  "kind": "inert",
+  "hard": true,
+  "screen": "Home",
+  "element": "Open this folder",
+  "read": "give / Sam’s notebook / Open this folder / People / Add an app / Manage this group",
+  "often": [
+   "`retain`: 2 of 3 accounts (Sam run 1, Jo run 1)"
+  ],
+  "happened": [
+   "`retain` run 1, Sam: could-not-judge, the scene ran out of time while they were acting. inert {\"tap\":\"Open this folder\"}; their last acts: look · scroll · scroll · tap “What neighbours know” · back · tap “Open this folder”",
+   "`retain` run 1, Jo: could-not-judge, the scene ran out of time while they were acting. inert {\"tap\":\"Open this folder\"}; their last acts: wait · scroll · back · tap “Seed swap” · tap “Seed swap (Sam's, since 7 Nov)” · tap “Open this folder”"
+  ],
+  "said": [],
+  "file": "retain-inert-home-open-this-folder",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/pages/members.rs:385` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:419` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:426` holds “Open this folder”"
+  ]
+ },
+ {
+  "key": "retain · soft · stuck · the notebook",
+  "scene": "retain",
+  "kind": "stuck",
+  "hard": false,
+  "screen": "the notebook",
+  "element": "",
+  "read": "Your note / Add your note / Neighbourhood notebook / What neighbours know / Seed swap: Saturday at 11, outside number 14. Bring spare envelopes. / A small notebook made for this rehearsal.",
+  "often": [
+   "`retain`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`retain` run 1, Ren: passed, did the scene, and said they were done; brought back by a message, then gave up; brought back by a message, then gave up. their last acts: say “Great, thanks Jo — all set here too. See you Saturday!” · give_up · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Ren, `retain` run 1: “Nowhere — the notebook page was straightforward, Mira's message told me exactly what to write, and the note went in on the first try. I didn't need anybody's help.”"
+  ],
+  "file": "retain-said-stuck-the-notebook",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ },
+ {
+  "key": "retain · soft · gave up · the notebook",
+  "scene": "retain",
+  "kind": "gave up",
+  "hard": false,
+  "screen": "the notebook",
+  "element": "",
+  "read": "Your note / Add your note / Neighbourhood notebook / What neighbours know / Seed swap: Saturday at 11, outside number 14. Bring spare envelopes. / A small notebook made for this rehearsal.",
+  "often": [
+   "`retain`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`retain` run 1, Ren: passed, did the scene, and said they were done; brought back by a message, then gave up; brought back by a message, then gave up. their last acts: say “Great, thanks Jo — all set here too. See you Saturday!” · give_up · tell · tell · tell · tell",
+   "`retain` run 1, Ren: passed, did the scene, and said they were done; brought back by a message, then gave up; brought back by a message, then gave up. their last acts: say “Great, thanks Jo — all set here too. See you Saturday!” · give_up · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Ren, `retain` run 1: “All done: I read the seed swap details (Saturday at 11, outside number 14, bring spare envelopes), added Mira's note — \"Seed envelopes are in the blue tin\" — to the Neighbourhood notebook, told the street chat, and replied to Sam. Nothing left to do.”",
+   "Ren, `retain` run 1: “Everything is wrapped up: the seed swap details are clear (Saturday at 11, outside number 14, bring spare envelopes), Mira's note about the blue tin is in the Neighbourhood notebook, and both Sam and Jo have confirmed they've seen it. Nothing left for me to do.”"
+  ],
+  "file": "retain-said-gave-up-the-notebook",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/xenia/neighbourhood-smoke.mjs:104` holds “Seed envelopes are in the blue tin”",
+   "crates/svrngs/tests/xenia/neighbourhood.rs:20` holds “Seed envelopes are in the blue tin”"
+  ]
+ },
+ {
+  "key": "handover · inert · Home · Open this folder",
+  "scene": "handover",
+  "kind": "inert",
+  "hard": true,
+  "screen": "Home",
+  "element": "Open this folder",
+  "read": "give / Sam’s notebook / Open this folder / People / Add an app / Manage this group",
+  "often": [
+   "`handover`: 3 of 3 accounts (Sam run 1, Jo run 1, Ren run 1)"
+  ],
+  "happened": [
+   "`handover` run 1, Sam: could-not-judge, the scene ran out of time while they were acting. inert {\"tap\":\"Open this folder\"}; their last acts: scroll · tap “Move it to…” · tap “Jo’s computer” · wait · back · tap “Open this folder”",
+   "`handover` run 1, Jo: could-not-judge, the scene ran out of time while they were acting. inert {\"tap\":\"Open this folder\"}; their last acts: tap “What neighbours know” · tap “Seed swap: Saturday at 11, outside number 14. Bring spare envelopes.” · look · back · tap “Seed swap” · tap “Open this folder”",
+   "`handover` run 1, Jo: could-not-judge, the scene ran out of time while they were acting. inert {\"tap\":\"Open this folder\"}; their last acts: tap “Seed swap” · tap “Open this folder” · tap “Sam’s notebook” · tap “Seed swap” · back · tap “Open this folder”",
+   "`handover` run 1, Ren: failed, ran out of patience. inert {\"tap\":\"Open this folder\"}; their last acts: tap “People” · tap “Sam’s notebook” · scroll · scroll · back · tap “Open this folder”"
+  ],
+  "said": [
+   "Ren, `handover` run 1: “missing: I wanted to get back to the notebook to check my note again after Sam and Jo's handover talk, and to say in the street chat that my note was still readable and I hadn't lost it. From the group settings I couldn't find my way back to the notebook page — tapping around only showed the folder and group details. The pages didn't let me return to the notebook or the chat from there.”"
+  ],
+  "file": "handover-inert-home-open-this-folder",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/pages/members.rs:385` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:419` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:426` holds “Open this folder”"
+  ]
+ },
+ {
+  "key": "handover · wordy · Home · ",
+  "scene": "handover",
+  "kind": "wordy",
+  "hard": true,
+  "screen": "Home",
+  "element": "",
+  "read": "give / Sam’s notebook / Open this folder / People / Add an app / Manage this group",
+  "often": [
+   "`handover`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`handover` run 1, Ren: failed, ran out of patience. wordy {\"words\":56,\"budget\":20}; their last acts: look · scroll · back · scroll · scroll · back"
+  ],
+  "said": [
+   "Ren, `handover` run 1: “missing: I wanted to get back to the notebook to check my note again after Sam and Jo's handover talk, and to say in the street chat that my note was still readable and I hadn't lost it. From the group settings I couldn't find my way back to the notebook page — tapping around only showed the folder and group details. The pages didn't let me return to the notebook or the chat from there.”"
+  ],
+  "file": "handover-wordy-home",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/pages/members.rs:385` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:419` holds “Open this folder”",
+   "crates/svrngs/tests/pages/members.rs:426` holds “Open this folder”"
+  ]
+ },
+ {
+  "key": "handover · soft · missing · Home",
+  "scene": "handover",
+  "kind": "missing",
+  "hard": false,
+  "screen": "Home",
+  "element": "",
+  "read": "give / Sam’s notebook / Open this folder / People / Add an app / Manage this group",
+  "often": [
+   "`handover`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`handover` run 1, Ren: failed, ran out of patience. their last acts: tap “Open this folder” · look · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Ren, `handover` run 1: “I wanted to get back to the notebook to check my note again after Sam and Jo's handover talk, and to say in the street chat that my note was still readable and I hadn't lost it. From the group settings I couldn't find my way back to the notebook page — tapping around only showed the folder and group details. The pages didn't let me return to the notebook or the chat from there.”"
+  ],
+  "file": "handover-said-missing-home",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ },
+ {
+  "key": "end · inert · Home · Seed swap",
+  "scene": "end",
+  "kind": "inert",
+  "hard": true,
+  "screen": "Home",
+  "element": "Seed swap",
+  "read": "Its name: / What it is: / Seed swap (Sam’s, since 7 Nov) (not ticked) / Lend it / Its name: / What it is:",
+  "often": [
+   "`end`: 1 of 3 accounts (Sam run 1)"
+  ],
+  "happened": [
+   "`end` run 1, Sam: failed, ran out of patience. inert {\"tap\":\"Seed swap\"}; their last acts: tap “Open this folder” · scroll · look · back · tap “Manage this group” · tap “Seed swap”"
+  ],
+  "said": [],
+  "file": "end-inert-home-seed-swap",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": [
+   "crates/svrngs/tests/xenia/neighbourhood-smoke.mjs:71` holds “Seed swap”",
+   "crates/svrngs/tests/xenia/neighbourhood-smoke.mjs:107` holds “Seed swap”",
+   "crates/svrngs/tests/xenia/neighbourhood.rs:18` holds “Seed swap”",
+   "crates/svrngs-node/src/home/page/found.js:21` holds “Its name:”",
+   "docs/guide/lend.md:18` holds “Its name:”",
+   "docs/guide/models.md:17` holds “Its name:”",
+   "crates/svrngs-node/src/home/page/found.js:22` holds “What it is:”",
+   "docs/guide/lend.md:18` holds “What it is:”",
+   "docs/guide/models.md:17` holds “What it is:”"
+  ]
+ },
+ {
+  "key": "end · soft · stuck · Home",
+  "scene": "end",
+  "kind": "stuck",
+  "hard": false,
+  "screen": "Home",
+  "element": "",
+  "read": "Its name: / What it is: / Seed swap (Sam’s, since 7 Nov) (not ticked) / Lend it / Its name: / What it is:",
+  "often": [
+   "`end`: 1 of 3 accounts (Jo run 1)"
+  ],
+  "happened": [
+   "`end` run 1, Jo: failed, ran out of patience. their last acts: back · say “I've looked at the pages. They only offer ways to lend things — I can't find any control to stop the notebook arrangement or to keep its notes. So nothing has actually stopped yet; a 'stop lending' option is missing.” · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Jo, `end` run 1: “I got stuck at the pages themselves: they only let me lend things, not stop lending or keep notes. I'd need whoever runs that page — Sam, I think — to add or use a stop/unlend option, or tell me where it is. I also couldn't get back to the street chat to say what was missing; the screen went to 'You've given up' before I could report anything.”"
+  ],
+  "file": "end-said-stuck-home",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ },
+ {
+  "key": "end · soft · missing · Home",
+  "scene": "end",
+  "kind": "missing",
+  "hard": false,
+  "screen": "Home",
+  "element": "",
+  "read": "Its name: / What it is: / Seed swap (Sam’s, since 7 Nov) (not ticked) / Lend it / Its name: / What it is:",
+  "often": [
+   "`end`: 1 of 3 accounts (Jo run 1)"
+  ],
+  "happened": [
+   "`end` run 1, Jo: failed, ran out of patience. their last acts: back · say “I've looked at the pages. They only offer ways to lend things — I can't find any control to stop the notebook arrangement or to keep its notes. So nothing has actually stopped yet; a 'stop lending' option is missing.” · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Jo, `end` run 1: “Yes. I wanted to end the notebook arrangement — stop running it and keep its notes for another season — and to check what had actually stopped and what could still be kept. The pages didn't let me do any of that: there was only a 'Lend it' button per item, no stop or withdraw control, and no view of current lendings or kept notes.”"
+  ],
+  "file": "end-said-missing-home",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ },
+ {
+  "key": "end · wordy · / · ",
+  "scene": "end",
+  "kind": "wordy",
+  "hard": true,
+  "screen": "/",
+  "element": "",
+  "read": "nothing is lent here by that name.",
+  "often": [
+   "`end`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`end` run 1, Ren: failed, ran out of patience. wordy {\"words\":40,\"budget\":20}; their last acts: back · tap “Manage this group” · tap “give” · scroll · scroll · back"
+  ],
+  "said": [
+   "Ren, `end` run 1: “stuck: I got stuck trying to stop the notebook: the pages showed it running, but I couldn’t find a control to stop it or a way to keep its notes. When I tapped “Sam’s notebook” I ended up on a page that just said nothing is lent here by that name, then I’d given up.”",
+   "Ren, `end` run 1: “missing: Yes — I wanted to stop the notebook running for the season while keeping its notes for another season, but the pages didn’t show me a stop control or a way to keep the notes separately. I couldn’t find it on “This computer” or in “Manage this group”.”"
+  ],
+  "file": "end-wordy",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ },
+ {
+  "key": "end · soft · stuck · /",
+  "scene": "end",
+  "kind": "stuck",
+  "hard": false,
+  "screen": "/",
+  "element": "",
+  "read": "nothing is lent here by that name.",
+  "often": [
+   "`end`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`end` run 1, Ren: failed, ran out of patience. their last acts: tap “Tell a friend” · scroll · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Ren, `end` run 1: “I got stuck trying to stop the notebook: the pages showed it running, but I couldn’t find a control to stop it or a way to keep its notes. When I tapped “Sam’s notebook” I ended up on a page that just said nothing is lent here by that name, then I’d given up.”"
+  ],
+  "file": "end-said-stuck",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ },
+ {
+  "key": "end · soft · missing · /",
+  "scene": "end",
+  "kind": "missing",
+  "hard": false,
+  "screen": "/",
+  "element": "",
+  "read": "nothing is lent here by that name.",
+  "often": [
+   "`end`: 1 of 3 accounts (Ren run 1)"
+  ],
+  "happened": [
+   "`end` run 1, Ren: failed, ran out of patience. their last acts: tap “Tell a friend” · scroll · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Ren, `end` run 1: “Yes — I wanted to stop the notebook running for the season while keeping its notes for another season, but the pages didn’t show me a stop control or a way to keep the notes separately. I couldn’t find it on “This computer” or in “Manage this group”.”"
+  ],
+  "file": "end-said-missing",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-08T00-24-18-480Z`, 1 run(s) by deepseek-flash, through deepinfra (https://api.deepinfra.com/v1/openai; reasoning effort max), xenia `df729c3`, the product `5c0305ce`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings /Users/alexsbryan/dev/svrngs/demo/xenia/permaculture/findings --source /Users/alexsbryan/dev/svrngs --debug",
+  "source": []
+ }
+]

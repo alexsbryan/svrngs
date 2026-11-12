@@ -15,54 +15,8 @@ fn today() -> String {
     chrono::Local::now().format("%-d %b").to_string()
 }
 
-/// **The section's words, one wording for both pages** (§9): an app the
-/// group carries reads and writes what the shelf says, when you open it,
-/// with no Stop; a yes to an app opening your friends' things says since
-/// when, and a stop says when; who can decide for you is your own
-/// devices, this one first, never another person's of your name.
-#[test]
-fn what_acts_as_you_is_said_in_one_wording() {
-    let shelf = json!([{ "name": "Money", "words": "who paid for what, and who owes whom." }]);
-    let notes = json!({ "person": "cy", "name": "notes", "kind": "notes", "reads": ["films"] });
-    let at = chrono::Local::now().timestamp();
-    let friends: Vec<_> = ["Sam", "Bo", "Cy", "Dee", "Eli"]
-        .iter()
-        .map(|p| json!({ "person": p, "kind": "jellyfin", "new": false }))
-        .collect();
-    let row = |key: &str, person: &str, first: &str, device: &str| json!({ "key": key, "person": person, "person_key": first, "device": device });
-    let rows = json!([
-        row("a1", "ada", "a1", "computer"),
-        row("a2", "ada", "a1", "browser"),
-        row("n1", "ada", "n1", "computer"),
-        row("b1", "bo", "b1", "browser"),
-    ]);
-    assert_eq!(
-        in_question(
-            "[q.carrying({ kind: 'Money' }, args.shelf), q.carrying({ kind: 'Quiz' }, args.shelf), q.carrying({ kind: 'Movie-Night', reads: ['jellyfin'] }, args.shelf), q.reading(args.notes, { said: 'yes', at: args.at }), q.reading(args.notes, { said: 'stop', at: args.at }), q.reading(args.notes, { said: 'yes', at: args.at, lends: ['x'] }), q.reading(args.notes, { said: 'yes', at: args.at, lends: [] }), q.readLine([args.sam, args.bo], 2, ['jellyfin']), q.readLine([args.sam, { ...args.bo, new: true }], 2, ['jellyfin']), q.readLine([], 0, ['jellyfin']), q.readLine([], 2, ['jellyfin']), q.readLine(args.friends, 5, ['jellyfin']), q.deciders(args.rows, 'a1', 'computer'), q.deciders(args.rows, 'a2', 'browser'), q.deciders(args.rows, 'b1', 'browser')]",
-            json!({ "shelf": shelf, "notes": notes, "at": at, "rows": rows,
-                "sam": { "person": "Sam", "kind": "jellyfin", "new": false },
-                "bo": { "person": "Bo", "kind": "jellyfin", "new": false },
-                "friends": friends }),
-        ),
-        json!([
-            "Money reads and writes who paid for what, and who owes whom, when you open it.",
-            "Quiz reads and writes its own part of the group’s record, when you open it.",
-            "Movie Night reads its own part of the group’s record, when you open it.",
-            format!("cy’s notes opens your friends’ films as you. Since {}. ", today()),
-            format!("cy’s notes stopped opening your friends’ films as you on {}. Opening it again says yes again.", today()),
-            format!("cy’s notes opens the films you chose, as you. Since {}. ", today()),
-            "cy’s notes opens nothing of your friends’ as you. Open it again to choose what it can. ",
-            "Reads Sam’s and Bo’s jellyfin. They can see it’s you, and what it asks for.",
-            "Reads Sam’s and Bo’s jellyfin. Bo’s is new since you last opened it.",
-            "Reads your friends’ jellyfin. Nobody lends one now.",
-            "Reads none of your friends’ jellyfin.",
-            "Reads jellyfin from 5 friends. They can see it’s you, and what it asks for.",
-            "This computer, and your phone",
-            "This phone, and your computer",
-            "This phone",
-        ])
-    );
-}
+// Pure wording/decider vectors are web/tests/question.test.mjs's; below, real
+// browsers and native resource owners establish that consent and Stop take effect.
 
 in_chromium!(
     /// **The home page says what acts as you, and its Stop holds** (§9).

@@ -29,6 +29,8 @@ const world = spawn(resolve(scenes, 'neighbourhood'), [], {
 const exited = new Promise((done) => world.on('exit', (code, signal) => done({ code, signal })));
 const lines = createInterface({ input: world.stdout });
 let browser;
+let evidencePath;
+const homes = new Map();
 const report = {
   simulated: true,
   kind: 'scripted workflow proof',
@@ -55,19 +57,22 @@ try {
   await writeFile(resolve(out, 'scene.json'), `${JSON.stringify(JSON.parse(first), null, 2)}\n`);
   const launched = await launch('computer');
   browser = launched.browser;
-  const homes = new Map();
   const away = [];
   for (const m of scene.cast) {
     const context = await browser.newContext(launched.options);
     away.push(await reach(context, scene.reach));
     const page = await context.newPage();
+    homes.set(m.as, page);
+    page.on('pageerror', (error) => console.error(`${m.as}'s page: ${error}`));
     page.setDefaultTimeout(60_000);
     await page.goto(m.url);
+    // The current home opens on the groups overview. Enter the workspace
+    // through its visible link before looking for a lent app.
+    await page.getByRole('link', { name: /^Seed swap/ }).click();
     await page
       .getByRole('link', { name: /notebook/i })
       .first()
       .waitFor();
-    homes.set(m.as, page);
   }
   const open = async (who, name) => {
     const home = homes.get(who);
@@ -79,7 +84,7 @@ try {
     await page.waitForLoadState();
     return page;
   };
-  const evidencePath = scene.attachments[0].path;
+  evidencePath = scene.attachments[0].path;
   const latest = async () => {
     const evidence = JSON.parse(await readFile(evidencePath, 'utf8'));
     return evidence.observations.at(-1)?.observed;
@@ -158,12 +163,17 @@ try {
       providers(e)?.length === 1 &&
       providers(e)[0] === 'Jo' &&
       e.notebooks[0].read.contains_ren_note &&
-      e.pods.Sam.exit === 0 &&
-      !['Running', 'Degraded'].includes(e.pods.Sam.state),
+      (e.pods.Sam.exists === false ||
+        (e.pods.Sam.exit === 0 &&
+          e.pods.Sam.state &&
+          !['Running', 'Degraded'].includes(e.pods.Sam.state))),
     'Jo serves the retained note and Sam has stopped',
   );
   isJo(moved);
-  assert.ok(moved.pods.Sam.state, 'an absent pod is not treated as a stopped pod');
+  assert.ok(
+    moved.pods.Sam.exists === false || moved.pods.Sam.state,
+    'only explicit absence or an observed stopped state proves the old app is no longer running',
+  );
   await homes.get('Ren').reload();
   const after = await open('Ren', /notebook/i);
   await after.getByText(note, { exact: true }).waitFor();
@@ -172,6 +182,7 @@ try {
   report.checks.push('consensual handover serves Ren’s note from Jo, with Sam’s old pod stopped');
 
   await homes.get('Jo').reload();
+  await homes.get('Jo').getByRole('link', { name: 'This computer', exact: true }).click();
   const stop = homes
     .get('Jo')
     .locator('li')
@@ -193,13 +204,32 @@ try {
     'Stop lending removes access but Jo’s app is still running; Give offers no stop-keeping action',
   );
   assert.deepEqual(away.flat(), [], 'all browser traffic stayed within declared reach');
-  await writeFile(resolve(out, 'evidence.json'), await readFile(evidencePath));
   report.status = 'passed';
 } catch (error) {
   report.status = 'failed';
   report.error = String(error.stack ?? error);
+  report.screens = [];
+  for (const [who, home] of homes) {
+    for (const [i, page] of home.context().pages().entries()) {
+      report.screens.push({
+        who,
+        tab: i,
+        url: page.url(),
+        text: await page.locator('body').innerText().catch(String),
+      });
+      await page
+        .screenshot({ path: resolve(out, `${who}-${i}-failure.png`), fullPage: true })
+        .catch(() => {});
+    }
+  }
   process.exitCode = 1;
 } finally {
+  if (evidencePath)
+    await readFile(evidencePath)
+      .then((bytes) => writeFile(resolve(out, 'evidence.json'), bytes))
+      .catch((error) => {
+        report.evidence_error = String(error);
+      });
   await browser?.close();
   lines.close();
   world.stdin.end();

@@ -49,6 +49,8 @@ macro_rules! scene {
 
 // Money (apps/expenses): a split, a settle, another's correction.
 mod money;
+// A beginner's folder app: private trial, sharing, phone write, update and removal.
+mod creator;
 // Events (demo/events.md): a dinner for two groups, each its own answers.
 mod events;
 // House rules (demo/house-rules.md): a rule agreed holds after one leaves.
@@ -72,6 +74,8 @@ mod films;
 mod night;
 // Movie Night (apps/movie-night): a newcomer searches a friend's films.
 mod movie_night;
+// HolyArrs: request, approval, real download/import, discovery and playback.
+mod holyarrs;
 // The pantry (apps/pantry): friends' models and tools, found by protocol.
 mod pantry;
 // Ports (demo/factorio.md, demo/minecraft.md): each presses Play, bytes cross.

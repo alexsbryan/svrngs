@@ -1,0 +1,30 @@
+{
+  "command": "scripts/check.sh",
+  "verdict": "passed",
+  "exit": 0,
+  "seconds": 1749,
+  "environment": {
+    "git_hooks": "Existing core.hooksPath=.githooks verified instead of rewritten",
+    "podman_ssh": "Temporary per-run PATH wrapper executes /usr/bin/ssh -4 with the original arguments; same real VM and authentication",
+    "record": "demo/runs/holyarrs/2026-11-10/gate"
+  },
+  "holyarrs": {
+    "chromium": {
+      "verdict": "passed",
+      "bars": ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8"],
+      "seek_ms": 372,
+      "stream_cut_ms": 1002,
+      "result": "gate/chromium/result.json"
+    },
+    "webkit": {
+      "verdict": "passed",
+      "bars": ["H1", "H2", "H3", "H4", "H5", "H6", "H7", "H8"],
+      "seek_ms": 4972,
+      "stream_cut_ms": 986,
+      "result": "gate/webkit/result.json"
+    }
+  },
+  "non_gating_rate_note": "Conformance's separate WebKit back-to-back rate reported two direct-control seeks past 5 seconds (14183 and 5231 ms). All four lent-path readings and every required conformance check passed. These rate observations do not change the gate verdict.",
+  "local_log": "target/holyarrs-full-check.log",
+  "local_status": "target/holyarrs-full-check.json"
+}

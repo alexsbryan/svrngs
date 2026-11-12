@@ -276,7 +276,7 @@ fn llama_server_is_known_by_its_name_and_lent_without_the_table_s_paths() {
     assert_eq!(well_known_kind(port(8080)), None);
     let said = ShareRefusal::NoKind(port(8080)).to_string();
     assert!(
-        said.ends_with("audiobookshelf, calibre-web, factorio, immich, jellyfin, kokoro, llama-server, minecraft, navidrome"),
+        said.ends_with("audiobookshelf, calibre-web, factorio, holyarrs, immich, jellyfin, kokoro, llama-server, minecraft, navidrome"),
         "{said}"
     );
     let mut typed = share(8080);

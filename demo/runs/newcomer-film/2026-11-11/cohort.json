@@ -1,0 +1,141 @@
+{
+  "simulated": true,
+  "kind": "observational only; the model admission missed p1-prominent",
+  "discoverability": "could-not-judge: this run missed a model-admission plant (p1-prominent)",
+  "model": "deepseek-flash",
+  "route": {
+    "reach": "provider",
+    "endpoint": "deepinfra",
+    "base_url": "https://api.deepinfra.com/v1/openai",
+    "call": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "glance": true,
+    "reasoning_effort": "max"
+  },
+  "samples": [
+    {
+      "profile": "ordinary",
+      "seconds": 620.3,
+      "accounts": [
+        {
+          "scene": "watch",
+          "verdict": {
+            "kind": "failed",
+            "reason": "ran out of patience"
+          },
+          "hard": [],
+          "helped": false
+        },
+        {
+          "scene": "request",
+          "verdict": {
+            "kind": "failed",
+            "reason": "ran out of patience"
+          },
+          "hard": [],
+          "helped": false
+        },
+        {
+          "scene": "return",
+          "verdict": {
+            "kind": "could-not-judge",
+            "reason": "the scene ran out of time while they were acting"
+          },
+          "hard": [
+            {
+              "screen": "/",
+              "at": 391199,
+              "kind": "wordy",
+              "words": 42,
+              "budget": 30
+            }
+          ],
+          "helped": false
+        }
+      ],
+      "observed": {
+        "bo_playback_samples": 18,
+        "first": [
+          63.7,
+          "Test Pattern One",
+          false
+        ],
+        "last": [
+          81.0,
+          "Test Pattern One",
+          false
+        ],
+        "asks": [],
+        "holyarrs_users": [
+          "Ana"
+        ]
+      }
+    },
+    {
+      "profile": "impatient",
+      "seconds": 674.6,
+      "accounts": [
+        {
+          "scene": "watch",
+          "verdict": {
+            "kind": "failed",
+            "reason": "ran out of patience"
+          },
+          "hard": [],
+          "helped": false
+        },
+        {
+          "scene": "request",
+          "verdict": {
+            "kind": "failed",
+            "reason": "ran out of patience"
+          },
+          "hard": [
+            {
+              "screen": "Film found",
+              "at": 269599,
+              "kind": "wordy",
+              "words": 41,
+              "budget": 20
+            }
+          ],
+          "helped": false
+        },
+        {
+          "scene": "return",
+          "verdict": {
+            "kind": "failed",
+            "reason": "ran out of patience"
+          },
+          "hard": [
+            {
+              "screen": "/",
+              "at": 467709,
+              "kind": "wordy",
+              "words": 40,
+              "budget": 20
+            }
+          ],
+          "helped": false
+        }
+      ],
+      "observed": {
+        "bo_playback_samples": 41,
+        "first": [
+          59.6,
+          "Test Pattern One",
+          false
+        ],
+        "last": [
+          116.4,
+          "Test Pattern One",
+          false
+        ],
+        "asks": [],
+        "holyarrs_users": [
+          "Ana"
+        ]
+      }
+    }
+  ],
+  "not_run": "cautious: stopped after the operator accepted the N7 could-not-judge verdict"
+}

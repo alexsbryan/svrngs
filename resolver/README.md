@@ -72,9 +72,11 @@ timing. New allocation leaves two close/recovery attempts per active-secret
 slot near the global monthly mutation ceiling. Metered-command proof and
 failure-injection transcripts belong to the recorded resolver run.
 
-The existing `scripts/check.sh` page-laws step includes
-`web/tests/resolver.test.mjs`. It needs `redis-server` and `redis-cli` on PATH;
-the test owns a Unix-socket-only Redis child with AOF and cleans it on exit.
+`node web/tests/run.mjs unit` runs the original isolated signature/ingress,
+provider-failure and hosting-adapter contracts without a store process.
+`node web/tests/run.mjs integration` runs `web/tests/resolver.integration.test.mjs`;
+it needs `redis-server` and `redis-cli` on PATH, owns a Unix-socket-only Redis child
+with AOF and cleans it on exit. Both tiers remain in `scripts/check.sh`.
 
 ## Wordlist attribution
 

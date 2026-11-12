@@ -15,6 +15,29 @@
 folder and a program is a word, and no beginner's bug does lasting harm to anyone
 else. Its queue is svrn-docs `rings/current/EXTENSION_POINT.md` §10, in order.
 
+**Current authority replacement** (operator, 2026-11-12, choice A): build the
+complete Eudoxia R1–R5 replacement, then cut over the native paths as one unit.
+Eudoxia owns authority; svrngs keeps its native formats and real effects, with
+small hooks between them, and its production code gets smaller. The caps stay
+fixed. The handoff, ownership map and deletion ledger are svrn-docs
+`rings/current/EUDOXIA_HANDOFF.md` and `EUDOXIA_OWNERSHIP.md`.
+
+**The next UX slice** (operator, 2026-11-11): a lightly technical creator builds
+for their community, and a friend opens it without learning an authority system.
+`demo/creator-to-friend.md` is its run-of-show and C1-C5 acceptance contract:
+private trial, deliberate publication, bounded first-open consent, a phone's own
+contribution, per-person update acceptance and withdrawal without erasure. Its
+scripted scene is `crates/svrngs/tests/scenes/creator.rs`; real newcomer
+understanding remains a separate recorded session, not a browser-test verdict.
+Additional-service consent and a private-data-to-group-record handoff follow the
+baseline; the latter requires an explicit authority design before implementation.
+
+**Check-tier detour** (operator, 2026-11-11): before the following UX work, move
+pure contracts out of integration targets and reserve browsers/services for claims
+that require them. `docs/CHECKS.md` is its extraction/coverage ledger and quick
+commands. The complete gate retains every tier; no slower assertion is removed
+without its equivalent check at the smaller real boundary.
+
 The operator selected one contained economizing unit on 2026-11-10:
 svrn-docs `rings/current/ECONOMIZING_PLAN.md`, stage 1, row 2(a), one node-owned notification of
 journal changes to folder application and sync, retiring callers' write

@@ -38,9 +38,16 @@ mod people;
 macro_rules! scene {
     ($($registration:tt)*) => {};
 }
+mod film;
+#[path = "../scenes/films.rs"]
+#[allow(dead_code)]
+mod films;
 #[path = "../scenes/give.rs"]
 #[allow(dead_code)]
 mod give;
+#[path = "../scenes/holyarrs.rs"]
+#[allow(dead_code)]
+mod holyarrs;
 mod neighbourhood;
 
 use serde_json::{json, Value};
@@ -487,8 +494,9 @@ fn main() {
         "ana" => Box::pin(ana_world()),
         "newcomer" => Box::pin(newcomer_world()),
         "neighbourhood" => Box::pin(neighbourhood::world()),
+        "film-newcomer" => Box::pin(film::world()),
         _ => {
-            eprintln!("xenia: no world is called {named:?}: together, kim, ana, newcomer or neighbourhood");
+            eprintln!("xenia: no world is called {named:?}: together, kim, ana, newcomer, neighbourhood or film-newcomer");
             std::process::exit(2)
         }
     };

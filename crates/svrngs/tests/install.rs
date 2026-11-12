@@ -44,6 +44,14 @@ fn tarball() -> String {
     tarball_of("svrngs")
 }
 
+// Rehearsals can hold the downloaded payload to the same immutable product
+// artifact as their browser world, instead of Cargo's shared profile pathname.
+fn binary() -> PathBuf {
+    std::env::var_os("SCENES_BINARY")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_svrngs")))
+}
+
 /// `program`'s tarball for this computer: svrngs's, or Give's program's.
 fn tarball_of(program: &str) -> String {
     let os = match std::env::consts::OS {
@@ -107,7 +115,7 @@ fn site(sums: Option<&str>) -> tempfile::TempDir {
     .unwrap();
     let get = site.path().join("get");
     std::fs::create_dir(&get).unwrap();
-    let bin = Path::new(env!("CARGO_BIN_EXE_svrngs"));
+    let bin = binary();
     let made = std::process::Command::new("tar")
         .arg("-czf")
         .arg(get.join(tarball()))
@@ -1087,7 +1095,7 @@ async fn the_line_puts_svrngs_on_the_login_shell_s_path() {
 async fn new_places_the_groups_folder() {
     use tokio::io::AsyncBufReadExt;
     let home = tempfile::tempdir().unwrap();
-    let mut new = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"))
+    let mut new = tokio::process::Command::new(binary())
         .args(["new", "trip", "--as", "Sam"])
         .env_clear()
         .env("HOME", home.path())
@@ -1165,7 +1173,7 @@ async fn joining_places_the_groups_folder() {
 
     let home = tempfile::tempdir().unwrap();
     let svrngs = |args: &[&str]| {
-        let mut c = tokio::process::Command::new(env!("CARGO_BIN_EXE_svrngs"));
+        let mut c = tokio::process::Command::new(binary());
         c.args(args)
             .env_clear()
             .env("HOME", home.path())

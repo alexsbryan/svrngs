@@ -1,0 +1,5 @@
+# HolyArrs 1.0.10's port is README.md's compose mapping, 6262:6262.
+# Its own accounts: HolyArrs/HolyArrs docs/users/roles.md at
+# 7c4c22a266d9098acbea96602fec9ab03f365a16, steps 1-6. A Member asks;
+# the owner approves. Trial: demo/runs/holyarrs/2026-11-10/.
+6262 holyarrs accounts: open HolyArrs from your group's shared HTTPS page first, then Settings, Users and roles, Member and Make an invite link; each friend opens their link and chooses a name and password

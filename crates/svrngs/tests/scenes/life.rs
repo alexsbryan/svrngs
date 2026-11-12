@@ -49,18 +49,24 @@ fn photo(n: usize) -> Vec<u8> {
 }
 
 /// The trip as it lies in `who`'s group folder.
-fn trip(who: &Person) -> PathBuf {
-    who.home.join("svrngs").join(GROUP).join("trip")
+async fn trip(who: &Person, group: &str) -> PathBuf {
+    who.folder(group).await.join("trip")
 }
 
 /// Every one of `names` on `who`'s disk with the bytes Ana put there,
 /// within `within`; else the scene fails, naming what is missing.
-async fn on_disk(who: &Person, names: &[(String, Vec<u8>)], within: Duration) -> Duration {
+async fn on_disk(
+    who: &Person,
+    group: &str,
+    names: &[(String, Vec<u8>)],
+    within: Duration,
+) -> Duration {
     let t0 = Instant::now();
+    let dir = trip(who, group).await;
     loop {
         let missing: Vec<_> = names
             .iter()
-            .filter(|(n, bytes)| std::fs::read(trip(who).join(n)).ok().as_ref() != Some(bytes))
+            .filter(|(n, bytes)| std::fs::read(dir.join(n)).ok().as_ref() != Some(bytes))
             .map(|(n, _)| n.clone())
             .collect();
         if missing.is_empty() {
@@ -139,7 +145,7 @@ async fn home_says(browsers: &mut Browsers, who: &Person, words: &str, within: D
 
 /// A newcomer's three things: the home page lists the group, its folder
 /// and both lends; Sam's films open from it, as `who`; the trip on disk.
-async fn newcomer(browsers: &mut Browsers, who: &Person, trip: &[(String, Vec<u8>)]) {
+async fn newcomer(browsers: &mut Browsers, who: &Person, group: &str, trip: &[(String, Vec<u8>)]) {
     // Each waited for: the page reads its groups and lends again each
     // second, and at a load of 155 it listed Sam's films before the
     // group's folder.
@@ -162,7 +168,7 @@ async fn newcomer(browsers: &mut Browsers, who: &Person, trip: &[(String, Vec<u8
         "{} sees Sam's films: {got:#}",
         who.name
     );
-    on_disk(who, trip, Duration::from_secs(120)).await;
+    on_disk(who, group, trip, Duration::from_secs(120)).await;
 }
 
 /// `who`'s browser at `at`, a lend's address on their computer, until
@@ -227,14 +233,25 @@ async fn life(engine: Engine) {
     let _films = lends(&scene, &sam, "films").await;
 
     // 2. Ana joins, lends her music, and puts the trip in the group's folder.
+    // Exercise the collision that the old guessed trip path raced: this local
+    // directory is not the group's, and must never become shared by accident.
+    let unrelated = scene.scratch("ana/svrngs/lake-trip");
+    std::fs::create_dir_all(&unrelated).unwrap();
+    std::fs::write(unrelated.join("private.txt"), "not part of the trip").unwrap();
     let ana = scene.joins("Ana", link, GROUP).await;
     let _music = lends(&scene, &ana, "music").await;
     let photos: Vec<(String, Vec<u8>)> = (1..=PHOTOS)
         .map(|n| (format!("IMG_{n:04}.jpg"), photo(n)))
         .collect();
-    std::fs::create_dir_all(trip(&ana)).unwrap();
+    let ana_trip = trip(&ana, &group).await;
+    assert_ne!(
+        ana_trip.parent().unwrap(),
+        unrelated,
+        "use the node-selected folder, not the pre-existing private directory"
+    );
+    std::fs::create_dir_all(&ana_trip).unwrap();
     for (name, bytes) in &photos {
-        std::fs::write(trip(&ana).join(name), bytes).unwrap();
+        std::fs::write(ana_trip.join(name), bytes).unwrap();
     }
 
     // 3. Alex, Bo and Dee, one at a time; Cy on a phone.
@@ -242,7 +259,7 @@ async fn life(engine: Engine) {
     scene.installs_from("Alex", &page);
     for name in ["Alex", "Bo", "Dee"] {
         let who = scene.joins(name, link, GROUP).await;
-        newcomer(&mut browsers, &who, &photos).await;
+        newcomer(&mut browsers, &who, &group, &photos).await;
         newcomers.push(who);
     }
     let cy = browsers
@@ -310,22 +327,23 @@ async fn life(engine: Engine) {
     // Nothing new reaches Bo: a photo Sam puts in after reaches every
     // member's disk but his.
     let after = vec![("after.jpg".to_string(), photo(0))];
-    std::fs::create_dir_all(trip(&sam)).unwrap();
-    std::fs::write(trip(&sam).join("after.jpg"), &after[0].1).unwrap();
+    let sam_trip = trip(&sam, &group).await;
+    std::fs::create_dir_all(&sam_trip).unwrap();
+    std::fs::write(sam_trip.join("after.jpg"), &after[0].1).unwrap();
     for who in [&ana, &alex, &dee] {
-        on_disk(who, &after, Duration::from_secs(60)).await;
+        on_disk(who, &group, &after, Duration::from_secs(60)).await;
     }
     assert!(
-        !trip(&bo).join("after.jpg").exists(),
+        !trip(&bo, &group).await.join("after.jpg").exists(),
         "Sam's photo after the removal reached Bo's disk"
     );
-    on_disk(&bo, &photos, Duration::ZERO).await;
+    on_disk(&bo, &group, &photos, Duration::ZERO).await;
 
     // 5. Ana's lid shuts; Eve joins and gets every photo from whoever
     // holds them, and her home page says Ana's computer did not answer.
     ana.stop().await;
     let eve = scene.joins("Eve", link, GROUP).await;
-    let took = on_disk(&eve, &photos, Duration::from_secs(120)).await;
+    let took = on_disk(&eve, &group, &photos, Duration::from_secs(120)).await;
     eprintln!("Eve's disk held the trip {took:?} after she was in, Ana's computer stopped");
     let asleep = "Ana's computer did not answer";
     home_says(&mut browsers, &eve, asleep, Duration::from_secs(60)).await;

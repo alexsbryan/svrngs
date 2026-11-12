@@ -76,25 +76,6 @@ fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
-/// Every `.js` file in a page's `page/` directory, in name order, as one
-/// text: a test that reads which call a page draws by reads the page, not
-/// one file of it, since js-read (b) split each flow's view into
-/// components a file apiece (web/page/lend-line.js draws the phone's open).
-/// Here, not in harness.rs, since conformance.rs shares that file and reads
-/// no page's source.
-pub fn page_source(dir: &str) -> String {
-    let mut files: Vec<std::path::PathBuf> = std::fs::read_dir(repo().join(dir))
-        .unwrap_or_else(|e| panic!("{dir}: {e}"))
-        .map(|entry| entry.unwrap().path())
-        .filter(|path| path.extension().is_some_and(|ext| ext == "js"))
-        .collect();
-    files.sort();
-    files
-        .iter()
-        .map(|path| std::fs::read_to_string(path).unwrap())
-        .collect()
-}
-
 /// No link is asked about here.
 fn no_seed(_: &Path) -> Result<Option<String>, String> {
     Ok(None)
@@ -481,22 +462,12 @@ fn question(app: [&str; 3], lend: [&str; 3]) -> String {
 /// `call`, an expression of question.js as `q` and of `args`, answered by
 /// node as JSON: the one source both pages draw their words from.
 fn in_question(call: &str, args: Value) -> Value {
-    in_question_at(None, call, args)
-}
-
-/// [`in_question`] with node's clock in the time zone `zone`, an IANA
-/// name, as a browser elsewhere reads it; this computer's own for `None`.
-fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
     let source = repo().join("crates/svrngs-node/src/home/question.js");
     let script = format!(
         "const q = await import({:?}); const args = JSON.parse(process.argv[1]); console.log(JSON.stringify({call}));",
         format!("file://{}", source.display())
     );
-    let mut node = std::process::Command::new("node");
-    if let Some(zone) = zone {
-        node.env("TZ", zone);
-    }
-    let out = node
+    let out = std::process::Command::new("node")
         .args(["--input-type=module", "-e", &script])
         .arg(args.to_string())
         .output()
@@ -509,33 +480,7 @@ fn in_question_at(zone: Option<&str>, call: &str, args: Value) -> Value {
     serde_json::from_slice(&out.stdout).expect("node answers JSON")
 }
 
-/// **The index's row judged in one place** (v1ui-findings (c); #158):
-/// whether a lend is full now is question.js's `opens` (how it opens, which
-/// it once also answered, is the home page's one word, "In a tab", G3),
-/// which both pages draw the index from, so a change to either lands on
-/// both; neither page judges them itself. Planted, watched failing: the
-/// pages as v1ui-door left them, each with its own `l.using >= l.limit`
-/// and "signing you in once". Since page-switchover each page draws its
-/// index in its `page/` directory; the phone's asks `opens(l)` for the
-/// verdict alone, as v1's read only `[1]` (web/app.js@19b63b2b:540). The
-/// whole directory is read since js-read (b) moved the phone's row into
-/// web/page/lend-line.js, where `index.js` alone missed it (js-read-2's run).
-#[test]
-fn the_index_s_row_is_judged_once_for_both_pages() {
-    for page in ["crates/svrngs-node/src/home/page", "web/page"] {
-        let text = page_source(page);
-        for judged in ["using >=", "signing you in"] {
-            assert!(!text.contains(judged), "{page} judges {judged:?} itself");
-        }
-        assert!(text.contains("opens(l"), "{page} draws no row by `opens`");
-    }
-    let full = json!({ "person": "cy", "limit": 1, "using": 1 });
-    let open = json!({ "person": "cy", "limit": null, "using": 4 });
-    assert_eq!(
-        in_question("args.map((l) => q.opens(l))", json!([full, open])),
-        json!(["full", "on"])
-    );
-}
+// Pure row/alias/source contracts are web/tests/question.test.mjs's.
 
 /// What the home page and the group's page say of an ask naming an app or
 /// a lend not lent there, or not asking: one wording for both, chosen in
@@ -894,61 +839,8 @@ fn could_not_judge(line: &str) {
     writeln!(file, "{line}").unwrap();
 }
 
-/// The film's seeks judged by `seeks_judged`, from `load()`'s lines as
-/// macOS and Linux print them, on 12 cores: the bar is 36. The misses are
-/// bash-first-minute-1's, the third seek again at 11,424 ms after the
-/// worker's stop (ralph/next/bash/ctl/log/sessions/bash-first-minute-1.await.log).
-mod film_seeks_by_load {
-    use super::*;
-    const QUIET: &str =
-        "2026-10-12T05:00:00Z 22:00  up 3 days, 2 users, load averages: 35.9 20.1 12.0";
-    const BUSY_MAC: &str =
-        "2026-10-12T05:00:00Z 22:00  up 3 days, 2 users, load averages: 62.1 40.3 30.1";
-    const BUSY_LINUX: &str =
-        "2026-10-12T05:00:00Z 05:00:00 up 3 days, 2 users, load average: 62.10, 40.30, 30.10";
-    const UNREAD: &str = "2026-10-12T05:00:00Z";
-
-    fn seeks(ms: [Value; 3]) -> Vec<Value> {
-        ms.into_iter().map(|ms| json!({ "ms": ms })).collect()
-    }
-
-    #[test]
-    fn a_seek_missed_at_low_load_fails() {
-        let missed = seeks([json!(1853), json!(2701), json!(11424)]);
-        let never = seeks([json!(null), json!(null), json!(531)]);
-        for load in [QUIET, UNREAD] {
-            assert_eq!(
-                seeks_judged(&missed, load, 12),
-                Err(r#"{"ms":11424}"#.to_string())
-            );
-            assert_eq!(
-                seeks_judged(&never, load, 12),
-                Err(r#"{"ms":null}, {"ms":null}"#.to_string())
-            );
-        }
-    }
-
-    #[test]
-    fn a_seek_missed_past_the_bar_could_not_judge() {
-        let missed = seeks([json!(1853), json!(2701), json!(11424)]);
-        for load in [BUSY_MAC, BUSY_LINUX] {
-            assert_eq!(
-                seeks_judged(&missed, load, 12),
-                Ok(Some(
-                    "could-not-judge, load 62.1 on 12 cores, past 3 a core".to_string()
-                ))
-            );
-        }
-    }
-
-    #[test]
-    fn seeks_held_passed_at_any_load() {
-        let held = seeks([json!(1853), json!(2701), json!(5000)]);
-        for load in [QUIET, BUSY_MAC, UNREAD] {
-            assert_eq!(seeks_judged(&held, load, 12), Ok(None));
-        }
-    }
-}
+// Calibration cases moved unchanged to tests/seek_judgment.rs; the actual timed
+// seeks below still consume this instrument against real playback.
 
 in_webkit!(
     /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
@@ -2223,93 +2115,8 @@ async fn a_links_token_with_what_it_opens_opens_it_and_a_garbled_fragment_says_w
     drop(ada);
 }
 
-/// **A lend's alias never collides within a group** (svrn-docs
-/// `rings/current/IN_THE_BROWSER.md`, "Decided"; question.js `alias`, the
-/// one decider both pages load). Two people called ada each lend `app`:
-/// each alias tells them apart as the page names them, by when each
-/// joined, and the bare `app@ada` names neither. Sam lends `films` from
-/// two computers: each alias tells them apart by when each computer
-/// joined. Money, which the group carries on two computers, is named by
-/// its kind, one copy. Every alias names one lend, and an alias of
-/// nothing names none, never a nearest match. Red on 3587c98f, which had
-/// no alias (`q.alias is not a function`); planted, watched failing: the
-/// alias by its lender's name alone (`o.person` for `o.called`), which
-/// told the two adas apart by their computers, not as the page names them.
-/// Each alias is the same in a zone at UTC+14 and one at UTC-11, and so is
-/// the ada it tells apart (`called`): its day in UTC. Red on a0132a41, the
-/// day the browser's own.
-#[test]
-fn a_lends_alias_never_collides_within_a_group() {
-    let (t1, t2, t3) = (1_791_100_000_i64, 1_791_200_000_i64, 1_791_300_000_i64);
-    let row = |person: &str, key: &str, first: &str, joined: Value| json!({ "person": person, "key": key, "person_key": first, "joined": joined, "device": "computer" });
-    let rows = json!([
-        row("ada", "a1", "a1", json!("started")),
-        row("ada", "a2", "a2", json!({ "at": t1 })),
-        row("sam", "s1", "s1", json!({ "at": t2 })),
-        row("sam", "s2", "s1", json!({ "at": t3 })),
-    ]);
-    let lend = |key: &str, person: &str, name: &str| json!({ "key": key, "person": person, "name": name, "kind": "k" });
-    let money = |key: &str| json!({ "key": key, "person": "ada", "name": "g Money", "kind": "Money", "group": "g" });
-    let lent = json!([
-        lend("a1", "ada", "app"),
-        lend("a2", "ada", "app"),
-        lend("s1", "sam", "films"),
-        lend("s2", "sam", "films"),
-        money("a1"),
-        money("s1"),
-    ]);
-    let day = |t: i64| {
-        chrono::DateTime::from_timestamp(t, 0)
-            .unwrap()
-            .format("%-d %b")
-            .to_string()
-    };
-    let aliases =
-        "(q.apart(args[0], args[1]), q.once(args[0]).map((l) => q.alias(l, args[0], args[1])))";
-    let said = in_question(aliases, json!([lent, rows]));
-    // The alias is one for everyone (the day in UTC): two browsers 25 hours
-    // apart, whose days always differ, say each the same; and the people
-    // its day tells apart are said with that day too (`called`).
-    for zone in ["Pacific/Kiritimati", "Pacific/Pago_Pago"] {
-        assert_eq!(
-            in_question_at(Some(zone), aliases, json!([lent, rows])),
-            said,
-            "the aliases in {zone}, as in this computer's zone"
-        );
-        assert_eq!(
-            in_question_at(Some(zone), "q.called(args[0], 'a2')", json!([rows])),
-            format!("ada (joined {})", day(t1)),
-            "the ada an alias tells apart, in {zone}"
-        );
-    }
-    let expected = json!([
-        "app@ada (started the group)",
-        format!("app@ada (joined {})", day(t1)),
-        format!("films@sam (computer joined {})", day(t2)),
-        format!("films@sam (computer joined {})", day(t3)),
-        "Money",
-    ]);
-    assert_eq!(said, expected, "each alias, by the page's own words");
-    let mut asked: Vec<String> = serde_json::from_value(expected).unwrap();
-    asked.extend(
-        [
-            "app@ada",
-            "films@sam",
-            "app@Ada (started the group)",
-            "nothing@ada",
-        ]
-        .map(String::from),
-    );
-    let named = in_question(
-        "(q.apart(args[0], args[1]), args[2].map((a) => q.aliased(a, args[0], args[1]).map((l) => l.key)))",
-        json!([lent, rows, asked]),
-    );
-    assert_eq!(
-        named,
-        json!([["a1"], ["a2"], ["s1"], ["s2"], ["a1"], [], [], [], []]),
-        "each alias names one lend; a bare name of two, a near one and none name nothing: {asked:?}"
-    );
-}
+// Alias collisions and time zones are direct Node contracts in question.test.mjs;
+// the browser alias navigation tests above still verify the actual destination.
 
 in_webkit!(
     /// A lent page asks its person through the group's page, and is stopped

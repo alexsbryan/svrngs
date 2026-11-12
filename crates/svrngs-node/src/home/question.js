@@ -119,7 +119,7 @@ export const named = (lend) => {
  * @param {Shelved[]} shelf
  */
 const does = (kind, shelf) =>
-  shelf.find((app) => app.name === kind)?.words ?? 'its own part of the group’s record.';
+  shelf.find((app) => app.name === kind)?.words ?? 'this app’s shared entries.';
 /**
  * @param {Lend} lend
  * @param {Shelved[]} shelf
@@ -138,11 +138,11 @@ export const agreed = (lend, shelf, group) => {
     // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
     // sentence for the app, or its own.
     const first = /** @type {string} */ (words[0]).toUpperCase();
-    const may = reads.length > 0 ? 'read that, and never write it' : 'read and write that';
+    const may = reads.length > 0 ? 'read but never write' : 'read and write only its own entries';
     // What its page asks that apps can't load, before anyone opens it
     // (EXTENSION_POINT §6.3): else a blank page says nothing.
     const told = lend.check ? ` ${lend.check}` : '';
-    return `${first}${words.slice(1)} Opening it lets it ${may}, as you.${also}${told}`;
+    return `${first}${words.slice(1)} Opening it lets it ${may}, as you in ${group.name ?? 'your group'}.${also}${told}`;
   }
   return `Opening it lets it write its own part of ${group.name ?? 'your group'}’s record, as you.${also}`;
 };

@@ -1,0 +1,8 @@
+#!/bin/sh
+# One real cold world, held until Xenia closes its stdin.
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/../../.." && pwd)
+mkdir -p "$ROOT/target/newcomer-film"
+case "$(uname -s)" in
+  Darwin) exec lockf -k "$ROOT/target/newcomer-film/world.lock" node "$ROOT/apps/holyarrs/check/world.mjs" ;;
+  *) exec flock "$ROOT/target/newcomer-film/world.lock" node "$ROOT/apps/holyarrs/check/world.mjs" ;;
+esac

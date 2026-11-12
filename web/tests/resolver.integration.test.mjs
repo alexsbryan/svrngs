@@ -2,53 +2,35 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createResolver } from '../../resolver/handler.mjs';
-import { phrase } from '../../resolver/handler.mjs';
 import { GENERATION, PREFIX } from '../../resolver/store.mjs';
-import { createHash, createPrivateKey, createPublicKey, sign } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn, spawnSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { before, after } from 'node:test';
+import {
+  ownerKey,
+  owner,
+  otherKey,
+  hash,
+  fixed,
+  seconds,
+  body,
+  mutation,
+  refused,
+} from './resolver-fixture.mjs';
 
 const directory = mkdtempSync(join(tmpdir(), 'svrngs-resolver-'));
 const socket = join(directory, 'redis.sock');
 let redis;
 let commands = [];
-let calls = 0;
 let fault;
 let candidate;
 let readOverride;
 const execute = promisify(execFile);
 const plant = process.env.RESOLVER_PLANT;
-const ownerKey = createPrivateKey({
-  key: Buffer.from(`302e020100300506032b657004220420${'01'.repeat(32)}`, 'hex'),
-  format: 'der',
-  type: 'pkcs8',
-});
-const owner = createPublicKey(ownerKey)
-  .export({ format: 'der', type: 'spki' })
-  .subarray(-32)
-  .toString('hex');
-const otherKey = createPrivateKey({
-  key: Buffer.from(`302e020100300506032b657004220420${'02'.repeat(32)}`, 'hex'),
-  format: 'der',
-  type: 'pkcs8',
-});
-const hash = (text) => createHash('sha256').update(text).digest('hex');
 const stateKey = `${PREFIX}:reservations`;
-const fixed = 'acid-acorn-acre-acts-afar';
-const seconds = () => Math.floor(Date.now() / 1000);
-const body = (changes = {}) => ({
-  action: 'publish',
-  id: 'ab'.repeat(32),
-  group: 'house',
-  token: 'ordinary-invitation',
-  until: seconds() + 3600,
-  page: 'https://svrnme.sh',
-  ...changes,
-});
 function cli(...args) {
   const child = spawnSync('redis-cli', ['-s', socket, '--json', ...args.map(String)], {
     encoding: 'utf8',
@@ -104,7 +86,6 @@ function reset() {
   fault = undefined;
   candidate = undefined;
   readOverride = undefined;
-  calls = 0;
   commands = [];
 }
 function instrument(source) {
@@ -155,7 +136,6 @@ local function call(command, ...)
 end\n${source}`;
 }
 async function localFetch(_url, options) {
-  calls++;
   const command = JSON.parse(options.body);
   const q = JSON.parse(command.at(-1));
   if (candidate && q.action === 'publish') q.phrase = candidate;
@@ -178,56 +158,8 @@ async function localFetch(_url, options) {
   }
 }
 const handle = createResolver({ token: 'fixture', fetch: localFetch });
-function mutation(value, key = ownerKey, domain = 'onboarding') {
-  const raw = typeof value === 'string' ? value : JSON.stringify(value);
-  const publicKey = createPublicKey(key)
-    .export({ format: 'der', type: 'spki' })
-    .subarray(-32)
-    .toString('hex');
-  return new Request('https://join.example/', {
-    method: 'POST',
-    headers: {
-      'x-svrngs-key': publicKey,
-      'x-svrngs-signature': sign(null, Buffer.from(`svrngs-app:${domain}:${raw}`), key).toString(
-        'hex',
-      ),
-    },
-    body: raw,
-  });
-}
 const publish = (value, key) => handle(mutation(value, key), '127.0.0.1');
 const lookup = (name, ip = '127.0.0.1') => handle(new Request(`https://join.example/${name}`), ip);
-async function refused(response) {
-  assert.equal(response.status, 503);
-  assert.equal(response.headers.get('retry-after'), '60');
-  const text = await response.text();
-  assert.match(text, /joining is temporarily unavailable/);
-  assert.match(text, /at least a minute/);
-  assert.doesNotMatch(text, /invitation has ended/);
-}
-
-test('phrase source, space and Rust signing-key vector are pinned', () => {
-  const words = readFileSync(new URL('../../resolver/words.txt', import.meta.url), 'utf8')
-    .trim()
-    .split(/\s+/);
-  assert.equal(words.length, 1295);
-  assert.equal(new Set(words).size, 1295);
-  assert.equal(
-    hash(words.join('\n')),
-    'd2ee5adec14a5e9a63ab145e169bbb052091c4d8b5fae9d36a55099f76cf3072',
-  );
-  assert.equal(owner, '8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c');
-  assert.equal(
-    sign(null, Buffer.from('svrngs-app:notes:line 812'), ownerKey).toString('hex'),
-    '6296480dc80a73a3f3872dac92fb777835e837829b20c7f818ab7ea922abdf401452e404d04f7a39cf613161bdb80a89ba55bfc43700b0a678f63b5c4110440f',
-  );
-  for (let i = 0; i < 100; i++)
-    assert.ok(
-      phrase()
-        .split('-')
-        .every((word) => words.includes(word)),
-    );
-});
 
 test('authenticated lifecycle, immutable binding, closure and no reopen', async () => {
   reset();
@@ -363,70 +295,6 @@ test('every write boundary is uncertain-safe and reconciles the same operation',
     );
   }
   console.log('before/after all 11 lifecycle writes and lost commit replies: passed');
-});
-
-test('provider failures are unavailable with one attempt and no false ended', async () => {
-  for (const response of [
-    () => new Response('', { status: 429 }),
-    () => new Response('bandwidth', { status: 509 }),
-    () => new Response('', { status: 500 }),
-    () => new Response('', { status: 401 }),
-    () => Response.json({ error: 'ERR max requests limit exceeded' }),
-    () => Response.json({ error: 'daily command quota exhausted' }),
-    () => Response.json({ error: 'bandwidth quota exhausted' }),
-    () => Response.json({ error: 'OOM storage exhausted' }),
-    () => Response.json({ result: null }),
-    () => new Response('{'),
-    () => new Response('x'.repeat(8193)),
-    () => {
-      throw new Error('TLS/DNS/timeout');
-    },
-  ]) {
-    let attempts = 0;
-    const failed = createResolver({
-      token: 'fixture',
-      fetch: async () => {
-        attempts++;
-        return response();
-      },
-    });
-    for (const request of [
-      new Request(`https://join.example/${fixed}`),
-      mutation(body()),
-      mutation(body({ action: 'close', token: null })),
-    ])
-      await refused(await failed(request, '127.0.0.1'));
-    assert.equal(attempts, 3, 'one store attempt per explicit request');
-  }
-});
-
-test('ingress bounds, authentication, trusted IP and no public directory', async () => {
-  reset();
-  for (const request of [
-    mutation('x'.repeat(8193)),
-    mutation(JSON.stringify(body()) + ' '.repeat(8193)),
-    mutation(body(), ownerKey, 'wrong-domain'),
-    new Request('https://join.example/'),
-    new Request('https://join.example/list'),
-    new Request('https://join.example/', { method: 'POST', body: JSON.stringify(body()) }),
-    mutation({ ...body(), unexpected: 'field' }),
-    new Request(mutation(body()), {
-      body: JSON.stringify(body({ token: 'tampered-after-signing' })),
-    }),
-  ])
-    await refused(await handle(request, '127.0.0.1'));
-  await refused(await handle(mutation(body()), undefined));
-  assert.equal(calls, 0);
-});
-
-test('a UTF-8 BOM cannot change the bytes whose signature is checked', async () => {
-  reset();
-  const q = body();
-  const signed = mutation(q);
-  await refused(
-    await handle(new Request(signed, { body: `\ufeff${JSON.stringify(q)}` }), '127.0.0.1'),
-  );
-  assert.equal(calls, 0);
 });
 
 test('distributed guessing and owner limits include misses, retries and status', async () => {
@@ -614,18 +482,4 @@ test('AOF restart retains closed reservations, never the discarded secret', asyn
   assert.equal((await (await lookup(first.phrase)).json()).state, 'ended');
   assert.equal(cli('TTL', stateKey), -1);
   assert.equal(cli('EXISTS', `${stateKey}:secret:${hash(`${owner}:${q.id}`)}`), 0);
-});
-
-test('resolver refuses provider failure with retry guidance, never ended', async () => {
-  const handle = createResolver({
-    token: 'fixture',
-    fetch: async () => new Response('', { status: 429 }),
-  });
-  const answer = await handle(
-    new Request('https://join.example/acid-acid-acid-acid-acid'),
-    '127.0.0.1',
-  );
-  assert.equal(answer.status, 503);
-  assert.equal(answer.headers.get('retry-after'), '60');
-  assert.match(await answer.text(), /joining is temporarily unavailable/);
 });

@@ -31,7 +31,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 QUIET = ("docs/", "ralph/", "demo/runs/", ".githooks/")
-EVERYTHING = {"Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "scripts/check.sh", "scripts/touched.py"}
+# The catalog owns all Node tiers; the seek instrument is shared across crates.
+EVERYTHING = {"Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "scripts/check.sh", "scripts/touched.py", "web/tests/run.mjs", "crates/svrngs-node/tests/browser/load.rs"}
 
 
 def run(*cmd):
@@ -78,7 +79,8 @@ def main(base, given=None):
     # import, a script it runs, a file it reads), or any, for an `import()`
     # its text cannot name: neither a literal, nor loaded in a page from the
     # served site (`new URL(..., app)`, `/...`), nor of a folder outside web/tests.
-    tests = {d.relative_to(ROOT).as_posix(): text(d) for d in (ROOT / "web/tests").glob("**/*") if d.is_file()}
+    catalogs = {tier: set(run("node", "web/tests/run.mjs", tier, "--list").splitlines()) for tier in ("unit", "integration")}
+    tests = {d.relative_to(ROOT).as_posix(): text(d) for d in set((ROOT / "web/tests").glob("**/*")) | {ROOT / f for files in catalogs.values() for f in files} if d.is_file()}
 
     def unknown(f, src):
         literal = re.findall(r"""import\(\s*(new URL\(\s*)?[`'"]([^`'"]*)""", src)
@@ -100,7 +102,7 @@ def main(base, given=None):
     # Each binary's web/tests files: from the drivers it names, None for any.
     drives = {}
     for b, (_, body, _) in bins.items():
-        froms = [reached_from(d) for d in tests if Path(d).name in body]
+        froms = [reached_from(d) for d in tests if not d.endswith(".test.mjs") and Path(d).name in body]
         drives[b] = None if any(more for _, more in froms) else set().union(*(seen for seen, _ in froms))
 
     crates, reached, why = set(), set(), {}
@@ -112,11 +114,13 @@ def main(base, given=None):
                 why[b] = f"{file}: {how}"
 
     for f in sorted(files):
+        if any(f in reached_from(d)[0] for d in catalogs["integration"]):
+            reach(["page integration"], f, "its Node resource contract")
         crate = max((c for c, h in home.items() if f.startswith(h + "/")), key=lambda c: len(home[c]), default=None)
         if f in EVERYTHING or f.startswith(".cargo/"):
             print(f"note       {f} reaches every step", file=sys.stderr)
             return
-        if f.startswith(QUIET) or (f.endswith(".md") and not f.startswith("apps/")):
+        if f in catalogs["unit"] or f.startswith(QUIET) or (f.endswith(".md") and not f.startswith("apps/")):
             continue
         if crate and f.startswith(home[crate] + "/tests/"):
             own = [b for b, (path, _, _) in bins.items() if b[0] == crate and (f == path + ".rs" or f.startswith(path + "/"))]
@@ -143,15 +147,15 @@ def main(base, given=None):
         # An app is read by any binary that reads apps/, its laws by `app laws`.
         name = "apps" if f.startswith("apps/") else f
         named = {b for b, (_, body, _) in bins.items() if name in body}
+        if any(name in tests[d] for d in catalogs["integration"]):
+            named.add("page integration")
         named |= {s for s, cmd in re.findall(every, check, re.M) if f in cmd or (name == "apps" and s == "app laws")}
         if not named and not any(fnmatch.fnmatch(f, g) for g in typed):
             print(f"note       {f}: nothing places it, so every step runs", file=sys.stderr)
             return
         reach(named, f, "names it")
-    grew = True
-    while grew:
-        more = {p["name"] for p in meta["packages"] if p["name"] not in crates and any(d["name"] in crates and d.get("path") for d in p["dependencies"])}
-        crates, grew = crates | more, bool(more)
+    while more := {p["name"] for p in meta["packages"] if p["name"] not in crates and any(d["name"] in crates and d.get("path") for d in p["dependencies"])}:
+        crates |= more
     for c in sorted(crates):
         reach([b for b in bins if b[0] == c], home[c], "its crate, or one it depends on")
     for f in (f for f in sorted(files) if any(fnmatch.fnmatch(f, g) for g in typed)):

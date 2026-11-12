@@ -1,0 +1,97 @@
+{
+  "steps": [
+    {
+      "bar": "H1",
+      "verdict": "passed",
+      "name": "Bo",
+      "url": "https://a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm.group.svrnme.test:61249/"
+    },
+    {
+      "bar": "H2",
+      "verdict": "passed",
+      "request_id": 1,
+      "asker": "Bo",
+      "approve_as_bo": 403,
+      "downloads_before_approval": 0
+    },
+    {
+      "bar": "H3",
+      "verdict": "passed",
+      "file": "Copper Lighthouse (2017)/Copper Lighthouse (2017) 720p WEB.mp4",
+      "bytes": 19549723,
+      "sha256": "2cfb60a705dc8cf821cf126cc612d70451bdebe0da353672a1022a87aa6671f1",
+      "downloaded_session": 19549723
+    },
+    {
+      "bar": "H4",
+      "verdict": "passed",
+      "before": {
+        "cards": [],
+        "said": "Ana’s library: nothing by that name\n"
+      },
+      "after": {
+        "cards": [
+          "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+        ],
+        "said": "Ana’s library: 1 film\n"
+      }
+    },
+    {
+      "bar": "H5",
+      "verdict": "passed",
+      "user": "bo",
+      "item": "2a532d840ab44a464174bb3b56b6811d",
+      "seek": {
+        "pct": 50,
+        "ms": 3549,
+        "at": 37.82,
+        "target": 37.5
+      }
+    }
+  ],
+  "errors": [
+    {
+      "who": "bo",
+      "at": "Leaving Jellyfin for HolyArrs",
+      "message": "Unhandled Promise Rejection: TypeError: Load failed",
+      "stack": "Unhandled Promise Rejection: TypeError: Load failed\n"
+    }
+  ],
+  "runtime": {
+    "jellyfin": "12.0.0",
+    "browser": "26.4",
+    "source_head": "26889eb35f34647d97d017ac568d72b95ec73aa9"
+  },
+  "logs": [
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's newest open and deleted its cookie",
+    "OPEN: ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's newest open and deleted its cookie",
+    "OPEN: ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfabbq3n1prdr's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfabbq3n1prdr's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass"
+  ],
+  "at": "Observing the removed member",
+  "before": {
+    "cards": [],
+    "said": "Ana’s library: nothing by that name\n"
+  },
+  "search": {
+    "cards": [
+      "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+    ],
+    "said": "Ana’s library: 1 film\n"
+  },
+  "copy": "https://ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5.group.svrnme.test:61249/svrngs-reads/a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfabbq3n1prdr/web/#/details?id=2a532d840ab44a464174bb3b56b6811d&serverId=1d7741dd90744db5a7a42d80c9747c66"
+}

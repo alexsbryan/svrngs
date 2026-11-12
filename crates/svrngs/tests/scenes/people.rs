@@ -283,7 +283,11 @@ impl Scene {
 /// `svrngs <args>`, this build's, in `home`, with nothing else of this
 /// computer's environment but its `PATH`.
 fn svrngs(home: &std::path::Path, name: &str, args: &[&str]) -> Command {
-    let mut c = Command::new(env!("CARGO_BIN_EXE_svrngs"));
+    // A consumer rehearsal can pin the just-built product: Cargo's test and
+    // ordinary profiles otherwise replace the same target/debug executable.
+    let binary =
+        std::env::var_os("SCENES_BINARY").unwrap_or_else(|| env!("CARGO_BIN_EXE_svrngs").into());
+    let mut c = Command::new(binary);
     c.args(args)
         .env_clear()
         .env("HOME", home)
@@ -338,6 +342,28 @@ impl Person {
         let got = got.bearer_auth(self.token()).send();
         let got = got.await.unwrap().bytes().await.unwrap();
         serde_json::from_slice(&got).unwrap_or(Value::Null)
+    }
+
+    /// The actual folder selected for this group, not a path guessed from its
+    /// display name. A pre-existing directory can make the node choose a suffix.
+    pub async fn folder(&self, group: &str) -> PathBuf {
+        for _ in 0..120 {
+            let read = self.get("/v1/groups").await;
+            let held = read["groups"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|g| g["id"] == group);
+            if let Some(path) = held.and_then(|g| g["folders"][0].as_str()) {
+                return path.into();
+            }
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+        late(format!(
+            "{}'s folder for {group} is unavailable after 60 s",
+            self.name
+        ))
+        .await
     }
 
     /// `POST <path>` of `body` to its record API, as a program on this

@@ -65,13 +65,9 @@ step "lint" sh -c 'test -x web/node_modules/.bin/oxlint || { echo "oxlint is not
 # is the formatter's and never a way to fit a budget (ralph/next/js/CHARTER.md,
 # "Why"): each file it would change is named. Not installed fails, as lint.
 step "format" sh -c 'test -x web/node_modules/.bin/oxfmt || { echo "oxfmt is not installed here: npm ci --prefix web"; exit 1; }; web/node_modules/.bin/oxfmt --check "**/*.{js,mjs,cjs}"'
-# The pages' laws, what of the pages node can judge with no browser
-# (web/tests/**/*.test.mjs: the vendored libraries' pins, the pages' core,
-# parts and machines, one UI): a step of its own, since apps' laws are
-# apps' (AGENTS.md 12), never-ran when none is found, as theirs.
-laws=$(find web/tests -name '*.test.mjs' 2>/dev/null)
-if [ -n "$laws" ]; then step "page laws" node --test $laws
-else echo "never-ran  page laws: none in web/tests"; failed=1; fi
+# Isolated Node contracts: no browser, native build or service. The catalog
+# refuses an empty tier; *.integration.test.mjs has its own step below.
+step "page laws" node web/tests/run.mjs unit
 step "rustfmt"  cargo fmt --all --check
 # The scripts' own laws (scripts/tests: advisories, the touched tier's plans).
 step "script laws" python3 -m unittest scripts.tests.test_advisories scripts.tests.test_touched
@@ -81,6 +77,8 @@ if [ "$failed" != 0 ] || [ "${1:-}" = --fast ]; then exit "$failed"; fi
 # `--touched [base]`: only the steps below a change since `base` can reach,
 # by scripts/touched.py, which says why each runs. Never the gate before a push.
 if [ "${1:-}" = --touched ]; then plan=$(python3 scripts/touched.py "${@:2}") || exit 1; eval "$plan"; fi
+# Actual Redis/Lua lifecycle and WebKit/CSS evidence, never replaced by fixtures.
+step "page integration" node web/tests/run.mjs integration
 # Then the test targets `cargo test` skips (`test = false`), which
 # --all-targets leaves out and a glob of names reaches.
 step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
@@ -166,8 +164,6 @@ elif [ -s target/seeks-webkit.log ] && ls target/conformance/seeks-*.tsv >/dev/n
   cut -f1,2,4,5,7,8 target/conformance/seeks-*.tsv | sed 's/^/           /'
   awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
 else echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
-tests=$(find apps -name '*.test.mjs' 2>/dev/null)
-if [ -n "$tests" ]; then step "app laws" node --test $tests
-else echo "never-ran  app tests: none yet"; failed=1; fi
+step "app laws" node web/tests/run.mjs apps
 rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed

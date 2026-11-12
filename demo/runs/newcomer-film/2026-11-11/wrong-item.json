@@ -1,0 +1,229 @@
+{
+  "kind": "cold-start construction proof",
+  "checks": [
+    "N1: fresh phone browser joined as Bo by the ordinary invitation",
+    "N2: Bo accepted Ana\u2019s actual UI-produced invitation and made his own request account",
+    "N4: independent observer saw Bo\u2019s own request waiting for approval"
+  ],
+  "controls": [],
+  "product_binary": "<repo>/target/newcomer-film/bin/8e539dec5b92c0efe1211afcaee972d7e039a00b1259d21faf2c162ee7adf481/svrngs",
+  "plant": "wrong-item",
+  "navigations": [
+    {
+      "at": "N1: ordinary invitation",
+      "url": "https://group.svrnme.test:65262/#<fragment>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://group.svrnme.test:65262/#<fragment>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/open.html?v=<token>&back=%2Finvite%2F3xm0x21fqqLvEegQuZ53E1Per5R9KUrd4ntlLOyJ4nc#<fragment>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/open.html?v=<token>&back=%2Finvite%2F3xm0x21fqqLvEegQuZ53E1Per5R9KUrd4ntlLOyJ4nc"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/"
+    },
+    {
+      "at": "N4: request as the first-time account",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/search"
+    },
+    {
+      "at": "N4: request as the first-time account",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/search?q=Copper"
+    },
+    {
+      "at": "N4: request as the first-time account",
+      "url": "https://rdz2k6zpdk7frxhkl5hfa3hs5l2guc4mpjgmx8pq4krfd29zb7gtf8zzb7p4bm.group.svrnme.test:65262/title/movie/900008"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://group.svrnme.test:65262/"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdlb497rr4z3v7wl2hjtq2al63jxkazz5g6jal6u.group.svrnme.test:65262/open.html?v=<token>#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdlb497rr4z3v7wl2hjtq2al63jxkazz5g6jal6u.group.svrnme.test:65262/open.html?v=<token>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdlb497rr4z3v7wl2hjtq2al63jxkazz5g6jal6u.group.svrnme.test:65262/"
+    }
+  ],
+  "page_errors": [
+    {
+      "at": "N2: host-created request invitation",
+      "error": "ResizeObserver loop completed with undelivered notifications."
+    }
+  ],
+  "media_requests": [],
+  "arrival_ms": 13426,
+  "join_ms": 7849,
+  "page_shell": "./app.js?v=<token>",
+  "request_observed": {
+    "observed": {
+      "asks": {
+        "body": {
+          "asks": [
+            {
+              "albums": [],
+              "also_declined": [],
+              "asked_at": "2026-11-11T02:17:17.589262485Z",
+              "asked_by": {
+                "id": 2,
+                "name": "Bo"
+              },
+              "auto_approved": false,
+              "episodes": [],
+              "four_k": false,
+              "future_only": false,
+              "id": 1,
+              "kind": "movie",
+              "mine": false,
+              "name": "Copper Lighthouse",
+              "people": [
+                {
+                  "asked_at": "2026-11-11T02:17:17.589262485Z",
+                  "id": 2,
+                  "name": "Bo"
+                }
+              ],
+              "ref": "tmdb:900008",
+              "seasons": [],
+              "state": "asked",
+              "state_label": "Waiting for approval",
+              "tmdb_id": "900008",
+              "year": 2017
+            }
+          ]
+        },
+        "status": 200
+      },
+      "people": {
+        "people": [
+          {
+            "device": "browser",
+            "joined": "started",
+            "person": "Ana"
+          },
+          {
+            "device": "computer",
+            "joined": "started",
+            "person": "Ana"
+          },
+          {
+            "device": "browser",
+            "joined": {
+              "at": 1794363413
+            },
+            "person": "Bo"
+          }
+        ]
+      },
+      "playback": {
+        "sessions": [
+          {
+            "item": null,
+            "paused": false,
+            "position_ticks": null,
+            "title": null,
+            "user": "readers"
+          },
+          {
+            "item": null,
+            "paused": false,
+            "position_ticks": null,
+            "title": null,
+            "user": "sam"
+          }
+        ],
+        "status": 200
+      },
+      "users": {
+        "body": {
+          "perms": [
+            "ask",
+            "auto_approve",
+            "approve",
+            "manage_library",
+            "settings"
+          ],
+          "users": [
+            {
+              "avatar": null,
+              "created_at": "2026-11-11T02:15:54.640980246Z",
+              "id": 1,
+              "last_seen_at": "2026-11-11T02:16:38.177670787Z",
+              "links": [],
+              "max_rating": "",
+              "name": "Ana",
+              "password": true,
+              "perms": [
+                "ask",
+                "auto_approve",
+                "approve",
+                "manage_library",
+                "settings"
+              ],
+              "rating_country": "US",
+              "role": "owner",
+              "sso_links": [],
+              "state": "active",
+              "two_factor": false
+            },
+            {
+              "avatar": null,
+              "created_at": "2026-11-11T02:17:12.542993016Z",
+              "id": 2,
+              "last_seen_at": "2026-11-11T02:17:12.543232809Z",
+              "links": [],
+              "max_rating": "",
+              "name": "Bo",
+              "password": true,
+              "perms": [
+                "ask"
+              ],
+              "rating_country": "US",
+              "role": "member",
+              "sso_links": [],
+              "state": "active",
+              "two_factor": false
+            }
+          ]
+        },
+        "status": 200
+      }
+    },
+    "seconds": 34.420958
+  },
+  "verdict": "failed",
+  "at": "N3: Movie Night permission and discovery",
+  "error": "AssertionError [ERR_ASSERTION]: N3: the chosen copy is the independently named Test Pattern One item\n+ actual - expected\n\n+ '19f973836cb63dcfec7460d288fff774'\n- '9c6c40f6b7211398008657ce6b4e51b9'\n",
+  "video": null,
+  "text": "Movie Night\n\nSearch\nAna\u2019s library: 1 film\nTest Pattern One (2026)\nWatch from Ana\u2019s library",
+  "raw_evidence": "target/newcomer-film/2026-11-11T02-15-25-647Z/report.json"
+}

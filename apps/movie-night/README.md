@@ -17,3 +17,8 @@ their own copy from a port (`svrngs share <port> --program movie-night
 `match.js` decides which films a search names and which copies are one film
 (`match.test.mjs`); `crates/svrngs/tests/scenes/movie_night.rs` plays a person
 new to the group finding a friend's film end to end.
+
+The cold page keeps its controls disabled until its module has bound the search
+form; it says **Opening…** meanwhile. `startup.test.mjs` holds the real module
+back to check that an early tap cannot submit the unbound HTML form and lose
+the query, then releases it and exercises the actual search.

@@ -15,7 +15,12 @@ things in a group of your own first: `svrngs new <name>` makes one, with its
 folder at `~/svrngs/<name>`, and you can bring the finished app to your real
 group after.
 
+Use **Folder location** on the group's home page to find its actual folder.
+If a directory of that name already existed, svrngs may have chosen a different
+name to keep your existing files private. The paths below are examples.
+
 On this page: [a guestbook](#a-guestbook) ·
+[share the finished app](#share-the-finished-app) ·
 [what `svrngs/acts` gives you](#what-svrngsacts-gives-you) ·
 [read your friends' apps](#read-your-friends-apps) ·
 [rules for a folder app](#rules-for-a-folder-app) ·
@@ -85,6 +90,28 @@ everyone's home page and phone (a `-` in the folder name shows as a space).
 Opening it shows each note with the name of whoever wrote it: svrngs says who
 is asking, so the page needs no name field and nobody can sign as someone
 else.
+
+## Share the finished app
+
+When it works in your test group, copy only the finished app's folder into
+`apps/` in the group you want to share it with. For example, copy the rota's
+`index.html` and `index.js` into `~/svrngs/Garden/apps/Garden-rota/`. The folder
+name is the app's name, with spaces shown in place of `-`.
+
+Its code becomes available to that group; the test group's entries stay in the
+test group. Before friends open it, their page names what opening it allows and
+which group it acts in. Opening your app does not let it use another app's
+entries or act in someone's other groups.
+
+You can keep editing your own copy and reload it. Friends keep the version they
+chose until they press **Open the new version** beside your change. Their saved
+entries stay with the group when they change versions.
+
+To stop offering the app, remove its folder from that group's `apps/` directory.
+Once svrngs has carried the removal, it is no longer offered and its routes no
+longer work. Already shared files and entries remain in the group's history;
+removing the app does not erase what people saved. There is no separate
+**Stop sharing** button for a folder app yet.
 
 ## What `svrngs/acts` gives you
 

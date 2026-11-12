@@ -120,52 +120,7 @@ async fn opening_an_app_from_the_home_page_is_the_yes_to_what_it_reads(engine: E
     drop((ada, cy));
 }
 
-/// **The open names the app, and beside it is what it does, in one
-/// wording for both pages** (shortfall 7; the note's §9; the operator,
-/// 2026-10-26, from demo/xenia/findings/first-set/
-/// after-join-reads-as-permissions.md): an app the group carries is first
-/// what the shelf says it is for, or else "its own part of the group’s
-/// record", then that opening it lets it read and write that as you, so its
-/// first version runs as a person only once they open it so named; a lend
-/// reading other kinds opens your friends' lends of them as you; one doing
-/// neither may write its own part of the record as you. Both pages draw the line
-/// beside the open from question.js's `agreed`, and the open by `named`,
-/// each in its `page/index.js` since page-switchover. The call is read, not
-/// its argument's name: js-lint (a) named the lend `lend` (75e95f3a), and
-/// this test's `agreed(l, ` failed on the rename alone (js-lint-6's gate).
-/// The page's whole `page/` directory is read: js-read (b) moved the
-/// phone's open into web/page/lend-line.js (js-read-2's run).
-/// Red at d736ff18: `agreed` said "Open " and the name before what the app
-/// does, all of it on the button. Red at 5c6e3b0d: "It reads and writes"
-/// first, which Ana read as done on her behalf without her yes (the fifth
-/// xenia set, demo/xenia/findings/said-too-much-the-group-s-page.md).
-#[test]
-fn the_open_says_what_an_app_does_in_one_wording() {
-    for page in ["crates/svrngs-node/src/home/page", "web/page"] {
-        let text = page_source(page);
-        assert!(text.contains("agreed("), "{page} draws no open by `agreed`");
-    }
-    let shelf = json!([{ "name": "Money", "words": "who owes whom, and for what." }]);
-    let carried = |kind: &str| json!({ "group": "g", "kind": kind, "person": "cy", "name": "x", "reads": [] });
-    let lends = json!([
-        carried("Money"),
-        carried("Quiz"),
-        { "person": "cy", "name": "notes", "kind": "notes", "reads": ["films", "music"] },
-        { "person": "cy", "name": "shelf", "kind": "k", "reads": [] },
-    ]);
-    assert_eq!(
-        in_question(
-            "args[0].map((l) => [q.named(l), q.agreed(l, args[1], { name: 'House' })])",
-            json!([lends, shelf])
-        ),
-        json!([
-            ["Money", "Who owes whom, and for what. Opening it lets it read and write that, as you."],
-            ["Quiz", "Its own part of the group’s record. Opening it lets it read and write that, as you."],
-            ["cy’s notes", "Opening it lets it write its own part of House’s record, as you. It also opens your friends’ films and music as you, and they can see what it asks."],
-            ["cy’s shelf (k)", "Opening it lets it write its own part of House’s record, as you."],
-        ])
-    );
-}
+// Pure formatter and source-wiring contracts moved to web/tests/question.test.mjs.
 
 in_chromium!(
     /// **An open leads to the home page, a lend opened from it, and a
@@ -694,13 +649,17 @@ async fn a_carried_app_reads_the_lends_it_declares_at_its_own_origin(engine: Eng
     })) {
         assert_eq!(&refused(step, name), said, "{step}: {name}:\n{seen:#}");
     }
-    let cell = "Open ProbeReads cy’s films. They can see it’s you, and what it asks for. cy’s films Its own part of the group’s record. Opening it lets it read that, and never write it, as you.";
+    let cell = in_question(
+        "`Open ${q.named(args.reader)}${q.readLine([args.film], 1, ['films'])} ${q.named(args.film)} ${q.agreed(args.reader, [], {})}`",
+        json!({ "reader": { "group": "g", "kind": "Probe", "reads": ["films"], "reading": [] },
+            "film": { "person": "cy", "name": "films", "kind": "films" } }),
+    );
     assert!(
         seen["cells"]
             .as_array()
             .into_iter()
             .flatten()
-            .any(|c| c == cell),
+            .any(|c| c == &cell),
         "the open says what the app reads:\n{seen:#}"
     );
     let yes = &seen["yes"];

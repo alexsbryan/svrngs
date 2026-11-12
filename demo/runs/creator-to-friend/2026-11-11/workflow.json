@@ -1,0 +1,48 @@
+{
+  "bars": {
+    "C1": {
+      "observations": {
+        "check": "Nothing in /Users/alexsbryan/dev/svrngs/crates/svrngs/../../target/scenes/creator-chromium/jo/svrngs/Jo test/apps/Try-rota that apps can't load.\n",
+        "test_entries_copied": false
+      },
+      "verdict": "passed"
+    },
+    "C2": {
+      "observations": {
+        "computer_and_phone_named_scope": true,
+        "group": "Garden"
+      },
+      "verdict": "passed"
+    },
+    "C3": {
+      "observations": {
+        "entry": "6aaacd5ee3589e0f110e6d0b87766b54798e8c9fe95002c94647b7351cc8ca5d",
+        "host_did_not_sign": true,
+        "other_app_refusal": 403,
+        "phone_person": "Kim"
+      },
+      "verdict": "passed"
+    },
+    "C4": {
+      "observations": {
+        "after": "Updated version",
+        "before": "Original version",
+        "changed_by": "Jo",
+        "contribution_retained": true
+      },
+      "verdict": "passed"
+    },
+    "C5": {
+      "observations": {
+        "old_route_status": 404,
+        "shared_entry_retained": true,
+        "withdrawal_action": "removed published folder",
+        "withdrawn": true
+      },
+      "verdict": "passed"
+    }
+  },
+  "human_newcomer": "never-ran",
+  "kind": "scripted-browser",
+  "scene": "creator-to-friend"
+}

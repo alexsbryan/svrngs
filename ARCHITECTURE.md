@@ -837,9 +837,13 @@ atomic reservation/commit/close lifecycle and shared request/capacity limits.
 Redis holds TTL-bound capabilities and permanent digest-bound reservations,
 never a group record or shared file. The hosting adapter must provide a trusted
 IP; missing configuration and every provider refusal return unavailable with
-retry guidance. `web/tests/resolver.test.mjs` is included by the existing page
-laws gate; it owns a local Unix-socket Redis child and plants errors around
-every write. `resolver/README.md` names the native/arrival HTTP contract.
+retry guidance. `web/tests/resolver.integration.test.mjs` owns a local Unix-socket
+Redis child and plants errors around every write. Isolated signature/ingress and
+provider-error contracts live in `web/tests/resolver-contracts.test.mjs`; the
+hosting adapter's isolated checks are `resolver/adapter.test.mjs`. The Node
+catalog runs those without services in the quick tier and keeps actual Redis
+checks in page integration (`docs/CHECKS.md`). `resolver/README.md` names the
+native/arrival HTTP contract.
 
 **`apps/expenses/`**: the Expenses fold (`expenses.js`) and its tests, from E0,
 the bot at tag `e0-bot`. Its reducer (`init`, `reduce`) folds the acts
@@ -862,6 +866,17 @@ key, `serve.mjs` keeps accounts and a token each.
 call 3): its `nouns.txt`, the program the retired sign-in hook ran (`mw/`,
 its README), kept until `oidc-retire` removes it, and the drivers of its
 measured runs (`check/`, `folders/`).
+**`apps/holyarrs/`**: setup instructions and the request-to-play scene's
+app-specific helpers. `check/services.mjs` owns a scratch pod with stock
+HolyArrs, a real torrent seed and downloader, and `check/fixture.mjs`'s
+metadata, release-search and tracker fixtures. `check/scene.mjs` drives the
+request, approval, Movie Night search, Jellyfin playback and access removal.
+`crates/svrngs/tests/scenes/holyarrs.rs` supplies isolated svrngs participants,
+the existing scratch Jellyfin and the credential scan, on computers and through
+the phone's hosted page in WebKit. `check/plants.py` requires each broken scene
+to fail at its named bar. Account advice alone ships in
+`crates/svrngs-node/src/programs/holyarrs.txt`; the run-of-show is
+`demo/holyarrs.md`.
 **`apps/tap/`**: only Tap's `nouns.txt`. Tap is a canary PLAN §4 plans,
 after U3, and is not built: nothing runs it (#196).
 **`apps/give/`**: Give (DESIGN §3, "Give"), a crate of the workspace that

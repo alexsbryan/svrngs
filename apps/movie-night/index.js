@@ -206,3 +206,9 @@ form.addEventListener('submit', (e) => {
 // Back from a Jellyfin, the last search as it was.
 const last = JSON.parse(sessionStorage.getItem(KEPT) ?? 'null');
 if (last) render(last);
+// A cold page can draw before this module arrives. Enable only the bound form.
+box.disabled = false;
+const submit = form.querySelector('button');
+submit.textContent = 'Search';
+submit.disabled = false;
+console.debug('movie-night: ready');

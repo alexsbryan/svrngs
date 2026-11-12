@@ -21,7 +21,8 @@
 import { arrived, firstLook, launch } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
-const { context, close } = await launch(args.engine);
+// A new scene can exercise today's grouped layout; legacy halves retain A.
+const { context, close } = await launch(args.engine, { b: args.b });
 // Chromium reads its clipboard only when granted it (start-home: a lend's
 // address copied for a program).
 if (args.engine === 'chromium')

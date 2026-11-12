@@ -289,7 +289,7 @@ sentinel cannot detect selective reservation loss or an old snapshot retaining
 it: known/suspected rollback still requires operator reconciliation or URL
 namespace retirement. The precise error/retry and uncertain-mutation contract
 is in `../demo/runs/onboarding/2026-11-04-store/FAILURES.md`. The adapter's
-`web/tests/resolver.test.mjs` injects errors before and after every lifecycle
+`web/tests/resolver.integration.test.mjs` injects errors before and after every lifecycle
 write and a lost commit reply. Pending capabilities stay invisible; interrupted
 close is unavailable until reconciled. Script isolation is not rollback of
 Redis writes after runtime errors. The hosting edge must supply its trusted

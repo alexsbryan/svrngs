@@ -64,8 +64,8 @@ older manifests using medium or high do not override this operator setting.
 (standalone, no I/O in the core, the RUST_ARCH rules a program can
 decide, the size budget), the trust floor (every page's policy and every
 listener held to `scripts/trust_floor.txt`), the lint of every JavaScript
-file (`.oxlintrc.json`) and its format (`.oxfmtrc.json`), the pages' laws
-(`web/tests/*.test.mjs`), rustfmt, clippy and the tests. A
+file (`.oxlintrc.json`) and its format (`.oxfmtrc.json`), isolated Node laws,
+explicit Node integration suites (`web/tests/run.mjs`), rustfmt, clippy and the tests. A
 size-budget raise is the operator's, and so is a change to the trust floor,
 whose commit gives its reason on a `Trust floor:` line. A raise is asked only
 after an economizing pass: its commit gives the reason, names what that pass
@@ -76,6 +76,12 @@ While iterating, `scripts/check.sh --touched` runs the cheap steps and, of
 the slow ones, only those a change since the upstream can reach, each said
 with the file that reached it (`scripts/touched.py`); a file it cannot place
 runs them all. It is never the gate: the whole check runs once before a push.
+
+For the edit loop use `node web/tests/run.mjs unit`, one `node --test <file>`, or
+a focused pure Rust target. `--fast` runs static checks and isolated Node laws;
+real Redis/WebKit suites run in `page integration` after that boundary. Name
+service-backed Node suites `*.integration.test.mjs`; keep all tiers in the full
+gate. `docs/CHECKS.md` records the ownership and extraction contract.
 
 Ship code, not prose. Commit freely; never push without the operator. Commit
 messages carry no assistant attribution.

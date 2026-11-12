@@ -113,12 +113,12 @@ pub fn repo() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-/// The page, built by `scripts/build-web.sh` into target/web/site once per
-/// run of this binary.
+/// The page, built once into this test process's own directory. Another
+/// scene's build must not delete assets while this process serves them.
 pub fn site() -> &'static Path {
     static SITE: OnceLock<PathBuf> = OnceLock::new();
     SITE.get_or_init(|| {
-        let out = repo().join("target/web/site");
+        let out = repo().join(format!("target/web/site-{}", std::process::id()));
         let built = std::process::Command::new(repo().join("scripts/build-web.sh"))
             .arg("--out")
             .arg(&out)

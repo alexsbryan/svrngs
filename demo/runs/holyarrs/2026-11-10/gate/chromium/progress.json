@@ -1,0 +1,74 @@
+{
+  "steps": [
+    {
+      "bar": "H1",
+      "verdict": "passed",
+      "name": "Bo",
+      "url": "http://z99165sq9qhrxsmvxfzz2zxbcv8zdjc4k0hq3h12w40fmlp8b8ftf8zzb7p4bm.localhost:60588/"
+    },
+    {
+      "bar": "H2",
+      "verdict": "passed",
+      "request_id": 1,
+      "asker": "Bo",
+      "approve_as_bo": 403,
+      "downloads_before_approval": 0
+    },
+    {
+      "bar": "H3",
+      "verdict": "passed",
+      "file": "Copper Lighthouse (2017)/Copper Lighthouse (2017) 720p WEB.mp4",
+      "bytes": 19549723,
+      "sha256": "2cfb60a705dc8cf821cf126cc612d70451bdebe0da353672a1022a87aa6671f1",
+      "downloaded_session": 19549723
+    },
+    {
+      "bar": "H4",
+      "verdict": "passed",
+      "before": {
+        "cards": [],
+        "said": "Ana’s library: nothing by that name"
+      },
+      "after": {
+        "cards": [
+          "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+        ],
+        "said": "Ana’s library: 1 film"
+      }
+    },
+    {
+      "bar": "H5",
+      "verdict": "passed",
+      "user": "bo",
+      "item": "67f248d08724515ae2ea20a84c15ce8c",
+      "seek": {
+        "pct": 50,
+        "ms": 372,
+        "at": 37.81,
+        "target": 37.5
+      }
+    }
+  ],
+  "errors": [],
+  "runtime": {
+    "jellyfin": "12.0.0",
+    "browser": "147.0.7727.15",
+    "source_head": "26889eb35f34647d97d017ac568d72b95ec73aa9"
+  },
+  "logs": [
+    "LENDING: read: reading -> reading, running read",
+    "LENDING: answered (1 lent): reading -> read"
+  ],
+  "at": "Observing the removed member",
+  "before": {
+    "cards": [],
+    "said": "Ana’s library: nothing by that name"
+  },
+  "search": {
+    "cards": [
+      "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+    ],
+    "said": "Ana’s library: 1 film"
+  },
+  "copy": "http://ll1c47s86fdfduhs5v7f5rqdlacz0593t70mwdgvjchqsgwwdcqtv7xp1j56ap.localhost:60588/svrngs-to?lender=afff7e6dedfb4cea3d52a12b5c568114bd519c5a458cdc9af89eac45259e0f89&lend=jellyfin#/details?id=67f248d08724515ae2ea20a84c15ce8c&serverId=7ddec18c1b384fd7a457e11723dc8366"
+}

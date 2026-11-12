@@ -1,0 +1,454 @@
+{
+  "kind": "cold-start construction proof",
+  "checks": [
+    "N1: fresh phone browser joined as Bo by the ordinary invitation",
+    "N2: Bo accepted Ana\u2019s actual UI-produced invitation and made his own request account",
+    "N4: independent observer saw Bo\u2019s own request waiting for approval",
+    "N3: cold newcomer found Ana\u2019s copy, recovered from a wrong password, played and sought the same item as bo",
+    "N5: original invitation reopened the same group; request account and waiting request survived"
+  ],
+  "controls": [
+    "N5: wrong viewing password refused with visible words",
+    "N5: actual service outage produced recovery words; retry after restart retained the same app account"
+  ],
+  "product_binary": "<repo>/target/newcomer-film/bin/8e539dec5b92c0efe1211afcaee972d7e039a00b1259d21faf2c162ee7adf481/svrngs",
+  "plant": null,
+  "navigations": [
+    {
+      "at": "N1: ordinary invitation",
+      "url": "https://group.svrnme.test:61235/#<fragment>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://group.svrnme.test:61235/#<fragment>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/open.html?v=<token>&back=%2Finvite%2FS0dTMXTvVp5Psm2w5S_2y2ZiMOgvy8LL5h2TUrOEb-k#<fragment>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/open.html?v=<token>&back=%2Finvite%2FS0dTMXTvVp5Psm2w5S_2y2ZiMOgvy8LL5h2TUrOEb-k"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/invite/<token>"
+    },
+    {
+      "at": "N2: host-created request invitation",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/"
+    },
+    {
+      "at": "N4: request as the first-time account",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/search"
+    },
+    {
+      "at": "N4: request as the first-time account",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/search?q=Copper"
+    },
+    {
+      "at": "N4: request as the first-time account",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/title/movie/900008"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://group.svrnme.test:61235/"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdla2hxwhw65fa6s5uclkwsmjazk7tpc380c2qb7.group.svrnme.test:61235/open.html?v=<token>#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdla2hxwhw65fa6s5uclkwsmjazk7tpc380c2qb7.group.svrnme.test:61235/open.html?v=<token>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdla2hxwhw65fa6s5uclkwsmjazk7tpc380c2qb7.group.svrnme.test:61235/"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://ll1c47s86fdfduhs5v7f5rqdla2hxwhw65fa6s5uclkwsmjazk7tpc380c2qb7.group.svrnme.test:61235/svrngs-reads/mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr/web/#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://group.svrnme.test:61235/#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/open.html?v=<token>&back=%2Fweb%2F%23%2Fdetails%3Fid%3D19f973836cb63dcfec7460d288fff774%26serverId%3Da60ec1e94d9d45e89502f25abd688b15#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/open.html?v=<token>&back=%2Fweb%2F%23%2Fdetails%3Fid%3D19f973836cb63dcfec7460d288fff774%26serverId%3Da60ec1e94d9d45e89502f25abd688b15"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/web/#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/web/#<fragment>"
+    },
+    {
+      "at": "N3: Movie Night permission and discovery",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/web/#<fragment>"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/web/#<fragment>"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/web/#<fragment>"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://group.svrnme.test:61235/#<fragment>"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/open.html?v=<token>#<fragment>"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/open.html?v=<token>"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/requests"
+    },
+    {
+      "at": "N5: temporarily unavailable app and retry",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/requests"
+    },
+    {
+      "at": "N5: temporarily unavailable app and retry",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/requests"
+    },
+    {
+      "at": "N5: temporarily unavailable app and retry",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/requests"
+    },
+    {
+      "at": "N5: temporarily unavailable app and retry",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tf8zzb7p4bm.group.svrnme.test:61235/requests"
+    }
+  ],
+  "page_errors": [
+    {
+      "at": "N2: host-created request invitation",
+      "error": "ResizeObserver loop completed with undelivered notifications."
+    },
+    {
+      "at": "N5: return without another identity",
+      "error": "Unhandled Promise Rejection: TypeError: Load failed"
+    }
+  ],
+  "media_requests": [
+    {
+      "at": "N5: wrong password and recovery",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Users/authenticatebyname",
+      "status": 401,
+      "headers": {
+        "access-control-allow-origin": "*",
+        "content-language": "en-US",
+        "content-type": "text/plain",
+        "date": "Wed, 11 Nov 2026 04:17:38 GMT",
+        "transfer-encoding": "chunked",
+        "server": "Kestrel",
+        "x-response-time-ms": "89.755"
+      },
+      "finished": "complete"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Users/authenticatebyname",
+      "status": 200,
+      "headers": {
+        "access-control-allow-origin": "*",
+        "content-language": "en-US",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Wed, 11 Nov 2026 04:17:39 GMT",
+        "transfer-encoding": "chunked",
+        "vary": "Accept-Encoding",
+        "server": "Kestrel",
+        "x-response-time-ms": "122.1847"
+      },
+      "finished": "complete"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Items/19f973836cb63dcfec7460d288fff774/PlaybackInfo",
+      "status": 200,
+      "headers": {
+        "access-control-allow-origin": "*",
+        "content-language": "en-US",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Wed, 11 Nov 2026 04:17:43 GMT",
+        "transfer-encoding": "chunked",
+        "vary": "Accept-Encoding",
+        "server": "Kestrel",
+        "x-response-time-ms": "86.2597"
+      },
+      "finished": "complete"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "status": 206,
+      "headers": {
+        "accept-ranges": "bytes",
+        "content-language": "en-US",
+        "content-length": "2",
+        "content-range": "bytes 0-1/47091038",
+        "content-type": "video/mp4",
+        "date": "Wed, 11 Nov 2026 04:17:44 GMT",
+        "last-modified": "Wed, 11 Nov 2026 04:16:26 GMT",
+        "server": "Kestrel",
+        "x-response-time-ms": "24.5198"
+      },
+      "finished": "complete"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "status": 206,
+      "headers": {
+        "accept-ranges": "bytes",
+        "content-language": "en-US",
+        "content-length": "2097152",
+        "content-range": "bytes 0-2097151/47091038",
+        "content-type": "video/mp4",
+        "date": "Wed, 11 Nov 2026 04:17:44 GMT",
+        "last-modified": "Wed, 11 Nov 2026 04:16:26 GMT",
+        "server": "Kestrel",
+        "x-response-time-ms": "7.1275"
+      },
+      "finish_unobserved": "Error: Target page, context or browser has been closed"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "failed": "cancelled"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "status": 206,
+      "headers": {
+        "accept-ranges": "bytes",
+        "content-language": "en-US",
+        "content-length": "2097152",
+        "content-range": "bytes 86714-2183865/47091038",
+        "content-type": "video/mp4",
+        "date": "Wed, 11 Nov 2026 04:17:44 GMT",
+        "last-modified": "Wed, 11 Nov 2026 04:16:26 GMT",
+        "server": "Kestrel",
+        "x-response-time-ms": "7.9704"
+      },
+      "finish_unobserved": "Error: Target page, context or browser has been closed"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "failed": "cancelled"
+    },
+    {
+      "at": "N3: actual playback",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "status": 206,
+      "headers": {
+        "accept-ranges": "bytes",
+        "content-language": "en-US",
+        "content-length": "2097152",
+        "content-range": "bytes 23527424-25624575/47091038",
+        "content-type": "video/mp4",
+        "date": "Wed, 11 Nov 2026 04:17:46 GMT",
+        "last-modified": "Wed, 11 Nov 2026 04:16:26 GMT",
+        "server": "Kestrel",
+        "x-response-time-ms": "5.1386"
+      },
+      "finish_unobserved": "Error: Target page, context or browser has been closed"
+    },
+    {
+      "at": "N5: return without another identity",
+      "url": "https://mtakudw76nrb3kzscgvz0cbtnl2bcl7jtvthkc780xlgfasd6r3tbbq3n1prdr.group.svrnme.test:61235/Videos/19f973836cb63dcfec7460d288fff774/stream.mp4",
+      "failed": "cancelled"
+    }
+  ],
+  "arrival_ms": 8971,
+  "join_ms": 4838,
+  "page_shell": "./app.js?v=<token>",
+  "request_observed": {
+    "observed": {
+      "asks": {
+        "body": {
+          "asks": [
+            {
+              "albums": [],
+              "also_declined": [],
+              "asked_at": "2026-11-11T04:17:30.226962679Z",
+              "asked_by": {
+                "id": 2,
+                "name": "Bo"
+              },
+              "auto_approved": false,
+              "episodes": [],
+              "four_k": false,
+              "future_only": false,
+              "id": 1,
+              "kind": "movie",
+              "mine": false,
+              "name": "Copper Lighthouse",
+              "people": [
+                {
+                  "asked_at": "2026-11-11T04:17:30.226962679Z",
+                  "id": 2,
+                  "name": "Bo"
+                }
+              ],
+              "ref": "tmdb:900008",
+              "seasons": [],
+              "state": "asked",
+              "state_label": "Waiting for approval",
+              "tmdb_id": "900008",
+              "year": 2017
+            }
+          ]
+        },
+        "status": 200
+      },
+      "people": {
+        "people": [
+          {
+            "device": "browser",
+            "joined": "started",
+            "person": "Ana"
+          },
+          {
+            "device": "computer",
+            "joined": "started",
+            "person": "Ana"
+          },
+          {
+            "device": "browser",
+            "joined": {
+              "at": 1794370639
+            },
+            "person": "Bo"
+          }
+        ]
+      },
+      "playback": {
+        "sessions": [
+          {
+            "item": null,
+            "paused": false,
+            "position_ticks": null,
+            "title": null,
+            "user": "readers"
+          },
+          {
+            "item": null,
+            "paused": false,
+            "position_ticks": null,
+            "title": null,
+            "user": "sam"
+          }
+        ],
+        "status": 200
+      },
+      "users": {
+        "body": {
+          "perms": [
+            "ask",
+            "auto_approve",
+            "approve",
+            "manage_library",
+            "settings"
+          ],
+          "users": [
+            {
+              "avatar": null,
+              "created_at": "2026-11-11T04:16:44.485345132Z",
+              "id": 1,
+              "last_seen_at": "2026-11-11T04:17:11.271635126Z",
+              "links": [],
+              "max_rating": "",
+              "name": "Ana",
+              "password": true,
+              "perms": [
+                "ask",
+                "auto_approve",
+                "approve",
+                "manage_library",
+                "settings"
+              ],
+              "rating_country": "US",
+              "role": "owner",
+              "sso_links": [],
+              "state": "active",
+              "two_factor": false
+            },
+            {
+              "avatar": null,
+              "created_at": "2026-11-11T04:17:27.788369576Z",
+              "id": 2,
+              "last_seen_at": "2026-11-11T04:17:27.788640578Z",
+              "links": [],
+              "max_rating": "",
+              "name": "Bo",
+              "password": true,
+              "perms": [
+                "ask"
+              ],
+              "rating_country": "US",
+              "role": "member",
+              "sso_links": [],
+              "state": "active",
+              "two_factor": false
+            }
+          ]
+        },
+        "status": 200
+      }
+    },
+    "seconds": 17.220166625
+  },
+  "find_and_play_ms": 15530,
+  "seek": {
+    "pct": 50,
+    "ms": 1942,
+    "at": 60.32,
+    "target": 60
+  },
+  "unavailable": "Ana\u2019s holyarrs is not answering now: try again later.",
+  "verdict": "passed",
+  "raw_evidence": "target/newcomer-film/2026-11-11T04-16-10-324Z/report.json",
+  "note": "Simulated observer records; no human was present. Invitations and passwords are omitted."
+}

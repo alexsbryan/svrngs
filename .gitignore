@@ -6,3 +6,5 @@ ralph/next/*/log*
 ralph/.heartbeat
 ralph/log*
 __pycache__/
+# Another tool's local state (a Codex session's MCP config).
+.codex/

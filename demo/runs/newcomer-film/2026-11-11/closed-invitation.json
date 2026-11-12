@@ -1,0 +1,20 @@
+{
+  "kind": "named negative control",
+  "checks": [],
+  "controls": [
+    "N1: closed ordinary invitation visibly refused and added no Bo to the real record"
+  ],
+  "product_binary": "<repo>/target/newcomer-film/bin/8e539dec5b92c0efe1211afcaee972d7e039a00b1259d21faf2c162ee7adf481/svrngs",
+  "plant": "closed-invitation",
+  "navigations": [
+    {
+      "at": "N1: ordinary invitation",
+      "url": "https://group.svrnme.test:63230/#<fragment>"
+    }
+  ],
+  "page_errors": [],
+  "media_requests": [],
+  "refusal": "This link lets nobody in. Ask for a new one.\n\n",
+  "verdict": "passed",
+  "raw_evidence": "target/newcomer-film/2026-11-11T02-13-09-067Z/report.json"
+}

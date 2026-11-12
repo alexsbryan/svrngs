@@ -16,14 +16,22 @@ cargo test -p svrngs --test xenia --no-run
 Then from `~/dev/xenia`, using Node >= 22.18:
 
 ```sh
-node src/run.ts run ~/dev/svrngs/demo/xenia/permaculture --runs 1 --model claude-sonnet-5-5 --findings ~/dev/svrngs/demo/xenia/permaculture/findings --source ~/dev/svrngs
+node src/run.ts run ~/dev/svrngs/demo/xenia/permaculture --runs 1 --model deepseek-flash --reasoning-effort max --findings ~/dev/svrngs/demo/xenia/permaculture/findings --source ~/dev/svrngs
 ```
 
 Xenia runs its plants before the rehearsal. One run is an exploration, not
 a rate. For repeated observations, choose `--runs 3`; the people stay the
 same and each run gets a fresh world. The notebook uses Podman and the
 pinned BusyBox image in `cards/notebook/compose.yaml`; absence is never-ran,
-not a simulated replacement. No Xenia engine changes are needed.
+not a simulated replacement. The scene uses Xenia's existing world contract.
+
+The operator selected DeepInfra's `deepseek-flash` for both plants and
+participants. Isaura currently resolves it to
+`deepseek-ai/DeepSeek-V4.1-Flash-1017`. `max` is the live OpenAI endpoint's
+maximum reasoning setting; it refused numeric `100` with HTTP 422 despite
+the older benchmark documentation. The setting is explicit and recorded. This
+needs Xenia's `--reasoning-effort` support, added for this run. GPT Sol is
+not used to stand in for Flash's model-admission plants.
 
 For the scripted browser proof, without model sessions:
 
@@ -119,17 +127,26 @@ long-term fairness, cross-home resilience, or actual caretaker wellbeing.
 Those need real communities, elapsed time and material measurements. Its
 first job is to expose what the current screens make possible or awkward.
 
-## Staging status
+## Run status
 
-Prepared on 6 November 2026. The operator deferred the run for resource
-planning. No world, container workload, browser proof, Xenia plants or
-model sessions have been launched for this scene. Its runtime outcomes,
-including the expected distinction between unsharing and stopping, are
-**never-ran**, not passed. The full repository gate is deferred too.
+Prepared on 6 November 2026, then held for resource planning. On 7 November
+the operator selected DeepInfra Flash at max for both plants and cast and
+approved launch. The scripted workflow proof passed, including an observed
+note-preserving handover and the gap between unsharing and stopping. Its
+artifact is `target/permaculture-smoke/2026-11-08T00-19-28-053Z/report.json`.
+The smoke driver was corrected to enter the current groups workspace and
+to distinguish a removed pod from a failed inspect; Give removes the pod
+when it stops an app, retaining its volumes (`apps/give/src/runtime.rs`).
 
-Completed lightweight checks: the Xenia Rust target compiles; its focused
-clippy check passes; the browser proof parses and passes lint/format; the
-launcher passes shell syntax checking. Plan the model, repetitions, wall
-time and spend before invoking the run commands above. The five parts
-allow up to twenty scene minutes per repetition, plus setup and Xenia's
-plants; model/provider overhead and actual spend are not measured here.
+The live endpoint refused the first numeric-effort attempt; it was stopped
+and kept, never judged a people result. An explicit `max` preflight then
+returned HTTP 200. One max-effort rehearsal is launched; its state, command,
+log and source patches are under `target/permaculture-run/`. Its pending
+outcomes are not a pass. The launch record is
+`demo/runs/permaculture/2026-11-07/README.md`.
+
+The Rust target compiles and its focused clippy passes; the browser proof
+passes lint/format; Xenia's types, vocabulary and local tests pass. The full
+repository gates have not been run for this launch. The five parts allow
+up to twenty scene minutes per repetition, plus setup and Xenia's plants;
+this is not a twenty-minute bound on the whole set or its model calls.

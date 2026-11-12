@@ -6,29 +6,29 @@
 //! the programs svrngs ships terms for: each file of `src/programs/` in
 //! file-name order, `$OUT_DIR/programs.rs` as share.rs's `PROGRAMS` is.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn main() {
     let here = Path::new(env!("CARGO_MANIFEST_DIR"));
     let listed = std::fs::read_to_string(here.join("src/shelf.txt")).expect("shelf.txt is read");
     println!("cargo::rerun-if-changed=src/shelf.txt");
-    let file = |at: &Path, f: &str| format!("({f:?}, include_str!({:?}))", at.join(f));
+    let file = |at: &Path, f: &str| {
+        println!("cargo::rerun-if-changed={}", at.join(f).display());
+        format!("({f:?}, include_str!({:?}))", at.join(f))
+    };
     let look = file(&here.join("src/home"), "look.css");
     let mut shelf = String::from("&[");
     let lines = listed
         .lines()
         .filter(|l| !l.starts_with('#') && !l.trim().is_empty());
     for fields in lines.map(|l| l.split('\t').collect::<Vec<_>>()) {
-        let [name, app, beside, words] = fields[..] else {
-            panic!("a shelf line is four fields: {fields:?}");
-        };
+        let [name, app, beside, words]: [&str; 4] = fields.try_into().expect("four shelf fields");
         let (app, beside) = (here.join("../../apps").join(app), beside.split(' '));
         let files = Vec::from_iter(["index.html", "index.js"].into_iter().chain(beside));
         let files: Vec<_> = files.into_iter().map(|f| file(&app, f)).collect();
         shelf += &format!("({name:?}, {words:?}, &[{}, {look}]),", files.join(", "));
     }
-    let out = std::env::var("OUT_DIR").expect("cargo sets OUT_DIR");
-    let out = Path::new(&out);
+    let out = PathBuf::from(std::env::var_os("OUT_DIR").expect("cargo sets OUT_DIR"));
     std::fs::write(out.join("shelf.rs"), shelf + "]").expect("the shelf is written");
 
     // By name, never the order the filesystem lists them in. A file holding

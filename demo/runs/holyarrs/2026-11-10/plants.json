@@ -1,0 +1,48 @@
+{
+  "runner": "python3 apps/holyarrs/check/plants.py",
+  "runs": [
+    {
+      "plant": "holyarrs:no-approval",
+      "expected_failure": "H3",
+      "cargo_exit": 101,
+      "observed": "H3: HolyArrs imports the downloaded film not observed",
+      "instrument_verdict": "passed"
+    },
+    {
+      "plant": "holyarrs:no-seed",
+      "expected_failure": "H3",
+      "cargo_exit": 101,
+      "observed": "H3: HolyArrs imports the downloaded film not observed",
+      "instrument_verdict": "passed"
+    },
+    {
+      "plant": "holyarrs:no-readers",
+      "expected_failure": "H4",
+      "cargo_exit": 101,
+      "observed": "H4: Movie Night finds Ana’s newly imported copy not observed",
+      "instrument_verdict": "passed"
+    },
+    {
+      "plant": "holyarrs:credential",
+      "expected_failure": "H7",
+      "cargo_exit": 101,
+      "observed": "H7: Jellyfin admin reached Bo",
+      "instrument_verdict": "passed"
+    },
+    {
+      "plant": "holyarrs:early-stream",
+      "expected_failure": "H6",
+      "cargo_exit": 101,
+      "observed": "H6: stream must still be open before removal",
+      "instrument_verdict": "passed"
+    }
+  ],
+  "rerun_after_tightening_H6": "python3 apps/holyarrs/check/plants.py early-stream credential",
+  "raw_logs": "target/holyarrs-plants/",
+  "prerequisite_plant": {
+    "command": "PATH=/usr/bin:/bin /Users/alexsbryan/.nvm/versions/node/v20.20.2/bin/node apps/holyarrs/check/services.mjs up target/holyarrs-missing-prerequisite",
+    "observed_verdict": "never-ran",
+    "reason": "spawnSync podman ENOENT",
+    "note": "The scene writes never-ran.txt for this response; the repository gate refuses that verdict."
+  }
+}

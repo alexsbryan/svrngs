@@ -1,0 +1,694 @@
+{
+  "at": "Observing the removed member",
+  "before": {
+    "cards": [],
+    "said": "Ana’s library: nothing by that name\n"
+  },
+  "cancellations": [
+    {
+      "at": "Leaving Jellyfin for HolyArrs",
+      "message": "Unhandled Promise Rejection: TypeError: Load failed",
+      "stack": "Unhandled Promise Rejection: TypeError: Load failed\n",
+      "who": "bo"
+    },
+    {
+      "at": "Observing the removed member",
+      "message": "FetchEvent.respondWith received an error: Error: error reading a body from connection",
+      "stack": "",
+      "who": "bo"
+    }
+  ],
+  "copy": "https://ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5.group.svrnme.test:61249/svrngs-reads/a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfabbq3n1prdr/web/#/details?id=2a532d840ab44a464174bb3b56b6811d&serverId=1d7741dd90744db5a7a42d80c9747c66",
+  "errors": [
+    {
+      "at": "Leaving Jellyfin for HolyArrs",
+      "message": "Unhandled Promise Rejection: TypeError: Load failed",
+      "stack": "Unhandled Promise Rejection: TypeError: Load failed\n",
+      "who": "bo"
+    },
+    {
+      "at": "Observing the removed member",
+      "message": "FetchEvent.respondWith received an error: Error: error reading a body from connection",
+      "stack": "",
+      "who": "bo"
+    }
+  ],
+  "fixture": {
+    "calls": [
+      {
+        "at": "2026-11-10T17:45:52.619Z",
+        "method": "POST",
+        "path": "/v1/installations",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:45:52.625Z",
+        "method": "GET",
+        "path": "/v1/music/packages",
+        "query": "?limit=200&since=0"
+      },
+      {
+        "at": "2026-11-10T17:45:52.650Z",
+        "method": "GET",
+        "path": "/v1/music/pools",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:45:52.651Z",
+        "method": "GET",
+        "path": "/v1/tmdb/genre/movie/list",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:45:52.844Z",
+        "method": "GET",
+        "path": "/release.torrent",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:45:52.901Z",
+        "method": "GET",
+        "path": "/v1/tmdb/genre/movie/list",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:45:53.617Z",
+        "method": "GET",
+        "path": "/v1/music/lists/shelves",
+        "query": "?region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:53.618Z",
+        "method": "GET",
+        "path": "/v1/music/charts",
+        "query": "?kind=albums&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:53.619Z",
+        "method": "GET",
+        "path": "/v1/music/charts",
+        "query": "?kind=songs&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:53.620Z",
+        "method": "GET",
+        "path": "/v1/music/genres",
+        "query": "?region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:53.620Z",
+        "method": "GET",
+        "path": "/v1/lists/music-trending",
+        "query": "?kind=album&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:54.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=18"
+      },
+      {
+        "at": "2026-11-10T17:45:54.717Z",
+        "method": "GET",
+        "path": "/announce",
+        "query": "?info_hash=%eaO%ac%3fx9%00z*6%94%93%ef%86%0b%c8)%9e%ea%ea&peer_id=-qB5140-R8AjIh81)B)K&port=6881&uploaded=0&downloaded=0&left=0&corrupt=0&key=C449B48C&event=started&numwant=200&compact=1&no_peer_id=1&supportcrypto=1&redundant=0"
+      },
+      {
+        "at": "2026-11-10T17:45:55.622Z",
+        "method": "GET",
+        "path": "/v1/tmdb/trending/movie/week",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:45:55.674Z",
+        "method": "GET",
+        "path": "/v1/tmdb/genre/tv/list",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:45:55.723Z",
+        "method": "GET",
+        "path": "/v1/tmdb/trending/tv/week",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:45:56.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/trending/movie/week",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:45:58.623Z",
+        "method": "GET",
+        "path": "/v1/lists/music-trending",
+        "query": "?kind=artist&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.625Z",
+        "method": "GET",
+        "path": "/v1/lists/music-trending",
+        "query": "?kind=fresh&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=35"
+      },
+      {
+        "at": "2026-11-10T17:45:58.627Z",
+        "method": "GET",
+        "path": "/v1/music/new",
+        "query": "?window=tracks"
+      },
+      {
+        "at": "2026-11-10T17:45:58.628Z",
+        "method": "GET",
+        "path": "/v1/music/new",
+        "query": "?window=week"
+      },
+      {
+        "at": "2026-11-10T17:45:58.629Z",
+        "method": "GET",
+        "path": "/v1/music/new",
+        "query": "?window=recent"
+      },
+      {
+        "at": "2026-11-10T17:45:58.631Z",
+        "method": "GET",
+        "path": "/v1/music/new",
+        "query": "?window=upcoming"
+      },
+      {
+        "at": "2026-11-10T17:45:58.632Z",
+        "method": "GET",
+        "path": "/v1/music/charts",
+        "query": "?kind=albums&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.633Z",
+        "method": "GET",
+        "path": "/v1/music/charts",
+        "query": "?kind=songs&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.634Z",
+        "method": "GET",
+        "path": "/v1/music/genres",
+        "query": "?region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.636Z",
+        "method": "GET",
+        "path": "/v1/music/charts",
+        "query": "?kind=songs&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.637Z",
+        "method": "GET",
+        "path": "/v1/music/lists/shelves",
+        "query": "?region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.638Z",
+        "method": "GET",
+        "path": "/v1/music/charts",
+        "query": "?kind=albums&region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.639Z",
+        "method": "GET",
+        "path": "/v1/music/genres",
+        "query": "?region=global"
+      },
+      {
+        "at": "2026-11-10T17:45:58.640Z",
+        "method": "GET",
+        "path": "/v1/control",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:00.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=28"
+      },
+      {
+        "at": "2026-11-10T17:46:02.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/genre/tv/list",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:46:04.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=18"
+      },
+      {
+        "at": "2026-11-10T17:46:06.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=10759"
+      },
+      {
+        "at": "2026-11-10T17:46:08.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=35"
+      },
+      {
+        "at": "2026-11-10T17:46:10.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=878"
+      },
+      {
+        "at": "2026-11-10T17:46:12.627Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=science+fiction"
+      },
+      {
+        "at": "2026-11-10T17:46:14.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=53"
+      },
+      {
+        "at": "2026-11-10T17:46:16.625Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=thriller"
+      },
+      {
+        "at": "2026-11-10T17:46:18.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=14"
+      },
+      {
+        "at": "2026-11-10T17:46:20.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=space"
+      },
+      {
+        "at": "2026-11-10T17:46:22.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=time+travel"
+      },
+      {
+        "at": "2026-11-10T17:46:24.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=whodunit"
+      },
+      {
+        "at": "2026-11-10T17:46:24.886Z",
+        "method": "GET",
+        "path": "/readyz",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:26.627Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=murder+mystery"
+      },
+      {
+        "at": "2026-11-10T17:46:28.627Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=magic"
+      },
+      {
+        "at": "2026-11-10T17:46:30.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=10749"
+      },
+      {
+        "at": "2026-11-10T17:46:32.123Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/movie",
+        "query": "?include_adult=false&query=Copper"
+      },
+      {
+        "at": "2026-11-10T17:46:32.627Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=alien"
+      },
+      {
+        "at": "2026-11-10T17:46:32.681Z",
+        "method": "GET",
+        "path": "/v1/tmdb/movie/900008",
+        "query": "?append_to_response=release_dates%2Cimages%2Ccredits%2Crecommendations%2Cvideos%2Ckeywords&include_image_language=en%2Cnull"
+      },
+      {
+        "at": "2026-11-10T17:46:32.730Z",
+        "method": "GET",
+        "path": "/v1/tmdb/movie/900008/watch/providers",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:32.774Z",
+        "method": "GET",
+        "path": "/v1/ratings/movie/900008",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:32.775Z",
+        "method": "GET",
+        "path": "/v1/art/movie/900008",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:32.778Z",
+        "method": "GET",
+        "path": "/v1/tmdb/movie/900008",
+        "query": "?append_to_response=release_dates%2Cimages%2Ccredits%2Ctranslations%2Calternative_titles&include_image_language=en%2Cnull"
+      },
+      {
+        "at": "2026-11-10T17:46:32.801Z",
+        "method": "GET",
+        "path": "/v1/wikidata/title/movie/900008",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:32.848Z",
+        "method": "GET",
+        "path": "/v1/tmdb/movie/900008/reviews",
+        "query": "?page=1"
+      },
+      {
+        "at": "2026-11-10T17:46:33.538Z",
+        "method": "GET",
+        "path": "/v1/tmdb/tv/on_the_air",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:46:33.590Z",
+        "method": "GET",
+        "path": "/v1/tmdb/movie/upcoming",
+        "query": "?language=en-US"
+      },
+      {
+        "at": "2026-11-10T17:46:33.640Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&primary_release_date.gte=2024-11-10&sort_by=vote_average.desc&vote_average.gte=7.5&vote_count.gte=300"
+      },
+      {
+        "at": "2026-11-10T17:46:33.688Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?first_air_date.gte=2026-10-11&first_air_date.lte=2026-11-24&include_adult=false&language=en-US&sort_by=popularity.desc"
+      },
+      {
+        "at": "2026-11-10T17:46:33.742Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?first_air_date.gte=2024-11-10&include_adult=false&language=en-US&sort_by=vote_average.desc&vote_average.gte=7.5&vote_count.gte=300"
+      },
+      {
+        "at": "2026-11-10T17:46:34.618Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=vote_average.desc&vote_average.gte=7.3&vote_count.gte=100"
+      },
+      {
+        "at": "2026-11-10T17:46:34.626Z",
+        "method": "GET",
+        "path": "/v1/trailers/movie/900008",
+        "query": "?language=en"
+      },
+      {
+        "at": "2026-11-10T17:46:36.622Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=vote_average.desc&vote_average.gte=7.3&vote_count.gte=100"
+      },
+      {
+        "at": "2026-11-10T17:46:36.625Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=dystopia"
+      },
+      {
+        "at": "2026-11-10T17:46:38.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=robot"
+      },
+      {
+        "at": "2026-11-10T17:46:40.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=romance"
+      },
+      {
+        "at": "2026-11-10T17:46:41.581Z",
+        "method": "GET",
+        "path": "/v1/tmdb/movie/900008",
+        "query": "?append_to_response=release_dates%2Cimages%2Ccredits%2Ctranslations%2Calternative_titles&include_image_language=en%2Cnull"
+      },
+      {
+        "at": "2026-11-10T17:46:42.583Z",
+        "method": "GET",
+        "path": "/source",
+        "query": "?t=caps"
+      },
+      {
+        "at": "2026-11-10T17:46:42.584Z",
+        "method": "GET",
+        "path": "/source",
+        "query": "?cat=2000&imdbid=9000080&limit=50&t=movie"
+      },
+      {
+        "at": "2026-11-10T17:46:42.593Z",
+        "method": "GET",
+        "path": "/release.torrent",
+        "query": ""
+      },
+      {
+        "at": "2026-11-10T17:46:42.627Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=love"
+      },
+      {
+        "at": "2026-11-10T17:46:43.035Z",
+        "method": "GET",
+        "path": "/announce",
+        "query": "?info_hash=%eaO%ac%3fx9%00z*6%94%93%ef%86%0b%c8)%9e%ea%ea&peer_id=-qB5140-To6JHhIs82eD&port=6882&uploaded=0&downloaded=0&left=19549723&corrupt=0&key=62614740&event=started&numwant=200&compact=1&no_peer_id=1&supportcrypto=1&redundant=0"
+      },
+      {
+        "at": "2026-11-10T17:46:43.185Z",
+        "method": "GET",
+        "path": "/announce",
+        "query": "?info_hash=%eaO%ac%3fx9%00z*6%94%93%ef%86%0b%c8)%9e%ea%ea&peer_id=-qB5140-To6JHhIs82eD&port=6882&uploaded=0&downloaded=19549723&left=0&corrupt=0&key=62614740&event=completed&numwant=200&compact=1&no_peer_id=1&supportcrypto=1&redundant=0"
+      },
+      {
+        "at": "2026-11-10T17:46:44.627Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=romantic+comedy"
+      },
+      {
+        "at": "2026-11-10T17:46:46.625Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=80"
+      },
+      {
+        "at": "2026-11-10T17:46:48.626Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=9648"
+      },
+      {
+        "at": "2026-11-10T17:46:52.621Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=supernatural"
+      },
+      {
+        "at": "2026-11-10T17:46:52.873Z",
+        "method": "GET",
+        "path": "/v1/tmdb/search/keyword",
+        "query": "?query=ghost"
+      },
+      {
+        "at": "2026-11-10T17:46:54.628Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=16"
+      },
+      {
+        "at": "2026-11-10T17:46:56.631Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=80"
+      },
+      {
+        "at": "2026-11-10T17:47:00.617Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=9648"
+      },
+      {
+        "at": "2026-11-10T17:47:04.617Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/tv",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=16"
+      },
+      {
+        "at": "2026-11-10T17:47:08.620Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=99"
+      },
+      {
+        "at": "2026-11-10T17:47:12.619Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=10751"
+      },
+      {
+        "at": "2026-11-10T17:47:16.620Z",
+        "method": "GET",
+        "path": "/v1/tmdb/discover/movie",
+        "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=12"
+      }
+    ],
+    "unexpected": []
+  },
+  "logs": [
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's newest open and deleted its cookie",
+    "OPEN: ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's newest open and deleted its cookie",
+    "OPEN: ll1c47s86fdfduhs5v7f5rqdlcrkckvn0420g5zdgxcl5akrbpttv078t6qsu5's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfabbq3n1prdr's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfabbq3n1prdr's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass",
+    "SIGN: adopted the approver of a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's newest open and deleted its cookie",
+    "OPEN: a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm's open is this browser's, its holder proved and kept",
+    "OPEN: the lend’s worker runs; handing it the pass"
+  ],
+  "runtime": {
+    "browser": "26.4",
+    "jellyfin": "12.0.0",
+    "source_head": "26889eb35f34647d97d017ac568d72b95ec73aa9"
+  },
+  "search": {
+    "cards": [
+      "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+    ],
+    "said": "Ana’s library: 1 film\n"
+  },
+  "steps": [
+    {
+      "bar": "H1",
+      "name": "Bo",
+      "url": "https://a221vjp6d0axalqf1d93485k0535lfnxqqsxzgcq7kr4radwhmfaf8zzb7p4bm.group.svrnme.test:61249/",
+      "verdict": "passed"
+    },
+    {
+      "approve_as_bo": 403,
+      "asker": "Bo",
+      "bar": "H2",
+      "downloads_before_approval": 0,
+      "request_id": 1,
+      "verdict": "passed"
+    },
+    {
+      "bar": "H3",
+      "bytes": 19549723,
+      "downloaded_session": 19549723,
+      "file": "Copper Lighthouse (2017)/Copper Lighthouse (2017) 720p WEB.mp4",
+      "sha256": "2cfb60a705dc8cf821cf126cc612d70451bdebe0da353672a1022a87aa6671f1",
+      "verdict": "passed"
+    },
+    {
+      "after": {
+        "cards": [
+          "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+        ],
+        "said": "Ana’s library: 1 film\n"
+      },
+      "bar": "H4",
+      "before": {
+        "cards": [],
+        "said": "Ana’s library: nothing by that name\n"
+      },
+      "verdict": "passed"
+    },
+    {
+      "bar": "H5",
+      "item": "2a532d840ab44a464174bb3b56b6811d",
+      "seek": {
+        "at": 37.82,
+        "ms": 3549,
+        "pct": 50,
+        "target": 37.5
+      },
+      "user": "bo",
+      "verdict": "passed"
+    },
+    {
+      "bar": "H6",
+      "removed": {
+        "refused": "removed",
+        "status": 403
+      },
+      "stranger": "refused",
+      "stream_cut_ms": 1002,
+      "verdict": "passed"
+    },
+    {
+      "bar": "H7",
+      "owner_credentials_checked": 5,
+      "verdict": "passed"
+    },
+    {
+      "bar": "H8",
+      "fixture": "metadata, Torznab and tracker",
+      "people": "programs on one host",
+      "verdict": "passed"
+    }
+  ],
+  "versions": {
+    "engine": "webkit",
+    "images": {
+      "holyarrs": [
+        "docker.io/holyarrs/holyarrs@sha256:3f7840f6e6756a53001f7e95fa53b00983e6c2d23acb614e824841bb36769ddd",
+        "docker.io/holyarrs/holyarrs@sha256:eaa508b014809dd555861abc636f7622685f7eff65037ddecf696daf5ef030b7"
+      ],
+      "node": [
+        "docker.io/library/node@sha256:932a44adcdb8f5dfbf00f00eb38da8d22b450b2ad258b6d1b2319beca823bfbd",
+        "docker.io/library/node@sha256:be8204d4bd327363357f532187b752ff62759c31bedf98e9e18fc08c9cbd605c"
+      ],
+      "qbit": [
+        "lscr.io/linuxserver/qbittorrent@sha256:c9990949e968e99333f47f49da7d16e81ba6e1469c8c46807a65b984c9e8b6ff",
+        "lscr.io/linuxserver/qbittorrent@sha256:ec617012ed13ff9f3287cbb48be54112446de2b4e6250926af96fe6abc63f728"
+      ]
+    },
+    "observed": {
+      "browser": "26.4",
+      "jellyfin": "12.0.0",
+      "source_head": "26889eb35f34647d97d017ac568d72b95ec73aa9"
+    },
+    "svrngs_package": "0.1.0"
+  }
+}

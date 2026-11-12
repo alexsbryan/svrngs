@@ -56,7 +56,8 @@ a claim — canon's rule for its own ledger too (`~/dev/canon` `a6960fc`,
 **And the apps already exist.** Everything people self-host is a web app on
 a port: Jellyfin and Navidrome for the library, Immich for photos,
 Audiobookshelf and Calibre-Web for books, Nextcloud and Paperless-ngx for
-files, Actual for money, Mealie and Grocy for plans, Home Assistant, and
+files, HolyArrs for requesting additions to a library, Actual for money,
+Mealie and Grocy for plans, Home Assistant, and
 llama-server for a model. Run one on any member's computer, `svrngs share
 <port> --program <name> --group <group>`, and everyone in that group can open it: no port
 opened, no tunnel, nothing for them to install. An app that takes the
@@ -67,7 +68,11 @@ set (`crates/svrngs-node/src/programs/`). An app that keeps its own
 accounts asks each person once. Each serves its pages from its own root, so
 on a phone it needs a page host that gives every app an address of its own,
 as ours does. Which apps are named here, and why others are not yet, is the
-catalogue run's (`demo/runs/catalogue/2026-10-05/`).
+catalogue run's (`demo/runs/catalogue/2026-10-05/`), with HolyArrs's
+request-to-play scene in `demo/holyarrs.md`: ordinary application accounts,
+the lender approving in HolyArrs, then its imported copy found through
+Movie Night and played in Jellyfin. Its local fixture boundary and recorded
+computer and phone-browser runs are `demo/runs/holyarrs/2026-11-10/`.
 
 **What we build:** the platform, and one small reference app per class of
 app, for the next developer to copy and bend: Money, a group's shared book
@@ -567,6 +572,17 @@ one decider). Whether a new version also waits for the house's agreement is
 a house rule canon may configure; svrngs keeps the pin and each person's
 yes. Not yet pinned: an inline `<script>`, bytes from the route, and reading
 another app's acts.
+
+**An unfamiliar app's first open names its boundary.** Beside Open, the computer
+and phone use one wording (`home/question.js::agreed`): this app's own shared
+entries, acting as the person, in the named group. The button itself stays Open;
+there is no second permission ceremony. A creator tries the folder in a group of
+their own, then copies only the finished app to their community's folder. Test
+entries stay in the test group. Removing the published app folder withdraws its
+routes after the removal is carried; shared history remains. The executable
+creator-to-friend scene and the separate human-session bar are
+`demo/creator-to-friend.md`. App-publisher attribution must come from native
+sources, never from whichever computer happens to serve the copy.
 
 **What an app gets — the whole surface, for our apps and a stranger's
 alike:**

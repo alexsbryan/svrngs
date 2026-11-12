@@ -41,19 +41,27 @@ impl Drop for Kept {
     }
 }
 
-/// A failed inspect is kept as a failed observation, not assumed stopped.
+/// Give removes a stopped pod (runtime.rs `stop`). Observe absence through
+/// `pod exists`'s explicit exit 1; an inspect/connection error is not absence.
 fn pod(who: &str) -> Value {
+    let name = format!("{}notebook", prefix(RUN, who));
     match Command::new("podman")
-        .args([
-            "pod",
-            "inspect",
-            "--format",
-            "{{.State}}",
-            &format!("{}notebook", prefix(RUN, who)),
-        ])
+        .args(["pod", "exists", &name])
+        .output()
+    {
+        Ok(o) if o.status.code() == Some(1) => return json!({ "exists": false, "exists_exit": 1 }),
+        Ok(o) if o.status.success() => {}
+        Ok(o) => {
+            return json!({ "could_not_observe": String::from_utf8_lossy(&o.stderr), "exists_exit": o.status.code() })
+        }
+        Err(e) => return json!({ "could_not_observe": e.to_string() }),
+    }
+    match Command::new("podman")
+        .args(["pod", "inspect", "--format", "{{.State}}", &name])
         .output()
     {
         Ok(o) => json!({
+            "exists": true,
             "exit": o.status.code(),
             "state": String::from_utf8_lossy(&o.stdout).trim(),
             "error": String::from_utf8_lossy(&o.stderr).trim(),
