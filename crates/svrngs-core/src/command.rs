@@ -7,7 +7,7 @@ use alloc::string::String;
 use alloc::vec::Vec;
 
 use crate::{actor_of, RingVerifier, Roster, SigningKey};
-use crate::{admit_after, derive_id, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
+use crate::{admit, derive_id, sign_act, ActSet, Admission, Op, OpId, RailAct, SignedOp};
 
 /// Which of the held acts a command's decision reads.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -170,15 +170,15 @@ fn authored<C: Command>(
     a: &Author<'_>,
 ) -> Result<Authored, Refused<C::Refusal>> {
     let actor = actor_of(a.signer);
-    let fold = |acts: &ActSet, known: Option<&OpId>| {
+    let fold = |acts: &ActSet| {
         let read = read::<C>(acts, a.roster);
-        admit_after(&read, &[], a.roster, a.namespace, held.verifier, known)
+        admit(&read, &[], a.roster, a.namespace, held.verifier)
     };
     // The interpreter reads every line, so the store's kept fold of what it
     // holds, which a store keeps only then, is this decision's, and the
     // write folds once (P8).
     let kept = held.kept.filter(|(seed, _)| *seed == a.roster);
-    let before = kept.map_or_else(|| fold(held.acts, None), |(_, kept)| kept.clone());
+    let before = kept.map_or_else(|| fold(held.acts), |(_, kept)| kept.clone());
     tracing::debug!(target: "rail:door", ns = a.namespace, %actor, kept = kept.is_some(), "commit: the fold decided over, the store's kept one when it keeps one");
     settled(&before, a.namespace)?;
     if !before.membership().standing.contains(&actor) {
@@ -187,19 +187,6 @@ fn authored<C: Command>(
         return Err(Refused::NoStanding);
     }
     let acts = command.decide(&before).map_err(Refused::Command)?;
-    // A held Adopt this copy lacks closure lines of decides nothing yet, so
-    // no membership act is written over it (EUDOXIA_JUDGE §2e rule 7).
-    let waits =
-        (acts.iter().any(RailAct::moves_membership)).then_some(&before.membership().decided);
-    if let Some(crate::Decided::Waiting(adopt)) = waits {
-        tracing::debug!(target: "rail:door", ns = a.namespace, %actor, %adopt, "commit refused — the group's Adopt waits on lines this copy lacks");
-        let sources = [crate::authority::AuthorityRef::Act(adopt.clone())].into();
-        let why = Some(crate::authority::SourceFailure::Missing { sources });
-        return Err(Refused::Uncounted(Uncounted {
-            why,
-            ..Default::default()
-        }));
-    }
     if acts.is_empty() {
         tracing::debug!(target: "rail:door", ns = a.namespace, %actor,
             "commit: the decision asks for nothing, so nothing is written");
@@ -210,7 +197,7 @@ fn authored<C: Command>(
     for line in &lines {
         with.insert(line.clone());
     }
-    let after = fold(&with, before.membership().decided.adopted());
+    let after = fold(&with);
     settled(&after, a.namespace)?;
     let ids: Vec<OpId> = lines.iter().map(|l| l.id.clone()).collect();
     command.confirm(&after, &ids).map_err(Refused::Command)?;

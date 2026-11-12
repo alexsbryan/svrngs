@@ -14,8 +14,6 @@ use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 
-use crate::authority::GroupPolicy;
-
 use crate::{
     actor_of, field, sign_message, verify_hex, Device, OpId, Person, Redemption, SigningKey,
 };
@@ -76,19 +74,6 @@ pub struct Asked {
     /// as before.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub person: Option<Person>,
-    /// The group moved to its interpreter by its keeper's Adopt (svrn-docs
-    /// EUDOXIA_JUDGE §2e rule 8), so the joiner's consent covers its device
-    /// as a sources-v1 seed's does. Skipped when false.
-    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
-    pub adopted: bool,
-}
-
-impl Asked {
-    /// The consent a joiner signs: as the seed's `policy` asks, or as a
-    /// sources-v1 seed's once the group moved.
-    pub fn policy(&self, seed: Option<GroupPolicy>) -> Option<GroupPolicy> {
-        seed.or(self.adopted.then_some(GroupPolicy::SourcesV1))
-    }
 }
 
 /// What a joiner presents.

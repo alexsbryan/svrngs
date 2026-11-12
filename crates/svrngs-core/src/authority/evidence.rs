@@ -5,11 +5,11 @@
 //! the [`Membership`] every consumer reads. svrngs's own checks stay here:
 //! line signatures, key well-formedness, and the joiner's consent.
 use super::SourceOffice;
-use super::{AuthorityRef, Judged, LegacyState, Lines};
+use super::{AuthorityRef, Judged, Lines};
 use super::{SourceFailure, SourceFault, SourceMember};
 use crate::membership::{in_rail_order, invites, visiting, voids};
-use crate::{ActSet, ContentHash, Cut, Device, Guest, Membership, Office, OpId, Person, RailAct};
-use crate::{Journaled, Op, RingVerifier, Roster, SignedOp};
+use crate::{Cut, Device, Membership, Office, OpId, Person, RailAct};
+use crate::{Journaled, Op, Roster, SignedOp};
 use alloc::{
     collections::{BTreeMap, BTreeSet},
     string::String,
@@ -23,7 +23,6 @@ impl Vocabulary for Native {
     type Id = OpId;
     type Person = Person;
     type Device = Device;
-    type Hash = ContentHash;
     fn computer(device: &Device) -> bool {
         *device == Device::Computer
     }
@@ -55,10 +54,6 @@ impl SourceRoots {
         let office = seed.members.values().flatten().next();
         Self::genesis(namespace, seed, office.map_or("", String::as_str))
     }
-    /// An adopted group's closure lines that the old fold counted.
-    pub(crate) fn admitted(&self) -> BTreeSet<OpId> {
-        self.model.admitted().cloned().collect()
-    }
     pub(crate) fn genesis(namespace: &str, seed: &Roster, office: &str) -> Judged<Self> {
         let mut members = BTreeMap::new();
         for (person, keys) in &seed.members {
@@ -87,37 +82,8 @@ impl core::ops::Deref for SourceRoots {
     }
 }
 
-pub(super) fn originals<'a>(
-    namespace: &str,
-    held: &'a ActSet,
-    verifier: &dyn RingVerifier,
-) -> (Lines<'a>, BTreeSet<OpId>) {
-    let (mut originals, mut invalid) = (Lines::new(), BTreeSet::new());
-    for op in held.iter() {
-        let id = crate::derive_id(op, namespace);
-        if !verifier.verify(&op.actor, &id, &op.kind.sig) {
-            invalid.insert(id);
-            continue;
-        }
-        // Version is unsigned envelope metadata. Preserve a supported encoding
-        // of this signed body when a peer also sends an unsupported alias.
-        let rank = |op: &Op<SignedOp>| {
-            (
-                !(op.kind.line_version()..=SignedOp::UNDERSTANDS).contains(&op.v),
-                op.v,
-            )
-        };
-        if originals.get(&id).is_none_or(|old| rank(op) < rank(old)) {
-            originals.insert(id, op);
-        }
-    }
-    (originals, invalid)
-}
-
-/// One verified line in the profile's terms. An Admit under an Invite inside
-/// an adoption's closure may carry the old consent: its issuer's computer
-/// may have redeemed before it held the Adopt (§2e rule 6).
-fn statement(namespace: &str, op: &Op<SignedOp>, closure: &BTreeSet<OpId>) -> Statement<Native> {
+/// One verified line in the profile's terms.
+fn statement(namespace: &str, op: &Op<SignedOp>) -> Statement<Native> {
     let act = match &op.kind.act {
         RailAct::Invite {
             until, device_of, ..
@@ -136,11 +102,10 @@ fn statement(namespace: &str, op: &Op<SignedOp>, closure: &BTreeSet<OpId>) -> St
             redemption: invite.as_ref().map(|r| {
                 let message =
                     crate::source_redemption_message(namespace, &r.id, person, key, r.device);
-                let old = closure.contains(&r.id) && r.verifies(namespace, person, key);
                 Redemption {
                     invite: r.id.clone(),
                     device: r.device,
-                    consent: old || crate::verify_hex(key, &message, &r.sig),
+                    consent: crate::verify_hex(key, &message, &r.sig),
                 }
             }),
         },
@@ -192,7 +157,7 @@ impl<'a> NativeAuthority<'a> {
     fn of(roots: &'a SourceRoots, lines: &Lines<'_>, forged: BTreeSet<OpId>) -> Self {
         let held = lines
             .iter()
-            .map(|(id, op)| (id.clone(), statement(&roots.namespace, op, roots.closure())))
+            .map(|(id, op)| (id.clone(), statement(&roots.namespace, op)))
             .collect();
         let evidence = Evidence { held, forged };
         Self { roots, evidence }
@@ -251,26 +216,8 @@ impl<'a> NativeAuthority<'a> {
             AuthorityRef::Act(id) if b.first == *key => Some((key.clone(), at(id))),
             _ => None,
         };
-        // An adopted group's closure is never projected again (§2e rule 5):
-        // its starting state is the pin's, and only later lines move it.
-        let start = (self.roots.adoption()).map_or_else(LegacyState::default, |a| a.state.clone());
-        let inside = |id: &OpId| self.roots.closure().contains(id);
-        let admitted_at = bound.iter().filter_map(joined).chain(start.joined);
+        let admitted_at = bound.iter().filter_map(joined);
         let mut visits = BTreeMap::new();
-        for (id, stopped) in start.visits {
-            if let Some(op) = lines.get(&id) {
-                let RailAct::Visit(visit) = &op.kind.act else {
-                    continue;
-                };
-                let guest = Guest {
-                    host: op.actor.clone(),
-                    at: op.ts_unix,
-                    visit: visit.clone(),
-                    stopped,
-                };
-                visits.insert(id, guest);
-            }
-        }
         let mut m = Membership {
             bindings: bound
                 .iter()
@@ -289,9 +236,6 @@ impl<'a> NativeAuthority<'a> {
             cut: cut.collect(),
             counted,
             uncounted,
-            signers: start.signers,
-            holders: start.holders,
-            meets: start.meets,
             ..Membership::default()
         };
         let all = in_rail_order(lines.iter().map(|(id, op)| (id, *op)));
@@ -304,15 +248,12 @@ impl<'a> NativeAuthority<'a> {
                 .len()
         };
         for (id, op) in all.iter().filter(|(id, _)| m.counted.contains(*id)) {
-            if !inside(id) {
-                visiting(&mut visits, (id, op), &m.cut, &m.bindings, &first, &people);
-            }
+            visiting(&mut visits, (id, op), &m.cut, &m.bindings, &first, &people);
             match &op.kind.act {
                 RailAct::Relay { url: Some(url) } => {
                     drop(m.relays.insert(op.actor.clone(), url.clone()))
                 }
                 RailAct::Relay { url: None } => drop(m.relays.remove(&op.actor)),
-                _ if inside(id) => {}
                 RailAct::Signers { .. } => drop(m.signers.get_or_insert((*id).clone())),
                 RailAct::Holders { .. } => drop(m.holders.get_or_insert((*id).clone())),
                 RailAct::Meets { relays } => m.meets = Some(relays.clone()),
@@ -325,9 +266,9 @@ impl<'a> NativeAuthority<'a> {
     }
 }
 
-/// A group's membership by its interpreter (EUDOXIA_JUDGE §2a, §2e): its
-/// facts over the lines admission verified, chained and granted, from the
-/// seed's roots or an adoption's, folded once and projected once. Roots
+/// A group's membership by its interpreter (EUDOXIA_JUDGE §2a): its facts
+/// over the lines admission verified, chained and granted, from the seed's
+/// roots, folded once and projected once. Roots
 /// that cannot be given stand nobody up, said at warn: never a legacy fold
 /// in their place.
 pub(crate) fn interpreted(

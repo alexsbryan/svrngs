@@ -74,34 +74,7 @@ pub fn router(state: RingInbound) -> axum::Router {
             post(ring_sync).layer(DefaultBodyLimit::max(MAX_REQUEST_BODY_BYTES)),
         )
         .route("/internal/ring/live", post(ring_live))
-        .route(READY_ROUTE, post(ready))
         .with_state(state)
-}
-
-/// Where a group's keeper asks this computer to get ready to move it.
-pub const READY_ROUTE: &str = "/internal/ring/ready";
-
-/// `POST /internal/ring/ready`: a keeper's Move asks this computer to get
-/// ready (svrn-docs EUDOXIA_JUDGE §2e §4). It signs a Ready of its own,
-/// only when the asker keeps the group as this computer reads it.
-async fn ready(
-    State(state): State<RingInbound>,
-    dialer: Option<Extension<Dialer>>,
-    Json(asked): Json<crate::removal::LeaveAsk>,
-) -> Response {
-    // The keeper stands: an asker on no iroh stream, or not the keeper, is
-    // refused alike.
-    let (ns, asker) = (asked.group.as_str(), dialer.map(|Extension(d)| d.actor()));
-    let keeps = asker.is_some() && state.rail.register(ns).is_ok_and(|r| r.keeper == asker);
-    let signed = keeps && matches!(state.rail.commit(ns, &crate::Ready), Ok(Ok(_)));
-    tracing::debug!(target: "rails", namespace = ns, ?asker, keeps, signed, "ring: ready — a Ready signed for the group's keeper, or refused");
-    match signed {
-        true => StatusCode::OK.into_response(),
-        false => err(
-            StatusCode::FORBIDDEN,
-            format!("{ns} is not readied here for {asker:?}"),
-        ),
-    }
 }
 
 /// The asker's key and its row of the register, to serve it; or why it may

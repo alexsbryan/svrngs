@@ -66,8 +66,6 @@ mod doc;
 mod life;
 // Keeping a group handed on: a hand-on, its Accept on a home page, a leave.
 mod keeping;
-// Moving an old group: its keeper's Move, then a hand-on that waits.
-mod moving;
 // Films (demo/a.md): two people play and seek Sam's lent Jellyfin at once.
 mod films;
 // Movie night (demo/b.md): a newcomer from the link to the film on a TV.

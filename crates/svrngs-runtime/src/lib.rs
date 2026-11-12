@@ -222,18 +222,6 @@ impl RingRail {
         }
     }
 
-    /// The Adopt this computer may sign in `namespace` now, over every line
-    /// it holds, or why not (EUDOXIA_JUDGE §2e): what Move writes.
-    pub fn adoption(
-        &self,
-        namespace: &str,
-    ) -> Result<Result<authority::LegacyAdoption, authority::Unlawful>, RailError> {
-        let journal = self.journal(namespace)?;
-        let (held, roster) = (ActSet::of(&journal.read()?.0), journal.roster_file()?);
-        let me = actor_of(self.signer());
-        Ok(authority::adoption(&held, &roster, namespace, &Ed25519Verifier, &me))
-    }
-
     /// This computer's newest `Invite` naming the link's key `link`, the
     /// group it is in, and, for a device link, the person it adds a device
     /// of, by name (bash-devices).

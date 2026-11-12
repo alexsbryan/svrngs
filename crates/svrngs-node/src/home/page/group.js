@@ -37,7 +37,6 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  * @property {'fallback' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
  * @property {true} [vacates] whether they keep its order of removals and leaving without handing it on leaves nobody keeping it (a group made before sources-v1 refuses that leave instead)
  * @property {{ to_you: boolean, person: string | null }} [offered] a hand-on of its order of removals waiting on its Accept, to this computer or from it, and who is at its other end
- * @property {'move' | 'phone' | 'waits'} [moves] a group made before sources-v1: Move offered here, kept on this person's phone, or this copy waiting on part of its record (surface.rs `Moves`)
  */
 
 /**

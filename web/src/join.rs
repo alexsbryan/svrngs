@@ -120,7 +120,7 @@ pub fn redemption(key: Vec<u8>, token: String, asked: String, name: String) -> R
         &asked.invite,
         &Person::from(name),
         Device::Browser,
-        asked.policy(seed.policy()),
+        seed.policy(),
     );
     emit(&format!(
         "JOIN: redeeming the link as {:?}, {}, a browser's key",

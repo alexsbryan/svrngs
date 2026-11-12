@@ -103,7 +103,6 @@ use alloc::vec::Vec;
 
 use crate::{command::AHEAD_SECS, op::Op};
 
-use crate::authority::AuthorityChange as Change;
 use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp, Visit};
 
 /// How long a visit may be, from its act's own time (GUESTS §3.6): the
@@ -295,29 +294,18 @@ impl Office {
     }
 }
 
-/// A group's one decider (EUDOXIA_JUDGE §2e): the old fold until its
-/// keeper's Adopt is lawful, the interpreter after, and from the seed for a
-/// group founded sources-v1. `Waiting`: the old fold, while a held Adopt
-/// lacks lines of its closure here, so this copy writes no membership act.
+/// A group's one decider, as its seed's policy picks it: the old fold, or
+/// for a group founded sources-v1 the interpreter.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub enum Decided {
     #[default]
     Legacy,
-    Waiting(OpId),
     Founded,
-    Adopted(OpId),
 }
 
 impl Decided {
     pub fn interpreted(&self) -> bool {
-        matches!(self, Self::Founded | Self::Adopted(_))
-    }
-
-    pub fn adopted(&self) -> Option<&OpId> {
-        match self {
-            Self::Adopted(id) => Some(id),
-            _ => None,
-        }
+        matches!(self, Self::Founded)
     }
 }
 
@@ -898,27 +886,6 @@ fn walk(
 }
 
 impl RailAct {
-    /// An old group's Adopt, what it pins (EUDOXIA_JUDGE §2e).
-    pub fn adoption(&self) -> Option<&crate::authority::LegacyAdoption> {
-        match self {
-            RailAct::Authority {
-                change: Change::Adopt { adoption },
-            } => Some(adoption),
-            _ => None,
-        }
-    }
-
-    /// A computer's Ready before its group moves (§2e rule 1): the tips it
-    /// held and the keeper it saw.
-    pub fn ready(&self) -> Option<(&BTreeSet<OpId>, &str)> {
-        match self {
-            RailAct::Authority {
-                change: Change::Ready { tips, keeper },
-            } => Some((tips, keeper)),
-            _ => None,
-        }
-    }
-
     /// The key a `Remove` names, asked or cut; `None` for any other act.
     pub fn names(&self) -> Option<&str> {
         match self {
@@ -966,14 +933,14 @@ impl RailAct {
 /// caller that folds standing from fewer acts than it holds
 /// (svrngs-runtime's register) keeps these, and [`RailAct::names`] is how
 /// it tells a key named as it goes. The interpreter reads every act, for a
-/// sources-v1 seed or once an Adopt is held: an authority act counts only
-/// with its author's whole chain held (EUDOXIA_JUDGE §2c, G2).
+/// sources-v1 seed: an authority act counts only with its author's whole
+/// chain held (EUDOXIA_JUDGE §2c, G2).
 pub fn standing_reads<'a>(
     ops: &'a [Op<SignedOp>],
     seed: &Roster,
 ) -> impl Iterator<Item = &'a Op<SignedOp>> {
     let named: BTreeSet<&str> = ops.iter().filter_map(|op| op.kind.act.names()).collect();
-    let whole = seed.policy.is_some() || ops.iter().any(|op| op.kind.act.adoption().is_some());
+    let whole = seed.policy.is_some();
     let kept = |a: &RailAct| a.moves_membership() || matches!(a, RailAct::Correct { .. });
     ops.iter()
         .filter(move |op| whole || kept(&op.kind.act) || named.contains(op.stands_as()))

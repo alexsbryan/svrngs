@@ -100,15 +100,5 @@ export function Leave({ g: group, rows, me, home }) {
   const stops = `${vacates}Leaving ${name} stops it reaching you, and stops what you lend reaching its people. What you have of it stays on this computer, its folder too. Rejoining needs a new invitation, and this computer can’t rejoin yet. `;
   /** @type {[On, string, Body, string]} */
   const leaving = ['leave', '/v1/leaves', at, `Leave ${name}`];
-  // A group made before sources-v1, moved by whoever keeps it (removal.rs `adopt`).
-  const MOVES = {
-    move: `${name} keeps who decides removals the way svrngs first did. Move it, and handing that on waits until the other person accepts it. Every computer in ${name} needs the newest svrngs, and has to be on while it moves: `,
-    phone: `You keep the order of removals in ${name} on your phone. To move ${name}, hand it to one of your computers first.`,
-    waits: `This computer is still getting part of ${name}’s record, so it changes nobody in ${name} until then. Keep svrngs running; it carries on by itself.`,
-  };
-  const moving =
-    group.moves === 'move'
-      ? part(MOVES.move, '', ['move', '/v1/adopts', at, `Move ${name}`])
-      : group.moves && html`<p>${MOVES[group.moves]}</p>`;
-  return html`${moving} ${taking} ${handOn} ${part(stops, '', leaving, 'leave')}`;
+  return html`${taking} ${handOn} ${part(stops, '', leaving, 'leave')}`;
 }

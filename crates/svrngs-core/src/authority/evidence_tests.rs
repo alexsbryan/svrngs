@@ -5,6 +5,36 @@
 //! pass before release 1 moved them here unchanged.
 use super::*;
 use crate::authority::GroupPolicy;
+use crate::{ActSet, RingVerifier};
+
+/// Moved here from `evidence.rs` with adoption (release 2): only these
+/// laws read lines this way now.
+fn originals<'a>(
+    namespace: &str,
+    held: &'a ActSet,
+    verifier: &dyn RingVerifier,
+) -> (Lines<'a>, BTreeSet<OpId>) {
+    let (mut originals, mut invalid) = (Lines::new(), BTreeSet::new());
+    for op in held.iter() {
+        let id = crate::derive_id(op, namespace);
+        if !verifier.verify(&op.actor, &id, &op.kind.sig) {
+            invalid.insert(id);
+            continue;
+        }
+        // Version is unsigned envelope metadata. Preserve a supported encoding
+        // of this signed body when a peer also sends an unsupported alias.
+        let rank = |op: &Op<SignedOp>| {
+            (
+                !(op.kind.line_version()..=SignedOp::UNDERSTANDS).contains(&op.v),
+                op.v,
+            )
+        };
+        if originals.get(&id).is_none_or(|old| rank(op) < rank(old)) {
+            originals.insert(id, op);
+        }
+    }
+    (originals, invalid)
+}
 
 impl SourceRoots {
     pub fn from_seed(seed: &crate::seed::Seed) -> Judged<Self> {

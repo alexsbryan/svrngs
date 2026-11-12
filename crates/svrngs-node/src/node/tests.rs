@@ -389,28 +389,6 @@ fn a_computer_answering_an_older_version_is_named_older() {
     assert!(matches!(answered("cy", b"not json"), Answered::Refused));
 }
 
-/// Mixed versions wait (svrn-docs EUDOXIA_JUDGE §2e §1, §6): a keeper's
-/// Move goes on past a computer only when its answer reads line version 15,
-/// so one answering 6, or not at all, is named (`Outcome::Behind`) and
-/// nothing is signed. Planted: `removal::moves` made true for every answer.
-#[test]
-fn a_keepers_move_waits_on_a_computer_answering_version_6() {
-    let at = |version: u32| {
-        let body = serde_json::json!({ "version": version, "lends": [] });
-        answered("bo", &serde_json::to_vec(&body).unwrap())
-    };
-    assert!(
-        matches!(at(6), Answered::Lends(..)),
-        "6 is read for its lends"
-    );
-    assert!(
-        !crate::removal::moves(&at(6)),
-        "but its keeper's Move waits on it"
-    );
-    assert!(!crate::removal::moves(&Answered::Unanswered));
-    assert!(crate::removal::moves(&at(crate::version::VERSION)));
-}
-
 /// The relayed direction of the scope fence (LENDING_SCOPE §"Updates,
 /// migration and mixed versions"): a computer still on 4 answers its lends
 /// unscoped, every one to every group; this computer names it older and

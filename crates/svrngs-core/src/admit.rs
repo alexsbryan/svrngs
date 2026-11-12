@@ -68,7 +68,7 @@ use crate::op::{Op, OpId};
 use crate::sig::derive_id;
 
 use crate::payload::Payload;
-use crate::{authority::SourceRoots, Person, RailAct, RingVerifier, Roster, SignedOp};
+use crate::{authority::SourceRoots, Decided, Person, RailAct, RingVerifier, Roster, SignedOp};
 
 /// Something the rail could not account for. Never fatal, always reported.
 ///
@@ -370,9 +370,6 @@ pub struct Admission {
     /// Each actor's newest acts held: chained, and named as `prev` by no
     /// other act of theirs. What a removal names (U7).
     pub(crate) tips: BTreeMap<String, Vec<OpId>>,
-    /// The old fold's bytes a lawful Adopt pins, when this fold judged it
-    /// (not when an earlier fold had): kept beside the group (§2e §3).
-    pinned: Option<Vec<u8>>,
 }
 
 impl Admission {
@@ -401,12 +398,6 @@ impl Admission {
     /// ```
     pub fn membership(&self) -> &crate::membership::Membership {
         &self.membership
-    }
-
-    /// The old fold's bytes the group's Adopt pins, when this fold judged
-    /// it lawful now.
-    pub fn pinned(&self) -> Option<&[u8]> {
-        self.pinned.as_deref()
     }
 
     /// `actor`'s newest acts this copy holds, by id (U7).
@@ -474,20 +465,6 @@ pub fn admit(
     namespace: &str,
     verifier: &dyn RingVerifier,
 ) -> Admission {
-    admit_after(acts, skipped, roster, namespace, verifier, None)
-}
-
-/// [`admit`], told the Adopt an earlier fold of this group found lawful:
-/// lawfulness is a function of the Adopt and its closure alone, so it is
-/// not judged again (EUDOXIA_JUDGE §2e).
-pub fn admit_after(
-    acts: &crate::ActSet,
-    skipped: &[crate::op::SkippedLine],
-    roster: &Roster,
-    namespace: &str,
-    verifier: &dyn RingVerifier,
-    known: Option<&OpId>,
-) -> Admission {
     use crate::op::SkippedLine;
 
     let mut gaps: Vec<RailGap> = skipped
@@ -533,14 +510,19 @@ pub fn admit_after(
         authentic.insert(derived, op);
     }
 
-    // The group's one decider (EUDOXIA_JUDGE §2e): the old fold holds the
-    // new kinds without meaning, but a Ready, which says nothing it reads.
-    let (decided, roots, pinned) =
-        crate::authority::decider(roster, &authentic, namespace, verifier, known);
+    // The group's one decider: the seed's policy. The old fold holds the
+    // new kinds without meaning.
+    let (decided, roots) = match roster.policy {
+        Some(_) => (
+            Decided::Founded,
+            Some(SourceRoots::seeded(roster, namespace)),
+        ),
+        None => (Decided::Legacy, None),
+    };
+    tracing::debug!(target: "rail:admit", namespace, ?decided, "admit: the seed's policy picks the decider");
     authentic.retain(|id, op| {
-        let ready = op.kind.act.ready().is_some();
         let new = matches!(op.kind.act, RailAct::Authority { .. } | RailAct::Accept { .. });
-        let held = decided.interpreted() || ready || !new;
+        let held = decided.interpreted() || !new;
         if !held {
             tracing::debug!(target: "rail:admit", %id, actor = %op.actor,
                 "source: held without authority — a legacy view cannot activate source-aware meaning");
@@ -548,12 +530,7 @@ pub fn admit_after(
         }
         held
     });
-    let cut_over = (roots.as_ref()).map(|roots| {
-        roots
-            .as_ref()
-            .map(SourceRoots::admitted)
-            .unwrap_or_default()
-    });
+    let cut_over = roots.is_some().then(BTreeSet::new);
 
     // ── a holder: what the pass on its line grants (capability-signed) ──
     //
@@ -590,7 +567,7 @@ pub fn admit_after(
     // The signed cutover names old history by hash, never by a forgeable clock.
     // Apply it before membership/voids so a rejected correction has no effect.
     // A sources-v1 group starts cut over (EUDOXIA_JUDGE §2c, G3): it covers
-    // none; an adopted group's covers its admitted closure.
+    // none.
     let holders = |o: &&Op<SignedOp>| matches!(o.kind.act, RailAct::Holders { .. });
     let frozen = match cut_over.clone() {
         Some(covered) => Some(covered),
@@ -917,7 +894,6 @@ pub fn admit_after(
         membership: m,
         synced,
         tips,
-        pinned,
     }
 }
 

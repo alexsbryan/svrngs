@@ -63,7 +63,7 @@ use crate::rail::{namespace_of, refused_as, standing_of, RailQuery};
 use crate::ring_routes::err;
 use crate::seed::Seed;
 use crate::{origin::origin, session::AS_PATH};
-use crate::{register::RemovalSaid, Decided, Device, Office, Person};
+use crate::{register::RemovalSaid, Office, Person};
 
 /// The guide to building an app, docs/guide/build.md, in the binary, so
 /// `svrngs guide` prints it to an agent holding only the command (svrn-docs
@@ -207,21 +207,6 @@ struct Held {
     /// Absent when not, as a legacy group refuses that leave instead.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     vacates: bool,
-    /// What the home page says of moving a group made before sources-v1
-    /// (svrn-docs EUDOXIA_JUDGE §2e §4); absent when it says nothing.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    moves: Option<Moves>,
-}
-
-/// Moving an old group, as its home page offers it: Move, kept by this
-/// computer; hand it to a computer first, kept on this person's phone; or
-/// this copy waits on part of its record before it changes anyone.
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "snake_case")]
-enum Moves {
-    Move,
-    Phone,
-    Waits,
 }
 
 /// A waiting hand-on as the home page says it (`Office::Pending`).
@@ -253,7 +238,7 @@ async fn groups(State(at): State<Asking>) -> Response {
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let (person, removed, removals, left, keeps, visiting, offered, vacates, moves) = match rail
+        let (person, removed, removals, left, keeps, visiting, offered, vacates) = match rail
             .register(&id)
         {
             Ok(r) => {
@@ -277,12 +262,6 @@ async fn groups(State(at): State<Asking>) -> Response {
                 let left = (r.removals.iter()).any(|x| x.key == me && x.said == RemovalSaid::Left);
                 let others = (r.members.values()).any(|m| Some(&m.person_key) != person_of(me));
                 let person = r.members.get(me).map(|m| m.person.clone());
-                let moves = match (&r.decided, keeper.map(|m| m.device)) {
-                    (Decided::Waiting(_), _) => Some(Moves::Waits),
-                    (Decided::Legacy, _) if r.keeper.as_deref() == Some(me) => Some(Moves::Move),
-                    (Decided::Legacy, Some(Device::Browser)) if keeps => Some(Moves::Phone),
-                    _ => None,
-                };
                 (
                     person,
                     Some(r.removed.contains_key(me)),
@@ -292,19 +271,18 @@ async fn groups(State(at): State<Asking>) -> Response {
                     visiting,
                     offered,
                     keeps && v1 && others,
-                    moves,
                 )
             }
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None, None, None, None, None, None, false, None)
+                (None, None, None, None, None, None, None, false)
             }
         };
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
         let waiting = at.door.folders.waiting_in(&id);
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps, ?offered, ?moves,
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps, ?offered,
             removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
             fallback: at.host.at_fallback(&id),
@@ -321,7 +299,6 @@ async fn groups(State(at): State<Asking>) -> Response {
             waiting,
             offered,
             vacates,
-            moves,
         });
     }
     // This computer's key, so its home page tells its own devices from

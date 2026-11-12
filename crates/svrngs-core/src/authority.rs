@@ -9,16 +9,12 @@ use crate::{
 use alloc::{collections::BTreeMap, format, vec::Vec};
 use eudoxia::*;
 mod evidence;
-mod legacy;
 mod sources;
 pub(crate) use evidence::interpreted;
 pub use evidence::{Native, NativeAuthority, SourceRoots};
-pub(crate) use legacy::decider;
-pub use legacy::{adoption, legacy_result_pin, Unlawful};
 pub use sources::{
-    AuthorityChange, AuthorityRef, GroupPolicy, GuestSlot, LegacyAdoption, LegacyState,
-    OfficeConflict, OfficeDispute, PeopleSnapshot, RecoveryChoice, SourceFailure, SourceFault,
-    SourceMember, SourceOffice,
+    AuthorityChange, AuthorityRef, GroupPolicy, GuestSlot, OfficeConflict, OfficeDispute,
+    PeopleSnapshot, RecoveryChoice, SourceFailure, SourceFault, SourceMember, SourceOffice,
 };
 
 pub type Lines<'a> = BTreeMap<OpId, &'a Op<SignedOp>>;

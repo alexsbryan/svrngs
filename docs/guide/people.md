@@ -123,21 +123,6 @@ it after you, then leave:* with a list of names and **Hand it on**.
 A group made before this svrngs hands it on at once, with no yes:
 *Bo now decides who is removed from House, instead of you.*
 
-## Move a group made before this svrngs
-
-If you decide who is removed from such a group, your home page offers
-**Move House**. Moving it makes handing on wait for the other person's yes,
-as above. Every computer in House needs the newest svrngs and has to be on
-while it moves; if one isn't, nothing changes and the page says whose. You
-can also run, while svrngs is running:
-
-```
-~/.local/bin/svrngs adopt House
-```
-
-If you decide it on your phone, hand it to one of your computers first. A
-group that can't move keeps working as it is.
-
 If you leave while you decide who is removed, nobody does until the others
 agree together on who; svrngs says so when you leave.
 

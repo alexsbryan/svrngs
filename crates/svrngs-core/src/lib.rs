@@ -120,7 +120,7 @@ pub use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 
 pub use act_set::ActSet;
-pub use admit::{admit, admit_after, body_json, Admission, AdmittedOp, GapClass, RailGap};
+pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
 pub use authority::{approve_in_open, ApprovalFault};
 pub use command::{
     commit, Author, Authored, Command, Held, Reads, Recorded, Refused, Store, Tip, Uncounted,
@@ -130,8 +130,8 @@ pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    Adopt, Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Ready, Redeem,
-    RedeemRefusal, RelayAt, Removal, RemovalRefusal, Take,
+    Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt,
+    Removal, RemovalRefusal, Take,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
@@ -918,8 +918,6 @@ mod tests;
 #[cfg(test)]
 mod tests_sealing;
 
-#[cfg(test)]
-mod tests_adoption;
 #[cfg(test)]
 mod tests_authority;
 #[cfg(test)]

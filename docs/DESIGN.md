@@ -2070,38 +2070,7 @@ from the journal waits in PLAN §2.
   by everyone else's yes. The write side asks the same interpreter whether
   each line it would write counts (`Refused::Uncounted`). A group made
   before keeps the legacy fold below, which has no recovery inside a group
-  (`crates/svrngs-core/src/membership.rs`, its module docs the rule), until
-  its keeper moves it. A group is on one decider at a time, and
-  `authority::decider` (`crates/svrngs-core/src/authority/legacy.rs`) is
-  that switch's one home; every other consumer reads its answer
-  (`Membership::decided`):
-  - **Move.** The keeper presses Move on the home page, or runs `svrngs
-    adopt <group>`, on a computer. Every other standing computer must
-    answer that it reads line version 15 (`version.rs` step 7), else the
-    move waits and names it; each exchanges, signs a `Ready` (the tips it
-    holds and the keeper it sees; it consents to nothing) and is shown to
-    hold every line; then the keeper's computer signs one `Adopt`.
-  - **What an Adopt is.** Its closure is every line on the `prev` chains of
-    its heads and of its own `prev`. It is lawful only if, over that closure
-    alone: its author is the old fold's keeper, stands as a computer, and
-    would count as keeper at the Adopt's place (no hand-on of its own
-    before it); its chain does not fork; the closure is held whole, below
-    line version 15 but for Readies, settled, with no cut through a line
-    outside it; every standing computer signed a Ready naming the author;
-    and everything it pins (members, cuts, the old fold's uncounted lines,
-    its starting state, and a hash of the old fold's exact bytes) equals
-    this computer's own old fold. Nothing held later changes the answer.
-    An Adopt by a key that never held the office is not read.
-  - **After it.** The interpreter decides, from the pinned result as its
-    roots. Lines inside the closure keep the old fold's verdicts and are
-    never judged again; lines outside are judged by the interpreter alone.
-    A later fork by the adopter, or a rival Adopt, freezes the office; the
-    group never returns to the old fold. A computer missing closure lines
-    writes no membership act until it has them, and its home page says so.
-    The pinned bytes are kept beside the group once verified.
-  - **What cannot move.** A keeper's fork, a fold that does not settle, or
-    pruned history: the group works on as it is, and only making it again
-    moves it.
+  (`crates/svrngs-core/src/membership.rs`, its module docs the rule).
 
   The legacy fold:
   - The keeper at the seed is the maker's key, moved only by the keeper's own

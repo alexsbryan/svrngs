@@ -64,12 +64,11 @@ fn a_new_group_commits_its_source_policy_in_its_actual_seed_identity() {
     assert!(authority::SourceRoots::from_seed(&legacy).is_err());
     let roots = authority::SourceRoots::from_seed(&source).unwrap();
     assert_eq!(roots.namespace(), source.id());
-    assert_eq!(roots.epoch(), &authority::AuthorityRef::Genesis);
     let held = ActSet::default();
     let graph = authority::NativeAuthority::new(&roots, &held, &Ed25519Verifier);
     assert_eq!(graph.members().len(), 1);
     assert!(
-        matches!(graph.office(), authority::SourceOffice::Held { key: holder, .. } if holder == actor_of(&key))
+        matches!(graph.office(), authority::SourceOffice::Held { key: holder, source: authority::AuthorityRef::Genesis } if holder == actor_of(&key))
     );
     assert_ne!(source.id(), legacy.id());
     // Independent Python blake3 producer, recorded in the source-graph run.
@@ -93,46 +92,4 @@ fn a_new_group_commits_its_source_policy_in_its_actual_seed_identity() {
     );
     file["policy"] = serde_json::json!("sources_v999");
     assert!(seed::Seed::from_text(&serde_json::to_string(&file).unwrap()).is_err());
-}
-
-#[test]
-fn legacy_adoption_is_original_signed_native_meaning_not_an_unsigned_export_flag() {
-    let key = SigningKey::from_bytes(&[1; 32]);
-    let adoption = serde_json::json!({
-        "op":"authority", "change":{
-            "kind":"adopt", "adoption":{
-                "policy":"sources_v1", "heads":[], "uncounted":[], "out":{},
-                "result": ContentHash::of(b"the exact old result"),
-                "members":{
-                    actor_of(&key): {
-                        "first":actor_of(&key), "person":"ana", "device":"computer",
-                        "source":{"kind":"genesis"}
-                    }
-                },
-                "office":actor_of(&key),
-                "state":{"joined":{}, "meets":null, "signers":null, "holders":null, "visits":{}}
-            }
-        }
-    });
-    let act: RailAct = serde_json::from_value(adoption.clone())
-        .expect("the native signature binds the exact proposed adoption");
-    let line = sign_act(&key, "legacy-adoption", 10, 0, None, act, None, None, None);
-    assert_eq!(line.v, AUTHORITY_LINE_VERSION);
-    let mut changed = adoption;
-    changed["change"]["adoption"]["uncounted"] =
-        serde_json::json!([crate::tests_support::stray_id(99)]);
-    let changed: RailAct = serde_json::from_value(changed).unwrap();
-    let changed = sign_act(
-        &key,
-        "legacy-adoption",
-        10,
-        0,
-        None,
-        changed,
-        None,
-        None,
-        None,
-    );
-    assert_ne!(changed.id, line.id);
-    assert!(!Ed25519Verifier.verify(&changed.actor, &changed.id, &line.kind.sig));
 }

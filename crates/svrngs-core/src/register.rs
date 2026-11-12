@@ -9,7 +9,6 @@ use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 
-use crate::authority::{AuthorityChange, Unlawful};
 use crate::command::{Command, Reads};
 use core::convert::Infallible;
 
@@ -428,55 +427,6 @@ impl Command for MeetsAt {
         let counted = after.membership().meets_at().as_ref() == Some(&self.0);
         tracing::debug!(target: "register", counted, "meets: the fold's verdict, which counts only the keeper's");
         counted.then_some(()).ok_or(HandOnRefusal::NotKeeper)
-    }
-}
-
-/// This computer's word when its group's keeper asks it to get ready to
-/// move (EUDOXIA_JUDGE §2e rule 1): it reads line version 15, holds these
-/// tips, and sees this key as keeper. It reports facts and consents to
-/// nothing, so its computer signs it on its own.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Ready;
-
-impl Command for Ready {
-    type Refusal = Unlawful;
-    const READS: Reads = Reads::All;
-
-    /// Refused [`Unlawful::NotKeeper`] when the fold names no keeper: a
-    /// Ready names the keeper it sees, never an empty one.
-    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Unlawful> {
-        let tips = before.tips.values().flatten().cloned().collect();
-        let keeper = before.membership().keeper.clone();
-        tracing::debug!(target: "register", ?keeper, "ready: the tips this computer holds and the keeper it sees");
-        let change = AuthorityChange::Ready {
-            tips,
-            keeper: keeper.ok_or(Unlawful::NotKeeper)?,
-        };
-        Ok(vec![RailAct::Authority { change }])
-    }
-}
-
-/// The keeper's Adopt, as [`crate::authority::adoption`] drew it after its
-/// keeper pressed Move: written only when the fold with it is adopted, so
-/// the write side is the replay.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Adopt(pub crate::authority::LegacyAdoption);
-
-impl Command for Adopt {
-    type Refusal = Unlawful;
-    const READS: Reads = Reads::All;
-
-    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Unlawful> {
-        let adoption = self.0.clone();
-        let change = AuthorityChange::Adopt { adoption };
-        Ok(vec![RailAct::Authority { change }])
-    }
-
-    fn confirm(&self, after: &Admission, written: &[OpId]) -> Result<(), Unlawful> {
-        let decided = &after.membership().decided;
-        tracing::debug!(target: "register", ?decided, "adopt: the fold's verdict");
-        let adopted = decided.adopted().is_some_and(|id| written.contains(id));
-        adopted.then_some(()).ok_or(Unlawful::Pin)
     }
 }
 

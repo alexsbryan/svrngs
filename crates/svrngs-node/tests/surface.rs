@@ -322,7 +322,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null, "moves": "move" }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }

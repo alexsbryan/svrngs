@@ -107,9 +107,6 @@ struct Held {
     /// folded under: what the next commit decides over, and what the
     /// register reads, until a line enters (P8: one fold per change).
     kept: Option<(Roster, svrngs_core::Admission)>,
-    /// The Adopt a fold here found lawful: lawfulness turns on that line and
-    /// its closure alone, so later folds do not judge it again (§2e).
-    adopted: Option<OpId>,
 }
 
 /// Whether a fold of standing reads `op` whoever a `Remove` names: asked
@@ -354,32 +351,21 @@ impl RingJournal {
             return Ok((register.clone(), true));
         }
         let held = &log.held;
-        // The interpreter reads the whole log (G2), for a sources-v1 seed or
-        // once an Adopt is held: the kept fold, else one made now and kept.
-        let whole = seed.policy.is_some() || held.membership.iter().any(|op| op.kind.act.adoption().is_some());
-        let register = match whole {
+        // The interpreter reads the whole log (G2), for a sources-v1 seed:
+        // the kept fold, else one made now and kept.
+        let register = match seed.policy.is_some() {
             false => crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?,
             true => {
                 if held.kept.as_ref().is_none_or(|(from, _)| from != seed) {
                     let (all, _) = log.oplog.read_all_with_skips().map_err(io)?;
-                    let (verifier, known) = (Checked(&log.held.passed), log.held.adopted.as_ref());
-                    let a = admit_after(&ActSet::of(&all), &[], seed, &self.namespace, &verifier, known);
+                    let a = admit(
+                        &ActSet::of(&all),
+                        &[],
+                        seed,
+                        &self.namespace,
+                        &Checked(&log.held.passed),
+                    );
                     log.held.kept = Some((seed.clone(), a));
-                }
-                let a = &log.held.kept.as_ref().expect("kept above").1;
-                if let Some(adopt) = a
-                    .membership()
-                    .decided
-                    .adopted()
-                    .filter(|a| log.held.adopted.as_ref() != Some(*a))
-                {
-                    let path = self.dir.join(format!("adoption-{adopt}.json"));
-                    let kept = path.exists() || a.pinned().is_some_and(|b| std::fs::write(&path, b).is_ok());
-                    tracing::debug!(namespace = %self.namespace, %adopt, kept, "ring rail: the adoption's pinned result kept beside the group, and the Adopt judged no more");
-                    if !kept {
-                        tracing::warn!(namespace = %self.namespace, %adopt, "ring rail: the adoption's pinned result could not be kept beside the group; the next fold judges it again");
-                    }
-                    log.held.adopted = kept.then(|| adopt.clone());
                 }
                 let m = log.held.kept.as_ref().map(|(_, a)| a.membership()).expect("kept above");
                 crate::register::register_of(m, &log.held.membership, &self.namespace)?

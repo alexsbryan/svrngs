@@ -124,13 +124,6 @@ an app's page svrngs won't load, and what to change.
       you; or take back your own handover before it is accepted. Asked
       of svrngs running here.
 
-  svrngs adopt <group>
-      Move <group>, made before this version of svrngs, to its new way of
-      keeping who decides removals: handing that on then waits until the
-      other person accepts it. You decide who is removed from <group>, on
-      this computer; every other computer in it needs the newest svrngs
-      and stays on while it moves. Asked of svrngs running here.
-
   svrngs leave <group>
       Leave <group> from every computer and phone of yours. What you have
       of it stays here; nothing new reaches you, nor what you lend them.

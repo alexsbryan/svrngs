@@ -14,11 +14,10 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use svrngs_runtime::authority::AuthorityChange;
 use svrngs_runtime::seed::Seed;
 use svrngs_runtime::{
-    actor_of, sign_act, Adopt, Append, Device, MintInvite, Name, Op, Person, RailAct, Ready, Redeem, Redemption,
-    RingRail, Roster, SignedOp, SigningKey,
+    actor_of, sign_act, Append, Device, MintInvite, Name, Op, Person, RailAct, Redeem, Redemption, RingRail, Roster,
+    SignedOp, SigningKey,
 };
 
 const ROUNDS: usize = 5;
@@ -104,45 +103,6 @@ fn legacy(dir: &std::path::Path) -> (RingRail, String) {
     (rail, ns)
 }
 
-/// The legacy group with `held` records, adopted by p1 (EUDOXIA_JUDGE §2e):
-/// every computer's Ready, then p1's Adopt over all of it.
-fn adopted(dir: &std::path::Path, held: usize) -> (RingRail, String) {
-    let (rail, ns) = legacy(dir);
-    rail.ingest_all(&ns, &records(&ns, &[], held)).unwrap();
-    let (all, _) = rail
-        .ops_missing_from_within(&ns, &Default::default(), usize::MAX)
-        .unwrap();
-    let tips: std::collections::BTreeSet<_> = all.iter().map(|op| op.id.clone()).collect();
-    for k in 2..=4u8 {
-        let tip = all
-            .iter()
-            .filter(|op| op.actor == actor_of(&key(k)))
-            .max_by_key(|op| op.kind.seq);
-        let (seq, prev) = tip.map_or((0, None), |t| (t.kind.seq + 1, Some(t.id.clone())));
-        let change = AuthorityChange::Ready {
-            tips: tips.clone(),
-            keeper: actor_of(&key(1)),
-        };
-        let ready = sign_act(
-            &key(k),
-            &ns,
-            2_100_000_000,
-            seq,
-            prev,
-            RailAct::Authority { change },
-            None,
-            None,
-            None,
-        );
-        rail.ingest_all(&ns, &[ready]).unwrap();
-    }
-    rail.commit(&ns, &Ready).unwrap().unwrap();
-    let drawn = rail.adoption(&ns).unwrap().unwrap();
-    rail.commit(&ns, &Adopt(drawn)).unwrap().unwrap();
-    assert!(rail.register(&ns).unwrap().decided.interpreted());
-    (rail, ns)
-}
-
 fn median(mut ms: Vec<f64>) -> f64 {
     ms.sort_by(f64::total_cmp);
     ms[ms.len() / 2]
@@ -189,7 +149,5 @@ fn a_sources_group_written_and_refolded_at_each_size() {
         let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
         measure("sources-v1", sources(a.path()), held);
         measure("legacy", legacy(b.path()), held);
-        let c = tempfile::tempdir().unwrap();
-        measure("adopted", adopted(c.path(), held), 0);
     }
 }
