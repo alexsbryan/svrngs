@@ -638,12 +638,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # signed-field projection in sig.rs: -4 core and non-JS, golden bytes unchanged.
 # Bank that pass; Eudoxia integration replaces authority code and must shrink it.
 # R0 shares eligible-group identity across four door paths: -1 non-JS, banked.
+# (2026-11-12) Release 2 (svrn-docs rings/current/EUDOXIA_JUDGE.md §2a): the
+# old fold and adoption deleted, every group decided by Eudoxia's
+# interpreter; the caps ratchet down to where it landed (core 4,618 ->
+# 3,773, . 22,666 -> 21,588, js 8,544 -> 8,527).
 BUDGET = {
-    "crates/svrngs-core": 4619,
+    "crates/svrngs-core": 3774,
 
-    ".": 22667,
+    ".": 21589,
 
-    "js": 8545,
+    "js": 8528,
 
     "swift": 1,
 }
