@@ -350,6 +350,7 @@ async fn the_people_door_answers_the_register_with_keys() {
             &invite,
             &cy,
             crate::Device::Browser,
+            None,
         )),
         person: cy,
         key: actor_of(&key(4)),

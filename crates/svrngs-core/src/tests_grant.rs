@@ -405,3 +405,50 @@ fn exact_approval_survives_delivery_delay_but_cannot_be_forged_after_expiry() {
     let reversed = admitted(&ops.into_iter().rev().collect::<Vec<_>>());
     assert_eq!(whose(&a), whose(&reversed));
 }
+
+/// Authentication and exact-content binding precede consulting a correction's
+/// missing target. Target-dependent diagnostics must not replace a grant's failed
+/// authentication or exact-content binding.
+#[test]
+fn an_unheld_correction_does_not_hide_an_invalid_or_wrong_content_grant() {
+    use crate::grant::Why;
+    let broad = Pass::approvable(
+        &key(2),
+        &actor_of(&key(HOLDER)),
+        (app("money"), vec![]),
+        2000,
+        Some(actor_of(&key(APPROVER))),
+    );
+    let target = signed(&key(2), 99, 0, act("money/expense", "not held"));
+    let draft = held(HOLDER, &broad, 100, None, act("money/expense", "approved"));
+    let exact = broad.approve(&key(APPROVER), &draft, NS, 100).unwrap();
+    let mut forged = broad.clone();
+    forged.sig.replace_range(..2, "ff");
+    assert!(!forged.signed());
+    assert!(exact.signed());
+    for (grant, expected) in [
+        (broad, Why::Unheld),
+        (forged, Why::Unsigned),
+        (exact, Why::Unapproved),
+    ] {
+        let line = held(
+            HOLDER,
+            &grant,
+            100,
+            None,
+            RailAct::Correct {
+                corrects: target.id.clone(),
+                replacement: None,
+            },
+        );
+        let admission = admitted(std::slice::from_ref(&line));
+        assert!(admission.ops().is_empty());
+        assert!(
+            admission.gaps().iter().any(|gap| matches!(
+                gap, RailGap::Ungranted { id, why, .. } if id == &line.id && *why == expected
+            )),
+            "expected {expected:?}: {:?}",
+            admission.gaps()
+        );
+    }
+}

@@ -220,6 +220,7 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
                 &invite.id,
                 &pia,
                 Device::Browser,
+                None,
             )),
             person: pia,
             key: actor_of(&signing(3)),

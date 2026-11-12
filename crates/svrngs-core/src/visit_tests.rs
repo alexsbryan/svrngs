@@ -256,7 +256,9 @@ fn the_hosts_leave_or_stop_ends_the_visit() {
         a.membership().counts(&came[0].id),
         "and the visit stays in the record, seen"
     );
-    let reads: Vec<Op<SignedOp>> = standing_reads(&stopped).cloned().collect();
+    let reads: Vec<Op<SignedOp>> = standing_reads(&stopped, &Roster::default())
+        .cloned()
+        .collect();
     assert!(
         names(&folded(&reads), FRI + HOUR).is_empty(),
         "the register's fold reads the Stop"

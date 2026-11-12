@@ -3,6 +3,7 @@ use super::*;
 use axum::body::Body;
 use axum::http::Request;
 use serde_json::json;
+use svrngs_core::tests_support::let_in;
 use tower::ServiceExt;
 
 /// Keep the real startup wiring, but stop background work so a stored wake
@@ -31,20 +32,21 @@ async fn write_fixture() -> (Asking, axum::Router, crate::seed::Seed, tempfile::
     drop(node._round);
     drop(node._tasks);
     node.host.keep_group(&seed, None, &[]).unwrap();
-    node.host
-        .rail
-        .commit(
-            &seed.id(),
-            &svrngs_core::tests_support::Fixture {
-                act: crate::RailAct::Admit {
-                    person: Person::parse("Cy").unwrap(),
-                    key: actor_of(&SigningKey::from_bytes(&[93; 32])),
-                    invite: None,
-                },
-            },
-        )
-        .unwrap()
-        .unwrap();
+    let (ns, rail) = (seed.id(), &node.host.rail);
+    let_in(
+        (&ns, seed.policy(), &node.host.actor),
+        (
+            &SigningKey::from_bytes(&[93; 32]),
+            "Cy",
+            crate::Device::Computer,
+        ),
+        |mint| {
+            rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        },
+        |redeem| drop(rail.commit(&ns, redeem).unwrap().unwrap()),
+    );
     let at = node.asking;
     while takes_wake(&at) {}
     (at, node.routes, seed, dir)
@@ -264,19 +266,17 @@ async fn a_write_reaches_a_peer_without_the_timer_and_both_rounds_settle() {
     let (ada, mut ar) = tracked_node(key, a.path()).await;
     let (bo, mut br) = tracked_node(other.clone(), b.path()).await;
     ada.host.keep_group(&seed, None, &[]).unwrap();
-    ada.rail()
-        .commit(
-            &seed.id(),
-            &svrngs_core::tests_support::Fixture {
-                act: crate::RailAct::Admit {
-                    person: Person::parse("Bo").unwrap(),
-                    key: actor_of(&other),
-                    invite: None,
-                },
-            },
-        )
-        .unwrap()
-        .unwrap();
+    let ns = seed.id();
+    let_in(
+        (&ns, seed.policy(), &ada.host.actor),
+        (&other, "Bo", crate::Device::Computer),
+        |mint| {
+            ada.rail().commit(&ns, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        },
+        |redeem| drop(ada.rail().commit(&ns, redeem).unwrap().unwrap()),
+    );
     bo.host.keep_group(&seed, None, &[]).unwrap();
     let held = ada
         .rail()
@@ -387,6 +387,28 @@ fn a_computer_answering_an_older_version_is_named_older() {
         "lends that are not lends"
     );
     assert!(matches!(answered("cy", b"not json"), Answered::Refused));
+}
+
+/// Mixed versions wait (svrn-docs EUDOXIA_JUDGE §2e §1, §6): a keeper's
+/// Move goes on past a computer only when its answer reads line version 15,
+/// so one answering 6, or not at all, is named (`Outcome::Behind`) and
+/// nothing is signed. Planted: `removal::moves` made true for every answer.
+#[test]
+fn a_keepers_move_waits_on_a_computer_answering_version_6() {
+    let at = |version: u32| {
+        let body = serde_json::json!({ "version": version, "lends": [] });
+        answered("bo", &serde_json::to_vec(&body).unwrap())
+    };
+    assert!(
+        matches!(at(6), Answered::Lends(..)),
+        "6 is read for its lends"
+    );
+    assert!(
+        !crate::removal::moves(&at(6)),
+        "but its keeper's Move waits on it"
+    );
+    assert!(!crate::removal::moves(&Answered::Unanswered));
+    assert!(crate::removal::moves(&at(crate::version::VERSION)));
 }
 
 /// The relayed direction of the scope fence (LENDING_SCOPE §"Updates,

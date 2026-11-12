@@ -8,7 +8,7 @@ use serde_json::{json, Value};
 use svrngs_core::link::Token;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, SigningKey};
+use svrngs_node::{actor_of, Person, SigningKey};
 
 use crate::drive::drive;
 use crate::harness::{relay, relay_url, site, Engine};
@@ -17,7 +17,17 @@ use crate::harness::{relay, relay_url, site, Engine};
 /// (browser/main.rs `house`), bo let in. With the token of
 /// a link ada's computer made, as the phone opens it.
 async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
-    use svrngs_node::group::{draw, Name};
+    house_as(dir, relay, false).await
+}
+
+/// [`house`], made before sources-v1 when `legacy` (no policy): its fold
+/// hands the order of removals on at once, with no yes.
+async fn house_as(
+    dir: &Path,
+    relay: &iroh_relay::server::Server,
+    legacy: bool,
+) -> (Node, String, String) {
+    use svrngs_node::group::{draw, Name, Seed};
     let ada = SigningKey::from_bytes(&[1; 32]);
     let config = RelayConfig {
         relay_urls: vec![relay_url(relay)],
@@ -34,20 +44,13 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String,
     .await
     .expect("a node starts");
     crate::drive::opens_at(node.api_addr().port(), &node.token());
-    let seed = draw(
-        Name::parse("house").unwrap(),
-        Name::parse("ada").unwrap(),
-        ada.verifying_key(),
-    );
-    node.host().keep_group(&seed, None, &[]).unwrap();
-    let bo = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("bo").unwrap(),
-            key: actor_of(&SigningKey::from_bytes(&[7; 32])),
-            invite: None,
-        },
+    let (house, by) = (Name::parse("house").unwrap(), Name::parse("ada").unwrap());
+    let seed = match legacy {
+        true => Seed::from_parts(house, by, ada.verifying_key(), [2; 16]),
+        false => draw(house, by, ada.verifying_key()),
     };
-    node.rail().commit(&seed.id(), &bo).unwrap().unwrap();
+    node.host().keep_group(&seed, None, &[]).unwrap();
+    crate::admit(&node, &seed.id(), "bo", 7);
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
@@ -326,12 +329,14 @@ in_chromium!(
     /// left and lists house under "Groups you left", never reloading.
     /// Watched failing on v1 (`UI` flipped), whose offer stays until a
     /// reload (home.js@19b63b2b:42 appends its words) and whose leave reloads.
+    /// A group made before sources-v1: its hand-on moves at once. A
+    /// sources-v1 hand-on waits on its Accept (scenes/keeping.rs).
     hand_on_then_leave_with_no_reload
 );
 async fn hand_on_then_leave_with_no_reload(engine: Engine) {
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
-    let (ada, _, _) = house(dir.path(), &relay).await;
+    let (ada, _, _) = house_as(dir.path(), &relay, true).await;
     let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
     let (hand, leave) = ("#home section p:has(> select)", "#home section p.leave");
     let press = json!([

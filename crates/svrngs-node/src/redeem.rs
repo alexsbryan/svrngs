@@ -278,11 +278,14 @@ fn serve_ask(at: &Asking, dialer: Option<String>, req: &AskRequest) -> Result<As
         .ok_or(NotAdmitted::NotHeld)?;
     tracing::debug!(target: "redeem", group, key = %req.key, invite = %invite, ?person,
         "redeem: asked — the link's key is named by this node's Invite; answering its group's seed, and a device link's person");
+    let register = rail.register(&group).map_err(NotAdmitted::Unjudged)?;
+    let adopted = register.decided.adopted().is_some();
     Ok(Asked {
         group,
         seed,
         invite,
         person,
+        adopted,
     })
 }
 

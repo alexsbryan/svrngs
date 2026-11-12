@@ -718,6 +718,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "eudoxia"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek 2.2.0",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+]
+
+[[package]]
+name = "eudoxia-community"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3018,6 +3035,8 @@ dependencies = [
  "base64 0.22.1",
  "blake3",
  "ed25519-dalek 2.2.0",
+ "eudoxia",
+ "eudoxia-community",
  "hex",
  "serde",
  "serde_json",

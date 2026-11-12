@@ -242,7 +242,7 @@ impl crate::Store for Memory {
     fn append_with<R>(
         &self,
         actor: &str,
-        f: impl FnOnce(&crate::ActSet, Option<crate::Tip>) -> (Option<crate::Authored>, R),
+        f: impl FnOnce(crate::Held<'_>) -> (Option<crate::Authored>, R),
     ) -> Result<R, Self::Error> {
         let held = self.0.borrow().clone();
         let tip = held
@@ -258,7 +258,13 @@ impl crate::Store for Memory {
                     .map(|op| (op.id.clone(), op.kind.sig.clone()))
                     .collect(),
             });
-        let (authored, answer) = f(&held, tip);
+        let verifier = &crate::Ed25519Verifier;
+        let (authored, answer) = f(crate::Held {
+            acts: &held,
+            tip,
+            verifier,
+            kept: None,
+        });
         for line in authored.iter().flat_map(|a| a.lines()) {
             self.0.borrow_mut().insert(line.clone());
         }
@@ -325,4 +331,34 @@ impl<K: crate::Journaled> crate::Op<K> {
             kind,
         }
     }
+}
+
+/// `joining` let in as `person`, held by `device`, by a link the issuer
+/// (the committer's key, `issuer`) mints, as a link does with no network:
+/// `mint` commits the [`MintInvite`] and answers its `Invite`'s id, and
+/// `redeem` commits the redeeming [`Redeem`], its consent as the seed's
+/// `policy` asks. A sources-v1 group counts no `Admit` but one under an
+/// invitation its joiner consented to.
+pub fn let_in(
+    (ns, policy, issuer): (&str, Option<authority::GroupPolicy>, &str),
+    (joining, person, device): (&SigningKey, &str, Device),
+    mint: impl FnOnce(&MintInvite) -> OpId,
+    redeem: impl FnOnce(&Redeem),
+) {
+    let link = SigningKey::from_bytes(&[0xa5; 32]);
+    let invite = mint(&MintInvite {
+        key: actor_of(&link),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let consent = Redemption::sign(joining, ns, &invite, &p(person), device, policy);
+    redeem(&Redeem {
+        invite,
+        person: p(person),
+        key: actor_of(joining),
+        cosig: consent.sig,
+        device,
+        link: actor_of(&link),
+        issuer: issuer.into(),
+    });
 }

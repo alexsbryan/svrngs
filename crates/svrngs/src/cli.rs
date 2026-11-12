@@ -25,6 +25,10 @@
 //! svrngs handover <name> --group <group> [--joined W]
 //!                                          let someone else decide who is removed,
 //!                                          asked of svrngs running here
+//! svrngs accept <group>                    decide who is removed, handed to you,
+//!                                          asked of svrngs running here
+//! svrngs adopt <group>                     move a group made before sources-v1,
+//!                                          asked of svrngs running here
 //! svrngs relay <name> [--open] [--staging] a relay, for the groups this computer is in
 //!                                          or everyone ([`crate::relay`])
 //! svrngs guide                             print the guide to building an app
@@ -115,7 +119,8 @@ use svrngs_node::lend::{
 use svrngs_node::node::{Lends, Node, NodeError};
 use svrngs_node::relay::n0_relays;
 use svrngs_node::removal::{
-    LeaveAsk, Outcome, RemovalAsk, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
+    LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, ADOPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE,
+    REMOVALS_ROUTE,
 };
 use svrngs_node::room;
 use svrngs_node::{Joined, Person, SigningKey};
@@ -217,6 +222,12 @@ pub enum Verb {
     /// `leave` (groups-leave), asked of svrngs running here: the group
     /// as typed.
     Leave(String),
+    /// `accept`, asked of svrngs running here: the group as typed, whose
+    /// waiting hand-on this computer takes.
+    Accept(String),
+    /// `adopt`, asked of svrngs running here: the group as typed, which its
+    /// keeper moves to its new decider (svrn-docs EUDOXIA_JUDGE §2e §4).
+    Adopt(String),
     /// `open` (give-session): the home page, in this computer's browser,
     /// or with `--print` shown for another.
     Open(Option<String>, bool),
@@ -460,6 +471,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "leave" => Ok(Verb::Leave(
             positional.ok_or("leave wants a group: `svrngs leave <group>`")?,
+        )),
+        "accept" => Ok(Verb::Accept(
+            positional.ok_or("accept wants a group: `svrngs accept <group>`")?,
+        )),
+        "adopt" => Ok(Verb::Adopt(
+            positional.ok_or("adopt wants a group: `svrngs adopt <group>`")?,
         )),
         "unshare" => {
             let raw = positional.ok_or("unshare wants a name: `svrngs unshare <name>`")?;
@@ -758,21 +775,25 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 person: person.as_str().to_string(),
                 joined,
             };
-            let (_, text) = ask_running(&root, route, &asked).await?;
+            let answer = ask_running(&root, route, &asked).await?;
             let group = seed.name().clone();
-            said(&seed, &text, |outcome| Said::Removal {
+            said(&seed, answer, |outcome| Said::Removal {
                 group,
                 person,
                 outcome,
             })?
             .to_string()
         }
-        Verb::Leave(group) => {
-            let seed = group_named(&root, &group)?;
-            let (_, text) =
-                ask_running(&root, LEAVES_ROUTE, &LeaveAsk { group: seed.id() }).await?;
+        Verb::Leave(ref group) | Verb::Accept(ref group) | Verb::Adopt(ref group) => {
+            let route = match command {
+                Verb::Accept(_) => ACCEPTS_ROUTE,
+                Verb::Adopt(_) => ADOPTS_ROUTE,
+                _ => LEAVES_ROUTE,
+            };
+            let seed = group_named(&root, group)?;
+            let answer = ask_running(&root, route, &LeaveAsk { group: seed.id() }).await?;
             let group = seed.name().clone();
-            said(&seed, &text, |outcome| Said::Left { group, outcome })?.to_string()
+            said(&seed, answer, |outcome| Said::Left { group, outcome })?.to_string()
         }
         Verb::Share(mut asked, groups) => {
             asked.audience = audience_of(&root, asked.port, &groups)?;
@@ -898,15 +919,21 @@ async fn room(root: &Path, names: Vec<LendName>) -> Result<Said, Refusal> {
 }
 
 /// What svrngs running here answered a removal, hand-on or leave in the
-/// group `seed` names, `text`, said as `said` words it, or the refusal.
-fn said(seed: &Seed, text: &str, said: impl FnOnce(Outcome) -> Said) -> Result<Said, Refusal> {
-    let outcome: Outcome = serde_json::from_str(text).map_err(|e| {
-        tracing::debug!(target: "cli", error = %e, text, "cli: refused — svrngs running here answered no outcome");
+/// group `seed` names, `text`, said as `said` words it, or the refusal. An
+/// outcome it answered as success is done (removal.rs `Outcome`'s status,
+/// the one list of them); any other is refused.
+fn said(
+    seed: &Seed,
+    (ok, text): (bool, String),
+    said: impl FnOnce(Outcome) -> Said,
+) -> Result<Said, Refusal> {
+    let outcome: Outcome = serde_json::from_str(&text).map_err(|e| {
+        tracing::debug!(target: "cli", error = %e, text = %text, "cli: refused — svrngs running here answered no outcome");
         Refusal::Unchanged(seed.name().clone())
     })?;
-    tracing::debug!(target: "cli", group = %seed.id(), ?outcome, "cli: a removal, hand-on or leave asked");
+    tracing::debug!(target: "cli", group = %seed.id(), ?outcome, ok, "cli: a removal, hand-on or leave asked");
     match outcome {
-        Outcome::Out | Outcome::Asked { .. } | Outcome::Handed | Outcome::Left => Ok(said(outcome)),
+        _ if ok => Ok(said(outcome)),
         Outcome::Fault => Err(Refusal::Unchanged(seed.name().clone())),
         _ => Err(Refusal::Removal(
             said(outcome).to_string().trim_end().to_string(),
@@ -1395,6 +1422,8 @@ impl std::fmt::Display for Said {
                         writeln!(f, "You asked {who} to remove {person} from {group}. {person} stays in it until {who} does.")
                     }
                     Outcome::Handed => writeln!(f, "{person} now decides who is removed from {group}, instead of you."),
+                    Outcome::Offered => writeln!(f, "{person} decides who is removed from {group} once they accept it, with `svrngs accept {group}` or on their home page. Until then nobody does; `svrngs accept {group}` here takes it back."),
+                    Outcome::Uncounted => writeln!(f, "{group}'s record would not count that from you, so nothing changed (RUST_LOG=debug says why)."),
                     Outcome::NotInGroup => writeln!(f, "Nobody called {person} is in {group}."),
                     Outcome::Which { joined } => {
                         let each: Vec<String> = joined.iter().map(|j| format!("`--joined {}`", joined_said(j))).collect();
@@ -1404,14 +1433,22 @@ impl std::fmt::Display for Said {
                     Outcome::Own => writeln!(f, "{person} is you, and you cannot remove yourself from {group}, so nothing changed: `svrngs leave {group}` leaves it."),
                     Outcome::NotDecider { decides: who } => writeln!(f, "Only {} can let someone else decide who is removed from {group}.", decides(who)),
                     Outcome::NotDeciderUnread => writeln!(f, "You do not decide who is removed from {group}, and this computer could not read who is in the group, so cannot say who does (RUST_LOG=debug says why)."),
-                    Outcome::NotIn | Outcome::Left => writeln!(f, "You are no longer in {group}."),
-                    Outcome::Fault => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
+                    Outcome::NotIn | Outcome::Left | Outcome::LeftVacant => writeln!(f, "You are no longer in {group}."),
+                    _ => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
                 }
             }
             Said::Left { group, outcome } => match outcome {
                 Outcome::Left => writeln!(f, "You left {group}, from every computer and phone of yours. Your copy of it and the files its folder gave you stay on this computer; nothing new reaches you, and what you lend no longer reaches its people. Rejoining needs a new invitation, and this computer cannot rejoin yet."),
                 Outcome::Decides => writeln!(f, "You decide who is removed from {group}, so you cannot leave it yet: hand that to someone else first, with `svrngs handover <name> --group {group}`, then leave."),
+                Outcome::LeftVacant => writeln!(f, "You left {group}, from every computer and phone of yours, and nobody decides who is removed from it now: the others agree together on who does. Your copy of it and the files its folder gave you stay on this computer; nothing new reaches you. Rejoining needs a new invitation, and this computer cannot rejoin yet."),
                 Outcome::NotIn => writeln!(f, "You are no longer in {group}."),
+                Outcome::Taken => writeln!(f, "You decide who is removed from {group} now."),
+                Outcome::NotOffered => writeln!(f, "Nobody handed you who is removed from {group}, so there is nothing to accept. Whoever decides it hands it on with `svrngs handover <name> --group {group}`."),
+                Outcome::Moved => writeln!(f, "{group} moved. From now on, handing on who decides removals waits until the other person accepts it."),
+                Outcome::Behind { person } => writeln!(f, "{person}'s computer needs the newest svrngs first, so nothing changed. {person} can press Update on their home page; then run this again."),
+                Outcome::Unready { person } => writeln!(f, "{} did not get ready in time, so nothing changed. Check every computer in {group} is on, then run this again.", person.as_ref().map_or("A computer".into(), |p| format!("{p}'s computer"))),
+                Outcome::Stuck => writeln!(f, "{group} cannot move, so nothing changed: its record is not one the move can carry over. {group} works on as it is; only making it again moves it."),
+                Outcome::NotDecider { .. } => writeln!(f, "Only whoever decides who is removed from {group} can move it."),
                 // Fault, and what the leave route never answers.
                 _ => writeln!(f, "{group} cannot be changed on this computer (RUST_LOG=debug says why)"),
             },
@@ -1709,6 +1746,8 @@ async fn serve(
         | Verb::Folder { .. }
         | Verb::Remove { .. }
         | Verb::Leave(_)
+        | Verb::Accept(_)
+        | Verb::Adopt(_)
         | Verb::Open(..)
         | Verb::Update
         | Verb::Restart => {

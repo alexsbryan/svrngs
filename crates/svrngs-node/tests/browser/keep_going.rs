@@ -449,14 +449,23 @@ async fn the_house_keeps_going_through_the_home_relay_and_comes_back(engine: Eng
     let (ada, id) = house(dirs[0].path(), &public, &bo).await;
     let named: svrngs_node::iroh::RelayUrl = home_at.parse().unwrap();
     ada.host().meet(&id, &[named]).expect("ada keeps the group");
+    // cy and dee let in by links ada's computer mints: house is sources-v1.
+    let rail = ada.rail();
     for (person, me) in [("cy", 2), ("dee", 3)] {
-        let act = RailAct::Admit {
-            person: Person::parse(person).unwrap(),
-            key: actor_of(&signing(me)),
-            invite: None,
-        };
-        let fixture = svrngs_core::tests_support::Fixture { act };
-        ada.rail().commit(&id, &fixture).unwrap().unwrap();
+        svrngs_core::tests_support::let_in(
+            (
+                &id,
+                Some(svrngs_node::authority::GroupPolicy::SourcesV1),
+                &actor_of(&signing(1)),
+            ),
+            (&signing(me), person, svrngs_node::Device::Computer),
+            |mint| {
+                rail.commit(&id, mint).unwrap().unwrap().lines()[0]
+                    .id
+                    .clone()
+            },
+            |redeem| drop(rail.commit(&id, redeem).unwrap().unwrap()),
+        );
     }
     let seed = (group::groups(ada.rail().root()).into_iter())
         .find(|s| s.id() == id)

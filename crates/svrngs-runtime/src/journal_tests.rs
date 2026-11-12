@@ -10,14 +10,13 @@ impl RingJournal {
         act: RailAct,
         signer: &SigningKey,
         roster: &Roster,
-        verifier: &dyn RingVerifier,
+        _verifier: &dyn RingVerifier,
     ) -> Result<Op<SignedOp>, RailError> {
         let fixture = svrngs_core::tests_support::Fixture { act };
         let author = svrngs_core::Author {
             signer,
             roster,
             namespace: &self.namespace,
-            verifier,
             now: now_unix(&self.namespace)?,
         };
         match svrngs_core::commit(self, &fixture, &author)? {

@@ -19,7 +19,7 @@ use alloc::vec;
 use ed25519_dalek::VerifyingKey;
 use serde::{Deserialize, Serialize};
 
-use crate::{field, Name, Person, Roster};
+use crate::{authority::GroupPolicy, field, Name, Person, Roster};
 
 /// What a group is founded on. Every field is inside the id's hash.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -28,6 +28,7 @@ pub struct Seed {
     founder: Name,
     key: VerifyingKey,
     salt: [u8; 16],
+    policy: Option<GroupPolicy>,
 }
 
 impl Seed {
@@ -37,7 +38,19 @@ impl Seed {
             founder,
             key,
             salt,
+            policy: None,
         }
+    }
+
+    /// A distinct new realm. This cannot upgrade an existing legacy group: the
+    /// policy is part of its identity and old readers refuse its seed field.
+    pub fn with_source_policy(mut self) -> Self {
+        self.policy = Some(GroupPolicy::SourcesV1);
+        self
+    }
+
+    pub fn policy(&self) -> Option<GroupPolicy> {
+        self.policy
     }
 
     /// The group's id: the whole BLAKE3 hash, 64 lowercase hex, of
@@ -45,7 +58,11 @@ impl Seed {
     /// preceded by its `u32` big-endian length. It names the group's
     /// directory, as a namespace (`svrngs_node`'s `valid_namespace`).
     pub fn id(&self) -> String {
-        let mut input = crate::sig::GROUP_ID_DOMAIN.to_vec();
+        let mut input = match self.policy {
+            None => crate::sig::GROUP_ID_DOMAIN,
+            Some(GroupPolicy::SourcesV1) => crate::sig::SOURCE_GROUP_ID_DOMAIN,
+        }
+        .to_vec();
         field(&mut input, self.name.as_str().as_bytes());
         field(&mut input, self.founder.as_str().as_bytes());
         input.extend_from_slice(self.key.as_bytes());
@@ -73,14 +90,14 @@ impl Seed {
     /// The register's seed: the founder's key, bound to the founder's name
     /// (DESIGN §6). The one writer of a group's `roster.json`.
     pub fn roster(&self) -> Roster {
-        Roster::new(
-            [(
-                Person::from(self.founder.clone()),
-                vec![self.founder_actor()],
-            )]
-            .into_iter()
-            .collect(),
-        )
+        let founder = (
+            Person::from(self.founder.clone()),
+            vec![self.founder_actor()],
+        );
+        Roster {
+            policy: self.policy,
+            ..Roster::new([founder].into())
+        }
     }
 
     /// The seed from its four fields as text, as `seed.json` holds them.
@@ -103,6 +120,7 @@ impl Seed {
             founder: self.founder.as_str().to_string(),
             key: self.founder_actor(),
             salt: self.salt_hex(),
+            policy: self.policy,
         };
         serde_json::to_string_pretty(&file).expect("a seed serializes")
     }
@@ -110,8 +128,10 @@ impl Seed {
     /// A seed from `seed.json`'s text.
     pub fn from_text(raw: &str) -> Result<Self, String> {
         let file: SeedFile = serde_json::from_str(raw).map_err(|e| e.to_string())?;
-        Self::parse(&file.name, &file.founder, &file.key, &file.salt)
-            .ok_or_else(|| "a field is not what a seed holds".into())
+        let mut seed = Self::parse(&file.name, &file.founder, &file.key, &file.salt)
+            .ok_or_else(|| String::from("a field is not what a seed holds"))?;
+        seed.policy = file.policy;
+        Ok(seed)
     }
 }
 
@@ -123,6 +143,8 @@ struct SeedFile {
     founder: String,
     key: String,
     salt: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    policy: Option<GroupPolicy>,
 }
 
 /// The seed an issuer answered for `group`, believed only when it hashes

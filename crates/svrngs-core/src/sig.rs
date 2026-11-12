@@ -91,11 +91,13 @@ pub(crate) const PASS_DOMAIN: &[u8] = b"svrngs-pass:";
 /// ([`crate::app`]): bytes the app chose, never an act's, a link's, a
 /// pass's or a consent.
 pub(crate) const APP_DOMAIN: &[u8] = b"svrngs-app:";
+pub(crate) const SOURCE_REDEMPTION_DOMAIN: &[u8] = b"svrngs-source-redemption-binding:";
 
 /// Domain separator for a group id's hash ([`crate::seed`]), so an id is
 /// never the hash of anything else svrngs hashes (an act id is
 /// `svrngs/act/v1`).
 pub(crate) const GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/v1\0";
+pub(crate) const SOURCE_GROUP_ID_DOMAIN: &[u8] = b"svrngs/group/sources-v1\0";
 
 /// Domain separation and definition version for a view's fold
 /// ([`crate::view`]). A second definition gets a second label; old heads
@@ -169,17 +171,23 @@ pub fn act_id(
 /// all ask this, so a rewritten `id` field cannot make one act pass for
 /// another anywhere.
 pub fn derive_id(op: &Op<SignedOp>, namespace: &str) -> OpId {
+    content_id(namespace, &op.actor, op.ts_unix, &op.kind)
+}
+
+// Authoring and verification share one signed-field projection; the native
+// golden vectors hold its bytes.
+fn content_id(namespace: &str, actor: &str, ts_unix: i64, kind: &SignedOp) -> OpId {
     act_id(
         namespace,
-        &op.actor,
-        op.kind.seq,
-        op.kind.prev.as_ref(),
-        op.ts_unix,
+        actor,
+        kind.seq,
+        kind.prev.as_ref(),
+        ts_unix,
         &crate::body_json(
-            &op.kind.act,
-            op.kind.on_behalf_of.as_deref(),
-            op.kind.view.as_ref(),
-            op.kind.grant.as_ref(),
+            &kind.act,
+            kind.on_behalf_of.as_deref(),
+            kind.view.as_ref(),
+            kind.grant.as_ref(),
         ),
     )
 }
@@ -203,6 +211,24 @@ pub fn redemption_message(namespace: &str, invite: &OpId, person: &str, key: &st
     field(&mut msg, person.as_bytes());
     field(&mut msg, key.as_bytes());
     msg
+}
+
+/// A sources-v1 joining consent: [`redemption_message`]'s fields and the
+/// device, so the joiner, not the issuer, says whether its key may hold office.
+pub fn source_redemption_message(
+    namespace: &str,
+    invite: &OpId,
+    person: &crate::Person,
+    key: &str,
+    device: crate::Device,
+) -> Vec<u8> {
+    let mut bytes = SOURCE_REDEMPTION_DOMAIN.to_vec();
+    field(&mut bytes, namespace.as_bytes());
+    bytes.extend(
+        serde_json::to_vec(&(invite, person, key, device))
+            .expect("native joining choice serialises"),
+    );
+    bytes
 }
 
 /// Hex Ed25519 signature over `msg`: the ONE place a signature is made and
@@ -254,14 +280,7 @@ pub fn sign_act(
 /// a key that signs apart: a phone's holder, which no script holds as
 /// bytes (DESIGN §3), signs [`ring_op_message`] of its id.
 pub fn unsigned_act(actor: String, namespace: &str, ts_unix: i64, kind: SignedOp) -> Op<SignedOp> {
-    let k = &kind;
-    let body = crate::body_json(
-        &k.act,
-        k.on_behalf_of.as_deref(),
-        k.view.as_ref(),
-        k.grant.as_ref(),
-    );
-    let id = act_id(namespace, &actor, k.seq, k.prev.as_ref(), ts_unix, &body);
+    let id = content_id(namespace, &actor, ts_unix, &kind);
     let v = kind.line_version();
     Op {
         v,

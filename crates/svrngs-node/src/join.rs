@@ -110,6 +110,7 @@ impl Host {
         }
         // A device link's person is who this computer joins as, asked no name
         // (bash-devices); else the name given.
+        let policy = asked.policy(seed.policy());
         let person = asked.person.unwrap_or_else(|| Person::from(person.clone()));
         tracing::debug!(target: "join", group = %id, %person, "join: redeeming as this person");
         let request = RedeemRequest::sign(
@@ -119,6 +120,7 @@ impl Host {
             &asked.invite,
             &person,
             Device::Computer,
+            policy,
         );
         let redeemed = redeem(&self.endpoint, issuer.clone(), &request)
             .await

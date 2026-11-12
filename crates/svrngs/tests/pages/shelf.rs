@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 use svrngs_core::link::Token;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, SigningKey};
+use svrngs_node::SigningKey;
 
 use crate::drive::drive;
 use crate::harness::{relay, relay_url, site, Engine};
@@ -41,14 +41,7 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String)
         ada.verifying_key(),
     );
     node.host().keep_group(&seed, None, &[]).unwrap();
-    let bo = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("bo").unwrap(),
-            key: actor_of(&SigningKey::from_bytes(&[7; 32])),
-            invite: None,
-        },
-    };
-    node.rail().commit(&seed.id(), &bo).unwrap().unwrap();
+    crate::admit(&node, &seed.id(), "bo", 7);
     let folder = dir.join("house");
     std::fs::create_dir(&folder).unwrap();
     let ask = svrngs_node::folder::FolderAsk {

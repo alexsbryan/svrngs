@@ -634,12 +634,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # its trace; sign.js the refusal, its words, `Told`, `AGAIN`), +6 js. The pass
 # cut the draft from 14 to 6 lines; the signer's two lapsed-record sweeps
 # differ, and nothing else in hand.js or sign.js is said twice: js to 8,507.
+# (2026-11-11) Before Eudoxia native integration, share authoring/verification's
+# signed-field projection in sig.rs: -4 core and non-JS, golden bytes unchanged.
+# Bank that pass; Eudoxia integration replaces authority code and must shrink it.
+# R0 shares eligible-group identity across four door paths: -1 non-JS, banked.
 BUDGET = {
-    "crates/svrngs-core": 3511,
+    "crates/svrngs-core": 4619,
 
-    ".": 21265,
+    ".": 22667,
 
-    "js": 8507,
+    "js": 8545,
 
     "swift": 1,
 }

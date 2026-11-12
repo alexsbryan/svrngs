@@ -103,6 +103,7 @@ use alloc::vec::Vec;
 
 use crate::{command::AHEAD_SECS, op::Op};
 
+use crate::authority::AuthorityChange as Change;
 use crate::{Device, OpId, Person, RailAct, Redemption, Roster, SignedOp, Visit};
 
 /// How long a visit may be, from its act's own time (GUESTS §3.6): the
@@ -176,7 +177,7 @@ pub struct Span {
 }
 
 /// What one fold of the membership acts concludes.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Membership {
     /// key → person, from the seed and every counting `Admit`. CUMULATIVE: a
     /// cut key keeps its binding — names stay stable and every past act keeps
@@ -222,6 +223,19 @@ pub struct Membership {
     /// on to. `None` only for an empty seed.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub keeper: Option<String>,
+    /// The office's state beside [`Self::keeper`], which names a key only
+    /// while it is held: a sources-v1 group's, from its interpreter. The
+    /// legacy fold's keeper is always held. Skipped when held.
+    #[serde(default, skip_serializing_if = "Office::held")]
+    pub office: Office,
+    /// A sources-v1 group's statements that do not count, each with its
+    /// interpreter's reason: what a refused write says. Never serialized.
+    #[serde(skip)]
+    pub uncounted: BTreeMap<OpId, crate::authority::SourceFailure>,
+    /// Which decider folded this, as `admit` asked `authority::decider`
+    /// once; every other consumer reads it here. Never serialized.
+    #[serde(skip)]
+    pub decided: Decided,
     /// Each key the keeper cut, with the cut (U7).
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub cut: BTreeMap<String, Cut>,
@@ -254,6 +268,57 @@ pub struct Membership {
     /// Ask [`Self::meets_at`]. Skipped when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub meets: Option<BTreeSet<String>>,
+}
+
+/// Who holds a sources-v1 group's office (EUDOXIA_JUDGE §2c): held; frozen
+/// by a fork or by competing recoveries; handed on by `by` to `to` with
+/// `hand_on`, and neither accepted nor withdrawn; vacated by its holder's exit; or resting
+/// on a line not held. Only held names a keeper; none falls back to another.
+#[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(tag = "state", rename_all = "snake_case")]
+pub enum Office {
+    #[default]
+    Held,
+    Frozen,
+    Pending {
+        hand_on: OpId,
+        by: String,
+        to: String,
+    },
+    Vacant,
+    Missing,
+}
+
+impl Office {
+    fn held(&self) -> bool {
+        *self == Self::Held
+    }
+}
+
+/// A group's one decider (EUDOXIA_JUDGE §2e): the old fold until its
+/// keeper's Adopt is lawful, the interpreter after, and from the seed for a
+/// group founded sources-v1. `Waiting`: the old fold, while a held Adopt
+/// lacks lines of its closure here, so this copy writes no membership act.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub enum Decided {
+    #[default]
+    Legacy,
+    Waiting(OpId),
+    Founded,
+    Adopted(OpId),
+}
+
+impl Decided {
+    pub fn interpreted(&self) -> bool {
+        matches!(self, Self::Founded | Self::Adopted(_))
+    }
+
+    pub fn adopted(&self) -> Option<&OpId> {
+        match self {
+            Self::Adopted(id) => Some(id),
+            _ => None,
+        }
+    }
 }
 
 /// A guest, as a counting [`RailAct::Visit`] names them, hosted by the key
@@ -436,29 +501,10 @@ pub fn membership<'a>(
     seed: &Roster,
     namespace: &str,
 ) -> Membership {
-    let mut ops: Vec<(&OpId, &Op<SignedOp>)> = ops.into_iter().collect();
-    ops.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
+    let ops = in_rail_order(ops);
 
     // ── the link: each redemption judged once on what it alone says ───
-    let invites: BTreeMap<OpId, Invited> = ops
-        .iter()
-        .filter_map(|(id, op)| match &op.kind.act {
-            RailAct::Invite {
-                key,
-                until,
-                device_of,
-            } => Some((
-                (*id).clone(),
-                Invited {
-                    issuer: op.actor.clone(),
-                    key: key.clone(),
-                    until: *until,
-                    device_of: device_of.clone(),
-                },
-            )),
-            _ => None,
-        })
-        .collect();
+    let invites = invites(&ops);
     let redeems: BTreeMap<&OpId, Judged> = ops
         .iter()
         .filter_map(|(id, op)| match &op.kind.act {
@@ -472,23 +518,11 @@ pub fn membership<'a>(
         .collect();
 
     // ── what follows a hand-on in its author's chain keeps nothing ───
-    //
-    // An act descending by `prev` from a `HandOn` its own author signed
-    // carries no keeper's authority, wherever its timestamp puts it: an
-    // ex-keeper's backdated second hand-on moves nothing.
-    let mut by_chain = ops.clone();
-    by_chain.sort_by_key(|(id, op)| (op.actor.clone(), op.kind.seq, *id));
-    // id → whether the act is a hand-on or follows one, along its chain.
-    let mut handed: BTreeMap<&OpId, (bool, bool)> = BTreeMap::new();
-    for (id, op) in &by_chain {
-        let parent = (op.kind.prev.as_ref()).and_then(|p| handed.get(p));
-        let after = parent.is_some_and(|(is, after)| *is || *after);
-        handed.insert(*id, (matches!(op.kind.act, RailAct::HandOn { .. }), after));
-    }
-    let kept: BTreeSet<&OpId> = handed
-        .into_iter()
-        .filter(|(_, (_, after))| !after)
-        .map(|(id, _)| id)
+    let spent = spent(&ops);
+    let follows = |op: &Op<SignedOp>| op.kind.prev.as_ref().is_some_and(|p| spent.contains(p));
+    let kept: BTreeSet<&OpId> = (ops.iter())
+        .filter(|(_, op)| !follows(op))
+        .map(|(id, _)| *id)
         .collect();
 
     // ── the walk, again until the cuts it finds are the cuts it was given ──
@@ -512,13 +546,68 @@ pub fn membership<'a>(
         m = walk(&ops, seed, &redeems, &covers, &kept);
     }
 
-    // ── the void set, from the corrections that counted ──────────────
+    voids(&ops, &mut m);
+    m.invites = invites;
+    m
+}
+
+/// Each act that is a `HandOn` or follows one its own author signed, along
+/// its chain: an act after one of these carries no keeper's authority,
+/// wherever its timestamp puts it, so an ex-keeper's backdated second
+/// hand-on moves nothing.
+pub(crate) fn spent<'a>(ops: &[(&'a OpId, &'a Op<SignedOp>)]) -> BTreeSet<&'a OpId> {
+    let mut by_chain = ops.to_vec();
+    by_chain.sort_by_key(|(id, op)| (op.actor.clone(), op.kind.seq, *id));
+    let mut spent = BTreeSet::new();
+    for (id, op) in by_chain {
+        let after = op.kind.prev.as_ref().is_some_and(|p| spent.contains(p));
+        if after || matches!(op.kind.act, RailAct::HandOn { .. }) {
+            spent.insert(id);
+        }
+    }
+    spent
+}
+
+/// `ops` in the rail's order, `(ts_unix, actor, seq, id)`.
+pub(crate) fn in_rail_order<'a>(
+    ops: impl IntoIterator<Item = (&'a OpId, &'a Op<SignedOp>)>,
+) -> Vec<(&'a OpId, &'a Op<SignedOp>)> {
+    let mut ops: Vec<_> = ops.into_iter().collect();
+    ops.sort_by_key(|(id, op)| (op.ts_unix, op.actor.clone(), op.kind.seq, *id));
+    ops
+}
+
+/// Every `Invite` held, by derived id: what a link says, whatever counts.
+pub(crate) fn invites(ops: &[(&OpId, &Op<SignedOp>)]) -> BTreeMap<OpId, Invited> {
+    let invited = |(id, op): &(&OpId, &Op<SignedOp>)| match &op.kind.act {
+        RailAct::Invite {
+            key,
+            until,
+            device_of,
+        } => Some((
+            (*id).clone(),
+            Invited {
+                issuer: op.actor.clone(),
+                key: key.clone(),
+                until: *until,
+                device_of: device_of.clone(),
+            },
+        )),
+        _ => None,
+    };
+    ops.iter().filter_map(invited).collect()
+}
+
+/// Rule 3, the void set: the targets of counting corrections, except an
+/// act that moves membership, which nothing undoes; voided acts leave
+/// [`Membership::counted`].
+pub(crate) fn voids(ops: &[(&OpId, &Op<SignedOp>)], m: &mut Membership) {
     let moves: BTreeSet<&OpId> = ops
         .iter()
         .filter(|(_, op)| op.kind.act.moves_membership())
         .map(|(id, _)| *id)
         .collect();
-    for (id, op) in &ops {
+    for (id, op) in ops {
         if let RailAct::Correct { corrects, .. } = &op.kind.act {
             if !m.counted.contains(*id) {
                 continue;
@@ -533,8 +622,51 @@ pub fn membership<'a>(
     }
     let voided = m.voided.clone();
     m.counted.retain(|id| !voided.contains(id));
-    m.invites = invites;
-    m
+}
+
+/// A counting act's part in who visits (guests-visit): a `Visit` is one
+/// only with its key never bound nor visiting before, within
+/// [`VISIT_LONGEST`], the visits on then fewer than the `members`, and its
+/// host's at most [`GUESTS_PER_HOST`]; `false` when it is not. A `Correct`
+/// of a visit by the key that hosts it is its Stop, the first counting.
+pub(crate) fn visiting(
+    visits: &mut BTreeMap<OpId, Guest>,
+    (id, op): (&OpId, &Op<SignedOp>),
+    cut: &BTreeMap<String, Cut>,
+    bindings: &BTreeMap<String, Person>,
+    of: &dyn Fn(&str) -> String,
+    members: &dyn Fn() -> usize,
+) -> bool {
+    match &op.kind.act {
+        RailAct::Visit(v) => {
+            let at = op.ts_unix;
+            let on: Vec<&Guest> = visits.values().filter(|g| g.live(cut, at)).collect();
+            let members = members();
+            let theirs = on.iter().filter(|g| of(&g.host) == of(&op.actor)).count();
+            let used =
+                visits.values().any(|g| g.visit.key == v.key) || bindings.contains_key(&v.key);
+            let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
+            let is = !used && timely && on.len() + 1 < members && theirs < GUESTS_PER_HOST;
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, on = on.len(), members, theirs, used, timely, is, "membership: a Visit is one only with its key never used before, within 48 hours, the visits on then fewer than the members and its host's at most two");
+            if is {
+                let guest = Guest {
+                    host: op.actor.clone(),
+                    at,
+                    visit: v.clone(),
+                    stopped: None,
+                };
+                visits.insert(id.clone(), guest);
+            }
+            is
+        }
+        RailAct::Correct { corrects, .. } => {
+            let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
+            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
+            visit.map(|g| g.stopped.get_or_insert(op.ts_unix));
+            true
+        }
+        _ => true,
+    }
 }
 
 /// For each cut, the acts it covers: the acts of the cut key its `through`
@@ -650,26 +782,9 @@ fn walk(
                 continue;
             }
         }
-        if let RailAct::Visit(v) = &op.kind.act {
-            let at = op.ts_unix;
-            let on: Vec<&Guest> = visits.values().filter(|g| g.live(&cut, at)).collect();
-            let members = live.keys().map(|k| of(k)).collect::<BTreeSet<_>>().len();
-            let theirs = on.iter().filter(|g| of(&g.host) == of(&op.actor)).count();
-            let used =
-                visits.values().any(|g| g.visit.key == v.key) || bindings.contains_key(&v.key);
-            let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
-            let is = !used && timely && on.len() + 1 < members && theirs < GUESTS_PER_HOST;
-            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, on = on.len(), members, theirs, used, timely, is, "membership: a Visit is one only with its key never used before, within 48 hours, the visits on then fewer than the members and its host's at most two");
-            if !is {
-                continue;
-            }
-            let g = Guest {
-                host: op.actor.clone(),
-                at,
-                visit: v.clone(),
-                stopped: None,
-            };
-            visits.insert(id.clone(), g);
+        let members = || live.keys().map(|k| of(k)).collect::<BTreeSet<_>>().len();
+        if !visiting(&mut visits, (id, op), &cut, &bindings, &of, &members) {
+            continue;
         }
         counted.insert(id.clone());
         let keeps = keeper.as_deref() == Some(op.actor.as_str()) && kept.contains(id);
@@ -760,11 +875,6 @@ fn walk(
                     "membership: a Meets says where the group meets only as the keeper's, the newest winning");
                 meets = keeps.then(|| relays.clone()).or(meets);
             }
-            RailAct::Correct { corrects, .. } => {
-                let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
-                tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
-                visit.map(|g| g.stopped.get_or_insert(op.ts_unix));
-            }
             _ => {}
         }
     }
@@ -774,22 +884,41 @@ fn walk(
         admitted_at,
         standing: live.into_keys().collect(),
         counted,
-        voided: BTreeSet::new(),
         refused,
-        invites: BTreeMap::new(),
         browsers,
         keeper,
         cut,
-        unsettled: false,
         relays,
         visits,
         signers,
         holders,
         meets,
+        ..Membership::default()
     }
 }
 
 impl RailAct {
+    /// An old group's Adopt, what it pins (EUDOXIA_JUDGE §2e).
+    pub fn adoption(&self) -> Option<&crate::authority::LegacyAdoption> {
+        match self {
+            RailAct::Authority {
+                change: Change::Adopt { adoption },
+            } => Some(adoption),
+            _ => None,
+        }
+    }
+
+    /// A computer's Ready before its group moves (§2e rule 1): the tips it
+    /// held and the keeper it saw.
+    pub fn ready(&self) -> Option<(&BTreeSet<OpId>, &str)> {
+        match self {
+            RailAct::Authority {
+                change: Change::Ready { tips, keeper },
+            } => Some((tips, keeper)),
+            _ => None,
+        }
+    }
+
     /// The key a `Remove` names, asked or cut; `None` for any other act.
     pub fn names(&self) -> Option<&str> {
         match self {
@@ -810,7 +939,9 @@ impl RailAct {
     /// does not compile until it is placed here.
     pub const fn moves_membership(&self) -> bool {
         match self {
-            RailAct::Admit { .. }
+            RailAct::Authority { .. }
+            | RailAct::Accept { .. }
+            | RailAct::Admit { .. }
             | RailAct::Remove { .. }
             | RailAct::HandOn { .. }
             | RailAct::Invite { .. }
@@ -834,12 +965,18 @@ impl RailAct {
 /// a visit's Stop (guests-visit): whether it is turns on the walk. A
 /// caller that folds standing from fewer acts than it holds
 /// (svrngs-runtime's register) keeps these, and [`RailAct::names`] is how
-/// it tells a key named as it goes.
-pub fn standing_reads(ops: &[Op<SignedOp>]) -> impl Iterator<Item = &Op<SignedOp>> {
+/// it tells a key named as it goes. The interpreter reads every act, for a
+/// sources-v1 seed or once an Adopt is held: an authority act counts only
+/// with its author's whole chain held (EUDOXIA_JUDGE §2c, G2).
+pub fn standing_reads<'a>(
+    ops: &'a [Op<SignedOp>],
+    seed: &Roster,
+) -> impl Iterator<Item = &'a Op<SignedOp>> {
     let named: BTreeSet<&str> = ops.iter().filter_map(|op| op.kind.act.names()).collect();
+    let whole = seed.policy.is_some() || ops.iter().any(|op| op.kind.act.adoption().is_some());
     let kept = |a: &RailAct| a.moves_membership() || matches!(a, RailAct::Correct { .. });
     ops.iter()
-        .filter(move |op| kept(&op.kind.act) || named.contains(op.stands_as()))
+        .filter(move |op| whole || kept(&op.kind.act) || named.contains(op.stands_as()))
 }
 
 /// What a redeeming `Admit` says alone: the `Invite` it names, if that is

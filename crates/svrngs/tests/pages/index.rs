@@ -310,19 +310,6 @@ async fn why_a_number_is_refused_is_said_once(engine: Engine) {
     drop(ada);
 }
 
-/// `who`, holding the key drawn from `seed`, let into group `id` on `node`.
-fn admit(node: &Node, id: &str, who: &str, seed: u8) {
-    use svrngs_node::{actor_of, Person, RailAct};
-    let act = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse(who).unwrap(),
-            key: actor_of(&SigningKey::from_bytes(&[seed; 32])),
-            invite: None,
-        },
-    };
-    node.rail().commit(id, &act).unwrap().unwrap();
-}
-
 /// Bo's phone, in house through ada's computer (pages/shelf.rs): the
 /// page.mjs `driving` args for group `id`, reading `read`.
 fn bo_s_phone(relay: &iroh_relay::server::Server, id: &str, read: &str) -> Value {
@@ -340,7 +327,7 @@ fn bo_s_phone(relay: &iroh_relay::server::Server, id: &str, read: &str) -> Value
 /// where the shelf's apps are brought (pages/shelf.rs `house`).
 async fn kept(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, String) {
     let (node, home, id) = house(dir, relay).await;
-    admit(&node, &id, "bo", 7);
+    crate::admit(&node, &id, "bo", 7);
     let folder = dir.join("house");
     std::fs::create_dir(&folder).unwrap();
     let ask = svrngs_node::folder::FolderAsk {
@@ -456,8 +443,8 @@ async fn a_lend_filled_while_shown_reads_full_now_on_coming_back(engine: Engine)
     let dir = tempfile::tempdir().unwrap();
     let body = json!({ "kind": "books", "limit": 1 });
     let (ada, _, id) = lending(dir.path(), &relay, body).await;
-    admit(&ada, &id, "bo", 7);
-    admit(&ada, &id, "cy", 8);
+    crate::admit(&ada, &id, "bo", 7);
+    crate::admit(&ada, &id, "cy", 8);
     let ready = dir.path().join("ready");
     let mut args = bo_s_phone(&relay, &id, "#lent tr");
     args["steps"] = json!([]);

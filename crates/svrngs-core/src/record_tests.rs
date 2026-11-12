@@ -9,7 +9,6 @@ fn author<'a>(signer: &'a SigningKey, roster: &'a Roster) -> Author<'a> {
         signer,
         roster,
         namespace: NS,
-        verifier: &Ed25519Verifier,
         now: 1_000,
     }
 }

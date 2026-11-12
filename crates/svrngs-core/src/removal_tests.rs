@@ -155,6 +155,7 @@ fn an_act_refused_inside_its_authors_chain_is_not_a_hole() {
                 &unheld.id,
                 &person,
                 Device::Computer,
+                None,
             )),
             person,
             key: actor_of(&key(4)),
@@ -506,7 +507,6 @@ fn cuts_that_cycle_are_said_unsettled() {
         signer: &key(2),
         roster: &alex_alone(),
         namespace: NS,
-        verifier: &Ed25519Verifier,
         now: 200,
     };
     let store = crate::tests_support::Memory::holding(&cycled);

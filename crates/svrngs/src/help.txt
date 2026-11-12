@@ -116,7 +116,20 @@ an app's page svrngs won't load, and what to change.
 
   svrngs handover <name> --group <group> [--joined <when>]
       Let <name> decide who is removed from <group> from now on, instead
-      of you. Asked of svrngs running here. --joined as for remove.
+      of you, once they accept it. Asked of svrngs running here. --joined
+      as for remove.
+
+  svrngs accept <group>
+      Decide who is removed from <group>, when someone handed that to
+      you; or take back your own handover before it is accepted. Asked
+      of svrngs running here.
+
+  svrngs adopt <group>
+      Move <group>, made before this version of svrngs, to its new way of
+      keeping who decides removals: handing that on then waits until the
+      other person accepts it. You decide who is removed from <group>, on
+      this computer; every other computer in it needs the newest svrngs
+      and stays on while it moves. Asked of svrngs running here.
 
   svrngs leave <group>
       Leave <group> from every computer and phone of yours. What you have

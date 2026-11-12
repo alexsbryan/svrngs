@@ -32,14 +32,17 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
+use crate::authority::Unlawful;
 use crate::iroh::{actor_key, Contact};
+use crate::node::Answered;
 use crate::node::{Asking, Host};
 use crate::peer_wire::RingSyncRequest;
 use crate::ring_routes::told_with;
 use crate::ring_sync::{ExchangeStop, To};
 use crate::{
-    register::Register, Command, Device, HandOnRefusal, HandOnTo, Joined, Leave, Person, Refused,
-    Removal, RemovalRefusal, NO_BUDGET,
+    register::{Member, Register},
+    Command, Device, HandOnRefusal, HandOnTo, Joined, Leave, Office, Person, Refused, Removal,
+    RemovalRefusal, Take, NO_BUDGET,
 };
 
 /// Where the command asks a removal.
@@ -51,6 +54,14 @@ pub const HANDOVERS_ROUTE: &str = "/v1/handovers";
 /// Where the command and the home page ask this computer's person's leave
 /// (groups-leave), of the group a [`LeaveAsk`] names.
 pub const LEAVES_ROUTE: &str = "/v1/leaves";
+
+/// Where the command and the home page ask this computer to take the order
+/// of removals a hand-on left waiting, of the group a [`LeaveAsk`] names.
+pub const ACCEPTS_ROUTE: &str = "/v1/accepts";
+
+/// Where the command and the home page ask its keeper's Move of the group
+/// a [`LeaveAsk`] names (svrn-docs EUDOXIA_JUDGE §2e §4).
+pub const ADOPTS_ROUTE: &str = "/v1/adopts";
 
 /// What a leave asks: the group, by its id.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -78,8 +89,20 @@ pub enum Outcome {
     Asked { decides: Option<Person> },
     /// The person now decides removals.
     Handed,
+    /// The person decides removals once they accept it on their computer.
+    Offered,
+    /// This computer's person decides removals now: they accepted it, or
+    /// took back their own hand-on.
+    Taken,
+    /// No hand-on waits for this computer to accept or take back.
+    NotOffered,
+    /// The group's record would not count it, so nothing was written.
+    Uncounted,
     /// This computer's person left the group.
     Left,
+    /// This computer's person left a sources-v1 group whose order of
+    /// removals they kept: nobody keeps it now, until the others recover it.
+    LeftVacant,
     /// Nobody of that name is in the group.
     NotInGroup,
     /// The ask names no one person — more than one in the group goes by
@@ -103,14 +126,30 @@ pub enum Outcome {
     /// The group's record could not be read or written here, or who is in
     /// it cannot be judged, its removals unsettled (#124): said at warn.
     Fault,
+    /// The group moved to its new decider: a hand-on waits for its Accept.
+    Moved,
+    /// `person`'s computer answered with an older svrngs, so nothing
+    /// moved: it updates first.
+    Behind { person: Person },
+    /// `person`'s computer, or one not named, did not answer, get ready or
+    /// hold what this one holds in time, so nothing moved: Move again.
+    Unready { person: Option<Person> },
+    /// The record cannot move as it is (a keeper's fork, an unsettled or
+    /// pruned history): only making the group again does.
+    Stuck,
 }
 
 impl IntoResponse for Outcome {
     fn into_response(self) -> Response {
         let status = match self {
-            Outcome::Out | Outcome::Asked { .. } | Outcome::Handed | Outcome::Left => {
-                StatusCode::OK
-            }
+            Outcome::Out
+            | Outcome::Asked { .. }
+            | Outcome::Handed
+            | Outcome::Offered
+            | Outcome::Taken
+            | Outcome::Left
+            | Outcome::LeftVacant
+            | Outcome::Moved => StatusCode::OK,
             Outcome::Fault => StatusCode::INTERNAL_SERVER_ERROR,
             _ => StatusCode::CONFLICT,
         };
@@ -124,6 +163,8 @@ pub(crate) fn router(asking: Asking) -> Router {
         .route(REMOVALS_ROUTE, post(remove))
         .route(HANDOVERS_ROUTE, post(hand_over))
         .route(LEAVES_ROUTE, post(leave))
+        .route(ACCEPTS_ROUTE, post(take))
+        .route(ADOPTS_ROUTE, post(adopt))
         .with_state(asking)
 }
 
@@ -174,6 +215,7 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
             return match refused {
                 Refused::NoStanding => Outcome::NotIn,
                 Refused::Unsettled => Outcome::Fault,
+                Refused::Uncounted(_) => Outcome::Uncounted,
                 Refused::Command(RemovalRefusal::NotInGroup) => Outcome::NotInGroup,
                 Refused::Command(RemovalRefusal::Which(joined)) => Outcome::Which { joined },
                 Refused::Command(RemovalRefusal::Keeps) => Outcome::Decides,
@@ -214,7 +256,9 @@ async fn cut<C: Command<Refusal = RemovalRefusal>>(
         .collect();
     let (host, group) = (at.host.clone(), group.to_string());
     tokio::spawn(async move { tell(&host, &group, computers).await });
-    if left {
+    if left && after.office == Office::Vacant {
+        Outcome::LeftVacant
+    } else if left {
         Outcome::Left
     } else {
         Outcome::Out
@@ -285,15 +329,47 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
         tracing::debug!(target: "removal", ?asked, "removal: refused — the name asked is no name, so nobody of it is in the group");
         return Outcome::NotInGroup;
     };
-    let rail = &at.host.rail;
     let group = asked.group.as_str();
     let joined = asked.joined;
-    let outcome = match rail.commit(group, &HandOnTo { person, joined }) {
-        Ok(Ok(_)) => Outcome::Handed,
+    // A sources-v1 group's hand-on waits on its recipient's Accept.
+    let written = |r: Register| match r.office {
+        Office::Pending { .. } => Outcome::Offered,
+        _ => Outcome::Handed,
+    };
+    handing(&at, group, &HandOnTo { person, joined }, written)
+}
+
+/// This computer takes the order of removals a hand-on left waiting: its
+/// person's own yes to a hand-on to it, or its taking back its own
+/// (svrngs-core's [`Take`]). Asked only by this computer's person.
+async fn take(State(at): State<Asking>, Json(asked): Json<LeaveAsk>) -> Outcome {
+    let me = Take(at.host.actor.clone());
+    handing(&at, &asked.group, &me, |_| Outcome::Taken)
+}
+
+/// `command`, a hand-on or a take, written in `group`, and what happened:
+/// `written` of the register after it, once written.
+fn handing<C: Command<Refusal = HandOnRefusal>>(
+    at: &Asking,
+    group: &str,
+    command: &C,
+    written: impl FnOnce(Register) -> Outcome,
+) -> Outcome {
+    let rail = &at.host.rail;
+    let outcome = match rail.commit(group, command) {
+        Ok(Ok(_)) => match rail.register(group) {
+            Ok(register) => written(register),
+            Err(e) => {
+                tracing::warn!(target: "removal", group, error = %e, "removal: written, and the register cannot be read back");
+                Outcome::Fault
+            }
+        },
         Ok(Err(Refused::NoStanding)) => Outcome::NotIn,
         Ok(Err(Refused::Unsettled)) => Outcome::Fault,
+        Ok(Err(Refused::Uncounted(_))) => Outcome::Uncounted,
         Ok(Err(Refused::Command(HandOnRefusal::NotInGroup))) => Outcome::NotInGroup,
         Ok(Err(Refused::Command(HandOnRefusal::Which(joined)))) => Outcome::Which { joined },
+        Ok(Err(Refused::Command(HandOnRefusal::NotOffered))) => Outcome::NotOffered,
         Ok(Err(Refused::Command(HandOnRefusal::NotKeeper))) => match rail.register(group) {
             Ok(register) => Outcome::NotDecider {
                 decides: decides(&register),
@@ -309,6 +385,124 @@ async fn hand_over(State(at): State<Asking>, Json(asked): Json<RemovalAsk>) -> O
             Outcome::Fault
         }
     };
-    tracing::debug!(target: "removal", group, ?outcome, "removal: a hand-on asked; the round woken when written");
+    tracing::debug!(target: "removal", group, ?outcome, "removal: a hand-on or a take asked; the round woken when written");
     outcome
+}
+
+/// Whether a computer's answer lets its keeper's Move go on: it reads line
+/// version 15 ([`crate::version::moves`]). One older, or silent, is waited
+/// for, since a line it cannot read cuts its sync off for the whole group.
+pub(crate) fn moves(answer: &Answered) -> bool {
+    matches!(answer, Answered::Lends(_, v) if crate::version::moves(Some(*v)))
+}
+
+/// The keeper's Move (§2e §4), asked only by this computer's person: every
+/// other standing computer reads line version 15, holds what this one
+/// holds and signs a Ready; then this computer signs the Adopt over all of
+/// it and gives it to each. Nothing is signed by this computer until every
+/// other one answered, and a stop says whose computer stopped it.
+async fn adopt(State(at): State<Asking>, Json(asked): Json<LeaveAsk>) -> Outcome {
+    let (host, group) = (&at.host, asked.group.as_str());
+    let Ok(register) = host.rail.register(group) else {
+        tracing::warn!(target: "removal", group, "move: the group's register cannot be read");
+        return Outcome::Fault;
+    };
+    tracing::debug!(target: "removal", group, decided = ?register.decided, keeper = ?register.keeper, "move: asked; only the keeper of a group on its old fold moves it");
+    if register.decided.interpreted() {
+        return Outcome::Moved;
+    }
+    if register.keeper.as_ref() != Some(&host.actor) {
+        return Outcome::NotDecider {
+            decides: decides(&register),
+        };
+    }
+    let (meeting, t) = (host.meeting(group), &*host.transport);
+    let mine = |(k, m): &(&String, &Member)| m.device == Device::Computer && **k != host.actor;
+    let unready = |person: &Person| Outcome::Unready {
+        person: Some(person.clone()),
+    };
+    let mut others = Vec::new();
+    for (key, m) in register.members.iter().filter(mine) {
+        let at = actor_key(key).map(|k| Contact::named(k, &meeting, m.relay.as_ref()));
+        let answer = match &at {
+            Some(at) => crate::node::ask_lends(t, key, at.clone()).await,
+            None => Answered::Unanswered,
+        };
+        tracing::debug!(target: "removal", group, key, moves = moves(&answer), "move: whether a computer reads line version 15");
+        let person = m.person.clone();
+        match at.filter(|_| moves(&answer)) {
+            Some(at) => others.push((person, at)),
+            // Off, or not reached: it is asked to be on, not to update.
+            None if !matches!(answer, Answered::Lends(..)) => return unready(&person),
+            None => return Outcome::Behind { person },
+        }
+    }
+    for (person, at) in &others {
+        if !synced(host, group, (t, at)).await || !readied((t, at), group).await {
+            return unready(person);
+        }
+    }
+    if !matches!(host.rail.commit(group, &crate::Ready), Ok(Ok(_))) {
+        return Outcome::Fault;
+    }
+    // Twice round: every Ready reaches every computer, then each is shown
+    // to hold all of it.
+    for (person, at) in others.iter().chain(&others) {
+        if !synced(host, group, (t, at)).await {
+            return unready(person);
+        }
+    }
+    let drawn = host.rail.adoption(group);
+    tracing::debug!(target: "removal", group, drawn = ?drawn.as_ref().map(|d| d.as_ref().err()), "move: the Adopt this computer may sign");
+    let adopted = match drawn {
+        Ok(Ok(drawn)) => host.rail.commit(group, &crate::Adopt(drawn)),
+        Ok(Err(why)) => Ok(Err(Refused::Command(why))),
+        Err(e) => Err(e),
+    };
+    match adopted {
+        Ok(Ok(_)) => {}
+        Ok(Err(Refused::Command(Unlawful::Missing | Unlawful::Ready))) => {
+            return Outcome::Unready { person: None }
+        }
+        Ok(Err(_)) => return Outcome::Stuck,
+        Err(_) => return Outcome::Fault,
+    }
+    for (_, at) in &others {
+        synced(host, group, (t, at)).await;
+    }
+    Outcome::Moved
+}
+
+/// One exchange with the computer at `to`, and whether it ended holding
+/// every line this computer holds of `group`.
+async fn synced(host: &Host, group: &str, to: To<'_>) -> bool {
+    let stop = crate::ring_sync::exchange(to, &host.rail, group).await.stop;
+    let mine = host.rail.digest(group).ok().filter(|_| stop.is_none());
+    let request = mine.map(|digest| RingSyncRequest {
+        namespace: group.into(),
+        digest,
+        ops: Vec::new(),
+    });
+    let theirs = match request {
+        Some(request) => crate::ring_sync::post(to, &request).await.ok(),
+        None => None,
+    };
+    let lacks = theirs.and_then(|t| {
+        host.rail
+            .ops_missing_from_within(group, &t.digest, NO_BUDGET)
+            .ok()
+    });
+    let holds = lacks.is_some_and(|(ops, _)| ops.is_empty());
+    tracing::debug!(target: "removal", group, holds, ?stop, "move: a computer exchanged with, and whether it holds every line here");
+    holds
+}
+
+/// Whether the computer at `to` signed its Ready in `group` when asked
+/// (ring_routes.rs `ready`).
+async fn readied(to: To<'_>, group: &str) -> bool {
+    let body = serde_json::json!({ "group": group }).to_string();
+    let asked = crate::iroh::posted(crate::ring_routes::READY_ROUTE, body);
+    let answer = to.0.fetch(to.1, asked).await;
+    tracing::debug!(target: "removal", group, status = ?answer.as_ref().map(|r| r.status().as_u16()).ok(), "move: a computer asked to sign its Ready");
+    answer.is_ok_and(|r| r.status().is_success())
 }

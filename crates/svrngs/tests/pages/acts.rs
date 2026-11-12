@@ -49,14 +49,7 @@ async fn ada(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, S
         key.verifying_key(),
     );
     node.host().keep_group(&seed, None, &[]).unwrap();
-    let bo = svrngs_core::tests_support::Fixture {
-        act: svrngs_node::RailAct::Admit {
-            person: svrngs_node::Person::parse("bo").unwrap(),
-            key: svrngs_node::actor_of(&SigningKey::from_bytes(&[7; 32])),
-            invite: None,
-        },
-    };
-    node.rail().commit(&seed.id(), &bo).unwrap().unwrap();
+    crate::admit(&node, &seed.id(), "bo", 7);
     let lends = svrngs_node::lend::lends_dir(dir);
     std::fs::create_dir_all(&lends).unwrap();
     for (name, more) in [

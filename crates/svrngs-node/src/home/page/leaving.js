@@ -17,11 +17,12 @@ import { ENDED, sent } from './routes.js?v=__VERSION__';
 /**
  * The node's answer to a leave or a hand-on (removal.rs `Outcome`, by its
  * `outcome`).
- * @typedef {'out' | 'asked' | 'handed' | 'left' | 'not_in_group' | 'which' | 'decides'
- *   | 'own' | 'not_decider' | 'not_decider_unread' | 'not_in' | 'fault'} Outcome
+ * @typedef {'out' | 'asked' | 'handed' | 'offered' | 'taken' | 'not_offered' | 'uncounted'
+ *   | 'left' | 'left_vacant' | 'not_in_group' | 'which' | 'decides' | 'own' | 'not_decider'
+ *   | 'not_decider_unread' | 'not_in' | 'fault' | 'moved' | 'behind' | 'unready' | 'stuck'} Outcome
  */
 
-/** @typedef {'hand' | 'leave'} On which button was pressed: Hand it on, or Leave */
+/** @typedef {'hand' | 'take' | 'leave' | 'move'} On which button was pressed: Hand it on, Accept it or Take it back, Leave, or Move */
 
 /**
  * What a press posts: the group, and for a hand-on, the people row of whom
@@ -62,18 +63,35 @@ import { ENDED, sent } from './routes.js?v=__VERSION__';
 
 // What is said of an outcome, and what HOME is told of it. Two statements,
 // as tsc gives one statement's type to each of its declarations.
-/** @type {Partial<Record<Outcome, (s: State) => string>>} */
+/** @type {Partial<Record<Outcome, (s: State, who: string) => string>>} */
 const SAYS = {
   handed: (state) =>
     `${state.person} keeps the order of removals in ${state.name} now, so you can leave it.`,
   decides: (state) =>
     `You keep the order of removals in ${state.name}: choose who keeps it after you, then leave.`,
   not_in: (state) => `You are no longer in ${state.name}.`,
+  not_offered: (state) =>
+    `Nothing waits for you to accept in ${state.name}: it was accepted or taken back first. The page now shows who keeps it.`,
+  uncounted: (state) =>
+    `${state.name}’s record would not count that from this computer, so nothing changed.`,
+  moved: (state) =>
+    `${state.name} moved. From now on, handing on the order of removals waits until the other person accepts it.`,
+  behind: (state, who) =>
+    `${who}’s computer needs the newest svrngs first, so nothing changed. ${who} can press Update on their home page, then you press Move again.`,
+  unready: (state, who) =>
+    `${who ? `${who}’s computer` : 'A computer'} didn’t get ready in time, so nothing changed. Check every computer in ${state.name} is on, then press Move again.`,
+  stuck: (state) =>
+    `${state.name} can’t move, so nothing changed, and it works on as it is. Only making ${state.name} again would move it.`,
 };
 /** @type {Partial<Record<Outcome, (s: State) => HOME.Message>>} */
 const TELLS = {
   left: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
+  left_vacant: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
   handed: () => ({ type: 'again' }),
+  offered: () => ({ type: 'again' }),
+  taken: () => ({ type: 'again' }),
+  not_offered: () => ({ type: 'again' }),
+  moved: () => ({ type: 'again' }),
 };
 // Where an outcome leaves the section; any other is a refusal.
 /** @type {Partial<Record<Outcome, State['at']['leave']>>} */
@@ -114,12 +132,15 @@ export const LEAVE = (home) => ({
         /** @type {Effect[]} */
         const told = tell ? [{ run: 'send', m: tell(state) }] : [];
         const leave = AFTER[message.o] ?? 'refused';
-        if (message.o === 'left') return go(state, { leave }, {}, ...told);
+        // Left, or an answer the groups read again show and words do not.
+        if (message.o.startsWith('left') || (tell && !SAYS[message.o]))
+          return go(state, { leave }, {}, ...told);
         const words =
-          SAYS[message.o]?.(state) ?? `${state.name} cannot be changed on this computer now.`;
-        // A hand-on's answer is said beside Leave, since the hand-on goes
-        // once the groups are read again.
-        const on = message.o === 'handed' ? 'leave' : state.on;
+          SAYS[message.o]?.(state, message.why) ??
+          `${state.name} cannot be changed on this computer now.`;
+        // An answer that reads the groups again is said beside Leave, since
+        // the button pressed may go with them.
+        const on = tell ? 'leave' : state.on;
         return go(state, { leave }, said(words, on), ...told);
       }
       case 'refused':
@@ -141,7 +162,7 @@ export const LEAVE = (home) => ({
       const { response, answer } = await sent(path, body);
       /** @type {Outcome | undefined} */
       const outcome = answer.outcome;
-      if (outcome) return { type: 'answered', o: outcome, why: outcome };
+      if (outcome) return { type: 'answered', o: outcome, why: answer.person ?? '' };
       if (response.status === 401) throw new Error(ENDED);
       throw new Error(answer.error || `answered ${response.status}`);
     },

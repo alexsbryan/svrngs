@@ -9,7 +9,7 @@ use svrngs::group::{Name, Seed};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
 use svrngs_node::removal::Outcome;
-use svrngs_node::{actor_of, Joined, Person, RailAct, SigningKey};
+use svrngs_node::{actor_of, Joined, Person, SigningKey};
 
 fn no_relay() -> RelayConfig {
     RelayConfig {
@@ -25,7 +25,27 @@ fn name(s: &str) -> Name {
 
 /// Sam's computer, running here in `dir`, and the group trip it made.
 async fn sams_trip(dir: &std::path::Path) -> (Node, Seed) {
-    let node = Node::start(
+    let node = sams_computer(dir).await;
+    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &[], &no_relay())
+        .await
+        .unwrap();
+    (node, seed)
+}
+
+/// Sam's computer keeping trip as a group made before sources-v1 (no
+/// policy): its legacy fold moves the keeper at the hand-on, and refuses
+/// the keeper's leave while others stand.
+async fn sams_legacy_trip(dir: &std::path::Path) -> (Node, Seed) {
+    let node = sams_computer(dir).await;
+    let sam = SigningKey::from_bytes(&[5; 32]).verifying_key();
+    let seed = Seed::from_parts(name("trip"), name("Sam"), sam, [1; 16]);
+    node.host().keep_group(&seed, None, &[]).unwrap();
+    (node, seed)
+}
+
+/// Sam's computer, running here in `dir`.
+async fn sams_computer(dir: &std::path::Path) -> Node {
+    Node::start(
         dir.to_path_buf(),
         SigningKey::from_bytes(&[5; 32]),
         &no_relay(),
@@ -33,24 +53,37 @@ async fn sams_trip(dir: &std::path::Path) -> (Node, Seed) {
         cli::API,
     )
     .await
-    .unwrap();
-    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &[], &no_relay())
-        .await
-        .unwrap();
-    (node, seed)
+    .unwrap()
 }
 
-/// Bo let into trip as `bo` by hand, with no link.
+/// Bo let into trip as `bo` by a link Sam's computer mints, with no network.
 fn let_bo_in(node: &Node, seed: &Seed, bo: &SigningKey) {
-    let admit = RailAct::Admit {
-        person: Person::parse("Bo").unwrap(),
-        key: actor_of(bo),
-        invite: None,
-    };
-    node.rail()
-        .commit(&seed.id(), &svrngs_core::tests_support::Batch(vec![admit]))
-        .unwrap()
-        .unwrap();
+    let_in(node, seed, bo, |redeem| Box::new(redeem.clone()));
+}
+
+/// As [`let_bo_in`], the `Admit` written as `admit` makes it of the asked
+/// redemption: a second Bo's by hand, past the name a link refuses, as two
+/// members' computers letting two Bos in at once would write.
+fn let_in<C: svrngs_core::Command + 'static>(
+    node: &Node,
+    seed: &Seed,
+    bo: &SigningKey,
+    admit: impl FnOnce(&svrngs_core::Redeem) -> Box<C>,
+) where
+    C::Refusal: std::fmt::Debug,
+{
+    let (ns, rail) = (seed.id(), node.rail());
+    let sam = actor_of(&SigningKey::from_bytes(&[5; 32]));
+    svrngs_core::tests_support::let_in(
+        (&ns, seed.policy(), &sam),
+        (bo, "Bo", svrngs_core::Device::Computer),
+        |mint| {
+            rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        },
+        |redeem| drop(rail.commit(&ns, &*admit(redeem)).unwrap().unwrap()),
+    );
 }
 
 fn argv(rest: &[&str]) -> Vec<String> {
@@ -280,10 +313,22 @@ async fn the_keeper_removes_one_of_two_people_of_one_name() {
     let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
     let (node, seed) = sams_trip(dir.path()).await;
     let bos = [6u8, 7].map(|b| SigningKey::from_bytes(&[b; 32]));
-    for bo in &bos {
-        let_bo_in(&node, &seed, bo);
-        tokio::time::sleep(std::time::Duration::from_millis(1_100)).await;
-    }
+    let_bo_in(&node, &seed, &bos[0]);
+    tokio::time::sleep(std::time::Duration::from_millis(1_100)).await;
+    let_in(&node, &seed, &bos[1], |r| {
+        let invite = svrngs_core::Redemption {
+            id: r.invite.clone(),
+            sig: r.cosig.clone(),
+            device: r.device,
+        };
+        let (person, key) = (r.person.clone(), r.key.clone());
+        let act = svrngs_core::RailAct::Admit {
+            person,
+            key,
+            invite: Some(invite),
+        };
+        Box::new(svrngs_core::tests_support::Fixture { act })
+    });
     let stand = || {
         let members = node.rail().register(&seed.id()).unwrap().members;
         bos.each_ref().map(|bo| members.contains_key(&actor_of(bo)))
@@ -344,7 +389,7 @@ async fn the_keeper_hands_on_then_leaves() {
     let dir = tempfile::tempdir().unwrap();
     let relay = no_relay();
     let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
-    let (node, seed) = sams_trip(dir.path()).await;
+    let (node, seed) = sams_legacy_trip(dir.path()).await;
     let bo = SigningKey::from_bytes(&[6; 32]);
     let_bo_in(&node, &seed, &bo);
 

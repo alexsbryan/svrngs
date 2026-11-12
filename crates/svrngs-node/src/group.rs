@@ -59,14 +59,15 @@ const RELAY_FILE: &str = "relay";
 
 /// A new group's seed: `founder` names the person holding `key`, and 16
 /// bytes are drawn so that a second group of the same name by the same
-/// person is a second group.
+/// person is a second group. Founded sources-v1, so Eudoxia's interpreter
+/// decides it (EUDOXIA_JUDGE §2a, release 1).
 #[expect(clippy::disallowed_methods, reason = "draws a group's salt")]
 pub fn draw(name: Name, founder: Name, key: VerifyingKey) -> Seed {
     let mut salt = [0u8; 16];
     // As identity.rs: getrandom failing is a host with no entropy, and
     // no group can be made on it.
     getrandom::fill(&mut salt).expect("failed to draw a group's salt");
-    Seed::from_parts(name, founder, key, salt)
+    Seed::from_parts(name, founder, key, salt).with_source_policy()
 }
 
 /// Why a group's seed or origin could not be written or read.

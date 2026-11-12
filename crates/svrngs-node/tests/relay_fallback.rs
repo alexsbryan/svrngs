@@ -32,7 +32,7 @@ use svrngs_core::tests_support::{record, Batch};
 use svrngs_node::group::{self, Name};
 use svrngs_node::iroh::RelayUrl;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, SigningKey};
+use svrngs_node::{actor_of, SigningKey};
 
 /// A plain-HTTP relay on 127.0.0.1 at `at` (port 0 for any), and its URL.
 async fn relay(at: SocketAddr) -> (Server, String) {
@@ -89,15 +89,6 @@ async fn homed_at(node: &Node, want: &str) {
         t.elapsed(),
         home(node)
     );
-}
-
-/// An `Admit` act naming the key of `seed`.
-fn admit(person: &str, seed: u8) -> RailAct {
-    RailAct::Admit {
-        person: Person::parse(person).unwrap(),
-        key: actor_of(&SigningKey::from_bytes(&[seed; 32])),
-        invite: None,
-    }
 }
 
 /// Whether `node`'s journal holds a record whose payload says `what`.
@@ -261,10 +252,22 @@ async fn cut_and_contribute(public_only: bool) {
     bo.host()
         .keep_group(&house, None, &[at_a.clone()])
         .expect("Bo keeps house, met at A");
-    ada.rail()
-        .commit(&house.id(), &Batch(vec![admit("bo", 6)]))
-        .unwrap()
-        .unwrap();
+    // Bo let in by a link Ada's computer mints: the group is sources-v1.
+    let (ns, rail) = (house.id(), ada.rail());
+    svrngs_core::tests_support::let_in(
+        (&ns, house.policy(), &actor_of(rail.signer())),
+        (
+            &SigningKey::from_bytes(&[6; 32]),
+            "bo",
+            svrngs_node::Device::Computer,
+        ),
+        |mint| {
+            rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        },
+        |redeem| drop(rail.commit(&ns, redeem).unwrap().unwrap()),
+    );
     if public_only {
         for (host, seed) in [(ada.host(), 5), (bo.host(), 6)] {
             let away = group::draw(

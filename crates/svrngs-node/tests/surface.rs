@@ -306,8 +306,9 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 /// nobody is visiting it (guests-pages); who made it,
 /// Alex's own computer, and since when it holds it, the time its seed was
 /// written (v1ui-door (c)); beside the groups this computer's key, which
-/// its home page tells its own devices by (capability-what-acts); the
-/// data dir's `api` file names the
+/// its home page tells its own devices by (capability-what-acts); house,
+/// made before sources-v1 and kept here, offered Move (EUDOXIA_JUDGE §2e
+/// §4); the data dir's `api` file names the
 /// address the app asked at. Planted: the file not written.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
@@ -321,7 +322,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null, "moves": "move" }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }

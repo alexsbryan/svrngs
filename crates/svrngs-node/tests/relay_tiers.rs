@@ -382,15 +382,23 @@ async fn the_door_says_which_relay_carried_an_action() {
     let (_dir, node) = ada(&url, &url).await;
     homed(&node, &url).await;
     let group = node.rail().namespaces().unwrap().remove(0);
-    let sam = SigningKey::from_bytes(&[9; 32]);
-    let admit = svrngs_core::tests_support::Fixture {
-        act: svrngs_node::RailAct::Admit {
-            person: svrngs_node::Person::parse("sam").unwrap(),
-            key: svrngs_node::actor_of(&sam),
-            invite: None,
+    let (sam, rail) = (SigningKey::from_bytes(&[9; 32]), node.rail());
+    // Sam let in by a link Ada's computer mints: the group is sources-v1.
+    let ada = svrngs_node::actor_of(rail.signer());
+    svrngs_core::tests_support::let_in(
+        (
+            &group,
+            Some(svrngs_node::authority::GroupPolicy::SourcesV1),
+            &ada,
+        ),
+        (&sam, "sam", svrngs_node::Device::Computer),
+        |mint| {
+            rail.commit(&group, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
         },
-    };
-    node.rail().commit(&group, &admit).unwrap().unwrap();
+        |redeem| drop(rail.commit(&group, redeem).unwrap().unwrap()),
+    );
     let port = pings()
         .await
         .rsplit(':')

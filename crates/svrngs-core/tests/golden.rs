@@ -276,7 +276,7 @@ fn emit_golden_journal() {
     let admit = |who: &str, k: &SigningKey, of: &OpId, device| RailAct::Admit {
         person: person(who),
         key: actor_of(k),
-        invite: Some(Redemption::sign(k, NS, of, &person(who), device)),
+        invite: Some(Redemption::sign(k, NS, of, &person(who), device, None)),
     };
 
     let to_bo = c.sign(&alex, 0, invite(&link_bo, None), None);

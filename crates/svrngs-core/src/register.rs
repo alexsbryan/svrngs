@@ -9,10 +9,11 @@ use alloc::string::{String, ToString};
 use alloc::vec;
 use alloc::vec::Vec;
 
+use crate::authority::{AuthorityChange, Unlawful};
 use crate::command::{Command, Reads};
 use core::convert::Infallible;
 
-use crate::{Admission, Device, InviteFault, Joined, OpId, Person, RailAct, Redemption};
+use crate::{Admission, Device, InviteFault, Joined, Office, OpId, Person, RailAct, Redemption};
 
 /// The issuer's node asked to admit `key` as `person` through its `Invite`.
 /// Decided at the issuer's write, where a link holder's name arrives, and
@@ -306,6 +307,9 @@ pub enum HandOnRefusal {
     /// The signer does not keep the group, so the hand-on would move
     /// nothing.
     NotKeeper,
+    /// No hand-on waits for the signer to take: none to it, and none of its
+    /// own to take back.
+    NotOffered,
 }
 
 impl HandOnTo {
@@ -332,11 +336,48 @@ impl Command for HandOnTo {
         Ok(vec![RailAct::HandOn { key: key?.clone() }])
     }
 
+    /// Moved, or in a sources-v1 group offered: it moves at their Accept.
     fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
         let m = after.membership();
-        let moved = self.key(m).is_ok_and(|k| m.keeper.as_ref() == Some(k));
-        tracing::debug!(target: "register", person = %self.person, moved, "hand-on: the fold's verdict");
+        let offered = |k: &String| matches!(&m.office, Office::Pending { to, .. } if to == k);
+        let moved = self
+            .key(m)
+            .is_ok_and(|k| m.keeper.as_ref() == Some(k) || offered(k));
+        tracing::debug!(target: "register", person = %self.person, moved, office = ?m.office, "hand-on: the fold's verdict");
         moved.then_some(()).ok_or(HandOnRefusal::NotKeeper)
+    }
+}
+
+/// This computer, `0`, takes the office a hand-on left waiting (sources-v1;
+/// EUDOXIA_JUDGE §2c): its person's own yes, an `Accept` naming a hand-on
+/// to it; or, for the holder that wrote the hand-on, taking it back, a
+/// `HandOn` to its own key. The interpreter decides either.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Take(pub String);
+
+impl Command for Take {
+    type Refusal = HandOnRefusal;
+    const READS: Reads = Reads::Membership;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let office = &before.membership().office;
+        tracing::debug!(target: "register", key = %self.0, ?office, "take: an Accept of a hand-on to this key, or its holder's taking it back");
+        match office {
+            Office::Pending { hand_on, to, .. } if *to == self.0 => {
+                let hand_on = hand_on.clone();
+                Ok(vec![RailAct::Accept { hand_on }])
+            }
+            Office::Pending { by, .. } if *by == self.0 => {
+                Ok(vec![RailAct::HandOn { key: by.clone() }])
+            }
+            _ => Err(HandOnRefusal::NotOffered),
+        }
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        let keeps = after.membership().keeper.as_ref() == Some(&self.0);
+        tracing::debug!(target: "register", key = %self.0, keeps, "take: the fold's verdict");
+        keeps.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }
 }
 
@@ -387,6 +428,55 @@ impl Command for MeetsAt {
         let counted = after.membership().meets_at().as_ref() == Some(&self.0);
         tracing::debug!(target: "register", counted, "meets: the fold's verdict, which counts only the keeper's");
         counted.then_some(()).ok_or(HandOnRefusal::NotKeeper)
+    }
+}
+
+/// This computer's word when its group's keeper asks it to get ready to
+/// move (EUDOXIA_JUDGE §2e rule 1): it reads line version 15, holds these
+/// tips, and sees this key as keeper. It reports facts and consents to
+/// nothing, so its computer signs it on its own.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Ready;
+
+impl Command for Ready {
+    type Refusal = Unlawful;
+    const READS: Reads = Reads::All;
+
+    /// Refused [`Unlawful::NotKeeper`] when the fold names no keeper: a
+    /// Ready names the keeper it sees, never an empty one.
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Unlawful> {
+        let tips = before.tips.values().flatten().cloned().collect();
+        let keeper = before.membership().keeper.clone();
+        tracing::debug!(target: "register", ?keeper, "ready: the tips this computer holds and the keeper it sees");
+        let change = AuthorityChange::Ready {
+            tips,
+            keeper: keeper.ok_or(Unlawful::NotKeeper)?,
+        };
+        Ok(vec![RailAct::Authority { change }])
+    }
+}
+
+/// The keeper's Adopt, as [`crate::authority::adoption`] drew it after its
+/// keeper pressed Move: written only when the fold with it is adopted, so
+/// the write side is the replay.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Adopt(pub crate::authority::LegacyAdoption);
+
+impl Command for Adopt {
+    type Refusal = Unlawful;
+    const READS: Reads = Reads::All;
+
+    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Unlawful> {
+        let adoption = self.0.clone();
+        let change = AuthorityChange::Adopt { adoption };
+        Ok(vec![RailAct::Authority { change }])
+    }
+
+    fn confirm(&self, after: &Admission, written: &[OpId]) -> Result<(), Unlawful> {
+        let decided = &after.membership().decided;
+        tracing::debug!(target: "register", ?decided, "adopt: the fold's verdict");
+        let adopted = decided.adopted().is_some_and(|id| written.contains(id));
+        adopted.then_some(()).ok_or(Unlawful::Pin)
     }
 }
 

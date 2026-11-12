@@ -2,17 +2,18 @@
 //! brings Money from her home page; Bo joins by the link her page makes.
 //! Ada adds the groceries, paid by her; Bo, on his own computer, says he
 //! was in on it, owes half, and says he paid it back, and both are square.
-//! Then a program on Bo's computer writes a correction of Ada's groceries:
-//! it is not counted, on either page, and says whose it was. Ada's own
-//! correction of an entry of hers still counts. Then Ada names Bo in on
+//! Then a program on Bo's computer tries a correction of Ada's groceries:
+//! the record refuses it as it is written, saying whose entry it is, and
+//! both pages still count the groceries. Ada's own correction of an entry
+//! of hers still counts. Then Ada names Bo in on
 //! dinner while Bo's Money is open: his page, not opened again, asks him;
 //! her line says what he owes once he says he was in on it; and his half
 //! counts once he says "Yes, I was in on dinner".
 //!
 //! The invariant it relies on: **a correction counts only from its
-//! author** (capability-money; expenses.js `voids`). The record voids an
-//! act whoever corrects it, so a fold that read the record's `voided`
-//! alone would let any member erase anyone's expense.
+//! author's person**: house is sources-v1, and its interpreter counts a
+//! `Correct` only from the person whose entry it names (EUDOXIA_JUDGE §2c,
+//! Correct), so the write side refuses another's (`Refused::Uncounted`).
 
 use std::time::Duration;
 
@@ -21,27 +22,17 @@ use serde_json::{json, Value};
 use crate::harness::Engine;
 use crate::people::{late, sees, Person, Scene};
 
-/// Once `who`'s record says Money's expense `what` voided, within 60 s:
-/// the record voids an act whoever corrects it (svrngs-core admit.rs,
-/// `voided`).
-async fn voided(who: &Person, group: &str, what: &str) {
-    let voided = |o: &Value| o["payload"]["description"] == what && o["voided"] == true;
-    for _ in 0..120 {
-        let log = who.get(&format!("/v1/rail/log?namespace={group}")).await;
-        if log["ops"]
-            .as_array()
-            .is_some_and(|ops| ops.iter().any(voided))
-        {
-            return;
-        }
-        tokio::time::sleep(Duration::from_millis(500)).await;
-    }
+/// `who`'s record holds Money's expense `what`, not voided: no correction
+/// of it counted.
+async fn kept(who: &Person, group: &str, what: &str) {
     let log = who.get(&format!("/v1/rail/log?namespace={group}")).await;
-    late(format!(
-        "{}'s record does not void {what} within 60 s: {log:#}",
+    let ops = log["ops"].as_array().cloned().unwrap_or_default();
+    let it = ops.iter().find(|o| o["payload"]["description"] == what);
+    assert!(
+        it.is_some_and(|o| o["voided"] == false),
+        "{}'s record keeps {what}, not voided: {log:#}",
         who.name
-    ))
-    .await
+    );
 }
 
 /// The groceries, split between Ada and Bo, as Bo's page and then Ada's
@@ -105,9 +96,9 @@ async fn held(who: &Person, group: &str, holds: impl Fn(&Value) -> bool) -> Valu
 }
 
 scene!(
-    /// Planted, watched failing: expenses.js's `actsOf` reading the
-    /// record's `voided` as before fd3347ac, so Bo's correction erases
-    /// Ada's groceries on both pages.
+    /// Planted, watched failing: svrngs-core command.rs `Uncounted`'s
+    /// words made the one generic sentence for every refusal, so Bo is not
+    /// told whose entry it is.
     money
 );
 async fn money(engine: Engine) {
@@ -170,27 +161,21 @@ async fn money(engine: Engine) {
     let (status, said) = bo
         .post(&format!("/v1/rail/append?namespace={house}"), &erase)
         .await;
-    assert!(
-        status < 300,
-        "the record takes Bo's correction, as it takes any member's act: {status} {said}"
+    // The record refuses it as it is written, saying whose entry it is and
+    // what to do; nothing reaches either computer.
+    let whose = "Only Ada can change Ada’s entry, so the record would not count Bo’s change. Ask Ada to change it.";
+    assert_eq!(status, 422, "{said}");
+    assert_eq!(
+        said["error"], whose,
+        "Bo is told whose the entry is: {said}"
     );
-    // Ada's record voids the groceries, as it voids an act whoever
-    // corrects it: its log no longer holds them.
-    voided(&ada, &house, "the groceries").await;
-
-    let refused =
-        "1 entry can’t be counted: Bo tried to change Ada’s entry, which only Ada can change.";
     for (who, both) in [(&bo, BOTH[0]), (&ada, BOTH[1])] {
+        kept(who, &house, "the groceries").await;
         let seen = opened(engine, who, json!([])).await;
         let said = seen["said"].as_str().unwrap_or_default();
         assert!(
             said.contains(both) && said.contains("You’re square with everyone."),
             "{}'s Money still counts the groceries: {seen:#}",
-            who.name
-        );
-        assert!(
-            said.contains(refused),
-            "{}'s Money says whose the correction was: {seen:#}",
             who.name
         );
     }
@@ -210,7 +195,6 @@ async fn money(engine: Engine) {
         !said.contains("a lamp"),
         "Ada's own correction counts: {seen:#}"
     );
-    assert!(said.contains(refused), "{seen:#}");
 
     // Ada names Bo in on dinner (the operator, 2026-10-26; demo/xenia/
     // findings/split-leaves-out-ana.md) while Bo's Money is open: his page,

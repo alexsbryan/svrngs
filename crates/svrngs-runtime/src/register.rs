@@ -50,6 +50,11 @@ pub struct Register {
     pub members: BTreeMap<String, Member>,
     pub removed: BTreeMap<String, Person>,
     pub keeper: Option<String>,
+    /// The office beside `keeper` (`Membership::office`): a sources-v1
+    /// group's hand-on waiting on its Accept, among others.
+    pub office: svrngs_core::Office,
+    /// Which decider folded it (`Membership::decided`).
+    pub decided: svrngs_core::Decided,
     pub removals: Vec<Removing>,
     pub visits: BTreeMap<OpId, Guest>,
     pub cut: BTreeMap<String, Cut>,
@@ -141,7 +146,12 @@ pub(crate) fn register_in(
     namespace: &str,
     verifier: &dyn RingVerifier,
 ) -> Result<Register, RailError> {
-    let m = membership_in(ops, seed, namespace, verifier)?;
+    register_of(&membership_in(ops, seed, namespace, verifier)?, ops, namespace)
+}
+
+/// The register `m` says, its removals read among `ops`, which hold every
+/// `Remove` (`svrngs_core::standing_reads`).
+pub(crate) fn register_of(m: &Membership, ops: &[Op<SignedOp>], namespace: &str) -> Result<Register, RailError> {
     if m.unsettled {
         tracing::warn!(target: "register", namespace, "register: the group's removals do not come to one answer, so nobody is read as standing");
         return Err(RailError::Unsettled(namespace.to_string()));
@@ -172,13 +182,15 @@ pub(crate) fn register_in(
     Ok(Register {
         members,
         removed,
-        removals: removals_in(ops, &m, namespace),
+        removals: removals_in(ops, m, namespace),
         meets: m.meets_at(),
-        keeper: m.keeper,
-        visits: m.visits,
-        cut: m.cut,
-        signers: m.signers,
-        holders: m.holders,
+        keeper: m.keeper.clone(),
+        office: m.office.clone(),
+        decided: m.decided.clone(),
+        visits: m.visits.clone(),
+        cut: m.cut.clone(),
+        signers: m.signers.clone(),
+        holders: m.holders.clone(),
     })
 }
 
@@ -233,7 +245,7 @@ pub(crate) fn membership_in(
     // each signature — the sync route asks this per request, of journals of
     // tens of thousands of acts (ring_sync's ceiling tests timed out
     // verifying them all).
-    let acts: Vec<Op<SignedOp>> = svrngs_core::standing_reads(ops).cloned().collect();
+    let acts: Vec<Op<SignedOp>> = svrngs_core::standing_reads(ops, seed).cloned().collect();
     Ok(admit(&crate::ActSet::of(&acts), &[], seed, namespace, verifier)
         .membership()
         .clone())

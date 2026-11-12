@@ -69,16 +69,8 @@ async fn ada_in(dir: &Path, relay: &iroh_relay::server::Server, seeds: &[Seed]) 
 /// and her record of each synced to it once, so ada's page lists what cy
 /// lends in each group (browser/main.rs `joined`).
 async fn cy(dir: &Path, relay: &iroh_relay::server::Server, ada: &Node, seeds: &[Seed]) -> Node {
-    use svrngs_node::{actor_of, Person, RailAct};
     for seed in seeds {
-        let act = svrngs_core::tests_support::Fixture {
-            act: RailAct::Admit {
-                person: Person::parse("cy").unwrap(),
-                key: actor_of(&SigningKey::from_bytes(&[44; 32])),
-                invite: None,
-            },
-        };
-        ada.rail().commit(&seed.id(), &act).unwrap().unwrap();
+        crate::admit(ada, &seed.id(), "cy", 44);
     }
     let node = computer(dir, relay, 44, seeds).await;
     for seed in seeds {

@@ -1288,7 +1288,7 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
         device_of: None,
     });
     let bo = Person::parse("bo").unwrap();
-    let redeemed = Redemption::sign(&signing(7), &group, &invite.id, &bo, Device::Browser);
+    let redeemed = Redemption::sign(&signing(7), &group, &invite.id, &bo, Device::Browser, None);
     append(RailAct::Admit {
         invite: Some(redeemed),
         person: bo,

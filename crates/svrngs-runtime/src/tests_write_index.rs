@@ -26,7 +26,6 @@ fn a_batch_append_continues_the_counter_contiguously() {
         signer: &key(1),
         roster: &r,
         namespace: NS,
-        verifier: &Ed25519Verifier,
         now: 1,
     };
     let recorded = svrngs_core::commit(&journal, &Batch(batch), &author).unwrap().unwrap();

@@ -131,6 +131,11 @@ impl Host {
                     RailError::Unsettled(group.to_string()).to_string(),
                 ))
             }
+            Ok(Err(Refused::Uncounted(_))) => {
+                return Err(Unminted::Unkept(format!(
+                    "{group} would not count the link"
+                )))
+            }
             Ok(Err(Refused::Command(never))) => match never {},
             Err(e) => return Err(Unminted::Unkept(e.to_string())),
         };

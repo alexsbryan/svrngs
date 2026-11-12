@@ -158,6 +158,9 @@ short name.
   or on the home page *"You keep the order of removals in House: choose who
   keeps it after you, then leave."* You decide who is removed, so hand that
   on first: `svrngs handover <name> --group House`. [People](people.md).
+- ***"Nobody handed you who is removed from House, so there is nothing to accept."***
+  The hand-on was taken back, or someone else accepted it first. Your home
+  page shows who decides now.
 - ***"svrngs cannot tell which person called sam in House you mean, so nothing changed."***
   Two people share the name. Add one of the `--joined …` choices it lists
   to the command, quotes included.

@@ -14,6 +14,8 @@ use alloc::vec::Vec;
 
 use serde::{Deserialize, Serialize};
 
+use crate::authority::GroupPolicy;
+
 use crate::{
     actor_of, field, sign_message, verify_hex, Device, OpId, Person, Redemption, SigningKey,
 };
@@ -74,6 +76,19 @@ pub struct Asked {
     /// as before.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub person: Option<Person>,
+    /// The group moved to its interpreter by its keeper's Adopt (svrn-docs
+    /// EUDOXIA_JUDGE §2e rule 8), so the joiner's consent covers its device
+    /// as a sources-v1 seed's does. Skipped when false.
+    #[serde(default, skip_serializing_if = "core::ops::Not::not")]
+    pub adopted: bool,
+}
+
+impl Asked {
+    /// The consent a joiner signs: as the seed's `policy` asks, or as a
+    /// sources-v1 seed's once the group moved.
+    pub fn policy(&self, seed: Option<GroupPolicy>) -> Option<GroupPolicy> {
+        seed.or(self.adopted.then_some(GroupPolicy::SourcesV1))
+    }
 }
 
 /// What a joiner presents.
@@ -102,7 +117,7 @@ pub struct RedeemRequest {
 impl RedeemRequest {
     /// `joining`, held by `device`, asks to join `group` as `person`,
     /// through the link whose secret is `link` and whose `Invite` is
-    /// `invite`.
+    /// `invite`, consenting as the group's seed `policy` asks.
     pub fn sign(
         link: &SigningKey,
         joining: &SigningKey,
@@ -110,8 +125,9 @@ impl RedeemRequest {
         invite: &OpId,
         person: &Person,
         device: Device,
+        policy: Option<crate::authority::GroupPolicy>,
     ) -> Self {
-        let consent = Redemption::sign(joining, group, invite, person, device);
+        let consent = Redemption::sign(joining, group, invite, person, device, policy);
         let mut req = Self {
             group: group.to_string(),
             invite: invite.clone(),

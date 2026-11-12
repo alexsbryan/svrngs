@@ -38,6 +38,10 @@ use program::Program;
 mod node_common;
 use node_common::heard;
 
+/// Every group here is founded by `svrngs new`: sources-v1.
+const V1: Option<svrngs_node::authority::GroupPolicy> =
+    Some(svrngs_node::authority::GroupPolicy::SourcesV1);
+
 /// The lines a group's journal holds on disk, as written.
 fn lines(node: &Node, group: &str) -> Vec<svrngs_node::Op<svrngs_node::SignedOp>> {
     let file = node
@@ -206,6 +210,7 @@ async fn present_from(
         invite,
         &Person::parse(person).unwrap(),
         device,
+        V1,
     );
     send(who, link, &req).await
 }
@@ -395,6 +400,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
         &open_invite,
         &Person::parse("Gus").unwrap(),
         Device::Computer,
+        V1,
     );
     req.link = actor_of(&open.token.key());
     let unsigned = send(&gus, &open, &req).await;
@@ -557,6 +563,7 @@ async fn a_name_that_is_not_one_is_refused_and_nothing_is_written() {
             &invite,
             &Person::parse("Hal").unwrap(),
             Device::Computer,
+            V1,
         );
         req.person = bad.clone();
         req.cosig = sign_message(

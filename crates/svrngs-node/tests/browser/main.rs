@@ -309,14 +309,18 @@ async fn house(dir: &Path, relay: &Server, admitted: &SigningKey) -> (Node, Stri
         signing(1).verifying_key(),
     );
     node.host().keep_group(&seed, None, &[]).unwrap();
-    let fixture = svrngs_core::tests_support::Fixture {
-        act: RailAct::Admit {
-            person: Person::parse("bo").unwrap(),
-            key: actor_of(admitted),
-            invite: None,
+    // bo let in by a link ada's computer mints: house is sources-v1.
+    let (ns, rail) = (seed.id(), node.rail());
+    svrngs_core::tests_support::let_in(
+        (&ns, seed.policy(), &actor_of(&signing(1))),
+        (admitted, "bo", svrngs_node::Device::Computer),
+        |mint| {
+            rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
         },
-    };
-    node.rail().commit(&seed.id(), &fixture).unwrap().unwrap();
+        |redeem| drop(rail.commit(&ns, redeem).unwrap().unwrap()),
+    );
     tokio::time::timeout(Duration::from_secs(20), node.endpoint().online())
         .await
         .expect("the node reaches the relay on 127.0.0.1");
@@ -3832,6 +3836,7 @@ fn from_a_phone(ada: &Node, person: &str, joining: u8) {
         &invite.id,
         &person,
         svrngs_node::Device::Browser,
+        None,
     );
     commit(RailAct::Admit {
         invite: Some(signed),

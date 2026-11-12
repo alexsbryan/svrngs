@@ -38,7 +38,7 @@ fn redeem_from(invite: &Op<SignedOp>, device: Device) -> Redeem {
         invite: id.clone(),
         person: p("hal"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("hal"), device).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("hal"), device, None).sig,
         device,
         link: actor_of(&link()),
         issuer: actor_of(&issuer()),
@@ -50,7 +50,6 @@ fn author<'a>(signer: &'a SigningKey, roster: &'a Roster, now: i64) -> Author<'a
         signer,
         roster,
         namespace: NS,
-        verifier: &Ed25519Verifier,
         now,
     }
 }
@@ -199,7 +198,14 @@ fn device_link(of: &SigningKey, new: &SigningKey, ts: i64) -> (Op<SignedOp>, Op<
     let admit = RailAct::Admit {
         person: p("bo"),
         key: actor_of(new),
-        invite: Some(Redemption::sign(new, NS, &id, &p("bo"), Device::Computer)),
+        invite: Some(Redemption::sign(
+            new,
+            NS,
+            &id,
+            &p("bo"),
+            Device::Computer,
+            None,
+        )),
     };
     let redeemed = after(of, &link, ts + 1, admit);
     (link, redeemed)
@@ -387,7 +393,7 @@ fn redeem_in_alexs_group(store: &Memory, seed: &Roster, name: &str, joiner: &Sig
         invite: id.clone(),
         person: p(name),
         key: actor_of(joiner),
-        cosig: Redemption::sign(joiner, NS, &id, &p(name), Device::Computer).sig,
+        cosig: Redemption::sign(joiner, NS, &id, &p(name), Device::Computer, None).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&key(1)),
@@ -490,7 +496,7 @@ fn a_removed_persons_name_is_free_again() {
         invite: id.clone(),
         person: p("Cy"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("Cy"), Device::Computer).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("Cy"), Device::Computer, None).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&key(1)),
@@ -602,7 +608,7 @@ fn a_persons_second_device_stands_as_them_by_a_link_of_theirs() {
         invite: id.clone(),
         person: p("whoever"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("whoever"), Device::Computer).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("whoever"), Device::Computer, None).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&cy),
@@ -655,7 +661,7 @@ fn a_device_link_counts_only_from_a_key_standing_as_its_person() {
         invite: id.clone(),
         person: p("bo"),
         key: actor_of(&joining()),
-        cosig: Redemption::sign(&joining(), NS, &id, &p("bo"), Device::Computer).sig,
+        cosig: Redemption::sign(&joining(), NS, &id, &p("bo"), Device::Computer, None).sig,
         device: Device::Computer,
         link: actor_of(&link()),
         issuer: actor_of(&cy),

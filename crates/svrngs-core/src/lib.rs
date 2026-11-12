@@ -85,6 +85,7 @@ mod act_set;
 mod admit;
 pub mod alpn;
 pub mod app;
+pub mod authority;
 mod command;
 pub mod grant;
 mod hash;
@@ -119,19 +120,22 @@ pub use ed25519_dalek::SigningKey;
 use serde::{Deserialize, Serialize};
 
 pub use act_set::ActSet;
-pub use admit::{admit, body_json, Admission, AdmittedOp, GapClass, RailGap};
-pub use command::{commit, Author, Authored, Command, Reads, Recorded, Refused, Store, Tip};
+pub use admit::{admit, admit_after, body_json, Admission, AdmittedOp, GapClass, RailGap};
+pub use authority::{approve_in_open, ApprovalFault};
+pub use command::{
+    commit, Author, Authored, Command, Held, Reads, Recorded, Refused, Store, Tip, Uncounted,
+};
 pub use membership::*;
 pub use payload::{Payload, PayloadError, MAX_PAYLOAD_BYTES};
 pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
-    Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt,
-    Removal, RemovalRefusal,
+    Adopt, Cutover, HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Ready, Redeem,
+    RedeemRefusal, RelayAt, Removal, RemovalRefusal, Take,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, redemption_message, ring_op_message, sign_act,
-    sign_message, sign_ring_op, unsigned_act, verify_hex,
+    sign_message, sign_ring_op, source_redemption_message, unsigned_act, verify_hex,
 };
 pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};
@@ -293,11 +297,18 @@ pub struct Roster {
     /// Person → the hex node public keys that person signs with. Two laptops
     /// is two keys in one row.
     pub members: BTreeMap<Person, Vec<String>>,
+    /// The seed's policy, which picks the group's one decider: `None`, the
+    /// legacy fold (`membership.rs`); sources-v1, Eudoxia's interpreter.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub policy: Option<authority::GroupPolicy>,
 }
 
 impl Roster {
     pub fn new(members: BTreeMap<Person, Vec<String>>) -> Self {
-        Self { members }
+        Self {
+            members,
+            policy: None,
+        }
     }
 }
 
@@ -317,6 +328,8 @@ impl Roster {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum RailAct {
+    /// Source-aware constitutional/control meaning, introduced as one cohort.
+    Authority { change: authority::AuthorityChange },
     /// The app said something.
     Record { payload: Payload },
     /// An earlier op was wrong. It is voided — permanently, and visibly — and
@@ -451,6 +464,9 @@ pub enum RailAct {
     /// them, which the record never names ([`relay::Meeting`]). As written:
     /// the fold reads each dotless. Carries no [`Payload`].
     Meets { relays: BTreeSet<String> },
+    /// The recipient of a [`Self::HandOn`] takes the office: on its own chain,
+    /// naming the hand-on by its id. The office passes when both lines exist.
+    Accept { hand_on: OpId },
 }
 
 /// What a [`RailAct::Visit`] says: the guest's name, the key they made for
@@ -529,15 +545,23 @@ impl Device {
 
 impl Redemption {
     /// `joining`, held by `device`, consents to join `namespace` as
-    /// `person` under the `Invite` whose id is `invite`.
+    /// `person` under the `Invite` whose id is `invite`, as the group's seed
+    /// `policy` asks: a sources-v1 group's consent covers the device too
+    /// ([`sig::source_redemption_message`]), so the joiner, not the issuer,
+    /// says whether its key may hold office.
     pub fn sign(
         joining: &SigningKey,
         namespace: &str,
         invite: &OpId,
         person: &Person,
         device: Device,
+        policy: Option<authority::GroupPolicy>,
     ) -> Self {
-        let msg = sig::redemption_message(namespace, invite, person.as_str(), &actor_of(joining));
+        let key = actor_of(joining);
+        let msg = match policy {
+            None => sig::redemption_message(namespace, invite, person.as_str(), &key),
+            Some(_) => sig::source_redemption_message(namespace, invite, person, &key, device),
+        };
         Self {
             id: invite.clone(),
             sig: sig::sign_message(joining, &msg),
@@ -727,6 +751,7 @@ pub const APPROVAL_LINE_VERSION: u32 = 13;
 /// names it `NewerVersionLine`, so it meets the group where it did before,
 /// at the relay its group's file keeps.
 pub const MEETS_LINE_VERSION: u32 = 14;
+pub const AUTHORITY_LINE_VERSION: u32 = 15;
 
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
@@ -736,7 +761,7 @@ impl Journaled for SignedOp {
     /// redemption's, a folder's, removal's, a device link's, a relay's, a
     /// yes to a carried app's version's, a visit's, a holder's and the
     /// group's relays' lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = MEETS_LINE_VERSION;
+    const UNDERSTANDS: u32 = AUTHORITY_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -744,6 +769,9 @@ impl Journaled for SignedOp {
     /// and a ring with no membership act folds byte-identically to the build
     /// before.
     fn line_version(&self) -> u32 {
+        if matches!(self.act, RailAct::Authority { .. } | RailAct::Accept { .. }) {
+            return AUTHORITY_LINE_VERSION;
+        }
         match self.act {
             RailAct::Meets { .. } => MEETS_LINE_VERSION,
             _ if self.grant.as_ref().is_some_and(|p| p.op.is_some()) => APPROVAL_LINE_VERSION,
@@ -891,7 +919,17 @@ mod tests;
 mod tests_sealing;
 
 #[cfg(test)]
+mod tests_adoption;
+#[cfg(test)]
+mod tests_authority;
+#[cfg(test)]
 mod tests_grant;
+#[cfg(test)]
+mod tests_source_graph;
+#[cfg(test)]
+mod tests_source_recovery;
+#[cfg(test)]
+mod tests_sources_live;
 
 #[cfg(test)]
 mod tests_cutover;

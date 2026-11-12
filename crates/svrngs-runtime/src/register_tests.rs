@@ -87,7 +87,7 @@ fn standing_from_the_membership_acts_alone_is_the_journals() {
         &inv,
         109,
         RailAct::Admit {
-            invite: Some(Redemption::sign(&key(5), NS, &inv.id, &eve, Device::Computer)),
+            invite: Some(Redemption::sign(&key(5), NS, &inv.id, &eve, Device::Computer, None)),
             person: eve,
             key: actor_of(&key(5)),
         },

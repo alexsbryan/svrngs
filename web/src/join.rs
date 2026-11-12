@@ -110,6 +110,9 @@ pub fn redemption(key: Vec<u8>, token: String, asked: String, name: String) -> R
     let link = link(&token)?;
     let asked: Asked = serde_json::from_str(&asked).map_err(|e| refuse(&format!("the answer is not an ask's: {e}")))?;
     let name = Name::parse(&name).map_err(|why| refuse(&why.to_string()))?;
+    // The consent the seed's policy asks, as `believe` believed the seed.
+    let seed = answered(&asked.group, &asked.seed)
+        .ok_or_else(|| refuse("the answer's seed does not hash to the group it names"))?;
     let req = RedeemRequest::sign(
         &link.key(),
         &joining,
@@ -117,6 +120,7 @@ pub fn redemption(key: Vec<u8>, token: String, asked: String, name: String) -> R
         &asked.invite,
         &Person::from(name),
         Device::Browser,
+        asked.policy(seed.policy()),
     );
     emit(&format!(
         "JOIN: redeeming the link as {:?}, {}, a browser's key",

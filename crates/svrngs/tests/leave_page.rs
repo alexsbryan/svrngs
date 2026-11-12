@@ -499,7 +499,14 @@ async fn a_cut_by_a_handed_on_keeper_reaches_a_computer_off_as_it_landed() {
     };
     let handed = sam.rail().commit(&trip, &to_bo).unwrap();
     assert!(handed.is_ok(), "control: Sam hands on to Bo: {handed:?}");
-    let keeps = || bo.rail().register(&trip).unwrap().keeper == Some(bo_actor.clone());
+    // Trip is sources-v1: the hand-on passes with Bo's own yes, once Bo's
+    // computer holds it (refused, writing nothing, until then).
+    let keeps = || {
+        let _ = bo
+            .rail()
+            .commit(&trip, &svrngs_core::Take(bo_actor.clone()));
+        bo.rail().register(&trip).unwrap().keeper == Some(bo_actor.clone())
+    };
     let kept = tokio::time::timeout(Duration::from_secs(30), async {
         while !keeps() {
             let _ = tokio::time::timeout(Duration::from_secs(10), bo.round()).await;

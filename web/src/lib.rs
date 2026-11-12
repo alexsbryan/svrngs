@@ -675,20 +675,8 @@ pub fn approve_line(
     let reach = Pass::decode(&reach).ok_or_else(|| JsError::new("not a reach pass"))?;
     let issued = Pass::decode(&grant).ok_or_else(|| JsError::new("not an issued grant"))?;
     let line: svrngs_core::Op<svrngs_core::SignedOp> = serde_json::from_str(&line)?;
-    let now = now as i64;
-    let grant = line.kind.grant.as_ref().ok_or_else(|| JsError::new("no write grant"))?;
-    let named = |p: &Pass| p.approver.as_deref() == Some(approver.as_str());
-    let ours = named(&reach)
-        && named(grant)
-        && grant == &issued
-        && reach.app.whose() == grant.app.whose()
-        && now.abs_diff(line.ts_unix) <= 300;
-    if !ours || reach.check(&line.actor, &reach.app, now).is_err() {
-        return Err(JsError::new("this app has no live authority here"));
-    }
-    let pass = grant
-        .approving(&line, &group, now)
-        .ok_or_else(|| JsError::new("this entry was not approved"))?;
+    let pass = svrngs_core::approve_in_open(&approver, &group, &reach, &issued, &line, now as i64)
+        .map_err(|error| JsError::new(&error.to_string()))?;
     Ok(js_sys::Array::of2(
         &serde_json::to_string(&pass)?.into(),
         &js_sys::Uint8Array::from(pass.approval_message().as_slice()).into(),

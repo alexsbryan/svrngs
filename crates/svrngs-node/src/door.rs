@@ -100,6 +100,7 @@ use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Via};
 use crate::lend::{self, Lend, LendName, Offered, Source};
 use crate::network::Whereabouts;
+use crate::register::Member;
 use crate::ring_routes::err;
 use crate::surface::AppRoute;
 use crate::{register::Visiting, Person, RingRail};
@@ -1236,51 +1237,52 @@ async fn holder_of(
     let label = lend.label(&door.key);
     let now = unix_now().ok_or_else(|| refused("this computer's clock cannot be read"))?;
     // A link carried lapses no later than its pass ([`Pass::carries`]).
-    let (checked, until) = match headers
+    let link = match headers
         .get(LINK_HEADER)
         .map(|v| v.to_str().ok().and_then(Pass::decode))
     {
-        None => (pass.check(&key, &label, now), pass.until),
-        Some(Some(link)) => (pass.carries(&link, &key, &label, now), link.until),
+        None => None,
+        Some(Some(link)) => Some(link),
         Some(None) => return Err(refused("a link that does not read")),
     };
-    if let Err(fault) = checked {
-        return Err(refused(&fault.to_string()));
-    }
+    let (issuer, app, until) = pass
+        .with_reach(link.as_ref(), &key, &label, now, |issuer, app, until| {
+            (issuer.to_owned(), app.clone(), until)
+        })
+        .map_err(|fault| refused(&fault.to_string()))?;
     // A group the lend does not reach grants nothing, so the signer's
     // identity is resolved only through a group this lend is lent to.
-    let eligible = |group: &str| reached(&door.rail, lend, group);
     let stands = || {
-        let standing = door.rail.standing_in(&pass.person, eligible);
-        standing.map(|(group, member)| (group, member.person, PersonKey(member.person_key)))
+        member_for(&door.rail, lend, &issuer)
+            .map(|(group, member)| (group, member.person, PersonKey(member.person_key)))
     };
     let standing = stands();
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
-    if standing.is_none() && door.rail.removed_anywhere(&pass.person).is_some() {
-        tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
+    if standing.is_none() && door.rail.removed_anywhere(&issuer).is_some() {
+        tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
             "door: refused — the pass's signer was removed from a group held here");
         return Err(gone());
     }
     let standing = if standing.is_none() {
-        if let Some(visit) = door.rail.visit_anywhere(&pass.person) {
+        if let Some(visit) = door.rail.visit_anywhere(&issuer) {
             let (group, host, person) =
-                guest_of(&hex::encode(door.key), visit, &pass.person, lend, now)?;
+                guest_of(&hex::encode(door.key), visit, &issuer, lend, now)?;
             return Ok(Asker {
-                app: Some(pass.app),
-                actor: PersonKey(pass.person.clone()),
-                device: DeviceKey(pass.person),
+                app: Some(app),
+                actor: PersonKey(issuer.clone()),
+                device: DeviceKey(issuer),
                 group,
                 person,
                 host: Some(host),
                 until: Some(until),
             });
         }
-        tracing::debug!(target: "door", holder = key, signer = pass.person, lend = %lend.name,
+        tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
             "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
         let in_time = door.ring.until(ASK_WITHIN, || stands().is_some()).await;
         let again = stands();
-        tracing::debug!(target: "door", signer = pass.person, in_time, known = again.is_some(),
+        tracing::debug!(target: "door", signer = issuer, in_time, known = again.is_some(),
             "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
         again
     } else {
@@ -1291,8 +1293,8 @@ async fn holder_of(
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until,
         "door: a pass opens this lend until the earlier of its and its link's time, so its holder asks as the person who signed it");
     Ok(Asker {
-        app: Some(pass.app),
-        device: DeviceKey(pass.person),
+        app: Some(app),
+        device: DeviceKey(issuer),
         actor,
         group,
         person,
@@ -1463,6 +1465,12 @@ fn lender_of(door: &Door) -> Option<Person> {
     door.rail.standing_anywhere(&me).map(|(_, m)| m.person)
 }
 
+// HTTP, pass issuers and raw admission/sweeps resolve the same eligible-group
+// identity. The caller supplies the current lend; owner-origin access is separate.
+fn member_for(rail: &RingRail, lend: &Lend, actor: &str) -> Option<(String, Member)> {
+    rail.standing_in(actor, |group| reached(rail, lend, group))
+}
+
 /// One request for a lend, from `who`: refused by name, or carried to the
 /// lend's service and its answer streamed back.
 pub(crate) async fn lend_for(
@@ -1493,7 +1501,6 @@ pub(crate) async fn lend_for(
     // explicit audience (LENDING_SCOPE). The audience is read from the
     // declaration just read, so a narrowing takes effect at the next
     // request (RUST_ARCH 8; LENDING_SCOPE §"Raw admission and sweep").
-    let eligible = |group: &str| reached(&door.rail, &lend, group);
     let Asker {
         actor: whose,
         device,
@@ -1522,7 +1529,7 @@ pub(crate) async fn lend_for(
             }
         }
         Who::Member(_) => {
-            let Some((group, member)) = door.rail.standing_in(&actor, eligible) else {
+            let Some((group, member)) = member_for(&door.rail, &lend, &actor) else {
                 tracing::debug!(target: "door", actor, lend = %lend.name,
                     "door: refused — the dialer stands in no group this lend is lent to");
                 return Err(LendRefusal::closed(LENDS_NOTHING));

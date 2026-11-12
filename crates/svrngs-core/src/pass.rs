@@ -29,7 +29,6 @@ use alloc::vec::Vec;
 use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 
-use crate::grant::{Capability::Append, Grant};
 use crate::{actor_of, field, sign_message, verify_hex, SigningKey};
 
 /// Base32's alphabet for a label: 22 lowercase letters and the ten digits,
@@ -307,20 +306,9 @@ impl Pass {
         group: &str,
         now: i64,
     ) -> Option<Self> {
-        let payload = match &line.kind.act {
-            crate::RailAct::Record { payload } => Ok(Some(payload)),
-            crate::RailAct::Correct { replacement, .. } => Ok(replacement.as_ref()),
-            _ => Err(()),
-        };
-        let may = |p: &crate::Payload| Grant(self, group).may(&line.actor, Append(p.app()), now);
-        let scoped = payload.is_ok_and(|p| p.is_none_or(|p| may(p).is_ok()));
-        let live = now < self.until && line.ts_unix < self.until;
-        let approves = self.approver.is_some() && self.op.is_none() && self.signed();
-        tracing::debug!(target: "rail:pass", holder = %line.actor, scoped, live, approves, "pass: an entry is approved only by its pass's approver, while the pass is live, in its app's part");
-        (scoped && live && approves && self.holder == line.actor).then(|| Self {
-            op: Some(crate::grant::bare_id(line, group)),
-            ..self.clone()
-        })
+        crate::authority::NativeScope::new(self)
+            .ok()?
+            .approving(line, group, now)
     }
 
     /// [`Self::approving`], signed by `approver`, the key this pass names.
@@ -340,22 +328,7 @@ impl Pass {
     /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
     /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        if self.op.is_some() {
-            return Err(PassFault::NotReach);
-        }
-        if !self.signed() {
-            return Err(PassFault::Unsigned);
-        }
-        if self.holder != holder {
-            return Err(PassFault::NotTheHolder);
-        }
-        if now >= self.until {
-            return Err(PassFault::Lapsed);
-        }
-        if &self.app != lend && !self.reads.contains(lend) {
-            return Err(PassFault::NotNamed);
-        }
-        Ok(())
+        self.with_reach(None, holder, lend, now, |_, _, _| ())
     }
 
     /// Whether `link`, presented by `to` at `now`, carries this pass to it
@@ -364,13 +337,31 @@ impl Pass {
     /// one does not (capability-signed; DESIGN §3). A phone's holder, a key
     /// no page can copy, names each worker run's endpoint key so.
     pub fn carries(&self, link: &Pass, to: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        link.check(to, lend, now)?;
-        self.check(&link.person, lend, now)?;
-        let within = link.reads.iter().all(|r| self.reads.contains(r));
-        match within && link.app == self.app && link.until <= self.until {
-            true => Ok(()),
-            false => Err(PassFault::Wider),
-        }
+        self.with_reach(Some(link), to, lend, now, |_, _, _| ())
+    }
+
+    /// Admit original issuer/app/deadline metadata only through the shared
+    /// resource commit. Group standing and transport remain their owners' work.
+    pub fn with_reach<T>(
+        &self,
+        link: Option<&Self>,
+        holder: &str,
+        lend: &Label,
+        now: i64,
+        commit: impl FnOnce(&str, &Label, i64) -> T,
+    ) -> Result<T, PassFault> {
+        crate::authority::resolve(self, link, holder, lend, now, || {
+            commit(
+                &self.person,
+                &self.app,
+                link.map_or(self.until, |p| p.until),
+            )
+        })
+    }
+
+    /// Native source authentication for carrying bytes, not a write permission.
+    pub fn held_by(&self, holder: &str) -> bool {
+        crate::authority::NativeScope::new(self).is_ok_and(|scope| scope.held_by(holder))
     }
 
     /// The link this pass's holder signs to `holder`, unsigned, its

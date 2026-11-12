@@ -191,7 +191,6 @@ impl RingRail {
             signer: self.signer(),
             roster: &roster,
             namespace,
-            verifier: &Ed25519Verifier,
             now: now_unix(namespace)?,
         };
         let done = svrngs_core::commit(&*journal, command, &author);
@@ -219,7 +218,20 @@ impl RingRail {
                 namespace: namespace.to_string(),
             }),
             Err(Refused::Unsettled) => Err(RailError::Unsettled(namespace.to_string())),
+            Err(Refused::Uncounted(why)) => Err(RailError::Rejected(why.to_string())),
         }
+    }
+
+    /// The Adopt this computer may sign in `namespace` now, over every line
+    /// it holds, or why not (EUDOXIA_JUDGE §2e): what Move writes.
+    pub fn adoption(
+        &self,
+        namespace: &str,
+    ) -> Result<Result<authority::LegacyAdoption, authority::Unlawful>, RailError> {
+        let journal = self.journal(namespace)?;
+        let (held, roster) = (ActSet::of(&journal.read()?.0), journal.roster_file()?);
+        let me = actor_of(self.signer());
+        Ok(authority::adoption(&held, &roster, namespace, &Ed25519Verifier, &me))
     }
 
     /// This computer's newest `Invite` naming the link's key `link`, the
@@ -229,9 +241,9 @@ impl RingRail {
         let me = actor_of(self.signer());
         for namespace in self.namespaces()? {
             let journal = self.journal(&namespace)?;
-            let (ops, _) = journal.read()?;
-            let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
-            let admission = admit(&register, &[], &journal.roster_file()?, &namespace, &Ed25519Verifier);
+            let (ops, roster) = (journal.read()?.0, journal.roster_file()?);
+            let register = ActSet::of(svrngs_core::standing_reads(&ops, &roster));
+            let admission = admit(&register, &[], &roster, &namespace, &Ed25519Verifier);
             if let Some(id) = admission.invites().newest(&me, link) {
                 let m = admission.membership();
                 let of = m.invites.get(id).and_then(|i| i.device_of.as_deref());
@@ -247,9 +259,9 @@ impl RingRail {
     /// This computer's current invitation, not the newest for an old link key.
     pub fn current_invite(&self, namespace: &str) -> Result<Option<(OpId, svrngs_core::Invited)>, RailError> {
         let journal = self.journal(namespace)?;
-        let (ops, _) = journal.read()?;
-        let register = ActSet::of(ops.iter().filter(|op| op.kind.act.moves_membership()));
-        let a = admit(&register, &[], &journal.roster_file()?, namespace, &Ed25519Verifier);
+        let (ops, roster) = (journal.read()?.0, journal.roster_file()?);
+        let register = ActSet::of(svrngs_core::standing_reads(&ops, &roster));
+        let a = admit(&register, &[], &roster, namespace, &Ed25519Verifier);
         if a.membership().unsettled {
             return Err(RailError::Unsettled(namespace.into()));
         }

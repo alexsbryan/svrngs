@@ -39,7 +39,7 @@ use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader, Lines};
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
-use super::{busy_words, find, now, reached, Door, InFlight, Verdict, LENDS_NOTHING};
+use super::{busy_words, find, member_for, now, Door, InFlight, Verdict, LENDS_NOTHING};
 use crate::iroh::{closed_unadmitted, key_actor, Alpn, Endpoint, EndpointAddr, Via, NOT_ADMITTED};
 use crate::lend::{Lend, LendName, Raw, Source};
 
@@ -166,9 +166,7 @@ pub(crate) async fn serve(door: Door, conn: Connection) {
 /// connection rather than letting it run on (LENDING_SCOPE §"Raw admission
 /// and current-scope sweep").
 pub(super) fn stands(door: &Door, actor: &str, lend: &Lend) -> bool {
-    let lent_to = |g: &str, l: &Lend| reached(&door.rail, l, g);
-    let reached = |live: Lend| door.rail.standing_in(actor, |g| lent_to(g, &live));
-    live(door, lend).is_ok_and(|live| reached(live).is_some())
+    live(door, lend).is_ok_and(|live| member_for(&door.rail, &live, actor).is_some())
 }
 
 /// When `actor` no longer [`stands`] for `lend`, asked every [`SWEEP`].
@@ -242,8 +240,7 @@ async fn opened(lent: &Lending<'_>, flow: u32) -> Result<mpsc::Sender<Vec<u8>>, 
 pub(super) async fn admitted(lent: &Lending<'_>, what: &str) -> Result<Option<InFlight>, String> {
     let (door, actor, lend, _, conn) = *lent;
     let live = live(door, lend)?;
-    let lent_to = |g: &str| reached(&door.rail, &live, g);
-    let Some((_, member)) = door.rail.standing_in(actor, lent_to) else {
+    let Some((_, member)) = member_for(&door.rail, &live, actor) else {
         tracing::debug!(target: "door", actor, what, lend = %lend.name, "raw: a use refused — the dialer stands in no group this lend is lent to now");
         return Err(LENDS_NOTHING.into());
     };

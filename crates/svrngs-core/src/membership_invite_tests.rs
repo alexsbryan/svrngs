@@ -44,6 +44,7 @@ fn redeem_by(
             &inv.id,
             &person,
             device,
+            None,
         )),
         person,
         key: actor_of(&key(joining)),

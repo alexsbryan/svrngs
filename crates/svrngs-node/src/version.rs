@@ -57,6 +57,10 @@ pub const STEPS: &[Behind] = &[
     // served by whichever computer carries it; a computer below 6 lists and
     // serves its copy at its own label, as before ([`carried_once`]).
     Behind::Reads,
+    // 7: reads line version 15, an old group's Ready and Adopt (svrn-docs
+    // EUDOXIA_JUDGE §2e §1); a keeper's Move waits on every computer below
+    // 7 ([`moves`]), which would cut sync off for the whole group.
+    Behind::Reads,
 ];
 
 /// This build's version, as its answers carry it.
@@ -99,4 +103,10 @@ pub fn carried_once(version: Option<u32>) -> bool {
 /// by a link (capability-signed).
 pub fn links(version: Option<u32>) -> bool {
     version.is_some_and(|v| v >= 2)
+}
+
+/// Whether a computer whose answer carries `version` reads an old group's
+/// Ready and Adopt, so its keeper's Move may go on.
+pub fn moves(version: Option<u32>) -> bool {
+    version.is_some_and(|v| v >= 7)
 }

@@ -103,6 +103,13 @@ struct Held {
     /// (U7; `svrngs_core::standing_reads`).
     named: std::collections::HashSet<String>,
     standing: Option<(Roster, crate::register::Register)>,
+    /// A sources-v1 group's fold of every line held, and the seed it was
+    /// folded under: what the next commit decides over, and what the
+    /// register reads, until a line enters (P8: one fold per change).
+    kept: Option<(Roster, svrngs_core::Admission)>,
+    /// The Adopt a fold here found lawful: lawfulness turns on that line and
+    /// its closure alone, so later folds do not judge it again (§2e).
+    adopted: Option<OpId>,
 }
 
 /// Whether a fold of standing reads `op` whoever a `Remove` names: asked
@@ -110,7 +117,9 @@ struct Held {
 /// visit's Stop, a `Correct` (guests-door). Until then [`Held`] kept only
 /// the acts that move membership, so a stopped visit read as live here.
 fn read_by_standing(op: &Op<SignedOp>) -> bool {
-    svrngs_core::standing_reads(std::slice::from_ref(op)).next().is_some()
+    svrngs_core::standing_reads(std::slice::from_ref(op), &Roster::default())
+        .next()
+        .is_some()
 }
 
 /// Each line whose signature [`Ed25519Verifier`] passed as the tail brought
@@ -198,6 +207,10 @@ impl Held {
             if verified {
                 self.ids.insert(id);
             }
+        }
+        // A sources-v1 group's fold reads every act (G2), so any act moves it.
+        if !tail.ops.is_empty() && self.kept.take().is_some() {
+            self.standing = None;
         }
         if !newly_named.is_empty() {
             // A key a `Remove` names for the first time: its acts already
@@ -337,12 +350,42 @@ impl RingJournal {
     /// folded now.
     pub(crate) fn folded(&self, seed: &Roster) -> Result<(crate::register::Register, bool), RailError> {
         let (mut log, _) = self.caught_up()?;
-        let held = &mut log.held;
-        if let Some((_, register)) = held.standing.as_ref().filter(|(from, _)| from == seed) {
+        if let Some((_, register)) = log.held.standing.as_ref().filter(|(from, _)| from == seed) {
             return Ok((register.clone(), true));
         }
-        let register = crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?;
-        held.standing = Some((seed.clone(), register.clone()));
+        let held = &log.held;
+        // The interpreter reads the whole log (G2), for a sources-v1 seed or
+        // once an Adopt is held: the kept fold, else one made now and kept.
+        let whole = seed.policy.is_some() || held.membership.iter().any(|op| op.kind.act.adoption().is_some());
+        let register = match whole {
+            false => crate::register::register_in(&held.membership, seed, &self.namespace, &Checked(&held.passed))?,
+            true => {
+                if held.kept.as_ref().is_none_or(|(from, _)| from != seed) {
+                    let (all, _) = log.oplog.read_all_with_skips().map_err(io)?;
+                    let (verifier, known) = (Checked(&log.held.passed), log.held.adopted.as_ref());
+                    let a = admit_after(&ActSet::of(&all), &[], seed, &self.namespace, &verifier, known);
+                    log.held.kept = Some((seed.clone(), a));
+                }
+                let a = &log.held.kept.as_ref().expect("kept above").1;
+                if let Some(adopt) = a
+                    .membership()
+                    .decided
+                    .adopted()
+                    .filter(|a| log.held.adopted.as_ref() != Some(*a))
+                {
+                    let path = self.dir.join(format!("adoption-{adopt}.json"));
+                    let kept = path.exists() || a.pinned().is_some_and(|b| std::fs::write(&path, b).is_ok());
+                    tracing::debug!(namespace = %self.namespace, %adopt, kept, "ring rail: the adoption's pinned result kept beside the group, and the Adopt judged no more");
+                    if !kept {
+                        tracing::warn!(namespace = %self.namespace, %adopt, "ring rail: the adoption's pinned result could not be kept beside the group; the next fold judges it again");
+                    }
+                    log.held.adopted = kept.then(|| adopt.clone());
+                }
+                let m = log.held.kept.as_ref().map(|(_, a)| a.membership()).expect("kept above");
+                crate::register::register_of(m, &log.held.membership, &self.namespace)?
+            }
+        };
+        log.held.standing = Some((seed.clone(), register.clone()));
         Ok((register, false))
     }
 
@@ -491,7 +534,7 @@ impl svrngs_core::Store for RingJournal {
     fn append_with<R>(
         &self,
         actor: &str,
-        f: impl FnOnce(&ActSet, Option<svrngs_core::Tip>) -> (Option<svrngs_core::Authored>, R),
+        f: impl FnOnce(svrngs_core::Held<'_>) -> (Option<svrngs_core::Authored>, R),
     ) -> Result<R, RailError> {
         let (mut guard, _) = self.caught_up()?;
         let log = &mut *guard;
@@ -500,7 +543,13 @@ impl svrngs_core::Store for RingJournal {
             seq: n.seq,
             lines: n.lines.clone(),
         });
-        let (authored, answer) = f(&ActSet::of(&held_ops), tip);
+        let kept = log.held.kept.as_ref().map(|(seed, a)| (seed, a));
+        let (authored, answer) = f(svrngs_core::Held {
+            acts: &ActSet::of(&held_ops),
+            tip,
+            verifier: &Checked(&log.held.passed),
+            kept,
+        });
         let Some(authored) = authored.filter(|a| !a.lines().is_empty()) else {
             return Ok(answer);
         };
@@ -510,6 +559,8 @@ impl svrngs_core::Store for RingJournal {
             tracing::debug!(namespace = %self.namespace, id = %op.id, actor = %op.actor,
                 seq = op.kind.seq, "ring rail: appended by commit");
         }
+        // The commit's own fold with its lines in it: the one kept next.
+        log.held.kept = authored.after();
         Ok(answer)
     }
 }
