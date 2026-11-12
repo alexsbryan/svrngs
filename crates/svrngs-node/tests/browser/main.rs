@@ -2509,7 +2509,8 @@ async fn the_home_page_tells_a_removed_person(engine: Engine) {
     // admitted as `bo` by hand are two people since bash-devices (b), and
     // a removal of `bo` would be refused `shared` (it admitted `signing(9)`).
     let ada = node(ada_dir.path(), &relay, &signing(2)).await;
-    let bo = joined(bo_dir.path(), &relay, &ada, 2, "bo").await;
+    // `node` let that key in already: a key is bound once (`Rebound`).
+    let bo = standing(bo_dir.path(), &relay, &ada, 2, "bo").await;
     assert_eq!(
         removal(&ada, "bo").await,
         svrngs_node::removal::Outcome::Out

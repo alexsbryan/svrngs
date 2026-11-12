@@ -116,9 +116,15 @@ async function main() {
   const bo = await record(BO, { kind: COMING, event, guests: ['Maya'] });
   const cy = await record(CY, { kind: COMING, event });
   const takenBack = await correct(CY, cy, null);
-  // Alex tries to take Bo's back: the record voids it, and the fold does not count it.
+  // Alex tries to take Bo's back: only Bo changes Bo's answer, so Alex's
+  // computer refuses it at the write and nothing is written (release 2).
   await arrived(ALEX, bo);
-  await correct(ALEX, bo, null);
+  const refused = await correct(ALEX, bo, null).then(
+    () => 'written',
+    (e) => e.message,
+  );
+  if (!refused.includes('Only bo can change bo’s entry'))
+    throw new Error(`Alex's change of Bo's answer was not refused at the write: ${refused}`);
   // Bo came, and says Maya came.
   await record(BO, { kind: CAME, event });
   await record(BO, { kind: CAME, event, guest: 'Maya' });
@@ -174,7 +180,9 @@ async function main() {
   const [s] = copies;
   if (copies.some((c) => !same([c.said, c.gaps], [s.said, s.gaps])))
     throw new Error(`the copies of ${group} fold to different answers:\n${lines.join('\n')}`);
-  if (!same(s.said, want) || !same(s.gaps, ['not_theirs']) || copies.some((c) => !c.voided)) {
+  // No gap: Alex's change of Bo's answer was refused at the write, so no
+  // copy holds it for the app to refuse (`not_theirs`, before release 2).
+  if (!same(s.said, want) || !same(s.gaps, []) || copies.some((c) => !c.voided)) {
     throw new Error(
       `every copy of ${group} agrees, but not with what the acts say (${JSON.stringify(want)}; Alex's change of Bo's answer not counted; Cy's ${takenBack} voiding hers on each):\n${lines.join('\n')}`,
     );

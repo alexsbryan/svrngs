@@ -109,10 +109,12 @@ step "web rustfmt and clippy" scripts/build-web.sh --lint
 # it never skips.
 step "browser" cargo test --quiet --workspace --test browser
 # The pages' types (jsconfig.json, and the service workers' in
-# jsconfig.workers.json, by scripts/types.mjs): after `browser`,
-# since that step builds the wasm glue whose declaration the pages' calls
-# into it are checked against. Not installed fails, as lint.
-step "types" sh -c 'test -f web/node_modules/typescript/package.json || { echo "typescript is not installed here: npm ci --prefix web"; exit 1; }; node scripts/types.mjs'
+# jsconfig.workers.json, by scripts/types.mjs), checked against the wasm
+# glue's declaration built here, target/web/site/wasm/: the browser step
+# builds its own page per test process (harness.rs `site`), so read alone
+# that directory was whatever an earlier build left (release 2: a glue of
+# 10 November, with no `Group.older`). Not installed fails, as lint.
+step "types" sh -c 'test -f web/node_modules/typescript/package.json || { echo "typescript is not installed here: npm ci --prefix web"; exit 1; }; scripts/build-web.sh >/dev/null && node scripts/types.mjs'
 # The rules of .oxlintrc.json that read those types, which `lint` skips
 # without a word, over the same two programs (scripts/typed-lint.mjs): after
 # `types`, for the same wasm declaration. Not installed fails, as lint.
