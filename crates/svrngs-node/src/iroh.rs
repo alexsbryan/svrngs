@@ -293,6 +293,15 @@ pub(crate) const BLOBS_RECEIVE_WINDOW: u32 = 512 * 1024;
 /// A request held whole, so it can be sent again.
 pub type WholeRequest = axum::http::Request<axum::body::Bytes>;
 
+/// A POST of the JSON `body` to `route`, as a member's routes are asked
+/// ([`IrohTransport::fetch`]).
+pub(crate) fn posted(route: &str, body: impl Into<axum::body::Bytes>) -> WholeRequest {
+    axum::http::Request::post(route)
+        .header(axum::http::header::CONTENT_TYPE, "application/json")
+        .body(body.into())
+        .expect("a fixed route and header")
+}
+
 /// How long a request read whole waits for its answer, the dial included:
 /// the ten seconds the round's reqwest client was built with
 /// (`ring_sync.rs` `peer_client` at 965b52b, cut with the bridge), kept.

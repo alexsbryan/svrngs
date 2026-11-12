@@ -635,10 +635,7 @@ pub(crate) async fn post(
     let payload =
         serde_json::to_vec(body).map_err(|e| ExchangeStop::Failed(format!("local encode: {e}")))?;
     let sent_bytes = payload.len();
-    let request = axum::http::Request::post(SYNC_ROUTE)
-        .header(axum::http::header::CONTENT_TYPE, "application/json")
-        .body(payload.into())
-        .expect("a fixed route and header");
+    let request = crate::iroh::posted(SYNC_ROUTE, payload);
     let resp = to.0.fetch(to.1, request).await;
     let resp = resp.map_err(|e| ExchangeStop::Failed(e.to_string()))?;
     let status = resp.status();

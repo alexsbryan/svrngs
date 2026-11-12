@@ -94,10 +94,7 @@ pub async fn push_ephemeral(
 
 /// Offer `envelope` to one peer, which has [`LIVE_PUSH_TIMEOUT`] to take it.
 async fn offer_peer(transport: &IrohTransport, envelope: &str, peer: LivePeer) -> PeerDelivery {
-    let offer = axum::http::Request::post("/internal/ring/live")
-        .header(axum::http::header::CONTENT_TYPE, "application/json")
-        .body(envelope.to_string().into())
-        .expect("a fixed route and header");
+    let offer = crate::iroh::posted("/internal/ring/live", envelope.to_string());
     let taken =
         tokio::time::timeout(LIVE_PUSH_TIMEOUT, transport.fetch(&peer.contact, offer)).await;
     let error = match taken {

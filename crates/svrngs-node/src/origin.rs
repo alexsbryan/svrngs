@@ -660,10 +660,8 @@ async fn appended(
             .await
             .unwrap_or_default();
         let line = serde_json::from_slice::<Value>(&line).map_or(Value::Null, |l| l["op"].clone());
-        let asked = axum::http::Request::post(crate::rail::CARRY_ROUTE)
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(serde_json::json!([group, line]).to_string().into())
-            .expect("a fixed route");
+        let asked = serde_json::json!([group, line]).to_string();
+        let asked = crate::iroh::posted(crate::rail::CARRY_ROUTE, asked);
         let taken = at.host.transport.fetch(contact, asked).await;
         let taken: Option<Value> = taken
             .ok()
