@@ -1,0 +1,24 @@
+plant: +        MeetAt::N0 => vec!["https://relay.n0.invalid/".to_string()], // PLANT
+warning: unused import: `svrngs_node::relay::n0_relays`
+   --> crates/svrngs/src/cli.rs:118:5
+    |
+118 | use svrngs_node::relay::n0_relays;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+warning: `svrngs` (lib) generated 1 warning (run `cargo fix --lib -p svrngs` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.85s
+     Running tests/n0.rs (target/debug/deps/n0-0287a5e8b50f48ab)
+running 1 test
+n0: usw1-1.relay.n0.iroh.link (5.78.69.43:443): connected; use1-1.relay.n0.iroh.link (87.99.151.110:443): connected; euc1-1.relay.n0.iroh.link (91.99.237.97:443): connected; aps1-1.relay.n0.iroh.link (5.223.65.62:443): connected
+n0: usw1-1.relay.n0.iroh.link (5.78.69.43:443): connected; use1-1.relay.n0.iroh.link (87.99.151.110:443): connected; euc1-1.relay.n0.iroh.link (91.99.237.97:443): connected; aps1-1.relay.n0.iroh.link (5.223.65.62:443): connected
+thread 'the_shipped_svrngs_is_met_at_n0_by_a_second_computer' (65987406) panicked at crates/svrngs/tests/n0.rs:250:19:
+Sam's computer was met at no home relay before its link: Some("2026-11-13T08:15:01.141019Z DEBUG cli: cli: waited for a relay online=false tried=[\"https://relay.n0.invalid/\"]"); its log is /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/crates/svrngs/../../target/n0/sam/svrngs.log; n0 answers iroh alone, so this is svrngs's
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+test the_shipped_svrngs_is_met_at_n0_by_a_second_computer ... FAILED
+failures:
+failures:
+    the_shipped_svrngs_is_met_at_n0_by_a_second_computer
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 22.32s
+error: test failed, to rerun pass `-p svrngs --test n0`
+exit 

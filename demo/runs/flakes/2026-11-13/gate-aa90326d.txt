@@ -1,0 +1,79 @@
+worktree aa90326d (0 changed files), eudoxia fff11f7 (0 changed files); began 2026-11-13T08:46:22Z; lockf -k /tmp/svrngs-gate.lock bash scripts/check.sh, CARGO_INCREMENTAL=0, npm ci --prefix web
+ 0:46  up 8 days,  4:56, 8 users, load averages: 5.60 4.91 5.94
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 47033)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (1 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     script laws (6 s)
+passed     page integration (16 s)
+passed     clippy (57 s)
+passed     tests (695 s)
+passed     canaries (38 s)
+passed     ceiling canary (89 s)
+           CEILING idle round at 25 x 10,000: 0.0686 s of processor, the median of [5.063501000000002, 0.06858400000000131, 0.04760800000000032], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.04760800000000032,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.008108125}
+passed     web rustfmt and clippy (10 s)
+passed     browser (227 s)
+passed     types (18 s)
+passed     typed lint (0 s)
+passed     joining in a browser (105 s)
+passed     pages (51 s)
+passed     scenes (423 s)
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (51 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+passed     playback (172 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	432	passed	1968	passed
+           computer	bo	384	passed	3168	passed
+           wildcard	sam	480	passed	3454	passed
+           wildcard	bo	435	passed	4009	passed
+           of 4 here since 2026-11-13T09:16:47Z: 0 missed 5 s through a lend, 0 straight; 0 ended at a load above 12 cores
+passed     n0 (14 s)
+passed     app laws (42 s)
+note       took 2035 s in all
+ended 2026-11-13T09:20:17Z, exit 0
+ 1:20  up 8 days,  5:30, 8 users, load averages: 3.51 6.86 8.19

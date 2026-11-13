@@ -1,0 +1,9 @@
+   Compiling svrngs v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/crates/svrngs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 1.68s
+     Running tests/n0.rs (target/debug/deps/n0-0287a5e8b50f48ab)
+
+running 1 test
+test the_shipped_svrngs_is_met_at_n0_by_a_second_computer ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 14.99s
+

@@ -1,0 +1,331 @@
+worktree 893e8cb8 (tree 313c6ff3; 0 changed files), eudoxia 5067f12 (0 changed files); began 2026-11-13T08:26:38Z
+ 0:26  up 8 days,  4:37, 8 users, load averages: 3.77 6.27 8.08
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 24150)
+untouched  principles pinned: nothing changed reaches it (scripts/touched.py)
+untouched  lean and RUST_ARCH: nothing changed reaches it (scripts/touched.py)
+untouched  trust floor: nothing changed reaches it (scripts/touched.py)
+untouched  advisories: nothing changed reaches it (scripts/touched.py)
+untouched  app nouns gate: nothing changed reaches it (scripts/touched.py)
+untouched  app nouns: nothing changed reaches it (scripts/touched.py)
+untouched  lint: nothing changed reaches it (scripts/touched.py)
+untouched  format: nothing changed reaches it (scripts/touched.py)
+untouched  page laws: nothing changed reaches it (scripts/touched.py)
+untouched  rustfmt: nothing changed reaches it (scripts/touched.py)
+untouched  script laws: nothing changed reaches it (scripts/touched.py)
+untouched  page integration: nothing changed reaches it (scripts/touched.py)
+untouched  clippy: nothing changed reaches it (scripts/touched.py)
+untouched  tests: nothing changed reaches it (scripts/touched.py)
+untouched  canaries: nothing changed reaches it (scripts/touched.py)
+untouched  ceiling canary: nothing changed reaches it (scripts/touched.py)
+untouched  web rustfmt and clippy: nothing changed reaches it (scripts/touched.py)
+untouched  browser: nothing changed reaches it (scripts/touched.py)
+untouched  types: nothing changed reaches it (scripts/touched.py)
+untouched  typed lint: nothing changed reaches it (scripts/touched.py)
+untouched  joining in a browser: nothing changed reaches it (scripts/touched.py)
+untouched  pages: nothing changed reaches it (scripts/touched.py)
+failed     scenes (503 s)
+              Compiling svrngs v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/crates/svrngs)
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 3.71s
+                Running tests/scenes/main.rs (target/debug/deps/scenes-f5e10d5853bc77c5)
+           
+           running 20 tests
+           test creator::creator::chromium has been running for over 60 seconds
+           test doc::doc::chromium has been running for over 60 seconds
+           test creator::creator::chromium ... FAILED
+           test doc::doc::chromium ... FAILED
+           test events::events::chromium ... FAILED
+           test films::films::chromium ... ok
+           test give::give::chromium ... ok
+           test give_gone::give_gone::chromium has been running for over 60 seconds
+           test give_move::give_move::chromium ... ok
+           test give_gone::give_gone::chromium ... ok
+           test grapevine::grapevine::chromium ... ok
+           test holyarrs::holyarrs::chromium has been running for over 60 seconds
+           test holyarrs::phone::webkit has been running for over 60 seconds
+           test holyarrs::holyarrs::chromium ... ok
+           test house_rules::house_rules::chromium ... ok
+           test holyarrs::phone::webkit ... FAILED
+           test keeping::keeping::chromium ... ok
+           test money::money::chromium ... ok
+           test life::life::chromium ... FAILED
+           test movie_night::movie_night::chromium ... ok
+           test pantry::pantry::chromium ... ok
+           test ports::ports::chromium ... ok
+           test redial::restarted::alone ... ok
+           test svrngs_here ... ignored, run by a scene's people, each in a process of its own, as svrngs
+           test night::night::chromium has been running for over 60 seconds
+           test night::night::chromium ... FAILED
+           
+           failures:
+           
+           ---- creator::creator::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (66050142) panicked at crates/svrngs/tests/scenes/creator.rs:155:5:
+           {
+             "asked": false,
+             "errors": [],
+             "logs": [
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+               "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+               "debug: PAGE: join: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/asking/none/shut/none/unasked/idle/shut, running ask",
+               "debug: JOIN: asking the issuer what the link is for, as 5d825502ea0ea08f9e29817767f4345c3c41f73669fc65edd45600e3d3eaa1a9",
+               "debug: LAYER parse: ok — issuer 53b6130df362c96d8c274d763f670867f9146335ee6a86a661e7395502acc0cd",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key 5d825502ea0ea08f9e29817767f4345c3c41f73669fc65edd45600e3d3eaa1a9",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:65032/",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:64464/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 5d825502ea0ea08f9e29817767f4345c3c41f73669fc65edd45600e3d3eaa1a9 bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "error: Failed to load resource: A TLS error caused the secure connection to fail.",
+               "error: Failed to load resource: A TLS error caused the secure connection to fail.",
+               "error: Failed to load resource: A TLS error caused the secure connection to fail.",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 53b6130df362c96d8c274d763f670867f9146335ee6a86a661e7395502acc0cd — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 53b6130df362c96d8c274d763f670867f9146335ee6a86a661e7395502acc0cd on the [115, 118, 114, 110, 103, 115, 47, 114, 101, 100, 101, 101, 109, 47, 48] protocol through http://127.0.0.1:65032/…",
+               "debug: LAYER tls/alpn+relay: dialing 53b6130df362c96d8c274d763f670867f9146335ee6a86a661e7395502acc0cd on the [115, 118, 114, 110, 103, 115, 47, 114, 101, 100, 101, 101, 109, 47, 48] protocol through http://127.0.0.1:64464/…",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: A TLS error caused the secure connection to fail.",
+               "debug: LAYER tls/alpn+relay: a route failed: timed out",
+               "debug: LAYER tls/alpn+relay: a route failed: timed out",
+               "debug: LAYER tls/alpn+relay: REFUSED — connect() failed on every route: timed out",
+               "error: WebSocket connection to 'wss://127.0.0.1:65032/relay' failed: WebSocket is closed before the connection is established.",
+               "debug: PAGE: the dial failed: Error: LAYER tls/alpn+relay: REFUSED — connect() failed on every route: timed out",
+               "debug: PAGE: unjoined (Error: The computer that sent this link did not answer, so it may be off. Try again later.): opening/unheld/unasked/unoffered/asking/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+               "debug: PAGE: failed (Error: The computer that sent this link did not answer, so it may be off. Try again later.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "error: WebSocket connection to 'wss://127.0.0.1:64464/relay' failed: The operation couldn’t be completed. Socket is not connected"
+             ],
+             "ms": 30642,
+             "status": "The computer that sent this link did not answer, so it may be off. Try again later."
+           }
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- doc::doc::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (66050125) panicked at crates/svrngs/tests/scenes/doc.rs:169:5:
+           Cy's phone joins: {
+             "listed": [],
+             "ms": 30795,
+             "status": "The computer that sent this link did not answer, so it may be off. Try again later."
+           }
+           
+           ---- events::events::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (66075738) panicked at crates/svrngs/tests/scenes/events.rs:134:5:
+           Cy's phone joins: {
+             "asked": false,
+             "ms": 30570,
+             "status": "The computer that sent this link did not answer, so it may be off. Try again later."
+           }
+           
+           ---- holyarrs::phone::webkit stdout ----
+           HolyArrs scene: []
+           
+           thread 'tokio-rt-worker' (66104433) panicked at crates/svrngs/tests/scenes/holyarrs.rs:210:5:
+           HolyArrs scene completed: {
+             "asks": {
+               "body": {
+                 "error": "sign in first"
+               },
+               "status": 401
+             },
+             "errors": [],
+             "logs": [
+               "SIGN: adopted the approver of 3hbgu27nr0dvwfj5xj0wp6x4rk71rz3zupagmdw80qkufu96r7naf8zzb7p4bm's newest open and deleted its cookie",
+               "OPEN: 3hbgu27nr0dvwfj5xj0wp6x4rk71rz3zupagmdw80qkufu96r7naf8zzb7p4bm's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass"
+             ],
+             "observed": {
+               "body": {
+                 "error": "sign in first"
+               },
+               "status": 401
+             },
+             "runtime": {
+               "browser": "26.4",
+               "jellyfin": "12.0.0",
+               "source_head": "893e8cb80fd8b2d855c2f6e04277d66488db6a76"
+             },
+             "steps": [],
+             "stopped": {
+               "error": "TimeoutError: locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('Name', { exact: true })\u001b[22m\n",
+               "text": "☾ Ana’s window is dark\n\nAna’s computer didn’t answer, so Ana’s holyarrs can’t open right now. It may be off, and it opens again once it answers.\n\nTry again\n\nGoodnight from Ana.",
+               "url": "https://3hbgu27nr0dvwfj5xj0wp6x4rk71rz3zupagmdw80qkufu96r7naf8zzb7p4bm.group.svrnme.test:52424/"
+             }
+           }
+           
+           ---- life::life::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (66112146) panicked at crates/svrngs/tests/scenes/life.rs:269:5:
+           Cy's phone joins: {
+             "asked": false,
+             "ms": 30566,
+             "status": "The computer that sent this link did not answer, so it may be off. Try again later."
+           }
+           
+           ---- night::night::chromium stdout ----
+           the TV, before the evening: {
+             "asked": {
+               "at_room": 138,
+               "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+               "elsewhere": [
+                 {
+                   "ms": 478,
+                   "url": "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+                 }
+               ],
+               "sockets": [
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket"
+               ]
+             },
+             "code_shown": true,
+             "dee": {
+               "listed": [
+                 "Sam’s jellyfin"
+               ],
+               "stopped": "the lend: page.waitForURL: Timeout 90000ms exceeded.; the page says: ☾ Sam’s window is dark Sam’s computer didn’t answer, so Sam’s jellyfin can’t open right now. It may be off, and it opens again once it answers. Try again Goodnight from Sam."
+             },
+             "dee_logs": [
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "console.debug: SIGN: adopted the approver of 7gknjrma683sp18r1nfdckn4tukxv9audsgkgct8cutdxxtsr13abbq3n1prdr's newest open and deleted its cookie",
+               "console.debug: OPEN: 7gknjrma683sp18r1nfdckn4tukxv9audsgkgct8cutdxxtsr13abbq3n1prdr's open is this browser's, its holder proved and kept",
+               "console.debug: OPEN: the lend’s worker runs; handing it the pass",
+               "http 502 GET https://7gknjrma683sp18r1nfdckn4tukxv9audsgkgct8cutdxxtsr13abbq3n1prdr.group.svrnme.test:55007/"
+             ],
+             "films": [],
+             "from": "2026-11-13T08:33:19.767Z",
+             "logs": [],
+             "part": "tv",
+             "quick_connect_enabled": true,
+             "room": "http://192.168.1.6:48906/",
+             "tv": {
+               "asked": true,
+               "open_ms": 540,
+               "quick_connect_offered": true
+             }
+           }
+           
+           thread 'tokio-rt-worker' (66117217) panicked at crates/svrngs/tests/scenes/night.rs:208:5:
+           the TV is signed in as the room by Dee's phone: {
+             "asked": {
+               "at_room": 138,
+               "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+               "elsewhere": [
+                 {
+                   "ms": 478,
+                   "url": "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+                 }
+               ],
+               "sockets": [
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket",
+                 "ws://192.168.1.6:48906/socket"
+               ]
+             },
+             "code_shown": true,
+             "dee": {
+               "listed": [
+                 "Sam’s jellyfin"
+               ],
+               "stopped": "the lend: page.waitForURL: Timeout 90000ms exceeded.; the page says: ☾ Sam’s window is dark Sam’s computer didn’t answer, so Sam’s jellyfin can’t open right now. It may be off, and it opens again once it answers. Try again Goodnight from Sam."
+             },
+             "dee_logs": [
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "failed: https://127.0.0.1:65032/ping: A TLS error caused the secure connection to fail.",
+               "console.debug: SIGN: adopted the approver of 7gknjrma683sp18r1nfdckn4tukxv9audsgkgct8cutdxxtsr13abbq3n1prdr's newest open and deleted its cookie",
+               "console.debug: OPEN: 7gknjrma683sp18r1nfdckn4tukxv9audsgkgct8cutdxxtsr13abbq3n1prdr's open is this browser's, its holder proved and kept",
+               "console.debug: OPEN: the lend’s worker runs; handing it the pass",
+               "http 502 GET https://7gknjrma683sp18r1nfdckn4tukxv9audsgkgct8cutdxxtsr13abbq3n1prdr.group.svrnme.test:55007/"
+             ],
+             "films": [],
+             "from": "2026-11-13T08:33:19.767Z",
+             "logs": [],
+             "part": "tv",
+             "quick_connect_enabled": true,
+             "room": "http://192.168.1.6:48906/",
+             "tv": {
+               "asked": true,
+               "open_ms": 540,
+               "quick_connect_offered": true
+             }
+           }
+           
+           
+           failures:
+               creator::creator::chromium
+               doc::doc::chromium
+               events::events::chromium
+               holyarrs::phone::webkit
+               life::life::chromium
+               night::night::chromium
+           
+           test result: FAILED. 13 passed; 6 failed; 1 ignored; 0 measured; 1 filtered out; finished in 497.03s
+           
+           error: test failed, to rerun pass `-p svrngs --test scenes`
+failed     scene creator (chromium)
+failed     scene doc (chromium)
+failed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+failed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+failed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+failed     scene night (chromium)
+untouched  conformance canary: nothing changed reaches it (scripts/touched.py)
+untouched  playback: nothing changed reaches it (scripts/touched.py)
+passed     n0 (17 s)
+untouched  app laws: nothing changed reaches it (scripts/touched.py)
+note       took 520 s in all
+ended 2026-11-13T08:35:20Z, exit 1
+ 0:35  up 8 days,  4:45, 8 users, load averages: 2.65 5.62 7.31

@@ -146,6 +146,13 @@ record_api 13, join_by_link 12, and 148 in 34 smaller targets. R counts a
 relay on 127.0.0.1 too: n0 is out of every CLI test (harness 8), not R.
 The isolated Node laws, 234, all deterministic.
 
+Recounted at aa90326d the same way, the `n0` target added
+(demo/runs/flakes/2026-11-13): 956, of which 516 (54.0%) cross no seam
+and 440 at least one: P 432, Q 420, R 206, B 158, C 79, D 10, M 7; the
+two new, n0's contained test and a deterministic one of ad25eab2's. The
+scenes still cross R, a relay on 127.0.0.1, so the share does not move;
+no gate test but `n0`'s depends on n0. The isolated Node laws, 234.
+
 ### The contained test of each seam
 
 | Seam | Contained place | What moves out of everything else |
@@ -201,6 +208,11 @@ The isolated Node laws, 234, all deterministic.
    scene needed what only the real binary does (install, release paths,
    launchd), so none stays on it; `SCENES_BINARY` still pins the product
    for a rehearsal, and the xenia worlds run the product as built.
+   Sampled with `lsof` over the scenes step's whole process tree
+   (demo/runs/flakes/2026-11-13): every scene's svrngs opened 421 sockets
+   to loopback and 13 to this host's LAN address (night's room), none
+   outside, and no person's log names an n0 host, where every one did
+   with the shipped binary.
 
 ### Units, in order
 

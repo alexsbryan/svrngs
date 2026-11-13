@@ -1,0 +1,32 @@
+   Compiling svrngs v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/crates/svrngs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.52s
+     Running tests/scenes/main.rs (target/debug/deps/scenes-f5e10d5853bc77c5)
+
+running 20 tests
+test doc::doc::chromium ... ok
+test creator::creator::chromium ... ok
+test events::events::chromium ... ok
+test films::films::chromium ... ok
+test give::give::chromium ... ok
+test give_move::give_move::chromium ... ok
+test give_gone::give_gone::chromium has been running for over 60 seconds
+test give_gone::give_gone::chromium ... ok
+test grapevine::grapevine::chromium ... ok
+test holyarrs::holyarrs::chromium has been running for over 60 seconds
+test holyarrs::phone::webkit has been running for over 60 seconds
+test holyarrs::holyarrs::chromium ... ok
+test house_rules::house_rules::chromium ... ok
+test holyarrs::phone::webkit ... ok
+test keeping::keeping::chromium ... ok
+test money::money::chromium ... ok
+test life::life::chromium ... ok
+test movie_night::movie_night::chromium ... ok
+test pantry::pantry::chromium ... ok
+test ports::ports::chromium ... ok
+test redial::restarted::alone ... ok
+test svrngs_here ... ignored, run by a scene's people, each in a process of its own, as svrngs
+test night::night::chromium has been running for over 60 seconds
+test night::night::chromium ... ok
+
+test result: ok. 19 passed; 0 failed; 1 ignored; 0 measured; 1 filtered out; finished in 350.94s
+

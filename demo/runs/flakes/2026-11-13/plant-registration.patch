@@ -1,0 +1,15 @@
+diff --git a/crates/svrngs/src/cli.rs b/crates/svrngs/src/cli.rs
+index cef4af01..4d61d412 100644
+--- a/crates/svrngs/src/cli.rs
++++ b/crates/svrngs/src/cli.rs
+@@ -720,9 +720,7 @@ pub fn claim(root: &Path) -> Result<File, Refusal> {
+ /// none of the path.
+ pub fn reach(at: MeetAt) -> RelayConfig {
+     let relay_urls = match at {
+-        MeetAt::N0 => (n0_relays().urls::<Vec<RelayUrl>>().iter())
+-            .map(ToString::to_string)
+-            .collect(),
++        MeetAt::N0 => vec!["https://relay.n0.invalid/".to_string()], // PLANT
+         MeetAt::Svrngs => vec![DEFAULT_RELAY.to_string()],
+     };
+     tracing::debug!(target: "cli", ?at, ?relay_urls, "cli: the build's relays, where this computer meets every group beside the group's own");

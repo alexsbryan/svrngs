@@ -1,0 +1,11 @@
+plant: every connection off this host denied: sandbox-exec -f blocked.sb ((version 1)(allow default)(deny network-outbound (remote ip "*:*"))(allow network-outbound (remote ip "localhost:*")))
+
+running 1 test
+n0: aps1-1.relay.n0.iroh.link (5.223.65.62:443): connecting failed: Operation not permitted (os error 1); use1-1.relay.n0.iroh.link (87.99.151.110:443): connecting failed: Operation not permitted (os error 1); usw1-1.relay.n0.iroh.link (5.78.69.43:443): connecting failed: Operation not permitted (os error 1); euc1-1.relay.n0.iroh.link (91.99.237.97:443): connecting failed: Operation not permitted (os error 1)
+could-not-judge: n0 did not answer before any svrngs ran: no relay of n0's answered: aps1-1.relay.n0.iroh.link (5.223.65.62:443): connecting failed: Operation not permitted (os error 1); use1-1.relay.n0.iroh.link (87.99.151.110:443): connecting failed: Operation not permitted (os error 1); usw1-1.relay.n0.iroh.link (5.78.69.43:443): connecting failed: Operation not permitted (os error 1); euc1-1.relay.n0.iroh.link (91.99.237.97:443): connecting failed: Operation not permitted (os error 1)
+test the_shipped_svrngs_is_met_at_n0_by_a_second_computer ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+
+exit 0
+target/could-not-judge/n0.step: n0 did not answer before any svrngs ran: no relay of n0's answered: aps1-1.relay.n0.iroh.link (5.223.65.62:443): connecting failed: Operation not permitted (os error 1); use1-1.relay.n0.iroh.link (87.99.151.110:443): connecting failed: Operation not permitted (os error 1); usw1-1.relay.n0.iroh.link (5.78.69.43:443): connecting failed: Operation not permitted (os error 1); euc1-1.relay.n0.iroh.link (91.99.237.97:443): connecting failed: Operation not permitted (os error 1)

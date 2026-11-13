@@ -1,0 +1,13 @@
+time	pid	kind	proto	local	remote	class	command
+00:11:01	7470	n0-0287a5e8b50f48ab	TCP	192.168.1.6:60049	5.223.65.62:443	outside	target/debug/deps/n0-0287a5e8b50f48ab
+00:11:03	7470	n0-0287a5e8b50f48ab	TCP	192.168.1.6:60066	49.13.207.244:443	outside	target/debug/deps/n0-0287a5e8b50f48ab
+00:11:03	7470	n0-0287a5e8b50f48ab	TCP	192.168.1.6:60083	91.99.237.97:443	outside	target/debug/deps/n0-0287a5e8b50f48ab
+00:11:06	7470	n0-0287a5e8b50f48ab	TCP	192.168.1.6:60151	5.78.69.43:443	outside	target/debug/deps/n0-0287a5e8b50f48ab
+00:11:12	7583	svrngs	TCP	192.168.1.6:60373	49.13.207.244:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs new house --as Sam
+00:11:12	7583	svrngs	TCP	192.168.1.6:60378	5.223.65.62:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs new house --as Sam
+00:11:12	7583	svrngs	TCP	192.168.1.6:60379	91.99.237.97:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs new house --as Sam
+00:11:14	7583	svrngs	TCP	192.168.1.6:60490	5.78.69.43:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs new house --as Sam
+00:11:15	7631	svrngs	TCP	192.168.1.6:60504	49.13.207.244:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs join svrngs://join/Ao9Zr04fN6um1g1RRk65K2eptlYRpYZmCgL6dGTNUlk1ZPOdqcgS9B2gV
+00:11:15	7631	svrngs	TCP	192.168.1.6:60510	5.223.65.62:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs join svrngs://join/Ao9Zr04fN6um1g1RRk65K2eptlYRpYZmCgL6dGTNUlk1ZPOdqcgS9B2gV
+00:11:15	7631	svrngs	TCP	192.168.1.6:60514	91.99.237.97:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs join svrngs://join/Ao9Zr04fN6um1g1RRk65K2eptlYRpYZmCgL6dGTNUlk1ZPOdqcgS9B2gV
+00:11:17	7631	svrngs	TCP	192.168.1.6:60602	5.78.69.43:443	outside	/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/n0/target/debug/svrngs join svrngs://join/Ao9Zr04fN6um1g1RRk65K2eptlYRpYZmCgL6dGTNUlk1ZPOdqcgS9B2gV

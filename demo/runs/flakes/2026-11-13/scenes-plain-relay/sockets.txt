@@ -1,0 +1,45 @@
+sockets: 995 (process, remote) pairs over 408 processes
+  chrome-headless-shell	loopback	31
+  curl	loopback	5
+  jellyfin	loopback	6
+  jellyfin	outside	20
+  n0-0287a5e8b50f48ab	outside	2
+  node	host	1
+  node	loopback	259
+  node	outside	3
+  podman	loopback	9
+  sccache	loopback	60
+  scenes-f5e10d5853bc77c5	loopback	212
+  svrngs	outside	5
+  svrngs_here	host	7
+  svrngs_here	loopback	375
+  outside: 00:28:16	27809	jellyfin	TCP	192.168.1.6:49232	68.183.204.194:443	outside
+  outside: 00:28:16	27809	jellyfin	TCP	192.168.1.6:49234	64.227.89.49:443	outside
+  outside: 00:28:18	27809	jellyfin	TCP	192.168.1.6:49258	18.239.199.18:443	outside
+  outside: 00:28:18	27809	jellyfin	TCP	192.168.1.6:49259	172.66.150.8:443	outside
+  outside: 00:28:35	26977	node	TCP	192.168.1.6:49495	142.251.154.120:443	outside
+  outside: 00:30:42	33055	jellyfin	TCP	192.168.1.6:52204	68.183.204.194:443	outside
+  outside: 00:30:42	33055	jellyfin	TCP	192.168.1.6:52205	64.227.89.49:443	outside
+  outside: 00:30:48	33055	jellyfin	TCP	192.168.1.6:52255	108.138.246.6:443	outside
+  outside: 00:30:50	33055	jellyfin	TCP	192.168.1.6:52259	104.20.34.121:443	outside
+  outside: 00:30:53	33182	jellyfin	TCP	192.168.1.6:52272	68.183.204.194:443	outside
+  outside: 00:30:53	33182	jellyfin	TCP	192.168.1.6:52276	64.227.89.49:443	outside
+  outside: 00:30:55	33182	jellyfin	TCP	192.168.1.6:52314	108.138.246.57:443	outside
+  outside: 00:30:55	33182	jellyfin	TCP	192.168.1.6:52320	104.20.34.121:443	outside
+  outside: 00:31:05	26977	node	TCP	192.168.1.6:52493	142.251.152.120:443	outside
+  outside: 00:32:48	34839	jellyfin	TCP	192.168.1.6:54585	68.183.204.194:443	outside
+  outside: 00:32:48	34839	jellyfin	TCP	192.168.1.6:54589	64.227.89.49:443	outside
+  outside: 00:32:50	34839	jellyfin	TCP	192.168.1.6:54611	108.138.246.55:443	outside
+  outside: 00:32:53	34839	jellyfin	TCP	192.168.1.6:54613	104.20.34.121:443	outside
+  outside: 00:33:05	35144	jellyfin	TCP	192.168.1.6:54948	68.183.204.194:443	outside
+  outside: 00:33:07	35144	jellyfin	TCP	192.168.1.6:54953	64.227.89.49:443	outside
+  outside: 00:33:09	35144	jellyfin	TCP	192.168.1.6:54973	108.138.246.55:443	outside
+  outside: 00:33:09	35144	jellyfin	TCP	192.168.1.6:54975	104.20.34.121:443	outside
+  outside: 00:33:16	26977	node	TCP	192.168.1.6:55071	142.251.157.120:443	outside
+  outside: 00:35:06	36243	n0-0287a5e8b50f48ab	TCP	192.168.1.6:56221	49.13.207.244:443	outside
+  outside: 00:35:08	36243	n0-0287a5e8b50f48ab	TCP	192.168.1.6:56254	5.78.69.43:443	outside
+  outside: 00:35:12	36389	svrngs	TCP	192.168.1.6:56276	49.13.207.244:443	outside
+  outside: 00:35:12	36389	svrngs	TCP	192.168.1.6:56283	5.223.65.62:443	outside
+  outside: 00:35:14	36389	svrngs	TCP	192.168.1.6:56308	5.78.69.43:443	outside
+  outside: 00:35:16	36422	svrngs	TCP	192.168.1.6:56310	49.13.207.244:443	outside
+  outside: 00:35:16	36422	svrngs	TCP	192.168.1.6:56325	5.223.65.62:443	outside

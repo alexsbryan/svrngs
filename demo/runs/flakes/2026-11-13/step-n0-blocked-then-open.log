@@ -1,0 +1,4 @@
+could-not-judge n0 (0 s): n0 did not answer before any svrngs ran: no relay of n0's answered: euc1-1.relay.n0.iroh.link (91.99.237.97:443): connecting failed: Operation not permitted (os error 1); use1-1.relay.n0.iroh.link (87.99.151.110:443): connecting failed: Operation not permitted (os error 1); usw1-1.relay.n0.iroh.link (5.78.69.43:443): connecting failed: Operation not permitted (os error 1); aps1-1.relay.n0.iroh.link (5.223.65.62:443): connecting failed: Operation not permitted (os error 1)
+failed=0
+passed     n0 (17 s)
+failed=0
