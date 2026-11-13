@@ -1,9 +1,9 @@
 //! A keeper changes where a group meets, and only a keeper may (relay
 //! change; relay fallbacks), on the wire: meet.rs's claims whose decision
 //! is `cli::link_to`'s, `Host::meet`'s and the record's fold, its relays
-//! named and never dialled (docs/seams.tsv). What stays in meet.rs: a join
-//! with every relay down, a relay lost, and `link --relay` asked of the
-//! svrngs running here.
+//! named and never dialled, and `link --relay` asked of the svrngs running
+//! here through `cli::Here` (docs/seams.tsv). What stays in meet.rs: a
+//! join with every relay down, and a relay lost.
 
 use svrngs::cli::{self, MeetAt, Verb};
 use svrngs_node::iroh::{RelayConfig, RelayUrl};

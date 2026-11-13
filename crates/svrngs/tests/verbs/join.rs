@@ -6,9 +6,9 @@
 //! forged one and an open one's key on a request its secret did not sign
 //! are refused in one sentence that names no group; a stranger on the
 //! members' protocol is refused at Sam's acceptor; nothing the command
-//! prints uses a word DESIGN §1 keeps from people. What stays in
-//! join_by_link.rs: `svrngs join` asking the svrngs running here, a real
-//! process over a relay on 127.0.0.1, and an older build's 404 at a socket.
+//! prints uses a word DESIGN §1 keeps from people; `svrngs join` asks the
+//! svrngs running here through `cli::Here`, and an older build's 404 is
+//! said to be one.
 
 use std::collections::BTreeSet;
 use std::time::{Duration, Instant};
