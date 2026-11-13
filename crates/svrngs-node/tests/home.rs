@@ -5,8 +5,10 @@
 //! kind `taste`, and a `taste` that asks; Sam lends a `taste` that asks.
 //! Two nodes in one process on one wire (common/on_wire.rs; docs/CHECKS.md,
 //! harness 3), no endpoint, each API asked of its routes as a browser on
-//! its computer asks it. A lent service still listens on a loopback port,
-//! as a person's does, and the door dials it there.
+//! its computer asks it. A lent service is answered in this process where
+//! a test's stub is origins.rs's (`head_on`, harness 2); a key's or an
+//! account's try, the port probe and the resolver still reach a loopback
+//! port, as svrngs asks them there.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
@@ -56,6 +58,16 @@ fn declare(
     std::fs::create_dir_all(&at).unwrap();
     let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "asks": asks, "groups": [NS] });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+}
+
+/// A lent service at `port` on `node`, answered in this process as
+/// origins.rs `head_origin` answers (on_wire.rs `serve`, harness 2): no
+/// port is bound; each request's head kept.
+fn head_on(node: &Node, port: u16) -> std::sync::Arc<std::sync::Mutex<Vec<String>>> {
+    let kept: std::sync::Arc<std::sync::Mutex<Vec<String>>> = std::sync::Arc::default();
+    let heads = std::sync::Arc::clone(&kept);
+    on_wire::serve(node, port, move |s| origins::answer_head(s, heads.clone()));
+    kept
 }
 
 /// pair.rs `alex_lets_sam_in` with both computers on this test's wire,
@@ -147,14 +159,37 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     let mut heads = std::collections::BTreeMap::new();
-    for (who, dir, name, kind, reads, asks) in [
-        (1, alex_dir.path(), "night", "night", &["taste"][..], None),
-        (1, alex_dir.path(), "taste", "taste", &[], Some(WORDS)),
-        (2, sam_dir.path(), "taste", "taste", &[], Some(WORDS)),
+    for (who, (node, dir), name, kind, reads, asks, port) in [
+        (
+            1,
+            (&alex, alex_dir.path()),
+            "night",
+            "night",
+            &["taste"][..],
+            None,
+            9001,
+        ),
+        (
+            1,
+            (&alex, alex_dir.path()),
+            "taste",
+            "taste",
+            &[],
+            Some(WORDS),
+            9002,
+        ),
+        (
+            2,
+            (&sam, sam_dir.path()),
+            "taste",
+            "taste",
+            &[],
+            Some(WORDS),
+            9002,
+        ),
     ] {
-        let (at, kept) = origins::head_origin().await;
-        declare(dir, name, at.port(), kind, reads, asks);
-        heads.insert((who, name), kept);
+        declare(dir, name, port, kind, reads, asks);
+        heads.insert((who, name), head_on(node, port));
     }
     let api = alex.api_addr();
     let browser = &Browser::of(&alex);
@@ -746,11 +781,10 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     tokio::time::timeout(Duration::from_secs(30), sam.round())
         .await
         .expect("Sam's computer hears it lets Sam in");
-    let (shelf_at, _kept) = origins::head_origin().await;
+    let _kept = head_on(&sam, 9001);
     let at = lend::lends_dir(sam_dir.path());
     std::fs::create_dir_all(&at).unwrap();
-    let body =
-        serde_json::json!({ "port": shelf_at.port(), "kind": "books", "limit": 1, "groups": [NS] });
+    let body = serde_json::json!({ "port": 9001, "kind": "books", "limit": 1, "groups": [NS] });
     std::fs::write(at.join("shelf.json"), body.to_string()).unwrap();
     let shelf = Label::of(&signing(2).verifying_key().to_bytes(), "shelf");
     let name = lend::LendName::parse("shelf").unwrap();
@@ -998,24 +1032,31 @@ async fn groups_that_cannot_be_read_are_said_so() {
 async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_other() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let silent = common::stopped().port();
-    for (dir, name, kind, reads, asks) in [
-        (alex_dir.path(), "night", "night", &["media"][..], None),
-        (alex_dir.path(), "telly", "media", &[], Some(WORDS)),
-        (alex_dir.path(), "diary", "notes", &[], None),
+    // A port nothing serves on the wire: Sam's reels, stopped.
+    let silent = 9099;
+    for (dir, name, kind, reads, asks, port) in [
+        (
+            alex_dir.path(),
+            "night",
+            "night",
+            &["media"][..],
+            None,
+            9001,
+        ),
+        (alex_dir.path(), "telly", "media", &[], Some(WORDS), 9002),
+        (alex_dir.path(), "diary", "notes", &[], None, 9003),
     ] {
-        let (at, _) = origins::head_origin().await;
-        declare(dir, name, at.port(), kind, reads, asks);
+        head_on(&alex, port);
+        declare(dir, name, port, kind, reads, asks);
     }
-    for (dir, name, port, refused) in [
-        (alex_dir.path(), "shows", None, &["/x"][..]),
-        (sam_dir.path(), "films", None, &["/x"]),
-        (sam_dir.path(), "reels", Some(silent), &[]),
+    for (node, dir, name, port, refused) in [
+        (&alex, alex_dir.path(), "shows", 9004, &["/x"][..]),
+        (&sam, sam_dir.path(), "films", 9001, &["/x"]),
+        (&sam, sam_dir.path(), "reels", silent, &[]),
     ] {
-        let port = match port {
-            Some(p) => p,
-            None => origins::head_origin().await.0.port(),
-        };
+        if port != silent {
+            head_on(node, port);
+        }
         let body = serde_json::json!({ "port": port, "kind": "media", "limit": 3, "refused": refused, "groups": [NS] });
         std::fs::create_dir_all(lend::lends_dir(dir)).unwrap();
         std::fs::write(
