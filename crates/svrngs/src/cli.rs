@@ -97,6 +97,7 @@
 //! attempted and nothing is claimed (ARCH 5).
 
 use std::fs::File;
+use std::future::Future;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -738,20 +739,29 @@ pub fn reach(at: MeetAt) -> RelayConfig {
 /// `share` declares its lend first, and runs only when svrngs is not
 /// running here already; `unshare` only withdraws one.
 pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<(), Refusal> {
-    let said = match command {
+    print!("{}", answer(command, &root, relay).await?);
+    Ok(())
+}
+
+/// What [`run`] says of `verb` over the data dir `here` names, each
+/// ask of svrngs running there answered as `here` answers it: so a test
+/// asks a node's routes in this process (docs/CHECKS.md, unit 7).
+pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result<String, Refusal> {
+    let root = here.root().to_path_buf();
+    let said = match verb {
         Verb::Help => format!("{USAGE}\n"),
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
         Verb::Check(dir) => checked(&dir)?,
-        Verb::Relay(asked) => return relay::run(asked, &root).await,
+        Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
-        Verb::Open(at, print) => open(&root, at.as_deref(), print).await?,
+        Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
         Verb::Update => match svrngs_node::update::apply(&root).await? {
             svrngs_node::update::Outcome::Current => "This computer has the latest svrngs.\n",
             svrngs_node::update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n",
         }
         .to_string(),
         Verb::Restart => restart(&root)?,
-        Verb::Folder { dir, group } => format!("{}\n", folder(&root, dir, &group).await?),
+        Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
             kind,
             person,
@@ -770,7 +780,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
                 person: person.as_str().to_string(),
                 joined,
             };
-            let answer = ask_running(&root, route, &asked).await?;
+            let answer = here.ask(route, &asked).await?;
             let group = seed.name().clone();
             said(&seed, answer, |outcome| Said::Removal {
                 group,
@@ -780,12 +790,12 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             .to_string()
         }
         Verb::Leave(ref group) | Verb::Accept(ref group) => {
-            let route = match command {
+            let route = match verb {
                 Verb::Accept(_) => ACCEPTS_ROUTE,
                 _ => LEAVES_ROUTE,
             };
             let seed = group_named(&root, group)?;
-            let answer = ask_running(&root, route, &LeaveAsk { group: seed.id() }).await?;
+            let answer = here.ask(route, &LeaveAsk { group: seed.id() }).await?;
             let group = seed.name().clone();
             said(&seed, answer, |outcome| Said::Left { group, outcome })?.to_string()
         }
@@ -794,7 +804,7 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             let known = share::well_known_kind(asked.port);
             let claimed = claim(&root);
             let terms = match (&claimed, share::kind_of(&asked, known.clone())) {
-                (Err(Refusal::Busy(_)), Some(kind)) => Some(terms_of(&root, &kind, &groups).await?),
+                (Err(Refusal::Busy(_)), Some(kind)) => Some(terms_of(here, &kind, &groups).await?),
                 (claimed, kind) => {
                     tracing::debug!(target: "cli", busy = claimed.is_err(), ?kind, "cli: share — no group's terms asked: svrngs is not running here to read them, or no program is named");
                     None
@@ -850,22 +860,21 @@ pub async fn run(command: Verb, root: PathBuf, relay: &RelayConfig) -> Result<()
             }
             (Err(Refusal::Busy(lock)), Verb::Room(names)) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: room — svrngs runs here already, so it is asked");
-                room(&root, names).await?.to_string()
+                room(here, names).await?.to_string()
             }
             (Err(Refusal::Busy(lock)), Verb::Join { link, person, .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: join — svrngs runs here already, so it is asked to join, as `room` is");
                 let person = person.or_else(user_name).ok_or(Refusal::NoNameToJoin)?;
-                join_running(&root, &link, &person).await?
+                join_running(here, &link, &person).await?
             }
             (Err(Refusal::Busy(lock)), link @ Verb::Link { origin: None, .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: link — svrngs runs here already, so it is asked, as `join` is");
-                link_running(&root, link).await?.to_string()
+                link_running(here, link).await?.to_string()
             }
             (claimed, other) => return start(other, root, relay, claimed?, None).await,
         },
     };
-    print!("{said}");
-    Ok(())
+    Ok(said)
 }
 
 /// `check`: what in the app at `dir` the policy every app's answer carries
@@ -890,10 +899,10 @@ fn checked(dir: &Path) -> Result<String, Refusal> {
 /// (`svrngs_node::folder::FolderAsk`): it alone writes this computer's acts,
 /// the journal's next index being its process's (svrngs-node journal.rs:16-27).
 /// The group is named as `link` names it ([`group::named`]).
-async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Refusal> {
-    let group = group_named(root, reference)?.id();
+async fn folder(here: &impl Here, dir: PathBuf, reference: &str) -> Result<String, Refusal> {
+    let group = group_named(here.root(), reference)?.id();
     let asked = FolderAsk { dir, group };
-    let (ok, text) = ask_running(root, "/v1/folders", &asked).await?;
+    let (ok, text) = here.ask("/v1/folders", &asked).await?;
     tracing::debug!(target: "cli", ?asked, ok, "cli: the folder's ask answered");
     ok.then_some(text.clone()).ok_or(Refusal::Folder(text))
 }
@@ -902,8 +911,8 @@ async fn folder(root: &Path, dir: PathBuf, reference: &str) -> Result<String, Re
 /// svrngs running here, asked as its home page asks it
 /// ([`room::ROUTE`]), and the room as it stands then; else its refusal,
 /// in its words.
-async fn room(root: &Path, names: Vec<LendName>) -> Result<Said, Refusal> {
-    let (ok, text) = ask_running(root, room::ROUTE, &room::RoomAsk::Names(names)).await?;
+async fn room(here: &impl Here, names: Vec<LendName>) -> Result<Said, Refusal> {
+    let (ok, text) = here.ask(room::ROUTE, &room::RoomAsk::Names(names)).await?;
     let on = serde_json::from_str(&text).ok().filter(|_| ok);
     tracing::debug!(target: "cli", ok, text, "cli: room — svrngs running here answered");
     let refused = serde_json::from_str::<serde_json::Value>(&text).ok();
@@ -939,8 +948,9 @@ fn said(
 /// as its session there (give-session), asked of svrngs running here and
 /// opened in this computer's browser; shown instead with `print`, for
 /// another browser, or where none opens.
-async fn open(root: &Path, at: Option<&str>, print: bool) -> Result<String, Refusal> {
-    let (ok, text) = ask_running(root, "/v1/open", &serde_json::json!({ "at": at })).await?;
+async fn open(here: &impl Here, at: Option<&str>, print: bool) -> Result<String, Refusal> {
+    let asked = serde_json::json!({ "at": at });
+    let (ok, text) = here.ask("/v1/open", &asked).await?;
     let open: Option<serde_json::Value> = serde_json::from_str(&text).ok().filter(|_| ok);
     let at = open.and_then(|o| Some(o["open"].as_str()?.to_string()));
     let at = at.ok_or_else(|| Refusal::Unopened(text.trim().into()))?;
@@ -974,32 +984,42 @@ fn restart(root: &Path) -> Result<String, Refusal> {
     .ok_or(Refusal::NotKept)
 }
 
-/// POST `body` to `route` of svrngs running here, at the API it wrote,
-/// showing the token it keeps beside it: whether it answered success, and
-/// its body.
-async fn ask_running(
-    root: &Path,
-    route: &str,
-    body: &impl serde::Serialize,
-) -> Result<(bool, String), Refusal> {
-    let read = |file| std::fs::read_to_string(root.join(file)).unwrap_or_default();
-    let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
-    let body = serde_json::to_string(body).expect("an ask is JSON");
-    let to = format!("{}{route}", api.trim());
-    let client = svrngs_node::http::client().map_err(|error| {
+/// A data dir as a verb reaches it, and what answers an ask of svrngs
+/// running over it: whether it answered success, and its body. The one
+/// boundary between the command and the process it asks (RUST_ARCH 7).
+pub trait Here {
+    fn root(&self) -> &Path;
+    fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked>;
+}
+
+pub type Asked = Result<(bool, String), Refusal>;
+
+/// The product's: POST `body` to `route` of svrngs running here, at the
+/// API it wrote, showing the token it keeps beside it.
+impl Here for PathBuf {
+    fn root(&self) -> &Path {
+        self
+    }
+    async fn ask(&self, route: &str, body: &impl serde::Serialize) -> Asked {
+        let read = |file| std::fs::read_to_string(self.join(file)).unwrap_or_default();
+        let (api, token) = (read(API_FILE), read(svrngs_node::api::TOKEN_FILE));
+        let body = serde_json::to_string(body).expect("an ask is JSON");
+        let to = format!("{}{route}", api.trim());
+        let client = svrngs_node::http::client().map_err(|error| {
             tracing::debug!(target: "cli", error, "cli: refused — no client to ask svrngs running here with");
             Refusal::NoClient(error)
         })?;
-    let sent = client.post(to).header("content-type", "application/json");
-    let sent = sent.bearer_auth(token.trim());
-    let answer = sent.body(body).send().await.map_err(|e| {
+        let sent = client.post(to).header("content-type", "application/json");
+        let sent = sent.bearer_auth(token.trim());
+        let answer = sent.body(body).send().await.map_err(|e| {
         tracing::debug!(target: "cli", api, error = %e, "cli: refused — no svrngs answers at the API it wrote");
         Refusal::NotRunning
     })?;
-    let ok = answer.status().is_success();
-    let text = answer.text().await.unwrap_or_default();
-    tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
-    Ok((ok, text))
+        let ok = answer.status().is_success();
+        let text = answer.text().await.unwrap_or_default();
+        tracing::debug!(target: "cli", route, ok, "cli: svrngs running here answered");
+        Ok((ok, text))
+    }
 }
 
 /// Start the node over the data dir `claimed` holds, do the verb, and run
@@ -1010,7 +1030,7 @@ async fn start(
     relay: &RelayConfig,
     _claimed: File,
     sharing: Option<Said>,
-) -> Result<(), Refusal> {
+) -> Result<String, Refusal> {
     let key = identity::load_or_generate_node_key(&root)?;
     // Where the API, the home page and each lend's address here listened
     // last, so a bookmark and a program's address survive a restart
@@ -1044,7 +1064,7 @@ async fn start(
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
     node.net().close().await;
-    ran
+    ran.map(|()| String::new())
 }
 
 /// `origin`'s scheme and host, with its port: where a browser keeps what
@@ -1599,10 +1619,10 @@ async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Res
 /// who wrote them where, as its lender is told it beside their words.
 /// Refused, never read as no terms, in its words. Kept for the life of this
 /// command, as the terms svrngs ships are.
-async fn terms_of(root: &Path, kind: &Program, groups: &[String]) -> Result<Read, Refusal> {
-    let named = |name: &String| group_named(root, name).map(|g| g.id());
+async fn terms_of(here: &impl Here, kind: &Program, groups: &[String]) -> Result<Read, Refusal> {
+    let named = |name: &String| group_named(here.root(), name).map(|g| g.id());
     let ids: Vec<String> = groups.iter().map(named).collect::<Result<_, _>>()?;
-    let (ok, text) = ask_running(root, PROGRAMS_ROUTE, &(ids, kind)).await?;
+    let (ok, text) = here.ask(PROGRAMS_ROUTE, &(ids, kind)).await?;
     tracing::debug!(target: "cli", ?groups, %kind, ok, text, "cli: share — its groups' own terms for the program, read through their records, or why not");
     // An older svrngs answers what it can't read in words, not JSON.
     match (ok, serde_json::from_str::<(String, String)>(&text)) {
@@ -1727,7 +1747,7 @@ async fn serve(
             Said::Linked { seed, link, device }
         }
         Verb::Run => running(root, node).await,
-        Verb::Room(names) => room(root, names).await?,
+        Verb::Room(names) => room(&root.to_path_buf(), names).await?,
         // Every other verb is answered in `run` before a node starts.
         _ => unreachable!("answered in `run`"),
     };
@@ -1788,7 +1808,7 @@ fn folder_at_join(node: &Node, seed: &Seed) -> Said {
 /// `Link::parse` here already proved is sent as it was given; the running
 /// svrngs that answers none of it is an older build: [`Refusal::Older`],
 /// never the lock's own refusal, which would send someone to stop it.
-async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String, Refusal> {
+async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<String, Refusal> {
     let whole = match &link.origin {
         Some(page) => https_link(page, &link.token),
         None => client_link(&link.token),
@@ -1797,7 +1817,7 @@ async fn join_running(root: &Path, link: &Link, person: &Name) -> Result<String,
         link: whole,
         person: person.as_str().to_string(),
     };
-    let (_, text) = ask_running(root, JOINS_ROUTE, &asked).await?;
+    let (_, text) = here.ask(JOINS_ROUTE, &asked).await?;
     let older = |why: String| {
         tracing::debug!(target: "cli", %why, text, "cli: the svrngs running here answered no join, as one of an older build does not");
         Refusal::Older
@@ -1978,7 +1998,7 @@ pub async fn link_to(
 /// computer's acts ([`svrngs_node::home::LINKS_ROUTE`]), said as [`link_to`]'s
 /// is; its refusal, a non-keeper's among them, in its words. One that
 /// answers no link is an older build, said as [`join_running`] says it.
-async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
+async fn link_running(here: &impl Here, link: Verb) -> Result<Said, Refusal> {
     let Verb::Link {
         group,
         relays,
@@ -1988,9 +2008,9 @@ async fn link_running(root: &Path, link: Verb) -> Result<Said, Refusal> {
     else {
         unreachable!("asked only of a link")
     };
-    let seed = group_named(root, &group)?;
+    let seed = group_named(here.root(), &group)?;
     let asked = serde_json::json!({ "group": seed.id(), "device": device, "relays": relays });
-    let (ok, text) = ask_running(root, LINKS_ROUTE, &asked).await?;
+    let (ok, text) = here.ask(LINKS_ROUTE, &asked).await?;
     let told: serde_json::Value = serde_json::from_str(&text).unwrap_or_default();
     tracing::debug!(target: "cli", ok, text, "cli: link — svrngs running here answered");
     let Some(client) = told["client"].as_str().filter(|_| ok).map(Into::into) else {

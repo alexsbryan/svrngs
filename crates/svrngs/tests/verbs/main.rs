@@ -12,11 +12,13 @@ mod join;
 mod leave;
 mod meet;
 mod new;
+mod remove;
 mod share;
 
 use std::net::SocketAddr;
 
 use axum::http::StatusCode;
+use svrngs::cli;
 use svrngs::group::{self, Name};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::{Node, Wire};
@@ -87,4 +89,20 @@ pub async fn ask(
     let status = answer.status();
     let body = axum::body::to_bytes(answer.into_body(), usize::MAX).await;
     (status, String::from_utf8(body.unwrap().to_vec()).unwrap())
+}
+
+/// svrngs running over `0`'s data dir as the command reaches it
+/// (cli.rs `Here`): each ask answered by its node's routes, as [`ask`]
+/// asks them, the API's socket aside.
+pub struct Running<'a>(pub &'a Computer);
+
+impl cli::Here for Running<'_> {
+    fn root(&self) -> &std::path::Path {
+        self.0.dir.path()
+    }
+    async fn ask(&self, route: &str, body: &impl serde::Serialize) -> cli::Asked {
+        let body = serde_json::to_value(body).unwrap();
+        let (status, text) = ask(&self.0.node, "POST", route, &body).await;
+        Ok((status.is_success(), text))
+    }
 }
