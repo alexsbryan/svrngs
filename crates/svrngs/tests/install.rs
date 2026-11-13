@@ -14,7 +14,9 @@
 //! svrngs on macOS, and on Linux prints the system unit, installing none;
 //! a relay's agent is recorded by the stub, never run, since it would take
 //! this computer's ports 80 and 443. Run where `$SHELL` names zsh or bash,
-//! it puts `~/.local/bin` on that shell's PATH, once.
+//! it puts `~/.local/bin` on that shell's PATH, once. Where the claim is
+//! install.sh's own, the line runs with no listener: a `curl` stub answers
+//! the page's files, and svrngs is a stand-in that starts no node ([`line`]).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 #[path = "../../svrngs-node/tests/browser/harness.rs"]
@@ -128,6 +130,12 @@ async fn host(site: PathBuf) -> u16 {
 /// ran: install.sh only fetches, checks, places and keeps it, and Give's
 /// own tests run the program itself (apps/give/tests/).
 fn site(sums: Option<&str>) -> tempfile::TempDir {
+    site_of(None, sums)
+}
+
+/// [`site`], its svrngs `stand_in`, a script by that name, where one is
+/// given, else this build's.
+fn site_of(stand_in: Option<&str>, sums: Option<&str>) -> tempfile::TempDir {
     let site = tempfile::tempdir().unwrap();
     std::fs::copy(
         harness::repo().join("web/install.sh"),
@@ -136,7 +144,16 @@ fn site(sums: Option<&str>) -> tempfile::TempDir {
     .unwrap();
     let get = site.path().join("get");
     std::fs::create_dir(&get).unwrap();
-    let bin = binary();
+    let bin = match stand_in {
+        None => binary(),
+        Some(script) => {
+            let bin = site.path().join("svrngs");
+            std::fs::write(&bin, script).unwrap();
+            let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
+            std::fs::set_permissions(&bin, exec).unwrap();
+            bin
+        }
+    };
     let made = std::process::Command::new("tar")
         .arg("-czf")
         .arg(get.join(tarball()))
@@ -1351,4 +1368,451 @@ async fn a_relay_on_linux_prints_its_system_unit_and_installs_none() {
         err.contains("a relay takes --open and nothing else, not --as."),
         "{err}"
     );
+}
+
+// install.sh's own claims, over the page's files with no listener: it
+// fetches only by `curl -fsSL <url> [-o <file>]` (web/install.sh:90, 98),
+// so a `curl` stub answers from the site as the page host would; and where
+// the claim is install.sh's, svrngs is a stand-in that runs no node. A
+// child process alone: no socket, relay or QUIC (docs/CHECKS.md, X).
+
+/// The page these lines name. Never resolved: the `curl` stub answers it.
+const PAGE: &str = "http://page.test/";
+
+/// svrngs's stand-in: install.sh places, keeps and opens it. Run with
+/// nothing, as launchd and systemd run it, it waits to be stopped; `open`
+/// writes the api file svrngs writes at its start and says what svrngs
+/// says; anything else is refused.
+const STAND_IN: &str = r#"#!/bin/sh
+case "${1:-}" in
+  "") exec sleep 600 ;;
+  open) printf 'http://127.0.0.1:4000' >"$SVRNGS_DIR/api" && echo "Your home page is open in your browser." ;;
+  *) echo "svrngs: the stand-in does not $1" >&2; exit 1 ;;
+esac
+"#;
+
+/// The site of [`site`], its svrngs [`STAND_IN`].
+fn stand_in_site(sums: Option<&str>) -> tempfile::TempDir {
+    site_of(Some(STAND_IN), sums)
+}
+
+/// The page's line, as a person pastes it, run in `home` with the stubs
+/// and a `curl` that answers [`PAGE`]'s urls from `site`: the file at the
+/// url's path, to `-o` or said, each url kept in `stubs/fetched`; 22, as
+/// `-f` fails on a 404, for a file the site has not, and 6, a host not
+/// found, for any other host.
+fn line(
+    site: &Path,
+    link: &str,
+    more: &str,
+    home: &Path,
+    uname: Option<&str>,
+    shell: Option<&str>,
+) -> Output {
+    let stubs = stubs(home, uname);
+    let curl = format!(
+        r#"#!/bin/sh
+url="" out=""
+while [ $# -gt 0 ]; do
+  case "$1" in -o) out="$2"; shift 2 ;; -*) shift ;; *) url="$1"; shift ;; esac
+done
+echo "$url" >>"$HOME/stubs/fetched"
+case "$url" in {PAGE}*) file="{}/${{url#{PAGE}}}" ;; *) exit 6 ;; esac
+[ -f "$file" ] || exit 22
+if [ -n "$out" ]; then cp "$file" "$out"; else cat "$file"; fi
+"#,
+        site.display()
+    );
+    std::fs::write(stubs.join("curl"), curl).unwrap();
+    let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
+    std::fs::set_permissions(stubs.join("curl"), exec).unwrap();
+    let line = format!("curl -fsSL {PAGE}install.sh | sh -s -- '{link}'{more}");
+    let path = format!("{}:/usr/bin:/bin:/usr/sbin:/sbin", stubs.display());
+    let mut sh = std::process::Command::new("/bin/sh");
+    sh.args(["-c", &line])
+        .env_clear()
+        .env("HOME", home)
+        .env("PATH", path)
+        .env("USER", "Alex");
+    if let Some(shell) = shell {
+        sh.env("SHELL", shell);
+    }
+    let out = sh.output().unwrap();
+    eprintln!(
+        "--- the line, in {}:\n{}{}",
+        home.display(),
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    out
+}
+
+#[test]
+fn install_sh_refuses_a_tarball_off_its_sum_by_name() {
+    let wrong = format!("{}  {}\n", "0".repeat(64), tarball());
+    let site = stand_in_site(Some(&wrong));
+    let home = tempfile::tempdir().unwrap();
+    let out = line(
+        site.path(),
+        &format!("{PAGE}#x"),
+        "",
+        home.path(),
+        None,
+        None,
+    );
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{err}");
+    assert!(
+        err.contains(&format!(
+            "{} is not the one the release lists, so it was refused",
+            tarball()
+        )),
+        "{err}"
+    );
+    assert!(
+        !home.path().join(".local/bin/svrngs").exists(),
+        "installed anyway"
+    );
+}
+
+/// Refused before any fetch: the line's own install.sh is the one url asked.
+#[test]
+fn install_sh_refuses_a_platform_svrngs_is_not_built_for_before_any_fetch() {
+    let site = stand_in_site(None);
+    let home = tempfile::tempdir().unwrap();
+    let link = format!("{PAGE}#x");
+    let out = line(
+        site.path(),
+        &link,
+        "",
+        home.path(),
+        Some("FreeBSD riscv64"),
+        None,
+    );
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{err}");
+    assert!(
+        err.contains("svrngs runs on Mac and Linux computers, Intel or ARM; this one is FreeBSD on riscv64, so nothing was installed."),
+        "{err}"
+    );
+    assert!(!home.path().join(".local/bin/svrngs").exists());
+    let fetched = std::fs::read_to_string(home.path().join("stubs/fetched")).unwrap();
+    assert_eq!(fetched, format!("{PAGE}install.sh\n"));
+}
+
+/// [`a_give_tarball_that_does_not_match_its_sum_is_refused_and_nothing_installed`]'s
+/// claim, over the page's files.
+#[test]
+fn install_sh_refuses_give_off_its_sum_and_installs_nothing() {
+    let site = stand_in_site(None);
+    let sums = std::fs::read_to_string(site.path().join("get/SHA256SUMS")).unwrap();
+    let give = tarball_of("give");
+    let wrong: String = (sums.lines())
+        .map(|l| match l.ends_with(&give) {
+            true => format!("{}  {give}\n", "0".repeat(64)),
+            false => format!("{l}\n"),
+        })
+        .collect();
+    std::fs::write(site.path().join("get/SHA256SUMS"), wrong).unwrap();
+    let home = tempfile::tempdir().unwrap();
+    let out = line(site.path(), PAGE, " --give", home.path(), None, None);
+    let err = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(1), "{err}");
+    let refused = format!("{give} is not the one the release lists, so it was refused");
+    assert!(err.contains(&refused), "{err}");
+    let bin = home.path().join(".local/bin");
+    assert!(!bin.join("give").exists(), "installed anyway");
+    assert!(
+        !bin.join("svrngs").exists(),
+        "svrngs installed beside a refused program"
+    );
+}
+
+/// `--relay <name> --open` on macOS: a LaunchAgent of its own running
+/// `svrngs relay <name> --open`, bootstrapped once, svrngs's own untouched.
+#[cfg(target_os = "macos")]
+#[test]
+fn install_sh_keeps_a_relay_running_beside_svrngs_on_a_mac() {
+    let site = stand_in_site(None);
+    let home = tempfile::tempdir().unwrap();
+    let more = " --relay relay.example.org --open";
+    let out = line(site.path(), PAGE, more, home.path(), None, None);
+    let said = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        out.status.success(),
+        "{said}{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let bin = home.path().join(".local/bin");
+    assert!(
+        said.contains(&format!("Installed svrngs in {}.", bin.display())),
+        "{said}"
+    );
+    assert!(
+        said.contains("svrngs-relay runs now, and whenever you log in"),
+        "{said}"
+    );
+    assert!(!said.contains("You're in"), "a relay joins nothing: {said}");
+    let agents = home.path().join("Library/LaunchAgents");
+    let plist = std::fs::read_to_string(agents.join("sh.svrnme.svrngs.relay.plist")).unwrap();
+    let run = format!(
+        "<array><string>{}/svrngs</string><string>relay</string><string>relay.example.org</string><string>--open</string></array>",
+        bin.display()
+    );
+    assert!(plist.contains(&run), "{plist}");
+    assert!(plist.contains("svrngs-relay.log"), "{plist}");
+    assert!(
+        !agents.join("sh.svrnme.svrngs.plist").exists(),
+        "svrngs's own agent is not touched"
+    );
+    let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+    assert_eq!(
+        launched.matches("launchctl bootstrap").count(),
+        1,
+        "{launched}"
+    );
+}
+
+/// `--relay` on Linux: the system unit printed, none installed, nothing
+/// asked of systemd; `--as` beside it refused.
+#[test]
+fn install_sh_prints_a_relay_s_system_unit_on_linux_and_installs_none() {
+    let site = stand_in_site(None);
+    as_linux(site.path());
+    let home = tempfile::tempdir().unwrap();
+    let linux = Some("Linux x86_64");
+    let more = " --relay relay.example.org";
+    let out = line(site.path(), PAGE, more, home.path(), linux, None);
+    let said = String::from_utf8_lossy(&out.stdout);
+    assert!(
+        out.status.success(),
+        "{said}{}",
+        String::from_utf8_lossy(&out.stderr)
+    );
+    let bin = home.path().join(".local/bin");
+    for line in [
+        "As root, put this in /etc/systemd/system/svrngs-relay.service, then run systemctl enable --now svrngs-relay:".to_string(),
+        format!("ExecStart={}/svrngs relay relay.example.org", bin.display()),
+        "AmbientCapabilities=CAP_NET_BIND_SERVICE".to_string(),
+        "WantedBy=multi-user.target".to_string(),
+    ] {
+        assert!(said.contains(&line), "not said: {line}\n{said}");
+    }
+    assert!(
+        !home.path().join("stubs/said").exists(),
+        "nothing asked of systemd"
+    );
+    assert!(
+        !home.path().join(".config/systemd").exists(),
+        "no unit installed"
+    );
+
+    let more = " --relay relay.example.org --as x";
+    let wrong = line(site.path(), PAGE, more, home.path(), linux, None);
+    let err = String::from_utf8_lossy(&wrong.stderr);
+    assert_eq!(wrong.status.code(), Some(1), "{err}");
+    assert!(
+        err.contains("a relay takes --open and nothing else, not --as."),
+        "{err}"
+    );
+}
+
+/// [`the_line_puts_svrngs_on_the_login_shell_s_path`]'s claim, install.sh's
+/// profile step: one PATH line in the login shell's profile, said once,
+/// then said to be there; what the profile held, kept.
+#[test]
+fn install_sh_puts_svrngs_on_the_login_shell_s_path_once() {
+    let site = stand_in_site(None);
+    as_linux(site.path());
+    let mac = cfg!(target_os = "macos");
+    let mut runs = vec![("/bin/bash", Some("Linux x86_64"), ".bashrc")];
+    if mac {
+        runs.push(("/bin/zsh", None, ".zshrc"));
+        runs.push(("/bin/bash", None, ".bash_profile"));
+    } else {
+        runs.push(("/usr/bin/zsh", Some("Linux x86_64"), ".zshrc"));
+    }
+    for (shell, uname, file) in runs {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let profile = home.path().join(file);
+        std::fs::write(&profile, "alias ll='ls -l'\n").unwrap();
+        let bin = home.path().join(".local/bin");
+        let export = format!("export PATH=\"{}:$PATH\"", bin.display());
+        let first = line(site.path(), PAGE, "", home.path(), uname, Some(shell));
+        let said = String::from_utf8_lossy(&first.stdout);
+        assert!(first.status.success(), "{shell} {uname:?}: {said}");
+        let added = format!(
+            "Added {} to where your terminal looks for programs, in {}. Open a new terminal window, and svrngs runs there by name.",
+            bin.display(),
+            profile.display()
+        );
+        assert!(
+            said.contains(&added),
+            "{shell} {uname:?}: not said: {added}\n{said}"
+        );
+        let again = line(site.path(), PAGE, "", home.path(), uname, Some(shell));
+        let said = String::from_utf8_lossy(&again.stdout);
+        assert!(again.status.success(), "{shell} {uname:?}: {said}");
+        let there = format!(
+            "{} already adds {} to where your terminal looks for programs. Open a new terminal window, and svrngs runs there by name.",
+            profile.display(),
+            bin.display()
+        );
+        assert!(
+            said.contains(&there),
+            "{shell} {uname:?}: not said: {there}\n{said}"
+        );
+        let held = std::fs::read_to_string(&profile).unwrap();
+        assert!(held.starts_with("alias ll='ls -l'\n"), "{held}");
+        assert_eq!(
+            held.matches(&export).count(),
+            1,
+            "{shell} {uname:?}: {held}"
+        );
+    }
+}
+
+/// [`the_line_without_then_with_give_installs_give_s_program_beside_svrngs`]'s
+/// claim, install.sh's: Give's program only when asked, checked, placed
+/// and kept at login beside svrngs, its agent or unit finding svrngs and
+/// Podman and waited for as it stops; run again, updated, one agent.
+#[test]
+fn install_sh_installs_and_keeps_give_beside_svrngs_only_when_asked() {
+    let site = stand_in_site(None);
+    as_linux(site.path());
+    let mac = cfg!(target_os = "macos").then_some(None);
+    for uname in mac.into_iter().chain([Some("Linux x86_64")]) {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let bin = home.path().join(".local/bin");
+        let agent = match uname {
+            None => home
+                .path()
+                .join("Library/LaunchAgents/sh.svrnme.give.plist"),
+            Some(_) => home.path().join(".config/systemd/user/give.service"),
+        };
+        let without = line(site.path(), PAGE, "", home.path(), uname, None);
+        let said = String::from_utf8_lossy(&without.stdout);
+        assert!(without.status.success(), "{uname:?}: {said}");
+        assert!(
+            !bin.join("give").exists(),
+            "{uname:?}: Give's program, unasked"
+        );
+        assert!(!agent.exists(), "{uname:?}: Give's program kept, unasked");
+
+        let platform = match uname {
+            None => tarball_of("give"),
+            Some(_) => "give-linux-x86_64.tar.gz".into(),
+        };
+        for (run, done) in [(1, "Installed"), (2, "Updated")] {
+            let with = line(site.path(), PAGE, " --give", home.path(), uname, None);
+            let said = String::from_utf8_lossy(&with.stdout);
+            let err = String::from_utf8_lossy(&with.stderr);
+            assert!(with.status.success(), "{uname:?}, run {run}: {said}{err}");
+            for line in [
+                format!(
+                    "Checked: {platform} is the one the release lists, unchanged on its way here."
+                ),
+                "Updated svrngs in".into(),
+                format!("{done} give in {}.", bin.display()),
+                "give runs now, and whenever you log in".into(),
+            ] {
+                assert!(
+                    said.contains(&line),
+                    "{uname:?}, run {run}, not said: {line}\n{said}"
+                );
+            }
+            assert_eq!(
+                said.contains("Stopped give, to update it."),
+                run == 2,
+                "{uname:?}, run {run}: {said}"
+            );
+            assert!(
+                !said.contains("You're in"),
+                "a page's address joins nothing: {said}"
+            );
+        }
+        let placed = std::fs::read_to_string(bin.join("give")).unwrap();
+        assert!(placed.contains("echo \"give $*\""), "{placed}");
+        let kept = std::fs::read_to_string(&agent).unwrap();
+        let path = format!("{}:/opt/podman/bin:", bin.display());
+        let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+        match uname {
+            None => {
+                let run = format!(
+                    "<string>{}/give</string><string>keep</string>",
+                    bin.display()
+                );
+                for line in [
+                    run,
+                    path,
+                    "<key>ExitTimeOut</key><integer>0</integer>".into(),
+                ] {
+                    assert!(kept.contains(&line), "not in the agent: {line}\n{kept}");
+                }
+                let n = launched.matches("bootstrap gui/").count();
+                assert_eq!(n, 3 + 2, "svrngs three times, give twice: {launched}");
+            }
+            Some(_) => {
+                let run = format!("ExecStart={}/give keep", bin.display());
+                for line in [
+                    run,
+                    format!("Environment=PATH={path}"),
+                    "TimeoutStopSec=infinity".into(),
+                ] {
+                    assert!(kept.contains(&line), "not in the unit: {line}\n{kept}");
+                }
+                let n = launched.matches("--user enable --now give.service").count();
+                assert_eq!(n, 2, "{launched}");
+            }
+        }
+        let data = home.path().join(".svrngs");
+        assert!(
+            kept.contains(&data.display().to_string()),
+            "the agent names svrngs's data dir: {kept}"
+        );
+    }
+}
+
+/// [`restart_asks_what_keeps_svrngs_and_refuses_where_nothing_does`]'s
+/// claim, `svrngs restart`'s (cli.rs `restart`): this build's svrngs, which
+/// starts no node for it, so its build's relay is never dialled, asked
+/// where install.sh kept the stand-in at login, then where nothing does.
+#[test]
+fn restart_asks_launchd_or_systemd_and_refuses_where_neither_keeps_svrngs() {
+    let site = stand_in_site(None);
+    let home = tempfile::tempdir().unwrap();
+    let _started = Started(home.path().to_path_buf());
+    assert!(line(site.path(), PAGE, "", home.path(), None, None)
+        .status
+        .success());
+    let program = tempfile::tempdir().unwrap();
+    let svrngs = as_main::installed_at(program.path(), "http://relay.test/");
+    let restart = || {
+        std::process::Command::new(&svrngs)
+            .arg("restart")
+            .env_clear()
+            .env("HOME", home.path())
+            .env("PATH", home.path().join("stubs"))
+            .output()
+            .unwrap()
+    };
+    let kept = restart();
+    assert!(kept.status.success(), "{kept:?}");
+    let said = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
+    let asked = match cfg!(target_os = "macos") {
+        true => "launchctl kickstart -k gui/",
+        false => "systemctl --user restart svrngs.service",
+    };
+    assert!(said.contains(asked), "{said}");
+
+    let pid = std::fs::read_to_string(home.path().join("stubs/pid")).unwrap();
+    let stopped = std::process::Command::new("kill").arg(pid.trim()).status();
+    assert!(stopped.unwrap().success());
+    std::fs::remove_file(home.path().join("stubs/pid")).unwrap();
+    let not = restart();
+    assert!(!not.status.success(), "{not:?}");
+    let why = String::from_utf8_lossy(&not.stderr);
+    assert!(why.contains("not kept running at login"), "{why}");
 }
