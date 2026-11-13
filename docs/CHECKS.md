@@ -238,8 +238,8 @@ Copy button's clipboard.
    TCP on loopback in `IrohTransport` and one end of a pipe on a `Wire`
    (`Wire::listen`; on_wire.rs `serve` answers it with a stub); the HTTP
    door and the TCP door both dial through it. Paid for by `connected`'s
-   two warn arms made one, so the count did not move. lend_origin's 7 and
-   session's 4 on the wire; kept there, the WebSocket through two doors (Q) and the
+   two warn arms made one, so the count did not move. lend_origin's 7,
+   session's 4 and carried's 5 (its lent services) on the wire; kept there, the WebSocket through two doors (Q) and the
    dial's cap on a slow and an asleep path (C's contained test).
 3. A `Door` without a `Host`: `Folders::start` needs a bound endpoint
    (folder.rs `start`), so even an in-process door binds QUIC today.

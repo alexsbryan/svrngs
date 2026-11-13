@@ -483,12 +483,11 @@ enum Use {
     People(LendName, oneshot::Sender<u32>),
 }
 
-#[expect(
-    clippy::disallowed_methods,
-    reason = "the door's clock: when a use of a lend begins and ends"
-)]
+/// The door's clock, when a use of a lend begins and ends and a read is
+/// counted: the runtime's, which is the system's monotonic clock in the
+/// product, so a test's paused clock holds the counts too.
 fn now() -> Instant {
-    Instant::now()
+    tokio::time::Instant::now().into_std()
 }
 
 impl Using {

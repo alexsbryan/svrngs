@@ -17,10 +17,9 @@ use computers::{found, round, signing, until_on as until};
 #[path = "common/on_wire.rs"]
 mod on_wire;
 use on_wire::{bridge_as, http, start, Answer};
-// A lent service keeping what it is sent: browser/main.rs's too.
+// A lent service keeping what it is sent.
 #[path = "common/keeping.rs"]
 mod keeping;
-use keeping::keeping;
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
@@ -1505,11 +1504,13 @@ async fn writing_loop(
     secs: u64,
     stops: bool,
 ) -> (usize, usize, Option<(u16, String, String)>) {
-    let until_at = std::time::Instant::now() + Duration::from_secs(secs);
+    // The runtime's clock, the door's too: paused, it moves only when every
+    // task waits, so no refill comes while the loops run.
+    let until_at = tokio::time::Instant::now() + Duration::from_secs(secs);
     let one = |w: usize| async move {
         let (mut wrote, mut refused, mut last) = (0, 0, None);
         let mut n = 0u64;
-        while std::time::Instant::now() < until_at {
+        while tokio::time::Instant::now() < until_at {
             n += 1;
             let op = json!({ "op": { "kind": "tick", "w": w, "n": n } });
             let answer = at(node, origin, "POST", "/svrngs/acts", Some(op)).await;
@@ -1942,30 +1943,41 @@ async fn a_folder_app_for_sixty_seconds() {
     }
 }
 
-/// A lent service that counts each request it is asked and answers each
-/// with JSON: its port, and the count.
-async fn counting() -> (u16, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+/// A port a service answers at on the wire; none is bound.
+const PORT: u16 = 9001;
+
+/// A lent service on `ben`'s computer at [`PORT`], answered in this
+/// process (on_wire.rs `serve`, harness 2), that counts each request it is
+/// asked and answers each with JSON: its port, and the count.
+fn counting(ben: &Node) -> (u16, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
     use std::sync::atomic::Ordering::Relaxed;
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let port = listener.local_addr().unwrap().port();
     let asked = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let count = asked.clone();
-    tokio::spawn(async move {
-        while let Ok((mut sock, _)) = listener.accept().await {
-            let count = count.clone();
-            tokio::spawn(async move {
-                let mut head = [0u8; 8192];
-                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
-                if n.is_ok_and(|n| n > 0) {
-                    count.fetch_add(1, Relaxed);
-                }
-                let body = r#"{"films":[]}"#;
-                let answer = format!("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
-                let _ = tokio::io::AsyncWriteExt::write_all(&mut sock, answer.as_bytes()).await;
-            });
+    on_wire::serve(ben, PORT, move |mut sock| {
+        let count = count.clone();
+        async move {
+            let mut head = [0u8; 8192];
+            let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
+            if n.is_ok_and(|n| n > 0) {
+                count.fetch_add(1, Relaxed);
+            }
+            let body = r#"{"films":[]}"#;
+            let answer = format!("HTTP/1.1 200 OK\r\ncontent-type: application/json\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}", body.len());
+            let _ = tokio::io::AsyncWriteExt::write_all(&mut sock, answer.as_bytes()).await;
         }
     });
-    (port, asked)
+    (PORT, asked)
+}
+
+/// A [`keeping::keep_one`] service on `ben`'s computer at [`PORT`], answered in this
+/// process (on_wire.rs `serve`, harness 2).
+fn keeping_at(ben: &Node) -> (u16, keeping::Kept) {
+    let asked = keeping::Kept::default();
+    let kept = asked.clone();
+    on_wire::serve(ben, PORT, move |s| {
+        keeping::keep_one(s, kept.clone(), keeping::embedding)
+    });
+    (PORT, asked)
 }
 
 /// Ben lends `films` to a [`counting`] service; Ana's computer carries
@@ -1986,7 +1998,7 @@ async fn reading(
     for node in [cy, ben, ana] {
         round(node).await;
     }
-    let (port, asked) = counting().await;
+    let (port, asked) = counting(ben);
     let declared = svrngs_node::lend::lends_dir(dirs[1].path());
     std::fs::create_dir_all(&declared).unwrap();
     let films = json!({ "groups": [group], "port": port, "kind": "films", "refused": [] });
@@ -2045,6 +2057,10 @@ async fn reading_loop(
             let answer = ask.bearer_auth(node.token().trim()).send().await.unwrap();
             if answer.status().is_success() {
                 read += 1;
+                // Never refused, a paused clock would never end the loop.
+                if stops && read > 2 * READS_A_MINUTE {
+                    break;
+                }
                 continue;
             }
             refused += 1;
@@ -2092,7 +2108,11 @@ fn read_at_most(elapsed: Duration) -> usize {
 async fn a_folder_app_reading_as_fast_as_it_can_stops_at_the_rate() {
     use std::sync::atomic::Ordering::Relaxed;
     let (nodes, _dirs, origin, label, asked) = reading(45).await;
-    let started = std::time::Instant::now();
+    // The door's clock is the runtime's (door.rs `now`): paused once the
+    // lend is read, it moves only when every task waits, so the rate's
+    // refill is no race with the loops (seam C).
+    tokio::time::pause();
+    let started = tokio::time::Instant::now();
     let (read, _, last) = reading_loop(&nodes[0], &origin, &label, 20, true).await;
     let served = asked.load(Relaxed);
     let (status, word, said, wait) = last.expect("the loop was told no");
@@ -2162,7 +2182,7 @@ async fn a_folder_app_reading_for_sixty_seconds() {
     }
 }
 
-/// Ben lends `embed`, a [`keeping`] service, its lend's `sends:` row
+/// Ben lends `embed`, a [`keeping_at`] service, its lend's `sends:` row
 /// `POST /v1/embeddings` (as `share` keeps it on Ben's yes, CONTRACTS §2);
 /// Ana's computer carries `Sender`, whose sends.txt names embed and which
 /// reads nothing else. Ana's yes, as her last open from the home page said
@@ -2185,7 +2205,7 @@ async fn sending(
     for node in [cy, ben, ana] {
         round(node).await;
     }
-    let (port, asked) = keeping().await;
+    let (port, asked) = keeping_at(ben);
     let declared = svrngs_node::lend::lends_dir(dirs[1].path());
     std::fs::create_dir_all(&declared).unwrap();
     let embed = json!({ "groups": [group], "port": port, "kind": "embed", "refused": ["/admin"],
