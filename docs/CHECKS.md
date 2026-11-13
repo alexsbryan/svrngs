@@ -211,7 +211,10 @@ stopped server; P's own, the upgrade and ws.mjs's frames, is
 `apps/doc/socket.test.mjs`. Events' page
 says who sees whose answers on its handler (`apps/events/answers.test.mjs`);
 its browser test keeps what only a browser does, a form pressed and the
-Copy button's clipboard.
+Copy button's clipboard. Grapevine's §10 scene reads its page's
+markup on its handler, a loop a turn of each person's pass
+(`apps/grapevine/scene.test.mjs`); its browser test keeps its script's
+send, reload and refusal.
 
 ### The contained test of each seam
 
