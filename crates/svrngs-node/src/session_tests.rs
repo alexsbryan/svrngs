@@ -197,3 +197,36 @@ fn a_redirect_s_next_onward_is_proved_once_where_and_how_the_answer_says() {
 fn the_home_page_s_address_is_its_host_at_its_port() {
     assert_eq!(crate::home::address(4321), "http://svrngs.localhost:4321/");
 }
+
+/// A browser svrngs never opened is refused in the person's words: 401,
+/// never kept or told where it came from, "Open svrngs from your
+/// computer", the opener named as this platform names it, and why (the
+/// words browser::navigations' cold bookmark and browser::opens' fresh
+/// browser were shown at the home page and at a lend's origin; which
+/// navigation lands on it stays theirs).
+#[tokio::test]
+async fn a_browser_never_opened_is_told_to_open_svrngs_from_its_computer() {
+    let dir = tempfile::tempdir().unwrap();
+    let s = Sessions::new(crate::api::kept_token(dir.path()).unwrap(), 4321);
+    let answer = s.refused("This browser was not opened by svrngs.");
+    assert_eq!(answer.status(), StatusCode::UNAUTHORIZED);
+    let head = |name| answer.headers().get(name).map(|v| v.to_str().unwrap());
+    assert_eq!(head(header::REFERRER_POLICY), Some("no-referrer"));
+    assert!(head(header::CACHE_CONTROL).is_some_and(|v| v.contains("no-store")));
+    let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+        .await
+        .unwrap();
+    let page = String::from_utf8(body.to_vec()).unwrap();
+    let opener = if cfg!(target_os = "macos") {
+        "Open svrngs from your Applications"
+    } else {
+        "Open svrngs from your applications menu"
+    };
+    for said in [
+        "<title>Open svrngs from your computer</title>",
+        "<p>This browser was not opened by svrngs.</p>",
+        opener,
+    ] {
+        assert!(page.contains(said), "{said}: {page}");
+    }
+}
