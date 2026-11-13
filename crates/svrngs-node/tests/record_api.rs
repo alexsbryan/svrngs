@@ -135,6 +135,56 @@ async fn a_listener_not_on_loopback_is_refused_by_name() {
     node.net().close().await;
 }
 
+/// **The API is asked for on loopback alone, decided before any bind**:
+/// `api::check_loopback` (api.rs:265) over literal addresses refuses each
+/// that is not loopback, naming it, and takes IPv4's and IPv6's loopback,
+/// `::ffff:127.0.0.1` among them; a node on a wire asked to listen on
+/// `0.0.0.0:0` refuses to start by those words and writes no `api` file,
+/// since the guard runs before the listener (api.rs `bind`). No socket:
+/// the address is refused before one is opened. Planted: the guard on
+/// `is_loopback` uncanonical (the mapped address refused); the guard
+/// taking an unspecified address (`0.0.0.0` served).
+#[tokio::test]
+async fn a_listen_address_not_on_loopback_is_refused_by_name_before_any_bind() {
+    use svrngs_node::api::check_loopback;
+    for open in [
+        "127.0.0.1:0",
+        "127.0.0.9:4000",
+        "[::1]:0",
+        "[::ffff:127.0.0.1]:0",
+    ] {
+        let open: SocketAddr = open.parse().unwrap();
+        assert!(check_loopback(open).is_ok(), "{open} is loopback");
+    }
+    for wide in [
+        "0.0.0.0:0",
+        "[::]:0",
+        "192.168.1.2:80",
+        "[::ffff:10.0.0.1]:0",
+    ] {
+        let wide: SocketAddr = wide.parse().unwrap();
+        let said = check_loopback(wide).expect_err("not loopback").to_string();
+        assert_eq!(
+            said,
+            format!("{wide} is not a loopback address; the record is this computer's alone")
+        );
+    }
+
+    let dir = tempfile::tempdir().unwrap();
+    let wide: SocketAddr = "0.0.0.0:0".parse().unwrap();
+    let wire = svrngs_node::node::Wire::default();
+    let path = dir.path().to_path_buf();
+    let refused = match Node::on_wire_listening(&wire, path, signing(1), no_seed, wide).await {
+        Ok(_) => panic!("a node must not serve the record on {wide}"),
+        Err(e) => e.to_string(),
+    };
+    assert!(
+        refused.contains("0.0.0.0:0") && refused.contains("not a loopback address"),
+        "{refused}"
+    );
+    assert!(!dir.path().join("api").exists(), "no listener named");
+}
+
 /// **An app's append goes at once** (the u3-2 row): A founds the group and
 /// admits B; an app on A's computer appends a record to A's group over
 /// loopback; the round, woken by the append and nothing else, carries it to
@@ -745,5 +795,34 @@ async fn the_token_is_owner_only_beside_the_api_file() {
             .mode();
         assert_eq!(mode & 0o777, 0o600, "the token is the person's alone");
     }
+    node.net().close().await;
+}
+
+/// **The token is the person's alone, beside the `api` file, with no
+/// listener**: a node on a wire keeps its token in its data dir, owner-only
+/// (0600), the same token across a second read; `api::write_address`
+/// (api.rs:139), what a listening node writes where it binds (node.rs
+/// `write_address`), puts the `api` file in that same dir. No socket: the
+/// file and its mode are the claim, and the api file naming a listener is
+/// surface.rs's. Planted: the token written by `std::fs::write` (0644);
+/// the token kept under a directory of its own (not beside the api file).
+#[tokio::test]
+async fn the_token_is_owner_only_beside_the_api_file_with_no_listener() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let node = start(1, &dir).await;
+    let token = token_in(dir.path());
+    assert_eq!(node.token(), token, "the node asks with the token it kept");
+    let mode = std::fs::metadata(dir.path().join("token")).unwrap();
+    assert_eq!(
+        mode.permissions().mode() & 0o777,
+        0o600,
+        "the token is the person's alone"
+    );
+    let kept = svrngs_node::api::kept_token(dir.path()).expect("kept");
+    drop(kept);
+    assert_eq!(token_in(dir.path()), token, "read again, never replaced");
+    svrngs_node::api::write_address(dir.path(), "127.0.0.1:4000".parse().unwrap()).unwrap();
+    assert!(dir.path().join("api").exists(), "beside the api file");
     node.net().close().await;
 }
