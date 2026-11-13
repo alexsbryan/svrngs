@@ -76,7 +76,7 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, OnlinePeer, RingSyncHandle, Rounds,
+    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, OnlinePeer, Rounds,
 };
 use crate::version::{SCOPE_HEADER, VERSION};
 use crate::{actor_of, Person, RingRail, SigningKey};
@@ -220,7 +220,7 @@ pub struct Node {
     #[cfg(any(test, feature = "test-support"))]
     routes: axum::Router,
     _acceptor: IrohAcceptor,
-    _round: RingSyncHandle,
+    _round: n0_future::task::AbortOnDropHandle<()>,
     /// Stopped with the node, in this order: the room's one owner
     /// ([`crate::room::owner::spawn`]); the watch on where this computer
     /// meets its groups, which says each move ([`Host::moved`]), and the ask

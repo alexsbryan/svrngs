@@ -226,9 +226,9 @@ impl RingRail {
     pub fn invite_for(&self, link: &str) -> Result<Option<(String, OpId, Option<Person>)>, RailError> {
         let me = actor_of(self.signer());
         for namespace in self.namespaces()? {
-            let journal = self.journal(&namespace)?;
-            let (ops, roster) = (journal.read()?.0, journal.roster_file()?);
-            let admission = admit(&ActSet::of(&ops), &[], &roster, &namespace, &Ed25519Verifier);
+            // The lines it skipped reach only the admission's gaps, which no
+            // invite reads.
+            let admission = self.admission(&namespace)?;
             if let Some(id) = admission.invites().newest(&me, link) {
                 let m = admission.membership();
                 let of = m.invites.get(id).and_then(|i| i.device_of.as_deref());
@@ -243,10 +243,7 @@ impl RingRail {
 
     /// This computer's current invitation, not the newest for an old link key.
     pub fn current_invite(&self, namespace: &str) -> Result<Option<(OpId, svrngs_core::Invited)>, RailError> {
-        let journal = self.journal(namespace)?;
-        let (ops, roster) = (journal.read()?.0, journal.roster_file()?);
-        let a = admit(&ActSet::of(&ops), &[], &roster, namespace, &Ed25519Verifier);
-        Ok(a.current_invite(&actor_of(self.signer())))
+        Ok(self.admission(namespace)?.current_invite(&actor_of(self.signer())))
     }
 
     /// The `Remove` acts this computer signed in `namespace`: its leave, once

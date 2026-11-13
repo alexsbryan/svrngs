@@ -186,10 +186,7 @@ async fn to_a_lend(State(lends): State<Router>, request: Request, next: Next) ->
     if crate::origin::label_of(host).is_none() && !crate::home::named(host) {
         return next.run(request).await;
     }
-    match lends.oneshot(request).await {
-        Ok(answer) => answer,
-        Err(never) => match never {},
-    }
+    (lends.oneshot(request).await).unwrap_or_else(|never| match never {})
 }
 
 /// The record is served to this computer's apps, never to a page in a

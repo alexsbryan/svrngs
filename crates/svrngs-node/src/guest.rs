@@ -78,15 +78,28 @@ impl RelayConfig {
     /// computer meets every group beside the group's own (relay fallbacks;
     /// svrngs's `cli::reach`), as [`relayed_endpoint_builder`] chooses them.
     pub fn build(&self) -> Vec<svrngs_core::relay::Url> {
-        let map = match parse_relay_mode(&self.relay_urls) {
-            Some(mode) => mode.relay_map(),
-            None if self.n0_services => relay::n0_relays(),
-            None => iroh::RelayMap::empty(),
-        };
+        let map = self.relay_mode().relay_map();
         map.urls::<Vec<RelayUrl>>()
             .into_iter()
             .map(Into::into)
             .collect()
+    }
+
+    /// The relays named, else n0's with `n0_services`, else none: the one
+    /// choice both [`Self::build`] and the endpoint read.
+    fn relay_mode(&self) -> iroh::RelayMode {
+        match parse_relay_mode(&self.relay_urls) {
+            Some(mode) => mode,
+            // n0_services + no custom relays → n0's default relays; svrngs:
+            // dotless, so the relay this computer advertises is one WebKit
+            // reaches (crate::relay, u4-9).
+            None if self.n0_services => iroh::RelayMode::Custom(relay::n0_relays()),
+            // Sovereign mode, no custom relay: disable relays entirely.
+            // Peers are reached by gossiped direct addrs only (flat
+            // LAN/VPC). Minimal carries no relay by default, but be
+            // explicit so intent is unmistakable.
+            None => iroh::RelayMode::Disabled,
+        }
     }
 }
 
@@ -150,20 +163,7 @@ fn relayed_endpoint_builder(
     // not by inference. (svrngs: upstream's proxy reading went, arch-peer.)
     tracing::info!(target: "transport", n0_services = cfg.n0_services, loopback_only = cfg.loopback_only, relays = ?cfg.relay_urls,
         "iroh egress posture (no relay named is n0's with n0_services, none without it; n0_services=false severs all n0 contact)");
-    match parse_relay_mode(&cfg.relay_urls) {
-        Some(mode) => builder = builder.relay_mode(mode),
-        None if !cfg.n0_services => {
-            // Sovereign mode, no custom relay: disable relays entirely.
-            // Peers are reached by gossiped direct addrs only (flat
-            // LAN/VPC). Minimal carries no relay by default, but be
-            // explicit so intent is unmistakable.
-            builder = builder.relay_mode(iroh::RelayMode::Disabled);
-        }
-        // n0_services + no custom relays → n0's default relays; svrngs:
-        // dotless, so the relay this computer advertises is one WebKit
-        // reaches (crate::relay, u4-9).
-        None => builder = builder.relay_mode(iroh::RelayMode::Custom(relay::n0_relays())),
-    }
+    builder = builder.relay_mode(cfg.relay_mode());
     if cfg.loopback_only {
         builder = builder
             .clear_ip_transports()

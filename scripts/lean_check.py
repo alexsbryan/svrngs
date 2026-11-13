@@ -675,6 +675,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # update.js's and copy.js's identical cases stacked (-3), the session's hex
 # shared by its worker (-4). Core 3,496 -> 3,492, . 21,196 -> 21,187, js
 # 8,516 -> 8,510; native 29,712 -> 29,697.
+# (2026-11-13) Economized before the seams' harnesses (docs/CHECKS.md,
+# "Seam migration ledger"): ring_sync.rs's `Reach`, which only re-read an
+# exchange's stop, and `RingSyncHandle`, a newtype over the abort handle;
+# guest.rs's relay choice made once for the endpoint and `build`;
+# svrngs-runtime's invite reads through `admission`; group.rs `read_relay`
+# and api.rs's Infallible match. . 21,185 -> 21,161; the cap is lowered
+# where the harness this pays for lands.
 BUDGET = {
     "crates/svrngs-core": 3493,
 

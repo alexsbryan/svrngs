@@ -128,13 +128,6 @@ pub const DEFAULT_RING_SYNC_INTERVAL: Duration = Duration::from_secs(60);
 /// next round resumes where this one stopped.
 pub const MAX_CHUNKS_PER_EXCHANGE: usize = 16;
 
-/// Handle to the spawned loop. Aborts the task on drop, matching
-/// the daemon's `GossipHandle` so the daemon tears both
-/// down the same way.
-pub struct RingSyncHandle {
-    pub(crate) _task: AbortOnDropHandle<()>,
-}
-
 /// What one round moved. Returned rather than only logged so a test can
 /// assert convergence instead of asserting on log lines.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -219,13 +212,14 @@ impl AskRound {
 /// refresh requests ([`AskRound`]). A change during a round leaves a permit
 /// for the next round. No-op commits and duplicate ingestion notify nothing,
 /// so a converged exchange returns to the interval. `rounds` counts rounds
-/// begun and ended for a waiting door.
+/// begun and ended for a waiting door. The loop is aborted when the
+/// handle returned drops.
 pub fn spawn_ring_sync_loop(
     host: Arc<Host>,
     interval: Duration,
     nudge: Arc<Notify>,
     rounds: Rounds,
-) -> RingSyncHandle {
+) -> AbortOnDropHandle<()> {
     let task = tokio::spawn(async move {
         info!(
             interval_secs = interval.as_secs(),
@@ -265,9 +259,7 @@ pub fn spawn_ring_sync_loop(
             }
         }
     });
-    RingSyncHandle {
-        _task: AbortOnDropHandle::new(task),
-    }
+    AbortOnDropHandle::new(task)
 }
 
 /// One anti-entropy pass over every namespace this node holds, against every
@@ -366,7 +358,7 @@ pub async fn run_one_round(
         for OnlinePeer { contact, .. } in offered_to {
             dials.push(async move {
                 let ended = exchange_with((transport, contact), rail, namespace).await;
-                if matches!(ended.2, Reach::Reached) {
+                if ended.stop.is_none() {
                     answered();
                 }
                 ended
@@ -376,14 +368,15 @@ pub async fn run_one_round(
     let (answered_leaves, ended) =
         tokio::join!(n0_future::join_all(leaves), n0_future::join_all(dials));
     told.extend(answered_leaves.into_iter().flatten());
-    for (pulled, pushed, reach) in ended {
-        // Counted BEFORE the verdict is read: see `exchange_with`.
-        outcome.ops_pulled += pulled;
-        outcome.ops_pushed += pushed;
-        match reach {
-            Reach::Reached => outcome.peers_reached += 1,
-            Reach::Refused => outcome.peers_refused += 1,
-            Reach::Unreachable => outcome.peers_unreachable += 1,
+    for ex in ended {
+        // Counted BEFORE the verdict is read: see `exchange_with`. It
+        // answered, it answered and refused, or no address of it answered.
+        outcome.ops_pulled += ex.pulled;
+        outcome.ops_pushed += ex.pushed;
+        match ex.stop {
+            None => outcome.peers_reached += 1,
+            Some(ExchangeStop::Refused { .. }) => outcome.peers_refused += 1,
+            Some(ExchangeStop::Failed(_)) => outcome.peers_unreachable += 1,
         }
     }
     outcome
@@ -429,24 +422,16 @@ fn leave_told<'a>(
     })
 }
 
-/// How a round's exchange with one member ended: it answered, it answered
-/// and refused, or no address of it answered.
-enum Reach {
-    Reached,
-    Refused,
-    Unreachable,
-}
-
 /// One round's exchange of `namespace` with the member at `to`: the ops
-/// pulled and pushed, and how it ended. (svrngs, arch-peer (c): upstream
-/// tried each address its transport answered until one worked; a member is
-/// asked by its key now, so there is one.)
-async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> (usize, usize, Reach) {
+/// pulled and pushed, and how it ended, traced. (svrngs, arch-peer (c):
+/// upstream tried each address its transport answered until one worked; a
+/// member is asked by its key now, so there is one.)
+async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> ExchangeOutcome {
     let ex = exchange(to, rail, namespace).await;
     // `ex.pulled` is progress whether or not a later call in the same
     // exchange failed: `ingest_all` has already written those lines to disk.
-    let reach = match ex.stop {
-        None => Reach::Reached,
+    match &ex.stop {
+        None => {}
         Some(ExchangeStop::Refused { sent_bytes, status }) => {
             warn!(
                 peer = %to.1.key,
@@ -459,14 +444,12 @@ async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> (usize, 
                  not serve this ring to us — we hold no standing \
                  in its register there, or it holds no such ring"
             );
-            Reach::Refused
         }
         Some(ExchangeStop::Failed(detail)) => {
             debug!(peer = %to.1.key, detail, "ring sync: exchange failed, so the member is unreachable this round");
-            Reach::Unreachable
         }
-    };
-    (ex.pulled, ex.pushed, reach)
+    }
+    ex
 }
 
 /// Where an exchange goes: a member, by its contact, through the

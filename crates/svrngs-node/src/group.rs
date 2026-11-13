@@ -132,11 +132,6 @@ pub fn write_relay(dir: &Path, relay: &RelayUrl) -> Result<(), SeedError> {
     keep(dir, path, &relay.to_string())
 }
 
-/// The relay kept in `dir`, read dotless, or `None` when it keeps none.
-pub fn read_relay(dir: &Path) -> Result<Option<RelayUrl>, SeedError> {
-    read_kept(&dir.join(RELAY_FILE), crate::relay::parse)
-}
-
 /// Write `contents` to `path`, a file in `dir`, the group's directory,
 /// making the directory first: how the seed and the origin are kept.
 fn keep(dir: &Path, path: PathBuf, contents: &str) -> Result<(), SeedError> {
@@ -268,7 +263,10 @@ pub(crate) fn meeting(rail: &crate::RingRail, group: &str, build: &[Url]) -> Mee
 /// warn, when it cannot be read.
 pub(crate) fn filed(rail: &crate::RingRail, group: &str) -> Option<Url> {
     let dir = rail.group_dir(group).map_err(|e| e.to_string());
-    let read = dir.and_then(|d| read_relay(&d).map_err(|e| e.to_string()));
+    // Read dotless, `None` when it keeps none.
+    let read = dir.and_then(|d| {
+        read_kept(&d.join(RELAY_FILE), crate::relay::parse).map_err(|e| e.to_string())
+    });
     let read = read.inspect_err(|e| tracing::warn!(target: "group", group, error = %e, "group: the relay its file keeps cannot be read, so it is met at the build's relays"));
     tracing::debug!(target: "group", group, ?read, "group: its keeper names no relays, so the relay its file keeps, an old group's");
     read.ok().flatten().map(Into::into)
