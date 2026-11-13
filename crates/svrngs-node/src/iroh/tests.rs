@@ -21,51 +21,6 @@ impl std::io::Write for Said {
     }
 }
 
-/// What keeps a router served on the stream: its acceptor, and the
-/// dialer's transport. (The round's exchange is asked in-process now,
-/// [`InProcess`]; a member asked over QUIC is this file's own tests'.)
-pub(crate) struct OnStream {
-    _acceptor: IrohAcceptor,
-    _transport: IrohTransport,
-}
-
-/// `router` served by an acceptor that admits every dialer, on a
-/// hermetic endpoint; and the base URL at which a dialer holding
-/// `dialer` reaches it through a test's splice
-/// ([`crate::node::splice`]). For a route that decides on
-/// the [`Dialer`] itself, so the admit decision is not what a test of it
-/// watches.
-pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> (String, OnStream) {
-    let served = hermetic_endpoint(0xEE, vec![ALPN.to_vec()]).await;
-    let addrs = loopback_sockets(&served);
-    let acceptor = spawn_acceptor(served.clone(), Default::default(), move |_, _| {
-        Admit::Serve(router.clone())
-    });
-    let dialling = EndpointBuilder::empty()
-        .crypto_provider(ring_crypto_provider())
-        .secret_key(dialer)
-        .bind()
-        .await
-        .expect("hermetic endpoint bind");
-    let transport = IrohTransport::new(dialling);
-    let contact = Contact {
-        key: served.id(),
-        relays: Default::default(),
-        iroh_direct_addrs: addrs,
-    };
-    let base = transport
-        .spliced(&contact)
-        .await
-        .expect("a contact with an address resolves");
-    (
-        base,
-        OnStream {
-            _acceptor: acceptor,
-            _transport: transport,
-        },
-    )
-}
-
 /// Members answered in this process (docs/CHECKS.md, harness 4): each
 /// key's router asked by tower's `oneshot`, the asker's [`Dialer`]
 /// inserted as [`IrohAcceptor`] inserts it, its answer read whole. A key

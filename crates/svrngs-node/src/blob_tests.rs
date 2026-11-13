@@ -26,9 +26,24 @@ fn seed_file(dir: &FsPath) -> Result<Option<String>, String> {
     }
 }
 
-/// Ana's and Ben's computers, each knowing where the other listens, in a
-/// group `films` Ana founds and Ben is admitted to: its id.
+/// Ana's and Ben's computers on one wire (docs/CHECKS.md, harness 3), no
+/// endpoint and no socket, in a group `films` Ana founds and Ben is
+/// admitted to: its id. A Blobs get is served by the holder's own provider
+/// over an in-memory pipe ([`crate::node::Wire`]).
 async fn ana_and_ben(dirs: [&FsPath; 2]) -> (Node, Node, String) {
+    let wire = crate::node::Wire::default();
+    let mut nodes = Vec::new();
+    for (n, dir) in [(1, dirs[0]), (2, dirs[1])] {
+        let node = Node::on_wire(&wire, dir.to_path_buf(), signing(n), seed_file);
+        nodes.push(node.await.expect("a node starts"));
+    }
+    in_films(nodes).await
+}
+
+/// [`ana_and_ben`] over QUIC on loopback, each knowing where the other
+/// listens: for the claim on the connection a fetch rides, which only a
+/// QUIC endpoint keeps.
+async fn ana_and_ben_over_quic(dirs: [&FsPath; 2]) -> (Node, Node, String) {
     let relay = RelayConfig {
         relay_urls: Vec::new(),
         n0_services: false,
@@ -53,6 +68,12 @@ async fn ana_and_ben(dirs: [&FsPath; 2]) -> (Node, Node, String) {
         }
         who.endpoint().address_lookup().unwrap().add(book);
     }
+    in_films(nodes).await
+}
+
+/// `nodes`, Ana's and Ben's, in the group `films` Ana founds and Ben is
+/// let in to, each having run a round: its id.
+async fn in_films(mut nodes: Vec<Node>) -> (Node, Node, String) {
     let ana = Name::parse("ana").unwrap();
     let seed = Seed::from_parts(
         Name::parse("films").unwrap(),
@@ -150,7 +171,7 @@ async fn a_lapse_this_computer_was_given_outlasts_a_fetch_that_failed() {
         "Ana still carries it: {held:?}"
     );
     for node in [ana, ben] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -215,7 +236,7 @@ async fn a_refused_put_and_a_get_that_asks_the_group_are_traced() {
         "the get asking the group traced, Ana's lapse given: {log}"
     );
     for node in [ana, ben] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -229,7 +250,9 @@ async fn a_refused_put_and_a_get_that_asks_the_group_are_traced() {
 #[tokio::test]
 async fn a_fetch_rides_the_connection_the_transport_keeps() {
     let dirs = [tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap()];
-    let (ana, ben, films) = ana_and_ben([dirs[0].path(), dirs[1].path()]).await;
+    // Over QUIC: a kept connection is the transport's own (Q's claim).
+    let dirs = [dirs[0].path(), dirs[1].path()];
+    let (ana, ben, films) = ana_and_ben_over_quic(dirs).await;
     let at = (
         *ben.endpoint().id().as_bytes(),
         crate::iroh::Alpn::Blobs.bytes(),

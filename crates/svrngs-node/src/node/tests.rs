@@ -6,9 +6,21 @@ use serde_json::json;
 use svrngs_core::tests_support::let_in;
 use tower::ServiceExt;
 
+/// What [`write_fixture`] gives a test: the state its routers ask, its
+/// record API's routes, its group's seed, its data dir, and the wire it is
+/// on, where a guest asks it.
+type Fixture = (
+    Asking,
+    axum::Router,
+    crate::seed::Seed,
+    tempfile::TempDir,
+    Wire,
+);
+
 /// Keep the real startup wiring, but stop background work so a stored wake
-/// permit can be inspected without a round consuming it.
-async fn write_fixture() -> (Asking, axum::Router, crate::seed::Seed, tempfile::TempDir) {
+/// permit can be inspected without a round consuming it. On a wire of its
+/// own (docs/CHECKS.md, harness 3): no endpoint and no socket.
+async fn write_fixture() -> Fixture {
     let dir = tempfile::tempdir().unwrap();
     let key = SigningKey::from_bytes(&[91; 32]);
     let seed = crate::group::draw(
@@ -16,19 +28,10 @@ async fn write_fixture() -> (Asking, axum::Router, crate::seed::Seed, tempfile::
         crate::Name::parse("Ada").unwrap(),
         key.verifying_key(),
     );
-    let node = Node::start(
-        dir.path().into(),
-        key,
-        &RelayConfig {
-            relay_urls: vec![],
-            n0_services: false,
-            loopback_only: true,
-        },
-        crate::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .unwrap();
+    let wire = Wire::default();
+    let node = Node::on_wire(&wire, dir.path().into(), key, crate::group::seed_text)
+        .await
+        .unwrap();
     drop(node._round);
     drop(node._tasks);
     node.host.keep_group(&seed, None, &[]).unwrap();
@@ -49,7 +52,7 @@ async fn write_fixture() -> (Asking, axum::Router, crate::seed::Seed, tempfile::
     );
     let at = node.asking;
     while takes_wake(&at) {}
-    (at, node.routes, seed, dir)
+    (at, node.routes, seed, dir, wire)
 }
 
 fn takes_wake(at: &Asking) -> bool {
@@ -62,7 +65,7 @@ fn takes_wake(at: &Asking) -> bool {
 
 #[tokio::test]
 async fn minting_a_link_wakes_sync() {
-    let (at, _, seed, _dir) = write_fixture().await;
+    let (at, _, seed, _dir, _wire) = write_fixture().await;
     at.host
         .mint(&seed.id(), vec![], None, crate::door::unix_now().unwrap())
         .unwrap();
@@ -74,7 +77,7 @@ async fn minting_a_link_wakes_sync() {
 
 #[tokio::test]
 async fn changing_the_meeting_wakes_sync() {
-    let (at, _, seed, _dir) = write_fixture().await;
+    let (at, _, seed, _dir, _wire) = write_fixture().await;
     at.host
         .meet(&seed.id(), &["http://127.0.0.1:9/".parse().unwrap()])
         .unwrap();
@@ -83,7 +86,7 @@ async fn changing_the_meeting_wakes_sync() {
 
 #[tokio::test]
 async fn journal_changes_wake_folders_and_sync_but_no_ops_and_refusals_do_not() {
-    let (at, _, seed, _dir) = write_fixture().await;
+    let (at, _, seed, _dir, _wire) = write_fixture().await;
     let rail = &at.host.rail;
     let mut folders = at.door.folders.woken.subscribe();
     let before = folders.borrow_and_update().clone();
@@ -137,24 +140,24 @@ async fn journal_changes_wake_folders_and_sync_but_no_ops_and_refusals_do_not() 
     assert!(takes_wake(&at));
 }
 
-async fn visiting(at: &Asking, group: &str) -> String {
+/// A guest's visit redeemed: asked of the node on `wire` by the guest's
+/// key on the redeem protocol, so the node's own acceptor admits it and
+/// its redeem router answers, the guest's `Dialer` inserted as the
+/// acceptor inserts it.
+async fn visiting(at: &Asking, wire: &Wire, group: &str) -> String {
     let page = crate::link::Origin::parse("https://house.example").unwrap();
     let link = at.host.link(group, false, Some(&page), Some(3600)).unwrap();
     let guest = SigningKey::from_bytes(&[92; 32]);
     let ask = crate::joining::AskRequest::sign(&link.token.key(), &guest);
     let consent = svrngs_core::tests_support::consent(&guest, &at.host.actor);
-    let (base, _stream) = crate::iroh::tests::serve_on_stream(
-        crate::redeem::router(at.clone()),
-        SecretKey::from_bytes(&guest.to_bytes()),
-    )
-    .await;
-    let response = reqwest::Client::new()
-        .post(format!("{base}/visit"))
-        .json(&json!({ "ask": ask, "guest": "Bo", "consent": consent }))
-        .send()
-        .await
+    let body = json!({ "ask": ask, "guest": "Bo", "consent": consent });
+    let req = Request::post("/visit")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
         .unwrap();
-    assert_eq!(response.status(), StatusCode::OK);
+    let node = at.host.transport.id();
+    let response = wire.ask_as(&guest, &node, Alpn::Redeem, req).await;
+    assert_eq!(response.unwrap().status(), StatusCode::OK);
     at.host
         .rail
         .register(group)
@@ -168,15 +171,15 @@ async fn visiting(at: &Asking, group: &str) -> String {
 
 #[tokio::test]
 async fn redeeming_a_visit_wakes_sync() {
-    let (at, _, seed, _dir) = write_fixture().await;
-    visiting(&at, &seed.id()).await;
+    let (at, _, seed, _dir, wire) = write_fixture().await;
+    visiting(&at, &wire, &seed.id()).await;
     assert!(takes_wake(&at), "the Visit was written without waking sync");
 }
 
 #[tokio::test]
 async fn stopping_a_visit_wakes_sync() {
-    let (at, routes, seed, dir) = write_fixture().await;
-    let visit = visiting(&at, &seed.id()).await;
+    let (at, routes, seed, dir, wire) = write_fixture().await;
+    let visit = visiting(&at, &wire, &seed.id()).await;
     while takes_wake(&at) {}
     let token = std::fs::read_to_string(dir.path().join("token")).unwrap();
     let req = Request::post("/visits")
@@ -201,26 +204,18 @@ async fn stopping_a_visit_wakes_sync() {
     );
 }
 
+/// `key`'s node over `dir` on `wire`, and the rounds it runs.
 async fn tracked_node(
+    wire: &Wire,
     key: SigningKey,
     dir: &std::path::Path,
 ) -> (
     Node,
     tokio::sync::watch::Receiver<crate::ring_sync::Progress>,
 ) {
-    let mut node = Node::start(
-        dir.into(),
-        key,
-        &RelayConfig {
-            relay_urls: vec![],
-            n0_services: false,
-            loopback_only: true,
-        },
-        crate::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .unwrap();
+    let mut node = Node::on_wire(wire, dir.into(), key, crate::group::seed_text)
+        .await
+        .unwrap();
     let progress = Rounds::new(Default::default());
     let seen = progress.subscribe();
     // Replace only the interval and observe the real round; keep startup's
@@ -264,8 +259,10 @@ async fn a_write_reaches_a_peer_without_the_timer_and_both_rounds_settle() {
         crate::Name::parse("Ada").unwrap(),
         key.verifying_key(),
     );
-    let (ada, mut ar) = tracked_node(key, a.path()).await;
-    let (bo, mut br) = tracked_node(other.clone(), b.path()).await;
+    // Ada's and Bo's computers on one wire, each reaching the other.
+    let wire = Wire::default();
+    let (ada, mut ar) = tracked_node(&wire, key, a.path()).await;
+    let (bo, mut br) = tracked_node(&wire, other.clone(), b.path()).await;
     ada.host.keep_group(&seed, None, &[]).unwrap();
     let ns = seed.id();
     let_in(
@@ -285,12 +282,6 @@ async fn a_write_reaches_a_peer_without_the_timer_and_both_rounds_settle() {
         .unwrap()
         .0;
     bo.rail().ingest_all(&seed.id(), &held).unwrap();
-    for (from, to) in [(&ada, &bo), (&bo, &ada)] {
-        from.host.transport.add_known_peer(
-            to.endpoint().id(),
-            crate::iroh::tests::loopback_sockets(to.endpoint()),
-        );
-    }
     let (before, _) = tokio::join!(settled(&mut ar), settled(&mut br));
     assert!(ada
         .rail()
@@ -332,8 +323,8 @@ async fn a_write_reaches_a_peer_without_the_timer_and_both_rounds_settle() {
         ada.rail().digest(&seed.id()).unwrap(),
         bo.rail().digest(&seed.id()).unwrap()
     );
-    ada.endpoint().close().await;
-    bo.endpoint().close().await;
+    ada.net().close().await;
+    bo.net().close().await;
 }
 
 /// **A computer running an older svrngs is named so, never read field by
