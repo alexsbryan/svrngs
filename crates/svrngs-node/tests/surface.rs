@@ -954,8 +954,10 @@ async fn a_visit_is_listed_on_every_computer_and_its_host_s_stop_ends_it_on_each
 /// [`svrngs_node::node::ANSWER_WITHIN`] and a second, Cy named as not
 /// answering, never dropped. Planted: every lender's ask awaited to its own
 /// end (node.rs `lends_in` before this row), which held the answer to the
-/// asleep dial's timeout.
-#[tokio::test]
+/// asleep dial's timeout. On a held clock (tokio's, paused), the bound is an
+/// order: Cy's dial waits [`svrngs_node::dial::DIAL_WITHIN`] on the wire
+/// (`Wire::asleep`), and the reads answer at `ANSWER_WITHIN`, before it.
+#[tokio::test(start_paused = true)]
 async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
     let house = House::new().await;
     declare(
@@ -997,7 +999,7 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
     let at = |seed: u8, name: &str| svrngs_node::origin::origin(&label(seed, name), port);
     let reads = svrngs_node::surface::READS_PATH;
 
-    let asked = std::time::Instant::now();
+    let asked = tokio::time::Instant::now();
     let (status, body) = at_origin(&house.alex, &label(1, "night"), reads, None).await;
     let took = asked.elapsed();
     eprintln!("the reads answered in {took:?}: {body}");
@@ -1013,9 +1015,9 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
         }),
         "Cy's computer asleep: named as not answering, never dropped"
     );
-    let bound = svrngs_node::node::ANSWER_WITHIN + Duration::from_secs(1);
+    let bound = svrngs_node::node::ANSWER_WITHIN;
     assert!(
-        took < bound,
+        took <= bound,
         "the reads waited {took:?} on a computer that never answers, past {bound:?}"
     );
     house.close().await;
