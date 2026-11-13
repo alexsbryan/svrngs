@@ -194,6 +194,12 @@ the node's settled rounds held to a paused clock. Left in the CLI: each
 verb that asks the svrngs running here (`ask_running`, a socket), a
 page's host, a relay, a real svrngs installed.
 
+The Node side, from 2026-11-13: the resolver's Redis suite keeps eleven,
+each its seam's claim, since the Lua that Redis runs decides
+(resolver/store.mjs `SCRIPT`) and a JS store that answered would be a
+second decider; its whole-response bound moved to the unit tier on
+node:test's mocked `setTimeout` (`resolver-contracts.test.mjs`).
+
 ### The contained test of each seam
 
 | Seam | Contained place | What moves out of everything else |

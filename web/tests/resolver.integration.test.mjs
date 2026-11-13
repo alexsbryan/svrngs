@@ -434,27 +434,6 @@ test('pending secret reserves capacity before the capability write', async () =>
   assert.ok(Math.max(...commands) <= 16);
 });
 
-test('whole-response timeout cancels stalled streams and cannot later publish', async () => {
-  let canceled = false;
-  let attempts = 0;
-  const stalled = createResolver({
-    token: 'fixture',
-    fetch: async () => {
-      attempts++;
-      return new Response(
-        new ReadableStream({
-          cancel() {
-            canceled = true;
-          },
-        }),
-      );
-    },
-  });
-  await refused(await stalled(new Request(`https://join.example/${fixed}`), '127.0.0.1'));
-  assert.equal(attempts, 1);
-  assert.equal(canceled, true);
-});
-
 test('AOF restart retains closed reservations, never the discarded secret', async () => {
   reset();
   const q = body();
