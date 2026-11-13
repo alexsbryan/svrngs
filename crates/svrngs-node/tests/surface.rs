@@ -377,6 +377,29 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     house.close().await;
 }
 
+/// **An app asks which groups this computer holds, on the wire**: the
+/// exact row of `an_app_finds_the_api_and_asks_the_groups_this_computer_holds`,
+/// asked of Alex's routes in this process (common/on_wire.rs), no endpoint
+/// and no socket: the group's id and name, who made it and since when,
+/// Alex as this computer's person, not removed and nobody removed or asked
+/// to be, not left, keeping the order of removals, nobody visiting, two
+/// slots, no folder, nothing waiting, no fallback, offered Move; beside
+/// the groups this computer's key. The api file naming the listener stays
+/// that test's. Planted: `keeps` never true (Alex's computer said not to
+/// keep the order, nor offered Move); the key beside the groups left out.
+#[tokio::test]
+async fn an_app_asks_the_groups_this_computer_holds_on_the_wire() {
+    let house = House::new().await;
+    let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
+    assert_eq!(status, 200, "{body:#}");
+    let made = made_by_alex(&body);
+    assert_eq!(
+        body,
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "slots": 2, "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)) }),
+    );
+    house.close().await;
+}
+
 /// The first group's `made`, as `/v1/groups` answers it on Alex's
 /// computer: house, made by this computer (no `maker`), held since a time.
 fn made_by_alex(body: &serde_json::Value) -> serde_json::Value {
