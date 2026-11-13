@@ -203,7 +203,7 @@ next is: loopback, canon, then guest"; "Yes, floor and pin first"):
   lend opens on `127.0.0.1` at its kept port, UDP or TCP as it is, the same
   after a restart, gone on Stop and when the member stops standing, and
   listed under "What acts as you" with its Stop
-  (`crates/svrngs/tests/play.rs`, `crates/svrngs-node/tests/browser/play.rs`);
+  (`crates/svrngs/tests/play.rs`, `web/tests/pages/opens.test.mjs`);
   +226 library, 0 core, 0 `apps/`, +2 surface (a lend's `raw`, and
   `/v1/play` answering a program holding the token), the cap 19,095, its
   raise landed for the operator (2f454259).

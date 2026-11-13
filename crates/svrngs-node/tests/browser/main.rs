@@ -41,12 +41,9 @@ mod acts;
 mod sends;
 // A lent service keeping what it is sent, tests/carried.rs's too.
 mod grouped;
+mod keep_going;
 #[path = "../common/keeping.rs"]
 mod keeping;
-// A lent port opened on this computer while Play is on (give-play).
-mod keep_going;
-mod native_arrival;
-mod play;
 // The one place a lent film is played (scripts/check.sh `playback`).
 mod playback;
 mod publication;
