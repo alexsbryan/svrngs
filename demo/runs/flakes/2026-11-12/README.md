@@ -228,7 +228,7 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   by relative path (crates/svrngs-core/Cargo.toml, `../../../eudoxia`),
   and between the two runs are both svrngs's abf5b0de ("R1 through
   Eudoxia's rules", another session's) and Eudoxia's own drift from
-  506388e to 83d482a. **Probable cause, neither: this run's own prober.**
+  506388e to 83d482a. **Cause, neither: this run's own prober.**
   `fl/pub-mac.sh`'s `probe()` (the C2 reproduction, started 17:51:13)
   outlived its `kill $pid` and connected to every port in 49152-65535,
   the Mac's ephemeral range where every browser test's stub listens, until
@@ -236,9 +236,12 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   19:46. A connection that sends nothing is the empty head the six count.
   Every failing run began after 17:51 (this gate 18:17-18:49, both six-at
   runs ~18:53); the R1 session's browser step before 17:51 passed; the
-  Fedora rounds had no prober; abf5b0de's diff adds no connections. Not
-  confirmed until one browser run without the prober (svrngs-46's R3/R4
-  landing gate). The films 401 and meet.rs:240 below ran beside it too.
+  Fedora rounds had no prober; abf5b0de's diff adds no connections.
+  **Confirmed**: the next full gate, without the prober, at 263d9753 plus
+  the R3/R4 change (landed as 0d203da7; its commit body), exited 0 under the
+  lock with the six passing, as did films, playback (197 s), the give tests
+  and `tests` (so meet.rs:240 did not recur). The films 401 and
+  meet.rs:240 below ran beside the prober too.
 - **scenes**: holyarrs::phone::webkit at H8, this run's own pattern bug,
   fixed in 3bfbb4ef; films, Bo's `/svrngs-open` answered 401 at once
   ("open_ms": 9) and his browser never let in, which the films run alone
@@ -275,7 +278,7 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   `[patch.crates-io]` with a saturating decrement, is the fix; neither
   is made here.
 - **The give machine test (C6)**: instrumented; ETXTBSY unconfirmed.
-- **The six browser failures** (above): probably this run's orphaned prober (killed 19:46), not abf5b0de; confirmed by the next browser run without it.
+- **The six browser failures** (above): this run's orphaned prober, confirmed by 0d203da7's gate (exit 0, the six passing).
 - **films' 401 and meet.rs:240**, each seen once in the full gate.
 - **Rates.** No before/after rate: the box went down in round 2 (§2).
   Measured on the Mac instead, once each: the changed tests unplanted,
