@@ -69,14 +69,15 @@ pub struct Program(String);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppName(String);
 
-/// A name of a declared header's rule, the same bytes and bound — both
-/// become a file name under the data dir and a token on the wire — parsed
-/// once for [`LendName`], [`Program`] and [`AppName`], each refused by its own name.
+/// Text held whole once `$fits` says it fits, parsed once, each refused by
+/// its own name: [`LendName`], [`Program`] and [`AppName`], a declared
+/// header's rule's name, the same bytes and bound — both become a file name
+/// under the data dir and a token on the wire — and [`SendRow`].
 macro_rules! header_named {
-    ($($name:ident: $refused:ident, $not:literal);+) => {$(
+    ($($name:ident: $fits:path, $refused:ident, $not:literal);+) => {$(
         impl $name {
             pub fn parse(raw: &str) -> Result<Self, LendError> {
-                if crate::declared::valid_header_name(raw) {
+                if $fits(raw) {
                     Ok(Self(raw.to_string()))
                 } else {
                     tracing::debug!(target: "lend", raw, $not);
@@ -98,7 +99,12 @@ macro_rules! header_named {
         svrngs_core::text_newtype!($name);
     )+};
 }
-header_named!(LendName: NotAName, "lend: not a lend's name"; Program: NotAProgram, "lend: not a program's name"; AppName: NotAProgram, "lend: not an app's name");
+header_named!(
+    LendName: crate::declared::valid_header_name, NotAName, "lend: not a lend's name";
+    Program: crate::declared::valid_header_name, NotAProgram, "lend: not a program's name";
+    AppName: crate::declared::valid_header_name, NotAProgram, "lend: not an app's name";
+    SendRow: SendRow::fits, NotASend, "lend: not a sends: row"
+);
 
 impl AppName {
     /// A lent app, by the word it is lent under, as the owner of
@@ -125,6 +131,7 @@ impl AppName {
 /// [`Self::covers`] says.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct RefusedPath(String);
+svrngs_core::text_newtype!(RefusedPath);
 
 impl RefusedPath {
     pub fn parse(raw: &str) -> Result<Self, LendError> {
@@ -133,10 +140,6 @@ impl RefusedPath {
         } else {
             Err(LendError::NotAPath(raw.to_string()))
         }
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
     }
 
     /// Whether `path` — a request's path, before its query — is this path or
@@ -193,7 +196,9 @@ fn comparable(path: &str) -> String {
 pub struct SendRow(String);
 
 impl SendRow {
-    pub fn parse(raw: &str) -> Result<Self, LendError> {
+    /// Whether `raw` is a sends: row: a write's method, then a path of
+    /// unreserved segments.
+    fn fits(raw: &str) -> bool {
         let (method, path) = raw.split_once(' ').unwrap_or_default();
         let unreserved = |b: u8| b.is_ascii_alphanumeric() || b"._~-".contains(&b);
         let segment = |s: &str| !matches!(s, "" | "." | "..") && s.bytes().all(unreserved);
@@ -202,8 +207,7 @@ impl SendRow {
             .is_some_and(|p| p.split('/').all(segment));
         let fits = at && ["POST", "PUT", "PATCH", "DELETE"].contains(&method);
         tracing::debug!(target: "lend", raw, fits, "lend: a sends: row, read or refused");
-        let refused = || LendError::NotASend(raw.to_string());
-        fits.then(|| Self(raw.to_string())).ok_or_else(refused)
+        fits
     }
 
     /// Whether a request of `method` at `path`, its spelling as it came and
@@ -217,20 +221,6 @@ impl SendRow {
         self.0.split_once(' ').map_or("", |(_, path)| path)
     }
 }
-
-impl TryFrom<String> for SendRow {
-    type Error = LendError;
-    fn try_from(raw: String) -> Result<Self, LendError> {
-        Self::parse(&raw)
-    }
-}
-
-impl From<SendRow> for String {
-    fn from(row: SendRow) -> String {
-        row.0
-    }
-}
-svrngs_core::text_newtype!(SendRow);
 
 /// The upload a lend's lender says it may use, in bits a second: stated,
 /// never measured (DESIGN §3, "The upload is declared"), so the share the

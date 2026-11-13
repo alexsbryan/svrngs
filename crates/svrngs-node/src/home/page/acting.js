@@ -13,7 +13,7 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Acts } from '../ui/acts.js?v=__VERSION__';
 import { Changes } from '../ui/changes.js?v=__VERSION__';
 import { Uses } from '../ui/uses.js?v=__VERSION__';
-import { called, carrying, deciders, label, once, reading } from '../question.js?v=__VERSION__';
+import { carrying, deciders, label, lentBy, once, reading } from '../question.js?v=__VERSION__';
 import { ACTS } from './acts-read.js?v=__VERSION__';
 import { Reach } from './reach.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';
@@ -85,13 +85,9 @@ export function Acting({ s: homeState, home }) {
   const told = (group) => homeState.told?.[group.id];
   /** @param {Group} group */
   const rows = (group) => told(group)?.people ?? [];
-  const lent = groups.flatMap((group) => {
-    const people = rows(group);
-    return (told(group)?.lends?.lent ?? []).map((lend) => {
-      const lender = people.find((row) => row.key === lend.key)?.person_key;
-      return { ...lend, called: called(people, lender) };
-    });
-  });
+  const lent = groups.flatMap((group) =>
+    (told(group)?.lends?.lent ?? []).map((lend) => lentBy(lend, rows(group))),
+  );
   const asking = lent.filter((lend) => lend.asks).map(label);
   const ready = groups.every(told);
   useEffect(() => {

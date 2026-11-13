@@ -187,12 +187,6 @@ impl AskRound {
         Self { nudge, rounds }
     }
 
-    /// Ask a round explicitly, waiting on nothing. Journal changes wake it
-    /// through the node's write callback without a caller's help.
-    pub fn wake(&self) {
-        self.nudge.notify_one();
-    }
-
     /// Wake the round now and wait, at most `within`, until `known` holds,
     /// asked again as each member answers, or a round begun after this ask
     /// ends: whether either came in time. A member that answers ends the

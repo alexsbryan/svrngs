@@ -44,7 +44,7 @@
 use crate::{api::Bearer, oidc::provider::Codes};
 use axum::{
     extract::{Request, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{header, HeaderMap, Method, StatusCode},
     response::{Html, IntoResponse, Response},
     routing::post,
     Json, Router,
@@ -158,7 +158,7 @@ impl Nonces {
 struct Onward {
     name: String,
     at: Option<String>,
-    method: axum::http::Method,
+    method: Method,
     stamp: i64,
     followed: u8,
 }
@@ -190,7 +190,7 @@ impl Onwards {
         proof: &str,
         name: &str,
         at: &str,
-        method: axum::http::Method,
+        method: Method,
         stamp: i64,
         now: i64,
     ) -> Result<u8, &'static str> {
@@ -216,14 +216,7 @@ impl Onwards {
 
     /// Whether `proof` names an onward waiting at origin `name`, address `at`,
     /// by `method`, its stamp fresh at `now`: taken, once, if so.
-    fn take(
-        &self,
-        proof: &str,
-        name: &str,
-        at: &str,
-        method: &axum::http::Method,
-        now: i64,
-    ) -> bool {
+    fn take(&self, proof: &str, name: &str, at: &str, method: &Method, now: i64) -> bool {
         let mut kept = self.0.lock().expect("the onward store's lock");
         let onward = kept.get_mut(proof).filter(|h| {
             h.name == name
@@ -358,14 +351,7 @@ impl Sessions {
     /// is kept for that proof ([`Onwards`]): by the method a browser follows
     /// it with, GET after a 303, or after a 301 or 302 to a POST, else the
     /// same. Any other answer, or a redirect elsewhere, keeps none.
-    pub(crate) fn onward(
-        &self,
-        name: &str,
-        proof: &str,
-        method: &axum::http::Method,
-        answer: &Response,
-    ) {
-        use axum::http::Method;
+    pub(crate) fn onward(&self, name: &str, proof: &str, method: &Method, answer: &Response) {
         let status = answer.status().as_u16();
         if !matches!(status, 301 | 302 | 303 | 307 | 308) {
             return;
@@ -403,10 +389,10 @@ impl Sessions {
 
     /// Only fixed bootstrap code is public. It carries no person's data or authority.
     pub(crate) fn public(&self, name: &str, req: &Request) -> Option<Response> {
-        if req.uri().path() == "/svrngs-session-epoch" && req.method() == axum::http::Method::GET {
+        if req.uri().path() == "/svrngs-session-epoch" && req.method() == Method::GET {
             return Some(([NO_STORE], self.epoch.clone()).into_response());
         }
-        if req.uri().path() == "/svrngs-socket" && req.method() == axum::http::Method::POST {
+        if req.uri().path() == "/svrngs-socket" && req.method() == Method::POST {
             let at = form_urlencoded::parse(req.uri().query().unwrap_or_default().as_bytes())
                 .find(|(k, _)| k == "at")
                 .map(|(_, v)| v.into_owned());
@@ -425,7 +411,7 @@ impl Sessions {
                 }
             });
         }
-        if req.method() != axum::http::Method::GET {
+        if req.method() != Method::GET {
             return None;
         }
         let file = match req.uri().path() {
@@ -447,7 +433,7 @@ impl Sessions {
         let headers = req.headers();
         let websocket =
             |h: &axum::http::HeaderValue| h.as_bytes().eq_ignore_ascii_case(b"websocket");
-        if req.method() != axum::http::Method::GET
+        if req.method() != Method::GET
             || headers.get(header::HOST).is_none_or(|h| h != host.as_str())
             || !headers.get(header::UPGRADE).is_some_and(websocket)
         {
@@ -485,7 +471,7 @@ impl Sessions {
     }
 
     pub(crate) fn redeem(&self, name: &str, req: &Request) -> Response {
-        if req.method() == axum::http::Method::GET {
+        if req.method() == Method::GET {
             tracing::debug!(target: "session", name, "session: an open's address read, which enrolls nothing until its page posts it");
             return self.refused("");
         }
@@ -496,7 +482,7 @@ impl Sessions {
             && headers
                 .get(header::HOST)
                 .is_some_and(|h| h == host.as_str());
-        if req.method() != axum::http::Method::POST || !own {
+        if req.method() != Method::POST || !own {
             tracing::debug!(target: "session", name, own, "session: enrollment refused outside its own origin");
             return StatusCode::FORBIDDEN.into_response();
         }
@@ -548,10 +534,7 @@ impl Sessions {
 
     /// Control-plane writes authenticate the body before any effect is performed.
     pub(crate) async fn body_matches(&self, req: &mut Request) -> bool {
-        if matches!(
-            *req.method(),
-            axum::http::Method::GET | axum::http::Method::HEAD
-        ) {
+        if matches!(*req.method(), Method::GET | Method::HEAD) {
             return true;
         }
         let wanted = req

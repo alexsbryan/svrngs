@@ -119,11 +119,7 @@ struct AppBody {
 /// Every choice kept at `path`; none when none was ever said. A file that
 /// cannot be read is an error, never no choice.
 fn load(path: &Path) -> Result<Kept, String> {
-    match std::fs::read_to_string(path) {
-        Ok(text) => serde_json::from_str(&text).map_err(|e| e.to_string()),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Kept::new()),
-        Err(e) => Err(e.to_string()),
-    }
+    crate::declared::read_json(path).map(Option::unwrap_or_default)
 }
 
 /// Where the choices for `lend` are kept.
@@ -254,14 +250,8 @@ async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u
         tracing::debug!(target: "door", lend = %lend.name, %app, error = %e, "door: refused — an app's pass says only stop");
         return LendRefusal::closed("an app may only stop; its person says yes");
     }
-    keep(
-        door,
-        file(door, lend),
-        person,
-        app,
-        (Said::Stop, Vec::new(), Vec::new(), Vec::new()),
-    )
-    .await
+    let told = (Said::Stop, Vec::new(), Vec::new(), Vec::new());
+    keep(door, file(door, lend), person, app, told).await
 }
 
 /// `person`'s own choices on `lend`.

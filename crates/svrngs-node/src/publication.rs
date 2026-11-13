@@ -57,11 +57,7 @@ fn fault(e: impl std::fmt::Display) -> Fault {
 impl Receipt {
     fn read(host: &Host, group: &str) -> Result<Option<Self>, Fault> {
         let dir = host.rail.group_dir(group).map_err(fault)?;
-        match std::fs::read(dir.join(RECEIPT)) {
-            Ok(bytes) => serde_json::from_slice(&bytes).map(Some).map_err(fault),
-            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(None),
-            Err(e) => Err(fault(e)),
-        }
+        crate::declared::read_json(&dir.join(RECEIPT)).map_err(fault)
     }
     fn keep(&self, host: &Host, group: &str) -> Result<(), Fault> {
         let at = host.rail.group_dir(group).map_err(fault)?.join(RECEIPT);

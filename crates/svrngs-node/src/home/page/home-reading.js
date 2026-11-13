@@ -183,19 +183,16 @@ export const HOME = (flows) => ({
       case 'again':
       case 'visible':
         return reading(state, message);
-      case 'read': {
+      case 'read':
+      case 'unread': {
         const old = late(state, 'groups', message.n);
         if (old) return no(state, old);
+        if (message.type === 'unread') return go(state, { groups: 'unread' }, { why: message.why });
         return go(
           state,
           { groups: 'read' },
           { groups: message.groups, key: message.key, round: { type: message.round } },
         );
-      }
-      case 'unread': {
-        const old = late(state, 'groups', message.n);
-        if (old) return no(state, old);
-        return go(state, { groups: 'unread' }, { why: message.why });
       }
       case 'made':
       case 'joined':

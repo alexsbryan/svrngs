@@ -17,11 +17,7 @@ use crate::lend::LendName;
 /// why, when it cannot be read or parsed, which the room says and serves
 /// nothing from (AGENTS.md 6).
 pub(crate) fn read<T: DeserializeOwned>(file: &Path) -> Result<Vec<T>, String> {
-    let on = match std::fs::read(file) {
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
-        read => (read.map_err(|e| e.to_string()))
-            .and_then(|b| serde_json::from_slice(&b).map_err(|e| e.to_string())),
-    };
+    let on = crate::declared::read_json(file).map(Option::unwrap_or_default);
     tracing::debug!(target: "room", file = %file.display(), error = ?on.as_ref().err(), "room: the lends on, as kept: none before the first, and one unread said, serving nothing");
     on
 }

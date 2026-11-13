@@ -313,9 +313,9 @@ async fn token(
     };
     let grant = |why: &str| refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
     let bad_client = |why: &str| refuse(StatusCode::UNAUTHORIZED, "invalid_client", why);
+    let bad = |error: &str, why: &str| refuse(StatusCode::BAD_REQUEST, error, why);
     if form.grant_type.as_deref() != Some("authorization_code") {
-        return refuse(
-            StatusCode::BAD_REQUEST,
+        return bad(
             "unsupported_grant_type",
             "the only grant is authorization_code",
         );
@@ -331,11 +331,7 @@ async fn token(
         return bad_client("the client's secret is not this lend's");
     }
     let Some(text) = form.code.as_deref() else {
-        return refuse(
-            StatusCode::BAD_REQUEST,
-            "invalid_request",
-            "no code was presented",
-        );
+        return bad("invalid_request", "no code was presented");
     };
     let code = match p.codes.redeem(text) {
         Ok(code) => code,

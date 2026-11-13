@@ -652,12 +652,20 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # are eudoxia-community's `lend` and `app` rules; the ingresses whose reads
 # would cost lines stay native (svrn-docs eudoxia-runs/2026-11-12/
 # relocate.md). . 21,375 -> 21,323, core unchanged.
+# (2026-11-12) Economized after R3/R4 so the authority work leaves svrngs
+# under its 29,765 baseline, with room for guest slots (R5): items only tests
+# call moved to test files (Pass::approve, authority::approving, Pass::carries,
+# Seed::policy), one reader of a kept JSON file (declared.rs read_json), SendRow
+# and RefusedPath through the newtype macros, the wasm Group's getters
+# generated, and the home page's lend given its lender once (question.js
+# lentBy). Core 3,558 -> 3,527, . 21,323 -> 21,228, js 8,527 -> 8,516; native
+# 29,850 -> 29,744.
 BUDGET = {
-    "crates/svrngs-core": 3559,
+    "crates/svrngs-core": 3528,
 
-    ".": 21324,
+    ".": 21229,
 
-    "js": 8528,
+    "js": 8517,
 
     "swift": 1,
 }

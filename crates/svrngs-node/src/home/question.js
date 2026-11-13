@@ -266,17 +266,28 @@ export const called = (rows, key, when = joinedSaid) => {
   return namesake ? `${person.person} (${when(person.joined)})` : person.person;
 };
 
-// Each of `lent` given `called`, its lender as `called` says them by the
-// key of the computer lending it, so `named` and `owner` tell two lenders
-// of one name apart.
+// `lend` given `called`, its lender as `called` says them by the key of
+// the computer lending it, so `named` and `owner` tell two lenders of one
+// name apart: the one way a lend read from a group is given whose it is.
+/**
+ * @template {{ key: string }} T
+ * @param {T} lend
+ * @param {PeopleRow[]} rows
+ * @returns {T & { called: string | undefined }}
+ */
+export const lentBy = (lend, rows) => ({
+  ...lend,
+  called: called(rows, rows.find((row) => row.key === lend.key)?.person_key),
+});
+
+// Each of `lent` given `called` in place, as `lentBy` gives it.
 /**
  * @param {Lend[]} lent
  * @param {PeopleRow[]} rows
  */
 export const apart = (lent, rows) => {
   for (const lend of lent) {
-    const computer = rows.find((row) => row.key === lend.key);
-    lend.called = called(rows, computer?.person_key);
+    lend.called = lentBy(lend, rows).called;
   }
 };
 

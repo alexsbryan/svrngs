@@ -168,15 +168,13 @@ impl Held {
             if verified {
                 self.passed.insert((op.actor.clone(), id.clone(), op.kind.sig.clone()));
                 self.digest.add(id.clone(), op);
+                self.ids.insert(id);
             } else {
                 self.forged.insert((id.clone(), op.kind.sig.clone()));
                 unverified += 1;
             }
             if matches!(op.kind.act, RailAct::Remove { .. }) {
                 self.removes.push(op.clone());
-            }
-            if verified {
-                self.ids.insert(id);
             }
         }
         // The fold reads every act (G2), so any act moves it.

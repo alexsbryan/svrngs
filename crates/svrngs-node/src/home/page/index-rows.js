@@ -6,7 +6,7 @@
 // never nobody's.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
-import { called, label, once } from '../question.js?v=__VERSION__';
+import { called, label, lentBy, once } from '../question.js?v=__VERSION__';
 import { LendRow } from './lend-row.js?v=__VERSION__';
 /** @import { Lends, PlaceProps } from './group.js?v=__VERSION__' */
 
@@ -25,10 +25,7 @@ const UNLISTED = {
 /** @param {IndexRowsProps} props */
 export function IndexRows({ lends, g: group, s: state, send, home, me }) {
   const people = state.people?.people ?? [];
-  const lent = lends.lent.map((lend) => ({
-    ...lend,
-    called: called(people, people.find((row) => row.key === lend.key)?.person_key),
-  }));
+  const lent = lends.lent.map((lend) => lentBy(lend, people));
   const each = once(lent).map(
     (lend) => html`
       <${LendRow}

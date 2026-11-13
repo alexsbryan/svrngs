@@ -127,11 +127,9 @@ pub(super) fn folder_of(dir: &Path, group: &str) -> String {
 /// a list that cannot be read said by its path.
 pub(super) fn syncing_in(data_dir: &Path) -> Syncing {
     let at = data_dir.join(SYNCED);
-    let asks: Vec<FolderAsk> = match std::fs::read(&at) {
-        Ok(bytes) => serde_json::from_slice(&bytes).map_err(|e| (at.clone(), e.to_string()))?,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
-        Err(e) => return Err((at, e.to_string())),
-    };
+    let asks: Vec<FolderAsk> = crate::declared::read_json(&at)
+        .map_err(|e| (at.clone(), e))?
+        .unwrap_or_default();
     let key = |a: &FolderAsk| (a.group.clone(), folder_of(&a.dir, &a.group));
     let kept: BTreeMap<_, _> = asks.iter().map(|a| (key(a), a.dir.clone())).collect();
     asks.iter().filter(|a| kept.get(&key(a)) != Some(&a.dir)).for_each(|a| tracing::warn!(target: "folder", namespace = a.group, dir = %a.dir.display(), "synced: a directory left out — a later one in the list keeps the same folder of the group, as a share from before a group's folder beside another's lined up with everyone's may"));
@@ -421,12 +419,11 @@ impl Folders {
         // with no base, so each step asks again until it can be read.
         let held = match held {
             Some(held) => held,
-            None => held.insert(match std::fs::read(&kept) {
-                Ok(bytes) => serde_json::from_slice(&bytes)
-                    .map_err(|e| FolderError::Kept(kept.clone(), e.to_string()))?,
-                Err(e) if e.kind() == std::io::ErrorKind::NotFound => BTreeMap::new(),
-                Err(e) => return Err(FolderError::Kept(kept.clone(), e.to_string())),
-            }),
+            None => held.insert(
+                crate::declared::read_json(&kept)
+                    .map_err(|e| FolderError::Kept(kept.clone(), e))?
+                    .unwrap_or_default(),
+            ),
         };
         let was = held.clone();
         let mut changes = Vec::new();

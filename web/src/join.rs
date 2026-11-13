@@ -49,41 +49,18 @@ pub fn ask(key: Vec<u8>, token: String) -> Result<String, JsError> {
 /// link's person, whom the phone joins as (bash-devices), who made it, so
 /// two of one name are told apart (v1ui-door (d)), and, for one an older
 /// svrngs made, the words that say nobody joins it now.
-#[wasm_bindgen]
+#[wasm_bindgen(getter_with_clone)]
 pub struct Group {
-    id: String,
-    name: String,
-    person: Option<String>,
-    maker: String,
-    older: Option<String>,
-}
-
-#[wasm_bindgen]
-impl Group {
-    #[wasm_bindgen(getter)]
-    pub fn id(&self) -> String {
-        self.id.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn person(&self) -> Option<String> {
-        self.person.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn maker(&self) -> String {
-        self.maker.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn older(&self) -> Option<String> {
-        self.older.clone()
-    }
+    #[wasm_bindgen(readonly)]
+    pub id: String,
+    #[wasm_bindgen(readonly)]
+    pub name: String,
+    #[wasm_bindgen(readonly)]
+    pub person: Option<String>,
+    #[wasm_bindgen(readonly)]
+    pub maker: String,
+    #[wasm_bindgen(readonly)]
+    pub older: Option<String>,
 }
 
 /// The issuer's answer to an ask, believed only when its seed hashes to

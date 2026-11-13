@@ -196,6 +196,19 @@ pub(crate) fn write_whole(path: &Path, bytes: &[u8]) -> Result<(), (PathBuf, std
     std::fs::rename(&partial, path).map_err(|e| (path.to_path_buf(), e))
 }
 
+/// The JSON at `path`, or `None` when no file is there: the one way this
+/// node reads a file it keeps whole ([`write_whole`]). A file that cannot
+/// be read or parsed is why, never nothing kept.
+pub(crate) fn read_json<T: serde::de::DeserializeOwned>(path: &Path) -> Result<Option<T>, String> {
+    let bytes = match std::fs::read(path) {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        read => read.map_err(|e| e.to_string())?,
+    };
+    serde_json::from_slice(&bytes)
+        .map(Some)
+        .map_err(|e| e.to_string())
+}
+
 /// `path` narrowed to `mode` where the system has modes; elsewhere nothing.
 fn harden(path: &Path, mode: u32) -> std::io::Result<()> {
     #[cfg(unix)]

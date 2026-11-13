@@ -6,10 +6,10 @@
 // imports wifi.js, so wifi.js cannot import it back (`import/no-cycle`),
 // and the law reads ROOM from wifi.js.
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
-import { called, named, once } from '../question.js?v=__VERSION__';
+import { lentBy, named, once } from '../question.js?v=__VERSION__';
 import { keyOf } from './lend-key.js?v=__VERSION__';
 import { Line, room } from './wifi.js?v=__VERSION__';
-/** @import { Lent, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
 /**
@@ -25,15 +25,10 @@ function WifiFoot({ s: state }) {
   if (!state.lends) return null;
   if (roomState.room === undefined && roomState.at.room !== 'unread') return null;
   const people = state.people?.people ?? [];
-  /** @param {Lent} lend */
-  const owned = (lend) => ({
-    ...lend,
-    called: called(people, people.find((row) => row.key === lend.key)?.person_key),
-  });
   const lines = once(state.lends.lent)
     .filter((lend) => !lend.raw)
     .map((lend) => {
-      const whose = owned(lend);
+      const whose = lentBy(lend, people);
       return html`<${Line} key=${keyOf(lend)} l=${whose} words=${`${named(whose)}:`} foot />`;
     });
   return html`<ul class="wifi">${lines}</ul>`;
