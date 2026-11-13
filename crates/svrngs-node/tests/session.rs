@@ -2,6 +2,8 @@
 //! specifications; the security pass runs only the pure session/core tests.
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 #[allow(dead_code)]
 #[path = "door/origins.rs"]
 mod origins;
@@ -296,6 +298,272 @@ async fn a_same_origin_redirect_is_followed_once_by_the_proof_that_asked_it() {
         302
     );
     let elsewhere = ask(api, "GET", &host, "/elsewhere", &headers, "").await;
+    assert_eq!(
+        elsewhere.status, 401,
+        "an onward request only where the answer pointed"
+    );
+}
+
+/// A port a wire's service answers at; none is bound.
+const PORT: u16 = 9001;
+
+/// Alex's computer and Sam's on this test's wire (common/on_wire.rs), Alex
+/// letting Sam in as pair.rs `alex_lets_sam_in` does.
+async fn wire_pair(
+    alex_dir: &std::path::Path,
+    sam_dir: &std::path::Path,
+) -> (svrngs_node::node::Node, svrngs_node::node::Node) {
+    let alex = on_wire::start(1, alex_dir).await;
+    let sam = on_wire::start(2, sam_dir).await;
+    pair::let_sam_in(&alex, &sam);
+    (alex, sam)
+}
+
+/// [`ask`] of the routes in this process (on_wire.rs `raw`).
+async fn ask_on(
+    api: SocketAddr,
+    method: &str,
+    host: &str,
+    path: &str,
+    headers: &str,
+    body: &str,
+) -> Got {
+    let text = format!("{method} {path} HTTP/1.1\r\nHost: {host}\r\n{headers}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
+    let (head, body) = on_wire::raw(api, &text).await;
+    let head = head.trim_end_matches("\r\n").to_string();
+    Got {
+        status: head[9..12].parse().unwrap(),
+        head,
+        body,
+    }
+}
+
+/// [`enroll`] in this process.
+async fn enroll_on(api: SocketAddr, token: &str, name: &str) -> Vec<u8> {
+    let body = if name == "svrngs" {
+        "{}".into()
+    } else {
+        serde_json::json!({ "lend": name }).to_string()
+    };
+    let opened = ask_on(
+        api,
+        "POST",
+        &api.to_string(),
+        "/v1/open",
+        &format!("Authorization: Bearer {token}\r\n"),
+        &body,
+    )
+    .await;
+    assert_eq!(opened.status, 200);
+    let json: serde_json::Value = serde_json::from_str(&opened.body).unwrap();
+    let path = path_of(json["open"].as_str().unwrap());
+    let host = format!("{name}.localhost:{}", api.port());
+    let shell = ask_on(api, "GET", &host, &path, TYPED, "").await;
+    assert!(shell.header("set-cookie").is_none());
+    assert!(shell.body.contains("svrngs-session.js"));
+    let headers = format!("Origin: http://{host}\r\nSec-Fetch-Site: same-origin\r\n");
+    let reply = ask_on(api, "POST", &host, &path, &headers, "").await;
+    assert_eq!(reply.status, 200);
+    assert!(reply.header("set-cookie").is_none());
+    let replay = ask_on(api, "POST", &host, &path, &headers, "").await;
+    assert_eq!(replay.status, 401);
+    let json: serde_json::Value = serde_json::from_str(&reply.body).unwrap();
+    URL_SAFE_NO_PAD
+        .decode(json["key"].as_str().unwrap())
+        .unwrap()
+}
+
+/// [`proved`] in this process.
+async fn proved_on(
+    api: SocketAddr,
+    key: &[u8],
+    host: &str,
+    method: &str,
+    path: &str,
+    body: &str,
+) -> String {
+    let epoch = ask_on(api, "GET", host, "/svrngs-session-epoch", TYPED, "").await;
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    let mut nonce = [0; 16];
+    getrandom::fill(&mut nonce).unwrap();
+    let stamp = format!("{now}.{}", hex::encode(nonce));
+    let digest = hex::encode(ring::digest::digest(&ring::digest::SHA256, body.as_bytes()).as_ref());
+    let message = format!(
+        "{host}\n{method}\n{path}\n{stamp}\n{digest}\nyes\n{}",
+        epoch.body
+    );
+    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, key);
+    let tag = URL_SAFE_NO_PAD.encode(ring::hmac::sign(&key, message.as_bytes()));
+    format!("Origin: http://{host}\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nX-Svrngs-Browser: {stamp}.{tag}\r\nX-Svrngs-Body: {digest}\r\nX-Svrngs-Intent: yes\r\n")
+}
+
+#[tokio::test]
+async fn enrollment_is_one_use_and_proofs_are_bound_to_requests_not_cookies_on_the_wire() {
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = wire_pair(a.path(), b.path()).await;
+    let api = alex.api_addr();
+    let host = format!("svrngs.localhost:{}", api.port());
+    let cookie = ask_on(
+        api,
+        "GET",
+        &host,
+        "/v1/groups",
+        &format!("{TYPED}Cookie: svrngs=stolen\r\n"),
+        "",
+    )
+    .await;
+    assert_eq!(cookie.status, 401);
+    let key = enroll_on(api, &alex.token(), "svrngs").await;
+    let headers = proved_on(api, &key, &host, "GET", "/v1/groups", "").await;
+    assert_eq!(
+        ask_on(api, "GET", &host, "/lent", &headers, "")
+            .await
+            .status,
+        401
+    );
+    assert_eq!(
+        ask_on(api, "GET", &host, "/v1/groups", &headers, "")
+            .await
+            .status,
+        200
+    );
+    assert_eq!(
+        ask_on(api, "GET", &host, "/v1/groups", &headers, "")
+            .await
+            .status,
+        401
+    );
+    let headers = proved_on(api, &key, &host, "POST", "/lent", "{}").await;
+    let altered = ask_on(
+        api,
+        "POST",
+        &host,
+        "/lent",
+        &headers,
+        "{\"lend\":\"changed\"}",
+    )
+    .await;
+    assert_eq!(
+        altered.status, 403,
+        "an authenticated header cannot authorize a different body"
+    );
+}
+
+#[tokio::test]
+async fn a_lend_has_its_own_key_and_no_proof_reaches_the_service_on_the_wire() {
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = wire_pair(a.path(), b.path()).await;
+    let heads: std::sync::Arc<std::sync::Mutex<Vec<String>>> = Default::default();
+    let kept = heads.clone();
+    on_wire::serve(&alex, PORT, move |s| origins::answer_head(s, kept.clone()));
+    let dir = svrngs_node::lend::lends_dir(a.path());
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("night.json"),
+        serde_json::json!({"port":PORT,"kind":"night","limit":3,"groups":["house"]}).to_string(),
+    )
+    .unwrap();
+    let name = Label::of(&signing(1).verifying_key().to_bytes(), "night").to_string();
+    let api = alex.api_addr();
+    let host = format!("{name}.localhost:{}", api.port());
+    let key = enroll_on(api, &alex.token(), &name).await;
+    let headers = proved_on(api, &key, &host, "GET", "/films?x=1", "").await;
+    let got = ask_on(api, "GET", &host, "/films?x=1", &headers, "").await;
+    assert_eq!(got.status, 200);
+    let sent = heads.lock().unwrap();
+    assert!(sent.iter().any(|h| h.starts_with("GET /films?x=1")));
+    assert!(!sent
+        .iter()
+        .any(|h| h.to_ascii_lowercase().contains("x-svrngs-browser")));
+}
+
+#[tokio::test]
+async fn a_forged_read_capability_is_not_a_browser_session_on_the_wire() {
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = wire_pair(a.path(), b.path()).await;
+    let name = Label::of(&signing(1).verifying_key().to_bytes(), "night");
+    let page = Label::of(&signing(1).verifying_key().to_bytes(), "page");
+    let host = format!("{name}.localhost:{}", alex.api_addr().port());
+    let extra = format!("Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{page}.localhost:{}\r\n", alex.api_addr().port());
+    assert_eq!(
+        ask_on(
+            alex.api_addr(),
+            "GET",
+            &host,
+            "/svrngs-as/forged/films",
+            &extra,
+            ""
+        )
+        .await
+        .status,
+        401
+    );
+}
+
+#[tokio::test]
+async fn a_same_origin_redirect_is_followed_once_by_the_proof_that_asked_it_on_the_wire() {
+    let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, _sam) = wire_pair(a.path(), b.path()).await;
+    let own = format!("localhost:{PORT}");
+    on_wire::serve(&alex, PORT, move |s| origins::answer_host(s, own.clone()));
+    let dir = svrngs_node::lend::lends_dir(a.path());
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("canary.json"),
+        serde_json::json!({"port":PORT,"kind":"canary","limit":3,"groups":["house"]}).to_string(),
+    )
+    .unwrap();
+    let name = Label::of(&signing(1).verifying_key().to_bytes(), "canary").to_string();
+    let api = alex.api_addr();
+    let host = format!("{name}.localhost:{}", api.port());
+    let key = enroll_on(api, &alex.token(), &name).await;
+    let (said, _guards) = common::heard("session=debug,origin=debug");
+
+    let headers = proved_on(api, &key, &host, "GET", "/redirect", "").await;
+    let first = ask_on(api, "GET", &host, "/redirect", &headers, "").await;
+    assert_eq!(first.status, 302, "{}", first.head);
+    assert_eq!(
+        first.header("location"),
+        Some("/landed?x=1"),
+        "made a path by the door"
+    );
+    let onward = ask_on(api, "GET", &host, "/landed?x=1", &headers, "").await;
+    let heard = || String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    assert_eq!(
+        onward.status,
+        302,
+        "the onward reaches the service:\n{}\n{}",
+        onward.head,
+        heard()
+    );
+    // The service redirects `/landed?x=1` to itself, so each onward names the
+    // next: followed through 20 redirects in all, the fetch standard's
+    // limit, and the 21st refused.
+    let mut taken = 1;
+    while ask_on(api, "GET", &host, "/landed?x=1", &headers, "")
+        .await
+        .status
+        == 302
+    {
+        taken += 1;
+        assert!(taken <= 20, "a proof followed past 20 redirects");
+    }
+    assert_eq!(
+        taken, 20,
+        "a proof follows as many redirects as a browser does"
+    );
+
+    let headers = proved_on(api, &key, &host, "GET", "/redirect", "").await;
+    assert_eq!(
+        ask_on(api, "GET", &host, "/redirect", &headers, "")
+            .await
+            .status,
+        302
+    );
+    let elsewhere = ask_on(api, "GET", &host, "/elsewhere", &headers, "").await;
     assert_eq!(
         elsewhere.status, 401,
         "an onward request only where the answer pointed"
