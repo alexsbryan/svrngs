@@ -1,78 +1,17 @@
 //! `svrngs remove` and `svrngs handover` (U7; DESIGN §6 "Removal has one
 //! decider"; PLAN §3, 2026-10-09: removing someone stays in the command), asked
-//! of svrngs running here as `share --folder` is.
+//! of svrngs running here as `share --folder` is. Here: the verbs' parse
+//! and their words; the asks and the fold's answers are tests/verbs/remove.rs's.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
-use svrngs::cli::{self, Refusal, RemoveKind, Said, Verb};
-use svrngs::group::{Name, Seed};
-use svrngs_node::iroh::RelayConfig;
-use svrngs_node::node::Node;
+use svrngs::cli::{self, RemoveKind, Said, Verb};
+use svrngs::group::Name;
 use svrngs_node::removal::Outcome;
-use svrngs_node::{actor_of, Joined, Person, SigningKey};
-
-fn no_relay() -> RelayConfig {
-    RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: true,
-    }
-}
+use svrngs_node::{Joined, Person};
 
 fn name(s: &str) -> Name {
     Name::parse(s).unwrap()
-}
-
-/// Sam's computer, running here in `dir`, and the group trip it made.
-async fn sams_trip(dir: &std::path::Path) -> (Node, Seed) {
-    let node = sams_computer(dir).await;
-    let (seed, _) = cli::new_group(&node, name("trip"), name("Sam"), None, &[], &no_relay())
-        .await
-        .unwrap();
-    (node, seed)
-}
-
-/// Sam's computer, running here in `dir`.
-async fn sams_computer(dir: &std::path::Path) -> Node {
-    Node::start(
-        dir.to_path_buf(),
-        SigningKey::from_bytes(&[5; 32]),
-        &no_relay(),
-        svrngs::group::seed_text,
-        cli::API,
-    )
-    .await
-    .unwrap()
-}
-
-/// Bo let into trip as `bo` by a link Sam's computer mints, with no network.
-fn let_bo_in(node: &Node, seed: &Seed, bo: &SigningKey) {
-    let_in(node, seed, bo, |redeem| Box::new(redeem.clone()));
-}
-
-/// As [`let_bo_in`], the `Admit` written as `admit` makes it of the asked
-/// redemption: a second Bo's by hand, past the name a link refuses, as two
-/// members' computers letting two Bos in at once would write.
-fn let_in<C: svrngs_core::Command + 'static>(
-    node: &Node,
-    seed: &Seed,
-    bo: &SigningKey,
-    admit: impl FnOnce(&svrngs_core::Redeem) -> Box<C>,
-) where
-    C::Refusal: std::fmt::Debug,
-{
-    let (ns, rail) = (seed.id(), node.rail());
-    let sam = actor_of(&SigningKey::from_bytes(&[5; 32]));
-    svrngs_core::tests_support::let_in(
-        (&ns, &sam),
-        (bo, "Bo", svrngs_core::Device::Computer),
-        |mint| {
-            rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
-                .id
-                .clone()
-        },
-        |redeem| drop(rail.commit(&ns, &*admit(redeem)).unwrap().unwrap()),
-    );
 }
 
 fn argv(rest: &[&str]) -> Vec<String> {
@@ -217,148 +156,6 @@ fn every_outcome_is_said_in_a_persons_words() {
         asked.to_string(),
         "You asked Sam to remove Bo from trip. Bo stays in it until Sam does.\n"
     );
-}
-
-/// **The command asks svrngs running here, and the fold decides** (U7
-/// (e)). Sam makes trip and lets Bo in; with no svrngs running the ask is a
-/// precondition absent; Sam's `remove` of somebody not in trip is refused
-/// by name, of Sam is refused as Sam decides, and of Bo is the cut — Bo
-/// stands no more. Planted: the ask posted where nothing answers.
-#[tokio::test]
-async fn the_keepers_remove_is_the_cut() {
-    let dir = tempfile::tempdir().unwrap();
-    let relay = no_relay();
-    let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
-    let remove = |who: &str| Verb::Remove {
-        kind: RemoveKind::Remove,
-        person: name(who),
-        group: "trip".into(),
-        joined: None,
-    };
-    let (node, seed) = sams_trip(dir.path()).await;
-    let bo = SigningKey::from_bytes(&[6; 32]);
-    let_bo_in(&node, &seed, &bo);
-    let stands = || {
-        node.rail()
-            .register(&seed.id())
-            .unwrap()
-            .members
-            .contains_key(&actor_of(&bo))
-    };
-    assert!(stands(), "control: Bo is in");
-
-    let nobody = ask(remove("Dee")).await;
-    assert!(
-        matches!(&nobody, Err(Refusal::Removal(w)) if w == "Nobody called Dee is in trip."),
-        "{nobody:?}"
-    );
-    let own = ask(remove("Sam")).await;
-    assert!(
-        matches!(&own, Err(Refusal::Removal(w)) if w.starts_with("Sam decides who is removed from trip")),
-        "{own:?}"
-    );
-    assert!(ask(remove("Bo")).await.is_ok());
-    assert!(!stands(), "Bo is out");
-    node.endpoint().close().await;
-
-    std::fs::write(
-        dir.path().join(svrngs_node::api::API_FILE),
-        "http://127.0.0.1:9",
-    )
-    .unwrap();
-    let away = ask(remove("Bo")).await;
-    assert!(matches!(away, Err(Refusal::NotRunning)), "{away:?}");
-    assert_eq!(away.unwrap_err().exit_code(), 3);
-}
-
-/// What a refusal's words say to add to the command, between backticks,
-/// as a shell would split it: each `"…"` one argument.
-fn ways(words: &str) -> Vec<Vec<String>> {
-    (words.split('`').skip(1).step_by(2))
-        .map(|way| {
-            (way.split('"').enumerate())
-                .flat_map(|(i, part)| match i % 2 {
-                    0 => part.split_whitespace().map(str::to_string).collect(),
-                    _ => vec![part.to_string()],
-                })
-                .collect()
-        })
-        .collect()
-}
-
-/// **The keeper removes one of two people of one name** (bash-same-name
-/// (a)). Sam lets two people into trip as Bo, a second apart, each by
-/// hand, as a member's hand or a race at two computers gives them
-/// (bash-devices made them two people, `a1d0ba9`). Sam's `remove Bo` and
-/// `handover Bo` are refused — svrngs never guesses which Bo — in words
-/// that name, between backticks, what to add to the command to name one;
-/// following the first, one Bo is out and the other stands, and following
-/// the second, the other is out. Planted: two people of one name, the
-/// keeper unable to remove either by any means the command offers.
-#[tokio::test]
-async fn the_keeper_removes_one_of_two_people_of_one_name() {
-    let dir = tempfile::tempdir().unwrap();
-    let relay = no_relay();
-    let ask = |verb: Verb| cli::run(verb, dir.path().to_path_buf(), &relay);
-    let (node, seed) = sams_trip(dir.path()).await;
-    let bos = [6u8, 7].map(|b| SigningKey::from_bytes(&[b; 32]));
-    let_bo_in(&node, &seed, &bos[0]);
-    tokio::time::sleep(std::time::Duration::from_millis(1_100)).await;
-    let_in(&node, &seed, &bos[1], |r| {
-        let invite = svrngs_core::Redemption {
-            id: r.invite.clone(),
-            sig: r.cosig.clone(),
-            device: r.device,
-        };
-        let (person, key) = (r.person.clone(), r.key.clone());
-        let act = svrngs_core::RailAct::Admit {
-            person,
-            key,
-            invite: Some(invite),
-        };
-        Box::new(svrngs_core::tests_support::Fixture { act })
-    });
-    let stand = || {
-        let members = node.rail().register(&seed.id()).unwrap().members;
-        bos.each_ref().map(|bo| members.contains_key(&actor_of(bo)))
-    };
-    assert_eq!(stand(), [true, true], "control: both Bos are in");
-
-    let verb = |v: &str, more: &[String]| {
-        let mut args = argv(&[v, "Bo", "--group", "trip"]);
-        args.extend(more.iter().cloned());
-        cli::parse(args)
-    };
-    for v in ["handover", "remove"] {
-        let refused = ask(verb(v, &[]).unwrap()).await;
-        let Err(Refusal::Removal(words)) = &refused else {
-            panic!("{v} Bo: {refused:?}")
-        };
-        eprintln!("{v} Bo: {words}");
-        for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
-            assert!(
-                !words.to_lowercase().contains(kept),
-                "{v} says {kept}: {words}"
-            );
-        }
-        assert_eq!(stand(), [true, true], "{v} Bo changed nothing");
-        assert_eq!(
-            ways(words).len(),
-            2,
-            "{v} Bo: the refusal names a way to name each Bo: {words}"
-        );
-    }
-    let Err(Refusal::Removal(words)) = ask(verb("remove", &[]).unwrap()).await else {
-        unreachable!("refused above")
-    };
-    let [first, second] = <[Vec<String>; 2]>::try_from(ways(&words)).unwrap();
-    let out = ask(verb("remove", &first).unwrap()).await;
-    assert!(out.is_ok(), "remove Bo {first:?}: {out:?}");
-    assert_eq!(stand(), [false, true], "the first Bo out, the other stands");
-    let out = ask(verb("remove", &second).unwrap()).await;
-    assert!(out.is_ok(), "remove Bo {second:?}: {out:?}");
-    assert_eq!(stand(), [false, false], "the second Bo out");
-    node.endpoint().close().await;
 }
 
 /// **`svrngs leave` asks a group, and says what stays** (groups-leave (b)):
