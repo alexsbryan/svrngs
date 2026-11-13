@@ -129,3 +129,62 @@ async fn unshare_a_group_from_a_legacy_lend_leaves_it_lent_to_none() {
     let kept = lend::read(sam.dir.path(), &pad.name).unwrap().unwrap();
     assert_eq!(kept.audience, Audience::Legacy);
 }
+
+/// **A folder is synced by asking svrngs running here, in one group**
+/// (gf-1, sy-1, syp-4): `share --folder <dir> --group <group>` takes the
+/// folder's absolute path and the group as typed, and only `share` takes
+/// `--folder`, never without `--group` (a folder is one group's); asked
+/// through `cli::Here` of the running node's routes, a group it does not
+/// hold is refused by name and one it holds is answered; with no svrngs
+/// running here (the product's `Here` over a data dir that wrote no API)
+/// the ask is refused as a precondition absent, never answered empty.
+/// Watched failing on two plants: the folder route's answer read as
+/// refused whatever it said (cli.rs `folder`), and the route answering a
+/// held group 409 (folder.rs `ask`).
+#[tokio::test]
+async fn a_folder_is_synced_by_asking_svrngs_running_here() {
+    use svrngs::cli::Verb;
+    let argv = |rest: &[&str]| {
+        std::iter::once("svrngs".to_string())
+            .chain(rest.iter().map(|s| s.to_string()))
+            .collect::<Vec<_>>()
+    };
+    let cwd = std::env::current_dir().unwrap();
+    assert_eq!(
+        cli::parse(argv(&["share", "--folder", "films", "--group", "house"])),
+        Ok(Verb::Folder {
+            dir: cwd.join("films"),
+            group: "house".into()
+        })
+    );
+    assert!(cli::parse(argv(&["share", "--folder", "films"])).is_err());
+    assert!(cli::parse(argv(&["share", "--folder", "films", "--both-ways"])).is_err());
+    assert!(cli::parse(argv(&["share", "--group", "house"])).is_err());
+    assert!(cli::parse(argv(&["unshare", "--folder", "films"])).is_err());
+    assert!(cli::parse(argv(&["link", "x", "--folder", "films"])).is_err());
+
+    let wire = Wire::default();
+    let sam = computer(&wire, 5).await;
+    let relay = no_relay();
+    let films = tempfile::tempdir().unwrap();
+    let folder = |group: &str| Verb::Folder {
+        dir: films.path().to_path_buf(),
+        group: group.into(),
+    };
+    cli::new_group(&sam.node, name("house"), name("Sam"), None, &[], &relay)
+        .await
+        .unwrap();
+    let running = crate::Running(&sam);
+    let nope = cli::answer(folder("nope"), &running, &relay).await;
+    assert!(
+        matches!(&nope, Err(Refusal::NoGroup(g)) if g == "nope"),
+        "{nope:?}"
+    );
+    let synced = cli::answer(folder("house"), &running, &relay).await;
+    assert!(synced.is_ok(), "{synced:?}");
+
+    let away = sam.dir.path().to_path_buf();
+    let refused = cli::answer(folder("house"), &away, &relay).await;
+    assert!(matches!(refused, Err(Refusal::NotRunning)), "{refused:?}");
+    assert_eq!(refused.unwrap_err().exit_code(), 3);
+}

@@ -186,3 +186,72 @@ async fn a_member_folds_the_new_relay_from_the_old_one() {
     assert!(synced.stop.is_none(), "Alex reaches Sam: {:?}", synced.stop);
     assert_eq!(meets(&alex, &seed.id()), vec![new.to_string()]);
 }
+
+/// **`link --relay` while svrngs runs asks it** (KEEP_GOING_AT_HOME 28): the
+/// command as a person types it, beside a svrngs holding the data dir's
+/// lock and serving the group's record, asked through `cli::Here` of its
+/// routes. Sam's asks his: where house meets changes and the link printed
+/// carries it. Alex's, not the keeper's, is refused in the keeper rule's
+/// words, exit 1, and writes nothing. Watched failing on two plants: the
+/// busy arm's `link` dropped, so the lock's refusal stands (cli.rs
+/// `answer`), and its refusal's words read from no field, so it reads as
+/// an older build (cli.rs `link_running`).
+#[tokio::test]
+async fn link_relay_asks_the_svrngs_running_here() {
+    let wire = Wire::default();
+    let (old, new, build) = relays();
+    let ours = RelayConfig {
+        relay_urls: vec![build.clone()],
+        ..cli::reach(MeetAt::Svrngs)
+    };
+    let sam = computer(&wire, 78).await;
+    let (name, person) = (
+        svrngs::group::Name::parse("house").unwrap(),
+        svrngs::group::Name::parse("Sam"),
+    );
+    let relays = [old.parse().unwrap()];
+    let (seed, printed) = cli::new_group(&sam.node, name, person.unwrap(), None, &relays, &ours)
+        .await
+        .expect("Sam makes house");
+    let Verb::Join { link, person, .. } =
+        cli::parse(argv(&format!("join {} --as Alex", printed.client))).unwrap()
+    else {
+        panic!("join parses as join");
+    };
+    let alex = computer(&wire, 79).await;
+    cli::join_group(&alex.node, &alex.key, &link, &person.unwrap())
+        .await
+        .expect("Alex joins");
+    let _held = [&sam, &alex].map(|c| cli::claim(c.dir.path()).expect("the lock is free"));
+    let link = async |who: &crate::Computer| {
+        let verb = cli::parse(argv(&format!("link house --relay {new}"))).unwrap();
+        cli::answer(verb, &crate::Running(who), &ours).await
+    };
+
+    let before = acts(&alex.node, &seed.id());
+    let refused = link(&alex).await;
+    let said = refused.as_ref().expect_err("Alex is refused").to_string();
+    assert_eq!(refused.unwrap_err().exit_code(), 1);
+    assert!(
+        said.contains("only the group's keeper decides where it meets"),
+        "{said}"
+    );
+    assert_eq!(
+        acts(&alex.node, &seed.id()),
+        before,
+        "the refusal writes no act"
+    );
+
+    let said = link(&sam).await.expect("Sam's link");
+    assert_eq!(meets(&sam.node, &seed.id()), vec![new.clone()]);
+    let line = said
+        .lines()
+        .find(|l| l.contains("svrngs://join/"))
+        .expect(&said);
+    let minted = Link::parse(line.trim()).expect("the link printed is whole");
+    assert!(
+        minted.token.relays.iter().any(|r| r.to_string() == new),
+        "the link printed carries the new relay: {:?}",
+        minted.token.relays
+    );
+}

@@ -862,3 +862,109 @@ async fn a_running_svrngs_answers_a_join_asked_of_its_record_api() {
     assert_eq!(status, 400, "{said}");
     assert_eq!(said["kind"], "no_name", "{said}");
 }
+
+/// **`svrngs join`, with svrngs running here, joins the group through it**
+/// (join-while-running; DESIGN §3 "Joining"): Alex's computer is in
+/// house and its svrngs holds the data dir's lock, as one runs that starts
+/// at login; Alex then joins Sam's party from a terminal: the join asks
+/// the svrngs running here, as `room` and `share` do, says "You're in
+/// party, as Alex." with party's folder placed where Alex's svrngs places
+/// folders, is not refused as "already running", and starts nothing (it
+/// returns, never "Leave this running"). The svrngs running keeps both
+/// groups. Watched failing on two plants: the busy arm's join dropped, so
+/// the lock's refusal stands (cli.rs `answer`), and the folder's line
+/// unsaid (cli.rs `join_running`).
+#[tokio::test]
+async fn join_asks_the_svrngs_running_here_for_another_group() {
+    let wire = Wire::default();
+    let sam = computer(&wire, 1).await;
+    let (house, printed) = sams_house(&sam).await;
+    let relay = no_relay();
+    let made = cli::new_group(&sam.node, name("party"), name("Sam"), None, &[], &relay);
+    let (party, party_link) = made.await.expect("Sam makes party");
+    let alex = computer(&wire, 2).await;
+    let link = parsed(&printed, &sam.node);
+    cli::join_group(&alex.node, &alex.key, &link, &name("Alex"))
+        .await
+        .expect("Alex's first join, as the svrngs running here made it");
+    let _held = cli::claim(alex.dir.path()).expect("Alex's svrngs holds the data dir");
+
+    let party_link = Link::parse(&party_link.client).unwrap();
+    let verb = Verb::Join {
+        link: Box::new(party_link),
+        person: Some(name("Alex")),
+        run: true,
+    };
+    let said = cli::answer(verb, &crate::Running(&alex), &no_relay()).await;
+    let said = said.expect("the second join, asked of the svrngs running here");
+    eprintln!("svrngs join party, svrngs running: {said}");
+    assert!(said.contains("You're in party, as Alex."), "{said}");
+    let places = alex.dir.path().join("svrngs").display().to_string();
+    assert!(
+        said.lines()
+            .any(|l| l.starts_with("party's folder is") && l.contains(&places)),
+        "{said}"
+    );
+    assert!(!said.contains("already running"), "not refused: {said}");
+    assert!(!said.contains("Leave this running"), "runs nothing: {said}");
+
+    let (_, groups) = ask(&alex.node, "GET", "/v1/groups", &serde_json::Value::Null).await;
+    let groups: serde_json::Value = serde_json::from_str(&groups).unwrap();
+    let held: Vec<&str> = (groups["groups"].as_array().into_iter().flatten())
+        .filter_map(|g| g["id"].as_str())
+        .collect();
+    assert!(held.contains(&house.id().as_str()), "{groups}");
+    assert!(held.contains(&party.id().as_str()), "{groups}");
+}
+
+/// The svrngs of a build from before `/v1/joins`, as the command reaches
+/// it (cli.rs `Here`): it answers every ask 404 with nothing, as a router
+/// without the route does.
+struct Older(tempfile::TempDir);
+
+impl cli::Here for Older {
+    fn root(&self) -> &std::path::Path {
+        self.0.path()
+    }
+    async fn ask(&self, _: &str, _: &impl serde::Serialize) -> cli::Asked {
+        let answer = axum::Router::new().into_service();
+        let req = axum::http::Request::post("/v1/joins").body(axum::body::Body::empty());
+        let answer = tower::ServiceExt::oneshot(answer, req.unwrap())
+            .await
+            .unwrap();
+        Ok((answer.status().is_success(), String::new()))
+    }
+}
+
+/// **A join the svrngs running here did not answer says it is too old**
+/// (join-while-running): svrngs holds the data dir and answers no
+/// `/v1/joins`, a build from before the route, and `svrngs join` gives the
+/// way on. Watched failing on two plants: the fallback at `Refusal::Busy`,
+/// the refusal this was until an operator hit it (cli.rs `answer`), and
+/// `Refusal::Older`'s words without `svrngs restart` (cli.rs).
+#[tokio::test]
+async fn a_join_an_older_svrngs_did_not_answer_says_it_is_too_old() {
+    let older = Older(tempfile::tempdir().unwrap());
+    let _held = cli::claim(older.0.path()).expect("the older svrngs holds the data dir");
+    let token = Token {
+        issuer: SigningKey::from_bytes(&[1; 32]).verifying_key(),
+        secret: [7; 16],
+        relays: Vec::new(),
+    };
+    let link = Link::parse(&svrngs_node::link::client_link(&token)).unwrap();
+    let verb = Verb::Join {
+        link: Box::new(link),
+        person: Some(name("Alex")),
+        run: true,
+    };
+    let refused = cli::answer(verb, &older, &no_relay()).await;
+    let words = refused
+        .as_ref()
+        .expect_err("no join, for nothing answered it")
+        .to_string();
+    assert!(matches!(refused, Err(Refusal::Older)), "{words}");
+    assert!(
+        words.contains("svrngs update") && words.contains("svrngs restart"),
+        "{words}"
+    );
+}
