@@ -41,7 +41,6 @@ mod grouped;
 mod keep_going;
 // The one place a lent film is played (scripts/check.sh `playback`).
 mod playback;
-mod publication;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;
