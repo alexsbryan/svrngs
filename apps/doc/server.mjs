@@ -281,6 +281,8 @@ export async function doc({ keep, api = null }) {
       clearInterval(asking);
       clearTimeout(linesTimer);
       pages.forEach((p) => p.peer.close(1001));
+      // Its Awareness keeps a timer of its own (y-protocols' outdated check).
+      awareness.destroy();
     },
   };
 }
