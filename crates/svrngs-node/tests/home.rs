@@ -36,6 +36,11 @@ use svrngs_node::{actor_of, group, lend, Person, Roster, SigningKey};
 
 const WORDS: &str = "the app receives ranked suggestions; your history stays where it is";
 
+#[allow(dead_code)]
+#[path = "common/computers.rs"]
+mod computers;
+#[path = "home/opens.rs"]
+mod opens;
 #[path = "home/publication.rs"]
 mod publication;
 
