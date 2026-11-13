@@ -188,3 +188,25 @@ async fn a_folder_is_synced_by_asking_svrngs_running_here() {
     assert!(matches!(refused, Err(Refusal::NotRunning)), "{refused:?}");
     assert_eq!(refused.unwrap_err().exit_code(), 3);
 }
+
+/// `unshare` of a name nothing is lent by says what is lent, or nothing
+/// more when nothing is.
+#[test]
+fn unshare_of_nothing_lent_says_what_is() {
+    let lend = |n: &str| svrngs_node::lend::LendName::parse(n).unwrap();
+    let said = |lent: Vec<_>| {
+        Refusal::NotLent {
+            name: lend("pad"),
+            lent,
+        }
+        .to_string()
+    };
+    assert_eq!(
+        said(vec![]),
+        "you lend nothing called pad from this computer"
+    );
+    assert_eq!(
+        said(vec![lend("films"), lend("tea")]),
+        "you lend nothing called pad from this computer; you lend films, tea"
+    );
+}

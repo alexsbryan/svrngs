@@ -616,12 +616,9 @@ fn lend_name(raw: &str) -> Result<LendName, String> {
 }
 
 fn lent_now(lent: &[LendName]) -> String {
-    if lent.is_empty() {
-        String::new()
-    } else {
-        let names: Vec<&str> = lent.iter().map(LendName::as_str).collect();
-        format!("; you lend {}", names.join(", "))
-    }
+    let names: Vec<&str> = lent.iter().map(LendName::as_str).collect();
+    let said = (!lent.is_empty()).then(|| format!("; you lend {}", names.join(", ")));
+    said.unwrap_or_default()
 }
 
 impl Refusal {
