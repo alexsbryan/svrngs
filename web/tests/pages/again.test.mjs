@@ -1,10 +1,15 @@
-// What the pages step (crates/svrngs/tests/pages/) held of the home page
-// read again, with no browser: the page over its twin (twin.mjs, harness
+// What the pages step (crates/svrngs/tests/pages/) held of each page read
+// again, with no browser. The home page over its twin (twin.mjs, harness
 // 5), each route answered from a recording in the shape its writer makes,
-// named beside it. Each law names the pages test whose claim it holds.
-// "No reload" is the twin's `went`: a reload, a form or a link followed is
-// kept there, and each law asserts it empty. Layout A (`/?ui=a`), as those
-// tests' drivers opened it (web/tests/page.mjs `longPage`).
+// named beside it; layout A (`/?ui=a`), as those tests' drivers opened it
+// (web/tests/page.mjs `longPage`). The phone's page composed from its flows
+// and drawn by them (`phone` below), each effect that leaves the page
+// answered by the law. Each law names the pages test whose claim it holds.
+// "No reload" is the twin's `went`, a reload, a form or a link followed
+// kept there, and each home law asserts it empty; the phone's page loads
+// again only at its edge, as the tab's lock is taken (enter.js:533-535) or
+// its address changes (web/app.js:80-83), so each phone law asserts no
+// effect opened it again (`again(at)`).
 //
 // A long timer, a visit's end or a screen's next read, waits on `clock()`
 // below, not on the real one: held until a law lets it go, so a law says
@@ -637,4 +642,472 @@ test('ten screen ticks never read asking again, each read out or landed', async 
   } finally {
     time.restore();
   }
+});
+
+// ---- The phone's page (pages/*.rs, WebKit) ----
+
+// PAGE composed from the flows as web/app.js composes it (:45-58), its
+// machine ui/machine.js's, so each step is traced as the browser traces it;
+// its io the flows' own `send` and, for each effect that leaves the page
+// (the wasm, the store, the clock), the law's answer (`answers`), or none,
+// held. Its places drawn as Page draws them (page.js:369-371), each
+// component called, but those that hold hooks: Ends and AskWhenRead, which
+// draw nothing and send from an effect, rendered by Preact for real into a
+// parent of their own; the shelf, ui/shelf.js `drawn` over a SHELF kept
+// here as `Shelf` keeps its own (ui/shelf.js:201-210), its `bring` the
+// law's, as dial.js `through` would answer it; and "What acts as you" and
+// a Copy, which no law here reads.
+const PHONE = ['enter', 'computer', 'join', 'ask', 'index', 'door', 'shelf'];
+const parts = (await import('../../page/page.js?v=__VERSION__')).compose(
+  Object.fromEntries(
+    await Promise.all(
+      [...PHONE, 'visit', 'among', 'acts', 'uses'].map(async (f) => [
+        f,
+        await import(`../../page/${f}.js?v=__VERSION__`),
+      ]),
+    ),
+  ),
+);
+const UI = '../../../crates/svrngs-node/src/home/ui/';
+const { machine } = await import(`${UI}machine.js?v=__VERSION__`);
+const { html, render } = await import(`${UI}view.js?v=__VERSION__`);
+const { SHELF, Shelf, drawn } = await import(`${UI}shelf.js?v=__VERSION__`);
+const { Copy } = await import(`${UI}copy.js?v=__VERSION__`);
+const { Ends } = await import('../../page/ends.js?v=__VERSION__');
+const { AskWhenRead } = await import('../../page/ask-when-read.js?v=__VERSION__');
+const { WhatActsAsYou } = await import('../../page/what-acts-as-you.js?v=__VERSION__');
+// ui/shelf.js's first state (:181).
+const SHELF_FIRST = { at: { bring: 'idle' }, ticked: [], brought: [], open: false, said: '' };
+
+// A drawing as plain nodes, `{ tag, props, kids }`, words as strings.
+const tree = (v, hooked) => {
+  if (v == null || typeof v === 'boolean') return [];
+  if (Array.isArray(v)) return v.flatMap((one) => tree(one, hooked));
+  if (typeof v !== 'object') return [String(v)];
+  if (typeof v.type === 'function')
+    return hooked.has(v.type) ? hooked.get(v.type)(v.props) : tree(v.type(v.props), hooked);
+  return [{ tag: v.type, props: v.props, kids: tree(v.props.children, hooked) }];
+};
+const said = (node) => (typeof node === 'string' ? node : node.kids.map(said).join(''));
+const spaced = (node) => said(node).replace(/\s+/g, ' ').trim();
+// Each node under `nodes` that `holds`, in the order a reader meets them.
+const among = (nodes, holds) =>
+  nodes.flatMap((node) =>
+    typeof node === 'string' ? [] : [...(holds(node) ? [node] : []), ...among(node.kids, holds)],
+  );
+const byId = (nodes, id) => among(nodes, (node) => node.props.id === id)[0];
+const NOT_REAL = { preventDefault() {}, currentTarget: {} };
+
+/**
+ * The phone's page from `state`, each effect run answered by `answers`
+ * (by its `run`, a function of the effect answering a message or a
+ * promise of one), and the shelf's bring by `answers.bring`.
+ */
+function phone(state, answers = {}) {
+  const lines = [];
+  globalThis.__trace = (line) => lines.push(line);
+  const ran = [];
+  const io = Object.fromEntries(
+    Object.keys(parts.io).map((run) => [
+      run,
+      (effect) => {
+        if (run === 'send') return effect.m;
+        ran.push(effect);
+        return answers[run] ? answers[run](effect) : new Promise(() => {});
+      },
+    ]),
+  );
+  const page = machine('PAGE', { states: parts.states, step: parts.step, io }, state);
+  const parents = new Map();
+  const real = (Component) => (props) => {
+    if (!parents.has(Component)) parents.set(Component, { nodeType: 1, childNodes: [] });
+    render(html`<${Component} ...${props} />`, parents.get(Component));
+    return [];
+  };
+  let shelf;
+  const hooked = new Map([
+    [Ends, real(Ends)],
+    [AskWhenRead, real(AskWhenRead)],
+    [WhatActsAsYou, () => []],
+    [Copy, () => []],
+    [
+      Shelf,
+      (props) => {
+        shelf ??= machine(
+          'SHELF',
+          SHELF(answers.bring ?? (() => new Promise(() => {})), props.after),
+          SHELF_FIRST,
+        );
+        return tree(drawn(shelf.get(), shelf.dispatch, props), hooked);
+      },
+    ],
+  ]);
+  const draw = () =>
+    tree(
+      parts.places.map(
+        (Place) =>
+          html`<${Place} s=${page.get()} send=${page.dispatch} acts=${parts.acts(page.get())} />`,
+      ),
+      hooked,
+    );
+  const at = {
+    page,
+    ran,
+    lines: () => [...lines],
+    draw,
+    heading: () => parts.heading(page.get()),
+    // Drawn again on each turn, as Page draws on each step (page.js
+    // `useStore`), so a hooked part's effect runs, until nothing is traced
+    // or changed for ten turns.
+    settle: async () => {
+      let [last, still] = ['', 0];
+      for (let turn = 0; turn < 2000 && still < 10; turn++) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const now = `${lines.length} ${JSON.stringify(page.get())} ${JSON.stringify(shelf?.get())}`;
+        draw();
+        [last, still] = [now, now === last ? still + 1 : 0];
+      }
+      return at;
+    },
+    send: (message) => (page.dispatch(message), at.settle()),
+    // A button pressed by the words it holds, as a browser runs its onClick.
+    press: (words) => {
+      const [button] = among(draw(), (n) => n.tag === 'button' && spaced(n).includes(words));
+      if (!button?.props.onClick) throw new Error(`nothing to press: ${words}`);
+      button.props.onClick(NOT_REAL);
+      return at.settle();
+    },
+    // A form sent, as its button sends it.
+    submit: (id) => (byId(draw(), id).props.onSubmit(NOT_REAL), at.settle()),
+    type: (id, value) => (
+      byId(draw(), id).props.onInput({ currentTarget: { value } }),
+      at.settle()
+    ),
+  };
+  return at.settle();
+}
+
+// The read's body (enter.test.mjs `body`) as a group's computer answers
+// it (surface.rs `lends`, rail.rs `standing_json` and `visiting`).
+const body = (more = {}) => ({
+  version: 3,
+  lent: [],
+  unanswered: [],
+  unheard: [],
+  refused: [],
+  older: [],
+  removals: [],
+  visiting: [],
+  people: [row('ada', ADA, 'started'), row('bo', BO)],
+  shelf: [],
+  changed: [],
+  ...more,
+});
+// Bo's phone in house, held, opened and read through ada's computer, as
+// enter.test.mjs steps it, `wants` what its address asks (enter.js `hold`):
+// the state its first read leaves.
+const PHONE_HOUSE = { id: 'house', name: 'house', person: 'bo', token: 'TOKEN', addresses: [] };
+const via = { key: ADA, person: 'ada', relay: null };
+const readOnce = (b, lent = [], wants = null) => {
+  const steps = [
+    { type: 'hold', group: PHONE_HOUSE, wants },
+    { type: 'held' },
+    { type: 'opened', group: PHONE_HOUSE },
+    { type: 'read', n: 1, ok: true, via, body: b, lent },
+  ];
+  return steps.reduce(
+    (s, m) => {
+      const r = parts.step(s, m);
+      assert.equal(r.refused, undefined, `${m.type}: ${r.refused}`);
+      return r.state;
+    },
+    parts.first({ fine: false }),
+  );
+};
+// A lend as the phone's read gives it (enter.js `Lent`: the edge's
+// readLends, its `label` the wasm's).
+const lentHere = (name, more = {}) => ({
+  key: ADA,
+  name,
+  kind: 'k',
+  person: 'ada',
+  group: null,
+  relay: null,
+  label: `${name}0lbl`,
+  limit: 3,
+  using: 0,
+  reads: [],
+  version: 9,
+  ...more,
+});
+// A read as enter.js `readLends` answers it (:577-590).
+const answered = (n, b, lent) => ({
+  type: 'read',
+  n,
+  ok: true,
+  via,
+  body: b,
+  lent,
+  older: false,
+  why: `200, at version ${b.version}, ${lent.length} lent`,
+});
+// The effects that would open the page again, a look at its address or a
+// hold of its tab (enter.js `look`, `lock`): none, drawn again in place.
+const again = (at) => at.ran.filter((effect) => ['look', 'lock'].includes(effect.run));
+const rows = (nodes) => among(byId(nodes, 'lent')?.kids ?? [], (n) => n.tag === 'tr').map(spaced);
+
+// ---- A guest's visit, on the phone (pages/members.rs) ----
+
+// The visit ada's computer answers a guest's redeem, as visit.js `stay`
+// makes it of the node's /visit answer (:148-165, the lends by name and
+// kind, each its label the wasm's), until `until`.
+const visited = (until) => ({
+  type: 'redeemed',
+  ended: false,
+  why: `a guest of ada until ${until}, opening notes`,
+  stay: {
+    host: 'ada',
+    until,
+    lent: [
+      {
+        key: ADA,
+        relay: null,
+        name: 'notes',
+        kind: 'k',
+        person: 'ada',
+        version: 9,
+        label: 'notes0lbl',
+      },
+    ],
+  },
+});
+// Sam at ada's guest's link, in a browser holding nothing (no visit kept,
+// visit.js `recalling`), their name given once asked.
+const guest = async (until, more = {}) => {
+  const redeems = [];
+  const at = await phone(parts.first({ fine: false }), {
+    recall: () => ({ type: 'unkept', why: 'no visit is kept for this link' }),
+    redeem: (effect) => (redeems.push(effect), visited(until)),
+    ...more,
+  });
+  await at.send({ type: 'looked', fragment: 'visit=VISIT', kept: [], linked: true });
+  const asking = at.heading();
+  const asked = byId(at.draw(), 'join');
+  await at.type('name', 'Sam');
+  await at.submit('join');
+  return { at, asking, asked, redeems };
+};
+
+// pages::members::a_guest_at_their_link_is_asked_their_name_once_and_is_in:
+// "You’re invited over as a guest", the name asked in #join; given, the
+// link is redeemed once, as Sam; "You’re ada’s guest until …", ada's notes
+// listed for Sam to open, and the name asked no more.
+test('a guest at their link is asked their name once, and is in, ada’s notes listed', async () => {
+  const until = Math.floor(Date.now() / 1000) + 3600;
+  const { at, asking, asked, redeems } = await guest(until);
+  assert.deepEqual(asking, ['You’re invited over as a guest']);
+  assert.equal(asked.props.hidden, false);
+  assert.deepEqual(
+    redeems.map(({ token, guest: name }) => [token, name]),
+    [['VISIT', 'Sam']],
+  );
+  const [heading, tone] = at.heading();
+  assert.ok(heading.startsWith('You’re ada’s guest until '), heading);
+  assert.equal(tone, 'good');
+  assert.deepEqual(rows(at.draw()), ['ada’s notes (k)']);
+  assert.equal(byId(at.draw(), 'join').props.hidden, true, 'the name is asked no more');
+  assert.deepEqual(again(at), []);
+});
+
+// pages::members::a_guest_s_visit_of_5_s_ends_while_shown: Sam in,
+// ada's notes listed; the visit's end waited for (visit.js `over`, dial.js
+// `when`), held until the law lets it come; come, "PAGE: ended" once, the
+// heading says the visit has ended and nothing is listed, the page drawn
+// again in place (web/app.js@19b63b2b:221-224 listed them until the link
+// was opened again).
+test('a guest’s visit ends while shown: said ended, nothing listed', async () => {
+  const until = Math.floor(Date.now() / 1000) + 5;
+  let end;
+  const over = [];
+  const { at } = await guest(until, {
+    over: (effect) => (over.push(effect.until), new Promise((come) => (end = come))),
+  });
+  assert.deepEqual(rows(at.draw()), ['ada’s notes (k)']);
+  assert.deepEqual(over, [until], 'the end waited for is the visit’s');
+  assert.equal(traced(at, 'PAGE: ended'), 0);
+  end({ type: 'ended', why: `the visit ended at ${until}` });
+  await at.settle();
+  assert.equal(traced(at, 'PAGE: ended'), 1, at.lines().join('\n'));
+  const [heading, tone] = at.heading();
+  assert.ok(heading.startsWith('Your visit as ada’s guest ended '), heading);
+  assert.equal(tone, 'bad');
+  assert.deepEqual(rows(at.draw()), []);
+  assert.deepEqual(again(at), []);
+});
+
+// pages::members::a_visit_ended_while_open_drops_on_the_phone: Sam is
+// ada's guest; bo's phone reads house and lists Sam visiting, and waits
+// for the visit's end (ends.js `Ends`, door.js `end`, dial.js `when`),
+// held until the law lets it come; come, the page reads the group again
+// by itself, "PAGE: reread (a visit ended" once, and lists nobody (v1
+// read the group once).
+test('a visit that ends while the phone’s page is open drops from it', async () => {
+  const until = Math.floor(Date.now() / 1000) + 20;
+  const sam = { id: 'v1', guest: 'Sam', host: 'ada', host_key: ADA, until, yours: false };
+  let end;
+  const ends = [];
+  const at = await phone(readOnce(body({ visiting: [sam] })), {
+    end: (effect) => (ends.push(effect.until), new Promise((come) => (end = come))),
+    read: ({ n }) => answered(n, body(), []),
+  });
+  const visiting = () =>
+    among(at.draw(), (n) => n.tag === 'li' && n.kids.length && /guest, until/.test(said(n))).map(
+      spaced,
+    );
+  const [line] = visiting();
+  assert.ok(line.startsWith('Sam, ada’s guest, until '), line);
+  assert.deepEqual(ends, [until], 'the end waited for is Sam’s');
+  end({ type: 'reread', why: `a visit ended at ${until}` });
+  await at.settle();
+  assert.equal(traced(at, 'PAGE: reread (a visit ended'), 1, at.lines().join('\n'));
+  assert.deepEqual(visiting(), []);
+  assert.deepEqual(again(at), []);
+});
+
+// ---- The phone's index and shelf (pages/index.rs, shelf.rs) ----
+
+// Money, brought to house, as the phone's read lists it: the group's own.
+const moneyHere = lentHere('house Money', {
+  kind: 'Money',
+  group: 'house',
+  label: 'money0lbl',
+  limit: null,
+});
+// Bo's phone reading house with the shelf offered; /shelf, through ada's
+// computer, answering each app brought (folder.rs `bring`), and the group
+// read again listing Money, each held until `holds` gives it when given.
+const bringing = async (holds = {}) => {
+  const brings = [];
+  const at = await phone(readOnce(body({ shelf: SHELVED })), {
+    bring: (group, apps) => {
+      brings.push([group.id, apps]);
+      return (holds.bring ?? Promise.resolve()).then(() => apps.map((app) => ({ app })));
+    },
+    read: ({ n }) =>
+      (holds.read ?? Promise.resolve()).then(() =>
+        answered(n, body({ shelf: SHELVED }), [moneyHere]),
+      ),
+  });
+  const shelf = () => byId(at.draw(), 'shelf');
+  const [money] = among([shelf()], (n) => n.tag === 'input' && n.props.type === 'checkbox');
+  money.props.onChange({ currentTarget: { checked: true } });
+  await at.settle();
+  return { at, brings, shelf };
+};
+
+// pages::index::a_bring_is_in_the_phone_s_index_with_no_reload: bo ticks
+// Money and brings it; the shelf's `after` has the page read the group
+// again (`reread`, shelf.js), and #lent lists Money, drawn again in place.
+test('a bring is in the phone’s index, read again by the page', async () => {
+  const { at } = await bringing();
+  assert.deepEqual(rows(at.draw()), []);
+  await at.press('Bring the ticked ones');
+  assert.ok(rows(at.draw())[0]?.startsWith('Money'), rows(at.draw()).join('\n'));
+  const brought = first(at, 'SHELF: brought (');
+  assert.ok(brought >= 0 && first(at, 'PAGE: reread: ') > brought, at.lines().join('\n'));
+  assert.deepEqual(again(at), []);
+});
+
+// pages::shelf::the_phone_s_bring_is_answered_beside_its_button: Money
+// ticked, the button pressed twice at once while the bring is out: held,
+// then given back; the second press refused by SHELF; one bring; the
+// answer the button's next sibling; then the page reads the group again,
+// which says Money is on the table and offers it no more
+// (question.js@19b63b2b:207 replaced the words above the boxes).
+test('the phone’s bring is answered beside its button, the button held while it brings', async () => {
+  const [hold, give] = [{}, {}];
+  for (const what of ['bring', 'read']) hold[what] = new Promise((go) => (give[what] = go));
+  const { at, brings, shelf } = await bringing(hold);
+  const button = (drawing = shelf()) =>
+    among([drawing], (n) => n.tag === 'button' && spaced(n).startsWith('Bring the ticked ones'))[0];
+  // Both on the button as drawn, before the page draws again, as a quick
+  // thumb's two presses land.
+  const pressed = button();
+  pressed.props.onClick(NOT_REAL);
+  pressed.props.onClick(NOT_REAL);
+  await at.settle();
+  const busy = [button().props.disabled];
+  give.bring();
+  await at.settle();
+  // Answered, while the group's read again is out.
+  const now = shelf();
+  const answered = button(now);
+  busy.push(answered.props.disabled);
+  assert.deepEqual(busy, [true, false]);
+  assert.equal(traced(at, 'SHELF: bring: idle -> bringing'), 1, at.lines().join('\n'));
+  assert.equal(traced(at, 'SHELF: bring refused in bringing'), 1, at.lines().join('\n'));
+  assert.deepEqual(brings, [['house', ['Money']]]);
+  const [line] = among([now], (n) => n.kids.includes(answered));
+  assert.equal(
+    said(line.kids[line.kids.indexOf(answered) + 1] ?? '').trim(),
+    'You brought Money to house: everyone in it can open it in a few seconds.',
+  );
+  give.read();
+  await at.settle();
+  const brought = first(at, 'SHELF: brought (');
+  assert.ok(brought >= 0 && first(at, 'PAGE: reread: ') > brought, at.lines().join('\n'));
+  assert.ok(spaced(shelf()).includes('Money is on the table.'), spaced(shelf()));
+  assert.ok(!spaced(shelf()).includes('Money: who owes'), spaced(shelf()));
+  assert.deepEqual(again(at), []);
+});
+
+// pages::index::a_lend_filled_while_shown_reads_full_now_on_coming_back:
+// ada lends shelf to one at once; bo's phone lists it, open to him; cy
+// opens it meanwhile, so ada's computer counts one using it (door/limit.rs
+// `ask`; /lends' `using`, door.rs `offered`); the page hidden and shown
+// again (web/app.js:77-79 `shown`) reads the group again, "PAGE: read"
+// once more, and its line says "Full now.", drawn again in place.
+test('a lend filled while shown reads Full now on coming back', async () => {
+  const one = lentHere('shelf', { kind: 'books', limit: 1 });
+  const at = await phone(readOnce(body(), [one]), {
+    read: ({ n }) => answered(n, body(), [{ ...one, using: 1 }]),
+  });
+  const [shown] = rows(at.draw());
+  assert.ok(shown.includes('shelf') && !shown.includes('Full now.'), shown);
+  const reads = traced(at, 'PAGE: read');
+  await at.send({ type: 'shown' });
+  assert.equal(traced(at, 'PAGE: read'), reads + 1, at.lines().join('\n'));
+  assert.ok(rows(at.draw())[0].includes('Full now.'), rows(at.draw()).join('\n'));
+  assert.deepEqual(again(at), []);
+});
+
+// ---- The ask, on the phone (pages/acts.rs) ----
+
+// pages::acts::a_refused_yes_keeps_the_ask_shown: bo's phone at
+// `#ask=<shelf>&app=<page>&at=/` asks, once the group is read
+// (AskWhenRead), whether ada's page may use her shelf; ada stops lending
+// the shelf, and bo's Yes is refused at her computer's door, as uses.js
+// `door` says a refused answer (:133-135); the heading says so with the
+// ask still shown, so bo can say it again (web/app.js@19b63b2b:316 hid
+// the form and left it so).
+test('a refused yes is said in the heading, and the ask stays shown', async () => {
+  const appLent = lentHere('page', { reads: ['k'] });
+  const lendLent = lentHere('shelf', { asks: 'the page reads the shelf' });
+  const answers = [];
+  const wants = { ask: lendLent.label, app: appLent.label, at: '/' };
+  const at = await phone(readOnce(body(), [appLent, lendLent], wants), {
+    answer: (effect) => (
+      answers.push([effect.l.label, effect.app]),
+      { type: 'unsaid', said: 'ada’s computer did not keep your answer.', why: 'answered 404' }
+    ),
+  });
+  const [asked, tone] = at.heading();
+  assert.ok(asked.startsWith('Let '), asked);
+  assert.equal(tone, 'good');
+  assert.equal(byId(at.draw(), 'ask').props.hidden, false);
+  await at.submit('ask');
+  assert.deepEqual(answers, [[lendLent.label, appLent.label]]);
+  assert.deepEqual(at.heading(), ['ada’s computer did not keep your answer.', 'bad']);
+  assert.equal(byId(at.draw(), 'ask').props.hidden, false, 'the ask stays shown');
+  assert.deepEqual(again(at), []);
 });
