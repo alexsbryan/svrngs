@@ -1,0 +1,2649 @@
+worktree c7b14e092aa7758bad8a749d04afc44edf52f769, eudoxia 83d482a; 2026-11-13T02:17:00Z 18:17  up 7 days, 22:27, 8 users, load averages: 12.11 15.87 15.07
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 27207)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (1 s)
+passed     advisories (1 s)
+passed     app nouns gate (0 s)
+passed     app nouns (1 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (1 s)
+passed     rustfmt (2 s)
+passed     script laws (8 s)
+passed     page integration (16 s)
+passed     clippy (72 s)
+failed     tests (628 s)
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 8 tests
+           give_check_names_the_step_that_failed_and_leaves_nothing --- FAILED
+           an_app_left_half_paused_is_stopped_and_removed --- FAILED
+           a_state_unlike_its_snapshot_is_told --- FAILED
+           a_snapshot_of_another_card_version_is_refused --- FAILED
+           the_stand_in_keeps_its_state_across_a_restore --- FAILED
+           an_app_left_paused_is_stopped_and_removed --- FAILED
+           give_check_passes_the_stand_in_and_leaves_nothing --- FAILED
+           .
+           failures:
+           
+           ---- give_check_names_the_step_that_failed_and_leaves_nothing stdout ----
+           
+           thread 'give_check_names_the_step_that_failed_and_leaves_nothing' (63207257) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- an_app_left_half_paused_is_stopped_and_removed stdout ----
+           
+           thread 'an_app_left_half_paused_is_stopped_and_removed' (63207254) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- a_state_unlike_its_snapshot_is_told stdout ----
+           
+           thread 'a_state_unlike_its_snapshot_is_told' (63207253) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- a_snapshot_of_another_card_version_is_refused stdout ----
+           
+           thread 'a_snapshot_of_another_card_version_is_refused' (63207252) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- the_stand_in_keeps_its_state_across_a_restore stdout ----
+           
+           thread 'the_stand_in_keeps_its_state_across_a_restore' (63207259) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- an_app_left_paused_is_stopped_and_removed stdout ----
+           
+           thread 'an_app_left_paused_is_stopped_and_removed' (63207255) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- give_check_passes_the_stand_in_and_leaves_nothing stdout ----
+           
+           thread 'give_check_passes_the_stand_in_and_leaves_nothing' (63207258) panicked at apps/give/tests/check.rs:22:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           
+           failures:
+               a_snapshot_of_another_card_version_is_refused
+               a_state_unlike_its_snapshot_is_told
+               an_app_left_half_paused_is_stopped_and_removed
+               an_app_left_paused_is_stopped_and_removed
+               give_check_names_the_step_that_failed_and_leaves_nothing
+               give_check_passes_the_stand_in_and_leaves_nothing
+               the_stand_in_keeps_its_state_across_a_restore
+           
+           test result: FAILED. 1 passed; 7 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.22s
+           
+           error: test failed, to rerun pass `-p give --test check`
+           
+           running 6 tests
+           a_stop_keeps_the_last_write_and_stays_stopped_until_started_again --- FAILED
+           the_keeper_keeps_only_what_the_record_names_it_for --- FAILED
+           a_stop_that_fails_names_its_step_and_finishes_the_same_stop_after_a_crash --- FAILED
+           the_keeper_gone_then_back --- FAILED
+           a_move_starts_the_computer_offered_from_the_last_copy --- FAILED
+           a_clean_stop_copies_the_state_and_unlends --- FAILED
+           
+           failures:
+           
+           ---- a_stop_keeps_the_last_write_and_stays_stopped_until_started_again stdout ----
+           
+           thread 'a_stop_keeps_the_last_write_and_stays_stopped_until_started_again' (63207405) panicked at apps/give/tests/keep.rs:34:9:
+           never-ran: podman does not answer on this computer, so no app can be kept here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- the_keeper_keeps_only_what_the_record_names_it_for stdout ----
+           
+           thread 'the_keeper_keeps_only_what_the_record_names_it_for' (63207408) panicked at apps/give/tests/keep.rs:34:9:
+           never-ran: podman does not answer on this computer, so no app can be kept here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- a_stop_that_fails_names_its_step_and_finishes_the_same_stop_after_a_crash stdout ----
+           
+           thread 'a_stop_that_fails_names_its_step_and_finishes_the_same_stop_after_a_crash' (63207406) panicked at apps/give/tests/keep.rs:34:9:
+           never-ran: podman does not answer on this computer, so no app can be kept here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- the_keeper_gone_then_back stdout ----
+           
+           thread 'the_keeper_gone_then_back' (63207407) panicked at apps/give/tests/keep.rs:34:9:
+           never-ran: podman does not answer on this computer, so no app can be kept here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- a_move_starts_the_computer_offered_from_the_last_copy stdout ----
+           
+           thread 'a_move_starts_the_computer_offered_from_the_last_copy' (63207404) panicked at apps/give/tests/keep.rs:34:9:
+           never-ran: podman does not answer on this computer, so no app can be kept here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           ---- a_clean_stop_copies_the_state_and_unlends stdout ----
+           
+           thread 'a_clean_stop_copies_the_state_and_unlends' (63207403) panicked at apps/give/tests/keep.rs:34:9:
+           never-ran: podman does not answer on this computer, so no app can be kept here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF)
+           
+           
+           failures:
+               a_clean_stop_copies_the_state_and_unlends
+               a_move_starts_the_computer_offered_from_the_last_copy
+               a_stop_keeps_the_last_write_and_stays_stopped_until_started_again
+               a_stop_that_fails_names_its_step_and_finishes_the_same_stop_after_a_crash
+               the_keeper_gone_then_back
+               the_keeper_keeps_only_what_the_record_names_it_for
+           
+           test result: FAILED. 0 passed; 6 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+           
+           error: test failed, to rerun pass `-p give --test keep`
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 18 tests
+           ..................
+           test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 24 tests
+           ........................
+           test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.53s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.14s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 6 tests
+           i.....
+           test result: ok. 5 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 12.68s
+           
+           
+           running 16 tests
+           .......Running for trip.
+           Apps on this computer reach your groups at http://127.0.0.1:52422.
+           Your home page, the same address each time svrngs starts: http://svrngs.localhost:52422/
+           
+           Leave this running; Ctrl-C stops it.
+           ..[2m2026-11-13T02:20:54.691899Z[0m [31mERROR[0m [2miroh::socket::transports::relay[0m[2m:[0m relay_recv_channel closed
+           [2m2026-11-13T02:20:54.692017Z[0m [31mERROR[0m [2miroh::socket::transports::relay[0m[2m:[0m relay_recv_channel closed
+           .......
+           test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 25.61s
+           
+           
+           running 14 tests
+           ..............
+           test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.38s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 21.29s
+           
+           
+           running 6 tests
+           .... 4/6
+           every_relay_down_a_join_ends_bounded_and_leaves_nothing_running --- FAILED
+           test the_program_joins_at_home_with_the_public_relay_gone has been running for over 60 seconds
+           .
+           failures:
+           
+           ---- every_relay_down_a_join_ends_bounded_and_leaves_nothing_running stdout ----
+           svrngs: after 10 s, this computer has not yet reached the server your groups find it through. It goes on, and keeps trying; until it does, they may not reach you (RUST_LOG=debug names the server).
+           every relay down: 20.005551958s
+           
+           thread 'every_relay_down_a_join_ends_bounded_and_leaves_nothing_running' (63219285) panicked at crates/svrngs/tests/meet.rs:240:5:
+           assertion `left == right` failed: something still dials after the close
+             left: 161
+            right: 113
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               every_relay_down_a_join_ends_bounded_and_leaves_nothing_running
+           
+           test result: FAILED. 5 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 68.35s
+           
+           error: test failed, to rerun pass `-p svrngs --test meet`
+           
+           running 3 tests
+           iii
+           test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.35s
+           
+           
+           running 16 tests
+           ................
+           test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.15s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: sam_through_a_relay_on_this_computer, ignore_message: U4's dry run, run by demo/runs/u4/2026-10-05/dry.sh
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.64s
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.07s
+           
+           
+           running 5 tests
+           .....
+           test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.29s
+           
+           
+           running 18 tests
+           ..................
+           test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8.85s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.06s
+           
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.62s
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.55s
+           
+           
+           running 206 tests
+           ....................................................................................... 87/206
+           ......................................................................i................ 174/206
+           ...................i............
+           test result: ok. 204 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1.92s
+           
+           
+           running 2 tests
+           ii
+           test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 6 tests
+           ii....
+           test result: ok. 4 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 150 tests
+           ....................................................................................... 87/150
+           ...............................................................
+           test result: ok. 150 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.15s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+           
+           
+           running 27 tests
+           iii........................
+           test result: ok. 24 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 23.58s
+           
+           
+           running 60 tests
+           ............................................................
+           test result: ok. 60 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 35.45s
+           
+           
+           running 32 tests
+           ................................
+           test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.92s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+           
+           
+           running 21 tests
+           
+           running 1 test
+           test publication::publication_restart_child ... ok
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.43s
+           
+           .....
+           running 1 test
+           .test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.28s
+           
+           
+           running 1 test
+           ...test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.18s
+           
+           
+           running 1 test
+           ....test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.15s
+           
+           ...
+           running 1 test
+           .test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.19s
+           
+           ...
+           test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.27s
+           
+           
+           running 4 tests
+           i...
+           test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 2.62s
+           
+           
+           running 9 tests
+           .........
+           test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.36s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.82s
+           
+           
+           running 4 tests
+           iiii
+           test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 13 tests
+           .............
+           test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.68s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.33s
+           
+           
+           running 8 tests
+           .....test a_fallback_this_computer_cannot_register_at_is_left has been running for over 60 seconds
+           test a_group_meets_at_the_builds_fallback_while_it_answers has been running for over 60 seconds
+           test a_keeper_taking_away_the_last_relay_is_met_nowhere_near_it_again has been running for over 60 seconds
+           ...
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 98.27s
+           
+           
+           running 9 tests
+           .........
+           test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.28s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+           
+           
+           running 3 tests
+           ii.
+           test result: ok. 1 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 4.36s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.40s
+           
+           
+           running 8 tests
+           ........
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.60s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: dee_asks_a_member, ignore_message: the spike's instrument: run by demo/runs/sy/2026-10-09/run.py
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 45 tests
+           .............................................
+           test result: ok. 45 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.33s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: a_sources_group_written_and_refolded_at_each_size, ignore_message: an instrument: run with --ignored --nocapture
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 12 tests
+           ............
+           test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.42s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.83s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.24s
+           
+           error: 3 targets failed:
+               `-p give --test check`
+               `-p give --test keep`
+               `-p svrngs --test meet`
+passed     canaries (4 s)
+passed     ceiling canary (114 s)
+           CEILING idle round at 25 x 10,000: 0.0360 s of processor, the median of [4.829848999999999, 0.034734000000000265, 0.03600099999999884], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.03600099999999884,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.014340958}
+passed     web rustfmt and clippy (11 s)
+failed     browser (261 s)
+           
+           running 116 tests
+           i............ 13/116
+           a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit --- FAILED
+           . 15/116
+           a_page_speaks_http_through_the_door_streaming_both_ways::webkit --- FAILED
+           .. 18/116
+           a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit --- FAILED
+           ...... 25/116
+           acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit --- FAILED
+           ..........................i.. 55/116
+           opens::an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again::chromium --- FAILED
+           ....
+           running 1 test
+           .host controls pending: {
+             "reloaded": "joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.Retry joiningClose joining",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:57048/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:57048/publication"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:57048/publication?group=house"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:57048/publication?group=house"
+               ]
+             ],
+             "text": "joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.joining is temporarily unavailable; retry in a minute from this computerRetry joiningClose joining"
+           }
+           test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 117 filtered out; finished in 2.38s
+           
+           
+           running 1 test
+           .host controls open: {
+             "reloaded": "http://127.0.0.1:56834/acorn-basil-cabin-daisy-eagle Copy the addressEnds 11/13/2026, 6:33:38 PM. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.Close joining",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:61796/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:61796/publication"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:61796/publication?group=house"
+               ]
+             ],
+             "text": "http://127.0.0.1:56834/acorn-basil-cabin-daisy-eagle Copy the addressEnds 11/13/2026, 6:33:38 PM. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.Close joining"
+           }
+           .test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 117 filtered out; finished in 2.33s
+           
+           
+           running 1 test
+           .host controls closing: {
+             "reloaded": "http://127.0.0.1:56834/acorn-basil-cabin-daisy-eagle Copy the addressjoining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.Retry closing",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:63415/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:63415/publication/close"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:63415/publication?group=house"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:63415/publication?group=house"
+               ]
+             ],
+             "text": "http://127.0.0.1:56834/acorn-basil-cabin-daisy-eagle Copied.joining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.joining is temporarily unavailable; retry in a minute from this computerRetry closing"
+           }
+           test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 117 filtered out; finished in 2.43s
+           
+           
+           running 1 test
+           host controls closed: {
+             "reloaded": "Joining is closedInvite people here",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:53593/publication?group=house"
+               ],
+               [
+                 "POST",
+                 "http://svrngs.localhost:53593/publication/close"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:53593/publication?group=house"
+               ]
+             ],
+             "text": "Joining is closedInvite people here"
+           }
+           test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 117 filtered out; finished in 2.21s
+           
+           
+           running 1 test
+           host controls inspect: {
+             "reloaded": "Joining is closedInvite people here",
+             "sent": [
+               [
+                 "GET",
+                 "http://svrngs.localhost:57096/publication?group=house"
+               ],
+               [
+                 "GET",
+                 "http://svrngs.localhost:57096/publication?group=house"
+               ]
+             ],
+             "text": "Joining is closedInvite people here"
+           }
+           test publication::onboarding_host_controls_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 117 filtered out; finished in 2.26s
+           
+           ..i.....test keep_going::an_action_whose_answer_is_lost_is_not_sent_again_and_can_be_checked::webkit has been running for over 60 seconds
+           test keep_going::the_house_keeps_going_through_the_home_relay_and_comes_back::chromium has been running for over 60 seconds
+           .............test opens::a_carried_app_reads_the_lends_it_declares_at_its_own_origin::chromium has been running for over 60 seconds
+           ..................... 106/116
+           opens::a_carried_app_reads_the_lends_it_declares_at_its_own_origin::chromium --- FAILED
+           ....test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit has been running for over 60 seconds
+           .....
+           failures:
+           
+           ---- a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit stdout ----
+           the ask's run: {
+             "again": {
+               "heading": "Let ada’s page (k) use cy’s shelf (k)?",
+               "landed": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/after?n=1",
+               "words": "the page receives what is on the shelf; nothing leaves cy's computer"
+             },
+             "appStop": {
+               "body": "{\"app\":\"umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\",\"choice\":{\"at\":1794537127,\"lends\":[],\"said\":\"stop\"}}",
+               "refused": null,
+               "status": 200
+             },
+             "appStopped": {
+               "body": "{\"error\":\"you stopped this app using shelf\",\"kind\":\"stopped\"}",
+               "refused": "stopped",
+               "status": 403
+             },
+             "asked": {
+               "heading": "Let ada’s page (k) use cy’s shelf (k)?",
+               "landed": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/after?n=1",
+               "words": "the page receives what is on the shelf; nothing leaves cy's computer"
+             },
+             "before": {
+               "body": "{\"error\":\"only an app you said yes to uses shelf\",\"kind\":\"unasked\"}",
+               "refused": "unasked",
+               "status": 403
+             },
+             "framed": [],
+             "kept": {
+               "exported": [
+                 "InvalidAccessError"
+               ],
+               "pass": "eyJwZXJzb24iOiJlYTRhNmM2M2UyOWM1MjBhYmVmNTUwN2IxMzJlYzVmOTk1NDc3NmFlYmViZTdiOTI0MjFlZWE2OTE0NDZkMjJjIiwiaG9sZGVyIjoiMjExMzdiYTkzYTQ3NjRhZmE3YjYwMWY2MWZkNTMwN2RkMzYyN2M5ZDJiZWMxNDczMTU3ZmRiMjE5YzZmZGNjNSIsImFwcCI6InVtZnJqMW54YmoyM245bXY1cDB3M3J2N3JuZ2hyY3E5ZDBtYmZoOXdydmZhZHFhc3E3cmF1djYyaDhnbjZxIiwicmVhZHMiOlsidGY2MXJkemtzeG56OHp6ZG11d3Bod2Q4M3dnMjVjeHUwdzFkc2t2NzgyanoxZDhsMHJtYXB6NG1xMXo4ZngiXSwidW50aWwiOjE3OTQ1ODAzMjYsInNpZyI6ImVjMjViZDRkMTdmY2Q1OTk1ZDU0YjE3ZjcxM2I1NDhkNTcxNjk4Nzk1YzU3MTdmZmE4NTE1NjRkOTc2NDE4MTYwNTFlNDQ0MWY5MTNiZDgxNDJmZjdlYWFlODYxM2ZkYjc3OTA2MTM1OWI0NGUzZmY5ZGNjZjIxMTU2ZDE1NzAwIiwiYXBwcm92ZXIiOiI3ZjA5Y2JlM2FhOGE5YWYxMzE1NmY1MzQ4MTdkZWVjYWMxYzJmMjdlNGRiY2U3OWFkYTgzYzA0OTgwNmZlYjY0In0",
+               "texts": [
+                 "umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q",
+                 "eyJwZXJzb24iOiJlYTRhNmM2M2UyOWM1MjBhYmVmNTUwN2IxMzJlYzVmOTk1NDc3NmFlYmViZTdiOTI0MjFlZWE2OTE0NDZkMjJjIiwiaG9sZGVyIjoiMjExMzdiYTkzYTQ3NjRhZmE3YjYwMWY2MWZkNTMwN2RkMzYyN2M5ZDJiZWMxNDczMTU3ZmRiMjE5YzZmZGNjNSIsImFwcCI6InVtZnJqMW54YmoyM245bXY1cDB3M3J2N3JuZ2hyY3E5ZDBtYmZoOXdydmZhZHFhc3E3cmF1djYyaDhnbjZxIiwicmVhZHMiOlsidGY2MXJkemtzeG56OHp6ZG11d3Bod2Q4M3dnMjVjeHUwdzFkc2t2NzgyanoxZDhsMHJtYXB6NG1xMXo4ZngiXSwidW50aWwiOjE3OTQ1ODAzMjYsInNpZyI6ImVjMjViZDRkMTdmY2Q1OTk1ZDU0YjE3ZjcxM2I1NDhkNTcxNjk4Nzk1YzU3MTdmZmE4NTE1NjRkOTc2NDE4MTYwNTFlNDQ0MWY5MTNiZDgxNDJmZjdlYWFlODYxM2ZkYjc3OTA2MTM1OWI0NGUzZmY5ZGNjZjIxMTU2ZDE1NzAwIiwiYXBwcm92ZXIiOiI3ZjA5Y2JlM2FhOGE5YWYxMzE1NmY1MzQ4MTdkZWVjYWMxYzJmMjdlNGRiY2U3OWFkYTgzYzA0OTgwNmZlYjY0In0",
+                 "eyJwZXJzb24iOiJlYTRhNmM2M2UyOWM1MjBhYmVmNTUwN2IxMzJlYzVmOTk1NDc3NmFlYmViZTdiOTI0MjFlZWE2OTE0NDZkMjJjIiwiaG9sZGVyIjoiMjExMzdiYTkzYTQ3NjRhZmE3YjYwMWY2MWZkNTMwN2RkMzYyN2M5ZDJiZWMxNDczMTU3ZmRiMjE5YzZmZGNjNSIsImFwcCI6InVtZnJqMW54YmoyM245bXY1cDB3M3J2N3JuZ2hyY3E5ZDBtYmZoOXdydmZhZHFhc3E3cmFoazAyeGJ0ZDI4IiwicmVhZHMiOltdLCJ1bnRpbCI6MTc5NDU4MDMyNiwic2lnIjoiOTU5NWZlZWJmZWNiMDdlNDk4OTBlMTFmYzRiYWUwZTYxMGIxNzAwOWNmNjk2YzA1MTc2OGE1ZmY5ZGRmNjQ0YTA2NDUwZGIzN2M5NDExMmU1MTFmZjZhYjNlYmIwNzIxNzAxOGU3ZWI0ZjEyMTAwOWVkYjBkMWZhMzUzMjI1MDAiLCJhcHByb3ZlciI6IjdmMDljYmUzYWE4YTlhZjEzMTU2ZjUzNDgxN2RlZWNhYzFjMmYyN2U0ZGJjZTc5YWRhODNjMDQ5ODA2ZmViNjQifQ",
+                 "house",
+                 "21137ba93a4764afa7b601f61fd5307dd3627c9d2bec1473157fdb219c6fdcc5",
+                 "https://group.svrnme.test:49797/",
+                 "3bcb5304f3630664433feca620d0c677b2d77c4da363a63fd832912106e74df3ee25a34e48de408c92c62bd7b49c6e0f7581aaa3e9b702f152040479"
+               ]
+             },
+             "logs": [
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+               "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+               "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: STORE: the sealing key absent: making one",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+               "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:50872/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/open.html?v=8a05b1522407, a pass to 2 lend(s) until 1794580321",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/open.html?v=8a05b1522407): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass",
+               "error: Failed to load resource: the server responded with a status of 403 ()",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 1 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:50872/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through cy's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: a computer answered late, so closed",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: ask (whether umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q may use tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx): opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut",
+               "debug: PAGE: say: opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut, running answer",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — a bi-stream opened",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — the stream is done",
+               "debug: PAGE: said (the yes kept at cy's computer): opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut, running send",
+               "debug: PAGE: open: opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/open.html?v=8a05b1522407&back=%2Fafter%3Fn%3D1, a pass to 2 lend(s) until 1794580324",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/open.html?v=8a05b1522407&back=%2Fafter%3Fn%3D1): opening/holding/read/unoffered/unasked/sending/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 1 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:50872/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: a computer answered late, so closed",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: fold: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: fold: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asking, running choices",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: HTTP: GET /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — a bi-stream opened",
+               "debug: HTTP: GET /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — the stream is done",
+               "debug: PAGE: chosen (shelf: 201 app(s)): opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asking -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asked",
+               "debug: PAGE: stop: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asked -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asked, running unuse",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — a bi-stream opened",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — the stream is done",
+               "debug: PAGE: unused (umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q stopped using shelf): opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asked -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asking, running choices",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: HTTP: GET /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — a bi-stream opened",
+               "debug: HTTP: GET /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — the stream is done",
+               "debug: PAGE: chosen (shelf: 201 app(s)): opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asking -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/asked",
+               "error: Failed to load resource: the server responded with a status of 403 ()",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 1 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:50872/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: a computer answered late, so closed",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: ask (whether umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q may use tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx): opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut",
+               "debug: PAGE: say: opening/holding/read/unoffered/unasked/asking/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut, running answer",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — a bi-stream opened",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: POST /choices/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx — the stream is done",
+               "debug: PAGE: said (the yes kept at cy's computer): opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut, running send",
+               "debug: PAGE: open: opening/holding/read/unoffered/unasked/sending/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/open.html?v=8a05b1522407&back=%2Fafter%3Fn%3D1, a pass to 2 lend(s) until 1794580326",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/open.html?v=8a05b1522407&back=%2Fafter%3Fn%3D1): opening/holding/read/unoffered/unasked/sending/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/sending/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass",
+               "error: Failed to load resource: the server responded with a status of 403 ()",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 1 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:50872/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:50872/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50872/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through cy's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: LAYER relay chosen: http://127.0.0.1:50872/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: a computer answered late, so closed",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: ask (whether y may use x): opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/refused/shut/none/unasked/idle/shut",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/refused/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/refused/shut/none/unasked/idle/shut",
+               "error: Refused to load https://group.svrnme.test:49797/#ask=x&app=y&at=/ because it does not appear in the frame-ancestors directive of the Content Security Policy."
+             ],
+             "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/",
+             "pageStopped": {
+               "body": "{\"error\":\"you stopped this app using shelf\",\"kind\":\"stopped\"}",
+               "refused": "stopped",
+               "status": 403
+             },
+             "told": {
+               "lends": [
+                 {
+                   "address": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/svrngs-reads/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/",
+                   "ask": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/svrngs-ask?lend=tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx&app=umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q",
+                   "asks": "the page receives what is on the shelf; nothing leaves cy's computer",
+                   "kind": "k",
+                   "lender": "cy",
+                   "name": "shelf",
+                   "stop": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:49797/svrngs-reads/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/svrngs-stop"
+                 }
+               ],
+               "unanswered": []
+             },
+             "unlent": "That app, or what it asks to use, is not lent here now.",
+             "unused": "An app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nada’s page (k) was stopped using cy’s shelf (k).\n",
+             "used": "An app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nAn app was stopped using cy’s shelf (k).\nada’s page (k) uses cy’s shelf (k). Stop\n",
+             "yes": {
+               "body": "what is on the shelf",
+               "refused": null,
+               "status": 200
+             },
+             "yesAgain": {
+               "body": "what is on the shelf",
+               "refused": null,
+               "status": 200
+             }
+           }
+           
+           thread 'a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit' (63293287) panicked at crates/svrngs-node/tests/browser/main.rs:2261:5:
+           cy's shelf is told the app: 
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- a_page_speaks_http_through_the_door_streaming_both_ways::webkit stdout ----
+           streaming::webkit: {"chunked":{"ms":126,"status":200,"text":"hellohellohello"},"lines":["+0 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c","+0 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)","+0 ms LAYER key: ok — the key 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394","+0 ms LAYER parse: ok — relay http://127.0.0.1:50358/","+0 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…","+1 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 bound","+1 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…","+212 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)","+212 ms LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried","+212 ms LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50358/…","+224 ms LAYER relay chosen: http://127.0.0.1:50358/, this page's own: true","+224 ms LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol","+224 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"","+224 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+232 ms HTTP: GET /lend/shelf/title.bin answered 206","+3785 ms HTTP: the response has ended; finishing the request's send half","+3785 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+3794 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened","+3957 ms HTTP: GET /lend/shelf/title.bin answered 416","+3957 ms HTTP: the response has ended; finishing the request's send half","+3958 ms HTTP: GET /lend/shelf/title.bin — the stream is done","+3959 ms HTTP: GET /lend/tap/stream — a bi-stream opened","+3987 ms HTTP: GET /lend/tap/stream answered 200","+4083 ms HTTP: the response has ended; finishing the request's send half","+4083 ms HTTP: GET /lend/tap/stream — the stream is done","+4084 ms HTTP: POST /lend/sink/up — a bi-stream opened","+4111 ms HTTP: POST /lend/sink/up answered 502","+4111 ms HTTP: POST /lend/sink/up — the stream ended in error: connection error"],"past":{"bytes":0,"chunks":0,"contentRange":"bytes */67108864","largest":0,"ms":164,"sha":"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855","status":416},"post":{"held":null,"ms":27,"status":502,"text":"{\"error\":\"ada’s sink is not answering now: try again later\",\"kind\":\"away\"}"},"range":{"bytes":8999000,"chunks":6363,"contentRange":"bytes 1000-8999999/67108864","largest":1420,"ms":3570,"sha":"c11b3b71567feda89b6873737195713886ff9ec499972411589045bfa2d44510","status":206}}
+           streaming::webkit: the 9 MB range in 3570 ms of its 60,000
+           
+           thread 'a_page_speaks_http_through_the_door_streaming_both_ways::webkit' (63298299) panicked at crates/svrngs-node/tests/browser/main.rs:623:5:
+           assertion `left == right` failed: {
+             "chunked": {
+               "ms": 126,
+               "status": 200,
+               "text": "hellohellohello"
+             },
+             "lines": [
+               "+0 ms LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "+0 ms LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "+0 ms LAYER key: ok — the key 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394",
+               "+0 ms LAYER parse: ok — relay http://127.0.0.1:50358/",
+               "+0 ms LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "+1 ms LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 bound",
+               "+1 ms LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "+212 ms LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "+212 ms LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "+212 ms LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:50358/…",
+               "+224 ms LAYER relay chosen: http://127.0.0.1:50358/, this page's own: true",
+               "+224 ms LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "+224 ms LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "+224 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened",
+               "+232 ms HTTP: GET /lend/shelf/title.bin answered 206",
+               "+3785 ms HTTP: the response has ended; finishing the request's send half",
+               "+3785 ms HTTP: GET /lend/shelf/title.bin — the stream is done",
+               "+3794 ms HTTP: GET /lend/shelf/title.bin — a bi-stream opened",
+               "+3957 ms HTTP: GET /lend/shelf/title.bin answered 416",
+               "+3957 ms HTTP: the response has ended; finishing the request's send half",
+               "+3958 ms HTTP: GET /lend/shelf/title.bin — the stream is done",
+               "+3959 ms HTTP: GET /lend/tap/stream — a bi-stream opened",
+               "+3987 ms HTTP: GET /lend/tap/stream answered 200",
+               "+4083 ms HTTP: the response has ended; finishing the request's send half",
+               "+4083 ms HTTP: GET /lend/tap/stream — the stream is done",
+               "+4084 ms HTTP: POST /lend/sink/up — a bi-stream opened",
+               "+4111 ms HTTP: POST /lend/sink/up answered 502",
+               "+4111 ms HTTP: POST /lend/sink/up — the stream ended in error: connection error"
+             ],
+             "past": {
+               "bytes": 0,
+               "chunks": 0,
+               "contentRange": "bytes */67108864",
+               "largest": 0,
+               "ms": 164,
+               "sha": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+               "status": 416
+             },
+             "post": {
+               "held": null,
+               "ms": 27,
+               "status": 502,
+               "text": "{\"error\":\"ada’s sink is not answering now: try again later\",\"kind\":\"away\"}"
+             },
+             "range": {
+               "bytes": 8999000,
+               "chunks": 6363,
+               "contentRange": "bytes 1000-8999999/67108864",
+               "largest": 1420,
+               "ms": 3570,
+               "sha": "c11b3b71567feda89b6873737195713886ff9ec499972411589045bfa2d44510",
+               "status": 206
+             }
+           }
+             left: Number(502)
+            right: 200
+           
+           ---- a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit stdout ----
+           the reads' run: {
+             "asked": {
+               "body": "This is not open to this page.",
+               "status": 403
+             },
+             "backAt": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:63278/",
+             "landed": {
+               "title": "cy's shelf",
+               "url": "https://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.group.svrnme.test:63278/deep/path?n=2#/details?id=3"
+             },
+             "logs": [
+               "debug: STORE: the sealing key absent: making one",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+               "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+               "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+               "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:64325/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:64325/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:64325/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:63278/open.html?v=8a05b1522407, a pass to 2 lend(s) until 1794580334",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:63278/open.html?v=8a05b1522407): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass",
+               "error: Failed to load resource: the server responded with a status of 403 ()",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 1 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:64325/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:64325/…",
+               "debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:64325/, tried beside every way this endpoint knows",
+               "debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:64325/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:64325/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: LAYER relay chosen: http://127.0.0.1:64325/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: a computer answered late, so closed",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+               "debug: PAGE: wanted: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/named/idle/shut, running send",
+               "debug: PAGE: open (#open=tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx names 1 of what house lends, by its label): opening/holding/read/unoffered/unasked/none/shut/none/named/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/named/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+               "debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx at https://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.group.svrnme.test:63278/open.html?v=8a05b1522407&back=%2Fdeep%2Fpath%3Fn%3D2%23%2Fdetails%3Fid%3D3, a pass to 1 lend(s) until 1794580338",
+               "debug: PAGE: handed (to https://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx.group.svrnme.test:63278/open.html?v=8a05b1522407&back=%2Fdeep%2Fpath%3Fn%3D2%23%2Fdetails%3Fid%3D3): opening/holding/read/unoffered/unasked/none/opening/none/named/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/named/idle/shut",
+               "debug: SIGN: adopted the approver of tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx's newest open and deleted its cookie",
+               "debug: OPEN: tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass"
+             ],
+             "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:63278/",
+             "said": "dee’s computer did not answer, so what they lend is not listed.",
+             "told": {
+               "body": "{\"lends\":[{\"kind\":\"k\",\"name\":\"shelf\",\"lender\":\"cy\",\"address\":\"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:63278/svrngs-reads/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rmapz4mq1z8fx/\"}],\"unanswered\":[\"dee\"]}",
+               "holder": "4c2cb62fcaab2da03f7cd55edc07455aa0c53627ba9bea7952965a557bd518c6",
+               "pass": "eyJwZXJzb24iOiJlYTRhNmM2M2UyOWM1MjBhYmVmNTUwN2IxMzJlYzVmOTk1NDc3NmFlYmViZTdiOTI0MjFlZWE2OTE0NDZkMjJjIiwiaG9sZGVyIjoiNGMyY2I2MmZjYWFiMmRhMDNmN2NkNTVlZGMwNzQ1NWFhMGM1MzYyN2JhOWJlYTc5NTI5NjVhNTU3YmQ1MThjNiIsImFwcCI6InVtZnJqMW54YmoyM245bXY1cDB3M3J2N3JuZ2hyY3E5ZDBtYmZoOXdydmZhZHFhc3E3cmF1djYyaDhnbjZxIiwicmVhZHMiOlsidGY2MXJkemtzeG56OHp6ZG11d3Bod2Q4M3dnMjVjeHUwdzFkc2t2NzgyanoxZDhsMHJtYXB6NG1xMXo4ZngiXSwidW50aWwiOjE3OTQ1ODAzMzQsInNpZyI6IjRiNzRlNTRiZjRmMjU0MDVkMzQzOGUwMzQ1OTFkM2M0YmM4NmZjNTk3NmU4MGQxYzU2NTYwMGIwYjhiYTdhZDE4ODJlZWZkYjdkNWVlMzlhNTE5ZTVmNTNlMDUwZmVhMDRkMzFiYjExNjMyOTA4MmYzODI4NzkxZWEwYTVjNzBmIiwiYXBwcm92ZXIiOiI1NjdlNWI3YzA1OWE5OWJlZTE5N2UxZGY2YjI1ZTZhMzRmMmNlOGNjYWQzOTkyMjNlMjk5ZTNmMTU5MjgzYzY3In0",
+               "refused": null,
+               "status": 200
+             },
+             "words": "ada’s page (k) Reads cy’s k. They can see it’s you, and what it asks for. Opening it lets it write its own part of house’s record, as you."
+           }
+           
+           thread 'a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit' (63297710) panicked at crates/svrngs-node/tests/browser/main.rs:1484:5:
+           cy's door must name bo
+           
+           ---- acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit stdout ----
+           the phone's reads: {"error":null,"ms":2298,"refused":"limit","retry":"1","status":429,"taken":622,"words":"This app is reading shelf faster than an app may, about 600 times a minute, because cy’s computer serves it. It can read again in 1 second. Read once and keep the answer, rather than on a timer."}
+           
+           thread 'acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit' (63299215) panicked at crates/svrngs-node/tests/browser/acts.rs:306:5:
+           cy's shelf asked 633 times, 622 taken
+           
+           ---- opens::an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again::chromium stdout ----
+           the open's run: {
+             "fresh_home": {
+               "text": "Open svrngs from your computer\n\nOpen svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.\n\nTo use this browser too, open the Terminal app, type svrngs open --print, and open the address it shows here within a minute.\n\nA program, not a browser, sends the token in /var/folders/qf/4ntssn_10d598",
+               "title": "Open svrngs from your computer",
+               "url": "http://svrngs.localhost:56048/?ui=a"
+             },
+             "fresh_lend": {
+               "text": "Open svrngs from your computer\n\nOpen svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.\n\nTo use this browser too, open the Terminal app, type svrngs open --print, and open the address it shows here within a minute.\n\nA program, not a browser, sends the token in /var/folders/qf/4ntssn_10d598",
+               "title": "Open svrngs from your computer",
+               "url": "http://svrngs.localhost:56048/to?lend=umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawx22qg5qws&at=%2F"
+             },
+             "home_again": {
+               "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it.\n\nReading your groups…",
+               "title": "Your groups",
+               "url": "http://svrngs.localhost:56048/?ui=a"
+             },
+             "lend": {
+               "text": "the pad",
+               "title": "ada's pad",
+               "url": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawx22qg5qws.localhost:56048/"
+             },
+             "lend_again": {
+               "text": "the pad",
+               "title": "ada's pad",
+               "url": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawx22qg5qws.localhost:56048/"
+             },
+             "opened": "http://svrngs.localhost:56048/?ui=a"
+           }
+           
+           thread 'opens::an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again::chromium' (63308095) panicked at crates/svrngs-node/tests/browser/opens.rs:204:5:
+           assertion `left == right` failed: the pad is asked only once opened, twice: {
+             "fresh_home": {
+               "text": "Open svrngs from your computer\n\nOpen svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.\n\nTo use this browser too, open the Terminal app, type svrngs open --print, and open the address it shows here within a minute.\n\nA program, not a browser, sends the token in /var/folders/qf/4ntssn_10d598",
+               "title": "Open svrngs from your computer",
+               "url": "http://svrngs.localhost:56048/?ui=a"
+             },
+             "fresh_lend": {
+               "text": "Open svrngs from your computer\n\nOpen svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.\n\nTo use this browser too, open the Terminal app, type svrngs open --print, and open the address it shows here within a minute.\n\nA program, not a browser, sends the token in /var/folders/qf/4ntssn_10d598",
+               "title": "Open svrngs from your computer",
+               "url": "http://svrngs.localhost:56048/to?lend=umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawx22qg5qws&at=%2F"
+             },
+             "home_again": {
+               "text": "Your groups\n\nThis page is yours, and only this computer opens it: nobody in your groups sees it.\n\nReading your groups…",
+               "title": "Your groups",
+               "url": "http://svrngs.localhost:56048/?ui=a"
+             },
+             "lend": {
+               "text": "the pad",
+               "title": "ada's pad",
+               "url": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawx22qg5qws.localhost:56048/"
+             },
+             "lend_again": {
+               "text": "the pad",
+               "title": "ada's pad",
+               "url": "http://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rawx22qg5qws.localhost:56048/"
+             },
+             "opened": "http://svrngs.localhost:56048/?ui=a"
+           }
+             left: 6
+            right: 2
+           
+           ---- opens::a_carried_app_reads_the_lends_it_declares_at_its_own_origin::chromium stdout ----
+           the carried app's reads: {
+             "before": {
+               "act": {
+                 "body": "{\"error\":\"An app that reads your friends’ apps can’t write in the group’s record.\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 105",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:57 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "cookie": "",
+               "elsewhere": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:45 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "films": {
+                 "body": "{\"error\":\"Open it from your home page first.\",\"kind\":\"unasked\"}",
+                 "headers": [
+                   "content-length: 63",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:48 GMT",
+                   "x-svrngs-refused: unasked"
+                 ],
+                 "refused": "unasked",
+                 "status": 403
+               },
+               "notes": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:51 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "post": {
+                 "body": "{\"error\":\"a carried app sends a lend JSON of 1 MiB at most, and nothing else\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 94",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:54 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "reads": {
+                 "body": "{\"lends\":[],\"new\":[{\"kind\":\"films\",\"lender\":\"cy\",\"name\":\"films\"}],\"unanswered\":[\"bo\"]}",
+                 "headers": [
+                   "content-length: 86",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:42 GMT"
+                 ],
+                 "refused": null,
+                 "status": 200
+               },
+               "removed": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:54 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "script": {
+                 "body": "{\"error\":\"Open it from your home page first.\",\"kind\":\"unasked\"}",
+                 "headers": [
+                   "content-length: 63",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:33:57 GMT",
+                   "x-svrngs-refused: unasked"
+                 ],
+                 "refused": "unasked",
+                 "status": 403
+               }
+             },
+             "cells": [
+               "Open ada’s films Opening it lets it write its own part of your group’s record, as you.",
+               "Open ProbeReads cy’s films. They can see it’s you, and what it asks for. cy’s films This app’s shared entries. Opening it lets it read but never write, as you in your group.",
+               "Open cy’s films Opening it lets it write its own part of your group’s record, as you.",
+               "Open cy’s notes Opening it lets it write its own part of your group’s record, as you.",
+               "bo's computer did not answer, so what they lend is not listed."
+             ],
+             "stopped": {
+               "act": {
+                 "body": "{\"error\":\"An app that reads your friends’ apps can’t write in the group’s record.\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 105",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:41 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "cookie": "",
+               "elsewhere": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:29 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "films": {
+                 "body": "{\"error\":\"Open it from your home page first.\",\"kind\":\"unasked\"}",
+                 "headers": [
+                   "content-length: 63",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:32 GMT",
+                   "x-svrngs-refused: unasked"
+                 ],
+                 "refused": "unasked",
+                 "status": 403
+               },
+               "notes": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:35 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "post": {
+                 "body": "{\"error\":\"a carried app sends a lend JSON of 1 MiB at most, and nothing else\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 94",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:38 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "reads": {
+                 "body": "{\"lends\":[],\"new\":[{\"kind\":\"films\",\"lender\":\"cy\",\"name\":\"films\"}],\"unanswered\":[\"bo\"]}",
+                 "headers": [
+                   "content-length: 86",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:26 GMT"
+                 ],
+                 "refused": null,
+                 "status": 200
+               },
+               "removed": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:38 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "script": {
+                 "body": "{\"error\":\"Open it from your home page first.\",\"kind\":\"unasked\"}",
+                 "headers": [
+                   "content-length: 63",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:41 GMT",
+                   "x-svrngs-refused: unasked"
+                 ],
+                 "refused": "unasked",
+                 "status": 403
+               }
+             },
+             "yes": {
+               "act": {
+                 "body": "{\"error\":\"An app that reads your friends’ apps can’t write in the group’s record.\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 105",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:19 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "cookie": "",
+               "elsewhere": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:07 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "films": {
+                 "body": "{\"films\":\"cy's films\"}",
+                 "headers": [
+                   "cache-control: no-store",
+                   "content-length: 22",
+                   "content-security-policy: sandbox",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:10 GMT",
+                   "x-content-type-options: nosniff"
+                 ],
+                 "refused": null,
+                 "status": 200
+               },
+               "notes": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:13 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "post": {
+                 "body": "{\"error\":\"a carried app sends a lend JSON of 1 MiB at most, and nothing else\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 94",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:16 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "reads": {
+                 "body": "{\"lends\":[{\"address\":\"http://ll1c47s86fdfduhs5v7f5rqdladmjvxczuu60paf9rjdru4ufauah574n1qxas.localhost:59107/svrngs-lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma6xu2lqzzth/\",\"kind\":\"films\",\"lender\":\"cy\",\"name\":\"films\",\"to\":\"http://ll1c47s86fdfduhs5v7f5rqdladmjvxczuu60paf9rjdru4ufauah574n1qxas.localhost:59107/svrngs-to?lender=8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394&lend=films\"}],\"unanswered\":[\"bo\"]}",
+                 "headers": [
+                   "content-length: 437",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:04 GMT"
+                 ],
+                 "refused": null,
+                 "status": 200
+               },
+               "removed": {
+                 "body": "{\"error\":\"this page does not read that; only what its lender declared it reads\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 96",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:16 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               },
+               "script": {
+                 "body": "{\"error\":\"a carried app reads data from a lend, nothing a browser runs\",\"kind\":\"closed\"}",
+                 "headers": [
+                   "content-length: 88",
+                   "content-type: application/json",
+                   "date: Fri, 13 Nov 2026 02:34:19 GMT",
+                   "x-svrngs-refused: closed"
+                 ],
+                 "refused": "closed",
+                 "status": 403
+               }
+             }
+           }
+           
+           thread 'opens::a_carried_app_reads_the_lends_it_declares_at_its_own_origin::chromium' (63307697) panicked at crates/svrngs-node/tests/browser/opens.rs:715:5:
+           assertion `left == right` failed: cy's films are read only after the yes that names them, twice: [
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "GET /films?n=1 HTTP/1.1\r\naccept: */*\r\nhost: localhost:55953\r\nx-svrngs-person: ada\r\nx-svrngs-key: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\r\nx-svrngs-user: ada-8a88e3dd7409f195\r\nx-svrngs-device: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\r\nauthorization: Readers films-for-apps\r\nx-svrngs-label: tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma6xu2lqzzth\r\nx-svrngs-app: ll1c47s86fdfduhs5v7f5rqdladmjvxczuu60paf9rjdru4ufauah574n1qxas\r\nx-svrngs-pages: house=none\r\n\r\n",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "GET /code.js HTTP/1.1\r\naccept: */*\r\nhost: localhost:55953\r\nx-svrngs-person: ada\r\nx-svrngs-key: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\r\nx-svrngs-user: ada-8a88e3dd7409f195\r\nx-svrngs-device: 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c\r\nauthorization: Readers films-for-apps\r\nx-svrngs-label: tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma6xu2lqzzth\r\nx-svrngs-app: ll1c47s86fdfduhs5v7f5rqdladmjvxczuu60paf9rjdru4ufauah574n1qxas\r\nx-svrngs-pages: house=none\r\n\r\n",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+               "",
+           ]
+             left: 74
+            right: 2
+           
+           
+           failures:
+               a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped::webkit
+               a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path::webkit
+               a_page_speaks_http_through_the_door_streaming_both_ways::webkit
+               acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit
+               opens::a_carried_app_reads_the_lends_it_declares_at_its_own_origin::chromium
+               opens::an_open_leads_home_then_to_a_lend_and_a_bookmark_opens_each_again::chromium
+           
+           test result: FAILED. 107 passed; 6 failed; 3 ignored; 0 measured; 2 filtered out; finished in 251.94s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+passed     types (21 s)
+passed     typed lint (1 s)
+passed     joining in a browser (128 s)
+passed     pages (64 s)
+failed     scenes (380 s)
+           warning: unused variable: `bo_at`
+              --> crates/svrngs/tests/scenes/films.rs:229:19
+               |
+           229 |     let (bo_lend, bo_at) = opened(bo.lent_by(&group, "Sam", "jellyfin").await);
+               |                   ^^^^^ help: if this is intentional, prefix it with an underscore: `_bo_at`
+               |
+               = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+           
+           warning: `svrngs` (test "scenes") generated 1 warning (run `cargo fix --test "scenes" -p svrngs` to apply 1 suggestion)
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+                Running tests/scenes/main.rs (target/debug/deps/scenes-51eb03ce3b4b7372)
+           
+           running 19 tests
+           test doc::doc::chromium ... ok
+           test creator::creator::chromium ... ok
+           test events::events::chromium ... ok
+           test films::films::chromium has been running for over 60 seconds
+           test give::give::chromium ... ok
+           test give_gone::give_gone::chromium ... ok
+           test give_move::give_move::chromium ... ok
+           test films::films::chromium ... FAILED
+           test grapevine::grapevine::chromium ... ok
+           test holyarrs::holyarrs::chromium has been running for over 60 seconds
+           test holyarrs::phone::webkit has been running for over 60 seconds
+           test holyarrs::holyarrs::chromium ... ok
+           test house_rules::house_rules::chromium ... ok
+           test keeping::keeping::chromium ... ok
+           test holyarrs::phone::webkit ... FAILED
+           test money::money::chromium ... ok
+           test life::life::chromium ... ok
+           test movie_night::movie_night::chromium ... ok
+           test pantry::pantry::chromium ... ok
+           test ports::ports::chromium ... ok
+           test redial::restarted::alone ... ok
+           test night::night::chromium has been running for over 60 seconds
+           test night::night::chromium ... ok
+           
+           failures:
+           
+           ---- films::films::chromium stdout ----
+           what Alex and Bo saw: {
+             "devices_apart": true,
+             "engine": "chromium",
+             "mw": false,
+             "people": {
+               "alex": {
+                 "account": "alex",
+                 "asked": true,
+                 "at": "<label>.localhost:54553",
+                 "browser": "147.0.7727.15",
+                 "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTQ1Mzc2MjgyMjA1",
+                 "logs": [
+                   "http 401 GET http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/svrngs-open?code=tjLX0kXW5Jjd8S3PXsx6I4mV2wvO23uy0owe9",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Capabilities/Full: net::ERR_ABORTED",
+                   "console.log: play() played",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing: net::ERR_ABORTED",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing/Progress: net::ERR_ABORTED",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing/Progress: net::ERR_ABORTED",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing/Progress: net::ERR_ABORTED",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing/Progress: net::ERR_ABORTED",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing/Progress: net::ERR_ABORTED",
+                   "failed: http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/Sessions/Playing/Progress: net::ERR_ABORTED"
+                 ],
+                 "name": "Alex",
+                 "open_ms": 9,
+                 "play_from": 3646,
+                 "received": {
+                   "bodies": 592,
+                   "body_bytes": 17713188,
+                   "frames": 7,
+                   "from_worker": 199,
+                   "no_body": 10,
+                   "responses": 606,
+                   "sockets": [
+                     "ws://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/socket?__svrngs_socket=jFgAuolOun3UK5B1J0ZWiHGDicHrFgX__fUaY3QlirQ",
+                     "ws://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/socket?__svrngs_socket=8Ardf7LtZGvy3-qaRVwAm8njVCpY_M-B1GIrDQY_9pc",
+                     "ws://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/socket?ApiKey=<its token>&__svrngs_socket=xzfwci-cphIQt0zGdiZPmnOtY89N828ZIqDMNPEM4K8"
+                   ]
+                 },
+                 "sessions": [
+                   {
+                     "client": "Jellyfin Web",
+                     "playing": true,
+                     "user": "alex"
+                   }
+                 ],
+                 "shown": "Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password",
+                 "shown_ms": 952,
+                 "signed_in_after": "alex",
+                 "signed_in_ms": 846,
+                 "socket": {
+                   "message_shown_ms": 22,
+                   "remote_control": true,
+                   "session": true
+                 },
+                 "streamed": {
+                   "from_worker": false,
+                   "ms": 1267,
+                   "origin": "http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553",
+                   "path": "/Videos/a8bbe3f6658310ce6caa1f7dedcd61b9/stream.mp4",
+                   "status": 206,
+                   "type": "video/mp4"
+                 },
+                 "token": "held",
+                 "user": "alex"
+               },
+               "bo": {
+                 "account": "bo",
+                 "at": "<label>.localhost:54553",
+                 "browser": "147.0.7727.15",
+                 "logs": [
+                   "http 401 GET http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/svrngs-open?code=tjLX0kXW5Jjd8S3PXsx6I4mV2wvO23uy0owe9",
+                   "http 401 POST http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/svrngs-open?code=tjLX0kXW5Jjd8S3PXsx6I4mV2wvO23uy0owe9"
+                 ],
+                 "name": "Bo",
+                 "open_ms": 9,
+                 "received": {
+                   "bodies": 2,
+                   "body_bytes": 6677,
+                   "frames": 0,
+                   "from_worker": 0,
+                   "no_body": 0,
+                   "responses": 3,
+                   "sockets": []
+                 },
+                 "shown_ms": null,
+                 "stopped": "a sign-in or home: page.waitForSelector: Timeout 60000ms exceeded.; the page says: Open svrngs from your computer Open svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you. T",
+                 "token": null,
+                 "user": "bo"
+               }
+             },
+             "way": "computer"
+           }
+           
+           thread 'tokio-rt-worker' (63357213) panicked at crates/svrngs/tests/scenes/films.rs:253:9:
+           bo gets to their film's stream: {
+             "account": "bo",
+             "at": "<label>.localhost:54553",
+             "browser": "147.0.7727.15",
+             "logs": [
+               "http 401 GET http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/svrngs-open?code=tjLX0kXW5Jjd8S3PXsx6I4mV2wvO23uy0owe9",
+               "http 401 POST http://wn0w00xsk72gq1j7hj785rx3lc62d3atld65wwgvt8w4lzvm6lstbbq3n1prdr.localhost:54553/svrngs-open?code=tjLX0kXW5Jjd8S3PXsx6I4mV2wvO23uy0owe9"
+             ],
+             "name": "Bo",
+             "open_ms": 9,
+             "received": {
+               "bodies": 2,
+               "body_bytes": 6677,
+               "frames": 0,
+               "from_worker": 0,
+               "no_body": 0,
+               "responses": 3,
+               "sockets": []
+             },
+             "shown_ms": null,
+             "stopped": "a sign-in or home: page.waitForSelector: Timeout 60000ms exceeded.; the page says: Open svrngs from your computer Open svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you. T",
+             "token": null,
+             "user": "bo"
+           }
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- holyarrs::phone::webkit stdout ----
+           HolyArrs scene: [{"bar":"H1","name":"Bo","url":"https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm.group.svrnme.test:58248/","verdict":"passed"},{"approve_as_bo":403,"asker":"Bo","bar":"H2","downloads_before_approval":0,"request_id":1,"verdict":"passed"},{"bar":"H3","bytes":19549723,"downloaded_session":19549723,"file":"Copper Lighthouse (2017)/Copper Lighthouse (2017) 720p WEB.mp4","sha256":"2cfb60a705dc8cf821cf126cc612d70451bdebe0da353672a1022a87aa6671f1","verdict":"passed"},{"after":{"cards":["Copper Lighthouse (2017) (2017)Watch from Ana’s library"],"said":"Ana’s library: 1 film\n"},"bar":"H4","before":{"cards":[],"said":"Ana’s library: nothing by that name\n"},"verdict":"passed"},{"bar":"H5","item":"75a4d3f38841588d2c28045c322f6e2a","stream":{"from_worker":true,"ms":3339,"origin":"https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248","path":"/Videos/75a4d3f38841588d2c28045c322f6e2a/stream.mp4","status":206,"type":"video/mp4"},"user":"bo","verdict":"passed"},{"bar":"H6","removed":{"refused":"removed","status":403},"stranger":"refused","stream_cut_ms":988,"verdict":"passed"}]
+           
+           thread 'tokio-rt-worker' (63367786) panicked at crates/svrngs/tests/scenes/holyarrs.rs:210:5:
+           HolyArrs scene completed: {
+             "asks": {
+               "body": {
+                 "asks": [
+                   {
+                     "albums": [],
+                     "also_declined": [],
+                     "asked_at": "2026-11-13T02:42:45.977592087Z",
+                     "asked_by": {
+                       "id": 2,
+                       "name": "Bo"
+                     },
+                     "auto_approved": false,
+                     "available_at": "2026-11-13T02:42:59.973601636Z",
+                     "decided_at": "2026-11-13T02:42:53.428878531Z",
+                     "decided_by": {
+                       "id": 1,
+                       "name": "Ana"
+                     },
+                     "episodes": [],
+                     "four_k": false,
+                     "future_only": false,
+                     "id": 1,
+                     "kind": "movie",
+                     "mine": false,
+                     "name": "Copper Lighthouse",
+                     "people": [
+                       {
+                         "asked_at": "2026-11-13T02:42:45.977592087Z",
+                         "id": 2,
+                         "name": "Bo"
+                       }
+                     ],
+                     "ref": "tmdb:900008",
+                     "seasons": [],
+                     "state": "available",
+                     "state_label": "Ready to watch",
+                     "title_id": 1,
+                     "tmdb_id": "900008",
+                     "year": 2017
+                   }
+                 ]
+               },
+               "status": 200
+             },
+             "at": "Observing the removed member",
+             "before": {
+               "cards": [],
+               "said": "Ana’s library: nothing by that name\n"
+             },
+             "cancellations": [
+               {
+                 "at": "Observing the removed member",
+                 "message": "FetchEvent.respondWith received an error: Error: error reading a body from connection",
+                 "stack": "",
+                 "who": "bo"
+               }
+             ],
+             "copy": "https://ll1c47s86fdfduhs5v7f5rqdlbw9arcrr3xsd3273h078nj0vxptj5frr2smau.group.svrnme.test:58248/svrngs-reads/j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr/web/#/details?id=75a4d3f38841588d2c28045c322f6e2a&serverId=8832b0fef39d4f71bef38a7748243600",
+             "errors": [
+               {
+                 "at": "Leaving Jellyfin for HolyArrs",
+                 "message": "Fetch API cannot load https: /j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/Sessions/Playing due to access control checks.",
+                 "stack": "Fetch API cannot load https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/Sessions/Playing due to access control checks.\n    at unknown (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/shim.js?v=8a05b1522407:134:25)\n    at value (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:14708)\n    at unknown (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:50937)\n    at l (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:4119)\n    at unknown (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:3869)\n    at d (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:9580)\n    at a (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:9784)",
+                 "who": "bo"
+               },
+               {
+                 "at": "Observing the removed member",
+                 "message": "FetchEvent.respondWith received an error: Error: error reading a body from connection",
+                 "stack": "",
+                 "who": "bo"
+               }
+             ],
+             "fixture": {
+               "calls": [
+                 {
+                   "at": "2026-11-13T02:42:12.980Z",
+                   "method": "POST",
+                   "path": "/v1/installations",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:12.983Z",
+                   "method": "GET",
+                   "path": "/v1/music/packages",
+                   "query": "?limit=200&since=0"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:12.997Z",
+                   "method": "GET",
+                   "path": "/v1/music/pools",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:12.998Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/genre/movie/list",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.247Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/genre/movie/list",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.257Z",
+                   "method": "GET",
+                   "path": "/release.torrent",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.980Z",
+                   "method": "GET",
+                   "path": "/v1/music/charts",
+                   "query": "?kind=albums&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.982Z",
+                   "method": "GET",
+                   "path": "/v1/music/charts",
+                   "query": "?kind=songs&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.984Z",
+                   "method": "GET",
+                   "path": "/v1/music/lists/shelves",
+                   "query": "?region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.986Z",
+                   "method": "GET",
+                   "path": "/v1/music/genres",
+                   "query": "?region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:13.989Z",
+                   "method": "GET",
+                   "path": "/v1/lists/music-trending",
+                   "query": "?kind=album&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:14.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=28"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:15.979Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/trending/movie/week",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:16.031Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/genre/tv/list",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:16.087Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/trending/tv/week",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:16.128Z",
+                   "method": "GET",
+                   "path": "/announce",
+                   "query": "?info_hash=%eaO%ac%3fx9%00z*6%94%93%ef%86%0b%c8)%9e%ea%ea&peer_id=-qB5140-ldM)SfKUl!KS&port=6881&uploaded=0&downloaded=0&left=0&corrupt=0&key=A52D0731&event=started&numwant=200&compact=1&no_peer_id=1&supportcrypto=1&redundant=0"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:16.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=35"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=18"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.994Z",
+                   "method": "GET",
+                   "path": "/v1/lists/music-trending",
+                   "query": "?kind=artist&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.995Z",
+                   "method": "GET",
+                   "path": "/v1/lists/music-trending",
+                   "query": "?kind=fresh&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.996Z",
+                   "method": "GET",
+                   "path": "/v1/music/new",
+                   "query": "?window=tracks"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.996Z",
+                   "method": "GET",
+                   "path": "/v1/music/new",
+                   "query": "?window=week"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.997Z",
+                   "method": "GET",
+                   "path": "/v1/music/new",
+                   "query": "?window=recent"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.997Z",
+                   "method": "GET",
+                   "path": "/v1/music/new",
+                   "query": "?window=upcoming"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.998Z",
+                   "method": "GET",
+                   "path": "/v1/music/charts",
+                   "query": "?kind=albums&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.998Z",
+                   "method": "GET",
+                   "path": "/v1/music/charts",
+                   "query": "?kind=songs&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.999Z",
+                   "method": "GET",
+                   "path": "/v1/music/genres",
+                   "query": "?region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:18.999Z",
+                   "method": "GET",
+                   "path": "/v1/music/charts",
+                   "query": "?kind=songs&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:19.000Z",
+                   "method": "GET",
+                   "path": "/v1/music/lists/shelves",
+                   "query": "?region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:19.000Z",
+                   "method": "GET",
+                   "path": "/v1/music/charts",
+                   "query": "?kind=albums&region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:19.000Z",
+                   "method": "GET",
+                   "path": "/v1/music/genres",
+                   "query": "?region=global"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:19.001Z",
+                   "method": "GET",
+                   "path": "/v1/control",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:20.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/trending/movie/week",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:22.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/tv",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=35"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:24.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/tv",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=18"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:26.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=878"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:28.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=27"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:30.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=horror"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:32.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=supernatural+horror"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:34.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=supernatural"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:36.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=science+fiction"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:37.590Z",
+                   "method": "GET",
+                   "path": "/readyz",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:38.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=14"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:40.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=magic"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:42.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=ghost"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:44.525Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/movie",
+                   "query": "?include_adult=false&query=Copper"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:44.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=space"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.108Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/movie/900008",
+                   "query": "?append_to_response=release_dates%2Cimages%2Ccredits%2Ctranslations%2Calternative_titles&include_image_language=en%2Cnull"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.160Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/movie/900008",
+                   "query": "?append_to_response=release_dates%2Cimages%2Ccredits%2Crecommendations%2Cvideos%2Ckeywords&include_image_language=en%2Cnull"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.209Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/movie/900008/watch/providers",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.281Z",
+                   "method": "GET",
+                   "path": "/v1/wikidata/title/movie/900008",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.282Z",
+                   "method": "GET",
+                   "path": "/v1/art/movie/900008",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.283Z",
+                   "method": "GET",
+                   "path": "/v1/ratings/movie/900008",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.353Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/movie/900008/reviews",
+                   "query": "?page=1"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:45.981Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/movie/upcoming",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.031Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/tv/on_the_air",
+                   "query": "?language=en-US"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.082Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&primary_release_date.gte=2024-11-13&sort_by=vote_average.desc&vote_average.gte=7.5&vote_count.gte=300"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.131Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/tv",
+                   "query": "?first_air_date.gte=2026-10-14&first_air_date.lte=2026-11-27&include_adult=false&language=en-US&sort_by=popularity.desc"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.182Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/tv",
+                   "query": "?first_air_date.gte=2024-11-13&include_adult=false&language=en-US&sort_by=vote_average.desc&vote_average.gte=7.5&vote_count.gte=300"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.232Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=vote_average.desc&vote_average.gte=7.3&vote_count.gte=100"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.979Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/tv",
+                   "query": "?include_adult=false&language=en-US&sort_by=vote_average.desc&vote_average.gte=7.3&vote_count.gte=100"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:46.979Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=dragon"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:48.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=10749"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:50.984Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=haunted+house"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:52.979Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=sword+and+sorcery"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:53.940Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/movie/900008",
+                   "query": "?append_to_response=release_dates%2Cimages%2Ccredits%2Ctranslations%2Calternative_titles&include_image_language=en%2Cnull"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:54.979Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=time+travel"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:55.945Z",
+                   "method": "GET",
+                   "path": "/source",
+                   "query": "?t=caps"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:55.949Z",
+                   "method": "GET",
+                   "path": "/source",
+                   "query": "?cat=2000&imdbid=9000080&limit=50&t=movie"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:55.964Z",
+                   "method": "GET",
+                   "path": "/release.torrent",
+                   "query": ""
+                 },
+                 {
+                   "at": "2026-11-13T02:42:56.439Z",
+                   "method": "GET",
+                   "path": "/announce",
+                   "query": "?info_hash=%eaO%ac%3fx9%00z*6%94%93%ef%86%0b%c8)%9e%ea%ea&peer_id=-qB5140-rNZUCdHl5lH)&port=6882&uploaded=0&downloaded=0&left=19549723&corrupt=0&key=8D083F63&event=started&numwant=200&compact=1&no_peer_id=1&supportcrypto=1&redundant=0"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:56.650Z",
+                   "method": "GET",
+                   "path": "/announce",
+                   "query": "?info_hash=%eaO%ac%3fx9%00z*6%94%93%ef%86%0b%c8)%9e%ea%ea&peer_id=-qB5140-rNZUCdHl5lH)&port=6882&uploaded=0&downloaded=19549723&left=0&corrupt=0&key=8D083F63&event=completed&numwant=200&compact=1&no_peer_id=1&supportcrypto=1&redundant=0"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:56.981Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=demon"
+                 },
+                 {
+                   "at": "2026-11-13T02:42:58.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=possession"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:00.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=witch"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:02.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=alien"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:04.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=fairy+tale"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:06.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=dystopia"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:08.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=psychological+thriller"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:10.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=robot"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:12.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=psychological+horror"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:14.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=80"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:16.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=paranoia"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:18.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=9648"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:20.981Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/search/keyword",
+                   "query": "?query=madness"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:22.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/movie",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=16"
+                 },
+                 {
+                   "at": "2026-11-13T02:43:24.980Z",
+                   "method": "GET",
+                   "path": "/v1/tmdb/discover/tv",
+                   "query": "?include_adult=false&language=en-US&sort_by=popularity.desc&vote_count.gte=20&with_genres=80"
+                 }
+               ],
+               "unexpected": []
+             },
+             "logs": [
+               "SIGN: adopted the approver of j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm's newest open and deleted its cookie",
+               "OPEN: j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass",
+               "SIGN: adopted the approver of ll1c47s86fdfduhs5v7f5rqdlbw9arcrr3xsd3273h078nj0vxptj5frr2smau's newest open and deleted its cookie",
+               "OPEN: ll1c47s86fdfduhs5v7f5rqdlbw9arcrr3xsd3273h078nj0vxptj5frr2smau's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass",
+               "SIGN: adopted the approver of j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm's newest open and deleted its cookie",
+               "OPEN: j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass",
+               "SIGN: adopted the approver of ll1c47s86fdfduhs5v7f5rqdlbw9arcrr3xsd3273h078nj0vxptj5frr2smau's newest open and deleted its cookie",
+               "OPEN: ll1c47s86fdfduhs5v7f5rqdlbw9arcrr3xsd3273h078nj0vxptj5frr2smau's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass",
+               "SIGN: adopted the approver of j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr's newest open and deleted its cookie",
+               "OPEN: j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass",
+               "SIGN: adopted the approver of j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm's newest open and deleted its cookie",
+               "OPEN: j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm's open is this browser's, its holder proved and kept",
+               "OPEN: the lend’s worker runs; handing it the pass"
+             ],
+             "observed": {
+               "body": {
+                 "downloads": [
+                   {
+                     "ConfirmedEdition": "",
+                     "CreatedAt": "2026-11-13T02:42:55.964342794Z",
+                     "CreatedBy": {
+                       "id": 16,
+                       "kind": "job"
+                     },
+                     "DownloaderID": 1,
+                     "ETA": null,
+                     "ExternalID": "ea4fac3f7839007a2a369493ef860bc8299eeaea",
+                     "FilesSeen": [
+                       {
+                         "name": "Copper.Lighthouse.2017.720p.WEB-DL.H264-SVRNGS.mp4",
+                         "size": 19549723
+                       }
+                     ],
+                     "FinishedAt": "2026-11-13T02:42:58.970823736Z",
+                     "ID": 1,
+                     "Peers": 0,
+                     "Progress": 1,
+                     "ProgressAt": "2026-11-13T02:42:55.955955634Z",
+                     "ReleaseID": 1,
+                     "SavePath": "/data/downloads",
+                     "Seeds": 0,
+                     "SlotIDs": [
+                       1
+                     ],
+                     "Speed": 0,
+                     "StartedAt": null,
+                     "StartedBy": {
+                       "id": 16,
+                       "kind": "job"
+                     },
+                     "State": "finished",
+                     "StateReason": null,
+                     "UpSpeed": 0,
+                     "UpdatedAt": "2026-11-13T02:42:58.970877695Z",
+                     "UpdatedBy": {
+                       "kind": "system"
+                     }
+                   }
+                 ]
+               },
+               "status": 200
+             },
+             "runtime": {
+               "browser": "26.4",
+               "jellyfin": "12.0.0",
+               "source_head": "c7b14e092aa7758bad8a749d04afc44edf52f769"
+             },
+             "search": {
+               "cards": [
+                 "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+               ],
+               "said": "Ana’s library: 1 film\n"
+             },
+             "steps": [
+               {
+                 "bar": "H1",
+                 "name": "Bo",
+                 "url": "https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm.group.svrnme.test:58248/",
+                 "verdict": "passed"
+               },
+               {
+                 "approve_as_bo": 403,
+                 "asker": "Bo",
+                 "bar": "H2",
+                 "downloads_before_approval": 0,
+                 "request_id": 1,
+                 "verdict": "passed"
+               },
+               {
+                 "bar": "H3",
+                 "bytes": 19549723,
+                 "downloaded_session": 19549723,
+                 "file": "Copper Lighthouse (2017)/Copper Lighthouse (2017) 720p WEB.mp4",
+                 "sha256": "2cfb60a705dc8cf821cf126cc612d70451bdebe0da353672a1022a87aa6671f1",
+                 "verdict": "passed"
+               },
+               {
+                 "after": {
+                   "cards": [
+                     "Copper Lighthouse (2017) (2017)Watch from Ana’s library"
+                   ],
+                   "said": "Ana’s library: 1 film\n"
+                 },
+                 "bar": "H4",
+                 "before": {
+                   "cards": [],
+                   "said": "Ana’s library: nothing by that name\n"
+                 },
+                 "verdict": "passed"
+               },
+               {
+                 "bar": "H5",
+                 "item": "75a4d3f38841588d2c28045c322f6e2a",
+                 "stream": {
+                   "from_worker": true,
+                   "ms": 3339,
+                   "origin": "https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248",
+                   "path": "/Videos/75a4d3f38841588d2c28045c322f6e2a/stream.mp4",
+                   "status": 206,
+                   "type": "video/mp4"
+                 },
+                 "user": "bo",
+                 "verdict": "passed"
+               },
+               {
+                 "bar": "H6",
+                 "removed": {
+                   "refused": "removed",
+                   "status": 403
+                 },
+                 "stranger": "refused",
+                 "stream_cut_ms": 988,
+                 "verdict": "passed"
+               }
+             ],
+             "stopped": {
+               "error": "AssertionError [ERR_ASSERTION]: H8: no unexpected browser script errors\n+ actual - expected\n\n+ [\n+   {\n+     at: 'Leaving Jellyfin for HolyArrs',\n+     message: 'Fetch API cannot load https: /j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/Sessions/Playing due to access control checks.',\n+     stack: 'Fetch API cannot load https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/Sessions/Playing due to access control checks.\\n' +\n+       '    at unknown (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/shim.js?v=8a05b1522407:134:25)\\n' +\n+       '    at value (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:14708)\\n' +\n+       '    at unknown (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:50937)\\n' +\n+       '    at l (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:4119)\\n' +\n+       '    at unknown (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:3869)\\n' +\n+       '    at d (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:9580)\\n' +\n+       '    at a (https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftbbq3n1prdr.group.svrnme.test:58248/web/node_modules.jellyfin-apiclient.bundle.js?92243be6e1b950a9de11:2:9784)',\n+     who: 'bo'\n+   }\n+ ]\n- []",
+               "text": "Skip to content\nHome\nExplore\nLibrary\nSearch\n2\nRequests\n\nMore\n, items need attention\nGood evening, Bo\nHome\nSomething you asked for has arrived.\nNew for you\n1\narrived in the last two weeks\nRequests\nNothing waiting\nAsk for something on Explore\nLibrary\n1\n1 movie · 0 shows · 0 artists\nExplore\nFind something new\nPick what to ask for next\nNew & Popular\nWhat's trending\nTop 10s and coming soon\nSearch\nLook anything up\nBy name\nNew today\nNew in the last two weeks\nSee allNew today\nCL\nCopper Lighthouse\nCopper Lighthouse\nMovie·New movie\nReady to watch\nCopper Lighthouse (2017) is in the Library and ready to watch\nOpen\n\nRequest approved\nCopper Lighthouse (2017) was approved by an admin\nRequests\n\n",
+               "url": "https://j34pmbpqgf1zzfxdc4f321kb2zrljl9ftstut79m2l5z1wbf9tftf8zzb7p4bm.group.svrnme.test:58248/"
+             }
+           }
+           
+           
+           failures:
+               films::films::chromium
+               holyarrs::phone::webkit
+           
+           test result: FAILED. 17 passed; 2 failed; 0 ignored; 0 measured; 0 filtered out; finished in 377.66s
+           
+           error: test failed, to rerun pass `-p svrngs --test scenes`
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene give (chromium)
+never-ran  scene give_gone (chromium): Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF
+never-ran  scene give_move (chromium): Error: unable to connect to Podman socket: failed to connect: ssh: handshake failed: EOF
+failed     scene films (chromium)
+passed     scene grapevine (chromium)
+failed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (56 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+passed     playback (110 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	411	passed	3840	passed
+           computer	bo	360	passed	4417	passed
+           wildcard	sam	336	passed	19177	failed
+           wildcard	bo	505	passed	3601	passed
+           of 12 here since 2026-11-13T01:42:52Z: 4 missed 5 s through a lend, 7 straight; 8 ended at a load above 12 cores
+passed     app laws (42 s)
+note       took 1922 s in all
+exit=1 2026-11-13T02:49:07Z 18:49  up 7 days, 22:59, 8 users, load averages: 14.24 14.99 15.47

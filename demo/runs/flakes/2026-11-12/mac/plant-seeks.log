@@ -1,0 +1,50 @@
+17:50  up 7 days, 22 hrs, 8 users, load averages: 4.32 12.56 13.30
+   Compiling svrngs-node v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/flake-wt/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.62s
+     Running tests/conformance.rs (target/debug/deps/conformance-aa8f5f8ae4d39052)
+
+running 4 tests
+test seeks_back_to_back::on_a_computer::chromium ... FAILED
+test seeks_back_to_back::on_a_computer::webkit ... ok
+test seeks_back_to_back::on_a_phone_with_the_wildcard::chromium ... FAILED
+test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit ... ok
+
+failures:
+
+---- seeks_back_to_back::on_a_computer::chromium stdout ----
+computer  chromium sam  seeks back to back                 failed
+computer  chromium bo   seeks back to back                 failed
+
+thread 'seeks_back_to_back::on_a_computer::chromium' (63000174) panicked at crates/svrngs-node/tests/conformance.rs:753:5:
+the seeks back to back failed, the host at 2026-11-13T01:50:24Z 17:50 up 7 days, 22 hrs, 8 users, load averages: 3.96 12.07 13.11 on 12 cores:
+computer  chromium sam  seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+computer  chromium bo   seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- seeks_back_to_back::on_a_phone_with_the_wildcard::chromium stdout ----
+wildcard  chromium sam  seeks back to back                 failed
+wildcard  chromium bo   seeks back to back                 failed
+
+thread 'seeks_back_to_back::on_a_phone_with_the_wildcard::chromium' (63000176) panicked at crates/svrngs-node/tests/conformance.rs:753:5:
+the seeks back to back failed, the host at 2026-11-13T01:50:24Z 17:50 up 7 days, 22 hrs, 8 users, load averages: 3.96 12.07 13.11 on 12 cores:
+wildcard  chromium sam  seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+wildcard  chromium bo   seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+
+
+failures:
+    seeks_back_to_back::on_a_computer::chromium
+    seeks_back_to_back::on_a_phone_with_the_wildcard::chromium
+
+test result: FAILED. 2 passed; 2 failed; 0 ignored; 0 measured; 8 filtered out; finished in 34.77s
+
+error: test failed, to rerun pass `-p svrngs-node --test conformance`
+exit=101
+computer  chromium sam  seeks back to back                 failed
+computer  chromium bo   seeks back to back                 failed
+computer  webkit   sam  seeks back to back                 failed, a rate
+computer  webkit   bo   seeks back to back                 failed, a rate
+wildcard  chromium sam  seeks back to back                 failed
+wildcard  chromium bo   seeks back to back                 failed
+wildcard  webkit   sam  seeks back to back                 failed, a rate
+wildcard  webkit   bo   seeks back to back                 failed, a rate
+17:50  up 7 days, 22:01, 8 users, load averages: 6.37 11.79 12.97

@@ -1,0 +1,35 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.35s
+     Running tests/browser/main.rs (target/debug/deps/browser-f402080bdec841b1)
+
+running 11 tests
+test guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it::chromium ... ok
+test playback::a_lent_film_plays_and_seeks_under_its_worker::chromium ... ok
+test acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit ... ok
+test guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it::chromium ... ok
+test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit ... ok
+test a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit ... ok
+test playback::a_lent_film_plays_and_seeks_under_its_worker::webkit ... ok
+test a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit ... ok
+test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit ... ok
+test carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium has been running for over 60 seconds
+test carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit has been running for over 60 seconds
+test carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium ... ok
+test carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 107 filtered out; finished in 76.44s
+
+browser-exit=0
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.45s
+     Running tests/conformance.rs (target/debug/deps/conformance-aa8f5f8ae4d39052)
+
+running 4 tests
+test seeks_back_to_back::on_a_computer::chromium ... ok
+test seeks_back_to_back::on_a_phone_with_the_wildcard::chromium ... ok
+test seeks_back_to_back::on_a_computer::webkit has been running for over 60 seconds
+test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit has been running for over 60 seconds
+test seeks_back_to_back::on_a_computer::webkit ... ok
+test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 80.44s
+
+conf-exit=0

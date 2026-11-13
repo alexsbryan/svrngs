@@ -1,0 +1,167 @@
+diff --git a/apps/jellyfin/check/night.mjs b/apps/jellyfin/check/night.mjs
+index ecd1627b..fa57d947 100644
+--- a/apps/jellyfin/check/night.mjs
++++ b/apps/jellyfin/check/night.mjs
+@@ -5,7 +5,7 @@
+ // `phone`), one at a time, all signed in as the room's one account.
+ //
+ //   node night.mjs tv|five '<json: {room, link, server, profile, account,
+-//     people?: [{name, user, engine, device?, film}]}>'
++//     until?, people?: [{name, user, engine, device?, film, film_id?}]}>'
+ //   env: SECRETS (the passwords), JF (the lender's Jellyfin), ADMIN (the
+ //   lender's token, to read its sessions and nothing else), DUMP (where
+ //   every phone's responses are written, and the TV's requests)
+@@ -18,12 +18,19 @@
+ //         the film they picked (its name), then pausing and seeking it from
+ //         their phone; with `direct`, the baseline with no svrngs anywhere:
+ //         the TV (signed in typing `account`'s) and each phone (a browser
+-//         as a computer's) straight at Sam's Jellyfin, `room` its /web/
++//         as a computer's) straight at Sam's Jellyfin, `room` its /web/;
++//         with `until: "streamed"` (the night scene, crates/svrngs/tests/
++//         scenes/night.rs), each turn ends at the TV's first bytes of the
++//         film (`film_id`, person.mjs `streamed`), nothing timed, paused or
++//         sought: that a browser decodes it is the browser tests' playback
++//         step's, and pausing and seeking from the phone ride on the TV's
++//         player having started (jellyfin-web reports a play to Jellyfin
++//         once the <video>'s play() settles), so they are Demo B's alone
+ //
+ // Prints one JSON line. A step that did not happen within its time is
+ // null with what the page showed: never a number guessed.
+ import fs from 'node:fs';
+-import { enter, lender, shown, timed, watch } from './person.mjs';
++import { enter, lender, shown, streamed, timed, watch } from './person.mjs';
+ import { kept, open, playOn, screen, session, until, video } from './tv.mjs';
+ 
+ const [part, raw] = process.argv.slice(2);
+@@ -124,8 +131,16 @@ async function turn(s, tv, p) {
+   r.header_after_pick = await header();
+   // Play; the clock stops when the TV plays it.
+   const since = await s.page.evaluate(() => performance.now());
++  const arrived = args.until === 'streamed' && streamed(s.context, p.film_id, 60_000);
+   r.play_at = Date.now() - T0;
+   await page.locator('.mainDetailButtons .btnPlay:visible').first().click({ force: true });
++  if (arrived) {
++    r.streamed = await arrived;
++    r.session = await session(jf, tv.device);
++    if (r.streamed.ms === null)
++      r.stopped = `the TV asked no stream of it within 60 s of Play; the TV says: ${await shown(s.page)}`;
++    return r;
++  }
+   // Both: the TV's <video> playing one started since, and the lender's
+   // Jellyfin naming their film as the TV's — each time kept.
+   const t0 = Date.now();
+diff --git a/crates/svrngs/tests/scenes/night.rs b/crates/svrngs/tests/scenes/night.rs
+index f3f6201e..f0530aad 100644
+--- a/crates/svrngs/tests/scenes/night.rs
++++ b/crates/svrngs/tests/scenes/night.rs
+@@ -7,8 +7,15 @@
+ //! browser at that address, is signed in by Quick Connect from Dee's
+ //! phone, as the room. Then Ana, new to all of it, opens the link on her
+ //! phone, gives her name, opens Sam's Jellyfin from the list, signs in as
+-//! the room, picks a film, casts it to the TV, and pauses and seeks it
+-//! there from her phone.
++//! the room, picks a film, casts it to the TV and presses Play: the TV
++//! asks the film's stream at the room's address and receives it, 200 or
++//! 206 with a video/* type (person.mjs `streamed`). That a browser decodes
++//! a film, and plays again within 5 s of a seek, is the playback step's
++//! (crates/svrngs-node/tests/browser/playback.rs). Pausing and seeking it
++//! from her phone, and her three minutes from the link, are Demo B's
++//! recorded run's (night.mjs without `until`): Jellyfin hears of the TV's
++//! play, and acts on a pause or a seek of it, only once the TV's <video>
++//! has started.
+ //!
+ //! Sam's Jellyfin is the films check's scratch one (films.rs
+ //! [`Jellyfin`]), never-ran where Jellyfin is not installed; the TV and
+@@ -18,7 +25,7 @@
+ //! The invariant it relies on: **a device in the room reaches a lend
+ //! through the computer it was opened on** (room.rs, "a device in the
+ //! room is this person's own"): the TV is in no group and holds no key,
+-//! and plays Sam's film through Dee's computer; and nobody makes an
++//! and receives Sam's film through Dee's computer; and nobody makes an
+ //! account: Jellyfin's users after are those Sam made (demo/b.md, "After").
+ 
+ use serde_json::{json, Value};
+@@ -26,7 +33,14 @@ use svrngs_node::room::Served;
+ 
+ use crate::films::{node, Jellyfin};
+ use crate::harness::{relay_url, Engine};
+-use crate::people::{at_page_host, late, Scene};
++use crate::people::{at_page_host, Scene};
++
++/// `scheme://host:port` of the room's address `at`, as a browser writes a
++/// response's origin.
++fn origin(at: &str) -> &str {
++    let host = at.find("://").map_or(0, |i| i + 3);
++    at[host..].find('/').map_or(at, |end| &at[..host + end])
++}
+ 
+ /// Jellyfin's users by name, as Sam's own token reads them.
+ pub(crate) async fn users(jf: &Jellyfin) -> Vec<String> {
+@@ -157,6 +171,7 @@ async fn night(engine: Engine) {
+             json!({
+                 "room": room, "link": link, "server": jf.env("SERVER"),
+                 "profile": profile, "account": "room", "people": people,
++                "until": "streamed",
+             })
+             .to_string(),
+         )
+@@ -180,7 +195,7 @@ async fn night(engine: Engine) {
+         Engine::Chromium => json!("Pixel 7"),
+         Engine::Webkit => Value::Null,
+     };
+-    let ana = json!([{ "name": "Ana", "user": "ana", "engine": engine.as_str(), "device": device, "film": "Test Pattern Two" }]);
++    let ana = json!([{ "name": "Ana", "user": "ana", "engine": engine.as_str(), "device": device, "film": "Test Pattern Two", "film_id": jf.env("TWO") }]);
+     let night = node("night.mjs", &["five", &args(&links["https"], ana)], &env).await;
+     eprintln!("the evening: {night:#}");
+     assert!(night.get("stopped").is_none(), "{night:#}");
+@@ -189,18 +204,22 @@ async fn night(engine: Engine) {
+         ana.get("stopped").is_none_or(Value::is_null),
+         "Ana gets from the link to the film on the TV: {ana:#}"
+     );
+-    if ana["within_3_min"] != true {
+-        late(format!(
+-            "Ana's film does not play on the TV within three minutes of the link: {ana:#}"
+-        ))
+-        .await;
+-    }
+-    if ana["pause_seek_within_10s"] != true {
+-        late(format!(
+-            "Ana does not pause and seek it on the TV from her phone within 10 s: {ana:#}"
+-        ))
+-        .await;
+-    }
++    // The TV received her film at the room's address, and asked nowhere
++    // else: it reaches the lend through Dee's computer alone.
++    assert!(
++        ana["streamed"]["ms"].is_number(),
++        "the TV receives Ana's film after her Play: {ana:#}"
++    );
++    assert_eq!(
++        ana["streamed"]["origin"].as_str(),
++        Some(origin(room)),
++        "the TV's film comes from the room's address: {ana:#}"
++    );
++    assert_eq!(
++        night["asked"]["elsewhere"],
++        json!([]),
++        "the TV asks nothing off the room's address: {night:#}"
++    );
+ 
+     // Nobody made an account.
+     assert_eq!(
+diff --git a/demo/b.md b/demo/b.md
+index 50476652..3e651c88 100644
+--- a/demo/b.md
++++ b/demo/b.md
+@@ -27,8 +27,9 @@ svrngs logs and Jellyfin's log are kept.
+ room"), which nobody is told; the dry run of 2026-10-06 took them on one
+ computer, the TV a browser at the room address and the five phones
+ through the page (`runs/b/2026-10-06/`), and the movie-night scene plays
+-them on every gate, a newcomer's phone for the five
+-(`crates/svrngs/tests/scenes/night.rs`). Set up before the evening: Sam
++them on every gate up to the film's stream reaching the TV, a newcomer's
++phone for the five (`crates/svrngs/tests/scenes/night.rs`; the pause, the
++seek and the three minutes are this run's alone). Set up before the evening: Sam
+ runs `svrngs new <group> --origin <page>`, which prints the group's link,
+ `svrngs://join/<token>`, and the same link on the page's address, for a
+ phone, and keeps running; beside it, `svrngs share 8096 --group <group>`, which prints how

@@ -1,0 +1,698 @@
+17:48  up 7 days, 21:58, 8 users, load averages: 4.84 16.11 14.47
+   Compiling svrngs-node v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/flake-wt/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.11s
+     Running tests/browser/main.rs (target/debug/deps/browser-f402080bdec841b1)
+
+running 4 tests
+test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit ... FAILED
+test a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit ... FAILED
+test a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit ... FAILED
+test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit ... FAILED
+
+failures:
+
+---- a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit stdout ----
+the hand-over's run: {
+  "answered": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "answeredAgain": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "handedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:28.522Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:28.552Z RUNTIME: this build's 9 pieces are saved here\n2026-11-13T01:48:28.554Z RUNTIME: 0 older build(s) dropped\n2026-11-13T01:48:28.559Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s)\n2026-11-13T01:48:28.603Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:28.603Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:28.604Z LAYER key: ok — the key 450f1fa0e1cf12729bdaf8c5c2ef1a01c31a0a712666b5030aa0d2f00069f2c1\n2026-11-13T01:48:28.604Z LAYER parse: ok — relay http://127.0.0.1:62252/\n2026-11-13T01:48:28.604Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:28.604Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 450f1fa0e1cf12729bdaf8c5c2ef1a01c31a0a712666b5030aa0d2f00069f2c1 bound\n2026-11-13T01:48:28.604Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:28.821Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:28.822Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:28.822Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62252/, tried beside every way this endpoint knows\n2026-11-13T01:48:28.822Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62252/…\n2026-11-13T01:48:28.833Z LAYER relay chosen: http://127.0.0.1:62252/, this page's own: true\n2026-11-13T01:48:28.833Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:28.833Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:28.834Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:28.843Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:28.845Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:28.845Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.845Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:28.850Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:28.874Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:28.874Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.879Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:28.879Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.881Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.881Z RANGE 1: answered 206 bytes 0-1/29197117, 7 ms\n2026-11-13T01:48:28.882Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.882Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.882Z RANGE 1: read whole, 2 bytes, 8 ms\n2026-11-13T01:48:28.888Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.888Z RANGE 2: answered 206 bytes 0-1048575/29197117, 9 ms\n2026-11-13T01:48:28.889Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:28.889Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:28.889Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.899Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.900Z RANGE 3: answered 206 bytes 0-2097151/29197117, 11 ms\n2026-11-13T01:48:28.910Z RANGE 3: cancelled by the browser after 29844 bytes: AbortError: load is cancelled, 21 ms\n2026-11-13T01:48:28.910Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.910Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.915Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:28.915Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.936Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.937Z RANGE 4: answered 206 bytes 0-1445/29197117, 22 ms\n2026-11-13T01:48:28.941Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.941Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.942Z RANGE 4: read whole, 1446 bytes, 27 ms\n2026-11-13T01:48:29.033Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:29.034Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:29.034Z RANGE 2: read whole, 1048576 bytes, 155 ms",
+  "kept": {
+    "fields": [
+      "group",
+      "holder",
+      "key",
+      "label",
+      "lends",
+      "page",
+      "pass",
+      "proof",
+      "raw",
+      "relays",
+      "unanswered",
+      "writes"
+    ],
+    "key": "CryptoKey"
+  },
+  "listed": [
+    "ada’s page (k)"
+  ],
+  "logs": [
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+    "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+    "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:62252/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:62252/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:62252/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/open.html?v=8a05b1522407, a pass to 1 lend(s) until 1794577708",
+    "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/open.html?v=8a05b1522407): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+    "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: OPEN: the lend’s worker runs; handing it the pass",
+    "error: Failed to load resource: the server responded with a status of 503 ()",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: OPEN: the lend’s worker runs; handing it the pass",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:62252/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:62252/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:62252/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt"
+  ],
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/",
+  "reopened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/",
+  "stoppedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:29.809Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:29.832Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: no pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q: its start page reads it again\n2026-11-13T01:48:29.849Z RUNTIME: open.html 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.854Z RUNTIME: open.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: store.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: authority.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.962Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s)\n2026-11-13T01:48:30.004Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:30.005Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:30.005Z LAYER key: ok — the key 13a3f0b058786c0882df496f77c4a10a11e55185776f81da891f82992e5ad8a3\n2026-11-13T01:48:30.005Z LAYER parse: ok — relay http://127.0.0.1:62252/\n2026-11-13T01:48:30.005Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:30.006Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 13a3f0b058786c0882df496f77c4a10a11e55185776f81da891f82992e5ad8a3 bound\n2026-11-13T01:48:30.006Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:30.225Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:30.225Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:30.226Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62252/, tried beside every way this endpoint knows\n2026-11-13T01:48:30.226Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62252/…\n2026-11-13T01:48:30.234Z LAYER relay chosen: http://127.0.0.1:62252/, this page's own: true\n2026-11-13T01:48:30.234Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:30.234Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:30.235Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:30.240Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:30.241Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:30.242Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.242Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:30.246Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.262Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:30.262Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.271Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.271Z RANGE 1: answered 206 bytes 0-1/29197117, 9 ms\n2026-11-13T01:48:30.272Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.272Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.272Z RANGE 1: read whole, 2 bytes, 10 ms\n2026-11-13T01:48:30.276Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:30.276Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:30.276Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.280Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.280Z RANGE 2: answered 206 bytes 0-2097151/29197117, 4 ms\n2026-11-13T01:48:30.286Z RANGE 2: cancelled by the browser after 40864 bytes: AbortError: load is cancelled, 10 ms\n2026-11-13T01:48:30.286Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.286Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.289Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:30.289Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.291Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.291Z RANGE 3: answered 206 bytes 0-1445/29197117, 2 ms\n2026-11-13T01:48:30.292Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.292Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.292Z RANGE 3: read whole, 1446 bytes, 3 ms\n2026-11-13T01:48:30.294Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:30.294Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.297Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.297Z RANGE 4: answered 206 bytes 0-1048575/29197117, 3 ms\n2026-11-13T01:48:30.422Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.422Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.422Z RANGE 4: read whole, 1048576 bytes, 128 ms",
+  "unheld": {
+    "refused": "pass",
+    "status": 503
+  },
+  "unsealedAfter": "0707070707070707070707070707070707070707070707070707070707070707"
+}
+
+thread 'a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit' (62991507) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: the lend's worker must dial with the handed pass: the film's part, through the lend's worker:
+{
+  "answered": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "answeredAgain": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "handedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:28.522Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:28.552Z RUNTIME: this build's 9 pieces are saved here\n2026-11-13T01:48:28.554Z RUNTIME: 0 older build(s) dropped\n2026-11-13T01:48:28.559Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s)\n2026-11-13T01:48:28.603Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:28.603Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:28.604Z LAYER key: ok — the key 450f1fa0e1cf12729bdaf8c5c2ef1a01c31a0a712666b5030aa0d2f00069f2c1\n2026-11-13T01:48:28.604Z LAYER parse: ok — relay http://127.0.0.1:62252/\n2026-11-13T01:48:28.604Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:28.604Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 450f1fa0e1cf12729bdaf8c5c2ef1a01c31a0a712666b5030aa0d2f00069f2c1 bound\n2026-11-13T01:48:28.604Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:28.821Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:28.822Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:28.822Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62252/, tried beside every way this endpoint knows\n2026-11-13T01:48:28.822Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62252/…\n2026-11-13T01:48:28.833Z LAYER relay chosen: http://127.0.0.1:62252/, this page's own: true\n2026-11-13T01:48:28.833Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:28.833Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:28.834Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:28.843Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:28.845Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:28.845Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.845Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:28.850Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:28.874Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:28.874Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.879Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:28.879Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.881Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.881Z RANGE 1: answered 206 bytes 0-1/29197117, 7 ms\n2026-11-13T01:48:28.882Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.882Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.882Z RANGE 1: read whole, 2 bytes, 8 ms\n2026-11-13T01:48:28.888Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.888Z RANGE 2: answered 206 bytes 0-1048575/29197117, 9 ms\n2026-11-13T01:48:28.889Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:28.889Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:28.889Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.899Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.900Z RANGE 3: answered 206 bytes 0-2097151/29197117, 11 ms\n2026-11-13T01:48:28.910Z RANGE 3: cancelled by the browser after 29844 bytes: AbortError: load is cancelled, 21 ms\n2026-11-13T01:48:28.910Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.910Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.915Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:28.915Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.936Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.937Z RANGE 4: answered 206 bytes 0-1445/29197117, 22 ms\n2026-11-13T01:48:28.941Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.941Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.942Z RANGE 4: read whole, 1446 bytes, 27 ms\n2026-11-13T01:48:29.033Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:29.034Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:29.034Z RANGE 2: read whole, 1048576 bytes, 155 ms",
+  "kept": {
+    "fields": [
+      "group",
+      "holder",
+      "key",
+      "label",
+      "lends",
+      "page",
+      "pass",
+      "proof",
+      "raw",
+      "relays",
+      "unanswered",
+      "writes"
+    ],
+    "key": "CryptoKey"
+  },
+  "listed": [
+    "ada’s page (k)"
+  ],
+  "logs": "73 lines",
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/",
+  "reopened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62413/",
+  "stoppedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:29.809Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:29.832Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: no pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q: its start page reads it again\n2026-11-13T01:48:29.849Z RUNTIME: open.html 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.854Z RUNTIME: open.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: store.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: authority.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.962Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s)\n2026-11-13T01:48:30.004Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:30.005Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:30.005Z LAYER key: ok — the key 13a3f0b058786c0882df496f77c4a10a11e55185776f81da891f82992e5ad8a3\n2026-11-13T01:48:30.005Z LAYER parse: ok — relay http://127.0.0.1:62252/\n2026-11-13T01:48:30.005Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:30.006Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 13a3f0b058786c0882df496f77c4a10a11e55185776f81da891f82992e5ad8a3 bound\n2026-11-13T01:48:30.006Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:30.225Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:30.225Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:30.226Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62252/, tried beside every way this endpoint knows\n2026-11-13T01:48:30.226Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62252/…\n2026-11-13T01:48:30.234Z LAYER relay chosen: http://127.0.0.1:62252/, this page's own: true\n2026-11-13T01:48:30.234Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:30.234Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:30.235Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:30.240Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:30.241Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:30.242Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.242Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:30.246Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.262Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:30.262Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.271Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.271Z RANGE 1: answered 206 bytes 0-1/29197117, 9 ms\n2026-11-13T01:48:30.272Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.272Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.272Z RANGE 1: read whole, 2 bytes, 10 ms\n2026-11-13T01:48:30.276Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:30.276Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:30.276Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.280Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.280Z RANGE 2: answered 206 bytes 0-2097151/29197117, 4 ms\n2026-11-13T01:48:30.286Z RANGE 2: cancelled by the browser after 40864 bytes: AbortError: load is cancelled, 10 ms\n2026-11-13T01:48:30.286Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.286Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.289Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:30.289Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.291Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.291Z RANGE 3: answered 206 bytes 0-1445/29197117, 2 ms\n2026-11-13T01:48:30.292Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.292Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.292Z RANGE 3: read whole, 1446 bytes, 3 ms\n2026-11-13T01:48:30.294Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:30.294Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.297Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.297Z RANGE 4: answered 206 bytes 0-1048575/29197117, 3 ms\n2026-11-13T01:48:30.422Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.422Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.422Z RANGE 4: read whole, 1048576 bytes, 128 ms",
+  "unheld": {
+    "refused": "pass",
+    "status": 503
+  },
+  "unsealedAfter": "0707070707070707070707070707070707070707070707070707070707070707"
+}
+  left: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd"), "status": Number(206), "type": String("video/mp4")}
+ right: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("cc97bbd36318f88b806b78437256ee9536860fb2cd6c25b7dce82337e2a06808"), "status": Number(206), "type": String("video/mp4")}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit stdout ----
+the hand-over's run: {
+  "answered": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "answeredAgain": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "handedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:28.521Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:28.552Z RUNTIME: this build's 9 pieces are saved here\n2026-11-13T01:48:28.554Z RUNTIME: 0 older build(s) dropped\n2026-11-13T01:48:28.559Z RUNTIME: a message was lost on its way here: its pages are told\n2026-11-13T01:48:28.560Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s), and its holder’s bytes, imported here and kept nowhere\n2026-11-13T01:48:28.606Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:28.606Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:28.606Z LAYER key: ok — the key 57dc6831bd58425803e08fbc158d3f766dbbdf8addedce8508dba129873a2323\n2026-11-13T01:48:28.606Z LAYER parse: ok — relay http://127.0.0.1:62254/\n2026-11-13T01:48:28.606Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:28.607Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 57dc6831bd58425803e08fbc158d3f766dbbdf8addedce8508dba129873a2323 bound\n2026-11-13T01:48:28.607Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:28.821Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:28.822Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:28.822Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62254/, tried beside every way this endpoint knows\n2026-11-13T01:48:28.822Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62254/…\n2026-11-13T01:48:28.833Z LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true\n2026-11-13T01:48:28.833Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:28.833Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:28.835Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:28.842Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:28.843Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:28.845Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.845Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:28.850Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:28.871Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:28.871Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.875Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:28.875Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.881Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.881Z RANGE 2: answered 206 bytes 0-1048575/29197117, 6 ms\n2026-11-13T01:48:28.882Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.882Z RANGE 1: answered 206 bytes 0-1/29197117, 11 ms\n2026-11-13T01:48:28.886Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.886Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.886Z RANGE 1: read whole, 2 bytes, 15 ms\n2026-11-13T01:48:28.889Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:28.889Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:28.889Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.906Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.906Z RANGE 3: answered 206 bytes 0-2097151/29197117, 17 ms\n2026-11-13T01:48:28.916Z RANGE 3: cancelled by the browser after 31264 bytes: AbortError: load is cancelled, 27 ms\n2026-11-13T01:48:28.916Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.916Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.920Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:28.920Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.967Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.967Z RANGE 4: answered 206 bytes 0-1445/29197117, 47 ms\n2026-11-13T01:48:28.976Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.976Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.976Z RANGE 4: read whole, 1446 bytes, 56 ms\n2026-11-13T01:48:29.027Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:29.027Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:29.027Z RANGE 2: read whole, 1048576 bytes, 152 ms",
+  "kept": {
+    "fields": [
+      "group",
+      "holder",
+      "key",
+      "label",
+      "lends",
+      "page",
+      "pass",
+      "proof",
+      "raw",
+      "relays",
+      "unanswered",
+      "writes"
+    ],
+    "key": "CryptoKey"
+  },
+  "listed": [
+    "ada’s page (k)"
+  ],
+  "logs": [
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+    "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+    "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:62254/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:62254/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/open.html?v=8a05b1522407, a pass to 1 lend(s) until 1794577708",
+    "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/open.html?v=8a05b1522407): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+    "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: OPEN: the lend’s worker runs; handing it the pass",
+    "debug: STORE: the worker said a message was lost on its way to the worker",
+    "error: Failed to load resource: the server responded with a status of 503 ()",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: OPEN: the lend’s worker runs; handing it the pass",
+    "debug: STORE: the worker said a message was lost on its way to the worker",
+    "debug: OPEN: the worker did not take the holder’s key, and no bytes of it are here: the group’s page signs a pass to a new holder",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:62254/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:62254/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+    "debug: PAGE: wanted: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/named/idle/shut, running forget",
+    "debug: PAGE: open (#open=umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q names 1 of what house lends, by its label): opening/holding/read/unoffered/unasked/none/shut/none/named/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/named/idle/shut, running hand",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/open.html?v=8a05b1522407&back=%2F, a pass to 1 lend(s) until 1794577710",
+    "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/open.html?v=8a05b1522407&back=%2F): opening/holding/read/unoffered/unasked/none/opening/none/named/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/named/idle/shut",
+    "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: OPEN: the lend’s worker runs; handing it the pass",
+    "debug: STORE: the worker said a message was lost on its way to the worker",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:62254/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:62254/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt"
+  ],
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/",
+  "reopened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/",
+  "stoppedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:29.809Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:29.833Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: no pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q: its start page reads it again\n2026-11-13T01:48:29.849Z RUNTIME: open.html 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.854Z RUNTIME: open.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: store.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: authority.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.962Z RUNTIME: a message was lost on its way here: its pages are told\n2026-11-13T01:48:30.404Z RUNTIME: open.html 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.423Z RUNTIME: open.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.428Z RUNTIME: store.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.428Z RUNTIME: authority.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.558Z RUNTIME: a message was lost on its way here: its pages are told\n2026-11-13T01:48:30.559Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s), and its holder’s bytes, imported here and kept nowhere\n2026-11-13T01:48:30.616Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:30.616Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:30.617Z LAYER key: ok — the key 84661515ea9a0c050cab76cb8895d370c96efd7952040ff8deb0d11da429939a\n2026-11-13T01:48:30.617Z LAYER parse: ok — relay http://127.0.0.1:62254/\n2026-11-13T01:48:30.617Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:30.618Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 84661515ea9a0c050cab76cb8895d370c96efd7952040ff8deb0d11da429939a bound\n2026-11-13T01:48:30.618Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:30.835Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:30.836Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:30.836Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62254/, tried beside every way this endpoint knows\n2026-11-13T01:48:30.836Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62254/…\n2026-11-13T01:48:30.848Z LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true\n2026-11-13T01:48:30.848Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:30.848Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:30.849Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:30.857Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:30.858Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:30.858Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.858Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:30.867Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.884Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:30.884Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.890Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.890Z RANGE 1: answered 206 bytes 0-1/29197117, 6 ms\n2026-11-13T01:48:30.895Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.895Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.895Z RANGE 1: read whole, 2 bytes, 11 ms\n2026-11-13T01:48:30.899Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:30.899Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:30.900Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.904Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.904Z RANGE 2: answered 206 bytes 0-2097151/29197117, 5 ms\n2026-11-13T01:48:30.917Z RANGE 2: cancelled by the browser after 33764 bytes: AbortError: load is cancelled, 18 ms\n2026-11-13T01:48:30.917Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.917Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.919Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:30.919Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.929Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.929Z RANGE 3: answered 206 bytes 0-1445/29197117, 10 ms\n2026-11-13T01:48:30.929Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.929Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.930Z RANGE 3: read whole, 1446 bytes, 11 ms\n2026-11-13T01:48:30.940Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:30.940Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.961Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.961Z RANGE 4: answered 206 bytes 0-1048575/29197117, 21 ms\n2026-11-13T01:48:31.058Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:31.058Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:31.059Z RANGE 4: read whole, 1048576 bytes, 119 ms",
+  "unheld": {
+    "refused": "pass",
+    "status": 503
+  },
+  "unsealedAfter": "0707070707070707070707070707070707070707070707070707070707070707"
+}
+
+thread 'a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit' (62991506) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: the lend's worker must dial with the handed pass: the film's part, through the lend's worker:
+{
+  "answered": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "answeredAgain": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "handedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:28.521Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:28.552Z RUNTIME: this build's 9 pieces are saved here\n2026-11-13T01:48:28.554Z RUNTIME: 0 older build(s) dropped\n2026-11-13T01:48:28.559Z RUNTIME: a message was lost on its way here: its pages are told\n2026-11-13T01:48:28.560Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s), and its holder’s bytes, imported here and kept nowhere\n2026-11-13T01:48:28.606Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:28.606Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:28.606Z LAYER key: ok — the key 57dc6831bd58425803e08fbc158d3f766dbbdf8addedce8508dba129873a2323\n2026-11-13T01:48:28.606Z LAYER parse: ok — relay http://127.0.0.1:62254/\n2026-11-13T01:48:28.606Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:28.607Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 57dc6831bd58425803e08fbc158d3f766dbbdf8addedce8508dba129873a2323 bound\n2026-11-13T01:48:28.607Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:28.821Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:28.822Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:28.822Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62254/, tried beside every way this endpoint knows\n2026-11-13T01:48:28.822Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62254/…\n2026-11-13T01:48:28.833Z LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true\n2026-11-13T01:48:28.833Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:28.833Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:28.835Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:28.842Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:28.843Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:28.845Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.845Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:28.850Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:28.871Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:28.871Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.875Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:28.875Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.881Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.881Z RANGE 2: answered 206 bytes 0-1048575/29197117, 6 ms\n2026-11-13T01:48:28.882Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.882Z RANGE 1: answered 206 bytes 0-1/29197117, 11 ms\n2026-11-13T01:48:28.886Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.886Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.886Z RANGE 1: read whole, 2 bytes, 15 ms\n2026-11-13T01:48:28.889Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:28.889Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:28.889Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.906Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.906Z RANGE 3: answered 206 bytes 0-2097151/29197117, 17 ms\n2026-11-13T01:48:28.916Z RANGE 3: cancelled by the browser after 31264 bytes: AbortError: load is cancelled, 27 ms\n2026-11-13T01:48:28.916Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.916Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.920Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:28.920Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:28.967Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:28.967Z RANGE 4: answered 206 bytes 0-1445/29197117, 47 ms\n2026-11-13T01:48:28.976Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:28.976Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:28.976Z RANGE 4: read whole, 1446 bytes, 56 ms\n2026-11-13T01:48:29.027Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:29.027Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:29.027Z RANGE 2: read whole, 1048576 bytes, 152 ms",
+  "kept": {
+    "fields": [
+      "group",
+      "holder",
+      "key",
+      "label",
+      "lends",
+      "page",
+      "pass",
+      "proof",
+      "raw",
+      "relays",
+      "unanswered",
+      "writes"
+    ],
+    "key": "CryptoKey"
+  },
+  "listed": [
+    "ada’s page (k)"
+  ],
+  "logs": "113 lines",
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/",
+  "reopened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62414/",
+  "stoppedTrace": "svrngs lend worker 8a05b1522407 for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q\n2026-11-13T01:48:29.809Z RUNTIME: this run of the worker begins\n2026-11-13T01:48:29.833Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q is not kept here\n2026-11-13T01:48:29.842Z RUNTIME: no pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q: its start page reads it again\n2026-11-13T01:48:29.849Z RUNTIME: open.html 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.854Z RUNTIME: open.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: store.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.858Z RUNTIME: authority.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:29.962Z RUNTIME: a message was lost on its way here: its pages are told\n2026-11-13T01:48:30.404Z RUNTIME: open.html 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.423Z RUNTIME: open.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.428Z RUNTIME: store.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.428Z RUNTIME: authority.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.558Z RUNTIME: a message was lost on its way here: its pages are told\n2026-11-13T01:48:30.559Z RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s), and its holder’s bytes, imported here and kept nowhere\n2026-11-13T01:48:30.616Z RUNTIME: opening the endpoint of this run, named by the holder’s link\n2026-11-13T01:48:30.616Z LAYER page: wasm module loaded and dial entered (iroh =1.0.2)\n2026-11-13T01:48:30.617Z LAYER key: ok — the key 84661515ea9a0c050cab76cb8895d370c96efd7952040ff8deb0d11da429939a\n2026-11-13T01:48:30.617Z LAYER parse: ok — relay http://127.0.0.1:62254/\n2026-11-13T01:48:30.617Z LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…\n2026-11-13T01:48:30.618Z LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 84661515ea9a0c050cab76cb8895d370c96efd7952040ff8deb0d11da429939a bound\n2026-11-13T01:48:30.618Z LAYER relay-connect: waiting for the relay handshake (endpoint.online())…\n2026-11-13T01:48:30.835Z LAYER relay-connect: ok — endpoint reports online (relay handshake done)\n2026-11-13T01:48:30.836Z RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder\n2026-11-13T01:48:30.836Z LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:62254/, tried beside every way this endpoint knows\n2026-11-13T01:48:30.836Z LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:62254/…\n2026-11-13T01:48:30.848Z LAYER relay chosen: http://127.0.0.1:62254/, this page's own: true\n2026-11-13T01:48:30.848Z LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol\n2026-11-13T01:48:30.848Z LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"\n2026-11-13T01:48:30.849Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened\n2026-11-13T01:48:30.857Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200\n2026-11-13T01:48:30.858Z RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set\n2026-11-13T01:48:30.858Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.858Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done\n2026-11-13T01:48:30.867Z RUNTIME: shim.js 8a05b1522407 is not saved here, so the site is asked\n2026-11-13T01:48:30.884Z RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1 for video, 0 ms\n2026-11-13T01:48:30.884Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.890Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.890Z RANGE 1: answered 206 bytes 0-1/29197117, 6 ms\n2026-11-13T01:48:30.895Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.895Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.895Z RANGE 1: read whole, 2 bytes, 11 ms\n2026-11-13T01:48:30.899Z RUNTIME: bytes=0-29197116 for video runs on: asked as a part of 2097152 bytes\n2026-11-13T01:48:30.899Z RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-29197116 for video, 0 ms\n2026-11-13T01:48:30.900Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.904Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.904Z RANGE 2: answered 206 bytes 0-2097151/29197117, 5 ms\n2026-11-13T01:48:30.917Z RANGE 2: cancelled by the browser after 33764 bytes: AbortError: load is cancelled, 18 ms\n2026-11-13T01:48:30.917Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.917Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.919Z RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1445 for video, 0 ms\n2026-11-13T01:48:30.919Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.929Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.929Z RANGE 3: answered 206 bytes 0-1445/29197117, 10 ms\n2026-11-13T01:48:30.929Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:30.929Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:30.930Z RANGE 3: read whole, 1446 bytes, 11 ms\n2026-11-13T01:48:30.940Z RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0-1048575 for a fetch, 0 ms\n2026-11-13T01:48:30.940Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened\n2026-11-13T01:48:30.961Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206\n2026-11-13T01:48:30.961Z RANGE 4: answered 206 bytes 0-1048575/29197117, 21 ms\n2026-11-13T01:48:31.058Z HTTP: the response has ended; finishing the request's send half\n2026-11-13T01:48:31.058Z HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done\n2026-11-13T01:48:31.059Z RANGE 4: read whole, 1048576 bytes, 119 ms",
+  "unheld": {
+    "refused": "pass",
+    "status": 503
+  },
+  "unsealedAfter": "0707070707070707070707070707070707070707070707070707070707070707"
+}
+  left: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd"), "status": Number(206), "type": String("video/mp4")}
+ right: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("cc97bbd36318f88b806b78437256ee9536860fb2cd6c25b7dce82337e2a06808"), "status": Number(206), "type": String("video/mp4")}
+
+---- a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit stdout ----
+the runtime's run: {"first":{"bytes":1048576,"contentRange":"bytes 0-1048575/29197117","sha":"761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd","src":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/title.mp4","status":206,"type":"video/mp4"},"listed":["ada’s page (k)","cy’s shelf (k)","cy’s strict (k)"],"logs":"43 lines","openEnded":{"bytes":262144,"contentRange":"bytes 1000000-1262143/16777216","sha":"4bc085e8e849b250b43200d8d4b3736b3afb25711939d38a555c76f90032050a","status":206},"opened":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/","other":{"bytes":4194304,"contentRange":"bytes 1000000-5194303/16777216","sha":"d80fa97d2e3a734ddc5e3cd6fc9aa2b42393144d69ba975bd11f7705ca10fc14","status":206},"refusals":[{"path":"x","refused":null,"status":403},{"path":"private/x","refused":"path","status":403}],"reopened":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/","replayed":{"bytes":1048576,"contentRange":"bytes 0-1048575/29197117","sha":"761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd","src":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/title.mp4","status":206,"type":"video/mp4"},"runs":[],"runsAtStop":[],"seeks":[]}
+
+thread 'a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit' (62991508) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: the film through the lend's worker: the film's part, through the lend's worker:
+{
+  "first": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "listed": [
+    "ada’s page (k)",
+    "cy’s shelf (k)",
+    "cy’s strict (k)"
+  ],
+  "logs": "43 lines",
+  "openEnded": {
+    "bytes": 262144,
+    "contentRange": "bytes 1000000-1262143/16777216",
+    "sha": "4bc085e8e849b250b43200d8d4b3736b3afb25711939d38a555c76f90032050a",
+    "status": 206
+  },
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/",
+  "other": {
+    "bytes": 4194304,
+    "contentRange": "bytes 1000000-5194303/16777216",
+    "sha": "d80fa97d2e3a734ddc5e3cd6fc9aa2b42393144d69ba975bd11f7705ca10fc14",
+    "status": 206
+  },
+  "refusals": [
+    {
+      "path": "x",
+      "refused": null,
+      "status": 403
+    },
+    {
+      "path": "private/x",
+      "refused": "path",
+      "status": 403
+    }
+  ],
+  "reopened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/",
+  "replayed": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:62552/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "runs": [],
+  "runsAtStop": [],
+  "seeks": []
+}
+  left: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd"), "status": Number(206), "type": String("video/mp4")}
+ right: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("cc97bbd36318f88b806b78437256ee9536860fb2cd6c25b7dce82337e2a06808"), "status": Number(206), "type": String("video/mp4")}
+
+---- guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit stdout ----
+the visit's run: {
+  "again": {
+    "asked": false,
+    "status": "You’re Kim’s guest until 11/14/2026, 5:48:25 PM"
+  },
+  "anaAgain": "This link lets nobody in. Ask for a new one.",
+  "anaLong": "This link lets nobody in. Ask for a new one.",
+  "answered": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.group.svrnme.test:62289/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "askedAgain": false,
+  "asking": "You’re invited over as a guest",
+  "ended": {
+    "asked": false,
+    "status": "Your visit as Kim’s guest ended 11/12/2026, 5:47:26 PM."
+  },
+  "groups": [
+    "own"
+  ],
+  "length": "48 hours",
+  "lengths": [
+    "48 hours",
+    "24 hours",
+    "6 hours"
+  ],
+  "link": "https://group.svrnme.test:62289/#visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cvoh_kMUn-Ia6BTaE0A2xUGh0dHA6Ly8xMjcuMC4wLjE6NjIxOTkv",
+  "listed": [
+    "Kim’s jellyfin (k)"
+  ],
+  "logs": [
+    "kim debug: PLAY: answered (0 on): reading -> read",
+    "kim debug: ROOM: answered (0 open): reading -> read",
+    "kim debug: HOME: layout a",
+    "kim debug: HOME: read (1 group(s)): reading/none -> read/none",
+    "kim debug: UPDATE: checked (this computer does not know the page svrngs came from, so it cannot update: run the install line from your group’s page once): checking -> unread",
+    "kim debug: ROOM: read refused in read: round 1 is read already",
+    "kim debug: GROUP: read: reading/reading -> reading/reading, running get, get",
+    "kim debug: GROUP: answered (people 1): reading/reading -> read/reading",
+    "kim debug: ROOM: read refused in read: round 1 is read already",
+    "kim debug: LINK: published: none/reading -> none/ready",
+    "kim debug: LINK: guest: none/ready -> none/ready",
+    "kim debug: LINK: make: none/ready -> making/ready, running make",
+    "kim debug: LINK: made (https://group.svrnme.test:62289/#visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cvoh_kMUn-Ia6BTaE0A2xUGh0dHA6Ly8xMjcuMC4wLjE6NjIxOTkv): making/ready -> made/reading, running publicationRead",
+    "kim debug: LINK: published: made/reading -> made/ready",
+    "ana debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "ana debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+    "ana debug: PAGE: visit: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running recall",
+    "ana debug: PAGE: unkept (no visit is kept for this link): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut",
+    "ana debug: PAGE: typed: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut",
+    "ana debug: PAGE: named: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut, running send",
+    "ana debug: PAGE: guest named: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut, running redeem",
+    "ana debug: JOIN: asking the issuer what the link is for, as f40e13ac5fc1d75d70d4decc2dcc6b014aa5fc5fc44721faaf9fdf2ac710a819",
+    "ana debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "ana debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "ana debug: LAYER key: ok — the key f40e13ac5fc1d75d70d4decc2dcc6b014aa5fc5fc44721faaf9fdf2ac710a819",
+    "ana debug: LAYER parse: ok — relay http://127.0.0.1:62199/",
+    "ana debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "ana debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint f40e13ac5fc1d75d70d4decc2dcc6b014aa5fc5fc44721faaf9fdf2ac710a819 bound",
+    "ana debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "ana debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "ana debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "ana debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 114, 101, 100, 101, 101, 109, 47, 48] protocol through http://127.0.0.1:62199/…",
+    "ana debug: LAYER relay chosen: http://127.0.0.1:62199/, this page's own: true",
+    "ana debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol",
+    "ana debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "ana debug: HTTP: POST /visit — a bi-stream opened",
+    "ana debug: HTTP: POST /visit answered 403",
+    "ana debug: HTTP: the response has ended; finishing the request's send half",
+    "ana debug: HTTP: POST /visit — the stream is done",
+    "ana debug: PAGE: /visit answered 403: {\"error\":\"this link lets nobody in\"}",
+    "ana debug: PAGE: failed (Error: This link lets nobody in. Ask for a new one.): opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut",
+    "ana error: WebSocket connection to 'wss://127.0.0.1:62199/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "sam debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "sam debug: STORE: the sealing key absent: making one",
+    "sam debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+    "sam debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "sam debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "sam debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "sam debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+    "sam debug: PAGE: visit: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running recall",
+    "sam debug: PAGE: unkept (no visit is kept for this link): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut",
+    "sam debug: PAGE: typed: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut",
+    "sam debug: PAGE: named: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut, running send",
+    "sam debug: PAGE: guest named: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut, running redeem",
+    "sam debug: JOIN: asking the issuer what the link is for, as df40070e04994b9fcf21e198aec3f2e68bca7bbc76e93c5f812e212d2032c00d",
+    "sam debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "sam debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "sam debug: LAYER key: ok — the key df40070e04994b9fcf21e198aec3f2e68bca7bbc76e93c5f812e212d2032c00d",
+    "sam debug: LAYER parse: ok — relay http://127.0.0.1:62199/",
+    "sam debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "sam debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint df40070e04994b9fcf21e198aec3f2e68bca7bbc76e93c5f812e212d2032c00d bound",
+    "sam debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "sam debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "sam debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "sam debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 114, 101, 100, 101, 101, 109, 47, 48] protocol through http://127.0.0.1:62199/…",
+    "sam debug: LAYER relay chosen: http://127.0.0.1:62199/, this page's own: true",
+    "sam debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol",
+    "sam debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "sam debug: HTTP: POST /visit — a bi-stream opened",
+    "sam debug: HTTP: POST /visit answered 200",
+    "sam debug: HTTP: the response has ended; finishing the request's send half",
+    "sam debug: HTTP: POST /visit — the stream is done",
+    "sam debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "sam debug: PAGE: redeemed (a guest of Kim until 1794707305, opening jellyfin): opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/on/unasked/idle/shut, running over",
+    "sam debug: PAGE: call: opening/unheld/unasked/unoffered/unasked/none/shut/on/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/on/unasked/idle/shut, running call",
+    "sam debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.group.svrnme.test:62289/open.html?v=8a05b1522407, a pass to 1 lend(s) until 1794750505",
+    "sam debug: PAGE: called (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.group.svrnme.test:62289/open.html?v=8a05b1522407): opening/unheld/unasked/unoffered/unasked/none/shut/on/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/on/unasked/idle/shut",
+    "sam debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr's newest open and deleted its cookie",
+    "sam debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr's open is this browser's, its holder proved and kept",
+    "sam debug: OPEN: the lend’s worker runs; handing it the pass",
+    "sam debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "sam debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+    "sam debug: PAGE: visit: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running recall",
+    "sam debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "sam debug: PAGE: redeemed (a guest of Kim until 1794707305, opening jellyfin): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/on/unasked/idle/shut, running over",
+    "sam debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "sam debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "sam debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "sam debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+    "sam debug: PAGE: visit: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running recall",
+    "sam debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "sam debug: PAGE: redeemed (a guest of Kim until 1794534446, opening jellyfin): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/ended/unasked/idle/shut",
+    "ana debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "ana debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send",
+    "ana debug: PAGE: visit: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running recall",
+    "ana debug: PAGE: unkept (no visit is kept for this link): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut",
+    "ana debug: PAGE: typed: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut",
+    "ana debug: PAGE: named: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut, running send",
+    "ana debug: PAGE: guest named: opening/unheld/unasked/unoffered/unasked/none/shut/naming/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut, running redeem",
+    "ana debug: JOIN: asking the issuer what the link is for, as 2267d76cf7a22fd6f93cb353db86381ce4472a8a64918127b31362a9c0c6254d",
+    "ana debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "ana debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "ana debug: LAYER key: ok — the key 2267d76cf7a22fd6f93cb353db86381ce4472a8a64918127b31362a9c0c6254d",
+    "ana debug: LAYER parse: ok — relay http://127.0.0.1:62199/",
+    "ana debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: false)…",
+    "ana debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 2267d76cf7a22fd6f93cb353db86381ce4472a8a64918127b31362a9c0c6254d bound",
+    "ana debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "kim debug: GROUP: answered (lends 1): read/reading -> read/read",
+    "kim debug: HOME: told (null: people read, lends read): read/none -> read/none",
+    "kim debug: ACTS: read: reading/idle -> reading/idle, running read",
+    "kim debug: ACTS: reached (0 asking): reading/idle -> read/idle",
+    "kim debug: HOME: told (what acts as you is read): read/none -> read/none",
+    "kim debug: LENDING: read: reading -> reading, running read",
+    "kim debug: LENDING: answered (1 lent): reading -> read",
+    "kim debug: HOME: told (what you lend is read): read/none -> read/none",
+    "ana debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "ana debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "ana debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 114, 101, 100, 101, 101, 109, 47, 48] protocol through http://127.0.0.1:62199/…",
+    "ana debug: LAYER relay chosen: http://127.0.0.1:62199/, this page's own: true",
+    "ana debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Redeem protocol",
+    "ana debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/redeem/0\"",
+    "ana debug: HTTP: POST /visit — a bi-stream opened",
+    "ana debug: HTTP: POST /visit answered 403",
+    "ana debug: HTTP: the response has ended; finishing the request's send half",
+    "ana debug: HTTP: POST /visit — the stream is done",
+    "ana debug: PAGE: /visit answered 403: {\"error\":\"this link lets nobody in\"}",
+    "ana debug: PAGE: failed (Error: This link lets nobody in. Ask for a new one.): opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut"
+  ],
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.group.svrnme.test:62289/",
+  "said": "Send this link to your guest, in any chat: https://group.svrnme.test:62289/#visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cvoh_kMUn-Ia6BTaE0A2xUGh0dHA6Ly8xMjcuMC4wLjE6NjIxOTkv They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in this group sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link",
+  "secretAsked": [],
+  "status": "You’re Kim’s guest until 11/14/2026, 5:48:25 PM",
+  "text": "You’re Kim’s guest until 11/14/2026, 5:48:25 PM\n\nKim’s jellyfin (k)\n"
+}
+
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit' (62991509) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: Kim's film must reach Sam: the film's part, through the lend's worker:
+{
+  "again": {
+    "asked": false,
+    "status": "You’re Kim’s guest until 11/14/2026, 5:48:25 PM"
+  },
+  "anaAgain": "This link lets nobody in. Ask for a new one.",
+  "anaLong": "This link lets nobody in. Ask for a new one.",
+  "answered": {
+    "bytes": 1048576,
+    "contentRange": "bytes 0-1048575/29197117",
+    "sha": "761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd",
+    "src": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.group.svrnme.test:62289/title.mp4",
+    "status": 206,
+    "type": "video/mp4"
+  },
+  "askedAgain": false,
+  "asking": "You’re invited over as a guest",
+  "ended": {
+    "asked": false,
+    "status": "Your visit as Kim’s guest ended 11/12/2026, 5:47:26 PM."
+  },
+  "groups": [
+    "own"
+  ],
+  "length": "48 hours",
+  "lengths": [
+    "48 hours",
+    "24 hours",
+    "6 hours"
+  ],
+  "link": "https://group.svrnme.test:62289/#visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cvoh_kMUn-Ia6BTaE0A2xUGh0dHA6Ly8xMjcuMC4wLjE6NjIxOTkv",
+  "listed": [
+    "Kim’s jellyfin (k)"
+  ],
+  "logs": "127 lines",
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rabbq3n1prdr.group.svrnme.test:62289/",
+  "said": "Send this link to your guest, in any chat: https://group.svrnme.test:62289/#visit=AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cvoh_kMUn-Ia6BTaE0A2xUGh0dHA6Ly8xMjcuMC4wLjE6NjIxOTkv They open it in a browser and give their name. For 48 hours from then they can open what you lend, and everyone in this group sees they are your guest. It lets one guest in, once, within a day, while this computer is on. Copy the link",
+  "secretAsked": [],
+  "status": "You’re Kim’s guest until 11/14/2026, 5:48:25 PM",
+  "text": "You’re Kim’s guest until 11/14/2026, 5:48:25 PM\n\nKim’s jellyfin (k)\n"
+}
+  left: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("761913253f7929a6c3f55e8bc0bf95293eff733e2ea52321673569e2e15274dd"), "status": Number(206), "type": String("video/mp4")}
+ right: Object {"bytes": Number(1048576), "contentRange": String("bytes 0-1048575/29197117"), "sha": String("cc97bbd36318f88b806b78437256ee9536860fb2cd6c25b7dce82337e2a06808"), "status": Number(206), "type": String("video/mp4")}
+
+
+failures:
+    a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit
+    a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit
+    a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit
+    guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit
+
+test result: FAILED. 0 passed; 4 failed; 0 ignored; 0 measured; 114 filtered out; finished in 21.45s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit=101
+17:48  up 7 days, 21:59, 8 users, load averages: 7.76 15.69 14.37

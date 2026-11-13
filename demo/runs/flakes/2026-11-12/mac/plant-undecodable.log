@@ -1,0 +1,272 @@
+17:46  up 7 days, 21:56, 8 users, load averages: 6.31 21.22 15.79
+   Compiling svrngs-node v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/flake-wt/crates/svrngs-node)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.00s
+     Running tests/browser/main.rs (target/debug/deps/browser-f402080bdec841b1)
+
+running 6 tests
+test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit ... ok
+test a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit ... ok
+test a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit ... ok
+test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit ... ok
+test playback::a_lent_film_plays_and_seeks_under_its_worker::chromium has been running for over 60 seconds
+test playback::a_lent_film_plays_and_seeks_under_its_worker::webkit has been running for over 60 seconds
+test playback::a_lent_film_plays_and_seeks_under_its_worker::chromium ... FAILED
+test playback::a_lent_film_plays_and_seeks_under_its_worker::webkit ... FAILED
+
+failures:
+
+---- playback::a_lent_film_plays_and_seeks_under_its_worker::chromium stdout ----
+the film's run: {"first":{"at":0,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false},"listed":["ada’s page (k)"],"logs":"87 lines","openEnded":null,"opened":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61244/","other":null,"refusals":[],"reopened":null,"replayed":null,"runs":["running","stopping","stopped"],"runsAtStop":["running","stopping","stopped"],"seeks":[{"at":40,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false},{"at":20,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false},{"at":52,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false}]}
+
+thread 'playback::a_lent_film_plays_and_seeks_under_its_worker::chromium' (62980149) panicked at crates/svrngs-node/tests/browser/playback.rs:124:21:
+the film must play, and each seek play again within five seconds, the host at 2026-11-13T01:46:49Z 17:46 up 7 days, 21:57, 8 users, load averages: 8.40 20.03 15.57; missed the play first: {"at":0,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false}; the seeks {"at":40,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false}, {"at":20,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false}, {"at":52,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false}:
+{
+  "first": {
+    "at": 0,
+    "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+    "ms": null,
+    "paused": true,
+    "seeking": false
+  },
+  "listed": [
+    "ada’s page (k)"
+  ],
+  "logs": [
+    "debug: STORE: the sealing key absent: making one",
+    "debug: STORE: the runtime's module was not kept: NetworkError: Failed to execute 'put' on 'Cache': Cache.put() encountered a network error",
+    "debug: PAGE: failed (WebAssembly compilation aborted: Network error: Response body loading was aborted): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+    "debug: PAGE: offer: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running where",
+    "debug: PAGE: offered: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: opened: opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:61068/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:61068/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:61068/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: open: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut, running hand",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+    "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61244/open.html?v=8a05b1522407, a pass to 1 lend(s) until 1794577610",
+    "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61244/open.html?v=8a05b1522407): opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/handed/none/unasked/idle/shut",
+    "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: RUNTIME: this run of the worker begins",
+    "debug: RUNTIME: this build's 9 pieces are saved here",
+    "debug: RUNTIME: 0 older build(s) dropped",
+    "debug: OPEN: the lend’s worker runs; handing it the pass",
+    "debug: RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q, 1 lend(s)",
+    "debug: RUNTIME: opening the endpoint of this run, named by the holder’s link",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key 543259ec187f18309fa3e8cceb28848de874c1324e51b0a306be6fabfdd75415",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:61068/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 543259ec187f18309fa3e8cceb28848de874c1324e51b0a306be6fabfdd75415 bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder",
+    "debug: LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:61068/, tried beside every way this endpoint knows",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:61068/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:61068/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"svrngs/lend/0\"",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — a bi-stream opened",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ answered 200",
+    "debug: RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/'s policy is none, so none is set",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/ — the stream is done",
+    "debug: RUNTIME: bytes=0- for video runs on: asked as a part of 262144 bytes",
+    "debug: RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=0- for video, 0 ms",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206",
+    "debug: RANGE 1: answered 206 bytes 0-262143/29197117, 3 ms",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done",
+    "debug: RANGE 1: read whole, 262144 bytes, 27 ms",
+    "debug: RUNTIME: bytes=262144- for video runs on: asked as a part of 524288 bytes",
+    "debug: RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=262144- for video, 0 ms",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206",
+    "debug: RANGE 2: answered 206 bytes 262144-786431/29197117, 5 ms",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done",
+    "debug: RANGE 2: read whole, 524288 bytes, 61 ms",
+    "debug: RUNTIME: bytes=786432- for video runs on: asked as a part of 1048576 bytes",
+    "debug: RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 bytes=786432- for video, 0 ms",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — a bi-stream opened",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 answered 206",
+    "debug: RANGE 3: answered 206 bytes 786432-1835007/29197117, 4 ms",
+    "debug: RANGE 3: cancelled by the browser after 363952 bytes: undefined, 28 ms",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q/title.mp4 — the stream is done"
+  ],
+  "openEnded": null,
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61244/",
+  "other": null,
+  "refusals": [],
+  "reopened": null,
+  "replayed": null,
+  "runs": [
+    "running",
+    "stopping",
+    "stopped"
+  ],
+  "runsAtStop": [
+    "running",
+    "stopping",
+    "stopped"
+  ],
+  "seeks": [
+    {
+      "at": 40,
+      "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+      "ms": null,
+      "paused": true,
+      "seeking": false
+    },
+    {
+      "at": 20,
+      "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+      "ms": null,
+      "paused": true,
+      "seeking": false
+    },
+    {
+      "at": 52,
+      "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+      "ms": null,
+      "paused": true,
+      "seeking": false
+    }
+  ]
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- playback::a_lent_film_plays_and_seeks_under_its_worker::webkit stdout ----
+the film's run: {"first":{"at":0,"error":"","ms":null,"paused":false,"seeking":false},"listed":["ada’s page (k)"],"logs":"41 lines","openEnded":null,"opened":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61255/","other":null,"refusals":[],"reopened":"https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61255/","replayed":{"at":0,"error":"","ms":null,"paused":true,"seeking":false},"runs":[],"runsAtStop":[],"seeks":[{"at":40,"error":"","ms":null,"paused":false,"seeking":false},{"at":20,"error":"","ms":null,"paused":false,"seeking":false},{"at":52,"error":"","ms":null,"paused":true,"seeking":false}]}
+
+thread 'playback::a_lent_film_plays_and_seeks_under_its_worker::webkit' (62980150) panicked at crates/svrngs-node/tests/browser/playback.rs:124:21:
+the film must play, and each seek play again within five seconds, the host at 2026-11-13T01:46:49Z 17:46 up 7 days, 21:57, 8 users, load averages: 8.40 20.03 15.57; missed the play first: {"at":0,"error":"","ms":null,"paused":false,"seeking":false}; the play once the browser was opened again: {"at":0,"error":"","ms":null,"paused":true,"seeking":false}; the seeks {"at":40,"error":"","ms":null,"paused":false,"seeking":false}, {"at":20,"error":"","ms":null,"paused":false,"seeking":false}, {"at":52,"error":"","ms":null,"paused":true,"seeking":false}:
+{
+  "first": {
+    "at": 0,
+    "error": "",
+    "ms": null,
+    "paused": false,
+    "seeking": false
+  },
+  "listed": [
+    "ada’s page (k)"
+  ],
+  "logs": [
+    "debug: STORE: the sealing key absent: making one",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, send",
+    "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+    "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+    "debug: PAGE: offer refused in opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut: no line offered: not a computer, or not a token",
+    "debug: PAGE: held (this tab holds house): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+    "debug: PAGE: asked the browser to keep the page's storage: refused",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+    "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+    "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+    "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+    "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+    "debug: LAYER parse: ok — relay http://127.0.0.1:61067/",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+    "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+    "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+    "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+    "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+    "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:61067/…",
+    "debug: LAYER relay chosen: http://127.0.0.1:61067/, this page's own: true",
+    "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+    "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+    "debug: PAGE: reached house through the link's computer",
+    "debug: HTTP: GET /people/lends — a bi-stream opened",
+    "debug: HTTP: GET /people/lends answered 200",
+    "debug: HTTP: the response has ended; finishing the request's send half",
+    "debug: HTTP: GET /people/lends — the stream is done",
+    "debug: PAGE: kept 0 of 0 relay(s) named",
+    "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+    "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+    "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+    "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=decrypt,encrypt",
+    "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61255/open.html?v=8a05b1522407, a pass to 1 lend(s) until 1794577611",
+    "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61255/open.html?v=8a05b1522407): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+    "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's newest open and deleted its cookie",
+    "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q's open is this browser's, its holder proved and kept",
+    "debug: OPEN: the lend’s worker runs; handing it the pass"
+  ],
+  "openEnded": null,
+  "opened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61255/",
+  "other": null,
+  "refusals": [],
+  "reopened": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rauv62h8gn6q.group.svrnme.test:61255/",
+  "replayed": {
+    "at": 0,
+    "error": "",
+    "ms": null,
+    "paused": true,
+    "seeking": false
+  },
+  "runs": [],
+  "runsAtStop": [],
+  "seeks": [
+    {
+      "at": 40,
+      "error": "",
+      "ms": null,
+      "paused": false,
+      "seeking": false
+    },
+    {
+      "at": 20,
+      "error": "",
+      "ms": null,
+      "paused": false,
+      "seeking": false
+    },
+    {
+      "at": 52,
+      "error": "",
+      "ms": null,
+      "paused": true,
+      "seeking": false
+    }
+  ]
+}
+
+
+failures:
+    playback::a_lent_film_plays_and_seeks_under_its_worker::chromium
+    playback::a_lent_film_plays_and_seeks_under_its_worker::webkit
+
+test result: FAILED. 4 passed; 2 failed; 0 ignored; 0 measured; 112 filtered out; finished in 91.35s
+
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit=101
+17:48  up 7 days, 21:58, 8 users, load averages: 4.84 16.11 14.47

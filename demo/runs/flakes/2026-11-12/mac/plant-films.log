@@ -1,0 +1,149 @@
+   Compiling svrngs v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/flake-wt/crates/svrngs)
+warning: unused variable: `bo_at`
+   --> crates/svrngs/tests/scenes/films.rs:229:19
+    |
+229 |     let (bo_lend, bo_at) = opened(bo.lent_by(&group, "Sam", "jellyfin").await);
+    |                   ^^^^^ help: if this is intentional, prefix it with an underscore: `_bo_at`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `svrngs` (test "scenes") generated 1 warning (run `cargo fix --test "scenes" -p svrngs` to apply 1 suggestion)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.41s
+     Running tests/scenes/main.rs (target/debug/deps/scenes-51eb03ce3b4b7372)
+
+running 1 test
+test films::films::chromium has been running for over 60 seconds
+test films::films::chromium ... FAILED
+
+failures:
+
+---- films::films::chromium stdout ----
+what Alex and Bo saw: {
+  "devices_apart": true,
+  "engine": "chromium",
+  "mw": false,
+  "people": {
+    "alex": {
+      "account": "alex",
+      "asked": true,
+      "at": "<label>.localhost:61674",
+      "browser": "147.0.7727.15",
+      "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTQ1MzYwNTgzNjA1",
+      "logs": [
+        "http 401 GET http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/svrngs-open?code=A5jlo-u12Zgz4TtLMirEQFwfhym2wlkn9_Ta0",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Capabilities/Full: net::ERR_ABORTED",
+        "console.log: play() played",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing: net::ERR_ABORTED",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing/Progress: net::ERR_ABORTED",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing/Progress: net::ERR_ABORTED",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing/Progress: net::ERR_ABORTED",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing/Progress: net::ERR_ABORTED",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing/Progress: net::ERR_ABORTED",
+        "failed: http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/Sessions/Playing/Progress: net::ERR_ABORTED"
+      ],
+      "name": "Alex",
+      "open_ms": 7,
+      "play_from": 3000,
+      "received": {
+        "bodies": 592,
+        "body_bytes": 17713191,
+        "frames": 6,
+        "from_worker": 199,
+        "no_body": 10,
+        "responses": 606,
+        "sockets": [
+          "ws://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/socket?__svrngs_socket=Pt7Bgv7U6mQGNnuY_DoZ8KbN6cH9nwZiol6adrQ0wKk",
+          "ws://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/socket?__svrngs_socket=YNqfJYlKum1ugsniVXDEIlp1WU59XePynHwPulZzL5I",
+          "ws://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/socket?ApiKey=<its token>&__svrngs_socket=eUr3BAu30zFq3pwvXwgDTr912hxpmDUeL2AH1mh0aG4"
+        ]
+      },
+      "sessions": [
+        {
+          "client": "Jellyfin Web",
+          "playing": true,
+          "user": "alex"
+        }
+      ],
+      "shown": "Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password",
+      "shown_ms": 920,
+      "signed_in_after": "alex",
+      "signed_in_ms": 339,
+      "socket": {
+        "message_shown_ms": 22,
+        "remote_control": true,
+        "session": true
+      },
+      "streamed": {
+        "from_worker": false,
+        "ms": 921,
+        "origin": "http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674",
+        "path": "/Videos/a8bbe3f6658310ce6caa1f7dedcd61b9/stream.mp4",
+        "status": 206,
+        "type": "video/mp4"
+      },
+      "token": "held",
+      "user": "alex"
+    },
+    "bo": {
+      "account": "bo",
+      "at": "<label>.localhost:61674",
+      "browser": "147.0.7727.15",
+      "logs": [
+        "http 401 GET http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/svrngs-open?code=A5jlo-u12Zgz4TtLMirEQFwfhym2wlkn9_Ta0",
+        "http 401 POST http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/svrngs-open?code=A5jlo-u12Zgz4TtLMirEQFwfhym2wlkn9_Ta0"
+      ],
+      "name": "Bo",
+      "open_ms": 12,
+      "received": {
+        "bodies": 2,
+        "body_bytes": 6677,
+        "frames": 0,
+        "from_worker": 0,
+        "no_body": 0,
+        "responses": 3,
+        "sockets": []
+      },
+      "shown_ms": null,
+      "stopped": "a sign-in or home: page.waitForSelector: Timeout 60000ms exceeded.; the page says: Open svrngs from your computer Open svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you. T",
+      "token": null,
+      "user": "bo"
+    }
+  },
+  "way": "computer"
+}
+
+thread 'tokio-rt-worker' (63129291) panicked at crates/svrngs/tests/scenes/films.rs:253:9:
+bo gets to their film's stream: {
+  "account": "bo",
+  "at": "<label>.localhost:61674",
+  "browser": "147.0.7727.15",
+  "logs": [
+    "http 401 GET http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/svrngs-open?code=A5jlo-u12Zgz4TtLMirEQFwfhym2wlkn9_Ta0",
+    "http 401 POST http://x0bv84d51gr71n7fns4ucmza9cmph1qa4gtbgap0jnambmabfp8tbbq3n1prdr.localhost:61674/svrngs-open?code=A5jlo-u12Zgz4TtLMirEQFwfhym2wlkn9_Ta0"
+  ],
+  "name": "Bo",
+  "open_ms": 12,
+  "received": {
+    "bodies": 2,
+    "body_bytes": 6677,
+    "frames": 0,
+    "from_worker": 0,
+    "no_body": 0,
+    "responses": 3,
+    "sockets": []
+  },
+  "shown_ms": null,
+  "stopped": "a sign-in or home: page.waitForSelector: Timeout 60000ms exceeded.; the page says: Open svrngs from your computer Open svrngs from your Applications, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you. T",
+  "token": null,
+  "user": "bo"
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    films::films::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 18 filtered out; finished in 105.71s
+
+error: test failed, to rerun pass `-p svrngs --test scenes`
+exit=101

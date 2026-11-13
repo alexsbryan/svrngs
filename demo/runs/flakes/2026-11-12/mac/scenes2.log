@@ -1,0 +1,16 @@
+   Compiling svrngs v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/flake-wt/crates/svrngs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.07s
+     Running tests/scenes/main.rs (target/debug/deps/scenes-51eb03ce3b4b7372)
+
+running 4 tests
+test holyarrs::holyarrs::chromium has been running for over 60 seconds
+test holyarrs::phone::webkit has been running for over 60 seconds
+test holyarrs::holyarrs::chromium ... ok
+test movie_night::movie_night::chromium ... ok
+test holyarrs::phone::webkit ... ok
+test night::night::chromium has been running for over 60 seconds
+test night::night::chromium ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 205.77s
+
+exit=0

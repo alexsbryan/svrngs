@@ -1,0 +1,11 @@
+unfixed,probed exit=101 invitation must never follow a resolver redirect test result:  
+unfixed,probed exit=101 invitation must never follow a resolver redirect test result:  
+unfixed,probed exit=101 invitation must never follow a resolver redirect test result:  
+fixed,probed exit=0 test result: ok 
+fixed,probed exit=0 test result: ok 
+fixed,probed exit=0 test result: ok 
+fixed,planted,probed exit=101 invitation must never follow a resolver redirect test result:  
+fixed,planted,probed exit=101 invitation must never follow a resolver redirect test result:  
+       0
+
+[exited with code 0]

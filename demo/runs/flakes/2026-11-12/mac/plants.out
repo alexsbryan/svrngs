@@ -1,0 +1,83 @@
+1
+== undecodable
+test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit ... ok
+test a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit ... ok
+test a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit ... ok
+test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit ... ok
+test playback::a_lent_film_plays_and_seeks_under_its_worker::chromium ... FAILED
+test playback::a_lent_film_plays_and_seeks_under_its_worker::webkit ... FAILED
+the film's run: {"first":{"at":0,"error":"PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed","ms":null,"paused":true,"seeking":false},"listed":["ada’s page (k)"],"logs":"87 lines","openEnde
+thread 'playback::a_lent_film_plays_and_seeks_under_its_worker::chromium' (62980149) panicked at crates/svrngs-node/tests/browser/playback.rs:124:21:
+the film must play, and each seek play again within five seconds, the host at 2026-11-13T01:46:49Z 17:46 up 7 days, 21:57, 8 users, load averages: 8.40 20.03 15.57; missed the play first: {"at":0,"error":"PipelineStatus:
+    "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+    "debug: PAGE: failed (WebAssembly compilation aborted: Network error: Response body loading was aborted): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/u
+      "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+      "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+      "error": "PipelineStatus::DEMUXER_ERROR_COULD_NOT_OPEN: FFmpegDemuxer: open context failed",
+thread 'playback::a_lent_film_plays_and_seeks_under_its_worker::webkit' (62980150) panicked at crates/svrngs-node/tests/browser/playback.rs:124:21:
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit=101
+1
+== range
+test a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit ... FAILED
+test a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit ... FAILED
+test a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit ... FAILED
+test guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit ... FAILED
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+thread 'a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it::webkit' (62991507) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: the lend's worker must dial with the handed pass: the film's part, through the lend's worker:
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+thread 'a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory::webkit' (62991506) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: the lend's worker must dial with the handed pass: the film's part, through the lend's worker:
+thread 'a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself::webkit' (62991508) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: the film through the lend's worker: the film's part, through the lend's worker:
+    "ana debug: PAGE: failed (Error: This link lets nobody in. Ask for a new one.): opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/rede
+    "ana error: WebSocket connection to 'wss://127.0.0.1:62199/relay' failed: The operation couldn’t be completed. Socket is not connected",
+    "sam debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut
+    "ana debug: PAGE: failed (Error: This link lets nobody in. Ask for a new one.): opening/unheld/unasked/unoffered/unasked/none/shut/redeeming/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/rede
+thread 'guests::sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest::webkit' (62991509) panicked at crates/svrngs-node/tests/browser/main.rs:815:5:
+assertion `left == right` failed: Kim's film must reach Sam: the film's part, through the lend's worker:
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit=101
+1
+1
+== rate-cookie
+test acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit ... FAILED
+test carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium ... FAILED
+test carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit ... FAILED
+thread 'acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::webkit' (62995070) panicked at crates/svrngs-node/tests/browser/acts.rs:275:5:
+thread 'carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::chromium' (62995071) panicked at crates/svrngs-node/tests/browser/carried.rs:927:5:
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+thread 'carried::an_app_s_entry_is_approved_by_the_group_s_signer_and_carried::webkit' (62995072) panicked at crates/svrngs-node/tests/browser/carried.rs:927:5:
+    "debug: PAGE: failed (Open this page from your group’s link.): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut",
+error: test failed, to rerun pass `-p svrngs-node --test browser`
+exit=101
+1
+== seeks
+test seeks_back_to_back::on_a_computer::chromium ... FAILED
+test seeks_back_to_back::on_a_computer::webkit ... ok
+test seeks_back_to_back::on_a_phone_with_the_wildcard::chromium ... FAILED
+test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit ... ok
+computer  chromium sam  seeks back to back                 failed
+computer  chromium bo   seeks back to back                 failed
+thread 'seeks_back_to_back::on_a_computer::chromium' (63000174) panicked at crates/svrngs-node/tests/conformance.rs:753:5:
+the seeks back to back failed, the host at 2026-11-13T01:50:24Z 17:50 up 7 days, 22 hrs, 8 users, load averages: 3.96 12.07 13.11 on 12 cores:
+computer  chromium sam  seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+computer  chromium bo   seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+wildcard  chromium sam  seeks back to back                 failed
+wildcard  chromium bo   seeks back to back                 failed
+thread 'seeks_back_to_back::on_a_phone_with_the_wildcard::chromium' (63000176) panicked at crates/svrngs-node/tests/conformance.rs:753:5:
+the seeks back to back failed, the host at 2026-11-13T01:50:24Z 17:50 up 7 days, 22 hrs, 8 users, load averages: 3.96 12.07 13.11 on 12 cores:
+wildcard  chromium sam  seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+wildcard  chromium bo   seeks back to back                 failed: "NotSupportedError: Failed to load because no supported source was found."
+error: test failed, to rerun pass `-p svrngs-node --test conformance`
+exit=101
+computer  chromium sam  seeks back to back                 failed
+computer  chromium bo   seeks back to back                 failed
+computer  webkit   sam  seeks back to back                 failed, a rate
+computer  webkit   bo   seeks back to back                 failed, a rate
+wildcard  chromium sam  seeks back to back                 failed
+wildcard  chromium bo   seeks back to back                 failed
+wildcard  webkit   sam  seeks back to back                 failed, a rate
+wildcard  webkit   bo   seeks back to back                 failed, a rate
