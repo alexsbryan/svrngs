@@ -152,10 +152,29 @@ fn an_opener_that_stays_does_not_hold_svrngs_open() {
         said.starts_with("Open this in your browser within a minute: http"),
         "{refused:?}"
     );
+    // The opener is handed the home page, at the address the bare command
+    // said (moved from a_second_bare_command_reminds_without_starting_or_opening).
+    let home = address_in(&running.until("//svrngs.localhost:"));
+    let marker = logs.path().join("opened");
+    stub(&format!("printf '%s' \"$1\" > '{}'", marker.display()));
+    let opened = invoke();
+    assert!(opened.status.success(), "{opened:?}");
+    assert!(std::fs::read_to_string(&marker).unwrap().starts_with(&home));
 }
 
-/// The plant is the old Busy refusal on a second bare invocation. The first
-/// bare invocation must still start a node; only `open` may launch a browser.
+/// **A second bare command reminds where the home page is, and starts,
+/// opens and rewrites nothing**: while svrngs runs here, a bare `svrngs`
+/// says the home page's address from the one the first wrote, with how to
+/// open it; any other verb is refused, "stop it"; an address it cannot
+/// read is refused, never a reminder invented. svrngs running here is what
+/// a second command reads of it: its data dir's lock held (cli::claim),
+/// and its address and token written as the node writes them (api.rs
+/// `write_address`, `TOKEN_FILE`), so no node runs and nothing is dialled.
+/// That a first bare command starts one and its home page answers at that
+/// address is the_home_page_and_a_lend_answer_at_one_address_across_a_restart's;
+/// that `open` hands the opener the home page,
+/// an_opener_that_stays_does_not_hold_svrngs_open's. The plant is the old
+/// Busy refusal on a second bare invocation.
 #[cfg(unix)]
 #[test]
 fn a_second_bare_command_reminds_without_starting_or_opening() {
@@ -171,6 +190,7 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
     let marker = logs.path().join("opened");
     std::fs::write(&fake, "#!/bin/sh\nprintf '%s' \"$1\" > \"$OPEN_MARKER\"\n").unwrap();
     std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o700)).unwrap();
+    // The shipped binary: a command that starts no node opens no socket.
     let invoke = |args: &[&str]| {
         Process::new(env!("CARGO_BIN_EXE_svrngs"))
             .args(args)
@@ -182,11 +202,15 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
             .output()
             .unwrap()
     };
-    let mut first = Program::start(dir.path(), &logs.path().join("first"), &[]);
-    let home = address_in(&first.until("//svrngs.localhost:"));
+    let running = cli::claim(dir.path()).expect("the data dir is free");
+    let port = 47_999;
+    let at = SocketAddr::from(([127, 0, 0, 1], port));
+    svrngs_node::api::write_address(dir.path(), at).unwrap();
+    let token = "a-token-svrngs-keeps-here";
+    std::fs::write(dir.path().join(svrngs_node::api::TOKEN_FILE), token).unwrap();
+    let home = format!("http://svrngs.localhost:{port}/");
     let api = dir.path().join("api");
     let saved = std::fs::read(&api).unwrap();
-    let token = std::fs::read_to_string(dir.path().join("token")).unwrap();
     let second = invoke(&[]);
     let said = String::from_utf8_lossy(&second.stdout);
     let traced = String::from_utf8_lossy(&second.stderr);
@@ -200,13 +224,13 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
         traced.contains("cli: run — local home reminder"),
         "{traced}"
     );
-    assert!(!said.contains(token.trim()) && !traced.contains(token.trim()));
+    assert!(!said.contains(token) && !traced.contains(token));
     assert!(!marker.exists(), "the reminder launched a browser");
-    assert!(first.child.try_wait().unwrap().is_none());
+    assert!(
+        matches!(cli::claim(dir.path()), Err(cli::Refusal::Busy(_))),
+        "the running svrngs keeps its data dir"
+    );
     assert_eq!(std::fs::read(&api).unwrap(), saved);
-    let opened = invoke(&["open"]);
-    assert!(opened.status.success(), "{opened:?}");
-    assert!(std::fs::read_to_string(&marker).unwrap().starts_with(&home));
     let other = invoke(&["new", "Lab", "--as", "Sam"]);
     assert_eq!(other.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&other.stderr).contains("stop it"));
@@ -227,8 +251,8 @@ fn a_second_bare_command_reminds_without_starting_or_opening() {
     assert!(unreadable.stdout.is_empty());
     std::fs::remove_dir(&api).unwrap();
     std::fs::write(&api, saved).unwrap();
-    assert!(first.child.try_wait().unwrap().is_none());
-    assert!(get(&home, "/", true, Some(&token)).0.ends_with("200 OK"));
+    assert!(!marker.exists(), "nothing launched a browser");
+    drop(running);
 }
 
 /// GET `path` at `address`, as a browser typing it asks (`Sec-Fetch-Site:
