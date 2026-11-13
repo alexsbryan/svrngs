@@ -10,6 +10,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::Path;
+use std::time::Duration;
 
 use axum::http::{HeaderMap, HeaderValue, Method, StatusCode};
 use svrngs_node::iroh::{Alpn, PublicKey, Unsent};
@@ -196,6 +197,32 @@ pub fn part(from: &Node, to: &Node) {
 /// `key`'s computer on this test's wire answers no dial ([`Wire::asleep`]).
 pub fn asleep(key: PublicKey) {
     WIRE.with(|w| w.asleep(key));
+}
+
+/// `from` asks `holder`'s provider for `hash` whole, into a store of its
+/// own under `dir`: the payload's bytes, or why none came.
+pub async fn get(
+    from: &Node,
+    holder: &Node,
+    hash: iroh_blobs::Hash,
+    dir: &Path,
+) -> Result<u64, String> {
+    let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
+    let holder = svrngs_node::iroh::Contact {
+        key: holder.net().id(),
+        relays: Default::default(),
+        iroh_direct_addrs: Vec::new(),
+    };
+    let request = iroh_blobs::protocol::GetRequest::blob(hash);
+    let get = from.net().get(&holder, &store, request).await;
+    let get = get.map_err(|e| match e {
+        svrngs_node::iroh::Unsent::NotAdmitted => "the dial: not admitted".to_string(),
+        e => format!("the dial: {e}"),
+    })?;
+    let got = tokio::time::timeout(Duration::from_secs(10), get).await;
+    let got = got.map_err(|_| "no answer".to_string())?;
+    got.map(|s| s.payload_bytes_read)
+        .map_err(|e| format!("{e:?}"))
 }
 
 /// The client a program on a computer asks its record API with.

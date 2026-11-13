@@ -8,8 +8,12 @@
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+#[path = "common/computers.rs"]
+mod computers;
 #[path = "common/member.rs"]
 mod member;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
@@ -466,5 +470,92 @@ async fn a_member_restarted_is_answered_at_once() {
         "Ana's process, started again on {:?}, answers Cy within {within:?} (took {took:?}); \
          Cy's iroh holding for her {known:?}",
         ana_addr.sockets
+    );
+}
+
+/// `who` asked, on the wire, to sync `dir` in the group, up to 30 s, until
+/// it stands there.
+async fn synced(who: &Node, dir: &Path, group: &str) {
+    std::fs::create_dir_all(dir).unwrap();
+    let body = serde_json::json!({ "dir": dir, "group": group }).to_string();
+    for _ in 0..60 {
+        let asked = on_wire::http()
+            .post(format!("http://{}/v1/folders", who.api_addr()))
+            .bearer_auth(who.token())
+            .header("content-type", "application/json")
+            .body(body.clone())
+            .send()
+            .await;
+        if asked.is_ok_and(|a| a.status().is_success()) {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(500)).await;
+    }
+    panic!("{} never synced {}", who.net().id(), dir.display());
+}
+
+/// **A restart resumes a synced directory unasked**, its computers on one
+/// wire (common/on_wire.rs): Ana's computer stopped is her node closed and
+/// dropped, started is a node over the same data dir, and Cy asks her
+/// provider by `Net::get`. Otherwise as [`a_restart_resumes_a_synced_directory_unasked`].
+#[tokio::test]
+async fn a_restart_resumes_a_synced_directory_unasked_on_one_wire() {
+    let root = tempfile::tempdir().unwrap();
+    let dir = |name: &str| {
+        let d = root.path().join(name);
+        std::fs::create_dir_all(&d).unwrap();
+        d
+    };
+    let (ana_dir, ben_dir, cy_dir) = (dir("ana"), dir("ben"), dir("cy"));
+    let (ana_disk, ben_disk) = (dir("disk/ana/Shared"), dir("disk/ben/Shared"));
+    let ana = on_wire::start(1, &ana_dir).await;
+    let ben = on_wire::start(2, &ben_dir).await;
+    let cy = on_wire::start(3, &cy_dir).await;
+    let group = computers::found("films", 9, &ana, &[(&ben, 2), (&cy, 3)]);
+    for node in [&ben, &cy, &ana] {
+        computers::round(node).await;
+    }
+    synced(&ana, &ana_disk, &group).await;
+    let first = noise(30_000, b"before the stop");
+    std::fs::write(ana_disk.join("first.bin"), &first).unwrap();
+    synced(&ben, &ben_disk, &group).await;
+    assert!(
+        holds(&ben_disk.join("first.bin"), &first).await,
+        "Ana's file reaches Ben"
+    );
+
+    ana.net().close().await;
+    drop(ana);
+    let edited = noise(30_500, b"edited while stopped");
+    std::fs::write(ana_disk.join("first.bin"), &edited).unwrap();
+    let ana = tokio::time::timeout(Duration::from_secs(30), on_wire::start(1, &ana_dir));
+    let ana = ana
+        .await
+        .expect("Ana's computer starts again over her data dir");
+    let hash = iroh_blobs::Hash::from_bytes(*blake3::hash(&edited).as_bytes());
+    let mut swept = Err("not asked".to_string());
+    for k in 0..30 {
+        swept = on_wire::get(&cy, &ana, hash, &root.path().join(format!("cy-{k}"))).await;
+        if swept.is_ok() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+    }
+    assert_eq!(
+        swept,
+        Ok(30_500),
+        "Ana's edit while stopped is found at her start's sweep and placed"
+    );
+    let after = noise(31_000, b"after the start");
+    std::fs::write(ben_disk.join("after.bin"), &after).unwrap();
+    assert!(kept(&ben_dir, "after.bin").await, "Ben's step sends it");
+    std::fs::write(ana_disk.join("mine.bin"), noise(32_000, b"mine")).unwrap();
+    let reached = holds(&ana_disk.join("after.bin"), &after).await;
+    for node in [&ana, &ben, &cy] {
+        node.net().close().await;
+    }
+    assert!(
+        reached,
+        "Ben's file reaches Ana's directory after her start, unasked"
     );
 }

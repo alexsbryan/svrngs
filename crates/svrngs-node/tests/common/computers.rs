@@ -112,6 +112,7 @@ pub async fn round(node: &Node) {
 }
 
 /// Up to 30 s, rounds run on `nodes`: whether `done` came true.
+#[allow(dead_code, reason = "kept.rs's restart waits on its nodes' own rounds")]
 pub async fn until_on(nodes: &[&Node], done: impl Fn() -> bool) -> bool {
     for _ in 0..30 {
         if done() {

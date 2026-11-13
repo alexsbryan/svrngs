@@ -15,7 +15,7 @@ mod computers;
 mod on_wire;
 use common::{heard, loopback_sockets, noise};
 use computers::{found, round, seed, signing, start as start_quic, until_on};
-use on_wire::{http, start};
+use on_wire::{get, http, start};
 
 use std::path::Path;
 use std::time::Duration;
@@ -130,32 +130,6 @@ async fn synced_in(who: &Node, root: &Path, group: &str) -> std::path::PathBuf {
 /// Up to 30 s, rounds run on every node: whether `done` came true.
 async fn until(group: &Group, done: impl Fn() -> bool) -> bool {
     until_on(&[&group.ana, &group.ben, &group.cy], done).await
-}
-
-/// `from` asks `holder`'s provider for `hash` whole, into a store of its
-/// own under `dir`: the payload's bytes, or why none came.
-async fn get(
-    from: &Node,
-    holder: &Node,
-    hash: iroh_blobs::Hash,
-    dir: &Path,
-) -> Result<u64, String> {
-    let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
-    let holder = svrngs_node::iroh::Contact {
-        key: holder.net().id(),
-        relays: Default::default(),
-        iroh_direct_addrs: Vec::new(),
-    };
-    let request = iroh_blobs::protocol::GetRequest::blob(hash);
-    let get = from.net().get(&holder, &store, request).await;
-    let get = get.map_err(|e| match e {
-        svrngs_node::iroh::Unsent::NotAdmitted => "the dial: not admitted".to_string(),
-        e => format!("the dial: {e}"),
-    })?;
-    let got = tokio::time::timeout(Duration::from_secs(10), get).await;
-    let got = got.map_err(|_| "no answer".to_string())?;
-    got.map(|s| s.payload_bytes_read)
-        .map_err(|e| format!("{e:?}"))
 }
 
 /// The contents of every file in `dir`, each once.
