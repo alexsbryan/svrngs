@@ -20,13 +20,26 @@ use crate::{computer, name, no_relay, Computer};
 /// `method` of `path` asked of `node`'s home page as its own page asks it:
 /// at `svrngs.localhost:<port>`, from itself, the token shown. The status
 /// and the body read as JSON.
-async fn paged(node: &Node, method: &str, path: &str, body: Value) -> (StatusCode, Value) {
+pub async fn paged(node: &Node, method: &str, path: &str, body: Value) -> (StatusCode, Value) {
     let own = format!("svrngs.localhost:{}", node.api_addr().port());
+    let (status, text) = asked_at(node, &own, method, path, body).await;
+    (status, serde_json::from_str(&text).unwrap_or(Value::Null))
+}
+
+/// `method` of `path` asked of `node`'s routes at `host`, as a page there
+/// asks it of itself, the token shown: the status and the body.
+pub async fn asked_at(
+    node: &Node,
+    host: &str,
+    method: &str,
+    path: &str,
+    body: Value,
+) -> (StatusCode, String) {
     let req = axum::http::Request::builder()
         .method(method)
         .uri(path)
-        .header("host", &own)
-        .header("origin", format!("http://{own}"))
+        .header("host", host)
+        .header("origin", format!("http://{host}"))
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("content-type", "application/json")
@@ -38,8 +51,7 @@ async fn paged(node: &Node, method: &str, path: &str, body: Value) -> (StatusCod
     let answer = node.api_routes().oneshot(req).await.unwrap();
     let status = answer.status();
     let body = axum::body::to_bytes(answer.into_body(), usize::MAX).await;
-    let body = body.unwrap();
-    (status, serde_json::from_slice(&body).unwrap_or(Value::Null))
+    (status, String::from_utf8_lossy(&body.unwrap()).into_owned())
 }
 
 /// The rule's one trace for a name held `held` times already (group.rs
@@ -186,7 +198,7 @@ async fn a_group_joined_on_the_home_page_is_joined_as_the_command_joins() {
 }
 
 /// `link` as a query's value, each byte not plain percent-encoded.
-fn urlencoding(link: &str) -> String {
+pub fn urlencoding(link: &str) -> String {
     link.bytes()
         .map(|b| match b {
             b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {

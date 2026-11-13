@@ -259,3 +259,224 @@ async fn a_leave_reaches_a_computer_off_as_it_landed() {
         "back on, Sam's computer holds Ana's leave"
     );
 }
+
+/// `node`'s `/v1/groups`, what its home page reads: `group`'s entry.
+async fn listed(node: &Node, group: &str) -> serde_json::Value {
+    let (_, text) = ask(node, "GET", "/v1/groups", &serde_json::Value::Null).await;
+    let held: serde_json::Value = serde_json::from_str(&text).unwrap();
+    let found = (held["groups"].as_array().into_iter().flatten()).find(|g| g["id"] == group);
+    found.cloned().unwrap_or_default()
+}
+
+/// Up to `within`, with a round on `node` each second if `rounds`:
+/// whether its home page says it left `group`.
+async fn until_left(node: &Node, group: &str, within: Duration, rounds: bool) -> bool {
+    let left = || async { listed(node, group).await["left"] == true };
+    let said = tokio::time::timeout(within, async {
+        while !left().await {
+            if rounds {
+                let _ = tokio::time::timeout(Duration::from_secs(10), node.round()).await;
+            }
+            tokio::time::sleep(Duration::from_secs(1)).await;
+        }
+    });
+    said.await.is_ok()
+}
+
+/// **A leave on the home page is held as a leave everywhere**
+/// (leave_page.rs, groups-leave (c)): Sam, who made Trip, keeps its order
+/// of removals, with Ana to hand it on to, which his page offers; Ana
+/// leaves as her page asks it (POST /v1/leaves), and her /v1/groups says
+/// she left Trip, made by Sam; Sam's computer holds her out, its removal
+/// a leave of Ana's (`said: left`), never a removal; an old address on
+/// her computer of a lend of Sam's says "You left Trip on" (#182), never
+/// "nothing is lent here"; and Sam's new link, asked of on her home page,
+/// is refused in words that say she cannot join again from here (join.rs
+/// `asked`'s `Standing::Left`). The page's words of each: home.test.mjs.
+#[tokio::test]
+async fn a_leave_on_the_home_page_is_held_as_a_leave_everywhere() {
+    let wire = Wire::default();
+    let crate::Computer {
+        node: sam,
+        dir: _sam_dir,
+        ..
+    } = computer(&wire, 6).await;
+    let (seed, _) = cli::new_group(&sam, name("Trip"), name("Sam"), None, &[], &no_relay())
+        .await
+        .expect("Sam makes Trip");
+    let trip = seed.id();
+    let ana_dir = tempfile::tempdir().unwrap();
+    let ana_key = SigningKey::from_bytes(&[7; 32]);
+    let ana = on(&wire, ana_dir.path(), &ana_key).await;
+    let link = || {
+        let made = sam.host().link(&trip, false, None, None);
+        client_link(&made.expect("Sam makes a link to Trip").token)
+    };
+    let sent = Link::parse(&link()).unwrap();
+    ana.host()
+        .join(&sent, &name("Ana"))
+        .await
+        .expect("Ana joins Trip");
+    assert_eq!(listed(&sam, &trip).await["keeps"], true, "Sam keeps Trip");
+    let (_, people) = ask(
+        &sam,
+        "GET",
+        &format!("/v1/rail/people?namespace={trip}"),
+        &serde_json::Value::Null,
+    )
+    .await;
+    assert!(people.contains("\"Ana\""), "Ana to hand it on to: {people}");
+
+    assert_eq!(leave_from(&ana, &trip).await, Outcome::Left);
+    let held = listed(&ana, &trip).await;
+    assert_eq!(
+        (&held["left"], &held["made"]["maker"]),
+        (&serde_json::json!(true), &serde_json::json!("Sam")),
+        "{held}"
+    );
+    let ana_actor = actor_of(&ana_key);
+    assert!(
+        out_of(&sam, &trip, &ana_actor).await,
+        "Sam's computer holds Ana's leave within 30 s"
+    );
+    let removals = listed(&sam, &trip).await["removals"].clone();
+    let said: Vec<_> = (removals.as_array().into_iter().flatten())
+        .map(|r| (r["of"].as_str(), r["said"].as_str()))
+        .collect();
+    assert_eq!(said, [(Some("Ana"), Some("left"))], "{removals}");
+
+    // Her computer's old address of a lend of Sam's.
+    let sams = actor_of(&SigningKey::from_bytes(&[6; 32]));
+    let notes = svrngs_core::pass::Label::of_hex(&sams, "notes").unwrap();
+    let old = svrngs_node::origin::origin(&notes, ana.api_addr().port());
+    let host = old.trim_start_matches("http://").trim_end_matches('/');
+    let (status, page) =
+        crate::home::asked_at(&ana, host, "GET", "/", serde_json::Value::Null).await;
+    assert!(page.contains("You left Trip on "), "{status} {page}");
+    assert!(!page.contains("nothing is lent here"), "{page}");
+
+    let again = format!("/join?link={}", crate::home::urlencoding(&link()));
+    let (status, page) = crate::home::paged(&ana, "GET", &again, serde_json::Value::Null).await;
+    let why =
+        "You’re no longer in Trip on this computer, and you can’t join it again from here yet.";
+    assert_eq!(status.as_u16(), 409, "{page}");
+    assert!(
+        page["error"].as_str().unwrap_or_default().starts_with(why),
+        "{page}"
+    );
+}
+
+/// **A leave reaches the leaver's other computer, on or off as it lands**
+/// (leave_page.rs, groups-leave-others (a), #179). Sam makes Films, Trip
+/// and Walk; Ana joins each from Sam's links on her first computer, and
+/// her second from her first's links for her devices, as Ana. She leaves
+/// Films from her first while her second is off; back on, within 90 s of
+/// its rounds its /v1/groups says she left Films. She leaves Trip while
+/// it is on, and within 30 s, no round of its own run, it says so: told
+/// by her first. She leaves Walk with it off again, now in no group of
+/// Sam's there; back on, within 90 s it says so, and lists all three as
+/// left, each made by Sam. Off is its place on the wire closed; back on
+/// is a node started again over a copy of what it held ([`held_again`]).
+#[tokio::test(flavor = "multi_thread")]
+async fn a_leave_reaches_the_leavers_other_computer_on_or_off() {
+    let wire = Wire::default();
+    let crate::Computer {
+        node: sam,
+        dir: _sam_dir,
+        ..
+    } = computer(&wire, 6).await;
+    let mut groups = Vec::new();
+    for g in ["Films", "Trip", "Walk"] {
+        let (seed, _) = cli::new_group(&sam, name(g), name("Sam"), None, &[], &no_relay())
+            .await
+            .expect("Sam makes a group");
+        groups.push(seed.id());
+    }
+    let [films, trip, walk] = [0, 1, 2].map(|i| groups[i].clone());
+    let (one_dir, two_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let keys = [7, 8].map(|b| SigningKey::from_bytes(&[b; 32]));
+    let one = on(&wire, one_dir.path(), &keys[0]).await;
+    let mut two = on(&wire, two_dir.path(), &keys[1]).await;
+    for g in &groups {
+        let made = sam.host().link(g, false, None, None);
+        let sent = Link::parse(&client_link(&made.expect("Sam makes a link").token)).unwrap();
+        one.host()
+            .join(&sent, &name("Ana"))
+            .await
+            .expect("Ana joins");
+        let made = one.host().link(g, true, None, None);
+        let sent = Link::parse(&client_link(&made.expect("Ana's device link").token)).unwrap();
+        two.host()
+            .join(&sent, &name("whoever"))
+            .await
+            .expect("Ana's second computer joins as Ana");
+    }
+    let two_actor = actor_of(&keys[1]);
+    let held = || {
+        groups.iter().all(|g| {
+            let s = sam.rail().standing(g).unwrap();
+            let o = one.rail().standing(g).unwrap();
+            s.member(&two_actor)
+                .is_some_and(|m| m.person.as_str() == "Ana")
+                && o.names(&two_actor)
+        })
+    };
+    let settled = tokio::time::timeout(Duration::from_secs(60), async {
+        while !held() {
+            for n in [&sam, &one, &two] {
+                let _ = tokio::time::timeout(Duration::from_secs(10), n.round()).await;
+            }
+        }
+    });
+    assert!(
+        settled.await.is_ok(),
+        "control: Sam's and Ana's first computer hold Ana's second as Ana"
+    );
+
+    // Off as the leave of Films lands, in Trip and Walk still.
+    two.net().close().await;
+    drop(two);
+    assert_eq!(leave_from(&one, &films).await, Outcome::Left);
+    assert!(
+        out_of(&sam, &films, &two_actor).await,
+        "control: Sam's computer holds Ana's second out of Films within 30 s"
+    );
+    let again = tempfile::tempdir().unwrap();
+    held_again(two_dir.path(), again.path());
+    two = on(&wire, again.path(), &keys[1]).await;
+    assert!(
+        until_left(&two, &films, Duration::from_secs(90), true).await,
+        "back on, Ana's second computer says she left Films"
+    );
+
+    // On as the leave of Trip lands, as her first's home page asks it.
+    assert_eq!(leave_from(&one, &trip).await, Outcome::Left);
+    assert!(
+        until_left(&two, &trip, Duration::from_secs(30), false).await,
+        "on, Ana's second computer says she left Trip"
+    );
+
+    // Off as the leave of Walk lands, in no group of Sam's there.
+    two.net().close().await;
+    drop(two);
+    assert_eq!(leave_from(&one, &walk).await, Outcome::Left);
+    assert!(
+        out_of(&sam, &walk, &two_actor).await,
+        "control: Sam's computer holds it"
+    );
+    let third = tempfile::tempdir().unwrap();
+    held_again(again.path(), third.path());
+    two = on(&wire, third.path(), &keys[1]).await;
+    assert!(
+        until_left(&two, &walk, Duration::from_secs(90), true).await,
+        "back on, Ana's second computer says she left Walk"
+    );
+    for g in [&films, &trip, &walk] {
+        let held = listed(&two, g).await;
+        assert_eq!(
+            (&held["left"], &held["made"]["maker"]),
+            (&serde_json::json!(true), &serde_json::json!("Sam")),
+            "{held}"
+        );
+    }
+}

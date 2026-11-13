@@ -653,6 +653,94 @@ test('a group joined beside one held is headed by whose, its shelf alone folded'
   assert.deepEqual([page.went, page.unanswered], [[], []]);
 });
 
+// leave_page::leaving_on_the_home_page_is_said_as_a_leave_everywhere, the
+// pages' half: Sam, keeping Trip's order of removals with Ana in it, is
+// offered the hand-on in a person's words; Ana's page says before she
+// leaves that this computer cannot rejoin yet, then, left (POST
+// /v1/leaves, removal.rs `Outcome`), that she left, and lists Trip as
+// Sam's under Groups you left; Sam's page says "Ana left on", never
+// removed; Sam's new link, pasted on Ana's page, is refused in join.rs
+// `NotJoined::Left`'s words, never offered as Join Trip. The node's
+// half, each answer: verbs/leave.rs
+// a_leave_on_the_home_page_is_held_as_a_leave_everywhere.
+test('a leave is said as a leave on both pages, and a link to it again is refused', async () => {
+  const people = [row('Sam', ADA, 'started'), row('Ana', EVE)];
+  const trip = (more) => group({ id: 'trip', name: 'Trip', ...more });
+  const sams = await home(ada({ people, groups: [trip({ person: 'Sam', made: mine })] }));
+  const keeps =
+    'You keep the order of removals in Trip. Choose who keeps it after you, then leave: ';
+  assert.ok(
+    sams.text('#home section p').some((p) => p.startsWith(keeps)),
+    sams.text('#home section p').join('\n'),
+  );
+  const left = {
+    said: 'left',
+    by: 'Ana',
+    by_key: EVE,
+    by_joined: { at: 1 },
+    of: 'Ana',
+    of_key: EVE,
+    of_joined: { at: 1 },
+    at: 1_791_000_100,
+  };
+  const after = await home(
+    ada({ people, groups: [trip({ person: 'Sam', made: mine, removals: [left] })] }),
+  );
+  const removals = after.text('#home .removals li');
+  assert.ok(removals.length === 1 && removals[0].startsWith('Ana left on '), removals.join());
+  assert.ok(!removals.join().includes('removed'), removals.join());
+
+  const made = { maker: 'Sam', since: 1_791_000_000 };
+  const state = { left: false };
+  const refusal =
+    'You’re no longer in Trip on this computer, and you can’t join it again from here yet. Join from your phone or another computer instead.';
+  const answers = ada({
+    people,
+    groups: [trip({ person: 'Ana', keeps: false, made })],
+    'POST /v1/leaves': () => ((state.left = true), { outcome: 'left' }),
+    [`GET /join?${new URLSearchParams({ link: LINK })}`]: refused(409, refusal),
+  });
+  answers['GET /v1/groups'] = () => ({
+    groups: [trip({ person: state.left ? null : 'Ana', keeps: false, made, left: state.left })],
+    key: EVE,
+  });
+  const anas = await home(answers);
+  const before = anas.text('#home section p').join('\n');
+  assert.ok(
+    before.includes('Rejoining needs a new invitation, and this computer can’t rejoin yet.'),
+    before,
+  );
+  await anas.press('#home section button', 'Leave Trip');
+  const said = ['#home > p', '#home section h2', '#home section p']
+    .flatMap((at) => anas.text(at))
+    .join('\n');
+  for (const words of ['You left Trip.', 'Groups you left', 'Trip (Sam’s, since'])
+    assert.ok(said.includes(words), `${words}: ${said}`);
+  await anas.type('#join input[name=link]', LINK);
+  const again = [...anas.text('#join p'), ...anas.text('#join button')].join('\n');
+  assert.ok(again.includes(refusal), again);
+  assert.ok(!again.includes('Join Trip'), again);
+  assert.deepEqual([anas.went, anas.unanswered], [[], []]);
+});
+
+// leave_page::a_leave_reaches_the_leavers_other_computer, the page's
+// half: three groups /v1/groups says were left are each listed under
+// Groups you left by whose each is. That each reaches her other computer:
+// verbs/leave.rs a_leave_reaches_the_leavers_other_computer_on_or_off.
+test('every group left is listed under Groups you left, by whose it is', async () => {
+  const made = { maker: 'Sam', since: 1_791_000_000 };
+  const groups = ['Films', 'Trip', 'Walk'].map((name) =>
+    group({ id: name, name, person: null, keeps: false, left: true, made }),
+  );
+  const page = await home(ada({ groups }));
+  const gone = page.text('#left p');
+  for (const name of ['Films', 'Trip', 'Walk'])
+    assert.ok(
+      gone.some((p) => p.startsWith(`${name} (Sam’s, since`)),
+      `${name}: ${gone.join('\n')}`,
+    );
+});
+
 // pages::rooms::play_in_one_index_is_said_on_in_every_list: cy, in ada's
 // house and flat, lends `played`, a UDP port, so each index lists it with
 // Play; Play pressed in house's, flat's says where to connect too, from
