@@ -519,3 +519,37 @@ test('a lend’s alias is one in every time zone: the addresses kept and what it
     assert.deepEqual(opens, [['hand', 'other-label', '/']], TZ);
   }
 });
+
+// join_page::a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name,
+// the page's half: a link Sam's computer made for Sam's devices, its
+// issuer answering the person it adds (join.rs `Asked::person`), is
+// redeemed as Sam's with no name asked, the heading saying whose the phone
+// is being added as; joined, the group held is read and the page is in as
+// Sam. That the redeem writes one Admit of a browser's key, named Sam by
+// Sam's first key: verbs/join.rs
+// a_browser_redeeming_a_link_for_sams_devices_stands_as_sam.
+test('a link for Sam’s devices adds the phone as Sam’s, asking no name', () => {
+  const asked = through(first, { type: 'join', token: 'DEVICE', kept: [], wants: null });
+  const group = { id: 'g3', name: 'house', person: 'Sam' };
+  const adding = parts.step(asked, { type: 'asked', group, told: 'TOLD' });
+  assert.equal(adding.refused, undefined);
+  assert.deepEqual(adding.effects, [
+    { run: 'admit', token: 'DEVICE', told: 'TOLD', group, name: 'Sam', failed: 'unjoined' },
+  ]);
+  assert.equal(adding.state.at.join, 'redeeming', 'no name is asked');
+  assert.deepEqual(parts.heading(adding.state)?.[0], 'Adding this phone to house as Sam’s…');
+  const held = { ...house, id: 'g3', person: 'Sam', token: 'DEVICE' };
+  const joined = parts.step(adding.state, { type: 'admitted', group: held });
+  assert.deepEqual(
+    joined.effects.map((f) => [f.run, f.m?.type, f.m?.group?.person]),
+    [['send', 'hold', 'Sam']],
+  );
+  const read = through(
+    joined.state,
+    { type: 'hold', group: held, joined: true },
+    { type: 'held' },
+    { type: 'opened', group: held },
+    { type: 'read', n: 1, ok: true, body: { ...body, unanswered: [] }, lent: [] },
+  );
+  assert.deepEqual(parts.heading(read), ['You’re in house, as Sam', 'good']);
+});

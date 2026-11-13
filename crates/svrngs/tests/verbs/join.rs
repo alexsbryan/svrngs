@@ -558,6 +558,51 @@ async fn another_computer_of_sams_joins_as_sam_by_a_link_for_sams_devices() {
     );
 }
 
+/// **A browser redeeming a link for Sam's devices stands as Sam**
+/// (join_page.rs, bash-devices (d)): a phone's request, naming a browser
+/// and whatever name, redeems the link Sam's computer made for Sam's
+/// devices; Sam's record holds one `Admit` of its key naming a browser,
+/// and Sam's register names that key Sam, by Sam's first key. The page
+/// asking no name, and saying whose it adds the phone as:
+/// web/tests/pages/enter.test.mjs.
+#[tokio::test]
+async fn a_browser_redeeming_a_link_for_sams_devices_stands_as_sam() {
+    let wire = Wire::default();
+    let sam = computer(&wire, 1).await;
+    let (seed, _) = sams_house(&sam).await;
+    let group = seed.id();
+    let (_, printed, _) = cli::link_to(&sam.node, "house", None, &no_relay(), true, &[])
+        .await
+        .expect("Sam's computer makes a link for Sam's devices");
+    let link = parsed(&printed, &sam.node);
+    let invite = invite_of(&sam.node, &group, &link);
+    let phone = computer(&wire, 13).await;
+    let answer = present_from(&phone, &link, &group, &invite, "Pia", Device::Browser).await;
+    assert!(matches!(answer, Ok(Redeemed::Admitted(_))), "{answer:?}");
+    let phones = actor_of(&phone.key);
+    let devices: Vec<_> = (lines(&sam.node, &group).into_iter())
+        .filter_map(|op| match op.kind.act {
+            RailAct::Admit { key, invite, .. } if key == phones => Some(invite.map(|i| i.device)),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        devices,
+        [Some(Device::Browser)],
+        "one Admit of the phone's key"
+    );
+    let standing = sam.node.rail().standing(&group).unwrap();
+    let svrngs_node::register::Standing::Members(members) = standing else {
+        panic!("house is held at Sam's")
+    };
+    let m = &members[&phones];
+    assert_eq!(
+        (m.person.as_str(), m.person_key.as_str()),
+        ("Sam", actor_of(&sam.key).as_str()),
+        "the phone is Sam's, by Sam's first key"
+    );
+}
+
 /// The redeem route writes what the request names (u4-1; DESIGN §3
 /// "Joining", call 2): Pia's request names a browser, and Sam's record holds
 /// one `Admit` of Pia's key naming a browser, at line version 4, and Sam's
