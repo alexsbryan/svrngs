@@ -9,12 +9,15 @@ ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 TZ=UTC
 # Every apt install below, Playwright's too, takes the archive as it was on
 # this day, so a rebuild gets the same packages: the snapshot is served over
 # https, so the certificates come first, from the archive as it is now.
+# redis-server (and its redis-cli) for `page integration`'s resolver suite
+# (web/tests/resolver.integration.test.mjs), which without it failed 12 of
+# its 13 tests, "Redis did not start" (demo/runs/flakes/2026-11-12).
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
  && echo 'APT::Snapshot "20261020T000000Z";' >/etc/apt/apt.conf.d/50snapshot \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl xz-utils git build-essential pkg-config clang lld \
-      python3 lsof perl procps \
+      python3 lsof perl procps redis-server \
  && rm -rf /var/lib/apt/lists/*
 
 # Jellyfin, the server the films and night scenes lend: 12.0, as the
@@ -63,14 +66,16 @@ RUN set -e; cd /tmp; \
 RUN userdel -r ubuntu && useradd -m -u 1000 -s /bin/bash gate \
  && mkdir /work && chown gate:gate /work
 USER gate
-# Rust as the operator's Mac has it (`rustc --version`, 1.94.1; svrngs has
-# no rust-toolchain.toml), with rustfmt, clippy and the page's wasm target.
+# Rust as rust-toolchain.toml pins it, 1.95.0, with rustfmt, clippy and the
+# page's wasm target: at 1.94.1 here, rustup fetched 1.95.0 at each run
+# without the wasm target, so every test that builds the page failed
+# ("the wasm target is not installed", demo/runs/flakes/2026-11-12).
 ENV CARGO_HOME=/home/gate/.cargo RUSTUP_HOME=/home/gate/.rustup PATH=/home/gate/.cargo/bin:$PATH
 RUN set -e; cd /tmp; \
     curl -fsSLo rustup-init https://static.rust-lang.org/rustup/archive/1.29.0/x86_64-unknown-linux-gnu/rustup-init; \
     echo "4acc9acc76d5079515b46346a485974457b5a79893cfb01112423c89aeb5aa10  rustup-init" | sha256sum -c -; \
     chmod +x rustup-init; ./rustup-init -y --no-modify-path --profile minimal \
-      --default-toolchain 1.94.1 -c rustfmt,clippy -t wasm32-unknown-unknown; \
+      --default-toolchain 1.95.0 -c rustfmt,clippy -t wasm32-unknown-unknown; \
     rm rustup-init; mkdir -p "$CARGO_HOME/registry" "$CARGO_HOME/git" /home/gate/.npm
 WORKDIR /work
 # What the image runs, in the checkout mounted at /work: Linux builds of
