@@ -2,8 +2,8 @@
 //! alone, Sam reached by seeded addresses: one copy, where home.rs and
 //! lend_origin.rs each wrote it out and peer.rs a third time
 //! (REVIEW-audit-arch-auto-1). Those and session.rs load it (`#[path]`),
-//! each using all of it but home.rs, whose computers meet on a wire and
-//! take only [`let_sam_in`].
+//! each using all of it but home.rs, whose computers meet on a wire, so
+//! it starts none here and lets Sam in by [`let_sam_in`] alone.
 
 use std::path::Path;
 

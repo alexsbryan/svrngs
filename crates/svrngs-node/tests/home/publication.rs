@@ -140,16 +140,8 @@ fn valid(node: &Node, token: &str) -> bool {
         .is_some_and(|(_, i)| i.key == actor_of(&token.key()))
 }
 
-/// Alex's computer over QUIC, its API asked of its routes as home.rs's
-/// `ask` asks.
-async fn alex(dir: &std::path::Path) -> Node {
-    let node = start(1, dir).await;
-    on_wire::served(&node);
-    node
-}
-
 async fn seeded(dir: &std::path::Path) -> Node {
-    let node = alex(dir).await;
+    let node = on_wire::start(1, dir).await;
     node.rail()
         .set_seed(
             NS,
@@ -179,7 +171,7 @@ async fn publish(browser: &Browser<'_>, method: &str, path: &str, body: &str) ->
 #[tokio::test]
 async fn publication_unavailable_is_retryable_not_an_ended_invitation() {
     let dir = tempfile::tempdir().unwrap();
-    let node = alex(dir.path()).await;
+    let node = on_wire::start(1, dir.path()).await;
     node.rail()
         .set_seed(
             NS,
@@ -204,7 +196,7 @@ async fn publication_unavailable_is_retryable_not_an_ended_invitation() {
         got.body
     );
     assert!(got.body.contains("retry"), "{}", got.body);
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 #[tokio::test]
@@ -314,7 +306,7 @@ async fn publication_survives_reload_and_closes_only_its_invitation() {
     let stale = publish(&browser, "POST", "/publication/close", &close).await;
     assert_eq!(stale.status, 503);
     assert_eq!(node.rail().current_invite(NS).unwrap(), current);
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 #[tokio::test]
@@ -385,7 +377,7 @@ async fn publication_failures_keep_one_recoverable_invitation_and_receipt() {
     );
     assert_eq!(got.json()["state"], "closed");
     assert!(!valid(&node, retried["token"].as_str().unwrap()));
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 #[tokio::test]
@@ -457,7 +449,7 @@ async fn publication_late_answers_cannot_override_new_links_or_closure() {
     let (late, ()) = tokio::join!(publish(&browser, "POST", "/publication", &old), race);
     assert_eq!(late.json()["state"], "closed");
     assert_eq!(status(&node).await["state"], "closed");
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 // A restart is a process boundary. An embedded FsStore owns database threads
@@ -503,7 +495,7 @@ async fn publication_restart_child() {
     let node = if phase == "pending" {
         seeded(dir).await
     } else {
-        alex(dir).await
+        on_wire::start(1, dir).await
     };
     let browser = Browser::of(&node);
     let previous = status(&node).await;
@@ -515,7 +507,7 @@ async fn publication_restart_child() {
         "inspect" => {
             assert_eq!(previous["state"], "closed");
             assert!(!valid(&node, receipt(&node).1["token"].as_str().unwrap()));
-            node.endpoint().close().await;
+            node.net().close().await;
             return;
         }
         _ => panic!("unknown restart phase"),
@@ -544,7 +536,7 @@ async fn publication_restart_child() {
     if phase != "closed" {
         assert!(valid(&node, receipt(&node).1["token"].as_str().unwrap()));
     }
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 /// The request a redirect followed would have sent `elsewhere`, if one came
@@ -607,5 +599,5 @@ async fn publication_refuses_redirects_oversized_bodies_and_timeouts() {
             "invitation must never follow a resolver redirect"
         );
     }
-    node.endpoint().close().await;
+    node.net().close().await;
 }

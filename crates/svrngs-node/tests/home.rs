@@ -26,7 +26,7 @@ use std::time::Duration;
 
 use common::heard;
 use on_wire::{http, Browser};
-use pair::{let_sam_in, signing, start, NS};
+use pair::{let_sam_in, signing, NS};
 
 use iroh_relay::server::{RelayConfig, Server, ServerConfig};
 use svrngs_core::link::Link;
