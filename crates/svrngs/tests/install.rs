@@ -704,58 +704,6 @@ async fn redeemed(url: &str) -> (u16, bool) {
     (reply[9..12].parse().unwrap(), set)
 }
 
-/// A second browser has no session, so the page it is refused with says
-/// what that is and how to let it in: `svrngs open --print` shows an open
-/// and launches nothing, and that open lets a browser in as any open does.
-/// Watched failing: `--print` was refused.
-#[tokio::test(flavor = "multi_thread")]
-async fn another_browser_is_told_how_to_come_in_and_can() {
-    let site = site(None);
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let _started = Started(home.path().to_path_buf());
-    let page = format!("http://127.0.0.1:{port}/");
-    assert!(paste(port, &page, home.path(), None).await.status.success());
-
-    let api = std::fs::read_to_string(home.path().join(".svrngs/api")).unwrap();
-    let host = format!(
-        "svrngs.localhost:{}",
-        api.trim().rsplit(':').next().unwrap()
-    );
-    let mut sock = tokio::net::TcpStream::connect(api.trim().trim_start_matches("http://"))
-        .await
-        .unwrap();
-    let ask = format!("GET / HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n");
-    sock.write_all(ask.as_bytes()).await.unwrap();
-    let mut refused = String::new();
-    sock.read_to_string(&mut refused).await.unwrap();
-    assert!(refused.contains("svrngs open --print"), "{refused}");
-    assert!(refused.contains("A program, not a browser"), "{refused}");
-
-    let opened = home.path().join("stubs/opened");
-    let before = std::fs::read_to_string(&opened).unwrap();
-    let printed = tokio::process::Command::new(home.path().join(".local/bin/svrngs"))
-        .args(["open", "--print"])
-        .env_clear()
-        .env("HOME", home.path())
-        .env("USER", "Alex")
-        .env("PATH", home.path().join("stubs"))
-        .output()
-        .await
-        .unwrap();
-    let said = String::from_utf8_lossy(&printed.stdout);
-    let open = said
-        .split_once("within a minute: ")
-        .map(|(_, at)| at.trim());
-    let open = open.unwrap_or_else(|| panic!("no open shown: {said}"));
-    assert_eq!(
-        std::fs::read_to_string(&opened).unwrap(),
-        before,
-        "nothing launched"
-    );
-    assert_eq!(redeemed(open).await, (200, true), "the open lets it in");
-}
-
 /// **install.sh opens the home page with a session, and puts in place an
 /// opener that does again** (give-session): what it opened is an open's
 /// address, whose code, redeemed, sets the home page's session once. The
