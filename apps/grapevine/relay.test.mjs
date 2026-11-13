@@ -185,3 +185,26 @@ test("a group whose people can't be read keeps svrngs's answer, and says so", as
     api.close();
   }
 });
+
+test("a group whose people can't be read keeps svrngs's answer, and says so (svrngs a function)", async () => {
+  const asked = [];
+  const svrngs = async (url, init) => {
+    asked.push([url, init.headers.authorization]);
+    return Response.json({ groups: [{ id: 'page', name: '1400 Page', person: 'Jo' }] });
+  };
+  const traced = [];
+  const store = { people: () => Promise.reject(new Error('the record is away')) };
+  const held = await relay.heldBy(
+    'http://127.0.0.1:4200',
+    'the-token',
+    store,
+    (what, fields) => traced.push({ what, ...fields }),
+    svrngs,
+  )();
+  assert.deepEqual(held, [{ id: 'page', name: '1400 Page', me: 'Jo' }]);
+  assert.deepEqual(asked, [['http://127.0.0.1:4200/v1/groups', 'Bearer the-token']]);
+  assert.ok(
+    traced.some((t) => t.group === 'page' && t.error === 'the record is away'),
+    JSON.stringify(traced),
+  );
+});
