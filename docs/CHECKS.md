@@ -161,6 +161,14 @@ record_api's loopback refusal. What harness 4 frees beside these needs a
 node with no endpoint (harness 3): blob's and the node's dialling unit
 tests, and unit 6's whole nodes.
 
+Recounted at 1c33d4ff, after harness 3 (`recount-1c33d4ff.out`): 957,
+of which 602 (62.9%) cross no seam and 355 at least one: P 341, Q 320,
+R 206, B 158, C 79, D 10, M 7. Units 4 and 6 moved 74 more onto the
+wire. Left beyond the wire's reach: the CLI's and the scenes' (a raw
+dial, a real listener, a relay), the browser and pages steps (B),
+kept.rs's restart, which waits on the store's actor ending with its
+node (folder.rs `start`, a product change).
+
 ### The contained test of each seam
 
 | Seam | Contained place | What moves out of everything else |

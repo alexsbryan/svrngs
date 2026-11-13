@@ -106,3 +106,21 @@ gate Rust tests, 528 (55.2%) crossing no seam, 428 at least one: P 424,
 Q 408, R 206, B 158, C 79, D 10, M 7. Since aa90326d: the eight ring_sync
 tests moved (eight retired, eight new with no seam), rail's three and
 record_api's one deterministic, 12 in all.
+
+## Harness 3, units 4 and 6 on the wire, and the gate at 1c33d4ff
+
+Commits: 6f9f7239 (iroh.rs `Net`, a node's network half; the non-JS cap
+21,241 -> 21,326 within the operator's +90 for harness 3, 2026-11-13,
+after the pass 9787472e), 4c288b80 (the in-process `Wire` and folders),
+a8c038e2 (carried), f066e8d1 (record_api), 467aa382 (removal), f3868b53
+(surface), a5860b42 (the node's and blob's unit tests), 1c33d4ff
+(group_not_mesh, canaries). Each body names the plants it was watched
+red on.
+
+`gate-1c33d4ff.txt`: `gate.sh` in a clean detached worktree at 1c33d4ff
+(main), Eudoxia fff11f7 (a clean clone), CARGO_INCREMENTAL=0: 1,859 s,
+**exit 0**, every step passed, nothing could-not-judge.
+
+`recount-1c33d4ff.out` (`recount.py`, unchanged): 957 gate Rust tests,
+602 (62.9%) crossing no seam, 355 at least one: P 341, Q 320, R 206,
+B 158, C 79, D 10, M 7. At 5cfa2609, 528 (55.2%).
