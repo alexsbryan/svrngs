@@ -700,7 +700,8 @@ apps/doc/doc.test.mjs (4)	-	deterministic	state	two pages write one doc, each na
 apps/doc/socket.test.mjs (1)	P	fragile	seam	a page's socket upgraded at /sync on the real listener (server.mjs `start`, ws.mjs), greeted by the door's name, an edit reaching another page (socket.test.mjs)	stays: the seam is the claim (the upgrade and ws.mjs's frames on a socket)	
 apps/events/events.test.mjs (18)	-	deterministic	decision	events fold/answers	stays	none
 apps/events/laws.test.mjs (2)	-	deterministic	decision	events laws	stays	none
-apps/events/page.test.mjs (2 calls x2 engines)	BPX	fragile	state	spawned events server; each group's people see only their answers; whose answer is said (page.test.mjs:62,212)	whose-answer wording to node-pure (events.test.mjs); keep one browser smoke	none
+apps/events/answers.test.mjs (2)	-	deterministic	state	each group's people see only their answers, the host every group's, another group's event page refused, the host's links or why none, whose computer wrote an answer said (answers.test.mjs), on server.mjs `events`'s handler with no browser	answers.test.mjs itself	
+apps/events/page.test.mjs (1 call x2 engines)	BPX	fragile	seam	Sam's Post pressed (its checkboxes sent, its 303 followed) and the Copy button's script says what it did, Chromium's clipboard holding the link (page.test.mjs)	stays: B's contained test of events' page (a form pressed, an onclick, the clipboard)	
 apps/events/partial.test.mjs (2)	-	deterministic	decision	server over a stub record API: partial group said so; two 'bo' told apart (partial.test.mjs:87,120)	partial.test.mjs itself, now in process: server.mjs `events(config, {fetch})`'s handler asked with a stub record function, no listener or spawn	
 apps/expenses/expenses.test.mjs (27)	-	deterministic	decision	expenses fold	stays	none
 apps/expenses/laws.test.mjs (2)	-	deterministic	decision	expenses laws	stays	none

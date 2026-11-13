@@ -208,7 +208,10 @@ claim for the pantry, its address across a restart, is
 `apps/pantry/address.test.mjs`. The doc's four run its server's doc and
 sync.js's pages in one process on node:test's mocked clock, the lid a
 stopped server; P's own, the upgrade and ws.mjs's frames, is
-`apps/doc/socket.test.mjs`.
+`apps/doc/socket.test.mjs`. Events' page
+says who sees whose answers on its handler (`apps/events/answers.test.mjs`);
+its browser test keeps what only a browser does, a form pressed and the
+Copy button's clipboard.
 
 ### The contained test of each seam
 
