@@ -396,7 +396,7 @@ try {
     e.who === 'bo' &&
     ((e.at === 'Leaving Jellyfin for HolyArrs' &&
       (e.message === 'Unhandled Promise Rejection: TypeError: Load failed' ||
-        /^Fetch API cannot load \S+\/Sessions\/Playing(\/\w+)? due to access control checks\.$/.test(
+        /^Fetch API cannot load .+\/Sessions\/Playing(\/\w+)? due to access control checks\.$/.test(
           e.message,
         ))) ||
       (['Removing Bo with a live stream open', 'Observing the removed member'].includes(e.at) &&
