@@ -26,7 +26,7 @@
 //! names them, [`LivePeer`]: the push door, [`crate::rail`], names the keys
 //! standing in the group but this node's. PLAN §4, U3's inventory.)
 
-use crate::iroh::{Contact, IrohTransport};
+use crate::iroh::{Contact, Fetch};
 
 // svrngs: `LIVE_PAYLOAD_MAX_BYTES` is rail.rs's, the same number, so the
 // lane has one cap (ARCH §10.6); the push door that reads it is there.
@@ -73,10 +73,10 @@ pub struct PeerDelivery {
 /// fan-out rather than iroh-gossip because at ring scale every pair already
 /// holds an authenticated connection (`ring-apps-shelf.md` §gossip, "default
 /// impl"). (svrngs, arch-peer (c): a request on the stream to each, by its
-/// key, [`IrohTransport::fetch`], where upstream tried each address a
+/// key, [`crate::iroh::IrohTransport::fetch`], where upstream tried each address a
 /// loopback bridge answered with a reqwest client of its own.)
 pub async fn push_ephemeral(
-    transport: &IrohTransport,
+    transport: &dyn Fetch,
     peers: Vec<LivePeer>,
     namespace: &str,
     payload: &str,
@@ -93,7 +93,7 @@ pub async fn push_ephemeral(
 }
 
 /// Offer `envelope` to one peer, which has [`LIVE_PUSH_TIMEOUT`] to take it.
-async fn offer_peer(transport: &IrohTransport, envelope: &str, peer: LivePeer) -> PeerDelivery {
+async fn offer_peer(transport: &dyn Fetch, envelope: &str, peer: LivePeer) -> PeerDelivery {
     let offer = crate::iroh::posted("/internal/ring/live", envelope.to_string());
     let taken =
         tokio::time::timeout(LIVE_PUSH_TIMEOUT, transport.fetch(&peer.contact, offer)).await;

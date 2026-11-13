@@ -76,7 +76,7 @@ use crate::redeem::SeedText;
 use crate::register::{Member, Standing};
 use crate::ring_routes::{self, err, RingInbound};
 use crate::ring_sync::{
-    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, OnlinePeer, Rounds,
+    exchange, spawn_ring_sync_loop, AskRound, ExchangeOutcome, OnlinePeer, Rounds, To,
 };
 use crate::version::{SCOPE_HEADER, VERSION};
 use crate::{actor_of, Person, RingRail, SigningKey};
@@ -535,7 +535,7 @@ impl Host {
             relays: peer.relay_urls().map(|r| r.clone().into()).collect(),
             iroh_direct_addrs: addrs,
         };
-        let to = (&*self.transport, &contact);
+        let to: To = (&*self.transport, &contact);
         let mut out = exchange(to, &self.rail, namespace).await;
         tracing::debug!(target: "node", namespace, pulled = out.pulled, pushed = out.pushed, stop = ?out.stop,
             "node: sync_with — one exchange with the peer");

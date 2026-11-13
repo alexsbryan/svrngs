@@ -505,7 +505,12 @@ async fn a_peer_that_answers_403_or_413_is_refused_rather_than_unreachable() {
         relays: Default::default(),
         iroh_direct_addrs: vec!["127.0.0.1:1".parse().unwrap()],
     };
-    let out = exchange((&nobody, &dead), rail.as_ref(), NS).await;
+    let out = exchange(
+        (&nobody as &dyn crate::iroh::Fetch, &dead),
+        rail.as_ref(),
+        NS,
+    )
+    .await;
     assert!(
         matches!(out.stop, Some(ExchangeStop::Failed(_))),
         "an unreachable address is not a refusal: {:?}",

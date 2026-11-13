@@ -24,7 +24,11 @@
 //! Upstream's `PeerTransport` port, `PeerContact`, `PeerEndpoint` and
 //! `TrafficClass` did not come over: there is one transport, so it is a
 //! concrete type (RUST_ARCH: a trait only at a real boundary), a contact is a
-//! key with optional dial hints, and there is one ALPN ([`ALPN`]).
+//! key with optional dial hints, and there is one ALPN ([`ALPN`]). The one
+//! trait is [`Fetch`], a member asked and its answer read whole, the network
+//! client boundary the round, a removal's tell and the live lane share: the
+//! transport is its one impl in the product, and a test answers it in
+//! process (docs/CHECKS.md, harness 4).
 //!
 //! ## Spike limitations (documented, intentional)
 //!
@@ -281,6 +285,25 @@ impl IrohTransport {
             .map(|c| c.close(0u32.into(), b"dialled afresh"))
             .count();
         tracing::debug!(target: "transport", peer = %key.fmt_short(), closed, "iroh: every connection to it closed before the dial afresh, so iroh picks its address anew; a lend on one is cut once");
+    }
+}
+
+/// A member asked: a request to the computer `peer` names, its answer read
+/// whole ([`IrohTransport::fetch`]). The boundary where the round's exchange
+/// ([`crate::ring_sync::To`]), a removal's tell and the live lane's fan-out
+/// meet the network, so a test answers it with the peer's own router in
+/// this process (docs/CHECKS.md, harness 4). Whatever answers decides
+/// nothing: the answer is the asked route's.
+pub trait Fetch: Send + Sync {
+    fn fetch<'a>(&'a self, peer: &'a Contact, req: WholeRequest) -> Fetched<'a>;
+}
+
+/// A [`Fetch`]'s answer, once it comes.
+pub type Fetched<'a> = std::pin::Pin<Box<dyn Future<Output = Result<Whole, Unsent>> + Send + 'a>>;
+
+impl Fetch for IrohTransport {
+    fn fetch<'a>(&'a self, peer: &'a Contact, req: WholeRequest) -> Fetched<'a> {
+        Box::pin(IrohTransport::fetch(self, peer, req))
     }
 }
 

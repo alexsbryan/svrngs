@@ -52,7 +52,6 @@ use serde::Deserialize;
 
 // rail.rs's refusal body came over with the sync route (u1-3), so there is one.
 use crate::folder::carried::{budget_refused, line_spent, Budgeted};
-use crate::iroh::IrohTransport;
 use crate::live::{push_ephemeral, LivePeer};
 use crate::node::dialled;
 use crate::register::{Member, Standing};
@@ -69,8 +68,9 @@ use svrngs_core::{Admission, Append};
 pub struct RailApi {
     pub rail: Arc<RingRail>,
     pub live: Arc<LiveBuffer>,
-    /// The node's dial-by-key transport, the live lane's fan-out rides it.
-    pub transport: Arc<IrohTransport>,
+    /// The node's dial-by-key transport, the live lane's fan-out rides it
+    /// ([`crate::iroh::Fetch`]).
+    pub transport: Arc<dyn crate::iroh::Fetch>,
     /// The build's relays, where every group meets beside its own
     /// (`RelayConfig::build`): the fan-out dials a group's whole meeting.
     pub build: Vec<svrngs_core::relay::Url>,
@@ -541,7 +541,7 @@ impl LiveBuffer {
 ///
 /// Nothing is written anywhere. (svrngs: and it is fanned out, as the
 /// daemon's `live_push` fanned it: offered to every key standing in the
-/// group but this node's, each dialled over the node's [`IrohTransport`],
+/// group but this node's, each dialled over the node's [`crate::iroh::IrohTransport`],
 /// and the answer names each peer and whether it took the payload —
 /// `delivered` counts them, so a lane half up is never read as "everyone
 /// saw it". A group this computer does not hold, or holds with no seed, is
@@ -582,7 +582,7 @@ pub async fn live_push(
     let standing = standing_of(&api.rail, namespace)?;
     let meeting = crate::group::meeting(&api.rail, namespace, &api.build);
     let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing, &meeting);
-    let peers = push_ephemeral(&api.transport, peers, namespace, payload).await;
+    let peers = push_ephemeral(&*api.transport, peers, namespace, payload).await;
     let delivered = peers.iter().filter(|p| p.delivered).count();
     tracing::debug!(
         target: "rails",

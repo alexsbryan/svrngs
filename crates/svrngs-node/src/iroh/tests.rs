@@ -32,7 +32,7 @@ pub(crate) struct OnStream {
 impl OnStream {
     /// The served router as a member a request is sent to, from the
     /// dialer's transport (arch-peer (c)).
-    pub(crate) fn to(&self) -> (&IrohTransport, &Contact) {
+    pub(crate) fn to(&self) -> crate::ring_sync::To<'_> {
         (&self.transport, &self.contact)
     }
 }

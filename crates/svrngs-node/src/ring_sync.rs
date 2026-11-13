@@ -310,7 +310,7 @@ pub async fn run_one_round(
         exchanged_with = ?peers.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
         "ring sync: round membership"
     );
-    let transport = &host.transport;
+    let transport: &dyn crate::iroh::Fetch = &*host.transport;
 
     let (mut dials, mut leaves) = (Vec::new(), Vec::new());
     for namespace in &namespaces {
@@ -454,7 +454,7 @@ async fn exchange_with(to: To<'_>, rail: &RingRail, namespace: &str) -> Exchange
 
 /// Where an exchange goes: a member, by its contact, through the
 /// transport that dials it.
-pub type To<'a> = (&'a crate::iroh::IrohTransport, &'a crate::iroh::Contact);
+pub type To<'a> = (&'a dyn crate::iroh::Fetch, &'a crate::iroh::Contact);
 
 /// Why an exchange with one peer address stopped.
 #[derive(Debug)]

@@ -263,7 +263,7 @@ pub(crate) async fn tell(
         };
         Some(async move {
             let contact = Contact::named(key, &host.meeting(group), relay.as_ref());
-            let told = told(host, group, (&host.transport, &contact)).await;
+            let told = told(host, group, (&*host.transport, &contact)).await;
             told.inspect(|how| tracing::debug!(target: "removal", group, actor, how, "removal: a computer told the cut"))
                 .inspect_err(|e| tracing::warn!(target: "removal", group, actor, error = e, "removal: a computer not told the cut with what it covers, so it is asked again, never sent the cut alone"))
                 .is_ok()

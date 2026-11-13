@@ -682,10 +682,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # svrngs-runtime's invite reads through `admission`; group.rs `read_relay`
 # and api.rs's Infallible match. . 21,185 -> 21,161; the cap is lowered
 # where the harness this pays for lands.
+# (2026-11-13) Harness 4, iroh.rs `Fetch` (+8), a member asked, the one
+# trait at the boundary ring_sync::To and RailApi::transport cross; . to
+# 21,169, the cap one past it, 18 under where the pass found it.
 BUDGET = {
     "crates/svrngs-core": 3493,
 
-    ".": 21188,
+    ".": 21170,
 
     "js": 8511,
 
