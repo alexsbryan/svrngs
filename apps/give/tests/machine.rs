@@ -181,7 +181,12 @@ fn a_running_small_machine_is_left_running_and_the_person_told() {
     let list = r#"[{"Name": "podman-machine-default", "Default": true, "Running": true, "Memory": "2147483648"}]"#;
     let (podman, log) = recording("running", list);
     let why = ensure_machine(&podman, GB, false).unwrap_err().to_string();
-    assert_eq!(std::fs::read_to_string(log).unwrap(), "machine list --format json\n");
+    // The refusal said first if the stub never ran: on the Fedora gate image
+    // its log was once never written (machine.rs:184, NotFound) with the
+    // refusal unread, so why the stub did not run was lost (demo/runs/
+    // flakes/2026-11-12, C6).
+    let said = std::fs::read_to_string(log).unwrap_or_else(|e| panic!("the stub never ran ({e}): {why}"));
+    assert_eq!(said, "machine list --format json\n");
     assert!(
         why.contains("gives Podman 2.0 GB, and keeping this needs 3.0 GB"),
         "{why}"
