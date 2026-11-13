@@ -462,3 +462,44 @@ fn a_visit_key_and_a_removed_key_are_served_no_member_s_protocol() {
     assert!(rail.removed_anywhere(&actor_of(&key(3))).is_some());
     assert!(rail.removed_anywhere(&actor_of(&key(9))).is_none());
 }
+
+/// **A group made here meets where its keeper says, never where a round's
+/// cut over read it half kept** (demo/runs/flakes/2026-11-12, row 201):
+/// `keep_group` seeds the rail, then commits its keeper's `MeetsAt`; a
+/// round's `cut_over` between the two read no `MeetsAt` and wrote the empty
+/// one a founder files, over the keeper's. Here the round comes at that
+/// point, `meeting` held as `keep_group` holds it, and writes nothing.
+/// Planted, watched red: `cut_over` not taking `meeting`, so it wrote
+/// `MeetsAt({})` into the half-kept group.
+#[tokio::test]
+async fn a_round_never_cuts_over_a_group_half_kept() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[96; 32]);
+    let seed = crate::group::draw(
+        crate::Name::parse("Trip").unwrap(),
+        crate::Name::parse("Sam").unwrap(),
+        key.verifying_key(),
+    );
+    let node = Node::on_wire(
+        &Wire::default(),
+        dir.path().into(),
+        key,
+        crate::group::seed_text,
+    )
+    .await
+    .unwrap();
+    drop(node._round);
+    drop(node._tasks);
+    let (host, ns) = (&node.host, seed.id());
+    let own: BTreeSet<Url> = ["http://127.0.0.1:9/".parse().unwrap()].into();
+    let half = host.meeting.lock().unwrap();
+    host.rail.set_seed(&ns, &seed.roster()).unwrap();
+    host.cut_over(&ns);
+    let meets = |host: &Host| host.rail.register(&ns).unwrap().meets;
+    assert_eq!(meets(host), None, "the round wrote into a group half kept");
+    let said = host.rail.commit(&ns, &svrngs_core::MeetsAt(own.clone()));
+    said.unwrap().unwrap();
+    drop(half);
+    host.cut_over(&ns);
+    assert_eq!(meets(host), Some(own), "the keeper's MeetsAt stands");
+}

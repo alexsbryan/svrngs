@@ -281,6 +281,13 @@ pub struct Host {
     /// (capability-scenes-found (e)).
     #[expect(clippy::disallowed_types, reason = "the links' sequencer")]
     pub(crate) minting: std::sync::Mutex<()>,
+    /// Held by the two steps that say where a group meets unasked: keeping a
+    /// group, from its seed to its founder's `MeetsAt`, and
+    /// [`Host::cut_over`]'s read and write, so the cut over never reads a
+    /// group half kept as one that says nowhere and writes over its
+    /// founder's `MeetsAt` (demo/runs/flakes/2026-11-12, row 201).
+    #[expect(clippy::disallowed_types, reason = "a group kept in one step")]
+    pub(crate) meeting: std::sync::Mutex<()>,
     /// Cancelled when the node stops ([`Stop`]), which ends each task run
     /// under it, the folders' sweep and synced directories: none outlives
     /// the node.
@@ -395,6 +402,7 @@ impl Node {
             held: tokio::sync::watch::Sender::new(held),
             api_port,
             minting: Default::default(),
+            meeting: Default::default(),
             stopping: Default::default(),
         });
         let (folders, blobs, store) =
@@ -656,8 +664,12 @@ impl Host {
     /// Where the group meets, said in `namespace` by this computer when it
     /// keeps the group and none is said yet (relay fallbacks): from the
     /// relay its file keeps. Asked of the kept register, as the relay is.
+    /// Not made while a group is being kept ([`Host::meeting`]), as it may
+    /// be half kept: each round asks again. A step that panicked holding it
+    /// left its group half kept, so none is made after it either.
     pub(crate) fn cut_over(&self, namespace: &str) {
-        let Ok(r) = self.rail.register(namespace) else {
+        let (Ok(_meeting), Ok(r)) = (self.meeting.try_lock(), self.rail.register(namespace)) else {
+            tracing::debug!(target: "node", namespace, "node: a group is being kept, or one failed half kept, or this one's register is unreadable, so no cut over this time");
             return;
         };
         let keeps = r.keeper.as_deref() == Some(self.actor.as_str());

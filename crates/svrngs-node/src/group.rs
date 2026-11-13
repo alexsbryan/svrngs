@@ -187,6 +187,9 @@ impl crate::node::Host {
             .and_then(|()| origin.map_or(Ok(()), |origin| write_origin(&dir, origin)))
             .and_then(|()| filed.map_or(Ok(()), |relay| write_relay(&dir, &relay)))
             .map_err(|e: SeedError| e.to_string())?;
+        // One step, so a round's cut over never reads the group seeded and
+        // not yet said to meet anywhere ([`crate::node::Host::meeting`]).
+        let _meeting = (self.meeting.lock()).unwrap_or_else(std::sync::PoisonError::into_inner);
         rail.set_seed(&seed.id(), &seed.roster())
             .map_err(|e| e.to_string())?;
         if founds {
@@ -194,7 +197,6 @@ impl crate::node::Host {
             said.map_err(|e| e.to_string())?
                 .map_err(|why| format!("{why:?}"))?;
         }
-        self.cut_over(&seed.id());
         // Its record says where it meets from now on: a relay kept asked
         // here would outlast the keeper's taking it away (requirement 5).
         self.held

@@ -702,10 +702,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # where a task that never ended held it past the node (+8); paid by
 # cli.rs `serve`'s unreachable arm, its thirteen verbs one `_` (-14).
 # . 21,325 -> 21,319.
+# (2026-11-13) A group kept in one step (node.rs `Host::meeting`): a round's
+# cut over no longer reads a group seeded and not yet said to meet, and
+# writes `MeetsAt({})` over its founder's (flakes 2026-11-12, row 201), +3;
+# paid by cli.rs `checked_page` taking the `--origin` that `new` and `link`
+# each matched on (-5). . 21,319 -> 21,317.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 21320,
+    ".": 21318,
 
     "js": 8553,
 
