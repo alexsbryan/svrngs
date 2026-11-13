@@ -81,10 +81,19 @@ impl UpdateError {
     }
 }
 
+/// What reads the page's file at a URL, at most so many bytes: [`fetch`],
+/// or a test's page with no socket under it.
+pub trait Get: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError> {}
+impl<F: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError>> Get for F {}
+
 /// Whether the page offers a svrngs this computer does not run.
 pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
-    let client = client()?;
-    let latest = latest(dir, &client).await?;
+    check_by(dir, fetch).await
+}
+
+/// [`check`], the page's files read by `get`.
+pub async fn check_by(dir: &Path, get: impl Get) -> Result<Check, UpdateError> {
+    let latest = latest(dir, &get).await?;
     let current = latest.installed.as_deref() == Some(latest.want.as_str());
     tracing::debug!(target: "update", page = %latest.base, want = %latest.want, installed = ?latest.installed, current, "update: the page’s release read");
     Ok(if current {
@@ -99,20 +108,20 @@ pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
 pub async fn apply(dir: &Path) -> Result<Outcome, UpdateError> {
     let exe =
         std::env::current_exe().map_err(refused("this computer cannot find the svrngs it runs"))?;
-    apply_at(dir, &exe).await
+    apply_at(dir, &exe, fetch).await
 }
 
-/// [`apply`] over `exe`, for a test whose svrngs is not the running one.
-pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
+/// [`apply`] over `exe`, the page's files read by `get`: for a test whose
+/// svrngs is not the running one, and whose page is no socket.
+pub async fn apply_at(dir: &Path, exe: &Path, get: impl Get) -> Result<Outcome, UpdateError> {
     let _held = claim(dir)?;
-    let client = client()?;
-    let latest = latest(dir, &client).await?;
+    let latest = latest(dir, &get).await?;
     if latest.installed.as_deref() == Some(latest.want.as_str()) {
         tracing::debug!(target: "update", tarball = %latest.tarball, "update: the release is the one this computer installed");
         return Ok(Outcome::Current);
     }
     let url = format!("{}{}", latest.base, latest.tarball);
-    let bytes = fetch(&client, &url, MAX_TARBALL).await?;
+    let bytes = get(&url, MAX_TARBALL).await?;
     if hash(&bytes) != latest.want {
         tracing::debug!(target: "update", url, "update: refused — the tarball does not match the page’s checksum");
         return Err(UpdateError::Mismatch);
@@ -142,9 +151,8 @@ pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
             "the new svrngs is not a regular file".to_string(),
         ));
     }
-    let program = fs::read(&unpacked).map_err(refused("the new svrngs cannot be read"))?;
     let new = exe.with_extension("new");
-    fs::write(&new, &program).map_err(refused("the new svrngs cannot be put where svrngs runs"))?;
+    fs::copy(&unpacked, &new).map_err(refused("the new svrngs cannot be put where svrngs runs"))?;
     fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755))
         .map_err(refused("the new svrngs cannot be made runnable"))?;
     fs::rename(&new, exe).map_err(refused("the new svrngs cannot replace this one"))?;
@@ -160,13 +168,13 @@ pub async fn apply_at(dir: &Path, exe: &Path) -> Result<Outcome, UpdateError> {
 }
 
 /// The page’s release and this computer’s record of what it installed.
-async fn latest(dir: &Path, client: &reqwest13::Client) -> Result<Latest, UpdateError> {
+async fn latest(dir: &Path, get: &impl Get) -> Result<Latest, UpdateError> {
     let page = page(dir)?;
     let platform =
         platform_of(std::env::consts::OS, std::env::consts::ARCH).ok_or(UpdateError::Platform)?;
     let tarball = format!("svrngs-{platform}.tar.gz");
     let base = format!("{}/get/", page.as_str().trim_end_matches('/'));
-    let sums = fetch(client, &format!("{base}SHA256SUMS"), MAX_SUMS).await?;
+    let sums = get(&format!("{base}SHA256SUMS"), MAX_SUMS).await?;
     let sums = String::from_utf8(sums)
         .map_err(|e| UpdateError::CouldNotJudge(format!("the page’s answer is not text: {e}")))?;
     let want = wanted(&sums, &tarball)?;
@@ -241,16 +249,13 @@ fn wanted(sums: &str, tarball: &str) -> Result<String, UpdateError> {
     Err(UpdateError::NotListed)
 }
 
-/// The one HTTP client, from [`crate::http`].
-fn client() -> Result<reqwest13::Client, UpdateError> {
-    crate::http::client().map_err(|e| {
+/// `url`’s bytes, refused past `max` and on any answer but success, asked
+/// with the one HTTP client, from [`crate::http`].
+pub async fn fetch(url: &str, max: usize) -> Result<Vec<u8>, UpdateError> {
+    let client = crate::http::client().map_err(|e| {
         tracing::debug!(target: "update", error = %e, "update: no HTTP client can be made");
         UpdateError::CouldNotJudge(format!("this computer cannot ask the page: {e}"))
-    })
-}
-
-/// `url`’s bytes, refused past `max` and on any answer but success.
-async fn fetch(client: &reqwest13::Client, url: &str, max: usize) -> Result<Vec<u8>, UpdateError> {
+    })?;
     let answer = client
         .get(url)
         .timeout(Duration::from_secs(30))
