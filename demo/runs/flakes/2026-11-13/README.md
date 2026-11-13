@@ -131,3 +131,24 @@ B 158, C 79, D 10, M 7. At 5cfa2609, 528 (55.2%).
 binaries): 899 gate Rust tests, 617 (68.6%) crossing no seam, 282 at
 least one: P 267, Q 234, R 140, B 90, C 75, D 10, M 7. Browser 43
 fragile, pages 3, home 13, home_group 4. The isolated Node laws: 309.
+
+## The gate at 6c30c2aa
+
+Since 630967b0: 7e1dc69a..c6fe992a and 34489477 (a node's folders end
+with it; kept's restart on the wire), 280cc545 (a carried app's spans
+name each person's first key), d57c7cee (Eudoxia from git rev e995acd4),
+e31251b7 (a group kept in one step, so a round never writes MeetsAt({})
+over its founder's: new_relay's flake, recorded-failures.tsv:201).
+
+A gate at 280cc545 failed at tests on new_relay.rs:85 alone (1,915 s,
+44 steps passed); new_relay then failed 1 run in 4 alone and was traced
+to that race (RUST_LOG=node=debug,group=debug,rail=debug).
+
+`gate-6c30c2aa.txt`: scripts/check.sh under the gate lock in a clean
+detached worktree at 6c30c2aa (main), Eudoxia from git e995acd4,
+CARGO_INCREMENTAL=0: 1,686 s, **exit 0**, every step passed, nothing
+could-not-judge; tests 621 s, browser 186 s, scenes 372 s, playback 180 s.
+
+`recount-6c30c2aa.out` (`recount.py`, unchanged): 900 gate Rust tests,
+618 (68.7%) crossing no seam, 282 at least one: P 267, Q 234, R 140,
+B 90, C 75, D 10, M 7.
