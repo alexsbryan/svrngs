@@ -607,3 +607,5 @@ fn the_answer_from_the_kept_digest_is_the_whole_logs_byte_for_byte() {
          ahead with its two; behind once we hold them; and in step"
     );
 }
+
+mod in_process;

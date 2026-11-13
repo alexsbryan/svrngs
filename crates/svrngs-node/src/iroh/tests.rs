@@ -75,6 +75,66 @@ pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> 
     )
 }
 
+/// Members answered in this process (docs/CHECKS.md, harness 4): each
+/// key's router asked by tower's `oneshot`, the asker's [`Dialer`]
+/// inserted as [`IrohAcceptor`] inserts it, its answer read whole. A key
+/// it serves no router for has no path, as a bare key with no lookup has
+/// none ([`Unsent::NoPath`]). It decides nothing: whatever the router
+/// answers is the answer, so the routes' own refusals are what a test
+/// watches. That a request reaches a member over QUIC at all stays
+/// `tests/accept.rs`'s and `a_request_rides_a_stream_of_the_one_connection_kept_to_the_member`'s.
+pub(crate) struct InProcess {
+    asker: Dialer,
+    routers: std::collections::BTreeMap<[u8; 32], axum::Router>,
+}
+
+impl InProcess {
+    /// Members asked by `asker`'s key, none served yet.
+    pub(crate) fn asked_by(asker: &crate::SigningKey) -> Self {
+        Self {
+            asker: dialer(asker),
+            routers: Default::default(),
+        }
+    }
+
+    /// `router` answering as the computer holding `key`; its contact.
+    pub(crate) fn serving(&mut self, key: u8, router: axum::Router) -> Contact {
+        let key = SecretKey::from_bytes(&[key; 32]).public();
+        self.routers.insert(*key.as_bytes(), router);
+        bare(key)
+    }
+}
+
+/// A contact by `key` alone: no relay, no address.
+pub(crate) fn bare(key: PublicKey) -> Contact {
+    Contact {
+        key,
+        relays: Default::default(),
+        iroh_direct_addrs: Vec::new(),
+    }
+}
+
+impl Fetch for InProcess {
+    fn fetch<'a>(&'a self, peer: &'a Contact, req: WholeRequest) -> Fetched<'a> {
+        Box::pin(async move {
+            use tower::ServiceExt;
+            let router = self
+                .routers
+                .get(peer.key.as_bytes())
+                .ok_or(Unsent::NoPath)?;
+            let mut req = req.map(axum::body::Body::from);
+            req.extensions_mut().insert(self.asker);
+            let answer = router.clone().oneshot(req).await;
+            let (head, body) = answer.unwrap_or_else(|never| match never {}).into_parts();
+            let body = axum::body::to_bytes(body, usize::MAX).await;
+            Ok(Whole::from_parts(
+                head,
+                body.map_err(|e| Unsent::Failed(e.to_string()))?,
+            ))
+        })
+    }
+}
+
 /// Bind an empty (no-relay, deterministic) endpoint serving `alpns`.
 pub(crate) async fn hermetic_endpoint(seed: u8, alpns: Vec<Vec<u8>>) -> Endpoint {
     EndpointBuilder::empty()
