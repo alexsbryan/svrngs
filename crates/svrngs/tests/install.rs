@@ -266,19 +266,6 @@ async fn paste(port: u16, link: &str, home: &Path, uname: Option<&str>) -> Outpu
 
 /// The line with `more` after the link.
 async fn paste_more(port: u16, link: &str, more: &str, home: &Path, uname: Option<&str>) -> Output {
-    paste_in(port, link, more, home, uname, None).await
-}
-
-/// The line pasted in a terminal whose login shell is `shell`, as `$SHELL`
-/// names it; with none, a terminal that names none.
-async fn paste_in(
-    port: u16,
-    link: &str,
-    more: &str,
-    home: &Path,
-    uname: Option<&str>,
-    shell: Option<&str>,
-) -> Output {
     let line = format!("curl -fsSL http://127.0.0.1:{port}/install.sh | sh -s -- '{link}'{more}");
     let path = format!(
         "{}:/usr/bin:/bin:/usr/sbin:/sbin",
@@ -290,9 +277,6 @@ async fn paste_in(
         .env("HOME", home)
         .env("PATH", path)
         .env("USER", "Alex");
-    if let Some(shell) = shell {
-        sh.env("SHELL", shell);
-    }
     let out = sh.output();
     let out = tokio::time::timeout(Duration::from_secs(120), out)
         .await
@@ -315,50 +299,6 @@ impl Drop for Started {
             let _ = std::process::Command::new("kill").arg(pid.trim()).status();
         }
     }
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn a_tarball_that_does_not_match_its_sum_is_refused_by_name() {
-    let wrong = format!("{}  {}\n", "0".repeat(64), tarball());
-    let site = site(Some(&wrong));
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let out = paste(
-        port,
-        &format!("http://127.0.0.1:{port}/#x"),
-        home.path(),
-        None,
-    )
-    .await;
-    let err = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(1), "{err}");
-    assert!(
-        err.contains(&format!(
-            "{} is not the one the release lists, so it was refused",
-            tarball()
-        )),
-        "{err}"
-    );
-    assert!(
-        !home.path().join(".local/bin/svrngs").exists(),
-        "installed anyway"
-    );
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn a_platform_svrngs_is_not_built_for_is_refused() {
-    let site = site(None);
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let link = format!("http://127.0.0.1:{port}/#x");
-    let out = paste(port, &link, home.path(), Some("FreeBSD riscv64")).await;
-    let err = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(1), "{err}");
-    assert!(
-        err.contains("svrngs runs on Mac and Linux computers, Intel or ARM; this one is FreeBSD on riscv64, so nothing was installed."),
-        "{err}"
-    );
-    assert!(!home.path().join(".local/bin/svrngs").exists());
 }
 
 /// Planted failure: a refused join after the installer has stopped an
@@ -743,152 +683,6 @@ async fn a_founder_s_line_installs_keeps_svrngs_at_login_and_opens_the_home_page
     }
 }
 
-/// **Give's program, as an option of the line** (give-install (a)): on a
-/// clean data dir the line without `--give` installs svrngs alone, and
-/// Give's page's line, `curl -fsSL <page>install.sh | sh -s -- '<page>'
-/// --give`, then gets Give's program from the same page's `get/`, checked
-/// against the same SHA256SUMS, puts it beside svrngs and keeps `give
-/// keep` running at login beside it — a LaunchAgent on macOS, a systemd
-/// --user unit on Linux, each recorded by the stand-in, never run, since
-/// it would drive this computer's Podman. The agent finds svrngs and
-/// Podman on its own PATH, which launchd and systemd do not give it, and
-/// is waited for as it stops, since it copies each app it keeps to the
-/// group as it stops. Run again with it, it updates Give's program and
-/// keeps one agent. Planted, watched failing: install.sh as 60565068 left
-/// it, which took `--give` for nothing and installed no program.
-#[tokio::test(flavor = "multi_thread")]
-async fn the_line_without_then_with_give_installs_give_s_program_beside_svrngs() {
-    let site = site(None);
-    as_linux(site.path());
-    let port = host(site.path().to_path_buf()).await;
-    let page = format!("http://127.0.0.1:{port}/");
-    let mac = cfg!(target_os = "macos").then_some(None);
-    for uname in mac.into_iter().chain([Some("Linux x86_64")]) {
-        let home = tempfile::tempdir().unwrap();
-        let _started = Started(home.path().to_path_buf());
-        let bin = home.path().join(".local/bin");
-        let agent = match uname {
-            None => home
-                .path()
-                .join("Library/LaunchAgents/sh.svrnme.give.plist"),
-            Some(_) => home.path().join(".config/systemd/user/give.service"),
-        };
-        let without = paste(port, &page, home.path(), uname).await;
-        let said = String::from_utf8_lossy(&without.stdout);
-        assert!(without.status.success(), "{uname:?}: {said}");
-        assert!(
-            !bin.join("give").exists(),
-            "{uname:?}: Give's program, unasked"
-        );
-        assert!(!agent.exists(), "{uname:?}: Give's program kept, unasked");
-
-        let platform = match uname {
-            None => tarball_of("give"),
-            Some(_) => "give-linux-x86_64.tar.gz".into(),
-        };
-        for (run, done) in [(1, "Installed"), (2, "Updated")] {
-            let with = paste_more(port, &page, " --give", home.path(), uname).await;
-            let said = String::from_utf8_lossy(&with.stdout);
-            let err = String::from_utf8_lossy(&with.stderr);
-            assert!(with.status.success(), "{uname:?}, run {run}: {said}{err}");
-            for line in [
-                format!(
-                    "Checked: {platform} is the one the release lists, unchanged on its way here."
-                ),
-                "Updated svrngs in".into(),
-                format!("{done} give in {}.", bin.display()),
-                "give runs now, and whenever you log in".into(),
-            ] {
-                assert!(
-                    said.contains(&line),
-                    "{uname:?}, run {run}, not said: {line}\n{said}"
-                );
-            }
-            assert_eq!(
-                said.contains("Stopped give, to update it."),
-                run == 2,
-                "{uname:?}, run {run}: {said}"
-            );
-            assert!(
-                !said.contains("You're in"),
-                "a page's address joins nothing: {said}"
-            );
-        }
-        let placed = std::fs::read_to_string(bin.join("give")).unwrap();
-        assert!(placed.contains("echo \"give $*\""), "{placed}");
-        let kept = std::fs::read_to_string(&agent).unwrap();
-        let path = format!("{}:/opt/podman/bin:", bin.display());
-        let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
-        match uname {
-            None => {
-                let run = format!(
-                    "<string>{}/give</string><string>keep</string>",
-                    bin.display()
-                );
-                for line in [
-                    run,
-                    path,
-                    "<key>ExitTimeOut</key><integer>0</integer>".into(),
-                ] {
-                    assert!(kept.contains(&line), "not in the agent: {line}\n{kept}");
-                }
-                let n = launched.matches("bootstrap gui/").count();
-                assert_eq!(n, 3 + 2, "svrngs three times, give twice: {launched}");
-            }
-            Some(_) => {
-                let run = format!("ExecStart={}/give keep", bin.display());
-                for line in [
-                    run,
-                    format!("Environment=PATH={path}"),
-                    "TimeoutStopSec=infinity".into(),
-                ] {
-                    assert!(kept.contains(&line), "not in the unit: {line}\n{kept}");
-                }
-                let n = launched.matches("--user enable --now give.service").count();
-                assert_eq!(n, 2, "{launched}");
-            }
-        }
-        let data = home.path().join(".svrngs");
-        assert!(
-            kept.contains(&data.display().to_string()),
-            "the agent names svrngs's data dir: {kept}"
-        );
-    }
-}
-
-/// **Give's program checked as svrngs is** (give-install (a)): a give
-/// tarball that does not match its sum is refused by name, and nothing is
-/// installed, svrngs included, though svrngs's own tarball matched.
-/// Planted, watched failing: install.sh as 60565068 left it, which fetched
-/// no program and so refused nothing.
-#[tokio::test(flavor = "multi_thread")]
-async fn a_give_tarball_that_does_not_match_its_sum_is_refused_and_nothing_installed() {
-    let site = site(None);
-    let sums = std::fs::read_to_string(site.path().join("get/SHA256SUMS")).unwrap();
-    let give = tarball_of("give");
-    let wrong: String = (sums.lines())
-        .map(|l| match l.ends_with(&give) {
-            true => format!("{}  {give}\n", "0".repeat(64)),
-            false => format!("{l}\n"),
-        })
-        .collect();
-    std::fs::write(site.path().join("get/SHA256SUMS"), wrong).unwrap();
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let page = format!("http://127.0.0.1:{port}/");
-    let out = paste_more(port, &page, " --give", home.path(), None).await;
-    let err = String::from_utf8_lossy(&out.stderr);
-    assert_eq!(out.status.code(), Some(1), "{err}");
-    let refused = format!("{give} is not the one the release lists, so it was refused");
-    assert!(err.contains(&refused), "{err}");
-    let bin = home.path().join(".local/bin");
-    assert!(!bin.join("give").exists(), "installed anyway");
-    assert!(
-        !bin.join("svrngs").exists(),
-        "svrngs installed beside a refused program"
-    );
-}
-
 /// What svrngs answers the open `url` redeemed as a browser's bootstrap
 /// redeems it, by a POST from its own origin (home/session.js): its status,
 /// and whether it gave the origin its key (session.rs `redeem`).
@@ -908,43 +702,6 @@ async fn redeemed(url: &str) -> (u16, bool) {
     sock.read_to_string(&mut reply).await.unwrap();
     let set = reply.contains("\"key\":");
     (reply[9..12].parse().unwrap(), set)
-}
-
-/// `svrngs restart` asks what keeps svrngs running, and says so plainly when
-/// nothing does. Watched failing: `restart` was an unknown command.
-#[tokio::test(flavor = "multi_thread")]
-async fn restart_asks_what_keeps_svrngs_and_refuses_where_nothing_does() {
-    let site = site(None);
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let _started = Started(home.path().to_path_buf());
-    let page = format!("http://127.0.0.1:{port}/");
-    assert!(paste(port, &page, home.path(), None).await.status.success());
-    let restart = || {
-        tokio::process::Command::new(home.path().join(".local/bin/svrngs"))
-            .arg("restart")
-            .env_clear()
-            .env("HOME", home.path())
-            .env("PATH", home.path().join("stubs"))
-            .output()
-    };
-    let kept = restart().await.unwrap();
-    assert!(kept.status.success(), "{kept:?}");
-    let said = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
-    let asked = match cfg!(target_os = "macos") {
-        true => "launchctl kickstart -k gui/",
-        false => "systemctl --user restart svrngs.service",
-    };
-    assert!(said.contains(asked), "{said}");
-
-    let pid = std::fs::read_to_string(home.path().join("stubs/pid")).unwrap();
-    let stopped = std::process::Command::new("kill").arg(pid.trim()).status();
-    assert!(stopped.unwrap().success());
-    std::fs::remove_file(home.path().join("stubs/pid")).unwrap();
-    let not = restart().await.unwrap();
-    assert!(!not.status.success(), "{not:?}");
-    let why = String::from_utf8_lossy(&not.stderr);
-    assert!(why.contains("not kept running at login"), "{why}");
 }
 
 /// A second browser has no session, so the page it is refused with says
@@ -1064,66 +821,6 @@ async fn the_opener_opens_the_home_page(home: &Path, linux: bool, address: &str,
         (200, true),
         "the opener's open sets the session"
     );
-}
-
-/// **svrngs on the login shell's PATH** (the room's report, 3: a person
-/// could not run `svrngs` by name after install.sh). A founder's line, run
-/// twice in a terminal that does not look in `~/.local/bin`: for zsh it
-/// adds that directory to `~/.zshrc`, for bash on Linux to `~/.bashrc`
-/// and on macOS to `~/.bash_profile`, as rustup and uv add theirs; it says
-/// what it changed and that a new terminal window picks it up, and the
-/// second run adds no second line and says it is there already. What the
-/// profile held before stays. Planted, watched failing: install.sh as
-/// e01c070a left it, which only printed where svrngs is.
-#[tokio::test(flavor = "multi_thread")]
-async fn the_line_puts_svrngs_on_the_login_shell_s_path() {
-    let site = site(None);
-    as_linux(site.path());
-    let port = host(site.path().to_path_buf()).await;
-    let page = format!("http://127.0.0.1:{port}/");
-    let mac = cfg!(target_os = "macos");
-    let mut runs = vec![("/bin/bash", Some("Linux x86_64"), ".bashrc")];
-    if mac {
-        runs.push(("/bin/zsh", None, ".zshrc"));
-        runs.push(("/bin/bash", None, ".bash_profile"));
-    } else {
-        runs.push(("/usr/bin/zsh", Some("Linux x86_64"), ".zshrc"));
-    }
-    for (shell, uname, file) in runs {
-        let home = tempfile::tempdir().unwrap();
-        let _started = Started(home.path().to_path_buf());
-        let profile = home.path().join(file);
-        std::fs::write(&profile, "alias ll='ls -l'\n").unwrap();
-        let bin = home.path().join(".local/bin");
-        let line = format!("export PATH=\"{}:$PATH\"", bin.display());
-        let first = paste_in(port, &page, "", home.path(), uname, Some(shell)).await;
-        let said = String::from_utf8_lossy(&first.stdout);
-        assert!(first.status.success(), "{shell} {uname:?}: {said}");
-        let added = format!(
-            "Added {} to where your terminal looks for programs, in {}. Open a new terminal window, and svrngs runs there by name.",
-            bin.display(),
-            profile.display()
-        );
-        assert!(
-            said.contains(&added),
-            "{shell} {uname:?}: not said: {added}\n{said}"
-        );
-        let again = paste_in(port, &page, "", home.path(), uname, Some(shell)).await;
-        let said = String::from_utf8_lossy(&again.stdout);
-        assert!(again.status.success(), "{shell} {uname:?}: {said}");
-        let there = format!(
-            "{} already adds {} to where your terminal looks for programs. Open a new terminal window, and svrngs runs there by name.",
-            profile.display(),
-            bin.display()
-        );
-        assert!(
-            said.contains(&there),
-            "{shell} {uname:?}: not said: {there}\n{said}"
-        );
-        let held = std::fs::read_to_string(&profile).unwrap();
-        assert!(held.starts_with("alias ll='ls -l'\n"), "{held}");
-        assert_eq!(held.matches(&line).count(), 1, "{shell} {uname:?}: {held}");
-    }
 }
 
 /// The founder has the group's folder from `new` (bash-first-minute (d);
@@ -1268,108 +965,6 @@ async fn joining_places_the_groups_folder() {
     sam.endpoint().close().await;
 }
 
-#[cfg(target_os = "macos")]
-#[tokio::test(flavor = "multi_thread")]
-async fn a_relay_is_kept_running_beside_svrngs_on_a_mac() {
-    let site = site(None);
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let page = format!("http://127.0.0.1:{port}/");
-    let more = " --relay relay.example.org --open";
-    let out = paste_more(port, &page, more, home.path(), None).await;
-    let said = String::from_utf8_lossy(&out.stdout);
-    assert!(
-        out.status.success(),
-        "{said}{}",
-        String::from_utf8_lossy(&out.stderr)
-    );
-    let bin = home.path().join(".local/bin");
-    assert!(
-        said.contains(&format!("Installed svrngs in {}.", bin.display())),
-        "{said}"
-    );
-    assert!(
-        said.contains("svrngs-relay runs now, and whenever you log in"),
-        "{said}"
-    );
-    assert!(!said.contains("You're in"), "a relay joins nothing: {said}");
-    let agents = home.path().join("Library/LaunchAgents");
-    let plist = std::fs::read_to_string(agents.join("sh.svrnme.svrngs.relay.plist")).unwrap();
-    let run = format!(
-        "<array><string>{}/svrngs</string><string>relay</string><string>relay.example.org</string><string>--open</string></array>",
-        bin.display()
-    );
-    assert!(plist.contains(&run), "{plist}");
-    assert!(plist.contains("svrngs-relay.log"), "{plist}");
-    assert!(
-        !agents.join("sh.svrnme.svrngs.plist").exists(),
-        "svrngs's own agent is not touched"
-    );
-    let launched = std::fs::read_to_string(home.path().join("stubs/said")).unwrap();
-    assert_eq!(
-        launched.matches("launchctl bootstrap").count(),
-        1,
-        "{launched}"
-    );
-}
-
-#[tokio::test(flavor = "multi_thread")]
-async fn a_relay_on_linux_prints_its_system_unit_and_installs_none() {
-    let site = site(None);
-    // The Linux path is read, never run, here.
-    as_linux(site.path());
-    let port = host(site.path().to_path_buf()).await;
-    let home = tempfile::tempdir().unwrap();
-    let page = format!("http://127.0.0.1:{port}/");
-    let linux = Some("Linux x86_64");
-    let out = paste_more(
-        port,
-        &page,
-        " --relay relay.example.org",
-        home.path(),
-        linux,
-    )
-    .await;
-    let said = String::from_utf8_lossy(&out.stdout);
-    assert!(
-        out.status.success(),
-        "{said}{}",
-        String::from_utf8_lossy(&out.stderr)
-    );
-    let bin = home.path().join(".local/bin");
-    for line in [
-        "As root, put this in /etc/systemd/system/svrngs-relay.service, then run systemctl enable --now svrngs-relay:".to_string(),
-        format!("ExecStart={}/svrngs relay relay.example.org", bin.display()),
-        "AmbientCapabilities=CAP_NET_BIND_SERVICE".to_string(),
-        "WantedBy=multi-user.target".to_string(),
-    ] {
-        assert!(said.contains(&line), "not said: {line}\n{said}");
-    }
-    assert!(
-        !home.path().join("stubs/said").exists(),
-        "nothing asked of systemd"
-    );
-    assert!(
-        !home.path().join(".config/systemd").exists(),
-        "no unit installed"
-    );
-
-    let wrong = paste_more(
-        port,
-        &page,
-        " --relay relay.example.org --as x",
-        home.path(),
-        linux,
-    )
-    .await;
-    let err = String::from_utf8_lossy(&wrong.stderr);
-    assert_eq!(wrong.status.code(), Some(1), "{err}");
-    assert!(
-        err.contains("a relay takes --open and nothing else, not --as."),
-        "{err}"
-    );
-}
-
 // install.sh's own claims, over the page's files with no listener: it
 // fetches only by `curl -fsSL <url> [-o <file>]` (web/install.sh:90, 98),
 // so a `curl` stub answers from the site as the page host would; and where
@@ -1500,8 +1095,9 @@ fn install_sh_refuses_a_platform_svrngs_is_not_built_for_before_any_fetch() {
     assert_eq!(fetched, format!("{PAGE}install.sh\n"));
 }
 
-/// [`a_give_tarball_that_does_not_match_its_sum_is_refused_and_nothing_installed`]'s
-/// claim, over the page's files.
+/// **Give's program checked as svrngs is** (give-install (a)): a give
+/// tarball off its sum is refused by name, and nothing is installed,
+/// svrngs included, though svrngs's own tarball matched.
 #[test]
 fn install_sh_refuses_give_off_its_sum_and_installs_nothing() {
     let site = stand_in_site(None);
@@ -1617,9 +1213,10 @@ fn install_sh_prints_a_relay_s_system_unit_on_linux_and_installs_none() {
     );
 }
 
-/// [`the_line_puts_svrngs_on_the_login_shell_s_path`]'s claim, install.sh's
-/// profile step: one PATH line in the login shell's profile, said once,
-/// then said to be there; what the profile held, kept.
+/// **svrngs on the login shell's PATH** (the room's report, 3): install.sh's
+/// profile step, for zsh `~/.zshrc`, for bash `~/.bashrc` on Linux and
+/// `~/.bash_profile` on macOS: one PATH line, said once, then said to be
+/// there; what the profile held, kept.
 #[test]
 fn install_sh_puts_svrngs_on_the_login_shell_s_path_once() {
     let site = stand_in_site(None);
@@ -1673,8 +1270,8 @@ fn install_sh_puts_svrngs_on_the_login_shell_s_path_once() {
     }
 }
 
-/// [`the_line_without_then_with_give_installs_give_s_program_beside_svrngs`]'s
-/// claim, install.sh's: Give's program only when asked, checked, placed
+/// **Give's program, as an option of the line** (give-install (a)),
+/// install.sh's claim: Give's program only when asked, checked, placed
 /// and kept at login beside svrngs, its agent or unit finding svrngs and
 /// Podman and waited for as it stops; run again, updated, one agent.
 #[test]
@@ -1775,8 +1372,8 @@ fn install_sh_installs_and_keeps_give_beside_svrngs_only_when_asked() {
     }
 }
 
-/// [`restart_asks_what_keeps_svrngs_and_refuses_where_nothing_does`]'s
-/// claim, `svrngs restart`'s (cli.rs `restart`): this build's svrngs, which
+/// `svrngs restart` asks what keeps svrngs running, and says so plainly
+/// when nothing does (cli.rs `restart`): this build's svrngs, which
 /// starts no node for it, so its build's relay is never dialled, asked
 /// where install.sh kept the stand-in at login, then where nothing does.
 #[test]
