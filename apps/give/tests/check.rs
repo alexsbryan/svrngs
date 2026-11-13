@@ -5,12 +5,16 @@
 //! never a pass. Every pod and volume they make is named `svrngs-test-*` and
 //! removed by the test that made it.
 
+mod fake;
+
 use std::io::{Read, Write};
 use std::net::TcpStream;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::Arc;
 
-use give::card::Card;
+use give::card::{Card, Transport};
+use give::check::{Step, check, line_failed, line_passed, line_shelf};
 use give::podman::Podman;
 use give::runtime::{Agreed, App, Name};
 
@@ -294,4 +298,177 @@ fn give_check_asks_before_it_starts_anything() {
     assert!(said.contains("--agree"), "{said}");
     assert!(!said.contains("passed  start"), "{said}");
     let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A port for the check's door: nothing listens, as nothing runs.
+fn no_port(_: Transport) -> std::io::Result<u16> {
+    Ok(40000)
+}
+
+/// `give check` of the card in `dir` over `podman`, in process: what it
+/// says, a line each, as main.rs says them, and how it ended.
+fn checked(podman: &Arc<fake::Podman>, dir: &Path, test: &str) -> (Result<Card, String>, Vec<String>) {
+    let mut said = Vec::new();
+    let mut passed = |step: Step, what: String| said.push(line_passed(step, &what));
+    let podman = Podman::by(podman.clone());
+    let name = Name::new(&format!("svrngs-test-{test}")).unwrap();
+    let ended = check(&podman, dir, name, &scratch(test), false, no_port, &mut passed);
+    match ended {
+        Ok(card) => {
+            said.push(line_shelf(&card));
+            (Ok(card), said)
+        }
+        Err(failed) => {
+            said.push(line_failed(&failed));
+            (Err(line_failed(&failed)), said)
+        }
+    }
+}
+
+/// The check passes the stand-in step by step, saying each, and leaves no
+/// pod and no volume behind: over a podman that answers as podman does
+/// (tests/fake), so it runs anywhere.
+#[test]
+fn a_check_passes_the_stand_in_and_leaves_nothing() {
+    let podman = Arc::new(fake::Podman::default());
+    let card = Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/standin"));
+    let (ended, said) = checked(&podman, card, "check");
+    assert!(ended.is_ok(), "{said:#?}");
+    for step in [
+        "pull by digest",
+        "healthy",
+        "snapshot",
+        "stop",
+        "restore: the state is the snapshot's",
+        "healthy again",
+    ] {
+        let line = format!("passed  {step}");
+        assert!(said.iter().any(|l| l.starts_with(&line)), "{step}: {said:#?}");
+    }
+    assert_eq!(said.last().unwrap(), "Stand-in can go on the shelf.", "{said:#?}");
+    assert_eq!(podman.pods(), Vec::<String>::new(), "no pod left");
+    assert_eq!(podman.volumes(), Vec::<String>::new(), "no volume left");
+}
+
+/// A card that never becomes healthy fails at `healthy`, after `start`
+/// passed, and the check removes what it made. Its retries are none, so
+/// its patience is spent at the first answer that it is not healthy yet,
+/// with no wait (runtime.rs `wait_healthy`).
+#[test]
+fn a_check_names_the_step_that_failed_and_leaves_nothing() {
+    let podman = Arc::new(fake::Podman::default());
+    podman.unhealthy();
+    let dir = scratch("unhealthy-card-fake");
+    std::fs::create_dir_all(&dir).unwrap();
+    let never = STANDIN.replace(
+        "[\"CMD\", \"wget\", \"-q\", \"-O\", \"/dev/null\", \"http://web:8080/starts\"]",
+        "[\"CMD\", \"false\"]",
+    );
+    std::fs::write(dir.join("compose.yaml"), never.replace("retries: 10", "retries: 0")).unwrap();
+    let (ended, said) = checked(&podman, &dir, "unhealthy");
+    let failed = ended.unwrap_err();
+    assert!(said.iter().any(|l| l.starts_with("passed  start")), "{said:#?}");
+    assert!(
+        failed.starts_with("failed  healthy: web was not healthy within"),
+        "{failed}"
+    );
+    assert_eq!(podman.pods(), Vec::<String>::new(), "no pod left");
+    assert_eq!(podman.volumes(), Vec::<String>::new(), "no volume left");
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// The stand-in, started and healthy over a podman that answers as podman
+/// does, and its snapshot.
+fn kept<'a>(podman: &'a Podman, card: &'a Card, test: &str) -> (App<'a>, give::runtime::Snapshot, PathBuf) {
+    let app = App::new(podman, card, name(test));
+    let dir = scratch(test);
+    app.pull().unwrap();
+    app.start(40000, &Agreed::to(&card.asks)).unwrap();
+    app.wait_healthy().unwrap();
+    let snapshot = app.snapshot_at(&dir, fake::stamp).unwrap();
+    (app, snapshot, dir)
+}
+
+/// What a restore brings back is compared with its snapshot file by file,
+/// not judged by the app's health: the same state is none different; the
+/// state changed after the snapshot, as a broken restore would leave it, is
+/// told by its path.
+#[test]
+fn a_restore_unlike_its_snapshot_is_told() {
+    let (fake, card) = (Arc::new(fake::Podman::default()), Card::parse(STANDIN).unwrap());
+    let podman = Podman::by(fake.clone());
+    let (app, snapshot, dir) = kept(&podman, &card, "differs-fake");
+    app.stop().unwrap();
+    app.restore(&snapshot.dir).unwrap();
+    assert_eq!(app.differs(&snapshot.dir, &dir).unwrap(), Vec::<String>::new());
+    app.start(40000, &Agreed::to(&card.asks)).unwrap();
+    app.wait_healthy().unwrap();
+    app.stop().unwrap();
+    assert_eq!(app.differs(&snapshot.dir, &dir).unwrap(), ["data/starts changed"]);
+    app.remove().unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// A copy is started only by the card version that wrote it (GIVE.md §4):
+/// a snapshot naming another version is refused before podman is asked
+/// anything, so the state the app has stays as it is.
+#[test]
+fn a_copy_another_card_version_wrote_is_refused() {
+    let (fake, card) = (Arc::new(fake::Podman::default()), Card::parse(STANDIN).unwrap());
+    let podman = Podman::by(fake.clone());
+    let (app, snapshot, dir) = kept(&podman, &card, "version-fake");
+    app.stop().unwrap();
+    let named = std::fs::read_to_string(snapshot.dir.join("card")).unwrap();
+    assert_eq!(named, card.version, "the snapshot names the card version that wrote it");
+    std::fs::write(snapshot.dir.join("card"), "another").unwrap();
+    let asked = fake.said();
+    let refused = app.restore(&snapshot.dir).unwrap_err().to_string();
+    assert!(
+        refused.contains("another version of its card wrote it") && refused.contains(&card.version),
+        "{refused}"
+    );
+    assert_eq!(fake.said(), asked, "podman asked nothing");
+    assert_eq!(
+        app.differs(&snapshot.dir, &dir).unwrap(),
+        Vec::<String>::new(),
+        "the state untouched"
+    );
+    app.remove().unwrap();
+    let _ = std::fs::remove_dir_all(&dir);
+}
+
+/// An app a keeper left paused, whole (killed in a snapshot's pause) or
+/// half (killed inside `pod pause`, the pod "Degraded"), is unpaused, then
+/// stopped or removed: podman refuses both of a paused container
+/// (tests/fake answers so, the podman test below holds podman to it).
+#[test]
+fn a_paused_app_is_unpaused_then_stopped_and_removed() {
+    let (fake, card) = (Arc::new(fake::Podman::default()), Card::parse(STANDIN).unwrap());
+    let podman = Podman::by(fake.clone());
+    let app = App::new(&podman, &card, name("paused-fake"));
+    let pod = name("paused-fake").as_str().to_string();
+    let web = format!("{pod}-web");
+    for (pause, end) in [
+        ("pod", "stops"),
+        ("pod", "is removed"),
+        ("web", "stops"),
+        ("web", "is removed"),
+    ] {
+        app.start(40000, &Agreed::to(&card.asks)).unwrap();
+        match pause {
+            "pod" => podman.run(&["pod", "pause", &pod]).unwrap(),
+            _ => podman.run(&["pause", &web]).unwrap(),
+        };
+        let state = podman.run(&["pod", "inspect", "--format", "{{.State}}", &pod]).unwrap();
+        assert_eq!(state, if pause == "pod" { "Paused" } else { "Degraded" });
+        let asked = fake.said().len();
+        let ended = if end == "stops" { app.stop() } else { app.remove() };
+        ended.unwrap_or_else(|e| panic!("an app paused by {pause} {end}: {e}"));
+        let said = &fake.said()[asked..];
+        assert!(said.contains(&format!("unpause {web}\n")), "unpaused first: {said}");
+        assert!(!podman.answers(&["pod", "exists", &pod]).unwrap(), "{end}: {said}");
+    }
+    app.remove().unwrap();
+    assert_eq!(fake.pods(), Vec::<String>::new());
+    assert_eq!(fake.volumes(), Vec::<String>::new());
 }
