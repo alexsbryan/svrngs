@@ -88,7 +88,9 @@ async fn at_origin(
 ) -> (u16, serde_json::Value) {
     use tower::ServiceExt;
     let port = node.api_addr().port();
+    // An address a page already holds, capability and all, is asked as it is.
     let path = match from.and_then(svrngs_core::pass::Label::parse) {
+        _ if path.starts_with("/svrngs-as/") => path.into(),
         Some(app) if &app != at => format!("/svrngs-as/{}{path}", node.read_capability(&app, at)),
         _ => path.into(),
     };
@@ -508,13 +510,20 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
 /// The person's yes to the app `app`, as the home page's Open posts it to
 /// `POST /reaching`, at this computer's home origin, with the token.
 async fn says_yes(node: &Node, app: &str, reads: &[&str], left: &[&str]) -> u16 {
-    use tower::ServiceExt;
-    let own = format!("svrngs.localhost:{}", node.api_addr().port());
     let form = format!(
         "app={app}&reads={}&left={}",
         reads.join("+"),
         left.join("+")
     );
+    says(node, form).await
+}
+
+/// `form` posted to `POST /reaching` as the home page's form posts it: a
+/// yes ([`says_yes`]), or `said=stop`, the Stop under "What acts as you"
+/// (home/page/reach.js `Reach`).
+async fn says(node: &Node, form: String) -> u16 {
+    use tower::ServiceExt;
+    let own = format!("svrngs.localhost:{}", node.api_addr().port());
     let mut request = axum::http::Request::post("/reaching")
         .header("host", own.clone())
         .header("sec-fetch-site", "same-origin")
@@ -704,6 +713,230 @@ async fn a_yes_names_lends_so_a_new_one_waits_for_the_next_open() {
     );
     let (_, said) = listed().await;
     assert_eq!(said["lends"], serde_json::json!([]), "{said:#}");
+    house.close().await;
+}
+
+/// **A Stop on the home page holds from the app's next request**
+/// (capability-what-acts; WHAT_CAN_ACT_AS_YOU §9; the node's half of
+/// browser::acts::the_home_page_says_what_acts_as_you_and_its_stop_holds,
+/// whose drawing is web/tests/pages/opens.test.mjs's). Sam lends
+/// `notes`, reading `films`, and `films`. Alex's open names films: the
+/// notes reach them at the address their page holds, and never at the
+/// films' plain origin, a fetch carrying no capability. Alex's Stop, posted
+/// as the home page's form posts it, goes back to the home page, and from
+/// the notes' next request the address held before it is refused,
+/// `unasked`, in words Alex can act on. Planted, each watched failing:
+/// door/choices.rs `own_reaching` answering a Stop and keeping nothing;
+/// a Stop kept as the yes it stops (`Choice::names` without `said`).
+#[tokio::test]
+async fn a_stop_on_the_home_page_holds_from_the_app_s_next_request() {
+    let house = House::new().await;
+    let sam_dir = house.sam_dir.path();
+    declare(sam_dir, &house.id, "notes", 8598, "notes", &["films"]);
+    declare(sam_dir, &house.id, "films", 8099, "films", &[]);
+    let label =
+        |name: &str| svrngs_core::pass::Label::of(signing(2).verifying_key().as_bytes(), name);
+    let (notes, films) = (label("notes"), label("films"));
+    let alex = &house.alex;
+    let unasked = |body: &serde_json::Value| {
+        (
+            body["kind"].as_str().map(str::to_string),
+            body["error"].clone(),
+        )
+    };
+    let words = || {
+        (
+            Some("unasked".to_string()),
+            serde_json::json!("Open it from your home page first."),
+        )
+    };
+
+    let (status, before) = at_origin(alex, &films, "/bookmark", Some(notes.as_str())).await;
+    assert_eq!(
+        (status, unasked(&before)),
+        (403, words()),
+        "no yes: {before:#}"
+    );
+    assert_eq!(
+        says_yes(alex, notes.as_str(), &[films.as_str()], &[]).await,
+        303
+    );
+    let held = format!(
+        "/svrngs-as/{}/stopped",
+        alex.read_capability(&notes, &films)
+    );
+    let (status, opened) = at_origin(alex, &films, "/opened", Some(notes.as_str())).await;
+    assert_ne!(
+        (status, unasked(&opened)),
+        (403, words()),
+        "on the yes the notes reach the films: {opened:#}"
+    );
+    // The notes' page fetching the films' plain origin: no capability.
+    let port = alex.api_addr().port();
+    let bare = on_wire::http()
+        .get(format!("http://{}/bare", alex.api_addr()))
+        .header("host", format!("{films}.localhost:{port}"))
+        .header("sec-fetch-site", "same-site")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{notes}.localhost:{port}"))
+        .send()
+        .await
+        .unwrap();
+    let (status, bare) = (bare.status().as_u16(), bare.text().await.unwrap());
+    // Refused there, 401, as a browser with no session is: never sent on.
+    assert_eq!(status, 401, "the films' plain origin is no address: {bare}");
+
+    let stop = format!("app={}&said=stop", notes.as_str());
+    assert_eq!(
+        says(alex, stop).await,
+        303,
+        "the Stop kept, then the home page"
+    );
+    let (status, stopped) = at_origin(alex, &films, &held, Some(notes.as_str())).await;
+    assert_eq!(
+        (status, unasked(&stopped)),
+        (403, words()),
+        "from the next request the address held before the Stop is refused: {stopped:#}"
+    );
+    house.close().await;
+}
+
+/// **A visit is listed on every computer of the group, and its host's Stop
+/// ends it on each** (guests-pages (a), (b); GUESTS §3.2, §5 "The pages",
+/// §7 bar 7; the node's half of browser::guests's two pages tests, whose
+/// drawing is web/tests/pages/opens.test.mjs's). Alex hosts Sam until 40
+/// hours from now, written as Alex's `/visit` writes it; Sam's computer
+/// syncs Alex's record. Each `/v1/groups` lists Sam visiting, Alex's guest,
+/// until then, Alex's as Alex's own. Alex's Stop, posted as the home page
+/// posts it (`POST /visits`), is in Alex's record, and Alex's list is
+/// empty; Sam's computer syncs, and its list is empty too. Planted: the
+/// fold's live visits read without the Stop (rail.rs `visiting`), and
+/// both still list Sam.
+#[tokio::test]
+async fn a_visit_is_listed_on_every_computer_and_its_host_s_stop_ends_it_on_each() {
+    let house = House::new().await;
+    let (alex, sam, id) = (&house.alex, house.sam.as_ref().unwrap(), &house.id);
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH);
+    let until = now.unwrap().as_secs() as i64 + 40 * 60 * 60;
+    let guest = signing(10);
+    let visit = svrngs_core::Visit {
+        guest: svrngs_node::Person::parse("Sam").unwrap(),
+        key: actor_of(&guest),
+        opens: Default::default(),
+        until,
+        consent: svrngs_core::tests_support::consent(&guest, &actor_of(alex.rail().signer())),
+        under: None,
+    };
+    alex.rail().commit(id, &visit).unwrap().unwrap();
+    let synced = || async {
+        let synced = sam.host().sync_with(id, &alex.net().addr()).await;
+        assert!(synced.stop.is_none(), "{synced:?}");
+    };
+    let visiting = |node: &Node| {
+        let url = format!("http://{}/v1/groups", node.api_addr());
+        let asked = on_wire::http().get(url).bearer_auth(node.token()).send();
+        async move {
+            let body: serde_json::Value = asked.await.unwrap().json().await.unwrap();
+            body["groups"][0]["visiting"].clone()
+        }
+    };
+    synced().await;
+    let visit_id = alex
+        .rail()
+        .register(id)
+        .unwrap()
+        .visits
+        .keys()
+        .next()
+        .unwrap()
+        .to_string();
+    let listed = |yours: bool| {
+        serde_json::json!([{ "id": visit_id, "guest": "Sam", "host": "alex",
+            "host_key": actor_of(&signing(1)), "until": until, "yours": yours }])
+    };
+    assert_eq!(visiting(alex).await, listed(true), "Alex's, as its host");
+    assert_eq!(
+        visiting(sam).await,
+        listed(false),
+        "Sam's computer's, Alex's guest"
+    );
+    // What a phone of the group reads through Sam's computer: its people's
+    // lends, asked as a member dials it (node.rs:1029), here as Alex's key.
+    let bridge = on_wire::bridge_as(&signing(1), sam, svrngs_node::iroh::Alpn::Member).await;
+    let phone = || {
+        let url = format!(
+            "http://{}{}",
+            bridge.local_addr(),
+            svrngs_node::node::PEOPLE_LENDS_ROUTE
+        );
+        let asked = on_wire::http()
+            .get(url)
+            .header(
+                "x-svrngs-version",
+                svrngs_node::version::VERSION.to_string(),
+            )
+            .send();
+        async move {
+            let body: serde_json::Value = asked.await.unwrap().json().await.unwrap();
+            body["visiting"].clone()
+        }
+    };
+    assert_eq!(
+        phone().await,
+        listed(false),
+        "a phone's, through Sam's computer"
+    );
+
+    let own = format!("svrngs.localhost:{}", alex.api_addr().port());
+    let stop = on_wire::http()
+        .post(format!("http://{}/visits", alex.api_addr()))
+        .header("host", &own)
+        .header("origin", format!("http://{own}"))
+        .header("sec-fetch-site", "same-origin")
+        .bearer_auth(alex.token().trim())
+        .json(&[id.as_str(), visit_id.as_str()])
+        .send()
+        .await
+        .unwrap();
+    assert!(stop.status().is_success(), "{:?}", stop.text().await);
+    let register = alex.rail().register(id).unwrap();
+    assert!(
+        register.visits.values().all(|g| g.stopped.is_some()),
+        "Alex's Stop is in Alex's record: {:#?}",
+        register.visits
+    );
+    // A visit is live while the time is before its Stop's
+    // (membership.rs:180, `at < e`), so it is gone from the second after.
+    let stopped = register
+        .visits
+        .values()
+        .filter_map(|g| g.stopped)
+        .max()
+        .unwrap();
+    while std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64
+        <= stopped
+    {
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+    assert_eq!(
+        visiting(alex).await,
+        serde_json::json!([]),
+        "Alex's, stopped"
+    );
+    synced().await;
+    assert_eq!(
+        visiting(sam).await,
+        serde_json::json!([]),
+        "Sam's computer's, synced"
+    );
+    assert_eq!(
+        phone().await,
+        serde_json::json!([]),
+        "a phone's, through Sam's computer"
+    );
     house.close().await;
 }
 

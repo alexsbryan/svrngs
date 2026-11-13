@@ -386,3 +386,213 @@ test('a native arrival says why it cannot welcome, and never shows a group of it
     }
   }
 });
+
+// browser::acts::the_home_page_says_what_acts_as_you_and_its_stop_holds:
+// cy lends notes, reading films, and films; ada's computer carries Money;
+// ada opened the notes, her yes, today, as /reaching answers it (home.rs
+// `reached`, door/choices.rs `Choice`: said, at, the lends it named).
+// "What acts as you" is folded under its heading, and says, part by part,
+// what Money does, the notes opening the films she chose since today with
+// a Stop and that a Stop holds from the app's next request, that what she
+// opens knows her name, and that only this computer decides for her. Its
+// Stop is the home page's form, posting the notes' label and `stop` to
+// /reaching; opened again, the line says the notes stopped. That the Stop
+// holds from the notes' next request, `unasked` in its words, is
+// tests/surface.rs a_stop_on_the_home_page_holds_from_the_app_s_next_request.
+test('what acts as you is said part by part, and its Stop is posted and said', async () => {
+  const q = await import('../../../crates/svrngs-node/src/home/question.js?v=__VERSION__');
+  const SHELF = new URL('../../../crates/svrngs-node/src/shelf.txt', import.meta.url);
+  // The shelf's words for Money, as /v1/lends's `shelf` carries them.
+  const [, , , said] = readFileSync(SHELF, 'utf8')
+    .split('\n')
+    .find((line) => line.startsWith('Money\t'))
+    .split('\t');
+  const notes = lend('notes', { key: CY, person: 'cy', kind: 'notes', reads: ['films'] });
+  const films = lend('films', { key: CY, person: 'cy', kind: 'films' });
+  const money = lend('Money0house', { kind: 'Money', group: 'house', limit: null });
+  const at = Math.floor(Date.now() / 1000) - 60;
+  const choice = (word) => ({ [q.label(notes)]: { said: word, at, lends: [q.label(films)] } });
+  const answers = (word) => {
+    const all = ada({
+      people: [row('ada', ADA, 'started'), row('cy', CY)],
+      lent: [money, notes, films],
+      'GET /reaching': choice(word),
+    });
+    all['GET /v1/lends?namespace=house'] = lends({
+      lent: [money, notes, films],
+      shelf: [{ name: 'Money', words: said }],
+    });
+    return all;
+  };
+  const page = await open(`${AT}/?ui=a`, answers('yes'));
+  const [details] = page.all('#acts details');
+  assert.ok(details && !('open' in details.attributes), 'folded under its heading');
+  const section = page.text('#acts')[0];
+  const today = q.day(at);
+  for (const part of [
+    'What acts as you',
+    'Reads and writes for you',
+    'Money reads and writes who owes whom, and for what, when you open it.',
+    'Opens friends’ things as you',
+    'Each Stop holds from the app’s next request.',
+    `cy’s notes opens the films you chose, as you. Since ${today}.`,
+    'Knows who you are',
+    'What you open knows your name.',
+    'Can decide for you',
+    'Your group: This computer.',
+  ])
+    assert.ok(section.includes(part), `${part}: ${section}`);
+  const line = page.all('#acts p').find((p) => p.textContent.includes('as you. Since'));
+  await page.press('#acts p form button', 'Stop');
+  const [[how]] = page.went;
+  assert.equal(how, 'submit');
+  const form = line.childNodes.find((child) => child.localName === 'form');
+  const posted = Object.fromEntries(
+    form.childNodes
+      .filter((input) => input.localName === 'input')
+      .map((input) => [input.name ?? input.attributes.name, input.value]),
+  );
+  assert.deepEqual([form.attributes.action, form.attributes.method], ['/reaching', 'post']);
+  assert.deepEqual([posted.app, posted.said], [q.label(notes), 'stop']);
+  const again = await open(`${AT}/?ui=a`, answers('stop'));
+  const stopped = again.text('#acts')[0];
+  assert.ok(
+    stopped.includes(`cy’s notes stopped opening your friends’ films as you on ${today}.`),
+    stopped,
+  );
+  assert.deepEqual(again.unanswered, []);
+});
+
+// browser::guests::every_home_page_shows_sam_visiting_and_kims_stop_ends_it:
+// Kim hosts Sam until a day 40 hours from now; each computer's /v1/groups
+// lists the visit (rail.rs `visiting`: id, guest, host, host_key, until,
+// yours). Bo's home page lists Sam visiting, Kim's guest, until that day;
+// Kim's lists Sam under her own guests with a Stop that says what it does,
+// and visiting; pressed, the Stop posts the group and the visit to
+// /visits, and Kim's page, read again, lists nobody, as Bo's does once
+// /v1/groups lists nobody. That each computer lists it, that the Stop is
+// in Kim's record and Bo's computer then lists nobody: tests/surface.rs
+// a_visit_is_listed_on_every_computer_and_its_host_s_stop_ends_it_on_each.
+const KIM = 'f7'.repeat(32);
+const sams = (yours) => {
+  const until = Math.floor(Date.now() / 1000) + 40 * 60 * 60;
+  const visit = { id: 'v1', guest: 'Sam', host: 'Kim', host_key: KIM, until, yours };
+  return [visit, new Date(until * 1000).toLocaleDateString('en-US', { weekday: 'long' })];
+};
+const visited = (me, visiting, more = {}) => {
+  const people = [row('Kim', KIM, me === KIM ? 'started' : undefined), row('bo', ADA)];
+  const g = group({ name: 'house', person: me === KIM ? 'Kim' : 'bo', visiting });
+  const answers = ada({ groups: [g], people, ...more });
+  answers['GET /v1/groups'] = more['GET /v1/groups'] ?? { groups: [g], key: me };
+  return answers;
+};
+// Who a home page lists as its own guests, then as visiting (visits.js).
+const listed = (page) => [...page.text('#home .yours li'), ...page.text('#home .visiting li')];
+test('every home page lists Sam visiting, and Kim’s Stop posts it and lists nobody', async () => {
+  const [bos, day] = sams(false);
+  const bo = await open(`${AT}/?ui=a`, visited(ADA, [bos]));
+  const onBos = listed(bo);
+  assert.equal(onBos.length, 1, onBos.join('\n'));
+  assert.ok(onBos[0].startsWith(`Sam, Kim’s guest, until ${day}`), onBos[0]);
+
+  const [kims] = sams(true);
+  const stopped = [];
+  const listing = { now: [kims] };
+  const answers = visited(KIM, [kims], {
+    'POST /visits': (body) => (stopped.push(body), (listing.now = []), {}),
+  });
+  const g = answers['GET /v1/groups'].groups[0];
+  answers['GET /v1/groups'] = () => ({ groups: [{ ...g, visiting: listing.now }], key: KIM });
+  const kim = await open(`${AT}/?ui=a`, answers);
+  const onKims = listed(kim);
+  assert.equal(onKims.length, 2, onKims.join('\n'));
+  assert.ok(onKims[0].startsWith(`Sam, until ${day}`), onKims[0]);
+  assert.ok(onKims[0].includes('Stop ends the visit now'), onKims[0]);
+  assert.ok(onKims[1].startsWith(`Sam, Kim’s guest, until ${day}`), onKims[1]);
+  await kim.press('#home .yours button', 'Stop');
+  assert.deepEqual(stopped, [['house', 'v1']]);
+  assert.deepEqual(listed(kim), [], 'read again, with no reload');
+  assert.deepEqual(kim.went, []);
+  const again = await open(`${AT}/?ui=a`, answers);
+  assert.deepEqual(listed(again), []);
+  const boAgain = await open(`${AT}/?ui=a`, visited(ADA, []));
+  assert.deepEqual(listed(boAgain), []);
+});
+
+// browser::guests::the_phones_page_shows_sam_visiting_and_kims_stop_ends_it:
+// Ana's phone reads house through Bo's computer, whose /people/lends
+// answers who is visiting (node.rs:1029, rail.rs `visiting`); the page
+// lists Sam visiting, Kim's guest, until that day, and once a read after
+// Kim's Stop answers nobody, lists nobody. That Bo's computer answers so
+// before and after the Stop it synced: tests/surface.rs
+// a_visit_is_listed_on_every_computer_and_its_host_s_stop_ends_it_on_each.
+test('the phone’s page lists Sam visiting as Bo’s computer answers, and nobody once it answers none', async () => {
+  const { compose } = await import('../../page/page.js?v=__VERSION__');
+  const { VisitingNow } = await import('../../page/visiting-now.js?v=__VERSION__');
+  const flows = [
+    'enter',
+    'computer',
+    'join',
+    'ask',
+    'index',
+    'door',
+    'shelf',
+    'visit',
+    'among',
+    'acts',
+    'uses',
+  ];
+  const parts = compose(
+    Object.fromEntries(
+      await Promise.all(
+        flows.map(async (f) => [f, await import(`../../page/${f}.js?v=__VERSION__`)]),
+      ),
+    ),
+  );
+  const house = { id: 'g1', name: 'house', person: 'Ana', token: 'TOKEN', addresses: [] };
+  const [sam, day] = sams(false);
+  const people = [row('Kim', KIM), row('bo', ADA), row('Ana', 'aa'.repeat(32))];
+  const body = (visiting) => ({
+    version: 5,
+    lent: [],
+    unanswered: [],
+    unheard: [],
+    refused: [],
+    older: [],
+    removals: [],
+    visiting,
+    people,
+    shelf: [],
+    changed: [],
+  });
+  const bo = { key: ADA, person: 'bo', relay: null };
+  const through = (s, ...ms) =>
+    ms.reduce((at, m) => {
+      const r = parts.step(at, m);
+      assert.equal(r.refused, undefined, `${m.type}: ${r.refused}`);
+      return r.state;
+    }, s);
+  // What a person reads of a drawing: its words, function parts drawn.
+  const words = (v) => {
+    if (v == null || typeof v === 'boolean') return '';
+    if (Array.isArray(v)) return v.map(words).join('');
+    if (typeof v !== 'object') return String(v);
+    if (typeof v.type === 'function') return words(v.type(v.props));
+    return words(v.props.children);
+  };
+  const read = through(
+    parts.first({ fine: false }),
+    { type: 'hold', group: house },
+    { type: 'held' },
+    { type: 'opened', group: house },
+    { type: 'read', n: 1, ok: true, via: bo, body: body([sam]), lent: [] },
+  );
+  const drawn = words(VisitingNow({ state: read }));
+  assert.ok(drawn.includes(`Sam, Kim’s guest, until ${day}`), drawn);
+  const again = through(
+    read,
+    { type: 'reread' },
+    { type: 'read', n: 2, ok: true, via: bo, body: body([]), lent: [] },
+  );
+  assert.equal(words(VisitingNow({ state: again })), '');
+});

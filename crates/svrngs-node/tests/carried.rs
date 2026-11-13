@@ -233,6 +233,99 @@ async fn an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
     }
 }
 
+/// **A carried app opens one lend of its group and no more** (the node's
+/// half of browser::opens::a_carried_app_opens_one_lend_of_its_group_and_no_more;
+/// docs/APP_ACCESS_AND_STOP.md A4, §5; surface.rs `to`). Probe, carried in
+/// house on Ana's computer, asks at its own origin whether Ben's notes
+/// open, Ben's `hidden`, lent to another group alone, and Cy's notes, Cy
+/// removed by Ana: the first opens, 204, told nothing more; neither other
+/// is lent there, 404. Asked as its tab follows the link, Ben's notes are
+/// sent on to their plain origin, 303, no code, capability or proof in the
+/// address. That the notes, reading films, still wait for Ana's yes there
+/// is surface.rs a_yes_names_lends_so_a_new_one_waits_for_the_next_open.
+/// Planted: the lend found by its name alone (`l.key == to.lender`
+/// dropped), and Cy's notes open; the opener sending the tab on with a
+/// code (`at.sessions.open`), and the address carries one.
+#[tokio::test]
+async fn a_carried_app_opens_one_lend_of_its_group_and_no_more() {
+    let (nodes, dirs) = computers().await;
+    let (ana, ben, cy) = (&nodes[0], &nodes[1], &nodes[2]);
+    let group = found("house", 9, ana, &[(ben, 2), (cy, 3)]);
+    for node in [cy, ben, ana] {
+        round(node).await;
+    }
+    for (dir, name, groups) in [
+        (dirs[1].path(), "notes", json!([group])),
+        (dirs[1].path(), "hidden", json!(["elsewhere"])),
+        (dirs[2].path(), "notes", json!([group])),
+    ] {
+        let at = svrngs_node::lend::lends_dir(dir);
+        std::fs::create_dir_all(&at).unwrap();
+        let body = json!({ "groups": groups, "port": 8600, "kind": "notes", "limit": 3, "refused": [], "reads": ["films"] });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let removed: Value = http()
+        .post(format!(
+            "http://{}{}",
+            ana.api_addr(),
+            svrngs_node::removal::REMOVALS_ROUTE
+        ))
+        .bearer_auth(ana.token())
+        .json(&json!({ "group": group, "person": "cy" }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(removed, json!({ "outcome": "out" }), "Ana removes Cy");
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Probe");
+    // Carried once Ana's folder has been read again, a round's work.
+    let mut origin = None;
+    for _ in 0..30 {
+        round(ana).await;
+        let listed = lends(ana, &group).await;
+        origin = of_kind(&listed, "Probe")
+            .first()
+            .map(|p| p["origin"].as_str().unwrap().to_string());
+        if origin.is_some() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    let origin = origin.expect("Probe is carried on Ana's computer");
+    let to = |lender: u8, lend: &str, whether: bool| {
+        let lender = actor_of(&signing(lender));
+        let whether = if whether { "&whether=true" } else { "" };
+        let path = format!("/svrngs-to?lender={lender}&lend={lend}{whether}");
+        let origin = origin.clone();
+        async move { at(ana, &origin, "GET", &path, None).await }
+    };
+    let said = [
+        to(2, "notes", true).await.status().as_u16(),
+        to(2, "hidden", true).await.status().as_u16(),
+        to(3, "notes", true).await.status().as_u16(),
+    ];
+    assert_eq!(
+        said,
+        [204, 404, 404],
+        "told only whether one lend of its group opens"
+    );
+    let followed = to(2, "notes", false).await;
+    let label = svrngs_core::pass::Label::of(signing(2).verifying_key().as_bytes(), "notes");
+    let plain = format!("http://{label}.localhost:{}/", ana.api_addr().port());
+    assert_eq!(
+        (followed.status().as_u16(), &followed.headers()["location"]),
+        (303, &plain.parse::<axum::http::HeaderValue>().unwrap()),
+        "sent on to the lend's plain origin, no code, capability or proof in it"
+    );
+    for node in [cy, ben, ana] {
+        node.net().close().await;
+    }
+}
+
 /// **An app reads only its own acts and writes only as the person, from
 /// its route** (V1_UI_BUILD §7, 3.4's second bar; COMMUNITY_APPS §6.2,
 /// §7 found 6): Money and Events carried on Cy's computer. Events reads
