@@ -76,7 +76,8 @@ with **Stop Dee’s visit**, which ends it now. A guest's visit is stopped
 only on the computer that made the link.
 
 A guest's link lets one guest in, once, within a day, while your computer
-is on.
+is on. Each computer can have two guests at once. A guest's link opened while two
+are over lets nobody in: stop a visit, then send a new link.
 
 ## Remove someone
 

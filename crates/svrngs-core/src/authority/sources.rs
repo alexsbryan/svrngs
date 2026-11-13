@@ -1,7 +1,7 @@
 //! Native wire aliases. Eudoxia owns community authority meaning.
 use crate::{Device, OpId, Person};
 use eudoxia_community as model;
-pub use model::{GroupPolicy, GuestSlot, SourceFault};
+pub use model::{GroupPolicy, SourceFault};
 pub type AuthorityRef = model::AuthorityRef<OpId>;
 pub type PeopleSnapshot = model::PeopleSnapshot<OpId, Person>;
 pub type SourceMember = model::SourceMember<OpId, Person, Device>;

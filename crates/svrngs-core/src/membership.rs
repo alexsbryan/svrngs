@@ -15,14 +15,11 @@
 //! name. [`Membership::one_named`] answers which person a name and that
 //! time name.
 //!
-//! svrngs (guests-visit; svrn-docs `rings/current/GUESTS.md` §3, §5): a
-//! counting [`RailAct::Visit`] is a visit when, at its place in the rail's
-//! order, its `until` is within [`VISIT_LONGEST`] of its own time, its key
-//! was never a member's or another visit's, and with it the group's guests
-//! on then stay fewer than the people standing and its host's at most
-//! [`GUESTS_PER_HOST`]. Otherwise it counts nowhere, on every copy, and
-//! nothing has to refuse it. A visit ends at its `until`, at its host's
-//! counting `Correct` of it, their Stop, or when the host's key is cut.
+//! svrngs (guests-visit): whether a [`RailAct::Visit`] is a visit is the
+//! interpreter's, judged along its host computer's own chain: a slot of the
+//! host's free behind it, within [`VISIT_LONGEST`], its key never a
+//! member's nor another visit's. A visit ends at its `until`, at its host's
+//! Stop (their `Correct` of it), or when the host's key is cut.
 //! [`Guest::live`] answers whether a visit is on when.
 
 use alloc::collections::{BTreeMap, BTreeSet};
@@ -33,12 +30,8 @@ use crate::{command::AHEAD_SECS, op::Op};
 
 use crate::{Device, OpId, Person, RailAct, SignedOp, Visit};
 
-/// How long a visit may be, from its act's own time (GUESTS §3.6): the
-/// house's 48 hours, the starting value `GuestRules` will read (§5).
-pub const VISIT_LONGEST: i64 = 48 * 60 * 60;
-/// How many guests one host may have on at once (GUESTS §3.7): two, the
-/// starting value `GuestRules` will read (§5).
-pub const GUESTS_PER_HOST: usize = 2;
+/// How long a visit may be, from its act's own time: the interpreter's.
+pub use eudoxia_community::VISIT_LONGEST;
 
 /// When a person joined the group (bash-same-name): they started it, a
 /// seed row's person, or the `Admit` that made them a person is timed at
@@ -176,9 +169,7 @@ impl Guest {
     /// begins when its act is written: a new act is timed at most one past
     /// a line [`AHEAD_SECS`] ahead of its writer's clock (`command.rs`
     /// `sign_lines`), so a visit timed that far past `at` is begun
-    /// (guests-first, #214). The projection walks counted acts by time
-    /// ([`in_rail_order`]), so asking at a later Visit's time counts as it
-    /// did.
+    /// (guests-first, #214).
     pub fn live(&self, cut: &BTreeMap<String, Cut>, at: i64) -> bool {
         let cut = cut.get(&self.host).map(|c| c.at);
         let ends = [Some(self.visit.until), self.stopped, cut];
@@ -376,51 +367,6 @@ pub(crate) fn voids(ops: &[(&OpId, &Op<SignedOp>)], m: &mut Membership) {
     }
     let voided = m.voided.clone();
     m.counted.retain(|id| !voided.contains(id));
-}
-
-/// A counting act's part in who visits (guests-visit): a `Visit` is one
-/// only with its key never bound nor visiting before, within
-/// [`VISIT_LONGEST`], the visits on then fewer than the `members`, and its
-/// host's at most [`GUESTS_PER_HOST`]; `false` when it is not. A `Correct`
-/// of a visit by the key that hosts it is its Stop, the first counting.
-pub(crate) fn visiting(
-    visits: &mut BTreeMap<OpId, Guest>,
-    (id, op): (&OpId, &Op<SignedOp>),
-    cut: &BTreeMap<String, Cut>,
-    bindings: &BTreeMap<String, Person>,
-    of: &dyn Fn(&str) -> String,
-    members: &dyn Fn() -> usize,
-) -> bool {
-    match &op.kind.act {
-        RailAct::Visit(v) => {
-            let at = op.ts_unix;
-            let on: Vec<&Guest> = visits.values().filter(|g| g.live(cut, at)).collect();
-            let members = members();
-            let theirs = on.iter().filter(|g| of(&g.host) == of(&op.actor)).count();
-            let used =
-                visits.values().any(|g| g.visit.key == v.key) || bindings.contains_key(&v.key);
-            let timely = (1..=VISIT_LONGEST).contains(&v.until.saturating_sub(at));
-            let is = !used && timely && on.len() + 1 < members && theirs < GUESTS_PER_HOST;
-            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, on = on.len(), members, theirs, used, timely, is, "membership: a Visit is one only with its key never used before, within 48 hours, the visits on then fewer than the members and its host's at most two");
-            if is {
-                let guest = Guest {
-                    host: op.actor.clone(),
-                    at,
-                    visit: v.clone(),
-                    stopped: None,
-                };
-                visits.insert(id.clone(), guest);
-            }
-            is
-        }
-        RailAct::Correct { corrects, .. } => {
-            let visit = visits.get_mut(corrects).filter(|g| g.host == op.actor);
-            tracing::debug!(target: "rail:membership", id = %id, actor = %op.actor, %corrects, stops = visit.is_some(), "membership: a Correct is a visit's Stop only by the key that hosts it, and the first counts");
-            visit.map(|g| g.stopped.get_or_insert(op.ts_unix));
-            true
-        }
-        _ => true,
-    }
 }
 
 impl RailAct {

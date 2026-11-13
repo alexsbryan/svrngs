@@ -198,15 +198,17 @@ no group the lend reaches it drops the service's answer, ending the
 asker's body in an error, or closes that upgraded connection
 (`door::withdrawn`, `cut_by`, `splice`); the connection to their
 computer, other lends and the group's sync carry on. Measured at 0.97 s
-for an answer and about 1 s for a socket on loopback (`tests/door/
-scope.rs`). A guest's streams are watched by the decision that let them
+for an answer and about 1 s for a socket on loopback (at 5e20d0b3
+`tests/door/scope.rs`, now `tests/door/live.rs`). A guest's streams are
+watched by the decision that let them
 in (`guest_admitted`, `guest_of` asked again): once the visit's group no
 longer reaches the lend, or the visit ends or is stopped, they are cut
 within the same bound. What a pass let in, directly or through a link
 (`holder_of`), is watched by its time as well: it is cut at the first
 sweep after the earlier of the pass's and the link's `until`, read on the
 clock the door read it on (0.35 to 0.86 s after the lapse in three runs on
-loopback, `tests/door/scope.rs`). A member's own page's pass only names
+loopback, at 5e20d0b3 `tests/door/scope.rs`, now `tests/door/live.rs`).
+A member's own page's pass only names
 its app (`own_app`); the member stands by dial, and is watched so. An
 owner's are never watched: the owner never loses their own lend. What already reached the app, or an app's own
 sessions, is not undone. *Lends are asked,
@@ -2239,17 +2241,23 @@ from the journal waits in PLAN §2.
   then on and a relay the keeper took away is not gone back to; while no
   other relay answers iroh keeps the home it has (iroh-1.0.2 socket.rs:1967),
   so the move off it waits for one. No command names an empty set yet.
-- **A visit is folded beside membership** (svrn-docs `GUESTS.md` §3, §5).
-  A `Visit{guest, key, opens, until}`, signed by the host's computer, names
-  the guest, a key fresh for the visit and the lends it opens, by each
-  lender's key (line version 11). It is a visit only when, at its place in
-  the walk, its key was never a member's or another visit's, `until` is
-  within 48 hours of the act's own time, and with it the group's guests on
-  then stay fewer than the people standing and the host's at most two:
-  `VISIT_LONGEST` and `GUESTS_PER_HOST`, one constant each in
-  `crates/svrngs-core/src/membership.rs`. Otherwise it is no visit on any
-  copy, and nothing refuses it. A visit binds nothing, so a guest's key
-  never stands. It ends at its `until`, at the host's `Correct` of it,
+- **A visit takes one of its host computer's two slots** (svrn-docs
+  `GUESTS.md` §3, §5). A `Visit{guest, key, opens, until}`, signed by the
+  host's computer, names the guest, a key fresh for the visit and the lends
+  it opens, by each lender's key (line version 11). Eudoxia's interpreter
+  judges it along the host computer's own chain (`eudoxia-community`
+  `guest.rs`): it is a visit when the host is a standing computer, its key
+  was never a member's nor named by an earlier visit on that chain or by
+  another computer's, `until` is within 48 hours of its own time
+  (`VISIT_LONGEST`), and one of the host's two slots is free behind it: a
+  visit earlier on the chain ended at or before its time, or its Stop
+  stands before it on the chain. A hole in the chain makes it missing, and
+  a fork of the chain freezes the visits on its branches. There is no cap
+  on a group's guests: each computer has its own two. The commit writes no
+  visit the interpreter would not count, so a guest past a computer's two
+  is refused before anything is written (`redeem.rs`, `recorded`). A visit
+  binds nothing, so a guest's key never stands. It ends at its `until`, at
+  the host's `Correct` of it,
   their Stop, which another's `Correct` is not, or when the host's key is
   cut; the act stays counted, seen (`Guest::live`). The lender's
   door, on the pass holders' protocol, lets in a pass a visit's key signed

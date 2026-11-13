@@ -17,8 +17,8 @@ pub(crate) use evidence::interpreted;
 pub use evidence::{Native, NativeAuthority, SourceRoots};
 pub use r1::{ApprovalFault, PassFault, Why};
 pub use sources::{
-    AuthorityChange, AuthorityRef, GroupPolicy, GuestSlot, OfficeConflict, OfficeDispute,
-    PeopleSnapshot, RecoveryChoice, SourceFailure, SourceFault, SourceMember, SourceOffice,
+    AuthorityChange, AuthorityRef, GroupPolicy, OfficeConflict, OfficeDispute, PeopleSnapshot,
+    RecoveryChoice, SourceFailure, SourceFault, SourceMember, SourceOffice,
 };
 
 pub type Lines<'a> = BTreeMap<OpId, &'a Op<SignedOp>>;

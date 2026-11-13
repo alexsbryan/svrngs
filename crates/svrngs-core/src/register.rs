@@ -129,9 +129,9 @@ impl Command for MintInvite {
     }
 }
 
-/// A host's computer writes the visit a guest's link made (guests-link;
-/// GUESTS §5): the fold, never this, decides whether it is one, so a visit
-/// past a bound is written, seen, and a visit nowhere (§3.7).
+/// A host's computer writes the visit a guest's link made (guests-link):
+/// the interpreter, never this, decides whether it is one, and the commit
+/// writes none it would not count (`command.rs`, `Refused::Uncounted`).
 impl Command for crate::Visit {
     type Refusal = Infallible;
 

@@ -103,3 +103,35 @@ fn an_ask_is_parsed_before_anything_is_read() {
         Err(NotAdmitted::LinkUnsigned)
     ));
 }
+
+/// A guest past the host computer's slots is refused before anything is
+/// written: two visits at once are written, a third is refused, and the
+/// journal holds the two. Plant: a Visit commit that skips the
+/// interpreter's count (`command.rs`), which writes the third.
+#[test]
+fn a_refused_visit_writes_nothing_and_lets_nobody_in() {
+    let dir = tempfile::tempdir().unwrap();
+    let rail = RingRail::new(dir.path(), std::sync::Arc::new(key(1)));
+    let mut members = BTreeMap::new();
+    members.insert(hal(), vec![actor_of(&key(1))]);
+    rail.set_seed(GROUP, &svrngs_core::Roster::new(members))
+        .unwrap();
+    let now = crate::door::unix_now().unwrap();
+    let visit = |n: u8| Visit {
+        guest: Person::parse("Sam").unwrap(),
+        key: actor_of(&key(n)),
+        opens: BTreeMap::new(),
+        until: now + 3_600,
+    };
+    for n in [7, 8] {
+        recorded(&rail, GROUP, &visit(n)).expect("a slot free");
+    }
+    let held = rail.admission(GROUP).unwrap().held();
+    let third = recorded(&rail, GROUP, &visit(9));
+    assert!(matches!(third, Err(NotAdmitted::Uncounted)), "{third:?}");
+    assert_eq!(
+        rail.admission(GROUP).unwrap().held(),
+        held,
+        "nothing written"
+    );
+}

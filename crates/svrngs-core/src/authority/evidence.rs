@@ -7,8 +7,8 @@
 use super::SourceOffice;
 use super::{AuthorityRef, Judged, Lines};
 use super::{SourceFailure, SourceFault, SourceMember};
-use crate::membership::{in_rail_order, invites, visiting, voids};
-use crate::{Cut, Device, Membership, Office, OpId, Person, RailAct};
+use crate::membership::{in_rail_order, invites, voids};
+use crate::{Cut, Device, Guest, Membership, Office, OpId, Person, RailAct};
 use crate::{Journaled, Op, Roster, SignedOp};
 use alloc::{
     collections::{BTreeMap, BTreeSet},
@@ -118,6 +118,11 @@ fn statement(namespace: &str, op: &Op<SignedOp>) -> Statement<Native> {
             through: through.clone(),
         },
         RailAct::Meets { .. } => Act::Meets,
+        RailAct::Visit(v) => Act::Fill {
+            key: v.key.clone(),
+            until: v.until,
+            under: None,
+        },
         RailAct::Correct {
             corrects,
             replacement,
@@ -167,9 +172,10 @@ impl<'a> NativeAuthority<'a> {
     }
     /// The one projection of one fold of the facts: every binding, who
     /// stands, the office beside a keeper it names only while held, each key
-    /// out by the Remove that took it, the statements that count; then what
-    /// svrngs carries over the counted acts in the rail's order (relays,
-    /// visits, cutovers, where the group meets) and the void set.
+    /// out by the Remove that took it, the statements that count, each visit
+    /// that counts with its Stop; then what svrngs carries over the counted
+    /// acts in the rail's order (relays, where the group meets) and the void
+    /// set.
     fn membership(&self, lines: &Lines<'_>) -> Membership {
         let facts = self.graph().facts();
         let counts = |(id, verdict): &(&OpId, &Judged<()>)| {
@@ -177,7 +183,7 @@ impl<'a> NativeAuthority<'a> {
             verdict.as_ref().inspect_err(not).is_ok()
         };
         let counted = facts.verdicts().iter().filter(counts);
-        let counted = counted.map(|(id, _)| id.clone()).collect();
+        let counted: BTreeSet<OpId> = counted.map(|(id, _)| id.clone()).collect();
         let failed = |(id, v): (&OpId, &Judged<()>)| Some((id.clone(), v.clone().err()?));
         let uncounted = facts.verdicts().iter().filter_map(failed).collect();
         let bound = facts.bound();
@@ -216,7 +222,19 @@ impl<'a> NativeAuthority<'a> {
             _ => None,
         };
         let admitted_at = bound.iter().filter_map(joined);
-        let mut visits = BTreeMap::new();
+        let visit = |(id, op): (&OpId, &&Op<SignedOp>)| match &op.kind.act {
+            RailAct::Visit(visit) if counted.contains(id) => Some((
+                id.clone(),
+                Guest {
+                    host: op.actor.clone(),
+                    at: op.ts_unix,
+                    visit: visit.clone(),
+                    stopped: facts.stops().get(id).map(at),
+                },
+            )),
+            _ => None,
+        };
+        let visits = lines.iter().filter_map(visit).collect();
         let mut m = Membership {
             bindings: bound
                 .iter()
@@ -233,21 +251,13 @@ impl<'a> NativeAuthority<'a> {
             keeper,
             office,
             cut: cut.collect(),
+            visits,
             counted,
             uncounted,
             ..Membership::default()
         };
         let all = in_rail_order(lines.iter().map(|(id, op)| (id, *op)));
-        let first = |k: &str| bound.get(k).map_or_else(|| k.into(), |b| b.first.clone());
-        let people = || {
-            m.standing
-                .iter()
-                .map(|k| first(k))
-                .collect::<BTreeSet<_>>()
-                .len()
-        };
-        for (id, op) in all.iter().filter(|(id, _)| m.counted.contains(*id)) {
-            visiting(&mut visits, (id, op), &m.cut, &m.bindings, &first, &people);
+        for (_, op) in all.iter().filter(|(id, _)| m.counted.contains(*id)) {
             match &op.kind.act {
                 RailAct::Relay { url: Some(url) } => {
                     drop(m.relays.insert(op.actor.clone(), url.clone()))
@@ -257,7 +267,7 @@ impl<'a> NativeAuthority<'a> {
                 _ => {}
             }
         }
-        (m.visits, m.invites) = (visits, invites(&all));
+        m.invites = invites(&all);
         voids(&all, &mut m);
         m
     }

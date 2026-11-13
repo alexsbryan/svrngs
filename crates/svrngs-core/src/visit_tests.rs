@@ -90,23 +90,6 @@ fn a_visit_is_on_from_when_its_act_is_written_and_no_earlier() {
     );
 }
 
-/// A house of six, so the per-host bound is met before the members' is:
-/// alex keeps it; kim, bo, cy, dee and eve.
-fn six() -> Roster {
-    let mut m = BTreeMap::new();
-    for (name, k) in [
-        ("alex", 1),
-        ("kim", 2),
-        ("bo", 3),
-        ("cy", 4),
-        ("dee", 5),
-        ("eve", 6),
-    ] {
-        m.insert(p(name), vec![actor_of(&key(k))]);
-    }
-    Roster::new(m)
-}
-
 /// The names of who is visiting at `at`, sorted: the fold keeps visits by
 /// their act's id.
 fn names(a: &Admission, at: i64) -> Vec<String> {
@@ -118,21 +101,21 @@ fn names(a: &Admission, at: i64) -> Vec<String> {
     names
 }
 
-/// **Guests are fewer than members, and two a host** (GUESTS §3.7; §7 bar
-/// 5): with three members, Kim's Sam and Bo's Tia are guests, and Alex's
-/// Uma, a third, is a guest on no copy; in a house of six, Kim's third at
-/// once is no guest, and once Kim stops Sam, Kim's next is. Plant: the fold
-/// counting no guests.
+/// **Two a computer, and no cap on the group**: with three members, Kim's
+/// Sam, Bo's Tia and Alex's Uma are all guests, since each computer has its
+/// own two slots (the cap of guests fewer than members is gone); Kim's
+/// third at once is no guest, and once Kim stops Sam, Kim's next is. Plant:
+/// the fold counting no guests.
 #[test]
-fn guests_are_fewer_than_members_and_two_a_host() {
+fn two_guests_a_computer_and_no_cap_on_the_group() {
     let mut ops = run(&key(2), FRI, [visit(2, "sam", 9, SUNDAY)]);
     ops.extend(run(&key(3), FRI + 1, [visit(3, "tia", 10, SUNDAY)]));
     ops.extend(run(&key(1), FRI + 2, [visit(1, "uma", 11, SUNDAY)]));
     let a = folded(&ops);
     assert_eq!(
         names(&a, FRI + HOUR),
-        ["sam", "tia"],
-        "a third guest of three members is none"
+        ["sam", "tia", "uma"],
+        "a guest of each of three members"
     );
 
     let kims = run(
@@ -147,10 +130,8 @@ fn guests_are_fewer_than_members_and_two_a_host() {
         FRI + 2,
         visit(2, "uma", 11, SUNDAY),
     ));
-    let in_six =
-        |ops: &[Op<SignedOp>]| admit(&crate::ActSet::of(ops), &[], &six(), NS, &Ed25519Verifier);
     assert_eq!(
-        names(&in_six(&third), FRI + HOUR),
+        names(&folded(&third), FRI + HOUR),
         ["sam", "tia"],
         "a host's third guest at once is none"
     );
@@ -174,7 +155,7 @@ fn guests_are_fewer_than_members_and_two_a_host() {
         visit(2, "uma", 11, SUNDAY),
     ));
     assert_eq!(
-        names(&in_six(&after_stop), FRI + HOUR),
+        names(&folded(&after_stop), FRI + HOUR),
         ["tia", "uma"],
         "a Stop frees its place"
     );

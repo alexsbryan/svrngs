@@ -660,10 +660,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # generated, and the home page's lend given its lender once (question.js
 # lentBy). Core 3,558 -> 3,527, . 21,323 -> 21,228, js 8,527 -> 8,516; native
 # 29,850 -> 29,744.
+# (2026-11-12) Guest slots per computer, judged by Eudoxia's interpreter along
+# the host's chain: the core's timestamp count of visits (`visiting`, its two
+# constants) and `serve_visit`'s recount after the write went. Core 3,527 ->
+# 3,496, . 21,228 -> 21,196; native 29,744 -> 29,712.
 BUDGET = {
-    "crates/svrngs-core": 3528,
+    "crates/svrngs-core": 3497,
 
-    ".": 21229,
+    ".": 21197,
 
     "js": 8517,
 

@@ -116,8 +116,8 @@ enum NotAdmitted {
     Decided(RedeemRefusal),
     /// This node could not read its own journal.
     Unjudged(RailError),
-    /// The `Visit` is written, and the fold counts it nowhere: it is past
-    /// a bound (GUESTS §3.7).
+    /// The interpreter would not count the `Visit`, so nothing is written:
+    /// past a bound, or none of this computer's slots free.
     Uncounted,
 }
 
@@ -183,8 +183,9 @@ async fn visit_route(
 /// name as a joiner's; the link claimed, once; then the `Visit` written,
 /// opening each lend this computer declares, until the link's length
 /// from now, when the guest opened it. Whether it is a visit is the
-/// fold's alone: one past a bound is written, seen, and refused here as
-/// none. Answered the host, until when, and the lends the visit opens, on
+/// interpreter's alone: one it would not count, past a bound or with none
+/// of this computer's slots free, is refused at the commit and nothing is
+/// written. Answered the host, until when, and the lends the visit opens, on
 /// this computer, which the page dials by the link, each by name and kind.
 fn serve_visit(
     at: &Asking,
@@ -214,21 +215,24 @@ fn serve_visit(
         opens: [(me, lent.keys().cloned().collect())].into(),
         until: now + length,
     };
-    let recorded = rail
-        .commit_said(group, &visit)
-        .map_err(NotAdmitted::Unjudged)?;
-    let Ok(recorded) = recorded;
-    let id = recorded.lines()[0].id.clone();
-    let register = rail.register(group).map_err(NotAdmitted::Unjudged)?;
-    let counted = register.visits.contains_key(&id);
-    tracing::debug!(target: "redeem", group, key = %req.ask.key, %id, until = visit.until, counted, ?lent,
-        "redeem: a guest's link redeemed and its Visit written, a visit only as the fold counts it");
-    let until = counted
-        .then_some(visit.until)
-        .ok_or(NotAdmitted::Uncounted)?;
+    let (id, until) = (recorded(rail, group, &visit)?, visit.until);
+    tracing::debug!(target: "redeem", group, key = %req.ask.key, %id, until, ?lent,
+        "redeem: a guest's link redeemed and its Visit written, as the interpreter counts it");
     // Its version, so a guest's page knows this door takes a holder's link.
     let version = crate::version::VERSION;
     Ok(serde_json::json!({ "host": host, "until": until, "lent": lent, "version": version }))
+}
+
+/// `visit` written, or [`NotAdmitted::Uncounted`] with nothing written: the
+/// commit refuses, under the group's write lock, a line the interpreter
+/// would not count.
+fn recorded(rail: &RingRail, group: &str, visit: &Visit) -> Result<OpId, NotAdmitted> {
+    let recorded = rail.commit_said(group, visit).map_err(|e| match e {
+        RailError::Rejected(_) => NotAdmitted::Uncounted,
+        e => NotAdmitted::Unjudged(e),
+    })?;
+    let Ok(recorded) = recorded;
+    Ok(recorded.lines()[0].id.clone())
 }
 
 /// A decision as the wire carries it: what was done, [`UNJUDGED`], or the

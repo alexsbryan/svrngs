@@ -460,8 +460,8 @@ pub enum RailAct {
         url: Option<String>,
     },
     /// A member's computer says: this person is my guest, until then
-    /// (guests-visit; svrn-docs `rings/current/GUESTS.md` §5). It is a visit
-    /// only within the bounds the fold keeps ([`Guest::live`]),
+    /// (guests-visit). It is a visit only as the interpreter counts it, in
+    /// one of its host computer's slots ([`Guest::live`] says when it is on),
     /// and the host's [`Self::Correct`] of it is their Stop. It binds
     /// nothing, so a guest's key never stands. Carries no [`Payload`].
     Visit(Visit),
