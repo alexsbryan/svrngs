@@ -4,8 +4,10 @@
 // `args.token` joins, opens the lend `args.open` from its list, the yes;
 // at that lend's origin its page asks `/svrngs-reads`, then reads the lend
 // `args.read` at the address it is told, as fast as it can, until svrngs
-// refuses a read or `args.most` are taken. It says how many were taken
-// and what the refusal said: its status, `x-svrngs-refused`,
+// refuses a read or `args.most` are taken. It says how many were taken,
+// in how many ms from the first read's asking to the last answer (`ms`, so
+// the rate's refill over the run is judged by its length, not assumed
+// fast), and what the refusal said: its status, `x-svrngs-refused`,
 // `Retry-After`, and its `error`.
 //
 //   node web/tests/read-rate.mjs '{"engine": "chromium"|"webkit", "site": ...,
@@ -32,11 +34,14 @@ await driving(args, async ({ page }) => {
           const reads = await fetch('/svrngs-reads').then((r) => r.json());
           const at = reads.lends.find((l) => l.name === read)?.address;
           if (!at) return { error: `no ${read} in ${JSON.stringify(reads)}` };
+          const began = performance.now();
+          const ms = () => Math.round(performance.now() - began);
           for (let taken = 0; taken < most; taken += 1) {
             const r = await fetch(at);
             if (r.status !== 200)
               return {
                 taken,
+                ms: ms(),
                 status: r.status,
                 refused: r.headers.get('x-svrngs-refused'),
                 retry: r.headers.get('retry-after'),
@@ -44,7 +49,7 @@ await driving(args, async ({ page }) => {
               };
             await r.text();
           }
-          return { taken: most };
+          return { taken: most, ms: ms() };
         },
         [args.read, args.most],
       ),

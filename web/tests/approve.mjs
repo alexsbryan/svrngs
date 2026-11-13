@@ -32,9 +32,23 @@ const watched = (b) => (
   ),
   b
 );
-// The handoff cookies the group's page left that no signer has taken.
-const handoffs = async (b) =>
-  (await b.context.cookies(origin)).filter((c) => c.name.startsWith('__Host-svrngs-')).length;
+// The handoff cookies the group's page left that no signer has taken,
+// once the signer's deletion has reached the browser's cookie store: a
+// frame's `document.cookie` write reaches it after the frame goes on, so
+// read at once WebKit's store still held the deleted cookie (the Fedora gate
+// image, demo/runs/flakes/2026-11-12). Asked again until none is left or
+// 10 s have passed: a cookie never deleted is still counted.
+const handoffs = async (b) => {
+  const left = async () =>
+    (await b.context.cookies(origin)).filter((c) => c.name.startsWith('__Host-svrngs-')).length;
+  const until = Date.now() + 10_000;
+  let n = await left();
+  while (n > 0 && Date.now() < until) {
+    await new Promise((r) => setTimeout(r, 100));
+    n = await left();
+  }
+  return n;
+};
 const ready = (page) =>
   page.waitForFunction(() => document.title === 'ready', null, { timeout: 90_000 });
 // From the group's page at `page`, `name` opened, its page drawn.

@@ -9,6 +9,7 @@
 
 use super::carried::{carried_at, carry};
 use super::*;
+use svrngs_node::door::limit::READS_A_MINUTE;
 
 /// "3 Oct", as question.js `day` says a day in this computer's time.
 fn today() -> String {
@@ -225,9 +226,15 @@ in_webkit!(
     /// from the group's page, the yes, and the page reads cy's shelf at the
     /// address it is told as fast as it can: past 600 at once it is refused
     /// 429, `limit`, with a `Retry-After` and the words cy's door says to a
-    /// computer, and cy's shelf was asked no more than were taken. Planted,
-    /// watched failing: the door counting no reads (`lend_for` never asking
-    /// `Reads::read`), and 1,000 reads were taken.
+    /// computer, and cy's shelf was asked no more than were taken. Past 600,
+    /// it takes no more than ten a second of the run let in: judged by the
+    /// run's length, since a page reading slower than 25 a second takes
+    /// 1,000 in 40 s, which the rate lets in whole (`READS_A_MINUTE`; on the
+    /// Fedora gate image, WebKit's 1,000 reads were all taken while the host
+    /// was loaded, demo/runs/flakes/2026-11-12). A page that never read
+    /// faster than the rate could not be refused: could-not-judge, never a
+    /// pass. Planted, watched failing: the door counting no reads
+    /// (`lend_for` never asking `Reads::read`), and 2,000 reads were taken.
     a_phone_s_page_reading_past_the_rate_is_refused_with_the_words
 );
 async fn a_phone_s_page_reading_past_the_rate_is_refused_with_the_words(engine: Engine) {
@@ -250,20 +257,35 @@ async fn a_phone_s_page_reading_past_the_rate_is_refused_with_the_words(engine: 
             "token": token(&signing(1), &relay),
             "open": "page",
             "read": "shelf",
-            "most": 1000,
+            "most": 2000,
         }),
         None,
     )
     .await;
     eprintln!(
         "the phone's reads: {}",
-        json!({ "taken": seen["taken"], "status": seen["status"], "refused": seen["refused"], "retry": seen["retry"], "words": seen["words"], "error": seen["error"] })
+        json!({ "taken": seen["taken"], "ms": seen["ms"], "status": seen["status"], "refused": seen["refused"], "retry": seen["retry"], "words": seen["words"], "error": seen["error"] })
     );
     let taken = seen["taken"].as_u64().unwrap_or_default();
+    // What the rate lets in over the run: its burst, then `READS_A_MINUTE`
+    // a minute over the run's ms, and the read under way.
+    let burst = u64::from(READS_A_MINUTE);
+    let ms = seen["ms"].as_u64().unwrap_or(u64::MAX);
+    let let_in = burst + ms.saturating_mul(burst) / 60_000 + 1;
     assert!(
-        (600..1000).contains(&taken),
-        "600 at once, then ten a second: {taken} taken"
+        (burst..=let_in).contains(&taken),
+        "600 at once, then ten a second: {taken} taken in {ms} ms, of {let_in} let in"
     );
+    if seen["status"].is_null() && seen["error"].is_null() {
+        // Never refused, and no more taken than the rate let in: the page
+        // read no faster than the rate, so it could not be past it.
+        return could_not_judge(&format!(
+            "acts::a_phone_s_page_reading_past_the_rate_is_refused_with_the_words::{} \
+             the page read {taken} in {ms} ms, no faster than {burst} a minute past {burst} \
+             at once, so no read could be refused",
+            engine.as_str()
+        ));
+    }
     assert_eq!(
         (seen["status"].clone(), seen["refused"].clone()),
         (json!(429), json!("limit")),
