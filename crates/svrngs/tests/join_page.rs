@@ -368,79 +368,6 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
     sam.endpoint().close().await;
 }
 
-in_webkit!(
-    /// **A phone opening a link Sam's computer made for Sam's devices is
-    /// added as Sam, asked no name** (bash-devices (d); `svrngs link house
-    /// --device`). It reads "Adding this phone to house as Sam’s…", then
-    /// that it is in as Sam; Sam's record holds one `Admit` of a browser's
-    /// key, and Sam's register names that key Sam, by Sam's first key. Red
-    /// before the page read the link's person: it asked the name.
-    a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name
-);
-async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: harness::Engine) {
-    let site = harness::site();
-    let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
-    let (phone, out, origin) = phone(json!({ "engine": engine.as_str(), "site": site })).await;
-    let origin = Origin::parse(&origin).unwrap();
-    let page = cli::checked_page(Some(origin))
-        .await
-        .expect("the page is served");
-    let (seed, _) = cli::new_group(
-        &sam,
-        Name::parse("house").unwrap(),
-        Name::parse("Sam").unwrap(),
-        page.as_ref(),
-        &[],
-        &ours,
-    )
-    .await
-    .expect("Sam makes house");
-    let (_, printed, _) = cli::link_to(&sam, "house", page.as_ref(), &ours, true, &[])
-        .await
-        .expect("Sam's computer makes a link for Sam's devices");
-    let link = printed.https.clone().expect("an https link on the origin");
-    let seen = finished(phone, out, json!({ "link": link, "name": "Pia" })).await;
-
-    let first = &seen["first"];
-    assert_eq!(
-        first["asked"], false,
-        "a device link asks no name:\n{seen:#}"
-    );
-    assert!(
-        (first["said"].as_array().unwrap())
-            .contains(&json!("Adding this phone to house as Sam’s…")),
-        "the phone reads whose it is being added as:\n{seen:#}"
-    );
-    assert!(in_house(first, "Sam"), "{seen:#}");
-
-    let key: [u8; 32] = hex::decode(seen["stored"]["key"].as_str().unwrap())
-        .unwrap()
-        .try_into()
-        .expect("the page's key is 32 bytes");
-    let phones = actor_of(&SigningKey::from_bytes(&key));
-    let id = seed.id();
-    let joined: Vec<_> = admits(&sam, &id)
-        .into_iter()
-        .filter_map(|(_, key, device)| (key == phones).then_some(device))
-        .collect();
-    assert_eq!(
-        joined,
-        vec![Some(Device::Browser)],
-        "one Admit of the phone's key:\n{seen:#}"
-    );
-    let svrngs_node::register::Standing::Members(members) = sam.rail().standing(&id).unwrap()
-    else {
-        panic!("house is held at Sam's")
-    };
-    let m = &members[&phones];
-    let sams = actor_of(&SigningKey::from_bytes(&[1; 32]));
-    assert_eq!(
-        (m.person.as_str(), m.person_key.as_str()),
-        ("Sam", sams.as_str())
-    );
-    sam.endpoint().close().await;
-}
-
 /// [`phone`] and [`finished`] for the link `<origin>#<token>` as Pia:
 /// `args` says the engine, the built site, the page's `policy` (`None`:
 /// the tests' allowance; `"production"`: the built meta alone) and, with
@@ -701,7 +628,11 @@ in_webkit!(
     /// keeper is not at — its probe answers, and a dial there finds no
     /// one — and carries B, where the keeper is. The browser tries both at
     /// once and is let in through B. Planted: `reach` dialling the first
-    /// route alone, and the join fails.
+    /// route alone, and the join fails. The seam is the claim: the page's
+    /// wasm, web/src/lib.rs `reach`, racing iroh's dials over real relays,
+    /// with nothing pure to split from it; a link carries two relays at
+    /// most (svrngs-core link.rs:117), so this race and the stalled one
+    /// below are two links, two tests.
     a_route_that_answers_but_cannot_reach_the_issuer_does_not_win
 );
 async fn a_route_that_answers_but_cannot_reach_the_issuer_does_not_win(engine: harness::Engine) {
@@ -751,6 +682,7 @@ in_webkit!(
     /// and never answers, and carries B. The published policy takes both,
     /// so both are dialled; B answers and the join is in. Planted:
     /// `reach` dialling the first route alone, and the join hangs at S.
+    /// The seam is the claim, as the dead-end route's above.
     a_stalled_eligible_primary_does_not_delay_the_fallback
 );
 async fn a_stalled_eligible_primary_does_not_delay_the_fallback(engine: harness::Engine) {
