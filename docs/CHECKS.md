@@ -214,7 +214,10 @@ its browser test keeps what only a browser does, a form pressed and the
 Copy button's clipboard. Grapevine's §10 scene reads its page's
 markup on its handler, a loop a turn of each person's pass
 (`apps/grapevine/scene.test.mjs`); its browser test keeps its script's
-send, reload and refusal.
+send, reload and refusal. House rules' page runs its own index.js in
+Node on a document of plain objects (`apps/canon/house-page.test.mjs`);
+its browser test keeps its policy, module and one press per engine.
+Movie Night's startup is B's own: a module held in flight.
 
 ### The contained test of each seam
 

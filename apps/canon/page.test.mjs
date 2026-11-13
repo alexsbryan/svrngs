@@ -1,15 +1,14 @@
-// House rules' page in a browser (canon-house (c)): Chromium as a desktop and
-// WebKit as an iPhone (web/tests/page.mjs, `launch`). A server of the test's
-// own serves the app's files under a carried page's policy, read from the
-// trust floor (scripts/trust_floor.txt, `page carried`), and answers
-// `svrngs/acts` as svrngs's door does (crates/svrngs-node/src/carried.rs
-// `acts`): the asker, the group, its people and their time in it, and the
-// app's entries, each new one written as the asker, through the computer the
-// test names. Four people founded the house. Ana brings it, answers the
-// question, "Most of you agree", and proposes "Quiet hours are 10pm to 7am";
-// Bo agrees through Dee's computer, and Ana's page says so; Cy agrees, and it
-// reads as a rule. No page says canon's own words. Without Playwright or its
-// browser this fails naming the install (`launch` exits 3); it never skips.
+// House rules' page in a browser, B's own (docs/seams.tsv): Chromium as a
+// desktop and WebKit as an iPhone (web/tests/page.mjs, `launch`). A server
+// of the test's own serves the app's files under a carried page's policy,
+// read from the trust floor (scripts/trust_floor.txt, `page carried`), and
+// answers `svrngs/acts` as svrngs's door does (crates/svrngs-node/src/
+// carried.rs `acts`). What only a browser does with the page: its module
+// and the vendored build load under that policy, it reads the house, and a
+// press writes and draws again, with no page error. The whole scene, every
+// word, is house-page.test.mjs's, index.js in Node. Without Playwright or
+// its browser this fails naming the install (`launch` exits 3); it never
+// skips.
 
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -21,8 +20,6 @@ import { launch } from '../../web/tests/page.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const ROOT = join(HERE, '../..');
-/** canon's words and svrngs's own, which the page never says (fence 6). */
-const NOT_SAID = /\b(scope|ratif\w*|commitments?|acts?|actors?|canon|member|key|record)\b/i;
 
 /** A carried page's policy as the floor pins it: its directives under `page carried`. */
 async function carriedPolicy() {
@@ -88,7 +85,7 @@ async function serve(spans) {
 }
 
 for (const engine of ['chromium', 'webkit']) {
-  test(`a house answers the question, proposes a rule, and two others agree to it (${engine})`, async () => {
+  test(`the page loads under a carried policy, reads the house and writes a choice (${engine})`, async () => {
     const founders = ['ana', 'bo', 'cy', 'dee'].map((person) => ({
       person,
       joined: null,
@@ -100,80 +97,26 @@ for (const engine of ['chromium', 'webkit']) {
     try {
       const page = await context.newPage();
       page.on('pageerror', (e) => errors.push(String(e)));
-      const traced = [];
-      page.on('console', (m) => m.type() === 'debug' && traced.push(m.text()));
-      const said = [];
-      const text = () => page.innerText('main');
-      const as = async (person, computer = person) => {
-        await context.setExtraHTTPHeaders({ 'x-person': person, 'x-computer': computer });
-        await page.goto(server.at);
-        await page.waitForFunction(
-          () => !document.body.innerText.includes('Reading your house'),
-          null,
-          { timeout: 60_000 },
-        );
-        said.push(await text());
-      };
-      const press = async (name) => {
-        const before = await text();
-        await page.getByRole('button', { name, exact: true }).first().click();
-        await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, {
-          timeout: 30_000,
-        });
-        said.push(await text());
-      };
-
-      await as('ana');
-      assert.match(await text(), /How does your house decide its rules\?/);
-      assert.match(
-        await text(),
-        /Most of you agree\. A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them\./,
+      await context.setExtraHTTPHeaders({ 'x-person': 'ana', 'x-computer': 'ana' });
+      await page.goto(server.at);
+      await page.waitForFunction(
+        () => !document.body.innerText.includes('Reading your house'),
+        null,
+        { timeout: 60_000 },
       );
+      assert.match(await page.innerText('main'), /How does your house decide its rules\?/);
       await page.check('input[name=way][value=most]');
-      await press('Make this how your house decides');
+      const before = await page.innerText('main');
+      await page
+        .getByRole('button', { name: 'Make this how your house decides', exact: true })
+        .click();
+      await page.waitForFunction((b) => document.querySelector('main').innerText !== b, before, {
+        timeout: 30_000,
+      });
       assert.match(
-        await text(),
+        await page.innerText('main'),
         /How your house decides\n+A rule holds once more than half of the people in your house when it was proposed agree, whoever proposed it among them\./,
       );
-      await page.fill('#rule', 'Quiet hours are 10pm to 7am');
-      await press('Propose this rule to everyone in your house');
-      assert.match(
-        await page.innerText('ul.proposed'),
-        /Quiet hours are 10pm to 7am\n+You proposed it on/,
-      );
-
-      await as('bo', 'dee');
-      await press('Agree');
-      await as('ana');
-      assert.match(await page.innerText('ul.proposed'), /Agreed: bo, through dee’s computer\./);
-      assert.equal(
-        await page.locator('ul.proposed button').count(),
-        0,
-        'Ana is not asked about her own proposal',
-      );
-
-      await as('cy');
-      await press('Agree');
-      assert.match(
-        await page.innerText('ul.rules'),
-        /^Quiet hours are 10pm to 7am \(ana proposed it on /,
-      );
-      assert.match(await text(), /Nothing is waiting on anyone\./);
-      assert.match(await text(), /Everyone in your house has a say: ana, bo, you and dee\./);
-      for (const words of said) assert.doesNotMatch(words, NOT_SAID);
-      // Each decision traced at debug, house.js's included (#210).
-      for (const what of [
-        'svrngs/acts answered',
-        'asking how the house decides',
-        'sent',
-        'canon asked',
-        'how the house decides',
-      ]) {
-        assert.ok(
-          traced.some((l) => l.startsWith(`House rules: ${what} `)),
-          `traced: ${what}`,
-        );
-      }
       assert.deepEqual(errors, []);
     } finally {
       await close();
