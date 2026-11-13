@@ -37,13 +37,8 @@ mod navigations;
 mod opens;
 // What acts as you, and its Stop (capability-what-acts).
 mod acts;
-// A carried app's send, on the person's tick (row 13).
-mod sends;
-// A lent service keeping what it is sent, tests/carried.rs's too.
 mod grouped;
 mod keep_going;
-#[path = "../common/keeping.rs"]
-mod keeping;
 // The one place a lent film is played (scripts/check.sh `playback`).
 mod playback;
 mod publication;
