@@ -22,19 +22,11 @@ impl std::io::Write for Said {
 }
 
 /// What keeps a router served on the stream: its acceptor, and the
-/// dialer's transport and the contact it reaches the router by.
+/// dialer's transport. (The round's exchange is asked in-process now,
+/// [`InProcess`]; a member asked over QUIC is this file's own tests'.)
 pub(crate) struct OnStream {
     _acceptor: IrohAcceptor,
-    transport: IrohTransport,
-    contact: Contact,
-}
-
-impl OnStream {
-    /// The served router as a member a request is sent to, from the
-    /// dialer's transport (arch-peer (c)).
-    pub(crate) fn to(&self) -> crate::ring_sync::To<'_> {
-        (&self.transport, &self.contact)
-    }
+    _transport: IrohTransport,
 }
 
 /// `router` served by an acceptor that admits every dialer, on a
@@ -69,8 +61,7 @@ pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> 
         base,
         OnStream {
             _acceptor: acceptor,
-            transport,
-            contact,
+            _transport: transport,
         },
     )
 }
