@@ -23,8 +23,10 @@ Jellyfin's list of users exported.
 
 **The steps as the design has them now** (DESIGN §3, "Joining" and "Lent
 apps", call 4, no program of svrngs's beside the app), which nobody is
-told; the films scene plays them on every gate, each person a program on
-one host (`crates/svrngs/tests/scenes/films.rs`), and the dry run of
+told; the films scene plays them on every gate up to each film's stream
+reaching its person, each person a program on one host
+(`crates/svrngs/tests/scenes/films.rs`; a browser decoding a lent film and
+seeking it is the browser tests' playback step's), and the dry run of
 2026-10-11 took them first, through a sign-in program since gone
 (`runs/a/2026-10-11/`). Set up before the run: Sam lends Jellyfin from his
 home page, under "Already running here", with sign-in with svrngs turned

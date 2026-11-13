@@ -15,7 +15,7 @@
 mod harness;
 #[path = "../../../svrngs-node/tests/browser/drive.rs"]
 mod drive;
-// The host's load and the film's seek bar under it, the browser tests' own.
+// The host's load, judged as the browser tests judge it (people.rs `late`).
 #[path = "../../../svrngs-node/tests/browser/load.rs"]
 #[allow(dead_code)]
 mod load;
@@ -66,13 +66,13 @@ mod doc;
 mod life;
 // Keeping a group handed on: a hand-on, its Accept on a home page, a leave.
 mod keeping;
-// Films (demo/a.md): two people play and seek Sam's lent Jellyfin at once.
+// Films (demo/a.md): two people stream Sam's lent Jellyfin at once, each as themselves.
 mod films;
 // Movie night (demo/b.md): a newcomer from the link to the film on a TV.
 mod night;
 // Movie Night (apps/movie-night): a newcomer searches a friend's films.
 mod movie_night;
-// HolyArrs: request, approval, real download/import, discovery and playback.
+// HolyArrs: request, approval, real download/import, discovery and the stream.
 mod holyarrs;
 // The pantry (apps/pantry): friends' models and tools, found by protocol.
 mod pantry;

@@ -4,8 +4,13 @@
 //! `share` printed tells him (apps/jellyfin/README.md). Alex and Bo join
 //! by the link Sam's home page makes, each on a computer of their own,
 //! and open Sam's Jellyfin at their own computer's address of it. Each
-//! signs in as themselves and plays a different film, and each seeks
-//! with Jellyfin's own seek bar while the other plays on.
+//! signs in as themselves and plays a different film, both at once: each
+//! browser receives its own film's stream through its own computer's
+//! address, answered 200 or 206 with a video/* type (person.mjs
+//! `streamed`). That a browser decodes a lent film, and plays again within
+//! 5 s of a seek, is the playback step's
+//! (crates/svrngs-node/tests/browser/playback.rs); Demo A's seek bars
+//! stay with its recorded instrument (check.sh `pair`, trio.mjs).
 //!
 //! Sam's Jellyfin is a scratch one, the films check's
 //! (apps/jellyfin/check/check.sh `jellyfin`), on a port of its own; the
@@ -23,8 +28,7 @@ use std::time::Duration;
 use serde_json::{json, Value};
 
 use crate::harness::{browsers, repo, Engine};
-use crate::load;
-use crate::people::{late, Scene};
+use crate::people::Scene;
 
 /// check.sh `<step> <scratch> <out>`, with Jellyfin on `port`, its films
 /// `media`'s when one is named (check.sh `MEDIA`), else its own.
@@ -219,18 +223,20 @@ async fn films(engine: Engine) {
     let bo = scene.joins("Bo", &link, "House").await;
     // Each opened by their svrngs, as the home page's link opens it
     // (give-session).
-    let opened = |at: String| crate::people::open_of(&at).expect("svrngs opens it").1;
-    let alex_at = opened(alex.lent_by(&group, "Sam", "jellyfin").await);
-    let bo_at = opened(bo.lent_by(&group, "Sam", "jellyfin").await);
+    // Each the lend's address on their own computer, and what opens it.
+    let opened = |at: String| crate::people::open_of(&at).expect("svrngs opens it");
+    let (alex_lend, alex_at) = opened(alex.lent_by(&group, "Sam", "jellyfin").await);
+    let (bo_lend, bo_at) = opened(bo.lent_by(&group, "Sam", "jellyfin").await);
 
-    // 4. Each signs in, plays a film of their own, and seeks while the
-    // other plays on.
+    // 4. Each signs in and plays a film of their own, the other's still
+    // open.
     let dump = scene.scratch("received");
     let people = json!({
         "way": "computer", "engine": engine.as_str(), "server": jf.env("SERVER"),
+        "until": "streamed",
         "people": [
-            { "name": "Alex", "user": "alex", "film": jf.env("ONE"), "seeks": [50, 15, 80], "at": alex_at },
-            { "name": "Bo", "user": "bo", "film": jf.env("TWO"), "seeks": [60, 20, 75], "at": bo_at },
+            { "name": "Alex", "user": "alex", "film": jf.env("ONE"), "at": alex_at },
+            { "name": "Bo", "user": "bo", "film": jf.env("TWO"), "at": bo_at },
         ],
     });
     let env = [
@@ -239,13 +245,33 @@ async fn films(engine: Engine) {
         ("ADMIN", jf.read("secrets/admin_token")),
         ("DUMP", dump.to_string_lossy().to_string()),
     ];
-    let began = load::load().await;
     let seen = node("drive.mjs", &[&people.to_string()], &env).await;
     eprintln!("what Alex and Bo saw: {seen:#}");
     assert!(seen.get("stopped").is_none(), "{seen:#}");
-    for who in ["alex", "bo"] {
+    for (who, film, lend) in [("alex", "ONE", &alex_lend), ("bo", "TWO", &bo_lend)] {
         let p = &seen["people"][who];
-        assert!(p["play_ms"].is_number(), "{who}'s film plays: {p:#}");
+        assert!(
+            p.get("stopped").is_none_or(Value::is_null),
+            "{who} gets to their film's stream: {p:#}"
+        );
+        // Their film's bytes, through their own computer's address of Sam's
+        // Jellyfin, not the other's nor Jellyfin's own.
+        let streamed = &p["streamed"];
+        assert!(
+            streamed["ms"].is_number(),
+            "{who}'s browser receives their film's stream: {p:#}"
+        );
+        assert_eq!(
+            streamed["origin"],
+            format!("http://{lend}"),
+            "{who}'s film comes through their own computer's address: {p:#}"
+        );
+        let path = streamed["path"].as_str().unwrap_or_default().to_lowercase();
+        let id = jf.env(film).to_lowercase();
+        assert!(
+            path.replace('-', "").starts_with(&format!("/videos/{id}/")),
+            "{who}'s stream is their own film's, {id}: {p:#}"
+        );
         assert_eq!(
             p["signed_in_after"], who,
             "{who} is in Jellyfin as themselves: {p:#}"
@@ -255,47 +281,6 @@ async fn films(engine: Engine) {
         seen["devices_apart"], true,
         "Alex and Bo are each a device of their own: {seen:#}"
     );
-    // Demo A's seek bar, each seek playing again within 5 s, judged as the
-    // browser tests judge the film's (load.rs `seeks_judged`): a miss on a
-    // host past `load::BUSY` a core is could-not-judge, never a pass; the
-    // whole gate's scenes once took this host to a load of 155 and Alex's
-    // first seek to 16.6 s, while films alone passed three runs of three.
-    let mut unjudged = Vec::new();
-    for phase in ["first_seeks", "then_seeks"] {
-        let p = &seen[phase];
-        let seeks = p["seeks"].as_array().cloned().unwrap_or_default();
-        assert_eq!(seeks.len(), 3, "{}'s three seeks: {p:#}", p["seeker"]);
-        match load::seeks_judged(&seeks, &began, load::cores()) {
-            Ok(None) => {}
-            Ok(Some(why)) => unjudged.push(format!("{}'s seeks, {why}", p["seeker"])),
-            Err(missed) => panic!(
-                "each of {}'s seeks plays again within 5 s, not {missed}: {p:#}",
-                p["seeker"]
-            ),
-        }
-        // Judged by the film itself: never started over, never back, never
-        // still 5 s. WebKit's watcher at times binds a second <video> while
-        // the film plays on, before any of this (demo/runs/si/2026-10-08/
-        // README.md, "What failed"), a count printed, not judged.
-        let w = &p["watch"];
-        eprintln!(
-            "{}'s page bound {} new <video> while {} sought",
-            p["watched"], w["element"], p["seeker"]
-        );
-        assert!(
-            w["emptied"] == 0 && w["loadstart"] == 0 && w["back_s"].as_f64() <= Some(2.0),
-            "{}'s film plays on while {} seeks: {p:#}",
-            p["watched"],
-            p["seeker"]
-        );
-        if w["still_ms"].as_u64() >= Some(5000) || w["still_ms"].is_null() {
-            let (watched, seeker) = (&p["watched"], &p["seeker"]);
-            late(format!(
-                "{watched}'s film stood still 5 s or more while {seeker} sought: {p:#}"
-            ))
-            .await;
-        }
-    }
 
     // Sam's password is in nothing they received, nor in their logs.
     let password = jf.read("secrets/sam_pw");
@@ -304,8 +289,5 @@ async fn films(engine: Engine) {
         held.extend(holding(&who.home, password.as_bytes()));
     }
     assert!(held.is_empty(), "Sam's password reached them: {held:?}");
-    if !unjudged.is_empty() {
-        scene.could_not_judge(&unjudged.join("; "));
-    }
     drop((sam, alex, bo, jf));
 }

@@ -22,7 +22,8 @@
 //
 // `routes`, when given, runs only those checks in each lend, in order, and
 // none after: u5-12's runs of the upload after the seeks, which list a lend
-// once for each try.
+// once for each try, and the playback step's seeks alone (conformance.rs
+// `seeks_back_to_back`).
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -45,12 +46,13 @@ async function unsealable() {
   return { groups: (await store.groups()).length, names };
 }
 
+// Every route but `seeks`, the one that plays, which the playback step asks
+// alone (crates/svrngs-node/tests/conformance.rs `seeks_back_to_back`).
 const ROUTES = [
   'root',
   'isolated',
   'host',
   'range',
-  'seeks',
   'upload',
   'websocket',
   'signin',

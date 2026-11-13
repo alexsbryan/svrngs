@@ -19,7 +19,7 @@ in_webkit!(
     /// page Kim taps **Have a guest**, keeps the 48 hours it starts at, and
     /// gets a link to send in any chat. Sam opens it in a browser holding
     /// nothing of any group, is asked their name once, and opens Kim's
-    /// Jellyfin from what the page lists: the film plays, and Jellyfin is
+    /// Jellyfin from what the page lists: its film's bytes come, and Jellyfin is
     /// told "Sam (Kim's guest)" on every request, never Kim. Kim's record
     /// holds one visit, Sam's, of 48 hours from when Sam opened the link.
     ///
@@ -44,7 +44,7 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     });
     let mp4 = dir.path().join("title.mp4");
     let size = film(&mp4);
-    let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
+    let (film_origin, film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
     let html = "<!doctype html><title>Jellyfin</title>\
                 <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
     let jellyfin = one_origin(page_origin(html).await, film_origin).await;
@@ -54,7 +54,7 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
     let kims_home = crate::drive::opens(&json!(kim.api_addr().to_string()));
     let mut half = tokio::process::Command::new("node")
         .arg(repo().join("web/tests/visit.mjs"))
-        .arg(json!({ "engine": engine.as_str(), "site": site() }).to_string())
+        .arg(json!({ "engine": engine.as_str(), "site": site(), "film": film_args() }).to_string())
         .env("SVRNGS_BROWSERS", crate::harness::browsers())
         .env("SVRNGS_OPENS", kims_home.to_string())
         .stdin(std::process::Stdio::piped())
@@ -141,10 +141,7 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
         at_origin(&seen["opened"], &label(KIM, "jellyfin")),
         "{shown:#}"
     );
-    assert!(
-        seen["first"]["ms"].is_u64(),
-        "Kim's film must play for Sam:\n{shown:#}"
-    );
+    film_answered(&seen["answered"], &mp4, "Kim's film must reach Sam", &shown);
 
     // Jellyfin told Sam, as Kim's guest, never Kim.
     let heads = film_heads.lock().unwrap().clone();

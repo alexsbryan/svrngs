@@ -7,10 +7,13 @@
 //! at an address of its own under the page's host (the wildcard) —
 //! Chromium, and WebKit as an iPhone (`web/tests/conformance.mjs`). Each
 //! route's verdict is printed per way and kept in `target/conformance/` for
-//! `scripts/check.sh`, and every route passes. WebKit's seeks back to back are
-//! a rate, not a gate (`a_rate`): kept beside the same seeks straight at a
-//! canary, and counted by scripts/check.sh; Chromium's, missed on a host
-//! whose load is past `load::BUSY` a core, are could-not-judge (`verdict`). Neither lend's cookie reaches the
+//! `scripts/check.sh`, and every route passes. The seeks back to back, the
+//! one route that plays (the canary's audio), run apart, in the playback
+//! step (`seeks_back_to_back`; scripts/check.sh `playback`; demo/runs/
+//! flakes/2026-11-12): WebKit's are a rate, not a gate (`a_rate`), kept
+//! beside the same seeks straight at a canary and counted by
+//! scripts/check.sh; Chromium's, missed on a host whose load is past
+//! `load::BUSY` a core, are could-not-judge (`verdict`). Neither lend's cookie reaches the
 //! other's requests; Bo's door names Alex's key; no byte Alex receives
 //! holds either secret; a lent page finds no group whose key it could
 //! unseal; and on a computer a lent page's post to the record API writes
@@ -211,12 +214,12 @@ impl Way {
     }
 }
 
-/// The canary's routes, as the row names them, each with its check.
-const ROUTES: [(&str, &str); 11] = [
+/// The canary's routes, as the row names them, each with its check: all
+/// but the one that plays, `SEEKS`, the playback step's.
+const ROUTES: [(&str, &str); 10] = [
     ("/-absolute paths", "root"),
     ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
-    ("seeks back to back", "seeks"),
     ("64 MiB uploaded, its length told", "upload"),
     ("its own service worker", "worker"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),
@@ -225,6 +228,12 @@ const ROUTES: [(&str, &str); 11] = [
     ("post, Origin checked", "guarded"),
     ("local storage", "storage"),
 ];
+
+/// The canary's seeks back to back (u5-11): its audio played and sought 20
+/// times, the last playing again within 5 s (apps/web-conformance
+/// checks.js `seeks`). The one route that needs the browser to decode, so
+/// the playback step's alone (`seeks_back_to_back`).
+const SEEKS: [(&str, &str); 1] = [("seeks back to back", "seeks")];
 
 /// WebKit's seeks back to back are a rate, not a gate (u5-11; operator,
 /// 2026-10-06): through a lend it takes a closed range's parts in serial
@@ -263,16 +272,17 @@ fn verdict_line(way: Way, engine: Engine, who: &str, route: &str, verdict: &str)
     )
 }
 
-/// Each route's verdict for one lend (`verdict`), the host's load read once,
-/// at the run's start.
+/// Each of `routes`' verdict for one lend (`verdict`), the host's load read
+/// once, at the run's start.
 fn verdicts(
+    routes: &[(&'static str, &'static str)],
     engine: Engine,
     lend: &Value,
     other: &Value,
     load: &str,
     cores: usize,
 ) -> Vec<(&'static str, String, String)> {
-    ROUTES
+    routes
         .iter()
         .map(|(route, check)| {
             let mut ok = lend[check]["ok"].as_bool() == Some(true);
@@ -421,7 +431,7 @@ async fn uplink(relay: &str) -> String {
 /// WebKit's seeks back to back (`a_rate`), beside the same seeks straight
 /// at a canary over the same link (`web/tests/control.mjs`), a try for
 /// each lend, with the host's load from `began` to now: printed, kept in
-/// `target/conformance/seeks-<way>.tsv` for this run and added to
+/// `target/playback/seeks-<way>.tsv` for this run and added to
 /// `target/seeks-webkit.log`, every run's on this host, which
 /// scripts/check.sh counts. The control must run; its seeks, and the
 /// lend's, never fail the test.
@@ -465,7 +475,7 @@ async fn rate(way: Way, ran: &Value, began: &str) {
     print!("{lines}");
     let kept = repo().join("target");
     std::fs::write(
-        kept.join(format!("conformance/seeks-{}.tsv", way.as_str())),
+        kept.join(format!("playback/seeks-{}.tsv", way.as_str())),
         &lines,
     )
     .unwrap();
@@ -592,7 +602,7 @@ async fn conformance(way: Way, engine: Engine) {
     let cores = load::cores();
     for (who, other) in [("sam", "bo"), ("bo", "sam")] {
         let (lend, other) = (&ran["lends"][who], &ran["lends"][other]);
-        for (route, verdict, saw) in verdicts(engine, lend, other, &began, cores) {
+        for (route, verdict, saw) in verdicts(&ROUTES, engine, lend, other, &began, cores) {
             let line = verdict_line(way, engine, who, route, &verdict);
             table.push_str(&format!("{line}\n"));
             if verdict == "failed" {
@@ -611,9 +621,6 @@ async fn conformance(way: Way, engine: Engine) {
         "routes failed, the host at {began} on {cores} cores:\n{}\n{shown:#}",
         failed.join("\n")
     );
-    if matches!(engine, Engine::Webkit) {
-        rate(way, &ran, &began).await;
-    }
 
     // Neither lend's cookie reaches the other's requests; Bo's door names
     // Alex's key, the computer's or the phone's; the secret is the
@@ -710,6 +717,87 @@ in_both_engines!(
 );
 async fn on_a_phone_with_the_wildcard(engine: Engine) {
     conformance(Way::Wildcard, engine).await
+}
+
+/// The canary's seeks back to back alone (`SEEKS`), lent by Sam and Bo and
+/// opened `way` in `engine`, as `conformance` opens them: the playback
+/// step's (scripts/check.sh `playback`), where each lend's verdict is kept
+/// in `target/playback/conformance-<way>-<engine>.txt`, Chromium's failing
+/// or could-not-judge past the load bar, WebKit's a rate (`a_rate`, `rate`).
+async fn seeks(way: Way, engine: Engine) {
+    let began = load::load().await;
+    let relay = relay().await;
+    let g = group(&relay).await;
+    let mut args = browser_args(way, engine, &g, &relay).await;
+    args["routes"] = json!(["seeks"]);
+    let ran = browse(&args, &opens(way, &g)).await;
+    let kept = repo().join("target/playback");
+    std::fs::create_dir_all(&kept).unwrap();
+    let name = format!("conformance-{}-{}", way.as_str(), engine.as_str());
+    std::fs::write(kept.join(format!("{name}.json")), format!("{ran:#}")).unwrap();
+    let mut table = String::new();
+    let mut failed = Vec::new();
+    let cores = load::cores();
+    for who in ["sam", "bo"] {
+        let lend = &ran["lends"][who];
+        for (route, verdict, saw) in verdicts(&SEEKS, engine, lend, &Value::Null, &began, cores) {
+            let line = verdict_line(way, engine, who, route, &verdict);
+            table.push_str(&format!("{line}\n"));
+            if verdict == "failed" {
+                failed.push(format!("{line}: {saw}"));
+            }
+        }
+    }
+    print!("{table}");
+    std::fs::write(kept.join(format!("{name}.txt")), &table).unwrap();
+    // A miss past the load bar, said where scripts/check.sh says the
+    // playback step's could-not-judge: never a pass.
+    let unjudged: String = (table.lines())
+        .filter(|l| l.contains("could-not-judge"))
+        .map(|l| format!("seeks_back_to_back {l}\n"))
+        .collect();
+    if !unjudged.is_empty() {
+        use std::io::Write;
+        let said = repo().join("target/could-not-judge");
+        std::fs::create_dir_all(&said).unwrap();
+        (std::fs::OpenOptions::new().create(true).append(true))
+            .open(said.join("playback.txt"))
+            .and_then(|mut f| f.write_all(unjudged.as_bytes()))
+            .unwrap();
+    }
+    assert!(
+        failed.is_empty(),
+        "the seeks back to back failed, the host at {began} on {cores} cores:\n{}",
+        failed.join("\n")
+    );
+    if matches!(engine, Engine::Webkit) {
+        rate(way, &ran, &began).await;
+    }
+    for n in [g.sam, g.bo, g.alex] {
+        n.endpoint().close().await;
+    }
+}
+
+/// The playback step's half of this binary (scripts/check.sh `playback`,
+/// which runs `seeks_back_to_back::` alone, and the canary's step skips it).
+mod seeks_back_to_back {
+    use super::{seeks, Engine, Way};
+
+    in_both_engines!(
+        /// From Alex's computer, each lend at its origin on Alex's loopback.
+        on_a_computer
+    );
+    async fn on_a_computer(engine: Engine) {
+        seeks(Way::Computer, engine).await
+    }
+
+    in_both_engines!(
+        /// From a phone, each lend at an address of its own under the page's host.
+        on_a_phone_with_the_wildcard
+    );
+    async fn on_a_phone_with_the_wildcard(engine: Engine) {
+        seeks(Way::Wildcard, engine).await
+    }
 }
 
 /// The most, in MB, a WebKit content process may hold through the tries

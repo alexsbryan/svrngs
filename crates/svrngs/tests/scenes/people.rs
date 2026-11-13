@@ -37,10 +37,11 @@ fn traced() -> String {
 /// be judged, so the scene ends there, never a pass ([`judged`]).
 pub struct Unjudged(String);
 
-/// A wait that ran out, `why`, judged as films' seeks are, against the one
-/// load bar (load.rs `past_busy`), read now: on a host past it the scene
-/// is could-not-judge, never a pass; under it the scene fails. Every other
-/// assertion fails plainly under any load, and no limit is lengthened.
+/// A wait that ran out, `why`, judged against the one load bar (load.rs
+/// `past_busy`), as the browser tests judge a seek, read now: on a host
+/// past it the scene is could-not-judge, never a pass; under it the scene
+/// fails. Every other assertion fails plainly under any load, and no
+/// limit is lengthened.
 pub async fn late(why: impl std::fmt::Display) -> ! {
     let load = crate::load::load().await;
     match crate::load::past_busy(&load, crate::load::cores()) {
@@ -92,14 +93,6 @@ impl Scene {
     pub fn never_ran(&self, why: &str) {
         eprintln!("never ran: {why}");
         std::fs::write(self.dir.join("never-ran.txt"), why).unwrap();
-    }
-
-    /// A bar the scene could not judge, and why, in its place, where the
-    /// gate's "scenes" step reads it as could-not-judge, never a pass, when
-    /// nothing else in the scene failed (scripts/check.sh).
-    pub fn could_not_judge(&self, why: &str) {
-        eprintln!("could-not-judge: {why}");
-        std::fs::write(self.dir.join("could-not-judge.txt"), why).unwrap();
     }
 
     /// `name`'s computer as the one install line leaves it: the page it came

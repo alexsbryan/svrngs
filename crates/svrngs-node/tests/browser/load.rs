@@ -1,8 +1,9 @@
 //! The host's load, and the bar past which a seek that missed is not
-//! judged: one home for the two binaries that time seeks, the conformance
-//! canary (crates/svrngs-node/tests/conformance.rs), the browser tests
-//! (bash-film-load; AGENTS.md 8) and the films scene
-//! (crates/svrngs/tests/scenes/films.rs), each including this file by path.
+//! judged: one home for the binaries that time seeks and other bars, the
+//! playback step's two (browser/playback.rs; conformance.rs
+//! `seeks_back_to_back`; bash-film-load; AGENTS.md 8) and the scenes'
+//! timing bars (crates/svrngs/tests/scenes/people.rs `late`), each
+//! including this file by path.
 
 /// The load per core past which a seek that missed is not judged (chk-1;
 /// operator, 2026-10-10, "Could-not-judge above a load bar"): sup-4's

@@ -555,6 +555,35 @@ export async function driving(args, drive) {
   }
 }
 
+// In the lend's page: `range` of `path` at the page's own origin, which
+// the lend's worker serves, read whole — its status, type, content-range,
+// length and SHA-256 — and the `<video>`'s source as the page resolved it.
+// The bytes a lent film's page is answered, which every test but the
+// playback step's asserts in place of the browser decoding them
+// (crates/svrngs-node/tests/browser/playback.rs; demo/runs/flakes/2026-11-12).
+export async function fetched({ path, range }) {
+  const src = document.querySelector('video')?.currentSrc || document.querySelector('video')?.src;
+  try {
+    // A bound on a worker that never answers, so it is said, not hung on.
+    const signal = AbortSignal.timeout(60_000);
+    const res = await fetch(new URL(path, location.href), { headers: { range }, signal });
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const sha = [...new Uint8Array(await crypto.subtle.digest('SHA-256', bytes))]
+      .map((x) => x.toString(16).padStart(2, '0'))
+      .join('');
+    return {
+      src: src ?? null,
+      status: res.status,
+      type: res.headers.get('content-type'),
+      contentRange: res.headers.get('content-range'),
+      bytes: bytes.length,
+      sha,
+    };
+  } catch (e) {
+    return { src: src ?? null, error: String(e) };
+  }
+}
+
 // In the lend's page: play its `<video>`, or seek it to `at`, and answer
 // how long until it plays on from there — `ms`, or `null` past `within` —
 // with where it stood then, or what the page says when it holds no video.

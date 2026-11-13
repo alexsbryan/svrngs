@@ -15,7 +15,8 @@
 // theirs from Jellyfin). A person may name an `at` of their own: on a
 // computer through the middleware, each their own computer's address.
 //
-// `run` is what each caller gives: { args: {way, engine, device?, at, server, mw?, lend?},
+// `run` is what each caller gives: { args: {way, engine, device?, at, server, mw?, lend?,
+// until?}, `until: "streamed"` ending Play at the film's bytes received,
 // SECRETS (the passwords), DUMP (where every response each browser
 // receives is written, for scan.py), T0 (every time reported is in ms
 // from here) }. A step that did not happen within its time is null with
@@ -211,6 +212,45 @@ export function record(context, page, user, { DUMP, T0 }) {
   return tally;
 }
 
+// A film's bytes received, at the network and no further: the first
+// response `context`'s pages get to the film `film`'s stream — its path
+// `/Videos/<film>/…`, the id with or without its dashes, as Jellyfin
+// writes it both ways — answered 200 or 206 with a video/* type, within
+// `within` ms. Started before Play is pressed, so none is missed; with the
+// film's other answers when none came. That a browser decodes it is not
+// this: crates/svrngs-node/tests/browser/playback.rs judges that.
+export function streamed(context, film, within) {
+  const id = String(film).toLowerCase().replace(/-/g, '');
+  const t0 = Date.now();
+  const others = [];
+  return new Promise((done) => {
+    const finish = (got) => {
+      clearTimeout(timer);
+      context.off('response', on);
+      done(got);
+    };
+    const on = (r) => {
+      const u = new URL(r.url());
+      const path = u.pathname.toLowerCase().replace(/-/g, '');
+      if (!path.startsWith(`/videos/${id}/`)) return;
+      const got = {
+        ms: Date.now() - t0,
+        origin: u.origin,
+        path: u.pathname,
+        status: r.status(),
+        type: r.headers()['content-type'] ?? null,
+        from_worker: r.fromServiceWorker(),
+      };
+      if ([200, 206].includes(got.status) && (got.type ?? '').startsWith('video/'))
+        return finish(got);
+      if (others.length < 10) others.push(got);
+    };
+    const timer = setTimeout(() => finish({ ms: null, within, others }), within);
+    timer.unref();
+    context.on('response', on);
+  });
+}
+
 export async function enter(p, run) {
   const { args, SECRETS, DUMP, T0 } = run;
   const person = { user: p.user, name: p.name, account: p.account ?? p.user };
@@ -372,6 +412,21 @@ export async function enter(p, run) {
     [p.film, args.server],
   );
   person.play_from = Date.now() - T0;
+  // With `until: "streamed"` (the scenes), Play ends at the film's bytes
+  // received (`streamed`), the player's start and its watch left out.
+  if (args.until === 'streamed') {
+    const arrived = streamed(context, p.film, 60_000);
+    const pressed = await timed(person, 'Play', async () => {
+      const play = page.locator('.mainDetailButtons .btnPlay:visible');
+      await play.first().waitFor({ timeout: 30_000 });
+      await play.first().click({ force: true });
+    });
+    if (pressed === null) return person;
+    person.streamed = await arrived;
+    if (person.streamed.ms === null)
+      person.stopped = `no stream of the film within 60 s of Play; the page says: ${await shown(page)}`;
+    return person;
+  }
   person.play_ms = await timed(person, 'playing', async () => {
     const play = page.locator('.mainDetailButtons .btnPlay:visible');
     await play.first().waitFor({ timeout: 30_000 });

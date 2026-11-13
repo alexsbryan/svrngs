@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { setTimeout as pause } from 'node:timers/promises';
 import { arrived, launch } from '../../../web/tests/page.mjs';
-import { record, seek } from '../../jellyfin/check/person.mjs';
+import { record, streamed } from '../../jellyfin/check/person.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const services = JSON.parse(readFileSync(args.state));
@@ -277,6 +277,8 @@ try {
   step('Bo follows the copy and plays in Jellyfin');
   const copy = night.locator('#results a.copy.first').first();
   seen.copy = await copy.getAttribute('href');
+  const itemId = new URLSearchParams(seen.copy.split('#/details?')[1]).get('id');
+  assert.ok(itemId, 'H5: the copy names one Jellyfin item');
   await copy.click();
   await night.waitForSelector('#txtManualName, .btnManual', { timeout: 60_000 });
   const manual = night.locator('.btnManual:visible');
@@ -286,33 +288,28 @@ try {
   await night.locator('.manualLoginForm button[type=submit]').click();
   const play = night.locator('.mainDetailButtons .btnPlay:visible').first();
   await play.waitFor({ timeout: 30_000 });
+  // What H5 holds is the film's bytes reaching Bo through Bo's lend, by
+  // its worker on a phone (person.mjs `streamed`); that a browser decodes
+  // them is the playback step's (crates/svrngs-node/tests/browser/playback.rs).
+  const lend = new URL(night.url()).origin;
+  const film = streamed(bo.context, itemId, 60_000);
   await play.click();
-  await night.waitForFunction(
-    () => {
-      const v = document.querySelector('video');
-      return v && !v.paused && v.currentTime > 1;
-    },
-    null,
-    { timeout: 45_000 },
-  );
-  const sought = await night.evaluate(seek, 50);
-  assert.ok(
-    sought.ms !== null && Math.abs(sought.at - sought.target) < 3,
-    `H5: seek resumes near its target: ${JSON.stringify(sought)}`,
-  );
+  const got = await film;
+  assert.ok(got.ms !== null, `H5: Bo's browser receives the film: ${JSON.stringify(got)}`);
+  assert.equal(got.origin, lend, `H5: through Bo's lend: ${JSON.stringify(got)}`);
+  assert.notEqual(got.origin, new URL(args.jf).origin, 'H5: not from Jellyfin itself');
+  if (args.phone_link)
+    assert.ok(got.from_worker, `H5: by the lend's worker: ${JSON.stringify(got)}`);
   const auth = `MediaBrowser Token="${readFileSync(`${args.jf_secrets}/admin_token`, 'utf8')}"`;
   const sessions = await (
     await fetch(`${args.jf}/Sessions`, { headers: { authorization: auth } })
   ).json();
-  const itemId = new URLSearchParams(seen.copy.split('#/details?')[1]).get('id');
-  assert.ok(itemId, 'H5: the copy names one Jellyfin item');
-  const session = sessions.find((s) => s.UserName === 'bo' && s.NowPlayingItem?.Id === itemId);
-  assert.ok(
-    session,
-    `H5: Jellyfin independently sees Bo playing the imported film: ${JSON.stringify(sessions)}`,
-  );
+  // Jellyfin's own word that Bo is in it as Bo; which film a session plays
+  // it hears only once the <video> has started, so it is not asked here.
+  const session = sessions.find((s) => s.UserName === 'bo');
+  assert.ok(session, `H5: Jellyfin independently sees Bo: ${JSON.stringify(sessions)}`);
   await night.screenshot({ path: `${args.out}/bo-playing.png` });
-  passed('H5', { user: session.UserName, item: session.NowPlayingItem.Id, seek: sought });
+  passed('H5', { user: session.UserName, item: itemId, stream: got });
 
   step('The group’s access is withdrawn');
   const stranger = await launch('chromium');
@@ -390,12 +387,18 @@ try {
   assert.deepEqual(seen.fixture.unexpected, [], 'H8: every fixture request has an explicit answer');
   // WebKit reports cancelling Jellyfin's in-flight fetch on navigation and
   // the deliberately cut SSE body as page errors (recorded with their phase).
-  // Only those two observed messages, at those actions, are expected.
+  // Only those observed messages, at those actions, are expected. Since H5
+  // no longer waits for the film to play, Jellyfin's report of the play,
+  // `/Sessions/Playing`, can still be in flight as Bo leaves, and WebKit
+  // says its cancelling so (the Mac, 2026-11-12, demo/runs/flakes/2026-11-12).
   const cancellation = (e) =>
     args.phone_link &&
     e.who === 'bo' &&
     ((e.at === 'Leaving Jellyfin for HolyArrs' &&
-      e.message === 'Unhandled Promise Rejection: TypeError: Load failed') ||
+      (e.message === 'Unhandled Promise Rejection: TypeError: Load failed' ||
+        /^Fetch API cannot load \S+\/Sessions\/Playing(\/\w+)? due to access control checks\.$/.test(
+          e.message,
+        ))) ||
       (['Removing Bo with a live stream open', 'Observing the removed member'].includes(e.at) &&
         e.message ===
           'FetchEvent.respondWith received an error: Error: error reading a body from connection'));

@@ -50,6 +50,8 @@ mod cuttable;
 mod keep_going;
 mod native_arrival;
 mod play;
+// The one place a lent film is played (scripts/check.sh `playback`).
+mod playback;
 mod publication;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
@@ -781,6 +783,53 @@ fn ranges(heads: &std::sync::Mutex<Vec<String>>) -> Vec<(u64, Option<u64>)> {
         .collect()
 }
 
+/// The part of a lent film every test but the playback step's has the
+/// lend's page fetch (page.mjs `fetched`), its first MiB: what it asks.
+const FILM_PART: (u64, u64) = (0, MIB - 1);
+
+/// `FILM_PART` of the film `mp4` as the lend's page fetched it (page.mjs
+/// `fetched`, `json!({"path": "title.mp4", ...})` from `film_args`), through
+/// the lend's worker: 206, the film's type, the part named of the whole, and
+/// the file's bytes; the page's `<video>` sourced from the same file. What
+/// a test asserts of a lent film in place of the browser decoding it: that
+/// a browser plays it is the playback step's (playback.rs; demo/runs/
+/// flakes/2026-11-12), and decoding varies with the host's load and media
+/// stack where the bytes do not.
+fn film_answered(answer: &Value, mp4: &Path, what: &str, shown: &Value) {
+    let film = std::fs::read(mp4).unwrap();
+    let (from, to) = FILM_PART;
+    let want = json!({
+        "status": 206,
+        "type": "video/mp4",
+        "contentRange": format!("bytes {from}-{to}/{}", film.len()),
+        "bytes": to - from + 1,
+        "sha": sha(film[from as usize..=to as usize].iter().copied()),
+    });
+    let got = json!({
+        "status": answer["status"],
+        "type": answer["type"],
+        "contentRange": answer["contentRange"],
+        "bytes": answer["bytes"],
+        "sha": answer["sha"],
+    });
+    assert_eq!(
+        got, want,
+        "{what}: the film's part, through the lend's worker:\n{shown:#}"
+    );
+    assert!(
+        answer["src"]
+            .as_str()
+            .is_some_and(|s| s.ends_with("/title.mp4")),
+        "{what}: the page's <video> is the film's:\n{shown:#}"
+    );
+}
+
+/// What page.mjs `fetched` takes for `FILM_PART` of the lent page's film.
+fn film_args() -> Value {
+    let (from, to) = FILM_PART;
+    json!({ "path": "title.mp4", "range": format!("bytes={from}-{to}") })
+}
+
 /// Chromium's report of its worker: stopped through DevTools, then running
 /// again, its endpoint opened when it started and again after the stop.
 fn stopped_and_ran_again(seen: &Value, shown: &Value) {
@@ -834,7 +883,7 @@ fn could_not_judge(line: &str) {
 }
 
 // Calibration cases moved unchanged to tests/seek_judgment.rs; the actual timed
-// seeks below still consume this instrument against real playback.
+// seeks consume this instrument against real playback in playback.rs alone.
 
 in_webkit!(
     /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
@@ -843,35 +892,33 @@ in_webkit!(
     /// bo's key, opens ada's page from its list: since u5-2 it opens at an
     /// origin of its own, `<label>.localhost`, apart from the page that
     /// holds bo's key, and that origin's worker serves it, its `<video>` and
-    /// every byte range from ada's door, with the pass the page signed. The film plays and seeks three times,
-    /// each playing again within five seconds (Demo A's seek bar), a miss on
-    /// a host past `load::BUSY` a core could-not-judge (`seeks_judged`); the browser
-    /// stops the worker before the third, and the next ranges still answer:
-    /// Chromium stops it through DevTools, the page left playing, and WebKit,
-    /// whose worker Playwright cannot reach, is closed and opened again on its
-    /// profile, as a phone ends a browser left in the background, and the page
-    /// reopens at the lend's address (web/tests/runtime.mjs). A
+    /// every byte range from ada's door, with the pass the page signed: the
+    /// film's first MiB comes back 206, its type and part said, sha-exact
+    /// (`film_answered`). The browser stops the worker, and the film's range
+    /// still comes back so: WebKit, whose worker Playwright cannot reach, is
+    /// closed and opened again on its profile, as a phone ends a browser left
+    /// in the background, and the page reopens at the lend's address
+    /// (web/tests/runtime.mjs). That the film plays and seeks, each seek
+    /// playing again within five seconds, is the playback step's alone
+    /// (playback.rs, which this test was before it; demo/runs/flakes/
+    /// 2026-11-12). A
     /// range of cy's file, asked at its own origin by ada's page, which reads
     /// lends of its kind (`--reads`, so the pass names cy's file too), comes
     /// back 206 and sha-exact, and cy's door names bo's key, not ada's: no
     /// computer carries another's lend. An open-ended range of cy's file, `bytes=N-`,
     /// comes back a bounded part, a 206 naming it and the whole, sha-exact
-    /// (u4-9, web/sw.js `PART`), and every range the film's `<video>` asks
-    /// reaches ada's door as a part of at most 2 MiB: Chromium asks
-    /// `bytes=N-`, WebKit `bytes=N-<the end>`, and WebKit read such a range
-    /// through before it asked for a seek's bytes (ralph/REVIEW_FINDINGS.md
-    /// #53). A 403 cy's `strict` answers comes back unmarked, the
+    /// (u4-9, web/sw.js `PART`), and every range of the film reaches ada's
+    /// door as a part of at most 2 MiB (the `<video>`'s own, by Chromium's
+    /// `bytes=N-` and WebKit's `bytes=N-<the end>`, playback.rs's; #53). A
+    /// 403 cy's `strict` answers comes back unmarked, the
     /// `x-svrngs-refused` it forged dropped, and cy's door's refusal of a
     /// path it is lent without comes back marked `path` (mnp-1). Planted: a
     /// range answered 200 with the whole body (the worker dropping `Range`);
     /// the worker's endpoint never reopened (opened once, when it activates);
-    /// the open range answered whole (u4-8's worker); a `<video>`'s closed
-    /// range to the end answered whole (b6ea0ab's); the door's mark off.
-    a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself
+    /// the open range answered whole (u4-8's worker); the door's mark off.
+    a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself
 );
-async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself(
-    engine: Engine,
-) {
+async fn a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself(engine: Engine) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -882,7 +929,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
 
     let mp4 = ada_dir.path().join("title.mp4");
     let size = film(&mp4);
-    let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
+    let (film_origin, film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
     let html = "<!doctype html><title>a page</title>\
                 <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
     let page = one_origin(page_origin(html).await, film_origin).await;
@@ -898,8 +945,6 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     std::fs::write(lends.join("strict.json"), body.to_string()).unwrap();
 
     let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
-    // The host's load as the film starts, which its seeks are judged at.
-    let began = load::load().await;
     let seen = drive(
         engine,
         "runtime.mjs",
@@ -908,7 +953,7 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
             "key": hex::encode(bo.to_bytes()),
             "token": token(&signing(1), &relay),
             "open": "page",
-            "seeks": [40.0, 20.0, 52.0],
+            "film": film_args(),
             "other": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-{to}") },
             "openEnded": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-") },
             "refusals": [
@@ -927,38 +972,25 @@ async fn a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_
     eprintln!("the runtime's run: {shown}");
 
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
-    assert!(
-        seen["first"]["ms"].is_u64(),
-        "the film must play:\n{seen:#}"
+    film_answered(
+        &seen["first"],
+        &mp4,
+        "the film through the lend's worker",
+        &shown,
     );
-    let seeks = seen["seeks"].as_array().unwrap();
-    assert_eq!(seeks.len(), 3, "{shown:#}");
-    match seeks_judged(seeks, &began, load::cores()) {
-        Ok(None) => {}
-        Ok(Some(busy)) => could_not_judge(&format!(
-            "a_lent_film_plays_and_seeks_under_the_worker_which_reaches_each_lender_itself::{} \
-             each seek within five seconds: {busy}, the host at {began}; the seeks played again in {} ms",
-            engine.as_str(),
-            seeks.iter().map(|s| s["ms"].to_string()).collect::<Vec<_>>().join(", ")
-        )),
-        Err(missed) => panic!(
-            "each seek must play again within five seconds, the host at {began}; \
-             missed {missed}:\n{seen:#}"
-        ),
-    }
     match engine {
         Engine::Chromium => stopped_and_ran_again(&seen, &shown),
-        Engine::Webkit => {
-            // No worker outlives its browser; WebKit's worker, which Playwright
-            // gives no console, shows its new endpoint by the film playing
-            // again at the lend's address, which only the worker serves.
-            assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
-            assert!(
-                seen["replayed"]["ms"].is_u64(),
-                "the film must play again once the browser is opened again:\n{shown:#}"
-            );
-        }
+        // No worker outlives its browser; WebKit's, which Playwright gives
+        // no console, shows its new endpoint by the film's range coming
+        // again at the lend's address, which only the worker serves.
+        Engine::Webkit => assert_eq!(seen["reopened"], seen["opened"], "{shown:#}"),
     }
+    film_answered(
+        &seen["replayed"],
+        &mp4,
+        "the film once the worker was stopped",
+        &shown,
+    );
 
     let film_keys = keys(&film_heads);
     assert!(
@@ -1178,12 +1210,12 @@ in_webkit!(
     /// planted to read that store empty, its pages not
     /// (web/tests/handover.mjs). The page opens ada's lent page from its
     /// list; the lend's start page hands its worker the pass in memory, and
-    /// the worker dials with it: the film plays. The browser stops the
-    /// worker and the lend's address is opened again: the worker holds no
+    /// the worker dials with it: the film's bytes come. The browser stops
+    /// the worker and the lend's address is opened again: the worker holds no
     /// pass and reads none, so it sends the page to its start page, which
     /// reads the pass, hands it over and opens the address again, and the
-    /// film plays; before that, a fetch from a page it serves is answered
-    /// by the worker itself, 503, marked svrngs's, a pass refused (mnp-1).
+    /// film's bytes come again (`film_answered`); before that, a fetch from
+    /// a page it serves is answered by the worker itself, 503, marked svrngs's, a pass refused (mnp-1).
     /// The group's page's own unseal still opens bo's key after, and the
     /// lend's origin keeps the holder as a key, never its bytes. Planted:
     /// the handed pass ignored (lend.js reading only its store); the
@@ -1203,11 +1235,11 @@ in_webkit!(
     /// `KEYS_LOST`; demo/runs/ios/2026-10-30-observe/keyprobe/phone.log),
     /// which no lend opened (open.js: "the lend's worker did not say it
     /// holds the pass"). The start page hands the holder's bytes in memory
-    /// instead, which the worker imports, and the film plays; the stopped
-    /// worker's start page has no bytes to hand, so the group's page signs
-    /// a pass to a new holder (`anew`) and the film plays again. The lend's
+    /// instead, which the worker imports, and the film's bytes come; the
+    /// stopped worker's start page has no bytes to hand, so the group's page signs
+    /// a pass to a new holder (`anew`) and they come again. The lend's
     /// origin keeps the holder as a key, never its bytes. Red at cad47f80,
-    /// which hands only the key: the film never plays.
+    /// which hands only the key: the film's bytes never come.
     a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory
 );
 async fn a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory(
@@ -1227,7 +1259,7 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
 
     let mp4 = dir.path().join("title.mp4");
     let size = film(&mp4);
-    let (film_origin, film_heads) = origins::kept_range_origin(mp4, size).await;
+    let (film_origin, film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
     let html = "<!doctype html><title>a page</title>\
                 <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
     let page = one_origin(page_origin(html).await, film_origin).await;
@@ -1242,6 +1274,7 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
             "token": token(&signing(1), &relay),
             "open": "page",
             "keysLost": keys_lost,
+            "film": film_args(),
         }),
         None,
     )
@@ -1263,9 +1296,11 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
         trace_of(&seen, "handedTrace").contains("the page handed over the pass"),
         "the lend's worker must dial with the pass its start page handed it:\n{shown:#}"
     );
-    assert!(
-        seen["first"]["ms"].is_u64(),
-        "the film must play with the handed pass:\n{shown:#}"
+    film_answered(
+        &seen["answered"],
+        &mp4,
+        "the lend's worker must dial with the handed pass",
+        &shown,
     );
     assert_eq!(
         seen["unheld"],
@@ -1297,9 +1332,11 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
         "the restarted worker's start page, its kept key lost, must ask the group's page for a new holder, and only then:\n{shown:#}"
     );
     assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
-    assert!(
-        seen["replayed"]["ms"].is_u64(),
-        "the film must play after the hand-over page:\n{shown:#}"
+    film_answered(
+        &seen["answeredAgain"],
+        &mp4,
+        "the restarted worker must dial after the hand-over page",
+        &shown,
     );
     let bytes = "and its holder’s bytes, imported here and kept nowhere";
     for (key, words) in [

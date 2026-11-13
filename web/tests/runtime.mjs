@@ -5,18 +5,23 @@
 // (page.mjs), holds a joined group in the page's store, opens the page and
 // then the lend `args.open` from its list, so the page goes to the lend's
 // origin, `<label>.localhost`, whose worker serves it from its lender's
-// computer. There it plays the page's `<video>`, seeks it at
-// `args.seeks[0..2]`, has the browser stop the worker — Chromium through
-// its DevTools protocol, WebKit by closing and opening the browser again —
-// seeks at the last, and loads a range of a second computer's lend, which
-// the first reads, at its origin (`args.other`), and an open-ended range of
-// it too (`args.openEnded`, `bytes=N-`), and asks paths of other lends
-// it reads (`args.refusals`), each answer's status and whose word it is.
-// It prints what it saw as one JSON line.
+// computer. There, with `args.seeks` (the playback step's alone,
+// crates/svrngs-node/tests/browser/playback.rs), it plays the page's
+// `<video>` and seeks it at `args.seeks[0..2]`; without, it fetches
+// `args.film`, a range of the `<video>`'s file, through the worker
+// (page.mjs `fetched`), which is what every other test asserts in place of
+// the browser decoding it. Then it has the browser stop the worker —
+// Chromium through its DevTools protocol, WebKit by closing and opening
+// the browser again — and plays on, seeking at the last, or fetches the
+// film's range again; and, when asked, loads a range of a second
+// computer's lend, which the first reads, at its origin (`args.other`), and
+// an open-ended range of it too (`args.openEnded`, `bytes=N-`), and asks
+// paths of other lends it reads (`args.refusals`), each answer's status
+// and whose word it is. It prints what it saw as one JSON line.
 //
 //   node web/tests/runtime.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ...,
-//     "open": "<the lend's name>", "seeks": [s, s, s],
+//     "open": "<the lend's name>", "seeks": [s, s, s] | "film": {"path", "range"},
 //     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"},
 //     "openEnded": {"path": ..., "range": "bytes=a-"},
 //     "refusals": [{"lend": "<label>", "path": ...}]}'
@@ -26,7 +31,7 @@
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { held, inApp, launch, pageAt, play, serve } from './page.mjs';
+import { fetched, held, inApp, launch, pageAt, play, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -90,9 +95,14 @@ try {
   });
   await cdp?.send('ServiceWorker.enable');
 
-  const first = await page.evaluate(play, { at: null, within: 15_000 });
+  // The film played (`play`, the playback step's), or its range fetched.
+  const look = (page) =>
+    args.seeks
+      ? page.evaluate(play, { at: null, within: 15_000 })
+      : page.evaluate(fetched, args.film);
+  const first = await look(page);
   const seeks = [];
-  for (const at of args.seeks.slice(0, -1))
+  for (const at of args.seeks?.slice(0, -1) ?? [])
     seeks.push(await page.evaluate(play, { at, within: 15_000 }));
   // The browser stops the worker mid-play; the next range must still
   // answer. Chromium stops it through DevTools, the page left playing.
@@ -116,11 +126,14 @@ try {
     await page.goto(opened);
     await page.waitForSelector('video', { timeout: 60_000 });
     reopened = page.url();
-    replayed = await page.evaluate(play, { at: null, within: 15_000 });
+    replayed = await look(page);
   }
   const runsAtStop = [...runs];
-  seeks.push(await page.evaluate(play, { at: args.seeks.at(-1), within: 15_000 }));
-  const other = await page.evaluate(range, args.other);
+  if (args.seeks) seeks.push(await page.evaluate(play, { at: args.seeks.at(-1), within: 15_000 }));
+  // Chromium's worker, stopped with the page left open: the film's range
+  // asked again starts it again, as a seek's would.
+  else if (cdp) replayed = await look(page);
+  const other = args.other ? await page.evaluate(range, args.other) : null;
   const openEnded = args.openEnded ? await page.evaluate(range, args.openEnded) : null;
   const refusals = [];
   for (const r of args.refusals ?? []) refusals.push(await page.evaluate(refusal, r));

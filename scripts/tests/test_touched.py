@@ -6,7 +6,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-SITE = {"browser", "conformance canary", "joining in a browser", "pages", "scenes"}
+# `playback` runs part of the browser and conformance binaries, so what
+# reaches either reaches it (scripts/check.sh `playback`).
+SITE = {"browser", "conformance canary", "joining in a browser", "pages", "playback", "scenes"}
 
 
 def plan(*files):
@@ -21,7 +23,7 @@ def plan(*files):
 
 class Plans(unittest.TestCase):
     def test_a_driver_reaches_the_binary_naming_it_alone(self):
-        self.assertEqual(plan("web/tests/keeps-going.mjs"), ({"browser"}, ""))
+        self.assertEqual(plan("web/tests/keeps-going.mjs"), ({"browser", "playback"}, ""))
 
     def test_a_helper_every_driver_reaches_reaches_every_binary_driving_them(self):
         steps, tests = plan("web/tests/page.mjs")
@@ -47,7 +49,7 @@ class Plans(unittest.TestCase):
         self.assertEqual(tests, "-p svrngs")
 
     def test_a_test_file_reaches_its_binary_alone(self):
-        self.assertEqual(plan("crates/svrngs-node/tests/browser/keep_going.rs"), ({"browser", "clippy"}, ""))
+        self.assertEqual(plan("crates/svrngs-node/tests/browser/keep_going.rs"), ({"browser", "playback", "clippy"}, ""))
         self.assertEqual(plan("crates/svrngs-node/tests/carried.rs"), ({"tests", "clippy"}, "-p svrngs-node --test carried"))
         self.assertEqual(plan("crates/svrngs-node/tests/seek_judgment.rs"), ({"tests", "clippy"}, "-p svrngs-node --test seek_judgment"))
 

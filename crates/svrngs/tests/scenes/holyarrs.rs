@@ -1,5 +1,9 @@
 //! demo/holyarrs.md: Bo asks Ana for a missing film, Ana approves, stock
-//! HolyArrs imports a real local download, Movie Night finds it and Bo plays.
+//! HolyArrs imports a real local download, Movie Night finds it and Bo
+//! presses Play: H5 is the film's stream received through Bo's lend, by
+//! its worker on a phone (scene.mjs, person.mjs `streamed`). That a browser
+//! decodes a lent film, and plays again within 5 s of a seek, is the
+//! playback step's (crates/svrngs-node/tests/browser/playback.rs).
 //! Metadata, Torznab and the tracker are explicit fixtures; the applications,
 //! two torrent peers, group, door and browser are real.
 use std::path::{Path, PathBuf};

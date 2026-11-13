@@ -13,18 +13,20 @@
 // 3. In a browser of its own, holding a group of Sam's own (`own`, its key
 //    `ownKey`), Sam opens the link, is asked their name once, gives it, and
 //    opens `open` from what the page lists, at its own origin, where its
-//    `<video>` plays; then opens the link again, and again once the visit
+//    worker answers a range of the `<video>`'s film (`args.film`, page.mjs
+//    `fetched`); then opens the link again, and again once the visit
 //    the page keeps has ended.
 // 4. Ana opens Sam's link and gives her name.
 //
 // Prints what it saw as one JSON line.
 //
-//   node web/tests/visit.mjs '{"engine": "chromium"|"webkit", "site": "<dir>"}'
+//   node web/tests/visit.mjs '{"engine": "chromium"|"webkit", "site": "<dir>",
+//     "film": {"path": "<the <video>'s file>", "range": "bytes=a-b"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { createInterface } from 'node:readline';
-import { hold, inApp, launch, pageAt, play, serve } from './page.mjs';
+import { fetched, hold, inApp, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
@@ -123,7 +125,7 @@ try {
   ]);
   await phone.waitForSelector('video', { timeout: 60_000 });
   const opened = phone.url();
-  const first = await phone.evaluate(play, { at: null, within: 15_000 });
+  const answered = await phone.evaluate(fetched, args.film);
 
   // The link again, then again once the visit the page keeps has ended.
   const again = await opens(sam.context, link, name);
@@ -150,7 +152,7 @@ try {
       listed,
       text,
       opened,
-      first,
+      answered,
       anaLong,
       again: { status: again.status, asked: again.asked },
       groups,

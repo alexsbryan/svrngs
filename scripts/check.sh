@@ -28,7 +28,10 @@ unset SVRNGS_STEPS SVRNGS_TESTS  # set only by --touched, below
 # up to 2.7 times (scenes, 204 to 544 s) with the host's load, and 5 leaves
 # room past the slowest seen while ending a hang in about 45 min at most. Every
 # step not named passed in at most 59 s there (app laws), so has 300 s.
-slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; *) echo 60 ;; esac; }
+# `playback`, new on 2026-11-12, has no queue's gates behind it: its halves
+# took 76 s (the browser's, beside nine other tests) and 80 s on the Mac
+# that day (demo/runs/flakes/2026-11-12/mac/changed-tests.log), so 160.
+slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 160 ;; *) echo 60 ;; esac; }
 # Each step runs in a process group of its own (set -m), ended whole at its
 # limit and when it ends, so no server or browser it started outlives it
 # (Playwright's browsers close as their driver is told TERM); the loop's
@@ -84,7 +87,7 @@ step "page integration" node web/tests/run.mjs integration
 step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
 # What the browser tests could not judge, printed after the browser's step,
 # and the conformance canary's verdicts: kept from this check alone.
-rm -rf target/could-not-judge target/conformance
+rm -rf target/could-not-judge target/conformance target/playback
 # The canaries, browser, joining and conformance targets are `test = false`
 # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
 # once, in its own step below, and not again here.
@@ -106,8 +109,9 @@ step "web rustfmt and clippy" scripts/build-web.sh --lint
 # `in_chromium!`, `in_webkit!`, `in_both_engines!`); one browser of each
 # for the step, each test a context of its own (harness.rs `browsers`).
 # Without Playwright or its browsers it fails naming the install command;
-# it never skips.
-step "browser" cargo test --quiet --workspace --test browser
+# it never skips. A lent film here is its bytes through the lend's worker
+# (main.rs `film_answered`); its playing is the `playback` step's, below.
+step "browser" cargo test --quiet --workspace --test browser -- --skip playback::
 # The pages' types (jsconfig.json, and the service workers' in
 # jsconfig.workers.json, by scripts/types.mjs), checked against the wasm
 # glue's declaration built here, target/web/site/wasm/: the browser step
@@ -119,10 +123,6 @@ step "types" sh -c 'test -f web/node_modules/typescript/package.json || { echo "
 # without a word, over the same two programs (scripts/typed-lint.mjs): after
 # `types`, for the same wasm declaration. Not installed fails, as lint.
 step "typed lint" node scripts/typed-lint.mjs
-# The film's seeks on a host past the seek bar's load bar (bash-film-load;
-# crates/svrngs-node/tests/browser/load.rs, conformance's too): said apart,
-# never a pass.
-! reached browser || sed 's/^/could-not-judge /' target/could-not-judge/browser.txt 2>/dev/null
 # A phone joining by the link `svrngs new --origin` prints (u4-5), in
 # WebKit as an iPhone.
 step "joining in a browser" cargo test --quiet --workspace --test join_page
@@ -138,9 +138,12 @@ step "pages" cargo test --quiet --workspace --test pages
 # third-party app is not installed here writes never-ran and why in its
 # place, target/scenes/<scene>-<engine>/never-ran.txt (each place is
 # emptied as its scene starts), and the gate fails on it. A scene that
-# passed all it could judge but one bar on a host past load.rs `BUSY` a
-# core (films' seeks) writes could-not-judge.txt there: said so, never a
-# pass, and the gate does not fail on it, as the browser step's film.
+# passed all it could judge but one timing bar on a host past load.rs
+# `BUSY` a core (people.rs `late`) writes could-not-judge.txt there: said
+# so, never a pass, and the gate does not fail on it, as the playback
+# step's film. No scene but night waits on a film playing, which is the
+# playback step's; night's TV playing, paused and sought from a phone is
+# held where it was for the operator's word (demo/runs/flakes/2026-11-12).
 # Two scenes at a time, the operator's choice (2026-10-23, "2 at a time")
 # from what capability-scenes-found (f) measured on this host (12 cores,
 # about 10 of load from elsewhere; load.rs's bar, 3 a core; sampled each
@@ -154,18 +157,33 @@ step "scenes" cargo test -p svrngs --test scenes -- --test-threads=2
 # address of its own (DESIGN §7), in both engines; and, with accounts of its
 # own, two people signed in through a lend's sign-in (mwp-4). Each route's
 # verdict per way is printed, once for every engine and lender that agree.
-step "conformance canary" cargo test --quiet --workspace --test conformance
-! reached "conformance canary" || cat target/conformance/*.txt 2>/dev/null | grep -v could-not-judge | cut -c1-10,25- | sort -u | sed 's/^/           /'
-# Chromium's seeks on a host past its load bar (chk-1; tests/browser/load.rs): said apart, never a pass.
-! reached "conformance canary" || grep -h could-not-judge target/conformance/*.txt 2>/dev/null | sed 's/^/could-not-judge /'
+# Its seeks back to back, the one route that plays, are the `playback`
+# step's (conformance.rs `seeks_back_to_back`).
+step "conformance canary" cargo test --quiet --workspace --test conformance -- --skip seeks_back_to_back::
+! reached "conformance canary" || cat target/conformance/*.txt 2>/dev/null | cut -c1-10,25- | sort -u | sed 's/^/           /'
+# The one place a browser is asked to decode media (demo/runs/flakes/
+# 2026-11-12): a lent film played, sought three times and played again
+# once its worker stopped, in each engine (browser/playback.rs), and the
+# conformance canary's audio sought back to back (conformance.rs
+# `seeks_back_to_back`). Every other test asserts a film's bytes instead.
+# Decoding is what varies with the host's load and media stack, so it is
+# judged here alone: a miss on a host past load.rs `BUSY` a core is
+# could-not-judge, said apart and never a pass; WebKit's seeks back to
+# back are a rate. Each half must run a test: a filter that matched none
+# is never-ran.
+step "playback" sh -c 'cargo test --workspace --test browser playback:: && cargo test --workspace --test conformance seeks_back_to_back::'
+! reached playback || [ "$(grep -cE '^test result: ok\. [1-9]' /tmp/svrngs-check.$$)" = 2 ] || grep -q '^test result: FAILED' /tmp/svrngs-check.$$ || { echo "never-ran  playback: a half of it ran no test (browser playback::, conformance seeks_back_to_back::)"; failed=1; }
+# What the browser and playback steps could not judge (a miss past the load
+# bar; acts.rs's read rate, read slower than the rate): said apart, never a
+# pass, each test's line in target/could-not-judge/<step>.txt.
+! reached browser && ! reached playback || cat target/could-not-judge/*.txt 2>/dev/null | sed 's/^/could-not-judge /'
 # WebKit's seeks back to back, a rate and not a gate (u5-11): this run's,
 # beside the same seeks straight at the canary, then every run's here.
-if ! reached "conformance canary"; then echo "untouched  WebKit's seeks back to back, a rate"
-elif [ -s target/seeks-webkit.log ] && ls target/conformance/seeks-*.tsv >/dev/null 2>&1; then
+if reached playback && [ -s target/seeks-webkit.log ] && ls target/playback/seeks-*.tsv >/dev/null 2>&1; then
   echo "rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict"
-  cut -f1,2,4,5,7,8 target/conformance/seeks-*.tsv | sed 's/^/           /'
+  cut -f1,2,4,5,7,8 target/playback/seeks-*.tsv | sed 's/^/           /'
   awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
-else echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
+elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
 step "app laws" node web/tests/run.mjs apps
 rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed

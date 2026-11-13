@@ -6,14 +6,15 @@
 // store comes back empty, while its pages read it. The page holds a joined
 // group, opens the link and then the lend `args.open` from its list: the
 // lend's start page (open.js) hands its worker the pass in memory, and the
-// `<video>` plays. Then the browser stops the worker — Chromium through its
+// worker answers a range of its `<video>`'s film (`args.film`, page.mjs
+// `fetched`). Then the browser stops the worker — Chromium through its
 // DevTools protocol, WebKit by closing the browser and opening it again —
 // and a page it serves fetches: the worker holds no pass and reads none,
 // so it answers itself, marked as svrngs's (mnp-1). Then the lend's
 // address is opened directly: the worker holds no pass and
 // reads none, so it sends the page to its start page, which reads the
-// pass, hands it over and opens the address again, and the `<video>`
-// plays. Last, the group's page's own unseal must still open the person's
+// pass, hands it over and opens the address again, and the worker
+// answers the film's range again. Last, the group's page's own unseal must still open the person's
 // key. The worker's trace is read at `/svrngs-trace` (lend.js), as a
 // phone's is. Prints what it saw as one JSON line.
 //
@@ -22,14 +23,15 @@
 // It also says what the lend's origin keeps of the pass (`keptPass`).
 //
 //   node web/tests/handover.mjs '{"engine": "chromium"|"webkit", "site": ...,
-//     "key": ..., "token": ..., "open": "<the lend's name>", "keysLost": bool}'
+//     "key": ..., "token": ..., "open": "<the lend's name>", "keysLost": bool,
+//     "film": {"path": "<the <video>'s file>", "range": "bytes=a-b"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { held, inApp, launch, pageAt, play, serve } from './page.mjs';
+import { fetched, held, inApp, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 
@@ -117,7 +119,7 @@ try {
   await Promise.all([page.waitForURL(away, { timeout: 90_000 }), button.click()]);
   await page.waitForSelector('video', { timeout: 60_000 });
   const opened = page.url();
-  const first = await page.evaluate(play, { at: null, within: 15_000 });
+  const answered = await page.evaluate(fetched, args.film);
   const handedTrace = await traced(page);
 
   // The browser stops the worker, and with it the key it was handed.
@@ -149,7 +151,7 @@ try {
   await page.waitForSelector('video', { timeout: 60_000 }).catch(() => {});
   await page.waitForLoadState('load');
   const reopened = page.url();
-  const replayed = await page.evaluate(play, { at: null, within: 15_000 });
+  const answeredAgain = await page.evaluate(fetched, args.film);
   const stoppedTrace = await traced(page);
   const kept = await page.evaluate(keptPass).catch((e) => `not read: ${e}`);
 
@@ -160,11 +162,11 @@ try {
     JSON.stringify({
       listed,
       opened,
-      first,
+      answered,
       handedTrace,
       unheld,
       reopened,
-      replayed,
+      answeredAgain,
       stoppedTrace,
       kept,
       unsealedAfter,

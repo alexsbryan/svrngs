@@ -28,6 +28,11 @@
 //   With `"mw": true` and `"lend"` (check.sh pair with MW=1, mw-2), the lend
 //   is Jellyfin's middleware's and nothing is typed (person.mjs); a person
 //   may name an `"at"` of their own.
+//   With `"until": "streamed"` (the films scene, crates/svrngs/tests/scenes/
+//   films.rs), each person's Play ends at their film's bytes received
+//   (person.mjs `streamed`), and nobody seeks: that a browser decodes it is
+//   the browser tests' playback step's; Demo A's seek bars are this
+//   driver's without it.
 //
 // Prints one JSON line. A step that did not happen within its time is
 // null with what the page showed: never a number guessed.
@@ -62,7 +67,7 @@ const people = [];
 try {
   for (const p of args.people) people.push(await enter(p, { args, SECRETS, DUMP, T0 }));
   const [a, b] = people;
-  const playing = people.every((p) => p.play_ms != null);
+  const playing = args.until !== 'streamed' && people.every((p) => p.play_ms != null);
   if (playing) {
     out.first_seeks = await phase(a, b, args.people[0].seeks);
     if (b) out.then_seeks = await phase(b, a, args.people[1].seeks);
