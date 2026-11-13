@@ -2,12 +2,17 @@
 //! this computer holds, and what a group's people lend, on the record's
 //! loopback listener, whose address the node writes to its data dir.
 //! Alex founds a group and lets Sam in; both lend. Two nodes in one
-//! process, no relay, each listening on 127.0.0.1 alone (#33's fix:
-//! ralph/REVIEW_FINDINGS.md), Sam reached by seeded addresses.
+//! process on one wire (common/on_wire.rs; docs/CHECKS.md, harness 3), no
+//! endpoint and no socket, each API asked of its routes. The listener
+//! itself, and the file naming it, is asked of two nodes over QUIC, each
+//! listening on 127.0.0.1 alone (#33's fix: ralph/REVIEW_FINDINGS.md), Sam
+//! reached by seeded addresses.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 use common::loopback_sockets;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 
 use std::net::SocketAddr;
 use std::time::Duration;
@@ -32,7 +37,9 @@ fn seed_file(dir: &std::path::Path) -> Result<Option<String>, String> {
     }
 }
 
-async fn start(seed: u8, dir: &std::path::Path) -> Node {
+/// `seed`'s computer over QUIC, its API on a loopback port: the
+/// listener's own claim.
+async fn start_quic(seed: u8, dir: &std::path::Path) -> Node {
     Node::start(
         dir.to_path_buf(),
         signing(seed),
@@ -89,7 +96,7 @@ async fn at_origin(
         axum::http::Request::get(&path).header("host", format!("{at}.localhost:{port}"));
     if let Some(page) = from {
         if page == at.as_str() {
-            let headers = common::proved(node, Some(at.as_str()), "GET", &path, "").await;
+            let headers = on_wire::proved(node, Some(at.as_str()), "GET", &path, "").await;
             for (name, value) in headers.iter() {
                 request = request.header(name, value);
             }
@@ -137,20 +144,40 @@ fn uncapped(mut body: serde_json::Value) -> serde_json::Value {
 }
 
 /// Alex's group "house" and Sam in it, each computer holding its seed, and
-/// Alex knowing where Sam listens.
+/// Alex reaching Sam: on this test's wire, or over QUIC.
 struct House {
     alex: Node,
     sam: Option<Node>,
     id: String,
     alex_dir: tempfile::TempDir,
     sam_dir: tempfile::TempDir,
+    quic: bool,
 }
 
 impl House {
+    /// Alex's and Sam's computers on this test's wire.
     async fn new() -> Self {
+        Self::on(false).await
+    }
+
+    /// Alex's and Sam's computers over QUIC, Alex knowing where Sam
+    /// listens, each API on a loopback port and asked there.
+    async fn over_quic() -> Self {
+        Self::on(true).await
+    }
+
+    async fn on(quic: bool) -> Self {
         let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-        let alex = start(1, alex_dir.path()).await;
-        let sam = start(2, sam_dir.path()).await;
+        let (alex, sam) = if quic {
+            let alex = start_quic(1, alex_dir.path()).await;
+            let sam = start_quic(2, sam_dir.path()).await;
+            alex.transport()
+                .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+            (alex, sam)
+        } else {
+            let alex = on_wire::start(1, alex_dir.path()).await;
+            (alex, on_wire::start(2, sam_dir.path()).await)
+        };
         let seed = Seed::from_parts(
             Name::parse("house").unwrap(),
             Name::parse("alex").unwrap(),
@@ -169,14 +196,14 @@ impl House {
                 .id
                 .clone()
         });
-        alex.transport()
-            .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
         // Sam's admission in Sam's own record too, synced from Alex as a
         // computer that joined holds it: a record that does not name Sam
         // lends nothing through the group (door.rs `lends`, `stands_here`).
-        let mut at = svrngs_node::iroh::EndpointAddr::new(alex.endpoint().id());
-        for socket in loopback_sockets(alex.endpoint()) {
-            at = at.with_ip_addr(socket);
+        let mut at = alex.net().addr();
+        if quic {
+            for socket in loopback_sockets(alex.endpoint()) {
+                at = at.with_ip_addr(socket);
+            }
         }
         let synced = sam.host().sync_with(&id, &at).await;
         assert!(synced.stop.is_none(), "{synced:?}");
@@ -186,21 +213,28 @@ impl House {
             id,
             alex_dir,
             sam_dir,
+            quic,
         }
     }
 
-    /// An app on Alex's computer asks `path`: its status and body.
+    /// An app on Alex's computer asks `path`: its status and body. Over
+    /// QUIC, at the port its API listens on.
     async fn ask(&self, path: &str) -> (u16, serde_json::Value) {
-        let http = reqwest::Client::builder().no_proxy().build().unwrap();
-        let answer = tokio::time::timeout(
-            Duration::from_secs(30),
-            http.get(format!("http://{}{path}", self.alex.api_addr()))
-                .bearer_auth(self.alex.token())
-                .send(),
-        )
-        .await
-        .expect("the ask finishes")
-        .unwrap();
+        let url = format!("http://{}{path}", self.alex.api_addr());
+        let within = Duration::from_secs(30);
+        if self.quic {
+            let http = reqwest::Client::builder().no_proxy().build().unwrap();
+            let asked = http.get(url).bearer_auth(self.alex.token()).send();
+            let answer = tokio::time::timeout(within, asked).await;
+            let answer = answer.expect("the ask finishes").unwrap();
+            return (answer.status().as_u16(), answer.json().await.unwrap());
+        }
+        let asked = on_wire::http()
+            .get(url)
+            .bearer_auth(self.alex.token())
+            .send();
+        let answer = tokio::time::timeout(within, asked).await;
+        let answer = answer.expect("the ask finishes").unwrap();
         (answer.status().as_u16(), answer.json().await.unwrap())
     }
 
@@ -212,9 +246,9 @@ impl House {
 
     async fn close(self) {
         if let Some(sam) = self.sam {
-            sam.endpoint().close().await;
+            sam.net().close().await;
         }
-        self.alex.endpoint().close().await;
+        self.alex.net().close().await;
     }
 }
 
@@ -292,7 +326,7 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 
     let mut house = house;
     let gone = house.sam.take().unwrap();
-    gone.endpoint().close().await;
+    gone.net().close().await;
     drop(gone);
     let body = house.lends().await;
     assert_eq!(
@@ -316,10 +350,11 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
 /// its home page tells its own devices by (capability-what-acts); house,
 /// made before sources-v1 and kept here, offered Move (EUDOXIA_JUDGE §2e
 /// §4); the data dir's `api` file names the
-/// address the app asked at. Planted: the file not written.
+/// address the app asked at. Planted: the file not written. Over QUIC:
+/// the file is written where the listener binds, and the app asks there.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
-    let house = House::new().await;
+    let house = House::over_quic().await;
     let written = std::fs::read_to_string(house.alex_dir.path().join(svrngs_node::api::API_FILE))
         .expect("the node writes where its API listens");
     assert_eq!(written, format!("http://{}\n", house.alex.api_addr()));
@@ -458,7 +493,7 @@ async fn a_lent_page_asks_at_its_own_origin_the_lends_it_reads() {
     );
 
     let gone = house.sam.take().unwrap();
-    gone.endpoint().close().await;
+    gone.net().close().await;
     drop(gone);
     let (status, body) = at_origin(&house.alex, &night, reads, None).await;
     assert_eq!(status, 200, "{body:#}");
@@ -713,10 +748,9 @@ async fn a_lent_page_is_not_held_by_a_computer_that_never_answers() {
             .id
             .clone()
     });
-    let (_asleep, at_cy) = common::never_answers();
     let cy =
         svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
-    house.alex.transport().add_known_peer(cy, at_cy);
+    on_wire::asleep(cy);
     let port = house.alex.api_addr().port();
     let label = |seed: u8, name: &str| {
         svrngs_core::pass::Label::of(signing(seed).verifying_key().as_bytes(), name)
@@ -801,7 +835,7 @@ async fn a_silent_lender_is_could_not_judge_on_the_page_s_reads_and_at_the_origi
     );
 
     let gone = house.sam.take().unwrap();
-    gone.endpoint().close().await;
+    gone.net().close().await;
     drop(gone);
     let away = (502, Some("away".to_string()));
     for (row, at, path, from) in [

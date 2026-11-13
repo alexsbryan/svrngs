@@ -121,6 +121,11 @@ pub fn part(from: &Node, to: &Node) {
     WIRE.with(|w| w.part(from.net().id(), to.net().id()));
 }
 
+/// `key`'s computer on this test's wire answers no dial ([`Wire::asleep`]).
+pub fn asleep(key: PublicKey) {
+    WIRE.with(|w| w.asleep(key));
+}
+
 /// The client a program on a computer asks its record API with.
 pub fn http() -> Client {
     Client

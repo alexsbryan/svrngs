@@ -218,12 +218,14 @@ pub struct Wire(
     Arc<std::sync::Mutex<Met>>,
 );
 
-/// Who is on a [`Wire`]: each key's acceptor decision, and each pair of
-/// keys the first has no path from to the second ([`Wire::part`]).
+/// Who is on a [`Wire`]: each key's acceptor decision, each pair of keys
+/// the first has no path from to the second ([`Wire::part`]), and each key
+/// whose computer answers no dial ([`Wire::asleep`]).
 #[derive(Default)]
 struct Met {
     admits: std::collections::BTreeMap<[u8; 32], crate::iroh::Admitting>,
     parted: std::collections::BTreeSet<([u8; 32], [u8; 32])>,
+    asleep: std::collections::BTreeSet<[u8; 32]>,
 }
 
 impl Wire {
@@ -233,6 +235,13 @@ impl Wire {
     pub fn part(&self, from: PublicKey, to: PublicKey) {
         let mut met = self.0.lock().unwrap();
         met.parted.insert((*from.as_bytes(), *to.as_bytes()));
+    }
+
+    /// `key`'s computer answers no dial, as an address nothing answers at:
+    /// each ask waits the dial's cap ([`crate::dial::DIAL_WITHIN`]), then is
+    /// [`Unsent::Asleep`], as [`IrohTransport`]'s dial is.
+    pub fn asleep(&self, key: PublicKey) {
+        self.0.lock().unwrap().asleep.insert(*key.as_bytes());
     }
 }
 
@@ -244,8 +253,14 @@ pub struct OnWire {
 
 impl OnWire {
     /// What `peer`'s acceptor decides for this computer on `alpn`, or why
-    /// nothing answers: no computer on the wire, or one that refuses.
-    fn admitted(&self, peer: &PublicKey, alpn: Alpn) -> Result<Admit, Unsent> {
+    /// nothing answers: no computer on the wire, or none on a path from
+    /// here, one asleep, or one that refuses.
+    async fn admitted(&self, peer: &PublicKey, alpn: Alpn) -> Result<Admit, Unsent> {
+        let asleep = self.wire.0.lock().unwrap().asleep.contains(peer.as_bytes());
+        if asleep {
+            tokio::time::sleep(crate::dial::DIAL_WITHIN).await;
+            return Err(Unsent::Asleep(crate::dial::DIAL_WITHIN));
+        }
         let met = self.wire.0.lock().unwrap();
         let parted = met
             .parted
@@ -267,7 +282,7 @@ impl OnWire {
         mut req: crate::iroh::Request,
     ) -> Result<crate::iroh::Streamed, Unsent> {
         use tower::ServiceExt;
-        let Admit::Serve(router) = self.admitted(peer, alpn)? else {
+        let Admit::Serve(router) = self.admitted(peer, alpn).await? else {
             return Err(Unsent::Failed(format!("not served on {alpn:?}")));
         };
         req.extensions_mut().insert(Dialer(self.key));
@@ -395,7 +410,7 @@ impl Net for OnWire {
     ) -> crate::iroh::Sent<'a, iroh_blobs::api::remote::GetProgress> {
         Box::pin(async move {
             use iroh_blobs::util::{AsyncReadRecvStream, AsyncWriteSendStream};
-            let Admit::Blobs(theirs, events) = self.admitted(&peer.key, Alpn::Blobs)? else {
+            let Admit::Blobs(theirs, events) = self.admitted(&peer.key, Alpn::Blobs).await? else {
                 return Err(Unsent::Failed("not served on the Blobs protocol".into()));
             };
             // Told to the holder's events as a QUIC connection is, by the
