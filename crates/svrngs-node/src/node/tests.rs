@@ -445,6 +445,7 @@ fn a_visit_key_and_a_removed_key_are_served_no_member_s_protocol() {
         opens,
         until: crate::door::unix_now().unwrap() + 3600,
         consent: svrngs_core::tests_support::consent(&key(9), &actor_of(&key(1))),
+        under: None,
     };
     let act = svrngs_core::tests_support::Fixture {
         act: crate::RailAct::Visit(visit),

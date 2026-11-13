@@ -34,6 +34,7 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  * @property {string[] | null} folders
  * @property {[string | null, number][] | null} waiting a fetch that found no holder, by writer's person
  * @property {Visit[] | null} visiting
+ * @property {number | null} [slots] how many each computer can have visiting at once, the keeper's say or the default
  * @property {'fallback' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
  * @property {true} [vacates] whether they keep its order of removals and leaving without handing it on leaves nobody keeping it
  * @property {{ to_you: boolean, person: string | null }} [offered] a hand-on of its order of removals waiting on its Accept, to this computer or from it, and who is at its other end

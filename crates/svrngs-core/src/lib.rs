@@ -131,7 +131,7 @@ pub use project::{Invites, Wire};
 pub use record::{Append, AppendRefusal};
 pub use register::{
     HandOnRefusal, HandOnTo, Leave, MeetsAt, MintInvite, Redeem, RedeemRefusal, RelayAt, Removal,
-    RemovalRefusal, Take,
+    RemovalRefusal, SlotsAt, Take,
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, ring_op_message, sign_act, sign_message, sign_ring_op,
@@ -482,6 +482,12 @@ pub enum RailAct {
     /// them, which the record never names ([`relay::Meeting`]). As written:
     /// the fold reads each dotless. Carries no [`Payload`].
     Meets { relays: BTreeSet<String> },
+    /// The keeper says: each computer may have this many guests at once,
+    /// at most [`eudoxia_community::GUESTS_MOST`]; two while none is said.
+    /// Counts only as the keeper's, as a cut does, and a visit names the one
+    /// it is judged under ([`Visit::under`]), so a lower number refuses new
+    /// visits and ends none. Carries no [`Payload`].
+    GuestSlots { per_computer: u8 },
     /// The recipient of a [`Self::HandOn`] takes the office: on its own chain,
     /// naming the hand-on by its id. The office passes when both lines exist.
     Accept { hand_on: OpId },
@@ -503,6 +509,10 @@ pub struct Visit {
     /// computer that signs this act; a visit without it counts nowhere.
     #[serde(default, skip_serializing_if = "String::is_empty")]
     pub consent: String,
+    /// The keeper's [`RailAct::GuestSlots`] standing when the host wrote it,
+    /// which the visit is judged under; none, the default. Skipped when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub under: Option<OpId>,
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it
@@ -763,6 +773,8 @@ pub const APPROVAL_LINE_VERSION: u32 = 13;
 /// at the relay its group's file keeps.
 pub const MEETS_LINE_VERSION: u32 = 14;
 pub const AUTHORITY_LINE_VERSION: u32 = 15;
+/// The keeper's guest setting, and a visit naming one.
+pub const GUESTS_LINE_VERSION: u32 = 16;
 
 impl Journaled for SignedOp {
     const FILE: &'static str = "ring_oplog.jsonl";
@@ -772,7 +784,7 @@ impl Journaled for SignedOp {
     /// redemption's, a folder's, removal's, a device link's, a relay's, a
     /// yes to a carried app's version's, a visit's, a holder's and the
     /// group's relays' lines too (see [`Self::line_version`]).
-    const UNDERSTANDS: u32 = AUTHORITY_LINE_VERSION;
+    const UNDERSTANDS: u32 = GUESTS_LINE_VERSION;
     /// The membership acts — [`RailAct::Admit`] and [`RailAct::Remove`] —
     /// ship at the bumped line version and the original three keep the bytes
     /// they always had, so an un-upgraded node names exactly the acts it
@@ -784,6 +796,9 @@ impl Journaled for SignedOp {
             return AUTHORITY_LINE_VERSION;
         }
         match self.act {
+            RailAct::GuestSlots { .. } | RailAct::Visit(Visit { under: Some(_), .. }) => {
+                GUESTS_LINE_VERSION
+            }
             RailAct::Meets { .. } => MEETS_LINE_VERSION,
             _ if self.grant.as_ref().is_some_and(|p| p.op.is_some()) => APPROVAL_LINE_VERSION,
             RailAct::Holders { .. } => APPROVAL_LINE_VERSION,

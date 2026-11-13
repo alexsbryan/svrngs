@@ -649,6 +649,7 @@ fn sams_visit(rail: &RingRail, until: i64, opens: &[(u8, &str)]) -> (crate::OpId
             &crate::SigningKey::from_bytes(&[9; 32]),
             &crate::actor_of(rail.signer()),
         ),
+        under: None,
     };
     let act = crate::RailAct::Visit(visit);
     wrote(rail, HOUSE, &svrngs_core::tests_support::Fixture { act })

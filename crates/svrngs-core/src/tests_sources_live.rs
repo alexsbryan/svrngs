@@ -378,6 +378,7 @@ fn a_visit_and_its_hosts_stop_count_in_a_sources_group() {
         opens: Default::default(),
         until: 3_000,
         consent: crate::tests_support::consent(&key(40), &actor_of(&key(1))),
+        under: None,
     };
     let came = g.by(1, 400, &visit).unwrap().lines()[0].id.clone();
     assert!(g.read().membership().visits.contains_key(&came), "a visit");
@@ -390,4 +391,58 @@ fn a_visit_and_its_hosts_stop_count_in_a_sources_group() {
     assert!(g.by(1, 410, &stop).is_ok(), "the host's Stop counts");
     let m = g.read().membership().clone();
     assert!(m.visits[&came].stopped.is_some(), "and stops it");
+}
+
+/// **The keeper's say of guests per computer, through the commit**: Ana
+/// keeps the group and says three; Bo's word is refused, nothing written.
+/// Bo's computer then has three guests at once, each visit naming Ana's
+/// setting as it is written, and a fourth is refused before it is written.
+/// Ana lowering it to one refuses Bo's next and ends none of the three.
+/// Plants: the Visit command naming no setting (the third refused under the
+/// default); `SlotsAt` not refused for Bo (watched in Eudoxia's laws).
+#[test]
+fn the_keeper_says_how_many_guests_each_computer_has() {
+    let g = three();
+    let held = |g: &Group| g.read().held();
+    let before = held(&g);
+    let bos = g.by(2, 300, &SlotsAt(8));
+    assert!(
+        matches!(bos, Err(Refused::Command(HandOnRefusal::NotKeeper))),
+        "{bos:?}"
+    );
+    assert_eq!(held(&g), before, "Bo's word is not written");
+    g.by(1, 310, &SlotsAt(3)).unwrap();
+    assert_eq!(
+        g.read().membership().slots.as_ref().map(|(_, n)| *n),
+        Some(3)
+    );
+    let visit = |guest: u8| Visit {
+        guest: p("Gil"),
+        key: actor_of(&key(guest)),
+        opens: Default::default(),
+        until: 9_000,
+        consent: crate::tests_support::consent(&key(guest), &actor_of(&key(2))),
+        under: None,
+    };
+    let came: Vec<OpId> = (41..44)
+        .map(|guest| {
+            g.by(2, 400 + i64::from(guest), &visit(guest))
+                .unwrap()
+                .lines()[0]
+                .id
+                .clone()
+        })
+        .collect();
+    let fourth = g.by(2, 450, &visit(44));
+    assert!(matches!(fourth, Err(Refused::Uncounted(_))), "{fourth:?}");
+    g.by(1, 460, &SlotsAt(1)).unwrap();
+    assert!(matches!(
+        g.by(2, 470, &visit(45)),
+        Err(Refused::Uncounted(_))
+    ));
+    let m = g.read().membership().clone();
+    assert!(
+        came.iter().all(|id| m.visits.contains_key(id)),
+        "none of the three ended"
+    );
 }

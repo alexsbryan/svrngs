@@ -192,6 +192,9 @@ struct Held {
     /// Who is visiting now (guests-pages; [`crate::rail::visiting`]): `null`
     /// beside `removed`'s, or when this computer's clock cannot be read.
     visiting: Option<Vec<serde_json::Value>>,
+    /// How many each computer can have visiting at once, the keeper's say or
+    /// the default; `null` beside `removed`'s.
+    slots: Option<u8>,
     /// Why this computer meets the group where it does now: the group names
     /// relays of its own, and this computer is at the build's fallback
     /// because that answers (relay fallbacks). The home page says so in a
@@ -245,7 +248,7 @@ async fn groups(State(at): State<Asking>) -> Response {
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let (person, removed, removals, left, keeps, visiting, offered, vacates) = match rail
+        let (person, removed, removals, left, keeps, visiting, slots, offered, vacates) = match rail
             .register(&id)
         {
             Ok(r) => {
@@ -276,13 +279,14 @@ async fn groups(State(at): State<Asking>) -> Response {
                     Some(left),
                     Some(keeps),
                     visiting,
+                    Some(r.slots.unwrap_or(svrngs_core::GUESTS_DEFAULT)),
                     offered,
                     keeps && others,
                 )
             }
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None, None, None, None, None, None, false)
+                (None, None, None, None, None, None, None, None, false)
             }
         };
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
@@ -303,6 +307,7 @@ async fn groups(State(at): State<Asking>) -> Response {
             keeps,
             folders,
             visiting,
+            slots,
             waiting,
             offered,
             vacates,

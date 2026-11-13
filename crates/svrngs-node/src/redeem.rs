@@ -218,6 +218,7 @@ fn serve_visit(
         opens: [(me, lent.keys().cloned().collect())].into(),
         until: now + length,
         consent: req.consent.clone(),
+        under: None,
     };
     let (id, until) = (recorded(rail, group, &visit)?, visit.until);
     tracing::debug!(target: "redeem", group, key = %req.ask.key, %id, until, ?lent,

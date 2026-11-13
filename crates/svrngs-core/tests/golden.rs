@@ -350,6 +350,7 @@ fn emit_golden_journal() {
         until: T + 19 + 3_600,
         // As frozen: written before a visit carried its guest's consent.
         consent: String::new(),
+        under: None,
     };
     let visit = c.sign(&alex, 19, RailAct::Visit(visit), None);
     let stop = c.sign(&alex, 20, correct(&visit.id, None), None);

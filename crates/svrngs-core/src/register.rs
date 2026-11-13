@@ -129,14 +129,46 @@ impl Command for MintInvite {
     }
 }
 
-/// A host's computer writes the visit a guest's link made (guests-link):
-/// the interpreter, never this, decides whether it is one, and the commit
-/// writes none it would not count (`command.rs`, `Refused::Uncounted`).
+/// A host's computer writes the visit a guest's link made (guests-link),
+/// naming the keeper's guest setting it holds: the interpreter, never this,
+/// decides whether it is one, and the commit writes none it would not count
+/// (`command.rs`, `Refused::Uncounted`).
 impl Command for crate::Visit {
     type Refusal = Infallible;
 
-    fn decide(&self, _before: &Admission) -> Result<Vec<RailAct>, Infallible> {
-        Ok(vec![RailAct::Visit(self.clone())])
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, Infallible> {
+        let under = before.membership().slots.as_ref().map(|(id, _)| id.clone());
+        tracing::debug!(target: "register", ?under, "visit: written under the keeper's guest setting held here, else the default");
+        Ok(vec![RailAct::Visit(crate::Visit {
+            under,
+            ..self.clone()
+        })])
+    }
+}
+
+/// The keeper says each computer may have `0` guests at once: written only
+/// when the record says otherwise, and counted only as the keeper's, so
+/// anyone else's is refused [`HandOnRefusal::NotKeeper`] and nothing is
+/// written.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SlotsAt(pub u8);
+
+impl Command for SlotsAt {
+    type Refusal = HandOnRefusal;
+
+    fn decide(&self, before: &Admission) -> Result<Vec<RailAct>, HandOnRefusal> {
+        let said = before.membership().slots.as_ref().map(|(_, n)| *n);
+        let writes = said != Some(self.0);
+        tracing::debug!(target: "register", ?said, asked = self.0, writes, "slots: the record's slots per computer against the keeper's");
+        Ok(Vec::from_iter(writes.then_some(RailAct::GuestSlots {
+            per_computer: self.0,
+        })))
+    }
+
+    fn confirm(&self, after: &Admission, _written: &[OpId]) -> Result<(), HandOnRefusal> {
+        let counted = after.membership().slots.as_ref().map(|(_, n)| *n) == Some(self.0);
+        tracing::debug!(target: "register", counted, "slots: the fold's verdict, which counts only the keeper's");
+        counted.then_some(()).ok_or(HandOnRefusal::NotKeeper)
     }
 }
 

@@ -151,6 +151,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .route("/publication", get(crate::publication::status).post(crate::publication::publish))
     .route("/publication/close", axum::routing::post(crate::publication::close))
     .route("/visits", axum::routing::post(stop))
+    .route("/slots", axum::routing::post(slots))
     .route("/folder", axum::routing::post(open))
     .route("/update", get(update_check).post(update_apply))
     .route("/shelf", axum::routing::post(crate::folder::bring))
@@ -885,6 +886,18 @@ async fn stop(State(at): State<Asking>, Json([group, visit]): Json<[String; 2]>)
         }
         Ok(false) => LendRefusal::closed("you host no such visit here"),
         Err(e) => LendRefusal::fault(e.to_string()),
+    }
+}
+
+/// `POST /slots`, `[group, number]`: the keeper's number each computer can
+/// have visiting at once ([`crate::node::Host::slots`]).
+async fn slots(State(at): State<Asking>, Json((group, n)): Json<(String, u8)>) -> Response {
+    match at.host.slots(&group, n) {
+        Ok(()) => Json(n).into_response(),
+        Err(why) => {
+            tracing::debug!(target: "home", group, why, "home: refused — how many each computer can have visiting stays as it was");
+            LendRefusal::closed(why)
+        }
     }
 }
 

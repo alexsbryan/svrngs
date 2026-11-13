@@ -61,6 +61,8 @@ pub struct Register {
     /// The relays the keeper says the group meets at, `None` while the
     /// keeper has said none (relay fallbacks; `Membership::meets_at`).
     pub meets: Option<std::collections::BTreeSet<svrngs_core::relay::Url>>,
+    /// The keeper's guests per computer; `None` while none is said.
+    pub slots: Option<u8>,
 }
 
 /// One counting `Remove`, as the group is shown it (v1-keeper-office (b)):
@@ -164,6 +166,7 @@ pub(crate) fn register_of(m: &Membership, removes: &[Op<SignedOp>], namespace: &
         removed,
         removals: removals_in(removes, m, namespace),
         meets: m.meets_at(),
+        slots: m.slots.as_ref().map(|(_, n)| *n),
         keeper: m.keeper.clone(),
         office: m.office.clone(),
         visits: m.visits.clone(),

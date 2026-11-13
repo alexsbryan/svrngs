@@ -31,7 +31,7 @@ use crate::{command::AHEAD_SECS, op::Op};
 use crate::{Device, OpId, Person, RailAct, SignedOp, Visit};
 
 /// How long a visit may be, from its act's own time: the interpreter's.
-pub use eudoxia_community::VISIT_LONGEST;
+pub use eudoxia_community::{GUESTS_DEFAULT, VISIT_LONGEST};
 
 /// When a person joined the group (bash-same-name): they started it, a
 /// seed row's person, or the `Admit` that made them a person is timed at
@@ -125,6 +125,10 @@ pub struct Membership {
     /// Ask [`Self::meets_at`]. Skipped when absent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub meets: Option<BTreeSet<String>>,
+    /// The keeper's guest setting that stands, and how many it gives each
+    /// computer; `None` while none is said. Skipped when absent.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub slots: Option<(OpId, u8)>,
 }
 
 /// Who holds a group's office (EUDOXIA_JUDGE §2c): held; frozen
@@ -398,7 +402,8 @@ impl RailAct {
             | RailAct::Visit(_)
             | RailAct::Signers { .. }
             | RailAct::Holders { .. }
-            | RailAct::Meets { .. } => true,
+            | RailAct::Meets { .. }
+            | RailAct::GuestSlots { .. } => true,
             RailAct::Record { .. }
             | RailAct::Correct { .. }
             | RailAct::Seal

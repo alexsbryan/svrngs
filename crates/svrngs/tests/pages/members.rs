@@ -62,6 +62,7 @@ fn sam_visits(ada: &Node, id: &str, secs: i64) {
             &SigningKey::from_bytes(&[9; 32]),
             &actor_of(ada.rail().signer()),
         ),
+        under: None,
     };
     ada.rail().commit(id, &visit).unwrap().unwrap();
 }

@@ -2241,7 +2241,7 @@ from the journal waits in PLAN §2.
   then on and a relay the keeper took away is not gone back to; while no
   other relay answers iroh keeps the home it has (iroh-1.0.2 socket.rs:1967),
   so the move off it waits for one. No command names an empty set yet.
-- **A visit takes one of its host computer's two slots** (svrn-docs
+- **A visit takes one of its host computer's slots** (svrn-docs
   `GUESTS.md` §3, §5). A `Visit{guest, key, opens, until}`, signed by the
   host's computer, names the guest, a key fresh for the visit and the lends
   it opens, by each lender's key (line version 11). Eudoxia's interpreter
@@ -2250,13 +2250,20 @@ from the journal waits in PLAN §2.
   the host is a standing computer, its key was never a member's nor named
   by an earlier visit on that chain or by another computer's consented
   one, `until` is within 48 hours of its own time
-  (`VISIT_LONGEST`), and one of the host's two slots is free behind it: a
+  (`VISIT_LONGEST`), and one of the host's slots is free behind it: a
   visit earlier on the chain ended at or before its time, or its Stop
   stands before it on the chain. A hole in the chain makes it missing, and
   a fork of the chain freezes the visits on its branches. There is no cap
-  on a group's guests: each computer has its own two. The commit writes no
-  visit the interpreter would not count, so a guest past a computer's two
-  is refused before anything is written (`redeem.rs`, `recorded`). The
+  on a group's guests: each computer has its own slots. How many is the
+  keeper's: a `GuestSlots{per_computer}`, an office act counted only as the
+  keeper's (`SlotsAt`; the home page's One fewer and One more, home.rs
+  `POST /slots`), at most `GUESTS_MOST` (8), two while none is said
+  (`GUESTS_DEFAULT`; line version 16). A visit names the setting its host's
+  computer held when it wrote it (`Visit::under`) and is judged under that
+  one, so a lower number refuses new visits and ends none. The commit
+  writes no visit the interpreter would not count, so a guest past a
+  computer's slots is refused before anything is written (`redeem.rs`,
+  `recorded`). The
   consent is the guest's page's: the visit's fresh key signs
   `visit_consent_message`, the host's key and its own (`sig.rs`; the page's
   `consent`, `web/src/join.rs`), and the `Visit` carries it. svrngs checks
@@ -2264,8 +2271,8 @@ from the journal waits in PLAN §2.
   a guest's key is refused and takes nothing from the host the guest chose;
   a visit without one counts nowhere. The page cannot know the group or the
   visit's end before the host writes them, so the consent names neither. A
-  visit binds nothing, so a guest's key never stands. It ends at its `until`, at
-  the host's `Correct` of it,
+  visit binds nothing, so a guest's key never stands. It ends at its
+  `until`, at the host's `Correct` of it,
   their Stop, which another's `Correct` is not, or when the host's key is
   cut; the act stays counted, seen (`Guest::live`). The lender's
   door, on the pass holders' protocol, lets in a pass a visit's key signed

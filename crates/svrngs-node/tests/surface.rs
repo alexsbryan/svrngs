@@ -329,7 +329,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "slots": 2, "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }
@@ -347,6 +347,7 @@ fn made_by_alex(body: &serde_json::Value) -> serde_json::Value {
 /// answers `removed: null`, never "not removed", and `removals: null`,
 /// never none (v1-keeper-office (b)), and `left` and `keeps` null beside
 /// them (groups-leave), and `visiting` null, never nobody (guests-pages),
+/// and how many each computer can have visiting null, never the default,
 /// so the home page can say
 /// this computer could not read who is in the group. Red at 09e1484,
 /// which read it `removed: false`.
@@ -369,7 +370,7 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "visiting": null, "folders": [], "waiting": null, "fallback": null }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "visiting": null, "slots": null, "folders": [], "waiting": null, "fallback": null }], "key": actor_of(&signing(1)) }),
     );
     house.close().await;
 }

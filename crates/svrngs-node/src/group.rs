@@ -234,6 +234,31 @@ impl crate::node::Host {
         Ok(relays.to_vec())
     }
 
+    /// The keeper says each computer of `group` may have `per_computer`
+    /// visiting at once ([`svrngs_core::SlotsAt`]); only the keeper's act
+    /// counts, and one past the profile's most is refused, said with the most.
+    pub fn slots(&self, group: &str, per_computer: u8) -> Result<(), String> {
+        let most = eudoxia_community::GUESTS_MOST;
+        tracing::debug!(target: "group", group, per_computer, most, "group: slots per computer, at most the profile's most");
+        if per_computer > most {
+            return Err(format!(
+                "each computer can have at most {most} visiting at once"
+            ));
+        }
+        let said = self
+            .rail
+            .commit_said(group, &svrngs_core::SlotsAt(per_computer));
+        said.map_err(|e| e.to_string())?.map_err(|why| match why {
+            svrngs_core::HandOnRefusal::NotKeeper => {
+                "only the group's keeper decides how many each computer can have visiting"
+                    .to_string()
+            }
+            _ => format!("{why:?}"),
+        })?;
+        self.refresh();
+        Ok(())
+    }
+
     /// Where `group` meets ([`meeting`]), by this computer's build.
     pub(crate) fn meeting(&self, group: &str) -> Meeting {
         meeting(&self.rail, group, &self.build)

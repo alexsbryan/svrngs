@@ -685,12 +685,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-13) Harness 4, iroh.rs `Fetch` (+8), a member asked, the one
 # trait at the boundary ring_sync::To and RailApi::transport cross; . to
 # 21,169, the cap one past it, 18 under where the pass found it.
+# (2026-11-13) Raised by the operator for the keeper-set guest setting:
+# `RailAct::GuestSlots`, `Visit::under`, `SlotsAt`, `Membership::slots`, the
+# adapter, `Host::slots`, `POST /slots`, the group's number on /v1/groups
+# and the SLOTS row on the home page. Core 3,492 -> 3,526, . 21,169 ->
+# 21,240, js 8,510 -> 8,552; native 29,679 -> 29,792. The economizing pass
+# before it (81f5c577) cut 36; the rest found (about 23 lines, uncertain)
+# would have left it about 22 over.
 BUDGET = {
-    "crates/svrngs-core": 3493,
+    "crates/svrngs-core": 3527,
 
-    ".": 21170,
+    ".": 21241,
 
-    "js": 8511,
+    "js": 8553,
 
     "swift": 1,
 }

@@ -128,8 +128,8 @@ fn a_synced_change_ships_at_its_own_line_version() {
     assert_eq!(op.kind.line_version(), SYNCED_LINE_VERSION);
     assert_eq!(
         SignedOp::UNDERSTANDS,
-        crate::AUTHORITY_LINE_VERSION,
-        "this build reads the original synced format and the later source-bound format"
+        crate::GUESTS_LINE_VERSION,
+        "this build reads the original synced format and the later formats, the keeper's guest setting's the newest"
     );
 }
 

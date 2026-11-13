@@ -481,6 +481,7 @@ async fn a_guest_s_code_names_the_guest_and_holds_to_their_visit() {
             &crate::SigningKey::from_bytes(&[9; 32]),
             &crate::actor_of(l.rail.signer()),
         ),
+        under: None,
     };
     let act = svrngs_core::tests_support::Fixture {
         act: crate::RailAct::Visit(visit),

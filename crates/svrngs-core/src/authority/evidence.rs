@@ -118,10 +118,13 @@ fn statement(namespace: &str, op: &Op<SignedOp>) -> Statement<Native> {
             through: through.clone(),
         },
         RailAct::Meets { .. } => Act::Meets,
+        RailAct::GuestSlots { per_computer } => Act::Slots {
+            per_computer: *per_computer,
+        },
         RailAct::Visit(v) => Act::Fill {
             key: v.key.clone(),
             until: v.until,
-            under: None,
+            under: v.under.clone(),
             consent: crate::verify_hex(
                 &v.key,
                 &crate::visit_consent_message(&op.actor, &v.key),
@@ -257,6 +260,7 @@ impl<'a> NativeAuthority<'a> {
             office,
             cut: cut.collect(),
             visits,
+            slots: facts.setting().map(|(id, n)| (id.clone(), n)),
             counted,
             uncounted,
             ..Membership::default()

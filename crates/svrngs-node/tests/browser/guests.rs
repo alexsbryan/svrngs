@@ -217,6 +217,7 @@ async fn sam_visiting(kim_dir: &Path, bo_dir: &Path, relay: &Server) -> (Node, N
         opens: Default::default(),
         until,
         consent: svrngs_core::tests_support::consent(&signing(SAM), &actor_of(kim.rail().signer())),
+        under: None,
     };
     kim.rail().commit(NS, &visit).unwrap().unwrap();
     let bo = standing_under(bo_dir, relay, &kim, BO, "bo", "Kim").await;

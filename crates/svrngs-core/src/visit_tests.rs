@@ -36,6 +36,7 @@ fn visit(host: u8, guest: &str, fresh: u8, until: i64) -> RailAct {
         opens,
         until,
         consent: crate::tests_support::consent(&key(fresh), &actor_of(&key(host))),
+        under: None,
     })
 }
 
