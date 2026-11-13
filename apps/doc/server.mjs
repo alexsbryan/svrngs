@@ -66,11 +66,13 @@ const told = (req, name) => {
 };
 
 /**
- * Start the server; resolves to `{port, close}` once it listens.
- * `keep` is the directory the doc's acts are kept in; `api` svrngs's api
- * file, or none.
+ * The doc, its pages and its timers, with no listener: `opened(req, peer)`
+ * takes a page's socket once upgraded (ws.mjs `accept`), `handle(req, res)`
+ * answers a plain request, `close()` ends its timers and pages. `keep` is
+ * the directory the doc's acts are kept in; `api` svrngs's api file, or
+ * none.
  */
-export async function start({ port = 0, keep, api = null }) {
+export async function doc({ keep, api = null }) {
   if (!keep) throw new Error('say where the doc is kept: --keep <dir>');
   mkdirSync(keep, { recursive: true });
   const file = join(keep, 'acts.jsonl');
@@ -250,7 +252,7 @@ export async function start({ port = 0, keep, api = null }) {
   await askLender();
   const asking = setInterval(askLender, LENDER_EVERY_MS);
 
-  const server = http.createServer((req, res) => {
+  const handle = (req, res) => {
     const path =
       decodeURIComponent(new URL(req.url, 'http://doc').pathname).replace(/^\/+/, '') ||
       'index.html';
@@ -270,23 +272,39 @@ export async function start({ port = 0, keep, api = null }) {
       'cache-control': 'no-cache',
     });
     res.end(readFileSync(join(HERE_DIR, name)));
-  });
+  };
+  return {
+    opened,
+    handle,
+    close: () => {
+      clearInterval(here);
+      clearInterval(asking);
+      clearTimeout(linesTimer);
+      pages.forEach((p) => p.peer.close(1001));
+    },
+  };
+}
+
+/**
+ * Start the server; resolves to `{port, close}` once it listens: the doc
+ * (`doc`) on 127.0.0.1, each page's socket accepted at /sync.
+ */
+export async function start({ port = 0, keep, api = null }) {
+  const d = await doc({ keep, api });
+  const server = http.createServer(d.handle);
   server.on('upgrade', (req, socket, head) => {
     if (new URL(req.url, 'http://doc').pathname !== '/sync') {
       trace('socket: refused — an upgrade not at /sync', { path: req.url });
       return socket.end('HTTP/1.1 404 Not Found\r\nconnection: close\r\ncontent-length: 0\r\n\r\n');
     }
-    accept(req, socket, head, (peer) => opened(req, peer));
+    accept(req, socket, head, (peer) => d.opened(req, peer));
   });
   await new Promise((done) => server.listen(port, '127.0.0.1', done));
   trace('server: listening on loopback alone', { port: server.address().port, keep });
   return {
     port: server.address().port,
     close: () => {
-      clearInterval(here);
-      clearInterval(asking);
-      clearTimeout(linesTimer);
-      pages.forEach((p) => p.peer.close(1001));
+      d.close();
       return new Promise((done) => server.close(done));
     },
   };
