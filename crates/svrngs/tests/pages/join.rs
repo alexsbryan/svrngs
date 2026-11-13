@@ -59,79 +59,6 @@ async fn computer(
     (node, home, seed.id())
 }
 
-/// `press` pressed twice on ada's home page, each read from `read` once
-/// the page traced a line starting with `line` (web/tests/pages/index.mjs,
-/// page-index's driver), after `fill` typed: how many times each read
-/// says `words`.
-async fn twice(
-    engine: Engine,
-    fill: Value,
-    press: &str,
-    read: &str,
-    line: &str,
-    words: &str,
-) -> (Vec<usize>, Value) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, home) = house(dir.path(), &relay).await;
-    let press = json!([press, null, line]);
-    let steps = [fill, press.clone(), press]
-        .into_iter()
-        .filter(|s| !s.is_null())
-        .collect::<Vec<_>>();
-    let args = json!({ "home": home, "read": read, "steps": steps });
-    let seen = drive(engine, "pages/index.mjs", args, None).await;
-    let said = (seen["after"].as_array().into_iter().flatten())
-        .map(|a| a["words"].to_string().matches(words).count())
-        .collect();
-    drop(ada);
-    (said, seen)
-}
-
-in_chromium!(
-    /// **A group not made is said once** (page-join (d)'s first fix). Ada
-    /// presses "Make a group" twice with no name: the node refuses each,
-    /// and the section says why once, beside the button, the second in the
-    /// first's place. Watched failing on v1 (`UI` flipped), which appends
-    /// it at each press (home.js@19b63b2b:421).
-    a_group_not_made_is_said_once
-);
-async fn a_group_not_made_is_said_once(engine: Engine) {
-    let (said, seen) = twice(
-        engine,
-        Value::Null,
-        "#make button:has-text('Make a group')",
-        "#make p",
-        "MAKE: refused",
-        "a name cannot be empty",
-    )
-    .await;
-    assert_eq!(said, [1, 1], "said once, at each press: {seen:#}");
-}
-
-in_chromium!(
-    /// **A link to nothing lent is said once** (page-join (f)'s fix). Ada
-    /// pastes a link that opens nothing lent in her groups and presses
-    /// "Open it" twice: "That is not a link to something lent in your
-    /// groups." is said once. Watched failing on v1 (`UI` flipped), which
-    /// appends it at each press (home.js@19b63b2b:397).
-    a_link_to_nothing_lent_is_said_once
-);
-async fn a_link_to_nothing_lent_is_said_once(engine: Engine) {
-    let fill = json!(["#open input", "http://page.example/#open=no-such"]);
-    let words = "That is not a link to something lent in your groups.";
-    let (said, seen) = twice(
-        engine,
-        fill,
-        "#open button:has-text('Open it')",
-        "#open p",
-        "OPEN: open",
-        words,
-    )
-    .await;
-    assert_eq!(said, [1, 1], "said once, at each press: {seen:#}");
-}
-
 /// Ada's home page, with Sam's computer holding Trip, the `steps` taken,
 /// given Sam's link to Trip, each read once `until`'s words hold it, with
 /// what `held` holds (web/tests/pages/index.mjs): the reads, and whether
@@ -412,32 +339,4 @@ async fn a_group_made_or_joined_says_it_is_being_read_until_it_is(engine: Engine
     .filter_map(|(failed, what)| failed.then_some(what))
     .collect();
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-}
-
-in_chromium!(
-    /// **A link's copy is answered once** (page-join (e)'s fix). Ada makes
-    /// a link to invite someone to house and presses "Copy the link"
-    /// twice: the answer is said once beside it, here " Select it above to
-    /// copy it.", as the test's browser refuses the clipboard, and
-    /// " Copied." where it takes it (ui/copy.js, one answer of two). Watched
-    /// failing on v1 (`UI` flipped), which appends it at each press
-    /// (home.js@19b63b2b:137).
-    a_link_s_copy_is_answered_once
-);
-async fn a_link_s_copy_is_answered_once(engine: Engine) {
-    let invite = json!([
-        "#home button:has-text('Invite someone to house')",
-        null,
-        "LINK: made"
-    ]);
-    let (said, seen) = twice(
-        engine,
-        invite,
-        "#home p.link button:has-text('Copy the link')",
-        "#home p.link",
-        "COPY: unwritten",
-        " Select it above to copy it.",
-    )
-    .await;
-    assert_eq!(said, [0, 1, 1], "said once, at each press: {seen:#}");
 }

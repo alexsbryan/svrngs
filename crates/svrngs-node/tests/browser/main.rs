@@ -66,7 +66,7 @@ use sha2::{Digest, Sha256};
 use svrngs_core::link::{Origin, Token};
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Joined, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
 use tokio::io::AsyncWriteExt;
 
 const NS: &str = "house";
@@ -2127,55 +2127,6 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
 }
 
 in_chromium!(
-    /// The home page on a computer asks svrngs's question in the one
-    /// wording the group's page asks it (lean-4 (c); sup-4's follow-up 2,
-    /// `demo/runs/sup/2026-10-10/README.md`). Ada lends a page reading
-    /// kind `k` and a shelf, `shelf` of kind `books`, that asks; her home
-    /// page's `/ask?lend=<shelf>&app=<page>` heads its question as
-    /// `question.js` words it: the shelf named with its kind, as the bare
-    /// command names a lend. Planted, watched failing: the home page with
-    /// words of its own (the kind dropped, as before). Asked of an app
-    /// and a lend not lent, it says [`UNLENT`], as the group's page does
-    /// (onair-economize (d); red at a20ed46: "... in your groups now.").
-    the_home_page_asks_in_the_one_wording
-);
-async fn the_home_page_asks_in_the_one_wording(engine: Engine) {
-    let relay = relay().await;
-    let ada_dir = tempfile::tempdir().unwrap();
-    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
-    let page = page_origin("<!doctype html><title>ada's page</title>").await;
-    lend_reading(ada_dir.path(), "page", page.port(), &["books"]);
-    let (shelf, _) = kept_page("<!doctype html><title>ada's shelf</title>").await;
-    let body = json!({ "groups": [NS], "port": shelf.port(), "kind": "books", "limit": 3, "asks": "the page reads the shelf" });
-    std::fs::write(
-        svrngs_node::lend::lends_dir(ada_dir.path()).join("shelf.json"),
-        body.to_string(),
-    )
-    .unwrap();
-    let ask = format!(
-        "http://svrngs.localhost:{}/ask?lend={}&app={}",
-        ada.api_addr().port(),
-        label(1, "shelf"),
-        label(1, "page")
-    );
-    let seen = drive(engine, "home.mjs", json!({ "ask": ask }), None).await;
-    eprintln!("the home page's run: {seen:#}");
-    assert_eq!(
-        seen["heading"],
-        question(["ada", "page", "k"], ["ada", "shelf", "books"]),
-        "{seen:#}"
-    );
-    let ask = format!(
-        "http://svrngs.localhost:{}/ask?lend=x&app=y",
-        ada.api_addr().port()
-    );
-    let args = json!({ "ask": ask, "heading": false, "read": "#home p:not(.said)" });
-    let seen = drive(engine, "home.mjs", args, None).await;
-    assert_eq!(seen["read"], UNLENT, "{seen:#}");
-    drop(ada);
-}
-
-in_chromium!(
     /// **The home page changes how many a lend lets in at once, in place**
     /// (bash-limit (b)). Ada lends `shelf` to one person at once; her home
     /// page lists it so, and she sets four, then everyone, then stops
@@ -2391,124 +2342,6 @@ async fn the_home_page_tells_a_removed_person(engine: Engine) {
 }
 
 in_chromium!(
-    /// **A register that cannot be read is said as itself** (REVIEW_FINDINGS
-    /// #123; DESIGN §1). Ada's copy of house's seed is unreadable, so
-    /// `/v1/groups` answers `removed: null`; her home page says this
-    /// computer could not read who is in the group, never what it lends.
-    /// Planted, watched failing: home.js as at 09e1484, which read `null`
-    /// as not removed and said "What this group lends cannot be read".
-    the_home_page_says_an_unreadable_register
-);
-async fn the_home_page_says_an_unreadable_register(engine: Engine) {
-    use std::os::unix::fs::PermissionsExt;
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(2)).await;
-    let roster = ada.rail().group_dir(NS).unwrap().join("roster.json");
-    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o000)).unwrap();
-    let seen = home_page(engine, &ada, json!({ "read": "#home section p" })).await;
-    std::fs::set_permissions(&roster, std::fs::Permissions::from_mode(0o644)).unwrap();
-    assert_eq!(
-        seen["read"], "This computer could not read who is in this group.",
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
-in_chromium!(
-    /// **The home page says its own address, as the command and install.sh
-    /// say it** (start-address (b)): the same each time svrngs starts, since
-    /// it is kept (`api::kept_address`). Planted, watched failing: home.js
-    /// as at 82c7dd1, which said no address.
-    the_home_page_says_its_address_as_the_command_does
-);
-async fn the_home_page_says_its_address_as_the_command_does(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(2)).await;
-    let seen = home_page(engine, &ada, json!({ "read": "#home > p.address" })).await;
-    assert_eq!(
-        seen["read"],
-        format!(
-            "Your home page, the same address each time svrngs starts: {}",
-            svrngs_node::home::address(ada.api_addr().port())
-        ),
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
-in_chromium!(
-    /// **The home page tells two people of one name apart**
-    /// (bash-same-name (a)). Ada lets two people into house as cy, a
-    /// second apart, each by hand (bash-devices made them two people,
-    /// `a1d0ba9`); her home page's door names each person once, and no two
-    /// alike, in a person's words — each cy by when they joined, as
-    /// `svrngs remove --joined` takes it, to the instant. Planted: two
-    /// people of one name, listed by home.js as "cy, cy"; a time with no
-    /// offset (#126).
-    the_home_page_tells_two_people_of_one_name_apart
-);
-async fn the_home_page_tells_two_people_of_one_name_apart(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    for me in [3, 4] {
-        svrngs_core::tests_support::let_in_by(NS, &signing(me), "cy", |act| {
-            let act = svrngs_core::tests_support::Fixture { act };
-            ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
-                .id
-                .clone()
-        });
-        tokio::time::sleep(Duration::from_millis(1_100)).await;
-    }
-    let seen = home_page(engine, &ada, json!({ "all": "#home .door strong" })).await;
-    eprintln!("the home page's run: {seen:#}");
-    let people: Vec<&str> = (seen["all"].as_array())
-        .unwrap_or_else(|| panic!("no door: {seen:#}"))
-        .iter()
-        .filter_map(Value::as_str)
-        .collect();
-    let line = people.join(", ");
-    let alike = people
-        .iter()
-        .filter(|p| people.iter().filter(|q| q == p).count() > 1);
-    assert_eq!(alike.count(), 0, "two people listed alike: {line}");
-    assert_eq!(people.len(), 4, "ada, bo and each cy, once: {line}");
-    assert_eq!(
-        people.iter().filter(|p| p.starts_with("cy")).count(),
-        2,
-        "{line}"
-    );
-    // Each cy by when they joined, in the form `svrngs remove --joined`
-    // takes (home.rs `WHEN`), read back to the instant each was let in
-    // (#126): 2026-10-12 14:03:22 -0700.
-    let admitted: BTreeSet<i64> = (ada.rail().register(NS).unwrap().members.values())
-        .filter(|m| m.person.as_str() == "cy")
-        .filter_map(|m| match m.joined {
-            Joined::At(t) => Some(t),
-            Joined::Started => None,
-        })
-        .collect();
-    let read: BTreeSet<i64> = (people.iter().filter(|p| p.starts_with("cy")))
-        .map(|cy| {
-            let when = (cy
-                .strip_prefix("cy (joined ")
-                .and_then(|w| w.strip_suffix(')')))
-            .unwrap_or_else(|| panic!("{cy} says no time: {line}"));
-            chrono::DateTime::parse_from_str(when, svrngs_node::home::WHEN)
-                .unwrap_or_else(|e| panic!("{cy}: not in `--joined`'s form ({e}): {line}"))
-                .timestamp()
-        })
-        .collect();
-    assert_eq!((read.len(), &read), (2, &admitted), "{line}");
-    for kept in ["key", "member", "keeper", "ring", " act", "journal"] {
-        assert!(!line.to_lowercase().contains(kept), "says {kept}: {line}");
-    }
-    drop(ada);
-}
-
-in_chromium!(
     /// **Two people of one name are told apart, and each is only
     /// themselves** (capability-keys; svrn-docs `rings/current/
     /// WHAT_CAN_ACT_AS_YOU.md` §7.4, §9): ada's computer brings Money and
@@ -2694,29 +2527,6 @@ fn removals_said(seen: &Value) -> Vec<String> {
         .collect()
 }
 
-in_chromium!(
-    /// **The home page shows everyone each removal and each ask** (the
-    /// operator, 2026-10-12; v1-keeper-office (b)). On ada's computer cy
-    /// asks to remove dee and ada removes dee; ada's home page lists both,
-    /// by name, with when, from the record alone. Planted, watched failing:
-    /// the home page before (b), which listed none.
-    the_home_page_shows_every_removal_and_ask
-);
-async fn the_home_page_shows_every_removal_and_ask(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    removals_held(&ada).await;
-    let seen = home_page(engine, &ada, json!({ "all": "#home .removals li" })).await;
-    eprintln!("the home page's run: {seen:#}");
-    assert_eq!(
-        removals_said(&json!({ "removals": seen["all"] })),
-        ["cy asked to remove dee", "ada removed dee"],
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
 in_webkit!(
     /// **The group's page shows everyone each removal and each ask**
     /// (v1-keeper-office (b)). The same removals on ada's computer; the
@@ -2876,33 +2686,6 @@ async fn the_page_opened_with_no_link_offers_a_founder_s_line(engine: Engine) {
     }
 }
 
-in_chromium!(
-    /// The home page says where the group's folder is on this computer
-    /// (v1-onboarding (d)), from `/v1/groups`' `folders`; this node keeps
-    /// no seed, so the group is named as the page names a group whose name
-    /// it cannot read. Watched failing: home.js before it said so, and
-    /// saying "null’s folder".
-    the_home_page_says_where_the_groups_folder_is
-);
-async fn the_home_page_says_where_the_groups_folder_is(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let folder = dir.path().join("house");
-    std::fs::create_dir(&folder).unwrap();
-    keep_folder(&ada, &folder).await;
-    let seen = home_page(engine, &ada, json!({ "read": ".folder" })).await;
-    assert_eq!(
-        seen["read"],
-        format!(
-            "The group’s folder is on this computer at {}",
-            folder.display()
-        ),
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
 /// Ada's computer, `admitted` let in as bo, and three more of house who
 /// do not say what they lend (bash-first-minute (c)): dee's computer never
 /// answers, having none; eve's holds no group of ada's, so it has not
@@ -2932,41 +2715,6 @@ async fn unlisted_held(
     )
     .unwrap();
     (ada, [eve, cy])
-}
-
-in_chromium!(
-    /// **The home page says a refusal as itself** (bash-first-minute (c);
-    /// Demo C's dry run, finding 6). On ada's computer, bo's and dee's
-    /// computers never answer, eve's has not heard of ada's, and cy's
-    /// answers that it cannot say: the home page names each by how, and
-    /// says neither eve's nor cy's did not answer. Planted, watched failing:
-    /// home.js before (c), which named bo and dee alone.
-    the_home_page_says_a_refusal_apart_from_no_answer
-);
-async fn the_home_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
-    let relay = relay().await;
-    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
-    let (ada, others) = unlisted_held(&relay, &signing(7), &dirs).await;
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({ "all": "#home table.index td[colspan]" }),
-    )
-    .await;
-    eprintln!("the home page's run: {seen:#}");
-    let mut said: Vec<String> = serde_json::from_value(seen["all"].clone()).unwrap();
-    said.sort();
-    assert_eq!(
-        said,
-        [
-            "bo's computer did not answer, so what they lend is not listed.",
-            "cy's computer answered without saying what they lend, so it is not listed.",
-            "dee's computer did not answer, so what they lend is not listed.",
-            "eve's computer has not heard of yours yet, so what they lend is not listed yet.",
-        ],
-        "{seen:#}"
-    );
-    drop((ada, others));
 }
 
 in_webkit!(
@@ -3029,173 +2777,40 @@ async fn alone(dir: &Path, relay: &Server) -> Node {
 }
 
 in_chromium!(
-    /// **The home page says at its top what it is for** (start-home, from
-    /// start-measure's ranked row 4: with no group, "This computer lends
-    /// nothing." and an empty "What apps use" were all it said,
-    /// `demo/runs/start/2026-10-13/README.md` §3 (c) 13): on ada's
-    /// computer, what can be done on it, in DESIGN §1's words; on a
-    /// computer in no group, how to make one (on the page since
-    /// start-group) or join one (on the page since arch-command (c)).
-    /// And how it opens again (give-session), at the page's foot, off the
-    /// first screen (the operator, 2026-10-26). In no group, joining comes
-    /// first, then making one, and nothing else of the page: no "What acts
-    /// as you", no box for a link from your group, nothing to lend, nobody
-    /// to remove; one look in June's forty words (demo/xenia/people/
-    /// june.md) and xenia's order, things to tap first, starts at the box
-    /// for the link someone sent her. The fifth set's June read 80-119
-    /// words there, and pasted Kim's link into the other box (demo/xenia/
-    /// findings/wordy-home.md, said-almost-left-home.md). Planted, watched
-    /// failing: index.html and home.js as c6c2212 left them; red before
-    /// give-session's words, with no `p.open`; red at d736ff18, in the
-    /// intro; red at 5c6e3b0d, its line in no group "Make one below, or
-    /// join one", making first.
+    /// **The home page in no group, as a person first sees it**
+    /// (start-home; the operator, 2026-10-26), the home page's one test in
+    /// a real browser (docs/CHECKS.md, seam B): it loads under its policy
+    /// (home.rs `POLICY`) with no page error and no refusal of the policy's,
+    /// and what only layout decides holds. One look in June's forty words
+    /// (demo/xenia/people/june.md), in xenia's order, things to tap first,
+    /// starts at the box for the link someone sent her (page.mjs
+    /// `firstLook`; the fifth set's June read 80-119 words there,
+    /// demo/xenia/findings/wordy-home.md); and look.css hides "Done in a
+    /// terminal", as nobody is there to remove. Its words, and what the
+    /// page draws in no group, are web/tests/pages/home.test.mjs's ('the
+    /// page says what it is for'). Planted, watched failing: index.html
+    /// and home.js as c6c2212 left them; red at 5c6e3b0d, making first.
     the_home_page_says_what_it_is_for
 );
 async fn the_home_page_says_what_it_is_for(engine: Engine) {
     let relay = relay().await;
-    let dirs = [(); 2].map(|_| tempfile::tempdir().unwrap());
-    let ada = node(dirs[0].path(), &relay, &signing(7)).await;
-    let seen = home_page(engine, &ada, json!({ "read": "#intro p" })).await;
-    let intro = seen["read"].as_str().unwrap_or_default();
-    assert!(
-        intro.starts_with(
-            "This page is yours, and only this computer opens it: nobody in your groups sees it."
-        ),
-        "{seen:#}"
-    );
-    // How it opens again, by the opener install.sh put in place, or a
-    // bookmark, with no terminal (give-session), at the page's foot.
-    let seen = home_page(engine, &ada, json!({ "read": "#terminal ~ #again p.open" })).await;
-    assert_eq!(
-        seen["read"],
-        "To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.",
-        "{seen:#}"
-    );
-    let dee = alone(dirs[1].path(), &relay).await;
-    let args = json!({ "read": "#home > p.none", "all": "#home h2", "look": 40, "text": true });
+    let dir = tempfile::tempdir().unwrap();
+    let dee = alone(dir.path(), &relay).await;
+    let args = json!({ "all": "#home h2", "look": 40, "text": true });
     let seen = home_page(engine, &dee, args).await;
-    assert_eq!(
-        seen["read"],
-        "You’re in no group yet. Join one below from the link someone sent you, or make your own.",
-        "{seen:#}"
-    );
-    assert_eq!(
-        seen["all"],
-        json!(["Join a group from a link", "Make a group"]),
-        "{seen:#}"
-    );
     let look = seen["look"].as_str().unwrap_or_default();
     assert!(
         look.starts_with("The link someone sent you: Your name in it:"),
         "{seen:#}"
     );
     let text = seen["text"].as_str().unwrap_or_default();
-    for gone in [
-        "Open a link from your group",
-        "What acts as you",
-        "What you lend",
-        "Already running here",
-        "Done in a terminal",
-    ] {
-        assert!(!text.contains(gone), "{gone}: {seen:#}");
-    }
-    drop((ada, dee));
-}
-
-in_chromium!(
-    /// **What the page cannot do is named on it, with the one line to
-    /// type** (start-home, from start-measure's ranked row 5: no state's
-    /// words named a line, `demo/runs/start/2026-10-13/README.md` §3 (c)
-    /// 12): removing someone, which the command does while svrngs runs.
-    /// Planted, watched failing: the page as 1b9575d left it. Leaving a
-    /// group is the page's own since groups-leave (c), so the page never
-    /// says it cannot be done (#192; red at 5753b234, which still said
-    /// "You cannot leave a group yet").
-    the_home_page_names_what_the_terminal_does
-);
-async fn the_home_page_names_what_the_terminal_does(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let seen = home_page(engine, &ada, json!({ "all": "#terminal li, #terminal p" })).await;
-    let said = seen["all"].to_string();
-    let line = "svrngs remove <their name> --group <the group’s name>";
-    assert!(said.contains(line), "{line}: {seen:#}");
-    assert!(!said.contains("leave"), "{seen:#}");
-    // Making a group is the page's own since start-group: the walk after
-    // found `svrngs new` refused while svrngs runs from login
-    // (demo/runs/start/2026-10-13-home/README.md §3).
-    assert!(!said.contains("svrngs new"), "{seen:#}");
-    // Nor lending what runs here, the page's own since v1ui-lend (b).
-    assert!(!said.contains("svrngs share"), "{seen:#}");
-    drop(ada);
-}
-
-in_chromium!(
-    /// **For a program, the address of each thing lent, with a Copy
-    /// button** (start-home, from start-measure's ranked row 6: Bo's tools
-    /// reached a friend's model only at the address `/v1/lends` gave,
-    /// `demo/runs/start/2026-10-13/README.md` §3 (a) 1-3, which the page
-    /// never showed). Ada lends `shelf`; her page's button beside it says
-    /// what it copies, and once pressed the page says the address it
-    /// copied, which Chromium's clipboard then holds, and where a program
-    /// takes it. The button is at the group's foot, off the first screen,
-    /// beside the WiFi: in the index's row it was words read before Money
-    /// (the fifth xenia set, Kim's Home 90 of her 30 words; June: "a lot
-    /// of wording about lending programs and copying addresses for
-    /// programs", demo/xenia/findings/wordy-home.md). Planted, watched
-    /// failing: the page as f898bfd left it, with no such button; as
-    /// 5c6e3b0d left it, the button in the index's row and the screen
-    /// under the group's people.
-    the_home_page_copies_a_lend_s_address_for_a_program
-);
-async fn the_home_page_copies_a_lend_s_address_for_a_program(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
-    lend(dir.path(), "shelf", shelf.port());
-    let origin = format!(
-        "http://{}.localhost:{}/",
-        label(1, "shelf"),
-        ada.api_addr().port()
-    );
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({
-            "all": "#home section ul.wifi li, #home section ul.wifi + p",
-            "do": [["#home section table.index ~ ul.wifi li button:has-text('Copy its address for a program')", null, true]],
-        }),
-    )
-    .await;
-    eprintln!("the home page's run: {seen:#}");
-    // The group on a screen there too, last: Kim's first tap in two of the
-    // fifth set's three `together` runs, on her way to Money.
-    let foot = seen["all"]
-        .as_array()
-        .and_then(|a| a.last())
-        .and_then(Value::as_str);
-    assert!(
-        foot.is_some_and(|t| t.ends_with(" on a screen")),
-        "{seen:#}"
-    );
-    // The address to keep, the same words as the group's page on a
-    // computer (question.js `keeping`; IN_THE_BROWSER §4). Red on
-    // a27fd4a5, which gave none.
-    assert!(
-        seen["all"][0]
-            .as_str()
-            .is_some_and(|t| t.contains(&format!("{origin} Bookmark this."))),
-        "{seen:#}"
-    );
-    let said = seen["after"][0].to_string();
-    let copied = format!("Copied: {origin}. Paste it where a program on this computer, such as a chat app, asks for an address.");
-    assert!(said.contains(&copied), "{seen:#}");
-    if matches!(engine, Engine::Chromium) {
-        assert_eq!(seen["clipboard"], origin, "{seen:#}");
-    }
-    drop(ada);
+    assert!(!text.contains("Done in a terminal"), "{seen:#}");
+    let logs = seen["logs"].as_array().cloned().unwrap_or_default();
+    let faults = (logs.iter().filter_map(Value::as_str))
+        .filter(|l| l.starts_with("pageerror") || l.contains("Content Security Policy"))
+        .collect::<Vec<_>>();
+    assert!(faults.is_empty(), "{faults:#?}");
+    drop(dee);
 }
 
 in_chromium!(
@@ -3278,186 +2893,6 @@ async fn the_home_page_opens_a_lend_to_this_wifi_and_closes_it(engine: Engine) {
     })
     .await;
     assert!(refused.is_ok(), "still served once off: {at}");
-    drop(ada);
-}
-
-in_chromium!(
-    /// **The home page says a room it cannot read** (AGENTS.md 6): ada's
-    /// room.json holds what is not a list of lends; her page's "On this
-    /// WiFi" says what is open to it cannot be read, and why, and that
-    /// opening a lend again starts it over, and the shelf's line still
-    /// offers "Open it to this WiFi". Planted, watched failing: the page as
-    /// c0b0bf59 left it, which read the room as empty and said nothing;
-    /// then as a9e82b9a left it, its words a TV's.
-    the_home_page_says_a_room_it_cannot_read
-);
-async fn the_home_page_says_a_room_it_cannot_read(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    std::fs::write(dir.path().join("room.json"), r#"{"on": "a TV"}"#).unwrap();
-    let me = match engine {
-        Engine::Chromium => 42,
-        Engine::Webkit => 43,
-    };
-    let ada = computer(dir.path(), &relay, &signing(7), me, "ada").await;
-    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
-    lend(dir.path(), "shelf", shelf.port());
-    // "What acts as you", where "On this WiFi" is, opened (folded since
-    // the operator's change of 2026-10-26). Read once the group's list of
-    // what is open to this WiFi is drawn, which waits on its /v1/lends
-    // (home.js `show`): read sooner, a loaded gate saw it still asking.
-    let args = json!({ "drawn": "#home section ul.wifi li", "text": true, "unfold": true });
-    let seen = home_page(engine, &ada, args).await;
-    let text = seen["text"].as_str().unwrap_or_default();
-    assert!(text.contains("Open to this WiFi"), "{seen:#}");
-    assert!(
-        text.contains("This computer cannot read what you opened to this WiFi (")
-            && text.contains("Open a lend to this WiFi again, and it starts over from that one."),
-        "{text}"
-    );
-    assert!(text.contains("Open it to this WiFi"), "{text}");
-    drop(ada);
-}
-
-in_chromium!(
-    /// **Each thing lent opens by a link saying what it opens and whose**
-    /// (start-home, from start-measure's ranked row 7: "Sam’s llama" read
-    /// as a riddle, `demo/runs/start/2026-10-13/README.md` §3 (c)). Ada
-    /// lends `shelf`, of kind `k`; her page's link to it reads "ada’s
-    /// shelf (k)", the lend named as question.js names it, its kind told,
-    /// and beside it what it writes as her (capability-signed): the name is
-    /// the link, as Kim tapped it (the operator, 2026-10-26;
-    /// demo/xenia/findings/wordy-home.md). Planted, watched failing: the
-    /// page as aac2340 left it, "ada’s shelf (k)" with nothing beside it;
-    /// as d736ff18 left it, "Open ada’s shelf (k). It writes …" all on the
-    /// link.
-    the_home_page_s_links_say_what_they_open
-);
-async fn the_home_page_s_links_say_what_they_open(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
-    lend(dir.path(), "shelf", shelf.port());
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({ "read": "#home table.index td a", "all": "#home table.index td" }),
-    )
-    .await;
-    assert_eq!(seen["read"], "Open ada’s shelf (k)", "{seen:#}");
-    assert_eq!(
-        seen["all"][0],
-        "Open ada’s shelf (k) Opening it lets it write its own part of your group’s record, as you.",
-        "{seen:#}"
-    );
-    // The WiFi and the address for a program are below the group's
-    // things, never in the index's row.
-    assert!(!seen["all"].to_string().contains("WiFi"), "{seen:#}");
-    assert!(
-        !seen["all"].to_string().contains("Copy its address"),
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
-in_chromium!(
-    /// **Fewer things to puzzle over** (start-home, from start-measure's
-    /// ranked row 8, `demo/runs/start/2026-10-13/README.md` §3 (c) 14 and
-    /// the words to look up): "What apps use" shown only when an app uses
-    /// something; the box's words, what its number is, shown beside it;
-    /// and a thing lent opened in a tab of its own, beside the home page,
-    /// never in its place. Ada lends `shelf`, nothing asking. Planted,
-    /// watched failing: the page as 535e213 left it.
-    the_home_page_shows_less_to_puzzle_over
-);
-async fn the_home_page_shows_less_to_puzzle_over(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let shelf = page_origin("<!doctype html><title>ada's shelf</title>").await;
-    lend(dir.path(), "shelf", shelf.port());
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({ "read": "#lent label", "all": "#home h2" }),
-    )
-    .await;
-    eprintln!("the home page's run: {seen:#}");
-    assert_eq!(seen["read"], "How many people at once: ", "{seen:#}");
-    assert!(
-        !seen["all"].to_string().contains("What apps use"),
-        "{seen:#}"
-    );
-    let lent = seen["links"].as_array().unwrap().iter().find(|l| {
-        l["text"]
-            .as_str()
-            .is_some_and(|t| t == "Open ada’s shelf (k)")
-    });
-    assert_eq!(
-        lent.map(|l| &l["target"]),
-        Some(&json!("_blank")),
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
-in_chromium!(
-    /// **A group is shown as it answers, not held for its slowest
-    /// computer** (start-home, from start-measure's ranked row 9: 3.6 s of
-    /// "Reading your groups…" with one computer stopped,
-    /// `demo/runs/start/2026-10-13/README.md` §3 (c) 16). Ada knows bo's
-    /// computer at an address that takes and never answers: her page
-    /// shows the group's people at once, and that bo's computer did not
-    /// answer only once it has not, more than a second later. Planted,
-    /// watched failing: the page as 11190e3 left it, both shown together.
-    the_home_page_shows_a_group_before_its_slowest_computer
-);
-async fn the_home_page_shows_a_group_before_its_slowest_computer(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let silent = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
-    let bo =
-        svrngs_node::iroh::PublicKey::from_bytes(signing(7).verifying_key().as_bytes()).unwrap();
-    ada.transport()
-        .add_known_peer(bo, vec![silent.local_addr().unwrap()]);
-    let (people, unanswered) = ("#home .door li", "#home .door li.off:has-text('bo')");
-    let seen = home_page(engine, &ada, json!({ "timed": [people, unanswered] })).await;
-    eprintln!("the home page's run: {seen:#}");
-    let ms = |s: &str| seen["timed"][s].as_u64().expect("shown");
-    assert!(ms(people) + 1000 < ms(unanswered), "{seen:#}");
-    drop((ada, silent));
-}
-
-in_chromium!(
-    /// **A link pasted on the home page opens only within its lend**
-    /// (#153). Under "Open a link from your group", a link to a lend at a
-    /// path opens a tab at that path on the lend's origin, through the
-    /// home page's `/to` (give-session); one whose path
-    /// is `/\evil.example/x` — a path to `startsWith('/')`, another host
-    /// to the URL parser — opens nothing and is said not to be a link to
-    /// something lent. Red at d62c393e: it opened `http://evil.example/x`.
-    the_home_page_opens_a_link_only_within_its_lend
-);
-async fn the_home_page_opens_a_link_only_within_its_lend(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &signing(7)).await;
-    let links = ["/at/a/path", "/\\evil.example/x"]
-        .map(|at| format!("http://page.example/#open=abc123&at={at}"));
-    let seen = home_page(engine, &ada, json!({ "opens": links })).await;
-    let opens = &seen["opens"];
-    // Through the home page's `/to`, which opens that path on the lend's
-    // origin with a code for it alone (give-session; tests/session.rs).
-    let lent = "/to?lend=abc123&at=%2Fat%2Fa%2Fpath";
-    assert_eq!(opens[0][0], json!([lent]), "{seen:#}");
-    assert_eq!(opens[1][0], json!([]), "{seen:#}");
-    let said = opens[1][1].as_str().unwrap_or_default();
-    assert!(
-        said.ends_with("That is not a link to something lent in your groups."),
-        "{seen:#}"
-    );
     drop(ada);
 }
 
@@ -3646,64 +3081,6 @@ fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
     (words.iter().copied())
         .filter(|w| said.contains(w) || said.contains(format!("{w}s").as_str()))
         .collect()
-}
-
-in_chromium!(
-    /// **Two groups of one name told apart** (v1ui-door (c); #138, the
-    /// operator's "Allow; tell them apart"). Ada's computer holds two
-    /// groups called Trip, one ada made and one sam made: each is headed
-    /// by its name, who made it and since when this computer has held it,
-    /// the day as the command says it (question.js `day`; #157). Planted,
-    /// watched failing: the page heading a group by its name alone, as
-    /// before this row.
-    the_home_page_tells_two_groups_of_one_name_apart
-);
-async fn the_home_page_tells_two_groups_of_one_name_apart(engine: Engine) {
-    use svrngs_node::group::{draw, Name};
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let ada = Node::start(
-        dir.path().to_path_buf(),
-        signing(1),
-        &RelayConfig {
-            relay_urls: vec![relay_url(&relay)],
-            n0_services: false,
-            loopback_only: true,
-        },
-        svrngs_node::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts");
-    drive::opens_at(ada.api_addr().port(), &ada.token());
-    let trip = || Name::parse("Trip").unwrap();
-    for (founder, key) in [("ada", 1), ("sam", 5)] {
-        let seed = draw(
-            trip(),
-            Name::parse(founder).unwrap(),
-            signing(key).verifying_key(),
-        );
-        ada.host().keep_group(&seed, None, &[]).unwrap();
-    }
-    let seen = home_page(
-        engine,
-        &ada,
-        json!({ "all": "#home section[data-colour] > h2" }),
-    )
-    .await;
-    eprintln!("the home page's run: {seen:#}");
-    let mut heads: Vec<String> = serde_json::from_value(seen["all"].clone()).unwrap();
-    heads.sort();
-    let (sams, yours) = (&heads[0], &heads[1]);
-    assert!(
-        sams.starts_with("Trip (sam’s, since ") && sams.ends_with(')'),
-        "{seen:#}"
-    );
-    assert!(
-        yours.starts_with("Trip (yours, since ") && yours.ends_with(')'),
-        "{seen:#}"
-    );
-    drop(ada);
 }
 
 in_webkit!(

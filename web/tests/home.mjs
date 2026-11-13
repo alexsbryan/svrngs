@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "opens"?: ["<link>", ...], "older"?: true, "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "older"?: true, "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
 //
 // A `do` step's fourth element, `until`, is words `all`'s text holds before
 // it is read. `visible` hides the page, then shows it, once the `do` steps
@@ -48,13 +48,6 @@ if (args.older) {
 }
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
-// With `opens`, links pasted under "Open a link from your group", one at a
-// time: where each would open a tab — `window.open` kept, not followed — and
-// what the section then says (#153).
-if (args.opens)
-  await context.addInitScript(() =>
-    Object.assign(window, { opened: [], open: (u) => void window.opened.push(String(u)) }),
-  );
 try {
   const page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
@@ -206,17 +199,6 @@ try {
   const [afterAt, laterWords] = [args.after].flat();
   await until(afterAt, laterWords);
   const later = afterAt ? await page.locator(afterAt).allTextContents() : null;
-  const opens = [];
-  for (const link of args.opens ?? []) {
-    await page.locator('#open input').fill(link, { timeout: 30_000 });
-    await page.locator('#open button').click();
-    opens.push(
-      await page.evaluate(() => [
-        window.opened.splice(0),
-        document.querySelector('#open p').textContent,
-      ]),
-    );
-  }
   // With `drawn`, a selector: each match's class and words, as the page
   // drew them once loaded (v1ui-door (c): the door) and judged — none still
   // "asking…", as each is until `/v1/lends` answers or fails (question.js
@@ -288,7 +270,6 @@ try {
       text,
       opened,
       labelled,
-      opens,
       sent,
       logs,
       loads,

@@ -137,7 +137,7 @@ record_api 13, join_by_link 12, and 152 in 34 smaller targets.
 
 | Seam | Contained place | What moves out of everything else |
 |---|---|---|
-| B | the browser step, one test per engine and page: the home page (Chromium), the group's page and joining by link (WebKit, `join_page`), a carried app's signer frame and cookie in both | a page's words and decisions to Node laws over the composed page (`web/tests/pages/enter.test.mjs` composes the group's page; the home page's twin is missing); node answers to handlers |
+| B | the browser step, one test per engine and page: the home page (Chromium, `the_home_page_says_what_it_is_for`), the group's page and joining by link (WebKit, `join_page`), a carried app's signer frame and cookie in both | a page's words and decisions to Node laws over the composed page (`web/tests/pages/enter.test.mjs` composes the group's page, `web/tests/pages/twin.mjs` runs the home page's); node answers to handlers |
 | W | none needed: a scene says whose pages each step leaves, and an error from one is not judged, whatever its words (`web/tests/leaving.mjs`, its law `leaving.test.mjs`) | holyarrs H8's list of messages, gone |
 | M | the `playback` step, as it is | nothing left |
 | Q | `door::a_range_is_served_206_and_416_through_the_door_sha_exact` (bytes cross the door), `accept::a_handler_reads_the_dialers_verified_key_and_no_header_names_another`, `folders::a_change_by_any_member_reaches_another_s_directory` | header rules, refusals and decisions to door.rs's pure functions and to `door::router` in-process; syncing claims to an in-memory transport |
@@ -160,9 +160,12 @@ record_api 13, join_by_link 12, and 152 in 34 smaller targets.
    `ring_sync::To`, answered by the peer's `ring_routes::router`; and a holder
    at `Folders::fetch` for blobs. Frees folders, record_api's push and drain,
    removal's races, canaries' convergence.
-5. The home page composed in Node from its flows with recorded `/v1`
-   answers, the twin of `pages/enter.test.mjs`. Frees most of the browser
-   and pages steps' home-page tests. No production seam.
+5. Landed: `web/tests/pages/twin.mjs` runs the home page's own home.js in
+   Node, every module loaded anew for each page (`pages/layout.mjs`),
+   Preact drawing into a document of plain objects, each route answered
+   from a recording in the shape its writer gives it; a law reads what was
+   drawn, asked and done outside the page as data
+   (`web/tests/pages/home.test.mjs`, twenty laws). No production seam.
 6. A probe passed in at home.rs's `share::listening`, so no test scans ports.
 7. `now` passed in where a bar is a timing: door.rs `unix_now`, carried's
    `spent`, the visit tests' end set from the real clock.
@@ -180,11 +183,11 @@ map changed with it.
 
 | # | Unit | Tests | Moves to | Needs |
 |---|---|---|---|---|
-| 1 | browser step: claims the map finds covered by laws and handlers. 4 of 54 retired (6 rows): an alias in two zones, a fragment's open and its words, a lend's script at a phone's page, a lost post. 50 kept: 21 on the home page (harness 5); 21 whose node answers are claimed only under `crates/*/tests` (door, carried, surface, lend_origin, guests, relay_fallback, a removed dialer's admission, the issuer's `/ask`: harnesses 1-4); 8 on a browser mechanism (a real alias landing, the wasm's streaming, a signer frame's cookie, a worker's update, a relay move, Cache across a restart, Web Locks across tabs, clipboard and request log) | 54 | `pages/enter.test.mjs`, `proxied.test.mjs` | none |
+| 1 | browser step: claims the map finds covered by laws and handlers. 19 of 54 retired: an alias in two zones, a fragment's open and its words, a lend's script at a phone's page, a lost post (6 rows); and 15 on the home page (unit 5). Kept on the home page, unit 5's; 21 whose node answers are claimed only under `crates/*/tests` (door, carried, surface, lend_origin, guests, relay_fallback, a removed dialer's admission, the issuer's `/ask`: harnesses 1-4); 8 on a browser mechanism (a real alias landing, the wasm's streaming, a signer frame's cookie, a worker's update, a relay move, Cache across a restart, Web Locks across tabs, clipboard and request log) | 54 | `pages/enter.test.mjs`, `proxied.test.mjs`, `pages/home.test.mjs` | none |
 | 2 | door, oidc, session, accept: pure rows and in-process routers. Landed for the door: `tests/door`'s 60 tests are 7 contained ones (bytes both ways, what the service and a member receive, each refusal family, live answers cut, what is lent, the authorize path, a newcomer through the ring), the rest `moved` in the map, their rules pure rows over explicit inputs and a rail on a tempdir (`door/tests.rs`, `oidc/tests.rs` with the token route by oneshot, `node/tests.rs`, `lend/tests.rs`) | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3; the live cuts and the limit's window, 7 |
 | 3 | n0 out of the gate | 25 | a relay on 127.0.0.1 | harness 8 |
 | 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob); ring_routes' 7 landed, asked in-process | 36, 29 left | routers by oneshot with a `Dialer`; transport | harness 1, 4 |
-| 5 | pages and the browser step's home-page tests | ~60 | Node laws over the composed home page | harness 5 |
+| 5 | pages and the browser step's home-page tests. 25 retired to `pages/home.test.mjs`: 15 of the browser step's 23 (its words, the ask, the door, removals, refusals, the folder, the terminal line, links, the address and its Copy, a pasted link, two Trips, an unreadable room and register, the slowest computer as an order) and 10 of the pages step's 36 (what was done said once; five answers said once a press; a lapsed session at Leave and at an ask; WiFi opened in one foot; a folder opened twice). `the_home_page_says_what_it_is_for` shrunk to B's contained test: loaded under its policy with no page error, June's first look, look.css. Left, 7 browser tests, each asserting a node act only `crates/*/tests` or a socket also hold: a lend's declaration gone (limit) or holding its secret (sign-in), a removed computer told, a link's issuer, the room served on this WiFi, a planted opener and a tab by keyboard and mouse, ports probed. Left, 26 pages tests: the phone's page in WebKit (9), a node's write read back on `visible` or `again` (choices, lends, a bring, a join over QUIC), a visit or the screen on the real clock, and drawings not moved yet (a group made or joined, Play in two lists) | 59, 34 left, one of them B's contained test | Node laws over the composed home page | harness 5 (landed); harness 7 for the clock, 1-4 for node acts |
 | 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |
 | 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address | ~95 | `src/*_tests.rs` over the parts that print and decide | harness 8, small splits per row |
 | 8 | scenes and holyarrs; H8's list of WebKit's messages replaced by whose page each step leaves (`web/tests/leaving.mjs`) | 20 | handlers and fixtures; one scene per daemon stays | none for W; the rest as the map says |

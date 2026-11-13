@@ -114,53 +114,6 @@ fn none_wrong(checks: &[(bool, &str)], seen: &Value) {
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
 }
 
-in_chromium!(
-    /// **Two refusals on /ask are said once** (page-acts (d)). Ada's home
-    /// page asks whether her page may use her shelf; her session lapses
-    /// (its key dropped), and she presses Yes, then, once that is
-    /// refused, Yes again: the section says the refusal once, the second
-    /// in place of the first. Watched failing on v1 (`UI` flipped), whose
-    /// `ask` appends each refusal (home.js@19b63b2b:343).
-    two_refusals_on_ask_are_said_once
-);
-async fn two_refusals_on_ask_are_said_once(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, home, _) = ada(dir.path(), &relay).await;
-    let ask = format!(
-        "{home}ask?lend={}&app={}&back=/",
-        label("shelf"),
-        label("page")
-    );
-    let yes = "#home section button:text-is('Yes')";
-    let press = |n: u8| json!({ "at": yes, "traced": ["ASK: unsaid", n] });
-    let args = json!({ "home": ask, "shown": "#home section h2", "forget": true, "press": [press(1), press(2)], "at": "#home section", "within": 15_000 });
-    let seen = drive(engine, "pages/acts.mjs", args, None).await;
-    let texts: Vec<&str> = (seen["texts"].as_array().into_iter().flatten())
-        .filter_map(Value::as_str)
-        .collect();
-    let first = texts
-        .first()
-        .and_then(|t| t.split("Not now").nth(1))
-        .unwrap_or_default();
-    none_wrong(
-        &[
-            (seen["went"] != json!([true, true]), "each Yes is refused"),
-            (
-                first.trim().is_empty(),
-                "the refusal is said after the buttons",
-            ),
-            (
-                texts.len() != 2 || texts[0] != texts[1],
-                "the second refusal said in place of the first",
-            ),
-            (seen["reloads"] != 0, "with no reload"),
-        ],
-        &seen,
-    );
-    drop(ada);
-}
-
 /// Ada's yes kept, `{label: {said, at}}` by her key, at `path`, as her
 /// computer's door keeps a choice (door/choices.rs `Kept`).
 fn kept_yes(path: &Path, app: &str) {
