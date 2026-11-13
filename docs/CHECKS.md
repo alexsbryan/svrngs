@@ -214,6 +214,54 @@ no gate test but `n0`'s depends on n0. The isolated Node laws, 234.
    outside, and no person's log names an n0 host, where every one did
    with the shipped binary.
 
+### Harnesses 3 and 4: the design
+
+One rule for both: a trait only where the network meets the node
+(RUST_ARCH 7, a network client), owned beside the transport, with one
+impl in the product and its test impl in a test file; no `cfg(test)`
+fork or test-only branch in product code. A test impl decides nothing:
+what a member answers is the answer of the router the node serves, so
+every refusal a test watches is the production route's, and nothing
+second stands beside a decider.
+
+**Harness 4, a member asked in this process.** The boundary is the one
+the round, a removal's tell and the live lane already share: a request
+to the computer a `Contact` names, its answer read whole
+(`IrohTransport::fetch`). It is `iroh::Fetch`, one method, in iroh.rs.
+`ring_sync::To` is `(&dyn Fetch, &Contact)` and `RailApi::transport` an
+`Arc<dyn Fetch>`; the node hands its one `IrohTransport` to both.
+- Production impl: `IrohTransport`, its `fetch` unchanged (the
+  connection kept, one retry on a fresh dial, `ANSWERED_WITHIN`).
+- Test impl: `iroh::tests::InProcess`, each key's router asked by tower
+  `oneshot` with the asker's `Dialer` inserted as `IrohAcceptor`
+  inserts it; a key it serves nothing for is `Unsent::NoPath`.
+- What it does not claim, and where that stays: the acceptor's admit
+  decision and the verified key (`accept`'s tests), a request riding a
+  kept QUIC connection (iroh/tests.rs
+  `a_request_rides_a_stream_of_the_one_connection_kept_to_the_member`),
+  a dial's cap (`a_computer_that_answers_no_dial_is_asleep_within_the_cap`),
+  folders syncing (`folders::a_change_by_any_member_reaches_another_s_directory`).
+- `IrohTransport::send`, a streamed answer (the door's and origin's),
+  stays concrete: hyper's `Incoming` has no in-memory constructor, and
+  none of the units below needs it.
+
+**Harness 3, a Door without a Host.** The door's one tie to a socket is
+`Door::folders`, whose `Arc<Host>` holds a bound `Endpoint` beside the
+transport; an `iroh::Endpoint` exists only bound. So the seam is the
+Host's network half, not the door: `Host::endpoint` and
+`Host::transport` become one owned value behind a trait at the same
+boundary, which `tiers.rs` (relays added and removed, the home relay and
+address watched), invite.rs and join.rs (the key, a link's dial),
+play.rs, a folder's Blobs dial (`Folders::fetch`, a QUIC `Connection`
+handed to iroh-blobs) and `Fetch` all read. Its production impl is the
+endpoint and transport as they are; its test impl answers members by
+`InProcess` and a Blobs get from the holder's own store, so a door,
+a folder and the record's routes run with no endpoint. Owner: node.rs,
+where `Node::start_every` builds the Host. Not a second decider for the
+same reason as harness 4. Cost: the trait carries about ten methods
+across 30 call sites, more than what is left under the cap after
+harness 4 (see "Units, in order", unit 4, and the stop it names).
+
 ### Units, in order
 
 Largest share and flake history first. Each lands per the verification
