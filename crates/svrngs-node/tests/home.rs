@@ -3,22 +3,30 @@
 //! `http://svrngs.localhost:<api port>/`, on the record API's listener.
 //! Alex founds a group and lets Sam in. Alex lends `night`, a page reading
 //! kind `taste`, and a `taste` that asks; Sam lends a `taste` that asks.
-//! Two nodes in one process, no relay, each on 127.0.0.1 alone, Sam
-//! reached by seeded addresses, as `tests/lend_origin.rs`.
+//! Two nodes in one process on one wire (common/on_wire.rs; docs/CHECKS.md,
+//! harness 3), no endpoint, each API asked of its routes as a browser on
+//! its computer asks it. A lent service still listens on a loopback port,
+//! as a person's does, and the door dials it there.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 #[allow(dead_code)]
 #[path = "door/origins.rs"]
 mod origins;
+#[allow(
+    dead_code,
+    reason = "this file's computers are on the wire; pair.rs's over QUIC are its other loaders'"
+)]
 #[path = "common/pair.rs"]
 mod pair;
 
 use std::time::Duration;
 
-use common::{heard, loopback_sockets, Browser};
-use pair::{alex_lets_sam_in, signing, start, NS};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use common::heard;
+use on_wire::{http, Browser};
+use pair::{let_sam_in, signing, start, NS};
 
 use iroh_relay::server::{RelayConfig, Server, ServerConfig};
 use svrngs_core::link::Link;
@@ -45,6 +53,15 @@ fn declare(
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
 }
 
+/// pair.rs `alex_lets_sam_in` with both computers on this test's wire,
+/// where Alex's reaches Sam's by key alone.
+async fn alex_lets_sam_in(alex_dir: &std::path::Path, sam_dir: &std::path::Path) -> (Node, Node) {
+    let alex = on_wire::start(1, alex_dir).await;
+    let sam = on_wire::start(2, sam_dir).await;
+    let_sam_in(&alex, &sam);
+    (alex, sam)
+}
+
 /// What came back: the status, the head and the body.
 struct Got {
     status: u16,
@@ -67,7 +84,8 @@ impl Got {
 }
 
 /// One request from `browser` at `host`, `extra` its other header lines,
-/// with the session svrngs opened there when `extra` is a page's.
+/// with the session svrngs opened there when `extra` is a page's: asked of
+/// the routes at the browser's node's API, as its listener would be asked.
 async fn ask(
     browser: &Browser<'_>,
     method: &str,
@@ -76,46 +94,33 @@ async fn ask(
     extra: &str,
     body: &str,
 ) -> Got {
-    let mut sock = tokio::net::TcpStream::connect(browser.api()).await.unwrap();
     let path = browser.path(host, path, extra);
     let proof = browser.proof(method, host, &path, extra, body).await;
-    let request = format!(
-        "{method} {path} HTTP/1.1\r\nHost: {host}\r\n{extra}{proof}Content-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
-        body.len()
-    );
-    sock.write_all(request.as_bytes()).await.unwrap();
-    let mut reply = Vec::new();
-    tokio::time::timeout(Duration::from_secs(30), sock.read_to_end(&mut reply))
+    let mut lines = axum::http::HeaderMap::new();
+    for (name, value) in (extra.lines().chain(proof.lines())).filter_map(|l| l.split_once(':')) {
+        let name = axum::http::HeaderName::from_bytes(name.trim().as_bytes()).unwrap();
+        lines.append(name, value.trim().parse().unwrap());
+    }
+    let url = format!("http://{}{path}", browser.api());
+    let asked = (http().request(method.parse().unwrap(), url))
+        .header("host", host)
+        .header("content-type", "application/json")
+        .headers(lines)
+        .body(body);
+    let reply = tokio::time::timeout(Duration::from_secs(30), asked.send())
         .await
         .expect("an answer")
         .unwrap();
-    let reply = String::from_utf8_lossy(&reply).into_owned();
-    let (head, body) = reply.split_once("\r\n\r\n").unwrap();
-    let body = match head
-        .to_ascii_lowercase()
-        .contains("transfer-encoding: chunked")
-    {
-        true => unchunk(body),
-        false => body.to_string(),
-    };
+    let status = reply.status().as_u16();
+    let mut head = format!("HTTP/1.1 {status}");
+    for (name, value) in reply.headers() {
+        head += &format!("\r\n{name}: {}", value.to_str().unwrap_or_default());
+    }
     Got {
-        status: head[9..12].parse().unwrap(),
-        head: head.to_string(),
-        body,
+        status,
+        head,
+        body: reply.text().await.unwrap(),
     }
-}
-
-fn unchunk(mut rest: &str) -> String {
-    let mut out = String::new();
-    while let Some((size, tail)) = rest.split_once("\r\n") {
-        let n = usize::from_str_radix(size.trim(), 16).unwrap();
-        if n == 0 {
-            break;
-        }
-        out.push_str(&tail[..n]);
-        rest = &tail[n + 2..];
-    }
-    out
 }
 
 /// **The home page answers only itself, shows what `/v1/lends` answers, and
@@ -395,8 +400,8 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
         heads[&(2, "taste")].lock().unwrap().len() == 1,
         "Sam's taste was asked once, after the yes"
     );
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
+    sam.net().close().await;
+    alex.net().close().await;
 }
 
 /// A stand-in for Immich's `GET /api/users/me` on `listener`: 200 for
@@ -467,9 +472,7 @@ fn sign_in_stand_in(listener: std::net::TcpListener) {
 #[tokio::test]
 async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    sam.transport()
-        .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
+    let (_alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
     tokio::time::timeout(Duration::from_secs(30), sam.round())
         .await
         .expect("Sam's computer hears it lets Sam in");
@@ -605,8 +608,6 @@ async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
 async fn the_apps_account_is_given_on_the_home_page() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    sam.transport()
-        .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
     tokio::time::timeout(Duration::from_secs(30), sam.round())
         .await
         .expect("Sam's computer hears it lets Sam in");
@@ -737,8 +738,6 @@ fn walkdir(dir: &std::path::Path) -> Vec<std::path::PathBuf> {
 async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    sam.transport()
-        .add_known_peer(alex.endpoint().id(), loopback_sockets(alex.endpoint()));
     tokio::time::timeout(Duration::from_secs(30), sam.round())
         .await
         .expect("Sam's computer hears it lets Sam in");
@@ -851,8 +850,8 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
     assert_eq!(limit(), None, "no longer lent");
     let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
     assert_eq!(listed["lent"], serde_json::json!([]), "{listed:#}");
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
+    sam.net().close().await;
+    alex.net().close().await;
 }
 
 /// **A lender turns on signing people in with svrngs from the home page**
@@ -868,11 +867,11 @@ async fn a_lend_s_limit_is_changed_on_the_home_page_and_the_door_takes_it() {
 async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
     use std::os::unix::fs::PermissionsExt;
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
-    let (shelf_at, _kept) = origins::head_origin().await;
+    let alex = on_wire::start(1, dir.path()).await;
+    // A port never dialled: turning sign-in on asks nothing of the service.
     let lends = lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
-    let body = serde_json::json!({ "port": shelf_at.port(), "kind": "books", "groups": [NS] });
+    let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     let name = lend::LendName::parse("shelf").unwrap();
     let api = alex.api_addr();
@@ -936,7 +935,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
         !after.to_string().contains(secret),
         "the secret is never shown again: {after:#}"
     );
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }
 
 /// **Groups that cannot be read are said so** (ralph/REVIEW_FINDINGS.md
@@ -947,7 +946,7 @@ async fn a_lend_is_signed_in_with_svrngs_from_the_home_page() {
 async fn groups_that_cannot_be_read_are_said_so() {
     use std::os::unix::fs::PermissionsExt;
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
+    let alex = on_wire::start(1, dir.path()).await;
     let seed = Roster::new(
         [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
             .into_iter()
@@ -974,7 +973,7 @@ async fn groups_that_cannot_be_read_are_said_so() {
         "{}",
         got.body
     );
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }
 
 /// **svrngs's own answers at a lend's origin are readable by a page that
@@ -1132,8 +1131,8 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
         unread(403, Some("closed")),
         "night's fetch at the home page"
     );
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
+    sam.net().close().await;
+    alex.net().close().await;
 }
 
 /// **The page's link for a group this computer does not hold is refused,
@@ -1146,7 +1145,7 @@ async fn svrngs_s_own_answers_are_readable_by_a_page_that_reads_the_lend_and_no_
 async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
     let (said, _heard) = heard("link=debug,home=debug");
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
+    let alex = on_wire::start(1, dir.path()).await;
     let home = format!("svrngs.localhost:{}", alex.api_addr().port());
     let own =
         format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
@@ -1171,7 +1170,7 @@ async fn the_page_s_link_for_a_group_not_held_is_refused_and_traced() {
         traced(" home: home: refused"),
         "the page's refusal traced: {log}"
     );
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }
 
 /// **A link the page makes before this computer has a home names the
@@ -1216,6 +1215,9 @@ async fn a_link_the_page_makes_before_a_home_names_the_home_it_comes_to() {
         group::Name::parse("alex").unwrap(),
         SigningKey::from_bytes(&[1; 32]).verifying_key(),
     );
+    // Its API asked of its routes: the claim is the home iroh reports,
+    // not the listener.
+    on_wire::served(&alex);
     let kept = alex.host().keep_group(&house, None, &[]);
     kept.expect("Alex keeps a group that names no relay of its own");
     let home = || alex.endpoint().addr().relay_urls().next().cloned();
@@ -1260,7 +1262,7 @@ async fn a_link_the_page_makes_before_a_home_names_the_home_it_comes_to() {
 async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
     let (said, _heard) = heard("home=debug");
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
+    let alex = on_wire::start(1, dir.path()).await;
     // The lender must hold the group it lends to; without one, an
     // explicit selection is refused before the port is ever checked.
     let seed = Roster::new(
@@ -1323,7 +1325,7 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
         "each with what refused it: {log}"
     );
     assert!(refused[0].contains("expected a nonzero u16"), "{log}");
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }
 
 /// **Looking for what runs here, a failed read said and traced by which**
@@ -1336,7 +1338,7 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
 async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
     let (said, _heard) = heard("home=debug");
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
+    let alex = on_wire::start(1, dir.path()).await;
     let lends = lend::lends_dir(dir.path());
     let _ = std::fs::remove_dir_all(&lends);
     std::fs::write(&lends, "not a directory").unwrap();
@@ -1357,7 +1359,7 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
             && traced.contains("cannot be read: Not a directory"),
         "which read, and its error: {traced}"
     );
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }
 
 /// **The home page's modules are served, each as its file, and no other**
@@ -1372,7 +1374,7 @@ async fn looking_for_what_runs_here_says_which_read_failed_and_traces_why() {
 #[tokio::test]
 async fn the_home_page_s_modules_are_served_each_as_its_file_and_no_other() {
     let dir = tempfile::tempdir().unwrap();
-    let node = start(1, dir.path()).await;
+    let node = on_wire::start(1, dir.path()).await;
     let (browser, port) = (&Browser::of(&node), node.api_addr().port());
     let home = format!("svrngs.localhost:{port}");
     let own = "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n";
@@ -1414,7 +1416,7 @@ async fn the_home_page_s_modules_are_served_each_as_its_file_and_no_other() {
         let got = ask(browser, "GET", &home, path, own, "").await;
         assert_eq!(got.status, 404, "{path}: {}", got.body);
     }
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 /// Every change to a lend's declaration holds its lock for the whole read,
@@ -1428,7 +1430,7 @@ async fn the_home_page_s_modules_are_served_each_as_its_file_and_no_other() {
 #[tokio::test]
 async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
+    let alex = on_wire::start(1, dir.path()).await;
     let lends = lend::lends_dir(dir.path());
     std::fs::create_dir_all(&lends).unwrap();
     let body = serde_json::json!({ "port": 9, "kind": "books", "groups": [NS] });
@@ -1471,7 +1473,7 @@ async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
         kept.sign_in_with_svrngs.is_some(),
         "the audience edit kept the client"
     );
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }
 
 /// A selection names only groups the lender stands in now
@@ -1483,7 +1485,7 @@ async fn a_change_while_another_holds_the_lend_is_busy_and_writes_nothing() {
 #[tokio::test]
 async fn an_audience_names_only_groups_the_lender_stands_in() {
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
+    let alex = on_wire::start(1, dir.path()).await;
     let roster = |p: &str, k: u8| {
         Roster::new(
             [(Person::parse(p).unwrap(), vec![actor_of(&signing(k))])]
@@ -1509,5 +1511,5 @@ async fn an_audience_names_only_groups_the_lender_stands_in() {
     assert_eq!(kept, lend::Audience::Selected(vec![NS.into()]));
     let house = ask(browser, "POST", &home, "/lent", &own, &to(NS)).await;
     assert_eq!(house.status, 204, "{}", house.body);
-    alex.endpoint().close().await;
+    alex.net().close().await;
 }

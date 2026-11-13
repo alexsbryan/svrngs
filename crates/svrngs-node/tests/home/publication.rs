@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 use super::*;
 use serde_json::{json, Value};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, oneshot};
 
 const PHRASE: &str = "acorn-basil-cabin-daisy-eagle";
@@ -139,8 +140,16 @@ fn valid(node: &Node, token: &str) -> bool {
         .is_some_and(|(_, i)| i.key == actor_of(&token.key()))
 }
 
-async fn seeded(dir: &std::path::Path) -> Node {
+/// Alex's computer over QUIC, its API asked of its routes as home.rs's
+/// `ask` asks.
+async fn alex(dir: &std::path::Path) -> Node {
     let node = start(1, dir).await;
+    on_wire::served(&node);
+    node
+}
+
+async fn seeded(dir: &std::path::Path) -> Node {
+    let node = alex(dir).await;
     node.rail()
         .set_seed(
             NS,
@@ -170,7 +179,7 @@ async fn publish(browser: &Browser<'_>, method: &str, path: &str, body: &str) ->
 #[tokio::test]
 async fn publication_unavailable_is_retryable_not_an_ended_invitation() {
     let dir = tempfile::tempdir().unwrap();
-    let node = start(1, dir.path()).await;
+    let node = alex(dir.path()).await;
     node.rail()
         .set_seed(
             NS,
@@ -494,7 +503,7 @@ async fn publication_restart_child() {
     let node = if phase == "pending" {
         seeded(dir).await
     } else {
-        start(1, dir).await
+        alex(dir).await
     };
     let browser = Browser::of(&node);
     let previous = status(&node).await;

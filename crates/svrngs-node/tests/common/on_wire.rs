@@ -73,19 +73,91 @@ pub async fn proved(
         return HeaderMap::new();
     }
     let key = opened(node, lend).await;
-    let epoch = (http().get(format!("http://{}/svrngs-session-epoch", node.api_addr())))
-        .header("host", &host)
-        .send()
-        .await
-        .unwrap();
-    let epoch = epoch.text().await.unwrap();
-    let proof = crate::common::signed(&key, (method, &host, path), body, false, &epoch);
+    let proof = signed(node, &key, (method, &host, path), body, false).await;
     let mut headers = HeaderMap::new();
     for (name, value) in proof.lines().filter_map(|l| l.split_once(':')) {
         let name = axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap();
         headers.insert(name, value.trim().parse().unwrap());
     }
     headers
+}
+
+/// common/mod.rs `prove` with `node` asked in-process: the boot challenge
+/// read of its routes at `host`, then the lines common/mod.rs `signed`
+/// signs with `key`.
+async fn signed(
+    node: &Node,
+    key: &[u8],
+    (method, host, path): (&str, &str, &str),
+    body: &str,
+    navigate: bool,
+) -> String {
+    let epoch = (http().get(format!("http://{}/svrngs-session-epoch", node.api_addr())))
+        .header("host", host)
+        .send()
+        .await
+        .unwrap();
+    let epoch = epoch.text().await.unwrap();
+    crate::common::signed(key, (method, host, path), body, navigate, &epoch)
+}
+
+/// common/mod.rs `Browser` with its node asked in-process: the same read
+/// capability and token, each origin's key enrolled once by [`opened`],
+/// each request's lines signed by [`signed`].
+pub struct Browser<'a> {
+    node: &'a Node,
+    of: crate::common::Browser<'a>,
+    held: RefCell<HashMap<String, Vec<u8>>>,
+}
+
+impl<'a> Browser<'a> {
+    pub fn of(node: &'a Node) -> Self {
+        let (of, held) = (crate::common::Browser::of(node), RefCell::default());
+        Self { node, of, held }
+    }
+
+    /// The address its API is asked at.
+    pub fn api(&self) -> SocketAddr {
+        self.node.api_addr()
+    }
+
+    /// common/mod.rs `Browser::bearer`.
+    pub fn bearer(&self) -> String {
+        self.of.bearer()
+    }
+
+    /// common/mod.rs `Browser::path`.
+    pub fn path(&self, host: &str, path: &str, extra: &str) -> String {
+        self.of.path(host, path, extra)
+    }
+
+    /// common/mod.rs `Browser::proof`, its node asked in-process.
+    pub async fn proof(
+        &self,
+        method: &str,
+        host: &str,
+        path: &str,
+        extra: &str,
+        body: &str,
+    ) -> String {
+        let name = host.split_once(".localhost").map(|(n, _)| n);
+        let Some(name) =
+            name.filter(|_| extra.contains("Sec-Fetch-Site") && !path.starts_with("/svrngs-as/"))
+        else {
+            return String::new();
+        };
+        let held = self.held.borrow().get(name).cloned();
+        let key = match held {
+            Some(key) => key,
+            None => {
+                let key = opened(self.node, Some(name).filter(|n| *n != "svrngs")).await;
+                self.held.borrow_mut().insert(name.into(), key.clone());
+                key
+            }
+        };
+        let navigate = extra.contains("Sec-Fetch-Mode: navigate");
+        signed(self.node, &key, (method, host, path), body, navigate).await
+    }
 }
 
 /// common/mod.rs `opened_at`, its two asks of `node`'s routes: `/v1/open`

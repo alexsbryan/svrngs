@@ -1,8 +1,9 @@
 //! Alex's computer and Sam's in one process, no relay, each on 127.0.0.1
 //! alone, Sam reached by seeded addresses: one copy, where home.rs and
 //! lend_origin.rs each wrote it out and peer.rs a third time
-//! (REVIEW-audit-arch-auto-1). Only those three load it (`#[path]`), so
-//! each test binary that compiles it uses all of it.
+//! (REVIEW-audit-arch-auto-1). Those and session.rs load it (`#[path]`),
+//! each using all of it but home.rs, whose computers meet on a wire and
+//! take only [`let_sam_in`].
 
 use std::path::Path;
 
@@ -44,12 +45,21 @@ pub async fn start(seed: u8, dir: &Path) -> Node {
 pub async fn alex_lets_sam_in(alex_dir: &Path, sam_dir: &Path) -> (Node, Node) {
     let alex = start(1, alex_dir).await;
     let sam = start(2, sam_dir).await;
+    let_sam_in(&alex, &sam);
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+    (alex, sam)
+}
+
+/// Alex founds a group and lets Sam in, on Alex's computer and Sam's
+/// however they reach each other.
+pub fn let_sam_in(alex: &Node, sam: &Node) {
     let seed = Roster::new(
         [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
             .into_iter()
             .collect(),
     );
-    for node in [&alex, &sam] {
+    for node in [alex, sam] {
         node.rail().set_seed(NS, &seed).unwrap();
     }
     svrngs_core::tests_support::let_in_by(NS, &signing(2), "sam", |act| {
@@ -66,7 +76,4 @@ pub async fn alex_lets_sam_in(alex_dir: &Path, sam_dir: &Path) -> (Node, Node) {
         .ops_missing_from_within(NS, &theirs, usize::MAX)
         .unwrap();
     sam.rail().ingest_all(NS, &ops).unwrap();
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
-    (alex, sam)
 }
