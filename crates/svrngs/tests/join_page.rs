@@ -226,14 +226,14 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         .unwrap()
         .to_string();
 
-    let page = cli::checked_page(origin.clone())
+    let page = cli::checked_page(Some(origin.clone()))
         .await
         .expect("the page's server serves it at every name under localhost, so no other step");
     let (seed, printed) = cli::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
-        Some(&page),
+        page.as_ref(),
         &[],
         &ours,
     )
@@ -382,18 +382,20 @@ async fn a_phone_opening_sams_device_link_is_added_as_sam_asked_no_name(engine: 
     let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
     let (phone, out, origin) = phone(json!({ "engine": engine.as_str(), "site": site })).await;
     let origin = Origin::parse(&origin).unwrap();
-    let page = cli::checked_page(origin).await.expect("the page is served");
+    let page = cli::checked_page(Some(origin))
+        .await
+        .expect("the page is served");
     let (seed, _) = cli::new_group(
         &sam,
         Name::parse("house").unwrap(),
         Name::parse("Sam").unwrap(),
-        Some(&page),
+        page.as_ref(),
         &[],
         &ours,
     )
     .await
     .expect("Sam makes house");
-    let (_, printed, _) = cli::link_to(&sam, "house", Some(&page), &ours, true, &[])
+    let (_, printed, _) = cli::link_to(&sam, "house", page.as_ref(), &ours, true, &[])
         .await
         .expect("Sam's computer makes a link for Sam's devices");
     let link = printed.https.clone().expect("an https link on the origin");

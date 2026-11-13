@@ -1061,12 +1061,14 @@ fn place(origin: &Origin) -> Option<(&str, &str)> {
 /// page at its root as the page's own address does (u5-10: www.svrnme.sh/g/
 /// resolved every name and served the page at none but its own); refused
 /// when it does not, and not judged when the page's own address does not
-/// give the page (u5-2).
+/// give the page (u5-2). No page given, none is checked: `new` and `link`
+/// take one only with `--origin`.
 #[expect(
     clippy::disallowed_methods,
     reason = "draws a name nobody made, to ask the page's host for the page there"
 )]
-pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
+pub async fn checked_page(page: Option<Origin>) -> Result<Option<Origin>, Refusal> {
+    let Some(page) = page else { return Ok(None) };
     // An address in brackets is IPv6's, a literal no name falls under.
     let named = place(&page).filter(|(_, a)| {
         let host = a.split(':').next().unwrap_or_default();
@@ -1104,7 +1106,7 @@ pub async fn checked_page(page: Origin) -> Result<Origin, Refusal> {
         return Err(no());
     }
     tracing::debug!(target: "cli", page = page.as_str(), authority, "cli: a name nobody made under the page's host serves the page, so each app opens at an address of its own");
-    Ok(page)
+    Ok(Some(page))
 }
 
 /// A link as printed: the client's, and the https one for a group that
@@ -1689,10 +1691,7 @@ async fn serve(
             let person = person
                 .or_else(user_name)
                 .ok_or_else(|| Refusal::NoName(name.clone()))?;
-            let page = match origin {
-                Some(page) => Some(checked_page(page).await?),
-                None => None,
-            };
+            let page = checked_page(origin).await?;
             // The one rule for a name, asked before the group is kept (#138).
             let beside = group::namesakes(node.rail().root(), &name, &svrngs_node::actor_of(key));
             let (seed, link) = new_group(node, name, person, page.as_ref(), &kept, relay).await?;
@@ -1722,10 +1721,7 @@ async fn serve(
             device,
             relays,
         } => {
-            let page = match origin {
-                Some(page) => Some(checked_page(page).await?),
-                None => None,
-            };
+            let page = checked_page(origin).await?;
             let (seed, link, device) =
                 link_to(node, &group, page.as_ref(), relay, device, &relays).await?;
             Said::Linked { seed, link, device }

@@ -646,9 +646,12 @@ enum Elsewhere {
 #[tokio::test]
 async fn each_app_opens_at_its_own_address_only_where_the_page_opens_there() {
     let host = page_host(Elsewhere::Page).await;
-    assert_eq!(cli::checked_page(host.clone()).await.unwrap(), host);
+    assert_eq!(
+        cli::checked_page(Some(host.clone())).await.unwrap(),
+        Some(host)
+    );
     for elsewhere in [Elsewhere::Other, Elsewhere::Nothing] {
-        let refused = cli::checked_page(page_host(elsewhere).await).await;
+        let refused = cli::checked_page(Some(page_host(elsewhere).await)).await;
         let Err(refused) = refused else {
             panic!("a host serving {elsewhere:?} at other names is refused: {refused:?}")
         };
@@ -667,10 +670,11 @@ async fn each_app_opens_at_its_own_address_only_where_the_page_opens_there() {
 /// name, so 127.0.0.1's page is asked for and not judged (u6-00).
 #[tokio::test]
 async fn a_page_origin_says_where_its_apps_open_or_is_refused() {
-    let page = |raw: &str| Origin::parse(raw).unwrap();
-    let ours = cli::checked_page(page_host(Elsewhere::Page).await)
+    let page = |raw: &str| Some(Origin::parse(raw).unwrap());
+    let ours = cli::checked_page(Some(page_host(Elsewhere::Page).await))
         .await
-        .unwrap();
+        .unwrap()
+        .expect("a page given is a page checked");
     let at = ours
         .as_str()
         .trim_start_matches("http://")
