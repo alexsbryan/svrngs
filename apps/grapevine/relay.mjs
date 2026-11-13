@@ -108,11 +108,11 @@ export function heldIn(store, name) {
  * against the group's people; null where it answers none (§13.3). Never a
  * name from the config.
  */
-export function heldBy(api, token, store, trace = debug) {
+export function heldBy(api, token, store, trace = debug, ask = fetch) {
   return async () => {
     let groups;
     try {
-      const res = await fetch(`${api}/v1/groups`, {
+      const res = await ask(`${api}/v1/groups`, {
         headers: { authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`${res.status}`);

@@ -29,7 +29,7 @@ import { readFileSync, renameSync, writeFileSync } from 'node:fs';
  * (give-token). A person is named by their first key, `person_key`, which the door
  * tells the app as `x-svrngs-key` (crates/svrngs-node/src/door.rs:123-127).
  */
-export function record(api, token) {
+export function record(api, token, ask = fetch) {
   const shown = { authorization: `Bearer ${token}` };
   async function call(path, body) {
     const sent =
@@ -42,7 +42,7 @@ export function record(api, token) {
           };
     let res;
     try {
-      res = await fetch(`${api}${path}`, sent);
+      res = await ask(`${api}${path}`, sent);
     } catch (e) {
       throw new Error(
         `this computer's svrngs did not answer at ${api}: ${e.cause?.code ?? e.message}`,
