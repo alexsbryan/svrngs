@@ -3,8 +3,9 @@
 //! record's telling and fold, each computer's round asked by the test
 //! (docs/seams.tsv). Off is the node's place on the wire closed, so every
 //! ask of it finds no path, and back on is a node started again over a copy
-//! of what it held. What stays in leave_page.rs: each home page in a
-//! browser.
+//! of what it held. leave_page.rs's last two, its home pages in a
+//! browser, are here and in web/tests/pages/home.test.mjs; the home page
+//! in a real browser is the browser step's contained test.
 
 use std::time::Duration;
 
@@ -17,8 +18,7 @@ use svrngs_node::{actor_of, Person, SigningKey};
 
 use crate::{ask, computer, name, no_relay};
 
-/// A computer of `key`'s over `dir` on `wire`, as leave_page.rs's
-/// `computer` starts one there.
+/// A computer of `key`'s over `dir` on `wire`.
 async fn on(wire: &Wire, dir: &std::path::Path, key: &SigningKey) -> Node {
     Node::on_wire(wire, dir.to_path_buf(), key.clone(), group::seed_text)
         .await
