@@ -247,7 +247,7 @@ impl Folders {
         tracing::info!(target: "folder", namespace = group, folder, dir = %dir.display(), "synced: the directory kept in step with the group's folder");
         let f = self.clone();
         let mut woken = self.woken.subscribe();
-        tokio::spawn(async move {
+        tokio::spawn(self.host.stopping.clone().run_until_cancelled_owned(async move {
             let count = |m: &BTreeMap<String, u64>| m.get(&group).copied().unwrap_or(0);
             // `tx` lives with the loop, so a watcher that could not start
             // leaves the channel open and the sweep its only waker.
@@ -330,7 +330,7 @@ impl Folders {
                     _ = tokio::time::sleep_until(due.into()) => Look::Everything,
                 };
             }
-        });
+        }));
     }
 
     /// Whose files no member gave in `group`'s folders here, each writer's

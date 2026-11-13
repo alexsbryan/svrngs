@@ -214,7 +214,8 @@ pub enum NodeError {
 pub(crate) type Serve =
     Box<dyn FnOnce(axum::Router) -> Result<crate::api::Serving, crate::api::ApiError> + Send>;
 
-/// A running node. Dropping it stops its round and its accept loop.
+/// A running node. Dropping it stops its round, its accept loop and its
+/// folders, their store shut ([`Stop`]).
 pub struct Node {
     host: Arc<Host>,
     /// The state its routers ask, kept for what only a test asks.
@@ -232,6 +233,24 @@ pub struct Node {
     /// of its groups' own relays ([`Host::check`]); and play's one owner
     /// ([`crate::play::spawn`]).
     _tasks: [n0_future::task::AbortOnDropHandle<()>; 4],
+    /// Its folders' tasks and store, ended with it.
+    _folders: Stop,
+}
+
+/// A node's folders' end, dropped with it: each task under
+/// [`Host::stopping`] cancelled, and the store shut, its database closed
+/// before the drop returns, so a node over the same data dir can open it.
+/// Dropped alone the store would stay open: its own sweep holds it
+/// (iroh-blobs fs.rs `run_gc`), and a second open of it in one process
+/// never answered (kept.rs's restart).
+pub(crate) struct Stop(iroh_blobs::store::fs::FsStore, Arc<Host>);
+
+impl Drop for Stop {
+    fn drop(&mut self) {
+        tracing::debug!(target: "node", "node: stopped, so its folders' tasks end and their store is shut");
+        self.1.stopping.cancel();
+        n0_future::future::block_on(self.0.shutdown()).ok();
+    }
 }
 
 /// What the round reads: the journals, the endpoint's transport, and the key
@@ -262,6 +281,10 @@ pub struct Host {
     /// (capability-scenes-found (e)).
     #[expect(clippy::disallowed_types, reason = "the links' sequencer")]
     pub(crate) minting: std::sync::Mutex<()>,
+    /// Cancelled when the node stops ([`Stop`]), which ends each task run
+    /// under it, the folders' sweep and synced directories: none outlives
+    /// the node.
+    pub(crate) stopping: tokio_util::sync::CancellationToken,
 }
 
 impl Node {
@@ -372,8 +395,9 @@ impl Node {
             held: tokio::sync::watch::Sender::new(held),
             api_port,
             minting: Default::default(),
+            stopping: Default::default(),
         });
-        let (folders, blobs) =
+        let (folders, blobs, store) =
             crate::folder::Folders::start((&data_dir, places), host.clone(), nudge.clone())
                 .await
                 .map_err(NodeError::Endpoint)?;
@@ -503,6 +527,7 @@ impl Node {
         ));
         let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
         Ok(Self {
+            _folders: Stop(store, host.clone()),
             host,
             asking: kept,
             api,

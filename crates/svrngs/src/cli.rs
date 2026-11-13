@@ -1732,21 +1732,8 @@ async fn serve(
         }
         Verb::Run => running(root, node).await,
         Verb::Room(names) => room(root, names).await?,
-        Verb::Help
-        | Verb::Guide
-        | Verb::Check(_)
-        | Verb::Share(..)
-        | Verb::Unshare(..)
-        | Verb::Relay(_)
-        | Verb::Folder { .. }
-        | Verb::Remove { .. }
-        | Verb::Leave(_)
-        | Verb::Accept(_)
-        | Verb::Open(..)
-        | Verb::Update
-        | Verb::Restart => {
-            unreachable!("answered in `run`")
-        }
+        // Every other verb is answered in `run` before a node starts.
+        _ => unreachable!("answered in `run`"),
     };
     println!("{said}");
     if !stays {

@@ -37,6 +37,9 @@ netdev = "=0.45.0"
 notify = "=8.2.0"
 # Incoming file operations are relative to an opened root, not joined ambient paths.
 cap-std = "3"
+# A node's folders' tasks ended with it (node.rs `Stop`): tokio's
+# cancellation token, at the version the lock already holds through iroh.
+tokio-util = "0.7"
 # `signal`: a node stopped by SIGTERM closes its endpoint (syp-6 b).
 tokio = { version = "1", features = ["net", "rt", "sync", "time", "io-util", "macros", "signal", "fs"] }
 rustls = { version = "0.23", default-features = false, features = ["ring"] }

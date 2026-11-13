@@ -697,10 +697,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # "raise the non-JS cap by up to +90 for harness 3" (2026-11-13, through
 # AskUserQuestion, after the economizing pass 9787472e, -24). . 21,240 ->
 # 21,325.
+# (2026-11-13) A node's folders end with it (node.rs `Stop`): their tasks
+# under `Host::stopping`, cancelled at its drop, and the blob store shut,
+# where a task that never ended held it past the node (+8); paid by
+# cli.rs `serve`'s unreachable arm, its thirteen verbs one `_` (-14).
+# . 21,325 -> 21,319.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 21326,
+    ".": 21320,
 
     "js": 8553,
 

@@ -162,12 +162,13 @@ type ReadAt = (
 
 impl Folders {
     /// The store under `data_dir/blobs`, its sweep, and its provider; a
-    /// group's folder placed under `places`.
+    /// group's folder placed under `places`. The store is the node's to
+    /// shut ([`crate::node::Stop`]), and the sweep ends with the node.
     pub(crate) async fn start(
         (data_dir, places): (&Path, Option<PathBuf>),
         host: Arc<Host>,
         nudge: Arc<Notify>,
-    ) -> Result<(Self, (Store, EventSender)), String> {
+    ) -> Result<(Self, (Store, EventSender), FsStore), String> {
         // The sweep runs on the store's own runtime and asks this node what
         // to keep; a sweep told nothing keeps everything.
         let (ask_keep, mut keep_asked) = mpsc::unbounded_channel::<KeepAsk>();
@@ -213,7 +214,7 @@ impl Folders {
         };
         tracing::info!(target: "folder", untagged, "folder: the store is open");
         let keeper = folders.clone();
-        tokio::spawn(async move {
+        tokio::spawn(folders.host.stopping.clone().run_until_cancelled_owned(async move {
             let (mut last, mut read_at) = (None, None);
             while let Some(answer) = keep_asked.recv().await {
                 // Each sweep reading every group's layout cost each node a
@@ -240,14 +241,9 @@ impl Folders {
                 }
                 answer.send(keep.filter(|_| sweep)).ok();
             }
-        });
-        // The store's actor lives as long as the node.
-        tokio::spawn(async move {
-            let _keep = fs;
-            std::future::pending::<()>().await
-        });
+        }));
         let blobs = provider(&store, folders.clone());
-        Ok((folders, blobs))
+        Ok((folders, blobs, fs))
     }
 
     /// Every synced folder's files where the record of `group` places
