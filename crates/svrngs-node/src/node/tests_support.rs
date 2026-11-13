@@ -234,6 +234,45 @@ impl OnWire {
             admitted => Ok(admitted),
         }
     }
+
+    /// `req` answered by the router `peer`'s acceptor serves this computer
+    /// on `alpn`, its `Dialer` inserted as the acceptor inserts it.
+    async fn ask(
+        &self,
+        peer: &PublicKey,
+        alpn: Alpn,
+        mut req: crate::iroh::Request,
+    ) -> Result<crate::iroh::Streamed, Unsent> {
+        use tower::ServiceExt;
+        let Admit::Serve(router) = self.admitted(peer, alpn)? else {
+            return Err(Unsent::Failed(format!("not served on {alpn:?}")));
+        };
+        req.extensions_mut().insert(Dialer(self.key));
+        Ok(router
+            .oneshot(req)
+            .await
+            .unwrap_or_else(|never| match never {}))
+    }
+}
+
+impl Wire {
+    /// `req` asked of `peer` on `alpn` by a key on no computer of the wire,
+    /// as a test dials as one (tests/common bridge_as): a phone's holder,
+    /// or a member's key apart from its node. `peer` decides it as it
+    /// decides any dialer's.
+    pub async fn ask_as(
+        &self,
+        key: &SigningKey,
+        peer: &PublicKey,
+        alpn: Alpn,
+        req: crate::iroh::Request,
+    ) -> Result<crate::iroh::Streamed, Unsent> {
+        let asker = OnWire {
+            key: SecretKey::from_bytes(&key.to_bytes()).public(),
+            wire: self.clone(),
+        };
+        asker.ask(peer, alpn, req).await
+    }
 }
 
 impl Fetch for OnWire {
@@ -311,18 +350,7 @@ impl Net for OnWire {
         peer: &'a Contact,
         req: crate::iroh::Request,
     ) -> crate::iroh::Sent<'a, crate::iroh::Streamed> {
-        Box::pin(async move {
-            use tower::ServiceExt;
-            let Admit::Serve(router) = self.admitted(&peer.key, Alpn::Member)? else {
-                return Err(Unsent::Failed("not served on the members' protocol".into()));
-            };
-            let mut req = req;
-            req.extensions_mut().insert(Dialer(self.key));
-            Ok(router
-                .oneshot(req)
-                .await
-                .unwrap_or_else(|never| match never {}))
-        })
+        Box::pin(self.ask(&peer.key, Alpn::Member, req))
     }
     fn dial(
         &self,

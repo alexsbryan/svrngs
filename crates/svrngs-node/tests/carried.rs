@@ -3,16 +3,20 @@
 //! folder in the group's synced folder, served at its own origin by each
 //! computer that holds it, from the store; its route, reading only the
 //! app's own acts and writing only as the person; the floor's headers on
-//! every answer. Ana, Ben and Cy in one group, three nodes in one process,
-//! no relay, each reached by the addresses seeded in the others' lookup,
-//! as `folders.rs` stands them up.
+//! every answer. Ana, Ben and Cy in one group, three nodes in one process
+//! on one wire (common/on_wire.rs; docs/CHECKS.md, harness 3), no
+//! endpoint, as `folders.rs` stands them up; a lent service still listens
+//! on a loopback port, as a person's does, and the door dials it there.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 use common::heard;
 #[path = "common/computers.rs"]
 mod computers;
-use computers::{found, http, known, round, signing, start, until_on as until};
+use computers::{found, round, signing, until_on as until};
+#[path = "common/on_wire.rs"]
+mod on_wire;
+use on_wire::{bridge_as, http, start, Answer};
 // A lent service keeping what it is sent: browser/main.rs's too.
 #[path = "common/keeping.rs"]
 mod keeping;
@@ -25,14 +29,13 @@ use serde_json::{json, Value};
 use svrngs_node::node::Node;
 use svrngs_node::{actor_of, RailAct};
 
-/// Ana's, Ben's and Cy's computers, each knowing where the others listen.
+/// Ana's, Ben's and Cy's computers, on this test's wire.
 async fn computers() -> (Vec<Node>, Vec<tempfile::TempDir>) {
     let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
     let mut nodes = Vec::new();
     for (i, dir) in dirs.iter().enumerate() {
         nodes.push(start(i as u8 + 1, dir.path()).await);
     }
-    known(&nodes.iter().collect::<Vec<_>>());
     (nodes, dirs)
 }
 
@@ -88,13 +91,7 @@ fn of_kind<'a>(lends: &'a Value, kind: &str) -> Vec<&'a Value> {
 
 /// `path` asked at the origin `origin` on `node`'s listener, as a
 /// program on that computer asks it, with its token: the answer.
-async fn at(
-    node: &Node,
-    origin: &str,
-    method: &str,
-    path: &str,
-    body: Option<Value>,
-) -> reqwest::Response {
+async fn at(node: &Node, origin: &str, method: &str, path: &str, body: Option<Value>) -> Answer {
     let host = origin.trim_start_matches("http://").trim_end_matches('/');
     let url = format!("http://{}{path}", node.api_addr());
     let ask = http()
@@ -127,7 +124,7 @@ fn live(read: &Value) -> Vec<Value> {
 
 /// The containment floor's headers (COMMUNITY_APPS §6.2) on `answer`, or
 /// what of them is missing.
-fn floor(answer: &reqwest::Response) -> Result<(), String> {
+fn floor(answer: &Answer) -> Result<(), String> {
     let h = answer.headers();
     let policy = h
         .get("content-security-policy")
@@ -179,7 +176,7 @@ async fn an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
         until(&[ana, cy], || page.exists() && script.exists()).await,
         "Money reaches Cy's folder"
     );
-    ana.endpoint().close().await;
+    ana.net().close().await;
 
     let listed = lends(cy, &group).await;
     let money = of_kind(&listed, "Money");
@@ -232,7 +229,7 @@ async fn an_app_one_computer_carried_opens_and_writes_on_another_with_it_stopped
         "the app reads its act as it wrote it, Cy's:\n{read:#}"
     );
     for node in [ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -368,7 +365,7 @@ async fn an_app_reads_only_its_own_acts_and_writes_only_as_the_person() {
         "and reads the correction, as a fold that decides voids needs:\n{money_read:#}"
     );
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -417,7 +414,7 @@ async fn a_carried_app_is_its_own_group_s_alone() {
             .unwrap()
             .to_string()
     };
-    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let bridge = bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
     let ask = |l: String| {
         http()
             .get(format!("http://{}/lend/{l}/", bridge.local_addr()))
@@ -433,7 +430,7 @@ async fn a_carried_app_is_its_own_group_s_alone() {
     );
     assert_eq!(not_his.headers()["x-svrngs-refused"], "closed");
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -490,7 +487,7 @@ async fn a_file_the_store_cannot_read_is_said_so_never_as_not_held_yet() {
         said.contains(r#""kind":"fault""#) && !said.contains("does not hold it yet"),
         "{said}"
     );
-    ana.endpoint().close().await;
+    ana.net().close().await;
 }
 
 /// **Bringing from the shelf traces why it could not write** (#164): Ana's
@@ -515,7 +512,7 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
-        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
+        .headers(on_wire::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
@@ -538,7 +535,7 @@ async fn bringing_from_the_shelf_traces_why_it_could_not_write() {
         traced.lines().any(why),
         "the write's error traced:\n{traced}"
     );
-    ana.endpoint().close().await;
+    ana.net().close().await;
 }
 
 /// **An app brought from the shelf lands in the group's own folder**
@@ -561,7 +558,7 @@ async fn an_app_brought_lands_in_the_group_s_own_folder() {
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
-        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
+        .headers(on_wire::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
@@ -575,7 +572,7 @@ async fn an_app_brought_lands_in_the_group_s_own_folder() {
     let money = |dir: &Path| dir.join("apps/Money/index.html").is_file();
     assert!(money(&own), "Money in house's own folder");
     assert!(!money(&drop), "Money not in the folder shared beside it");
-    ana.endpoint().close().await;
+    ana.net().close().await;
 }
 
 /// **A group's own folder placed apart takes what is brought** (group.rs
@@ -596,7 +593,7 @@ async fn an_app_brought_lands_in_the_group_s_own_folder_placed_apart() {
     let answer = http()
         .post(format!("http://{}/shelf", ana.api_addr()))
         .header("host", &home)
-        .headers(common::proved(ana, None, "POST", "/shelf", &body).await)
+        .headers(on_wire::proved(ana, None, "POST", "/shelf", &body).await)
         .header("sec-fetch-site", "same-origin")
         .header("sec-fetch-mode", "cors")
         .header("origin", format!("http://{home}"))
@@ -608,7 +605,7 @@ async fn an_app_brought_lands_in_the_group_s_own_folder_placed_apart() {
     let status = answer.status();
     assert_eq!(status, 200, "{}", answer.text().await.unwrap());
     assert!(own.join("apps/Money/index.html").is_file());
-    ana.endpoint().close().await;
+    ana.net().close().await;
 }
 
 /// **A folder under apps/ no lend can be named by is traced as left out**
@@ -641,7 +638,7 @@ async fn a_folder_under_apps_no_lend_can_be_named_by_is_traced_as_left_out() {
         traced.lines().any(left),
         "the folder left out is named:\n{traced}"
     );
-    ana.endpoint().close().await;
+    ana.net().close().await;
 }
 
 /// **A carried app runs as it was brought after a member changes its
@@ -701,7 +698,7 @@ async fn a_carried_app_runs_as_it_was_brought_after_a_member_changes_it() {
         );
     }
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -788,7 +785,7 @@ async fn an_author_s_own_change_runs_for_them_and_anyone_else_s_waits_on_their_y
         "Cy's change waits on Ben's yes"
     );
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -840,7 +837,7 @@ async fn a_computer_that_never_held_an_app_as_brought_fetches_it() {
         "fetched as Ana brought it"
     );
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -944,7 +941,7 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
     );
     assert_eq!(spans.len(), 3, "{read:#}");
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -963,7 +960,7 @@ async fn a_line_is_carried_only_signed_by_someone_in_the_group() {
     let (nodes, _dirs) = computers().await;
     let (ana, ben) = (&nodes[0], &nodes[1]);
     let group = found("house", 11, ana, &[(ben, 2)]);
-    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let bridge = bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
     let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
         let at = format!("http://{}/carry", bridge.local_addr());
         http().post(at).json(&json!([group, line])).send()
@@ -1068,7 +1065,7 @@ async fn a_phone_s_line_is_carried_and_counts_as_its_person() {
     let (ana, ben) = (&nodes[0], &nodes[1]);
     let group = found("house", 11, ana, &[(ben, 2)]);
     let holder = signing(9);
-    let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let bridge = bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
     let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
         let at = format!("http://{}/carry", bridge.local_addr());
         http().post(at).json(&json!([group, line])).send()
@@ -1201,7 +1198,7 @@ async fn a_member_writes_on_their_own_computer_s_copy_alone() {
         .split('.')
         .next()
         .unwrap();
-    let bridge = common::bridge_as(&signing(3), ana, svrngs_core::alpn::Alpn::Member).await;
+    let bridge = bridge_as(&signing(3), ana, svrngs_core::alpn::Alpn::Member).await;
     let route = format!("http://{}/lend/{label}/svrngs/acts", bridge.local_addr());
     let wrote = http().post(&route).json(&expense).send().await.unwrap();
     assert_eq!(wrote.status(), 403, "Ana's computer writes nothing as Cy");
@@ -1301,7 +1298,7 @@ async fn a_computer_writes_nothing_as_a_phone_s_person() {
         + 600;
     let app = (Label::parse(label).unwrap(), vec![]);
     let pass = Pass::sign(&signing(7), &actor_of(&holder), app, until).encode();
-    let bridge = common::bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let bridge = bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
     let route = format!("http://{}/lend/{label}/svrngs/acts", bridge.local_addr());
     let expense = json!({ "op": { "kind": "expense", "amount_cents": 1 } });
     let wrote = (http().post(&route).header("x-svrngs-pass", &pass))
@@ -1380,7 +1377,7 @@ async fn an_app_is_told_the_page_its_group_s_links_print_on() {
         "the group's own, once a link names it"
     );
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1555,7 +1552,7 @@ async fn a_folder_app_writing_as_fast_as_it_can_stops_at_its_budget() {
         "a budget is one app's; another app of the same person's writes"
     );
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1573,7 +1570,7 @@ async fn a_phone_s_line_past_the_app_s_budget_is_refused() {
     let (nodes, _dirs) = computers().await;
     let (ana, ben) = (&nodes[0], &nodes[1]);
     let group = found("house", 42, ana, &[(ben, 2)]);
-    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let bridge = bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
     let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
         let at = format!("http://{}/carry", bridge.local_addr());
         http().post(at).json(&json!([group, line])).send()
@@ -1655,7 +1652,7 @@ async fn a_phone_s_line_past_the_app_s_budget_is_refused() {
     let again = carry(&lines[0]).await.unwrap();
     assert_eq!(again.status(), 200, "a line already held is taken again");
     for node in [ana, ben] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1697,7 +1694,7 @@ async fn a_loop_voiding_its_own_entry_stops_at_the_budget() {
         "the record and then voids of it reach the budget: {in_all}, {told:?}"
     );
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1717,7 +1714,7 @@ async fn a_burst_is_told_its_wait_and_a_write_after_it_is_taken() {
     let (nodes, _dirs) = computers().await;
     let (ana, ben) = (&nodes[0], &nodes[1]);
     let group = found("house", 45, ana, &[(ben, 2)]);
-    let bridge = common::bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
+    let bridge = bridge_as(&signing(2), ana, svrngs_core::alpn::Alpn::Member).await;
     let carry = |line: &svrngs_core::Op<svrngs_core::SignedOp>| {
         let at = format!("http://{}/carry", bridge.local_addr());
         http().post(at).json(&json!([group, line])).send()
@@ -1795,7 +1792,7 @@ async fn a_burst_is_told_its_wait_and_a_write_after_it_is_taken() {
         "a far stamp locks no one out"
     );
     for node in [ana, ben] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1833,7 +1830,7 @@ async fn a_folder_app_for_sixty_seconds() {
     let at_most = WRITES_AN_HOUR + secs as usize / 18 + 1;
     assert!(wrote >= WRITES_AN_HOUR && wrote <= at_most, "{wrote}");
     for node in [ana, ben, cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -2023,7 +2020,7 @@ async fn a_folder_app_reading_as_fast_as_it_can_stops_at_the_rate() {
         own.status()
     );
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -2053,7 +2050,7 @@ async fn a_folder_app_reading_for_sixty_seconds() {
         "{served}"
     );
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -2228,7 +2225,7 @@ async fn a_carried_app_sends_one_method_to_one_exact_path() {
         "a script in a send's answer never reaches the page: {said}"
     );
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -2281,7 +2278,7 @@ async fn a_yes_to_reading_never_covers_a_send() {
         "only the read reached the service"
     );
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -2332,8 +2329,9 @@ async fn a_carried_taste_sends() {
         .unwrap();
     let health = format!("http://127.0.0.1:{port}/health");
     let mut up = false;
+    // The real llama-server on its port, asked as any client asks it.
     for _ in 0..120 {
-        if http()
+        if computers::http()
             .get(&health)
             .send()
             .await
@@ -2451,7 +2449,7 @@ async fn a_carried_taste_sends() {
     );
     let _ = llama.kill().await;
     for node in &nodes {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 

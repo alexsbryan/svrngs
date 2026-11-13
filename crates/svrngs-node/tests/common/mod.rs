@@ -280,7 +280,6 @@ pub async fn prove(
     body: &str,
     navigate: bool,
 ) -> String {
-    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
     let client = reqwest::Client::builder().no_proxy().build().unwrap();
     let epoch = client
         .get(format!("http://{api}/svrngs-session-epoch"))
@@ -291,6 +290,24 @@ pub async fn prove(
         .text()
         .await
         .unwrap();
+    signed(key, (method, host, path), body, navigate, &epoch)
+}
+
+/// [`prove`]'s lines once the boot challenge `epoch` is read: what a test
+/// whose node is asked in-process (on_wire.rs `proved`) signs too.
+#[allow(
+    dead_code,
+    clippy::disallowed_methods,
+    reason = "each test binary compiles this file; a protocol-test adapter draws a fresh nonce and reads the clock"
+)]
+pub fn signed(
+    key: &[u8],
+    (method, host, path): (&str, &str, &str),
+    body: &str,
+    navigate: bool,
+    epoch: &str,
+) -> String {
+    use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
     let now = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()

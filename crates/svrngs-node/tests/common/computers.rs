@@ -1,8 +1,8 @@
 //! Ana's, Ben's and Cy's computers in one process, no relay, each reached
 //! by the addresses seeded in the others' lookup: one copy, where
 //! folders.rs and carried.rs each wrote it out (REVIEW-audit-v1ui-auto-2).
-//! Only those two load it (`#[path]`), so each test binary that compiles
-//! it uses all of it.
+//! Only those two load it (`#[path]`); both meet their computers on a wire
+//! (on_wire.rs) but folders.rs's Q test, which starts them here.
 
 use std::path::Path;
 use std::time::Duration;
@@ -18,6 +18,10 @@ pub fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
+#[allow(
+    dead_code,
+    reason = "folders.rs's Q test alone starts its computers over QUIC"
+)]
 fn seed_file(dir: &Path) -> Result<Option<String>, String> {
     match std::fs::read_to_string(dir.join("seed.json")) {
         Ok(t) => Ok(Some(t)),
@@ -26,6 +30,10 @@ fn seed_file(dir: &Path) -> Result<Option<String>, String> {
     }
 }
 
+#[allow(
+    dead_code,
+    reason = "folders.rs's Q test alone starts its computers over QUIC"
+)]
 pub async fn start(seed: u8, dir: &Path) -> Node {
     let relay = RelayConfig {
         relay_urls: Vec::new(),
@@ -79,7 +87,7 @@ pub fn found(name: &str, salt: u8, ana: &Node, others: &[(&Node, u8)]) -> String
 /// by key alike.
 #[allow(
     dead_code,
-    reason = "folders.rs meets its computers on a wire; carried.rs over QUIC"
+    reason = "folders.rs's Q test alone starts its computers over QUIC"
 )]
 pub fn known(nodes: &[&Node]) {
     for who in nodes {
@@ -117,10 +125,9 @@ pub async fn until_on(nodes: &[&Node], done: impl Fn() -> bool) -> bool {
     done()
 }
 
-#[allow(
-    dead_code,
-    reason = "folders.rs meets its computers on a wire; carried.rs over QUIC"
-)]
+/// A client of a real port: carried.rs's llama-server; a node's API is
+/// asked in-process (on_wire.rs `http`).
+#[allow(dead_code, reason = "carried.rs alone asks a real port")]
 pub fn http() -> reqwest::Client {
     reqwest::Client::builder().no_proxy().build().unwrap()
 }
