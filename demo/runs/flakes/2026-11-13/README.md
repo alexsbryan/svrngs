@@ -85,3 +85,24 @@ moved is that no gate test but n0's own depends on n0.
   holyarrs (seam D, a third-party app).
 - lean_check's "." cap: 21,185 of 21,187 after these commits; the cap is
   lean_check.py's to lower.
+
+## Harness 4, and the gate at 5cfa2609
+
+Commits: 9787472e (the economizing pass, -24 counted lines), e3e831ac
+(the design of harnesses 3 and 4, docs/CHECKS.md), bde74682 (`iroh::Fetch`,
++8; the non-JS cap 21,188 -> 21,170), 34cad974 and 206d5733 (ring_sync's
+eight exchange tests over `InProcess`, then their QUIC copies retired),
+6eda83b5 (rail's three), 5cfa2609 (record_api's loopback refusal). Each
+body names the plants it was watched red on.
+
+`gate-5cfa2609.txt`: `gate.sh`, scripts/check.sh under the gate lock in a
+clean detached worktree at 5cfa2609, Eudoxia fff11f7 (a clean clone),
+CARGO_INCREMENTAL=0, npm ci --prefix web: 1,720 s, **exit 0**, every step
+passed, nothing could-not-judge, scenes 391 s, playback 175 s, n0 14 s.
+It ran after another session's gate released the lock.
+
+`recount-5cfa2609.out`: `recount.py` over that worktree's binaries: 956
+gate Rust tests, 528 (55.2%) crossing no seam, 428 at least one: P 424,
+Q 408, R 206, B 158, C 79, D 10, M 7. Since aa90326d: the eight ring_sync
+tests moved (eight retired, eight new with no seam), rail's three and
+record_api's one deterministic, 12 in all.
