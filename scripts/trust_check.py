@@ -20,9 +20,9 @@ import re, subprocess, sys
 from collections import Counter
 from pathlib import Path
 
-ROOT = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent.parent
+from lean_check import ROOT, TEST_FILE
+
 FLOOR = "scripts/trust_floor.txt"
-TEST_FILE = re.compile(r"(^|/)tests?(_\w+)?\.rs$|_tests?\.rs$")
 BINDS = re.compile(r"TcpListener::bind|UdpSocket::bind|\.bind\(|\.bind_addr\(|Server::spawn\(|UNSPECIFIED|0\.0\.0\.0|\[::\]")
 
 

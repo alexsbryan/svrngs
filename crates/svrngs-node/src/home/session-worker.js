@@ -1,4 +1,4 @@
-import { session, proof, Browser, browserAuthority } from '/svrngs-session.js';
+import { session, proof, hex, Browser, browserAuthority } from '/svrngs-session.js';
 
 // `self` as a service worker's: the worker's lib names it a
 // `WorkerGlobalScope`, which every kind of worker shares
@@ -33,10 +33,7 @@ async function authenticated(request, intent = false) {
     const digest = new Uint8Array(
       await crypto.subtle.digest('SHA-256', await request.clone().arrayBuffer()),
     );
-    headers.set(
-      'x-svrngs-body',
-      [...digest].map((byte) => byte.toString(16).padStart(2, '0')).join(''),
-    );
+    headers.set('x-svrngs-body', hex(digest));
   }
   // A no-cors request's headers are guarded to the safelisted ones, which
   // drops the proof without a word: every stylesheet, image and classic

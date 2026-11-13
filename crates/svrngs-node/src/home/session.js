@@ -28,6 +28,10 @@ export async function session(value) {
   });
 }
 
+// Bytes as hex: a proof's nonce, and the digest of the body it covers.
+/** @param {Uint8Array} bytes */
+export const hex = (bytes) => [...bytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+
 /**
  * The proof a request carries: when, a nonce, and the key's HMAC over its
  * host, method, path, body digest, intent and the session's `epoch`.
@@ -37,9 +41,7 @@ export async function session(value) {
  */
 export async function proof(key, request, epoch) {
   const url = new URL(request.url);
-  const nonce = [...crypto.getRandomValues(new Uint8Array(16))]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+  const nonce = hex(crypto.getRandomValues(new Uint8Array(16)));
   const stamp = `${Math.floor(Date.now() / 1000)}.${nonce}`;
   // A line each, in the order the node signs them over to check this
   // proof (session.rs `Sessions::proved`, its `format!` of `message`).

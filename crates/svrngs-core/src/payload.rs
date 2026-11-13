@@ -53,7 +53,7 @@
 use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Value};
 
 /// The largest canonical payload the rail will carry.
@@ -70,7 +70,8 @@ pub const MAX_PAYLOAD_BYTES: usize = 64 * 1024;
 /// canonical form. Deserialization applies the same rules, so a `Payload` in
 /// hand — from a journal line, from a peer, from this node's own door — is
 /// always one whose bytes every node agrees on.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(transparent)]
 pub struct Payload(Value);
 
 /// Why a payload cannot go on the rail. Every variant renders as a sentence
@@ -151,12 +152,6 @@ fn canonicalize(value: Value) -> Result<Value, PayloadError> {
         }
         other => other,
     })
-}
-
-impl Serialize for Payload {
-    fn serialize<S: Serializer>(&self, s: S) -> Result<S::Ok, S::Error> {
-        self.0.serialize(s)
-    }
 }
 
 /// Deserialization runs the same rules as [`Payload::new`], on purpose.

@@ -54,7 +54,6 @@ export const COPY = {
         return go(state, { copy: 'copying' }, {}, /** @type {CopyEffect} */ (write));
       }
       case 'copied':
-        return answered(state, message);
       case 'unwritten':
         return answered(state, message);
       default:

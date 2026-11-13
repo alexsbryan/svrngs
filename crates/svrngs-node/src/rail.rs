@@ -394,7 +394,7 @@ pub(crate) fn ops_json(admission: &Admission) -> Option<serde_json::Value> {
 pub async fn log(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
-) -> Result<Response, Response> {
+) -> Result<Json<serde_json::Value>, Response> {
     let namespace = &namespace_of(&q)?;
     standing_of(&api.rail, namespace)?;
     // ONE read, admitted once: the ops, the gaps and the people all come from
@@ -433,8 +433,7 @@ pub async fn log(
         "held": admission.held(),
         "complete": admission.is_complete(),
         "people": people_json(people),
-    }))
-    .into_response())
+    })))
 }
 
 /// GET /v1/rail/people — the people standing in the group, each with the
@@ -444,14 +443,13 @@ pub async fn log(
 pub async fn people(
     State(api): State<RailApi>,
     Query(q): Query<RailQuery>,
-) -> Result<Response, Response> {
+) -> Result<Json<serde_json::Value>, Response> {
     let namespace = namespace_of(&q)?;
     let people = standing_of(&api.rail, &namespace)?;
     Ok(Json(serde_json::json!({
         "namespace": namespace,
         "people": standing_json(&people),
-    }))
-    .into_response())
+    })))
 }
 
 /// POST /v1/rail/append.

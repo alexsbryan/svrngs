@@ -12,17 +12,15 @@ the upstream commit, and the sha256 of the pinned text. Upstream is
 commonwealth-ai, found at $COMMONWEALTH_AI or ~/dev/commonwealth-ai.
 """
 import hashlib
-import os
 import shutil
-import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from ports import ROOT, UPSTREAM, git
+
 PIN = ROOT / "docs" / "principles" / "SOURCE"
 DOCS = {"docs/principles/ARCH_PRINCIPLES.md": "sovereign/ARCH_PRINCIPLES.md",
         "docs/principles/RUST_ARCH.md": "docs/RUST_ARCH.md"}
-UPSTREAM = Path(os.environ.get("COMMONWEALTH_AI", Path.home() / "dev" / "commonwealth-ai"))
 
 
 def sha(p):
@@ -30,8 +28,7 @@ def sha(p):
 
 
 def upstream_commit(path):
-    r = subprocess.run(["git", "log", "-1", "--format=%h", "--", path], cwd=UPSTREAM,
-                       capture_output=True, text=True)
+    r = git("log", "-1", "--format=%h", "--", path)
     return r.stdout.strip() if r.returncode == 0 else ""
 
 

@@ -101,9 +101,6 @@ pub fn select<'line>(
     selected
 }
 
-pub fn check(pass: &Pass, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-    resolve(pass, None, holder, lend, now, || ())
-}
 pub fn resolve<T>(
     pass: &Pass,
     link: Option<&Pass>,

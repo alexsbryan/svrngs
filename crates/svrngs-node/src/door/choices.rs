@@ -250,7 +250,12 @@ async fn stop(door: &Door, lend: &Lend, person: PersonKey, app: Label, body: &[u
         tracing::debug!(target: "door", lend = %lend.name, %app, error = %e, "door: refused — an app's pass says only stop");
         return LendRefusal::closed("an app may only stop; its person says yes");
     }
-    let told = (Said::Stop, Vec::new(), Vec::new(), Vec::new());
+    say(door, lend, person, app, Said::Stop).await
+}
+
+/// `person`'s `said` of `app` on `lend`, kept naming no reads, lefts or sends.
+async fn say(door: &Door, lend: &Lend, person: PersonKey, app: Label, said: Said) -> Response {
+    let told = (said, Vec::new(), Vec::new(), Vec::new());
     keep(door, file(door, lend), person, app, told).await
 }
 
@@ -297,10 +302,7 @@ pub(super) async fn choose(
         return Ok(stop(&door, &lend, person, app, &body).await);
     }
     match serde_json::from_slice::<Saying>(&body) {
-        Ok(Saying { app, said }) => {
-            let told = (said, Vec::new(), Vec::new(), Vec::new());
-            Ok(keep(&door, file(&door, &lend), person, app, told).await)
-        }
+        Ok(Saying { app, said }) => Ok(say(&door, &lend, person, app, said).await),
         Err(e) => {
             tracing::debug!(target: "door", lend = %lend.name, error = %e, "door: refused — not a choice");
             Err(LendRefusal::bad_path(
@@ -341,10 +343,7 @@ pub(super) async fn choices_of(
 /// no dial: the home page's and its origin's ([`crate::home`]).
 pub(crate) async fn own_choose(door: &Door, label: &Label, app: Label, said: Said) -> Response {
     match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
-        Ok((person, lend)) => {
-            let told = (said, Vec::new(), Vec::new(), Vec::new());
-            keep(door, file(door, &lend), person, app, told).await
-        }
+        Ok((person, lend)) => say(door, &lend, person, app, said).await,
         Err(refused) => refused,
     }
 }

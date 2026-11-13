@@ -63,11 +63,8 @@ impl SyncPath {
         tracing::debug!(target: "rail:folder", raw, %why, "synced: not a path under the folder");
         Err(why)
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
 }
+crate::text_newtype!(SyncPath);
 
 impl TryFrom<String> for SyncPath {
     type Error = NotASyncPath;
@@ -79,12 +76,6 @@ impl TryFrom<String> for SyncPath {
 impl From<SyncPath> for String {
     fn from(path: SyncPath) -> String {
         path.0
-    }
-}
-
-impl core::fmt::Display for SyncPath {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        f.write_str(&self.0)
     }
 }
 

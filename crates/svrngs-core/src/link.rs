@@ -188,11 +188,8 @@ impl Origin {
         }
         ok.then(|| Self(raw.to_string()))
     }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
 }
+crate::text_newtype!(Origin);
 
 /// A parsed link: its token, and the origin it was printed on when it was
 /// given in the https form.

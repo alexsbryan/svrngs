@@ -116,6 +116,17 @@ impl RingRail {
     pub fn namespaces(&self) -> Result<Vec<String>, RailError> {
         namespaces_in(&self.root)
     }
+
+    /// The journal for one namespace, opening it if this is the first touch.
+    pub(crate) fn journal(&self, namespace: &str) -> Result<Arc<RingJournal>, RailError> {
+        let mut open = self.open.lock().unwrap_or_else(|e| e.into_inner());
+        if let Some(existing) = open.get(namespace) {
+            return Ok(existing.clone());
+        }
+        let journal = Arc::new(RingJournal::open(&self.root, namespace)?);
+        open.insert(namespace.to_string(), journal.clone());
+        Ok(journal)
+    }
 }
 
 /// Every ring namespace under `root`, without holding a [`RingRail`].
@@ -143,19 +154,6 @@ pub fn namespaces_in(root: &Path) -> Result<Vec<String>, RailError> {
         .collect();
     out.sort();
     Ok(out)
-}
-
-impl RingRail {
-    /// The journal for one namespace, opening it if this is the first touch.
-    pub(crate) fn journal(&self, namespace: &str) -> Result<Arc<RingJournal>, RailError> {
-        let mut open = self.open.lock().unwrap_or_else(|e| e.into_inner());
-        if let Some(existing) = open.get(namespace) {
-            return Ok(existing.clone());
-        }
-        let journal = Arc::new(RingJournal::open(&self.root, namespace)?);
-        open.insert(namespace.to_string(), journal.clone());
-        Ok(journal)
-    }
 }
 
 /// The runtime's whole surface for adapters: queries, `commit`, and the

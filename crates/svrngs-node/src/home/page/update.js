@@ -71,17 +71,15 @@ export const UPDATE = {
         if (message.state === 'available') return go(state, { update: 'available' });
         return go(state, { update: 'unread' }, { why: message.why });
       case 'unread':
-        return go(state, { update: 'unread' }, { why: message.why });
+      case 'refused':
+      case 'stuck':
+        return go(state, { update: message.type }, { why: message.why });
       case 'update':
         return go(state, { update: 'updating' }, {}, { run: 'update', failed: 'refused' });
       case 'updated':
         return go(state, { update: 'updated' }, {}, { run: 'wait', failed: 'stuck' });
       case 'current':
         return go(state, { update: 'current' }, {}, { run: 'reload', failed: 'stuck' });
-      case 'refused':
-        return go(state, { update: 'refused' }, { why: message.why });
-      case 'stuck':
-        return go(state, { update: 'stuck' }, { why: message.why });
       case 'back':
         if (state.at.update === 'current') return go(state, {});
         return go(state, { update: 'current' }, {}, { run: 'reload', failed: 'stuck' });

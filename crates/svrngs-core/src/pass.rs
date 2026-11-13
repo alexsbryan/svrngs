@@ -284,7 +284,7 @@ impl Pass {
     /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
     /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        crate::authority::check(self, holder, lend, now)
+        crate::authority::resolve(self, None, holder, lend, now, || ())
     }
 
     /// The link this pass's holder signs to `holder`, unsigned, its

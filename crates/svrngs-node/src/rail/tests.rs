@@ -370,14 +370,18 @@ async fn api_of(rail: &Arc<RingRail>) -> RailApi {
 /// What `door`, a handler of the record API's `?namespace=` routes, answers
 /// for `namespace` over `rail`, refused or not.
 async fn answer<
-    F: std::future::Future<Output = Result<axum::response::Response, axum::response::Response>>,
+    T: axum::response::IntoResponse,
+    F: std::future::Future<Output = Result<T, axum::response::Response>>,
 >(
     rail: &Arc<RingRail>,
     namespace: &str,
     door: impl FnOnce(State<RailApi>, Query<RailQuery>) -> F,
 ) -> axum::response::Response {
     let answered = door(State(api_of(rail).await), named(namespace)).await;
-    answered.unwrap_or_else(|refused| refused)
+    answered.map_or_else(
+        |refused| refused,
+        axum::response::IntoResponse::into_response,
+    )
 }
 
 /// `?namespace=` naming `namespace`.
