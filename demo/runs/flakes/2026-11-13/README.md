@@ -171,3 +171,16 @@ gate it ran beside the other three seeks for 67 s. Recorded in
 2026-11-12/recorded-failures.tsv; one run, no rate. It is the contained
 playback step's seam B, and no commit since 6c30c2aa touched the page,
 the worker, conformance.rs or page.mjs.
+
+Who closed it: Chromium itself. The shared chrome-headless-shell's browser
+process, launched by browsers.mjs at 14:36:07.9, died at 14:36:22.8 on
+EXC_BREAKPOINT in its main thread, a CHECK (macOS crash report
+chrome-headless-shell-2026-11-13-143646.ips, this Mac); Playwright's server
+answers a client `Browser closed` only when its browser disconnects
+(playwright-core 1.59.1 lib/remote/playwrightConnection.js:76). The harness
+holds that browser to the binary's exit (harness.rs `browsers`), and a
+driver's close only disconnects. Not reproduced: 10 rounds of all four
+seeks in parallel under the lock at dd5f5a9f, Chromium's stderr and exit
+traced, 40 of 40 passed, both browsers exiting 0, no new crash report. The
+wildcard's first load lost its wasm body in each of the 9 rounds traced,
+all passing, so that is not the cause. No code changed.
