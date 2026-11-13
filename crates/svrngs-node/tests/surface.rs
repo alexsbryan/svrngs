@@ -342,19 +342,12 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
     house.close().await;
 }
 
-/// **An app asks which groups this computer holds, and finds the API by
-/// itself** (the u5-1 row): `/v1/groups` answers the group's id, its name,
-/// Alex as this computer's person, that Alex was not removed (U7), that
-/// nobody was removed or asked to be (v1-keeper-office (b)), that Alex did
-/// not leave it and keeps the order of removals (groups-leave), and that
-/// nobody is visiting it (guests-pages); who made it,
-/// Alex's own computer, and since when it holds it, the time its seed was
-/// written (v1ui-door (c)); beside the groups this computer's key, which
-/// its home page tells its own devices by (capability-what-acts); house,
-/// made before sources-v1 and kept here, offered Move (EUDOXIA_JUDGE §2e
-/// §4); the data dir's `api` file names the
-/// address the app asked at. Planted: the file not written. Over QUIC:
-/// the file is written where the listener binds, and the app asks there.
+/// **An app finds the API by itself** (the u5-1 row): the data dir's `api`
+/// file names the loopback address the listener bound, a nonzero port, and
+/// an app asking `/v1/groups` there is answered by this computer, its key
+/// beside the groups. Planted: the file not written. Over QUIC: the file is
+/// written where the listener binds, and the app asks there; the row's
+/// exact shape is `an_app_asks_the_groups_this_computer_holds_on_the_wire`'s.
 #[tokio::test]
 async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let house = House::over_quic().await;
@@ -369,11 +362,7 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
 
     let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
     assert_eq!(status, 200, "{body:#}");
-    let made = made_by_alex(&body);
-    assert_eq!(
-        body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "slots": 2, "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)) }),
-    );
+    assert_eq!(body["key"], actor_of(&signing(1)), "{body:#}");
     house.close().await;
 }
 
