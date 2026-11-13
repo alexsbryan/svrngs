@@ -402,6 +402,16 @@ impl Net for OnWire {
             )))
         })
     }
+    /// Asked of `to`'s router for this computer on `alpn`, as a fresh
+    /// connection's one stream is: a link's issuer, a join's redeem.
+    fn ask_once(
+        &self,
+        to: EndpointAddr,
+        alpn: Alpn,
+        req: crate::iroh::Request,
+    ) -> crate::iroh::Sent<'_, crate::iroh::Streamed> {
+        Box::pin(async move { self.ask(&to.id, alpn, req).await })
+    }
     fn get<'a>(
         &'a self,
         peer: &'a Contact,

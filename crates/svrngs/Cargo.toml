@@ -55,6 +55,10 @@ reqwest = { version = "0.12", default-features = false, features = ["json"] }
 svrngs-core = { workspace = true, features = ["test-support"] }
 svrngs-node = { workspace = true, features = ["test-support"] }
 tokio = { version = "1", features = ["process", "io-util", "net"] }
+# tests/verbs asks a node's record API of its routes, as svrngs-node's
+# tests on the wire do: the router and its `oneshot`, svrngs-node's own.
+axum = "0.8"
+tower = { version = "0.5", features = ["util"] }
 # relay.rs dials the verb's relay as iroh's relay client does, which asks a
 # resolver: iroh's, at the version svrngs-node pins.
 iroh = "=1.0.2"
