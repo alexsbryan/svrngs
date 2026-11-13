@@ -133,6 +133,21 @@ async fn the_keeper_removes_and_the_removed_computer_is_told() {
         }
     );
     assert!(stands(&ana, 3), "Ana's ask cuts nobody");
+    // The ask as /v1/groups lists it (svrngs-runtime register.rs `Removing`):
+    // who asked and of whom, each by first key, which a page tells two of
+    // one name apart by (web/tests/pages/home-acts.test.mjs).
+    let removals = ana.rail().register(NS).unwrap().removals;
+    let named: Vec<_> = (removals.iter())
+        .map(|r| (r.by_key.as_str(), r.of_key.as_str()))
+        .collect();
+    assert_eq!(
+        named,
+        [(
+            actor_of(&signing(2)).as_str(),
+            actor_of(&signing(3)).as_str()
+        )],
+        "Ana's ask, by her key and bo's"
+    );
 
     assert_eq!(ask(&sam, REMOVALS_ROUTE, "bo").await, (200, Outcome::Out));
     assert!(!stands(&sam, 3), "Bo is out on Sam's copy");
@@ -149,6 +164,22 @@ async fn the_keeper_removes_and_the_removed_computer_is_told() {
         .unwrap()
         .removed
         .contains_key(&actor_of(&signing(3))));
+    // What bo's home page reads of it (surface.rs `Held`, `removed`), which
+    // web/tests/pages/home.test.mjs draws as "You are no longer in this group."
+    let groups: serde_json::Value = http()
+        .get(format!(
+            "http://{}{}",
+            bo.api_addr(),
+            svrngs_node::surface::GROUPS_ROUTE
+        ))
+        .bearer_auth(bo.token())
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(groups["groups"][0]["removed"], true, "{groups:#}");
     assert_eq!(ask(&bo, REMOVALS_ROUTE, "ana").await, (409, Outcome::NotIn));
     assert!(stands(&sam, 2), "Ana stands");
 }

@@ -249,6 +249,10 @@ fn an_app_runs_as_it_was_brought_whoever_changes_it() {
         money([("index.html", 7), ("app.js", 8)])
     );
     assert_eq!(runs.brought.len(), 1, "the note is no app's");
+    // Who changed it last, by first key and name: what carried.rs `changed`
+    // answers in /v1/lends, by which a page tells two of one name apart.
+    let (by_key, by, _) = &runs.changed["Money"];
+    assert_eq!((by_key, by), (&actor_of(&key(2)), &p("bo")));
 }
 
 /// The yeses `ops` hold, by kind and first key, each with whether it names
