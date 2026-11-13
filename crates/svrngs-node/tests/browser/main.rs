@@ -58,7 +58,7 @@ use sha2::{Digest, Sha256};
 use svrngs_core::link::Token;
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;
-use svrngs_node::{actor_of, Person, RailAct, Roster, SigningKey};
+use svrngs_node::{actor_of, Person, Roster, SigningKey};
 use tokio::io::AsyncWriteExt;
 
 const NS: &str = "house";
@@ -1795,33 +1795,6 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
         .collect::<Vec<_>>();
     assert!(faults.is_empty(), "{faults:#?}");
     drop(dee);
-}
-
-/// `person` let into ada's group from a phone's page as `signing(joining)`:
-/// a link's `Invite`, then its redemption naming a browser (u4-1).
-fn from_a_phone(ada: &Node, person: &str, joining: u8) {
-    let commit = |act| {
-        let fixture = svrngs_core::tests_support::Fixture { act };
-        ada.rail().commit(NS, &fixture).unwrap().unwrap().lines()[0].clone()
-    };
-    let invite = commit(RailAct::Invite {
-        key: actor_of(&signing(9)),
-        until: i64::MAX,
-        device_of: None,
-    });
-    let person = Person::parse(person).unwrap();
-    let signed = svrngs_node::Redemption::sign(
-        &signing(joining),
-        NS,
-        &invite.id,
-        &person,
-        svrngs_node::Device::Browser,
-    );
-    commit(RailAct::Admit {
-        invite: Some(signed),
-        person,
-        key: actor_of(&signing(joining)),
-    });
 }
 
 /// Each of `words`, or its plural, that `text` holds as a whole word.
