@@ -1,9 +1,12 @@
 //! Every lend at an origin of its own on a computer's loopback (DESIGN §3,
 //! "Lent apps", call 1; the u5-2 row): `http://<label>.localhost:<api
 //! port>/`, served on the record API's listener. Alex founds a group and
-//! lets Sam in; both lend, each with a secret. Two nodes in one process, no
-//! relay, each listening on 127.0.0.1 alone (#33's fix), Sam reached by
-//! seeded addresses. The browser halves of the same claims run in
+//! lets Sam in; both lend, each with a secret. Their computers meet on one
+//! wire (common/on_wire.rs), each lend's service answered in this process
+//! (docs/CHECKS.md, harness 2), the routes asked with a raw request's text:
+//! no socket. Kept over QUIC and loopback sockets, each its seam's own: a
+//! WebSocket carried through both doors, and a dial's cap on a slow path
+//! and an asleep one. The browser halves of the same claims run in
 //! `tests/conformance.rs`.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
@@ -283,1025 +286,6 @@ async fn each_lend_opens_at_an_origin_of_its_own_on_this_computer() {
 #[tokio::test]
 async fn the_record_answers_no_lend_s_origin_and_refuses_a_page() {
     let dir = tempfile::tempdir().unwrap();
-    let alex = start(1, dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    alex.rail().set_seed(NS, &seed).unwrap();
-    let (telly, heads) = origins::head_origin().await;
-    lends(dir.path(), "telly", telly.port(), ALEXS);
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    let label = Label::of(alex.endpoint().id().as_bytes(), "telly");
-    let lend_host = format!("{label}.localhost:{}", api.port());
-
-    let (head, sock) = asked(
-        on,
-        &lend_host,
-        "GET /v1/groups HTTP/1.1\r\nConnection: close\r\n",
-    )
-    .await;
-    let answer = body(sock).await;
-    assert!(head.starts_with("HTTP/1.1 200"), "{head}{answer}");
-    assert!(
-        !answer.contains("\"groups\""),
-        "the record answered a lend's host: {answer}"
-    );
-    assert!(
-        last(&heads).starts_with("GET /v1/groups HTTP/1.1\r\n"),
-        "the lend was asked"
-    );
-
-    let append =
-        serde_json::json!({ "namespace": NS, "body": { "kind": "note", "n": 1 } }).to_string();
-    let post = |extra: &str| {
-        format!(
-            "POST /v1/rail/append HTTP/1.1\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nConnection: close\r\n{extra}",
-            append.len()
-        )
-    };
-    for page in [
-        format!("Origin: http://{lend_host}\r\n"),
-        "Sec-Fetch-Site: same-site\r\n".to_string(),
-    ] {
-        let mut sock = tokio::net::TcpStream::connect(api).await.unwrap();
-        sock.write_all(
-            format!(
-                "{}Host: 127.0.0.1:{}\r\n\r\n{append}",
-                post(&page),
-                api.port()
-            )
-            .as_bytes(),
-        )
-        .await
-        .unwrap();
-        let reply = body(sock).await;
-        assert!(reply.starts_with("HTTP/1.1 403"), "{page}: {reply}");
-        assert!(reply.contains("from_a_page"), "{page}: {reply}");
-    }
-    let mut sock = tokio::net::TcpStream::connect(api).await.unwrap();
-    sock.write_all(
-        format!("{}Host: 127.0.0.1:{}\r\n\r\n{append}", post(""), api.port()).as_bytes(),
-    )
-    .await
-    .unwrap();
-    let reply = body(sock).await;
-    assert!(
-        !reply.contains("from_a_page"),
-        "an app's own client is answered: {reply}"
-    );
-    alex.endpoint().close().await;
-}
-
-/// Alex's computer and Sam's on this test's wire (on_wire.rs), Alex
-/// letting Sam in as pair.rs `alex_lets_sam_in` does.
-async fn wire_pair(alex_dir: &std::path::Path, sam_dir: &std::path::Path) -> (Node, Node) {
-    let alex = on_wire::start(1, alex_dir).await;
-    let sam = on_wire::start(2, sam_dir).await;
-    pair::let_sam_in(&alex, &sam);
-    (alex, sam)
-}
-
-/// A port a wire's service answers at; none is bound.
-const TELLY: u16 = 9001;
-
-/// `node`'s [`origins::head_origin`] at `port` on the wire: the heads kept.
-fn served(node: &Node, port: u16) -> std::sync::Arc<std::sync::Mutex<Vec<String>>> {
-    let heads: std::sync::Arc<std::sync::Mutex<Vec<String>>> = Default::default();
-    let kept = std::sync::Arc::clone(&heads);
-    on_wire::serve(node, port, move |s| origins::answer_head(s, kept.clone()));
-    heads
-}
-
-/// [`ask`] of the routes in this process (on_wire.rs `raw`): the head,
-/// then the body, neither holding a secret.
-async fn ask_on(api: SocketAddr, host: &str, rest: &str) -> (String, String) {
-    let (head, body) = on_wire::raw(api, &format!("{rest}Host: {host}\r\n\r\n")).await;
-    clean(head.as_bytes());
-    clean(body.as_bytes());
-    (head, body)
-}
-
-/// [`asked`] of the routes in this process.
-async fn asked_on(on: &on_wire::Browser<'_>, host: &str, rest: &str) -> (String, String) {
-    let (line, headers) = rest.split_once("\r\n").unwrap();
-    let mut parts = line.split_whitespace();
-    let (method, path) = (parts.next().unwrap(), parts.next().unwrap());
-    let path = on.path(host, path, headers);
-    let shown = on.shown(method, host, &path, headers, "").await;
-    let rest = format!("{method} {path} HTTP/1.1\r\n{headers}{shown}");
-    ask_on(on.api(), host, &rest).await
-}
-
-/// `dir`'s computer lends `name` on `port`, of `kind`, its pages reading
-/// `reads`.
-fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
-    let at = lend::lends_dir(dir);
-    std::fs::create_dir_all(&at).unwrap();
-    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "groups": [NS] });
-    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
-    let secrets = lend::secret_dir(dir, &LendName::parse(name).unwrap());
-    declared::write_declared_in(&secrets, "authorization", ALEXS).unwrap();
-}
-
-/// `GET /x` at `host` with `extra` header lines: the status, the refusal's
-/// kind, and the app the service behind it was told — `None` when the
-/// service was not asked.
-async fn judged(
-    on: &Browser<'_>,
-    host: &str,
-    extra: &str,
-    heads: &std::sync::Mutex<Vec<String>>,
-) -> (u16, Option<String>, Option<Vec<String>>) {
-    let before = heads.lock().unwrap().len();
-    let (head, sock) = asked(
-        on,
-        host,
-        &format!("GET /x HTTP/1.1\r\nConnection: close\r\n{extra}"),
-    )
-    .await;
-    body(sock).await;
-    let status = head[9..12].parse().unwrap();
-    let refused = header_values(&head, "x-svrngs-refused")
-        .first()
-        .map(|k| k.to_string());
-    let after = heads.lock().unwrap();
-    let told = (after.len() > before).then(|| {
-        header_values(after.last().unwrap(), "x-svrngs-app")
-            .into_iter()
-            .map(str::to_string)
-            .collect()
-    });
-    (status, refused, told)
-}
-
-/// [`judged`] of the routes in this process.
-async fn judged_on(
-    on: &on_wire::Browser<'_>,
-    host: &str,
-    extra: &str,
-    heads: &std::sync::Mutex<Vec<String>>,
-) -> (u16, Option<String>, Option<Vec<String>>) {
-    let before = heads.lock().unwrap().len();
-    let (head, _) = asked_on(
-        on,
-        host,
-        &format!("GET /x HTTP/1.1\r\nConnection: close\r\n{extra}"),
-    )
-    .await;
-    let status = head[9..12].parse().unwrap();
-    let refused = header_values(&head, "x-svrngs-refused")
-        .first()
-        .map(|k| k.to_string());
-    let after = heads.lock().unwrap();
-    let told = (after.len() > before).then(|| {
-        header_values(after.last().unwrap(), "x-svrngs-app")
-            .into_iter()
-            .map(str::to_string)
-            .collect()
-    });
-    (status, refused, told)
-}
-
-/// **A computer's origin names the app asking, and keeps a page to its
-/// reads** (sup-1; DESIGN §3, "Lent apps", call 6, and its table). Alex
-/// lends a page, `night`, reading kind `media`, a `telly` of it and a
-/// `diary`; Sam a `films` and a `notes`. At Alex's computer, each row of
-/// the table: a program (no `Sec-Fetch-*`) showing the token, and each
-/// page's request with the session svrngs opened there: a typed address, a link
-/// followed from another page (a navigation with no `Origin`) and a request
-/// from the lend's own origin are the lend's own page, its service told its
-/// own label; a `fetch` from `night`'s page, by its `Origin`, is `night`'s,
-/// at Alex's own `telly` and at Sam's `films` alike, Sam's door told it
-/// from the pass Alex's computer signs, and so are a form `night`'s page
-/// posted, by its `Origin`, and its frame, by its `Referer`
-/// (capability-navigation); Sam's page at its origin is Sam's `films` at
-/// Sam's door. Refused `closed`, its service never asked: `night`'s page at
-/// `diary` and at Sam's `notes`, which it does not read, by a fetch, a form
-/// or a frame; a request from another page with no `Origin` (an `<img>`);
-/// a frame whose `Referer` is withheld; an `Origin` at another port; a
-/// site's.
-/// Node's `fetch` says `Sec-Fetch-Mode: cors` and no `Sec-Fetch-Site`,
-/// which a browser never leaves out (start-address (b); start-measure,
-/// `demo/runs/start/2026-10-13/README.md` §3 (a) 4): a program's, the
-/// lend's own with the token; without it, refused (give-session).
-/// Planted, each watched failing: the origin taking the `Host` for a
-/// cross-origin `fetch`; a page reaching a lend it does not read; Alex's
-/// computer presenting no pass of its own to Sam's door; a program with a
-/// mode and no site refused (`app_of` as at a39c8d4); every navigation the
-/// lend's own page again (`app_of` as at 9fc1d6c4).
-#[tokio::test]
-async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let mut heads = std::collections::BTreeMap::new();
-    for (dir, name, kind, reads) in [
-        (alex_dir.path(), "night", "night", &["media"][..]),
-        (alex_dir.path(), "telly", "media", &[]),
-        (alex_dir.path(), "diary", "notes", &[]),
-        (sam_dir.path(), "films", "media", &[]),
-        (sam_dir.path(), "notes", "notes", &[]),
-    ] {
-        let (at, kept) = origins::head_origin().await;
-        declare(dir, name, at.port(), kind, reads);
-        heads.insert(name, kept);
-    }
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    let port = api.port();
-    let label = |seed: u8, name: &str| Label::of(&signing(seed).verifying_key().to_bytes(), name);
-    let night = label(1, "night");
-    let from = |l: &Label| format!("Origin: http://{l}.localhost:{port}\r\n");
-    let fetch = "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: cors\r\n";
-    let tab =
-        "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: document\r\n";
-    let frame =
-        "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: navigate\r\nSec-Fetch-Dest: iframe\r\n";
-    let told = |l: &Label| (200, None, Some(vec![l.to_string()]));
-    let closed = (403, Some("closed".to_string()), None);
-    let rows = [
-        (
-            "a program, with the token",
-            1,
-            "night",
-            String::new(),
-            told(&night),
-        ),
-        (
-            "Node's fetch, a program saying a mode and no site, with the token",
-            1,
-            "night",
-            "Sec-Fetch-Mode: cors\r\n".into(),
-            told(&night),
-        ),
-        (
-            "a typed address",
-            1,
-            "night",
-            "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\n".into(),
-            told(&night),
-        ),
-        (
-            "a link followed from another page",
-            1,
-            "telly",
-            format!("{tab}Referer: http://{night}.localhost:{port}/\r\n"),
-            told(&label(1, "telly")),
-        ),
-        (
-            "a form night's page posted",
-            1,
-            "telly",
-            format!("{tab}{}", from(&night)),
-            told(&night),
-        ),
-        (
-            "night's frame, by its Referer",
-            1,
-            "telly",
-            format!("{frame}Referer: http://{night}.localhost:{port}/at\r\n"),
-            told(&night),
-        ),
-        (
-            "a form night's page posted at Alex's diary, unread",
-            1,
-            "diary",
-            format!("{tab}{}", from(&night)),
-            closed.clone(),
-        ),
-        (
-            "night's frame at Alex's diary, unread",
-            1,
-            "diary",
-            format!("{frame}Referer: http://{night}.localhost:{port}/\r\n"),
-            closed.clone(),
-        ),
-        (
-            "a frame with its Referer withheld",
-            1,
-            "telly",
-            frame.into(),
-            closed.clone(),
-        ),
-        (
-            "its own origin",
-            1,
-            "night",
-            "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n".into(),
-            told(&night),
-        ),
-        (
-            "night's fetch at Alex's telly",
-            1,
-            "telly",
-            format!("{fetch}{}", from(&night)),
-            told(&night),
-        ),
-        (
-            "night's fetch at Sam's films",
-            2,
-            "films",
-            format!("{fetch}{}", from(&night)),
-            told(&night),
-        ),
-        (
-            "Sam's page at its origin",
-            2,
-            "films",
-            "Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\n".into(),
-            told(&label(2, "films")),
-        ),
-        (
-            "night's fetch at Alex's diary, unread",
-            1,
-            "diary",
-            format!("{fetch}{}", from(&night)),
-            closed.clone(),
-        ),
-        (
-            "night's fetch at Sam's notes, unread",
-            2,
-            "notes",
-            format!("{fetch}{}", from(&night)),
-            closed.clone(),
-        ),
-        (
-            "another page's <img>",
-            1,
-            "telly",
-            "Sec-Fetch-Site: same-site\r\nSec-Fetch-Mode: no-cors\r\n".into(),
-            closed.clone(),
-        ),
-        (
-            "an Origin at another port",
-            1,
-            "telly",
-            format!("{fetch}Origin: http://{night}.localhost:1\r\n"),
-            closed.clone(),
-        ),
-        (
-            "a site's",
-            1,
-            "telly",
-            "Sec-Fetch-Site: cross-site\r\nSec-Fetch-Mode: cors\r\nOrigin: https://example.com\r\n"
-                .into(),
-            closed.clone(),
-        ),
-    ];
-    for (row, seed, name, extra, want) in rows {
-        let host = format!("{}.localhost:{port}", label(seed, name));
-        let got = judged(on, &host, &extra, &heads[name]).await;
-        eprintln!("{row}: {got:?}");
-        assert_eq!(got, want, "{row}");
-    }
-    // A program without the token is told where it is, and its lend's
-    // service is never asked (give-session).
-    let before = heads["night"].lock().unwrap().len();
-    let host = format!("{night}.localhost:{port}");
-    let (head, sock) = ask(api, &host, "GET /x HTTP/1.1\r\nConnection: close\r\n").await;
-    let said = body(sock).await;
-    assert!(head.starts_with("HTTP/1.1 401"), "{head}{said}");
-    assert!(said.contains("token"), "{said}");
-    assert_eq!(heads["night"].lock().unwrap().len(), before);
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
-}
-
-/// A path on loopback to `to` that holds every datagram `delay` each way,
-/// so a computer reached through it answers its dial as late as the
-/// slowest dial measured (`demo/runs/asleep/2026-10-14/README.md`, 1).
-async fn slow_path(to: SocketAddr, delay: Duration) -> SocketAddr {
-    use std::sync::{Arc, Mutex};
-    use tokio::net::UdpSocket;
-    let front = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
-    let back = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
-    let at = front.local_addr().unwrap();
-    let dialler = Arc::new(Mutex::new(None::<SocketAddr>));
-    let (f, b, d) = (front.clone(), back.clone(), dialler.clone());
-    tokio::spawn(async move {
-        let mut buf = vec![0u8; 65536];
-        while let Ok((n, from)) = f.recv_from(&mut buf).await {
-            *d.lock().unwrap() = Some(from);
-            let (b, bytes) = (b.clone(), buf[..n].to_vec());
-            tokio::spawn(async move {
-                tokio::time::sleep(delay).await;
-                let _ = b.send_to(&bytes, to).await;
-            });
-        }
-    });
-    tokio::spawn(async move {
-        let mut buf = vec![0u8; 65536];
-        while let Ok((n, _)) = back.recv_from(&mut buf).await {
-            let Some(dialler) = *dialler.lock().unwrap() else {
-                continue;
-            };
-            let (f, bytes) = (front.clone(), buf[..n].to_vec());
-            tokio::spawn(async move {
-                tokio::time::sleep(delay).await;
-                let _ = f.send_to(&bytes, dialler).await;
-            });
-        }
-    });
-    at
-}
-
-/// **A lend's computer asleep is said away within the cap; one that answers
-/// as late as the slowest dial measured is not** (events-asleep (b)). Alex
-/// lets Sam and Cy in. Sam's computer is reached only through a path that
-/// holds each datagram 750 ms each way, so its dial is answered no sooner
-/// than 1.5 s, past the slowest working dial `demo/runs/asleep/2026-10-14/`
-/// measured, 1,013 ms: Sam's pad, at its origin on Alex's computer, answers
-/// 200. Cy's computer is asleep, a socket nobody reads (`common::never_answers`):
-/// Cy's lend at its origin is answered 502 `away` within
-/// [`svrngs_node::dial::DIAL_WITHIN`] and a second. Planted, each watched
-/// failing: the dial uncapped, as before this row (`guest.rs`'s bridge
-/// awaiting `connect` to its own end), which Cy's lend waits out; and the
-/// cap below the slow path's dial, 1 s, which says Sam's lend away.
-#[tokio::test]
-async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let alex = start(1, alex_dir.path()).await;
-    let sam = start(2, sam_dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    for node in [&alex, &sam] {
-        node.rail().set_seed(NS, &seed).unwrap();
-    }
-    let delay = Duration::from_millis(750);
-    let slow = slow_path(loopback_sockets(sam.endpoint())[0], delay).await;
-    alex.transport()
-        .add_known_peer(sam.endpoint().id(), vec![slow]);
-    let (_asleep, at_cy) = common::never_answers();
-    let cy =
-        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
-    alex.transport().add_known_peer(cy, at_cy);
-    for (person, seed) in [("sam", 2), ("cy", 3)] {
-        svrngs_core::tests_support::let_in_by(NS, &signing(seed), person, |act| {
-            let act = svrngs_core::tests_support::Fixture { act };
-            alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
-                .id
-                .clone()
-        });
-    }
-    // Sam's computer holds its own admission, as a round would carry it.
-    let theirs = sam.rail().digest(NS).unwrap();
-    let (ops, _) = alex
-        .rail()
-        .ops_missing_from_within(NS, &theirs, usize::MAX)
-        .unwrap();
-    sam.rail().ingest_all(NS, &ops).unwrap();
-    let (pad, _) = origins::head_origin().await;
-    lends(sam_dir.path(), "pad", pad.port(), SAMS);
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    let host =
-        |key: &[u8; 32], name: &str| format!("{}.localhost:{}", Label::of(key, name), api.port());
-    let within = svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1);
-
-    let since = std::time::Instant::now();
-    let (head, sock) = asked(
-        on,
-        &host(sam.endpoint().id().as_bytes(), "pad"),
-        "GET / HTTP/1.1\r\nConnection: close\r\n",
-    )
-    .await;
-    let took = since.elapsed();
-    eprintln!("Sam's pad, through the slow path, answered in {took:?}: {head}");
-    assert!(
-        head.starts_with("HTTP/1.1 200"),
-        "a lend that answers is never said away: {head}{}",
-        body(sock).await
-    );
-    assert!(
-        took >= 2 * delay,
-        "the dial went through the slow path, at least a round trip: {took:?}"
-    );
-
-    let since = std::time::Instant::now();
-    let (head, sock) = asked(
-        on,
-        &host(&signing(3).verifying_key().to_bytes(), "pad"),
-        "GET / HTTP/1.1\r\nConnection: close\r\n",
-    )
-    .await;
-    let took = since.elapsed();
-    eprintln!("Cy's pad, Cy's computer asleep, answered in {took:?}: {head}");
-    assert!(
-        head.starts_with("HTTP/1.1 502"),
-        "{head}{}",
-        body(sock).await
-    );
-    assert_eq!(
-        header_values(&head, "x-svrngs-refused"),
-        vec!["away"],
-        "{head}"
-    );
-    assert!(
-        took < within,
-        "told Cy's computer is asleep in {took:?}, past the cap and a second, {within:?}"
-    );
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
-}
-
-/// **A stopped lend said by its lender, as a page to a tab** (v1ui-polish
-/// (a); `demo/runs/v1ui/2026-10-15/README.md` finding 2). Alex's telly and
-/// Sam's pad each lent on a port nothing listens on: at each origin on
-/// Alex's computer, a tab (`Accept: text/html`) is shown a page naming the
-/// lender and the lend, never a brace or the port; a program is given the
-/// JSON, `away`. Sam's computer holds its own admission, so it names its
-/// lender sam (a lend reaches only a group its lender stands in), never a
-/// host.
-/// Planted: HEAD before it, which answered both in braces. Each lender
-/// found, or none, is traced (#173; red at 9543e52, untraced).
-#[tokio::test]
-async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program() {
-    let (said, _heard) = common::heard("door=debug");
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let stopped = common::stopped();
-    lends(alex_dir.path(), "telly", stopped.port(), ALEXS);
-    lends(sam_dir.path(), "pad", stopped.port(), SAMS);
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    for (node, name, lender) in [(&alex, "telly", "alex"), (&sam, "pad", "sam")] {
-        let host = format!(
-            "{}.localhost:{}",
-            Label::of(node.endpoint().id().as_bytes(), name),
-            api.port()
-        );
-        let tab = "GET / HTTP/1.1\r\nAccept: text/html,*/*\r\nSec-Fetch-Mode: navigate\r\nConnection: close\r\n";
-        let (head, sock) = asked(on, &host, tab).await;
-        let page = format!("{head}{}", body(sock).await);
-        assert!(page.starts_with("HTTP/1.1 502"), "{page}");
-        assert!(
-            page.to_ascii_lowercase()
-                .contains("content-type: text/html"),
-            "{page}"
-        );
-        assert!(
-            page.contains(&format!("{lender}’s {name} is not answering")),
-            "{page}"
-        );
-        assert!(
-            !page.contains("{\"") && !page.contains(&stopped.port().to_string()),
-            "{page}"
-        );
-        let (head, sock) = asked(on, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
-        let program = format!("{head}{}", body(sock).await);
-        assert!(program.contains(r#""kind":"away""#), "{program}");
-    }
-    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
-    let traced = |lender: &str| {
-        (log.lines()).any(|l| l.contains("door: the lend's lender") && l.contains(lender))
-    };
-    assert!(
-        traced("lender=Some(\"alex\")") && traced("lender=Some(\"sam\")"),
-        "{log}"
-    );
-}
-
-/// **A lend's computer that did not answer is shown to a tab as its
-/// person's window, dark** (V1.1.3; the operator's "a graceful and cute
-/// goodnight state", 2026-10-20). Alex lets Cy in, and Cy's computer is a
-/// socket nobody reads (`common::never_answers`), as a closed lid leaves
-/// it. At Cy's pad's origin on Alex's computer a tab (`Accept: text/html`)
-/// is shown home/away.html: Cy's window is dark, Cy's computer did not
-/// answer, and goodnight from Cy — never that it sleeps, nor since when.
-/// A program is given svrngs's JSON as before, `away`, in the same words.
-/// Who did not answer is traced. Planted: HEAD before it, which drew the
-/// words alone, "The computer that lends this did not answer".
-#[tokio::test]
-async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_dark() {
-    let (said, _heard) = common::heard("origin=debug,door=debug");
-    let alex_dir = tempfile::tempdir().unwrap();
-    let alex = start(1, alex_dir.path()).await;
-    let seed = Roster::new(
-        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
-            .into_iter()
-            .collect(),
-    );
-    alex.rail().set_seed(NS, &seed).unwrap();
-    let (_asleep, at_cy) = common::never_answers();
-    let cy =
-        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
-    alex.transport().add_known_peer(cy, at_cy);
-    svrngs_core::tests_support::let_in_by(NS, &signing(3), "cy", |act| {
-        let act = svrngs_core::tests_support::Fixture { act };
-        alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
-            .id
-            .clone()
-    });
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    let host = format!(
-        "{}.localhost:{}",
-        Label::of(&signing(3).verifying_key().to_bytes(), "pad"),
-        api.port()
-    );
-
-    let tab = "GET / HTTP/1.1\r\nAccept: text/html,*/*\r\nSec-Fetch-Mode: navigate\r\nConnection: close\r\n";
-    let (head, sock) = asked(on, &host, tab).await;
-    let page = format!("{head}{}", body(sock).await);
-    eprintln!("Cy's pad, Cy's computer not answering, to a tab: {page}");
-    assert!(page.starts_with("HTTP/1.1 502"), "{page}");
-    assert_eq!(
-        header_values(&head, "x-svrngs-refused"),
-        vec!["away"],
-        "{head}"
-    );
-    assert!(
-        page.to_ascii_lowercase()
-            .contains("content-type: text/html"),
-        "{page}"
-    );
-    for words in [
-        "<title>cy’s window is dark</title>",
-        "cy’s computer didn’t answer, so this can’t open right now.",
-        "Goodnight from cy.",
-    ] {
-        assert!(page.contains(words), "the page lacks {words:?}: {page}");
-    }
-    assert!(
-        !page.contains("{whose}") && !page.contains("{what}") && !page.contains("{\""),
-        "{page}"
-    );
-
-    let (head, sock) = asked(on, &host, "GET / HTTP/1.1\r\nConnection: close\r\n").await;
-    let program = format!("{head}{}", body(sock).await);
-    assert!(
-        program.contains(
-            r#"{"error":"the computer that lends this did not answer; try again later","kind":"away"}"#
-        ),
-        "{program}"
-    );
-    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
-    assert!(
-        log.lines().any(
-            |l| l.contains("origin: the lender's computer did not answer")
-                && l.contains("whose=Some(\"cy\")")
-        ),
-        "{log}"
-    );
-    alex.endpoint().close().await;
-}
-
-/// A service that answers every request `303` to `/`, naming in
-/// `x-svrngs-append` the acts the request's `x-test-append` holds: a lent
-/// app that writes as the person asking (`apps/events/server.mjs`).
-async fn appending_origin() -> SocketAddr {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        while let Ok((sock, _)) = listener.accept().await {
-            tokio::spawn(appending(sock));
-        }
-    });
-    addr
-}
-
-/// [`appending_origin`]'s answer on one connection.
-async fn appending(mut sock: impl origins::Conn) {
-    let Some(head) = origins::read_head(&mut sock).await else {
-        return;
-    };
-    let acts = header_values(&head, "x-test-append").concat();
-    let answer = format!("HTTP/1.1 303 See Other\r\nLocation: /\r\nx-svrngs-append: {acts}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
-    let _ = sock.write_all(answer.as_bytes()).await;
-    let _ = sock.shutdown().await;
-}
-
-/// Each act of `node`'s copy of the group: its kind, whose it counts as and
-/// the key that signed it.
-fn written(node: &Node) -> Vec<(String, String, String)> {
-    let read = node.rail().admission(NS).unwrap();
-    let ops = serde_json::to_value(read.wire()).unwrap();
-    let ops = ops.as_array().unwrap().iter();
-    ops.filter_map(|o| {
-        let kind = o["payload"]["kind"]
-            .as_str()
-            .or(o["corrects"].as_str().map(|_| "a correction"))?;
-        Some((
-            kind.to_string(),
-            o["person"].as_str()?.to_string(),
-            o["actor"].as_str()?.to_string(),
-        ))
-    })
-    .collect()
-}
-
-/// **A lent app writes as the person asking only by their own device**
-/// (capability-signed (a), F1; demo/runs/authorship/2026-10-24/DESIGN.md
-/// §6). Sam lends `events`, of kind `events`, an app on a port that names
-/// in its answer, `x-svrngs-append`, the act it writes as whoever asks;
-/// Alex lends one too. Alex, at Sam's lend's origin on Alex's computer,
-/// says he is coming: Alex's computer signs it with its own key, as Alex,
-/// under the lend's kind (`events/coming`), and carries it to Sam's
-/// computer before the answer reaches the page, so Sam's copy holds it
-/// when Sam's app reads next. Kept: Alex at his own lend writes as Alex,
-/// and no carry is needed. Refused, the answer withheld and the refusal in
-/// words, nothing written: a correction of an act outside the lend's kind
-/// (Alex's own `money/paid`), so an app voids nothing of another's part;
-/// an act in a group Alex's computer does not hold; an act in trip, which
-/// both hold and the lend is not lent to (LENDING_SCOPE §"Enforcement and
-/// disclosure" 5). No answer carries the header on to the page. Red at
-/// HEAD: the door passes the header through to the page and nobody writes
-/// the act; then, for trip, an act judged by both standing alone.
-#[tokio::test]
-async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
-    let (said, _heard) = common::heard("origin=debug");
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let both = [("alex", 1), ("sam", 2)]
-        .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(k))]));
-    for node in [&alex, &sam] {
-        node.rail()
-            .set_seed("trip", &Roster::new(both.clone().into_iter().collect()))
-            .unwrap();
-    }
-    for dir in [alex_dir.path(), sam_dir.path()] {
-        declare(
-            dir,
-            "events",
-            appending_origin().await.port(),
-            "events",
-            &[],
-        );
-    }
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    let host = |seed: u8| {
-        let label = Label::of(&signing(seed).verifying_key().to_bytes(), "events");
-        format!("{label}.localhost:{}", api.port())
-    };
-    let post = |acts: serde_json::Value| {
-        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nx-svrngs-append: events\r\nx-test-append: {acts}\r\n")
-    };
-    let (alex_key, sam_key) = (actor_of(&signing(1)), actor_of(&signing(2)));
-    let paid = alex.rail().commit(
-        NS,
-        &svrngs_core::tests_support::Fixture {
-            act: RailAct::from_json(
-                serde_json::json!({ "op": "record", "payload": { "kind": "money/paid" } }),
-            )
-            .unwrap(),
-        },
-    );
-    let paid = paid.unwrap().unwrap().lines()[0].id.clone();
-
-    let coming = serde_json::json!([{ "group": NS, "op": { "kind": "coming", "event": "e1" } }]);
-    let (head, sock) = asked(on, &host(2), &post(coming)).await;
-    body(sock).await;
-    eprintln!("Alex at Sam's events, coming: {head}");
-    assert!(head.starts_with("HTTP/1.1 303"), "{head}");
-    assert!(
-        header_values(&head, "x-svrngs-append").is_empty(),
-        "the page is never shown the act: {head}"
-    );
-    let alex_s = (
-        "events/coming".to_string(),
-        "alex".to_string(),
-        alex_key.clone(),
-    );
-    assert!(
-        written(&sam).contains(&alex_s),
-        "Sam's copy holds Alex's own: {:?}",
-        written(&sam)
-    );
-    assert!(written(&alex).contains(&alex_s), "{:?}", written(&alex));
-
-    let own = serde_json::json!([{ "group": NS, "op": { "kind": "came", "event": "e1" } }]);
-    let (head, sock) = asked(on, &host(1), &post(own)).await;
-    body(sock).await;
-    assert!(
-        head.starts_with("HTTP/1.1 303"),
-        "Alex at his own events: {head}"
-    );
-    let came = (
-        "events/came".to_string(),
-        "alex".to_string(),
-        alex_key.clone(),
-    );
-    assert!(written(&alex).contains(&came), "{:?}", written(&alex));
-
-    for (row, acts, words) in [
-        (
-            "a correction outside the lend's kind",
-            serde_json::json!([{ "group": NS, "corrects": paid, "op": null }]),
-            "sam’s events writes only its own part of the group’s record, so it was not saved.",
-        ),
-        (
-            "a group this computer does not hold",
-            serde_json::json!([{ "group": "elsewhere", "op": { "kind": "coming", "event": "e1" } }]),
-            "sam’s events wrote in a group you and its lender are not both in, so it was not saved.",
-        ),
-        (
-            "a group both hold that the lend is not lent to",
-            serde_json::json!([{ "group": "trip", "op": { "kind": "coming", "event": "e1" } }]),
-            "sam’s events wrote in a group it is not lent to, so it was not saved.",
-        ),
-    ] {
-        let (head, sock) = asked(on, &host(2), &post(acts)).await;
-        let page = format!("{head}{}", body(sock).await);
-        eprintln!("{row}: {page}");
-        assert!(page.starts_with("HTTP/1.1 403"), "{row}: {page}");
-        assert!(page.contains(words), "{row}: {page}");
-        assert!(
-            header_values(&head, "x-svrngs-append").is_empty(),
-            "{row}: {head}"
-        );
-    }
-    for node in [&alex, &sam] {
-        let corrections = written(node)
-            .into_iter()
-            .filter(|(k, _, _)| k == "a correction");
-        assert_eq!(corrections.count(), 0, "nothing refused is written");
-        for group in ["elsewhere", "trip"] {
-            let ops = node.rail().admission(group).ok();
-            let ops = ops.map(|a| serde_json::to_value(a.wire()).unwrap());
-            let app_s = |o: &serde_json::Value| o["payload"]["kind"] == "events/coming";
-            assert!(
-                ops.is_none_or(|ops| !ops.as_array().unwrap().iter().any(app_s)),
-                "{group}"
-            );
-        }
-    }
-    assert!(
-        !written(&sam).iter().any(|(_, _, k)| k == &sam_key),
-        "Sam's computer writes nothing as Alex"
-    );
-    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
-    assert!(
-        log.lines()
-            .any(|l| l.contains("origin: refused — a lent app's act") && l.contains("why=")),
-        "{log}"
-    );
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
-}
-
-/// **A lent app's answer is written whole or not at all at its budget**
-/// (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G1, "Left: at the
-/// limit a lent app's earlier acts in that answer stay written"). Alex has
-/// written 199 of Sam's `events` entries this hour, one short of the
-/// budget, and Sam's app answers his press with two acts: neither is
-/// written, and he is told the limit's words with a `Retry-After`. One act
-/// then fits, and is written. Planted, watched failing: each act counted
-/// alone (`left` always 1), and the first of the two is written before the
-/// second is refused.
-#[tokio::test]
-async fn a_lent_app_s_answer_is_written_whole_or_not_at_all_at_its_budget() {
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    let port = appending_origin().await.port();
-    declare(sam_dir.path(), "events", port, "events", &[]);
-    for n in 0..199 {
-        let act =
-            serde_json::json!({ "op": "record", "payload": { "kind": "events/old", "n": n } });
-        let act = RailAct::from_json(act).unwrap();
-        let fixture = svrngs_core::tests_support::Fixture { act };
-        alex.rail().commit(NS, &fixture).unwrap().unwrap();
-    }
-    let host = {
-        let label = Label::of(&signing(2).verifying_key().to_bytes(), "events");
-        format!("{label}.localhost:{}", alex.api_addr().port())
-    };
-    let post = |acts: serde_json::Value| {
-        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nSec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{host}\r\nx-test-append: {acts}\r\n")
-    };
-    let coming = |n: u8| serde_json::json!({ "group": NS, "op": { "kind": "coming", "event": n } });
-    let on = &Browser::of(&alex);
-    let written = |node: &Node| {
-        written(node)
-            .iter()
-            .filter(|(k, ..)| k == "events/coming")
-            .count()
-    };
-
-    let (head, sock) = asked(on, &host, &post(serde_json::json!([coming(1), coming(2)]))).await;
-    let page = format!("{head}{}", body(sock).await);
-    eprintln!("two acts, room for one: {page}");
-    assert!(page.starts_with("HTTP/1.1 429"), "{page}");
-    assert!(
-        page.contains("is writing faster than an app may here"),
-        "{page}"
-    );
-    assert!(!header_values(&head, "retry-after").is_empty(), "{head}");
-    assert_eq!(written(&alex), 0, "neither of the two is written");
-
-    let (head, sock) = asked(on, &host, &post(serde_json::json!([coming(3)]))).await;
-    body(sock).await;
-    assert!(head.starts_with("HTTP/1.1 303"), "one act fits: {head}");
-    assert_eq!(written(&alex), 1, "and is written");
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
-}
-
-/// **A lent app writes no part that is a folder in its group** (svrn-docs
-/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §3, §6 8). `Money` is a
-/// folder in the house (`apps/Money/`, the shelf's); Sam lends a server of
-/// his as `--kind Money` and his events server as `events`, beside the
-/// shelf's `apps/Events/`. A write in `Money/` and a void of Alex's own
-/// `Money/paid`, both named by Sam's `Money` server in its answer, are
-/// refused: nothing written, the answer withheld. The events server, a
-/// part apart from the folder `Events` by its case, writes as before.
-#[tokio::test]
-async fn a_lent_app_named_for_a_folder_writes_nothing_in_its_part() {
-    use svrngs_core::tests_support::Fixture;
-    use svrngs_core::{Change, ContentHash, SyncPath};
-
-    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
-    for folder in ["Money", "Events"] {
-        let path = SyncPath::parse(&format!("apps/{folder}/index.html")).unwrap();
-        let hash = ContentHash::from_bytes(*blake3::hash(folder.as_bytes()).as_bytes());
-        let placed = RailAct::Synced {
-            folder: "Shared".into(),
-            changes: vec![Change {
-                path,
-                now: Some((hash, 4)),
-                base: None,
-            }],
-        };
-        alex.rail()
-            .commit(NS, &Fixture { act: placed })
-            .unwrap()
-            .unwrap();
-    }
-    let record = RailAct::from_json(
-        serde_json::json!({ "op": "record", "payload": { "kind": "Money/paid" } }),
-    )
-    .unwrap();
-    let paid = alex.rail().commit(NS, &Fixture { act: record });
-    let paid = paid.unwrap().unwrap().lines()[0].id.clone();
-    let server = appending_origin().await.port();
-    declare(sam_dir.path(), "ledger", server, "Money", &[]);
-    declare(sam_dir.path(), "events", server, "events", &[]);
-    let api = alex.api_addr();
-    let on = &Browser::of(&alex);
-    let sam_s = |name: &str| {
-        let label = Label::of(&signing(2).verifying_key().to_bytes(), name);
-        format!("{label}.localhost:{}", api.port())
-    };
-    let post = |kind: &str, acts: serde_json::Value| {
-        format!("POST /e HTTP/1.1\r\nConnection: close\r\nContent-Length: 0\r\nx-svrngs-append: {kind}\r\nx-test-append: {acts}\r\n")
-    };
-    let wrote = serde_json::json!([{ "group": NS, "op": { "kind": "paid", "by": "sam" } }]);
-    let voided = serde_json::json!([{ "group": NS, "corrects": paid, "op": null }]);
-    for (row, acts) in [
-        ("a write in Money's part", wrote),
-        ("a void of its entry", voided),
-    ] {
-        let (head, sock) = asked(on, &sam_s("ledger"), &post("Money", acts)).await;
-        let page = format!("{head}{}", body(sock).await);
-        eprintln!("{row}: {page}");
-        assert!(page.starts_with("HTTP/1.1 403"), "{row}: {page}");
-        assert!(
-            page.contains("sam’s ledger writes only its own part of the group’s record"),
-            "{row}: {page}"
-        );
-    }
-    let of_money = |k: &str| k == "Money/paid";
-    let money = written(&alex);
-    assert_eq!(
-        money
-            .iter()
-            .filter(|(k, _, _)| k.starts_with("Money/"))
-            .count(),
-        1,
-        "only Alex's own Money/paid stands: {money:?}"
-    );
-    assert!(money.iter().any(|(k, _, _)| of_money(k)));
-    assert_eq!(
-        money.iter().filter(|(k, _, _)| k == "a correction").count(),
-        0,
-        "nothing voided: {money:?}"
-    );
-
-    let coming = serde_json::json!([{ "group": NS, "op": { "kind": "coming", "event": "e1" } }]);
-    let (head, sock) = asked(on, &sam_s("events"), &post("events", coming)).await;
-    body(sock).await;
-    assert!(
-        head.starts_with("HTTP/1.1 303"),
-        "a lend whose part is no folder writes as before, the shelf's Events no matter: {head}"
-    );
-    assert!(
-        written(&alex).iter().any(|(k, _, _)| k == "events/coming"),
-        "{:?}",
-        written(&alex)
-    );
-    sam.endpoint().close().await;
-    alex.endpoint().close().await;
-}
-
-#[tokio::test]
-async fn the_record_answers_no_lend_s_origin_and_refuses_a_page_on_the_wire() {
-    let dir = tempfile::tempdir().unwrap();
     let alex = on_wire::start(1, dir.path()).await;
     let seed = Roster::new(
         [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
@@ -1364,8 +348,116 @@ async fn the_record_answers_no_lend_s_origin_and_refuses_a_page_on_the_wire() {
     alex.net().close().await;
 }
 
+/// Alex's computer and Sam's on this test's wire (on_wire.rs), Alex
+/// letting Sam in as pair.rs `alex_lets_sam_in` does.
+async fn wire_pair(alex_dir: &std::path::Path, sam_dir: &std::path::Path) -> (Node, Node) {
+    let alex = on_wire::start(1, alex_dir).await;
+    let sam = on_wire::start(2, sam_dir).await;
+    pair::let_sam_in(&alex, &sam);
+    (alex, sam)
+}
+
+/// A port a wire's service answers at; none is bound.
+const TELLY: u16 = 9001;
+
+/// `node`'s [`origins::head_origin`] at `port` on the wire: the heads kept.
+fn served(node: &Node, port: u16) -> std::sync::Arc<std::sync::Mutex<Vec<String>>> {
+    let heads: std::sync::Arc<std::sync::Mutex<Vec<String>>> = Default::default();
+    let kept = std::sync::Arc::clone(&heads);
+    on_wire::serve(node, port, move |s| origins::answer_head(s, kept.clone()));
+    heads
+}
+
+/// [`ask`] of the routes in this process (on_wire.rs `raw`): the head,
+/// then the body, neither holding a secret.
+async fn ask_on(api: SocketAddr, host: &str, rest: &str) -> (String, String) {
+    let (head, body) = on_wire::raw(api, &format!("{rest}Host: {host}\r\n\r\n")).await;
+    clean(head.as_bytes());
+    clean(body.as_bytes());
+    (head, body)
+}
+
+/// [`asked`] of the routes in this process.
+async fn asked_on(on: &on_wire::Browser<'_>, host: &str, rest: &str) -> (String, String) {
+    let (line, headers) = rest.split_once("\r\n").unwrap();
+    let mut parts = line.split_whitespace();
+    let (method, path) = (parts.next().unwrap(), parts.next().unwrap());
+    let path = on.path(host, path, headers);
+    let shown = on.shown(method, host, &path, headers, "").await;
+    let rest = format!("{method} {path} HTTP/1.1\r\n{headers}{shown}");
+    ask_on(on.api(), host, &rest).await
+}
+
+/// `dir`'s computer lends `name` on `port`, of `kind`, its pages reading
+/// `reads`.
+fn declare(dir: &std::path::Path, name: &str, port: u16, kind: &str, reads: &[&str]) {
+    let at = lend::lends_dir(dir);
+    std::fs::create_dir_all(&at).unwrap();
+    let body = serde_json::json!({ "port": port, "kind": kind, "limit": 3, "reads": reads, "groups": [NS] });
+    std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    let secrets = lend::secret_dir(dir, &LendName::parse(name).unwrap());
+    declared::write_declared_in(&secrets, "authorization", ALEXS).unwrap();
+}
+
+/// `GET /x` at `host` with `extra` header lines, asked of the routes in
+/// this process: the status, the refusal's kind, and the app the service
+/// behind it was told — `None` when the service was not asked.
+async fn judged_on(
+    on: &on_wire::Browser<'_>,
+    host: &str,
+    extra: &str,
+    heads: &std::sync::Mutex<Vec<String>>,
+) -> (u16, Option<String>, Option<Vec<String>>) {
+    let before = heads.lock().unwrap().len();
+    let (head, _) = asked_on(
+        on,
+        host,
+        &format!("GET /x HTTP/1.1\r\nConnection: close\r\n{extra}"),
+    )
+    .await;
+    let status = head[9..12].parse().unwrap();
+    let refused = header_values(&head, "x-svrngs-refused")
+        .first()
+        .map(|k| k.to_string());
+    let after = heads.lock().unwrap();
+    let told = (after.len() > before).then(|| {
+        header_values(after.last().unwrap(), "x-svrngs-app")
+            .into_iter()
+            .map(str::to_string)
+            .collect()
+    });
+    (status, refused, told)
+}
+
+/// **A computer's origin names the app asking, and keeps a page to its
+/// reads** (sup-1; DESIGN §3, "Lent apps", call 6, and its table). Alex
+/// lends a page, `night`, reading kind `media`, a `telly` of it and a
+/// `diary`; Sam a `films` and a `notes`. At Alex's computer, each row of
+/// the table: a program (no `Sec-Fetch-*`) showing the token, and each
+/// page's request with the session svrngs opened there: a typed address, a link
+/// followed from another page (a navigation with no `Origin`) and a request
+/// from the lend's own origin are the lend's own page, its service told its
+/// own label; a `fetch` from `night`'s page, by its `Origin`, is `night`'s,
+/// at Alex's own `telly` and at Sam's `films` alike, Sam's door told it
+/// from the pass Alex's computer signs, and so are a form `night`'s page
+/// posted, by its `Origin`, and its frame, by its `Referer`
+/// (capability-navigation); Sam's page at its origin is Sam's `films` at
+/// Sam's door. Refused `closed`, its service never asked: `night`'s page at
+/// `diary` and at Sam's `notes`, which it does not read, by a fetch, a form
+/// or a frame; a request from another page with no `Origin` (an `<img>`);
+/// a frame whose `Referer` is withheld; an `Origin` at another port; a
+/// site's.
+/// Node's `fetch` says `Sec-Fetch-Mode: cors` and no `Sec-Fetch-Site`,
+/// which a browser never leaves out (start-address (b); start-measure,
+/// `demo/runs/start/2026-10-13/README.md` §3 (a) 4): a program's, the
+/// lend's own with the token; without it, refused (give-session).
+/// Planted, each watched failing: the origin taking the `Host` for a
+/// cross-origin `fetch`; a page reaching a lend it does not read; Alex's
+/// computer presenting no pass of its own to Sam's door; a program with a
+/// mode and no site refused (`app_of` as at a39c8d4); every navigation the
+/// lend's own page again (`app_of` as at 9fc1d6c4).
 #[tokio::test]
-async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads_on_the_wire() {
+async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = wire_pair(alex_dir.path(), sam_dir.path()).await;
     let mut heads = std::collections::BTreeMap::new();
@@ -1539,9 +631,158 @@ async fn a_computer_s_origin_names_the_app_and_keeps_a_page_to_its_reads_on_the_
     alex.net().close().await;
 }
 
+/// A path on loopback to `to` that holds every datagram `delay` each way,
+/// so a computer reached through it answers its dial as late as the
+/// slowest dial measured (`demo/runs/asleep/2026-10-14/README.md`, 1).
+async fn slow_path(to: SocketAddr, delay: Duration) -> SocketAddr {
+    use std::sync::{Arc, Mutex};
+    use tokio::net::UdpSocket;
+    let front = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+    let back = Arc::new(UdpSocket::bind("127.0.0.1:0").await.unwrap());
+    let at = front.local_addr().unwrap();
+    let dialler = Arc::new(Mutex::new(None::<SocketAddr>));
+    let (f, b, d) = (front.clone(), back.clone(), dialler.clone());
+    tokio::spawn(async move {
+        let mut buf = vec![0u8; 65536];
+        while let Ok((n, from)) = f.recv_from(&mut buf).await {
+            *d.lock().unwrap() = Some(from);
+            let (b, bytes) = (b.clone(), buf[..n].to_vec());
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                let _ = b.send_to(&bytes, to).await;
+            });
+        }
+    });
+    tokio::spawn(async move {
+        let mut buf = vec![0u8; 65536];
+        while let Ok((n, _)) = back.recv_from(&mut buf).await {
+            let Some(dialler) = *dialler.lock().unwrap() else {
+                continue;
+            };
+            let (f, bytes) = (front.clone(), buf[..n].to_vec());
+            tokio::spawn(async move {
+                tokio::time::sleep(delay).await;
+                let _ = f.send_to(&bytes, dialler).await;
+            });
+        }
+    });
+    at
+}
+
+/// **A lend's computer asleep is said away within the cap; one that answers
+/// as late as the slowest dial measured is not** (events-asleep (b)). Alex
+/// lets Sam and Cy in. Sam's computer is reached only through a path that
+/// holds each datagram 750 ms each way, so its dial is answered no sooner
+/// than 1.5 s, past the slowest working dial `demo/runs/asleep/2026-10-14/`
+/// measured, 1,013 ms: Sam's pad, at its origin on Alex's computer, answers
+/// 200. Cy's computer is asleep, a socket nobody reads (`common::never_answers`):
+/// Cy's lend at its origin is answered 502 `away` within
+/// [`svrngs_node::dial::DIAL_WITHIN`] and a second. Planted, each watched
+/// failing: the dial uncapped, as before this row (`guest.rs`'s bridge
+/// awaiting `connect` to its own end), which Cy's lend waits out; and the
+/// cap below the slow path's dial, 1 s, which says Sam's lend away.
 #[tokio::test]
-async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program_on_the_wire()
-{
+async fn a_lend_s_computer_asleep_is_said_away_within_the_cap() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let alex = start(1, alex_dir.path()).await;
+    let sam = start(2, sam_dir.path()).await;
+    let seed = Roster::new(
+        [(Person::parse("alex").unwrap(), vec![actor_of(&signing(1))])]
+            .into_iter()
+            .collect(),
+    );
+    for node in [&alex, &sam] {
+        node.rail().set_seed(NS, &seed).unwrap();
+    }
+    let delay = Duration::from_millis(750);
+    let slow = slow_path(loopback_sockets(sam.endpoint())[0], delay).await;
+    alex.transport()
+        .add_known_peer(sam.endpoint().id(), vec![slow]);
+    let (_asleep, at_cy) = common::never_answers();
+    let cy =
+        svrngs_node::iroh::PublicKey::from_bytes(signing(3).verifying_key().as_bytes()).unwrap();
+    alex.transport().add_known_peer(cy, at_cy);
+    for (person, seed) in [("sam", 2), ("cy", 3)] {
+        svrngs_core::tests_support::let_in_by(NS, &signing(seed), person, |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            alex.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
+    }
+    // Sam's computer holds its own admission, as a round would carry it.
+    let theirs = sam.rail().digest(NS).unwrap();
+    let (ops, _) = alex
+        .rail()
+        .ops_missing_from_within(NS, &theirs, usize::MAX)
+        .unwrap();
+    sam.rail().ingest_all(NS, &ops).unwrap();
+    let (pad, _) = origins::head_origin().await;
+    lends(sam_dir.path(), "pad", pad.port(), SAMS);
+    let api = alex.api_addr();
+    let on = &Browser::of(&alex);
+    let host =
+        |key: &[u8; 32], name: &str| format!("{}.localhost:{}", Label::of(key, name), api.port());
+    let within = svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1);
+
+    let since = std::time::Instant::now();
+    let (head, sock) = asked(
+        on,
+        &host(sam.endpoint().id().as_bytes(), "pad"),
+        "GET / HTTP/1.1\r\nConnection: close\r\n",
+    )
+    .await;
+    let took = since.elapsed();
+    eprintln!("Sam's pad, through the slow path, answered in {took:?}: {head}");
+    assert!(
+        head.starts_with("HTTP/1.1 200"),
+        "a lend that answers is never said away: {head}{}",
+        body(sock).await
+    );
+    assert!(
+        took >= 2 * delay,
+        "the dial went through the slow path, at least a round trip: {took:?}"
+    );
+
+    let since = std::time::Instant::now();
+    let (head, sock) = asked(
+        on,
+        &host(&signing(3).verifying_key().to_bytes(), "pad"),
+        "GET / HTTP/1.1\r\nConnection: close\r\n",
+    )
+    .await;
+    let took = since.elapsed();
+    eprintln!("Cy's pad, Cy's computer asleep, answered in {took:?}: {head}");
+    assert!(
+        head.starts_with("HTTP/1.1 502"),
+        "{head}{}",
+        body(sock).await
+    );
+    assert_eq!(
+        header_values(&head, "x-svrngs-refused"),
+        vec!["away"],
+        "{head}"
+    );
+    assert!(
+        took < within,
+        "told Cy's computer is asleep in {took:?}, past the cap and a second, {within:?}"
+    );
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
+}
+
+/// **A stopped lend said by its lender, as a page to a tab** (v1ui-polish
+/// (a); `demo/runs/v1ui/2026-10-15/README.md` finding 2). Alex's telly and
+/// Sam's pad each lent on a port nothing listens on: at each origin on
+/// Alex's computer, a tab (`Accept: text/html`) is shown a page naming the
+/// lender and the lend, never a brace or the port; a program is given the
+/// JSON, `away`. Sam's computer holds its own admission, so it names its
+/// lender sam (a lend reaches only a group its lender stands in), never a
+/// host.
+/// Planted: HEAD before it, which answered both in braces. Each lender
+/// found, or none, is traced (#173; red at 9543e52, untraced).
+#[tokio::test]
+async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_program() {
     let (said, _heard) = common::heard("door=debug");
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = wire_pair(alex_dir.path(), sam_dir.path()).await;
@@ -1587,8 +828,18 @@ async fn a_stopped_lend_is_said_by_its_lender_as_a_page_to_a_tab_and_json_to_a_p
     );
 }
 
+/// **A lend's computer that did not answer is shown to a tab as its
+/// person's window, dark** (V1.1.3; the operator's "a graceful and cute
+/// goodnight state", 2026-10-20). Alex lets Cy in, and Cy's computer is a
+/// computer answering no dial (on_wire.rs `asleep`, the clock paused), as
+/// a closed lid leaves it. At Cy's pad's origin on Alex's computer a tab (`Accept: text/html`)
+/// is shown home/away.html: Cy's window is dark, Cy's computer did not
+/// answer, and goodnight from Cy — never that it sleeps, nor since when.
+/// A program is given svrngs's JSON as before, `away`, in the same words.
+/// Who did not answer is traced. Planted: HEAD before it, which drew the
+/// words alone, "The computer that lends this did not answer".
 #[tokio::test(start_paused = true)]
-async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_dark_on_the_wire() {
+async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_dark() {
     let (said, _heard) = common::heard("origin=debug,door=debug");
     let alex_dir = tempfile::tempdir().unwrap();
     let alex = on_wire::start(1, alex_dir.path()).await;
@@ -1661,8 +912,57 @@ async fn a_lend_s_computer_that_did_not_answer_is_shown_to_a_tab_as_its_window_d
     alex.net().close().await;
 }
 
+/// A service's answer on one connection: `303` to `/`, naming in
+/// `x-svrngs-append` the acts the request's `x-test-append` holds: a lent
+/// app that writes as the person asking (`apps/events/server.mjs`).
+async fn appending(mut sock: impl origins::Conn) {
+    let Some(head) = origins::read_head(&mut sock).await else {
+        return;
+    };
+    let acts = header_values(&head, "x-test-append").concat();
+    let answer = format!("HTTP/1.1 303 See Other\r\nLocation: /\r\nx-svrngs-append: {acts}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
+    let _ = sock.write_all(answer.as_bytes()).await;
+    let _ = sock.shutdown().await;
+}
+
+/// Each act of `node`'s copy of the group: its kind, whose it counts as and
+/// the key that signed it.
+fn written(node: &Node) -> Vec<(String, String, String)> {
+    let read = node.rail().admission(NS).unwrap();
+    let ops = serde_json::to_value(read.wire()).unwrap();
+    let ops = ops.as_array().unwrap().iter();
+    ops.filter_map(|o| {
+        let kind = o["payload"]["kind"]
+            .as_str()
+            .or(o["corrects"].as_str().map(|_| "a correction"))?;
+        Some((
+            kind.to_string(),
+            o["person"].as_str()?.to_string(),
+            o["actor"].as_str()?.to_string(),
+        ))
+    })
+    .collect()
+}
+
+/// **A lent app writes as the person asking only by their own device**
+/// (capability-signed (a), F1; demo/runs/authorship/2026-10-24/DESIGN.md
+/// §6). Sam lends `events`, of kind `events`, an app on a port that names
+/// in its answer, `x-svrngs-append`, the act it writes as whoever asks;
+/// Alex lends one too. Alex, at Sam's lend's origin on Alex's computer,
+/// says he is coming: Alex's computer signs it with its own key, as Alex,
+/// under the lend's kind (`events/coming`), and carries it to Sam's
+/// computer before the answer reaches the page, so Sam's copy holds it
+/// when Sam's app reads next. Kept: Alex at his own lend writes as Alex,
+/// and no carry is needed. Refused, the answer withheld and the refusal in
+/// words, nothing written: a correction of an act outside the lend's kind
+/// (Alex's own `money/paid`), so an app voids nothing of another's part;
+/// an act in a group Alex's computer does not hold; an act in trip, which
+/// both hold and the lend is not lent to (LENDING_SCOPE §"Enforcement and
+/// disclosure" 5). No answer carries the header on to the page. Red at
+/// HEAD: the door passes the header through to the page and nobody writes
+/// the act; then, for trip, an act judged by both standing alone.
 #[tokio::test]
-async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device_on_the_wire() {
+async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device() {
     let (said, _heard) = common::heard("origin=debug");
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = wire_pair(alex_dir.path(), sam_dir.path()).await;
@@ -1787,8 +1087,17 @@ async fn a_lent_app_writes_as_the_person_asking_only_by_their_own_device_on_the_
     alex.net().close().await;
 }
 
+/// **A lent app's answer is written whole or not at all at its budget**
+/// (svrn-docs `rings/current/EXTENSION_POINT.md` §7, G1, "Left: at the
+/// limit a lent app's earlier acts in that answer stay written"). Alex has
+/// written 199 of Sam's `events` entries this hour, one short of the
+/// budget, and Sam's app answers his press with two acts: neither is
+/// written, and he is told the limit's words with a `Retry-After`. One act
+/// then fits, and is written. Planted, watched failing: each act counted
+/// alone (`left` always 1), and the first of the two is written before the
+/// second is refused.
 #[tokio::test]
-async fn a_lent_app_s_answer_is_written_whole_or_not_at_all_at_its_budget_on_the_wire() {
+async fn a_lent_app_s_answer_is_written_whole_or_not_at_all_at_its_budget() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (alex, sam) = wire_pair(alex_dir.path(), sam_dir.path()).await;
     on_wire::serve(&sam, TELLY, appending);
@@ -1835,8 +1144,16 @@ async fn a_lent_app_s_answer_is_written_whole_or_not_at_all_at_its_budget_on_the
     alex.net().close().await;
 }
 
+/// **A lent app writes no part that is a folder in its group** (svrn-docs
+/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §3, §6 8). `Money` is a
+/// folder in the house (`apps/Money/`, the shelf's); Sam lends a server of
+/// his as `--kind Money` and his events server as `events`, beside the
+/// shelf's `apps/Events/`. A write in `Money/` and a void of Alex's own
+/// `Money/paid`, both named by Sam's `Money` server in its answer, are
+/// refused: nothing written, the answer withheld. The events server, a
+/// part apart from the folder `Events` by its case, writes as before.
 #[tokio::test]
-async fn a_lent_app_named_for_a_folder_writes_nothing_in_its_part_on_the_wire() {
+async fn a_lent_app_named_for_a_folder_writes_nothing_in_its_part() {
     use svrngs_core::tests_support::Fixture;
     use svrngs_core::{Change, ContentHash, SyncPath};
 

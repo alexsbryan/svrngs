@@ -224,6 +224,13 @@ grapevine's asker and `heldBy`, no listener and no spawned server.
    on purpose). Frees most of door, oidc and ring_routes' refusals.
 2. The door's upstream behind the socket it dials (door.rs `connected`): an
    in-memory stream for a test, so a lend's stub answers with no port.
+   Landed: `Net::service`, a connection to a lend's service at a port,
+   TCP on loopback in `IrohTransport` and one end of a pipe on a `Wire`
+   (`Wire::listen`; on_wire.rs `serve` answers it with a stub); the HTTP
+   door and the TCP door both dial through it. Paid for by `connected`'s
+   two warn arms made one, so the count did not move. lend_origin's 7 on
+   the wire; kept there, the WebSocket through two doors (Q) and the
+   dial's cap on a slow and an asleep path (C's contained test).
 3. A `Door` without a `Host`: `Folders::start` needs a bound endpoint
    (folder.rs `start`), so even an in-process door binds QUIC today.
    Landed as the Host's network half ("Harnesses 3 and 4: the
