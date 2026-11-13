@@ -36,8 +36,7 @@ mod guests;
 mod navigations;
 // Opening an app is the yes to what it does as you (capability-open).
 mod opens;
-// What acts as you, and its Stop (capability-what-acts).
-mod acts;
+
 mod grouped;
 mod keep_going;
 // The one place a lent film is played (scripts/check.sh `playback`).

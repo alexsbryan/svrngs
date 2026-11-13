@@ -97,7 +97,7 @@ function Arrival({ state }) {
 
 // The page's address, drawn last, once no feature's file `holds` it while it
 // reads: a driver reads the whole page once it is there (web/tests/home.mjs
-// `all`, web/tests/acts.mjs `loaded`). A names `/` though it is `/?ui=a`.
+// `all`). A names `/` though it is `/?ui=a`.
 /** @param {{ s: State, held: boolean }} props */
 const Foot = ({ s: state, held }) => html`
   <${Connection} />
