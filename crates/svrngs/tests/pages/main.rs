@@ -25,8 +25,8 @@ mod members;
 mod join;
 // page-acts: the record's acts, its changes and uses, and the ask.
 mod acts;
-// page-home-rooms: the home's Wi-Fi and Play.
-mod rooms;
+// page-home-rooms, the home's Wi-Fi and Play, has no test here: each of its
+// claims is a law of the home page's twin (web/tests/pages/home.test.mjs).
 
 /// `who`, holding the key drawn from `seed`, let into group `id` on `node`
 /// by a link `node` mints, consenting as the group's seed asks: a group
