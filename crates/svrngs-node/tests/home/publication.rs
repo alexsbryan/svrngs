@@ -42,8 +42,16 @@ impl Resolver {
                     let mut bytes = Vec::new();
                     let (head, body) = loop {
                         let mut buf = [0; 4096];
-                        let n = socket.read(&mut buf).await.unwrap();
-                        assert_ne!(n, 0);
+                        let n = socket.read(&mut buf).await.unwrap_or(0);
+                        // Closed before a whole request: no call. Something
+                        // else on this computer looked at the port, as
+                        // share::listening does from another test in this
+                        // binary, which on Linux reaches the ephemeral
+                        // ports (32768-60999) this stub listens on
+                        // (demo/runs/flakes/2026-11-12).
+                        if n == 0 {
+                            return;
+                        }
                         bytes.extend_from_slice(&buf[..n]);
                         if let Some(at) = bytes.windows(4).position(|b| b == b"\r\n\r\n") {
                             let head = String::from_utf8(bytes[..at].to_vec()).unwrap();
@@ -530,6 +538,28 @@ async fn publication_restart_child() {
     node.endpoint().close().await;
 }
 
+/// The request a redirect followed would have sent `elsewhere`, if one came
+/// within 100 ms. A connection that sends nothing and closes is not one: a
+/// look at the port by something else on this computer (share::listening,
+/// from another test in this binary, reaches it on Linux), which as
+/// `accept` alone failed this test 5 runs of 5 beside such a prober and
+/// none of 5 without (demo/runs/flakes/2026-11-12).
+async fn followed(elsewhere: &tokio::net::TcpListener) -> Option<String> {
+    let request = async {
+        loop {
+            let (mut socket, _) = elsewhere.accept().await.unwrap();
+            let mut buf = [0; 1024];
+            let n = socket.read(&mut buf).await.unwrap_or(0);
+            if n > 0 {
+                return String::from_utf8_lossy(&buf[..n]).into_owned();
+            }
+        }
+    };
+    tokio::time::timeout(Duration::from_millis(100), request)
+        .await
+        .ok()
+}
+
 #[tokio::test]
 async fn publication_refuses_redirects_oversized_bodies_and_timeouts() {
     let dir = tempfile::tempdir().unwrap();
@@ -562,10 +592,9 @@ async fn publication_refuses_redirects_oversized_bodies_and_timeouts() {
         );
         assert_eq!(status(&node).await["state"], "pending");
         assert!(valid(&node, receipt(&node).1["token"].as_str().unwrap()));
-        assert!(
-            tokio::time::timeout(Duration::from_millis(100), elsewhere.accept())
-                .await
-                .is_err(),
+        assert_eq!(
+            followed(&elsewhere).await,
+            None,
             "invitation must never follow a resolver redirect"
         );
     }
