@@ -3,7 +3,7 @@
 // `args.ask`, its `/ask?lend=<label>&app=<label>`, it is read for its
 // heading, which the test holds to the one source (question.js).
 //
-//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "drawn"?: "<selector>", "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "older"?: true, "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
+//   node web/tests/home.mjs '{"engine": "chromium"|"webkit", "ask": "<url>", "heading"?: false, "read"?: "<selector>", "all"?: "<selector>", "do"?: [[<selector>, <value>? | true, <stays>?], ...], "timed"?: [<selector>, ...], "text"?: true, "open"?: "<a link's words>", "labelled"?: "<a link's whole name>", "unfold"?: true, "look"?: <words>, "visible"?: true, "after"?: <selector> | [<selector>, <words>]}'
 //
 // A `do` step's fourth element, `until`, is words `all`'s text holds before
 // it is read. `visible` hides the page, then shows it, once the `do` steps
@@ -27,25 +27,6 @@ const { context, close } = await launch(args.engine, { b: args.b });
 // address copied for a program).
 if (args.engine === 'chromium')
   await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-// With `older`, every lender's computer in the group's answer as this
-// computer names one running an older svrngs (arch-version; `node.rs`
-// `answered`): in `older`, each by name and first key, a computer's key
-// its person's first here, and none of its lends listed. Planted where the
-// page reads the answer: a route's own fetch would lose the page's
-// Sec-Fetch headers, which the home page answers only with.
-if (args.older) {
-  await context.addInitScript(() => {
-    const json = Response.prototype.json;
-    Response.prototype.json = async function () {
-      const body = await json.call(this);
-      const lenders = (lent) => [
-        ...new Map(lent.map((l) => [l.key, { person: l.person, person_key: l.key }])).values(),
-      ];
-      if (body?.lent && body.unanswered) [body.older, body.lent] = [lenders(body.lent), []];
-      return body;
-    };
-  });
-}
 const logs = [];
 context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
@@ -199,20 +180,6 @@ try {
   const [afterAt, laterWords] = [args.after].flat();
   await until(afterAt, laterWords);
   const later = afterAt ? await page.locator(afterAt).allTextContents() : null;
-  // With `drawn`, a selector: each match's class and words, as the page
-  // drew them once loaded (v1ui-door (c): the door) and judged — none still
-  // "asking…", as each is until `/v1/lends` answers or fails (question.js
-  // `door`). Read at once, a loaded host read them unjudged (#193).
-  const judged = (s) =>
-    ((es) => es.length && !es.some((e) => e.textContent.includes('asking…')))([
-      ...document.querySelectorAll(s),
-    ]);
-  if (args.drawn) await page.waitForFunction(judged, args.drawn, { timeout: 30_000 });
-  const drawn = args.drawn
-    ? await page
-        .locator(args.drawn)
-        .evaluateAll((es) => es.map((e) => [e.className, e.textContent]))
-    : null;
   // With `open`, a link's words: the tab it opens, once loaded, its
   // address and title (v1ui-lend (b): bo opening what ada lent).
   let opened = null;
@@ -266,7 +233,6 @@ try {
       clipboard,
       links,
       timed,
-      drawn,
       text,
       opened,
       labelled,

@@ -5,7 +5,7 @@
 // computer.
 //
 //   node web/tests/drive.mjs '{"engine": "chromium"|"webkit", "site": "<dir>",
-//     "key": "<64 hex>", "token": "<token>", "older"?: true | "<person>"}'
+//     "key": "<64 hex>", "token": "<token>"}'
 //
 // First it leaves the page while it loads, and opens it again.
 //
@@ -171,28 +171,6 @@ const server = await serve(args.site);
 const origin = `http://127.0.0.1:${server.address().port}/`;
 const { context, close } = await launch(args.engine);
 const away = await offline(context);
-// With `older` true, the computer the page reaches answers as one running
-// an older svrngs (arch-version): its people's lends with no `version`.
-// With a person's name, that computer names theirs as one running an
-// older svrngs, and lists none of their lends, as the node does
-// (`node.rs` `answered`). Planted where the page reads the answer, as the
-// dial's Response is the page's own.
-if (args.older) {
-  await context.addInitScript((older) => {
-    const json = Response.prototype.json;
-    Response.prototype.json = async function () {
-      const body = await json.call(this);
-      if (body?.lent && body.unanswered && older === true) delete body.version;
-      if (body?.lent && body.unanswered && typeof older === 'string') {
-        body.older = [
-          { person: older, person_key: body.people?.find((p) => p.person === older)?.person_key },
-        ];
-        body.lent = body.lent.filter((l) => l.person !== older);
-      }
-      return body;
-    };
-  }, args.older);
-}
 const logs = [];
 try {
   const page = await context.newPage();
