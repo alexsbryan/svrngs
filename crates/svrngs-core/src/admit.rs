@@ -505,11 +505,8 @@ pub fn admit(
         };
         let scope = scopes
             .entry(pass)
-            .or_insert_with(|| crate::authority::NativeScope::new(pass));
-        let verdict = scope
-            .as_ref()
-            .map_err(|why| *why)
-            .and_then(|scope| scope.select(id, op, namespace, &authentic, &mut selected));
+            .or_insert_with(|| crate::authority::read(pass));
+        let verdict = crate::authority::select(scope, id, op, namespace, &authentic, &mut selected);
         if let Err(why) = verdict {
             tracing::debug!(target: "rail:admit", id = %id, actor = %op.actor, person = %pass.person, %why,
                 "admit refused — a holder's line its pass does not grant");

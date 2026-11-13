@@ -642,10 +642,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # old fold and adoption deleted, every group decided by Eudoxia's
 # interpreter; the caps ratchet down to where it landed (core 4,618 ->
 # 3,773, . 22,666 -> 21,588, js 8,544 -> 8,527).
+# (2026-11-12) R1 through rules (EUDOXIA_JUDGE §8 step 4): what a pass lets
+# its holder do is decided by eudoxia-community's rules; authority.rs only
+# reads passes and lines for them, and the fault enums moved with the rules
+# (core 3,773 -> 3,558, . 21,588 -> 21,375).
 BUDGET = {
-    "crates/svrngs-core": 3774,
+    "crates/svrngs-core": 3559,
 
-    ".": 21589,
+    ".": 21376,
 
     "js": 8528,
 

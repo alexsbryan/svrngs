@@ -335,7 +335,8 @@ pub(crate) async fn carry(
     let signed =
         id == line.id && svrngs_core::Ed25519Verifier.verify(&line.actor, &id, &line.kind.sig);
     let read = rail.admission(&group).ok();
-    let held = (line.kind.grant.as_ref()).is_none_or(|p| p.held_by(&line.actor));
+    let held =
+        (line.kind.grant.as_ref()).is_none_or(|p| svrngs_core::authority::held(p, &line.actor));
     let stands =
         (read.as_ref()).is_some_and(|a| a.membership().standing.contains(line.stands_as()));
     tracing::debug!(target: "rails", group, %id, signer = %line.actor, as_ = line.stands_as(), by = ?by.map(|d| d.actor()), signed, held, stands, "rail: a line a device signed, carried here unchanged, or why not");

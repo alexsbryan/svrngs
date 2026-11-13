@@ -731,6 +731,7 @@ dependencies = [
 name = "eudoxia-community"
 version = "0.1.0"
 dependencies = [
+ "eudoxia",
  "serde",
 ]
 

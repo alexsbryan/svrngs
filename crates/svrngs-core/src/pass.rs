@@ -217,22 +217,8 @@ pub struct Pass {
     pub approval: Option<String>,
 }
 
-/// Why a pass opens nothing here.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, thiserror::Error)]
-pub enum PassFault {
-    #[error("an entry approval is not a reach pass")]
-    NotReach,
-    #[error("not signed by the person it names")]
-    Unsigned,
-    #[error("held by another key than the one presenting it")]
-    NotTheHolder,
-    #[error("lapsed")]
-    Lapsed,
-    #[error("it does not name this lend")]
-    NotNamed,
-    #[error("its link names more than the pass it carries")]
-    Wider,
-}
+/// Why a pass opens nothing here: the community profile's (R1).
+pub use crate::authority::PassFault;
 
 impl Pass {
     /// `person` lets `holder`, actor hex, act as them for `app` toward it
@@ -295,23 +281,12 @@ impl Pass {
         msg
     }
 
-    /// This grant naming `line`, unsigned, when its approver may approve
-    /// it at `now`, the approver's clock: before the pass lapses, by its
-    /// holder, appending only its app's part (HOLDER_APPROVAL §2). The
-    /// holder's own timestamp is no evidence of when it wrote, so a line
-    /// stamped after the pass lapses gets none either.
-    pub fn approving(
-        &self,
-        line: &crate::Op<crate::SignedOp>,
-        group: &str,
-        now: i64,
-    ) -> Option<Self> {
-        crate::authority::NativeScope::new(self)
-            .ok()?
-            .approving(line, group, now)
-    }
-
-    /// [`Self::approving`], signed by `approver`, the key this pass names.
+    /// This grant naming `line`, signed by `approver`, the key this pass
+    /// names, when it may approve it at `now`, its own clock: before the pass
+    /// lapses, by its holder, appending only its app's part (HOLDER_APPROVAL
+    /// §2; [`crate::authority::approving`]). The holder's own timestamp is no
+    /// evidence of when it wrote, so a line stamped after the pass lapses
+    /// gets none either.
     pub fn approve(
         &self,
         approver: &SigningKey,
@@ -319,7 +294,7 @@ impl Pass {
         group: &str,
         now: i64,
     ) -> Option<Self> {
-        let mut pass = self.approving(line, group, now)?;
+        let mut pass = crate::authority::approving(self, line, group, now)?;
         (pass.approver.as_deref() == Some(actor_of(approver).as_str())).then_some(())?;
         pass.approval = Some(sign_message(approver, &pass.approval_message()));
         Some(pass)
@@ -328,7 +303,7 @@ impl Pass {
     /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
     /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        self.with_reach(None, holder, lend, now, |_, _, _| ())
+        crate::authority::check(self, holder, lend, now)
     }
 
     /// Whether `link`, presented by `to` at `now`, carries this pass to it
@@ -337,31 +312,7 @@ impl Pass {
     /// one does not (capability-signed; DESIGN §3). A phone's holder, a key
     /// no page can copy, names each worker run's endpoint key so.
     pub fn carries(&self, link: &Pass, to: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        self.with_reach(Some(link), to, lend, now, |_, _, _| ())
-    }
-
-    /// Admit original issuer/app/deadline metadata only through the shared
-    /// resource commit. Group standing and transport remain their owners' work.
-    pub fn with_reach<T>(
-        &self,
-        link: Option<&Self>,
-        holder: &str,
-        lend: &Label,
-        now: i64,
-        commit: impl FnOnce(&str, &Label, i64) -> T,
-    ) -> Result<T, PassFault> {
-        crate::authority::resolve(self, link, holder, lend, now, || {
-            commit(
-                &self.person,
-                &self.app,
-                link.map_or(self.until, |p| p.until),
-            )
-        })
-    }
-
-    /// Native source authentication for carrying bytes, not a write permission.
-    pub fn held_by(&self, holder: &str) -> bool {
-        crate::authority::NativeScope::new(self).is_ok_and(|scope| scope.held_by(holder))
+        crate::authority::resolve(self, Some(link), to, lend, now, || ())
     }
 
     /// The link this pass's holder signs to `holder`, unsigned, its

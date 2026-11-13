@@ -1,17 +1,21 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//! Original native source interpretation and scoped owned effects through
-//! Eudoxia. Group standing is independently established by the native fold.
+//! A holder's pass and line, read for Eudoxia's community profile, which
+//! decides what the pass lets its holder do by rules (svrn-docs
+//! rings/current/EUDOXIA_JUDGE.md §3, R1); and a group's lines as the
+//! evidence its interpreter reads (R2). svrngs keeps the bytes: signatures,
+//! ids and labels. Group standing is the interpreter's, never a pass's.
 use crate::{
-    grant::Why,
-    pass::{carried_name, Label, Pass, PassFault, Whose},
-    ContentHash, Op, OpId, RailAct, SignedOp,
+    grant::bare_id,
+    pass::{carried_name, Label, Pass, Whose},
+    Op, OpId, Payload, RailAct, SignedOp,
 };
-use alloc::{collections::BTreeMap, format, vec::Vec};
-use eudoxia::*;
+use alloc::{collections::BTreeMap, string::ToString};
+use eudoxia_community::pass as r1;
 mod evidence;
 mod sources;
 pub(crate) use evidence::interpreted;
 pub use evidence::{Native, NativeAuthority, SourceRoots};
+pub use r1::{ApprovalFault, PassFault, Why};
 pub use sources::{
     AuthorityChange, AuthorityRef, GroupPolicy, GuestSlot, OfficeConflict, OfficeDispute,
     PeopleSnapshot, RecoveryChoice, SourceFailure, SourceFault, SourceMember, SourceOffice,
@@ -19,238 +23,84 @@ pub use sources::{
 
 pub type Lines<'a> = BTreeMap<OpId, &'a Op<SignedOp>>;
 pub(crate) type Judged<T> = Result<T, SourceFailure>;
-fn id(s: &str) -> Id {
-    Id::new(s).expect("fixed profile name or native content ID")
-}
-fn resource(tag: &str, label: &Label) -> Resource {
-    Resource::new(format!("{tag}/{label}")).unwrap()
-}
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Use<'a> {
-    Reach(&'a Label),
-    Record(&'a Label),
-    Decide,
-}
-impl Use<'_> {
-    fn operation(self) -> Operation {
-        Operation::new(match self {
-            Self::Reach(_) => "reach",
-            Self::Record(_) => "record",
-            Self::Decide => "decide",
-        })
-        .unwrap()
-    }
-    fn resource(self, pass: &Pass) -> Resource {
-        match self {
-            Self::Reach(lend) => {
-                let tag = if *lend == pass.app { "own" } else { "read" };
-                resource(tag, lend)
-            }
-            Self::Record(part) => resource("record", part),
-            Self::Decide => resource("record", &pass.app),
-        }
-    }
-}
-fn source(original: &impl serde::Serialize) -> Fact {
-    Fact {
-        source: SourceRef {
-            namespace: id("svrngs-native-pass-json-v1"),
-            algorithm: id("blake3"),
-            digest: ContentHash::of(&serde_json::to_vec(original).unwrap())
-                .as_bytes()
-                .to_vec(),
+
+/// `pass` as the profile reads it, its signatures verified here.
+pub fn read(pass: &Pass) -> r1::Pass<'_> {
+    r1::Pass {
+        person: &pass.person,
+        key: hex::decode(&pass.person)
+            .ok()
+            .and_then(|k| k.try_into().ok()),
+        holder: &pass.holder,
+        app: pass.app.as_str(),
+        reads: pass.reads.iter().map(Label::as_str).collect(),
+        until: pass.until,
+        approver: pass.approver.as_deref(),
+        approves: pass.op.as_ref().map(ToString::to_string),
+        signed: pass.signed(),
+        lender: match pass.app.whose() {
+            Whose::Carried => None,
+            Whose::Computer(key) => Some(key),
         },
-        state: FactState::Established,
     }
 }
-fn session(issuer: Principal, raw: &str) -> Actor {
-    Actor::Session {
-        issuer,
-        id: AuthorityId::session(issuer, &id("svrngs-native-pass-v1"), raw.as_bytes()),
-    }
-}
-/// Original authenticated evidence, cached once per distinct native Pass. It
-/// establishes only this key's delegated scope, never group standing.
-pub struct NativeScope<'a> {
-    pass: &'a Pass,
-    profile: PersonalProfile,
-}
-impl<'a> NativeScope<'a> {
-    pub fn new(pass: &'a Pass) -> Result<Self, Why> {
-        if !pass.signed() {
-            return Err(Why::Unsigned);
+
+/// `line` as the profile reads it: the part each kind it names writes, under
+/// `pass`'s app, and the corrected line's where `held` holds it.
+fn entry<'l>(
+    pass: &r1::Pass,
+    line: &'l Op<SignedOp>,
+    group: &str,
+    content: &'l str,
+    held: &Lines,
+) -> r1::Entry<'l> {
+    let part = |kind: &str| r1::Part {
+        kind: kind.into(),
+        label: match pass.lender {
+            None => Label::carried(kind, group),
+            Some(key) => Label::of(&key, &carried_name(kind, group)),
         }
-        let issuer =
-            Principal::new(*ContentHash::from_hex(&pass.person).unwrap().as_bytes()).unwrap();
-        let scope = Scope {
-            person: Some(issuer),
-            application: None,
-            coverage: Coverage::Set(
-                core::iter::once(resource("own", &pass.app))
-                    .chain(core::iter::once(resource("record", &pass.app)))
-                    .chain(pass.reads.iter().map(|label| resource("read", label)))
-                    .collect(),
-            ),
-            operations: [
-                Use::Reach(&pass.app).operation(),
-                Use::Record(&pass.app).operation(),
-            ]
-            .into(),
-            interval: match pass.until {
-                i64::MIN => Interval::empty(i64::MIN),
-                until => Interval::new(i64::MIN, until).unwrap(),
-            },
-            redelegations: 1,
-        };
-        let profile = PersonalProfile::interpreted(
-            id("svrngs-native-pass-v1"),
-            i64::MIN,
-            source(pass),
-            scope,
-            session(issuer, &pass.holder),
-        )
-        .unwrap();
-        Ok(Self { pass, profile })
-    }
-    fn run<T>(
-        &self,
-        holder: &str,
-        use_: Use,
-        at: i64,
-        purpose: Purpose,
-        body: Vec<u8>,
-        apply: impl FnOnce() -> T,
-    ) -> Result<T, Why> {
-        let actor = session(self.profile.principal(), holder);
-        let result = self
-            .profile
-            .operation(at, actor, use_.operation(), use_.resource(self.pass))
-            .commit(purpose, body, apply);
-        tracing::debug!(target: "rail:authority", holder, at, allowed = result.is_ok(), error = ?result.as_ref().err(), "native: original scope through Eudoxia and owned commit");
-        result.map_err(|_| {
-            if !self.profile.actor_matches(actor) {
-                Why::NotTheHolder
-            } else if !self.profile.scope().interval.contains(at) {
-                Why::Lapsed
-            } else if use_ == Use::Decide {
-                Why::Decides
-            } else {
-                Why::OtherKind
-            }
-        })
-    }
-    pub fn reach<T>(
-        &self,
-        holder: &str,
-        lend: &Label,
-        at: i64,
-        apply: impl FnOnce() -> T,
-    ) -> Result<T, PassFault> {
-        self.run(
-            holder,
-            Use::Reach(lend),
-            at,
-            Purpose::Live,
-            lend.as_str().as_bytes().to_vec(),
-            apply,
-        )
-        .map_err(pass_fault)
-    }
-    pub fn select<'line>(
-        &self,
-        id: &OpId,
-        line: &'line Op<SignedOp>,
-        group: &str,
-        held: &Lines<'line>,
-        out: &mut Lines<'line>,
-    ) -> Result<(), Why> {
-        let approved = self.pass.op.as_ref();
-        if approved.is_some_and(|id| *id != crate::grant::bare_id(line, group)) {
-            return Err(Why::Unapproved);
-        }
-        let kind = match &line.kind.act {
-            RailAct::Record { payload } => Some(payload.app()),
-            RailAct::Correct {
-                corrects,
-                replacement,
-            } => {
-                let target = held.get(corrects).ok_or(Why::Unheld)?;
-                let kind = target.kind.act.payload().map_or("", crate::Payload::app);
-                if replacement.as_ref().is_some_and(|p| p.app() != kind) {
-                    return Err(Why::OtherKind);
-                }
-                Some(kind)
-            }
-            _ => None,
-        };
-        let target = self.part(kind, group);
-        let use_ = if kind.is_some() {
-            Use::Record(&target)
-        } else {
-            Use::Decide
-        };
-        self.run(
-            &line.actor,
-            use_,
-            line.ts_unix,
-            Purpose::HistoricalAdmission,
-            id.as_bytes().to_vec(),
-            || {
-                out.insert(id.clone(), line);
-            },
-        )
-    }
-    pub fn approving(&self, line: &Op<SignedOp>, group: &str, now: i64) -> Option<Pass> {
-        if self.pass.op.is_some() || self.pass.approver.is_none() || line.ts_unix >= self.pass.until
-        {
-            return None;
-        }
-        if !matches!(
-            line.kind.act,
-            RailAct::Record { .. } | RailAct::Correct { .. }
-        ) {
-            return None;
-        }
-        let kind = line.kind.act.payload().map(crate::Payload::app);
-        let target = self.part(kind, group);
-        let body = crate::grant::bare_id(line, group);
-        self.run(
-            &line.actor,
-            Use::Record(&target),
-            now,
-            Purpose::Live,
-            body.as_bytes().to_vec(),
-            || Pass {
-                op: Some(body),
-                ..self.pass.clone()
-            },
-        )
-        .ok()
-    }
-    /// Source authentication for a carrier storing a line, not record scope or
-    /// group standing. The fold separately decides whether that source counts.
-    pub fn held_by(&self, holder: &str) -> bool {
-        self.profile
-            .actor_matches(session(self.profile.principal(), holder))
-    }
-    fn part(&self, kind: Option<&str>, group: &str) -> Label {
-        kind.map_or_else(
-            || self.pass.app.clone(),
-            |kind| match self.pass.app.whose() {
-                Whose::Carried => Label::carried(kind, group),
-                Whose::Computer(key) => Label::of(&key, &carried_name(kind, group)),
-            },
-        )
+        .to_string(),
+    };
+    let act = match &line.kind.act {
+        RailAct::Record { payload } => r1::Act::Write(part(payload.app())),
+        RailAct::Correct {
+            corrects,
+            replacement,
+        } => r1::Act::Correct {
+            target: held
+                .get(corrects)
+                .map(|t| part(t.kind.act.payload().map_or("", Payload::app))),
+            replacement: replacement.as_ref().map(|p| part(p.app())),
+        },
+        _ => r1::Act::Decide,
+    };
+    r1::Entry {
+        actor: &line.actor,
+        written: line.ts_unix,
+        content,
+        act,
     }
 }
-fn pass_fault(why: Why) -> PassFault {
-    match why {
-        Why::Unsigned => PassFault::Unsigned,
-        Why::NotTheHolder => PassFault::NotTheHolder,
-        Why::Lapsed => PassFault::Lapsed,
-        _ => PassFault::NotNamed,
-    }
+/// `line`, a holder's under `pass` (already [`read`]), counted into `out`
+/// only if the profile's rules let it stand in its person's place.
+pub fn select<'line>(
+    pass: &r1::Pass,
+    id: &OpId,
+    line: &'line Op<SignedOp>,
+    group: &str,
+    held: &Lines<'line>,
+    out: &mut Lines<'line>,
+) -> Result<(), Why> {
+    let content = bare_id(line, group).to_string();
+    let entry = entry(pass, line, group, &content, held);
+    let selected = r1::entry(pass, &entry, || {
+        out.insert(id.clone(), line);
+    });
+    tracing::debug!(target: "rail:authority", %id, actor = %line.actor, error = ?selected.err(), "pass: a holder's line, by the community profile's rules");
+    selected
 }
+
 pub fn check(pass: &Pass, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
     resolve(pass, None, holder, lend, now, || ())
 }
@@ -262,50 +112,38 @@ pub fn resolve<T>(
     now: i64,
     apply: impl FnOnce() -> T,
 ) -> Result<T, PassFault> {
-    if let Some(link) = link {
-        return carries(pass, link, holder, lend, now, apply);
-    }
-    reaching(pass)?.reach(holder, lend, now, apply)
-}
-/// `pass`'s scope for reach: an approval of one entry reaches nothing.
-fn reaching(pass: &Pass) -> Result<NativeScope<'_>, PassFault> {
-    if pass.op.is_some() {
-        return Err(PassFault::NotReach);
-    }
-    NativeScope::new(pass).map_err(pass_fault)
-}
-pub fn carries<T>(
-    pass: &Pass,
-    link: &Pass,
-    holder: &str,
-    lend: &Label,
-    now: i64,
-    apply: impl FnOnce() -> T,
-) -> Result<T, PassFault> {
-    let child = reaching(link)?;
-    child.reach(holder, lend, now, || ())?;
-    let parent = reaching(pass)?;
-    parent.reach(&link.person, lend, now, || ())?;
-    let issuer = parent.profile.principal();
-    let mut scope = child.profile.scope().clone();
-    scope.person = Some(issuer);
-    scope.redelegations = 0;
-    let profile = parent
-        .profile
-        .attenuated(source(&(pass, link)), scope, session(issuer, &link.holder))
-        .map_err(|_| PassFault::Wider)?;
-    NativeScope { pass, profile }.reach(holder, lend, now, apply)
+    let reached = r1::reach(
+        &read(pass),
+        link.map(read).as_ref(),
+        holder,
+        lend.as_str(),
+        now,
+        apply,
+    );
+    tracing::debug!(target: "rail:authority", holder, %lend, now, error = ?reached.as_ref().err(), "pass: reach, by the community profile's rules");
+    reached
 }
 
-#[derive(Debug, Clone, Copy, thiserror::Error)]
-pub enum ApprovalFault {
-    #[error("no write grant")]
-    Missing,
-    #[error("this app has no live authority here")]
-    Open,
-    #[error("this entry was not approved")]
-    Entry,
+/// `pass` naming `line`, unsigned, when its approver may approve it at `now`.
+pub fn approving(pass: &Pass, line: &Op<SignedOp>, group: &str, now: i64) -> Option<Pass> {
+    let (read, content) = (read(pass), bare_id(line, group));
+    let text = content.to_string();
+    let approves = r1::approving(&read, &entry(&read, line, group, &text, &Lines::new()), now);
+    tracing::debug!(target: "rail:authority", actor = %line.actor, now, approves, "pass: an entry's approval, by the community profile's rules");
+    approves.then(|| Pass {
+        op: Some(content),
+        ..pass.clone()
+    })
 }
+
+/// Source authentication for a carrier storing a line, not record scope or
+/// group standing. The fold separately decides whether that source counts.
+pub fn held(pass: &Pass, holder: &str) -> bool {
+    r1::held(&read(pass), holder)
+}
+
+/// The Wasm signer's approval of `line` in `group` for the open whose pass
+/// is `reach` and which issued `issued`, by `approver`, at `now`.
 pub fn approve_in_open(
     approver: &str,
     group: &str,
@@ -314,18 +152,23 @@ pub fn approve_in_open(
     line: &Op<SignedOp>,
     now: i64,
 ) -> Result<Pass, ApprovalFault> {
-    let grant = line.kind.grant.as_ref().ok_or(ApprovalFault::Missing)?;
-    let named = |p: &Pass| p.approver.as_deref() == Some(approver);
-    let ours = named(reach)
-        && named(grant)
-        && grant == issued
-        && reach.app.whose() == grant.app.whose()
-        && now.abs_diff(line.ts_unix) <= 300;
-    if !ours || check(reach, &line.actor, &reach.app, now).is_err() {
-        return Err(ApprovalFault::Open);
-    }
-    NativeScope::new(grant)
-        .ok()
-        .and_then(|scope| scope.approving(line, group, now))
-        .ok_or(ApprovalFault::Entry)
+    let grant = line.kind.grant.as_ref();
+    let (opener, writes) = (read(reach), read(grant.unwrap_or(issued)));
+    let content = bare_id(line, group);
+    let text = content.to_string();
+    let entry = entry(&writes, line, group, &text, &Lines::new());
+    let opened = r1::open(
+        approver,
+        &opener,
+        grant.map(|g| (&writes, g == issued)),
+        &entry,
+        now,
+    );
+    tracing::debug!(target: "rail:authority", %approver, error = ?opened.err(), "pass: an open's approval, by the community profile's rules");
+    opened?;
+    let grant = grant.ok_or(ApprovalFault::Missing)?;
+    Ok(Pass {
+        op: Some(content),
+        ..grant.clone()
+    })
 }

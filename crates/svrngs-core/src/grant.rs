@@ -10,31 +10,8 @@
 
 use alloc::format;
 
-use serde::{Deserialize, Serialize};
-
-/// Why a holder may not.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, thiserror::Error,
-)]
-#[serde(rename_all = "snake_case")]
-pub enum Why {
-    #[error("its person did not approve this exact entry")]
-    Unapproved,
-    #[error("its pass is not signed by the person it names")]
-    Unsigned,
-    #[error("its pass is another key's")]
-    NotTheHolder,
-    #[error("its pass had lapsed")]
-    Lapsed,
-    #[error("an app writes only its own part of the record")]
-    OtherKind,
-    #[error("an app decides nothing for its person")]
-    Decides,
-    /// The act it corrects is not held, so whose part it is cannot be told
-    /// yet: it may be real data, and counts once its target arrives.
-    #[error("what it corrects is not held here yet")]
-    Unheld,
-}
+/// Why a holder may not: the community profile's (EUDOXIA_JUDGE §3, R1).
+pub use crate::authority::Why;
 
 /// The content a per-entry grant binds, before that grant is attached.
 pub fn bare_id(line: &crate::Op<crate::SignedOp>, group: &str) -> crate::OpId {

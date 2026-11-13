@@ -1245,9 +1245,10 @@ async fn holder_of(
         Some(Some(link)) => Some(link),
         Some(None) => return Err(refused("a link that does not read")),
     };
-    let (issuer, app, until) = pass
-        .with_reach(link.as_ref(), &key, &label, now, |issuer, app, until| {
-            (issuer.to_owned(), app.clone(), until)
+    let until = link.as_ref().map_or(pass.until, |p| p.until);
+    let (issuer, app) =
+        svrngs_core::authority::resolve(&pass, link.as_ref(), &key, &label, now, || {
+            (pass.person.clone(), pass.app.clone())
         })
         .map_err(|fault| refused(&fault.to_string()))?;
     // A group the lend does not reach grants nothing, so the signer's

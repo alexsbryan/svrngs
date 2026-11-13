@@ -1997,9 +1997,12 @@ from the journal waits in PLAN §2.
   part, the kind the pass's label names (`Label::carried`), and never
   deciding: a holder's `Runs`, or any act of the register, counts nowhere.
   Anything else is `RailGap::Ungranted`, a contradiction, or an absence
-  while what it corrects is not held
-  (`crates/svrngs-core/src/grant.rs`, judged in `admit`, each pass
-  verified once). A cut covers its key's holders as it covers the key, and
+  while what it corrects is not held. What a pass lets its holder do,
+  reach, write, or have an entry approved, is decided by rules in
+  Eudoxia's community profile (`eudoxia-community` `pass.rs`); svrngs
+  reads each pass and line for it, signatures verified once per pass, and
+  labels each kind's part (`crates/svrngs-core/src/authority.rs`, judged in
+  `admit`). A cut covers its key's holders as it covers the key, and
   its `through` names their newest acts.
 
   A holder's timestamp can't show when it wrote: the app's own code holds
@@ -2012,7 +2015,7 @@ from the journal waits in PLAN §2.
   the group's signer, `web/sign.html` at the page's origin, which an app's
   page frames and which runs no app code. Before the worker signs an entry,
   the signer approves it by its own clock while the pass is live
-  (`Pass::approving`, `approve_line`): the entry's grant must be one its
+  (`authority::approving`, `approve_line`): the entry's grant must be one its
   open issued, its time within five minutes of the signer's, its app's own
   part. Approval names the entry's id without its grant (`grant::bare_id`,
   `Pass.op`) and is the approver's signature over the pass and that id
