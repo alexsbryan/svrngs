@@ -30,14 +30,14 @@ use std::time::Duration;
 use svrngs::cli;
 use svrngs::group::Name;
 use svrngs_node::invite::ORIGIN_FILE;
-use svrngs_node::update::RELEASE_FILE;
-// Only the macOS tests' (the_line_run_twice_…): unused, and so clippy's
-// error, where they are not built.
-#[cfg(target_os = "macos")]
 use svrngs_node::link::Origin;
-#[cfg(target_os = "macos")]
+use svrngs_node::update::RELEASE_FILE;
 use svrngs_node::RailAct;
-use tokio::io::{AsyncBufReadExt, AsyncReadExt, AsyncWriteExt};
+// Only the macOS tests' (a_svrngs_started_by_hand_…): unused, and so
+// clippy's error, where they are not built.
+#[cfg(target_os = "macos")]
+use tokio::io::AsyncBufReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 /// This computer's tarball, as install.sh names it from `uname`.
 fn tarball() -> String {
