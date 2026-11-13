@@ -1,6 +1,6 @@
-// What the browser step's sends tests held of the home page, with no
-// browser (docs/CHECKS.md harness 5): the index row of an app that reads a
-// lend it may send to, drawn whole by twin.mjs from /v1/lends answered in
+// What the browser step's sends tests, and a carried card's, held of the
+// home page, with no browser (docs/CHECKS.md harness 5): the index row of
+// an app that reads a lend it may send to, drawn whole by twin.mjs from /v1/lends answered in
 // surface.rs `opening`'s shape (surface.rs:526-529), its fold's ticks
 // pressed as a person presses them, and what its Open posts read off the
 // form (home/page/reach.js `Reach`). That the post is the yes to the send,
@@ -43,7 +43,7 @@ const probe = (sending) => ({
     },
   ],
 });
-const answers = (sending) => ({
+const answers = (sending, lent = [probe(sending)]) => ({
   'GET /v1/groups': {
     key: ADA,
     groups: [
@@ -70,7 +70,7 @@ const answers = (sending) => ({
     ],
   },
   'GET /v1/lends?namespace=house': {
-    lent: [probe(sending)],
+    lent,
     unanswered: [],
     unheard: [],
     refused: [],
@@ -131,4 +131,23 @@ test('the send’s tick is drawn under its read’s, posted only while its read 
   const again = await open(`${AT}/?ui=a`, answers(true));
   const kept = ticks(again);
   assert.deepEqual([kept.checked, kept.sends], [[true, true], LLAMA], 'the last yes ticks it');
+});
+
+// browser::carried::a_folder_app_the_policy_blanks_is_told_so_on_its_card:
+// a carried app whose page asks another host for a font and runs a script
+// written inside it is told so on its card, in `svrngs check`'s words as
+// /v1/lends carries them (surface.rs:410 `check`; the words, check.rs, and
+// that /v1/lends carries them: tests/carried.rs
+// a_carried_app_the_policy_blanks_is_listed_with_why).
+test('a carried app the policy blanks is told why on its card', async () => {
+  const said = [
+    'This page asks fonts.googleapis.com for a font, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, save the .woff2 beside index.html and point @font-face at it.',
+    'This page has a script written inside it, and apps run scripts only from their own files. Move it to a .js file beside index.html.',
+  ];
+  const blank = { ...probe(false), name: 'Blank', kind: 'Blank', reads: [], check: said.join(' ') };
+  delete blank.reading;
+  const page = await open(`${AT}/?ui=a`, answers(false, [blank]));
+  assert.deepEqual(page.unanswered, []);
+  const row = page.text('#home table.index td')[0];
+  for (const words of said) assert.ok(row.includes(words), `the card lacks ${words}: ${row}`);
 });
