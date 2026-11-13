@@ -434,6 +434,189 @@ test('what was done here is said once, and the address forgets it', async () => 
   assert.equal(again.asked.filter(([, path]) => path === '/v1/groups').length, 1);
 });
 
+// The groups /v1/groups answers, changed by a make or a join as home.rs
+// `found` and `join` change them: each group's people and lends recorded,
+// whichever are held now (`ada`), and its list read as it stands.
+const growing = (first, more) => {
+  const held = { groups: first };
+  const answers = ada({ groups: [...first, ...more] });
+  answers['GET /v1/groups'] = () => ({ groups: held.groups, key: ADA });
+  return [answers, (g) => (held.groups = [...held.groups, g])];
+};
+const mine = { maker: null, since: 1_791_000_000 };
+const LINK = 'svrngs://join/TRIPTOKEN';
+const lab = group({ id: 'lab', name: 'Lab', person: 'Ada', made: mine, folders: ['/h/Lab'] });
+const trip = group({
+  id: 'trip',
+  name: 'Trip',
+  person: 'Dee',
+  keeps: false,
+  made: { maker: 'Sam', since: 1_791_000_000 },
+  folders: ['/h/Trip'],
+});
+// Lab made, as home.rs `found` answers a make: the name, no folder
+// refused, no namesakes; Trip joined, as `asked` and `join` answer.
+const making = (add) => ({
+  'GET /group?name=Lab': [],
+  'POST /group': (body) => (add(lab), body[0] === 'Lab' ? ['Lab', null, []] : refused(409, 'no')),
+  [`GET /join?${new URLSearchParams({ link: LINK })}`]: ['Trip', null],
+  'POST /join': (body) => (add(trip), ['Trip', body.person, null]),
+});
+const make = async (page) => {
+  await page.type('#make input[name=name]', 'Lab');
+  await page.type('#make input[name=person]', 'Ada');
+  return page.press('#make button', 'Make a group');
+};
+const join = async (page) => {
+  await page.type('#join input[name=link]', LINK);
+  await page.type('#join input[name=person]', 'Dee');
+  return page.press('#join button', 'Join Trip as Dee');
+};
+
+// pages::join::a_group_made_is_drawn_with_no_reload, on layout B's make
+// page: Ada makes Lab; the page says so and draws Lab, its links, having
+// loaded once (home.js@19b63b2b:364 opened the page again).
+test('a group made is said and drawn with its links, with no reload', async () => {
+  const house = group({ name: 'house', made: mine });
+  const [answers, add] = growing([house], [lab, trip]);
+  const page = await home({ ...answers, ...making(add) }, '/?view=make');
+  await make(page);
+  assert.ok(page.text('#home > p').join().includes('You made Lab.'), page.text('#home > p').join());
+  assert.ok(page.text('#home section button').includes('Invite someone to Lab'));
+  assert.deepEqual(
+    page.asked.filter(([how]) => how === 'POST').map(([, , body]) => body),
+    [['Lab', 'Ada']],
+  );
+  assert.ok(
+    page.lines().some((line) => line.startsWith('MAKE: made')),
+    page.lines().join('\n'),
+  );
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
+// pages::join::a_group_joined_is_drawn_with_no_reload, on layout B's join
+// page: Ada pastes Sam's link to Trip and joins as Dee; the page says so
+// and draws Trip, its shelf folded as just joined, having loaded once
+// (home.js@19b63b2b:409 opened the page again).
+test('a group joined is said and drawn, its shelf folded, with no reload', async () => {
+  const house = group({ name: 'house', made: mine });
+  const [answers, add] = growing([house], [lab, trip]);
+  const page = await home({ ...answers, ...making(add) }, '/?view=join');
+  await join(page);
+  const said = page.text('#home > p').join();
+  assert.ok(said.includes('You’re in Trip, as Dee.'), said);
+  assert.ok(
+    page.text('#home summary').includes('Bring more to Trip'),
+    page.text('#home summary').join(),
+  );
+  assert.deepEqual(
+    page.asked.filter(([how]) => how === 'POST').map(([, , body]) => body),
+    [{ link: LINK, person: 'Dee' }],
+  );
+  assert.ok(
+    page.lines().some((line) => line.startsWith('JOIN: joined')),
+    page.lines().join('\n'),
+  );
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
+// pages::join::a_group_made_or_joined_says_it_is_being_read_until_it_is
+// (the operator, 2026-11-03): once drawn, every read of a group's people
+// and lends is held; Lab made and Trip joined each say "Reading Lab…",
+// "Reading Trip…" under its heading, while house keeps what it drew; let
+// go, each is drawn read, its folder said, and none says it is read.
+test('a group made or joined says it is being read until it is, and house keeps its drawing', async () => {
+  const house = group({ name: 'house', made: mine, folders: ['/h/house'] });
+  const [answers, add] = growing([house], [lab, trip]);
+  const holds = [];
+  const held = Object.fromEntries(
+    Object.entries(answers)
+      .filter(([key]) => /^GET \/v1\/(rail\/people|lends)\?/.test(key))
+      .map(([key, body]) => [key, () => new Promise((give) => holds.push(() => give(body)))]),
+  );
+  const asked = { ...answers, ...making(add) };
+  const page = await home(asked);
+  Object.assign(asked, held);
+  const section = (head) =>
+    page.text('#home section[data-colour]').find((words) => words.startsWith(head)) ?? '';
+  await make(page);
+  const housed = section('house (yours');
+  assert.ok(
+    housed.includes('Invite someone to house') && !housed.includes('Reading house…'),
+    housed,
+  );
+  assert.ok(section('Lab (yours').includes('Reading Lab…'), section('Lab'));
+  await join(page);
+  assert.ok(section('Trip (Sam’s').includes('Reading Trip…'), section('Trip'));
+  for (const give of holds.splice(0)) give();
+  await page.settle();
+  assert.ok(!page.text('#home section[data-colour]').join().includes('Reading '));
+  assert.ok(section('Lab (yours').includes('Lab’s folder is on this computer'), section('Lab'));
+  assert.ok(section('Trip (Sam’s').includes('Trip’s folder is on this computer'), section('Trip'));
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
+// pages::rooms::play_in_one_index_is_said_on_in_every_list: cy, in ada's
+// house and flat, lends `played`, a UDP port, so each index lists it with
+// Play; Play pressed in house's, flat's says where to connect too, from
+// PLAY's one answer (/v1/play, play.rs `Playing`); Stop in flat's, house's
+// offers Play again (home.js@19b63b2b:91 drew the pressed cell alone).
+test('Play in one group’s index is said on in every index, and its Stop too', async () => {
+  const played = lend('played', {
+    key: CY,
+    person: 'cy',
+    kind: 'echo',
+    raw: 'udp',
+    groups: ['house', 'flat'],
+  });
+  const on = [
+    {
+      person: 'cy',
+      key: CY,
+      name: 'played',
+      port: 41000,
+      said: 'Connect to 127.0.0.1:41000.',
+      open: { is: 'at', words: null },
+    },
+  ];
+  const turns = [];
+  const people = [row('ada', ADA, 'started'), row('cy', CY)];
+  const page = await home(
+    ada({
+      groups: [group({ name: 'house' }), group({ id: 'flat', name: 'flat' })],
+      people,
+      'GET /v1/lends?namespace=house': lends({ lent: [played] }),
+      'GET /v1/lends?namespace=flat': lends({ lent: [played] }),
+      'POST /v1/play': (body) => (turns.push(body), body.on ? on : []),
+    }),
+  );
+  const cells = () =>
+    page
+      .all('#home section table.index td')
+      .filter((td) => td.textContent.match(/(Play|Stop)$/))
+      .map(words);
+  assert.equal(cells().length, 2, cells().join('\n'));
+  const [house, flat] = page.all('#home section table.index');
+  const id = (table) => ancestorId(table);
+  await page.press(`#${id(house)} table.index td button`, 'Play');
+  assert.ok(
+    cells().every((cell) => cell.includes('Connect to 127.0.0.1:') && cell.endsWith('Stop')),
+    cells().join('\n'),
+  );
+  await page.press(`#${id(flat)} table.index td button`, 'Stop');
+  assert.ok(
+    cells().every((cell) => !cell.includes('Connect to') && cell.endsWith('Play')),
+    cells().join('\n'),
+  );
+  assert.deepEqual(turns, [
+    { on: { key: CY, name: 'played' } },
+    { off: { key: CY, name: 'played' } },
+  ]);
+  assert.ok(page.lines().some((line) => line.startsWith('PLAY: turn: read -> turning')));
+  assert.deepEqual(page.went, []);
+});
+const ancestorId = (el) => (el.id ? el.id : ancestorId(el.parentNode));
+
 // pages::join::a_group_not_made_is_said_once,
 // ::a_link_to_nothing_lent_is_said_once,
 // ::a_link_s_copy_is_answered_once, pages::index::why_a_number_is_refused_is_said_once
