@@ -361,6 +361,11 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
     let written = std::fs::read_to_string(house.alex_dir.path().join(svrngs_node::api::API_FILE))
         .expect("the node writes where its API listens");
     assert_eq!(written, format!("http://{}\n", house.alex.api_addr()));
+    let at = house.alex.api_addr();
+    assert!(
+        at.ip().is_loopback() && at.port() != 0,
+        "the port bound: {at}"
+    );
 
     let (status, body) = house.ask(svrngs_node::surface::GROUPS_ROUTE).await;
     assert_eq!(status, 200, "{body:#}");

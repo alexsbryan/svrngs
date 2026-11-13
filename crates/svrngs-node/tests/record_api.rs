@@ -4,9 +4,9 @@
 //! bound to 127.0.0.1, and nothing else reaches it.
 //! Nodes in one process on one wire (common/on_wire.rs; docs/CHECKS.md,
 //! harness 3), no endpoint and no socket, each API asked of its routes as
-//! a program on its computer asks it. The listener itself, its bind and
-//! the file naming it, is asked over a real one: a node started over
-//! QUIC on loopback, no relay.
+//! a program on its computer asks it. The listener's guard and the token
+//! beside its file are asked with no socket; the listener itself, the port
+//! it binds and the file naming it, is surface.rs's, over a real one.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
@@ -16,8 +16,7 @@ mod on_wire;
 use std::net::SocketAddr;
 use std::time::Duration;
 
-use svrngs_node::iroh::RelayConfig;
-use svrngs_node::node::{Node, NodeError};
+use svrngs_node::node::Node;
 use svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
 use svrngs_node::{actor_of, Person, Roster, SigningKey};
 
@@ -30,15 +29,6 @@ const ONE_ROUND: Duration = Duration::from_secs(10);
 
 fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
-}
-
-/// No relay and no address lookup: peers are reached by seeded addresses.
-fn no_relay() -> RelayConfig {
-    RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: false,
-    }
 }
 
 /// No link is asked about here.
@@ -96,56 +86,18 @@ fn holds(node: &Node, ns: &str, id: &str) -> bool {
         .any(|o| o.id.to_string() == id)
 }
 
-/// `seed`'s computer over QUIC, its API listening on `api`: the listener's
-/// own claims, which a wire has none of.
-async fn start_on(seed: u8, dir: &tempfile::TempDir, api: SocketAddr) -> Result<Node, NodeError> {
-    Node::start(
-        dir.path().to_path_buf(),
-        signing(seed),
-        &no_relay(),
-        no_seed,
-        api,
-    )
-    .await
-}
-
-/// **The API is served on loopback alone** — upstream's bind guard
-/// (`api.rs:167`, `check_loopback`): asked to listen on an address that is
-/// not loopback, the node refuses to start, naming the address, and binds
-/// nothing. Asked for loopback, it serves there. Over QUIC: the bind is
-/// the claim.
-#[tokio::test]
-async fn a_listener_not_on_loopback_is_refused_by_name() {
-    let dir = tempfile::tempdir().unwrap();
-    let wide: SocketAddr = "0.0.0.0:0".parse().unwrap();
-    let refused = match start_on(1, &dir, wide).await {
-        Ok(_) => panic!("a node must not serve the record on {wide}"),
-        Err(e) => e.to_string(),
-    };
-    assert!(
-        refused.contains("0.0.0.0:0") && refused.contains("not a loopback address"),
-        "{refused}"
-    );
-
-    let node = start_on(1, &dir, "127.0.0.1:0".parse().unwrap())
-        .await
-        .unwrap();
-    assert!(node.api_addr().ip().is_loopback(), "{}", node.api_addr());
-    assert_ne!(node.api_addr().port(), 0, "the port bound is answered");
-    node.net().close().await;
-}
-
 /// **The API is asked for on loopback alone, decided before any bind**:
 /// `api::check_loopback` (api.rs:265) over literal addresses refuses each
 /// that is not loopback, naming it, and takes IPv4's and IPv6's loopback,
 /// `::ffff:127.0.0.1` among them; a node on a wire asked to listen on
 /// `0.0.0.0:0` refuses to start by those words and writes no `api` file,
 /// since the guard runs before the listener (api.rs `bind`). No socket:
-/// the address is refused before one is opened. Planted: the guard on
+/// the address is refused before one is opened. The trust floor's gate
+/// for "the record API binds loopback alone". Planted: the guard on
 /// `is_loopback` uncanonical (the mapped address refused); the guard
 /// taking an unspecified address (`0.0.0.0` served).
 #[tokio::test]
-async fn a_listen_address_not_on_loopback_is_refused_by_name_before_any_bind() {
+async fn a_listener_not_on_loopback_is_refused_by_name() {
     use svrngs_node::api::check_loopback;
     for open in [
         "127.0.0.1:0",
@@ -768,33 +720,6 @@ async fn a_program_without_the_token_is_refused_on_every_record_route() {
         status != 401 && out["kind"] != "no_token",
         "sign-in's routes keep their own secret: {status} {out}"
     );
-    node.net().close().await;
-}
-
-/// **The token is the person's alone** (give-token): it is written
-/// beside the `api` file, owner-only (0600), so a program the person runs
-/// reads it as it could read their key, and one meant to be contained, in
-/// a container, cannot. That it is kept across a restart is the command's
-/// test (crates/svrngs/tests/address.rs), which restarts the program over
-/// one data dir. The failing input: no token file.
-/// Over QUIC: the `api` file is the listener's, written where it binds.
-#[tokio::test]
-async fn the_token_is_owner_only_beside_the_api_file() {
-    let dir = tempfile::tempdir().unwrap();
-    let node = start_on(1, &dir, "127.0.0.1:0".parse().unwrap())
-        .await
-        .expect("a node starts");
-    token_in(dir.path());
-    assert!(dir.path().join("api").exists(), "beside the api file");
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let mode = std::fs::metadata(dir.path().join("token"))
-            .unwrap()
-            .permissions()
-            .mode();
-        assert_eq!(mode & 0o777, 0o600, "the token is the person's alone");
-    }
     node.net().close().await;
 }
 
