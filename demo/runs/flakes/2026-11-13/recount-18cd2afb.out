@@ -1,0 +1,5 @@
+gate Rust tests 900: deterministic 651 (72.3%), fragile 249
+per seam {'Q': 209, 'P': 237, 'R': 133, 'C': 71, 'B': 90, 'M': 7, 'D': 10}
+fragile by target browser 43, scenes 20, home 13, share 11, carried 9, lend_origin 9, svrngs_node 9, conformance 8, folders 8, install 8, relay_tiers 8, door 7, join_page 7, tcp 7, udp 6, relay 5, update 5, home_group 4, leave_page 4, peer 4, play 4, room 4, scale 4, session 4, address 3, kept 3, meet 3, pages 3, relay_fallback 3, accept 2, canaries 2, join_by_link 2, new 2, oidc 2, record_api 2, remove 2, surface 2, check 1, default_relay 1, n0 1, name 1, new_relay 1, shipped 1, svrngs_runtime 1
+unmapped integration tests (counted deterministic): 0
+rows marked moved but still listed: []

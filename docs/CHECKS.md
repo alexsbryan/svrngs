@@ -184,6 +184,16 @@ cut-from-text edges, and to wire tests in tests/carried.rs and
 surface.rs. The isolated Node laws, 309, all deterministic: with them,
 926 of 1,208 (76.7%).
 
+Recounted at 18cd2afb (`recount-18cd2afb.out`), after unit 7's pass:
+900, of which 651 (72.3%) cross no seam and 249 at least one: P 237,
+Q 209, R 133, B 90, C 71, D 10, M 7. join_by_link 12 to 2, share 14 to
+11, new 7 to 2, meet 5 to 3, leave_page 6 to 4 (to `tests/verbs` on the
+wire, a join's redeem by `Net::ask_once`); install 16 to 8 (install.sh
+over a stubbed `curl` and a stand-in svrngs); record_api, removal and
+the node's settled rounds held to a paused clock. Left in the CLI: each
+verb that asks the svrngs running here (`ask_running`, a socket), a
+page's host, a relay, a real svrngs installed.
+
 ### The contained test of each seam
 
 | Seam | Contained place | What moves out of everything else |
