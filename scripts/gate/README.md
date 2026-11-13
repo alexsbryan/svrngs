@@ -13,7 +13,7 @@ From a svrngs checkout:
     podman run --rm --init --userns=keep-id:uid=1000,gid=1000 \
       --security-opt label=disable --shm-size=2g --pids-limit=-1 \
       --sysctl net.ipv4.ip_local_port_range="49152 65535" \
-      -v "$PWD:/work" -v "$PWD/../eudoxia:/eudoxia:ro" \
+      -v "$PWD:/work" \
       -v svrngs-gate-cargo-registry:/home/gate/.cargo/registry \
       -v svrngs-gate-cargo-git:/home/gate/.cargo/git \
       -v svrngs-gate-npm:/home/gate/.npm svrngs-gate
@@ -25,9 +25,8 @@ The build takes about 10 minutes, once. Each flag is for a reason:
   as root: one that makes a file unreadable and expects it unread would
   pass as root for the wrong reason. `label=disable` lets the container
   read the checkout without relabelling it for SELinux.
-- Eudoxia, the path dependency svrngs-core names (`../../../eudoxia`
-  from crates/svrngs-core), read-only at `/eudoxia`, beside `/work` as it
-  is beside the checkout on the Mac.
+- Eudoxia comes from its public repository at the rev the crates'
+  Cargo.toml pin, fetched once into the cargo-git volume.
 - Chromium wants more shared memory than podman's 64 MB, and a test run
   more threads than its 2,048 pids.
 - A network of the container's own (podman's pasta), its ephemeral
