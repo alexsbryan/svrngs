@@ -257,35 +257,40 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
     a.endpoint().close().await;
 }
 
+/// Members no path reaches: the live lane's transport for a router whose
+/// test asks no member (docs/CHECKS.md, harness 4), so no endpoint is bound.
+struct Nobody;
+
+impl svrngs_node::iroh::Fetch for Nobody {
+    fn fetch<'a>(
+        &'a self,
+        _: &'a svrngs_node::iroh::Contact,
+        _: svrngs_node::iroh::WholeRequest,
+    ) -> svrngs_node::iroh::Fetched<'a> {
+        Box::pin(async { Err(svrngs_node::iroh::Unsent::NoPath) })
+    }
+}
+
 /// The record API's router over a rail of its own, with no listener: a
 /// request is handed whatever caller address the test names, as the
-/// listener hands every request its own. The endpoint is kept for the
-/// transport the live lane dials through.
-async fn api_alone(dir: &tempfile::TempDir) -> (axum::Router, svrngs_node::iroh::Endpoint) {
+/// listener hands every request its own; no member is reached.
+fn api_alone(dir: &tempfile::TempDir) -> axum::Router {
     let token = svrngs_node::api::kept_token(dir.path()).unwrap();
-    let endpoint = svrngs_node::iroh::build_relayed_endpoint(
-        svrngs_node::iroh::SecretKey::from_bytes(&signing(1).to_bytes()),
-        Vec::new(),
-        &no_relay(),
-    )
-    .await
-    .unwrap();
-    let router = svrngs_node::api::router(
+    svrngs_node::api::router(
         svrngs_node::rail::RailApi {
             rail: std::sync::Arc::new(svrngs_node::RingRail::new(
                 dir.path(),
                 std::sync::Arc::new(signing(1)),
             )),
             live: Default::default(),
-            transport: std::sync::Arc::new(svrngs_node::iroh::IrohTransport::new(endpoint.clone())),
+            transport: std::sync::Arc::new(Nobody),
             build: Vec::new(),
         },
         axum::Router::new(),
         axum::Router::new(),
         axum::Router::new(),
         token,
-    );
-    (router, endpoint)
+    )
 }
 
 /// A request to the people door from `caller`, if any; its status and body.
@@ -321,7 +326,7 @@ async fn ask_as(
 #[tokio::test]
 async fn a_caller_not_on_loopback_is_refused_by_name() {
     let dir = tempfile::tempdir().unwrap();
-    let (router, _endpoint) = api_alone(&dir).await;
+    let router = api_alone(&dir);
     let token = token_in(dir.path());
     for caller in ["192.168.1.5:50000", "[2001:db8::5]:50000"] {
         let (status, out) = ask_as(router.clone(), Some(caller.parse().unwrap()), &token).await;
