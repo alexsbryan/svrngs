@@ -33,6 +33,7 @@ mod load;
 use std::path::Path;
 use std::process::Stdio;
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use harness::{browsers, relay, relay_url, repo, site, Engine};
 use iroh_relay::server::Server;

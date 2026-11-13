@@ -29,6 +29,7 @@ mod refusals;
 
 use std::net::SocketAddr;
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use common::{bridge_as, loopback_sockets};
 use sha2::{Digest, Sha256};

@@ -6,6 +6,7 @@
 //! it starts none here and lets Sam in by [`let_sam_in`] alone.
 
 use std::path::Path;
+use svrngs_node::iroh::Net as _;
 
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::Node;

@@ -20,6 +20,7 @@ mod on_wire;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command};
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use common::{loopback_sockets, noise};
 use member::{signing, Addr};

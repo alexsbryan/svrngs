@@ -240,6 +240,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 use common::loopback_sockets;
+use svrngs_node::iroh::Net as _;
 
 use std::collections::BTreeMap;
 use std::sync::{mpsc, Arc, Mutex, OnceLock};

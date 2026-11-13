@@ -9,7 +9,7 @@ use std::path::Path as FsPath;
 
 use super::*;
 use crate::iroh::tests::{loopback_sockets, Said};
-use crate::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
+use crate::iroh::{EndpointAddr, MemoryLookup, Net as _, RelayConfig};
 use crate::node::Node;
 use crate::seed::Seed;
 use crate::{actor_of, Name, SigningKey};

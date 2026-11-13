@@ -6,6 +6,7 @@
 
 use std::path::Path;
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig};
 use svrngs_node::node::Node;

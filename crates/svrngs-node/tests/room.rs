@@ -19,6 +19,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::process::Stdio;
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use common::loopback_sockets;
 use serde_json::{json, Value};

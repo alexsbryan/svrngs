@@ -8,6 +8,7 @@
 //! the seam this contained test holds (docs/seams.tsv).
 
 use std::time::{Duration, Instant};
+use svrngs_node::iroh::Net as _;
 
 use super::common::loopback_sockets;
 use super::{

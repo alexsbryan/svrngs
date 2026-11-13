@@ -305,6 +305,18 @@ a folder and the record's routes run with no endpoint. Owner: node.rs,
 where `Node::start_every` builds the Host. Not a second decider for the
 same reason as harness 4. Landed: the trait has fourteen methods; the operator raised the cap +90 for it after the economizing pass (2026-11-13), and it took 85. A Blobs get on the wire is served by the holder's own provider and events over an in-memory pipe, so the folder's per-get decision runs as served.
 
+**A link's issuer on the wire.** A join redeems on a connection dialled
+for it alone on `Alpn::Redeem` (redeem.rs `call`), which took
+`Net::dial`'s QUIC `Connection`, so no join ran on a `Wire`. The seam is
+one more `Net` method, `ask_once`: a request asked of a key on an ALPN on
+a fresh connection, the answer's head and body. Production impl:
+`IrohTransport`, the dial and `on_stream` as `call` had them, uncapped;
+test impl: `OnWire`, the issuer's acceptor decision and router for the
+asker's key, as `send` is answered. Paid for by one `add_known_peer`
+body where two stood (iroh.rs), so the count does not move. What it does
+not claim: a fresh connection's dial (`Net::dial`, kept for the UDP
+door's datagrams) and the acceptor's close (`accept`'s tests).
+
 ### Units, in order
 
 Largest share and flake history first. Each lands per the verification

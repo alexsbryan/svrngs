@@ -25,6 +25,7 @@ mod harness;
 // The host's load and the seek bar's, the conformance canary's too.
 mod load;
 use load::seeks_judged;
+use svrngs_node::iroh::Net as _;
 // An app the group carries (v1ui-shelf).
 mod carried;
 // The group's page in two tabs (groups-tabs).

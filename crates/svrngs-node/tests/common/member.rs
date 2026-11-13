@@ -5,6 +5,7 @@
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use super::common::loopback_sockets;
 use svrngs_node::iroh::{EndpointAddr, MemoryLookup, PublicKey, RelayConfig};

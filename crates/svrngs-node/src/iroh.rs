@@ -169,14 +169,6 @@ impl IrohTransport {
         Ok(conn)
     }
 
-    /// Seed dial hints for a peer. Test/fallback surface — a caller with a
-    /// [`Contact`] passes its hints there instead.
-    pub fn add_known_peer(&self, pubkey: PublicKey, addrs: Vec<SocketAddr>) {
-        if let Ok(mut map) = self.known_addrs.lock() {
-            map.insert(*pubkey.as_bytes(), addrs);
-        }
-    }
-
     /// The connection kept to `peer` on `alpn`, while it stays open.
     fn open(&self, peer: &Contact, alpn: Alpn) -> Option<Connection> {
         let at = (*peer.key.as_bytes(), alpn.bytes());
@@ -261,6 +253,9 @@ pub trait Net: Fetch + std::any::Any {
     fn send<'a>(&'a self, peer: &'a Contact, req: Request) -> Sent<'a, Streamed>;
     /// A connection to `to` on `alpn`, as [`dialled`].
     fn dial(&self, to: EndpointAddr, alpn: Alpn, within: Option<Duration>) -> Sent<'_, Connection>;
+    /// `req` asked of `to` on `alpn`, on a connection dialled for it alone,
+    /// uncapped: a link's issuer asked ([`crate::redeem`]).
+    fn ask_once(&self, to: EndpointAddr, alpn: Alpn, req: Request) -> Sent<'_, Streamed>;
     /// `request` got from `peer` into `store` on the Blobs connection kept
     /// to it, which [`Net::let_go`] lets go when the get fails.
     fn get<'a>(
@@ -328,6 +323,9 @@ impl Net for IrohTransport {
     fn dial(&self, to: EndpointAddr, alpn: Alpn, within: Option<Duration>) -> Sent<'_, Connection> {
         Box::pin(dialled(&self.endpoint, to, alpn.bytes(), within))
     }
+    fn ask_once(&self, to: EndpointAddr, alpn: Alpn, req: Request) -> Sent<'_, Streamed> {
+        Box::pin(async move { on_stream(&self.dial(to, alpn, None).await?, req).await })
+    }
     fn get<'a>(
         &'a self,
         peer: &'a Contact,
@@ -354,8 +352,12 @@ impl Net for IrohTransport {
         self.conns
             .send_if_modified(|m| m.remove(&(*peer.as_bytes(), alpn.bytes())).is_some());
     }
+    /// Seed dial hints for a peer. Test/fallback surface — a caller with a
+    /// [`Contact`] passes its hints there instead.
     fn add_known_peer(&self, pubkey: PublicKey, addrs: Vec<SocketAddr>) {
-        IrohTransport::add_known_peer(self, pubkey, addrs);
+        if let Ok(mut map) = self.known_addrs.lock() {
+            map.insert(*pubkey.as_bytes(), addrs);
+        }
     }
     /// Build the dial target from the contact's iroh info (its relays
     /// and direct addrs), merging any test-seeded `known_addrs`.

@@ -16,6 +16,7 @@ mod pair;
 
 use std::net::SocketAddr;
 use std::time::Duration;
+use svrngs_node::iroh::Net as _;
 
 use common::{loopback_sockets, Browser};
 use pair::{alex_lets_sam_in, signing, start, NS};
