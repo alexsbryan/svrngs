@@ -134,7 +134,7 @@ is kept beside it. A run not played is a record with `"never_ran"` and
 why, never a run left out.
 
 **What this does not test.** A copy that doesn't start: the gate plays it
-against a record of the test's own (`apps/give/tests/keep.rs`
+against a record of the test's own (`apps/give/tests/keeper.rs`
 `the_keeper_gone_then_back`). Also untested: more than one keeper at
 once, a person picking who may keep, and the game's own LAN list. Each
 waits for a group that asks.

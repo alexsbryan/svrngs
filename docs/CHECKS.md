@@ -187,4 +187,4 @@ map changed with it.
 | 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |
 | 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address | ~95 | `src/*_tests.rs` over the parts that print and decide | harness 8, small splits per row |
 | 8 | scenes and holyarrs; H8's list of WebKit's messages replaced by whose page each step leaves (`web/tests/leaving.mjs`) | 20 | handlers and fixtures; one scene per daemon stays | none for W; the rest as the map says |
-| 9 | give's keeper, check and machine | 20 | fakes of Podman and the clock | none |
+| 9 | give's keeper, check and machine; landed: tests/fake answers as podman, svrngs's command and the record API do, `Keeper` is driven a round at a time at a set `now` (keeper.rs), `check` runs in process; keep.rs retired | 20, 1 left: check.rs's podman test, the contained one | fakes of Podman and the clock | none |

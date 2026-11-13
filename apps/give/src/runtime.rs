@@ -477,15 +477,16 @@ impl<'a> App<'a> {
     }
 
     /// The app unpaused, if a snapshot's pause was left by a keeper program
-    /// killed inside it: podman refuses to stop or remove a paused pod
-    /// ("container state improper", tests/check.rs
-    /// `an_app_left_paused_is_stopped_and_removed`).
+    /// killed inside it: podman's `pod stop` leaves a paused container
+    /// paused, exit 0, and `pod rm` refuses it ("container state
+    /// improper", podman 6.0.1).
     ///
     /// Killed inside `pod pause` itself, it leaves some containers paused
-    /// and the pod's own running, and the pod reads "Degraded"
-    /// (tests/check.rs `an_app_left_half_paused_is_stopped_and_removed`),
-    /// so each paused container is asked for and unpaused, whatever the
-    /// pod's state says.
+    /// and the pod's own running, and the pod reads "Degraded", so each
+    /// paused container is asked for and unpaused, whatever the pod's
+    /// state says. Real podman is held to both in tests/check.rs
+    /// `the_stand_in_keeps_its_state_across_a_restore`; this, over
+    /// tests/fake, in `a_paused_app_is_unpaused_then_stopped_and_removed`.
     fn unpause(&self) -> Result<(), RunError> {
         let name = self.name.as_str();
         let pod = format!("pod={name}");

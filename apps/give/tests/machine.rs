@@ -1,9 +1,13 @@
 //! On a Mac, podman's machine is made and started when it is absent or
 //! stopped, sized for what the cards declare, with nothing typed. The plan is
-//! read from `podman machine list`; its commands are run against a podman
-//! that records them, since making a machine on this host would stop the one
-//! that runs here. The machine give makes has Rosetta on; a card that needs
-//! it, on a machine with it off, is refused before anything starts.
+//! read from `podman machine list`; its commands are given to a podman that
+//! records them (tests/fake), since making a machine on this host would stop
+//! the one that runs here. The machine give makes has Rosetta on; a card that
+//! needs it, on a machine with it off, is refused before anything starts.
+
+mod fake;
+
+use std::sync::Arc;
 
 use give::machine::{Machine, PODMANS_OWN, Plan, ensure_machine, needs_rosetta, plan, read};
 use give::podman::Podman;
@@ -72,31 +76,12 @@ fn podmans_list_is_read_as_it_prints_it() {
     assert!(read("{}").is_err());
 }
 
-/// A podman that answers `machine list` with `list` and records every
-/// command it is given, and what `CONTAINERS_CONF_OVERRIDE` gives it to read.
-fn recording(test: &str, list: &str) -> (Podman, std::path::PathBuf) {
-    recording_with(test, list, "[]")
-}
-
-/// [`recording`], answering `machine inspect` with `inspect`.
-fn recording_with(test: &str, list: &str, inspect: &str) -> (Podman, std::path::PathBuf) {
-    let dir =
-        std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join(format!("give-machine-{test}-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).unwrap();
-    let (script, log) = (dir.join("podman"), dir.join("said"));
-    let _ = std::fs::remove_file(&log);
-    std::fs::write(
-        &script,
-        format!(
-            "#!/bin/sh\necho \"$@\" >> '{log}'\n[ -n \"$CONTAINERS_CONF_OVERRIDE\" ] && cat \"$CONTAINERS_CONF_OVERRIDE\" >> '{log}'\n\
-             [ \"$1 $2\" = 'machine list' ] && echo '{list}'\n[ \"$1 $2\" = 'machine inspect' ] && echo '{inspect}'\nexit 0\n",
-            log = log.display()
-        ),
-    )
-    .unwrap();
-    use std::os::unix::fs::PermissionsExt;
-    std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
-    (Podman::at(script), log)
+/// A podman that answers `machine list` with `list` and `machine inspect`
+/// with `inspect`, and records every command it is given, and what
+/// `CONTAINERS_CONF_OVERRIDE` gives it to read.
+fn recording(list: &str, inspect: &str) -> (Podman, Arc<fake::Podman>) {
+    let fake = Arc::new(fake::Podman::machines(list, inspect));
+    (Podman::by(fake.clone()), fake)
 }
 
 /// The machine give makes has Rosetta on, which podman 5.6 and later leave
@@ -104,11 +89,10 @@ fn recording_with(test: &str, list: &str, inspect: &str) -> (Podman, std::path::
 /// watched failing: `init` run without it.
 #[test]
 fn an_absent_machine_is_made_and_started_sized_for_the_card_with_rosetta_on() {
-    let (podman, log) = recording("absent", "[]");
+    let (podman, log) = recording("[]", "[]");
     ensure_machine(&podman, 3 * GB, true).unwrap();
-    let said = std::fs::read_to_string(log).unwrap();
     assert_eq!(
-        said,
+        log.said(),
         "machine list --format json\nmachine init --memory 5120 --now\n[machine]\nrosetta = true\n"
     );
 }
@@ -120,34 +104,26 @@ fn an_absent_machine_is_made_and_started_sized_for_the_card_with_rosetta_on() {
 #[test]
 fn a_card_that_needs_rosetta_is_refused_where_the_machine_has_it_off() {
     let list = r#"[{"Name": "podman-machine-default", "Default": true, "Running": false, "Memory": "25769803776"}]"#;
-    let (podman, log) = recording_with(
-        "rosetta-off",
-        list,
-        r#"[{"Name": "podman-machine-default", "Rosetta": false}]"#,
-    );
+    let (podman, log) = recording(list, r#"[{"Name": "podman-machine-default", "Rosetta": false}]"#);
     let why = ensure_machine(&podman, GB, true).unwrap_err().to_string();
     assert_eq!(
-        std::fs::read_to_string(log).unwrap(),
+        log.said(),
         "machine list --format json\nmachine inspect podman-machine-default\n"
     );
     assert!(why.contains("Turn on Rosetta in Podman Desktop’s settings"), "{why}");
 
-    let (podman, log) = recording_with(
-        "rosetta-on",
-        list,
-        r#"[{"Name": "podman-machine-default", "Rosetta": true}]"#,
-    );
+    let (podman, log) = recording(list, r#"[{"Name": "podman-machine-default", "Rosetta": true}]"#);
     ensure_machine(&podman, GB, true).unwrap();
     assert_eq!(
-        std::fs::read_to_string(log).unwrap(),
+        log.said(),
         "machine list --format json\nmachine inspect podman-machine-default\nmachine start podman-machine-default\n"
     );
 
     // A card that does not need it never asks.
-    let (podman, log) = recording_with("rosetta-unasked", list, "not read");
+    let (podman, log) = recording(list, "not read");
     ensure_machine(&podman, GB, false).unwrap();
     assert_eq!(
-        std::fs::read_to_string(log).unwrap(),
+        log.said(),
         "machine list --format json\nmachine start podman-machine-default\n"
     );
 }
@@ -167,11 +143,10 @@ fn only_an_amd64_card_on_apple_silicon_needs_rosetta() {
 #[test]
 fn a_stopped_small_machine_is_grown_then_started() {
     let list = r#"[{"Name": "podman-machine-default", "Default": true, "Running": false, "Memory": "2147483648"}]"#;
-    let (podman, log) = recording("small", list);
+    let (podman, log) = recording(list, "[]");
     ensure_machine(&podman, GB, false).unwrap();
-    let said = std::fs::read_to_string(log).unwrap();
     assert_eq!(
-        said,
+        log.said(),
         "machine list --format json\nmachine set --memory 3072 podman-machine-default\nmachine start podman-machine-default\n"
     );
 }
@@ -179,14 +154,9 @@ fn a_stopped_small_machine_is_grown_then_started() {
 #[test]
 fn a_running_small_machine_is_left_running_and_the_person_told() {
     let list = r#"[{"Name": "podman-machine-default", "Default": true, "Running": true, "Memory": "2147483648"}]"#;
-    let (podman, log) = recording("running", list);
+    let (podman, log) = recording(list, "[]");
     let why = ensure_machine(&podman, GB, false).unwrap_err().to_string();
-    // The refusal said first if the stub never ran: on the Fedora gate image
-    // its log was once never written (machine.rs:184, NotFound) with the
-    // refusal unread, so why the stub did not run was lost (demo/runs/
-    // flakes/2026-11-12, C6).
-    let said = std::fs::read_to_string(log).unwrap_or_else(|e| panic!("the stub never ran ({e}): {why}"));
-    assert_eq!(said, "machine list --format json\n");
+    assert_eq!(log.said(), "machine list --format json\n", "{why}");
     assert!(
         why.contains("gives Podman 2.0 GB, and keeping this needs 3.0 GB"),
         "{why}"

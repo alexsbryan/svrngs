@@ -252,13 +252,16 @@ impl State {
                     (false, false) => "Running",
                 })
             }
-            // A paused container is refused a stop, and its pod a remove
-            // (tests/check.rs's podman test holds podman to it).
+            // `pod stop` stops what runs, exit 0, and leaves a paused
+            // container paused; `pod rm` refuses a pod with one (podman
+            // 6.0.1, 2026-11-12; tests/check.rs's podman test holds podman
+            // to it).
             ["pod", "stop", "--time", _, n] => {
-                if self.of(n).any(|(_, c)| c.run == Run::Paused) {
-                    return refused("container state improper");
-                }
-                for c in self.containers.values_mut().filter(|c| c.pod == *n) {
+                for c in self
+                    .containers
+                    .values_mut()
+                    .filter(|c| c.pod == *n && c.run == Run::Running)
+                {
                     c.run = Run::Exited(0);
                 }
                 ok(n)

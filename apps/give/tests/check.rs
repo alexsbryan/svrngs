@@ -1,9 +1,14 @@
 //! A card runs: the stand-in pulled by digest, started rootless, healthy by
 //! its own healthcheck, snapshotted, stopped, restored and healthy again,
-//! its state the same across the restore. These need podman; where it does
-//! not answer, each is never-ran with its reason, a failure of the gate and
-//! never a pass. Every pod and volume they make is named `svrngs-test-*` and
-//! removed by the test that made it.
+//! its state the same across the restore, and an app left paused stopped
+//! and removed. `give check`'s steps, and the runtime's decisions under
+//! them, are judged over tests/fake's podman, so they run anywhere.
+//!
+//! One test needs podman, the contained test of give's seam with it
+//! (docs/CHECKS.md, seam D): that real podman answers the commands give
+//! runs as tests/fake answers them. Where podman does not answer, it is
+//! never-ran with its reason, a failure of the gate and never a pass. Every
+//! pod and volume it makes is named `svrngs-test-*` and removed by it.
 
 mod fake;
 
@@ -65,6 +70,14 @@ fn free_port() -> u16 {
         .port()
 }
 
+/// Real podman keeps the stand-in as give asks and as tests/fake answers:
+/// started, healthy, snapshotted whole (its card version named), stopped
+/// and gone, restored the same, started again from the state it had. Left
+/// paused by a keeper killed in a snapshot's pause, whole (the pod
+/// "Paused") or half, killed inside `pod pause` itself (the pod
+/// "Degraded"), podman's `pod rm` refuses it ("cannot remove container …
+/// as it is paused", podman 6.0.1), and give still stops it, and removes
+/// it.
 #[test]
 fn the_stand_in_keeps_its_state_across_a_restore() {
     let podman = podman_here();
@@ -106,57 +119,35 @@ fn the_stand_in_keeps_its_state_across_a_restore() {
     );
     assert!(again.starts_with(&first), "{first} then {again}");
     let _ = std::fs::remove_dir_all(&dir);
-}
 
-/// A restore that does not bring back what was snapshotted is caught by the
-/// check, not by the app's health: the state here is changed after the
-/// snapshot, as a broken restore would leave it.
-#[test]
-fn a_state_unlike_its_snapshot_is_told() {
-    let podman = podman_here();
-    let card = Card::parse(STANDIN).unwrap();
-    let app = App::new(&podman, &card, name("differs"));
-    let _removed = Removed(&app);
-    let (dir, at) = (scratch("differs"), free_port());
-    app.pull().unwrap();
-    app.start(at, &Agreed::to(&card.asks)).unwrap();
-    app.wait_healthy().unwrap();
-    let snapshot = app.snapshot(&dir).unwrap();
-    app.stop().unwrap();
-    app.start(at, &Agreed::to(&card.asks)).unwrap();
-    app.wait_healthy().unwrap();
-    app.stop().unwrap();
-    assert_eq!(app.differs(&snapshot.dir, &dir).unwrap(), ["data/starts changed"]);
-    let _ = std::fs::remove_dir_all(&dir);
-}
-
-/// A copy is started only by the card version that wrote it (GIVE.md §4):
-/// a snapshot naming another version is refused before any volume is
-/// touched, so the state the app has stays as it is.
-#[test]
-fn a_snapshot_of_another_card_version_is_refused() {
-    let podman = podman_here();
-    let card = Card::parse(STANDIN).unwrap();
-    let app = App::new(&podman, &card, name("version"));
-    let _removed = Removed(&app);
-    let (dir, at) = (scratch("version"), free_port());
-    app.pull().unwrap();
-    app.start(at, &Agreed::to(&card.asks)).unwrap();
-    app.wait_healthy().unwrap();
-    let snapshot = app.snapshot(&dir).unwrap();
-    app.stop().unwrap();
-    std::fs::write(snapshot.dir.join("card"), "another").unwrap();
-    let refused = app.restore(&snapshot.dir).unwrap_err().to_string();
-    assert!(
-        refused.contains("another version of its card wrote it") && refused.contains(&card.version),
-        "{refused}"
-    );
-    assert_eq!(
-        app.differs(&snapshot.dir, &dir).unwrap(),
-        Vec::<String>::new(),
-        "the state untouched"
-    );
-    let _ = std::fs::remove_dir_all(&dir);
+    let (pod, web) = (name("keep"), format!("{}-web", name("keep").as_str()));
+    for (pause, end) in [
+        ("pod", "stops"),
+        ("web", "stops"),
+        ("pod", "is removed"),
+        ("web", "is removed"),
+    ] {
+        if !podman.answers(&["pod", "exists", pod.as_str()]).unwrap() {
+            app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
+            app.wait_healthy().unwrap();
+        }
+        if pause == "pod" {
+            podman.run(&["pod", "pause", pod.as_str()]).unwrap();
+        } else {
+            podman.run(&["pause", &web]).unwrap();
+        }
+        let refused = podman.run(&["pod", "rm", pod.as_str()]);
+        let state = podman.run(&["pod", "inspect", "--format", "{{.State}}", pod.as_str()]);
+        let paused = if pause == "pod" { "Paused" } else { "Degraded" };
+        assert_eq!(state.unwrap(), paused, "the plant: paused by {pause}");
+        assert!(
+            refused.is_err(),
+            "podman refuses the app paused by {pause}, as tests/fake does"
+        );
+        let ended = if end == "stops" { app.stop() } else { app.remove() };
+        ended.unwrap_or_else(|e| panic!("an app paused by {pause} {end}: {e}"));
+    }
+    gone(&podman, &pod);
 }
 
 fn give(args: &[&str]) -> (bool, String) {
@@ -189,94 +180,6 @@ fn gone(podman: &Podman, name: &Name) {
         ])
         .unwrap();
     assert_eq!(volumes, "", "{} left volumes", name.as_str());
-}
-
-/// A keeper program killed in a snapshot's pause leaves its app paused
-/// (keep.rs's move test, killed at its bound, left
-/// `svrngs-test-move-a-33371-standin` "Paused", and `pod stop` refused it:
-/// "container state improper"). Stopping it, or removing it, still does so.
-#[test]
-fn an_app_left_paused_is_stopped_and_removed() {
-    let podman = podman_here();
-    let card = Card::parse(STANDIN).unwrap();
-    let app = App::new(&podman, &card, name("paused"));
-    let _removed = Removed(&app);
-    app.pull().unwrap();
-    app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
-    app.wait_healthy().unwrap();
-    podman.run(&["pod", "pause", name("paused").as_str()]).unwrap();
-    app.stop().expect("a paused app stops");
-    podman.run(&["pod", "rm", "--force", name("paused").as_str()]).ok();
-    app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
-    podman.run(&["pod", "pause", name("paused").as_str()]).unwrap();
-    app.remove().expect("a paused app is removed");
-    gone(&podman, &name("paused"));
-}
-
-/// Killed inside `pod pause` itself, a keeper leaves the app's container
-/// paused and the pod's own running: the pod reads "Degraded", not
-/// "Paused" (podman 6.0.1, 2026-10-26), and `pod rm` refused it: "cannot
-/// remove container … as it is paused" (keep.rs's move test, at its
-/// cleanup, two runs in three). Stopping it, or removing it, still does so.
-#[test]
-fn an_app_left_half_paused_is_stopped_and_removed() {
-    let podman = podman_here();
-    let card = Card::parse(STANDIN).unwrap();
-    let app = App::new(&podman, &card, name("half"));
-    let _removed = Removed(&app);
-    let web = format!("{}-web", name("half").as_str());
-    app.pull().unwrap();
-    for what in ["stops", "is removed"] {
-        app.start(free_port(), &Agreed::to(&card.asks)).unwrap();
-        app.wait_healthy().unwrap();
-        podman.run(&["pause", &web]).unwrap();
-        let state = podman.run(&["pod", "inspect", "--format", "{{.State}}", name("half").as_str()]);
-        assert_eq!(state.unwrap(), "Degraded", "the plant: half paused");
-        let ended = if what == "stops" { app.stop() } else { app.remove() };
-        ended.unwrap_or_else(|e| panic!("a half-paused app {what}: {e}"));
-    }
-    gone(&podman, &name("half"));
-}
-
-#[test]
-fn give_check_passes_the_stand_in_and_leaves_nothing() {
-    let podman = podman_here();
-    let n = name("check");
-    let card = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/standin");
-    let (ok, said) = give(&["check", "--name", n.as_str(), card]);
-    println!("{said}");
-    assert!(ok, "{said}");
-    for step in [
-        "pull by digest",
-        "healthy",
-        "snapshot",
-        "stop",
-        "restore: the state is the snapshot's",
-        "healthy again",
-    ] {
-        assert!(said.contains(&format!("passed  {step}")), "{step}: {said}");
-    }
-    assert!(said.contains("Stand-in can go on the shelf."), "{said}");
-    gone(&podman, &n);
-}
-
-#[test]
-fn give_check_names_the_step_that_failed_and_leaves_nothing() {
-    let podman = podman_here();
-    let n = name("unhealthy");
-    let dir = scratch("unhealthy-card");
-    std::fs::create_dir_all(&dir).unwrap();
-    let never = STANDIN.replace(
-        "[\"CMD\", \"wget\", \"-q\", \"-O\", \"/dev/null\", \"http://web:8080/starts\"]",
-        "[\"CMD\", \"false\"]",
-    );
-    std::fs::write(dir.join("compose.yaml"), never.replace("retries: 10", "retries: 2")).unwrap();
-    let (ok, said) = give(&["check", "--name", n.as_str(), dir.to_str().unwrap()]);
-    assert!(!ok, "{said}");
-    assert!(said.contains("passed  start"), "{said}");
-    assert!(said.contains("failed  healthy: web was not healthy within"), "{said}");
-    gone(&podman, &n);
-    let _ = std::fs::remove_dir_all(&dir);
 }
 
 /// A card with asks is not started until whoever runs it says yes; podman
@@ -439,8 +342,9 @@ fn a_copy_another_card_version_wrote_is_refused() {
 
 /// An app a keeper left paused, whole (killed in a snapshot's pause) or
 /// half (killed inside `pod pause`, the pod "Degraded"), is unpaused, then
-/// stopped or removed: podman refuses both of a paused container
-/// (tests/fake answers so, the podman test below holds podman to it).
+/// stopped or removed: podman's `pod stop` leaves a paused container
+/// paused and `pod rm` refuses it (tests/fake answers so, and
+/// `the_stand_in_keeps_its_state_across_a_restore` holds podman to it).
 #[test]
 fn a_paused_app_is_unpaused_then_stopped_and_removed() {
     let (fake, card) = (Arc::new(fake::Podman::default()), Card::parse(STANDIN).unwrap());
