@@ -1,0 +1,38 @@
+19:35  up 7 days, 23:46, 8 users, load averages: 16.08 15.45 15.64
+note       open files: 10240, raised to 10240
+note       kept awake while this runs (caffeinate, pid 27179)
+untouched  principles pinned: nothing changed reaches it (scripts/touched.py)
+untouched  lean and RUST_ARCH: nothing changed reaches it (scripts/touched.py)
+untouched  trust floor: nothing changed reaches it (scripts/touched.py)
+untouched  advisories: nothing changed reaches it (scripts/touched.py)
+untouched  app nouns gate: nothing changed reaches it (scripts/touched.py)
+untouched  app nouns: nothing changed reaches it (scripts/touched.py)
+untouched  lint: nothing changed reaches it (scripts/touched.py)
+untouched  format: nothing changed reaches it (scripts/touched.py)
+untouched  page laws: nothing changed reaches it (scripts/touched.py)
+untouched  rustfmt: nothing changed reaches it (scripts/touched.py)
+untouched  script laws: nothing changed reaches it (scripts/touched.py)
+untouched  page integration: nothing changed reaches it (scripts/touched.py)
+untouched  clippy: nothing changed reaches it (scripts/touched.py)
+untouched  tests: nothing changed reaches it (scripts/touched.py)
+untouched  canaries: nothing changed reaches it (scripts/touched.py)
+untouched  ceiling canary: nothing changed reaches it (scripts/touched.py)
+untouched  web rustfmt and clippy: nothing changed reaches it (scripts/touched.py)
+untouched  browser: nothing changed reaches it (scripts/touched.py)
+untouched  types: nothing changed reaches it (scripts/touched.py)
+untouched  typed lint: nothing changed reaches it (scripts/touched.py)
+untouched  joining in a browser: nothing changed reaches it (scripts/touched.py)
+untouched  pages: nothing changed reaches it (scripts/touched.py)
+untouched  scenes: nothing changed reaches it (scripts/touched.py)
+untouched  conformance canary: nothing changed reaches it (scripts/touched.py)
+passed     playback (225 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	239	passed	5520	failed
+           computer	bo	263	passed	2041	passed
+           wildcard	sam	216	passed	3265	passed
+           wildcard	bo	336	passed	3120	passed
+           of 4 here since 2026-11-13T03:36:18Z: 0 missed 5 s through a lend, 1 straight; 4 ended at a load above 12 cores
+untouched  app laws: nothing changed reaches it (scripts/touched.py)
+note       took 225 s in all
+exit=0
+19:39  up 7 days, 23:49, 8 users, load averages: 11.87 14.77 15.38

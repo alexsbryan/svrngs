@@ -27,8 +27,10 @@ svrngs logs and Jellyfin's log are kept.
 room"), which nobody is told; the dry run of 2026-10-06 took them on one
 computer, the TV a browser at the room address and the five phones
 through the page (`runs/b/2026-10-06/`), and the movie-night scene plays
-them on every gate, a newcomer's phone for the five
-(`crates/svrngs/tests/scenes/night.rs`). Set up before the evening: Sam
+them on every gate up to the film's stream reaching the TV, a newcomer's
+phone for the five (`crates/svrngs/tests/scenes/night.rs`; the TV
+playing it within three minutes, and the pause and the seek from the
+phone, in the gate's `playback` step, `night_played`). Set up before the evening: Sam
 runs `svrngs new <group> --origin <page>`, which prints the group's link,
 `svrngs://join/<token>`, and the same link on the page's address, for a
 phone, and keeps running; beside it, `svrngs share 8096 --group <group>`, which prints how

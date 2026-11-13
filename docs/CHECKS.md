@@ -14,7 +14,7 @@ reimplement authorization. Fast presentation tests are not signing/I/O evidence.
 | Node resource/browser integration | `node web/tests/run.mjs integration` | Actual Redis/Lua persistence, expiry and restart; actual WebKit/CSS application |
 | Seek judgment calibration | `cargo test -p svrngs-node --test seek_judgment` | Actual pure Rust instrument, explicit recorded measurements; no browser/host sampling |
 | One real creator workflow | `cargo test -p svrngs --test scenes creator -- --test-threads=1` | Native publication/signing/version routes and computer/phone browsers |
-| That a browser decodes a lent film | `cargo test --test browser playback:: && cargo test --test conformance seeks_back_to_back::` (check.sh `playback`) | Actual Chromium and WebKit media decoders through a lend's worker; the one place a test waits on playback |
+| That a browser decodes a lent film | `cargo test --test browser playback:: && cargo test --test conformance seeks_back_to_back:: && cargo test -p svrngs --test scenes night_played::` (check.sh `playback`) | Actual Chromium and WebKit media decoders, and Jellyfin's player on the night scene's TV through a lend's worker; the one place a test waits on playback |
 | Complete regression gate | `scripts/check.sh` | Every tier, before shipping |
 
 `--fast` keeps its static checks and isolated Node laws. The complete gate also
@@ -51,6 +51,7 @@ catalog; the old page-laws glob had not covered it.
 | Plays in the runtime (now `a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself`), both hand-over tests and guests.rs | `main.rs::film_answered`: the film's first MiB through the lend's worker, 206, `video/mp4`, its part named, sha-exact, before and after the worker stops | Every non-playback assertion of each test; the hand-over's trace read after the worker has answered |
 | films scene's play, Demo A's seeks and the other's watch | person.mjs `streamed`: each person's own film's stream, 200/206 `video/*`, from their own computer's lend address; seeking's bar is `playback.rs`'s, Demo A's numbers its recorded instrument's (check.sh `pair`) | Signed in as themselves, devices apart, Sam's password in nothing received, the token plant |
 | holyarrs H5's play, `seek(50)` and Jellyfin's now-playing | `streamed` through Bo's lend, by its worker on the phone, not Jellyfin's own address; `/Sessions` names Bo | H1-H4, H6-H8 |
+| night scene's TV playing within three minutes, paused and sought from Ana's phone within 10 s | `night.rs::night_played`, check.sh `playback`; `night` in the scenes step asserts the TV received Ana's film from the room's address, 200/206 `video/*`, and asked nothing else off it but jellyfin-web's Chromecast sender script | Quick Connect sign-in as the room, nobody made an account, the bars' could-not-judge past `BUSY` (people.rs `late`) |
 | `conformance.rs` canary's `seeks` route | `conformance.rs::seeks_back_to_back`, both ways and engines, check.sh `playback` | Chromium a gate with load could-not-judge, WebKit a rate kept in `target/seeks-webkit.log`; the canary keeps its other ten routes |
 
 Keep these integration checks: actual HTML build/CSP, native ingress/signing,
@@ -59,8 +60,7 @@ long-lived connection closure, media playback and browser-origin behavior.
 Media playback has one home, the `playback` step: decoding is what varies with
 the host's load and its media stack, so every other test asserts the bytes a
 film is answered (`film_answered`, or a scene's stream responses, person.mjs
-`streamed`) and none waits on `currentTime`, but the night scene's TV, held
-for the operator's word (demo/runs/flakes/2026-11-12).
+`streamed`) and none waits on `currentTime` (demo/runs/flakes/2026-11-12).
 `#[test]` alone does not imply purity: publication's test restarts real processes.
 Exact writer/reader row text formerly repeated in two native workflows now has
 independent golden assertions in the direct question contract. The native cases

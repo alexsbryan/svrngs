@@ -1,0 +1,465 @@
+1
+19:33  up 7 days, 23:43, 8 users, load averages: 12.80 16.82 16.14
+   Compiling svrngs v0.1.0 (/private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/ec058323-fd43-47eb-b700-2cdd0033b6ca/scratchpad/night-wt/crates/svrngs)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.70s
+     Running tests/scenes/main.rs (target/debug/deps/scenes-51eb03ce3b4b7372)
+
+running 1 test
+test night::night::chromium has been running for over 60 seconds
+test night::night::chromium ... FAILED
+
+failures:
+
+---- night::night::chromium stdout ----
+the TV, before the evening: {
+  "approved_ms": 365,
+  "asked": {
+    "at_room": 154,
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+    "elsewhere": [
+      {
+        "ms": 595,
+        "url": "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+      }
+    ],
+    "sockets": [
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket",
+      "ws://192.168.1.6:41321/socket?ApiKey=<masked>"
+    ]
+  },
+  "code_shown": true,
+  "dee": {
+    "at": "<label>.group.svrnme.test:52976",
+    "listed": [
+      "Sam’s jellyfin"
+    ],
+    "signed_in_ms": 830,
+    "stopped": null
+  },
+  "dee_logs": [
+    "failed: https://usw1-1.relay.n0.iroh.link/ping: cancelled",
+    "console.debug: SIGN: adopted the approver of 5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr's newest open and deleted its cookie",
+    "console.debug: OPEN: 5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr's open is this browser's, its holder proved and kept",
+    "console.debug: OPEN: the lend’s worker runs; handing it the pass",
+    "failed: https://5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr.group.svrnme.test:52976/System/Info: cancelled"
+  ],
+  "films": [],
+  "from": "2026-11-13T03:33:49.424Z",
+  "kept": {
+    "LastConnectionMode": 2,
+    "LocalAddress": "http://127.0.0.1:51540",
+    "ManualAddress": "http://192.168.1.6:41321",
+    "RemoteAddress": null,
+    "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTQ1NDA4Mjk5Mjg1",
+    "serverAddress": "http://192.168.1.6:41321",
+    "servers": 1,
+    "signed_in_as": "room",
+    "token": "held"
+  },
+  "logs": [
+    "pageerror: undefined"
+  ],
+  "part": "tv",
+  "quick_connect_enabled": true,
+  "room": "http://192.168.1.6:41321/",
+  "session": {
+    "client": "Jellyfin Web",
+    "device_name": "Chrome",
+    "media_control": true,
+    "paused": false,
+    "play_method": null,
+    "playing": null,
+    "remote_control": true,
+    "remote_end": "127.0.0.1",
+    "user": "room",
+    "version": "12.0.0"
+  },
+  "tv": {
+    "asked": true,
+    "open_ms": 1129,
+    "quick_connect_offered": true
+  },
+  "tv_signed_in_ms": 3802,
+  "typed_on_tv": 0
+}
+the evening: {
+  "ana_logs": [
+    "failed: https://usw1-1.relay.n0.iroh.link/ping: net::ERR_ABORTED",
+    "failed: https://usw1-1.relay.n0.iroh.link/ping: net::ERR_ABORTED",
+    "failed: https://usw1-1.relay.n0.iroh.link/ping: net::ERR_ABORTED",
+    "console.debug: SIGN: adopted the approver of 5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr's newest open and deleted its cookie",
+    "console.debug: OPEN: 5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr's open is this browser's, its holder proved and kept",
+    "console.debug: OPEN: the lend’s worker runs; handing it the pass",
+    "failed: https://5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr.group.svrnme.test:52976/Sessions/Capabilities/Ful: net::ERR_ABORTED",
+    "failed: https://5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr.group.svrnme.test:52976/System/Info: net::ERR_ABORTED",
+    "failed: https://5c4b1q8tlcgmjv4mndhu7ft08nwgnqq6n4sarm6m2knumw3n40stbbq3n1prdr.group.svrnme.test:52976/Sessions/744a2b93a95fa90c: net::ERR_ABORTED"
+  ],
+  "asked": {
+    "at_room": 180,
+    "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/147.0.7727.15 Safari/537.36",
+    "elsewhere": [
+      {
+        "ms": 652,
+        "url": "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"
+      }
+    ],
+    "sockets": [
+      "ws://192.168.1.6:41321/socket?ApiKey=<masked>"
+    ]
+  },
+  "direct": false,
+  "films": [
+    {
+      "content_range": null,
+      "length": "1136",
+      "ms": 25473,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/master.m3u8",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "44109",
+      "ms": 25508,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/main.m3u8",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "1367",
+      "ms": 25913,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/-1.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "95851",
+      "ms": 25940,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/0.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "95851",
+      "ms": 25996,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/0.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93945",
+      "ms": 26045,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/1.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94477",
+      "ms": 26082,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/2.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93711",
+      "ms": 29091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/3.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94464",
+      "ms": 32092,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/4.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93826",
+      "ms": 35092,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/5.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94603",
+      "ms": 38091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/6.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93782",
+      "ms": 41090,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/7.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94203",
+      "ms": 44091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/8.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94239",
+      "ms": 47090,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/9.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94611",
+      "ms": 50091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/10.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93646",
+      "ms": 53091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/11.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94853",
+      "ms": 56091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/12.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93963",
+      "ms": 59101,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/13.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94481",
+      "ms": 62090,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/14.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93904",
+      "ms": 65093,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/15.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94340",
+      "ms": 68104,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/16.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94184",
+      "ms": 71091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/17.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94417",
+      "ms": 74090,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/18.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "93495",
+      "ms": 77092,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/19.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94886",
+      "ms": 80092,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/20.mp4",
+      "range": null,
+      "status": 200
+    },
+    {
+      "content_range": null,
+      "length": "94006",
+      "ms": 83091,
+      "path": "/videos/4c903ea5-e0fd-a49c-ca3b-3258cc58f1f7/hls1/main/21.mp4",
+      "range": null,
+      "status": 200
+    }
+  ],
+  "from": "2026-11-13T03:34:12.654Z",
+  "kept": {
+    "LastConnectionMode": 2,
+    "LocalAddress": "http://127.0.0.1:51540",
+    "ManualAddress": "http://192.168.1.6:41321",
+    "RemoteAddress": null,
+    "device": "TW96aWxsYS81LjAgKE1hY2ludG9zaDsgSW50ZWwgTWFjIE9TIFggMTBfMTVfNykgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgSGVhZGxlc3NDaHJvbWUvMTQ3LjAuNzcyNy4xNSBTYWZhcmkvNTM3LjM2fDE3OTQ1NDA4Mjk5Mjg1",
+    "serverAddress": "http://192.168.1.6:41321",
+    "servers": 1,
+    "signed_in_as": "room",
+    "token": "held"
+  },
+  "logs": [],
+  "part": "five",
+  "people": [
+    {
+      "asked": true,
+      "at": "<label>.group.svrnme.test:52976",
+      "browser": "147.0.7727.15",
+      "device": "Pixel 7",
+      "engine": "chromium",
+      "film": "Test Pattern Two",
+      "film_ms": 886,
+      "header_after_pick": "Chrome",
+      "list_ms": 8645,
+      "listed": [
+        "Sam’s jellyfin"
+      ],
+      "name": "Ana",
+      "open_ms": 3337,
+      "opened_at": 2620,
+      "play_at": 24669,
+      "play_on_lists": [
+        "Chrome - Jellyfin Web room"
+      ],
+      "play_on_ms": 4,
+      "session": {
+        "client": "Jellyfin Web",
+        "device_name": "Chrome",
+        "media_control": true,
+        "paused": false,
+        "play_method": "Transcode",
+        "playing": "Test Pattern Two",
+        "remote_control": true,
+        "remote_end": "127.0.0.1",
+        "user": "room",
+        "version": "12.0.0"
+      },
+      "shown": "Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password",
+      "shown_ms": 1795,
+      "signed_in_ms": 807,
+      "stopped": "the TV asked no stream of it within 60 s of Play; the TV says: ",
+      "streamed": {
+        "ms": null,
+        "others": [],
+        "within": 60000
+      },
+      "tv_listed": true,
+      "tv_named": "Chrome - Jellyfin Web room"
+    }
+  ],
+  "room": "http://192.168.1.6:41321/",
+  "session": {
+    "client": "Jellyfin Web",
+    "device_name": "Chrome",
+    "media_control": true,
+    "paused": false,
+    "play_method": null,
+    "playing": null,
+    "remote_control": true,
+    "remote_end": "127.0.0.1",
+    "user": "room",
+    "version": "12.0.0"
+  },
+  "tv": {
+    "asked": false,
+    "open_ms": 661,
+    "quick_connect_offered": false
+  },
+  "within_3_min": 0
+}
+
+thread 'tokio-rt-worker' (63737237) panicked at crates/svrngs/tests/scenes/night.rs:227:5:
+Ana gets from the link to the film on the TV: {
+  "asked": true,
+  "at": "<label>.group.svrnme.test:52976",
+  "browser": "147.0.7727.15",
+  "device": "Pixel 7",
+  "engine": "chromium",
+  "film": "Test Pattern Two",
+  "film_ms": 886,
+  "header_after_pick": "Chrome",
+  "list_ms": 8645,
+  "listed": [
+    "Sam’s jellyfin"
+  ],
+  "name": "Ana",
+  "open_ms": 3337,
+  "opened_at": 2620,
+  "play_at": 24669,
+  "play_on_lists": [
+    "Chrome - Jellyfin Web room"
+  ],
+  "play_on_ms": 4,
+  "session": {
+    "client": "Jellyfin Web",
+    "device_name": "Chrome",
+    "media_control": true,
+    "paused": false,
+    "play_method": "Transcode",
+    "playing": "Test Pattern Two",
+    "remote_control": true,
+    "remote_end": "127.0.0.1",
+    "user": "room",
+    "version": "12.0.0"
+  },
+  "shown": "Please sign in User Password Remember Me Sign In Use Quick Connect Forgot Password",
+  "shown_ms": 1795,
+  "signed_in_ms": 807,
+  "stopped": "the TV asked no stream of it within 60 s of Play; the TV says: ",
+  "streamed": {
+    "ms": null,
+    "others": [],
+    "within": 60000
+  },
+  "tv_listed": true,
+  "tv_named": "Chrome - Jellyfin Web room"
+}
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    night::night::chromium
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 19 filtered out; finished in 150.22s
+
+error: test failed, to rerun pass `-p svrngs --test scenes`
+exit=101
+19:35  up 7 days, 23:46, 8 users, load averages: 16.08 15.45 15.64

@@ -36,7 +36,7 @@ Media playback is in four of the eight recurring rows.
 ## 2. Measured
 
 The Fedora box (32 cores, `podman` gate image, `localhost/svrngs-gate`),
-from a clean clone at fc357324 with eudoxia 506388e, each round the slow
+from a clean clone at fc357324 with Eudoxia 506388e, each round the slow
 steps of check.sh run through check.sh's own `step` (`round.sh`, `launch.sh`;
 per-test verdicts by `tally.py`), load and free memory sampled every 5 s.
 
@@ -187,6 +187,10 @@ player starts").
 
 ## 5. What changed
 
+Every commit below, and every Mac run of them, built with Eudoxia 83d482a
+at `../eudoxia` (the path dependency); the Fedora rounds, fc357324 with
+Eudoxia 506388e.
+
 | Commit | What | Shown by |
 |---|---|---|
 | 8153e41d | install.rs: the native arrival test's imports on every platform; on Linux `tests` did not compile | the gate image's build, exit 0 after |
@@ -216,11 +220,16 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
 - **browser, 6 tests**, every one a stub that a lend is read from seeing
   more than was asked (empty heads; "cy's shelf asked 633 times, 622
   taken"; "cy's door must name bo"). Not flakes and not these commits:
-  all six fail alone at 8153e41d, before any of them
-  (`mac/six-at-8153e41d.log`), and at c7b14e09 (`mac/six-at-c7b14e09.log`);
-  at fc357324 on the Fedora image three of them passed both rounds. Between
-  the two is abf5b0de, "R1 through Eudoxia's rules" (another session's).
-  Reported to it, not fixed here.
+  all six fail alone at 8153e41d (Eudoxia 83d482a), before any of them
+  (`mac/six-at-8153e41d.log`), and at c7b14e09 (Eudoxia 83d482a,
+  `mac/six-at-c7b14e09.log`); at fc357324 (Eudoxia 506388e) on the Fedora
+  image three of them passed both rounds. That comparison changed both
+  repositories, so it does not isolate a cause: svrngs-core takes Eudoxia
+  by relative path (crates/svrngs-core/Cargo.toml, `../../../eudoxia`),
+  and between the two runs are both svrngs's abf5b0de ("R1 through
+  Eudoxia's rules", another session's) and Eudoxia's own drift from
+  506388e to 83d482a. Either is the candidate; a run of abf5b0de with
+  83d482a is deciding it (svrngs-46). Not fixed here.
 - **scenes**: holyarrs::phone::webkit at H8, this run's own pattern bug,
   fixed in 3bfbb4ef; films, Bo's `/svrngs-open` answered 401 at once
   ("open_ms": 9) and his browser never let in, which the films run alone
@@ -236,22 +245,28 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
 
 ## 6. Open
 
-- **night, held for the operator's word.** The night scene's TV plays,
-  and Ana's phone pauses and seeks it, through Jellyfin's player: a claim
-  no network observation carries (jellyfin-web reports a play only once
-  its player's `play()` settles, so Jellyfin's session naming the film
-  needs the decoder too). The worker's diff that moved it to the stream
-  alone is `night-held.patch`; it also asserted the TV asked nothing off
-  the room's address, which failed on the Mac every time
-  (www.gstatic.com's cast_sender.js, jellyfin-web's own, `mac/scenes.log`).
-  Left as it was, still waiting on playback in the scenes step.
+- **night: decided.** The operator chose to move the TV's playing, and
+  Ana's pause and seek of it, into the playback step (2026-11-12): night.rs
+  `night_played`, run by `playback` alone, its bars `late` as before; the
+  scenes step's `night` asserts the TV received Ana's film from the room's
+  address and asked nothing else off it but jellyfin-web's Chromecast
+  sender script (`night-held.patch` was its start). Verified on the Mac,
+  under the gate lock, in a clean worktree: `night` alone passed in 140 s
+  (`mac/night-alone.log`); planted with One's id for Two's film, so the
+  TV's stream never came, it failed at night.rs:227, "the TV asked no
+  stream of it within 60 s of Play" (`mac/night-plant.log`); check.sh's
+  `playback` step alone, `night_played` in it, passed in 225 s
+  (`mac/night-playback-step.log`). Its never-ran line, run on planted
+  outputs, said never-ran for a filter that matched no scene and for a
+  scene that never ran, and nothing for three halves run.
+  The step's limit is now 5 times 225 s.
 - **noq's abort (C3).** An upstream bug in noq 1.0.1 (and its decrement
   unchanged in 1.4.0): to be reported to n0-computer/noq with the two
   traces above. A version of noq that guards the counter, or a
   `[patch.crates-io]` with a saturating decrement, is the fix; neither
   is made here.
 - **The give machine test (C6)**: instrumented; ETXTBSY unconfirmed.
-- **abf5b0de's six browser failures** (above): the other session's.
+- **The six browser failures** (above): abf5b0de or Eudoxia 506388e→83d482a, being decided by svrngs-46.
 - **films' 401 and meet.rs:240**, each seen once in the full gate.
 - **Rates.** No before/after rate: the box went down in round 2 (§2).
   Measured on the Mac instead, once each: the changed tests unplanted,

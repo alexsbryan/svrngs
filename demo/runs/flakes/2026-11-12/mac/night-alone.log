@@ -1,0 +1,12 @@
+19:30  up 7 days, 23:41, 8 users, load averages: 18.91 17.89 16.24
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.49s
+     Running tests/scenes/main.rs (target/debug/deps/scenes-51eb03ce3b4b7372)
+
+running 1 test
+test night::night::chromium has been running for over 60 seconds
+test night::night::chromium ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 19 filtered out; finished in 140.20s
+
+exit=0
+19:33  up 7 days, 23:43, 8 users, load averages: 12.80 16.82 16.14

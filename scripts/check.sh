@@ -28,10 +28,10 @@ unset SVRNGS_STEPS SVRNGS_TESTS  # set only by --touched, below
 # up to 2.7 times (scenes, 204 to 544 s) with the host's load, and 5 leaves
 # room past the slowest seen while ending a hang in about 45 min at most. Every
 # step not named passed in at most 59 s there (app laws), so has 300 s.
-# `playback`, new on 2026-11-12, has no queue's gates behind it: its halves
-# took 76 s (the browser's, beside nine other tests) and 80 s on the Mac
-# that day (demo/runs/flakes/2026-11-12/mac/changed-tests.log), so 160.
-slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 160 ;; *) echo 60 ;; esac; }
+# `playback`, new on 2026-11-12, has no queue's gates behind it: with the
+# night scene's playing in it, it took 225 s on the Mac that day
+# (demo/runs/flakes/2026-11-12/mac/night-playback-step.log), so 225.
+slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 225 ;; *) echo 60 ;; esac; }
 # Each step runs in a process group of its own (set -m), ended whole at its
 # limit and when it ends, so no server or browser it started outlives it
 # (Playwright's browsers close as their driver is told TERM); the loop's
@@ -87,7 +87,7 @@ step "page integration" node web/tests/run.mjs integration
 step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
 # What the browser tests could not judge, printed after the browser's step,
 # and the conformance canary's verdicts: kept from this check alone.
-rm -rf target/could-not-judge target/conformance target/playback
+rm -rf target/could-not-judge target/conformance target/playback target/scenes/night_played-*
 # The canaries, browser, joining and conformance targets are `test = false`
 # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
 # once, in its own step below, and not again here.
@@ -141,16 +141,16 @@ step "pages" cargo test --quiet --workspace --test pages
 # passed all it could judge but one timing bar on a host past load.rs
 # `BUSY` a core (people.rs `late`) writes could-not-judge.txt there: said
 # so, never a pass, and the gate does not fail on it, as the playback
-# step's film. No scene but night waits on a film playing, which is the
-# playback step's; night's TV playing, paused and sought from a phone is
-# held where it was for the operator's word (demo/runs/flakes/2026-11-12).
+# step's film. No scene here waits on a film playing: night's TV playing,
+# paused and sought from a phone is the playback step's (night.rs
+# `night_played`; the operator, 2026-11-12, demo/runs/flakes/2026-11-12).
 # Two scenes at a time, the operator's choice (2026-10-23, "2 at a time")
 # from what capability-scenes-found (f) measured on this host (12 cores,
 # about 10 of load from elsewhere; load.rs's bar, 3 a core; sampled each
 # 5 s): 12 threads 162 s, peak 140, 29 of 32 samples past; 4, 201 s, peak
 # 66, 28 of 40; 2, 319 s, peak 44, 6 of 63; 1, 560 s, peak 21, none. At 2
 # a timing is now and then could-not-judge, never a false failure.
-step "scenes" cargo test -p svrngs --test scenes -- --test-threads=2
+step "scenes" cargo test -p svrngs --test scenes -- --test-threads=2 --skip night_played::
 ! reached scenes || awk '/^test .* \.\.\. / {split($2, n, "::"); k = n[1]; if (!(k in s)) o[++m] = k; e[k] = e[k] (e[k] ? ", " : "") n[3]; if (!(k in s) || $NF != "ok") s[k] = $NF == "ok" ? "passed" : "failed"} FILENAME ~ /never-ran/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/never-ran.txt$/, "", k); if (!(k in s)) o[++m] = k; s[k] = "never-ran"; w[k] = ": " $0; x = 1} FILENAME ~ /could-not-judge/ {k = FILENAME; sub(/.*scenes\//, "", k); sub(/-[a-z]+\/could-not-judge.txt$/, "", k); if (s[k] == "passed") {s[k] = "could-not-judge"; w[k] = ": " $0}} END {for (i = 1; i <= m; i++) printf "%-10s scene %s (%s)%s\n", s[o[i]], o[i], e[o[i]], w[o[i]]; exit x}' /tmp/svrngs-check.$$ $(ls target/scenes/*/never-ran.txt target/scenes/*/could-not-judge.txt 2>/dev/null) || failed=1
 # The conformance canary (DESIGN §5; u5-2): apps/web-conformance, lent by
 # two computers, opened from a computer and from a phone, each app at an
@@ -163,20 +163,22 @@ step "conformance canary" cargo test --quiet --workspace --test conformance -- -
 ! reached "conformance canary" || cat target/conformance/*.txt 2>/dev/null | cut -c1-10,25- | sort -u | sed 's/^/           /'
 # The one place a browser is asked to decode media (demo/runs/flakes/
 # 2026-11-12): a lent film played, sought three times and played again
-# once its worker stopped, in each engine (browser/playback.rs), and the
+# once its worker stopped, in each engine (browser/playback.rs), the
 # conformance canary's audio sought back to back (conformance.rs
-# `seeks_back_to_back`). Every other test asserts a film's bytes instead.
+# `seeks_back_to_back`), and movie night's TV playing Ana's film, paused
+# and sought from her phone (night.rs `night_played`, a scene: its
+# never-ran said here). Every other test asserts a film's bytes instead.
 # Decoding is what varies with the host's load and media stack, so it is
 # judged here alone: a miss on a host past load.rs `BUSY` a core is
 # could-not-judge, said apart and never a pass; WebKit's seeks back to
 # back are a rate. Each half must run a test: a filter that matched none
 # is never-ran.
-step "playback" sh -c 'cargo test --workspace --test browser playback:: && cargo test --workspace --test conformance seeks_back_to_back::'
-! reached playback || [ "$(grep -cE '^test result: ok\. [1-9]' /tmp/svrngs-check.$$)" = 2 ] || grep -q '^test result: FAILED' /tmp/svrngs-check.$$ || { echo "never-ran  playback: a half of it ran no test (browser playback::, conformance seeks_back_to_back::)"; failed=1; }
+step "playback" sh -c 'cargo test --workspace --test browser playback:: && cargo test --workspace --test conformance seeks_back_to_back:: && cargo test -p svrngs --test scenes night_played::'
+! reached playback || { [ "$(grep -cE '^test result: ok\. [1-9]' /tmp/svrngs-check.$$)" = 3 ] && ! cat target/scenes/night_played-*/never-ran.txt 2>/dev/null; } || grep -q '^test result: FAILED' /tmp/svrngs-check.$$ || { echo "never-ran  playback: a part ran no test (browser playback::, conformance seeks_back_to_back::, scenes night_played::), or the scene never ran, as above"; failed=1; }
 # What the browser and playback steps could not judge (a miss past the load
 # bar; acts.rs's read rate, read slower than the rate): said apart, never a
 # pass, each test's line in target/could-not-judge/<step>.txt.
-! reached browser && ! reached playback || cat target/could-not-judge/*.txt 2>/dev/null | sed 's/^/could-not-judge /'
+! reached browser && ! reached playback || cat target/could-not-judge/*.txt target/scenes/night_played-*/could-not-judge.txt 2>/dev/null | sed 's/^/could-not-judge /'
 # WebKit's seeks back to back, a rate and not a gate (u5-11): this run's,
 # beside the same seeks straight at the canary, then every run's here.
 if reached playback && [ -s target/seeks-webkit.log ] && ls target/playback/seeks-*.tsv >/dev/null 2>&1; then

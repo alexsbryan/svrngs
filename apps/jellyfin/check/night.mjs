@@ -5,7 +5,7 @@
 // `phone`), one at a time, all signed in as the room's one account.
 //
 //   node night.mjs tv|five '<json: {room, link, server, profile, account,
-//     people?: [{name, user, engine, device?, film}]}>'
+//     until?, people?: [{name, user, engine, device?, film, film_id?}]}>'
 //   env: SECRETS (the passwords), JF (the lender's Jellyfin), ADMIN (the
 //   lender's token, to read its sessions and nothing else), DUMP (where
 //   every phone's responses are written, and the TV's requests)
@@ -18,12 +18,19 @@
 //         the film they picked (its name), then pausing and seeking it from
 //         their phone; with `direct`, the baseline with no svrngs anywhere:
 //         the TV (signed in typing `account`'s) and each phone (a browser
-//         as a computer's) straight at Sam's Jellyfin, `room` its /web/
+//         as a computer's) straight at Sam's Jellyfin, `room` its /web/;
+//         with `until: "streamed"` (the night scene, crates/svrngs/tests/
+//         scenes/night.rs), each turn ends at the TV's first bytes of the
+//         film (`film_id`, person.mjs `streamed`), nothing timed, paused or
+//         sought: that the TV plays it, and is paused and sought from the
+//         phone, which ride on its player having started (jellyfin-web
+//         reports a play to Jellyfin once the <video>'s play() settles), is
+//         the playback step's, the scene `night_played` without `until`
 //
 // Prints one JSON line. A step that did not happen within its time is
 // null with what the page showed: never a number guessed.
 import fs from 'node:fs';
-import { enter, lender, shown, timed, watch } from './person.mjs';
+import { enter, lender, shown, streamed, timed, watch } from './person.mjs';
 import { kept, open, playOn, screen, session, until, video } from './tv.mjs';
 
 const [part, raw] = process.argv.slice(2);
@@ -124,8 +131,16 @@ async function turn(s, tv, p) {
   r.header_after_pick = await header();
   // Play; the clock stops when the TV plays it.
   const since = await s.page.evaluate(() => performance.now());
+  const arrived = args.until === 'streamed' && streamed(s.context, p.film_id, 60_000);
   r.play_at = Date.now() - T0;
   await page.locator('.mainDetailButtons .btnPlay:visible').first().click({ force: true });
+  if (arrived) {
+    r.streamed = await arrived;
+    r.session = await session(jf, tv.device);
+    if (r.streamed.ms === null)
+      r.stopped = `the TV asked no stream of it within 60 s of Play; the TV says: ${await shown(s.page)}`;
+    return r;
+  }
   // Both: the TV's <video> playing one started since, and the lender's
   // Jellyfin naming their film as the TV's — each time kept.
   const t0 = Date.now();
