@@ -1,8 +1,6 @@
-//! page-acts's tests (main.rs): what the phone's page does of the ask
-//! and of a line left unsent that v1 does not, each part of (d) its own
-//! test. "What acts as you" on the home page, its Stop and a yes from
-//! another tab, are the home page twin's laws
-//! (web/tests/pages/again.test.mjs).
+//! page-acts's test (main.rs): a line the phone's page left unsent, kept
+//! in its store across a real reopen, is carried on the next open. The
+//! rest of page-acts (d), on both pages, is web/tests/pages/again.test.mjs.
 
 use std::path::Path;
 use std::time::Duration;
@@ -18,12 +16,6 @@ use crate::harness::{relay, relay_url, Engine};
 
 /// What ada's shelf says it asks of an app.
 const ASKS: &str = "the page reads the shelf";
-
-/// The label of ada's lend `name` (browser/main.rs `label`).
-fn label(name: &str) -> String {
-    let ada = SigningKey::from_bytes(&[1; 32]).verifying_key();
-    svrngs_core::pass::Label::of(ada.as_bytes(), name).to_string()
-}
 
 /// Ada's computer, `signing(1)`'s, holding house from its seed,
 /// lending `page`, which reads kind `k`, and `shelf`, of
@@ -115,55 +107,6 @@ fn none_wrong(checks: &[(bool, &str)], seen: &Value) {
         .filter_map(|(failed, what)| failed.then_some(*what))
         .collect();
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-}
-
-in_webkit!(
-    /// **A refused yes keeps the ask shown, with why** (page-acts (d)).
-    /// Bo's phone asks, at `#ask=`, whether ada's page may use her shelf;
-    /// once it asks, ada stops lending the shelf, and bo presses Yes: her
-    /// computer refuses it, and the page says so in its heading with the
-    /// ask still shown, so bo can say it again. Watched failing on v1
-    /// (`UI` flipped), whose form is hidden on Yes and left so (app.js@19b63b2b:316).
-    a_refused_yes_keeps_the_ask_shown
-);
-async fn a_refused_yes_keeps_the_ask_shown(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, _, id) = ada(dir.path(), &relay).await;
-    let hold = dir.path().join("hold");
-    let mut args = bo_s_phone(&relay, &id);
-    let ask = format!("ask={}&app={}&at=/", label("shelf"), label("page"));
-    args.as_object_mut().unwrap().extend(
-        json!({ "ask": ask, "hold": hold, "within": 60_000 })
-            .as_object()
-            .unwrap()
-            .clone(),
-    );
-    let driven = tokio::spawn(drive(engine, "pages/acts.mjs", args, None));
-    let shown = hold.with_extension("shown");
-    let told = tokio::time::timeout(Duration::from_secs(120), async {
-        while !shown.exists() {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    });
-    assert!(told.await.is_ok(), "bo's page asks within 120 s");
-    std::fs::remove_file(svrngs_node::lend::lends_dir(dir.path()).join("shelf.json")).unwrap();
-    std::fs::write(&hold, "").unwrap();
-    let seen = driven.await.unwrap();
-    none_wrong(
-        &[
-            (
-                !seen["asked"]
-                    .as_str()
-                    .is_some_and(|t| t.starts_with("Let ")),
-                "bo is asked",
-            ),
-            (seen["went"] != true, "the refusal is said in the heading"),
-            (seen["hidden"] != false, "the ask stays shown"),
-        ],
-        &seen,
-    );
-    drop(ada);
 }
 
 in_webkit!(

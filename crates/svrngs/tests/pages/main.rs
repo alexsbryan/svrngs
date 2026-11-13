@@ -15,17 +15,11 @@ mod drive;
 
 // page-open: the phone page opens into its group; the home reads its groups.
 mod open;
-// page-shelf: what the group's shelf brings, read again after.
-mod shelf;
-// page-index: the group's index, what runs and what is lent.
-mod index;
-// page-members: the door, visits, leaving and the screen.
-mod members;
 // page-acts: the record's acts, its changes and uses, and the ask.
 mod acts;
-// page-home-rooms, the home's Wi-Fi and Play, and page-join, joining and
-// making a group, have no test here: each of their claims is a law of the
-// home page's twin (web/tests/pages/home.test.mjs, again.test.mjs).
+// page-home-rooms, page-join, page-shelf, page-index and page-members have
+// no test here: each of their claims is a law of either page with no
+// browser (web/tests/pages/home.test.mjs, again.test.mjs).
 
 /// `who`, holding the key drawn from `seed`, let into group `id` on `node`
 /// by a link `node` mints, consenting as the group's seed asks: a group
