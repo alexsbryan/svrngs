@@ -12,6 +12,7 @@ mod join;
 mod leave;
 mod meet;
 mod new;
+mod open;
 mod remove;
 mod share;
 
