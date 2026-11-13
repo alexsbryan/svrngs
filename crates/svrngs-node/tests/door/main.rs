@@ -596,6 +596,16 @@ async fn a_forged_identity_header_is_replaced_by_the_verified_one() {
         !pages.contains("trip") && !pages.contains("yard"),
         "{pages}"
     );
+    // An app writes a link into itself from its label and its group's page,
+    // `none` where the group keeps none (events-links (a); browser/main.rs
+    // at 58b950a3, `a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone`;
+    // its pages door/tests.rs a_service_is_told_the_page_of_each_group_its_asker_stands_in).
+    assert_eq!(pages, format!("{NS}=none"), "{head}");
+    assert_eq!(
+        header_values(&head, "x-svrngs-label"),
+        [shelf.as_str()],
+        "{head}"
+    );
     let told = |head: &str| {
         let one = |n| header_values(head, n).join(",");
         (

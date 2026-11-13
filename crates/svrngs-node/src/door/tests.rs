@@ -826,6 +826,39 @@ fn a_lend_reaches_a_member_only_through_a_group_both_stand_in() {
     );
 }
 
+/// A service is told, in `x-svrngs-pages`, the page of each group the
+/// device asking stands in that the lend reaches, `none` for one keeping
+/// no page, so an app writes a link into itself that opens on a phone
+/// (events-links (a); browser/main.rs at 58b950a3,
+/// `a_lent_app_writes_a_link_into_itself_that_opens_on_a_phone`, whose
+/// computer was told `dweb=none house=<page>` and bo's phone the house's
+/// alone). Planted, watched failing: a group keeping no page told unread
+/// (`map_or("unread"…)`); every group held told, whoever asks (`stands`
+/// without its `standing`).
+#[test]
+fn a_service_is_told_the_page_of_each_group_its_asker_stands_in() {
+    let (ada_bo, ada): (People, People) = (&[("ada", &[1]), ("bo", &[2])], &[("ada", &[1])]);
+    let (_dir, a) = held(1, &[(HOUSE, ada_bo), ("dweb", ada), ("trip", ada_bo)]);
+    let page = "https://group.example:8443/";
+    let origin = svrngs_core::link::Origin::parse(page).unwrap();
+    crate::group::write_origin(&a.group_dir(HOUSE).unwrap(), &origin).unwrap();
+    let app = port_lend("app", &[HOUSE, "dweb"]);
+    let told = |who: u8| {
+        let value = pages(&a, &DeviceKey(actor(who)), &app);
+        value.map(|v| v.to_str().unwrap().to_string())
+    };
+    assert_eq!(
+        told(1),
+        Some(format!("dweb=none {HOUSE}={page}")),
+        "the computer, in both groups the lend reaches"
+    );
+    assert_eq!(
+        told(2),
+        Some(format!("{HOUSE}={page}")),
+        "bo's phone, in the house alone"
+    );
+}
+
 /// One person's two devices are one person to a lend: each device's key
 /// resolves to the person's first key, which the door counts, keeps choices
 /// by and tells as `x-svrngs-key`, so one account (tests/door at 5e20d0b3, at 5e20d0b3,
