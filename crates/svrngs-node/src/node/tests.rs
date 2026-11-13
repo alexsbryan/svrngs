@@ -249,7 +249,10 @@ async fn settled(rounds: &mut tokio::sync::watch::Receiver<crate::ring_sync::Pro
     .expect("journal notifications kept sync running after convergence")
 }
 
-#[tokio::test]
+/// On a held clock (tokio's, paused: it moves only when every task waits),
+/// [`settled`]'s 200 ms of no round is every task idle, an order and no
+/// rate, and the 5 s bars are hangs ended.
+#[tokio::test(start_paused = true)]
 async fn a_write_reaches_a_peer_without_the_timer_and_both_rounds_settle() {
     let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let key = SigningKey::from_bytes(&[94; 32]);

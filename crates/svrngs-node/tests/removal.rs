@@ -242,8 +242,10 @@ async fn holds_cut(node: &Node, seed: u8, within: Duration) -> bool {
 /// 43.3 s after Sam's command, at Ana's next round). Ana's ask reaches Sam,
 /// Sam's cut reaches Ana, and Sam's hand-on to Ana reaches her, each within
 /// 5 s, with every round 60 s apart and none asked for. Red with the
-/// removal route waking no round (removal.rs at 7412588).
-#[tokio::test]
+/// removal route waking no round (removal.rs at 7412588). On a held clock
+/// (tokio's, paused: it moves only when every task waits), 5 s is an order,
+/// each before any timed round, whatever the host's load.
+#[tokio::test(start_paused = true)]
 async fn a_removal_reaches_every_computer_without_waiting_for_a_round() {
     let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
     let [sam, ana, _bo] = three(&dirs).await;

@@ -14,7 +14,7 @@ mod common;
 mod on_wire;
 
 use std::net::SocketAddr;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::{Node, NodeError};
@@ -142,8 +142,10 @@ async fn a_listener_not_on_loopback_is_refused_by_name() {
 /// sleeps for an interval nor runs a round. Both nodes' start rounds run
 /// over no group first, so none is in flight when the app writes. The
 /// failing input: the nudge the node builds dropped, as it was before
-/// u3-2 (B does not see the act within one round's wait).
-#[tokio::test]
+/// u3-2 (B does not see the act within one round's wait). On a held clock
+/// (tokio's, paused: it moves only when every task waits), [`ONE_ROUND`] is
+/// an order, the act before any timed round, whatever the host's load.
+#[tokio::test(start_paused = true)]
 async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
     assert!(ONE_ROUND < DEFAULT_RING_SYNC_INTERVAL);
     let (da, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -173,7 +175,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
     assert!(holds(&a, NS, &id), "control: A holds the act");
     assert!(!holds(&b, NS, &id), "control: B does not yet");
 
-    let since = Instant::now();
+    let since = tokio::time::Instant::now();
     while !holds(&b, NS, &id) {
         assert!(
             since.elapsed() < ONE_ROUND,

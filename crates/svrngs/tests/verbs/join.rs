@@ -620,16 +620,17 @@ async fn the_redeem_route_writes_the_device_the_request_names() {
 /// (`demo/runs/first-minute/2026-10-12/README.md`): the join took 0.7 s,
 /// listing took under 0.1 s once Ana's computer held the `Admit`, and the
 /// rest, 56 s, was waiting for Sam's round at its 60 s period. On the wire
-/// the exchange takes no network, so any listing before half that period
-/// is the redeem's wake, never a timed round; the bar only ends a hang.
-const HEARD_WITHIN: Duration = Duration::from_secs(30);
+/// and a held clock (tokio's, paused: it moves only when every task waits),
+/// five seconds is an order, not a rate: the listing comes before any timed
+/// round could, whatever the host's load.
+const HEARD_WITHIN: Duration = Duration::from_secs(5);
 
 /// A newcomer is heard by the group at once (bash-first-minute (b); Demo
 /// C's dry run, finding 8): Ana is in Sam's group and lends one thing;
 /// Alex is let in by Sam's computer, and Alex's computer lists Ana's lend,
 /// asked of Ana's computer, within [`HEARD_WITHIN`] — every round's period
 /// left at its 60 s. Watched failing with the redeem route waking no round.
-#[tokio::test(flavor = "multi_thread")]
+#[tokio::test(start_paused = true)]
 async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     let wire = Wire::default();
     let sam = computer(&wire, 1).await;
@@ -647,7 +648,7 @@ async fn a_newcomer_lists_what_every_computer_lends_within_seconds() {
     cli::join_group(&alex.node, &alex.key, &link, &name("alex"))
         .await
         .expect("Alex is let in");
-    let started = Instant::now();
+    let started = tokio::time::Instant::now();
     loop {
         let lends = alex.node.lends().await;
         if lends.lent.iter().any(|l| l.person.as_str() == "ana") {
