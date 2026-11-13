@@ -22,7 +22,7 @@ thread_local! {
     /// Each started node's routes by the address its API names, and the
     /// wire they meet on: one test's, since each `#[tokio::test]` runs on a
     /// thread of its own.
-    static APIS: RefCell<HashMap<SocketAddr, axum::Router>> = RefCell::default();
+    static APIS: RefCell<HashMap<SocketAddr, (PublicKey, axum::Router)>> = RefCell::default();
     static WIRE: Wire = Wire::default();
     /// Each [`bridge_as`]'s address: the key it asks as, of whom, on what.
     static BRIDGES: RefCell<HashMap<SocketAddr, Bridged>> = RefCell::default();
@@ -143,7 +143,13 @@ impl Client {
 /// `node`'s routes asked by [`http`] at its API's address, a node started
 /// over QUIC included.
 pub fn served(node: &Node) {
-    APIS.with(|a| a.borrow_mut().insert(node.api_addr(), node.api_routes()));
+    let (at, key) = (node.api_addr(), node.net().id());
+    let was = APIS.with(|a| a.borrow_mut().insert(at, (key, node.api_routes())));
+    // The same key again is its computer restarted; another's would be
+    // asked in its place.
+    if let Some((other, _)) = was.filter(|(k, _)| *k != key) {
+        panic!("{key} and {other} both answer at {at}");
+    }
 }
 
 /// An address [`http`] asks `to`'s routes at on `alpn` as `key` dials it,
@@ -239,7 +245,7 @@ impl Asked {
             let wire = WIRE.with(Clone::clone);
             wire.ask_as(&key, &to, alpn, req).await?
         } else {
-            let routes = APIS.with(|a| a.borrow().get(&self.at).cloned());
+            let routes = APIS.with(|a| a.borrow().get(&self.at).map(|(_, r)| r.clone()));
             let routes = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
             let caller = SocketAddr::from(([127, 0, 0, 1], 50_000));
             req.extensions_mut()

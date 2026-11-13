@@ -2,17 +2,21 @@
 //! u3-3 rows): an app on a member's computer appends to its group, reads the
 //! log and the people, and pushes and drains the live lane, on a listener
 //! bound to 127.0.0.1, and nothing else reaches it.
-//! Nodes in one process, no relay; peers are reached by seeded addresses,
-//! as `group_not_mesh.rs` does.
+//! Nodes in one process on one wire (common/on_wire.rs; docs/CHECKS.md,
+//! harness 3), no endpoint and no socket, each API asked of its routes as
+//! a program on its computer asks it. The listener itself, its bind and
+//! the file naming it, is asked over a real one: a node started over
+//! QUIC on loopback, no relay.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
-use common::loopback_sockets;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 
-use svrngs_node::iroh::{PublicKey, RelayConfig};
+use svrngs_node::iroh::RelayConfig;
 use svrngs_node::node::{Node, NodeError};
 use svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
 use svrngs_node::{actor_of, Person, Roster, SigningKey};
@@ -42,14 +46,9 @@ fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
     Ok(None)
 }
 
-fn key(seed: u8) -> PublicKey {
-    PublicKey::from_bytes(&signing(seed).verifying_key().to_bytes()).unwrap()
-}
-
+/// `seed`'s computer over `dir` on this test's wire, holding no seed file.
 async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
-    start_on(seed, dir, "127.0.0.1:0".parse().unwrap())
-        .await
-        .expect("a node starts")
+    on_wire::start(seed, dir.path()).await
 }
 
 /// A group's seed: its founder's key alone (DESIGN §6).
@@ -85,9 +84,9 @@ fn admit_to(node: &Node, ns: &str, person: &str, joining: u8) {
     });
 }
 
-/// An app's HTTP client: loopback, never a proxy.
-fn app() -> reqwest::Client {
-    reqwest::Client::builder().no_proxy().build().unwrap()
+/// An app's HTTP client, asking its computer's API (on_wire.rs `http`).
+fn app() -> on_wire::Client {
+    on_wire::http()
 }
 
 /// Whether `node` holds the act `id` in `ns`.
@@ -97,6 +96,8 @@ fn holds(node: &Node, ns: &str, id: &str) -> bool {
         .any(|o| o.id.to_string() == id)
 }
 
+/// `seed`'s computer over QUIC, its API listening on `api`: the listener's
+/// own claims, which a wire has none of.
 async fn start_on(seed: u8, dir: &tempfile::TempDir, api: SocketAddr) -> Result<Node, NodeError> {
     Node::start(
         dir.path().to_path_buf(),
@@ -111,7 +112,8 @@ async fn start_on(seed: u8, dir: &tempfile::TempDir, api: SocketAddr) -> Result<
 /// **The API is served on loopback alone** — upstream's bind guard
 /// (`api.rs:167`, `check_loopback`): asked to listen on an address that is
 /// not loopback, the node refuses to start, naming the address, and binds
-/// nothing. Asked for loopback, it serves there.
+/// nothing. Asked for loopback, it serves there. Over QUIC: the bind is
+/// the claim.
 #[tokio::test]
 async fn a_listener_not_on_loopback_is_refused_by_name() {
     let dir = tempfile::tempdir().unwrap();
@@ -130,7 +132,7 @@ async fn a_listener_not_on_loopback_is_refused_by_name() {
         .unwrap();
     assert!(node.api_addr().ip().is_loopback(), "{}", node.api_addr());
     assert_ne!(node.api_addr().port(), 0, "the port bound is answered");
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 /// **An app's append goes at once** (the u3-2 row): A founds the group and
@@ -153,8 +155,6 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
     hold(&a, NS, 1);
     admit(&a, "bo", 2);
     hold(&b, NS, 1);
-    a.transport()
-        .add_known_peer(key(2), loopback_sockets(b.endpoint()));
 
     let answer = app()
         .post(format!(
@@ -166,7 +166,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
         .send()
         .await
         .expect("A's record answers on loopback");
-    assert_eq!(answer.status(), reqwest::StatusCode::OK);
+    assert_eq!(answer.status(), axum::http::StatusCode::OK);
     let out: serde_json::Value = answer.json().await.unwrap();
     let id = out["id"].as_str().unwrap().to_string();
     assert_eq!(out["actor"], actor_of(&signing(1)), "A's computer signs");
@@ -182,7 +182,7 @@ async fn an_app_appends_on_loopback_and_the_woken_round_carries_it_to_b() {
         tokio::time::sleep(Duration::from_millis(20)).await;
     }
     for n in [&a, &b] {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -206,7 +206,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
         .send()
         .await
         .unwrap();
-    assert_eq!(answer.status(), reqwest::StatusCode::NOT_FOUND);
+    assert_eq!(answer.status(), axum::http::StatusCode::NOT_FOUND);
     let out: serde_json::Value = answer.json().await.unwrap();
     assert_eq!(out["kind"], "not_held", "{out}");
     assert!(!da.path().join("rings/elsewhere").exists());
@@ -214,7 +214,7 @@ async fn an_append_naming_a_group_not_held_is_refused() {
     // the record's own, and carries none (capability-signed).
     let entries = svrngs_core::tests_support::wire_ops(&a.rail().admission(NS).unwrap());
     assert!(entries.iter().all(|o| o.payload.is_none()), "{entries:?}");
-    a.endpoint().close().await;
+    a.net().close().await;
 }
 
 /// **The people come from the register, with their keys** (the u3-2 row;
@@ -254,7 +254,7 @@ async fn the_people_read_lists_a_and_b_with_their_keys() {
     ];
     want.sort_by_key(|p| p["key"].as_str().unwrap().to_string());
     assert_eq!(out["people"], serde_json::Value::from(want), "{out}");
-    a.endpoint().close().await;
+    a.net().close().await;
 }
 
 /// Members no path reaches: the live lane's transport for a router whose
@@ -400,8 +400,6 @@ async fn a_and_b_in(ns: &str, a: &Node, b: &Node) {
     hold(a, ns, 1);
     admit_to(a, ns, "bo", 2);
     hold(b, ns, 1);
-    a.transport()
-        .add_known_peer(key(2), loopback_sockets(b.endpoint()));
 }
 
 /// **A pushes on loopback and B drains the payload** (the u3-3 row): an app
@@ -426,7 +424,7 @@ async fn a_pushes_on_loopback_and_b_drains_the_payload() {
     assert!(drained(&b, NS).await.is_empty(), "a drain empties");
     assert!(drained(&a, NS).await.is_empty(), "A does not hear itself");
     for n in [&a, &b] {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -454,10 +452,6 @@ async fn a_payload_drained_names_its_sender_and_their_person() {
     for n in [&a, &b] {
         n.rail().set_seed(NS, &seed).unwrap();
     }
-    a.transport()
-        .add_known_peer(key(6), loopback_sockets(b.endpoint()));
-    b.transport()
-        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
 
     let (ada, bo) = (actor_of(&signing(1)), actor_of(&signing(2)));
     let bos_device = actor_of(&signing(6));
@@ -474,7 +468,7 @@ async fn a_payload_drained_names_its_sender_and_their_person() {
         );
     }
     for n in [&a, &b] {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -501,7 +495,7 @@ async fn a_live_payload_over_4096_bytes_is_refused() {
     );
     assert_eq!(drained(&b, NS).await[0].len(), 4096);
     for n in [&a, &b] {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -528,7 +522,7 @@ async fn a_drain_takes_only_its_own_groups_payloads() {
     assert_eq!(drained(&b, "yard").await, ["WQ"]);
     assert_eq!(drained(&b, NS).await, ["SA"]);
     for n in [&a, &b] {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -563,8 +557,6 @@ async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
     hold_as(&c, NS, 3, "cy");
     admit_to(&c, NS, "ada", 1);
     hold(&c, "yard", 1);
-    c.transport()
-        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
 
     let (status, out) = push(&c, NS, b"AQID".to_vec()).await;
     assert_eq!(status, 200, "{out}");
@@ -582,7 +574,7 @@ async fn a_dialer_standing_in_another_group_a_holds_is_refused() {
     );
     assert_eq!(drained(&a, "yard").await, ["BAUG"]);
     for n in [&a, &c] {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -659,7 +651,7 @@ async fn asked_with(
     path: &str,
     token: Option<&str>,
 ) -> (u16, serde_json::Value) {
-    let method = reqwest::Method::from_bytes(method.as_bytes()).unwrap();
+    let method = axum::http::Method::from_bytes(method.as_bytes()).unwrap();
     let mut ask = app()
         .request(method, format!("http://{}{path}", node.api_addr()))
         .header("content-type", "application/json")
@@ -724,7 +716,7 @@ async fn a_program_without_the_token_is_refused_on_every_record_route() {
         status != 401 && out["kind"] != "no_token",
         "sign-in's routes keep their own secret: {status} {out}"
     );
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 /// **The token is the person's alone** (give-token): it is written
@@ -733,10 +725,13 @@ async fn a_program_without_the_token_is_refused_on_every_record_route() {
 /// a container, cannot. That it is kept across a restart is the command's
 /// test (crates/svrngs/tests/address.rs), which restarts the program over
 /// one data dir. The failing input: no token file.
+/// Over QUIC: the `api` file is the listener's, written where it binds.
 #[tokio::test]
 async fn the_token_is_owner_only_beside_the_api_file() {
     let dir = tempfile::tempdir().unwrap();
-    let node = start(1, &dir).await;
+    let node = start_on(1, &dir, "127.0.0.1:0".parse().unwrap())
+        .await
+        .expect("a node starts");
     token_in(dir.path());
     assert!(dir.path().join("api").exists(), "beside the api file");
     #[cfg(unix)]
@@ -748,5 +743,5 @@ async fn the_token_is_owner_only_beside_the_api_file() {
             .mode();
         assert_eq!(mode & 0o777, 0o600, "the token is the person's alone");
     }
-    node.endpoint().close().await;
+    node.net().close().await;
 }

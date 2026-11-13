@@ -454,8 +454,11 @@ impl Node {
             loopback_only: true,
         };
         // A port no socket holds, one per key, so a test tells its nodes'
-        // APIs apart by address as their programs would.
-        let port = 1024 + u16::from(net.key.as_bytes()[0]);
+        // APIs apart by address as their programs would: two bytes of it,
+        // since one gave keys 1 and 6 one port (common/on_wire.rs `served`
+        // refuses two keys at one).
+        let [hi, lo, ..] = *net.key.as_bytes();
+        let port = 1024 + u16::from_be_bytes([hi, lo]) % 64_000;
         let unbound: Serve = Box::new(move |_| {
             Ok(crate::api::Serving {
                 addr: SocketAddr::from(([127, 0, 0, 1], port)),
