@@ -121,3 +121,40 @@ test('resolver refuses provider failure with retry guidance, never ended', async
   assert.equal(answer.headers.get('retry-after'), '60');
   assert.match(await answer.text(), /joining is temporarily unavailable/);
 });
+
+test('whole-response timeout cancels stalled streams and cannot later publish', async (t) => {
+  // node:test's mocked setTimeout holds the handler's 8 s bound, so the
+  // bound is an order (not before 8000 ms, at it), never a wait.
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  let canceled = false;
+  let attempts = 0;
+  let asked;
+  const reached = new Promise((resolve) => (asked = resolve));
+  const stalled = createResolver({
+    token: 'fixture',
+    fetch: async () => {
+      attempts++;
+      asked();
+      return new Response(
+        new ReadableStream({
+          cancel() {
+            canceled = true;
+          },
+        }),
+      );
+    },
+  });
+  let settled = false;
+  const answer = stalled(new Request(`https://join.example/${fixed}`), '127.0.0.1').finally(
+    () => (settled = true),
+  );
+  await reached;
+  await new Promise((resolve) => setImmediate(resolve));
+  t.mock.timers.tick(7999);
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false, 'the whole-response bound is 8000 ms, not less');
+  t.mock.timers.tick(1);
+  await refused(await answer);
+  assert.equal(attempts, 1);
+  assert.equal(canceled, true);
+});
