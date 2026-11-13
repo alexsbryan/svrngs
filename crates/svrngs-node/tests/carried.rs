@@ -2555,3 +2555,411 @@ async fn found_group(ana: &Node, ben: &Node, cy: &Node) -> String {
     }
     group
 }
+
+/// `person` standing in `group` on `ana`'s computer from a phone, the key
+/// `seed` signs as, a browser's device redeeming a link Ana made, as
+/// a_computer_writes_nothing_as_a_phone_s_person stands Bo.
+fn from_a_phone(ana: &Node, group: &str, person: &str, seed: u8) {
+    use svrngs_node::{Device, Person, Redemption};
+    let append = |act| {
+        let fixture = svrngs_core::tests_support::Fixture { act };
+        let lines = ana.rail().commit(group, &fixture).unwrap().unwrap();
+        lines.lines()[0].clone()
+    };
+    let invite = append(RailAct::Invite {
+        key: actor_of(&signing(seed + 1)),
+        until: i64::MAX,
+        device_of: None,
+    });
+    let person = Person::parse(person).unwrap();
+    let redeemed = Redemption::sign(&signing(seed), group, &invite.id, &person, Device::Browser);
+    append(RailAct::Admit {
+        invite: Some(redeemed),
+        person,
+        key: actor_of(&signing(seed)),
+    });
+}
+
+/// `body` posted as JSON to `node`'s home page at `path`, as its own page
+/// posts it, with the proof of the key its origin enrolled: the answer.
+async fn on_home(node: &Node, path: &str, body: &Value) -> Answer {
+    let home = format!("svrngs.localhost:{}", node.api_addr().port());
+    let text = body.to_string();
+    http()
+        .post(format!("http://{}{path}", node.api_addr()))
+        .header("host", &home)
+        .headers(on_wire::proved(node, None, "POST", path, &text).await)
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .header("content-type", "application/json")
+        .body(text)
+        .send()
+        .await
+        .unwrap()
+}
+
+/// **A folder app the policy blanks is told so in its open, before anyone
+/// opens it** (svrn-docs `rings/current/EXTENSION_POINT.md` §6.3; §7, G3):
+/// Blank, carried in the group's folder, has a script written in its page
+/// and a font from fonts.googleapis.com. Ana's computer lists it with
+/// `check`, both in the words `svrngs check` prints (check.rs
+/// `Refused::words`), which the home page's open draws after what the app
+/// does (home/question.js `agreed`); Money, of its own files, with none.
+/// Planted, each watched failing: surface.rs `lends` sending no `check`;
+/// carried.rs `checked` reading an app's folder under the wrong name.
+#[tokio::test]
+async fn a_carried_app_the_policy_blanks_is_listed_with_why() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 60, ana, &[]);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let folder = synced_in(ana, root.path(), &group).await;
+    carry(&folder, "Money");
+    let blank = folder.join("apps/Blank");
+    std::fs::create_dir_all(&blank).unwrap();
+    let page = "<!doctype html><title>Blank</title>\n\
+        <link rel=stylesheet href=\"https://fonts.googleapis.com/css2?family=Inter\">\n\
+        <script>document.body.textContent = 'ran';</script>\n";
+    std::fs::write(blank.join("index.html"), page).unwrap();
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if !of_kind(&seen, "Blank").is_empty() && !of_kind(&seen, "Money").is_empty() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    let check = of_kind(&seen, "Blank")[0]["check"]
+        .as_str()
+        .unwrap_or_default()
+        .to_string();
+    for said in [
+        "This page asks fonts.googleapis.com for a font, and apps load only their own files. That way, opening an app tells nobody outside your group you were here. To fix it, save the .woff2 beside index.html and point @font-face at it.",
+        "This page has a script written inside it, and apps run scripts only from their own files. Move it to a .js file beside index.html.",
+    ] {
+        assert!(check.contains(said), "Blank's check lacks {said:?}:\n{seen:#}");
+    }
+    assert_eq!(of_kind(&seen, "Money")[0]["check"], Value::Null, "{seen:#}");
+    ana.net().close().await;
+}
+
+/// **A yes runs an app's new version for its person alone, said from a
+/// computer or a phone** (canon-pin (c); svrn-docs
+/// `rings/current/WHAT_RUNS_AS_YOU.md` §3): Ana brings Money, Ben changes
+/// its `app.js`. Ana's computer serves Ana Money as brought, and Bo, in the
+/// group from a phone, through his holder under his pass, the same. Ana's
+/// yes, from her home page (`POST /runs`, as home/page/acts.js posts it):
+/// Money runs as Ben changed it for her, and no longer lists a change for
+/// her; for Bo still as brought. Bo's yes, from his phone: the computer
+/// names the act at `/runs` on the members' protocol, the phone signs it
+/// as its own line and carries it (`/carry`, web/page/acts.js `running`),
+/// and Money runs as Ben changed it for Bo. Planted, watched failing:
+/// carried.rs `runs_as` serving every person the files now (Ana runs Ben's
+/// before her yes).
+#[tokio::test]
+async fn a_yes_runs_the_new_version_for_its_person_alone_from_a_computer_or_a_phone() {
+    use svrngs_core::pass::{Label, Pass};
+    let (nodes, _dirs) = computers().await;
+    let (ana, ben) = (&nodes[0], &nodes[1]);
+    let group = found("house", 61, ana, &[(ben, 2)]);
+    from_a_phone(ana, &group, "bo", 7);
+    for node in [ben, ana] {
+        round(node).await;
+    }
+    let roots: Vec<_> = (0..2).map(|_| tempfile::tempdir().unwrap()).collect();
+    let at_ana = synced_in(ana, roots[0].path(), &group).await;
+    let at_ben = synced_in(ben, roots[1].path(), &group).await;
+    carry(&at_ana, "Money");
+    let script = |dir: &Path| std::fs::read_to_string(dir.join("apps/Money/app.js"));
+    let brought = "// Money's script\n";
+    let all = [ana, ben];
+    assert!(until(&all, || script(&at_ben).is_ok_and(|s| s == brought)).await);
+    let bens = "// Ben's script, run once each person says yes\n";
+    std::fs::write(at_ben.join("apps/Money/app.js"), bens).unwrap();
+    assert!(until(&all, || script(&at_ana).is_ok_and(|s| s == bens)).await);
+    assert_eq!(
+        served(ana, &group, 1).await,
+        (brought.to_string(), true),
+        "Ana runs Money as brought, and is asked"
+    );
+
+    // What Bo's phone runs: Money's script read by his holder under his pass.
+    let listed = lends(ana, &group).await;
+    let origin = of_kind(&listed, "Money")[0]["origin"]
+        .as_str()
+        .unwrap()
+        .to_string();
+    let label = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap()
+        .to_string();
+    let holder = signing(9);
+    let until_at = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let pass = Pass::sign(
+        &signing(7),
+        &actor_of(&holder),
+        (Label::parse(&label).unwrap(), vec![]),
+        until_at + 600,
+    )
+    .encode();
+    let holds = bridge_as(&holder, ana, svrngs_core::alpn::Alpn::Lend).await;
+    let bos = || async {
+        let route = format!("http://{}/lend/{label}/app.js", holds.local_addr());
+        let read = http()
+            .get(&route)
+            .header("x-svrngs-pass", &pass)
+            .send()
+            .await;
+        let read = read.unwrap();
+        assert_eq!(read.status(), 200);
+        read.text().await.unwrap()
+    };
+    assert_eq!(bos().await, brought, "Bo runs Money as brought");
+
+    let said = on_home(ana, "/runs", &json!([group, "Money"])).await;
+    assert!(said.status().is_success(), "{:?}", said.text().await);
+    assert_eq!(
+        served(ana, &group, 1).await,
+        (bens.to_string(), false),
+        "Ana runs Money as Ben changed it once she says yes"
+    );
+    assert_eq!(
+        bos().await,
+        brought,
+        "Bo runs Money as brought, whatever Ana said"
+    );
+
+    let phone = bridge_as(&signing(7), ana, svrngs_core::alpn::Alpn::Member).await;
+    let named = http()
+        .post(format!("http://{}/runs", phone.local_addr()))
+        .json(&json!([group, "Money"]))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(named.status(), 200, "{:?}", named.text().await);
+    let named: Value = named.json().await.unwrap();
+    let act = RailAct::from_json(named["sign"].clone()).unwrap();
+    let line = svrngs_core::sign_act(
+        &signing(7),
+        &group,
+        until_at,
+        0,
+        None,
+        act,
+        None,
+        None,
+        None,
+    );
+    let carried = http()
+        .post(format!("http://{}/carry", phone.local_addr()))
+        .json(&json!([group, line]))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(carried.status(), 200, "{:?}", carried.text().await);
+    assert_eq!(
+        bos().await,
+        bens,
+        "Bo runs Money as Ben changed it once he says yes"
+    );
+    for node in all {
+        node.net().close().await;
+    }
+}
+
+/// **A phone brings from the shelf through the computer it reaches**
+/// (v1ui-shelf (c); web/page/shelf.js `bring`, dial.js `through`): Bo,
+/// in the group from a phone, posts `[group, ["Money", "Events"]]` to
+/// `/shelf` on the members' protocol, as his key; both land in the
+/// group's own folder on Ana's computer, each said not there already, and
+/// her computer lists each as the group's. Again, each is said there
+/// already, and nothing is written over. Planted, watched failing: the
+/// members' router without `/shelf` (node.rs `people_router`), 404.
+#[tokio::test]
+async fn a_phone_brings_from_the_shelf_through_the_computer_it_reaches() {
+    let (nodes, _dirs) = computers().await;
+    let ana = &nodes[0];
+    let group = found("house", 62, ana, &[]);
+    from_a_phone(ana, &group, "bo", 7);
+    round(ana).await;
+    let root = tempfile::tempdir().unwrap();
+    let own = synced_at(ana, root.path().join("house"), &group).await;
+    let phone = bridge_as(&signing(7), ana, svrngs_core::alpn::Alpn::Member).await;
+    let bring = || async {
+        let asked = http().post(format!("http://{}/shelf", phone.local_addr()));
+        let answer = asked
+            .json(&json!([group, ["Money", "Events"]]))
+            .send()
+            .await;
+        let answer = answer.unwrap();
+        assert_eq!(answer.status(), 200, "{:?}", answer.text().await);
+        answer.json::<Value>().await.unwrap()
+    };
+    assert_eq!(
+        bring().await,
+        json!([{ "app": "Money", "already": false }, { "app": "Events", "already": false }])
+    );
+    for app in ["Money", "Events"] {
+        assert!(
+            own.join("apps").join(app).join("index.html").is_file(),
+            "{app}"
+        );
+    }
+    let mut seen = lends(ana, &group).await;
+    for _ in 0..30 {
+        if ["Money", "Events"]
+            .iter()
+            .all(|k| !of_kind(&seen, k).is_empty())
+        {
+            break;
+        }
+        tokio::time::sleep(Duration::from_secs(1)).await;
+        seen = lends(ana, &group).await;
+    }
+    for app in ["Money", "Events"] {
+        let listed = of_kind(&seen, app);
+        assert_eq!(listed.len(), 1, "{app}:\n{seen:#}");
+        assert_eq!(
+            listed[0]["group"],
+            group.as_str(),
+            "{app} the group's:\n{seen:#}"
+        );
+    }
+    let mine = own.join("apps/Money/index.js");
+    std::fs::write(&mine, "// kept\n").unwrap();
+    assert_eq!(
+        bring().await,
+        json!([{ "app": "Money", "already": true }, { "app": "Events", "already": true }])
+    );
+    assert_eq!(std::fs::read_to_string(mine).unwrap(), "// kept\n");
+    ana.net().close().await;
+}
+
+/// `form` posted to `node`'s home page at `/reaching`, as the open's
+/// button posts it in a tab of its own (home/page/reach.js `Reach`): sent
+/// on, to the app or back to the page.
+async fn reaching(node: &Node, form: String) {
+    let home = format!("svrngs.localhost:{}", node.api_addr().port());
+    let answer = http()
+        .post(format!("http://{}/reaching", node.api_addr()))
+        .header("host", &home)
+        .header("sec-fetch-site", "same-origin")
+        .header("origin", format!("http://{home}"))
+        .bearer_auth(node.token().trim())
+        .header("content-type", "application/x-www-form-urlencoded")
+        .body(form)
+        .send()
+        .await
+        .unwrap();
+    let status = answer.status();
+    assert!(
+        status.is_redirection(),
+        "{status}: {:?}",
+        answer.text().await
+    );
+}
+
+/// **The home page's Open, its send ticked, is the yes to that send**
+/// (svrn-docs `rings/current/CONTRACTS.md` §6.6, §7): Sender, carried on
+/// Ana's computer, names Ben's embed in its sends.txt, and Ana has said
+/// nothing of it. Its POST to embed's row is refused `unasked`, the
+/// service never asked, and its open shows the send unticked. Ana's Open
+/// posts `/reaching` as the home page's form does (home/page/reach.js
+/// `Reach`), naming embed to read and to send to: the open shows the send
+/// ticked, and Sender's POST reaches the service, its answer back. A form
+/// naming embed to read alone keeps no send. Planted, watched failing:
+/// home.rs `reaching` dropping the form's `sends` (the open unticked).
+#[tokio::test]
+async fn the_home_page_s_open_with_its_send_ticked_is_the_yes_to_the_send() {
+    let (nodes, dirs, origin, label, asked, group) = sending(63, |_| json!({})).await;
+    let ana = &nodes[0];
+    std::fs::remove_file(dirs[0].path().join("reaching.json")).unwrap();
+    let app = origin
+        .trim_start_matches("http://")
+        .split('.')
+        .next()
+        .unwrap();
+    let embed = ("POST", label.as_str(), "/v1/embeddings");
+    let (status, word, said) = sent(ana, &origin, embed, texts("a film")).await;
+    assert_eq!((status, word.as_str()), (403, "unasked"), "{said}");
+    assert_eq!(opened(ana, &group).await["sending"], json!(false));
+    reaching(ana, format!("app={app}&reads={label}&sends=")).await;
+    assert_eq!(
+        opened(ana, &group).await["sending"],
+        json!(false),
+        "a read alone"
+    );
+    let (status, word, _) = sent(ana, &origin, embed, texts("a film")).await;
+    assert_eq!((status, word.as_str()), (403, "unasked"));
+    assert_eq!(asked.lock().unwrap().len(), 0, "the service is not asked");
+    reaching(ana, format!("app={app}&reads={label}&sends={label}")).await;
+    assert_eq!(
+        opened(ana, &group).await["sending"],
+        json!(true),
+        "ticked, by that yes"
+    );
+    let (status, word, said) = sent(ana, &origin, embed, texts("a film")).await;
+    assert_eq!((status, word.as_str()), (200, ""), "{said}");
+    assert_eq!(said, r#"{"data":[{"embedding":[0.5,0.25]}]}"#);
+    let kept = asked.lock().unwrap().clone();
+    assert_eq!(
+        kept.len(),
+        1,
+        "the service is asked once, after the yes: {kept:#?}"
+    );
+    assert!(
+        kept[0].ends_with(r#"{"input":["a film"],"model":"embed"}"#),
+        "{kept:#?}"
+    );
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
+
+/// **A carried page is told each lend it reads at its own origin**
+/// (DESIGN §3, "Lent apps", call 6; surface.rs `reads`): Sender, carried
+/// on Ana's computer, its yes naming Ben's embed, asks `/svrngs-reads` at
+/// its origin and is told embed by kind, name and lender, its address
+/// under its own origin's `/svrngs-lend/<label>/`, and `to`, svrngs's
+/// opener of Ben's own page, `/svrngs-to?lender=<Ben's key>&lend=embed`,
+/// no capability in either; a POST at that address plus the row's path
+/// reaches the service (as apps/taste/index.js sends). Planted, watched
+/// failing: `reads` giving a carried page no `to`.
+#[tokio::test]
+async fn a_carried_page_is_told_each_lend_it_reads_at_its_own_origin() {
+    let yes = |label: &str| json!({ "said": "yes", "at": 1, "lends": [label], "sends": [label] });
+    let (nodes, _dirs, origin, label, asked, _group) = sending(64, yes).await;
+    let ana = &nodes[0];
+    let told = at(ana, &origin, "GET", "/svrngs-reads", None).await;
+    assert_eq!(told.status(), 200);
+    let told: Value = told.json().await.unwrap();
+    let address = format!("{origin}svrngs-lend/{label}/");
+    let ben = actor_of(&signing(2));
+    assert_eq!(
+        told["lends"],
+        json!([{ "kind": "embed", "name": "embed", "lender": "ben", "address": address,
+            "to": format!("{origin}svrngs-to?lender={ben}&lend=embed") }]),
+        "{told:#}"
+    );
+    let path = format!("{}v1/embeddings", address.trim_start_matches(&origin));
+    let answer = at(
+        ana,
+        &origin,
+        "POST",
+        &format!("/{path}"),
+        Some(json!({ "input": ["a film"] })),
+    )
+    .await;
+    assert_eq!(answer.status(), 200, "{:?}", answer.text().await);
+    assert_eq!(asked.lock().unwrap().len(), 1);
+    for node in &nodes {
+        node.net().close().await;
+    }
+}
