@@ -318,6 +318,35 @@ async fn an_answer_not_read_whole_within_ten_seconds_is_slow() {
     );
 }
 
+/// **A whole answer within ten seconds, on a held clock**: [`whole`] over an
+/// answer whose head comes at once and whose body never ends is said to
+/// have no whole answer at [`ANSWERED_WITHIN`], ten seconds after the ask
+/// on tokio's paused clock, the body's wait inside the bound; an answer
+/// that ends is read whole at once. No endpoint: the bound is `whole`'s,
+/// and [`IrohTransport::fetch`] reads every answer through it. Planted:
+/// no bound (the test's own cap runs out at 20 s); the bound on the head
+/// alone (the body waited for as long as it takes).
+#[tokio::test(start_paused = true)]
+async fn an_answer_whose_body_never_ends_is_slow_at_ten_seconds() {
+    let t0 = tokio::time::Instant::now();
+    let ended = whole(async { Ok(Streamed::new(axum::body::Body::from("whole"))) }).await;
+    assert_eq!(ended.expect("an answer that ends").body(), "whole");
+    assert_eq!(t0.elapsed(), Duration::ZERO, "control: read at once");
+
+    let never = n0_future::stream::pending::<Result<axum::body::Bytes, std::io::Error>>();
+    let endless = Streamed::new(axum::body::Body::from_stream(never));
+    let said = tokio::time::timeout(ANSWERED_WITHIN * 2, whole(async { Ok(endless) })).await;
+    assert!(
+        matches!(&said, Ok(Err(Unsent::Failed(why))) if why.starts_with("no whole answer within 10s")),
+        "{said:?}"
+    );
+    assert_eq!(
+        t0.elapsed(),
+        ANSWERED_WITHIN,
+        "said at the bound, not before"
+    );
+}
+
 /// **Which connection a request went on, traced** (#178): two requests to
 /// a member, the first said dialled and the second said riding the
 /// connection kept to it, each with its protocol. Red with the plant the
