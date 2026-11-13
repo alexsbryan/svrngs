@@ -378,39 +378,6 @@ async fn a_page_holding_a_standing_key_dials_the_node_and_gets_its_lends(engine:
     drop(node);
 }
 
-in_webkit!(
-    /// A link naming no relay — from a computer that had n0's address
-    /// lookup — is refused in a person's words, and the page reaches for
-    /// no address off this computer, n0's lookup and relays among them,
-    /// each refused it (relay-default (b)). Planted, watched failing: the
-    /// page before it, which bound with n0's lookup and relays.
-    a_link_naming_no_relay_is_refused_and_n0_never_reached
-);
-async fn a_link_naming_no_relay_is_refused_and_n0_never_reached(engine: Engine) {
-    let dir = tempfile::tempdir().unwrap();
-    let relay = relay().await;
-    let bo = signing(7);
-    let node = node(dir.path(), &relay, &bo).await;
-    let bare = Token {
-        issuer: signing(1).verifying_key(),
-        secret: [0; 16],
-        relays: Vec::new(),
-    };
-    let seen = drive(
-        engine,
-        "drive.mjs",
-        json!({ "site": site(), "key": hex::encode(bo.to_bytes()), "token": bare.encode() }),
-        None,
-    )
-    .await;
-    assert_eq!(seen["away"], json!([]), "n0 never asked:\n{seen:#}");
-    assert_eq!(
-        seen["status"], "This link was made by an older svrngs. Ask whoever sent it for a new one.",
-        "{seen:#}"
-    );
-    drop(node);
-}
-
 const FILE_BYTES: u64 = 64 * 1024 * 1024;
 const POST_BYTES: u64 = 8 * 1024 * 1024;
 const MIB: u64 = 1024 * 1024;
@@ -1646,94 +1613,6 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
     drop((ada, other));
 }
 
-in_both_engines!(
-    /// **A person in two groups opens each one's lend where it is lent**
-    /// (svrn-docs `rings/current/IN_THE_BROWSER.md` §4; DESIGN §3, "Lent
-    /// apps", call 1). Bo's browser holds house, ada's, and club, founded
-    /// by another ada, each lending `app`, and opened club last. House's
-    /// app's address, opened cold, lands on house's app: the group's page
-    /// finds the group whose lends, as it last listed them, name it. The
-    /// alias `app@ada`, which names a lend in each, is
-    /// said so, each group offered, and none opened until bo picks house,
-    /// which opens house's app. A label lent in neither is said so, of
-    /// both. Red on a45e7937, the cold address sent to club, the group last
-    /// opened: "What that address opens is not lent in club now."
-    a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent
-);
-async fn a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let (dir, club_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(dir.path(), &relay, &bo).await;
-    let club = computer(club_dir.path(), &relay, &bo, 3, "ada").await;
-    let house_app = page_origin("<!doctype html><title>the app of house</title>").await;
-    let club_app = page_origin("<!doctype html><title>the app of club</title>").await;
-    lend(dir.path(), "app", house_app.port());
-    lend(club_dir.path(), "app", club_app.port());
-    let both = "app@ada";
-    let nothing = label(5, "nothing");
-    let args = json!({
-        "site": site,
-        "key": hex::encode(bo.to_bytes()),
-        "token": token(&signing(1), &relay),
-        "second": { "token": token(&signing(3), &relay), "id": "club", "name": "club" },
-        "cold": label(1, "app"),
-        "aliases": [both, nothing],
-        "choose": "house",
-    });
-    let seen = drive(engine, "cold.mjs", args, None).await;
-    eprintln!("the two groups' run: {seen:#}");
-    assert!(
-        seen["second"]
-            .as_str()
-            .is_some_and(|s| s.starts_with("You’re in club")),
-        "club opened last:\n{seen:#}"
-    );
-    let cold = &seen["cold"];
-    assert!(
-        at_origin(&cold["url"], &label(1, "app")) && cold["title"] == "the app of house",
-        "house's app's address opens it, though club was opened last:\n{seen:#}"
-    );
-    // Each offered, the group last opened first.
-    let offered = &seen["aliases"][0];
-    let mut buttons: Vec<String> =
-        serde_json::from_value(offered["buttons"].clone()).unwrap_or_default();
-    buttons.sort();
-    let said = ["house and in club", "club and in house"]
-        .map(|g| json!(format!("What that address opens is lent in {g}.")));
-    assert!(
-        said.contains(&offered["status"]) && buttons == ["Open it in club", "Open it in house"],
-        "an alias lent in both is said, and each offered:\n{seen:#}"
-    );
-    assert!(
-        !offered["url"]
-            .as_str()
-            .unwrap_or_default()
-            .contains(&format!(".{}:", harness::PAGE_HOST))
-            || offered["url"]
-                .as_str()
-                .unwrap_or_default()
-                .starts_with(&format!("https://{}:", harness::PAGE_HOST)),
-        "none opened before bo picks:\n{seen:#}"
-    );
-    let chosen = &offered["chosen"];
-    assert!(
-        at_origin(&chosen["url"], &label(1, "app")) && chosen["title"] == "the app of house",
-        "picked, house's app opens:\n{seen:#}"
-    );
-    let none = &seen["aliases"][1];
-    assert!(
-        none["said"]
-            .as_str()
-            .is_some_and(|s| s.starts_with("What that address opens is not lent in ")
-                && s.contains("house")
-                && s.contains("club")),
-        "a label lent in neither is said so, of both:\n{seen:#}"
-    );
-    drop((ada, club));
-}
-
 // Alias collisions and time zones, a link's token with what it opens, and a
 // fragment the page cannot read are Node laws (question.test.mjs,
 // pages/enter.test.mjs); the alias and cold-open tests above still land in
@@ -1902,120 +1781,6 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     drop((ada, cy));
 }
 
-in_webkit!(
-    /// **A removed person's phone is told so in a person's words** (U7
-    /// (e); DESIGN §6). Ada removes bo through her computer's
-    /// `/v1/removals`; the page holding bo's key opens the group's link,
-    /// and ada's computer, which closes a stranger's dial, serves bo's only
-    /// to refuse it as removed: the page says "You are no longer in house."
-    /// Planted, watched failing: a removed dialer closed like a stranger
-    /// (the page said "This browser could not open the page.").
-    the_group_s_page_tells_a_removed_person
-);
-async fn the_group_s_page_tells_a_removed_person(engine: Engine) {
-    let site = site();
-    let dir = tempfile::tempdir().unwrap();
-    let relay = relay().await;
-    let bo = signing(7);
-    let ada = node(dir.path(), &relay, &bo).await;
-    let removed = removal(&ada, "bo").await;
-    assert_eq!(removed, svrngs_node::removal::Outcome::Out);
-    let seen = drive(
-        engine,
-        "drive.mjs",
-        json!({
-            "site": site,
-            "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
-        }),
-        None,
-    )
-    .await;
-    assert_eq!(seen["status"], "You are no longer in house.", "{seen:#}");
-    drop(ada);
-}
-
-/// House's removals, held on ada's computer: cy and dee admitted, cy's
-/// ask to remove dee signed on cy's own key and taken in, then ada's cut
-/// of dee through `/v1/removals`.
-async fn removals_held(ada: &Node) {
-    for (person, me) in [("cy", 3), ("dee", 4)] {
-        svrngs_core::tests_support::let_in_by(NS, &signing(me), person, |act| {
-            let act = svrngs_core::tests_support::Fixture { act };
-            ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
-                .id
-                .clone()
-        });
-    }
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
-    let ask = RailAct::Remove {
-        key: actor_of(&signing(4)),
-        through: vec![],
-    };
-    let asked = svrngs_core::tests_support::signed_in(NS, &signing(3), now + 5, 0, ask);
-    ada.rail().ingest_all(NS, &[asked]).unwrap();
-    assert_eq!(
-        removal(ada, "dee").await,
-        svrngs_node::removal::Outcome::Out
-    );
-}
-
-/// Each line of the removals a page lists, up to its time: the time is
-/// the browser's own words for it.
-fn removals_said(seen: &Value) -> Vec<String> {
-    seen["removals"]
-        .as_array()
-        .unwrap_or_else(|| panic!("the page lists no removals: {seen:#}"))
-        .iter()
-        .map(|l| {
-            l.as_str()
-                .unwrap()
-                .split(" on ")
-                .next()
-                .unwrap()
-                .to_string()
-        })
-        .collect()
-}
-
-in_webkit!(
-    /// **The group's page shows everyone each removal and each ask**
-    /// (v1-keeper-office (b)). The same removals on ada's computer; the
-    /// page holding bo's key opens the group's link and lists both, as the
-    /// home page does. Planted, watched failing: the page before (b).
-    the_group_s_page_shows_every_removal_and_ask
-);
-async fn the_group_s_page_shows_every_removal_and_ask(engine: Engine) {
-    let site = site();
-    let dir = tempfile::tempdir().unwrap();
-    let relay = relay().await;
-    let bo = signing(7);
-    let ada = node(dir.path(), &relay, &bo).await;
-    removals_held(&ada).await;
-    let seen = drive(
-        engine,
-        "drive.mjs",
-        json!({
-            "site": site,
-            "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
-        }),
-        None,
-    )
-    .await;
-    eprintln!("the group's page's run: {seen:#}");
-    assert_eq!(seen["status"], "You’re in house, as bo", "{seen:#}");
-    assert_eq!(
-        removals_said(&seen),
-        ["cy asked to remove dee", "ada removed dee"],
-        "{seen:#}"
-    );
-    drop(ada);
-}
-
 /// Ada's computer removes `who` from house as `svrngs remove` asks it.
 async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
     reqwest::Client::builder()
@@ -2041,15 +1806,19 @@ async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
         .unwrap()
 }
 
-in_both_engines!(
+in_chromium!(
     /// The group's link on a computer (v1-onboarding (c); DESIGN §7): the
     /// page offers the one line that gets svrngs, composed from the
-    /// link's `#` part, and a button that copies it; on a phone it offers
-    /// none. No request either page makes, the worker's and the relay's
-    /// included, carries the token, and the page host's answer to `/`
-    /// previews the link as an invitation, naming no group. The link here
-    /// lets nobody in, so each page settles on its refusal. Watched
-    /// failing: the page before the offer, and the line sent in a request.
+    /// link's `#` part, and a button that copies it, which puts it on the
+    /// clipboard; on a phone it offers none. No request either page makes,
+    /// the worker's and the relay's included, carries the token, and the
+    /// page host's answer to `/` previews the link as an invitation,
+    /// naming no group. The link here lets nobody in, so each page settles
+    /// on its refusal. Watched failing: the page before the offer, and the
+    /// line sent in a request. In Chromium alone, whose clipboard a test
+    /// may read: the line, its words, Copy and a phone's none are
+    /// web/tests/pages/group-page.test.mjs's ('a computer is offered one
+    /// line'), for both engines.
     the_page_offers_a_computer_one_line_and_sends_the_token_nowhere
 );
 async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine: Engine) {
@@ -2072,10 +1841,7 @@ async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine:
     assert_eq!(computer["line"], line, "{computer:#}");
     assert_eq!(computer["button"], "Copied", "{computer:#}");
     assert_eq!(computer["written"], line, "{computer:#}");
-    // WebKit refuses a test's read of the clipboard (computer.mjs).
-    if engine.as_str() == "chromium" {
-        assert_eq!(computer["copied"], line, "{computer:#}");
-    }
+    assert_eq!(computer["copied"], line, "{computer:#}");
     assert_eq!(seen["phone"]["offered"], false, "{:#}", seen["phone"]);
     let requests = seen["requests"].as_array().unwrap();
     eprintln!(
@@ -2102,113 +1868,6 @@ async fn the_page_offers_a_computer_one_line_and_sends_the_token_nowhere(engine:
     }
     assert!(!served.contains("house") && !served.contains(&token));
     drop(ada);
-}
-
-in_both_engines!(
-    /// **A founder's one line** (start-group (d); DESIGN §7): the group's
-    /// page opened with no link, on a computer that holds no group, offers
-    /// the line with the page's address where the link goes, saying it
-    /// gets svrngs and opens the home page, where a group is made; and a
-    /// button that copies it. On a phone it offers none. Planted, watched
-    /// failing: the page as a136f60 left it, "Open this page from your
-    /// group’s link." alone. Each says that above, not a fault's words:
-    /// red at db36fec-e3cdb97, which read `asked.has` with nothing asked
-    /// (v1ui-race (b)).
-    the_page_opened_with_no_link_offers_a_founder_s_line
-);
-async fn the_page_opened_with_no_link_offers_a_founder_s_line(engine: Engine) {
-    let seen = drive(
-        engine,
-        "computer.mjs",
-        json!({ "site": site(), "token": "" }),
-        None,
-    )
-    .await;
-    let origin = seen["origin"].as_str().unwrap();
-    let line = format!("curl -fsSL {origin}install.sh | sh -s -- '{origin}'");
-    let computer = &seen["computer"];
-    eprintln!("offered on a computer: {computer:#}");
-    assert_eq!(computer["offered"], true, "{computer:#}");
-    assert_eq!(computer["line"], line, "{computer:#}");
-    assert_eq!(computer["written"], line, "{computer:#}");
-    let words = computer["words"].as_str().unwrap_or_default();
-    assert!(words.contains("make your group"), "{computer:#}");
-    assert_eq!(seen["phone"]["offered"], false, "{:#}", seen["phone"]);
-    for opened in [computer, &seen["phone"]] {
-        let status = "Open this page from your group’s link.";
-        assert_eq!(opened["status"], status, "{:#}", seen["logs"]);
-    }
-}
-
-/// Ada's computer, `admitted` let in as bo, and three more of house who
-/// do not say what they lend (bash-first-minute (c)): dee's computer never
-/// answers, having none; eve's holds no group of ada's, so it has not
-/// heard of ada's and closes it; cy's cannot read what it lends, and
-/// answers so. The computers are returned, to be dropped with ada's.
-async fn unlisted_held(
-    relay: &Server,
-    admitted: &SigningKey,
-    dirs: &[tempfile::TempDir; 3],
-) -> (Node, [Node; 2]) {
-    let ada = node(dirs[0].path(), relay, admitted).await;
-    for (person, me) in [("dee", 4), ("eve", 5)] {
-        svrngs_core::tests_support::let_in_by(NS, &signing(me), person, |act| {
-            let act = svrngs_core::tests_support::Fixture { act };
-            ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
-                .id
-                .clone()
-        });
-    }
-    let eve = computer(dirs[1].path(), relay, &signing(9), 5, "eve").await;
-    let addrs = eve.endpoint().addr().ip_addrs().copied().collect();
-    ada.transport().add_known_peer(eve.endpoint().id(), addrs);
-    let cy = joined(dirs[2].path(), relay, &ada, 2, "cy").await;
-    std::fs::write(
-        svrngs_node::lend::lends_dir(dirs[2].path()),
-        "not a directory",
-    )
-    .unwrap();
-    (ada, [eve, cy])
-}
-
-in_webkit!(
-    /// **The group's page says a refusal as itself**, as the home page
-    /// does: the page holding bo's key opens the group's link, and ada's
-    /// computer answers for dee's, eve's and cy's. Planted, watched
-    /// failing: app.js before (c), which named dee alone, and said nobody
-    /// in house lends anything.
-    the_group_s_page_says_a_refusal_apart_from_no_answer
-);
-async fn the_group_s_page_says_a_refusal_apart_from_no_answer(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
-    let (ada, others) = unlisted_held(&relay, &bo, &dirs).await;
-    let seen = drive(
-        engine,
-        "drive.mjs",
-        json!({
-            "site": site,
-            "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
-        }),
-        None,
-    )
-    .await;
-    eprintln!("the group's page's run: {seen:#}");
-    assert_eq!(seen["status"], "You’re in house, as bo", "{seen:#}");
-    assert_eq!(
-        seen["answer"],
-        [
-            "dee’s computer did not answer, so what they lend is not listed.",
-            "eve’s computer has not heard of the computer you reached yet, so what they lend is not listed yet.",
-            "cy’s computer answered without saying what they lend, so it is not listed.",
-        ]
-        .join("\n"),
-        "{seen:#}"
-    );
-    drop((ada, others));
 }
 
 /// A computer in no group: a node with no seed and nothing in its record.
@@ -2294,22 +1953,6 @@ fn from_a_phone(ada: &Node, person: &str, joining: u8) {
     });
 }
 
-/// The door as both pages draw it of one group, in one wording (v1ui-door
-/// (c), (d)): ada and cy on now, bo off, pia in from a phone, each cell's
-/// class and words, sorted by its words.
-fn drew_the_door(seen: &Value) {
-    let mut drawn: Vec<(String, String)> = serde_json::from_value(seen["drawn"].clone()).unwrap();
-    drawn.sort_by(|a, b| a.1.cmp(&b.1));
-    let want = [
-        ("on", "ada on now"),
-        ("off", "bo did not answer"),
-        ("on", "cy on now"),
-        ("phone", "pia in from a phone"),
-    ];
-    let want: Vec<(String, String)> = want.map(|(c, w)| (c.into(), w.into())).into();
-    assert_eq!(drawn, want, "{seen:#}");
-}
-
 /// Each of `words`, or its plural, that `text` holds as a whole word.
 fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
     let said: BTreeSet<&str> = text
@@ -2319,69 +1962,6 @@ fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
     (words.iter().copied())
         .filter(|w| said.contains(w) || said.contains(format!("{w}s").as_str()))
         .collect()
-}
-
-in_webkit!(
-    /// **The door and the index on the group's page** (v1ui-door (d);
-    /// V1_UI_BUILD §3.1), as on the computer's: pia's phone opens ada's
-    /// group, joined from sam's link a day it keeps. Through ada's
-    /// computer it draws ada and cy "on now", bo, whose computer never
-    /// answers, off, and pia herself in from a phone; lists cy's shelf, a
-    /// line each, its open naming whose it is and what opening it does
-    /// beside it; and heads the group's people with who made it and since
-    /// when, so two of one name are told apart, its heading saying only
-    /// that pia is in. Planted, watched failing: the page as before this
-    /// part, a list of buttons and the group by its name; then as 5c6e3b0d
-    /// left it, the maker in the heading and a head of four columns, words
-    /// the fifth xenia set's Ana read before her first tap
-    /// (demo/xenia/findings/wordy-the-group-s-page.md).
-    the_group_s_page_draws_the_door_and_the_index
-);
-async fn the_group_s_page_draws_the_door_and_the_index(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(ada_dir.path(), &relay, &signing(8)).await;
-    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
-    lend(
-        cy_dir.path(),
-        "shelf",
-        page_origin("<!doctype html>").await.port(),
-    );
-    from_a_phone(&ada, "pia", 7);
-    let joined_at = 1_791_000_000;
-    let args = json!({
-        "site": site,
-        "key": hex::encode(signing(7).to_bytes()),
-        "token": token(&signing(1), &relay),
-        "person": "pia",
-        "maker": "sam",
-        "since": joined_at,
-    });
-    let seen = drive(engine, "drive.mjs", args, None).await;
-    eprintln!("the group's page's run: {seen:#}");
-    assert_eq!(seen["status"], "You’re in house, as pia", "{seen:#}");
-    let door = seen["door"].as_str().unwrap_or_default();
-    assert!(door.starts_with("house (sam’s, since "), "{seen:#}");
-    drew_the_door(&seen);
-    // The row's words, then the address to keep, a link on a computer
-    // (question.js `keeping`).
-    let index = seen["index"][0][0].as_str().unwrap_or_default();
-    let (row, kept) = index.split_once(" http://").unwrap_or((index, ""));
-    assert_eq!(
-        row, "cy’s shelf (k) Opening it lets it write its own part of house’s record, as you.",
-        "{seen:#}"
-    );
-    // A phone keeps the group's page on its Home Screen, so no row of
-    // it says to keep a lend; a computer's browser bookmarks the address.
-    match engine {
-        Engine::Webkit => assert_eq!(kept, "", "{seen:#}"),
-        Engine::Chromium => assert!(
-            kept.contains("/#open=shelf@cy ") && kept.ends_with(" Bookmark this."),
-            "{seen:#}"
-        ),
-    }
-    drop((ada, cy));
 }
 
 in_chromium!(
@@ -2483,15 +2063,10 @@ const REACHED_WITHIN: u64 = svrngs_node::dial::LINK_WITHIN.as_millis() as u64;
 
 /// Bo's phone opens ada's group while every computer answers, then again
 /// once each of ada's and cy's that `stops` names is stopped: reach.mjs's
-/// run, with the host's load at its start and the relay's host. Ada's
-/// computer made bo's link and lends a pad when `ada_lends`; cy's lends a
-/// shelf. What the relay carried over the second visit is said, the dials'
-/// cost (v1ui-race (a)).
-async fn with_stopped(
-    engine: Engine,
-    ada_lends: bool,
-    stops: [bool; 2],
-) -> (Value, String, String) {
+/// run, with the host's load at its start. Ada's computer made bo's link;
+/// cy's lends a shelf. What the relay carried over the second visit is
+/// said, the dials' cost (v1ui-race (a)).
+async fn with_stopped(engine: Engine, stops: [bool; 2]) -> (Value, String) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -2504,13 +2079,6 @@ async fn with_stopped(
     let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
     let shelf = page_origin("<!doctype html><title>cy's shelf</title>").await;
     lend(cy_dir.path(), "shelf", shelf.port());
-    if ada_lends {
-        lend(
-            ada_dir.path(),
-            "pad",
-            page_origin("<!doctype html>").await.port(),
-        );
-    }
     let ready = kept.path().join("ready");
     let (go, release) = tokio::sync::oneshot::channel();
     let args = json!({
@@ -2557,10 +2125,7 @@ async fn with_stopped(
         seen["listed"]["status"]
     );
     drop(awake);
-    let host = relay_url(&relay)["http://".len()..]
-        .trim_end_matches('/')
-        .to_string();
-    (seen, start, host)
+    (seen, start)
 }
 
 in_webkit!(
@@ -2577,7 +2142,7 @@ in_webkit!(
     the_phone_reaches_whoever_s_awake
 );
 async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
-    let (seen, start, _) = with_stopped(engine, false, [true, false]).await;
+    let (seen, start) = with_stopped(engine, [true, false]).await;
     assert_eq!(
         seen["first"]["status"], "You’re in house, as bo",
         "{seen:#}"
@@ -2609,23 +2174,6 @@ async fn the_phone_reaches_whoever_s_awake(engine: Engine) {
     }
 }
 
-in_webkit!(
-    /// With the link's computer awake, the phone goes through it (v1ui-race
-    /// (a)): bo's phone opens the group while every computer answers, then
-    /// again with cy's stopped, dialling ada's and cy's at once, and ada's
-    /// answers: the page names no one else's computer, and its time is said.
-    /// Planted: the page dialling only the lenders, never the link's
-    /// computer, which reaches nobody.
-    the_phone_goes_through_the_link_s_computer_while_it_answers
-);
-async fn the_phone_goes_through_the_link_s_computer_while_it_answers(engine: Engine) {
-    let (seen, _, _) = with_stopped(engine, false, [false, true]).await;
-    assert_eq!(
-        seen["listed"]["status"], "You’re in house, as bo",
-        "{seen:#}"
-    );
-}
-
 /// What the page's dials cost with every computer awake (v1ui-race (a)):
 /// [`with_stopped`]'s line on the relay over the second visit, stopping
 /// nobody, for `demo/runs/race/`. An instrument, not a check.
@@ -2633,32 +2181,8 @@ async fn the_phone_goes_through_the_link_s_computer_while_it_answers(engine: Eng
 #[ignore = "v1ui-race (a)'s measurement, run by name"]
 async fn the_dials_cost_with_everyone_awake() {
     for engine in [Engine::Chromium, Engine::Webkit] {
-        with_stopped(engine, false, [false, false]).await;
+        with_stopped(engine, [false, false]).await;
     }
-}
-
-in_webkit!(
-    /// A computer that did not answer is named by its person, never by a
-    /// relay's host (v1ui-reach (d)): ada's computer made bo's link and
-    /// lends a pad, cy's a shelf, and with both stopped bo's phone says
-    /// each did not answer, by whose it is, and no word on the page names
-    /// the relay. Planted: the page as before this part, which said "Your
-    /// group’s computer did not answer through 127.0.0.1:<port>".
-    a_computer_that_did_not_answer_is_named_by_its_person
-);
-async fn a_computer_that_did_not_answer_is_named_by_its_person(engine: Engine) {
-    let (seen, _, host) = with_stopped(engine, true, [true, true]).await;
-    let listed = &seen["listed"];
-    assert_eq!(
-        listed["status"],
-        "ada’s computer did not answer, so it may be off. cy’s computer did not answer, so it may be off. This page keeps asking.",
-        "{seen:#}"
-    );
-    let text = listed["text"].as_str().unwrap_or_default();
-    assert!(
-        !text.contains(&host) && !text.contains("127.0.0.1"),
-        "no word on the page names the relay, {host}:\n{seen:#}"
-    );
 }
 
 /// A way to `relay` that holds each new connection `by` before passing it

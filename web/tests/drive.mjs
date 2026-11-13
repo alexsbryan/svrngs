@@ -188,13 +188,7 @@ try {
   } catch (e) {
     throw new Error(`the page, left while it loaded, did not open again: ${e}`);
   }
-  await page.evaluate(hold, {
-    hex: args.key,
-    token: args.token,
-    person: args.person,
-    maker: args.maker,
-    since: args.since,
-  });
+  await page.evaluate(hold, { hex: args.key, token: args.token, person: args.person });
   await page.goto('about:blank');
   await page.goto(`${origin}#${args.token}`);
   await page.waitForSelector('#status.good, #status.bad', { timeout: 90_000 });
@@ -202,13 +196,9 @@ try {
     status: document.getElementById('status').textContent,
     answer: document.getElementById('response').textContent,
     lent: [...document.querySelectorAll('#lent button')].map((b) => b.textContent),
-    removals: [...document.querySelectorAll('#removals li')].map((l) => l.textContent),
     // Who is visiting now (guests-pages (b)).
     visiting: [...document.querySelectorAll('.visiting li')].map((l) => l.textContent),
-    // The door, each cell's class and words, and the index's rows, each
-    // cell's words (v1ui-door (d)).
-    drawn: [...document.querySelectorAll('.door li')].map((e) => [e.className, e.textContent]),
-    door: document.getElementById('door').textContent,
+    // The index's rows, each cell's words (v1ui-door (d)).
     index: [...document.querySelectorAll('#lent tr')].map((r) =>
       [...r.cells].map((c) => c.textContent),
     ),

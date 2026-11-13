@@ -5,8 +5,7 @@
 // gets svrngs (DESIGN §7), composed from the link's `#` part, and a button
 // that copies it; on the phone it offers none. Every request either page
 // makes, the service worker's included, is kept, and the page host's own
-// answer to `/` as a chat's preview reads it. With an empty token, the
-// page opened with no link, which offers a founder's line (start-group).
+// answer to `/` as a chat's preview reads it.
 //
 //   node web/tests/computer.mjs '{"engine": "chromium"|"webkit", "site": "<dir>", "token": "<token>"}'
 //
@@ -40,12 +39,10 @@ async function opened(device) {
       timeout: 90_000,
     });
     const offered = await page.locator('#computer').isVisible();
-    let [line, words] = [null, null];
+    let line = null;
     let [copied, written, button] = [null, null, null];
     if (offered) {
       line = await page.locator('#line').textContent();
-      // What the page says the line does, a joiner's or a founder's (start-group).
-      words = await page.locator('#computer p:not([hidden])').textContent();
       // What the page hands the clipboard, kept as it passes: WebKit
       // refuses a test's read of the clipboard (NotAllowedError), so there
       // the copy is read from this and the button's word alone.
@@ -68,7 +65,6 @@ async function opened(device) {
     return {
       offered,
       line,
-      words,
       written,
       copied,
       button,

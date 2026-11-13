@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // #computer: the line computer.js offers, in a terminal's words, with Copy
 // (ui/copy.js). Each line's words are drawn once, hidden unless they are
-// the line's, so the words a browser test reads (web/tests/computer.mjs,
-// `#computer p:not([hidden])`) are the only ones shown.
+// the line's, so the words a person reads (web/tests/pages/
+// group-page.test.mjs, each `p` not `hidden`) are the only ones shown.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Copy } from '../ui/copy.js?v=__VERSION__';
 /** @import { Props } from './page.js?v=__VERSION__' */
