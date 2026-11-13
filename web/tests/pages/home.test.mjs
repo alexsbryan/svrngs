@@ -556,6 +556,103 @@ test('a group made or joined says it is being read until it is, and house keeps 
   assert.deepEqual([page.went, page.unanswered], [[], []]);
 });
 
+// home_group::the_home_page_makes_a_group_another_computer_joins_with_no_restart,
+// the page's half: Dee, in Lab, makes Trip; the page says so and where
+// home.rs `found` placed its folder, and Invite shows the https link
+// home.rs `link` answers on the page svrngs came from. Then trip, a name
+// held already: said as it is typed and again once made, in question.js
+// `namesakes`'s words. The node's half, that Trip is made, placed and
+// joined by Bo, and the one rule traced: verbs/home.rs.
+test('a group made says where its folder is and links on the page svrngs came from', async () => {
+  const since = 1_791_000_000;
+  const held = { name: 'Trip', maker: null, since };
+  const made = group({ id: 'trip', name: 'Trip', person: 'Dee', made: { name: 'Trip', ...mine } });
+  const twice = group({
+    id: 'trip2',
+    name: 'trip',
+    person: 'Dee',
+    made: { name: 'trip', ...mine },
+  });
+  const placed = (g) => ({ ...g, folders: [`/h/svrngs/${g.name}`] });
+  const [answers, add] = growing([lab], [placed(made), placed(twice)]);
+  const links = [];
+  const page = await home({
+    ...answers,
+    'GET /group?name=Trip': [],
+    'GET /group?name=trip': [held],
+    'POST /group': ([name]) => (
+      add(placed(name === 'Trip' ? made : twice)),
+      [name, null, name === 'Trip' ? [] : [held]]
+    ),
+    'POST /link': (body) => (
+      links.push(body),
+      { client: 'svrngs://join/T', https: 'http://127.0.0.1:9/#T', device: false }
+    ),
+  });
+  const said = () => page.text('#home > p').join('\n');
+  await page.type('#make input[name=name]', 'Trip');
+  await page.type('#make input[name=person]', 'Dee');
+  await page.press('#make button', 'Make a group');
+  assert.ok(said().includes('You made Trip.'), said());
+  const section = () =>
+    page.text('#home section[data-colour]').find((w) => w.startsWith('Trip (yours')) ?? '';
+  assert.ok(section().includes('Trip’s folder is on this computer at /h/svrngs/Trip'), section());
+  await page.press('#home section button', 'Invite someone to Trip');
+  assert.deepEqual(links, [{ group: 'trip', device: false }]);
+  const link = page.text('#home section p.link').find(Boolean) ?? '';
+  assert.ok(
+    link.startsWith('Send this link to the person you are inviting: http://127.0.0.1:9/#T '),
+    link,
+  );
+  const day = q.day(since);
+  await page.type('#make input[name=name]', 'trip');
+  const before = page.text('#make p').join('\n');
+  assert.ok(
+    before.includes(
+      `You’re already in Trip (yours, since ${day}). This makes a second group called trip.`,
+    ),
+    before,
+  );
+  await page.type('#make input[name=person]', 'Dee');
+  await page.press('#make button', 'Make a group');
+  assert.ok(
+    said().includes(
+      `You made trip. You’re already in Trip (yours, since ${day}). This is a second group called trip.`,
+    ),
+    said(),
+  );
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
+// home_group::the_home_page_joins_another_group_from_its_link_while_svrngs_runs,
+// the page's half: Dee, in Lab, pastes Sam's link to Trip; its button says
+// what home.rs `asked` answered before it is pressed; joined, the page
+// says so, heads Trip as Sam's beside Lab as Dee's own, folds Trip's
+// shelf alone, as just joined (the operator, 2026-10-26), and says where
+// its folder is. The node's half, the join and Sam's register:
+// verbs/home.rs.
+test('a group joined beside one held is headed by whose, its shelf alone folded', async () => {
+  const [answers, add] = growing([lab], [trip]);
+  const page = await home({ ...answers, ...making(add) });
+  await page.type('#join input[name=link]', LINK);
+  await page.type('#join input[name=person]', 'Dee');
+  assert.ok(page.text('#join button').includes('Join Trip as Dee'), page.text('#join').join());
+  await page.press('#join button', 'Join Trip as Dee');
+  const said = page.text('#home > p').join('\n');
+  assert.ok(said.includes('You’re in Trip, as Dee.'), said);
+  const heads = page.text('#home section[data-colour] > h2');
+  for (const whose of ['Trip (Sam’s', 'Lab (yours'])
+    assert.ok(
+      heads.some((h) => h.startsWith(whose)),
+      `${whose}: ${heads.join()}`,
+    );
+  const folded = page.text('#home summary').filter((s) => s.startsWith('Bring more to'));
+  assert.deepEqual(folded, ['Bring more to Trip']);
+  const section = page.text('#home section[data-colour]').find((w) => w.startsWith('Trip (Sam’s'));
+  assert.ok(section.includes('Trip’s folder is on this computer at /h/Trip'), section);
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
 // pages::rooms::play_in_one_index_is_said_on_in_every_list: cy, in ada's
 // house and flat, lends `played`, a UDP port, so each index lists it with
 // Play; Play pressed in house's, flat's says where to connect too, from
