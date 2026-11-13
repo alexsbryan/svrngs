@@ -1,0 +1,24 @@
+events scene, n0's relay as Sam's and Bo's svrngs saw it in gate-119dd235 (target/scenes/events-chromium/*/svrngs.log, relay-actor lines):
+-- sam
+2026-11-13T07:41:35.228366Z  INFO endpoint{id=7f958c4a94}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-11-13T07:41:44.121427Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Lost connection to relay server: Client stream read failed: Stream error: peer closed connection
+2026-11-13T07:41:45.625141Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:47.145561Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:48.675279Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:50.246370Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:51.880302Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:53.591448Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:55.484862Z  WARN endpoint{id=7f958c4a94}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+-- bo
+2026-11-13T07:41:38.602134Z  INFO endpoint{id=6b3cc0646b}:relay-actor: iroh::socket::transports::relay::actor: home is now relay https://usw1-1.relay.n0.iroh.link/, was None
+2026-11-13T07:41:44.159854Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Lost connection to relay server: Client stream read failed: Stream error: peer closed connection
+2026-11-13T07:41:45.662754Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:47.180193Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:48.712182Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:50.288357Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:51.941244Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:53.629939Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+2026-11-13T07:41:55.775645Z  WARN endpoint{id=6b3cc0646b}:relay-actor:active-relay{url=https://usw1-1.relay.n0.iroh.link/}: iroh::socket::transports::relay::actor: Failed to connect to relay server: unable to connect: deadline has elapsed
+-- the same scene alone at a04d9b73 (product and scenes code identical to 119dd235), after the gate:
+test events::events::chromium ... ok
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 19 filtered out; finished in 36.76s

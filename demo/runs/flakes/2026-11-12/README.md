@@ -255,6 +255,29 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   found (the stalled relays count every accept, so a dial in flight at the
   close, or a relay actor iroh keeps, would both read so).
 
+### The full gate at 119dd235 (the seam ledger's harness 8 and units 4 and 7)
+
+`mac/gate-119dd235.txt`: scripts/check.sh under the gate lock in a clean
+detached worktree at 119dd235, Eudoxia 5067f12 (a clean checkout of that
+commit, which main builds with since d779b190), 1,817 s, **exit 1**.
+Every step passed but `scenes`, and of its 20 scenes all but `events`:
+`tests` 551 s, `browser` 234 s, `pages` 48 s, the conformance canary 48 s,
+`playback` 181 s with nothing could-not-judge, WebKit's seeks 4 of 4
+within 5 s at loads under 12 cores.
+
+- **scenes: events.** Cy's phone, joining by Sam's https link, was told
+  "The computer that sent your link did not answer" after 17,695 ms
+  (events.rs:134). Cause: n0. Sam's and Bo's svrngs, the shipped binary,
+  took n0's usw1-1 as their home relay; both lost it at 07:41:44 ("peer
+  closed connection without sending TLS close_notify") and failed to
+  reach it again seven times to 07:41:55, "deadline has elapsed", while
+  the phone asked (`mac/events-n0-119dd235.log`). Not these commits: they
+  change no product code, no scene and no browser harness
+  (`git diff --stat a04d9b73 119dd235` over those paths is empty), and the
+  scene passed alone at a04d9b73 after the gate (36.8 s). The scenes are
+  the gate's last tests that meet n0 (docs/CHECKS.md unit 3); the CLI's
+  no longer do.
+
 ## 6. Open
 
 - **night: decided.** The operator chose to move the TV's playing, and
