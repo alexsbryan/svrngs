@@ -171,6 +171,15 @@ impl House {
         });
         alex.transport()
             .add_known_peer(sam.endpoint().id(), loopback_sockets(sam.endpoint()));
+        // Sam's admission in Sam's own record too, synced from Alex as a
+        // computer that joined holds it: a record that does not name Sam
+        // lends nothing through the group (door.rs `lends`, `stands_here`).
+        let mut at = svrngs_node::iroh::EndpointAddr::new(alex.endpoint().id());
+        for socket in loopback_sockets(alex.endpoint()) {
+            at = at.with_ip_addr(socket);
+        }
+        let synced = sam.host().sync_with(&id, &at).await;
+        assert!(synced.stop.is_none(), "{synced:?}");
         House {
             alex,
             sam: Some(sam),
