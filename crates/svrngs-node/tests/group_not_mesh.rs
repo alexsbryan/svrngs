@@ -1,18 +1,23 @@
 //! A group is not a mesh (PLAN §4, U1): who may connect, who is synced and
 //! who may write come from the group's register — its seed, the founder's
 //! key alone, and the `Admit` acts written through its door — never a mesh.
-//! Nodes in one process, no relay; peers are reached by seeded addresses.
+//! Nodes in one process on one wire (common/on_wire.rs; docs/CHECKS.md,
+//! harness 3), no endpoint and no socket: each node's acceptor and routes
+//! answer as they decide. That a refused dialer's QUIC connection is
+//! closed with no HTTP answer is accept.rs's
+//! (`a_refused_dialer_gets_its_connection_closed_with_no_http_answer`).
 //! The shape of upstream's
 //! `commonwealth/crates/commonwealth-rails/tests/ring_round.rs`, rewritten:
 //! upstream's is built on the mesh daemon.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
-use common::loopback_sockets;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 
 use std::time::Duration;
 
-use svrngs_node::iroh::{Contact, PublicKey, RelayConfig};
+use svrngs_node::iroh::{Alpn, Unsent};
 use svrngs_node::node::{Node, Unlisted};
 use svrngs_node::register::Standing;
 use svrngs_node::{
@@ -27,35 +32,11 @@ fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
-fn key(seed: u8) -> PublicKey {
-    PublicKey::from_bytes(&signing(seed).verifying_key().to_bytes()).unwrap()
-}
-
-/// No relay and no address lookup: peers are reached by seeded addresses.
-fn no_relay() -> RelayConfig {
-    RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: false,
-    }
-}
-
+/// `seed`'s computer over `dir` on this test's wire. No link is asked
+/// about here: groups are seeded by hand, and no `seed.json` is kept in
+/// `dir`, so the seeds it reads are none.
 async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
-    Node::start(
-        dir.path().to_path_buf(),
-        signing(seed),
-        &no_relay(),
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
-}
-
-/// No link is asked about here: groups are seeded by hand, with no seed
-/// the command would keep.
-fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
-    Ok(None)
+    on_wire::start(seed, dir.path()).await
 }
 
 /// A group's seed: its founder's key alone (DESIGN §6).
@@ -104,17 +85,12 @@ fn digest(node: &Node, ns: &str) -> Digest {
     node.rail().digest(ns).unwrap()
 }
 
-/// `dialer`'s base URL for `served`, through a splice ([`svrngs_node::node::splice`]).
-async fn base_url(dialer: &Node, served: &Node) -> String {
-    dialer
-        .transport()
-        .spliced(&Contact {
-            key: served.endpoint().id(),
-            relays: Default::default(),
-            iroh_direct_addrs: loopback_sockets(served.endpoint()),
-        })
-        .await
-        .expect("a contact with an address resolves")
+/// `dialer`'s base URL for `served`, as a splice gave one: its requests
+/// asked of `served` on the members' protocol as `dialer`'s key
+/// (on_wire.rs `bridge_as`), decided by `served`'s acceptor and routes.
+async fn base_url(dialer: u8, served: &Node) -> String {
+    let bridge = on_wire::bridge_as(&signing(dialer), served, Alpn::Member).await;
+    format!("http://{}", bridge.local_addr())
 }
 
 async fn round(node: &Node) -> svrngs_node::ring_sync::RoundOutcome {
@@ -143,8 +119,6 @@ async fn a_member_the_founder_admits_syncs_and_writes() {
         digest(&b, NS),
         "control: B holds none of A's acts"
     );
-    b.transport()
-        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
 
     let pulled = round(&b).await;
     assert_eq!(
@@ -236,8 +210,8 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
         [Some(Device::Computer), Some(Device::Browser)],
         "control: B stands from a computer and P from a browser"
     );
-    a.transport()
-        .add_known_peer(key(2), loopback_sockets(b.endpoint()));
+    // A knows no address of P's, as a page's key is never one to dial.
+    on_wire::part(&a, &p);
 
     let round_a = round(&a).await;
     assert_eq!(
@@ -250,8 +224,8 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
         .expect("the ask finishes");
     assert_eq!(lends.unlisted.unanswered, [], "A asks B alone");
 
-    p.transport()
-        .add_known_peer(key(1), loopback_sockets(a.endpoint()));
+    // P reaches A alone, as when it was told A's address and no other.
+    on_wire::part(&p, &b);
     let round_p = round(&p).await;
     assert_eq!(
         (round_p.peers_reached, round_p.peers_refused),
@@ -273,7 +247,8 @@ async fn a_round_dials_a_computer_and_never_a_browser() {
 #[tokio::test]
 async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
     let dirs = [(); 3].map(|_| tempfile::tempdir().unwrap());
-    let (a, bo, cy) = (
+    // Bo's computer on the wire, holding no group: its acceptor decides.
+    let (a, _bo, cy) = (
         start(1, &dirs[0]).await,
         start(2, &dirs[1]).await,
         start(3, &dirs[2]).await,
@@ -290,10 +265,7 @@ async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
         "not a directory",
     )
     .unwrap();
-    for (k, node) in [(2, &bo), (3, &cy)] {
-        a.transport()
-            .add_known_peer(key(k), loopback_sockets(node.endpoint()));
-    }
+    // Dee's computer is on no wire: no path reaches it.
     let lends = tokio::time::timeout(Duration::from_secs(30), a.lends())
         .await
         .expect("the ask finishes");
@@ -326,35 +298,35 @@ async fn a_computer_that_refuses_is_said_apart_from_one_that_does_not_answer() {
 /// the first group).
 #[tokio::test]
 async fn a_stranger_is_closed_and_a_member_of_another_group_is_refused() {
-    let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
-    let a = start(1, &dirs[0]).await;
-    let c = start(3, &dirs[1]).await;
-    let d = start(4, &dirs[2]).await;
+    let dir = tempfile::tempdir().unwrap();
+    let a = start(1, &dir).await;
+    // C's and D's keys dial A, as their computers would (on_wire.rs
+    // `bridge_as`): A decides by the key alone.
     hold(&a, NS, 1);
     hold(&a, OTHER, 1);
     admit(&a, OTHER, "dee", 4);
-    let http = reqwest::Client::builder().no_proxy().build().unwrap();
+    let http = on_wire::http();
     let sync = |base: &str, ns: &str, claim: Option<String>| {
         let mut req = http
             .post(format!("{base}/internal/ring/sync"))
             .json(&serde_json::json!({ "namespace": ns, "digest": Digest::default(), "ops": [] }));
         if let Some(c) = claim {
-            req = req.header("X-Mesh-Pubkey", c);
+            req = req.header("x-mesh-pubkey", c);
         }
         tokio::time::timeout(Duration::from_secs(20), req.send())
     };
 
-    let to_c = base_url(&c, &a).await;
+    let to_c = base_url(3, &a).await;
     let answer = sync(&to_c, NS, None)
         .await
         .expect("a closed connection is an error, not a hang");
     assert!(
-        answer.is_err(),
+        matches!(answer, Err(Unsent::NotAdmitted)),
         "C stands nowhere, so gets no HTTP answer, got {:?}",
         answer.map(|r| r.status())
     );
 
-    let to_d = base_url(&d, &a).await;
+    let to_d = base_url(4, &a).await;
     let served = sync(&to_d, OTHER, None).await.unwrap().unwrap();
     assert_eq!(
         served.status(),

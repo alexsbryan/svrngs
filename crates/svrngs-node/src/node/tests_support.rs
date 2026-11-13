@@ -476,6 +476,48 @@ impl Node {
         key: SigningKey,
         seeds: SeedText,
     ) -> Result<Self, NodeError> {
+        // A port no socket holds, one per key, so a test tells its nodes'
+        // APIs apart by address as their programs would: two bytes of it,
+        // since one gave keys 1 and 6 one port (common/on_wire.rs `served`
+        // refuses two keys at one).
+        let public = SecretKey::from_bytes(&key.to_bytes()).public();
+        let [hi, lo, ..] = *public.as_bytes();
+        let port = 1024 + u16::from_be_bytes([hi, lo]) % 64_000;
+        let unbound: Serve = Box::new(move |_| {
+            Ok(crate::api::Serving {
+                addr: SocketAddr::from(([127, 0, 0, 1], port)),
+                _task: n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {})),
+            })
+        });
+        Self::on_wire_serving(wire, (data_dir, key, seeds), (port, unbound)).await
+    }
+
+    /// [`Node::on_wire`] with its record API served on a listener at `api`,
+    /// which must be loopback, and named in `data_dir`'s `api` file, as
+    /// [`Node::start`] serves it: for a program outside this process, such
+    /// as an app's canary under Node, which asks the record over HTTP.
+    pub async fn on_wire_listening(
+        wire: &Wire,
+        data_dir: PathBuf,
+        key: SigningKey,
+        seeds: SeedText,
+        api: SocketAddr,
+    ) -> Result<Self, NodeError> {
+        let bound = crate::api::bind(api).await?;
+        let (port, dir) = (bound.addr.port(), data_dir.clone());
+        let serve: Serve = Box::new(move |routes| {
+            let api = crate::api::serve(routes, bound);
+            crate::api::write_address(&dir, api.addr).map(|()| api)
+        });
+        Self::on_wire_serving(wire, (data_dir, key, seeds), (port, serve)).await
+    }
+
+    /// A node on `wire` whose record API, at `port`, `serve` serves.
+    async fn on_wire_serving(
+        wire: &Wire,
+        (data_dir, key, seeds): (PathBuf, SigningKey, SeedText),
+        (port, serve): (u16, Serve),
+    ) -> Result<Self, NodeError> {
         crate::declared::secret_dir(&data_dir).map_err(|source| NodeError::DataDir {
             path: data_dir.clone(),
             source,
@@ -493,18 +535,6 @@ impl Node {
             n0_services: false,
             loopback_only: true,
         };
-        // A port no socket holds, one per key, so a test tells its nodes'
-        // APIs apart by address as their programs would: two bytes of it,
-        // since one gave keys 1 and 6 one port (common/on_wire.rs `served`
-        // refuses two keys at one).
-        let [hi, lo, ..] = *net.key.as_bytes();
-        let port = 1024 + u16::from_be_bytes([hi, lo]) % 64_000;
-        let unbound: Serve = Box::new(move |_| {
-            Ok(crate::api::Serving {
-                addr: SocketAddr::from(([127, 0, 0, 1], port)),
-                _task: n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {})),
-            })
-        });
         let places = Some(data_dir.join("svrngs"));
         let every = crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
         Self::start_on(
@@ -513,7 +543,7 @@ impl Node {
             rail,
             (&relay, held),
             seeds,
-            (token, port, unbound),
+            (token, port, serve),
             every,
         )
         .await

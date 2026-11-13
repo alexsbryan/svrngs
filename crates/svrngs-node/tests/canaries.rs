@@ -1,20 +1,19 @@
 //! The canaries (DESIGN §5): small apps in `apps/`, run against the infra on
 //! every check, each using only what DESIGN §3 says an app gets, so a change
 //! that serves one app and breaks another fails the build. This file stands
-//! the computers up — nodes in one process, no relay, peers reached by
-//! seeded addresses, as `record_api.rs` does — and runs the app's own canary
-//! under Node against their loopback record APIs. A canary that cannot run
+//! the computers up — nodes in one process on one wire (docs/CHECKS.md,
+//! harness 3), no endpoint and no relay, each reaching the rest — and runs
+//! the app's own canary under Node against their record APIs, each served
+//! on a loopback listener and named by its data dir's `api` file as the
+//! command serves it: the canary is a program outside this process, so its
+//! HTTP needs a real port. A canary that cannot run
 //! fails: one that never ran has not passed (AGENTS.md 6).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
-mod common;
-use common::loopback_sockets;
-
 use std::path::Path;
 use std::time::Duration;
 
-use svrngs_node::iroh::{PublicKey, RelayConfig};
-use svrngs_node::node::Node;
+use svrngs_node::node::{Node, Wire};
 use svrngs_node::{actor_of, Person, Roster, SigningKey};
 
 const GROUP: &str = "house";
@@ -23,34 +22,18 @@ fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
-fn key(seed: u8) -> PublicKey {
-    PublicKey::from_bytes(&signing(seed).verifying_key().to_bytes()).unwrap()
-}
-
-/// No relay and no address lookup: peers are reached by seeded addresses.
-fn no_relay() -> RelayConfig {
-    RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: false,
-    }
-}
-
 /// No link is asked about here.
 fn no_seed(_: &Path) -> Result<Option<String>, String> {
     Ok(None)
 }
 
-async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
-    Node::start(
-        dir.path().to_path_buf(),
-        signing(seed),
-        &no_relay(),
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
+/// `seed`'s computer over `dir` on `wire`, its record API on a loopback
+/// port of its own.
+async fn start(wire: &Wire, seed: u8, dir: &tempfile::TempDir) -> Node {
+    let (dir, api) = (dir.path().to_path_buf(), "127.0.0.1:0".parse().unwrap());
+    Node::on_wire_listening(wire, dir, signing(seed), no_seed, api)
+        .await
+        .expect("a node starts")
 }
 
 /// The group's seed: Sam's key alone (DESIGN §6).
@@ -79,13 +62,13 @@ const PEOPLE: [(&str, u8); 4] = [("sam", 1), ("alex", 2), ("bo", 3), ("cy", 4)];
 /// One computer per person, one group: Sam founds it and lets in Alex, Bo
 /// and Cy, each of whom writes on their own computer, since the record API
 /// writes only as its own person (DESIGN §3, `not_yours`). Each holds the
-/// seed, and one round of its own brings it the rest of the register; each
-/// is told every other's loopback addresses, so a round an append wakes on
-/// any reaches the rest.
+/// seed, and one round of its own brings it the rest of the register; all
+/// are on one wire, so a round an append wakes on any reaches the rest.
 async fn computers(dirs: &[tempfile::TempDir; 4]) -> Vec<Node> {
+    let wire = Wire::default();
     let mut nodes = Vec::new();
     for ((_, seed), dir) in PEOPLE.iter().zip(dirs) {
-        nodes.push(start(*seed, dir).await);
+        nodes.push(start(&wire, *seed, dir).await);
     }
     nodes[0].rail().set_seed(GROUP, &founded_by_sam()).unwrap();
     for (person, seed) in &PEOPLE[1..] {
@@ -94,12 +77,6 @@ async fn computers(dirs: &[tempfile::TempDir; 4]) -> Vec<Node> {
     for (n, (_, seed)) in nodes.iter().zip(PEOPLE) {
         if seed != 1 {
             n.rail().set_seed(GROUP, &founded_by_sam()).unwrap();
-        }
-        for (other, (_, theirs)) in nodes.iter().zip(PEOPLE) {
-            if theirs != seed {
-                n.transport()
-                    .add_known_peer(key(theirs), loopback_sockets(other.endpoint()));
-            }
         }
     }
     for n in &nodes[1..] {
@@ -163,7 +140,7 @@ async fn expenses() {
         .collect();
     canary("expenses", &args).await;
     for n in &nodes {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
 
@@ -186,6 +163,6 @@ async fn events() {
         .collect();
     canary("events", &args).await;
     for n in &nodes {
-        n.endpoint().close().await;
+        n.net().close().await;
     }
 }
