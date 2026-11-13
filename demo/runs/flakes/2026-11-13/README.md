@@ -124,3 +124,10 @@ red on.
 `recount-1c33d4ff.out` (`recount.py`, unchanged): 957 gate Rust tests,
 602 (62.9%) crossing no seam, 355 at least one: P 341, Q 320, R 206,
 B 158, C 79, D 10, M 7. At 5cfa2609, 528 (55.2%).
+
+## After seam B's pass
+
+`recount-630967b0.out` (`recount.py`, unchanged, over 630967b0's
+binaries): 899 gate Rust tests, 617 (68.6%) crossing no seam, 282 at
+least one: P 267, Q 234, R 140, B 90, C 75, D 10, M 7. Browser 43
+fragile, pages 3, home 13, home_group 4. The isolated Node laws: 309.

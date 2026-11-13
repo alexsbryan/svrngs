@@ -174,6 +174,16 @@ at 1c33d4ff, one test fewer crossing Q and P, 603 of 957 (63.0%)
 crossing no seam, P 340, Q 319. Counted from the map, not from the
 binaries (no test was added or removed in the gate's set).
 
+Recounted at 630967b0 (`recount-630967b0.out`), after seam B's pass:
+899, of which 617 (68.6%) cross no seam and 282 at least one: P 267,
+Q 234, R 140, B 90, C 75, D 10, M 7. The browser step 92 to 43 fragile,
+the pages step 22 to 3, home 20 to 13 (on the wire; what is left keeps
+P: a lent service, a key's try, the port probe, the resolver's stub);
+their claims to Node laws over the twin, the composed phone page and
+cut-from-text edges, and to wire tests in tests/carried.rs and
+surface.rs. The isolated Node laws, 309, all deterministic: with them,
+926 of 1,208 (76.7%).
+
 ### The contained test of each seam
 
 | Seam | Contained place | What moves out of everything else |
