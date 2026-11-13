@@ -384,7 +384,8 @@ impl Asked {
     pub fn bearer_auth(self, token: impl std::fmt::Display) -> Self {
         self.header("authorization", format!("Bearer {token}"))
     }
-    pub fn header(mut self, name: &'static str, value: impl AsRef<str>) -> Self {
+    pub fn header(mut self, name: &str, value: impl AsRef<str>) -> Self {
+        let name = axum::http::HeaderName::from_bytes(name.as_bytes()).unwrap();
         self.headers
             .insert(name, HeaderValue::from_str(value.as_ref()).unwrap());
         self
@@ -398,6 +399,19 @@ impl Asked {
     pub fn body(mut self, body: impl Into<Vec<u8>>) -> Self {
         self.body = body.into();
         self
+    }
+    pub fn basic_auth(self, id: &str, secret: Option<&str>) -> Self {
+        use base64::{engine::general_purpose::STANDARD, Engine};
+        let pair = STANDARD.encode(format!("{id}:{}", secret.unwrap_or_default()));
+        self.header("authorization", format!("Basic {pair}"))
+    }
+    pub fn form(self, pairs: &[(&str, &str)]) -> Self {
+        let body = (pairs.iter())
+            .map(|(k, v)| format!("{}={}", encoded(k), encoded(v)))
+            .collect::<Vec<_>>()
+            .join("&");
+        let kind = "application/x-www-form-urlencoded";
+        self.header("content-type", kind).body(body)
     }
     pub fn json(self, value: &impl serde::Serialize) -> Self {
         let body = serde_json::to_vec(value).unwrap();
@@ -435,6 +449,19 @@ impl Asked {
             body,
         })
     }
+}
+
+/// `text` percent-encoded as a form's value, as reqwest encodes it.
+fn encoded(text: &str) -> String {
+    text.bytes()
+        .map(|b| match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'*' => {
+                (b as char).to_string()
+            }
+            b' ' => "+".into(),
+            b => format!("%{b:02X}"),
+        })
+        .collect()
 }
 
 /// An answer read whole, as reqwest's response is read.

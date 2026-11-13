@@ -2,7 +2,14 @@
 //! (SIGN_IN_WITH_SVRNGS §5 "The back channel", §5a "What the provider must
 //! do"): discovery at the issuer's `/.well-known/openid-configuration`, the
 //! keys, the token and userinfo, on the record API's listener, behind its
-//! one loopback check and its page guard.
+//! one loopback check and its page guard. The lender's computer is on one
+//! wire (common/on_wire.rs), its routes asked in this process: no socket.
+
+#![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod common;
+#[path = "common/on_wire.rs"]
+mod on_wire;
+use on_wire::http;
 
 use std::net::SocketAddr;
 use std::path::Path;
@@ -13,7 +20,6 @@ use base64::Engine as _;
 use ring::signature::{UnparsedPublicKey, ECDSA_P256_SHA256_FIXED};
 use serde_json::{json, Value};
 use svrngs_core::token::Group;
-use svrngs_node::iroh::RelayConfig;
 use svrngs_node::lend;
 use svrngs_node::node::Node;
 use svrngs_node::SigningKey;
@@ -42,20 +48,10 @@ fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
+/// The lender's computer on this test's wire (common/on_wire.rs): its
+/// routes asked in this process, no socket.
 async fn start(dir: &Path) -> Node {
-    Node::start(
-        dir.to_path_buf(),
-        signing(1),
-        &RelayConfig {
-            relay_urls: Vec::new(),
-            n0_services: false,
-            loopback_only: true,
-        },
-        |_| Ok(None),
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
+    on_wire::start(1, dir).await
 }
 
 /// `dir` lends `name` on `port`, with a sign-in-with-svrngs client `client`
@@ -70,10 +66,6 @@ fn signs_in(dir: &Path, name: &str, port: u16, client: &str, secret: Option<&str
     let body =
         json!({ "port": port, "kind": "media", "groups": [NS], "sign_in_with_svrngs": client });
     std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
-}
-
-fn http() -> reqwest::Client {
-    reqwest::Client::builder().no_proxy().build().unwrap()
 }
 
 async fn get(node: &Node, path: &str) -> (u16, Value) {
@@ -548,7 +540,7 @@ async fn discovery_the_keys_the_token_and_userinfo_as_a_stock_client_reads_them(
         );
     }
 
-    node.endpoint().close().await;
+    node.net().close().await;
 }
 
 /// A code is redeemed only through a group that still reaches the lend by
