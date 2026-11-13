@@ -530,6 +530,12 @@ async fn publication_restart_child() {
     };
     let (got, ()) = tokio::join!(publish(&browser, "POST", path, &body), reply);
     assert_eq!(got.status, if failed { 503 } else { 200 }, "{}", got.body);
+    // One resolver call a press, retried by the person, never by svrngs
+    // (browser::publication's `calls`, its node half).
+    assert!(
+        resolver.calls.try_recv().is_err(),
+        "{phase}: no automatic retry"
+    );
     if phase == "open" {
         assert_eq!(got.json()["id"], previous["id"]);
     }
