@@ -84,3 +84,107 @@ isolated Node laws 0.652 s, real Node integration 15.822 s, warm Rust calibratio
 with Redis absent from PATH and an unavailable Playwright browser installation.
 These are individual timing observations. The record names the compiled/source
 faults that the migrated checks caught before the full gate passed.
+
+## Seam migration ledger
+
+The gate's tests should judge their claims on deterministic paths: no
+browser, no socket, no relay, no wall-clock bar, no outside daemon, no
+decoder. Each fragile mechanism, a seam, is judged in one contained place,
+whose test claims only that the seam works, with the four verdicts
+(passed, failed, could-not-judge, never-ran), as the `playback` step does.
+The logic around a seam is claimed elsewhere, from explicit inputs.
+
+The seams, each named by its letter in `docs/seams.tsv`:
+
+| Seam | What varies | Seen fail as |
+|---|---|---|
+| B browser | Playwright's Chromium or WebKit, its scheduling and its layout | most of the browser step's 114 recorded failures |
+| W leaving a page | WebKit reports the loads a navigation cancels as page errors | holyarrs H8's growing list of messages |
+| M decode | the host's media stack and load | §"Media playback has one home" |
+| Q QUIC | iroh/noq endpoints dialling on loopback | noq endpoint.rs:648 aborts the binary (C3) |
+| R relay or n0 | a relay process, or n0's relays and lookup on the internet | relay retake races; n0 outages |
+| P socket | a TCP/UDP listener or connection on the host | a prober's connection counted by a stub (C2) |
+| C clock | a duration, rate or "within N s" judged on a loaded host | carried's 15 s bar, acts.rs's rate (C4) |
+| D daemon | podman, Jellyfin, Redis | podman's socket refusing; Redis absent |
+
+A child process alone (X in the map) is not a seam: a spawned `svrngs` that
+opens no socket is as repeatable as a function. A node started and never
+dialled still binds a UDP endpoint and its API port, so it counts as Q and P.
+
+### Where it stands
+
+`docs/seams.tsv` has a row for every test outside the unit tests, and for
+each unit test that crosses a seam: its seams, whether it is `fragile`,
+`deterministic` or `ignored` now, its claim with the line that asserts it,
+where that claim moves, and the harness missing for the move. A unit that
+moves a test changes its row in the same commit.
+
+On 2026-11-12, at 15607df4, the gate's Rust tests (unit tests and every
+target check.sh runs, ignored ones apart): 1,019, of which 471 (46.2%) cross
+no seam and 548 cross at least one: P 538, Q 516, R 241, B 193, C 97, D 22,
+M 7. The target is 95%: at most about 51 fragile tests, each the contained
+test of its seam. The Node tiers apart: every isolated law is
+deterministic; `page integration` is 13 tests on Redis and WebKit, kept as
+they are (§"Keep these integration checks"); the apps' tier has 161 calls,
+45 of them crossing a seam.
+
+Of the 548, by target: browser 113, door 60, pages 36, the node's own unit
+tests 36, folders 32, carried 24, home 20, scenes 20, install 16, share 14,
+record_api 13, join_by_link 12, and 152 in 34 smaller targets.
+
+### The contained test of each seam
+
+| Seam | Contained place | What moves out of everything else |
+|---|---|---|
+| B | the browser step, one test per engine and page: the home page (Chromium), the group's page and joining by link (WebKit, `join_page`), a carried app's signer frame and cookie in both | a page's words and decisions to Node laws over the composed page (`web/tests/pages/enter.test.mjs` composes the group's page; the home page's twin is missing); node answers to handlers |
+| W | none needed: an error is judged by the document it came from (unit 8) | holyarrs H8's messages |
+| M | the `playback` step, as it is | nothing left |
+| Q | `door::a_range_is_served_206_and_416_through_the_door_sha_exact` (bytes cross the door), `accept::a_handler_reads_the_dialers_verified_key_and_no_header_names_another`, `folders::a_change_by_any_member_reaches_another_s_directory` | header rules, refusals and decisions to door.rs's pure functions and to `door::router` in-process; syncing claims to an in-memory transport |
+| R | `default_relay::a_group_s_own_relay_meets_every_member_and_n0_never`, `relay_fallback::a_fresh_contribution_syncs_after_the_public_reach_is_cut` | n0 out of the gate entirely; tier choices to a pure step (tiers.rs) |
+| P | `play::stop_closes_it_and_nothing_listens_while_it_is_off`, and the home page's port probe run alone | ports to injected probes and in-memory upstreams |
+| C | the ceiling canary; `lend_origin::a_lend_s_computer_asleep_is_said_away_within_the_cap` | every other bar to an ordering claim over a fake clock or `now` passed in |
+| D | the films scene (Jellyfin), give (podman), `page integration` (Redis) | holyarrs and night's other claims to handlers and fixtures; give's keeper to fakes of Podman |
+
+### Harnesses missing, smallest production seam first
+
+1. A `Dialer` a test can build, so `door::router`, `holders_router` and the
+   members' routes are asked in-process: in-crate tests already can
+   (iroh/tests.rs `dialer`); `tests/` cannot (iroh.rs `Dialer` is private
+   on purpose). Frees most of door, oidc and ring_routes' refusals.
+2. The door's upstream behind the socket it dials (door.rs `connected`): an
+   in-memory stream for a test, so a lend's stub answers with no port.
+3. A `Door` without a `Host`: `Folders::start` needs a bound endpoint
+   (folder.rs `start`), so even an in-process door binds QUIC today.
+4. An in-memory transport at `IrohTransport::fetch`/`send` and
+   `ring_sync::To`, answered by the peer's `ring_routes::router`; and a holder
+   at `Folders::fetch` for blobs. Frees folders, record_api's push and drain,
+   removal's races, canaries' convergence.
+5. The home page composed in Node from its flows with recorded `/v1`
+   answers, the twin of `pages/enter.test.mjs`. Frees most of the browser
+   and pages steps' home-page tests. No production seam.
+6. A probe passed in at home.rs's `share::listening`, so no test scans ports.
+7. `now` passed in where a bar is a timing: door.rs `unix_now`, carried's
+   `spent`, the visit tests' end set from the real clock.
+8. The CLI's spawned `svrngs` pointed at a relay on 127.0.0.1, as
+   home_group.rs `dee_s_computer` does: 25 tests reach n0 on the internet
+   today. No production seam.
+
+### Units, in order
+
+Largest share and flake history first. Each lands per the verification
+contract above: the deterministic test first, watched failing on a plant
+named in its commit, every original assertion kept, the old copy retired
+or shrunk to its seam claim in a commit of its own, this ledger and the
+map changed with it.
+
+| # | Unit | Tests | Moves to | Needs |
+|---|---|---|---|---|
+| 1 | browser step: claims the map finds covered by laws and handlers | 54 | the laws named in the map | none |
+| 2 | door, oidc, session, accept: pure rows and in-process routers | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3 |
+| 3 | n0 out of the gate | 25 | a relay on 127.0.0.1 | harness 8 |
+| 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob) | 36 | routers by oneshot with a `Dialer`; transport | harness 1, 4 |
+| 5 | pages and the browser step's home-page tests | ~60 | Node laws over the composed home page | harness 5 |
+| 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |
+| 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address | ~95 | `src/*_tests.rs` over the parts that print and decide | harness 8, small splits per row |
+| 8 | scenes and holyarrs | 20 | handlers and fixtures; one scene per daemon stays | W's rule: judge an error by its document |
+| 9 | give's keeper, check and machine | 20 | fakes of Podman and the clock | none |
