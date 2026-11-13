@@ -201,7 +201,11 @@ second decider; its whole-response bound moved to the unit tier on
 node:test's mocked `setTimeout` (`resolver-contracts.test.mjs`). The apps'
 servers' handlers are functions of their config, asked in the test's
 process with svrngs's API a function: events' partial groups and
-grapevine's asker and `heldBy`, no listener and no spawned server.
+grapevine's asker and `heldBy`, no listener and no spawned server. The
+pantry's, the vision bridge's and the whisper wrapper's too, every hop a
+handler on `apps/pantry/in-process.mjs`, a socket's stand-in; P's own
+claim for the pantry, its address across a restart, is
+`apps/pantry/address.test.mjs`.
 
 ### The contained test of each seam
 

@@ -6,15 +6,18 @@
 // prompt; `tools` and every other field pass through untouched, the answer
 // streams, and both hops are named. A request with no image is untouched.
 // The friend's door counts the person running the bridge, never another.
+// Every server is a handler in this process (../../in-process.mjs), the
+// bridge's, the pantry's, the door's and each lend's, with no listener; a
+// held chunk is a promise the test releases, never a wait.
 
 import assert from 'node:assert/strict';
-import http from 'node:http';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-import { serve } from '../../pantry.mjs';
-import { PROMPT, start } from './server.mjs';
+import { fetch, request, serveAt } from '../../in-process.mjs';
+import { handler } from '../../pantry.mjs';
+import { PROMPT, bridge } from './server.mjs';
 
 const PANTRY = new URL('../../', import.meta.url).pathname;
 
@@ -33,7 +36,7 @@ function json(res, status, value) {
 }
 
 function forward(req, res, at, raw, headers) {
-  const target = http.request(
+  const target = request(
     {
       hostname: at.hostname,
       port: at.port,
@@ -50,35 +53,26 @@ function forward(req, res, at, raw, headers) {
   target.end(raw);
 }
 
-async function standin(handler) {
+function standin(answer) {
   const requests = [];
-  const server = http.createServer(async (req, res) => {
+  const { origin, close } = serveAt(async (req, res) => {
     const raw = await body(req);
     const seen = { method: req.method, path: req.url, headers: req.headers, body: raw };
     requests.push(seen);
     try {
-      await handler(req, res, seen);
+      await answer(req, res, seen);
     } catch (e) {
       json(res, 500, { error: String(e) });
     }
   });
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  return {
-    origin: `http://127.0.0.1:${server.address().port}/`,
-    requests,
-    close: () =>
-      new Promise((resolve) => {
-        server.close(resolve);
-        server.closeAllConnections?.();
-      }),
-  };
+  return { origin, requests, close };
 }
 
 /// A friend's model, behind the door on the person's computer. The door is
 /// the only way from that pantry to this lend, and it names the caller from
 /// the connection, so a forged identity header never reaches the friend.
-async function lend(id, { sees = true } = {}) {
-  const friend = await standin(async (req, res, seen) => {
+function lend(id, { sees = true } = {}) {
+  const friend = standin(async (req, res, seen) => {
     if (req.url === '/v1/models')
       return json(res, 200, { object: 'list', data: [{ id, object: 'model' }] });
     if (req.url !== '/v1/chat/completions') return json(res, 404, { error: 'not me' });
@@ -90,7 +84,7 @@ async function lend(id, { sees = true } = {}) {
     if (asked.stream) {
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: 'first' } }] })}\n\n`);
-      await new Promise((r) => setTimeout(r, 150));
+      await new Promise((r) => (seen.sendSecond = r));
       seen.secondSent = true;
       res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: 'second' } }] })}\n\n`);
       return res.end('data: [DONE]\n\n');
@@ -102,7 +96,7 @@ async function lend(id, { sees = true } = {}) {
       choices: [{ index: 0, message: { role: 'assistant', content } }],
     });
   });
-  const door = await standin((req, res, seen) => {
+  const door = standin((req, res, seen) => {
     const headers = { ...req.headers };
     delete headers.host;
     delete headers.connection;
@@ -115,7 +109,10 @@ async function lend(id, { sees = true } = {}) {
   return {
     origin: door.origin,
     requests: friend.requests,
-    close: () => Promise.all([friend.close(), door.close()]),
+    close: () => {
+      friend.close();
+      door.close();
+    },
   };
 }
 
@@ -144,28 +141,38 @@ function hash(path) {
   return createHash('sha256').update(readFileSync(path)).digest('hex');
 }
 
-async function place(t, lends) {
-  const held = await record(lends);
-  const pantry = await serve({ record: held.origin, host: '127.0.0.1', port: 0, access: KEY });
-  t.after(() => Promise.all([held.close(), pantry.close()]));
-  return pantry;
+/** The person's pantry on a record of `lends`, at an origin of its own, as `serve` gives it its listener. */
+function place(t, lends) {
+  const held = record(lends);
+  const pantry = serveAt(
+    handler({ record: { at: held.origin, token: '', fetch }, access: KEY, request }),
+  );
+  t.after(() => {
+    held.close();
+    pantry.close();
+  });
+  return { url: pantry.origin.replace(/\/$/, '') };
+}
+
+/** The bridge in front of `upstream`, as `start` gives it its listener. */
+function start({ upstream, vision }) {
+  const at = serveAt(bridge({ upstream, vision, fetch, request }));
+  return { url: at.origin.replace(/\/$/, ''), close: at.close };
 }
 
 test("a screenshot reaches a blind model as the vision model's description, tools intact, both hops named", async (t) => {
-  const coder = await lend('coder', { sees: false });
-  const vision = await lend('vision');
-  t.after(() => Promise.all([coder.close(), vision.close()]));
-  const pantry = await place(t, [
+  const coder = lend('coder', { sees: false });
+  const vision = lend('vision');
+  t.after(() => {
+    coder.close();
+    vision.close();
+  });
+  const pantry = place(t, [
     { group: 'g', name: 'ana-coder', person: 'ana', origin: coder.origin },
     { group: 'g', name: 'ana-vision', person: 'ana', origin: vision.origin },
   ]);
-  const bridge = await start({
-    upstream: pantry.url,
-    vision: 'ana/vision',
-    host: '127.0.0.1',
-    port: 0,
-  });
-  t.after(() => bridge.close());
+  const bridged = start({ upstream: pantry.url, vision: 'ana/vision' });
+  t.after(() => bridged.close());
 
   const tools = [
     { type: 'function', function: { name: 'weather', parameters: { type: 'object' } } },
@@ -187,7 +194,7 @@ test("a screenshot reaches a blind model as the vision model's description, tool
       },
     ],
   };
-  const res = await fetch(`${bridge.url}/v1/chat/completions`, {
+  const res = await fetch(`${bridged.url}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${KEY}`,
@@ -209,6 +216,8 @@ test("a screenshot reaches a blind model as the vision model's description, tool
     undefined,
     'the first chunk arrived before the lender sent the second',
   );
+  heard.sendSecond();
+  assert.match(Buffer.from((await reader.read()).value).toString(), /second/);
   await reader.cancel();
 
   const asked = JSON.parse(heard.body);
@@ -243,25 +252,23 @@ test("a screenshot reaches a blind model as the vision model's description, tool
 });
 
 test('a request with no image passes through untouched, and the vision model is never asked', async (t) => {
-  const coder = await lend('coder', { sees: false });
-  const vision = await lend('vision');
-  t.after(() => Promise.all([coder.close(), vision.close()]));
-  const pantry = await place(t, [
+  const coder = lend('coder', { sees: false });
+  const vision = lend('vision');
+  t.after(() => {
+    coder.close();
+    vision.close();
+  });
+  const pantry = place(t, [
     { group: 'g', name: 'ana-coder', person: 'ana', origin: coder.origin },
     { group: 'g', name: 'ana-vision', person: 'ana', origin: vision.origin },
   ]);
-  const bridge = await start({
-    upstream: pantry.url,
-    vision: 'ana/vision',
-    host: '127.0.0.1',
-    port: 0,
-  });
-  t.after(() => bridge.close());
+  const bridged = start({ upstream: pantry.url, vision: 'ana/vision' });
+  t.after(() => bridged.close());
 
   const tools = [
     { type: 'function', function: { name: 'weather', parameters: { type: 'object' } } },
   ];
-  const res = await fetch(`${bridge.url}/v1/chat/completions`, {
+  const res = await fetch(`${bridged.url}/v1/chat/completions`, {
     method: 'POST',
     headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({
@@ -287,22 +294,20 @@ test('a request with no image passes through untouched, and the vision model is 
 test("the pantry's own files do not change for the bridge", async (t) => {
   const files = ['pantry.mjs', 'mcp.mjs'].map((f) => `${PANTRY}${f}`);
   const before = files.map(hash);
-  const coder = await lend('coder', { sees: false });
-  const vision = await lend('vision');
-  t.after(() => Promise.all([coder.close(), vision.close()]));
-  const pantry = await place(t, [
+  const coder = lend('coder', { sees: false });
+  const vision = lend('vision');
+  t.after(() => {
+    coder.close();
+    vision.close();
+  });
+  const pantry = place(t, [
     { group: 'g', name: 'ana-coder', person: 'ana', origin: coder.origin },
     { group: 'g', name: 'ana-vision', person: 'ana', origin: vision.origin },
   ]);
-  const bridge = await start({
-    upstream: pantry.url,
-    vision: 'ana/vision',
-    host: '127.0.0.1',
-    port: 0,
-  });
-  t.after(() => bridge.close());
+  const bridged = start({ upstream: pantry.url, vision: 'ana/vision' });
+  t.after(() => bridged.close());
 
-  await fetch(`${bridge.url}/v1/chat/completions`, {
+  await fetch(`${bridged.url}/v1/chat/completions`, {
     method: 'POST',
     headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json' },
     body: JSON.stringify({

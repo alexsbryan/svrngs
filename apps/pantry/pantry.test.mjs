@@ -1,16 +1,19 @@
 // The pantry's minimum (CHARTER.md, "The minimum"; bars C1, C2, C3, C6):
 // stand-in people in a group lend stand-in servers, and the pantry finds
-// them by asking their protocol, never by a kind it keeps a list of.
+// them by asking their protocol, never by a kind it keeps a list of. Every
+// server here is a handler in this process (in-process.mjs): the pantry's
+// own (pantry.mjs `handler`), each lend's and the record's, asked as a
+// socket would ask them, with no listener; a held answer is a promise the
+// test releases, never a wait.
 
 import assert from 'node:assert/strict';
-import http from 'node:http';
-import net from 'node:net';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, readFileSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { mkdtempSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 
-import { FOUND_FOR, LENDS_FOR, formatList, list, serve } from './pantry.mjs';
+import { TIMED_OUT, fetch as wire, request, serveAt } from './in-process.mjs';
+import { FOUND_FOR, LENDS_FOR, formatList, handler, list } from './pantry.mjs';
 
 const HERE = new URL('.', import.meta.url).pathname;
 const clients = new Map();
@@ -24,7 +27,7 @@ const fetch = (url, init = {}) => {
   const key = clients.get(new URL(url).origin);
   const headers = new Headers(init.headers);
   if (key && !headers.has('authorization')) headers.set('authorization', `Bearer ${key}`);
-  return globalThis.fetch(url, { ...init, headers });
+  return wire(url, { ...init, headers });
 };
 
 function body(req) {
@@ -43,15 +46,9 @@ function json(res, status, value) {
 
 async function standin(handler) {
   const requests = [];
-  const server = http.createServer(async (req, res) => {
+  const { origin, close } = serveAt(async (req, res) => {
     const raw = await body(req);
-    const seen = {
-      method: req.method,
-      path: req.url,
-      headers: req.headers,
-      body: raw,
-      at: Date.now(),
-    };
+    const seen = { method: req.method, path: req.url, headers: req.headers, body: raw };
     requests.push(seen);
     try {
       await handler(req, res, seen);
@@ -59,20 +56,12 @@ async function standin(handler) {
       json(res, 500, { error: String(e) });
     }
   });
-  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  const origin = `http://127.0.0.1:${server.address().port}/`;
-  return {
-    origin,
-    requests,
-    close: () =>
-      new Promise((resolve) => {
-        server.close(resolve);
-        server.closeAllConnections?.();
-      }),
-  };
+  return { origin, requests, close };
 }
 
-async function group(lends, unlisted = {}, { delay = 0 } = {}) {
+/** The record's stand-in; `held(n)` keeps its nth `/v1/lends` answer until it resolves. */
+async function group(lends, unlisted = {}, { held } = {}) {
+  let asked = 0;
   return standin(async (req, res) => {
     if (req.url === '/v1/groups') {
       return json(res, 200, {
@@ -81,7 +70,8 @@ async function group(lends, unlisted = {}, { delay = 0 } = {}) {
     }
     const at = new URL(req.url, 'http://record');
     if (at.pathname === '/v1/lends') {
-      if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+      asked += 1;
+      if (held) await held(asked);
       const namespace = at.searchParams.get('namespace');
       fsLends(
         res,
@@ -115,7 +105,7 @@ function modelLend({ id, reply = 'ok', extra = [] }) {
       if (asked.stream) {
         res.writeHead(200, { 'content-type': 'text/event-stream' });
         res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: 'first' } }] })}\n\n`);
-        await new Promise((r) => setTimeout(r, 150));
+        await new Promise((r) => (seen.sendSecond = r));
         seen.secondSent = true;
         res.write(`data: ${JSON.stringify({ choices: [{ delta: { content: 'second' } }] })}\n\n`);
         res.end('data: [DONE]\n\n');
@@ -181,10 +171,14 @@ function silent() {
   return standin((req, res) => json(res, 404, { error: 'not me' }));
 }
 
-async function pantry(opts) {
-  const at = await serve({ host: '127.0.0.1', port: 0, access: CLIENT_KEY, ...opts });
-  clients.set(new URL(at.url).origin, CLIENT_KEY);
-  return at;
+/** The pantry's handler on `record`, at an origin of its own, as `serve` gives it its listener. */
+async function pantry({ record, clock }) {
+  const at = serveAt(
+    handler({ record: { at: record, token: '', fetch: wire }, access: CLIENT_KEY, clock, request }),
+  );
+  const url = at.origin.replace(/\/$/, '');
+  clients.set(url, CLIENT_KEY);
+  return { url, close: at.close };
 }
 
 // C1: discovery by protocol, no registration.
@@ -227,7 +221,7 @@ test('list names each lend by asking it, with whose computer, its address and it
   ]);
   t.after(() => Promise.all([ana.close(), sam.close(), cy.close(), record.close()]));
 
-  const found = await list({ record: record.origin });
+  const found = await list({ fetch: wire, record: record.origin });
   const by = Object.fromEntries(found.lends.map((l) => [l.person, l]));
 
   assert.equal(by.ana.protocol, 'model');
@@ -345,6 +339,9 @@ test('serve routes chat, multipart transcription and speech by the prefixed mode
   assert.equal(said.seen.voice, 'af_heart');
 });
 
+// A pantry that buffered would hold the first chunk until the lend sent its
+// last, which it sends only once the test has read the first: a deadlock
+// with nothing left to run, which node:test fails as still pending.
 test('a streamed answer reaches the client chunk by chunk, not buffered', async (t) => {
   const ana = await modelLend({ id: 'coder' });
   const record = await group([
@@ -379,6 +376,8 @@ test('a streamed answer reaches the client chunk by chunk, not buffered', async 
     undefined,
     'the first chunk arrived before the lend sent the second',
   );
+  seen.sendSecond();
+  assert.match(Buffer.from((await reader.read()).value).toString(), /second/);
   await reader.cancel();
 });
 
@@ -400,7 +399,7 @@ test('an unregistered server, path and body are listed and answered with the pan
   t.after(() => Promise.all([cy.close(), record.close(), at.close()]));
 
   const before = hashFiles(HERE);
-  const found = await list({ record: record.origin });
+  const found = await list({ fetch: wire, record: record.origin });
   assert.equal(found.lends[0].protocol, 'model');
   assert.equal(found.lends[0].models[0].as, 'cy/never-seen-id');
 
@@ -515,22 +514,13 @@ test('an asleep, full or unknown lender is named and never substituted', async (
   assert.equal(sam.requests.filter((r) => r.path === '/v1/chat/completions').length, 0);
 });
 
-function stateDir() {
-  return mkdtempSync(join(process.cwd(), 'target', 'pantry-test-'));
-}
-
 // (0)(i): a lend whose protocol did not answer in time is could-not-judge,
 // absent from /v1/models with its reason in list, and a request naming it is
 // a 503 naming the lend and why, never 404 "no lend answers" (AGENTS.md 6).
 test('a lend that did not answer in time is could-not-judge, absent, and refused by name', async (t) => {
   let clock = 1000;
   const now = () => clock;
-  const mute = await standin(async () => {
-    await new Promise((resolve) => {
-      const held = setTimeout(resolve, 4500);
-      held.unref?.();
-    });
-  });
+  const mute = serveAt(TIMED_OUT);
   const sam = await modelLend({ id: 'voice' });
   const record = await group([
     {
@@ -564,7 +554,7 @@ test('a lend that did not answer in time is could-not-judge, absent, and refused
     'the silent lend is absent',
   );
 
-  const seen = await list({ record: record.origin, clock: now });
+  const seen = await list({ fetch: wire, record: record.origin, clock: now });
   const ana = seen.lends.find((l) => l.person === 'ana');
   assert.equal(ana.protocol, 'neither');
   assert.equal(ana.couldNotJudge, true);
@@ -673,7 +663,7 @@ test("one person's two lends of one model id are both listed as serve routes the
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([first.close(), second.close(), record.close(), at.close()]));
 
-  const listed = (await list({ record: record.origin })).lends.flatMap((l) =>
+  const listed = (await list({ fetch: wire, record: record.origin })).lends.flatMap((l) =>
     l.models.map((m) => m.as),
   );
   const served = (await (await fetch(`${at.url}/v1/models`)).json()).data.map((m) => m.id);
@@ -726,7 +716,7 @@ test('discovery is kept for a short time and its age is said', async (t) => {
   clock += 1000;
   await fetch(`${at.url}/v1/models`);
   assert.equal(probes(), 1, 'still inside the time it is kept');
-  const seen = await list({ record: record.origin, clock: now });
+  const seen = await list({ fetch: wire, record: record.origin, clock: now });
   assert.match(await formatList(seen), /looked 1s ago/);
 
   clock += FOUND_FOR;
@@ -737,10 +727,27 @@ test('discovery is kept for a short time and its age is said', async (t) => {
 // models-fresh (a): one friend asleep costs one ask of the record, not one
 // per message. The record's `/v1/lends` is where an asleep friend's dial is
 // waited on (`crates/svrngs-node/src/node.rs:109`), so the stand-in record
-// takes a delay; the requests between refreshes must not pay it.
+// holds every answer after its first until it is released; a request
+// between refreshes that asked it again would wait on it, and loses its race
+// to that ask.
 test('a lender asleep costs one ask of the record, not every message', async (t) => {
   let clock = 1000;
   const now = () => clock;
+  let waited;
+  const askedAgain = new Promise((resolve) => (waited = resolve));
+  let release;
+  const released = new Promise((resolve) => (release = resolve));
+  const held = (n) => {
+    if (n === 1) return undefined;
+    waited(`the record was asked again (ask ${n}), and the request waited on it`);
+    return released;
+  };
+  /** What `asking` answered, refused if the record was asked again first. */
+  const unwaited = async (asking) => {
+    const out = await Promise.race([asking, askedAgain]);
+    assert.equal(typeof out, 'object', out);
+    return out;
+  };
   const ana = await standin(async () => {});
   const sam = await modelLend({ id: 'voice' });
   const record = await group(
@@ -757,20 +764,19 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
       },
     ],
     { unanswered: ['ana'] },
-    { delay: 600 },
+    { held },
   );
   const at = await pantry({ record: record.origin, clock: now });
   t.after(() => Promise.all([ana.close(), sam.close(), record.close(), at.close()]));
 
   const lendsAsked = () => record.requests.filter((r) => r.path.startsWith('/v1/lends')).length;
   const chat = async () => {
-    const began = Date.now();
     const answer = await fetch(`${at.url}/v1/chat/completions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ model: 'sam/voice', messages: [{ role: 'user', content: 'hi' }] }),
     });
-    return { status: answer.status, body: await answer.text(), elapsed: Date.now() - began };
+    return { status: answer.status, body: await answer.text() };
   };
 
   const first = await chat();
@@ -779,29 +785,24 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
 
   for (let i = 0; i < 3; i += 1) {
     clock += FOUND_FOR + 1000;
-    const again = await chat();
-    assert.equal(again.status, 200);
-    assert.ok(
-      again.elapsed < 500,
-      `request ${i + 2} waited ${again.elapsed} ms on the asleep friend`,
-    );
+    const again = await unwaited(chat());
+    assert.equal(again.status, 200, `request ${i + 2}`);
   }
   assert.equal(lendsAsked(), 1, 'the record is asked once while its answer is kept');
 
   clock += 1000;
-  const began = Date.now();
-  const asleep = await fetch(`${at.url}/v1/chat/completions`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ model: 'ana/whisper-1', messages: [{ role: 'user', content: 'hi' }] }),
-  });
+  const asleep = await unwaited(
+    fetch(`${at.url}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ model: 'ana/whisper-1', messages: [{ role: 'user', content: 'hi' }] }),
+    }),
+  );
   const asleepBody = await asleep.text();
-  const asleepElapsed = Date.now() - began;
   assert.equal(asleep.status, 503, 'the asleep lender is named, never answered by another');
   assert.match(asleepBody, /ana/);
   assert.match(asleepBody, /asleep|did not answer/);
   assert.match(asleepBody, /looked \d+s ago/, 'the refusal says the age of what it used');
-  assert.ok(asleepElapsed < 500, `the refusal waited ${asleepElapsed} ms on the asleep friend`);
   assert.equal(
     lendsAsked(),
     1,
@@ -809,6 +810,7 @@ test('a lender asleep costs one ask of the record, not every message', async (t)
   );
 
   clock = 1000 + LENDS_FOR;
+  release();
   const older = await chat();
   assert.equal(older.status, 200);
   assert.equal(lendsAsked(), 2, 'the record is asked again once its answer outlives its time');
@@ -903,7 +905,7 @@ test('PANTRY_LOG=debug writes each probe, route and skip, and the answer names b
   const at = await pantry({ record: record.origin });
   t.after(() => Promise.all([ana.close(), cy.close(), record.close(), at.close()]));
 
-  await list({ record: record.origin });
+  await list({ fetch: wire, record: record.origin });
   const answer = await fetch(`${at.url}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -952,59 +954,4 @@ test("a client's Authorization and Cookie never reach a friend's lend", async (t
   assert.equal(heard.headers.authorization, undefined);
   assert.equal(heard.headers.cookie, undefined);
   assert.equal(heard.headers['x-keep-me'], 'yes', 'everything else still passes');
-});
-
-// The address a person pasted into their interface stays across a restart.
-test('serve answers at the same address across a restart and refuses a held one by name', async (t) => {
-  const state = stateDir();
-  const ana = await modelLend({ id: 'coder' });
-  const record = await group([
-    {
-      group: 'g',
-      key: 'k',
-      name: 'ana-coder',
-      person: 'ana',
-      origin: ana.origin,
-      kind: 'x',
-      limit: null,
-      using: 0,
-    },
-  ]);
-  t.after(() => {
-    rmSync(state, { recursive: true, force: true });
-    return Promise.all([ana.close(), record.close()]);
-  });
-
-  const first = await serve({ record: record.origin, state });
-  const port = first.port;
-  await first.close();
-
-  const again = await serve({ record: record.origin, state });
-  t.after(() => again.close());
-  assert.equal(again.port, port, 'the address moved across a restart');
-  await again.close();
-
-  const held = net.createServer();
-  await new Promise((resolve) => held.listen(port, '127.0.0.1', resolve));
-  t.after(() => held.close());
-  await assert.rejects(
-    serve({ record: record.origin, state }),
-    new RegExp(`holds 127\\.0\\.0\\.1:${port}`),
-    'silently moved to another port',
-  );
-  await new Promise((resolve) => held.close(resolve));
-
-  const free = await new Promise((resolve) => {
-    const probe = net.createServer();
-    probe.listen(0, '127.0.0.1', () => {
-      const chosen = probe.address().port;
-      probe.close(() => resolve(chosen));
-    });
-  });
-  const named = await serve({ record: record.origin, state, port: free });
-  assert.equal(named.port, free, '--port names another');
-  await named.close();
-  const kept = await serve({ record: record.origin, state });
-  t.after(() => kept.close());
-  assert.equal(kept.port, free, 'and what --port named stays the address');
 });
