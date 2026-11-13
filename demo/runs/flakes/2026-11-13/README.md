@@ -184,3 +184,12 @@ seeks in parallel under the lock at dd5f5a9f, Chromium's stderr and exit
 traced, 40 of 40 passed, both browsers exiting 0, no new crash report. The
 wildcard's first load lost its wasm body in each of the 9 rounds traced,
 all passing, so that is not the cause. No code changed.
+
+The phone's first load failing in every round (Cache.put's network error,
+then "WebAssembly compilation aborted") is the browser half's own doing:
+web/tests/conformance.mjs:126-127 opens the page to hold the key, and
+:134-135 then navigates to about:blank and back with the token while that
+first load is still fetching its wasm, so the browser aborts the fetch.
+The crash report's frames name only the nearest exported symbols of a
+stripped chrome-headless-shell (temporal_rs, rust_png), so the CHECK that
+fired is not known; it is upstream's, held in the playback step.
