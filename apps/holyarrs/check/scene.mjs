@@ -391,12 +391,19 @@ try {
   // no longer waits for the film to play, Jellyfin's report of the play,
   // `/Sessions/Playing`, can still be in flight as Bo leaves, and WebKit
   // says its cancelling so (the Mac, 2026-11-12, demo/runs/flakes/2026-11-12).
+  // The player's own code can be in flight too: webpack's loader rejects with
+  // a ChunkLoadError when the navigation cancels its <script> for a /web/
+  // chunk (twice at load ~4, svrngs-46's scenes-rerun.log, 2026-11-12). So
+  // leaving cancels each way a page loads: fetch (two wordings) and script.
   const cancellation = (e) =>
     args.phone_link &&
     e.who === 'bo' &&
     ((e.at === 'Leaving Jellyfin for HolyArrs' &&
       (e.message === 'Unhandled Promise Rejection: TypeError: Load failed' ||
         /^Fetch API cannot load .+\/Sessions\/Playing(\/\w+)? due to access control checks\.$/.test(
+          e.message,
+        ) ||
+        /^Unhandled Promise Rejection: ChunkLoadError: Loading chunk \d+ failed\.\n\(error: https:\/\/[^/]+\/web\/[\w.-]+\.chunk\.js\)$/.test(
           e.message,
         ))) ||
       (['Removing Bo with a live stream open', 'Observing the removed member'].includes(e.at) &&
