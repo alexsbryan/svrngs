@@ -188,3 +188,12 @@ fn a_redirect_s_next_onward_is_proved_once_where_and_how_the_answer_says() {
         );
     }
 }
+
+/// The home page's address, as the command and install.sh say it and the
+/// page says it at its foot from the origin it was opened at
+/// (web/tests/pages/home.test.mjs, 'the page says its own address at its
+/// foot'): this host, the port it started on, and `/`.
+#[test]
+fn the_home_page_s_address_is_its_host_at_its_port() {
+    assert_eq!(crate::home::address(4321), "http://svrngs.localhost:4321/");
+}

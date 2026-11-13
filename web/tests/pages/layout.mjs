@@ -14,9 +14,14 @@ const KEPT = [
   ['/web/question.js', '/crates/svrngs-node/src/home/question.js'],
 ];
 
+// A module a page of the home page's twin imports (twin.mjs) carries that
+// page's number, as its importer does, so each page loads its modules, and
+// the state some keep as they load (wifi.js ROOM), anew, as a browser does.
 export async function resolve(spec, ctx, next) {
   if (!spec.startsWith('.') || !ctx.parentURL?.startsWith('file:')) return next(spec, ctx);
   const url = new URL(spec, ctx.parentURL);
   for (const [served, kept] of KEPT) url.pathname = url.pathname.replace(served, kept);
+  const twin = new URL(ctx.parentURL).searchParams.get('twin');
+  if (twin) url.searchParams.set('twin', twin);
   return next(url.href, ctx);
 }
