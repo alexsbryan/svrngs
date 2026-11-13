@@ -4,7 +4,7 @@
 
 const PROTOCOL = '2025-06-18';
 
-async function post(url, message, { session, version, timeout, token }) {
+async function post(url, message, { session, version, timeout, token, ask }) {
   const headers = {
     accept: 'application/json, text/event-stream',
     'content-type': 'application/json',
@@ -12,7 +12,7 @@ async function post(url, message, { session, version, timeout, token }) {
   if (token) headers.authorization = `Bearer ${token}`;
   if (session) headers['mcp-session-id'] = session;
   if (version) headers['mcp-protocol-version'] = version;
-  const res = await fetch(url, {
+  const res = await ask(url, {
     redirect: 'error',
     method: 'POST',
     headers,
@@ -54,7 +54,8 @@ function parse(text, contentType) {
 /// `timeout` ms, the caller's one probe time. A lend's origin on this
 /// computer answers a program only with this computer's `token`, which
 /// svrngs takes off before the lend's service is asked (give-session).
-export async function toolsAt(origin, timeout, token) {
+/// `ask` is the fetch it asks with.
+export async function toolsAt(origin, timeout, token, ask = fetch) {
   const url = `${origin.replace(/\/+$/, '')}/mcp`;
   const init = await post(
     url,
@@ -68,7 +69,7 @@ export async function toolsAt(origin, timeout, token) {
         clientInfo: { name: 'pantry', version: '0' },
       },
     },
-    { timeout, token },
+    { timeout, token, ask },
   );
   const version = init.message?.result?.protocolVersion || PROTOCOL;
   await post(
@@ -79,6 +80,7 @@ export async function toolsAt(origin, timeout, token) {
       version,
       timeout,
       token,
+      ask,
     },
   );
   const listed = await post(
@@ -89,6 +91,7 @@ export async function toolsAt(origin, timeout, token) {
       version,
       timeout,
       token,
+      ask,
     },
   );
   if (listed.message?.error) {

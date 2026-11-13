@@ -23,14 +23,12 @@ function json(res, status, value) {
   res.end(JSON.stringify(value));
 }
 
-export async function start({
-  upstream,
-  port = 8100,
-  host = '127.0.0.1',
-  model = 'whisper-1',
-} = {}) {
+/// The wrapper's answer to one request: `upstream` is whisper.cpp's server,
+/// `model` the id it is listed by, and `request` how whisper.cpp is asked,
+/// node's `http.request` when it listens.
+export function wrapper({ upstream, model = 'whisper-1', request = http.request } = {}) {
   if (!upstream) throw new Error("the wrapper needs whisper.cpp's server as --upstream");
-  const server = http.createServer(async (req, res) => {
+  return async (req, res) => {
     if (req.method === 'GET' && req.url === '/v1/models') {
       return json(res, 200, { object: 'list', data: [{ id: model, object: 'model' }] });
     }
@@ -41,7 +39,7 @@ export async function start({
     }
     const body = await collect(req);
     const at = new URL('/inference', upstream);
-    const answer = http.request(
+    const answer = request(
       {
         hostname: at.hostname,
         port: at.port,
@@ -68,7 +66,16 @@ export async function start({
     );
     answer.end(body);
     return undefined;
-  });
+  };
+}
+
+export async function start({
+  upstream,
+  port = 8100,
+  host = '127.0.0.1',
+  model = 'whisper-1',
+} = {}) {
+  const server = http.createServer(wrapper({ upstream, model }));
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, host, resolve);

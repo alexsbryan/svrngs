@@ -35,14 +35,14 @@ function json(res, status, value) {
 }
 
 /// One request to the person's pantry, its answer streamed back as it came.
-function relay(req, res, base, raw, extra = {}) {
+function relay(request, req, res, base, raw, extra = {}) {
   const at = destination(base, req.url);
   const headers = { ...req.headers };
   delete headers.host;
   delete headers.connection;
   delete headers['content-length'];
   headers['content-length'] = String(raw.length);
-  const target = http.request(
+  const target = request(
     {
       hostname: at.hostname,
       port: at.port,
@@ -63,8 +63,8 @@ function relay(req, res, base, raw, extra = {}) {
 }
 
 /// The vision model's description of one image, asked through the pantry.
-async function describe(base, vision, part, authorization) {
-  const res = await fetch(`${base}/v1/chat/completions`, {
+async function describe(ask, base, vision, part, authorization) {
+  const res = await ask(`${base}/v1/chat/completions`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', ...(authorization && { authorization }) },
     redirect: 'error',
@@ -107,11 +107,14 @@ const imageParts = (messages) =>
     .flatMap((m) => (Array.isArray(m?.content) ? m.content : []))
     .filter((part) => part?.type === 'image_url');
 
-export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' } = {}) {
+/// The bridge's answer to one request: `upstream` is the person's pantry,
+/// `vision` the model that describes an image; `fetch` asks the pantry for
+/// a description and `request` relays, node's `http.request` when it listens.
+export function bridge({ upstream, vision, fetch: ask = fetch, request = http.request } = {}) {
   if (!upstream) throw new Error("the bridge needs the person's pantry as --upstream");
   if (!vision) throw new Error('the bridge needs the seeing model as --vision');
   const base = upstream.replace(/\/+$/, '');
-  const server = http.createServer(async (req, res) => {
+  return async (req, res) => {
     try {
       destination(base, req.url);
       const raw = await collect(req);
@@ -125,14 +128,14 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
       }
       const images = imageParts(asked?.messages);
       if (typeof asked?.model !== 'string' || !images.length) {
-        return relay(req, res, base, raw);
+        return relay(request, req, res, base, raw);
       }
       let seen;
       try {
         seen = {
           ...asked,
           messages: await withSight(asked.messages, (part) =>
-            describe(base, vision, part, req.headers.authorization),
+            describe(ask, base, vision, part, req.headers.authorization),
           ),
         };
       } catch (e) {
@@ -142,7 +145,7 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
           bridged_by: vision,
         });
       }
-      return relay(req, res, base, Buffer.from(JSON.stringify(seen)), {
+      return relay(request, req, res, base, Buffer.from(JSON.stringify(seen)), {
         'x-pantry-model': asked.model,
         'x-pantry-bridged-by': vision,
       });
@@ -151,7 +154,11 @@ export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' 
       else res.destroy(e);
       return undefined;
     }
-  });
+  };
+}
+
+export async function start({ upstream, vision, port = 8120, host = '127.0.0.1' } = {}) {
+  const server = http.createServer(bridge({ upstream, vision }));
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(port, host, resolve);

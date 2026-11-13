@@ -102,9 +102,9 @@ function secondsAgo(at, now) {
   return Math.max(0, Math.round((now() - at) / 1000));
 }
 
-async function get(url, token) {
+async function get(url, token, ask) {
   const headers = token === undefined ? {} : { authorization: `Bearer ${token}` };
-  const res = await fetch(url, {
+  const res = await ask(url, {
     headers,
     redirect: 'error',
     signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
@@ -118,7 +118,8 @@ async function get(url, token) {
 /// key their computer is dialled by, so two people of one name keep two ids.
 /// The record's answer is kept for [`LENDS_FOR`] in this process, so a friend
 /// asleep is not dialled on every message; `refresh` asks it again before
-/// that time.
+/// that time. `record` is where it answers (`at`), the `token` it asks
+/// with, and the `fetch` that asks it, the global one by default.
 const keptLends = new Map();
 
 export async function lendsNow(record, { clock = Date.now, refresh = false } = {}) {
@@ -129,14 +130,19 @@ export async function lendsNow(record, { clock = Date.now, refresh = false } = {
     note('kept lends', base, `looked ${secondsAgo(kept.at, clock)}s ago`);
     return { ...kept.seen, at: kept.at, asked: false };
   }
-  const held = await get(`${base}/v1/groups`, record.token);
+  const ask = record.fetch ?? fetch;
+  const held = await get(`${base}/v1/groups`, record.token, ask);
   const groups = Array.isArray(held.groups) ? held.groups : [];
   const lends = [];
   const unlisted = [];
   const seen = new Set();
   for (const group of groups) {
     const id = group.id;
-    const body = await get(`${base}/v1/lends?namespace=${encodeURIComponent(id)}`, record.token);
+    const body = await get(
+      `${base}/v1/lends?namespace=${encodeURIComponent(id)}`,
+      record.token,
+      ask,
+    );
     for (const lend of body.lent || []) {
       const key = `${lend.person}\u0000${lend.key}\u0000${lend.name}\u0000${lend.origin}`;
       if (seen.has(key)) continue;
@@ -210,7 +216,7 @@ function handles(lends) {
 /// neither, with the reasons kept. Its origin on this computer answers a
 /// program only with this computer's `token`, which svrngs takes off before
 /// the lend's service is asked (give-session).
-async function probe(origin, token) {
+async function probe(origin, token, ask) {
   const base = origin.replace(/\/+$/, '');
   const why = [];
   let couldNotJudge = false;
@@ -219,7 +225,7 @@ async function probe(origin, token) {
     e?.name === 'AbortError' ||
     /abort|timeout/i.test(e?.message || '');
   try {
-    const res = await fetch(`${base}/v1/models`, {
+    const res = await ask(`${base}/v1/models`, {
       redirect: 'error',
       headers: { accept: 'application/json', ...(token && { authorization: `Bearer ${token}` }) },
       signal: AbortSignal.timeout(DISCOVERY_TIMEOUT),
@@ -243,7 +249,7 @@ async function probe(origin, token) {
     couldNotJudge = couldNotJudge || timedOut(e);
   }
   try {
-    const tools = await toolsAt(base, DISCOVERY_TIMEOUT, token);
+    const tools = await toolsAt(base, DISCOVERY_TIMEOUT, token, ask);
     return { protocol: 'tool', tools };
   } catch (e) {
     why.push(`MCP did not answer (${e.message})`);
@@ -257,14 +263,14 @@ async function probe(origin, token) {
 /// and in each refusal.
 const discovered = new Map();
 
-export async function discover(origin, clock = Date.now, token = undefined) {
+export async function discover(origin, clock = Date.now, token = undefined, ask = fetch) {
   const now = clock();
   const kept = discovered.get(origin);
   if (kept && now - kept.at < FOUND_FOR) {
     note('kept', origin, `looked ${secondsAgo(kept.at, clock)}s ago`, kept.seen.protocol);
     return { ...kept.seen, at: kept.at };
   }
-  const seen = await probe(origin, token);
+  const seen = await probe(origin, token, ask);
   discovered.set(origin, { at: now, seen });
   note(
     'probed',
@@ -290,12 +296,17 @@ function modelId(lend, model, taken) {
 }
 
 /// What your groups lend now, each lend asked by its protocol.
-export async function list({ record = recordAt(), token = tokenAt(), clock = Date.now } = {}) {
-  const { lends, unlisted, at } = await lendsNow({ at: record, token }, { clock });
+export async function list({
+  record = recordAt(),
+  token = tokenAt(),
+  clock = Date.now,
+  fetch: ask = fetch,
+} = {}) {
+  const { lends, unlisted, at } = await lendsNow({ at: record, token, fetch: ask }, { clock });
   const found = [];
   const used = new Set();
   for (const lend of lends) {
-    const seen = await discover(lend.origin, clock, token);
+    const seen = await discover(lend.origin, clock, token, ask);
     if (seen.protocol === 'model') {
       seen.models = seen.models.map((m) => {
         const id = modelId(lend, m.id, used);
@@ -360,7 +371,7 @@ async function modelsNow(record, clock, prefix) {
   const unjudged = new Map();
   for (const lend of lends) {
     if (prefix !== undefined && lend.handle !== prefix) continue;
-    const seen = await discover(lend.origin, clock, record.token);
+    const seen = await discover(lend.origin, clock, record.token, record.fetch);
     if (seen.protocol !== 'model') {
       if (seen.protocol === 'neither') {
         if (!unjudged.has(lend.handle)) unjudged.set(lend.handle, []);
@@ -441,25 +452,12 @@ function rewriteModel(raw, contentType, model) {
   return { body: Buffer.from(JSON.stringify({ ...asked, model })), model: asked.model };
 }
 
-/// One OpenAI-compatible address on 127.0.0.1, routed by `model`. Without
-/// `--port` it takes the address it took last time, from the data dir's
-/// `pantry-port`, so the address a person pasted into their interface stays;
-/// another program holding it is said by name, never moved past in silence.
-export async function serve({
-  record: at = recordAt(),
-  token = tokenAt(),
-  port,
-  host = '127.0.0.1',
-  state,
-  access = accessAt(state),
-  clock = Date.now,
-} = {}) {
-  if (!access || !['127.0.0.1', '::1'].includes(host))
-    throw new Error('the pantry needs a caller key and a loopback listener');
-  const record = { at, token };
-  const dir = dataDir(state);
-  const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
-  const server = http.createServer(async (req, res) => {
+/// The pantry's answer to one request on its address: `record` is where
+/// this computer's record answers, its token and the fetch that asks it;
+/// `access` the key a caller shows; `request` how a lend is asked, node's
+/// `http.request` when it listens.
+export function handler({ record, access, clock = Date.now, request = http.request }) {
+  return async (req, res) => {
     try {
       if (!authorized(req.headers, access)) {
         note('refused caller');
@@ -536,7 +534,7 @@ export async function serve({
       if (record.token) headers.authorization = `Bearer ${record.token}`;
       headers['content-length'] = String(written.body.length);
       note('routed', asked.model, '→', lend.handle, lend.name, lend.origin);
-      const target = http.request(
+      const target = request(
         {
           hostname: upstream.hostname,
           port: upstream.port,
@@ -571,7 +569,31 @@ export async function serve({
       else res.destroy(e);
       return undefined;
     }
-  });
+  };
+}
+
+/// One OpenAI-compatible address on 127.0.0.1, routed by `model`. Without
+/// `--port` it takes the address it took last time, from the data dir's
+/// `pantry-port`, so the address a person pasted into their interface stays;
+/// another program holding it is said by name, never moved past in silence.
+export async function serve({
+  record: at = recordAt(),
+  token = tokenAt(),
+  port,
+  host = '127.0.0.1',
+  state,
+  access = accessAt(state),
+  clock = Date.now,
+  fetch: ask = fetch,
+  request = http.request,
+} = {}) {
+  if (!access || !['127.0.0.1', '::1'].includes(host))
+    throw new Error('the pantry needs a caller key and a loopback listener');
+  const dir = dataDir(state);
+  const wanted = port === undefined ? (keptPort(dir) ?? 0) : port;
+  const server = http.createServer(
+    handler({ record: { at, token, fetch: ask }, access, clock, request }),
+  );
   await new Promise((resolve, reject) => {
     server.once('error', (e) => {
       if (e.code === 'EADDRINUSE') {
