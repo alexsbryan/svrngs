@@ -228,12 +228,17 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   by relative path (crates/svrngs-core/Cargo.toml, `../../../eudoxia`),
   and between the two runs are both svrngs's abf5b0de ("R1 through
   Eudoxia's rules", another session's) and Eudoxia's own drift from
-  506388e to 83d482a. The 8153e41d run is the paired one: 83d482a
-  ("community: R1 through rules, pass.rs", 16:42) is abf5b0de's own
-  Eudoxia (16:43), and 8153e41d changes only crates/svrngs/tests/install.rs
-  (`git show --stat 8153e41d`). So the six are a regression of the R1 pair
-  abf5b0de + 83d482a, owned by svrngs-46, which diagnoses it by reading the
-  code, without rerunning. Not fixed here.
+  506388e to 83d482a. **Probable cause, neither: this run's own prober.**
+  `fl/pub-mac.sh`'s `probe()` (the C2 reproduction, started 17:51:13)
+  outlived its `kill $pid` and connected to every port in 49152-65535,
+  the Mac's ephemeral range where every browser test's stub listens, until
+  it was found as an orphan (pid 5974, parent 1, ~330% CPU) and killed at
+  19:46. A connection that sends nothing is the empty head the six count.
+  Every failing run began after 17:51 (this gate 18:17-18:49, both six-at
+  runs ~18:53); the R1 session's browser step before 17:51 passed; the
+  Fedora rounds had no prober; abf5b0de's diff adds no connections. Not
+  confirmed until one browser run without the prober (svrngs-46's R3/R4
+  landing gate). The films 401 and meet.rs:240 below ran beside it too.
 - **scenes**: holyarrs::phone::webkit at H8, this run's own pattern bug,
   fixed in 3bfbb4ef; films, Bo's `/svrngs-open` answered 401 at once
   ("open_ms": 9) and his browser never let in, which the films run alone
@@ -270,7 +275,7 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   `[patch.crates-io]` with a saturating decrement, is the fix; neither
   is made here.
 - **The give machine test (C6)**: instrumented; ETXTBSY unconfirmed.
-- **The six browser failures** (above): a regression of the R1 pair abf5b0de + Eudoxia 83d482a, owned by svrngs-46.
+- **The six browser failures** (above): probably this run's orphaned prober (killed 19:46), not abf5b0de; confirmed by the next browser run without it.
 - **films' 401 and meet.rs:240**, each seen once in the full gate.
 - **Rates.** No before/after rate: the box went down in round 2 (§2).
   Measured on the Mac instead, once each: the changed tests unplanted,
