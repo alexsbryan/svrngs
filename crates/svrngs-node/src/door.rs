@@ -1624,7 +1624,7 @@ pub(crate) async fn lend_for(
         Verdict::TooFast(wait) => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, app = ?reading.map(Label::as_str), ?wait,
                 "door: refused — an app reading this lend as this person faster than its rate");
-            return Err(read_too_fast(door, &lend, wait));
+            return Err(read_too_fast(lender_of(door), &lend, wait));
         }
         Verdict::Home => {
             tracing::info!(target: "door", person = person.as_str(), lend = %lend.name, addr = ?observed.as_ref().and_then(|o| o.addr),
@@ -1687,9 +1687,9 @@ struct Told {
 
 /// An app past [`READS_A_MINUTE`] of `lend` told so, `wait` before it may
 /// read again, in `Retry-After` too, since agents and fetch wrappers read it.
-fn read_too_fast(door: &Door, lend: &Lend, wait: Duration) -> Response {
+fn read_too_fast(lender: Option<Person>, lend: &Lend, wait: Duration) -> Response {
     let secs = wait.as_secs() + u64::from(wait.subsec_nanos() > 0);
-    let by = lender_of(door).map_or("the lender’s computer".into(), |p| {
+    let by = lender.map_or("the lender’s computer".into(), |p| {
         format!("{p}’s computer")
     });
     let words = format!("This app is reading {} faster than an app may, about {READS_A_MINUTE} times a minute, because {by} serves it. It can read again in {secs} {}. Read once and keep the answer, rather than on a timer.", lend.name, if secs == 1 { "second" } else { "seconds" });

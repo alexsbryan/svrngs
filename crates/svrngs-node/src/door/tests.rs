@@ -889,3 +889,57 @@ fn one_person_s_two_devices_resolve_to_one_person_key() {
         );
     }
 }
+
+/// An app reading a lend past its rate is refused before its person is
+/// counted or its service asked, and told so in words, by whose computer,
+/// with a `Retry-After` (browser::acts::a_phone_s_page_reading_past_the_
+/// rate_is_refused_with_the_words, its door half: a phone's page read cy's
+/// shelf 2,000 times). Ana's app reads shelf: its first READS_A_MINUTE
+/// asks are let in, the next is `TooFast`, holding no use, while a read
+/// with no app, the person's own, is never held to the rate; the
+/// refusal is 429 `limit`, its wait in whole seconds.
+#[tokio::test]
+async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again() {
+    let shelf = port_lend("shelf", &["house"]);
+    let app = Label::of(&[1; 32], "page");
+    let using = Using::spawn();
+    for read in 0..READS_A_MINUTE {
+        let (verdict, held) = using
+            .ask(&shelf, &actor(7), Whereabouts::Away, Some(&app))
+            .await
+            .unwrap();
+        assert!(
+            matches!(verdict, Verdict::In { .. }),
+            "read {read}: {verdict:?}"
+        );
+        drop(held);
+    }
+    let (verdict, held) = using
+        .ask(&shelf, &actor(7), Whereabouts::Away, Some(&app))
+        .await
+        .unwrap();
+    let Verdict::TooFast(wait) = verdict else {
+        panic!("past {READS_A_MINUTE} at once: {verdict:?}")
+    };
+    assert!(held.is_none() && wait > Duration::ZERO, "{wait:?}");
+    let own = using.ask(&shelf, &actor(7), Whereabouts::Away, None).await;
+    assert!(
+        matches!(own, Some((Verdict::In { .. }, Some(_)))),
+        "a person's own read is not an app's"
+    );
+
+    let cy = Person::parse("cy").ok();
+    let answer = read_too_fast(cy, &shelf, Duration::from_millis(100));
+    assert_eq!((said(&answer).0, said(&answer).1), (429, Some("limit")));
+    assert_eq!(answer.headers()[header::RETRY_AFTER], "1");
+    assert_eq!(
+        said(&answer).2,
+        Some("This app is reading shelf faster than an app may, about 600 times a minute, because cy’s computer serves it. It can read again in 1 second. Read once and keep the answer, rather than on a timer.")
+    );
+    let answer = read_too_fast(None, &shelf, Duration::from_millis(2_500));
+    assert_eq!(answer.headers()[header::RETRY_AFTER], "3");
+    assert!(said(&answer)
+        .2
+        .is_some_and(|w| w
+            .contains("because the lender’s computer serves it. It can read again in 3 seconds.")));
+}
