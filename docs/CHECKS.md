@@ -137,7 +137,7 @@ record_api 13, join_by_link 12, and 152 in 34 smaller targets.
 | Seam | Contained place | What moves out of everything else |
 |---|---|---|
 | B | the browser step, one test per engine and page: the home page (Chromium), the group's page and joining by link (WebKit, `join_page`), a carried app's signer frame and cookie in both | a page's words and decisions to Node laws over the composed page (`web/tests/pages/enter.test.mjs` composes the group's page; the home page's twin is missing); node answers to handlers |
-| W | none needed: an error is judged by the document it came from (unit 8) | holyarrs H8's messages |
+| W | none needed: a scene says whose pages each step leaves, and an error from one is not judged, whatever its words (`web/tests/leaving.mjs`, its law `leaving.test.mjs`) | holyarrs H8's list of messages, gone |
 | M | the `playback` step, as it is | nothing left |
 | Q | `door::a_range_is_served_206_and_416_through_the_door_sha_exact` (bytes cross the door), `accept::a_handler_reads_the_dialers_verified_key_and_no_header_names_another`, `folders::a_change_by_any_member_reaches_another_s_directory` | header rules, refusals and decisions to door.rs's pure functions and to `door::router` in-process; syncing claims to an in-memory transport |
 | R | `default_relay::a_group_s_own_relay_meets_every_member_and_n0_never`, `relay_fallback::a_fresh_contribution_syncs_after_the_public_reach_is_cut` | n0 out of the gate entirely; tier choices to a pure step (tiers.rs) |
@@ -186,5 +186,5 @@ map changed with it.
 | 5 | pages and the browser step's home-page tests | ~60 | Node laws over the composed home page | harness 5 |
 | 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |
 | 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address | ~95 | `src/*_tests.rs` over the parts that print and decide | harness 8, small splits per row |
-| 8 | scenes and holyarrs | 20 | handlers and fixtures; one scene per daemon stays | W's rule: judge an error by its document |
+| 8 | scenes and holyarrs; H8's list of WebKit's messages replaced by whose page each step leaves (`web/tests/leaving.mjs`) | 20 | handlers and fixtures; one scene per daemon stays | none for W; the rest as the map says |
 | 9 | give's keeper, check and machine | 20 | fakes of Podman and the clock | none |

@@ -5,14 +5,19 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { setTimeout as pause } from 'node:timers/promises';
 import { arrived, launch } from '../../../web/tests/page.mjs';
+import { leaving } from '../../../web/tests/leaving.mjs';
 import { record, streamed } from '../../jellyfin/check/person.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const services = JSON.parse(readFileSync(args.state));
 mkdirSync(args.out, { recursive: true });
 const seen = { steps: [], errors: [] };
-const step = (at) => {
+// Whose pages each step leaves, by navigating away or cutting them off on
+// purpose: their errors in that step are not judged (leaving.mjs, H8).
+const leaves = new Map();
+const step = (at, ...left) => {
   seen.at = at;
+  if (left.length) leaves.set(at, left);
   writeFileSync(`${args.out}/progress.json`, JSON.stringify(seen, null, 2));
 };
 const bo = await launch(args.engine);
@@ -321,7 +326,7 @@ try {
     await stranger.close();
   }
   if (args.phone_link) {
-    step('Leaving Jellyfin for HolyArrs');
+    step('Leaving Jellyfin for HolyArrs', 'bo');
     await phoneOpen(page, 'holyarrs', /Bo/);
   }
   step('Holding HolyArrs’s live stream before removal');
@@ -346,7 +351,7 @@ try {
       }
     })();
   });
-  step('Removing Bo with a live stream open');
+  step('Removing Bo with a live stream open', 'bo');
   if (args.plant === 'holyarrs:early-stream')
     await page.evaluate(() => window.__held.reader.cancel());
   assert.equal(
@@ -361,7 +366,7 @@ try {
     timeout: 30_000,
     env: { HOME: args.ana_dir, USER: 'ana', PATH: process.env.PATH, NO_COLOR: '1' },
   });
-  step('Observing the removed member');
+  step('Observing the removed member', 'bo');
   await page.waitForFunction(() => window.__held.cut !== null, null, { timeout: 5000 });
   const cut = await page.evaluate(() => window.__held.cut);
   assert.ok(
@@ -385,36 +390,14 @@ try {
     );
   seen.fixture = await (await fetch(`${services.fixture}/evidence`)).json();
   assert.deepEqual(seen.fixture.unexpected, [], 'H8: every fixture request has an explicit answer');
-  // WebKit reports cancelling Jellyfin's in-flight fetch on navigation and
-  // the deliberately cut SSE body as page errors (recorded with their phase).
-  // Only those observed messages, at those actions, are expected. Since H5
-  // no longer waits for the film to play, Jellyfin's report of the play,
-  // `/Sessions/Playing`, can still be in flight as Bo leaves, and WebKit
-  // says its cancelling so (the Mac, 2026-11-12, demo/runs/flakes/2026-11-12).
-  // The player's own code can be in flight too: webpack's loader rejects with
-  // a ChunkLoadError when the navigation cancels its <script> for a /web/
-  // chunk (twice at load ~4, svrngs-46's scenes-rerun.log, 2026-11-12). So
-  // leaving cancels each way a page loads: fetch (two wordings) and script.
-  const cancellation = (e) =>
-    args.phone_link &&
-    e.who === 'bo' &&
-    ((e.at === 'Leaving Jellyfin for HolyArrs' &&
-      (e.message === 'Unhandled Promise Rejection: TypeError: Load failed' ||
-        /^Fetch API cannot load .+\/Sessions\/Playing(\/\w+)? due to access control checks\.$/.test(
-          e.message,
-        ) ||
-        /^Unhandled Promise Rejection: ChunkLoadError: Loading chunk \d+ failed\.\n\(error: https:\/\/[^/]+\/web\/[\w.-]+\.chunk\.js\)$/.test(
-          e.message,
-        ))) ||
-      (['Removing Bo with a live stream open', 'Observing the removed member'].includes(e.at) &&
-        e.message ===
-          'FetchEvent.respondWith received an error: Error: error reading a body from connection'));
-  seen.cancellations = seen.errors.filter(cancellation);
-  assert.deepEqual(
-    seen.errors.filter((e) => !cancellation(e)),
-    [],
-    'H8: no unexpected browser script errors',
-  );
+  // A page a step leaves reports what the leaving cancels or cuts as page
+  // errors, in its engine's own words (WebKit: Jellyfin's `/Sessions/Playing`
+  // and a /web/ chunk as Bo leaves it, the lend's worker reading the cut
+  // live body as Bo is removed; demo/runs/flakes/2026-11-12): those are
+  // kept apart, never judged by their words; every other error is judged.
+  const { left, judged } = leaving(seen.errors, leaves);
+  seen.cancellations = left;
+  assert.deepEqual(judged, [], 'H8: no unexpected browser script errors');
 } catch (e) {
   seen.observed = await api(own, 'GET', '/downloads').catch((e) => String(e));
   seen.asks = await api(own, 'GET', '/asks').catch((e) => String(e));
