@@ -8,13 +8,17 @@
 // said "Nothing posted yet." and dWeb's answers shown as if all were here.
 // Beside it, against the same stand-in, two people called bo (keys-names).
 
+// The server's handler is asked in this process and svrngs's API is a
+// function: no listener, no process.
+
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
-import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Readable } from 'node:stream';
 import { test } from 'node:test';
+
+import { events } from './server.mjs';
 
 const E = '0123456789abcdef';
 const dinner = { kind: 'event', event: E, what: 'dinner', when: 'Friday 7', where: 'the house' };
@@ -29,49 +33,59 @@ const PARTLY = /may not have reached this computer yet/;
 /** The token the stand-in asks for, as svrngs asks for its `token` file's. */
 const TOKEN = 'the-token';
 
-/** svrngs's record API as the store reads it (store.mjs `record`): an ask
- * without the token refused, as svrngs refuses it (give-token). */
+/** svrngs's record API as the store reads it (store.mjs `record`), a
+ * function: an ask without the token refused, as svrngs refuses it
+ * (give-token). */
 function svrngs(GROUPS = PARTIAL) {
-  const server = http.createServer((req, res) => {
-    if (req.headers.authorization !== `Bearer ${TOKEN}`)
-      return res.writeHead(401).end('{"kind":"no_token"}');
-    const url = new URL(req.url, 'http://x');
-    const g = GROUPS[url.searchParams.get('namespace')];
+  return async (url, init = {}) => {
+    if (init.headers?.authorization !== `Bearer ${TOKEN}`)
+      return new Response('{"kind":"no_token"}', { status: 401 });
+    const at = new URL(url);
+    const g = GROUPS[at.searchParams.get('namespace')];
     const answer =
-      url.pathname === '/v1/groups'
+      at.pathname === '/v1/groups'
         ? { groups: Object.entries(GROUPS).map(([id, x]) => ({ id, name: x.name })) }
-        : url.pathname === '/v1/rail/people' && g
+        : at.pathname === '/v1/rail/people' && g
           ? {
               people: g.people.map((p) =>
                 typeof p === 'string' ? { person: p, person_key: `k-${p}` } : p,
               ),
             }
-          : url.pathname === '/v1/rail/log' && g
+          : at.pathname === '/v1/rail/log' && g
             ? { ops: g.ops, complete: g.complete }
             : null;
-    res.writeHead(answer ? 200 : 404, { 'content-type': 'application/json' });
-    res.end(JSON.stringify(answer ?? { error: 'no such thing here' }));
-  });
-  return new Promise((done) => server.listen(0, '127.0.0.1', () => done(server)));
+    return Response.json(answer ?? { error: 'no such thing here' }, { status: answer ? 200 : 404 });
+  };
 }
 
-async function events(api) {
+/** The events server on that API, its handler asked as a browser at the door would. */
+function served(api) {
   const dir = mkdtempSync(join(tmpdir(), 'events-partial-'));
   writeFileSync(join(dir, 'token'), TOKEN);
-  writeFileSync(
-    join(dir, 'config.json'),
-    JSON.stringify({ record: api, token: join(dir, 'token') }),
+  const app = events(
+    { record: 'http://127.0.0.1:4200', token: join(dir, 'token') },
+    { fetch: api },
   );
-  const child = spawn(
-    process.execPath,
-    [new URL('./server.mjs', import.meta.url).pathname, join(dir, 'config.json')],
-    { stdio: ['ignore', 'pipe', 'inherit'] },
-  );
-  const line = await new Promise((done, fail) => {
-    child.stdout.once('data', (b) => done(String(b)));
-    child.once('exit', (code) => fail(new Error(`the server exited ${code} before it listened`)));
-  });
-  return { at: `http://127.0.0.1:${JSON.parse(line).port}`, stop: () => child.kill() };
+  return (path, { method = 'GET', headers = {}, body } = {}) => {
+    const req = Readable.from(body === undefined ? [] : [Buffer.from(body)]);
+    req.method = method;
+    req.url = path;
+    req.headers = Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]));
+    return new Promise((done, fail) => {
+      const res = {
+        writeHead(status, head = {}) {
+          this.status = status;
+          this.head = new Headers(head);
+          return this;
+        },
+        end(text = '') {
+          done({ status: this.status, headers: this.head, text: async () => String(text) });
+          return this;
+        },
+      };
+      Promise.resolve(app.handle(req, res)).catch(fail);
+    });
+  };
 }
 
 /** Each `<section>` of `html` by its heading, its text. */
@@ -85,31 +99,24 @@ function sections(html) {
 }
 
 test("a group not fully received is said so on the home list and in the host's view, never as nothing posted", async () => {
-  const api = await svrngs();
-  const app = await events(`http://127.0.0.1:${api.address().port}`);
-  try {
-    const as = async (path) =>
-      (await fetch(`${app.at}${path}`, { headers: { 'x-svrngs-key': 'k-sam' } })).text();
+  const app = served(svrngs());
+  const as = async (path) => (await app(path, { headers: { 'x-svrngs-key': 'k-sam' } })).text();
 
-    const home = sections(await as('/'));
-    assert.doesNotMatch(
-      home['The Club'],
-      /Nothing posted yet/,
-      "The Club's posts may not have reached here",
-    );
-    assert.match(home['The Club'], PARTLY);
-    assert.match(home.dWeb, /dinner/);
-    assert.match(home.dWeb, PARTLY);
-    assert.match(home['The House'], /dinner/);
-    assert.doesNotMatch(home['The House'], PARTLY, 'The House holds all it knows of');
+  const home = sections(await as('/'));
+  assert.doesNotMatch(
+    home['The Club'],
+    /Nothing posted yet/,
+    "The Club's posts may not have reached here",
+  );
+  assert.match(home['The Club'], PARTLY);
+  assert.match(home.dWeb, /dinner/);
+  assert.match(home.dWeb, PARTLY);
+  assert.match(home['The House'], /dinner/);
+  assert.doesNotMatch(home['The House'], PARTLY, 'The House holds all it knows of');
 
-    const hosts = sections(await as(`/g/house/e/${E}`));
-    assert.match(hosts.dWeb, PARTLY, "dWeb's answers may not all be here");
-    assert.doesNotMatch(hosts['The House'], PARTLY);
-  } finally {
-    app.stop();
-    api.close();
-  }
+  const hosts = sections(await as(`/g/house/e/${E}`));
+  assert.match(hosts.dWeb, PARTLY, "dWeb's answers may not all be here");
+  assert.doesNotMatch(hosts['The House'], PARTLY);
 });
 
 // Two people called bo (keys-names): the second is invited and answers as
@@ -134,40 +141,30 @@ test('two people called bo are two: each answers as themselves, told apart by wh
       payload: { kind: 'coming', event: E, guests: ['Maya'] },
     },
   ];
-  const api = await svrngs({ house: { name: 'The House', people, ops, complete: true } });
-  const app = await events(`http://127.0.0.1:${api.address().port}`);
-  try {
-    const as = (key, path, init = {}) =>
-      fetch(`${app.at}${path}`, {
-        ...init,
-        redirect: 'manual',
-        headers: { 'x-svrngs-key': key, ...init.headers },
-      });
-    const second = await (await as('k-bo2', `/g/house/e/${E}`)).text();
-    assert.match(
-      second,
-      /<li>bo \(joined 1 Oct\) \+ Maya<\/li>/,
-      "the first bo's answer, said as theirs",
-    );
-    assert.match(
-      second,
-      /<ul class="invited"><li>bo \(joined 1 Oct\)<\/li><li>bo \(joined 3 Oct\)<\/li><\/ul>/,
-    );
-    assert.match(second, /<button>I'm coming<\/button>/, 'the second bo has not answered');
-    assert.doesNotMatch(second, /value="Maya"/, "nor are the first bo's guests theirs");
-    assert.match(await (await as('k-bo1', `/g/house/e/${E}`)).text(), /value="Maya"/);
-    const coming = await as('k-bo2', `/g/house/e/${E}/coming`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/x-www-form-urlencoded' },
-      body: 'guests=',
-    });
-    assert.deepEqual(
-      JSON.parse(coming.headers.get('x-svrngs-append')),
-      [{ group: 'house', op: { kind: 'coming', event: E } }],
-      'a record of their own',
-    );
-  } finally {
-    app.stop();
-    api.close();
-  }
+  const app = served(svrngs({ house: { name: 'The House', people, ops, complete: true } }));
+  const as = (key, path, init = {}) =>
+    app(path, { ...init, headers: { 'x-svrngs-key': key, ...init.headers } });
+  const second = await (await as('k-bo2', `/g/house/e/${E}`)).text();
+  assert.match(
+    second,
+    /<li>bo \(joined 1 Oct\) \+ Maya<\/li>/,
+    "the first bo's answer, said as theirs",
+  );
+  assert.match(
+    second,
+    /<ul class="invited"><li>bo \(joined 1 Oct\)<\/li><li>bo \(joined 3 Oct\)<\/li><\/ul>/,
+  );
+  assert.match(second, /<button>I'm coming<\/button>/, 'the second bo has not answered');
+  assert.doesNotMatch(second, /value="Maya"/, "nor are the first bo's guests theirs");
+  assert.match(await (await as('k-bo1', `/g/house/e/${E}`)).text(), /value="Maya"/);
+  const coming = await as('k-bo2', `/g/house/e/${E}/coming`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    body: 'guests=',
+  });
+  assert.deepEqual(
+    JSON.parse(coming.headers.get('x-svrngs-append')),
+    [{ group: 'house', op: { kind: 'coming', event: E } }],
+    'a record of their own',
+  );
 });

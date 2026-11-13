@@ -698,7 +698,7 @@ apps/doc/doc.test.mjs (4)	PCX	fragile	state	spawned doc server (doc.test.mjs:96)
 apps/events/events.test.mjs (18)	-	deterministic	decision	events fold/answers	stays	none
 apps/events/laws.test.mjs (2)	-	deterministic	decision	events laws	stays	none
 apps/events/page.test.mjs (2 calls x2 engines)	BPX	fragile	state	spawned events server; each group's people see only their answers; whose answer is said (page.test.mjs:62,212)	whose-answer wording to node-pure (events.test.mjs); keep one browser smoke	none
-apps/events/partial.test.mjs (2)	PX	fragile	decision	server over a stub record API: partial group said so; two 'bo' told apart (partial.test.mjs:87,120)	handler: the server's request handler with a stub record function instead of a socket	server only reachable by spawn+listen
+apps/events/partial.test.mjs (2)	-	deterministic	decision	server over a stub record API: partial group said so; two 'bo' told apart (partial.test.mjs:87,120)	partial.test.mjs itself, now in process: server.mjs `events(config, {fetch})`'s handler asked with a stub record function, no listener or spawn	
 apps/expenses/expenses.test.mjs (27)	-	deterministic	decision	expenses fold	stays	none
 apps/expenses/laws.test.mjs (2)	-	deterministic	decision	expenses laws	stays	none
 apps/give/fold.test.mjs (4)	-	deterministic	decision	JS fold against cases.json (same 51 as cases::every_case_folds_as_written)	stays	none
@@ -707,8 +707,8 @@ apps/grapevine/canary.test.mjs (2)	X	deterministic	state	spawnSync canary.mjs: s
 apps/grapevine/grapevine.test.mjs (21)	-	deterministic	decision	grapevine fold	stays	none
 apps/grapevine/laws.test.mjs (2)	-	deterministic	decision	grapevine laws	stays	none
 apps/grapevine/page.test.mjs (1 call x2 engines)	BPCX	fragile	state	§10 scene by ?as= with 300 ms sleeps between steps (page.test.mjs:62,82)	stays as browser smoke; step decisions covered (grapevine.test.mjs)	none
-apps/grapevine/relay.test.mjs (3)	P	fragile	decision	loop laws and plants; one test against a stub API listener (relay.test.mjs:165)	handler: pass the stub as a function, not a listener	none
-apps/grapevine/who.test.mjs (2 calls in a law loop)	PX	fragile	decision	spawned server reads 'me' per group from a stub svrngs API; each law and its plant (who.test.mjs:280,283)	handler: server's who() with a stub fetch	server only reachable by spawn+listen
+apps/grapevine/relay.test.mjs (3)	-	deterministic	decision	loop laws and plants; one test against a stub API listener (relay.test.mjs:165)	relay.test.mjs itself: heldBy's svrngs a function (relay.mjs `heldBy(..., ask)`), no listener	
+apps/grapevine/who.test.mjs (2 calls in a law loop)	-	deterministic	decision	spawned server reads 'me' per group from a stub svrngs API; each law and its plant (who.test.mjs:280,283)	who.test.mjs itself, now in process: each law's server (and planted copy) imported, `grapevine(config, {fetch, address})`'s handler asked with svrngs a function, no listener or spawn	
 apps/movie-night/match.test.mjs (4)	-	deterministic	decision	match laws	stays	none
 apps/movie-night/startup.test.mjs (1)	BP	fragile	state	form inert until the module binds it, chromium (startup.test.mjs:9)	stays (module-binding timing in a browser is the claim)	none
 apps/on-air/laws.test.mjs (5)	-	deterministic	decision	on-air laws	stays	none

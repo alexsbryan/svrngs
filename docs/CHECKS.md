@@ -198,7 +198,10 @@ The Node side, from 2026-11-13: the resolver's Redis suite keeps eleven,
 each its seam's claim, since the Lua that Redis runs decides
 (resolver/store.mjs `SCRIPT`) and a JS store that answered would be a
 second decider; its whole-response bound moved to the unit tier on
-node:test's mocked `setTimeout` (`resolver-contracts.test.mjs`).
+node:test's mocked `setTimeout` (`resolver-contracts.test.mjs`). The apps'
+servers' handlers are functions of their config, asked in the test's
+process with svrngs's API a function: events' partial groups and
+grapevine's asker and `heldBy`, no listener and no spawned server.
 
 ### The contained test of each seam
 

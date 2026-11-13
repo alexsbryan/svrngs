@@ -8,7 +8,6 @@
 
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -163,30 +162,6 @@ test("each of the loop's laws catches the change planted to break it", async () 
 });
 
 test("a group whose people can't be read keeps svrngs's answer, and says so", async () => {
-  const api = http.createServer((req, res) =>
-    res.end(JSON.stringify({ groups: [{ id: 'page', name: '1400 Page', person: 'Jo' }] })),
-  );
-  await new Promise((done) => api.listen(0, '127.0.0.1', done));
-  const traced = [];
-  const store = { people: () => Promise.reject(new Error('the record is away')) };
-  try {
-    const held = await relay.heldBy(
-      `http://127.0.0.1:${api.address().port}`,
-      'the-token',
-      store,
-      (what, fields) => traced.push({ what, ...fields }),
-    )();
-    assert.deepEqual(held, [{ id: 'page', name: '1400 Page', me: 'Jo' }]);
-    assert.ok(
-      traced.some((t) => t.group === 'page' && t.error === 'the record is away'),
-      JSON.stringify(traced),
-    );
-  } finally {
-    api.close();
-  }
-});
-
-test("a group whose people can't be read keeps svrngs's answer, and says so (svrngs a function)", async () => {
   const asked = [];
   const svrngs = async (url, init) => {
     asked.push([url, init.headers.authorization]);
