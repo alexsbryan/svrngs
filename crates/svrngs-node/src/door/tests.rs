@@ -903,25 +903,31 @@ async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again()
     let shelf = port_lend("shelf", &["house"]);
     let app = Label::of(&[1; 32], "page");
     let using = Using::spawn();
-    for read in 0..READS_A_MINUTE {
+    // The rate refills on the real clock (door.rs `now`), so what it lets
+    // in is judged by how long the asks took, as Reads' own test does.
+    let began = std::time::Instant::now();
+    let (mut taken, mut refused) = (0u64, None);
+    while refused.is_none() && taken < 2 * u64::from(READS_A_MINUTE) {
         let (verdict, held) = using
             .ask(&shelf, &actor(7), Whereabouts::Away, Some(&app))
             .await
             .unwrap();
-        assert!(
-            matches!(verdict, Verdict::In { .. }),
-            "read {read}: {verdict:?}"
-        );
-        drop(held);
+        match verdict {
+            Verdict::In { .. } => taken += 1,
+            Verdict::TooFast(wait) => refused = Some((wait, held.is_none())),
+            other => panic!("read {taken}: {other:?}"),
+        }
     }
-    let (verdict, held) = using
-        .ask(&shelf, &actor(7), Whereabouts::Away, Some(&app))
-        .await
-        .unwrap();
-    let Verdict::TooFast(wait) = verdict else {
-        panic!("past {READS_A_MINUTE} at once: {verdict:?}")
+    let burst = u64::from(READS_A_MINUTE);
+    let ms = u64::try_from(began.elapsed().as_millis()).unwrap();
+    assert!(
+        (burst..=burst + ms * burst / 60_000 + 1).contains(&taken),
+        "{burst} at once, then ten a second: {taken} taken in {ms} ms"
+    );
+    let Some((wait, unheld)) = refused else {
+        panic!("never refused: {taken} taken in {ms} ms")
     };
-    assert!(held.is_none() && wait > Duration::ZERO, "{wait:?}");
+    assert!(unheld && wait > Duration::ZERO, "{wait:?}");
     let own = using.ask(&shelf, &actor(7), Whereabouts::Away, None).await;
     assert!(
         matches!(own, Some((Verdict::In { .. }, Some(_)))),
