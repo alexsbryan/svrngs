@@ -355,14 +355,14 @@ fn the_live_buffer_evicts_the_oldest_and_reports_it() {
     assert!(mine.is_empty());
 }
 
-/// The record API over `rail`, as the node serves it, its transport an
-/// endpoint of this process alone.
-async fn api_of(rail: &Arc<RingRail>) -> RailApi {
-    let endpoint = crate::iroh::tests::hermetic_endpoint(7, Vec::new()).await;
+/// The record API over `rail`, as the node serves it, its members asked
+/// in this process and none served, so a fan-out reaches nobody
+/// (docs/CHECKS.md, harness 4): no endpoint is bound.
+fn api_of(rail: &Arc<RingRail>) -> RailApi {
     RailApi {
         rail: rail.clone(),
         live: Arc::new(LiveBuffer::default()),
-        transport: Arc::new(crate::iroh::IrohTransport::new(endpoint)),
+        transport: Arc::new(crate::iroh::tests::InProcess::asked_by(rail.signer())),
         build: Vec::new(),
     }
 }
@@ -377,7 +377,7 @@ async fn answer<
     namespace: &str,
     door: impl FnOnce(State<RailApi>, Query<RailQuery>) -> F,
 ) -> axum::response::Response {
-    let answered = door(State(api_of(rail).await), named(namespace)).await;
+    let answered = door(State(api_of(rail)), named(namespace)).await;
     answered.map_or_else(
         |refused| refused,
         axum::response::IntoResponse::into_response,
@@ -401,19 +401,14 @@ async fn pushed(api: &RailApi, namespace: &str, body: Vec<u8>) -> axum::response
 /// what was fanned out. (svrngs: upstream's daemon carried no fabric, and
 /// reported `peers: []`; here the push is offered to each key standing in
 /// the group but this node's, and the answer names each and whether it took
-/// it. Bo stands in `ledger` with no address and no lookup to find one, so
-/// Bo is named, not delivered, with the reason; nothing is buffered here,
-/// and a group not held is refused as the append door refuses it.)
+/// it. Bo stands in `ledger` and no path reaches Bo's computer, so Bo is
+/// named, not delivered, with the reason; nothing is buffered here, and a
+/// group not held is refused as the append door refuses it. That a bare
+/// key with no lookup has no path is iroh/tests.rs's.)
 #[tokio::test]
 async fn live_push_reports_each_peer_it_offered_the_payload() {
     let (_dir, rail) = rail_with(&[("ada", 7), ("bo", 3)]);
-    let endpoint = crate::iroh::tests::hermetic_endpoint(7, Vec::new()).await;
-    let api = RailApi {
-        rail,
-        live: Arc::new(LiveBuffer::default()),
-        transport: Arc::new(crate::iroh::IrohTransport::new(endpoint.clone())),
-        build: Vec::new(),
-    };
+    let api = api_of(&rail);
     let oversize = vec![b'x'; 4097];
     let resp = pushed(&api, "ledger", oversize).await;
     assert_eq!(resp.status(), StatusCode::PAYLOAD_TOO_LARGE);
@@ -443,7 +438,6 @@ async fn live_push_reports_each_peer_it_offered_the_payload() {
     .await;
     assert_eq!(out["payloads"].as_array().unwrap().len(), 0);
     assert_eq!(out["dropped"], 0);
-    endpoint.close().await;
 }
 
 /// The live fan-out offers a payload to computers' keys and never to a
