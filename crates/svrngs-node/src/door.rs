@@ -1798,19 +1798,19 @@ impl Drop for Carriage {
 /// stands in that the lend reaches, never another (LENDING_SCOPE
 /// §"Enforcement and disclosure" 5); `None`, named at warn, when the groups
 /// held cannot be listed, and at debug when a page cannot be a header.
-fn pages(door: &Door, device: &DeviceKey, lend: &Lend) -> Option<HeaderValue> {
+fn pages(rail: &RingRail, device: &DeviceKey, lend: &Lend) -> Option<HeaderValue> {
     let stands = |group: &String| {
-        if !reached(&door.rail, lend, group) {
+        if !reached(rail, lend, group) {
             tracing::debug!(target: "door", group, lend = %lend.name, "door: a group the lend is not lent to, so its page is not told");
             return false;
         }
-        let standing = door.rail.standing(group);
+        let standing = rail.standing(group);
         tracing::debug!(target: "door", group, read = standing.is_ok(), "door: whether the device stands in a group, for its page; an unreadable register tells none");
         standing.is_ok_and(|s| s.names(device.as_str()))
     };
-    let held = door.rail.namespaces().inspect_err(|e| tracing::warn!(target: "door", error = %e, "door: the groups held cannot be listed, so no page is told"));
+    let held = rail.namespaces().inspect_err(|e| tracing::warn!(target: "door", error = %e, "door: the groups held cannot be listed, so no page is told"));
     let told: Vec<String> = (held.ok()?.into_iter().filter(stands)).map(|group| {
-        let dir = door.rail.group_dir(&group).map_err(|e| e.to_string());
+        let dir = rail.group_dir(&group).map_err(|e| e.to_string());
         let page: String = dir.and_then(|d| crate::invite::kept_page(&d)).map_or_else(|why| {
             tracing::warn!(target: "door", group, why, "door: a group's page cannot be read, so it is told unread");
             "unread".into()
@@ -1895,7 +1895,7 @@ async fn forward(
     let said =
         |l: &Label| HeaderValue::from_str(l.as_str()).expect("a label is base32, so a header");
     let app = app.map(|a| (HeaderName::from_static(APP_HEADER), said(a)));
-    let pages = pages(door, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
+    let pages = pages(&door.rail, device, lend).map(|p| (HeaderName::from_static(PAGES_HEADER), p));
     let told = [(HeaderName::from_static(LABEL_HEADER), said(&label))];
     parts
         .headers
