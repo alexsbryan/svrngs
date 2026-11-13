@@ -188,18 +188,15 @@ pub(crate) fn dialer(key: &crate::SigningKey) -> Dialer {
     Dialer(SecretKey::from_bytes(&key.to_bytes()).public())
 }
 
-/// A router answering `/who` with the key its request came from, and
-/// `/never` never, served on a hermetic endpoint that admits a dialer or
-/// refuses it as `admits` says; the endpoint, and how many connections it
-/// was asked to admit.
+/// A router answering `/who` with the key its request came from, served
+/// on a hermetic endpoint that admits a dialer or refuses it as `admits`
+/// says; the endpoint, and how many connections it was asked to admit.
 async fn served(seed: u8, admits: bool) -> (Endpoint, Arc<std::sync::atomic::AtomicUsize>) {
     use axum::routing::get;
-    let router = axum::Router::new()
-        .route(
-            "/who",
-            get(|axum::Extension(d): axum::Extension<Dialer>| async move { d.actor() }),
-        )
-        .route("/never", get(std::future::pending::<String>));
+    let router = axum::Router::new().route(
+        "/who",
+        get(|axum::Extension(d): axum::Extension<Dialer>| async move { d.actor() }),
+    );
     let endpoint = hermetic_endpoint(seed, vec![ALPN.to_vec()]).await;
     let asked = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let counted = asked.clone();
@@ -296,26 +293,6 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
         )
         .await;
     assert!(matches!(said, Err(Unsent::NoPath)), "{said:?}");
-}
-
-/// **A whole answer within ten seconds** (arch-peer (b)): a member that
-/// takes the request and never answers it is said to have no whole answer at
-/// [`ANSWERED_WITHIN`], the round's reqwest client's bound, kept.
-/// Planted: no bound, which waits as long as the member does.
-#[tokio::test]
-async fn an_answer_not_read_whole_within_ten_seconds_is_slow() {
-    let (member, _) = served(47, true).await;
-    let transport = IrohTransport::new(hermetic_endpoint(48, vec![]).await);
-    let contact = contact_for(&member, loopback_sockets(&member));
-    let said = tokio::time::timeout(
-        ANSWERED_WITHIN * 2,
-        transport.fetch(&contact, get("/never")),
-    )
-    .await;
-    assert!(
-        matches!(&said, Ok(Err(Unsent::Failed(why))) if why.starts_with("no whole answer within 10s")),
-        "{said:?}"
-    );
 }
 
 /// **A whole answer within ten seconds, on a held clock**: [`whole`] over an
