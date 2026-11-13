@@ -32,6 +32,12 @@ unset SVRNGS_STEPS SVRNGS_TESTS  # set only by --touched, below
 # night scene's playing in it, it took 225 s on the Mac that day
 # (demo/runs/flakes/2026-11-12/mac/night-playback-step.log), so 225.
 slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 ;; "conformance canary") echo 178 ;; playback) echo 225 ;; *) echo 60 ;; esac; }
+# A step whose test could judge nothing of its claim, its seam silent
+# before any of our code ran (the `n0` step: n0 itself not answering),
+# writes why to target/could-not-judge/<step>.step, a directory emptied
+# before the slow steps (below): the step is said could-not-judge with it,
+# never passed, and the gate does not fail on it, as the playback step's
+# film past the load bar.
 # Each step runs in a process group of its own (set -m), ended whole at its
 # limit and when it ends, so no server or browser it started outlives it
 # (Playwright's browsers close as their driver is told TERM); the loop's
@@ -42,11 +48,12 @@ trap 'kill -TERM -${running:-} 2>/dev/null; exit 1' INT TERM HUP
 reached() { [ -z "${SVRNGS_STEPS+x}" ] || printf '%s\n' "$SVRNGS_STEPS" | grep -qxF "$1"; }
 step() {  # step <name> <command...>
   reached "$1" || { echo "untouched  $1: nothing changed reaches it (scripts/touched.py)"; return; }
-  local name=$1 began=$SECONDS limit=$((5 * $(slowest "$1"))) status watch; shift
+  local name=$1 began=$SECONDS limit=$((5 * $(slowest "$1"))) status watch unjudged="target/could-not-judge/$1.step"; shift
   "$@" >/tmp/svrngs-check.$$ 2>&1 & running=$!
   (sleep "$limit"; kill -TERM -$running) 2>/dev/null & watch=$!
   wait $running; status=$?; { kill -TERM -$watch; kill -TERM -$running && sleep 2; kill -KILL -$running; } 2>/dev/null
-  if [ $status = 0 ]; then echo "passed     $name ($((SECONDS - began)) s)"
+  if [ $status = 0 ] && [ -s "$unjudged" ]; then echo "could-not-judge $name ($((SECONDS - began)) s): $(cat "$unjudged")"
+  elif [ $status = 0 ]; then echo "passed     $name ($((SECONDS - began)) s)"
   elif ((SECONDS - began >= limit)); then echo "failed     $name: still running at its limit of $limit s, so it and all it started were ended; its last output:"; tail -n 20 /tmp/svrngs-check.$$ | sed 's/^/           /'; failed=1
   else echo "failed     $name ($((SECONDS - began)) s)"; sed 's/^/           /' /tmp/svrngs-check.$$; failed=1; fi
 }
@@ -133,7 +140,7 @@ step "pages" cargo test --quiet --workspace --test pages
 # The demo scenes, played (capability-scenes; crates/svrngs/tests/
 # scenes): each scene end to end, every person this build's svrngs with
 # a HOME of their own, met at relays on 127.0.0.1 and never n0's (the
-# scenes' binary as `main`, people.rs `program`),
+# scenes' binary as `main`, people.rs `program`; n0 is the `n0` step's),
 # played once, each person's browser the engine
 # their device is (scenes/main.rs `scene!`); each
 # scene's verdict on its own line, in the order they ended (libtest's
@@ -190,6 +197,15 @@ if reached playback && [ -s target/seeks-webkit.log ] && ls target/playback/seek
   cut -f1,2,4,5,7,8 target/playback/seeks-*.tsv | sed 's/^/           /'
   awk -F'\t' -v cores="$(getconf _NPROCESSORS_ONLN)" '{n++; l+=$5=="failed"; s+=$8=="failed"; split($10, a, "averages?: "); hot+=a[2]+0>cores} END {printf "           of %d here since %s: %d missed 5 s through a lend, %d straight; %d ended at a load above %d cores\n", n, f, l, s, hot, cores} NR==1 {f=substr($9,1,20)}' target/seeks-webkit.log
 elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate: nothing kept"; failed=1; fi
+# The shipped svrngs met at n0 (tests/n0.rs; docs/CHECKS.md, seam R), the
+# one test that meets n0's relays and lookup on the internet: every other
+# svrngs a test runs meets at a relay on 127.0.0.1 (tests/common/as_main.rs),
+# the scenes' too. Sam's computer, the shipped binary, makes a group met at
+# n0 alone, and Bo's joins by its link. n0 is not ours, so it is asked by
+# iroh alone first: silent then, or silent again after a svrngs failed, the
+# step is could-not-judge, with why (`step`, above); a failure with n0
+# answering is ours.
+step "n0" cargo test -p svrngs --test n0
 step "app laws" node web/tests/run.mjs apps
 rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed
