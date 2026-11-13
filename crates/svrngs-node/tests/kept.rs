@@ -478,3 +478,68 @@ async fn a_restart_resumes_a_synced_directory_unasked() {
         "Ben's file reaches Ana's directory after her start, unasked"
     );
 }
+
+/// What the `folder` target traces on this test's thread, kept to be read:
+/// a dropped node's tasks run on it, as every task of a `#[tokio::test]`.
+#[derive(Clone, Default)]
+struct Traced(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+
+impl std::io::Write for Traced {
+    fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(bytes);
+        Ok(bytes.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+/// **A node dropped leaves nothing of its folders running** (node.rs
+/// `Stop`): Ana syncs a directory, her file is taken and its act written;
+/// her node is closed and dropped; she edits the file and waits past three
+/// of the store's sweeps (folder.rs `SWEEP`, 1 s). No act is written into
+/// her record, no step of her directory's loop runs and the sweep asks her
+/// node nothing: the `folder` target says nothing at all after the drop.
+/// Red with `Host::stopping` not cancelled at the drop: the old loop
+/// steps at the edit, finds it, and stops short only because the store is
+/// shut, so no act is written; the act count alone would not see it. On
+/// one wire, Ana alone in her group.
+#[tokio::test]
+async fn a_node_dropped_leaves_no_task_of_its_folders_running() {
+    let root = tempfile::tempdir().unwrap();
+    let (ana_dir, ana_disk) = (root.path().join("ana"), root.path().join("disk/Shared"));
+    std::fs::create_dir_all(&ana_dir).unwrap();
+    let ana = on_wire::start(1, &ana_dir).await;
+    let group = computers::found("films", 9, &ana, &[]);
+    synced(&ana, &ana_disk, &group).await;
+    std::fs::write(ana_disk.join("first.bin"), noise(10_000, b"first")).unwrap();
+    assert!(kept(&ana_dir, "first.bin").await, "Ana's step takes it");
+    let acts = || {
+        let rail = svrngs_node::RingRail::new(&ana_dir, std::sync::Arc::new(computers::signing(1)));
+        svrngs_core::tests_support::wire_ops(&rail.admission(&group).unwrap()).len()
+    };
+    let before = acts();
+
+    ana.net().close().await;
+    let traced = Traced::default();
+    let writer = traced.clone();
+    let subscriber = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new("folder=debug"))
+        .with_writer(move || writer.clone())
+        .with_ansi(false)
+        .finish();
+    let _on_this_thread = tracing::subscriber::set_default(subscriber);
+    drop(ana);
+    std::fs::write(ana_disk.join("first.bin"), noise(10_500, b"edited after")).unwrap();
+    tokio::time::sleep(Duration::from_millis(3_500)).await;
+    let said = String::from_utf8(traced.0.lock().unwrap().clone()).unwrap();
+    assert_eq!(
+        acts(),
+        before,
+        "no act written through the dropped node's rail"
+    );
+    assert!(
+        said.is_empty(),
+        "nothing of the dropped node's folders runs, no step and no sweep's ask: {said}"
+    );
+}
