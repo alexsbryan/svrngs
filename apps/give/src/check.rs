@@ -62,15 +62,36 @@ impl fmt::Display for Failed {
     }
 }
 
+/// The line `give check` says of a step passed, with what it found.
+pub fn line_passed(step: Step, what: &str) -> String {
+    if what.is_empty() {
+        format!("passed  {step}")
+    } else {
+        format!("passed  {step}: {what}")
+    }
+}
+
+/// The line `give check` says of the step that failed.
+pub fn line_failed(failed: &Failed) -> String {
+    format!("failed  {failed}")
+}
+
+/// The line `give check` ends with when every step passed.
+pub fn line_shelf(card: &Card) -> String {
+    format!("{} can go on the shelf.", card.title)
+}
+
 /// Run the check on the card in `dir`, under `name`, writing its snapshot
 /// under `scratch`, which it makes and removes. `agree` is the yes of whoever runs it to the card's
-/// asks. Each step passed is told to `passed`, with what it found.
+/// asks. Its door listens where `port` says ([`free_port`], or a test's).
+/// Each step passed is told to `passed`, with what it found.
 pub fn check(
     podman: &Podman,
     dir: &Path,
     name: Name,
     scratch: &Path,
     agree: bool,
+    port: fn(Transport) -> std::io::Result<u16>,
     passed: &mut dyn FnMut(Step, String),
 ) -> Result<Card, Failed> {
     let fail = |step: Step| {
@@ -91,7 +112,7 @@ pub fn check(
     }
     passed(Step::Asks, format!("{} agreed", card.asks.len()));
     let app = App::new(podman, &card, name);
-    let run = steps(podman, &card, &app, scratch, passed);
+    let run = steps(podman, &card, &app, scratch, port, passed);
     let removed = app.remove();
     let _ = std::fs::remove_dir_all(scratch);
     run?;
@@ -105,6 +126,7 @@ fn steps(
     card: &Card,
     app: &App,
     scratch: &Path,
+    port: fn(Transport) -> std::io::Result<u16>,
     passed: &mut dyn FnMut(Step, String),
 ) -> Result<(), Failed> {
     let fail = |step: Step| {
@@ -124,7 +146,7 @@ fn steps(
             .collect::<Vec<_>>()
             .join(", "),
     );
-    let at = free_port(card.door.protocol.transport()).map_err(|e| fail(Step::Start)(&e))?;
+    let at = port(card.door.protocol.transport()).map_err(|e| fail(Step::Start)(&e))?;
     let agreed = Agreed::to(&card.asks);
     app.start(at, &agreed).map_err(|e| fail(Step::Start)(&e))?;
     passed(Step::Start, format!("its door on 127.0.0.1:{at}"));
@@ -157,7 +179,7 @@ fn steps(
 }
 
 /// A port nothing on this computer's loopback holds now, for the door.
-fn free_port(transport: Transport) -> std::io::Result<u16> {
+pub fn free_port(transport: Transport) -> std::io::Result<u16> {
     match transport {
         Transport::Tcp => std::net::TcpListener::bind("127.0.0.1:0")?
             .local_addr()

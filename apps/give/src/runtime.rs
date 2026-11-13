@@ -357,16 +357,16 @@ impl<'a> App<'a> {
     /// as `<volume>.tar`. The directory appears whole or not at all. An app
     /// with no pod, stopped, or gone with a computer that lost power, has
     /// nothing writing its volumes, so they are copied with no pause.
-    #[expect(
-        clippy::disallowed_methods,
-        reason = "a snapshot is named for when it was taken, and times its pause"
-    )]
     pub fn snapshot(&self, into: &Path) -> Result<Snapshot, RunError> {
+        self.snapshot_at(into, stamp)
+    }
+
+    /// [`App::snapshot`], named by `stamp` when it is taken: the wall
+    /// clock's milliseconds, or a test's.
+    #[expect(clippy::disallowed_methods, reason = "a snapshot times its pause")]
+    pub fn snapshot_at(&self, into: &Path, stamp: fn() -> u128) -> Result<Snapshot, RunError> {
         let shell = self.storage_shell()?;
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_millis())
-            .unwrap_or(0);
+        let stamp = stamp();
         let partial = into.join(format!(".{stamp}.partial"));
         std::fs::create_dir_all(&partial).map_err(|e| file(&partial, e))?;
         let name = self.name.as_str();
@@ -634,6 +634,15 @@ impl<'a> App<'a> {
         }
         Ok(())
     }
+}
+
+/// When a snapshot is taken, in milliseconds since the epoch: its name.
+#[expect(clippy::disallowed_methods, reason = "a snapshot is named for when it was taken")]
+pub fn stamp() -> u128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0)
 }
 
 /// Where a snapshot keeps the bytes of the card that wrote it, inside what

@@ -11,6 +11,7 @@
 //! `svrngs/acts`, so the fold reads the same acts from either.
 
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::{Value, json};
@@ -47,11 +48,47 @@ pub struct Groups {
     pub groups: Vec<Group>,
 }
 
+/// What carries a call to svrngs's API: HTTP on this computer's loopback,
+/// or a test's stand-in that answers as svrngs does (apps/give/tests/fake).
+pub trait Answers: std::fmt::Debug + Send + Sync {
+    /// `route` asked, `body` posted if there is one: the status and the
+    /// text answered, or why nothing was.
+    fn call(&self, route: &str, body: Option<&Value>) -> Result<(u16, String), String>;
+}
+
+/// svrngs's API at `api`, asked with its token.
+#[derive(Debug)]
+struct Loopback {
+    api: String,
+    token: String,
+}
+
+impl Answers for Loopback {
+    fn call(&self, route: &str, body: Option<&Value>) -> Result<(u16, String), String> {
+        let url = format!("{}{route}", self.api);
+        let shown = format!("Bearer {}", self.token);
+        let sent = match body {
+            None => attohttpc::get(&url)
+                .header("authorization", shown)
+                .timeout(WITHIN)
+                .send(),
+            Some(body) => (attohttpc::post(&url).header("authorization", shown))
+                .header("content-type", "application/json")
+                .timeout(WITHIN)
+                .text(body.to_string())
+                .send(),
+        };
+        let answer = sent.map_err(|e| e.to_string())?;
+        let status = answer.status().as_u16();
+        Ok((status, answer.text().map_err(|e| e.to_string())?))
+    }
+}
+
 /// svrngs's loopback API on this computer.
 #[derive(Debug, Clone)]
 pub struct Record {
     api: String,
-    token: String,
+    answers: Arc<dyn Answers>,
 }
 
 /// svrngs's data dir, as its command reads it.
@@ -74,32 +111,24 @@ impl Record {
     pub fn at(data_dir: &Path) -> Result<Record, RecordError> {
         let (api, token) = (read(&data_dir.join("api"))?, read(&data_dir.join("token"))?);
         tracing::debug!(api, data_dir = %data_dir.display(), "record: where svrngs listens, and its token read");
-        Ok(Record { api, token })
+        Ok(Record::by(api.clone(), Arc::new(Loopback { api, token })))
+    }
+
+    /// The record `answers` carries calls to, at `api`, as its refusals
+    /// name it.
+    pub fn by(api: impl Into<String>, answers: Arc<dyn Answers>) -> Record {
+        Record {
+            api: api.into(),
+            answers,
+        }
     }
 
     fn call(&self, route: &str, body: Option<&Value>) -> Result<Value, RecordError> {
-        let url = format!("{}{route}", self.api);
-        let shown = format!("Bearer {}", self.token);
-        let sent = match body {
-            None => attohttpc::get(&url)
-                .header("authorization", shown)
-                .timeout(WITHIN)
-                .send(),
-            Some(body) => (attohttpc::post(&url).header("authorization", shown))
-                .header("content-type", "application/json")
-                .timeout(WITHIN)
-                .text(body.to_string())
-                .send(),
-        };
         let unanswered = |why: String| RecordError::Unanswered {
             api: self.api.clone(),
             why,
         };
-        let answer = sent.map_err(|e| unanswered(e.to_string()))?;
-        let (status, text) = (
-            answer.status().as_u16(),
-            answer.text().map_err(|e| unanswered(e.to_string()))?,
-        );
+        let (status, text) = self.answers.call(route, body).map_err(unanswered)?;
         let path = route.split('?').next().unwrap_or(route).to_string();
         if !(200..300).contains(&status) {
             tracing::debug!(route = path, status, said = text, "record: refused");

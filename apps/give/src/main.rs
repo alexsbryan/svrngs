@@ -13,7 +13,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use anyhow::Context;
-use give::check::{Step, check};
+use give::check::{Step, check, free_port, line_failed, line_passed, line_shelf};
 use give::keep::{EVERY, Keeper, ROUND};
 use give::podman::Podman;
 use give::record::{Record, data_dir};
@@ -92,21 +92,14 @@ fn run_check(args: Vec<String>) -> anyhow::Result<ExitCode> {
         .unwrap_or_default();
     let name = Name::new(&name.unwrap_or_else(|| format!("svrngs-check-{kind}")))?;
     let scratch = std::env::temp_dir().join(format!("give-check-{}", std::process::id()));
-    let mut passed = |step: Step, what: String| {
-        let what = if what.is_empty() {
-            String::new()
-        } else {
-            format!(": {what}")
-        };
-        println!("passed  {step}{what}");
-    };
-    match check(&Podman::default(), &dir, name, &scratch, agree, &mut passed) {
+    let mut passed = |step: Step, what: String| println!("{}", line_passed(step, &what));
+    match check(&Podman::default(), &dir, name, &scratch, agree, free_port, &mut passed) {
         Ok(card) => {
-            println!("{} can go on the shelf.", card.title);
+            println!("{}", line_shelf(&card));
             Ok(ExitCode::SUCCESS)
         }
         Err(failed) => {
-            println!("failed  {failed}");
+            println!("{}", line_failed(&failed));
             Ok(ExitCode::FAILURE)
         }
     }

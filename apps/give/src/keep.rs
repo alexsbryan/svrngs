@@ -365,6 +365,11 @@ pub struct Keeper {
     /// The failure last said of each stop, by its act, so a stop tried
     /// again says one only when it changes.
     said_stop: BTreeMap<String, String>,
+    /// Where a started app's door listens: a port free on this computer's
+    /// loopback, or a test's.
+    pub port: fn() -> std::io::Result<u16>,
+    /// What a snapshot is named by: [`crate::runtime::stamp`], or a test's.
+    pub stamp: fn() -> u128,
 }
 
 impl Keeper {
@@ -382,6 +387,8 @@ impl Keeper {
             folders: BTreeMap::new(),
             told: Default::default(),
             said_stop: BTreeMap::new(),
+            port: free_port,
+            stamp: crate::runtime::stamp,
         }
     }
 
@@ -590,7 +597,7 @@ impl Keeper {
             (Some(from), false) => run.restore(&folder.join(from))?,
             (None, false) => run.remove()?,
         }
-        let at = free_port().map_err(|e| file(Path::new("127.0.0.1:0"), e))?;
+        let at = (self.port)().map_err(|e| file(Path::new("127.0.0.1:0"), e))?;
         run.start(at, &Agreed::to(&card.asks))?;
         let lent = match run.wait_healthy() {
             Err(why @ (RunError::Exited { .. } | RunError::Unhealthy { .. })) if k.from.is_some() && !holds => {
@@ -673,7 +680,7 @@ impl Keeper {
         let into = self.folder(group)?.join("give").join(app).join(me);
         let into = if had { into.join("had") } else { into };
         let card = self.card(app)?;
-        let snapshot = App::new(&self.podman, card, self.name(app)?).snapshot(&into)?;
+        let snapshot = App::new(&self.podman, card, self.name(app)?).snapshot_at(&into, self.stamp)?;
         tracing::debug!(app, dir = %snapshot.dir.display(), paused = ?snapshot.paused, had, "keep: copied to the group");
         Ok(snapshot.dir)
     }
@@ -929,7 +936,7 @@ impl Keeper {
     fn last_copy(&self, me: &str, group: &str, app: &str, card: &Card) -> Result<(String, String), StartError> {
         let folder = self.folder(group)?;
         let into = folder.join("give").join(app).join(me).join("stopped");
-        let dir = App::new(&self.podman, card, self.name(app)?).snapshot(&into)?.dir;
+        let dir = (App::new(&self.podman, card, self.name(app)?).snapshot_at(&into, self.stamp)?).dir;
         let files = (card.state.iter()).flat_map(|v| [format!("{v}.tar"), format!("{v}.root")]);
         for f in files.chain(["card".into(), CARD.into()]) {
             if !dir.join(&f).is_file() {

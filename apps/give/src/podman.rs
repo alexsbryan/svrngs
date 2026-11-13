@@ -5,6 +5,7 @@
 
 use std::ffi::OsString;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PodmanError {
@@ -18,11 +19,41 @@ pub enum PodmanError {
     },
 }
 
-/// The podman program give runs: `podman` on the PATH, or another for a test,
-/// with what it adds to podman's environment.
+/// What runs podman's command line: the program itself, or a test's
+/// stand-in that answers as podman does (apps/give/tests/fake). The one
+/// place a podman command leaves give.
+pub trait Runs: std::fmt::Debug + Send + Sync {
+    /// `podman <args>`, with `env` added to its environment: its exit
+    /// status, its output and its errors, or why it could not be run.
+    fn run(&self, args: &[&str], env: &[(OsString, OsString)]) -> Result<(i32, String, String), String>;
+}
+
+/// A podman program, run with nothing on its input.
+#[derive(Debug)]
+struct Program(OsString);
+
+impl Runs for Program {
+    fn run(&self, args: &[&str], env: &[(OsString, OsString)]) -> Result<(i32, String, String), String> {
+        let out = Command::new(&self.0)
+            .args(args)
+            .envs(env.iter().map(|(k, v)| (k, v)))
+            .stdin(Stdio::null())
+            .output()
+            .map_err(|e| format!("{}: {e}", self.0.to_string_lossy()))?;
+        let status = out.status.code().unwrap_or(-1);
+        let (stdout, stderr) = (
+            String::from_utf8_lossy(&out.stdout).into_owned(),
+            String::from_utf8_lossy(&out.stderr).into_owned(),
+        );
+        Ok((status, stdout, stderr))
+    }
+}
+
+/// The podman give runs: `podman` on the PATH, another program, or what
+/// a test gives it, with what it adds to podman's environment.
 #[derive(Debug, Clone)]
 pub struct Podman {
-    program: OsString,
+    runs: Arc<dyn Runs>,
     env: Vec<(OsString, OsString)>,
 }
 
@@ -34,10 +65,12 @@ impl Default for Podman {
 
 impl Podman {
     pub fn at(program: impl Into<OsString>) -> Podman {
-        Podman {
-            program: program.into(),
-            env: Vec::new(),
-        }
+        Podman::by(Arc::new(Program(program.into())))
+    }
+
+    /// The podman `runs` answers for.
+    pub fn by(runs: Arc<dyn Runs>) -> Podman {
+        Podman { runs, env: Vec::new() }
     }
 
     /// The same podman, run with `key` set to `value`.
@@ -75,17 +108,7 @@ impl Podman {
     }
 
     fn exec(&self, args: &[&str]) -> Result<(i32, String, String), PodmanError> {
-        let out = Command::new(&self.program)
-            .args(args)
-            .envs(self.env.iter().map(|(k, v)| (k, v)))
-            .stdin(Stdio::null())
-            .output()
-            .map_err(|e| PodmanError::Missing(format!("{}: {e}", self.program.to_string_lossy())))?;
-        let status = out.status.code().unwrap_or(-1);
-        let (stdout, stderr) = (
-            String::from_utf8_lossy(&out.stdout).into_owned(),
-            String::from_utf8_lossy(&out.stderr).into_owned(),
-        );
+        let (status, stdout, stderr) = self.runs.run(args, &self.env).map_err(PodmanError::Missing)?;
         tracing::debug!(command = args.join(" "), status, stderr = stderr.trim(), "podman");
         Ok((status, stdout, stderr))
     }

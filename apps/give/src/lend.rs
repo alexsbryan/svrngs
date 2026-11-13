@@ -7,6 +7,7 @@
 use std::ffi::OsString;
 use std::io::Write;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 
 use crate::card::Protocol;
 
@@ -18,24 +19,23 @@ pub enum LendError {
     Failed { args: String, code: i32, said: String },
 }
 
-/// svrngs's command: `svrngs` on the PATH, as a person runs it.
-#[derive(Debug, Clone)]
-pub struct Svrngs {
-    program: OsString,
+/// What runs svrngs's command: the program a person runs, or a test's
+/// stand-in that answers as it does (apps/give/tests/fake).
+pub trait Runs: std::fmt::Debug + Send + Sync {
+    /// `svrngs <args>`, an empty line on its input: its exit code, none
+    /// where a signal ended it, and what it said, its output then its
+    /// errors.
+    fn run(&self, args: &[&str]) -> Result<(Option<i32>, String), LendError>;
 }
 
-impl Default for Svrngs {
-    fn default() -> Svrngs {
-        Svrngs {
-            program: "svrngs".into(),
-        }
-    }
-}
+/// svrngs's program.
+#[derive(Debug)]
+struct Program(OsString);
 
-impl Svrngs {
-    fn run(&self, args: &[&str]) -> Result<String, LendError> {
-        let program = self.program.to_string_lossy().to_string();
-        let mut child = (Command::new(&self.program).args(args))
+impl Runs for Program {
+    fn run(&self, args: &[&str]) -> Result<(Option<i32>, String), LendError> {
+        let program = self.0.to_string_lossy().to_string();
+        let mut child = (Command::new(&self.0).args(args))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
@@ -58,11 +58,36 @@ impl Svrngs {
             String::from_utf8_lossy(&out.stdout),
             String::from_utf8_lossy(&out.stderr)
         );
-        tracing::debug!(?args, code = out.status.code(), said, "svrngs: ran");
-        if !out.status.success() {
+        Ok((out.status.code(), said))
+    }
+}
+
+/// svrngs's command: `svrngs` on the PATH, as a person runs it, or what a
+/// test gives it.
+#[derive(Debug, Clone)]
+pub struct Svrngs {
+    runs: Arc<dyn Runs>,
+}
+
+impl Default for Svrngs {
+    fn default() -> Svrngs {
+        Svrngs::by(Arc::new(Program("svrngs".into())))
+    }
+}
+
+impl Svrngs {
+    /// The svrngs command `runs` answers for.
+    pub fn by(runs: Arc<dyn Runs>) -> Svrngs {
+        Svrngs { runs }
+    }
+
+    fn run(&self, args: &[&str]) -> Result<String, LendError> {
+        let (code, said) = self.runs.run(args)?;
+        tracing::debug!(?args, code, said, "svrngs: ran");
+        if code != Some(0) {
             return Err(LendError::Failed {
                 args: args.join(" "),
-                code: out.status.code().unwrap_or(-1),
+                code: code.unwrap_or(-1),
                 said: said.trim().to_string(),
             });
         }
