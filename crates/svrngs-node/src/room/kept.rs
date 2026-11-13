@@ -6,28 +6,13 @@
 //! ([`crate::declared::write_whole`]). And what both of a store's owners
 //! are told by, the room's ([`super::owner`]) and Play's ([`crate::play`]).
 
-use std::path::Path;
+use std::path::PathBuf;
 
 use serde::{de::DeserializeOwned, Serialize};
 use tokio::sync::{mpsc, oneshot};
 
+use super::owner::LOOK_EVERY;
 use crate::lend::LendName;
-
-/// The lends on, as `file` keeps them: none before the first is turned on;
-/// why, when it cannot be read or parsed, which the room says and serves
-/// nothing from (AGENTS.md 6).
-pub(crate) fn read<T: DeserializeOwned>(file: &Path) -> Result<Vec<T>, String> {
-    let on = crate::declared::read_json(file).map(Option::unwrap_or_default);
-    tracing::debug!(target: "room", file = %file.display(), error = ?on.as_ref().err(), "room: the lends on, as kept: none before the first, and one unread said, serving nothing");
-    on
-}
-
-/// `on` written to `file` whole, so it opens again as svrngs starts.
-pub(crate) fn write<T: Serialize>(file: &Path, on: &[T]) {
-    let bytes = serde_json::to_vec(on).expect("the room is JSON");
-    let kept = crate::declared::write_whole(file, &bytes);
-    tracing::debug!(target: "room", file = %file.display(), on = on.len(), ?kept, "room: turned, and kept so it opens again as svrngs starts");
-}
 
 /// A change to the lends on, sent to their owner: these on, this one off,
 /// or none, to read them.
@@ -87,26 +72,38 @@ impl<T, A> Owner<T, A> {
     }
 }
 
-/// An owner's wait for its next look: at `every`'s tick, nobody to answer;
-/// at an ask, its turn made and written to `file`, and who to answer. A
-/// turn, not a read, writes over `on`: one that could not be read too.
-/// `None` once no handle is left.
-pub(crate) async fn next<A, On: Clone + Serialize>(
-    every: &mut tokio::time::Interval,
-    asked: &mut Asks<Turn<On>, A>,
-    file: &Path,
-    on: &mut Result<Vec<On>, String>,
+/// A store's owner, for as long as a handle is left: the lends on, read
+/// from `file` as it starts; at each tick of [`LOOK_EVERY`], each `serve`d;
+/// at an ask, its turn made and written to `file`, then served, and its
+/// asker answered with what stands, or why it cannot be read. A turn, not
+/// a read, writes over what is on: one that could not be read too.
+pub(crate) async fn run<A, On: Clone + Serialize + DeserializeOwned>(
+    file: PathBuf,
+    mut asked: Asks<Turn<On>, A>,
     id: fn(&On) -> (&String, &LendName),
-) -> Option<Option<Done<A>>> {
-    tokio::select! {
-        _ = every.tick() => Some(None),
-        turned = asked.recv() => {
-            let (turn, done) = turned?;
-            if let Some(made) = turn.made(on.as_deref().unwrap_or_default(), id) {
-                write(file, &made);
-                *on = Ok(made);
+    mut serve: impl AsyncFnMut(&[On]) -> Vec<A>,
+) {
+    // None before the first is turned on; why, when it cannot be read or
+    // parsed, which the room says and serves nothing from (AGENTS.md 6).
+    let mut on = crate::declared::read_json(&file).map(Option::unwrap_or_default);
+    tracing::debug!(target: "room", file = %file.display(), error = ?on.as_ref().err(), "room: the lends on, as kept: none before the first, and one unread said, serving nothing");
+    let mut every = tokio::time::interval(LOOK_EVERY);
+    loop {
+        let done = tokio::select! {
+            _ = every.tick() => None,
+            turned = asked.recv() => {
+                let Some((turn, done)) = turned else { return };
+                if let Some(made) = turn.made(on.as_deref().unwrap_or_default(), id) {
+                    // Written whole, so it opens again as svrngs starts.
+                    let bytes = serde_json::to_vec(&made).expect("the room is JSON");
+                    let kept = crate::declared::write_whole(&file, &bytes);
+                    tracing::debug!(target: "room", file = %file.display(), on = made.len(), ?kept, "room: turned, and kept so it opens again as svrngs starts");
+                    on = Ok(made);
+                }
+                Some(done)
             }
-            Some(Some(done))
-        }
+        };
+        let served = serve(on.as_deref().unwrap_or_default()).await;
+        done.map(|d| d.send(on.as_ref().map(|_| served).map_err(String::clone)));
     }
 }

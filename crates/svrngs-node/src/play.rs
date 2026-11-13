@@ -11,9 +11,10 @@
 //! which Plays are on is kept in [`PLAY_FILE`] by the room's store, so they
 //! open again as svrngs starts. Each is open only while this computer's
 //! person and its lender stand in a group held here together, read again
-//! every [`LOOK_EVERY`]; one its lender's computer closed, or did not
-//! answer, is opened again at the next look. Turned at [`ROUTE`] by the
-//! home page's Play and Stop, its row's and "What acts as you"'s alike.
+//! every [`crate::room::owner::LOOK_EVERY`]; one its lender's computer
+//! closed, or did not answer, is opened again at the next look. Turned at
+//! [`ROUTE`] by the home page's Play and Stop, its row's and "What acts as
+//! you"'s alike.
 //!
 //! **What it lets in** (svrn-docs WHAT_CAN_ACT_AS_YOU §4; the trust floor's
 //! Play lines): a raw port carries no token, so any program on this
@@ -35,7 +36,7 @@ use tokio::net::{TcpListener, UdpSocket};
 use crate::door::{tcp, udp, LendRefusal};
 use crate::lend::{LendName, Raw};
 use crate::node::Asking;
-use crate::room::{kept, owner::LOOK_EVERY, port_of};
+use crate::room::{kept, port_of};
 use crate::Person;
 
 /// Where Play is read and turned on and off: the home page's Play and Stop.
@@ -120,20 +121,13 @@ pub(crate) type Plays = kept::Owner<Turn, Playing>;
 
 /// Play's one owner, for as long as the node runs: the lends with Play on,
 /// read from [`PLAY_FILE`] as it starts and written there at each turn,
-/// each opened as [`play`] decides every [`LOOK_EVERY`] and at each ask.
-pub(crate) fn spawn(at: Asking, mut asked: kept::Asks<Turn, Playing>) -> AbortOnDropHandle<()> {
-    let file = at.door.data_dir.join(PLAY_FILE);
-    let (mut on, mut open) = (kept::read::<On>(&file), Opened::new());
-    AbortOnDropHandle::new(tokio::spawn(async move {
-        let mut every = tokio::time::interval(LOOK_EVERY);
-        loop {
-            let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
-            let done = kept::next(&mut every, &mut asked, &file, &mut on, id);
-            let Some(done) = done.await else { return };
-            let plays = play(&at, on.as_deref().unwrap_or_default(), &mut open).await;
-            done.map(|d| d.send(on.as_ref().map(|_| plays).map_err(String::clone)));
-        }
-    }))
+/// each opened as [`play`] decides every
+/// [`crate::room::owner::LOOK_EVERY`] and at each ask.
+pub(crate) fn spawn(at: Asking, asked: kept::Asks<Turn, Playing>) -> AbortOnDropHandle<()> {
+    let (file, mut open) = (at.door.data_dir.join(PLAY_FILE), Opened::new());
+    let played = async move |on: &[On]| play(&at, on, &mut open).await;
+    let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
+    AbortOnDropHandle::new(tokio::spawn(kept::run(file, asked, id, played)))
 }
 
 /// Each lend `on` open or not: open while this computer's person and its

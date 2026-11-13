@@ -41,19 +41,11 @@ pub(crate) type Room = kept::Owner<Turn, InRoom>;
 /// The room's one owner, for as long as the node runs: the lends on, read
 /// from [`ROOM_FILE`] as it starts and written there at each turn, each
 /// served as [`serve`] decides every [`LOOK_EVERY`] and at each ask.
-pub(crate) fn spawn(at: Asking, mut asked: kept::Asks<Turn, InRoom>) -> AbortOnDropHandle<()> {
-    let file = at.door.data_dir.join(ROOM_FILE);
-    let (mut on, mut listening) = (kept::read(&file), Listening::new());
-    AbortOnDropHandle::new(tokio::spawn(async move {
-        let mut every = tokio::time::interval(LOOK_EVERY);
-        loop {
-            let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
-            let done = kept::next(&mut every, &mut asked, &file, &mut on, id);
-            let Some(done) = done.await else { return };
-            let room = serve(&at, on.as_deref().unwrap_or_default(), &mut listening).await;
-            done.map(|d| d.send(on.as_ref().map(|_| room).map_err(String::clone)));
-        }
-    }))
+pub(crate) fn spawn(at: Asking, asked: kept::Asks<Turn, InRoom>) -> AbortOnDropHandle<()> {
+    let (file, mut listening) = (at.door.data_dir.join(ROOM_FILE), Listening::new());
+    let served = async move |on: &[On]| serve(&at, on, &mut listening).await;
+    let id: fn(&On) -> (&String, &LendName) = |o| (&o.key, &o.name);
+    AbortOnDropHandle::new(tokio::spawn(kept::run(file, asked, id, served)))
 }
 
 /// Each lend `on` served or not, as [`serves`] decides at the network read
