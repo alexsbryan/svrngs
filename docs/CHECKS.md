@@ -133,6 +133,18 @@ Of the 548, by target: browser 113, door 60, pages 36, the node's own unit
 tests 36, folders 32, carried 24, home 20, scenes 20, install 16, share 14,
 record_api 13, join_by_link 12, and 152 in 34 smaller targets.
 
+Recounted at c87af561 from the binaries (`cargo test --workspace --no-run`
+and each `test = false` target's, every executable's `--list` less its
+`--ignored`, the ceiling canary kept; each name keyed as this map keys it,
+a unit test with no row taken as crossing no seam, as this map's rule
+says, and no integration test left without a row): 954, of which 515
+(54.0%) cross no seam and 439 at least one: P 431, Q 419, R 205, B 158,
+C 79, D 10, M 7. By target: browser 92, folders 32, the node's unit tests
+26, carried 24, pages 22, home 20, scenes 20, install 16, share 14,
+record_api 13, join_by_link 12, and 148 in 34 smaller targets. R counts a
+relay on 127.0.0.1 too: n0 is out of every CLI test (harness 8), not R.
+The isolated Node laws, 234, all deterministic.
+
 ### The contained test of each seam
 
 | Seam | Contained place | What moves out of everything else |
@@ -195,7 +207,7 @@ map changed with it.
 | 5 | pages and the browser step's home-page tests. 29 retired to `pages/home.test.mjs`: 15 of the browser step's 23 (its words, the ask, the door, removals, refusals, the folder, the terminal line, links, the address and its Copy, a pasted link, two Trips, an unreadable room and register, the slowest computer as an order) and 14 of the pages step's 36 (what was done said once; five answers said once a press; a lapsed session at Leave and at an ask; WiFi opened in one foot; a folder opened twice; a group made, a group joined, each said read until it is, and Play in two lists, its page-home-rooms module gone). `the_home_page_says_what_it_is_for` shrunk to B's contained test: loaded under its policy with no page error, June's first look, look.css. Left, 7 browser tests, each asserting a node act only `crates/*/tests` or a socket also hold: a lend's declaration gone (limit) or holding its secret (sign-in), a removed computer told, a link's issuer, the room served on this WiFi, a planted opener and a tab by keyboard and mouse, ports probed. Left, 22 pages tests: the phone's page in WebKit (9), a node's write read back on `visible` or `again` (choices, lends, a bring, a join over QUIC), a visit or the screen on the real clock | 59, 30 left, one of them B's contained test | Node laws over the composed home page | harness 5 (landed); harness 7 for the clock, 1-4 for node acts |
 | 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |
 | 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address. Landed: address's second bare command, its svrngs running here stood in for by the data dir's lock and its api and token files, so no node runs (X alone). Left: each other row's pure part sits inside a function that does I/O (`ask_running` cli.rs:980, the Share arm's prompts, `full_name`, `restart`'s service query, `relay::spawn`'s admission, update's fetch), so its split is a product change, waiting for the economizing pass | ~95, 1 done | `src/*_tests.rs` over the parts that print and decide | harness 8 (landed), small splits per row |
-| 8 | scenes and holyarrs; H8's list of WebKit's messages replaced by whose page each step leaves (`web/tests/leaving.mjs`) | 20 | handlers and fixtures; one scene per daemon stays | none for W; the rest as the map says |
+| 8 | scenes and holyarrs; H8's list of WebKit's messages replaced by whose page each step leaves (`web/tests/leaving.mjs`). Not shrunk yet: a scene is one test whatever it asserts, so a shrink moves no count; where a scene's claim has a deterministic home it is the apps' tier already (pantry, doc, events, canon, give's fold), and the rest wait on a harness the map names (a removal's stream cut on an in-process node, a WebSocket through the door, an in-process two-node record, a Jellyfin answers fixture). The scenes run the shipped binary, so they still meet n0 (unit 3) | 20 | handlers and fixtures; one scene per daemon stays | none for W; the rest as the map says |
 | 9 | give's keeper, check and machine; landed: tests/fake answers as podman, svrngs's command and the record API do, `Keeper` is driven a round at a time at a set `now` (keeper.rs), `check` runs in process; keep.rs retired | 20, 1 left: check.rs's podman test, the contained one | fakes of Podman and the clock | none |
 
 ### Owed
