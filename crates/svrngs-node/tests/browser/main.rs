@@ -1978,7 +1978,7 @@ in_webkit!(
     /// the lent page is not shown in the frame, and its origin keeps no
     /// text that is its pass's holder key, only a key object that cannot
     /// be copied (capability-signed (H); a pass's own yes is refused in
-    /// tests/door/choices.rs). Asked of an app and a lend not lent, the group's page
+    /// tests/door/refusals.rs). Asked of an app and a lend not lent, the group's page
     /// says [`UNLENT`], as the home page does (onair-economize (d); red at
     /// a20ed46: "... in your group now."). Planted, each watched failing: a
     /// holder's yes accepted at the door; the group's page framed (no

@@ -657,7 +657,7 @@ fn a_change_let_go_is_never_held_by_a_program_starting_at_the_time() {
 /// Declarations that cannot be read are an error, never no lends: a lends
 /// directory that is a file is unreadable, which every route listing lends
 /// answers 500 in words (door.rs `offered`); none at all is lending nothing
-/// (tests/door main.rs:1023-1037). Planted, watched failing: `all` reading
+/// (tests/door at 5e20d0b3, main.rs:1023-1037). Planted, watched failing: `all` reading
 /// any error as no directory, `Ok(vec![])`.
 #[test]
 fn declarations_that_cannot_be_read_are_an_error_never_none() {

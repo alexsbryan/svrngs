@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! The door's one check, row by row of the design's §4 table;
-//! `tests/door/choices.rs` runs it through the door between two nodes.
+//! `tests/door/refusals.rs` runs it through the door between two nodes.
 
 use super::*;
 

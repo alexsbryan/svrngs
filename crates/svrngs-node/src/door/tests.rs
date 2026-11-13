@@ -332,7 +332,7 @@ fn said(r: &Response) -> (u16, Option<&str>, Option<&str>) {
 /// Every header under the prefix the client typed goes, whatever it names,
 /// and a name a credential the door sends fills goes too, its spelling
 /// aside: a forged app, group, pass or link, and a page's own `x-api-key`
-/// where the readers' key is sent (tests/door main.rs:1431-1435,
+/// where the readers' key is sent (tests/door at 5e20d0b3, main.rs:1431-1435,
 /// 1561-1597, scope.rs:60, main.rs:1167, 1286-1287). Planted, watched
 /// failing: `rewrite_headers` stripping no declared name (the page's own
 /// `x-api-key` kept beside the readers').
@@ -380,7 +380,7 @@ fn a_client_s_forged_door_headers_and_credential_names_never_reach_the_service()
 /// A GET naming a protocol without `Connection: upgrade` is only that GET:
 /// it asks no switch, so the door reads it as a read, and its `Upgrade`
 /// stops at the door; with `Connection: Upgrade` it asks one, which the door
-/// reads as a write (tests/door main.rs:1365-1394). Planted, watched
+/// reads as a write (tests/door at 5e20d0b3, main.rs:1365-1394). Planted, watched
 /// failing: `upgrade_of` reading `Upgrade` whatever `Connection` names.
 #[test]
 fn only_a_connection_naming_upgrade_asks_to_switch_protocols() {
@@ -394,7 +394,7 @@ fn only_a_connection_naming_upgrade_asks_to_switch_protocols() {
 
 /// The lend's secret is read from its store at each ask: none declared,
 /// none sent; declared, sent from the next ask, its value verbatim, quotes
-/// and inner space kept (tests/door main.rs:399, 459-461). Planted, watched
+/// and inner space kept (tests/door at 5e20d0b3, main.rs:399, 459-461). Planted, watched
 /// failing: `secret_headers` trimming the value's quotes.
 #[test]
 fn a_secret_is_read_from_its_store_at_each_ask_and_sent_verbatim() {
@@ -417,7 +417,7 @@ fn a_secret_is_read_from_its_store_at_each_ask_and_sent_verbatim() {
 
 /// Each answer svrngs makes in a lend's place is marked its own, by kind,
 /// in the header and the body: a lend not declared, a path refused or one
-/// that steps out, a service not answering, a removal in its words (tests/door
+/// that steps out, a service not answering, a removal in its words (tests/door at 5e20d0b3, at 5e20d0b3,
 /// main.rs:519-531, 1779-1789). Planted, watched failing: `said` setting no
 /// header.
 #[tokio::test]
@@ -462,7 +462,7 @@ async fn svrngs_s_own_answers_are_marked_by_kind_in_header_and_body() {
 /// A lend that signs people in with svrngs is told the browser's origin as
 /// a proxy's forwarded headers, `http` for a `*.localhost` host or the
 /// room's address and `https` for a page host's name; any other lend is told
-/// none; a value the client typed is displaced either way (tests/door
+/// none; a value the client typed is displaced either way (tests/door at 5e20d0b3, at 5e20d0b3,
 /// oidc.rs:632-645, 669; main.rs:1712-1720). Planted, watched failing:
 /// `tell_origin` telling every lend, as at 1efa9a2d.
 #[test]
@@ -497,7 +497,7 @@ fn only_a_lend_that_signs_in_is_told_the_browser_s_origin() {
 /// A request from the lend's own pages is told the service's own address
 /// as its `Origin`, as its `Host` is, so a service that takes a post only
 /// from its own address takes them; any other origin is left as sent
-/// (tests/door main.rs:1721-1727). Planted, watched failing: `own_origin`
+/// (tests/door at 5e20d0b3, main.rs:1721-1727). Planted, watched failing: `own_origin`
 /// comparing the whole host, port and all, to the label.
 #[test]
 fn the_lend_s_own_origin_is_told_as_the_service_s_own_address() {
@@ -529,7 +529,7 @@ fn the_lend_s_own_origin_is_told_as_the_service_s_own_address() {
 
 /// A service's redirect to its own address comes back a path on the lend,
 /// its query kept; one a browser reads as another host's, `//` or `/\` after
-/// that address, is no path, so the door leaves it as sent (tests/door
+/// that address, is no path, so the door leaves it as sent (tests/door at 5e20d0b3, at 5e20d0b3,
 /// main.rs:1646-1651, 1667-1680). Planted, watched failing: `LendPath::parse`
 /// without its `//` and `\` check, as at 3f313267.
 #[test]
@@ -552,7 +552,7 @@ fn a_redirect_off_the_lend_s_origin_is_never_made_a_path() {
 
 /// The mixed-version fence on what is lent: an ask with no marker, or an
 /// older one, or one that does not read, is not scope-aware; 5 and later are
-/// (tests/door scope.rs:157-163). Planted, watched failing: 4 read as aware.
+/// (tests/door at 5e20d0b3, scope.rs:157-163). Planted, watched failing: 4 read as aware.
 #[test]
 fn a_list_ask_is_scope_aware_only_marked_at_5_or_later() {
     for (marker, aware) in [
@@ -571,7 +571,7 @@ fn a_list_ask_is_scope_aware_only_marked_at_5_or_later() {
 }
 
 /// A newcomer past the limit is told why, how many, and that the number is
-/// the lender's choice, in a 503 marked `full` with the figures (tests/door
+/// the lender's choice, in a 503 marked `full` with the figures (tests/door at 5e20d0b3, at 5e20d0b3,
 /// limit.rs:186-200). Planted, watched failing: "people" said of one.
 #[tokio::test]
 async fn a_newcomer_past_the_limit_is_told_the_number_and_whose_it_is() {
@@ -604,7 +604,7 @@ async fn a_newcomer_past_the_limit_is_told_the_number_and_whose_it_is() {
 }
 
 /// A guest is told as their host's guest, with an account of their own
-/// that no member's can be; a member as themselves (tests/door
+/// that no member's can be; a member as themselves (tests/door at 5e20d0b3, at 5e20d0b3,
 /// guests.rs:109-127; oidc.rs:879-884). Planted, watched failing: `told_as`
 /// leaving off `.guest`.
 #[test]
@@ -667,7 +667,7 @@ fn guest_at(rail: &RingRail, me: u8, lend: &Lend, now: i64) -> Result<String, (S
 /// the visit names, in a group the lend still reaches, and only while the
 /// visit is on: begun, though timed a minute ahead of the door's clock
 /// (#214), and before its time, its host's Stop and its host's leave, each
-/// end said (tests/door guests.rs:157, 197-205, 257-266; oidc.rs:797-803).
+/// end said (tests/door at 5e20d0b3, guests.rs:157, 197-205, 257-266; oidc.rs:797-803).
 /// The time is an argument, so no visit is waited out. Planted, watched
 /// failing, one at a time: `guest_of` not asking `stopped`; letting a visit
 /// in at any lend it names, its host's or not (`own` true).
@@ -736,7 +736,7 @@ fn a_guest_is_let_in_only_to_their_host_s_named_lend_while_the_visit_is_on() {
 /// The withdrawal sweep and a guest's redemption ask [`guest_of`] again at
 /// the door's clock: a live visit's guest is admitted to their host's
 /// named lend, and not once the lend reaches the visit's group no more, nor
-/// a key with no visit here (tests/door guests.rs:414-422; oidc.rs:797-803).
+/// a key with no visit here (tests/door at 5e20d0b3, guests.rs:414-422; oidc.rs:797-803).
 /// Planted, watched failing: `guest_admitted` answering true for any visit.
 #[test]
 fn a_guest_is_admitted_again_by_the_one_decision_that_let_them_in() {
@@ -761,7 +761,7 @@ fn a_guest_is_admitted_again_by_the_one_decision_that_let_them_in() {
 /// third group joined widens nothing; lent to the house and yard, bo
 /// reaches it through the house, and the house alone is the group whose
 /// page the service is told; lent to `bos`, which names bo and not ada,
-/// nobody reaches it (tests/door scope.rs:60-70, 101-106, 141-148, 346-348,
+/// nobody reaches it (tests/door at 5e20d0b3, scope.rs:60-70, 101-106, 141-148, 346-348,
 /// 367-378). Planted, watched failing, one at a time: `reached` not asking
 /// `stands_here`; `member_for` resolving through any group held here.
 #[test]
@@ -823,7 +823,7 @@ fn a_lend_reaches_a_member_only_through_a_group_both_stand_in() {
 
 /// One person's two devices are one person to a lend: each device's key
 /// resolves to the person's first key, which the door counts, keeps choices
-/// by and tells as `x-svrngs-key`, so one account (tests/door
+/// by and tells as `x-svrngs-key`, so one account (tests/door at 5e20d0b3, at 5e20d0b3,
 /// main.rs:355-358; limit.rs:225-227; choices.rs:224). Planted, watched
 /// failing: `member_for` answering the device's own key as the person's.
 #[test]

@@ -216,7 +216,7 @@ fn browser_at(host: &str) -> String {
 /// `<label>.localhost` in http, a page host's name in https, the room's
 /// address in http; answered relative to that origin. Another lend's
 /// origin, the label on a host that is not the browser's, and the browser's
-/// host in the other scheme are refused 400, no code (tests/door
+/// host in the other scheme are refused 400, no code (tests/door at 5e20d0b3, at 5e20d0b3,
 /// oidc.rs:536-593, 686-688). Planted, watched failing: `LendPath::parse`
 /// reading no browser origin, as the front channel before oidc-jellyfin.
 #[test]
@@ -389,7 +389,7 @@ fn id_claims(answer: &serde_json::Value) -> serde_json::Value {
 /// `sub` the ask names; at another lend's route, with another login's
 /// verifier, or for another redirect, it is refused; once its person is
 /// removed from the group it was minted through, or the lend is no longer
-/// lent there, `invalid_grant` (tests/door oidc.rs:163-301, 445-456,
+/// lent there, `invalid_grant` (tests/door at 5e20d0b3, oidc.rs:163-301, 445-456,
 /// 481-491). In process, no socket. Planted, watched failing, one at a
 /// time: the token route not asking the code's person's standing; not
 /// asking `reached`.
@@ -462,7 +462,7 @@ async fn a_code_redeems_for_the_door_s_person_only_while_the_door_would_let_them
 /// guest's visit by the door's one decision (`guest_admitted`): Sam's code,
 /// Kim's visit live, redeems for Sam's visit key, account and name, group
 /// `guest`; a guest code for a key no visit here names is refused for the
-/// visit (tests/door oidc.rs:797-805, 873-888). Planted, watched failing:
+/// visit (tests/door at 5e20d0b3, oidc.rs:797-805, 873-888). Planted, watched failing:
 /// the token route holding a guest's code to the audience alone.
 #[tokio::test]
 async fn a_guest_s_code_names_the_guest_and_holds_to_their_visit() {

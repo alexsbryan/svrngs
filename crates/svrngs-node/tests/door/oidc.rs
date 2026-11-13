@@ -5,7 +5,11 @@
 //! own address, the door answers a one-time code in a relative `Location`
 //! back to the app's callback, and the code redeems at the provider's
 //! token route for the person the door resolved. The service never sees
-//! the ask.
+//! the ask. One crossing holds that the door's authorize path answers its
+//! own asker and refuses what the lend would; each rule of the front
+//! channel and the token route is judged on its own, in process
+//! (`src/oidc/tests.rs`). Each step names the test it came from, retired
+//! at its move (docs/seams.tsv).
 
 use std::collections::BTreeMap;
 
@@ -14,16 +18,13 @@ use base64::Engine as _;
 use serde_json::{json, Value};
 use svrngs_core::alpn::Alpn;
 use svrngs_core::pass::{Label, Pass};
-use svrngs_node::{OpId, Visit};
+use svrngs_node::Visit;
 
 use super::*;
 
 const LEND: &str = "media";
-const OTHER: &str = "other";
 const CLIENT: &str = "svrngs-media";
 const SECRET: &str = "media-secret_2026.10";
-const OTHER_CLIENT: &str = "svrngs-other";
-const OTHER_SECRET: &str = "other-secret_2026.10";
 const PATH: &str = "/signin-oidc";
 const STATE: &str = "st-0123456789";
 const NONCE: &str = "n-0S6_WzA2Mj";
@@ -130,26 +131,41 @@ fn claims(token: &str) -> Value {
     serde_json::from_slice(&URL_SAFE_NO_PAD.decode(payload).unwrap()).unwrap()
 }
 
-/// Given a lend that signs people in with svrngs, when a member's browser
-/// reaches its authorize address through the door, then the door answers a
-/// one-time code in a relative `Location` back to the app's callback, and
-/// the code redeems at the token route for that person's claims; the
-/// service is never asked. Planted and watched failing: a second person's
-/// key or name in the ask (the door's `Asker` is the code's person); a code
-/// minted for this lend presented at another's token route; a removed
-/// member answered a code; an absolute `Location`; a redirect other than
-/// the one the code was minted for.
+/// Planted and watched failing when each was its own test: a second
+/// person's key or name in the ask (the door's `Asker` is the code's
+/// person); a removed member answered a code; an absolute `Location`; the
+/// front channel accepting only `http://localhost:<port>`; the door telling
+/// a room's address https; the authorize path carried past a refused path
+/// or an unsaid app; a guest's code naming the host.
 #[tokio::test]
 async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     let pair = Pair::new().await;
     let (origin, heads) = origins::head_origin().await;
     let port = origin.port();
     signs_in(&pair, LEND, port, CLIENT, SECRET);
-    signs_in(&pair, OTHER, port, OTHER_CLIENT, OTHER_SECRET);
     let bo = actor_of(&signing(2));
     let cy = actor_of(&signing(3));
     let redirect = format!("http://localhost:{port}{PATH}");
+    let redeem = |code: String, redirect: String| {
+        let a = &pair.a;
+        async move {
+            let form = [
+                ("grant_type", "authorization_code"),
+                ("code", code.as_str()),
+                ("redirect_uri", redirect.as_str()),
+                ("code_verifier", VERIFIER),
+            ];
+            token(a, LEND, CLIENT, SECRET, &form).await
+        }
+    };
+    let code_of = |reply: &Reply| -> String {
+        let loc = location(reply).expect("a Location");
+        pairs(loc.split_once('?').expect("a query").1)
+            .remove("code")
+            .expect("a code")
+    };
 
+    // a_members_authorize_answers_a_code_the_token_route_redeems (oidc.rs:153-209):
     // bo's browser asks, with cy's key and name planted on the request.
     let reply = get(
         pair.bridge,
@@ -169,180 +185,53 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     assert!(!loc.contains("http://"), "the redirect is absolute: {loc}");
     let (path, query) = loc.split_once('?').expect("a query on the callback");
     assert_eq!(path, PATH);
-    let said = pairs(query);
-    assert_eq!(said.get("state").map(String::as_str), Some(STATE));
-    let code = said.get("code").expect("a code").clone();
-    assert!(!code.is_empty());
-    assert!(
-        heads.lock().unwrap().is_empty(),
-        "the authorize ask reached the app's service: {:?}",
-        heads.lock().unwrap()
-    );
-
-    // The code redeems, for bo, with bo's PKCE verifier; never for cy.
-    let (status, answer) = token(
-        &pair.a,
-        LEND,
-        CLIENT,
-        SECRET,
-        &[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", &redirect),
-            ("code_verifier", VERIFIER),
-        ],
-    )
-    .await;
+    assert_eq!(pairs(query).get("state").map(String::as_str), Some(STATE));
+    let (status, answer) = redeem(code_of(&reply), redirect.clone()).await;
     assert_eq!(status, 200, "{answer:#}");
-    let claims = claims(answer["id_token"].as_str().expect("an id token"));
+    let said = claims(answer["id_token"].as_str().expect("an id token"));
     assert_eq!(
-        claims["sub"], bo,
-        "the code is not the door's person: {claims:#}"
+        said["sub"], bo,
+        "the code is not the door's person: {said:#}"
     );
-    assert_ne!(claims["sub"], cy, "the ask chose the person: {claims:#}");
-    assert_eq!(claims["name"], "bo");
-    assert_eq!(claims["preferred_username"], format!("bo-{}", &bo[..16]));
-    assert_eq!(claims["groups"], json!(["member"]));
-    assert_eq!(
-        claims["nonce"], NONCE,
-        "the nonce is not echoed: {claims:#}"
-    );
+    assert_ne!(said["sub"], cy, "the ask chose the person: {said:#}");
+    assert_eq!(said["name"], "bo");
+    assert_eq!(said["preferred_username"], format!("bo-{}", &bo[..16]));
+    assert_eq!(said["groups"], json!(["member"]));
+    assert_eq!(said["nonce"], NONCE, "the nonce is not echoed: {said:#}");
 
-    // A fresh code, presented at another lend's token route, is refused.
-    let fresh = |reply: &Reply| -> String {
-        pairs(
-            location(reply)
-                .expect("a Location")
-                .split_once('?')
-                .unwrap()
-                .1,
-        )
-        .remove("code")
-        .expect("a code")
-    };
-    let reply = get(
-        pair.bridge,
-        &format!(
+    // the_authorize_path_accepts_the_lends_own_origin_as_the_redirect (oidc.rs:519-566):
+    // a computer's browser at <label>.localhost, a phone's at a page host, read as https;
+    // and a_rooms_address_is_told_http_and_its_origin_passes_authorize (oidc.rs:675-688).
+    let label = Label::of(pair.a.endpoint().id().as_bytes(), LEND);
+    let api = pair.a.api_addr().port();
+    for (browser, scheme) in [
+        (format!("{label}.localhost:{api}"), "http"),
+        (format!("{label}.svrngs.example"), "https"),
+        ("192.168.1.20:7123".to_string(), "http"),
+    ] {
+        let at = format!("{scheme}://{browser}{PATH}");
+        let path = format!(
             "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-            ask(port, CLIENT, "")
-        ),
-        "",
-    )
-    .await;
-    let (status, answer) = token(
-        &pair.a,
-        OTHER,
-        OTHER_CLIENT,
-        OTHER_SECRET,
-        &[
-            ("grant_type", "authorization_code"),
-            ("code", &fresh(&reply)),
-            ("redirect_uri", &redirect),
-            ("code_verifier", VERIFIER),
-        ],
-    )
-    .await;
-    assert_eq!(status, 400, "another lend redeemed the code: {answer:#}");
+            ask_to(&at, CLIENT, "")
+        );
+        let reply = get_at(pair.bridge, &browser, &path, "").await;
+        assert_eq!(reply.status, 302, "on {browser}: {}", reply.text);
+        let loc = location(&reply).expect("a Location");
+        assert!(
+            loc.starts_with(&format!("{PATH}?code=")),
+            "on {browser}: {loc}"
+        );
+        let (status, answer) = redeem(code_of(&reply), at).await;
+        assert_eq!(status, 200, "on {browser}: {answer:#}");
+        assert_eq!(
+            claims(answer["id_token"].as_str().unwrap())["sub"],
+            bo,
+            "on {browser}"
+        );
+    }
 
-    // Another login attempt's verifier does not answer the code's challenge.
-    let reply = get(
-        pair.bridge,
-        &format!(
-            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-            ask(port, CLIENT, "")
-        ),
-        "",
-    )
-    .await;
-    let (status, answer) = token(
-        &pair.a,
-        LEND,
-        CLIENT,
-        SECRET,
-        &[
-            ("grant_type", "authorization_code"),
-            ("code", &fresh(&reply)),
-            ("redirect_uri", &redirect),
-            (
-                "code_verifier",
-                "another-login-attempt-s-verifier-43-characters",
-            ),
-        ],
-    )
-    .await;
-    assert_eq!(status, 400, "another login redeemed the code: {answer:#}");
-
-    // A fourth code, redeemed with a redirect it was not minted for.
-    let reply = get(
-        pair.bridge,
-        &format!(
-            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-            ask(port, CLIENT, "")
-        ),
-        "",
-    )
-    .await;
-    let (status, answer) = token(
-        &pair.a,
-        LEND,
-        CLIENT,
-        SECRET,
-        &[
-            ("grant_type", "authorization_code"),
-            ("code", &fresh(&reply)),
-            ("redirect_uri", "http://localhost:8096/elsewhere"),
-            ("code_verifier", VERIFIER),
-        ],
-    )
-    .await;
-    assert_eq!(
-        status, 400,
-        "a redirect other than the code's was accepted: {answer:#}"
-    );
-
-    // bo is removed, and the door refuses the authorize address before a
-    // code, without asking the service.
-    let removal = svrngs_node::Removal {
-        person: Person::parse("bo").unwrap(),
-        joined: None,
-    };
-    pair.a.rail().commit(NS, &removal).unwrap().unwrap();
-    let gone = bridge_as(&signing(2), &pair.a, Alpn::Member).await;
-    let refused = get(
-        gone.local_addr(),
-        &format!(
-            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-            ask(port, CLIENT, "")
-        ),
-        "",
-    )
-    .await;
-    assert_eq!(refused.status, 403, "{}", refused.text);
-    assert!(
-        location(&refused).is_none(),
-        "a removed member was answered a code: {}",
-        refused.text
-    );
-    assert!(
-        heads.lock().unwrap().is_empty(),
-        "the service was asked: {:?}",
-        heads.lock().unwrap()
-    );
-
-    pair.close().await;
-}
-
-/// **The authorize path holds to what a lend refuses and asks** (svrn-docs
-/// `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §5 step 2): a lend that
-/// `--refuse`s the path, or `--asks` for a person's yes, answers a member
-/// no code it would not let in. A lend refusing `/.svrngs` is refused; a
-/// lend that asks refuses a member naming no app or another app without
-/// their yes, and gives a code to the lend's own page.
-#[tokio::test]
-async fn a_lend_that_refuses_or_asks_answers_the_authorize_path_no_code_of_its_own() {
-    let pair = Pair::new().await;
-    let (origin, heads) = origins::head_origin().await;
-    let port = origin.port();
+    // a_lend_that_refuses_or_asks_answers_the_authorize_path_no_code_of_its_own
+    // (oidc.rs:347-417).
     let (refusing, asking) = ("refusing", "asking");
     signs_in_with(
         &pair,
@@ -360,14 +249,13 @@ async fn a_lend_that_refuses_or_asks_answers_the_authorize_path_no_code_of_its_o
         SECRET,
         json!({ "asks": "the app reads your films" }),
     );
-    let bo = bridge_as(&signing(2), &pair.a, Alpn::Member).await;
     let a = *pair.a.endpoint().id().as_bytes();
-    let (label, night) = (Label::of(&a, asking), Label::of(&a, "night"));
+    let (asks, night) = (Label::of(&a, asking), Label::of(&a, "night"));
     let passed = |app: &Label| {
         let pass = Pass::sign(
             &signing(2),
-            &svrngs_node::actor_of(&signing(2)),
-            (app.clone(), vec![label.clone()]),
+            &bo,
+            (app.clone(), vec![asks.clone()]),
             unix_now() + 3600,
         );
         format!("x-svrngs-pass: {}\r\n", pass.encode())
@@ -397,10 +285,9 @@ async fn a_lend_that_refuses_or_asks_answers_the_authorize_path_no_code_of_its_o
             passed(&night),
             Some("unasked"),
         ),
-        ("the lend's own page", asking, passed(&label), None),
+        ("the lend's own page", asking, passed(&asks), None),
     ] {
-        let reply = get(bo.local_addr(), &authorize(lend), &headers).await;
-        eprintln!("{row}: {}", reply.text);
+        let reply = get(pair.bridge, &authorize(lend), &headers).await;
         match refused {
             Some(kind) => {
                 assert_eq!(reply.status, 403, "{row}: {}", reply.text);
@@ -414,279 +301,88 @@ async fn a_lend_that_refuses_or_asks_answers_the_authorize_path_no_code_of_its_o
             None => assert!(location(&reply).is_some(), "{row}: {}", reply.text),
         }
     }
-    assert!(heads.lock().unwrap().is_empty(), "no authorize is carried");
-    pair.close().await;
-}
 
-/// A code is redeemed only while its person is still in the group it was
-/// minted through: bo, removed from the house inside the code's minute,
-/// gets `invalid_grant` though the lend is still lent there. Planted: a
-/// redemption that asks the audience alone.
-#[tokio::test]
-async fn a_code_is_not_redeemed_once_its_person_left_the_group() {
-    let pair = Pair::new().await;
-    let (origin, _heads) = origins::head_origin().await;
-    let port = origin.port();
-    signs_in(&pair, LEND, port, CLIENT, SECRET);
-    let redirect = format!("http://localhost:{port}{PATH}");
-    let authorize = format!(
+    // a_guests_code_names_the_guest_never_the_host (oidc.rs:813-888): Sam,
+    // ada's guest here, through the pass holders' protocol.
+    let mut opens = BTreeMap::new();
+    opens.insert(actor_of(&signing(1)), [LEND.to_string()].into());
+    let act = RailAct::Visit(Visit {
+        guest: Person::parse("Sam").unwrap(),
+        key: actor_of(&signing(SAM)),
+        opens,
+        until: unix_now() + 24 * 3600,
+    });
+    pair.a
+        .rail()
+        .commit(NS, &svrngs_core::tests_support::Fixture { act })
+        .unwrap()
+        .unwrap();
+    let holder = signing(HOLDER);
+    let sams = Pass::sign(
+        &signing(SAM),
+        &actor_of(&holder),
+        (label.clone(), vec![]),
+        unix_now() + 3600,
+    );
+    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let reply = raw_to(
+        bridge.local_addr(),
+        format!(
+            "GET /lend/{label}/.svrngs/oidc/authorize?{} HTTP/1.1\r\nHost: local\r\n\
+             x-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
+            ask(port, CLIENT, ""),
+            sams.encode()
+        ),
+    )
+    .await;
+    assert_eq!(reply.status, 302, "{}", reply.text);
+    let (status, answer) = redeem(code_of(&reply), redirect.clone()).await;
+    assert_eq!(status, 200, "{answer:#}");
+    let said = claims(answer["id_token"].as_str().expect("an id token"));
+    let (sam, ada) = (actor_of(&signing(SAM)), actor_of(&signing(1)));
+    assert_eq!(said["sub"], sam, "{said:#}");
+    assert_eq!(said["name"], "Sam (ada's guest)");
+    assert_eq!(
+        said["preferred_username"],
+        format!("Sam-{}.guest", &sam[..16])
+    );
+    assert_eq!(said["groups"], json!(["guest"]));
+    assert!(
+        !answer.to_string().contains(&ada),
+        "the host's key reached the app"
+    );
+
+    // a_code_is_not_redeemed_once_its_group_is_no_longer_lent_to (oidc.rs:493-494):
+    // no new code is minted once the lend leaves the house.
+    let name = LendName::parse(LEND).unwrap();
+    assert!(lend::set_audience(pair.dir.path(), &name, vec!["yard".into()]).unwrap());
+    let path = format!(
         "/lend/{LEND}/.svrngs/oidc/authorize?{}",
         ask(port, CLIENT, "")
     );
-    let reply = get(pair.bridge, &authorize, "").await;
-    assert_eq!(reply.status, 302, "{}", reply.text);
-    let loc = location(&reply).expect("a Location");
-    let code = pairs(loc.split_once('?').expect("a query").1)["code"].clone();
-    let bo = svrngs_node::Removal {
+    assert_eq!(get(pair.bridge, &path, "").await.status, 403);
+    assert!(lend::set_audience(pair.dir.path(), &name, vec![NS.into()]).unwrap());
+
+    // a_members_authorize_answers_a_code_the_token_route_redeems (oidc.rs:303-330):
+    // bo removed, the door refuses the authorize address before a code.
+    let removal = svrngs_node::Removal {
         person: Person::parse("bo").unwrap(),
         joined: None,
     };
-    pair.a.rail().commit(NS, &bo).unwrap().unwrap();
-    let form = [
-        ("grant_type", "authorization_code"),
-        ("code", code.as_str()),
-        ("redirect_uri", redirect.as_str()),
-        ("code_verifier", VERIFIER),
-    ];
-    let (status, answer) = token(&pair.a, LEND, CLIENT, SECRET, &form).await;
-    assert_eq!(
-        (status, answer["error"].as_str()),
-        (400, Some("invalid_grant")),
-        "{answer:#}"
+    pair.a.rail().commit(NS, &removal).unwrap().unwrap();
+    let gone = bridge_as(&signing(2), &pair.a, Alpn::Member).await;
+    let refused = get(gone.local_addr(), &path, "").await;
+    assert_eq!(refused.status, 403, "{}", refused.text);
+    assert!(
+        location(&refused).is_none(),
+        "a removed member was answered a code: {}",
+        refused.text
     );
-    pair.close().await;
-}
-
-/// A code minted through the house is not redeemed once the lend is no
-/// longer lent to the house, inside the code's minute, and no new one is
-/// minted: the authorize path refuses bo (LENDING_SCOPE §"Enforcement and
-/// disclosure" 6). Planted: a redemption that asks no group of the code.
-#[tokio::test]
-async fn a_code_is_not_redeemed_once_its_group_is_no_longer_lent_to() {
-    let pair = Pair::new().await;
-    let (origin, _heads) = origins::head_origin().await;
-    let port = origin.port();
-    signs_in(&pair, LEND, port, CLIENT, SECRET);
-    let redirect = format!("http://localhost:{port}{PATH}");
-    let authorize = format!(
-        "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-        ask(port, CLIENT, "")
-    );
-    let reply = get(pair.bridge, &authorize, "").await;
-    assert_eq!(reply.status, 302, "{}", reply.text);
-    let loc = location(&reply).expect("a Location");
-    let code = pairs(loc.split_once('?').expect("a query").1)["code"].clone();
-    let name = LendName::parse(LEND).unwrap();
-    assert!(lend::set_audience(pair.dir.path(), &name, vec!["yard".into()]).unwrap());
-    let form = [
-        ("grant_type", "authorization_code"),
-        ("code", code.as_str()),
-        ("redirect_uri", redirect.as_str()),
-        ("code_verifier", VERIFIER),
-    ];
-    let (status, answer) = token(&pair.a, LEND, CLIENT, SECRET, &form).await;
-    assert_eq!(
-        (status, answer["error"].as_str()),
-        (400, Some("invalid_grant")),
-        "{answer:#}"
-    );
-    let again = get(pair.bridge, &authorize, "").await;
-    assert_eq!(again.status, 403, "{}", again.text);
-    pair.close().await;
-}
-
-/// Given a lend signing people in with svrngs, when the app built its
-/// callback on the lend's own origin — the browser's host and scheme, which
-/// the door tells it as `X-Forwarded-Host`/`-Proto` (oidc-jellyfin) — then
-/// the authorize path accepts that redirect beside the app's own
-/// `http://localhost:<port>`, answers a relative `Location`, and the code
-/// redeems for it. Planted: the front channel before this row, which
-/// accepted only `http://localhost:<port>` (red with "the redirect_uri is
-/// not on this lend's own address"); a redirect on another lend's origin,
-/// or on the lender's host with another scheme, refused.
-#[tokio::test]
-async fn the_authorize_path_accepts_the_lends_own_origin_as_the_redirect() {
-    let pair = Pair::new().await;
-    let (origin, heads) = origins::head_origin().await;
-    let port = origin.port();
-    signs_in(&pair, LEND, port, CLIENT, SECRET);
-    signs_in(&pair, OTHER, port, OTHER_CLIENT, OTHER_SECRET);
-    let label = Label::of(pair.a.endpoint().id().as_bytes(), LEND);
-    let other = Label::of(pair.a.endpoint().id().as_bytes(), OTHER);
-    let api = pair.a.api_addr().port();
-    let bo = actor_of(&signing(2));
-
-    // A computer's browser is at <label>.localhost:<its door's port>;
-    // a phone's is at <label>.<page host>, read as https.
-    for (browser, scheme) in [
-        (format!("{label}.localhost:{api}"), "http"),
-        (format!("{label}.svrngs.example"), "https"),
-    ] {
-        let redirect = format!("{scheme}://{browser}{PATH}");
-        let reply = get_at(
-            pair.bridge,
-            &browser,
-            &format!(
-                "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-                ask_to(&redirect, CLIENT, "")
-            ),
-            "",
-        )
-        .await;
-        assert_eq!(reply.status, 302, "on {browser}: {}", reply.text);
-        let loc = location(&reply).expect("a Location");
-        assert!(
-            loc.starts_with(PATH),
-            "the redirect is not relative to the lend's origin: {loc}"
-        );
-        let code = pairs(loc.split_once('?').expect("a query").1)
-            .remove("code")
-            .expect("a code");
-        assert!(
-            heads.lock().unwrap().is_empty(),
-            "the authorize ask reached the app's service: {:?}",
-            heads.lock().unwrap()
-        );
-        let (status, answer) = token(
-            &pair.a,
-            LEND,
-            CLIENT,
-            SECRET,
-            &[
-                ("grant_type", "authorization_code"),
-                ("code", &code),
-                ("redirect_uri", &redirect),
-                ("code_verifier", VERIFIER),
-            ],
-        )
-        .await;
-        assert_eq!(status, 200, "on {browser}: {answer:#}");
-        let claims = claims(answer["id_token"].as_str().expect("an id token"));
-        assert_eq!(claims["sub"], bo, "on {browser}: {claims:#}");
-    }
-
-    // Another lend's origin, and the lend's own label on a host that is not
-    // the browser's, and the browser's host with the other scheme: refused.
-    let host = format!("{label}.localhost:{api}");
-    for redirect in [
-        format!("http://{other}.localhost:{api}{PATH}"),
-        format!("http://{label}.other.example{PATH}"),
-        format!("https://{host}{PATH}"),
-    ] {
-        let reply = get_at(
-            pair.bridge,
-            &host,
-            &format!(
-                "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-                ask_to(&redirect, CLIENT, "")
-            ),
-            "",
-        )
-        .await;
-        assert_eq!(reply.status, 400, "on {redirect}: {}", reply.text);
-        assert!(
-            location(&reply).is_none(),
-            "a redirect off the lend's origin was answered a code: {}",
-            reply.text
-        );
-    }
     assert!(
         heads.lock().unwrap().is_empty(),
         "the service was asked: {:?}",
         heads.lock().unwrap()
     );
-
-    pair.close().await;
-}
-
-/// The browser's own origin is told to a service that signs people in, as a
-/// reverse proxy tells it (oidc-jellyfin): `X-Forwarded-Host` is the `Host` the browser asked,
-/// and `X-Forwarded-Proto` is `http` for a `*.localhost` host (or an
-/// address, `the_scheme_told_is_the_one_the_browser_used`) and `https`
-/// otherwise; a value the client typed is displaced, and `Host` is still the
-/// service's own address. Planted: the door before this row, which sent
-/// neither and let a client's through.
-#[tokio::test]
-async fn the_browser_origin_is_told_to_the_service_as_forwarded_headers() {
-    let pair = Pair::new().await;
-    let (origin, heads) = origins::head_origin().await;
-    signs_in(&pair, "shelf", origin.port(), CLIENT, SECRET);
-    let own = format!("localhost:{}", origin.port());
-    let label = Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
-    for (host, proto) in [
-        (format!("{label}.localhost:6473"), "http"),
-        (format!("{label}.svrngs.example"), "https"),
-    ] {
-        let reply = pair
-            .raw(
-                format!(
-                    "GET /lend/shelf/whoami HTTP/1.1\r\nHost: {host}\r\n\
-                     x-forwarded-host: evil.example\r\nX-Forwarded-Proto: https\r\n\
-                     Connection: close\r\n\r\n"
-                )
-                .as_bytes(),
-            )
-            .await;
-        assert_eq!(reply.status, 200, "{}", reply.text);
-        let head = last(&heads);
-        assert_eq!(
-            header_values(&head, "x-forwarded-host"),
-            vec![host.as_str()],
-            "the browser's host is not the one the service is told: {head}"
-        );
-        assert_eq!(
-            header_values(&head, "x-forwarded-proto"),
-            vec![proto],
-            "the scheme is not the browser's: {head}"
-        );
-        assert_eq!(
-            header_values(&head, "host"),
-            vec![own.as_str()],
-            "the service's own Host changed: {head}"
-        );
-    }
-    pair.close().await;
-}
-
-/// Given a lend signing people in with svrngs, when a device in the room
-/// reaches it at the room's address, `http://<private address>:<port>/`
-/// (DESIGN §3 "The room", call 3; room.rs), plain http, then the service is
-/// told that scheme, and the authorize path takes a redirect on that
-/// `http://` origin as the lend's own. Red at dd7721c7: the door told the
-/// service `X-Forwarded-Proto: https` (door.rs `scheme_of`, which read
-/// every host but `*.localhost` as https), and refused the redirect 400,
-/// "the redirect_uri is not on this lend's own address".
-#[tokio::test]
-async fn a_rooms_address_is_told_http_and_its_origin_passes_authorize() {
-    let pair = Pair::new().await;
-    let (origin, heads) = origins::head_origin().await;
-    signs_in(&pair, LEND, origin.port(), CLIENT, SECRET);
-    let room = "192.168.1.20:7123";
-
-    let reply = get_at(pair.bridge, room, &format!("/lend/{LEND}/whoami"), "").await;
-    assert_eq!(reply.status, 200, "{}", reply.text);
-    let head = last(&heads);
-    assert_eq!(
-        header_values(&head, "x-forwarded-proto"),
-        vec!["http"],
-        "the room's scheme is not the one its browser used: {head}"
-    );
-
-    let redirect = format!("http://{room}{PATH}");
-    let reply = get_at(
-        pair.bridge,
-        room,
-        &format!(
-            "/lend/{LEND}/.svrngs/oidc/authorize?{}",
-            ask_to(&redirect, CLIENT, "")
-        ),
-        "",
-    )
-    .await;
-    assert_eq!(reply.status, 302, "{}", reply.text);
-    let loc = location(&reply).expect("a Location");
-    assert!(loc.starts_with(&format!("{PATH}?code=")), "{loc}");
-
     pair.close().await;
 }
 
@@ -694,199 +390,3 @@ async fn a_rooms_address_is_told_http_and_its_origin_passes_authorize() {
 const SAM: u8 = 9;
 /// The key a lend's origin on Sam's page dials with, holding Sam's pass.
 const HOLDER: u8 = 10;
-
-/// Kim's house: Alex keeps it, Kim's computer the lender, Bo's another
-/// member's, each holding the group's seed.
-struct House {
-    kim: Node,
-    bo: Node,
-    dirs: [tempfile::TempDir; 2],
-}
-
-impl House {
-    async fn new() -> Self {
-        let dirs = [tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap()];
-        let kim = start(1, dirs[0].path()).await;
-        let bo = start(2, dirs[1].path()).await;
-        let people = [("Alex", 7), ("Kim", 1), ("Bo", 2)];
-        let seed = Roster::new(
-            (people.into_iter())
-                .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&signing(k))]))
-                .collect(),
-        );
-        for node in [&kim, &bo] {
-            node.rail().set_seed(NS, &seed).unwrap();
-        }
-        House { kim, bo, dirs }
-    }
-
-    /// Kim has Sam over until `until`, opening Kim's `lend`.
-    fn visit(&self, until: i64, lend: &str) -> OpId {
-        let mut opens = std::collections::BTreeMap::new();
-        opens.insert(
-            actor_of(self.kim.rail().signer()),
-            [lend.to_string()].into(),
-        );
-        let act = RailAct::Visit(Visit {
-            guest: Person::parse("Sam").unwrap(),
-            key: actor_of(&signing(SAM)),
-            opens,
-            until,
-        });
-        let fixture = svrngs_core::tests_support::Fixture { act };
-        let recorded = self.kim.rail().commit(NS, &fixture).unwrap().unwrap();
-        self.bo.rail().ingest_all(NS, recorded.lines()).unwrap();
-        recorded.lines()[0].id.clone()
-    }
-}
-
-/// A guest's code is redeemed only while the door would still let the
-/// guest in (guest_of, asked again): Kim stops Sam's visit inside the
-/// code's minute, the lend still lent to the house, and the code is
-/// `invalid_grant`. Planted: the audience alone at a guest's redemption.
-#[tokio::test]
-async fn a_guests_code_is_not_redeemed_once_the_visit_is_stopped() {
-    let house = House::new().await;
-    let (origin, _heads) = origins::head_origin().await;
-    let port = origin.port();
-    let dir = lend::lends_dir(house.dirs[0].path());
-    std::fs::create_dir_all(&dir).unwrap();
-    let body = json!({
-        "port": port, "kind": "k", "groups": [NS],
-        "sign_in_with_svrngs": { "client_id": CLIENT, "client_secret": SECRET },
-    });
-    std::fs::write(dir.join(format!("{LEND}.json")), body.to_string()).unwrap();
-    let visit = house.visit(unix_now() + 24 * 3600, LEND);
-    let label = Label::of(house.kim.endpoint().id().as_bytes(), LEND);
-    let holder = signing(HOLDER);
-    let pass = Pass::sign(
-        &signing(SAM),
-        &actor_of(&holder),
-        (label.clone(), vec![]),
-        unix_now() + 3600,
-    );
-    let bridge = bridge_as(&holder, &house.kim, Alpn::Lend).await;
-    let asked = format!(
-        "GET /lend/{label}/.svrngs/oidc/authorize?{} HTTP/1.1\r\nHost: local\r\n\
-         x-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
-        ask(port, CLIENT, ""),
-        pass.encode()
-    );
-    let reply = raw_to(bridge.local_addr(), asked).await;
-    assert_eq!(reply.status, 302, "{}", reply.text);
-    let loc = location(&reply).expect("a Location");
-    let code = pairs(loc.split_once('?').unwrap().1)
-        .remove("code")
-        .expect("a code");
-    let stop = svrngs_core::tests_support::Fixture {
-        act: RailAct::Correct {
-            corrects: visit,
-            replacement: None,
-        },
-    };
-    house.kim.rail().commit(NS, &stop).unwrap().unwrap();
-    tokio::time::sleep(Duration::from_millis(1100)).await;
-    let redirect = format!("http://localhost:{port}{PATH}");
-    let form = [
-        ("grant_type", "authorization_code"),
-        ("code", code.as_str()),
-        ("redirect_uri", redirect.as_str()),
-        ("code_verifier", VERIFIER),
-    ];
-    let (status, answer) = token(&house.kim, LEND, CLIENT, SECRET, &form).await;
-    assert_eq!(
-        (status, answer["error"].as_str()),
-        (400, Some("invalid_grant")),
-        "{answer:#}"
-    );
-    let why = answer["error_description"].as_str().unwrap_or_default();
-    assert!(
-        why.contains("guest"),
-        "refused for the visit, not another check: {answer:#}"
-    );
-}
-
-/// Given Kim's lend signing people in with svrngs and Sam over as Kim's
-/// guest, when Sam's browser reaches the authorize address with the visit's
-/// pass, then the code redeems for the guest — the visit's key, Sam's
-/// account and name — never for Kim or Kim's key.
-#[tokio::test]
-async fn a_guests_code_names_the_guest_never_the_host() {
-    let house = House::new().await;
-    let (origin, heads) = origins::head_origin().await;
-    let port = origin.port();
-    let dir = lend::lends_dir(house.dirs[0].path());
-    std::fs::create_dir_all(&dir).unwrap();
-    let body = json!({
-        "port": port,
-        "kind": "k",
-        "groups": [NS],
-        "sign_in_with_svrngs": { "client_id": CLIENT, "client_secret": SECRET },
-    });
-    std::fs::write(dir.join(format!("{LEND}.json")), body.to_string()).unwrap();
-    house.visit(unix_now() + 24 * 3600, LEND);
-
-    let label = Label::of(house.kim.endpoint().id().as_bytes(), LEND);
-    let holder = signing(HOLDER);
-    let pass = Pass::sign(
-        &signing(SAM),
-        &actor_of(&holder),
-        (label.clone(), vec![]),
-        unix_now() + 3600,
-    );
-    let bridge = bridge_as(&holder, &house.kim, Alpn::Lend).await;
-    let reply = raw_to(
-        bridge.local_addr(),
-        format!(
-            "GET /lend/{label}/.svrngs/oidc/authorize?{} HTTP/1.1\r\nHost: local\r\n\
-             x-svrngs-pass: {}\r\nConnection: close\r\n\r\n",
-            ask(port, CLIENT, ""),
-            pass.encode()
-        ),
-    )
-    .await;
-    assert_eq!(reply.status, 302, "{}", reply.text);
-    let loc = location(&reply).expect("a Location");
-    let code = pairs(loc.split_once('?').unwrap().1)
-        .remove("code")
-        .expect("a code");
-    assert!(
-        heads.lock().unwrap().is_empty(),
-        "the service was asked: {:?}",
-        heads.lock().unwrap()
-    );
-
-    let redirect = format!("http://localhost:{port}{PATH}");
-    let (status, answer) = token(
-        &house.kim,
-        LEND,
-        CLIENT,
-        SECRET,
-        &[
-            ("grant_type", "authorization_code"),
-            ("code", &code),
-            ("redirect_uri", &redirect),
-            ("code_verifier", VERIFIER),
-        ],
-    )
-    .await;
-    assert_eq!(status, 200, "{answer:#}");
-    let claims = claims(answer["id_token"].as_str().expect("an id token"));
-    let sam = actor_of(&signing(SAM));
-    let kim = actor_of(&signing(1));
-    assert_eq!(claims["sub"], sam, "{claims:#}");
-    assert_ne!(claims["sub"], kim, "the guest's code names Kim: {claims:#}");
-    assert_eq!(claims["name"], "Sam (Kim's guest)");
-    assert_eq!(
-        claims["preferred_username"],
-        format!("Sam-{}.guest", &sam[..16])
-    );
-    assert_eq!(claims["groups"], json!(["guest"]));
-    assert!(
-        !answer.to_string().contains(&kim),
-        "Kim's key reached the app"
-    );
-
-    house.kim.endpoint().close().await;
-    house.bo.endpoint().close().await;
-}

@@ -424,7 +424,7 @@ fn an_unscoped_answer_from_a_computer_on_4_is_relayed_to_nobody() {
 /// protocol, where the door asks its pass, and on none that syncs, reads
 /// people or fetches blobs; a key the keeper cut on none, though the
 /// register still names it removed, which turns the members' protocol into
-/// the routes that tell it so (tests/door guests.rs:304-354, main.rs:1773-1797).
+/// the routes that tell it so (tests/door at 5e20d0b3, guests.rs:304-354, main.rs:1773-1797).
 /// Planted, watched failing: `admit_dialer` admitting a key with a visit
 /// held here on every protocol.
 #[test]

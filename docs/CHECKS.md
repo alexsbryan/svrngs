@@ -115,7 +115,8 @@ dialled still binds a UDP endpoint and its API port, so it counts as Q and P.
 
 `docs/seams.tsv` has a row for every test outside the unit tests, and for
 each unit test that crosses a seam: its seams, whether it is `fragile`,
-`deterministic` or `ignored` now, its claim with the line that asserts it,
+`deterministic` or `ignored` now, or `moved` (retired, its claim held
+where `moves to` names), its claim with the line that asserts it,
 where that claim moves, and the harness missing for the move. A unit that
 moves a test changes its row in the same commit.
 
@@ -180,7 +181,7 @@ map changed with it.
 | # | Unit | Tests | Moves to | Needs |
 |---|---|---|---|---|
 | 1 | browser step: claims the map finds covered by laws and handlers. 4 of 54 retired (6 rows): an alias in two zones, a fragment's open and its words, a lend's script at a phone's page, a lost post. 50 kept: 21 on the home page (harness 5); 21 whose node answers are claimed only under `crates/*/tests` (door, carried, surface, lend_origin, guests, relay_fallback, a removed dialer's admission, the issuer's `/ask`: harnesses 1-4); 8 on a browser mechanism (a real alias landing, the wasm's streaming, a signer frame's cookie, a worker's update, a relay move, Cache across a restart, Web Locks across tabs, clipboard and request log) | 54 | `pages/enter.test.mjs`, `proxied.test.mjs` | none |
-| 2 | door, oidc, session, accept: pure rows and in-process routers | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3 |
+| 2 | door, oidc, session, accept: pure rows and in-process routers. Landed for the door: `tests/door`'s 60 tests are 7 contained ones (bytes both ways, what the service and a member receive, each refusal family, live answers cut, what is lent, the authorize path, a newcomer through the ring), the rest `moved` in the map, their rules pure rows over explicit inputs and a rail on a tempdir (`door/tests.rs`, `oidc/tests.rs` with the token route by oneshot, `node/tests.rs`, `lend/tests.rs`) | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3; the live cuts and the limit's window, 7 |
 | 3 | n0 out of the gate | 25 | a relay on 127.0.0.1 | harness 8 |
 | 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob); ring_routes' 7 landed, asked in-process | 36, 29 left | routers by oneshot with a `Dialer`; transport | harness 1, 4 |
 | 5 | pages and the browser step's home-page tests | ~60 | Node laws over the composed home page | harness 5 |
@@ -188,3 +189,9 @@ map changed with it.
 | 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address | ~95 | `src/*_tests.rs` over the parts that print and decide | harness 8, small splits per row |
 | 8 | scenes and holyarrs; H8's list of WebKit's messages replaced by whose page each step leaves (`web/tests/leaving.mjs`) | 20 | handlers and fixtures; one scene per daemon stays | none for W; the rest as the map says |
 | 9 | give's keeper, check and machine; landed: tests/fake answers as podman, svrngs's command and the record API do, `Keeper` is driven a round at a time at a set `now` (keeper.rs), `check` runs in process; keep.rs retired | 20, 1 left: check.rs's podman test, the contained one | fakes of Podman and the clock | none |
+
+### Owed
+
+- `docs/DESIGN.md` cites `crates/svrngs-node/tests/door/main.rs:56`; since
+  unit 2 that line is :59. DESIGN.md was another session's open file when
+  unit 2 landed, so the citation waits for its next edit.

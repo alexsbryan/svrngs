@@ -1043,7 +1043,7 @@ API's; since u5-2 each opens at an origin of its own (DESIGN §7). *Two nodes on
 connection dialled on loopback onto this computer's private address, which
 the door guesses home and tells no share (`ralph/REVIEW_FINDINGS.md` #33),
 so U5's two-node tests build every node with `RelayConfig::loopback_only`,
-as the door's do (`crates/svrngs-node/tests/door/main.rs:56`). *A sign-in is
+as the door's do (`crates/svrngs-node/tests/door/main.rs:59`). *A sign-in is
 the app's:* the door sets the person on every request, and an app that
 reads no such header asks its own sign-in; Jellyfin is one (U3's dry run),
 and which of DESIGN §1's apps read one is the census's to find. *Jellyfin's own
