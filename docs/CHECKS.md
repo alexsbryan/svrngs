@@ -141,7 +141,7 @@ record_api 13, join_by_link 12, and 152 in 34 smaller targets.
 | W | none needed: a scene says whose pages each step leaves, and an error from one is not judged, whatever its words (`web/tests/leaving.mjs`, its law `leaving.test.mjs`) | holyarrs H8's list of messages, gone |
 | M | the `playback` step, as it is | nothing left |
 | Q | `door::a_range_is_served_206_and_416_through_the_door_sha_exact` (bytes cross the door), `accept::a_handler_reads_the_dialers_verified_key_and_no_header_names_another`, `folders::a_change_by_any_member_reaches_another_s_directory` | header rules, refusals and decisions to door.rs's pure functions and to `door::router` in-process; syncing claims to an in-memory transport |
-| R | `default_relay::a_group_s_own_relay_meets_every_member_and_n0_never`, `relay_fallback::a_fresh_contribution_syncs_after_the_public_reach_is_cut` | n0 out of the gate entirely; tier choices to a pure step (tiers.rs) |
+| R | `default_relay::a_group_s_own_relay_meets_every_member_and_n0_never`, `relay_fallback::a_fresh_contribution_syncs_after_the_public_reach_is_cut` | n0 out of the gate entirely (the CLI's tests: harness 8; the scenes left, unit 3); tier choices to a pure step (tiers.rs) |
 | P | `play::stop_closes_it_and_nothing_listens_while_it_is_off`, and the home page's port probe run alone | ports to injected probes and in-memory upstreams |
 | C | the ceiling canary; `lend_origin::a_lend_s_computer_asleep_is_said_away_within_the_cap` | every other bar to an ordering claim over a fake clock or `now` passed in |
 | D | the films scene (Jellyfin), give (podman), `page integration` (Redis) | holyarrs and night's other claims to handlers and fixtures; give's keeper to fakes of Podman |
@@ -169,9 +169,14 @@ record_api 13, join_by_link 12, and 152 in 34 smaller targets.
 6. A probe passed in at home.rs's `share::listening`, so no test scans ports.
 7. `now` passed in where a bar is a timing: door.rs `unix_now`, carried's
    `spent`, the visit tests' end set from the real clock.
-8. The CLI's spawned `svrngs` pointed at a relay on 127.0.0.1, as
-   home_group.rs `dee_s_computer` does: 25 tests reach n0 on the internet
-   today. No production seam.
+8. Landed: the CLI's spawned `svrngs` is `crates/svrngs/tests/common/as_main.rs`,
+   the test binary run again as `main` but meeting at one relay on 127.0.0.1
+   per binary, n0 nowhere, as home_group.rs `dee_s_computer` was alone:
+   `Program` (share, join_by_link), address.rs, name.rs and install.rs's
+   tarball, a script that is it. No production seam. The 25 tests that
+   reached n0's relays and lookup reach 127.0.0.1 alone (a probe with
+   `lsof` saw the shipped binary dial eight addresses on 443 and 80 in
+   8 s, as_main's none); R stays in their rows, a relay process still.
 
 ### Units, in order
 
@@ -185,7 +190,7 @@ map changed with it.
 |---|---|---|---|---|
 | 1 | browser step: claims the map finds covered by laws and handlers. 19 of 54 retired: an alias in two zones, a fragment's open and its words, a lend's script at a phone's page, a lost post (6 rows); and 15 on the home page (unit 5). Kept on the home page, unit 5's; 21 whose node answers are claimed only under `crates/*/tests` (door, carried, surface, lend_origin, guests, relay_fallback, a removed dialer's admission, the issuer's `/ask`: harnesses 1-4); 8 on a browser mechanism (a real alias landing, the wasm's streaming, a signer frame's cookie, a worker's update, a relay move, Cache across a restart, Web Locks across tabs, clipboard and request log) | 54 | `pages/enter.test.mjs`, `proxied.test.mjs`, `pages/home.test.mjs` | none |
 | 2 | door, oidc, session, accept: pure rows and in-process routers. Landed for the door: `tests/door`'s 60 tests are 7 contained ones (bytes both ways, what the service and a member receive, each refusal family, live answers cut, what is lent, the authorize path, a newcomer through the ring), the rest `moved` in the map, their rules pure rows over explicit inputs and a rail on a tempdir (`door/tests.rs`, `oidc/tests.rs` with the token route by oneshot, `node/tests.rs`, `lend/tests.rs`) | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3; the live cuts and the limit's window, 7 |
-| 3 | n0 out of the gate | 25 | a relay on 127.0.0.1 | harness 8 |
+| 3 | n0 out of the gate. Landed for the CLI's 25 (harness 8); no gate test is n0's contained one, since `tests/shipped.rs` pins `reach(SHIPPED)` with no socket. Left: the scenes, Demo evidence, run the shipped binary (scenes/people.rs `svrngs`, or `SCENES_BINARY`), so each person's svrngs meets n0 beside the scene's own relay | 25 | a relay on 127.0.0.1 | harness 8 (landed) |
 | 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob); ring_routes' 7 landed, asked in-process | 36, 29 left | routers by oneshot with a `Dialer`; transport | harness 1, 4 |
 | 5 | pages and the browser step's home-page tests. 25 retired to `pages/home.test.mjs`: 15 of the browser step's 23 (its words, the ask, the door, removals, refusals, the folder, the terminal line, links, the address and its Copy, a pasted link, two Trips, an unreadable room and register, the slowest computer as an order) and 10 of the pages step's 36 (what was done said once; five answers said once a press; a lapsed session at Leave and at an ask; WiFi opened in one foot; a folder opened twice). `the_home_page_says_what_it_is_for` shrunk to B's contained test: loaded under its policy with no page error, June's first look, look.css. Left, 7 browser tests, each asserting a node act only `crates/*/tests` or a socket also hold: a lend's declaration gone (limit) or holding its secret (sign-in), a removed computer told, a link's issuer, the room served on this WiFi, a planted opener and a tab by keyboard and mouse, ports probed. Left, 26 pages tests: the phone's page in WebKit (9), a node's write read back on `visible` or `again` (choices, lends, a bring, a join over QUIC), a visit or the screen on the real clock, and drawings not moved yet (a group made or joined, Play in two lists) | 59, 34 left, one of them B's contained test | Node laws over the composed home page | harness 5 (landed); harness 7 for the clock, 1-4 for node acts |
 | 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |

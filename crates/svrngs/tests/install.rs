@@ -46,10 +46,31 @@ fn tarball() -> String {
 
 // Rehearsals can hold the downloaded payload to the same immutable product
 // artifact as their browser world, instead of Cargo's shared profile pathname.
+// Otherwise svrngs is as_main.rs's, this binary meeting at a relay on
+// 127.0.0.1, so nothing install.sh starts reaches n0: a program named
+// `svrngs`, made once for the binary, which the tarball carries.
 fn binary() -> PathBuf {
+    static MADE: std::sync::OnceLock<(tempfile::TempDir, PathBuf)> = std::sync::OnceLock::new();
     std::env::var_os("SCENES_BINARY")
         .map(PathBuf::from)
-        .unwrap_or_else(|| PathBuf::from(env!("CARGO_BIN_EXE_svrngs")))
+        .unwrap_or_else(|| {
+            let (_, svrngs) = MADE.get_or_init(|| {
+                let dir = tempfile::tempdir().unwrap();
+                let svrngs = as_main::installed(dir.path());
+                (dir, svrngs)
+            });
+            svrngs.clone()
+        })
+}
+
+#[path = "common/as_main.rs"]
+mod as_main;
+
+/// svrngs itself, as install.sh places and starts it (common/as_main.rs).
+#[test]
+#[ignore = "run by install.sh's svrngs, in a process of its own, as svrngs"]
+fn svrngs_here() {
+    as_main::main()
 }
 
 /// `program`'s tarball for this computer: svrngs's, or Give's program's.
@@ -439,7 +460,11 @@ async fn a_svrngs_started_by_hand_is_stopped_by_the_line() {
 async fn native_arrival_retries_one_identity_and_opens_the_exact_group() {
     let site = site(None);
     let port = host(site.path().to_path_buf()).await;
-    let (_relay, ours, _dir, sam) = common::sams_computer(1).await;
+    // A Sam of its own key: with the_line_run_twice_…'s, also 1, both
+    // answered a relay their joiners shared, which handed one's ask to the
+    // other, refused NoInvite (2 of 12 runs once both met at one relay on
+    // 127.0.0.1, as_main.rs; the issuer's traces, redeem.rs `serve_ask`).
+    let (_relay, ours, _dir, sam) = common::sams_computer(3).await;
     let page = Origin::parse(&format!("http://127.0.0.1:{port}/")).unwrap();
     let (seed, printed) = cli::new_group(
         &sam,

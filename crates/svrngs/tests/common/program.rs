@@ -2,11 +2,14 @@
 //! The program itself, as a person runs it: started over a data dir, its
 //! output read line by line as it comes. Moved from tests/share.rs,
 //! behaviour kept, so other tests can run the command against a svrngs
-//! already running (tests/join_by_link.rs).
+//! already running (tests/join_by_link.rs). Its svrngs is
+//! as_main.rs's: this test binary as `main`, meeting at a relay on
+//! 127.0.0.1 and never n0, so each binary that includes this file includes
+//! `common/as_main.rs` as `as_main` and names its `main` in a test.
 
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
-use std::process::{Child, Command as Process, Stdio};
+use std::process::{Child, Stdio};
 use std::time::Duration;
 
 /// The program, its output read line by line as it comes.
@@ -31,7 +34,7 @@ impl Program {
     /// [`Program::start`], with `$HOME` set to `home` when one is given, so
     /// a group's folder is placed there, not in the machine's own home.
     pub fn at(dir: &Path, log: &Path, args: &[&str], input: &str, home: Option<&Path>) -> Self {
-        let mut asked = Process::new(env!("CARGO_BIN_EXE_svrngs"));
+        let mut asked = crate::as_main::svrngs();
         let mut asked = asked
             .args(args)
             .env("SVRNGS_DIR", dir)
@@ -51,10 +54,11 @@ impl Program {
             .unwrap()
             .write_all(input.as_bytes())
             .unwrap();
-        let out = child.stdout.take().unwrap();
+        let mut out = BufReader::new(child.stdout.take().unwrap());
+        crate::as_main::past_header(&mut out);
         let (tx, lines) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
-            for line in BufReader::new(out).lines().map_while(Result::ok) {
+            for line in out.lines().map_while(Result::ok) {
                 if tx.send(line).is_err() {
                     return;
                 }

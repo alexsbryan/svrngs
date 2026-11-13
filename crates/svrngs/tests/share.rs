@@ -567,6 +567,15 @@ fn a_lend_that_asks_keeps_its_lender_s_words() {
 #[path = "common/program.rs"]
 mod program;
 use program::Program;
+#[path = "common/as_main.rs"]
+mod as_main;
+
+/// svrngs itself, as [`Program`] runs it (common/as_main.rs).
+#[test]
+#[ignore = "run by Program, in a process of its own, as svrngs"]
+fn svrngs_here() {
+    as_main::main()
+}
 
 /// Every file under `dir` but `except`, by path, holding `needle`.
 fn holding(dir: &Path, needle: &[u8], except: &Path) -> Vec<String> {

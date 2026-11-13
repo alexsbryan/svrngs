@@ -33,6 +33,15 @@ use svrngs_node::{
 #[path = "common/program.rs"]
 mod program;
 use program::Program;
+#[path = "common/as_main.rs"]
+mod as_main;
+
+/// svrngs itself, as [`Program`] runs it (common/as_main.rs).
+#[test]
+#[ignore = "run by Program, in a process of its own, as svrngs"]
+fn svrngs_here() {
+    as_main::main()
+}
 
 #[path = "../../svrngs-node/tests/common/mod.rs"]
 mod node_common;

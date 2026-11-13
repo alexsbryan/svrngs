@@ -7,6 +7,17 @@
 //! this test beside it, 0 of 15 without).
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+#[path = "common/as_main.rs"]
+mod as_main;
+
+/// svrngs itself, as [`founded_as`] runs it, meeting at a relay on
+/// 127.0.0.1 and never n0 (common/as_main.rs).
+#[test]
+#[ignore = "run by founded_as, in a process of its own, as svrngs"]
+fn svrngs_here() {
+    as_main::main()
+}
+
 /// The account's full name as this system shows it, asked as a person
 /// would: `id -F` on macOS, the GECOS field of `getent passwd` up to its
 /// first comma elsewhere; empty when it shows none.
@@ -41,7 +52,7 @@ fn full_name_shown(user: &str) -> String {
 fn founded_as(user: &str) -> String {
     use std::io::BufRead;
     let home = tempfile::tempdir().unwrap();
-    let mut child = std::process::Command::new(env!("CARGO_BIN_EXE_svrngs"))
+    let mut child = as_main::svrngs()
         .args(["new", "house"])
         .env("HOME", home.path())
         .env("SVRNGS_DIR", home.path().join(".svrngs"))
@@ -51,9 +62,9 @@ fn founded_as(user: &str) -> String {
         .spawn()
         .unwrap();
     let mut first = String::new();
-    std::io::BufReader::new(child.stdout.take().unwrap())
-        .read_line(&mut first)
-        .unwrap();
+    let mut out = std::io::BufReader::new(child.stdout.take().unwrap());
+    as_main::past_header(&mut out);
+    out.read_line(&mut first).unwrap();
     let _ = child.kill();
     let _ = child.wait();
     first

@@ -18,6 +18,17 @@ use svrngs::cli;
 use svrngs::share::{self, Share};
 use svrngs_node::lend::Program as LentProgram;
 
+#[path = "common/as_main.rs"]
+mod as_main;
+
+/// svrngs itself, as [`Program`] runs it (common/as_main.rs). `open` and a
+/// second bare command, which start no node, are the shipped binary's.
+#[test]
+#[ignore = "run by Program, in a process of its own, as svrngs"]
+fn svrngs_here() {
+    as_main::main()
+}
+
 /// The program, its output read line by line as it comes.
 struct Program {
     child: Child,
@@ -27,9 +38,10 @@ struct Program {
 
 impl Program {
     /// `svrngs <args>` over `dir`, its home `dir` too (a group's folder
-    /// is made under it), tracing everything to `log`.
+    /// is made under it), tracing everything to `log`: as_main.rs's, so it
+    /// meets at a relay on 127.0.0.1, never n0.
     fn start(dir: &Path, log: &Path, args: &[&str]) -> Self {
-        let mut child = Process::new(env!("CARGO_BIN_EXE_svrngs"))
+        let mut child = as_main::svrngs()
             .args(args)
             .env("SVRNGS_DIR", dir)
             .env("HOME", dir)
@@ -39,10 +51,11 @@ impl Program {
             .stderr(std::fs::File::create(log).unwrap())
             .spawn()
             .unwrap();
-        let out = child.stdout.take().unwrap();
+        let mut out = BufReader::new(child.stdout.take().unwrap());
+        as_main::past_header(&mut out);
         let (tx, lines) = std::sync::mpsc::channel();
         std::thread::spawn(move || {
-            for line in BufReader::new(out).lines().map_while(Result::ok) {
+            for line in out.lines().map_while(Result::ok) {
                 if tx.send(line).is_err() {
                     return;
                 }
