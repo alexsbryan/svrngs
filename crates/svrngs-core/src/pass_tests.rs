@@ -2,6 +2,17 @@
 use super::*;
 use crate::tests_support::key;
 
+impl Pass {
+    /// Whether `link`, presented by `to` at `now`, carries this pass to it
+    /// for `lend`, as the door asks it ([`crate::authority::resolve`]): each
+    /// opens `lend` now, `link` held by `to` and signed by this pass's
+    /// holder, and naming no app, lend or time this one does not
+    /// (capability-signed; DESIGN §3).
+    fn carries(&self, link: &Pass, to: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
+        crate::authority::resolve(self, Some(link), to, lend, now, || ())
+    }
+}
+
 fn lender(seed: u8) -> [u8; 32] {
     key(seed).verifying_key().to_bytes()
 }

@@ -1314,7 +1314,7 @@ Seven calls:
    pinned to what they said yes to. They cannot carry it off. iroh's
    handshake needs an endpoint key as bytes, so each worker run makes its
    own, and the holder names it in a link, a short pass the door checks
-   beside the pass (`x-svrngs-link`; `Pass::carries`). An origin holding no
+   beside the pass (`x-svrngs-link`; `authority::resolve`). An origin holding no
    key its pass names asks the group's page for a new one (`#open=<label>
    &anew`), which a window another page opened is never given. Where the
    browser loses that key on its way to the origin's worker — Safari on an
@@ -2019,7 +2019,7 @@ from the journal waits in PLAN §2.
   the group's signer, `web/sign.html` at the page's origin, which an app's
   page frames and which runs no app code. Before the worker signs an entry,
   the signer approves it by its own clock while the pass is live
-  (`authority::approving`, `approve_line`): the entry's grant must be one its
+  (`authority::approve_in_open`, `approve_line`): the entry's grant must be one its
   open issued, its time within five minutes of the signer's, its app's own
   part. Approval names the entry's id without its grant (`grant::bare_id`,
   `Pass.op`) and is the approver's signature over the pass and that id

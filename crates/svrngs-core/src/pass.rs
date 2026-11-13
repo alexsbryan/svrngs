@@ -228,7 +228,7 @@ impl Pass {
     }
 
     /// [`Self::sign`], naming `approver`, actor hex, as the key that
-    /// approves the holder's entries ([`Self::approve`]).
+    /// approves the holder's entries ([`crate::authority::approve_in_open`]).
     pub fn approvable(
         person: &SigningKey,
         holder: &str,
@@ -281,43 +281,15 @@ impl Pass {
         msg
     }
 
-    /// This grant naming `line`, signed by `approver`, the key this pass
-    /// names, when it may approve it at `now`, its own clock: before the pass
-    /// lapses, by its holder, appending only its app's part (HOLDER_APPROVAL
-    /// §2; [`crate::authority::approving`]). The holder's own timestamp is no
-    /// evidence of when it wrote, so a line stamped after the pass lapses
-    /// gets none either.
-    pub fn approve(
-        &self,
-        approver: &SigningKey,
-        line: &crate::Op<crate::SignedOp>,
-        group: &str,
-        now: i64,
-    ) -> Option<Self> {
-        let mut pass = crate::authority::approving(self, line, group, now)?;
-        (pass.approver.as_deref() == Some(actor_of(approver).as_str())).then_some(())?;
-        pass.approval = Some(sign_message(approver, &pass.approval_message()));
-        Some(pass)
-    }
-
     /// Whether this pass, presented by `holder` at `now`, opens `lend`: its
     /// app or one of its reads.
     pub fn check(&self, holder: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
         crate::authority::check(self, holder, lend, now)
     }
 
-    /// Whether `link`, presented by `to` at `now`, carries this pass to it
-    /// for `lend`: each opens `lend` now, `link` held by `to` and
-    /// signed by this pass's holder, and naming no app, lend or time this
-    /// one does not (capability-signed; DESIGN §3). A phone's holder, a key
-    /// no page can copy, names each worker run's endpoint key so.
-    pub fn carries(&self, link: &Pass, to: &str, lend: &Label, now: i64) -> Result<(), PassFault> {
-        crate::authority::resolve(self, Some(link), to, lend, now, || ())
-    }
-
     /// The link this pass's holder signs to `holder`, unsigned, its
     /// [`Self::message`] what the holder signs: the same lends and time, so
-    /// [`Self::carries`] passes it.
+    /// [`crate::authority::resolve`] passes it.
     pub fn link(&self, holder: &str) -> Self {
         let mut link = self.clone();
         (link.person, link.holder, link.sig) = (self.holder.clone(), holder.into(), String::new());

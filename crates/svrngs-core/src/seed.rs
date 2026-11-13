@@ -28,7 +28,7 @@ pub struct Seed {
     founder: Name,
     key: VerifyingKey,
     salt: [u8; 16],
-    policy: Option<GroupPolicy>,
+    pub(crate) policy: Option<GroupPolicy>,
 }
 
 impl Seed {
@@ -42,10 +42,6 @@ impl Seed {
             salt,
             policy: Some(GroupPolicy::SourcesV1),
         }
-    }
-
-    pub fn policy(&self) -> Option<GroupPolicy> {
-        self.policy
     }
 
     /// Whether an older svrngs made the group, as its roster says
@@ -84,10 +80,6 @@ impl Seed {
         hex::encode(self.key.as_bytes())
     }
 
-    pub fn salt_hex(&self) -> String {
-        hex::encode(self.salt)
-    }
-
     /// The register's seed: the founder's key, bound to the founder's name
     /// (DESIGN §6). The one writer of a group's `roster.json`.
     pub fn roster(&self) -> Roster {
@@ -121,7 +113,7 @@ impl Seed {
             name: self.name.as_str().to_string(),
             founder: self.founder.as_str().to_string(),
             key: self.founder_actor(),
-            salt: self.salt_hex(),
+            salt: hex::encode(self.salt),
             policy: self.policy,
         };
         serde_json::to_string_pretty(&file).expect("a seed serializes")

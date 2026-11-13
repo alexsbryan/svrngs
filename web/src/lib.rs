@@ -601,7 +601,7 @@ fn signing(key: Vec<u8>) -> Result<svrngs_core::SigningKey, JsError> {
 
 /// The bytes the holder of the pass `pass` signs for its link to the key
 /// `to`, 64 hex, and, given its signature `sig`, the link as the door reads
-/// it beside the pass (`x-svrngs-link`; svrngs-core's `Pass::carries`):
+/// it beside the pass (`x-svrngs-link`; svrngs-core's `authority::resolve`):
 /// each worker run's endpoint key, named by a holder no page can copy
 /// (capability-signed; DESIGN §3).
 #[wasm_bindgen]

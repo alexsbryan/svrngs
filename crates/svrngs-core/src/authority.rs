@@ -47,7 +47,7 @@ pub fn read(pass: &Pass) -> r1::Pass<'_> {
 
 /// `line` as the profile reads it: the part each kind it names writes, under
 /// `pass`'s app, and the corrected line's where `held` holds it.
-fn entry<'l>(
+pub(crate) fn entry<'l>(
     pass: &r1::Pass,
     line: &'l Op<SignedOp>,
     group: &str,
@@ -122,18 +122,6 @@ pub fn resolve<T>(
     );
     tracing::debug!(target: "rail:authority", holder, %lend, now, error = ?reached.as_ref().err(), "pass: reach, by the community profile's rules");
     reached
-}
-
-/// `pass` naming `line`, unsigned, when its approver may approve it at `now`.
-pub fn approving(pass: &Pass, line: &Op<SignedOp>, group: &str, now: i64) -> Option<Pass> {
-    let (read, content) = (read(pass), bare_id(line, group));
-    let text = content.to_string();
-    let approves = r1::approving(&read, &entry(&read, line, group, &text, &Lines::new()), now);
-    tracing::debug!(target: "rail:authority", actor = %line.actor, now, approves, "pass: an entry's approval, by the community profile's rules");
-    approves.then(|| Pass {
-        op: Some(content),
-        ..pass.clone()
-    })
 }
 
 /// Source authentication for a carrier storing a line, not record scope or

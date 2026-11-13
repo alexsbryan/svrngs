@@ -406,3 +406,47 @@ pub fn let_in(
         issuer: issuer.into(),
     });
 }
+
+impl pass::Pass {
+    /// This grant naming `line`, signed by `approver`, the key this pass
+    /// names, when it may approve it at `now`, its own clock: before the pass
+    /// lapses, by its holder, appending only its app's part (HOLDER_APPROVAL
+    /// §2; [`approving`]). The holder's own timestamp is no evidence of when
+    /// it wrote, so a line stamped after the pass lapses gets none either.
+    /// Only tests approve so; a page approves through
+    /// [`crate::authority::approve_in_open`].
+    pub fn approve(
+        &self,
+        approver: &SigningKey,
+        line: &Op<SignedOp>,
+        group: &str,
+        now: i64,
+    ) -> Option<Self> {
+        let mut pass = approving(self, line, group, now)?;
+        (pass.approver.as_deref() == Some(actor_of(approver).as_str())).then_some(())?;
+        pass.approval = Some(sign_message(approver, &pass.approval_message()));
+        Some(pass)
+    }
+}
+
+/// `pass` naming `line`, unsigned, when its approver may approve it at `now`.
+fn approving(pass: &pass::Pass, line: &Op<SignedOp>, group: &str, now: i64) -> Option<pass::Pass> {
+    use crate::authority::{entry, read, Lines};
+    use alloc::string::ToString;
+    use eudoxia_community::pass as r1;
+    let (read, content) = (read(pass), crate::grant::bare_id(line, group));
+    let text = content.to_string();
+    let approves = r1::approving(&read, &entry(&read, line, group, &text, &Lines::new()), now);
+    tracing::debug!(target: "rail:authority", actor = %line.actor, now, approves, "pass: an entry's approval, by the community profile's rules");
+    approves.then(|| pass::Pass {
+        op: Some(content),
+        ..pass.clone()
+    })
+}
+
+impl seed::Seed {
+    /// The group's policy, as its id hashes it: only tests ask it apart.
+    pub fn policy(&self) -> Option<authority::GroupPolicy> {
+        self.policy
+    }
+}

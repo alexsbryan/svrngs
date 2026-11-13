@@ -204,7 +204,7 @@ pub const SHARE_HEADER: &str = "x-svrngs-declared-share-bps";
 pub const PASS_HEADER: &str = "x-svrngs-pass";
 /// The link a phone's worker presents beside its pass (capability-signed;
 /// DESIGN §3): its holder, a key no page can copy, carrying the pass to
-/// the endpoint key the worker dials with ([`Pass::carries`]). A pass with
+/// the endpoint key the worker dials with ([`svrngs_core::authority::resolve`]). A pass with
 /// none is held by the dialer itself, as an older page's is.
 pub const LINK_HEADER: &str = "x-svrngs-link";
 
@@ -1238,7 +1238,7 @@ async fn holder_of(
     let pass = pass.ok_or_else(|| refused("no pass, or none that reads"))?;
     let label = lend.label(&door.key);
     let now = unix_now().ok_or_else(|| refused("this computer's clock cannot be read"))?;
-    // A link carried lapses no later than its pass ([`Pass::carries`]).
+    // A link carried lapses no later than its pass ([`svrngs_core::authority::resolve`]).
     let link = match headers
         .get(LINK_HEADER)
         .map(|v| v.to_str().ok().and_then(Pass::decode))
