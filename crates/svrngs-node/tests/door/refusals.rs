@@ -468,6 +468,9 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
         .map(|l| l["name"].as_str().unwrap())
         .collect();
     assert!(!names.contains(&"yardonly"), "{names:?}");
+    // Nor does it list one lent only to a group A no longer stands in, which
+    // it would refuse to open (door.rs `reached`): bo stands in "bos", A not.
+    assert!(!names.contains(&"bosonly"), "{names:?}");
     let forged = "x-svrngs-group: yard\r\nx-svrngs-person: cy\r\n";
     let reply = ask(bo, "GET", "/lend/yardonly/whoami", forged).await;
     assert_eq!(

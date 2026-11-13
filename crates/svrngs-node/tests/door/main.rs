@@ -508,6 +508,15 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
     pair.a
         .transport()
         .add_known_peer(node.endpoint().id(), loopback_sockets(node.endpoint()));
+    // Its admission in its own record too, synced from A as a computer that
+    // joined holds it: one its record does not name lends nothing through
+    // that group (door.rs `lends`, `reached`).
+    let mut a = svrngs_node::iroh::EndpointAddr::new(pair.a.endpoint().id());
+    for at in loopback_sockets(pair.a.endpoint()) {
+        a = a.with_ip_addr(at);
+    }
+    let synced = node.host().sync_with(ns, &a).await;
+    assert!(synced.stop.is_none(), "{synced:?}");
     (node, dir)
 }
 
