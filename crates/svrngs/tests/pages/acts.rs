@@ -1,5 +1,8 @@
-//! page-acts's tests (main.rs): what v2 does of "What acts as
-//! you" and the ask that v1 does not, each part of (d) its own test.
+//! page-acts's tests (main.rs): what the phone's page does of the ask
+//! and of a line left unsent that v1 does not, each part of (d) its own
+//! test. "What acts as you" on the home page, its Stop and a yes from
+//! another tab, are the home page twin's laws
+//! (web/tests/pages/again.test.mjs).
 
 use std::path::Path;
 use std::time::Duration;
@@ -112,135 +115,6 @@ fn none_wrong(checks: &[(bool, &str)], seen: &Value) {
         .filter_map(|(failed, what)| failed.then_some(*what))
         .collect();
     assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-}
-
-/// Ada's yes kept, `{label: {said, at}}` by her key, at `path`, as her
-/// computer's door keeps a choice (door/choices.rs `Kept`).
-fn kept_yes(path: &Path, app: &str) {
-    let ada = svrngs_node::actor_of(&SigningKey::from_bytes(&[1; 32]));
-    let at = chrono::Local::now().timestamp();
-    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-    let kept = json!({ ada: { app: { "said": "yes", "at": at } } });
-    std::fs::write(path, kept.to_string()).unwrap();
-}
-
-in_chromium!(
-    /// **A Stop on what apps use is read again in place** (page-acts (d)).
-    /// Ada said yes to her page using her shelf, which asks; her home
-    /// page's "What acts as you" says her page uses the shelf, with Stop.
-    /// She presses it, and the section, read again, says her page was
-    /// stopped using the shelf, with no reload. Watched failing on v1
-    /// (`UI` flipped), whose Stop reloads the page (home.js@19b63b2b:221).
-    a_stop_on_what_apps_use_is_read_again_in_place
-);
-async fn a_stop_on_what_apps_use_is_read_again_in_place(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let shelf = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
-    kept_yes(
-        &svrngs_node::lend::choices_path(dir.path(), &shelf),
-        &label("page"),
-    );
-    let (ada, home, _) = ada(dir.path(), &relay).await;
-    let stop = "#acts p:has-text('uses') button:text-is('Stop')";
-    let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary", stop], "said": "was stopped using", "at": "#acts", "within": 30_000 });
-    let seen = drive(engine, "pages/members.mjs", args, None).await;
-    none_wrong(
-        &[
-            (
-                seen["went"] != true,
-                "after the Stop, the section says it was stopped",
-            ),
-            (seen["reloads"] != 0, "with no reload"),
-        ],
-        &seen,
-    );
-    drop(ada);
-}
-
-in_chromium!(
-    /// **A refused Stop on what apps use is said beside it**. Ada said yes
-    /// to her page using her shelf, which asks; her computer can read
-    /// that yes but keep nothing new beside it (its choices' directory
-    /// made read-only), so her Stop is refused, "this could not be kept on
-    /// the computer that lends it" (door/choices.rs `keep`). The line
-    /// with that Stop says so after it. Watched failing at 4b7160c0,
-    /// whose refusal carried no lend and no app (ui/machine.js `run`
-    /// makes a failed effect's message `{type, n, why}`), so ACTS kept it
-    /// under "undefined undefined", which `Uses` never draws.
-    a_refused_stop_on_what_apps_use_is_said_beside_it
-);
-async fn a_refused_stop_on_what_apps_use_is_said_beside_it(engine: Engine) {
-    use std::os::unix::fs::PermissionsExt;
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let shelf = svrngs_node::lend::LendName::try_from("shelf".to_string()).unwrap();
-    let choices = svrngs_node::lend::choices_path(dir.path(), &shelf);
-    kept_yes(&choices, &label("page"));
-    let (ada, home, _) = ada(dir.path(), &relay).await;
-    let held = choices.parent().unwrap();
-    std::fs::set_permissions(held, std::fs::Permissions::from_mode(0o555)).unwrap();
-    let line = "#acts p:has-text('uses')";
-    let stop =
-        json!({ "at": format!("{line} button:text-is('Stop')"), "traced": ["ACTS: unstopped", 1] });
-    let args = json!({ "home": home, "shown": "#acts summary", "press": [{ "at": "#acts summary" }, stop], "at": line, "within": 30_000 });
-    let seen = drive(engine, "pages/acts.mjs", args, None).await;
-    // Writable again, so the directory is removed with the rest.
-    std::fs::set_permissions(held, std::fs::Permissions::from_mode(0o755)).unwrap();
-    let said = seen["texts"][1].as_str().unwrap_or_default();
-    none_wrong(
-        &[
-            (seen["went"][1] != true, "the Stop is refused"),
-            (
-                !said.contains("Stop")
-                    || !said.contains("this could not be kept on the computer that lends it"),
-                "the refusal is said on the line of its Stop",
-            ),
-            (seen["reloads"] != 0, "with no reload"),
-        ],
-        &seen,
-    );
-    drop(ada);
-}
-
-in_chromium!(
-    /// **A yes in another tab is shown on `visible`** (page-acts (d)).
-    /// Ada's home page is open, her page said yes to nowhere; she says yes
-    /// to it elsewhere (its yes kept, as /to keeps it), and her page,
-    /// hidden and shown again, says in "What acts as you" that her page
-    /// opens nothing yet (a yes the file kept names no lend), with no reload. Watched failing on v1
-    /// (`UI` flipped), which reads /reaching once a load (acts.mjs:60
-    /// reloads it).
-    a_yes_in_another_tab_is_shown_on_visible
-);
-async fn a_yes_in_another_tab_is_shown_on_visible(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, home, _) = ada(dir.path(), &relay).await;
-    let hold = dir.path().join("hold");
-    let args = json!({ "home": home, "shown": "#acts summary", "press": ["#acts summary"], "hold": hold, "said": "opens nothing of your friends’ as you", "at": "#acts", "within": 30_000 });
-    let driven = tokio::spawn(drive(engine, "pages/members.mjs", args, None));
-    let shown = hold.with_extension("shown");
-    let told = tokio::time::timeout(Duration::from_secs(90), async {
-        while !shown.exists() {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    });
-    assert!(
-        told.await.is_ok(),
-        "ada's page shows what acts as her within 90 s"
-    );
-    kept_yes(&dir.path().join("reaching.json"), &label("page"));
-    std::fs::write(&hold, "").unwrap();
-    let seen = driven.await.unwrap();
-    none_wrong(
-        &[
-            (seen["went"] != true, "shown again, the yes is said"),
-            (seen["reloads"] != 0, "with no reload"),
-        ],
-        &seen,
-    );
-    drop(ada);
 }
 
 in_webkit!(

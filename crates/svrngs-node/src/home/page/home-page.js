@@ -124,7 +124,7 @@ export function Home({ store, flows, places }) {
   // What was done here drawn, or nothing, never '': Preact 11.1.1 draws ''
   // as words, and those words turned into a <p> mounted each group's
   // section again, its GROUP new and its places gone until read again
-  // (crates/svrngs/tests/pages/join.rs, its group house).
+  // (web/tests/pages/home.test.mjs, house kept as a group is made).
   const said = saidOnce(state);
   const groups = /** @type {Held[]} */ (state.groups);
   const sections = groups

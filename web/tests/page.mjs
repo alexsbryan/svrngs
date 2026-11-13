@@ -393,23 +393,6 @@ function landing(page) {
   );
 }
 
-// `page`'s origin's session lapsed, as one does: the key svrngs's open
-// enrolled there (home/session.js, IndexedDB `svrngs-browser`) dropped, so
-// its worker proves no request after and each is refused as a browser
-// with no session is (session.rs `refused`). What clearing the cookie was
-// before the key moved out of one.
-export async function lapse(page) {
-  await page.evaluate(
-    () =>
-      new Promise((done, failed) => {
-        const asked = indexedDB.deleteDatabase('svrngs-browser');
-        asked.onsuccess = done;
-        asked.onerror = () => failed(asked.error);
-        asked.onblocked = () => failed(new Error('the session key is held open'));
-      }),
-  );
-}
-
 // Every address off this computer refused, as with n0 unreachable
 // (relay-default (b)): each request and socket the context opens elsewhere —
 // n0's lookup, n0's relays, any host — aborted, and its URL kept in the

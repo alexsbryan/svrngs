@@ -1,5 +1,7 @@
 //! page-members' tests (main.rs): who is visiting, dropped from
-//! the phone's page as their visit ends, with no reload.
+//! the phone's page as their visit ends, with no reload. The home page's
+//! door, its screen and a guest's Stop are the home page twin's laws
+//! (web/tests/pages/again.test.mjs).
 
 use std::path::Path;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -118,51 +120,6 @@ async fn a_visit_ended_while_open_drops_on_the_phone(engine: Engine) {
     drop(ada);
 }
 
-in_chromium!(
-    /// **A guest's Stop on the home page ends the visit with no reload**
-    /// (page-members (b)). Sam is ada's guest for an hour; ada's home page
-    /// lists Sam under "Who you have over"; ada presses Stop, and once
-    /// the Stop's own time has come the groups are read again and Sam is
-    /// listed nowhere, where v1 reloaded the page (home.js@19b63b2b:163). Watched
-    /// failing on v1 (`UI` flipped).
-    a_guest_s_stop_ends_the_visit_with_no_reload
-);
-async fn a_guest_s_stop_ends_the_visit_with_no_reload(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, id, _) = house(dir.path(), &relay).await;
-    sam_visits(&ada, &id, 3600);
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let args = json!({ "home": home, "shown": "#home .yours li", "press": ["#home .yours button"], "gone": "#home .yours li, #home .visiting li", "within": 20_000 });
-    let seen = drive(engine, "pages/members.mjs", args, None).await;
-    let shown = seen["shown"].as_array().cloned().unwrap_or_default();
-    let wrong: Vec<&str> = [
-        (
-            !(shown.len() == 1
-                && shown[0].as_str().is_some_and(|l| {
-                    l.starts_with("Sam, until ") && l.ends_with("Stop Sam’s visit")
-                })),
-            "Sam is listed under Who you have over, with Stop",
-        ),
-        (seen["went"] != true, "Sam is listed nowhere once stopped"),
-        (seen["reloads"] != 0, "with no reload"),
-        (
-            traced(&seen, "VISITS: waited") != 1,
-            "the Stop waited for its time, then read again",
-        ),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    let stopped = ada.rail().register(&id).unwrap();
-    assert!(
-        stopped.visits.values().all(|g| g.stopped.is_some()),
-        "{stopped:#?}"
-    );
-    drop(ada);
-}
-
 /// Ada lending notes and a guest's link to house for `secs` made, as her
 /// home page makes one (`/link` with `visit`), its page any https one: the
 /// token, which the phone opens as `#visit=<token>`.
@@ -271,123 +228,6 @@ async fn a_guest_s_visit_of_5_s_ends_while_shown(engine: Engine) {
             traced(&seen, "PAGE: ended") != 1,
             "the visit ended at its end, on the page's timer",
         ),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    drop(ada);
-}
-
-in_chromium!(
-    /// **The door is judged again when the page is shown again**
-    /// (page-members (f)). cy joins ada's house; ada's home page lights cy,
-    /// "on now", bo drawn off beside, as bo's computer never answers.
-    /// cy's computer goes off while the page is open; ada's page is hidden
-    /// and shown again, and its door draws cy "did not answer", with no
-    /// reload. The page read again on `visible` is page-open's (home.js
-    /// `visible`, group.js GROUP), so this part is its test alone. Off, not
-    /// back on, as nothing here restarts a node in process. Watched
-    /// failing on v1 (`UI` flipped), whose page judges its door once.
-    the_door_is_judged_again_when_shown_again
-);
-async fn the_door_is_judged_again_when_shown_again(engine: Engine) {
-    use svrngs_node::group::Name;
-    use svrngs_node::link::{client_link, Link};
-    let relay = relay().await;
-    let (dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let (ada, id, _) = house(dir.path(), &relay).await;
-    let config = RelayConfig {
-        relay_urls: vec![relay_url(&relay)],
-        n0_services: false,
-        loopback_only: true,
-    };
-    let cy = Node::start(
-        cy_dir.path().to_path_buf(),
-        SigningKey::from_bytes(&[3; 32]),
-        &config,
-        svrngs_node::group::seed_text,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("cy's computer starts");
-    tokio::time::timeout(Duration::from_secs(20), cy.endpoint().online())
-        .await
-        .expect("cy's computer reaches the relay on 127.0.0.1");
-    let made = ada.host().link(&id, false, None, None).expect("a link");
-    let sent = Link::parse(&client_link(&made.token)).unwrap();
-    cy.host()
-        .join(&sent, &Name::parse("cy").unwrap())
-        .await
-        .expect("cy joins house");
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let hold = dir.path().join("hold");
-    let args = json!({ "home": home, "shown": "#home .door li.off + li.on", "hold": hold, "gone": "#home .door li.off + li.on", "traced": ["GROUP: answered (lends 2)", 1], "at": "#home .door", "within": 30_000 });
-    let driven = tokio::spawn(drive(engine, "pages/members.mjs", args, None));
-    let shown = hold.with_extension("shown");
-    let told = tokio::time::timeout(Duration::from_secs(90), async {
-        while !shown.exists() {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    });
-    assert!(told.await.is_ok(), "ada's page lights cy within 90 s");
-    cy.endpoint().close().await;
-    drop(cy);
-    std::fs::write(&hold, "").unwrap();
-    let seen = driven.await.unwrap();
-    let wrong: Vec<&str> = [
-        (
-            !seen["shown"][0]
-                .as_str()
-                .is_some_and(|t| t.starts_with("cy")),
-            "cy is lit",
-        ),
-        (seen["went"] != true, "shown again, the door is read again"),
-        (
-            !seen["text"]
-                .as_str()
-                .is_some_and(|t| t.ends_with("cy\ndid not answer")),
-            "cy did not answer",
-        ),
-        (seen["reloads"] != 0, "with no reload"),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    drop(ada);
-}
-
-in_chromium!(
-    /// **Ten screen ticks never read "asking…" again** (page-members (e)).
-    /// ada opens house on a screen, `/?screen=<id>`; once its door is drawn,
-    /// ada lit and bo, whose computer never answers, off, the screen reads
-    /// the group ten times more by itself (SCREEN's `tick`), and no change to
-    /// the page in all that time leaves a window "asking…": each door is
-    /// judged before it takes the last one's place (home.js@19b63b2b:299-301).
-    /// Watched failing on v1 (`UI` flipped), whose screen is no machine and
-    /// traces no tick; and on a planted v2 screen.js that draws the door
-    /// unjudged while each tick's read is out.
-    ten_screen_ticks_never_read_asking_again
-);
-async fn ten_screen_ticks_never_read_asking_again(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, id, _) = house(dir.path(), &relay).await;
-    let port = ada.api_addr().port();
-    let screen = format!("http://svrngs.localhost:{port}/?screen={id}");
-    let args = json!({ "home": screen, "shown": "#home .door li.on", "never": "asking…", "said": "", "at": "#home", "traced": ["SCREEN: tick", 10], "within": 90_000 });
-    let seen = drive(engine, "pages/members.mjs", args, None).await;
-    let wrong: Vec<&str> = [
-        (
-            !seen["shown"][0]
-                .as_str()
-                .is_some_and(|t| t.starts_with("ada")),
-            "ada is lit",
-        ),
-        (seen["went"] != true, "ten ticks, each read"),
-        (seen["never"] != 0, "no window reads \"asking…\" again"),
-        (seen["reloads"] != 0, "with no reload"),
     ]
     .into_iter()
     .filter_map(|(failed, what)| failed.then_some(what))

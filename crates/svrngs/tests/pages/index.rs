@@ -1,5 +1,7 @@
-//! page-index's tests (main.rs): the index and "What you lend"
-//! drawn again from each read, after the page's own writes, with no reload.
+//! page-index's tests (main.rs): the phone's index drawn again from each
+//! read, after a bring and on coming back, with no reload. The home page's
+//! index and "What you lend", read again after its own writes, are the
+//! home page twin's laws (web/tests/pages/again.test.mjs).
 
 use std::path::Path;
 use std::time::Duration;
@@ -76,71 +78,6 @@ async fn serving(from: u16, title: &'static str) -> u16 {
     port
 }
 
-/// The page's trace lines (`window.__lines`).
-fn lines(seen: &Value) -> Vec<&str> {
-    (seen["lines"].as_array().into_iter().flatten())
-        .filter_map(Value::as_str)
-        .collect()
-}
-
-in_chromium!(
-    /// **A lend from "Already running here" is in the index at once**
-    /// (page-index (d)'s fix). Something listens on a port of ada's
-    /// computer; her home page looks, she names it notes and says it is
-    /// notes, and lends it: the row says she lent it, and the group's
-    /// index lists "ada’s notes" and "What you lend" lists it too, from
-    /// HOME's `again`, with no reload. Watched failing on v1 (`UI`
-    /// flipped), whose lend redraws only "What you lend" (home.js@19b63b2b:247).
-    a_lend_from_what_runs_here_is_in_the_index_at_once
-);
-async fn a_lend_from_what_runs_here_is_in_the_index_at_once(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, home, _) = house(dir.path(), &relay).await;
-    let port = serving(21000, "notes").await;
-    let row = format!("#running li:has-text('localhost:{port}')");
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({
-            "ask": home,
-            "all": "#running li, #running p",
-            "do": [["#running button:has-text('Look for programs')", null, true],
-                [format!("{row} input[name=name]"), "notes"], [format!("{row} input[name=kind]"), "notes"],
-                [format!("{row} input[type=checkbox]"), true],
-                [format!("{row} button"), null, true, "You lent notes"]],
-            "after": ["#home table.index", "ada’s notes"],
-            "text": true,
-        }),
-        None,
-    )
-    .await;
-    let later = seen["later"].to_string();
-    let text = seen["text"].as_str().unwrap_or_default();
-    let lines = lines(&seen);
-    let at = |start: &str| lines.iter().position(|l| l.starts_with(start));
-    let wrong: Vec<&str> = [
-        (
-            !later.contains("ada’s notes"),
-            "the index lists ada’s notes",
-        ),
-        (
-            !text.contains("notes: everyone in the groups you chose at once"),
-            "What you lend lists it",
-        ),
-        (seen["loads"] != 1, "with no reload"),
-        (
-            !(at("LEND: lent") < at("HOME: again: ") && at("LEND: lent").is_some()),
-            "read again by HOME's again, after the lend",
-        ),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    drop(ada);
-}
-
 /// Ada's computer lending `shelf`, a page of its own, as `body` declares it
 /// (browser/main.rs's lend tests), her home page's address, and the
 /// group's id.
@@ -165,115 +102,6 @@ fn first(seen: &Value, i: usize) -> String {
         .as_str()
         .unwrap_or_default()
         .into()
-}
-
-in_chromium!(
-    /// **Three changes to what ada lends, each read again in place**
-    /// (page-index (e)'s fix). Ada lends `shelf` to one person at once;
-    /// she sets four, then everyone, then stops lending it, and after each
-    /// "What you lend" is read again through HOME's `again`, never a load
-    /// of the page. Watched failing on v1 (`UI` flipped), which loads the
-    /// page again after each (home.js@19b63b2b:283).
-    three_changes_to_a_lend_are_read_again_in_place
-);
-async fn three_changes_to_a_lend_are_read_again_in_place(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let body = json!({ "kind": "books", "limit": 1 });
-    let (ada, home, _) = lending(dir.path(), &relay, body).await;
-    let press = |words: &str| {
-        json!([
-            format!("#lent button:has-text('{words}')"),
-            null,
-            "LENDING: answered"
-        ])
-    };
-    let steps = json!([
-        ["#lent input", "4"],
-        press("Let in this many"),
-        press("Let everyone in"),
-        press("Stop lending")
-    ]);
-    let args = json!({ "home": home, "read": "#lent li, #lent p", "steps": steps });
-    let seen = drive(engine, "pages/index.mjs", args, None).await;
-    let wrong: Vec<&str> = [
-        (
-            !first(&seen, 0).starts_with("shelf: up to 4 people at once"),
-            "four, read again",
-        ),
-        (
-            !first(&seen, 1).starts_with("shelf: everyone in the groups you chose at once"),
-            "everyone, read again",
-        ),
-        (
-            seen["after"][2]["words"] != json!(["You lend nothing yet."]),
-            "stopped, read again",
-        ),
-        (seen["loads"] != 1, "with no load of the page"),
-        (
-            !(seen["after"].as_array().into_iter().flatten()).all(|a| a["how"] == "settled"),
-            "each read again by LENDING",
-        ),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    drop(ada);
-}
-
-in_chromium!(
-    /// **The secret stays shown when the page is read again** (page-index
-    /// (e)). Ada turns on signing people in with svrngs for `shelf`; its
-    /// secret is shown in the row, then the page is hidden and shown, and
-    /// read again: the row keeps the app-setup reminder, its button gone,
-    /// and still shows the secret, which no request, link or trace line
-    /// carries. Watched failing on v1 (`UI` flipped), which never reads
-    /// again on coming back.
-    the_secret_stays_shown_when_the_page_is_read_again
-);
-async fn the_secret_stays_shown_when_the_page_is_read_again(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, home, _) = lending(dir.path(), &relay, json!({ "kind": "books" })).await;
-    let sign = json!([
-        "#lent button:has-text('Sign people in with svrngs')",
-        null,
-        "CHANGE: signed"
-    ]);
-    let args = json!({ "home": home, "read": "#lent li", "steps": [sign], "visible": ["LENDING: answered"] });
-    let seen = drive(engine, "pages/index.mjs", args, None).await;
-    let name = svrngs_node::lend::LendName::parse("shelf").unwrap();
-    let secret = (svrngs_node::lend::read(dir.path(), &name).unwrap().unwrap())
-        .sign_in_with_svrngs
-        .expect("the declaration holds the client")
-        .client_secret
-        .expect("a secret");
-    let later = seen["later"]["words"][0].as_str().unwrap_or_default();
-    let wrong: Vec<&str> = [
-        (!first(&seen, 0).contains(&secret), "shown once turned on"),
-        (
-            seen["later"]["how"] != "settled",
-            "read again on coming back",
-        ),
-        (
-            !later.contains("Sign-in credentials created; app setup still required.")
-                || later.contains("Sign people in with svrngs"),
-            "credentials created, app setup still required, its button gone",
-        ),
-        (!later.contains(&secret), "the secret still shown"),
-        (
-            [&seen["sent"], &seen["links"], &seen["lines"]]
-                .iter()
-                .any(|v| v.to_string().contains(&secret)),
-            "no request, link or trace line carries it",
-        ),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    drop(ada);
 }
 
 /// Bo's phone, in house through ada's computer (pages/shelf.rs): the
@@ -313,44 +141,6 @@ async fn kept(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String, 
         .unwrap();
     assert!(asked.status().is_success(), "{:?}", asked.text().await);
     (node, home, id)
-}
-
-in_chromium!(
-    /// **A bring is in the home's index with no reload** (page-index
-    /// (c)). Ada ticks Money on her home page and brings it: house's
-    /// index lists "Money Who owes" with the page loaded once, read again
-    /// by HOME's `again`. Watched failing on v1 (`UI` flipped), whose
-    /// bring redraws only the shelf (question.js@19b63b2b:207).
-    a_bring_is_in_the_home_s_index_with_no_reload
-);
-async fn a_bring_is_in_the_home_s_index_with_no_reload(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, home, _) = kept(dir.path(), &relay).await;
-    let seen = drive(
-        engine,
-        "home.mjs",
-        json!({
-            "ask": home,
-            "all": "table.index tr",
-            "do": [["#home label:has-text('Money') input", true],
-                ["#home button:has-text('Bring the ticked ones')", null, true, "Money Who owes"]],
-        }),
-        None,
-    )
-    .await;
-    let wrong: Vec<&str> = [
-        (
-            !seen["after"][0].to_string().contains("Money Who owes"),
-            "the index lists Money",
-        ),
-        (seen["loads"] != 1, "with no reload"),
-    ]
-    .into_iter()
-    .filter_map(|(failed, what)| failed.then_some(what))
-    .collect();
-    assert!(wrong.is_empty(), "not so: {wrong:?}\n{seen:#}");
-    drop(ada);
 }
 
 in_webkit!(

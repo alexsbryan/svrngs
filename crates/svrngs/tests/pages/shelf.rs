@@ -1,6 +1,7 @@
-//! page-shelf's tests (main.rs): the bring on both pages, its
+//! page-shelf's tests (main.rs): the bring on the phone's page, its
 //! answer beside the button, the button held while it brings, and the
-//! group read again after it.
+//! group read again after it. The home page's is a law of its twin
+//! (web/tests/pages/again.test.mjs).
 
 use std::path::Path;
 use std::time::Duration;
@@ -67,34 +68,24 @@ async fn house(dir: &Path, relay: &iroh_relay::server::Server) -> (Node, String)
 }
 
 /// Whether the page asked its group again after SHELF's `brought`: the
-/// phone's `reread` (web/page/enter.js), the home's `again`, HOME's then
-/// each GROUP's (home/home.js, group.js).
-fn read_after(lines: &[&str], home: bool) -> bool {
+/// phone's `reread` (web/page/enter.js).
+fn read_after(lines: &[&str]) -> bool {
     let at = |start: &str| lines.iter().position(|l| l.starts_with(start));
-    let asked: &[&str] = if home {
-        &["HOME: again: ", "GROUP: again: "]
-    } else {
-        &["PAGE: reread: "]
-    };
     let brought = at("SHELF: brought (");
-    brought.is_some() && asked.iter().all(|a| at(a) > brought)
+    brought.is_some() && at("PAGE: reread: ") > brought
 }
 
 /// What `seen` (web/tests/pages/shelf.mjs) shows of the bring, each wrong
 /// one said, so one run says all a page did not do. The button pressed
 /// twice at once: held while it brings, then given back, and the second
-/// press refused by SHELF, so the home page posts /shelf once; then
-/// Money, brought, offered no more, and the group read again, which says
-/// Money is on the table, with no reload.
-fn brought_on_v2(seen: &Value, home: bool) {
+/// press refused by SHELF; then Money, brought, offered no more, and the
+/// group read again, which says Money is on the table, with no reload.
+fn brought_on_v2(seen: &Value) {
     let next = seen["next"].as_str().unwrap_or_default();
     let lines: Vec<&str> = (seen["lines"].as_array().into_iter().flatten())
         .filter_map(|l| l.as_str())
         .collect();
     let traced = |start: &str| lines.iter().filter(|l| l.starts_with(start)).count();
-    let posts = (seen["sent"].as_array().into_iter().flatten())
-        .filter(|r| *r == "POST /shelf")
-        .count();
     let wrong: Vec<&str> = [
         (
             !next.contains(
@@ -111,9 +102,8 @@ fn brought_on_v2(seen: &Value, home: bool) {
                 || traced("SHELF: bring refused in bringing") != 1,
             "the second press is refused while the first brings",
         ),
-        (home && posts != 1, "the home page posts /shelf once"),
         (
-            !(seen["table"] == true && seen["reloads"] == 0 && read_after(&lines, home)),
+            !(seen["table"] == true && seen["reloads"] == 0 && read_after(&lines)),
             "then the group is read again, Money on the table, with no reload",
         ),
         (
@@ -150,23 +140,6 @@ async fn the_phone_s_bring_is_answered_beside_its_button(engine: Engine) {
     let bo = hex::encode(SigningKey::from_bytes(&[7; 32]).to_bytes());
     let args = json!({ "site": site(), "key": bo, "token": token, "id": id, "apps": ["Money"], "table": "Money is on the table." });
     let seen = drive(engine, "pages/shelf.mjs", args, None).await;
-    brought_on_v2(&seen, false);
-    drop(ada);
-}
-
-in_chromium!(
-    /// **The bring on the home page, on v2** (page-shelf (b)): ada's home
-    /// page, Money ticked and brought, as on the phone. Watched failing
-    /// on v1 (`UI` flipped), as on the phone.
-    the_home_page_s_bring_is_answered_beside_its_button
-);
-async fn the_home_page_s_bring_is_answered_beside_its_button(engine: Engine) {
-    let relay = relay().await;
-    let dir = tempfile::tempdir().unwrap();
-    let (ada, _) = house(dir.path(), &relay).await;
-    let home = format!("http://svrngs.localhost:{}/", ada.api_addr().port());
-    let args = json!({ "home": home, "apps": ["Money"], "table": "Money is on the table." });
-    let seen = drive(engine, "pages/shelf.mjs", args, None).await;
-    brought_on_v2(&seen, true);
+    brought_on_v2(&seen);
     drop(ada);
 }

@@ -1,8 +1,7 @@
 // The browser half of page-index's tests (crates/svrngs/tests/
-// pages/index.rs): the home page at `home`, on B and that selector's sign
-// that it is drawn given as `b`, or the group's page (`site`,
-// `key`, `token`, held as page.mjs `driving` holds it), and each of `steps`
-// in turn, [selector, value, line, until?]: a value `true` ticks the box,
+// pages/index.rs): the group's page (`site`, `key`, `token`, held as
+// page.mjs `driving` holds it), and each of `steps` in turn, [selector,
+// value, line, until?]: a value `true` ticks the box,
 // another fills it, and null clicks it, then reads once the page has
 // traced one more line starting with `line` (ui/machine.js), or has loaded
 // again, as v1 does, and drawn "What you lend" again; one neither did in
@@ -21,12 +20,12 @@
 // group's page, `driving`'s own load counted), every request it sent with
 // its body, each link, and the trace.
 //
-//   node web/tests/pages/index.mjs '{"engine": ..., "home": <url> | "site": ..., "key": ..., "token": ..., "read": <selector>, "steps": [[<selector>, <value>|true|null, <line>?, <until>?], ...], "ready"?: <file>, "visible"?: [<line>, <until>?], "held"?: [[<path>, ...], <words>]}'
+//   node web/tests/pages/index.mjs '{"engine": ..., "site": ..., "key": ..., "token": ..., "read": <selector>, "steps": [[<selector>, <value>|true|null, <line>?, <until>?], ...], "ready"?: <file>, "visible"?: [<line>, <until>?], "held"?: [[<path>, ...], <words>]}'
 //
 // Exit 0 with the JSON line; 1 on anything else.
 import { writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
-import { driving, launch } from '../page.mjs';
+import { driving } from '../page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 // The page gone to by `go` (`loaded` the loads before), `ready` drawn:
@@ -141,21 +140,4 @@ async function run(page, ready, loaded, go) {
   return { after, released, shown, later, loads, sent, links, lines };
 }
 
-if (args.home) {
-  const { context, close } = await launch(args.engine, { b: Boolean(args.b) });
-  const logs = [];
-  context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
-  try {
-    const page = await context.newPage();
-    page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
-    const seen = await run(page, args.b ?? '#lent h2 ~ *', 0, () => page.goto(args.home));
-    console.log(JSON.stringify({ ...seen, logs }));
-  } catch (e) {
-    console.error(`the page did not finish: ${e}\n${logs.join('\n')}`);
-    process.exitCode = 1;
-  } finally {
-    await close();
-  }
-} else {
-  await driving(args, ({ page }) => run(page, '#lent tr, #shelf button', 1, async () => {}));
-}
+await driving(args, ({ page }) => run(page, '#lent tr, #shelf button', 1, async () => {}));
