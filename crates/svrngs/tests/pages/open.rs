@@ -65,13 +65,16 @@ async fn the_computer_s_line_is_offered_and_copied_on_v2(engine: Engine) {
 
 in_webkit!(
     /// **Back on screen, the phone reads its group again** (page-open
-    /// (c); PAGE_STATE §3, 6). Bo's phone opens house through ada's
-    /// computer, which lends nothing: "Nobody in house lends anything
-    /// yet." The page is hidden, ada lends a shelf, and the page is shown
-    /// again: it reads the group a second time, through the endpoint it
-    /// bound, and the shelf is in that read (`list`'s lines), so the
-    /// response no longer says nobody lends. Watched failing on v1 (`UI`
-    /// flipped), which reads the group once (web/app.js@19b63b2b:436).
+    /// (c); PAGE_STATE §3, 6). The seam is the claim: a read again through
+    /// the wasm endpoint the page bound, over a real relay. Bo's phone opens
+    /// house through ada's computer, which lends nothing; the page is
+    /// hidden, ada lends a shelf, and the page is shown again: it reads the
+    /// group a second time, and the shelf is in that read (`list`'s lines).
+    /// What the page says of each read, and that being shown asks the read
+    /// again: web/tests/pages/enter.test.mjs ('back on screen the list is
+    /// read again') and group-page.test.mjs ("Nobody in house lends
+    /// anything yet."). Watched failing on v1 (`UI` flipped), which reads
+    /// the group once (web/app.js@19b63b2b:436).
     the_phone_reads_its_group_again_when_shown
 );
 async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
@@ -139,22 +142,6 @@ async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
     std::fs::write(lends.join("shelf.json"), body.to_string()).unwrap();
     go.send(()).unwrap();
     let seen = phone.await.unwrap();
-    assert_eq!(
-        seen["before"]["status"], "You’re in house, as bo",
-        "{seen:#}"
-    );
-    assert_eq!(
-        seen["before"]["response"], "Nobody in house lends anything yet.",
-        "{seen:#}"
-    );
-    assert_eq!(
-        seen["after"]["status"], "You’re in house, as bo",
-        "{seen:#}"
-    );
-    assert_eq!(
-        seen["after"]["response"], "",
-        "the shelf is lent now: {seen:#}"
-    );
     let lines: Vec<&str> = seen["lines"]
         .as_array()
         .unwrap()
@@ -169,13 +156,6 @@ async fn the_phone_reads_its_group_again_when_shown(engine: Engine) {
     assert!(
         reads[0].contains(", 0 lent)") && reads[1].contains(", 1 lent)"),
         "{reads:?}"
-    );
-    assert!(
-        lines
-            .iter()
-            .any(|l| l.starts_with("PAGE: shown: opening/holding/read/")
-                && l.ends_with("running read")),
-        "{seen:#}"
     );
     drop((node, shelf));
 }

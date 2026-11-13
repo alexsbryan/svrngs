@@ -111,10 +111,12 @@ fn none_wrong(checks: &[(bool, &str)], seen: &Value) {
 
 in_webkit!(
     /// **A line left unsent is carried on the next open** (page-acts (d)).
-    /// Bo's phone keeps house with a line of his own signed and left
-    /// unsent, as a carry that failed leaves it (app.js@19b63b2b:506); the page
-    /// opened again reads house, carries the line to ada's computer, and
-    /// keeps none unsent. Watched failing on v1 (`UI` flipped), which
+    /// The seam is the claim: store.js's IndexedDB keeping the line across
+    /// a real reopen, and empty once it is carried; the carry's decision is
+    /// web/tests/pages/acts.test.mjs's. Bo's phone keeps house with a line
+    /// of his own signed and left unsent, as a carry that failed leaves it
+    /// (app.js@19b63b2b:506); the page opened again reads house, carries
+    /// the line to ada's computer, and keeps none unsent. Watched failing on v1 (`UI` flipped), which
     /// carries unsent lines only at the next yes.
     a_line_left_unsent_is_carried_on_the_next_open
 );
