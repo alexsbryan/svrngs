@@ -154,21 +154,6 @@ fn node(dir: &std::path::Path, key: &SigningKey, n: usize) -> (Arc<RingRail>, Jo
     (rail, journal)
 }
 
-/// Serve `router` on an ephemeral loopback port, with the connect info the
-/// internal listener carries. Returns the address.
-pub(crate) async fn serve_at(router: axum::Router) -> std::net::SocketAddr {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        let _ = axum::serve(
-            listener,
-            router.into_make_service_with_connect_info::<std::net::SocketAddr>(),
-        )
-        .await;
-    });
-    addr
-}
-
 /// cw-rails' ring routes over `rail`, as the node serves them on the stream.
 pub(super) fn ring_router(rail: Arc<RingRail>) -> axum::Router {
     router(RingInbound {

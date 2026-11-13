@@ -182,7 +182,7 @@ map changed with it.
 | 1 | browser step: claims the map finds covered by laws and handlers | 54 | the laws named in the map | none |
 | 2 | door, oidc, session, accept: pure rows and in-process routers | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3 |
 | 3 | n0 out of the gate | 25 | a relay on 127.0.0.1 | harness 8 |
-| 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob) | 36 | routers by oneshot with a `Dialer`; transport | harness 1, 4 |
+| 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob); ring_routes' 7 landed, asked in-process | 36, 29 left | routers by oneshot with a `Dialer`; transport | harness 1, 4 |
 | 5 | pages and the browser step's home-page tests | ~60 | Node laws over the composed home page | harness 5 |
 | 6 | folders, carried, record_api, removal, surface, kept, canaries, relay_* | ~110 | in-memory transport and holder | harness 3, 4 |
 | 7 | CLI: share, new, install, join_by_link, tcp, udp, meet, relay, remove, play, address | ~95 | `src/*_tests.rs` over the parts that print and decide | harness 8, small splits per row |

@@ -6,12 +6,17 @@
 //! pb-rails-parity. (svrngs: the checkpoint route did not come over, so
 //! neither did its tests; the live route's and the sync route's refusal
 //! test did.)
+//!
+//! Each asks the router in-process, as [`IrohAcceptor`](crate::iroh::IrohAcceptor)
+//! hands it a request: with the `Dialer` iroh verified as an extension, or
+//! with none, as a request off the stream comes. No endpoint, socket or
+//! clock (docs/CHECKS.md, unit 4): that the acceptor inserts the verified
+//! key, and only that, is tests/accept.rs's, across QUIC.
 
 use std::sync::Arc;
 
-use crate::iroh::tests::serve_on_stream;
-use crate::iroh::SecretKey;
-use crate::ring_sync::tests::serve_at;
+use tower::ServiceExt;
+
 use crate::{Digest, Person, RingRail, Roster, SigningKey};
 
 use super::*;
@@ -35,25 +40,56 @@ fn rail_with_roster(root: &std::path::Path) -> Arc<RingRail> {
     rail
 }
 
-/// The ring routes over `rail` and `live`, served on the iroh stream to a
-/// dialer holding [`key`], whom the roster names; the base URL, and what
-/// keeps it served. (svrngs: upstream served them on a plain loopback port
-/// and registered the two live namespaces here; [`fresh`] holds them,
-/// before anything is read from disk, and the live route answers only a
-/// dialer standing in the group, so its tests dial.)
-async fn serve(
-    rail: Arc<RingRail>,
-    live: Arc<LiveBuffer>,
-) -> (String, crate::iroh::tests::OnStream) {
-    serve_on_stream(
-        router(RingInbound {
-            rail,
-            live,
-            wake: Default::default(),
-        }),
-        SecretKey::from_bytes(&key().to_bytes()),
-    )
-    .await
+/// The ring routes over `rail` and `live`, as `dialer`'s stream reaches
+/// them; `None` asks as a request off the stream. (svrngs: upstream served
+/// them on a plain loopback port and registered the two live namespaces
+/// here; [`fresh`] holds them, before anything is read from disk, and the
+/// live route answers only a dialer standing in the group.)
+struct Routes {
+    router: axum::Router,
+    dialer: Option<SigningKey>,
+}
+
+impl Routes {
+    fn new(inbound: RingInbound, dialer: Option<SigningKey>) -> Self {
+        Self {
+            router: router(inbound),
+            dialer,
+        }
+    }
+
+    /// POST `body` to `path`, carrying `X-Mesh-Pubkey: <claim>` when given;
+    /// the status and the body answered.
+    async fn post(&self, path: &str, body: String, claim: Option<&str>) -> (u16, String) {
+        let mut req = axum::http::Request::post(path);
+        if let Some(c) = claim {
+            req = req.header("x-mesh-pubkey", c);
+        }
+        let mut req = req.body(axum::body::Body::from(body)).unwrap();
+        if let Some(key) = &self.dialer {
+            req.extensions_mut().insert(crate::iroh::tests::dialer(key));
+        }
+        let answer = self.router.clone().oneshot(req).await.unwrap();
+        let status = answer.status().as_u16();
+        let bytes = axum::body::to_bytes(answer.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        (status, String::from_utf8_lossy(&bytes).into_owned())
+    }
+}
+
+fn inbound(rail: Arc<RingRail>, live: Arc<LiveBuffer>) -> RingInbound {
+    RingInbound {
+        rail,
+        live,
+        wake: Default::default(),
+    }
+}
+
+/// The routes over `rail` and `live`, asked by a dialer holding [`key`],
+/// whom the roster names.
+fn serve(rail: Arc<RingRail>, live: Arc<LiveBuffer>) -> Routes {
+    Routes::new(inbound(rail, live), Some(key()))
 }
 
 /// `payload` as it is drained when [`key`], Ada's only key, sent it.
@@ -76,15 +112,12 @@ fn fresh(dir: &tempfile::TempDir) -> (Arc<RingRail>, Arc<LiveBuffer>) {
     (rail, Arc::new(LiveBuffer::default()))
 }
 
-/// One exchange call to `url`, carrying `X-Mesh-Pubkey: <claim>` when given.
-async fn ask(url: &str, claim: Option<&str>) -> reqwest::Response {
-    let mut req = reqwest::Client::new()
-        .post(url)
-        .json(&serde_json::json!({ "namespace": NS, "digest": Digest::default(), "ops": [] }));
-    if let Some(c) = claim {
-        req = req.header("x-mesh-pubkey", c);
-    }
-    req.send().await.unwrap()
+/// One exchange call, carrying `X-Mesh-Pubkey: <claim>` when given.
+async fn ask(routes: &Routes, claim: Option<&str>) -> (u16, String) {
+    let body = serde_json::json!({ "namespace": NS, "digest": Digest::default(), "ops": [] });
+    routes
+        .post("/internal/ring/sync", body.to_string(), claim)
+        .await
 }
 
 /// The asker is the dialer iroh verified, and nothing else. A request off
@@ -100,62 +133,35 @@ async fn the_asker_is_the_verified_dialer_and_no_header_names_one() {
     let dir = tempfile::tempdir().unwrap();
     let rail = rail_with_roster(dir.path());
     let ada = crate::actor_of(&key());
+    let live = || Arc::new(LiveBuffer::default());
 
-    let addr = serve_at(router(RingInbound {
-        rail: rail.clone(),
-        live: Arc::new(LiveBuffer::default()),
-        wake: Default::default(),
-    }))
-    .await;
-    let off_stream = ask(&format!("http://{addr}/internal/ring/sync"), Some(&ada)).await;
+    let off_stream = Routes::new(inbound(rail.clone(), live()), None);
+    let (status, body) = ask(&off_stream, Some(&ada)).await;
+    assert_eq!(status, 403, "a request off the stream is refused");
+    assert!(body.contains(NS));
+
+    let rostered = Routes::new(inbound(rail.clone(), live()), Some(key()));
     assert_eq!(
-        off_stream.status(),
-        403,
-        "a request off the stream is refused"
+        ask(&rostered, None).await.0,
+        200,
+        "the rostered dialer is served"
     );
-    assert!(off_stream.text().await.unwrap().contains(NS));
 
-    let (base, _ada) = serve_on_stream(
-        router(RingInbound {
-            rail: rail.clone(),
-            live: Arc::new(LiveBuffer::default()),
-            wake: Default::default(),
-        }),
-        SecretKey::from_bytes(&key().to_bytes()),
-    )
-    .await;
-    let rostered = ask(&format!("{base}/internal/ring/sync"), None).await;
-    assert_eq!(rostered.status(), 200, "the rostered dialer is served");
-
-    let (base, _stranger) = serve_on_stream(
-        router(RingInbound {
-            rail,
-            live: Arc::new(LiveBuffer::default()),
-            wake: Default::default(),
-        }),
-        SecretKey::from_bytes(&[12u8; 32]),
-    )
-    .await;
-    let claiming = ask(&format!("{base}/internal/ring/sync"), Some(&ada)).await;
-    assert_eq!(
-        claiming.status(),
-        403,
-        "a header naming Ada makes no stranger Ada"
-    );
-    assert!(claiming.text().await.unwrap().contains(NS));
+    let stranger = SigningKey::from_bytes(&[12u8; 32]);
+    let claiming = Routes::new(inbound(rail, live()), Some(stranger));
+    let (status, body) = ask(&claiming, Some(&ada)).await;
+    assert_eq!(status, 403, "a header naming Ada makes no stranger Ada");
+    assert!(body.contains(NS));
 }
 
 fn envelope(namespace: &str, payload: &str) -> String {
     serde_json::json!({ "namespace": namespace, "payload": payload }).to_string()
 }
 
-async fn push(base: &str, namespace: &str, payload: &str) -> reqwest::Response {
-    reqwest::Client::new()
-        .post(format!("{base}/internal/ring/live"))
-        .body(envelope(namespace, payload))
-        .send()
+async fn push(routes: &Routes, namespace: &str, payload: &str) -> (u16, String) {
+    routes
+        .post("/internal/ring/live", envelope(namespace, payload), None)
         .await
-        .unwrap()
 }
 
 /// Every file under `dir`, with its length.
@@ -190,11 +196,11 @@ async fn a_live_payload_touches_nothing_on_disk() {
     let (rail, live) = fresh(&dir);
     let before = snapshot(dir.path());
     assert!(!before.is_empty(), "control: the roster file is on disk");
-    let (addr, _served) = serve(rail, live.clone()).await;
+    let routes = serve(rail, live.clone());
     let payloads = ["AQID", "BAUG", "BwgJ"];
     for p in payloads {
-        let sent = push(&addr, LIVE_NS, p).await;
-        assert_eq!(sent.status(), 200, "{}", sent.text().await.unwrap());
+        let (status, body) = push(&routes, LIVE_NS, p).await;
+        assert_eq!(status, 200, "{body}");
     }
     assert_eq!(live.drain(LIVE_NS), (payloads.map(from_ada).to_vec(), 0));
     assert_eq!(snapshot(dir.path()), before, "the live lane wrote to disk");
@@ -206,10 +212,10 @@ async fn a_live_payload_touches_nothing_on_disk() {
 async fn a_restart_empties_the_buffer() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, live) = fresh(&dir);
-    let (addr, _served) = serve(rail, live.clone()).await;
-    assert_eq!(push(&addr, LIVE_NS, "AQID").await.status(), 200);
+    let routes = serve(rail, live.clone());
+    assert_eq!(push(&routes, LIVE_NS, "AQID").await.0, 200);
     let restarted = Arc::new(LiveBuffer::default());
-    let _restarted = serve(rail_with_roster(dir.path()), restarted.clone()).await;
+    let _restarted = serve(rail_with_roster(dir.path()), restarted.clone());
     assert_eq!(restarted.drain(LIVE_NS), (Vec::new(), 0));
     assert_eq!(
         live.drain(LIVE_NS),
@@ -225,9 +231,9 @@ async fn a_restart_empties_the_buffer() {
 async fn a_drain_takes_only_its_own_namespace() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, live) = fresh(&dir);
-    let (addr, _served) = serve(rail, live.clone()).await;
+    let routes = serve(rail, live.clone());
     for p in ["AQID", "BAUG"] {
-        assert_eq!(push(&addr, LIVE_NS, p).await.status(), 200);
+        assert_eq!(push(&routes, LIVE_NS, p).await.0, 200);
     }
     assert_eq!(live.drain(OTHER_LIVE_NS), (Vec::new(), 0));
     assert_eq!(
@@ -243,11 +249,10 @@ async fn a_drain_takes_only_its_own_namespace() {
 async fn an_envelope_for_an_unknown_namespace_is_refused() {
     let dir = tempfile::tempdir().unwrap();
     let (rail, live) = fresh(&dir);
-    let (addr, _served) = serve(rail, live.clone()).await;
+    let routes = serve(rail, live.clone());
     let unknown = "nobody-registered-this";
-    let resp = push(&addr, unknown, "AQID").await;
-    assert_eq!(resp.status(), 403);
-    let body = resp.text().await.unwrap();
+    let (status, body) = push(&routes, unknown, "AQID").await;
+    assert_eq!(status, 403);
     assert!(
         body.contains(unknown),
         "the refusal names the namespace: {body}"
@@ -270,34 +275,20 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
     let mut members = std::collections::BTreeMap::new();
     members.insert(Person::parse("Bo").unwrap(), vec![crate::actor_of(&bo)]);
     rail.set_seed("bo-only", &Roster::new(members)).unwrap();
-    let (base, _bo) = serve_on_stream(
-        router(RingInbound {
-            rail: rail.clone(),
-            live: live.clone(),
-            wake: Default::default(),
-        }),
-        SecretKey::from_bytes(&bo.to_bytes()),
-    )
-    .await;
-    let refused = push(&base, LIVE_NS, "AQID").await;
-    assert_eq!(refused.status(), 403);
-    assert!(refused.text().await.unwrap().contains(LIVE_NS));
+    let as_bo = Routes::new(inbound(rail.clone(), live.clone()), Some(bo));
+    let (status, body) = push(&as_bo, LIVE_NS, "AQID").await;
+    assert_eq!(status, 403);
+    assert!(body.contains(LIVE_NS));
     assert_eq!(live.drain(LIVE_NS), (Vec::new(), 0));
     assert_eq!(
-        push(&base, "bo-only", "BAUG").await.status(),
+        push(&as_bo, "bo-only", "BAUG").await.0,
         200,
         "control: Bo's own group"
     );
 
-    let addr = serve_at(router(RingInbound {
-        rail,
-        live: live.clone(),
-        wake: Default::default(),
-    }))
-    .await;
-    let off_stream = push(&format!("http://{addr}"), LIVE_NS, "AQID").await;
+    let off_stream = Routes::new(inbound(rail, live.clone()), None);
     assert_eq!(
-        off_stream.status(),
+        push(&off_stream, LIVE_NS, "AQID").await.0,
         403,
         "a request off the stream is refused"
     );
@@ -308,7 +299,9 @@ async fn a_dialer_not_standing_in_the_group_named_is_refused() {
 /// hears where a newcomer is reached now (relay-in-record): Ada says hers
 /// and pushes it to a computer holding the group, whose nudge then holds a
 /// permit; pushed again, nothing lands and nothing wakes. The failing
-/// input: a route that never wakes, as before.
+/// input: a route that never wakes, as before. The route wakes before it
+/// answers (ring_routes.rs `ring_sync`), so the permit is there once the
+/// answer is: each is read with no wait, never on the clock.
 #[tokio::test]
 async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
     let (a, b) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -333,33 +326,32 @@ async fn a_push_landing_the_askers_own_relay_wakes_the_round() {
     members.insert(Person::parse("Ada").unwrap(), vec![crate::actor_of(&key())]);
     issuer.set_seed(NS, &Roster::new(members)).unwrap();
     let wake = Arc::new(tokio::sync::Notify::new());
-    let inbound = RingInbound {
-        rail: issuer,
-        live: Default::default(),
-        wake: wake.clone(),
-    };
-    let (base, _ada) =
-        serve_on_stream(router(inbound), SecretKey::from_bytes(&key().to_bytes())).await;
+    let routes = Routes::new(
+        RingInbound {
+            rail: issuer,
+            live: Default::default(),
+            wake: wake.clone(),
+        },
+        Some(key()),
+    );
     let body = serde_json::json!({
         "namespace": NS,
         "digest": ada.digest(NS).unwrap(),
         "ops": ada.ops_missing_from_within(NS, &Digest::default(), usize::MAX).unwrap().0,
-    });
-    let push = || {
-        reqwest::Client::new()
-            .post(format!("{base}/internal/ring/sync"))
-            .json(&body)
-            .send()
-    };
-    assert_eq!(push().await.unwrap().status(), 200);
-    let woken = tokio::time::timeout(std::time::Duration::from_secs(1), wake.notified()).await;
+    })
+    .to_string();
+    let push = || routes.post("/internal/ring/sync", body.clone(), None);
+    let woken = || tokio::time::timeout(std::time::Duration::ZERO, wake.notified());
+    assert_eq!(push().await.0, 200);
     assert!(
-        woken.is_ok(),
+        woken().await.is_ok(),
         "the asker's own relay landed, and the round was not woken"
     );
-    assert_eq!(push().await.unwrap().status(), 200);
-    let again = tokio::time::timeout(std::time::Duration::from_millis(200), wake.notified()).await;
-    assert!(again.is_err(), "nothing landed, and the round was woken");
+    assert_eq!(push().await.0, 200);
+    assert!(
+        woken().await.is_err(),
+        "nothing landed, and the round was woken"
+    );
 }
 
 /// **Whether a key stands in a group is decided in one place** (#146):
