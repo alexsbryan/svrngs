@@ -1325,8 +1325,8 @@ Seven calls:
    worker the bytes it was given, in memory alone, and the worker imports
    them; they are kept nowhere at the origin, so a worker the browser
    stopped holds no key, its start page asks for a new holder, and a request
-   in flight as it stopped fails once (held by `web/tests/handover.mjs`,
-   `KEYS_LOST`). A lend at a
+   in flight as it stopped fails once (held by
+   `web/tests/lend-worker.test.mjs`, its keys lost). A lend at a
    computer on an older svrngs, whose door takes no link, is opened as
    before, its holder's bytes kept at the origin for the worker to dial as,
    and the writes the worker signs wait until a computer on the new svrngs

@@ -13,18 +13,14 @@
 // the browser decoding it. Then it has the browser stop the worker —
 // Chromium through its DevTools protocol, WebKit by closing and opening
 // the browser again — and plays on, seeking at the last, or fetches the
-// film's range again; and, when asked, loads a range of a second
-// computer's lend, which the first reads, at its origin (`args.other`), and
-// an open-ended range of it too (`args.openEnded`, `bytes=N-`), and asks
-// paths of other lends it reads (`args.refusals`), each answer's status
-// and whose word it is. It prints what it saw as one JSON line.
+// film's range again; and, when asked, loads a range of a lend it reads
+// at its origin (`args.other`, the relay-rate measurement's). It prints
+// what it saw as one JSON line.
 //
 //   node web/tests/runtime.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ...,
 //     "open": "<the lend's name>", "seeks": [s, s, s] | "film": {"path", "range"},
-//     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"},
-//     "openEnded": {"path": ..., "range": "bytes=a-"},
-//     "refusals": [{"lend": "<label>", "path": ...}]}'
+//     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -54,14 +50,6 @@ async function range({ lend, path, range }) {
   } catch (e) {
     return { error: String(e) };
   }
-}
-
-// In the lend's page: `path` at the lend `lend`'s origin, its status and
-// whose word it is (mnp-1): svrngs's kind, or null for the lend's own.
-async function refusal({ lend, path }) {
-  const at = `${location.protocol}//${lend}${location.host.slice(location.hostname.split('.')[0].length)}/${path}`;
-  const res = await fetch(at).catch((e) => ({ status: String(e), headers: new Headers() }));
-  return { path, status: res.status, refused: res.headers.get('x-svrngs-refused') };
 }
 
 const server = await serve(args.site);
@@ -134,9 +122,6 @@ try {
   // asked again starts it again, as a seek's would.
   else if (cdp) replayed = await look(page);
   const other = args.other ? await page.evaluate(range, args.other) : null;
-  const openEnded = args.openEnded ? await page.evaluate(range, args.openEnded) : null;
-  const refusals = [];
-  for (const r of args.refusals ?? []) refusals.push(await page.evaluate(refusal, r));
   console.log(
     JSON.stringify({
       listed,
@@ -148,8 +133,6 @@ try {
       runsAtStop,
       runs,
       other,
-      openEnded,
-      refusals,
       logs,
     }),
   );

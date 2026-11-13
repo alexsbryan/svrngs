@@ -879,198 +879,6 @@ fn could_not_judge(line: &str) {
 // Calibration cases moved unchanged to tests/seek_judgment.rs; the actual timed
 // seeks consume this instrument against real playback in playback.rs alone.
 
-in_webkit!(
-    /// The runtime (u4-6; DESIGN §3, "Joining", calls 3 and 4): ada's computer
-    /// lends a page and a film, an H.264 mp4 from upstream's Range origin, and
-    /// cy's, another computer holding bo's key, lends a file. The phone, holding
-    /// bo's key, opens ada's page from its list: since u5-2 it opens at an
-    /// origin of its own, `<label>.localhost`, apart from the page that
-    /// holds bo's key, and that origin's worker serves it, its `<video>` and
-    /// every byte range from ada's door, with the pass the page signed: the
-    /// film's first MiB comes back 206, its type and part said, sha-exact
-    /// (`film_answered`). The browser stops the worker, and the film's range
-    /// still comes back so: WebKit, whose worker Playwright cannot reach, is
-    /// closed and opened again on its profile, as a phone ends a browser left
-    /// in the background, and the page reopens at the lend's address
-    /// (web/tests/runtime.mjs). That the film plays and seeks, each seek
-    /// playing again within five seconds, is the playback step's alone
-    /// (playback.rs, which this test was before it; demo/runs/flakes/
-    /// 2026-11-12). A
-    /// range of cy's file, asked at its own origin by ada's page, which reads
-    /// lends of its kind (`--reads`, so the pass names cy's file too), comes
-    /// back 206 and sha-exact, and cy's door names bo's key, not ada's: no
-    /// computer carries another's lend. An open-ended range of cy's file, `bytes=N-`,
-    /// comes back a bounded part, a 206 naming it and the whole, sha-exact
-    /// (u4-9, web/sw.js `PART`), and every range of the film reaches ada's
-    /// door as a part of at most 2 MiB (the `<video>`'s own, by Chromium's
-    /// `bytes=N-` and WebKit's `bytes=N-<the end>`, playback.rs's; #53). A
-    /// 403 cy's `strict` answers comes back unmarked, the
-    /// `x-svrngs-refused` it forged dropped, and cy's door's refusal of a
-    /// path it is lent without comes back marked `path` (mnp-1). Planted: a
-    /// range answered 200 with the whole body (the worker dropping `Range`);
-    /// the worker's endpoint never reopened (opened once, when it activates);
-    /// the open range answered whole (u4-8's worker); the door's mark off.
-    a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself
-);
-async fn a_lent_film_comes_under_the_worker_which_reaches_each_lender_itself(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(ada_dir.path(), &relay, &bo).await;
-    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
-    let (ada_key, bo_key) = (actor_of(&signing(1)), actor_of(&bo));
-
-    let mp4 = ada_dir.path().join("title.mp4");
-    let size = film(&mp4);
-    let (film_origin, film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
-    let html = "<!doctype html><title>a page</title>\
-                <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
-    let page = one_origin(page_origin(html).await, film_origin).await;
-    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
-    const OTHER: u64 = 16 * MIB;
-    let file = cy_dir.path().join("title.bin");
-    std::fs::write(&file, (0..OTHER).map(origins::byte_at).collect::<Vec<u8>>()).unwrap();
-    let (shelf, shelf_heads) = origins::kept_range_origin(file, OTHER).await;
-    lend(cy_dir.path(), "shelf", shelf.port());
-    let strict = origins::refusing_origin().await;
-    let lends = svrngs_node::lend::lends_dir(cy_dir.path());
-    let body = json!({ "groups": [NS], "port": strict.port(), "kind": "k", "limit": 3, "refused": ["/private"] });
-    std::fs::write(lends.join("strict.json"), body.to_string()).unwrap();
-
-    let (from, to) = (1_000_000, 1_000_000 + 4 * MIB - 1);
-    let seen = drive(
-        engine,
-        "runtime.mjs",
-        json!({
-            "site": site,
-            "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
-            "open": "page",
-            "film": film_args(),
-            "other": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-{to}") },
-            "openEnded": { "lend": label(2, "shelf"), "path": "title.bin", "range": format!("bytes={from}-") },
-            "refusals": [
-                { "lend": label(2, "strict"), "path": "x" },
-                { "lend": label(2, "strict"), "path": "private/x" },
-            ],
-        }),
-        None,
-    )
-    .await;
-    let mut shown = seen.clone();
-    shown["logs"] = json!(format!(
-        "{} lines",
-        seen["logs"].as_array().map_or(0, Vec::len)
-    ));
-    eprintln!("the runtime's run: {shown}");
-
-    assert!(at_origin(&seen["opened"], &label(1, "page")), "{seen:#}");
-    film_answered(
-        &seen["first"],
-        &mp4,
-        "the film through the lend's worker",
-        &shown,
-    );
-    match engine {
-        Engine::Chromium => stopped_and_ran_again(&seen, &shown),
-        // No worker outlives its browser; WebKit's, which Playwright gives
-        // no console, shows its new endpoint by the film's range coming
-        // again at the lend's address, which only the worker serves.
-        Engine::Webkit => assert_eq!(seen["reopened"], seen["opened"], "{shown:#}"),
-    }
-    film_answered(
-        &seen["replayed"],
-        &mp4,
-        "the film once the worker was stopped",
-        &shown,
-    );
-
-    let film_keys = keys(&film_heads);
-    assert!(
-        film_heads
-            .lock()
-            .unwrap()
-            .iter()
-            .any(|h| h.to_ascii_lowercase().contains("\r\nrange: bytes=")),
-        "the film's ranges must reach its service:\n{:#?}",
-        film_heads.lock().unwrap()
-    );
-    assert!(
-        film_keys.iter().all(|k| *k == bo_key),
-        "ada's door must name bo's key: {film_keys:?}"
-    );
-    // Each of the film's ranges as the door was asked it: a part, closed
-    // and at most web/sw.js's PART, never a range that runs on to the end.
-    let asked = ranges(&film_heads);
-    let long: Vec<&(u64, Option<u64>)> = asked
-        .iter()
-        .filter(|(from, to)| to.is_none_or(|to| to + 1 - from > 2 * MIB))
-        .collect();
-    assert!(
-        long.is_empty(),
-        "the film's ranges must reach its door as parts of at most 2 MiB, of {size} bytes; \
-         these ran on (from, to): {long:?}\nall: {asked:?}"
-    );
-
-    let other = &seen["other"];
-    assert_eq!(
-        other["status"], 206,
-        "the range must come back 206:\n{shown:#}"
-    );
-    assert_eq!(
-        other["contentRange"],
-        format!("bytes {from}-{to}/{OTHER}"),
-        "{shown:#}"
-    );
-    assert_eq!(other["bytes"], to - from + 1, "{shown:#}");
-    assert_eq!(
-        other["sha"],
-        sha((from..to + 1).map(origins::byte_at)),
-        "{shown:#}"
-    );
-    // The open range: a part from `from`, named by its 206, never the
-    // rest of the file.
-    let part = &seen["openEnded"];
-    let got = part["bytes"].as_u64().unwrap_or(0);
-    assert_eq!(
-        part["status"], 206,
-        "the open range must come back 206:\n{shown:#}"
-    );
-    assert!(
-        got > 0 && got < OTHER - from,
-        "the open range must come back a part, not the {} bytes to the end:\n{shown:#}",
-        OTHER - from
-    );
-    assert_eq!(
-        part["contentRange"],
-        format!("bytes {from}-{}/{OTHER}", from + got - 1),
-        "{shown:#}"
-    );
-    assert_eq!(
-        part["sha"],
-        sha((from..from + got).map(origins::byte_at)),
-        "{shown:#}"
-    );
-    // Whose word each answer is (mnp-1): the lend's own 403 unmarked, the
-    // header it forged dropped; the door's refusal of a path, through the
-    // worker, marked svrngs's.
-    assert_eq!(
-        seen["refusals"],
-        json!([
-            { "path": "x", "status": 403, "refused": null },
-            { "path": "private/x", "status": 403, "refused": "path" },
-        ]),
-        "{shown:#}"
-    );
-    let shelf_keys = keys(&shelf_heads);
-    assert!(
-        !shelf_keys.is_empty() && shelf_keys.iter().all(|k| *k == bo_key),
-        "cy's door must name bo's key, the viewer's, never ada's ({ada_key}): {shelf_keys:?}"
-    );
-    drop((ada, cy));
-}
-
 /// The measurement an open relay's per-client rate is set from (relay-verb
 /// (b); `demo/runs/relay-rate/`): ada's computer lends a film at Demo A's
 /// bitrate, 3,730,555 bit/s (Jellyfin's conversion for WebKit,
@@ -1213,38 +1021,16 @@ in_webkit!(
     /// The group's page's own unseal still opens bo's key after, and the
     /// lend's origin keeps the holder as a key, never its bytes. Planted:
     /// the handed pass ignored (lend.js reading only its store); the
-    /// worker's mark off.
+    /// worker's mark off. Safari's worker on an iPhone 2026-10-30, which
+    /// loses every CryptoKey handed it (`messageerror` in its place,
+    /// demo/runs/ios/2026-10-30-observe/keyprobe/phone.log), its start page
+    /// handing the holder's bytes instead and the group's page signing to
+    /// a new holder after a stop, is web/tests/lend-worker.test.mjs's.
     a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it
 );
 async fn a_lend_worker_that_reads_no_store_dials_with_the_pass_its_start_page_hands_it(
     engine: Engine,
 ) {
-    handed_over(engine, false).await
-}
-
-in_webkit!(
-    /// Safari's worker on the operator's iPhone 2026-10-30, iOS Safari
-    /// 26.6.1, as the last test's and more: every CryptoKey sent to it is
-    /// lost, `messageerror` in its place (web/tests/handover.mjs
-    /// `KEYS_LOST`; demo/runs/ios/2026-10-30-observe/keyprobe/phone.log),
-    /// which no lend opened (open.js: "the lend's worker did not say it
-    /// holds the pass"). The start page hands the holder's bytes in memory
-    /// instead, which the worker imports, and the film's bytes come; the
-    /// stopped worker's start page has no bytes to hand, so the group's page signs
-    /// a pass to a new holder (`anew`) and they come again. The lend's
-    /// origin keeps the holder as a key, never its bytes. Red at cad47f80,
-    /// which hands only the key: the film's bytes never come.
-    a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory
-);
-async fn a_lend_worker_that_loses_every_key_handed_it_takes_the_holders_bytes_in_memory(
-    engine: Engine,
-) {
-    handed_over(engine, true).await
-}
-
-/// The two tests above, Safari's worker losing every key handed it when
-/// `keys_lost`.
-async fn handed_over(engine: Engine, keys_lost: bool) {
     let site = site();
     let relay = relay().await;
     let bo = signing(7);
@@ -1267,7 +1053,6 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
             "key": hex::encode(bo.to_bytes()),
             "token": token(&signing(1), &relay),
             "open": "page",
-            "keysLost": keys_lost,
             "film": film_args(),
         }),
         None,
@@ -1301,9 +1086,6 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
         json!({ "status": 503, "refused": "pass" }),
         "a worker holding no pass must answer a fetch itself, marked svrngs's:\n{shown:#}"
     );
-    // Where keys are lost the restarted worker's run can end while its
-    // page is at the group's, and the plant reads no last run's lines: its
-    // start page's word stands for it.
     let stopped = trace_of(&seen, "stoppedTrace");
     let logged = |words: &str| {
         seen["logs"].as_array().is_some_and(|l| {
@@ -1312,18 +1094,17 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
         })
     };
     assert!(
-        keys_lost || stopped.contains("is not kept here"),
+        stopped.contains("is not kept here"),
         "the restarted worker must read nothing of its origin's store (the plant):\n{shown:#}"
     );
     assert!(
-        (keys_lost || stopped.contains("its start page reads it again"))
+        stopped.contains("its start page reads it again")
             && stopped.contains("the page handed over the pass"),
         "the lend's address must go through its start page, which hands the pass over:\n{shown:#}"
     );
-    assert_eq!(
-        logged("no bytes of it are here: the group’s page signs a pass to a new holder"),
-        keys_lost,
-        "the restarted worker's start page, its kept key lost, must ask the group's page for a new holder, and only then:\n{shown:#}"
+    assert!(
+        !logged("no bytes of it are here: the group’s page signs a pass to a new holder"),
+        "the restarted worker's start page, its kept key taken, must not ask the group's page for a new holder:\n{shown:#}"
     );
     assert_eq!(seen["reopened"], seen["opened"], "{shown:#}");
     film_answered(
@@ -1337,16 +1118,14 @@ async fn handed_over(engine: Engine, keys_lost: bool) {
         ("handedTrace", "the first"),
         ("stoppedTrace", "the stopped"),
     ] {
-        assert_eq!(
-            trace_of(&seen, key).contains(bytes),
-            keys_lost,
+        assert!(
+            !trace_of(&seen, key).contains(bytes),
             "{words} worker must take the holder's bytes only where the key was lost:\n{shown:#}"
         );
     }
-    assert_eq!(
-        logged("STORE: the worker said a message was lost"),
-        keys_lost,
-        "the start page must hear at once that its key was lost, and only then:\n{shown:#}"
+    assert!(
+        !logged("STORE: the worker said a message was lost"),
+        "the start page must hear that its key was lost only when it was:\n{shown:#}"
     );
     assert_eq!(
         seen["kept"]["key"], "CryptoKey",
@@ -3840,217 +3619,4 @@ async fn a_phone_opens_a_lend_that_answers_only_in_gzip(engine: Engine) {
         "{seen:#}"
     );
     drop(ada);
-}
-
-in_webkit!(
-    /// **A phone is shown a lend's computer that did not answer as its
-    /// person's window, dark** (V1.1.3; the operator's "a graceful and cute
-    /// goodnight state", 2026-10-20). Ada's computer made bo's link; cy's
-    /// lends a shelf, which bo's phone opens. Then cy's computer is stopped,
-    /// as a closed lid leaves it, and the phone goes to the shelf's address
-    /// again: within the dial's cap and a second its worker shows
-    /// home/away.html, the page a computer shows too, 502 `away`: cy's
-    /// window is dark, cy's shelf can't open right now, goodnight from
-    /// cy — never that it sleeps, nor since when. Planted: HEAD before
-    /// it, whose worker said "The computer lending this did not answer.
-    /// Try again later." in plain text.
-    a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark
-);
-async fn a_phone_is_shown_a_lend_s_computer_that_did_not_answer_as_its_window_dark(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let (ada_dir, cy_dir, kept) = (
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-    );
-    let ada = node(ada_dir.path(), &relay, &bo).await;
-    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
-    let shelf = page_origin("<!doctype html><title>cy's shelf</title>").await;
-    lend(cy_dir.path(), "shelf", shelf.port());
-    let ready = kept.path().join("ready");
-    let (go, release) = tokio::sync::oneshot::channel();
-    let args = json!({
-        "site": site,
-        "key": hex::encode(bo.to_bytes()),
-        "token": token(&signing(1), &relay),
-        "ready": ready,
-        "open": "shelf",
-        "title": "cy's shelf",
-    });
-    let phone = tokio::spawn(drive(engine, "night.mjs", args, Some(release)));
-    tokio::time::timeout(Duration::from_secs(120), async {
-        while !ready.exists() {
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    })
-    .await
-    .expect("the phone opens cy's shelf while cy's computer answers");
-    cy.endpoint().close().await;
-    drop(cy);
-    go.send(()).unwrap();
-    let seen = phone.await.unwrap();
-    eprintln!("the phone's run: {seen:#}");
-    assert_eq!(seen["opened"]["title"], "cy's shelf", "{seen:#}");
-    let again = &seen["again"];
-    assert_eq!(again["status"], 502, "{seen:#}");
-    assert_eq!(again["refused"], "away", "{seen:#}");
-    assert_eq!(again["title"], "cy’s window is dark", "{seen:#}");
-    let text = again["text"].as_str().unwrap_or_default();
-    for words in [
-        "cy’s computer didn’t answer, so cy’s shelf can’t open right now.",
-        "Goodnight from cy.",
-    ] {
-        assert!(text.contains(words), "the page lacks {words:?}:\n{seen:#}");
-    }
-    let within = (svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1)).as_millis();
-    assert!(
-        again["ms"]
-            .as_u64()
-            .is_some_and(|ms| u128::from(ms) < within),
-        "shown within the dial's cap and a second, {within} ms:\n{seen:#}"
-    );
-    drop(ada);
-}
-
-/// A lent page that holds a socket, on one port: a request asking
-/// `Upgrade: websocket` switched and left open, as a live app's sync
-/// socket is, and any other answered with "cy's room".
-async fn socket_page() -> std::net::SocketAddr {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        while let Ok((mut sock, _)) = listener.accept().await {
-            tokio::spawn(async move {
-                let mut head = [0u8; 8192];
-                let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
-                    .await
-                    .unwrap_or(0);
-                let head = String::from_utf8_lossy(&head[..n]).to_ascii_lowercase();
-                if head.contains("\r\nupgrade: websocket") {
-                    let yes = "HTTP/1.1 101 Switching Protocols\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n";
-                    if sock.write_all(yes.as_bytes()).await.is_ok() {
-                        let (mut r, mut w) = sock.split();
-                        let _ = tokio::io::copy(&mut r, &mut w).await;
-                    }
-                    return;
-                }
-                let html = "<!doctype html><title>cy's room</title>";
-                let answer = format!(
-                    "HTTP/1.1 200 OK\r\ncontent-type: text/html; charset=utf-8\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{html}",
-                    html.len()
-                );
-                let _ = sock.write_all(answer.as_bytes()).await;
-            });
-        }
-    });
-    addr
-}
-
-/// A way to `relay` that shuts, as a closed lid leaves a computer reached
-/// only through it: shut (`false` sent), it ends every connection through
-/// it and refuses each new one, until opened again (`true`).
-async fn lid(relay: &Server) -> (String, tokio::sync::watch::Sender<bool>) {
-    let to = harness::relay_at(relay);
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let at = listener.local_addr().unwrap();
-    let (open, watch) = tokio::sync::watch::channel(true);
-    tokio::spawn(async move {
-        while let Ok((mut near, _)) = listener.accept().await {
-            let mut shut = watch.clone();
-            if !*shut.borrow() {
-                continue;
-            }
-            tokio::spawn(async move {
-                if let Ok(mut far) = tokio::net::TcpStream::connect(to).await {
-                    tokio::select! {
-                        _ = tokio::io::copy_bidirectional(&mut near, &mut far) => {}
-                        _ = shut.wait_for(|open| !*open) => {}
-                    }
-                }
-            });
-        }
-    });
-    (format!("http://{at}/"), open)
-}
-
-in_webkit!(
-    /// **A phone's socket opens again once its lender answers again**
-    /// (V1.1.3; the doc run's finding, `demo/runs/doc/2026-10-20/found/
-    /// lid-45s.jsonl`, 3fee02f4: a phone's sockets never came back after
-    /// the lid opened). Cy's computer is reached only through its own
-    /// relay, by a way that shuts (`lid`). Cy lends a room whose page holds
-    /// a socket, and bo's phone opens it: a socket there opens. The way is
-    /// shut, as a closed lid leaves cy's computer, and a socket does not
-    /// open. The way opens again, and within 60 s a socket the page asks
-    /// for opens, the page not opened again. Planted: HEAD before it,
-    /// whose worker kept the dial a socket failed on (web/lend.js
-    /// `socket`, as `lent` does not), so every socket after went to a
-    /// connection that had gone.
-    a_phone_s_socket_opens_again_once_its_lender_answers_again
-);
-async fn a_phone_s_socket_opens_again_once_its_lender_answers_again(engine: Engine) {
-    let site = site();
-    let (relay, far) = (relay().await, relay().await);
-    let (cys, lid) = lid(&far).await;
-    // The phone's way shuts too: a dial tries every relay the phone knows,
-    // and cy, having answered it there, can be reached there.
-    let (phones, shut) = self::lid(&relay).await;
-    let bo = signing(7);
-    let (ada_dir, cy_dir, kept) = (
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-        tempfile::tempdir().unwrap(),
-    );
-    let ada = node(ada_dir.path(), &relay, &bo).await;
-    svrngs_core::tests_support::let_in_by(NS, &signing(2), "cy", |act| {
-        let act = svrngs_core::tests_support::Fixture { act };
-        ada.rail().commit(NS, &act).unwrap().unwrap().lines()[0]
-            .id
-            .clone()
-    });
-    let cy = standing_on(cy_dir.path(), cys, &ada, 2, "cy", "ada").await;
-    lend(cy_dir.path(), "room", socket_page().await.port());
-    let (ready, again) = (kept.path().join("ready"), kept.path().join("again"));
-    let args = json!({
-        "site": site,
-        "key": hex::encode(bo.to_bytes()),
-        "token": Token {
-            issuer: signing(1).verifying_key(),
-            secret: [0; 16],
-            relays: vec![phones.parse().expect("a URL")],
-        }
-        .encode(),
-        "ready": ready,
-        "again": again,
-        "open": "room",
-        "title": "cy's room",
-        "socket": "/sync",
-    });
-    let (go, release) = tokio::sync::oneshot::channel();
-    let phone = tokio::spawn(drive(engine, "night.mjs", args, Some(release)));
-    let written = |f: std::path::PathBuf| async move {
-        tokio::time::timeout(Duration::from_secs(120), async {
-            while !f.exists() {
-                tokio::time::sleep(Duration::from_millis(100)).await;
-            }
-        })
-        .await
-        .expect("the phone writes its file");
-    };
-    written(ready.clone()).await;
-    lid.send(false).unwrap();
-    shut.send(false).unwrap();
-    go.send(()).unwrap();
-    written(again.clone()).await;
-    lid.send(true).unwrap();
-    shut.send(true).unwrap();
-    let seen = phone.await.unwrap();
-    eprintln!("the phone's run: {seen:#}");
-    assert_eq!(seen["opened"]["title"], "cy's room", "{seen:#}");
-    assert_eq!(seen["first"], "open", "{seen:#}");
-    assert_ne!(seen["stopped"], "open", "{seen:#}");
-    assert_eq!(seen["back"]["last"], "open", "{seen:#}");
-    drop((cy, ada));
 }

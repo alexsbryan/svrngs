@@ -16,14 +16,13 @@
 // pass, hands it over and opens the address again, and the worker
 // answers the film's range again. Last, the group's page's own unseal must still open the person's
 // key. The worker's trace is read at `/svrngs-trace` (lend.js), as a
-// phone's is. Prints what it saw as one JSON line.
-//
-// With `keysLost`, the worker is planted too as Safari's on an iPhone
-// 2026-10-30 (KEYS_LOST): a message carrying a CryptoKey never reaches it.
-// It also says what the lend's origin keeps of the pass (`keptPass`).
+// phone's is. It also says what the lend's origin keeps of the pass
+// (`keptPass`). Prints what it saw as one JSON line. Safari's worker on an
+// iPhone 2026-10-30, which loses every CryptoKey handed it, is a Node law
+// now (its row in docs/seams.tsv).
 //
 //   node web/tests/handover.mjs '{"engine": "chromium"|"webkit", "site": ...,
-//     "key": ..., "token": ..., "open": "<the lend's name>", "keysLost": bool,
+//     "key": ..., "token": ..., "open": "<the lend's name>",
 //     "film": {"path": "<the <video>'s file>", "range": "bytes=a-b"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
@@ -40,19 +39,6 @@ const PLANT = `{
   const get = IDBObjectStore.prototype.get;
   IDBObjectStore.prototype.get = function (k) {
     return get.call(this, this.name === 'kept' ? 'planted: Safari reads nothing here' : k);
-  };
-}`;
-
-// Safari's worker on an iPhone 2026-10-30, iOS Safari 26.6.1: any CryptoKey
-// in a message to it, the holder's an open hands included, is lost, and
-// `messageerror` fires in place of `message`; plain data and bytes arrive
-// (demo/runs/ios/2026-10-30-observe/keyprobe/phone.log, cases B-E).
-const KEYS_LOST = `{
-  const add = self.addEventListener;
-  const holds = (v) => v instanceof CryptoKey || (v !== null && typeof v === 'object' && Object.values(v).some(holds));
-  self.addEventListener = function (type, f, o) {
-    const lost = (e) => (holds(e.data) ? self.dispatchEvent(new MessageEvent('messageerror')) : f.call(this, e));
-    return add.call(this, type, type === 'message' ? lost : f, o);
   };
 }`;
 
@@ -96,7 +82,7 @@ const traced = (page) =>
     .evaluate(() => fetch('/svrngs-trace').then((r) => r.text()))
     .catch((e) => `the trace was not read: ${e}`);
 
-const server = await serve(args.site, { worker: args.keysLost ? `${PLANT}\n${KEYS_LOST}` : PLANT });
+const server = await serve(args.site, { worker: PLANT });
 const origin = pageAt(server);
 const profile =
   args.engine === 'webkit' ? mkdtempSync(join(tmpdir(), 'svrngs-webkit-')) : undefined;
