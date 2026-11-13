@@ -979,6 +979,12 @@ impl cli::Here for Older {
             .unwrap();
         Ok((answer.status().is_success(), String::new()))
     }
+    fn listens(&self, _: std::num::NonZeroU16) -> bool {
+        unreachable!("a join probes no port")
+    }
+    fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {
+        unreachable!("a join asks nothing at the terminal")
+    }
 }
 
 /// **A join the svrngs running here did not answer says it is too old**

@@ -94,7 +94,8 @@ pub async fn ask(
 
 /// svrngs running over `0`'s data dir as the command reaches it
 /// (cli.rs `Here`): each ask answered by its node's routes, as [`ask`]
-/// asks them, the API's socket aside.
+/// asks them, the API's socket aside; every port said to listen, and
+/// nobody at the terminal.
 pub struct Running<'a>(pub &'a Computer);
 
 impl cli::Here for Running<'_> {
@@ -105,5 +106,13 @@ impl cli::Here for Running<'_> {
         let body = serde_json::to_value(body).unwrap();
         let (status, text) = ask(&self.0.node, "POST", route, &body).await;
         Ok((status.is_success(), text))
+    }
+    /// Every port listens: a test of a lend says what its service is.
+    fn listens(&self, _: std::num::NonZeroU16) -> bool {
+        true
+    }
+    /// Nobody types.
+    fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {
+        Ok(None)
     }
 }

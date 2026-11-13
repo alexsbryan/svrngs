@@ -808,8 +808,8 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 }
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
-            let mut lend = share::lend_of(&asked, share::listens, known, theirs)?;
-            if !lend.sends.is_empty() && !sends_said(&lend)? {
+            let mut lend = share::lend_of(&asked, |p| here.listens(p), known, theirs)?;
+            if !lend.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.sends.clear();
             }
             let accounts = share::accounts_of(&lend.kind, theirs);
@@ -825,11 +825,11 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                     tracing::debug!(target: "cli", lend = %lend.name, ?signs, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes (Accounts), or it takes each person from the door's header (Header)");
                     None
                 }
-                (false, None) => prompt_secret(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
+                (false, None) => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
             };
             share_lend(&root, &lend, secret.as_deref())?;
             if asked.readers {
-                share_readers(&root, &lend, (asked.port, theirs)).await?;
+                share_readers(here, &lend, (asked.port, theirs)).await?;
             }
             let sharing = Said::Shared {
                 lend,
@@ -987,15 +987,51 @@ fn restart(root: &Path) -> Result<String, Refusal> {
 pub trait Here {
     fn root(&self) -> &Path;
     fn ask(&self, route: &str, body: &impl serde::Serialize) -> impl Future<Output = Asked>;
+    fn listens(&self, port: NonZeroU16) -> bool;
+    fn prompt(&self, name: &LendName, asked: &str, shown: bool) -> Prompted;
 }
 
 pub type Asked = Result<(bool, String), Refusal>;
+pub type Prompted = Result<Option<String>, Refusal>;
 
 /// The product's: POST `body` to `route` of svrngs running here, at the
 /// API it wrote, showing the token it keeps beside it.
 impl Here for PathBuf {
     fn root(&self) -> &Path {
         self
+    }
+    fn listens(&self, port: NonZeroU16) -> bool {
+        share::listens(port)
+    }
+    /// Ask for the lend's password on this terminal, never echoed, and read
+    /// one line from standard input: `None` for an empty line or none. The
+    /// value is never traced, only whether there is one.
+    fn prompt(&self, name: &LendName, asked: &str, shown: bool) -> Prompted {
+        use std::io::{BufRead, IsTerminal, Write};
+        let stdin = std::io::stdin();
+        let terminal = stdin.is_terminal() && !shown;
+        eprint!("{asked}");
+        let _ = std::io::stderr().flush();
+        let echo = |on: bool| {
+            if terminal {
+                let _ = std::process::Command::new("stty")
+                    .arg(if on { "echo" } else { "-echo" })
+                    .stdin(std::process::Stdio::inherit())
+                    .status();
+            }
+        };
+        echo(false);
+        let mut line = String::new();
+        let read = stdin.lock().read_line(&mut line);
+        echo(true);
+        eprintln!();
+        read.map_err(|e| {
+            tracing::debug!(target: "cli", error = %e, "cli: share — the password cannot be read");
+            Refusal::Prompt(e)
+        })?;
+        let secret = line.trim().to_string();
+        tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
+        Ok((!secret.is_empty()).then_some(secret))
     }
     async fn ask(&self, route: &str, body: &impl serde::Serialize) -> Asked {
         let read = |file| std::fs::read_to_string(self.join(file)).unwrap_or_default();
@@ -1518,48 +1554,18 @@ fn joined_said(joined: &Joined) -> String {
     }
 }
 
-/// Ask for the lend's password on this terminal, never echoed, and read
-/// one line from standard input: `None` for an empty line or none. The
-/// value is never traced, only whether there is one.
-fn prompt_secret(name: &LendName, asked: &str, shown: bool) -> Result<Option<String>, Refusal> {
-    use std::io::{BufRead, IsTerminal, Write};
-    let stdin = std::io::stdin();
-    let terminal = stdin.is_terminal() && !shown;
-    eprint!("{asked}");
-    let _ = std::io::stderr().flush();
-    let echo = |on: bool| {
-        if terminal {
-            let _ = std::process::Command::new("stty")
-                .arg(if on { "echo" } else { "-echo" })
-                .stdin(std::process::Stdio::inherit())
-                .status();
-        }
-    };
-    echo(false);
-    let mut line = String::new();
-    let read = stdin.lock().read_line(&mut line);
-    echo(true);
-    eprintln!();
-    read.map_err(|e| {
-        tracing::debug!(target: "cli", error = %e, "cli: share — the password cannot be read");
-        Refusal::Prompt(e)
-    })?;
-    let secret = line.trim().to_string();
-    tracing::debug!(target: "cli", lend = %name, given = !secret.is_empty(), terminal, "cli: share — the password asked for");
-    Ok((!secret.is_empty()).then_some(secret))
-}
-
 /// Whether `lend`'s lender says yes, y at this terminal, to apps sending to
 /// it where its terms say (svrn-docs `rings/current/CONTRACTS.md` §2, "The
 /// lend is the yes"): with no terminal to answer, no, and said so.
-fn sends_said(lend: &Lend) -> Result<bool, Refusal> {
+fn sends_said(here: &impl Here, lend: &Lend) -> Result<bool, Refusal> {
     use std::io::IsTerminal;
     let paths: Vec<&str> = lend.sends.iter().map(|s| s.path()).collect();
     let (name, at) = (&lend.name, paths.join(" and "));
     let terminal = std::io::stdin().is_terminal();
     let words = format!("Apps your friends open on their computers can send to {name} at {at}, if each says yes. Let them? Type y, then press Enter: ");
     let yes = terminal
-        && prompt_secret(name, &words, true)?
+        && here
+            .prompt(name, &words, true)?
             .is_some_and(|y| ["y", "yes"].contains(&y.to_lowercase().as_str()));
     tracing::debug!(target: "cli", lend = %name, terminal, yes, "cli: share — its lender's yes to apps sending to it, or none");
     if !yes {
@@ -1571,17 +1577,21 @@ fn sends_said(lend: &Lend) -> Result<bool, Refusal> {
 /// `svrngs share --readers`: the account apps reading `lend` are let in as,
 /// signed in once where the table says how (`share::readers_of`), else
 /// what its Authorization header takes, pasted; then kept.
-async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Result<(), Refusal> {
+async fn share_readers(
+    here: &impl Here,
+    lend: &Lend,
+    at: (NonZeroU16, Terms),
+) -> Result<(), Refusal> {
     let (port, terms) = at;
     let name = &lend.name;
-    let ask = |words: String, shown| prompt_secret(name, &words, shown);
+    let ask = |words: String, shown| here.prompt(name, &words, shown);
     let refused = |why: String| Refusal::Readers(name.clone(), why);
     if let Some(how) = share::key_of(&lend.kind, terms) {
         let key = ask(format!("Paste the key you made in {name}: "), false)?;
         let key = key.ok_or_else(|| refused("nothing was given".into()))?;
         let said = share::key_said(&lend.kind, share::tried(port, Some(how), &key).await);
         let said = said.map_err(&refused)?;
-        share::keep_key(root, name, Some(how), &key).map_err(|e| refused(e.to_string()))?;
+        share::keep_key(here.root(), name, Some(how), &key).map_err(|e| refused(e.to_string()))?;
         eprintln!("{said} Apps that read {name} are let in with that key, to look only; a person opening it still signs in as themselves.");
         return Ok(());
     }
@@ -1603,7 +1613,7 @@ async fn share_readers(root: &Path, lend: &Lend, at: (NonZeroU16, Terms)) -> Res
         )?
         .ok_or_else(|| refused("nothing was given".into()))?,
     };
-    lend::keep_readers(root, name, (lend::SECRET_HEADER, &line))
+    lend::keep_readers(here.root(), name, (lend::SECRET_HEADER, &line))
         .map_err(|e| refused(e.to_string()))?;
     eprintln!("Apps that read {name} are let in as that account, to look only; a person opening it still signs in as themselves.");
     Ok(())
