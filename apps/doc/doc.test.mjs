@@ -1,115 +1,123 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// The doc end to end on one host: the real server (server.mjs) as its own
-// process, and pages as sync.js runs them, each over a socket that sets the
-// headers svrngs's door sets on an upgrade (a stand-in for the door: svrngs
+// The doc end to end in one process: the real server's doc (server.mjs
+// `doc`, everything `start` listens with but the listener) and pages as
+// sync.js runs them, each over an in-memory socket carrying the headers
+// svrngs's door sets on an upgrade (a stand-in for the door: svrngs
 // crates/svrngs-node/src/door.rs strips a client's copies and sets its own).
-// The lid is SIGSTOP on the server's process, which is what a closed lid
-// does to it. `node --test apps/doc/`, and scripts/check.sh's "app laws".
+// Time is node:test's mocked clock, moved a step at a time, so a bar on
+// QUIET_MS is judged on the time the page and the server read, never a
+// loaded host's. The lid is what a closed lid does to the server's process:
+// nothing it says reaches a page, and what a page sends or opens waits for
+// it to wake. `node --test apps/doc/`, and scripts/check.sh's "app laws".
 
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
-import http from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
 import { PROSE_FRAGMENT } from './adapter.js';
+import { doc } from './server.mjs';
 import { QUIET_MS, sync } from './sync.js';
 import { Y, awarenessProtocol } from './vendor/doc-bundle.js';
-import { frame, frames } from './ws.mjs';
 
-const SERVER = fileURLToPath(new URL('./server.mjs', import.meta.url));
 const keyOf = (person) => createHash('sha256').update(person).digest('hex');
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** The test's mocked timers (each test enables its own). */
+let mock;
+/** Every message and step already queued, run: setImmediate is the real one. */
+const settle = () => new Promise((r) => setImmediate(r));
+/** The mocked clock moved on `ms`, a step at a time, the work each step wakes run. */
+async function sleep(ms) {
+  for (let left = ms; left > 0; left -= 50) {
+    mock.tick(Math.min(50, left));
+    await settle();
+  }
+}
+/** Virtual ms until `f()` holds, failing past `within`. */
 async function until(what, f, within = 15_000) {
   const t0 = Date.now();
+  await settle();
   for (;;) {
-    const v = f();
-    if (v) return Date.now() - t0;
+    if (f()) return Date.now() - t0;
     if (Date.now() - t0 > within) throw new Error(`${what}: not within ${within} ms`);
     await sleep(50);
   }
 }
 
-/** A browser's WebSocket, in Node, opened with `headers` as the door would set them. */
-function socketAs(headers) {
-  return class {
-    constructor(url) {
-      Object.assign(this, { readyState: 0, binaryType: 'blob' });
-      const u = new URL(url.replace(/^ws/, 'http'));
-      this.req = http.request({
-        host: u.hostname,
-        port: u.port,
-        path: u.pathname,
-        headers: {
-          connection: 'Upgrade',
-          upgrade: 'websocket',
-          'sec-websocket-version': '13',
-          'sec-websocket-key': randomBytes(16).toString('base64'),
-          ...headers,
-        },
-      });
-      this.req.on('upgrade', (_res, socket, head) => {
-        this.socket = socket;
-        this.readyState = 1;
-        let buf = Buffer.alloc(0);
-        const take = (d) => {
-          const { out, rest } = frames(Buffer.concat([buf, d]));
-          buf = rest;
-          for (const f of out) {
-            if (f.op === 2)
-              this.onmessage?.({
-                data: f.data.buffer.slice(f.data.byteOffset, f.data.byteOffset + f.data.length),
-              });
-            if (f.op === 8) this.end();
-          }
-        };
-        socket.on('data', take);
-        socket.on('close', () => this.end());
-        socket.on('error', () => this.end());
-        this.onopen?.();
-        if (head.length) take(head);
-      });
-      this.req.on('error', () => this.end());
-      this.req.end();
-    }
-    send(data) {
-      if (this.readyState === 1) this.socket.write(frame(2, data, randomBytes(4)));
-    }
-    close() {
-      if (this.readyState === 1) this.socket.end(frame(8, Buffer.from([3, 232]), randomBytes(4)));
-      else this.req.destroy();
-      this.end();
-    }
-    end() {
-      if (this.readyState === 3) return;
-      this.readyState = 3;
-      this.onclose?.();
-    }
-  };
-}
-
-/** The server as its own process; `stop()` and `go()` are the lid. */
+/** The server's doc in this process, its lid, and how a page reaches it. */
 async function server(keep) {
-  const proc = spawn(process.execPath, [SERVER, '--port', '0', '--keep', keep], {
-    stdio: ['ignore', 'pipe', 'inherit'],
-  });
-  let said = '';
-  proc.stdout.on('data', (d) => (said += d));
-  await until('the server says its port', () => /127\.0\.0\.1:(\d+)/.test(said), 10_000);
+  const d = await doc({ keep });
+  const lid = { shut: false, waiting: [] };
+  /** What reaches the server: at once, or when it wakes. */
+  const toServer = (f) => (lid.shut ? lid.waiting.push(f) : queueMicrotask(f));
   return {
-    port: Number(said.match(/127\.0\.0\.1:(\d+)/)[1]),
-    stop: () => proc.kill('SIGSTOP'),
-    go: () => proc.kill('SIGCONT'),
-    end: () =>
-      new Promise((done) => (proc.kill('SIGCONT'), proc.kill('SIGTERM'), proc.on('exit', done))),
+    d,
+    stop: () => (lid.shut = true),
+    go: () => {
+      lid.shut = false;
+      lid.waiting.splice(0).forEach((f) => queueMicrotask(f));
+    },
+    end: () => d.close(),
+    /** GET /here, as sync.js `poke` asks it: answered by the server's own handler. */
+    poke: () =>
+      new Promise((done) =>
+        toServer(() =>
+          d.handle(
+            { method: 'GET', url: '/here', headers: {} },
+            {
+              writeHead() {
+                return this;
+              },
+              end: () => done(),
+            },
+          ),
+        ),
+      ),
+    /** A browser's WebSocket, opened with `headers` as the door would set them. */
+    socketAs(headers) {
+      return class {
+        constructor() {
+          Object.assign(this, { readyState: 0, binaryType: 'blob' });
+          this.peer = {
+            send: (bytes) => {
+              if (lid.shut) return;
+              const data = Uint8Array.from(bytes).buffer;
+              queueMicrotask(() => this.readyState === 1 && this.onmessage?.({ data }));
+            },
+            close: () => queueMicrotask(() => this.end()),
+            onmessage: () => {},
+            onclose: () => {},
+          };
+          toServer(() => {
+            if (this.readyState !== 0) return;
+            this.readyState = 1;
+            d.opened({ headers }, this.peer);
+            this.onopen?.();
+          });
+        }
+        send(data) {
+          if (this.readyState === 1) {
+            const bytes = Uint8Array.from(data);
+            toServer(() => this.peer.onmessage(bytes));
+          }
+        }
+        close() {
+          const was = this.readyState;
+          this.end();
+          if (was === 1) toServer(() => this.peer.onclose());
+        }
+        end() {
+          if (this.readyState === 3) return;
+          this.readyState = 3;
+          this.onclose?.();
+        }
+      };
+    },
   };
 }
 
 /** A page: its own doc, its sync, and what the sync told it. */
-function page(port, person) {
+function page(srv, person) {
   const doc = new Y.Doc();
   const awareness = new awarenessProtocol.Awareness(doc);
   const seen = { hello: null, lines: null, away: [], here: 0, joined: [], pokes: 0, synced: 0 };
@@ -117,14 +125,11 @@ function page(port, person) {
     ? { 'x-svrngs-person': Buffer.from(person).toString('latin1'), 'x-svrngs-key': keyOf(person) }
     : {};
   const s = sync({
-    url: `ws://127.0.0.1:${port}/sync`,
+    url: 'ws://127.0.0.1:4100/sync',
     doc,
     awareness,
-    WebSocket: socketAs(headers),
-    poke: () => (
-      (seen.pokes += 1),
-      fetch(`http://127.0.0.1:${port}/here`, { signal: AbortSignal.timeout(5000) })
-    ),
+    WebSocket: srv.socketAs(headers),
+    poke: () => ((seen.pokes += 1), srv.poke()),
     on: {
       hello: (h) => {
         seen.hello = h;
@@ -143,8 +148,6 @@ function page(port, person) {
     awareness,
     seen,
     s,
-    // An Awareness keeps a timer of its own (y-protocols' outdated check),
-    // which would hold the test's process open.
     close: () => (s.stop(), awareness.destroy()),
     write(text) {
       const p = new Y.XmlElement('paragraph');
@@ -169,13 +172,13 @@ function page(port, person) {
 }
 
 test('two pages write at once and read one doc, each named as the door named their socket', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'], now: 1_000_000 });
+  mock = t.mock.timers;
   const keep = mkdtempSync(join(tmpdir(), 'doc-'));
   const srv = await server(keep);
-  const bo = page(srv.port, 'Bo');
-  const zoe = page(srv.port, 'Zoë');
-  t.after(
-    async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })),
-  );
+  const bo = page(srv, 'Bo');
+  const zoe = page(srv, 'Zoë');
+  t.after(async () => (bo.close(), zoe.close(), srv.end(), rmSync(keep, { recursive: true })));
   await until('both are greeted', () => bo.seen.hello && zoe.seen.hello);
   // The page lets its person type once this has been said (app.js).
   await until("both are told they hold the server's doc", () => bo.seen.synced && zoe.seen.synced);
@@ -200,10 +203,12 @@ test('two pages write at once and read one doc, each named as the door named the
 });
 
 test('a page opened without svrngs is named nobody, and its paragraph says so', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'], now: 1_000_000 });
+  mock = t.mock.timers;
   const keep = mkdtempSync(join(tmpdir(), 'doc-'));
   const srv = await server(keep);
-  const anon = page(srv.port, null);
-  t.after(async () => (anon.close(), await srv.end(), rmSync(keep, { recursive: true })));
+  const anon = page(srv, null);
+  t.after(async () => (anon.close(), srv.end(), rmSync(keep, { recursive: true })));
   await until('greeted', () => anon.seen.hello);
   assert.equal(anon.seen.hello.you, null);
   anon.write('hello');
@@ -212,13 +217,13 @@ test('a page opened without svrngs is named nobody, and its paragraph says so', 
 });
 
 test('a lender gone quiet is goodnight within QUIET_MS and a tick, and what was written meanwhile joins once it answers', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'], now: 1_000_000 });
+  mock = t.mock.timers;
   const keep = mkdtempSync(join(tmpdir(), 'doc-'));
   const srv = await server(keep);
-  const bo = page(srv.port, 'Bo');
-  const zoe = page(srv.port, 'Zoë');
-  t.after(
-    async () => (bo.close(), zoe.close(), await srv.end(), rmSync(keep, { recursive: true })),
-  );
+  const bo = page(srv, 'Bo');
+  const zoe = page(srv, 'Zoë');
+  t.after(async () => (bo.close(), zoe.close(), srv.end(), rmSync(keep, { recursive: true })));
   bo.write('before');
   await until('both read it', () => zoe.text().includes('before'));
 
@@ -260,17 +265,19 @@ test('a lender gone quiet is goodnight within QUIET_MS and a tick, and what was 
 });
 
 test('the server reads the doc back whole after a restart', async (t) => {
+  t.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'], now: 1_000_000 });
+  mock = t.mock.timers;
   const keep = mkdtempSync(join(tmpdir(), 'doc-'));
   t.after(() => rmSync(keep, { recursive: true }));
   let srv = await server(keep);
-  const bo = page(srv.port, 'Bo');
+  const bo = page(srv, 'Bo');
   bo.write('kept');
   await until('Bo is told who wrote it', () => bo.seen.lines?.[0]?.person === 'Bo');
   bo.close();
-  await srv.end();
+  srv.end();
   srv = await server(keep);
-  const cy = page(srv.port, 'Cy');
-  t.after(async () => (cy.close(), await srv.end()));
+  const cy = page(srv, 'Cy');
+  t.after(async () => (cy.close(), srv.end()));
   await until('Cy reads it', () => cy.text().includes('kept'));
   await until('and who wrote it', () => cy.seen.lines?.[0]?.person === 'Bo');
 });
