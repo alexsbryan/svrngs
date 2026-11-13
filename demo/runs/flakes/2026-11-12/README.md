@@ -278,6 +278,7 @@ this run, one of four straight at the canary not (19,177 ms), at loads of
   `[patch.crates-io]` with a saturating decrement, is the fix; neither
   is made here.
 - **The give machine test (C6)**: instrumented; ETXTBSY unconfirmed.
+- **holyarrs H8 on WebKit** (after 99473e23, twice at load ~4): Bo leaving Jellyfin while its player's chunk still loads gives a `ChunkLoadError`; expected at that step by 16c7d8d9, not yet seen green under load.
 - **The six browser failures** (above): this run's orphaned prober, confirmed by 0d203da7's gate (exit 0, the six passing).
 - **films' 401 and meet.rs:240**, each seen once in the full gate.
 - **Rates.** No before/after rate: the box went down in round 2 (§2).
