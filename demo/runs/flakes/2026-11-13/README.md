@@ -152,3 +152,22 @@ could-not-judge; tests 621 s, browser 186 s, scenes 372 s, playback 180 s.
 `recount-6c30c2aa.out` (`recount.py`, unchanged): 900 gate Rust tests,
 618 (68.7%) crossing no seam, 282 at least one: P 267, Q 234, R 140,
 B 90, C 75, D 10, M 7.
+
+## Unit 7 (the command's verbs) and the gate at 196b8097
+
+Commits: b9e86134 (`Net::ask_once`, a link's issuer asked on the wire,
+net zero lines), 43832adf..ab8c2e73 (join_by_link 10, new 5, share 3,
+meet 2, leave_page 2 on the wire, crates/svrngs/tests/verbs/),
+bb783fd5/f2574521 (install's 8 on a curl stub), 18cd2afb (four "within
+N s" bars on tokio's paused clock). `recount-18cd2afb.out`: 651 of 900
+(72.3%) cross no seam: P 237, Q 209, R 133, B 90, C 71, D 10, M 7.
+
+`gate-196b8097.txt`: clean worktree, under the lock: 1,540 s, **exit 1**.
+Every step passed but playback: conformance
+`seeks_back_to_back::on_a_phone_with_the_wildcard::chromium` (the browser
+half: `page.evaluate: Browser closed`, after a first load whose wasm body
+was aborted). Alone under the lock it passed 3 of 3 (35.6-36.4 s); in the
+gate it ran beside the other three seeks for 67 s. Recorded in
+2026-11-12/recorded-failures.tsv; one run, no rate. It is the contained
+playback step's seam B, and no commit since 6c30c2aa touched the page,
+the worker, conformance.rs or page.mjs.

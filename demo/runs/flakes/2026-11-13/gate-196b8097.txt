@@ -1,0 +1,979 @@
+Fri Nov 13 14:12:17 PST 2026
+196b8097
+14:12  up 8 days, 18:22, 8 users, load averages: 3.07 4.85 6.25
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 80813)
+passed     principles pinned (1 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     script laws (7 s)
+passed     page integration (15 s)
+passed     clippy (47 s)
+passed     tests (542 s)
+passed     canaries (1 s)
+passed     ceiling canary (60 s)
+           CEILING idle round at 25 x 10,000: 0.0546 s of processor, the median of [4.711540999999997, 0.05461800000000139, 0.04982700000000051], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.04982700000000051,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.009267166}
+passed     web rustfmt and clippy (8 s)
+passed     browser (175 s)
+passed     types (18 s)
+passed     typed lint (1 s)
+passed     joining in a browser (70 s)
+passed     pages (22 s)
+passed     scenes (364 s)
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (48 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+failed     playback (86 s)
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+                Running tests/browser/main.rs (target/debug/deps/browser-538ac7a90aa67903)
+           
+           running 2 tests
+           test playback::a_lent_film_plays_and_seeks_under_its_worker::chromium ... ok
+           test playback::a_lent_film_plays_and_seeks_under_its_worker::webkit ... ok
+           
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 46 filtered out; finished in 16.30s
+           
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 0.22s
+                Running tests/conformance.rs (target/debug/deps/conformance-0ff7b69368e9cff4)
+           
+           running 4 tests
+           test seeks_back_to_back::on_a_phone_with_the_wildcard::chromium ... FAILED
+           test seeks_back_to_back::on_a_computer::chromium ... ok
+           test seeks_back_to_back::on_a_computer::webkit ... ok
+           test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit has been running for over 60 seconds
+           test seeks_back_to_back::on_a_phone_with_the_wildcard::webkit ... ok
+           
+           failures:
+           
+           ---- seeks_back_to_back::on_a_phone_with_the_wildcard::chromium stdout ----
+           
+           thread 'seeks_back_to_back::on_a_phone_with_the_wildcard::chromium' (71106833) panicked at crates/svrngs-node/tests/conformance.rs:547:5:
+           the browser half failed (exit status: 1):
+           the page did not finish: Error: page.evaluate: Browser closed
+           debug: STORE: the sealing key absent: making one
+           debug: STORE: the runtime's module was not kept: NetworkError: Failed to execute 'put' on 'Cache': Cache.put() encountered a network error
+           debug: PAGE: failed (WebAssembly compilation aborted: Network error: Response body loading was aborted): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> failed/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut
+           debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look
+           debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock
+           debug: PAGE: offer: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running where
+           debug: PAGE: offered: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut
+           debug: PAGE: held (this tab holds house): opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut, running open
+           debug: PAGE: asked the browser to keep the page's storage: refused
+           debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt
+           debug: PAGE: opened: opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut, running read
+           debug: PAGE: dialling the link's computer and 0 other computer(s) at once
+           debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+           debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+           debug: LAYER parse: ok — relay http://127.0.0.1:51206/
+           debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…
+           debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound
+           debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried
+           debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:51206/…
+           debug: LAYER relay chosen: http://127.0.0.1:51206/, this page's own: true
+           debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol
+           debug: LAYER tls/alpn: negotiated ALPN = "cwth/http/0"
+           debug: PAGE: reached house through the link's computer
+           debug: HTTP: GET /people/lends — a bi-stream opened
+           debug: HTTP: GET /people/lends answered 200
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /people/lends — the stream is done
+           debug: PAGE: kept 0 of 0 relay(s) named
+           debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut, running keep
+           debug: PAGE: kept: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut
+           debug: PAGE: open: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut, running hand
+           debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt
+           debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl.group.svrnme.test:51264/open.html?v=31af5302605c, a pass to 1 lend(s) until 1794652571
+           debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl.group.svrnme.test:51264/open.html?v=31af5302605c): opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/handed/none/unasked/idle/shut
+           debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl's newest open and deleted its cookie
+           debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl's open is this browser's, its holder proved and kept
+           debug: RUNTIME: this run of the worker begins
+           debug: RUNTIME: this build's 9 pieces are saved here
+           debug: RUNTIME: 0 older build(s) dropped
+           debug: OPEN: the lend’s worker runs; handing it the pass
+           debug: RUNTIME: the page handed over the pass for umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl, 1 lend(s)
+           debug: RUNTIME: opening the endpoint of this run, named by the holder’s link
+           debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           debug: LAYER key: ok — the key ce3fbacd2f3c1be924778cf7d043937fcdc29478a7cd72e66f266d62a309beef
+           debug: LAYER parse: ok — relay http://127.0.0.1:51206/
+           debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…
+           debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ce3fbacd2f3c1be924778cf7d043937fcdc29478a7cd72e66f266d62a309beef bound
+           debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           debug: RUNTIME: dialling 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c for the pass's holder
+           debug: LAYER parse: ok — 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c's group names its relay http://127.0.0.1:51005/, tried beside every way this endpoint knows
+           debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:51206/…
+           debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:51005/…
+           debug: LAYER relay chosen: http://127.0.0.1:51005/, this page's own: false
+           debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Lend protocol
+           debug: LAYER tls/alpn: negotiated ALPN = "svrngs/lend/0"
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/ — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/ answered 200
+           debug: RUNTIME: /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/'s policy frames by open; the signer is let in where they restrict
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/ — the stream is done
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/abs.js — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/checks.js — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/abs.js answered 200
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/abs.js — the stream is done
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/checks.js answered 200
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/checks.js — the stream is done
+           debug: RUNTIME: bytes=0- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 1: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=0- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 1: answered 206 bytes 0-262143/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 1: read whole, 262144 bytes, 30 ms
+           debug: RUNTIME: bytes=262144- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 2: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=262144- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 2: answered 206 bytes 262144-786431/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 2: read whole, 524288 bytes, 43 ms
+           debug: RUNTIME: bytes=786432- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 3: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=786432- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 3: answered 206 bytes 786432-1835007/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 3: read whole, 1048576 bytes, 75 ms
+           debug: RUNTIME: bytes=1835008- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 4: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=1835008- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 4: answered 206 bytes 1835008-3932159/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 4: read whole, 2097152 bytes, 143 ms
+           debug: RUNTIME: bytes=3932160- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 5: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=3932160- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 5: answered 206 bytes 3932160-6029311/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 5: read whole, 2097152 bytes, 143 ms
+           debug: RUNTIME: bytes=6029312- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 6: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=6029312- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 6: answered 206 bytes 6029312-8126463/67108864, 8 ms
+           debug: RANGE 6: cancelled by the browser after 10733 bytes: undefined, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=6684672- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 7: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=6684672- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 7: answered 206 bytes 6684672-6946815/67108864, 4 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 7: read whole, 262144 bytes, 19 ms
+           debug: RUNTIME: bytes=6946816- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 8: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=6946816- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 8: answered 206 bytes 6946816-7471103/67108864, 3 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 8: read whole, 524288 bytes, 32 ms
+           debug: RUNTIME: bytes=7471104- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 9: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=7471104- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 9: answered 206 bytes 7471104-8519679/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 9: read whole, 1048576 bytes, 62 ms
+           debug: RUNTIME: bytes=8519680- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 10: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=8519680- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 10: answered 206 bytes 8519680-10616831/67108864, 7 ms
+           debug: RANGE 10: cancelled by the browser after 642454 bytes: undefined, 50 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=55017472- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 11: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=55017472- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 11: answered 206 bytes 55017472-55279615/67108864, 32 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 11: read whole, 262144 bytes, 45 ms
+           debug: RUNTIME: bytes=55279616- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 12: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=55279616- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 12: answered 206 bytes 55279616-55803903/67108864, 4 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 12: read whole, 524288 bytes, 40 ms
+           debug: RUNTIME: bytes=55803904- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 13: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=55803904- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 13: answered 206 bytes 55803904-56852479/67108864, 4 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 13: read whole, 1048576 bytes, 62 ms
+           debug: RUNTIME: bytes=56852480- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 14: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=56852480- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 14: answered 206 bytes 56852480-58949631/67108864, 6 ms
+           debug: RANGE 14: cancelled by the browser after 48394 bytes: undefined, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=10715136- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 15: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=10715136- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 15: answered 206 bytes 10715136-10977279/67108864, 14 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 15: read whole, 262144 bytes, 25 ms
+           debug: RUNTIME: bytes=10977280- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 16: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=10977280- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 16: answered 206 bytes 10977280-11501567/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 16: read whole, 524288 bytes, 35 ms
+           debug: RUNTIME: bytes=11501568- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 17: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=11501568- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 17: answered 206 bytes 11501568-12550143/67108864, 4 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 17: read whole, 1048576 bytes, 60 ms
+           debug: RUNTIME: bytes=12550144- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 18: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=12550144- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 18: answered 206 bytes 12550144-14647295/67108864, 5 ms
+           debug: RANGE 18: cancelled by the browser after 547750 bytes: undefined, 35 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=50987008- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 19: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=50987008- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 19: answered 206 bytes 50987008-51249151/67108864, 36 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 19: read whole, 262144 bytes, 47 ms
+           debug: RUNTIME: bytes=51249152- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 20: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=51249152- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 20: answered 206 bytes 51249152-51773439/67108864, 4 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 20: read whole, 524288 bytes, 34 ms
+           debug: RUNTIME: bytes=51773440- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 21: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=51773440- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 21: answered 206 bytes 51773440-52822015/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 21: read whole, 1048576 bytes, 63 ms
+           debug: RUNTIME: bytes=52822016- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 22: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=52822016- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 22: answered 206 bytes 52822016-54919167/67108864, 5 ms
+           debug: RANGE 22: cancelled by the browser after 90964 bytes: undefined, 10 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=14745600- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 23: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=14745600- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 23: answered 206 bytes 14745600-15007743/67108864, 39 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 23: read whole, 262144 bytes, 54 ms
+           debug: RUNTIME: bytes=15007744- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 24: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=15007744- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 24: answered 206 bytes 15007744-15532031/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 24: read whole, 524288 bytes, 34 ms
+           debug: RUNTIME: bytes=15532032- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 25: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=15532032- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 25: answered 206 bytes 15532032-16580607/67108864, 3 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 25: read whole, 1048576 bytes, 63 ms
+           debug: RUNTIME: bytes=16580608- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 26: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=16580608- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: RUNTIME: bytes=46956544- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 27: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=46956544- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 26: answered 206 bytes 16580608-18677759/67108864, 6 ms
+           debug: RANGE 26: cancelled by the browser after 0 bytes: undefined, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 27: answered 206 bytes 46956544-47218687/67108864, 10 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 27: read whole, 262144 bytes, 22 ms
+           debug: RUNTIME: bytes=47218688- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 28: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=47218688- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 28: answered 206 bytes 47218688-47742975/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 28: read whole, 524288 bytes, 40 ms
+           debug: RUNTIME: bytes=47742976- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 29: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=47742976- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 29: answered 206 bytes 47742976-48791551/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 29: read whole, 1048576 bytes, 63 ms
+           debug: RUNTIME: bytes=48791552- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 30: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=48791552- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 30: answered 206 bytes 48791552-50888703/67108864, 9 ms
+           debug: RANGE 30: cancelled by the browser after 570304 bytes: undefined, 43 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=18776064- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 31: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=18776064- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 31: answered 206 bytes 18776064-19038207/67108864, 23 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 31: read whole, 262144 bytes, 35 ms
+           debug: RUNTIME: bytes=19038208- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 32: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=19038208- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 32: answered 206 bytes 19038208-19562495/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 32: read whole, 524288 bytes, 38 ms
+           debug: RUNTIME: bytes=19562496- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 33: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=19562496- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 33: answered 206 bytes 19562496-20611071/67108864, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 33: read whole, 1048576 bytes, 71 ms
+           debug: RUNTIME: bytes=20611072- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 34: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=20611072- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: RUNTIME: bytes=42926080- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 35: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=42926080- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 34: answered 206 bytes 20611072-22708223/67108864, 15 ms
+           debug: RANGE 34: cancelled by the browser after 0 bytes: undefined, 15 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 35: answered 206 bytes 42926080-43188223/67108864, 10 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 35: read whole, 262144 bytes, 26 ms
+           debug: RUNTIME: bytes=43188224- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 36: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=43188224- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 36: answered 206 bytes 43188224-43712511/67108864, 8 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 36: read whole, 524288 bytes, 40 ms
+           debug: RUNTIME: bytes=43712512- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 37: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=43712512- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 37: answered 206 bytes 43712512-44761087/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 37: read whole, 1048576 bytes, 73 ms
+           debug: RUNTIME: bytes=44761088- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 38: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=44761088- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 38: answered 206 bytes 44761088-46858239/67108864, 9 ms
+           debug: RANGE 38: cancelled by the browser after 262603 bytes: undefined, 26 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=22806528- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 39: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=22806528- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 39: answered 206 bytes 22806528-23068671/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 39: read whole, 262144 bytes, 20 ms
+           debug: RUNTIME: bytes=23068672- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 40: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=23068672- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 40: answered 206 bytes 23068672-23592959/67108864, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 40: read whole, 524288 bytes, 40 ms
+           debug: RUNTIME: bytes=23592960- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 41: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=23592960- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 41: answered 206 bytes 23592960-24641535/67108864, 23 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 41: read whole, 1048576 bytes, 86 ms
+           debug: RUNTIME: bytes=24641536- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 42: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=24641536- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: RUNTIME: bytes=38895616- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 43: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=38895616- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 42: answered 206 bytes 24641536-26738687/67108864, 8 ms
+           debug: RANGE 42: cancelled by the browser after 0 bytes: undefined, 8 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 43: answered 206 bytes 38895616-39157759/67108864, 22 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 43: read whole, 262144 bytes, 34 ms
+           debug: RUNTIME: bytes=39157760- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 44: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=39157760- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 44: answered 206 bytes 39157760-39682047/67108864, 14 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 44: read whole, 524288 bytes, 44 ms
+           debug: RUNTIME: bytes=39682048- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 45: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=39682048- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 45: answered 206 bytes 39682048-40730623/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 45: read whole, 1048576 bytes, 84 ms
+           debug: RUNTIME: bytes=40730624- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 46: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=40730624- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: RUNTIME: bytes=26836992- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 47: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=26836992- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 46: answered 206 bytes 40730624-42827775/67108864, 9 ms
+           debug: RANGE 46: cancelled by the browser after 0 bytes: undefined, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 47: answered 206 bytes 26836992-27099135/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 47: read whole, 262144 bytes, 22 ms
+           debug: RUNTIME: bytes=27099136- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 48: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=27099136- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 48: answered 206 bytes 27099136-27623423/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 48: read whole, 524288 bytes, 35 ms
+           debug: RUNTIME: bytes=27623424- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 49: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=27623424- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 49: answered 206 bytes 27623424-28671999/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 49: read whole, 1048576 bytes, 68 ms
+           debug: RUNTIME: bytes=28672000- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 50: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=28672000- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 50: answered 206 bytes 28672000-30769151/67108864, 9 ms
+           debug: RANGE 50: cancelled by the browser after 512555 bytes: undefined, 40 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=34865152- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 51: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=34865152- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 51: answered 206 bytes 34865152-35127295/67108864, 14 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 51: read whole, 262144 bytes, 26 ms
+           debug: RUNTIME: bytes=35127296- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 52: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=35127296- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 52: answered 206 bytes 35127296-35651583/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 52: read whole, 524288 bytes, 41 ms
+           debug: RUNTIME: bytes=35651584- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 53: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=35651584- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 53: answered 206 bytes 35651584-36700159/67108864, 10 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 53: read whole, 1048576 bytes, 77 ms
+           debug: RUNTIME: bytes=36700160- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 54: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=36700160- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 54: answered 206 bytes 36700160-38797311/67108864, 11 ms
+           debug: RANGE 54: cancelled by the browser after 0 bytes: undefined, 11 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=30867456- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 55: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=30867456- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 55: answered 206 bytes 30867456-31129599/67108864, 16 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 55: read whole, 262144 bytes, 29 ms
+           debug: RUNTIME: bytes=31129600- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 56: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=31129600- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 56: answered 206 bytes 31129600-31653887/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 56: read whole, 524288 bytes, 38 ms
+           debug: RUNTIME: bytes=31653888- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 57: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=31653888- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 57: answered 206 bytes 31653888-32702463/67108864, 8 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 57: read whole, 1048576 bytes, 73 ms
+           debug: RUNTIME: bytes=32702464- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 58: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=32702464- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 58: answered 206 bytes 32702464-34799615/67108864, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 58: read whole, 2097152 bytes, 132 ms
+           debug: RUNTIME: bytes=34799616- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 59: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=34799616- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 59: answered 206 bytes 34799616-36896767/67108864, 7 ms
+           debug: RANGE 59: cancelled by the browser after 69810 bytes: undefined, 12 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=36700160- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 60: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=36700160- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 60: answered 206 bytes 36700160-36962303/67108864, 14 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 60: read whole, 262144 bytes, 26 ms
+           debug: RUNTIME: bytes=36962304- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 61: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=36962304- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 61: answered 206 bytes 36962304-37486591/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 61: read whole, 524288 bytes, 38 ms
+           debug: RUNTIME: bytes=37486592- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 62: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=37486592- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 62: answered 206 bytes 37486592-38535167/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 62: read whole, 1048576 bytes, 68 ms
+           debug: RUNTIME: bytes=38535168- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 63: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=38535168- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 63: answered 206 bytes 38535168-40632319/67108864, 8 ms
+           debug: RANGE 63: cancelled by the browser after 366116 bytes: undefined, 29 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=40730624- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 64: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=40730624- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 64: answered 206 bytes 40730624-40992767/67108864, 16 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 64: read whole, 262144 bytes, 27 ms
+           debug: RUNTIME: bytes=40992768- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 65: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=40992768- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 65: answered 206 bytes 40992768-41517055/67108864, 11 ms
+           debug: RANGE 65: cancelled by the browser after 331059 bytes: undefined, 31 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=26836992- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 66: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=26836992- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 66: answered 206 bytes 26836992-27099135/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 66: read whole, 262144 bytes, 24 ms
+           debug: RUNTIME: bytes=27099136- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 67: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=27099136- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 67: answered 206 bytes 27099136-27623423/67108864, 8 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 67: read whole, 524288 bytes, 40 ms
+           debug: RUNTIME: bytes=27623424- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 68: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=27623424- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 68: answered 206 bytes 27623424-28671999/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 68: read whole, 1048576 bytes, 65 ms
+           debug: RUNTIME: bytes=28672000- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 69: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=28672000- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 69: answered 206 bytes 28672000-30769151/67108864, 10 ms
+           debug: RANGE 69: cancelled by the browser after 628828 bytes: undefined, 46 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=41287680- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 70: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=41287680- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 70: answered 206 bytes 41287680-41549823/67108864, 19 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 70: read whole, 262144 bytes, 31 ms
+           debug: RUNTIME: bytes=41549824- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 71: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=41549824- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 71: answered 206 bytes 41549824-42074111/67108864, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 71: read whole, 524288 bytes, 40 ms
+           debug: RUNTIME: bytes=42074112- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 72: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=42074112- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 72: answered 206 bytes 42074112-43122687/67108864, 8 ms
+           debug: RANGE 72: cancelled by the browser after 855690 bytes: undefined, 64 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=44990464- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 73: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=44990464- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 73: answered 206 bytes 44990464-45252607/67108864, 7 ms
+           debug: RANGE 73: cancelled by the browser after 219050 bytes: undefined, 22 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=22806528- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 74: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=22806528- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 74: answered 206 bytes 22806528-23068671/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 74: read whole, 262144 bytes, 25 ms
+           debug: RUNTIME: bytes=23068672- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 75: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=23068672- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 75: answered 206 bytes 23068672-23592959/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 75: read whole, 524288 bytes, 38 ms
+           debug: RUNTIME: bytes=23592960- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 76: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=23592960- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 76: answered 206 bytes 23592960-24641535/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 76: read whole, 1048576 bytes, 66 ms
+           debug: RUNTIME: bytes=24641536- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 77: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=24641536- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 77: answered 206 bytes 24641536-26738687/67108864, 7 ms
+           debug: RANGE 77: cancelled by the browser after 874145 bytes: undefined, 55 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=45187072- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 78: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=45187072- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 78: answered 206 bytes 45187072-45449215/67108864, 30 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 78: read whole, 262144 bytes, 42 ms
+           debug: RUNTIME: bytes=45449216- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 79: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=45449216- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 79: answered 206 bytes 45449216-45973503/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 79: read whole, 524288 bytes, 37 ms
+           debug: RUNTIME: bytes=45973504- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 80: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=45973504- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 80: answered 206 bytes 45973504-47022079/67108864, 7 ms
+           debug: RANGE 80: cancelled by the browser after 988582 bytes: undefined, 63 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=49217536- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 81: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=49217536- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 81: answered 206 bytes 49217536-49479679/67108864, 8 ms
+           debug: RANGE 81: cancelled by the browser after 143599 bytes: undefined, 18 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RUNTIME: bytes=18776064- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 82: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=18776064- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 82: answered 206 bytes 18776064-19038207/67108864, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 82: read whole, 262144 bytes, 24 ms
+           debug: RUNTIME: bytes=19038208- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 83: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=19038208- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 83: answered 206 bytes 19038208-19562495/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 83: read whole, 524288 bytes, 35 ms
+           debug: RUNTIME: bytes=19562496- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 84: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=19562496- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 84: answered 206 bytes 19562496-20611071/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 84: read whole, 1048576 bytes, 102 ms
+           debug: RUNTIME: bytes=20611072- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 85: asked /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav bytes=20611072- for audio, 0 ms
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav answered 206
+           debug: RANGE 85: answered 206 bytes 20611072-22708223/67108864, 11 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7ra8fv960uusl/big.wav — the stream is done
+           debug: RANGE 85: read whole, 2097152 bytes, 136 ms
+           debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look
+           debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock
+           debug: PAGE: offer: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running where
+           debug: PAGE: offered: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut
+           debug: PAGE: held (this tab holds house): opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut, running open
+           debug: PAGE: asked the browser to keep the page's storage: refused
+           debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt
+           debug: PAGE: opened: opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut, running read
+           debug: PAGE: dialling the link's computer and 1 other computer(s) at once
+           debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c
+           debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c
+           debug: LAYER parse: ok — relay http://127.0.0.1:51206/
+           debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…
+           debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound
+           debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried
+           debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:51206/…
+           debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:51005/, tried beside every way this endpoint knows
+           debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:51206/…
+           debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:51005/…
+           debug: LAYER relay chosen: http://127.0.0.1:51005/, this page's own: false
+           debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Member protocol
+           debug: LAYER tls/alpn: negotiated ALPN = "cwth/http/0"
+           debug: PAGE: reached house through bo's computer
+           debug: HTTP: GET /people/lends — a bi-stream opened
+           debug: HTTP: GET /people/lends answered 200
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /people/lends — the stream is done
+           debug: PAGE: kept 0 of 0 relay(s) named
+           debug: PAGE: read (200, at version 6, 2 lent): opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut, running keep
+           debug: PAGE: kept: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut
+           debug: LAYER relay chosen: http://127.0.0.1:51206/, this page's own: true
+           debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol
+           debug: LAYER tls/alpn: negotiated ALPN = "cwth/http/0"
+           debug: PAGE: a computer answered late, so closed
+           debug: PAGE: open: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut, running hand
+           debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt
+           debug: PAGE: opening tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl at https://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl.group.svrnme.test:51264/open.html?v=31af5302605c, a pass to 1 lend(s) until 1794652580
+           debug: PAGE: handed (to https://tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl.group.svrnme.test:51264/open.html?v=31af5302605c): opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/handed/none/unasked/idle/shut
+           debug: SIGN: adopted the approver of tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl's newest open and deleted its cookie
+           debug: OPEN: tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl's open is this browser's, its holder proved and kept
+           debug: RUNTIME: this run of the worker begins
+           debug: RUNTIME: this build's 9 pieces are saved here
+           debug: RUNTIME: 0 older build(s) dropped
+           debug: OPEN: the lend’s worker runs; handing it the pass
+           debug: RUNTIME: the page handed over the pass for tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl, 1 lend(s)
+           debug: RUNTIME: opening the endpoint of this run, named by the holder’s link
+           debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)
+           debug: LAYER key: ok — the key 95a3926d1d8402872cece87a858510e1dadbdc7c4b850b104e7e75adf1e780ce
+           debug: LAYER parse: ok — relay http://127.0.0.1:51206/
+           debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…
+           debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint 95a3926d1d8402872cece87a858510e1dadbdc7c4b850b104e7e75adf1e780ce bound
+           debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…
+           debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)
+           debug: RUNTIME: dialling 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 for the pass's holder
+           debug: LAYER parse: ok — 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394's group names its relay http://127.0.0.1:51005/, tried beside every way this endpoint knows
+           debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:51206/…
+           debug: LAYER tls/alpn+relay: dialing 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the [115, 118, 114, 110, 103, 115, 47, 108, 101, 110, 100, 47, 48] protocol through http://127.0.0.1:51005/…
+           debug: LAYER relay chosen: http://127.0.0.1:51005/, this page's own: false
+           debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394 on the Lend protocol
+           debug: LAYER tls/alpn: negotiated ALPN = "svrngs/lend/0"
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/ — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/ answered 200
+           debug: RUNTIME: /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/'s policy frames by open; the signer is let in where they restrict
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/ — the stream is done
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/abs.js — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/checks.js — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/checks.js answered 200
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/checks.js — the stream is done
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/abs.js answered 200
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/abs.js — the stream is done
+           debug: RUNTIME: bytes=0- for audio runs on: asked as a part of 262144 bytes
+           debug: RANGE 1: asked /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav bytes=0- for audio, 0 ms
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav answered 206
+           debug: RANGE 1: answered 206 bytes 0-262143/67108864, 7 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — the stream is done
+           debug: RANGE 1: read whole, 262144 bytes, 39 ms
+           debug: RUNTIME: bytes=262144- for audio runs on: asked as a part of 524288 bytes
+           debug: RANGE 2: asked /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav bytes=262144- for audio, 0 ms
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav answered 206
+           debug: RANGE 2: answered 206 bytes 262144-786431/67108864, 6 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — the stream is done
+           debug: RANGE 2: read whole, 524288 bytes, 60 ms
+           debug: RUNTIME: bytes=786432- for audio runs on: asked as a part of 1048576 bytes
+           debug: RANGE 3: asked /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav bytes=786432- for audio, 0 ms
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav answered 206
+           debug: RANGE 3: answered 206 bytes 786432-1835007/67108864, 9 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — the stream is done
+           debug: RANGE 3: read whole, 1048576 bytes, 94 ms
+           debug: RUNTIME: bytes=1835008- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 4: asked /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav bytes=1835008- for audio, 0 ms
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav answered 206
+           debug: RANGE 4: answered 206 bytes 1835008-3932159/67108864, 5 ms
+           debug: HTTP: the response has ended; finishing the request's send half
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — the stream is done
+           debug: RANGE 4: read whole, 2097152 bytes, 157 ms
+           debug: RUNTIME: bytes=3932160- for audio runs on: asked as a part of 2097152 bytes
+           debug: RANGE 5: asked /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav bytes=3932160- for audio, 0 ms
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav — a bi-stream opened
+           debug: HTTP: GET /lend/tf61rdzksxnz8zzdmuwphwd83wg25cxu0w1dskv782jz1d8l0rma8fv960uusl/big.wav answered 206
+           
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               seeks_back_to_back::on_a_phone_with_the_wildcard::chromium
+           
+           test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 8 filtered out; finished in 67.45s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test conformance`
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	384	passed	3911	passed
+           computer	bo	407	passed	3073	passed
+           wildcard	sam	509	passed	3820	passed
+           wildcard	bo	457	passed	2233	passed
+           of 4 here since 2026-11-13T22:35:51Z: 0 missed 5 s through a lend, 0 straight; 0 ended at a load above 12 cores
+passed     n0 (15 s)
+passed     app laws (41 s)
+note       took 1540 s in all
+exit 1
