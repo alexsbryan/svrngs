@@ -129,6 +129,9 @@ enum NotAdmitted {
 pub struct VisitRequest {
     pub ask: AskRequest,
     pub guest: String,
+    /// The visit key's consent to be this computer's guest
+    /// ([`svrngs_core::visit_consent_message`]).
+    pub consent: String,
 }
 
 /// The ask and redemption routes, served on [`Alpn::Redeem`] to any dialer.
@@ -214,6 +217,7 @@ fn serve_visit(
         key: req.ask.key.clone(),
         opens: [(me, lent.keys().cloned().collect())].into(),
         until: now + length,
+        consent: req.consent.clone(),
     };
     let (id, until) = (recorded(rail, group, &visit)?, visit.until);
     tracing::debug!(target: "redeem", group, key = %req.ask.key, %id, until, ?lent,

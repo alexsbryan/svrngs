@@ -58,6 +58,10 @@ fn sam_visits(ada: &Node, id: &str, secs: i64) {
         key: actor_of(&SigningKey::from_bytes(&[9; 32])),
         opens: Default::default(),
         until: now.as_secs() as i64 + secs,
+        consent: svrngs_core::tests_support::consent(
+            &SigningKey::from_bytes(&[9; 32]),
+            &actor_of(ada.rail().signer()),
+        ),
     };
     ada.rail().commit(id, &visit).unwrap().unwrap();
 }

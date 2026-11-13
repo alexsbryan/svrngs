@@ -135,7 +135,7 @@ pub use register::{
 };
 pub use sig::{
     act_id, actor_of, derive_id, field, ring_op_message, sign_act, sign_message, sign_ring_op,
-    source_redemption_message, unsigned_act, verify_hex,
+    source_redemption_message, unsigned_act, verify_hex, visit_consent_message,
 };
 pub use sync::{digest, ops_missing_from_within, DigestFold, NO_BUDGET};
 pub use synced::{Change, Entry, Files, NotASyncPath, Placed, Runs, SyncFolder, SyncPath};
@@ -499,6 +499,10 @@ pub struct Visit {
     pub opens: BTreeMap<String, BTreeSet<String>>,
     /// Unix seconds, within [`VISIT_LONGEST`] of the act's own time.
     pub until: i64,
+    /// The guest key's signature over [`visit_consent_message`] naming the
+    /// computer that signs this act; a visit without it counts nowhere.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub consent: String,
 }
 
 /// What a redeeming [`RailAct::Admit`] carries: the [`RailAct::Invite`] it

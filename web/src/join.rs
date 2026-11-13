@@ -14,7 +14,7 @@
 use svrngs_core::joining::{AskRequest, Asked, RedeemRequest};
 use svrngs_core::link::Token;
 use svrngs_core::seed::answered;
-use svrngs_core::{Device, Name, Person, SigningKey};
+use svrngs_core::{actor_of, sign_message, visit_consent_message, Device, Name, Person, SigningKey};
 use wasm_bindgen::prelude::*;
 
 use crate::emit;
@@ -43,6 +43,15 @@ pub fn ask(key: Vec<u8>, token: String) -> Result<String, JsError> {
     let req = AskRequest::sign(&link(&token)?.key(), &person(&key)?);
     emit(&format!("JOIN: asking the issuer what the link is for, as {}", req.key));
     Ok(serde_json::to_string(&req).expect("an ask serializes"))
+}
+
+/// A guest's consent, by the visit's fresh key, to be the guest of the
+/// computer that made the link: what its `Visit` must carry to count.
+#[wasm_bindgen]
+pub fn consent(key: Vec<u8>, token: String) -> Result<String, JsError> {
+    let (guest, host) = (person(&key)?, hex::encode(link(&token)?.issuer.as_bytes()));
+    emit(&format!("JOIN: consenting to be the guest of {host}"));
+    Ok(sign_message(&guest, &visit_consent_message(&host, &actor_of(&guest))))
 }
 
 /// A group the issuer answered, believed: its id and its name, a device

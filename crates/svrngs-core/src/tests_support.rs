@@ -25,6 +25,13 @@ pub fn key(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
+/// A visit key's consent to be the guest of `host`, a computer's actor hex,
+/// as a guest's page signs it.
+pub fn consent(guest: &SigningKey, host: &str) -> String {
+    let key = crate::actor_of(guest);
+    crate::sign_message(guest, &crate::visit_consent_message(host, &key))
+}
+
 pub fn p(name: &str) -> Person {
     Person::parse(name).unwrap()
 }

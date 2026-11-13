@@ -2246,17 +2246,25 @@ from the journal waits in PLAN §2.
   host's computer, names the guest, a key fresh for the visit and the lends
   it opens, by each lender's key (line version 11). Eudoxia's interpreter
   judges it along the host computer's own chain (`eudoxia-community`
-  `guest.rs`): it is a visit when the host is a standing computer, its key
-  was never a member's nor named by an earlier visit on that chain or by
-  another computer's, `until` is within 48 hours of its own time
+  `guest.rs`): it is a visit when the guest's key consented to this host,
+  the host is a standing computer, its key was never a member's nor named
+  by an earlier visit on that chain or by another computer's consented
+  one, `until` is within 48 hours of its own time
   (`VISIT_LONGEST`), and one of the host's two slots is free behind it: a
   visit earlier on the chain ended at or before its time, or its Stop
   stands before it on the chain. A hole in the chain makes it missing, and
   a fork of the chain freezes the visits on its branches. There is no cap
   on a group's guests: each computer has its own two. The commit writes no
   visit the interpreter would not count, so a guest past a computer's two
-  is refused before anything is written (`redeem.rs`, `recorded`). A visit
-  binds nothing, so a guest's key never stands. It ends at its `until`, at
+  is refused before anything is written (`redeem.rs`, `recorded`). The
+  consent is the guest's page's: the visit's fresh key signs
+  `visit_consent_message`, the host's key and its own (`sig.rs`; the page's
+  `consent`, `web/src/join.rs`), and the `Visit` carries it. svrngs checks
+  it against the computer that signed the line, so another member's copy of
+  a guest's key is refused and takes nothing from the host the guest chose;
+  a visit without one counts nowhere. The page cannot know the group or the
+  visit's end before the host writes them, so the consent names neither. A
+  visit binds nothing, so a guest's key never stands. It ends at its `until`, at
   the host's `Correct` of it,
   their Stop, which another's `Correct` is not, or when the host's key is
   cut; the act stays counted, seen (`Guest::live`). The lender's

@@ -172,7 +172,8 @@ const stay = (core, token, visit) => {
  */
 async function visiting(core, token, guest) {
   const ask = JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token));
-  const body = JSON.stringify({ ask, guest });
+  const consent = core.consent(/** @type {Uint8Array} */ (key), token);
+  const body = JSON.stringify({ ask, guest, consent });
   return JSON.parse(
     await posted(core, /** @type {Uint8Array} */ (key), token, { path: '/visit', body }),
   );

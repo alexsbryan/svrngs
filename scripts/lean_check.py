@@ -664,12 +664,23 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # the host's chain: the core's timestamp count of visits (`visiting`, its two
 # constants) and `serve_visit`'s recount after the write went. Core 3,527 ->
 # 3,496, . 21,228 -> 21,196; native 29,744 -> 29,712.
+# (2026-11-12) A guest's consent to its host on each visit (+21), with an
+# economizing pass that keeps behavior: SyncPath and Origin through
+# text_newtype (synced.rs -7, link.rs -2), Payload's Serialize derived
+# transparent (payload.rs -5), authority::check folded into its one caller
+# (-3), the door's three choice writes through one `say` (choices.rs -3),
+# rail.rs's log and people answering Json (-2), the runtime's journal() in
+# RingRail's first impl (-2), principles_check.py reading ports.py's ROOT,
+# UPSTREAM and git and trust_check.py lean_check's ROOT and TEST_FILE (-5),
+# update.js's and copy.js's identical cases stacked (-3), the session's hex
+# shared by its worker (-4). Core 3,496 -> 3,492, . 21,196 -> 21,187, js
+# 8,516 -> 8,510; native 29,712 -> 29,697.
 BUDGET = {
-    "crates/svrngs-core": 3497,
+    "crates/svrngs-core": 3493,
 
-    ".": 21197,
+    ".": 21188,
 
-    "js": 8517,
+    "js": 8511,
 
     "swift": 1,
 }

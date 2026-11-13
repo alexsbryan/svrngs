@@ -348,6 +348,8 @@ fn emit_golden_journal() {
         key: actor_of(&key(6)),
         opens,
         until: T + 19 + 3_600,
+        // As frozen: written before a visit carried its guest's consent.
+        consent: String::new(),
     };
     let visit = c.sign(&alex, 19, RailAct::Visit(visit), None);
     let stop = c.sign(&alex, 20, correct(&visit.id, None), None);

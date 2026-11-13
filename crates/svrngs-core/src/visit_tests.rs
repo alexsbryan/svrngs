@@ -35,6 +35,7 @@ fn visit(host: u8, guest: &str, fresh: u8, until: i64) -> RailAct {
         key: actor_of(&key(fresh)),
         opens,
         until,
+        consent: crate::tests_support::consent(&key(fresh), &actor_of(&key(host))),
     })
 }
 
@@ -260,4 +261,27 @@ fn a_visits_key_is_fresh_and_never_stands() {
         "a key that visited before is not fresh"
     );
     assert!(!a.membership().standing.contains(&actor_of(&key(9))));
+}
+
+/// **A copy of a guest's key takes nothing**: Kim has Tia over; Bo writes a
+/// visit of his own with Tia's key and Kim's consent copied. Bo's is no
+/// visit, since Tia's key consented to Kim alone, and Tia stays Kim's
+/// guest. Plant: the consent's message naming no host
+/// (`visit_consent_message`), so Bo's copy verifies.
+#[test]
+fn another_member_s_copy_of_a_guest_s_key_takes_nothing() {
+    let kims = run(&key(2), FRI, [visit(2, "tia", 10, SUNDAY)]);
+    let RailAct::Visit(tia) = &kims[0].kind.act else {
+        unreachable!("a visit")
+    };
+    let mut ops = kims.clone();
+    ops.extend(run(&key(3), FRI + 1, [RailAct::Visit(tia.clone())]));
+    let a = folded(&ops);
+    assert_eq!(names(&a, FRI + HOUR), ["tia"], "Tia stays Kim's guest");
+    let m = a.membership();
+    assert!(
+        m.visits.values().all(|g| g.host == actor_of(&key(2))),
+        "Kim's alone"
+    );
+    assert!(!m.counts(&ops[1].id), "Bo's copy counts nowhere");
 }

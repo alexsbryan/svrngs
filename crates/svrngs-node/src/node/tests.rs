@@ -142,6 +142,7 @@ async fn visiting(at: &Asking, group: &str) -> String {
     let link = at.host.link(group, false, Some(&page), Some(3600)).unwrap();
     let guest = SigningKey::from_bytes(&[92; 32]);
     let ask = crate::joining::AskRequest::sign(&link.token.key(), &guest);
+    let consent = svrngs_core::tests_support::consent(&guest, &at.host.actor);
     let (base, _stream) = crate::iroh::tests::serve_on_stream(
         crate::redeem::router(at.clone()),
         SecretKey::from_bytes(&guest.to_bytes()),
@@ -149,7 +150,7 @@ async fn visiting(at: &Asking, group: &str) -> String {
     .await;
     let response = reqwest::Client::new()
         .post(format!("{base}/visit"))
-        .json(&json!({ "ask": ask, "guest": "Bo" }))
+        .json(&json!({ "ask": ask, "guest": "Bo", "consent": consent }))
         .send()
         .await
         .unwrap();
@@ -443,6 +444,7 @@ fn a_visit_key_and_a_removed_key_are_served_no_member_s_protocol() {
         key: actor_of(&key(9)),
         opens,
         until: crate::door::unix_now().unwrap() + 3600,
+        consent: svrngs_core::tests_support::consent(&key(9), &actor_of(&key(1))),
     };
     let act = svrngs_core::tests_support::Fixture {
         act: crate::RailAct::Visit(visit),

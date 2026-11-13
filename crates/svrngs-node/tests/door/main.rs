@@ -303,6 +303,10 @@ impl World {
             key: actor_of(&signing(SAM)),
             opens: named,
             until: unix_now() + 24 * 3600,
+            consent: svrngs_core::tests_support::consent(
+                &signing(SAM),
+                &actor_of(self.a.rail().signer()),
+            ),
         });
         let fixture = svrngs_core::tests_support::Fixture { act };
         let recorded = self.a.rail().commit(NS, &fixture).unwrap().unwrap();

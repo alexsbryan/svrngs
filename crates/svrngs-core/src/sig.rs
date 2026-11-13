@@ -90,6 +90,8 @@ pub(crate) const APP_DOMAIN: &[u8] = b"svrngs-app:";
 /// admitted key's consent is never valid as an act's signature, nor one as
 /// the other.
 pub(crate) const SOURCE_REDEMPTION_DOMAIN: &[u8] = b"svrngs-source-redemption-binding:";
+/// Domain separator for a guest's consent to its host ([`visit_consent_message`]).
+pub(crate) const VISIT_CONSENT_DOMAIN: &[u8] = b"svrngs-visit-consent:";
 
 /// Domain separator for a group id's hash ([`crate::seed`]), so an id is
 /// never the hash of anything else svrngs hashes (an act id is
@@ -214,6 +216,19 @@ pub fn source_redemption_message(
         serde_json::to_vec(&(invite, person, key, device))
             .expect("native joining choice serialises"),
     );
+    bytes
+}
+
+/// What a visit's fresh `key` signs to be `host`'s guest: `DOMAIN || host ||
+/// key`, each length-prefixed. A `Visit` counts only with it, verified
+/// against the computer that signs the visit, so another member's copy of a
+/// guest's key is refused and takes nothing from the host the guest chose.
+/// The guest's page cannot know the group or the visit's end before the
+/// host writes them, so the consent names neither.
+pub fn visit_consent_message(host: &str, key: &str) -> Vec<u8> {
+    let mut bytes = VISIT_CONSENT_DOMAIN.to_vec();
+    field(&mut bytes, host.as_bytes());
+    field(&mut bytes, key.as_bytes());
     bytes
 }
 

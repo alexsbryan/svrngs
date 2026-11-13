@@ -122,6 +122,11 @@ fn statement(namespace: &str, op: &Op<SignedOp>) -> Statement<Native> {
             key: v.key.clone(),
             until: v.until,
             under: None,
+            consent: crate::verify_hex(
+                &v.key,
+                &crate::visit_consent_message(&op.actor, &v.key),
+                &v.consent,
+            ),
         },
         RailAct::Correct {
             corrects,

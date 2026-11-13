@@ -377,6 +377,7 @@ fn a_visit_and_its_hosts_stop_count_in_a_sources_group() {
         key: actor_of(&key(40)),
         opens: Default::default(),
         until: 3_000,
+        consent: crate::tests_support::consent(&key(40), &actor_of(&key(1))),
     };
     let came = g.by(1, 400, &visit).unwrap().lines()[0].id.clone();
     assert!(g.read().membership().visits.contains_key(&came), "a visit");

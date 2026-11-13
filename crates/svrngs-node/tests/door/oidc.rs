@@ -311,6 +311,10 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         key: actor_of(&signing(SAM)),
         opens,
         until: unix_now() + 24 * 3600,
+        consent: svrngs_core::tests_support::consent(
+            &signing(SAM),
+            &actor_of(pair.a.rail().signer()),
+        ),
     });
     pair.a
         .rail()

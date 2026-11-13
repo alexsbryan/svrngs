@@ -122,6 +122,7 @@ fn a_refused_visit_writes_nothing_and_lets_nobody_in() {
         key: actor_of(&key(n)),
         opens: BTreeMap::new(),
         until: now + 3_600,
+        consent: svrngs_core::tests_support::consent(&key(n), &actor_of(&key(1))),
     };
     for n in [7, 8] {
         recorded(&rail, GROUP, &visit(n)).expect("a slot free");
