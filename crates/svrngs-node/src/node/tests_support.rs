@@ -215,8 +215,26 @@ pub struct Wire(
         clippy::disallowed_types,
         reason = "a test's in-process network, shared by its nodes"
     )]
-    Arc<std::sync::Mutex<std::collections::BTreeMap<[u8; 32], crate::iroh::Admitting>>>,
+    Arc<std::sync::Mutex<Met>>,
 );
+
+/// Who is on a [`Wire`]: each key's acceptor decision, and each pair of
+/// keys the first has no path from to the second ([`Wire::part`]).
+#[derive(Default)]
+struct Met {
+    admits: std::collections::BTreeMap<[u8; 32], crate::iroh::Admitting>,
+    parted: std::collections::BTreeSet<([u8; 32], [u8; 32])>,
+}
+
+impl Wire {
+    /// No path from `from`'s computer to `to`'s, as when `from` knows no
+    /// address of `to` and no relay or lookup finds one: each ask is
+    /// [`Unsent::NoPath`]. `to` still reaches `from`.
+    pub fn part(&self, from: PublicKey, to: PublicKey) {
+        let mut met = self.0.lock().unwrap();
+        met.parted.insert((*from.as_bytes(), *to.as_bytes()));
+    }
+}
 
 /// One computer's place on a [`Wire`]: its key.
 pub struct OnWire {
@@ -228,8 +246,13 @@ impl OnWire {
     /// What `peer`'s acceptor decides for this computer on `alpn`, or why
     /// nothing answers: no computer on the wire, or one that refuses.
     fn admitted(&self, peer: &PublicKey, alpn: Alpn) -> Result<Admit, Unsent> {
-        let admit = self.wire.0.lock().unwrap().get(peer.as_bytes()).cloned();
-        match admit.ok_or(Unsent::NoPath)?(alpn.bytes(), &self.key) {
+        let met = self.wire.0.lock().unwrap();
+        let parted = met
+            .parted
+            .contains(&(*self.key.as_bytes(), *peer.as_bytes()));
+        let admit = (!parted).then(|| met.admits.get(peer.as_bytes()).cloned());
+        drop(met);
+        match admit.flatten().ok_or(Unsent::NoPath)?(alpn.bytes(), &self.key) {
             Admit::Refuse => Err(Unsent::NotAdmitted),
             admitted => Ok(admitted),
         }
@@ -412,15 +435,17 @@ impl Net for OnWire {
         Some(EndpointAddr::new(peer.key))
     }
     fn accept(&self, admit: crate::iroh::Admitting) -> crate::iroh::IrohAcceptor {
+        let mut met = self.wire.0.lock().unwrap();
+        met.admits.insert(*self.key.as_bytes(), admit);
+        n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {}))
+    }
+    fn close(&self) -> crate::iroh::Later<'_, ()> {
         self.wire
             .0
             .lock()
             .unwrap()
-            .insert(*self.key.as_bytes(), admit);
-        n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {}))
-    }
-    fn close(&self) -> crate::iroh::Later<'_, ()> {
-        self.wire.0.lock().unwrap().remove(self.key.as_bytes());
+            .admits
+            .remove(self.key.as_bytes());
         Box::pin(async {})
     }
 }

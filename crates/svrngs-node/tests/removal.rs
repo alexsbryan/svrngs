@@ -1,11 +1,14 @@
 //! Removal through the node, as the command asks it (U7; DESIGN §6
 //! "Removal has one decider"): `POST /v1/removals` and `/v1/handovers` on
-//! the record API, three nodes in one process, no relay, peers reached by
-//! seeded addresses as `group_not_mesh.rs` reaches them.
+//! the record API, three nodes in one process on one wire
+//! (common/on_wire.rs; docs/CHECKS.md, harness 3), no endpoint and no
+//! socket, each API asked of its routes as the command asks it.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
-use common::loopback_sockets;
+#[path = "common/on_wire.rs"]
+mod on_wire;
+use on_wire::http;
 
 use std::path::PathBuf;
 use std::sync::{Mutex, OnceLock};
@@ -14,7 +17,6 @@ use std::time::Duration;
 
 use tracing_subscriber::layer::SubscriberExt;
 
-use svrngs_node::iroh::{PublicKey, RelayConfig};
 use svrngs_node::node::Node;
 use svrngs_node::removal::{Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, REMOVALS_ROUTE};
 use svrngs_node::{actor_of, Person, Roster, SigningKey};
@@ -25,33 +27,11 @@ fn signing(seed: u8) -> SigningKey {
     SigningKey::from_bytes(&[seed; 32])
 }
 
-fn key(seed: u8) -> PublicKey {
-    PublicKey::from_bytes(&signing(seed).verifying_key().to_bytes()).unwrap()
-}
-
-fn no_relay() -> RelayConfig {
-    RelayConfig {
-        relay_urls: Vec::new(),
-        n0_services: false,
-        loopback_only: false,
-    }
-}
-
-fn no_seed(_: &std::path::Path) -> Result<Option<String>, String> {
-    Ok(None)
-}
-
+/// `seed`'s computer over `dir` on this test's wire, the plant set first.
+/// No seed file is written here, so its seed reader answers none.
 async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
     plant();
-    Node::start(
-        dir.path().to_path_buf(),
-        signing(seed),
-        &no_relay(),
-        no_seed,
-        "127.0.0.1:0".parse().unwrap(),
-    )
-    .await
-    .expect("a node starts")
+    on_wire::start(seed, dir.path()).await
 }
 
 /// Sam's group: Sam's key (1) its seed, so Sam decides removals.
@@ -76,10 +56,7 @@ fn admit(node: &Node, ns: &str, person: &str, joining: u8) {
 
 /// What the command asks `node` at `route`, and the node's answer.
 async fn ask(node: &Node, route: &str, person: &str) -> (u16, Outcome) {
-    let answer = reqwest::Client::builder()
-        .no_proxy()
-        .build()
-        .unwrap()
+    let answer = http()
         .post(format!("http://{}{route}", node.api_addr()))
         .bearer_auth(node.token())
         .json(&RemovalAsk {
@@ -103,7 +80,7 @@ fn stands(node: &Node, seed: u8) -> bool {
 }
 
 /// Sam, Ana and Bo, each a computer holding the group, Sam's copy the one
-/// that admitted the others; each reaches the others by address.
+/// that admitted the others; each reaches the others on the wire.
 async fn three(dirs: &[tempfile::TempDir; 3]) -> [Node; 3] {
     let nodes = [
         start(1, &dirs[0]).await,
@@ -115,22 +92,14 @@ async fn three(dirs: &[tempfile::TempDir; 3]) -> [Node; 3] {
 }
 
 /// `nodes` made one group, `ns`: `seed` its seed on every copy, `admitted`
-/// admitted on the first's, each node reaching the others by address, and
-/// the others holding the group by one round each.
+/// admitted on the first's, and the others holding the group by one round
+/// each.
 async fn knit(nodes: &[Node; 3], ns: &str, seed: &Roster, admitted: [(&str, u8); 2]) {
     for n in nodes {
         n.rail().set_seed(ns, seed).unwrap();
     }
     for (person, k) in admitted {
         admit(&nodes[0], ns, person, k);
-    }
-    for (i, n) in nodes.iter().enumerate() {
-        for (j, m) in nodes.iter().enumerate() {
-            if i != j {
-                n.transport()
-                    .add_known_peer(key(j as u8 + 1), loopback_sockets(m.endpoint()));
-            }
-        }
     }
     for n in &nodes[1..] {
         tokio::time::timeout(Duration::from_secs(30), n.round())
@@ -383,21 +352,11 @@ mod leave_race {
     use svrngs_node::removal::{LeaveAsk, LEAVES_ROUTE};
 
     const NS: &str = "oak";
-    const DAY: Duration = Duration::from_secs(24 * 60 * 60);
 
+    /// `seed`'s computer on this test's wire, its background round stopped
+    /// at once, so each round is the test's own.
     async fn start(seed: u8, dir: &tempfile::TempDir) -> Node {
-        let api = "127.0.0.1:0".parse().unwrap();
-        let node = Node::start_every(
-            (dir.path().to_path_buf(), Some(dir.path().join("svrngs"))),
-            signing(seed),
-            &no_relay(),
-            &[],
-            no_seed,
-            api,
-            DAY,
-        )
-        .await
-        .expect("a node starts");
+        let node = on_wire::start(seed, dir.path()).await;
         node.stop_sync();
         node
     }
@@ -425,10 +384,6 @@ mod leave_race {
             .unwrap()
             .unwrap();
         done.lines().to_vec()
-    }
-
-    fn http() -> reqwest::Client {
-        reqwest::Client::builder().no_proxy().build().unwrap()
     }
 
     async fn leaves(node: &Node) -> Outcome {
@@ -649,15 +604,8 @@ mod leave_race {
                 .unwrap();
         }
         admit(&nodes[0], NS, "bo", 3);
-        for (i, n) in nodes.iter().enumerate() {
-            for (j, m) in nodes.iter().enumerate() {
-                // Kim's first computer (index 1) never reaches her second (3).
-                if i != j && (i, j) != (1, 3) {
-                    n.transport()
-                        .add_known_peer(key(j as u8 + 1), loopback_sockets(m.endpoint()));
-                }
-            }
-        }
+        // Kim's first computer (index 1) never reaches her second (3).
+        on_wire::part(&nodes[1], &nodes[3]);
         for n in &nodes[1..] {
             tokio::time::timeout(Duration::from_secs(30), n.round())
                 .await

@@ -115,6 +115,12 @@ async fn opened(node: &Node, lend: Option<&str>) -> Vec<u8> {
         .unwrap()
 }
 
+/// No path on this test's wire from `from`'s computer to `to`'s, as when
+/// `from` knows no address of `to` ([`Wire::part`]).
+pub fn part(from: &Node, to: &Node) {
+    WIRE.with(|w| w.part(from.net().id(), to.net().id()));
+}
+
 /// The client a program on a computer asks its record API with.
 pub fn http() -> Client {
     Client
