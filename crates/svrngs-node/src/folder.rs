@@ -106,7 +106,7 @@ pub struct Folders {
     inline: u64,
     /// The journals, the endpoint, this computer's key, and who stands
     /// where ([`Host::standings`]): the round's, read here too.
-    host: Arc<Host>,
+    pub(crate) host: Arc<Host>,
     pub(crate) nudge: Arc<Notify>,
     pub(crate) data_dir: PathBuf,
     /// Where a group's folder is placed ([`Self::place`]): `~/svrngs`, read

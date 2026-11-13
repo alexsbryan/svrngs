@@ -233,33 +233,39 @@ pub async fn head_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     let heads = Arc::new(Mutex::new(Vec::new()));
     let kept = heads.clone();
     tokio::spawn(async move {
-        while let Ok((mut sock, _)) = listener.accept().await {
-            let kept = kept.clone();
-            tokio::spawn(async move {
-                let Some(head) = read_head(&mut sock).await else {
-                    return;
-                };
-                let seen: Vec<String> = head
-                    .lines()
-                    .filter_map(|l| l.split_once(':'))
-                    .filter(|(n, _)| n.trim().eq_ignore_ascii_case("authorization"))
-                    .map(|(_, v)| format!("x-seen-authorization: {}\r\n", v.trim()))
-                    .collect();
-                kept.lock().unwrap().push(head);
-                let _ = sock
-                    .write_all(
-                        format!(
-                            "HTTP/1.1 200 OK\r\n{}Content-Length: 2\r\nConnection: close\r\n\r\nok",
-                            seen.concat()
-                        )
-                        .as_bytes(),
-                    )
-                    .await;
-                let _ = sock.shutdown().await;
-            });
+        while let Ok((sock, _)) = listener.accept().await {
+            tokio::spawn(answer_head(sock, kept.clone()));
         }
     });
     (addr, heads)
+}
+
+/// A connection a service answers, a socket's or a pipe's end.
+pub trait Conn: AsyncReadExt + AsyncWriteExt + Unpin + Send + 'static {}
+impl<T: AsyncReadExt + AsyncWriteExt + Unpin + Send + 'static> Conn for T {}
+
+/// [`head_origin`]'s answer on one connection, its head kept in `kept`.
+pub async fn answer_head(mut sock: impl Conn, kept: Arc<Mutex<Vec<String>>>) {
+    let Some(head) = read_head(&mut sock).await else {
+        return;
+    };
+    let seen: Vec<String> = head
+        .lines()
+        .filter_map(|l| l.split_once(':'))
+        .filter(|(n, _)| n.trim().eq_ignore_ascii_case("authorization"))
+        .map(|(_, v)| format!("x-seen-authorization: {}\r\n", v.trim()))
+        .collect();
+    kept.lock().unwrap().push(head);
+    let _ = sock
+        .write_all(
+            format!(
+                "HTTP/1.1 200 OK\r\n{}Content-Length: 2\r\nConnection: close\r\n\r\nok",
+                seen.concat()
+            )
+            .as_bytes(),
+        )
+        .await;
+    let _ = sock.shutdown().await;
 }
 
 /// The door's own (mnp-1): an origin that refuses everything 403 as an
@@ -383,7 +389,7 @@ pub async fn streaming_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
 }
 
 /// A request head off `sock`, up to its blank line.
-pub async fn read_head(sock: &mut TcpStream) -> Option<String> {
+pub async fn read_head(sock: &mut (impl AsyncReadExt + Unpin)) -> Option<String> {
     let mut head = Vec::new();
     let mut buf = [0u8; 4096];
     while !head.windows(4).any(|w| w == b"\r\n\r\n") {
@@ -444,33 +450,38 @@ pub async fn host_origin() -> SocketAddr {
     let addr = listener.local_addr().unwrap();
     let own = format!("localhost:{}", addr.port());
     tokio::spawn(async move {
-        while let Ok((mut sock, _)) = listener.accept().await {
-            let own = own.clone();
-            tokio::spawn(async move {
-                let Some(head) = read_head(&mut sock).await else {
-                    return;
-                };
-                let host = head
-                    .lines()
-                    .find_map(|l| {
-                        let (n, v) = l.split_once(':')?;
-                        n.eq_ignore_ascii_case("host").then(|| v.trim().to_string())
-                    })
-                    .unwrap_or_default();
-                let to = match head.split_whitespace().nth(1) {
-                    Some("/away") => "//evil.example/cb",
-                    Some("/away-back") => "/\\evil.example/cb",
-                    _ => "/landed?x=1",
-                };
-                let answer = if host == own {
-                    format!("HTTP/1.1 302 Found\r\nLocation: http://{host}{to}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
-                } else {
-                    let why = format!("host {host} is not allowed");
-                    format!("HTTP/1.1 403 Forbidden\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{why}", why.len())
-                };
-                let _ = sock.write_all(answer.as_bytes()).await;
-            });
+        while let Ok((sock, _)) = listener.accept().await {
+            tokio::spawn(answer_host(sock, own.clone()));
         }
     });
     addr
+}
+
+/// [`host_origin`]'s answer on one connection, `own` its `Host`.
+pub async fn answer_host(mut sock: impl Conn, own: String) {
+    let Some(head) = read_head(&mut sock).await else {
+        return;
+    };
+    let host = head
+        .lines()
+        .find_map(|l| {
+            let (n, v) = l.split_once(':')?;
+            n.eq_ignore_ascii_case("host").then(|| v.trim().to_string())
+        })
+        .unwrap_or_default();
+    let to = match head.split_whitespace().nth(1) {
+        Some("/away") => "//evil.example/cb",
+        Some("/away-back") => "/\\evil.example/cb",
+        _ => "/landed?x=1",
+    };
+    let answer = if host == own {
+        format!("HTTP/1.1 302 Found\r\nLocation: http://{host}{to}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+    } else {
+        let why = format!("host {host} is not allowed");
+        format!(
+            "HTTP/1.1 403 Forbidden\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{why}",
+            why.len()
+        )
+    };
+    let _ = sock.write_all(answer.as_bytes()).await;
 }

@@ -219,14 +219,19 @@ pub struct Wire(
 );
 
 /// Who is on a [`Wire`]: each key's acceptor decision, each pair of keys
-/// the first has no path from to the second ([`Wire::part`]), and each key
-/// whose computer answers no dial ([`Wire::asleep`]).
+/// the first has no path from to the second ([`Wire::part`]), each key
+/// whose computer answers no dial ([`Wire::asleep`]), and each service a
+/// computer's door reaches at a port ([`Wire::listen`]).
 #[derive(Default)]
 struct Met {
     admits: std::collections::BTreeMap<[u8; 32], crate::iroh::Admitting>,
     parted: std::collections::BTreeSet<([u8; 32], [u8; 32])>,
     asleep: std::collections::BTreeSet<[u8; 32]>,
+    services: std::collections::BTreeMap<([u8; 32], u16), Listening>,
 }
+
+/// Where [`Wire::listen`]'s connections arrive, one pipe's end each.
+type Listening = tokio::sync::mpsc::UnboundedSender<tokio::io::DuplexStream>;
 
 impl Wire {
     /// No path from `from`'s computer to `to`'s, as when `from` knows no
@@ -242,6 +247,22 @@ impl Wire {
     /// [`Unsent::Asleep`], as [`IrohTransport`]'s dial is.
     pub fn asleep(&self, key: PublicKey) {
         self.0.lock().unwrap().asleep.insert(*key.as_bytes());
+    }
+
+    /// A service on `key`'s computer at `port`, answered in this process
+    /// (docs/CHECKS.md, harness 2): each connection its door opens there
+    /// ([`Net::service`]) is one end of a pipe, the other end received
+    /// here, as a listener accepts one. Nothing listening, or the receiver
+    /// dropped, is a refused connection, as a closed port is.
+    pub fn listen(
+        &self,
+        key: PublicKey,
+        port: u16,
+    ) -> tokio::sync::mpsc::UnboundedReceiver<tokio::io::DuplexStream> {
+        let (to, at) = tokio::sync::mpsc::unbounded_channel();
+        let mut met = self.0.lock().unwrap();
+        met.services.insert((*key.as_bytes(), port), to);
+        at
     }
 }
 
@@ -361,6 +382,23 @@ impl iroh_blobs::util::AsyncWriteSendStreamExtra for Half<tokio::io::DuplexStrea
 }
 
 impl Net for OnWire {
+    /// [`Wire::listen`]'s service at `port` on this computer, a pipe's end.
+    fn service(
+        &self,
+        port: u16,
+    ) -> crate::iroh::Later<'_, std::io::Result<Box<dyn crate::iroh::Duplex>>> {
+        let (ours, theirs) = tokio::io::duplex(64 * 1024);
+        let met = self.wire.0.lock().unwrap();
+        let to = met.services.get(&(*self.key.as_bytes(), port));
+        let taken = to.is_some_and(|to| to.send(theirs).is_ok());
+        drop(met);
+        Box::pin(async move {
+            match taken {
+                true => Ok(Box::new(ours) as Box<dyn crate::iroh::Duplex>),
+                false => Err(std::io::ErrorKind::ConnectionRefused.into()),
+            }
+        })
+    }
     fn id(&self) -> PublicKey {
         self.key
     }

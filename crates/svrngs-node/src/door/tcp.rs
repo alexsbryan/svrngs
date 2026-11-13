@@ -17,8 +17,6 @@
 //! have closed: a side's close is its stream's finish, so a half-close
 //! crosses.
 
-use std::net::Ipv4Addr;
-
 use iroh::endpoint::{Connection, RecvStream, SendStream};
 use n0_future::task::AbortOnDropHandle;
 use tokio::io::{copy_bidirectional, join, AsyncBufReadExt, BufReader};
@@ -47,11 +45,11 @@ pub(super) async fn serve((door, actor, lend, port, conn): Lending<'_>) {
 /// lent port, copied each way with the stream until both have closed; or
 /// why not, in a person's words on the stream.
 async fn connection(lent: Lending<'_>, mut send: SendStream, mut recv: RecvStream) {
-    let (_, actor, lend, port, _) = lent;
+    let (door, actor, lend, port, _) = lent;
     let _ = recv.read_exact(&mut [0; 1]).await;
     let unreached = |e| format!("{} cannot be reached here: {e}", lend.name);
     let opened = match admitted(&lent, "tcp: a connection").await {
-        Ok(held) => (TcpStream::connect((Ipv4Addr::LOCALHOST, port.get())).await)
+        Ok(held) => (door.folders.host.transport.service(port.get()).await)
             .map(|to| (to, held))
             .map_err(unreached),
         Err(words) => Err(words),

@@ -270,7 +270,14 @@ pub trait Net: Fetch + std::any::Any {
     /// Each connection served as `admit` says ([`IrohAcceptor`]).
     fn accept(&self, admit: Admitting) -> IrohAcceptor;
     fn close(&self) -> Later<'_, ()>;
+    /// A connection to the lend's service at this computer's `port`
+    /// ([`crate::door`]'s upstream): TCP on loopback in the product.
+    fn service(&self, port: u16) -> Later<'_, std::io::Result<Box<dyn Duplex>>>;
 }
+
+/// A connection's two halves as one, as a lend's service is spoken to.
+pub trait Duplex: tokio::io::AsyncRead + tokio::io::AsyncWrite + Send + Unpin {}
+impl<T: tokio::io::AsyncRead + tokio::io::AsyncWrite + Send + Unpin> Duplex for T {}
 
 /// The acceptor's decision for each connection ([`spawn_acceptor`]).
 pub type Admitting = Arc<dyn Fn(&[u8], &PublicKey) -> Admit + Send + Sync>;
@@ -409,6 +416,10 @@ impl Net for IrohTransport {
     }
     fn close(&self) -> Later<'_, ()> {
         Box::pin(self.endpoint.close())
+    }
+    fn service(&self, port: u16) -> Later<'_, std::io::Result<Box<dyn Duplex>>> {
+        let to = (std::net::Ipv4Addr::LOCALHOST, port);
+        Box::pin(async move { Ok(Box::new(tokio::net::TcpStream::connect(to).await?) as _) })
     }
 }
 

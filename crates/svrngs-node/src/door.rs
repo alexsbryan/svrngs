@@ -97,7 +97,7 @@ use http_body_util::BodyExt;
 use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
-use crate::iroh::{Dialer, Via};
+use crate::iroh::{Dialer, Duplex, Via};
 use crate::lend::{self, Lend, LendName, Offered, Source};
 use crate::network::Whereabouts;
 use crate::register::Member;
@@ -1719,32 +1719,27 @@ fn busy_words(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> String {
     )
 }
 
-/// A connection to `to`, `lend`'s service, when it takes one within
+/// A connection to `lend`'s service at `port`, when it takes one within
 /// [`CONNECT_WITHIN`]; `None`, named at warn with why, when it does not —
 /// what [`send_to`] carries a request on.
-async fn connected(to: std::net::SocketAddr, lend: &str) -> Option<tokio::net::TcpStream> {
-    match tokio::time::timeout(CONNECT_WITHIN, tokio::net::TcpStream::connect(to)).await {
-        Ok(Ok(tcp)) => Some(tcp),
-        Ok(Err(e)) => {
-            tracing::warn!(target: "door", lend, %to, error = %e, "door: the lend's service refused a connection");
-            None
-        }
-        Err(_) => {
-            tracing::warn!(target: "door", lend, %to, within = ?CONNECT_WITHIN, "door: the lend's service took no connection in time");
-            None
-        }
-    }
+async fn connected(door: &Door, port: u16, lend: &str) -> Option<Box<dyn Duplex>> {
+    let net = &door.folders.host.transport;
+    let taken = tokio::time::timeout(CONNECT_WITHIN, net.service(port)).await;
+    let taken = taken.unwrap_or_else(|_| Err(std::io::ErrorKind::TimedOut.into()));
+    let why = |e: &std::io::Error| tracing::warn!(target: "door", lend, port, error = %e, within = ?CONNECT_WITHIN, "door: the lend's service took no connection, refused or not in time");
+    taken.inspect_err(why).ok()
 }
 
-/// Send `request` on a new HTTP/1 connection to `to`, driven with
-/// upgrades, and answer the response; `None`, named at warn by `lend`,
-/// when nothing there takes the connection ([`connected`]) or answers.
+/// Send `request` on a new HTTP/1 connection to `lend`'s service at
+/// `port`, driven with upgrades, and answer the response; `None`, named at
+/// warn by `lend`, when nothing there takes the connection ([`connected`])
+/// or answers.
 async fn send_to(
-    to: std::net::SocketAddr,
+    (door, port): (&Door, u16),
     request: axum::http::Request<Body>,
     lend: &str,
 ) -> Option<axum::http::Response<hyper::body::Incoming>> {
-    let tcp = connected(to, lend).await?;
+    let tcp = connected(door, port, lend).await?;
     let handshake = hyper::client::conn::http1::handshake(hyper_util::rt::TokioIo::new(tcp));
     let shaken = handshake.await.inspect_err(|e| {
         tracing::warn!(target: "door", lend, error = %e, "door: no HTTP/1 connection to the lend's service");
@@ -1885,7 +1880,6 @@ async fn forward(
     let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
     let away = format!("{lender}’s {name} is not answering now: try again later");
     let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
-    let origin = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let label = lend.label(&door.key);
     let target = parts
         .uri
@@ -1925,7 +1919,7 @@ async fn forward(
     // The use began when the person was let in, and lasts until the member
     // has the whole answer or leaves it: the answer's body holds it.
 
-    let Some(mut answer) = send_to(origin, request, lend.name.as_str()).await else {
+    let Some(mut answer) = send_to((door, port.get()), request, lend.name.as_str()).await else {
         let unanswered = unanswered();
         carriage.answered = Some((unanswered.status().as_u16(), None));
         return Err(unanswered);

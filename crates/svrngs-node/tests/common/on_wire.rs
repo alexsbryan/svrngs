@@ -132,6 +132,21 @@ impl<'a> Browser<'a> {
         self.of.path(host, path, extra)
     }
 
+    /// common/mod.rs `Browser::shown`: a page's proof, else the token's line.
+    pub async fn shown(
+        &self,
+        method: &str,
+        host: &str,
+        path: &str,
+        extra: &str,
+        body: &str,
+    ) -> String {
+        match extra.contains("Sec-Fetch-Site") {
+            true => self.proof(method, host, path, extra, body).await,
+            false => self.bearer(),
+        }
+    }
+
     /// common/mod.rs `Browser::proof`, its node asked in-process.
     pub async fn proof(
         &self,
@@ -186,6 +201,53 @@ async fn opened(node: &Node, lend: Option<&str>) -> Vec<u8> {
     URL_SAFE_NO_PAD
         .decode(answer["key"].as_str().expect("enrollment's origin key"))
         .unwrap()
+}
+
+/// `node`'s service at `port`, answered in this process ([`Wire::listen`],
+/// harness 2): each connection its door opens there handed to `answer`, as
+/// a listener's accepted socket is; no port is bound.
+pub fn serve<F, Fut>(node: &Node, port: u16, answer: F)
+where
+    F: Fn(tokio::io::DuplexStream) -> Fut + Send + 'static,
+    Fut: std::future::Future<Output = ()> + Send + 'static,
+{
+    let mut at = WIRE.with(|w| w.listen(node.net().id(), port));
+    tokio::spawn(async move {
+        while let Some(conn) = at.recv().await {
+            tokio::spawn(answer(conn));
+        }
+    });
+}
+
+/// The raw HTTP/1 request `text` asked of the routes at `api`, as a
+/// program's socket sends it: the answer's head, its status line and a
+/// line per header up to the blank line, and its body whole.
+pub async fn raw(api: SocketAddr, text: &str) -> (String, String) {
+    let (head, body) = text.split_once("\r\n\r\n").unwrap_or((text, ""));
+    let mut lines = head.split("\r\n");
+    let mut line = lines.next().unwrap().split_whitespace();
+    let (method, path) = (line.next().unwrap(), line.next().unwrap());
+    let mut asked = http().request(method.parse().unwrap(), format!("http://{api}{path}"));
+    for (name, value) in lines.filter_map(|l| l.split_once(':')) {
+        let name = axum::http::HeaderName::from_bytes(name.trim().as_bytes()).unwrap();
+        asked.headers.insert(name, value.trim().parse().unwrap());
+    }
+    let answer = asked
+        .body(body)
+        .send()
+        .await
+        .expect("a node's own routes answer");
+    let status = answer.status();
+    let mut said = format!(
+        "HTTP/1.1 {} {}\r\n",
+        status.as_u16(),
+        status.canonical_reason().unwrap_or_default()
+    );
+    for (name, value) in answer.headers() {
+        said += &format!("{name}: {}\r\n", value.to_str().unwrap_or_default());
+    }
+    said += "\r\n";
+    (said, String::from_utf8_lossy(&answer.body).into_owned())
 }
 
 /// No path on this test's wire from `from`'s computer to `to`'s, as when
