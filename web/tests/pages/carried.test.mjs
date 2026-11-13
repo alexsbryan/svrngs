@@ -272,7 +272,7 @@ function acts() {
       });
       return Response.json({ id, counted: true });
     }
-    const spans = [{ person: 'ada', joined: null, left: null }];
+    const spans = [{ person: 'ada', joined: null, left: null, person_key: ADA }];
     return Response.json({
       you: 'ada',
       you_key: ADA,

@@ -348,8 +348,9 @@ another of the group's computers when this one never held it — and from
   page its https links print on, as `svrngs link` prints them, null where
   none is kept (Give's install line names it); its `people`
   now; and `spans`, each person's stretches in the group, `{person, joined,
-  left}`, so a house's rules count a past act with whoever stood when it
-  was written (`Membership::spans`, the one decider of who stood when).
+  left, person_key}`, so a house's rules count a past act with whoever stood
+  when it was written (`Membership::spans`, the one decider of who stood
+  when), and a page tells two of one name apart by their first key.
   Their times are stamps on acts, never a computer's clock, so every copy
   says the same; `joined` is null for whoever started the group, `left`
   while they stand, and one who leaves and comes back does so by a new key,

@@ -943,7 +943,9 @@ async fn a_computer_that_never_held_an_app_as_brought_fetches_it() {
 /// clock: a commit is timed after every act it holds (svrngs-core
 /// command.rs `commit`), so may run ahead of it. Red at ce3396d8: the
 /// answer had today's names alone. Planted (canon-spans (b)): `left` read
-/// as none for everyone, and Cy reads as standing still.
+/// as none for everyone, and Cy reads as standing still. Each stretch names
+/// its person's first key, `person_key`, which Money and Events tell two
+/// of one name apart by; red without it, and planted: the name as the key.
 #[tokio::test]
 async fn an_app_is_told_each_person_s_time_in_the_group() {
     use svrngs_node::removal::{LeaveAsk, Outcome, LEAVES_ROUTE};
@@ -1033,6 +1035,19 @@ async fn an_app_is_told_each_person_s_time_in_the_group() {
         "Cy's one stretch ends when Cy's leave is timed:\n{read:#}"
     );
     assert_eq!(spans.len(), 3, "{read:#}");
+    // keys-names: a page tells two of one name apart by the first key each
+    // stretch names (apps/expenses/expenses.js `called`).
+    for (who, seed) in [("ana", 1), ("ben", 2), ("cy", 3)] {
+        let keys: Vec<_> = (spans.iter().filter(|s| s["person"] == who))
+            .map(|s| s["person_key"].clone())
+            .collect();
+        let first = json!(actor_of(&signing(seed)));
+        assert_eq!(
+            keys,
+            [first],
+            "{who}'s stretch names their first key:\n{read:#}"
+        );
+    }
     for node in [ana, ben, cy] {
         node.net().close().await;
     }

@@ -52,12 +52,14 @@ pub enum Joined {
 /// holding the acts says the same. A person who left and came back did so
 /// by a new key, since a cut key is never let back in (`register.rs`,
 /// `RedeemRefusal::Cut`): a new person of the same name, with a stretch of
-/// their own.
+/// their own. `person_key` is their first key, which tells two of one
+/// name apart (keys-names).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
 pub struct Span {
     pub person: Person,
     pub joined: Option<i64>,
     pub left: Option<i64>,
+    pub person_key: String,
 }
 
 /// What one fold of a group's history concludes, as the interpreter's
@@ -247,6 +249,7 @@ impl Membership {
             person: person.clone(),
             joined: self.admitted_at.get(first).copied(),
             left: left(first),
+            person_key: first.clone(),
         };
         let spans = people.map(span).collect();
         tracing::debug!(target: "rail:membership", ?spans, "membership: each person's stretch, from when they joined to their last key's cut, or standing");
@@ -297,12 +300,11 @@ impl Membership {
     pub fn meets_at(&self) -> Option<BTreeSet<crate::relay::Url>> {
         let said = self.meets.as_ref();
         tracing::debug!(target: "rail:membership", ?said, "membership: the relays the keeper says the group meets at");
-        Some(
-            said?
-                .iter()
+        said.map(|s| {
+            s.iter()
                 .filter_map(|r| crate::relay::parse(r).ok())
-                .collect(),
-        )
+                .collect()
+        })
     }
 
     /// What holds `key`, if it stands now; `None` if it does not.
@@ -369,8 +371,7 @@ pub(crate) fn voids(ops: &[(&OpId, &Op<SignedOp>)], m: &mut Membership) {
             m.voided.insert(corrects.clone());
         }
     }
-    let voided = m.voided.clone();
-    m.counted.retain(|id| !voided.contains(id));
+    m.counted.retain(|id| !m.voided.contains(id));
 }
 
 impl RailAct {
