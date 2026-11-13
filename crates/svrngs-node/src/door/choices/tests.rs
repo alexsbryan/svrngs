@@ -39,7 +39,14 @@ fn each_row_of_the_table() {
         ),
         ("an app, nothing said", true, Some(&app), None, unasked),
     ] {
-        let got = judge(asks, &own, named, said).map_err(LendRefusal::as_str);
+        let node = ed25519_dalek::SigningKey::from_bytes(&[7; 32])
+            .verifying_key()
+            .to_bytes();
+        let got = rules::choose(&node, asks, own.as_str(), named.map(Label::as_str), said);
+        let got = got.map_err(|r| match r {
+            Refusal::Stopped => LendRefusal::Stopped.as_str(),
+            _ => LendRefusal::Unasked.as_str(),
+        });
         assert_eq!(got, want, "{row}");
     }
 }

@@ -329,7 +329,8 @@ async fn lent(State(at): State<Asking>, mut req: Request) -> Result<Response, Re
         let page = req.headers().get(header::ORIGIN).cloned();
         let unasked =
             |r: &Response| (r.headers().get(REFUSED_HEADER)).is_some_and(|k| k == "unasked");
-        let reached = match crate::surface::reaches(&at, &app, &label).await {
+        let send = !matches!(*req.method(), Method::GET | Method::HEAD);
+        let reached = match crate::surface::reaches(&at, &app, &label, send).await {
             Ok(()) => reach(&at, label, app, appending, req).await,
             Err(refused) if unasked(&refused) => Err(refused),
             Err(refused) => return Err(refused),
@@ -446,7 +447,7 @@ async fn routed(
     if !reading && typed.is_some() && json.is_none() {
         return Err(closed(only));
     }
-    crate::surface::reaches(at, &label, &read).await?;
+    crate::surface::reaches(at, &label, &read, !reading).await?;
     let (mut parts, body) = req.into_parts();
     parts.uri = uri_of(&tail)?;
     let accept = parts.headers.remove(header::ACCEPT);
@@ -514,20 +515,6 @@ pub(crate) async fn reach(
     let tail = req.uri().path_and_query().map_or("/", |p| p.as_str());
     let target = format!("{LEND_ROUTE}{label}{tail}");
     let door: &Door = &at.door;
-    // A carried app's send carries only on its person's own yes to it
-    // sending to this lend (CONTRACTS §6.6), checked here, where every
-    // request a page makes of another lend passes; the lender's door holds
-    // the rest ([`door::admit`]). Another app's write is the door's to refuse.
-    let sending = matches!(app.whose(), Whose::Carried) && app != label;
-    if sending && !matches!(*req.method(), Method::GET | Method::HEAD) {
-        let yes = door::choices::reaching(door, &app)?;
-        let sends = yes.is_some_and(|c| c.sends_to(&label));
-        tracing::debug!(target: "origin", %label, %app, sends, "origin: a carried app's send, carried only when its person's yes names this lend to send to");
-        if !sends {
-            let why = "This app sends here only once you say so: open it from your home page, and tick where it sends.";
-            return Err(LendRefusal::Unasked.say(StatusCode::FORBIDDEN, why));
-        }
-    }
     let Serving::At(contact, lender) = serving(at, &label).await? else {
         tracing::debug!(target: "origin", %label, "origin: this computer's own lend, through its door's rules");
         let (mut parts, body) = req.into_parts();

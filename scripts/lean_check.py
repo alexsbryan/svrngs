@@ -646,10 +646,16 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # its holder do is decided by eudoxia-community's rules; authority.rs only
 # reads passes and lines for them, and the fault enums moved with the rules
 # (core 3,773 -> 3,558, . 21,588 -> 21,375).
+# (2026-11-12) R3/R4 through rules where it shrinks svrngs (EUDOXIA_JUDGE §8
+# step 5): the lend's credential, the person's yes or stop, a page's reach
+# and a carried app's send, the stream's recheck and a reading app's class
+# are eudoxia-community's `lend` and `app` rules; the ingresses whose reads
+# would cost lines stay native (svrn-docs eudoxia-runs/2026-11-12/
+# relocate.md). . 21,375 -> 21,323, core unchanged.
 BUDGET = {
     "crates/svrngs-core": 3559,
 
-    ".": 21376,
+    ".": 21324,
 
     "js": 8528,
 

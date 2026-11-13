@@ -49,6 +49,7 @@ use axum::http::{StatusCode, Uri};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
+use eudoxia_community::lend;
 use serde::{Deserialize, Serialize};
 use svrngs_core::app::App;
 use svrngs_core::pass::{Label, Whose};
@@ -545,37 +546,39 @@ async fn said_of(at: &Asking, app: &Label) -> Result<Option<Option<choices::Choi
 }
 
 /// Whether the page of the lend `app` may reach the lend `label`
-/// ([`crate::origin`]): `label` among what it reads ([`read_by`]), and,
-/// for another computer's app or one its group carries, named by the
-/// person's yes, which their last open from the home page said, ticking
-/// only what they left ticked (capability-open; [`choices::reaching`]):
-/// this computer's own app reads what its person declared. A lend whose
-/// lender did not say is could-not-judge, refused `away`.
-pub(crate) async fn reaches(at: &Asking, app: &Label, label: &Label) -> Result<(), Response> {
+/// ([`crate::origin`]), a request that sends if `send`, by the community
+/// profile's rules (`lend::reach`): `label` among what it reads
+/// ([`read_by`]), and, for another computer's app or one its group carries,
+/// named by the person's yes, which their last open from the home page said,
+/// ticking only what they left ticked (capability-open;
+/// [`choices::reaching`]), and named apart to send to where a carried app
+/// sends (CONTRACTS §6.6): this computer's own app reads what its person
+/// declared. A lend whose lender did not say is could-not-judge, refused
+/// `away`.
+pub(crate) async fn reaches(
+    at: &Asking,
+    app: &Label,
+    label: &Label,
+    send: bool,
+) -> Result<(), Response> {
     let (read, unlisted, silent) = read_by(at, app).await?;
-    if read.iter().any(|l| named(l).as_ref() == Some(label)) {
-        let said = said_of(at, app).await?;
-        let told = (said.as_ref()).is_none_or(|c| c.as_ref().is_some_and(|c| c.names(label)));
-        tracing::debug!(target: "surface", %app, %label, own = said.is_none(), ?said, told, "surface: the page reads the lend's kind; reached when the app is this computer's own or its person's yes names this lend");
-        if !told {
-            return Err(LendRefusal::Unasked
-                .say(StatusCode::FORBIDDEN, "Open it from your home page first."));
-        }
-        return Ok(());
-    }
+    let reads = read.iter().any(|l| named(l).as_ref() == Some(label));
+    // The person's yes is read only for a lend the page reads.
+    let said = if reads { said_of(at, app).await? } else { None };
+    let yes = said.map(|c| c.map_or((false, false), |c| (c.names(label), c.sends_to(label))));
     // A carried app's computers are each listed or not: none stands for it.
     let lender = match label.whose() {
-        Whose::Computer(key) => Some(hex::encode(key)),
-        Whose::Carried => None,
+        Whose::Computer(key) => silent.contains(&hex::encode(key)),
+        Whose::Carried => false,
     };
-    if lender.is_some_and(|l| silent.contains(&l)) {
-        tracing::debug!(target: "surface", %app, %label, ?unlisted, "surface: refused — the lend's lender did not say what it lends, so whether the page reads it cannot be judged");
-        return Err(crate::origin::away());
-    }
-    tracing::debug!(target: "surface", %app, %label, "surface: refused — the page does not read the lend, or it is not lent now");
-    Err(LendRefusal::closed(
-        "this page does not read that; only what its lender declared it reads",
-    ))
+    let sending = (send, matches!(app.whose(), Whose::Carried));
+    let reached = lend::reach(&at.door.key, label.as_str(), (reads, lender), yes, sending);
+    tracing::debug!(target: "surface", %app, %label, reads, lender, ?yes, ?sending, ?unlisted, ?reached, "surface: whether the page reaches the lend, by the community profile's rules");
+    reached.map_err(|refused| match refused {
+        lend::Refusal::Silent => crate::origin::away(),
+        lend::Refusal::NotRead => LendRefusal::closed(refused.to_string()),
+        _ => LendRefusal::Unasked.say(StatusCode::FORBIDDEN, refused.to_string()),
+    })
 }
 
 /// `GET /svrngs-reads` at the origin of the lend `label` (mnp-2): what it

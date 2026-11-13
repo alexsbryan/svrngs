@@ -227,26 +227,35 @@ fn admit_is_the_rule_for_every_request_naming_another_app() {
     let own = Label::of(&[1; 32], "shelf");
     let other = Label::of(&[2; 32], "picks");
     let carried = Label::carried("Taste", "the-group-s-id-0123");
+    let refused = Err(rules::Refusal::ReadOnly);
+    // The lender's door decides under its own key: a real one.
+    let node = ed25519_dalek::SigningKey::from_bytes(&[7; 32])
+        .verifying_key()
+        .to_bytes();
     for (app, asked, readers, holder, want) in [
-        (None, Write, false, false, Admit::Own),
-        (None, Write, true, false, Admit::Own),
-        (None, Read, true, false, Admit::Own),
-        (Some(&own), Write, true, false, Admit::Own),
-        (Some(&own), Read, false, false, Admit::Own),
-        (Some(&other), Read, true, false, Admit::Readers),
-        (Some(&other), Read, false, false, Admit::Bare),
-        (Some(&other), Write, true, false, Admit::Refused),
-        (Some(&other), Write, false, false, Admit::Refused),
-        (Some(&carried), Send, true, false, Admit::Readers),
-        (Some(&carried), Send, false, false, Admit::Bare),
-        (Some(&carried), Write, true, false, Admit::Refused),
-        (Some(&carried), Send, true, true, Admit::Refused),
-        (Some(&carried), Read, true, true, Admit::Readers),
-        (Some(&other), Send, true, false, Admit::Refused),
-        (Some(&other), Send, false, true, Admit::Refused),
+        (None, Write, false, false, Ok(Admit::Own)),
+        (None, Write, true, false, Ok(Admit::Own)),
+        (None, Read, true, false, Ok(Admit::Own)),
+        (Some(&own), Write, true, false, Ok(Admit::Own)),
+        (Some(&own), Read, false, false, Ok(Admit::Own)),
+        (Some(&other), Read, true, false, Ok(Admit::Readers)),
+        (Some(&other), Read, false, false, Ok(Admit::Bare)),
+        (Some(&other), Write, true, false, refused),
+        (Some(&other), Write, false, false, refused),
+        (Some(&carried), Send, true, false, Ok(Admit::Readers)),
+        (Some(&carried), Send, false, false, Ok(Admit::Bare)),
+        (Some(&carried), Write, true, false, refused),
+        (Some(&carried), Send, true, true, refused),
+        (Some(&carried), Read, true, true, Ok(Admit::Readers)),
+        (Some(&other), Send, true, false, refused),
+        (Some(&other), Send, false, true, refused),
     ] {
         assert_eq!(
-            admit(app, &own, asked, readers, holder),
+            {
+                let carried = app.is_some_and(|a| matches!(a.whose(), Whose::Carried));
+                let app = app.map(Label::as_str);
+                rules::admit(&node, own.as_str(), app, asked, (readers, holder, carried))
+            },
             want,
             "{app:?} {asked:?} {readers} {holder}"
         );

@@ -42,15 +42,11 @@ use super::{
 };
 use crate::iroh::Dialer;
 use crate::lend::{choices_path, Lend};
+use eudoxia_community::lend::{self as rules, Refusal};
 use svrngs_core::pass::Label;
 
-/// What a person says of an app: a closed set (AGENTS 9).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Said {
-    Yes,
-    Stop,
-}
+/// What a person says of an app: a closed set (AGENTS 9), the profile's.
+pub use eudoxia_community::lend::Said;
 
 /// What an app holding a pass may say of itself: only stop, since giving
 /// up access never widens it. No yes, so a pass's yes does not parse.
@@ -143,26 +139,10 @@ fn read(door: &Door, lend: &Lend) -> Result<Kept, Response> {
     })
 }
 
-/// The door's one check, by the design's §4 table: a lend that asks
-/// nobody, or asked by its own pages, is carried; else the app the request
-/// names must have its person's yes — `stopped` after a stop, `unasked`
-/// with no app named or nothing said.
-pub(crate) fn judge(
-    asks: bool,
-    own: &Label,
-    app: Option<&Label>,
-    said: Option<Said>,
-) -> Result<(), LendRefusal> {
-    match (app, said) {
-        _ if !asks => Ok(()),
-        (Some(app), _) if app == own || said == Some(Said::Yes) => Ok(()),
-        (Some(_), Some(Said::Stop)) => Err(LendRefusal::Stopped),
-        _ => Err(LendRefusal::Unasked),
-    }
-}
-
-/// [`judge`] for one request for `lend` by `person` from `app`: `None` to
-/// carry it, else svrngs's refusal.
+/// The door's one check, by the design's §4 table, decided by the
+/// community profile's rules (`lend::choose`): a lend that asks nobody, or
+/// asked by its own pages, is carried; else the app the request names must
+/// have its person's yes. `None` to carry it, else svrngs's refusal.
 pub(super) fn check(
     door: &Door,
     lend: &Lend,
@@ -177,20 +157,16 @@ pub(super) fn check(
         },
         _ => None,
     };
-    let judged = judge(
-        lend.asks.is_some(),
-        &own,
-        app,
-        choice.as_ref().map(|c| c.said),
-    );
-    tracing::debug!(target: "door", lend = %lend.name, %person, app = ?app.map(Label::as_str), asks = lend.asks.is_some(),
-        ?choice, ?judged, "door: the person's choice for the app, judged");
-    let refused = judged.err()?;
-    let words = match refused {
-        LendRefusal::Stopped => format!("you stopped this app using {}", lend.name),
-        _ => format!("only an app you said yes to uses {}", lend.name),
+    let (asks, app) = (lend.asks.is_some(), app.map(Label::as_str));
+    let said = choice.as_ref().map(|c| c.said);
+    let judged = rules::choose(&door.key, asks, own.as_str(), app, said);
+    tracing::debug!(target: "door", lend = %lend.name, %person, app, asks,
+        ?choice, ?judged, "door: the person's choice for the app, by the community profile's rules");
+    let (kind, words) = match judged.err()? {
+        Refusal::Stopped => (LendRefusal::Stopped, "you stopped this app using"),
+        _ => (LendRefusal::Unasked, "only an app you said yes to uses"),
     };
-    Some(refused.say(StatusCode::FORBIDDEN, words))
+    Some(kind.say(StatusCode::FORBIDDEN, format!("{words} {}", lend.name)))
 }
 
 /// The task every choice is written through, so two never interleave

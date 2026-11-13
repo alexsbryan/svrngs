@@ -416,8 +416,9 @@ its status, a body under a `Content-Type` that is svrngs's own constant from a
 closed set of data types (`DATA`), and `sandbox`, `nosniff` and `no-store`.
 Another type is refused `closed`; no header of the lend's arrives. And once a
 person has said yes to an app reading lends, it writes nothing to the record
-for them, through a Stop or a later version, as what it read may be in its
-storage (`door.rs`). What it can still send is what a read's address holds,
+for them, through a Stop or a later version, as what it read may be in its storage: its class, a reader's, is part of
+the app's identity, refused by Eudoxia's kernel before any rule
+(`door.rs`, `eudoxia-community` `app::writes`). What it can still send is what a read's address holds,
 to lenders of the kinds it declared in its group, and the open says so, and
 what a send carries, below. On a
 phone the lend's worker makes the answer anew by the same rule (`inert`,
@@ -440,12 +441,13 @@ another computer lists it. The open shows a tick apart under each such lend
 that keeps a row, "Sends to Sam’s llama-server at /v1/embeddings. Sam can
 see what it sends.", never ticked but by the last yes that named it, and
 posted only with its read's tick (`Choice`'s `sends`; a yes from before names
-none). `reach` carries a carried app's non-GET only when that yes names the
-lend to send to, else `unasked`; `routed` builds it anew, its method, the
+none). `surface::reaches` lets a carried app's non-GET through only when that
+yes names the lend to send to, else `unasked`, by the community profile's
+rule (`eudoxia-community` `lend::reach`); `routed` builds it anew, its method, the
 page's `Accept`, a body read whole under `SEND_MAX`, 1 MiB, before anything
 is dialed, and `Content-Type: application/json` for a body, any other type
-refused `closed`; the answer comes back through `inert`. The lender's door
-decides the rest in `admit`, one match: a send is a method and path that a
+refused `closed`; the answer comes back through `inert`. The lender's door decides
+the rest by the profile's `lend::admit` rule: a send is a method and path that a
 row of its own lend names byte for byte (`SendRow::is`, never `covers`'s
 decoded spelling), no query and no upgrade (`Asked::Send`), from an app its
 group carries, never from a pass's holder, and goes as the readers' account
@@ -688,7 +690,8 @@ alike:**
   share --ask "<what an app receives>"`, the lender's words, carried in
   `asks` on every list and never read by svrngs). The lend's door keeps each
   person's yes and stop per app, beside the lend's declaration and never in
-  the record, and decides on them (`door/choices.rs`). A lend asking nobody
+  the record, reads the one that applies and states it to the community
+  profile's rule (`door/choices.rs`, `eudoxia-community` `lend::choose`). A lend asking nobody
   is carried as before, and its own pages are carried whatever was said; an
   app with no yes, or no app named, is refused `unasked`, and one stopped
   `stopped`. Only the person says
@@ -1268,7 +1271,8 @@ Seven calls:
    OpenID Connect names svrngs once in its own settings, and the door signs
    each person in as themselves ("The room", call 6). Another app reading a
    lend is not a person signing in, and it never has more than the person
-   and has less (`door::admit`, its one home): a request naming an app that
+   and has less (`eudoxia-community` `lend::admit`, its one home, which
+   the door states its facts to): a request naming an app that
    is not this lend, by a GET or HEAD and no protocol switch, goes as the
    account its lender keeps for readers, if one is kept, signed in once as
    the table says, or the key its lender pasted (the home page's row for it

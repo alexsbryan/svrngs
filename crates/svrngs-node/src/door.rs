@@ -104,6 +104,8 @@ use crate::register::Member;
 use crate::ring_routes::err;
 use crate::surface::AppRoute;
 use crate::{register::Visiting, Person, RingRail};
+use eudoxia_community::app;
+use eudoxia_community::lend::{self as rules, Admit, Asked};
 use limit::{Counts, Reads, Verdict, READS_A_MINUTE};
 use svrngs_core::pass::{Label, Pass, Whose};
 use svrngs_core::token::Group;
@@ -798,16 +800,16 @@ fn withdrawn(
         };
         let mut every = tokio::time::interval(udp::SWEEP);
         loop {
-            // No clock, no pass judged: as at the door ([`unix_now`]).
-            let lapsed = until.is_some_and(|u| unix_now().is_none_or(|now| now >= u));
             let let_in = match &watched {
                 Watched::Member(device) => udp::stands(&door, device, &lend),
                 Watched::Guest(key) => {
                     udp::live(&door, &lend).is_ok_and(|l| guest_admitted(&door.rail, key, &l))
                 }
             };
-            if lapsed || !let_in {
-                return tracing::debug!(target: "door", lend = %lend.name, ?watched, until, lapsed, let_in, "door: a use no longer let in — its standing or visit gone, or the pass carrying it lapsed — so it is cut");
+            // No clock, no pass judged: as at the door ([`unix_now`]).
+            let live = rules::recheck(&door.key, lend.name.as_str(), let_in, until, unix_now());
+            if !live {
+                return tracing::debug!(target: "door", lend = %lend.name, ?watched, until, let_in, "door: a use no longer let in — its standing or visit gone, or the pass carrying it lapsed, by the community profile's rules — so it is cut");
             }
             every.tick().await;
         }
@@ -1404,61 +1406,6 @@ async fn through(
     lend_for(&door, Who::Member(dialer), via.map(|Extension(v)| v), req).await
 }
 
-/// What a request for a lend may carry to its service: a closed set
-/// (AGENTS 9). The lender's own secret goes only with the person opening
-/// the lend or its own page.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Admit {
-    Own,
-    Readers,
-    /// No lender credential: the service answers as it would anyone.
-    Bare,
-    /// The service is never asked.
-    Refused,
-}
-
-/// What a request asks of a lend's service, as [`admit`] reads it: a
-/// closed set (AGENTS 9).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum Asked {
-    /// GET or HEAD, and no protocol switch ([`upgrade_of`]).
-    Read,
-    /// A method and path one of the lend's `sends:` rows names byte for
-    /// byte ([`crate::lend::SendRow::is`]), no query, which can carry
-    /// `_method=DELETE` to a framework that honors it, and no protocol
-    /// switch (svrn-docs `rings/current/CONTRACTS.md` §7).
-    Send,
-    /// Anything else.
-    Write,
-}
-
-/// Attenuation (svrn-docs `rings/current/CAPABILITY_CONNECTIONS_PLAN.md` §2):
-/// one rule at the lender's door. A request naming an app that is not this
-/// lend reads as the readers' account or as no one, and writes nothing, so
-/// a reading page's one POST cannot end the group's sign-in. It sends
-/// (CONTRACTS §7) only where the lend's own rows say, only for an app its
-/// group carries, and never for a pass's `holder`, a phone or a delegated
-/// program: from a member's computer or this one's own page, whose person's
-/// yes their computer checked (`crate::origin::reach`), as the readers'
-/// account or as no one, as a read is. `own` is this lend's label; an app
-/// absent is a person's own open ([`Asker`]).
-pub(crate) fn admit(
-    app: Option<&Label>,
-    own: &Label,
-    asked: Asked,
-    readers: bool,
-    holder: bool,
-) -> Admit {
-    let sends = !holder && app.is_some_and(|a| matches!(a.whose(), Whose::Carried));
-    match (app.is_some_and(|a| a != own), asked, readers) {
-        (false, ..) => Admit::Own,
-        (true, Asked::Write, _) => Admit::Refused,
-        (true, Asked::Send, _) if !sends => Admit::Refused,
-        (true, Asked::Read | Asked::Send, true) => Admit::Readers,
-        (true, Asked::Read | Asked::Send, false) => Admit::Bare,
-    }
-}
-
 /// The person this computer's key stands as, by whom a refusal names the
 /// lend's lender; none when it stands in no group held here.
 fn lender_of(door: &Door) -> Option<Person> {
@@ -1552,15 +1499,15 @@ pub(crate) async fn lend_for(
         Source::Port(port) => *port,
         Source::Carried(carried, group) => {
             let route = AppRoute::of(&service_path);
-            let writes = route == AppRoute::Acts && req.method() != Method::GET;
-            // Sticky through a Stop or a later version: what it read may
-            // still sit in its storage. Reads and the record stay apart.
-            let reader = writes
-                && choices::reaching(door, &Label::carried(carried.as_str(), group))?.is_some();
-            tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, reader, "door: a carried app, answered from this computer's store, unless it has read lends and asks to write");
-            if reader {
-                let why = "An app that reads your friends’ apps can’t write in the group’s record.";
-                return Err(LendRefusal::closed(why));
+            // An app that ever read others' lends is a reader for good,
+            // through a Stop or a later version: what it read may still sit
+            // in its storage. Reads and the record stay apart.
+            if route == AppRoute::Acts && req.method() != Method::GET {
+                let reached = choices::reaching(door, &Label::carried(carried.as_str(), group))?;
+                let class = reached.map_or(app::Class::Record, |_| app::Class::Connector);
+                let wrote = app::writes(&door.key, (group, actor), carried.as_str(), class);
+                tracing::debug!(target: "door", actor, lend = %lend.name, group, path = service_path, ?class, ?wrote, "door: a carried app's write, refused for an app that reads others' lends by the kernel's check of its class");
+                wrote.map_err(|why| LendRefusal::closed(why.to_string()))?;
             }
             let opened = (door.folders).open(&lend, (device.as_str(), &service_path, route), req);
             return Ok(opened.await);
@@ -1626,13 +1573,19 @@ pub(crate) async fn lend_for(
         _ => Asked::Write,
     };
     let readers = secret_headers(&lend::readers_dir(&door.data_dir, &lend.name), &lend.name);
-    let own = lend.label(&door.key);
-    let holder = matches!(who, Who::Holder(_));
-    let admitted = admit(app.as_ref(), &own, asked, !readers.is_empty(), holder);
-    tracing::debug!(target: "door", actor, lend = %lend.name, app = ?app.as_ref().map(Label::as_str), method = %req.method(), ?asked, holder, readers = !readers.is_empty(), ?admitted,
-        "door: what an app may do with this lend, and the lender's credential that goes with it");
+    let (own, named) = (lend.label(&door.key), app.as_ref().map(Label::as_str));
+    // Attenuation (CAPABILITY_CONNECTIONS_PLAN §2, CONTRACTS §7): the
+    // profile's rule at the lender's door, so a reading page's one POST
+    // cannot end the group's sign-in.
+    let carried = app
+        .as_ref()
+        .is_some_and(|a| matches!(a.whose(), Whose::Carried));
+    let stated = (!readers.is_empty(), matches!(who, Who::Holder(_)), carried);
+    let admitted = rules::admit(&door.key, own.as_str(), named, asked, stated);
+    tracing::debug!(target: "door", actor, lend = %lend.name, app = ?named, method = %req.method(), ?asked, ?stated, ?admitted,
+        "door: what an app may do with this lend, and the lender's credential that goes with it, by the community profile's rules");
     let secret = match admitted {
-        Admit::Refused => {
+        Err(_) => {
             let by = lender_of(door).map_or("the person who lends it".into(), |p| p.to_string());
             let name = &lend.name;
             let mut words = format!("Apps can only read {by}’s {name}.");
@@ -1642,9 +1595,9 @@ pub(crate) async fn lend_for(
             }
             return Err(LendRefusal::closed(words));
         }
-        Admit::Readers => readers,
-        Admit::Bare => Vec::new(),
-        Admit::Own => secret_headers(&lend::secret_dir(&door.data_dir, &lend.name), &lend.name),
+        Ok(Admit::Readers) => readers,
+        Ok(Admit::Bare) => Vec::new(),
+        Ok(Admit::Own) => secret_headers(&lend::secret_dir(&door.data_dir, &lend.name), &lend.name),
     };
     let observed = via.and_then(|v| v.observe());
     if observed.is_none() {
@@ -1655,7 +1608,7 @@ pub(crate) async fn lend_for(
     // program with the token, which is theirs, are not an app's reads.
     let reading = app
         .as_ref()
-        .filter(|_| matches!(admitted, Admit::Readers | Admit::Bare));
+        .filter(|_| matches!(admitted, Ok(Admit::Readers | Admit::Bare)));
     let Some((verdict, held)) = door.using.ask(&lend, actor, whereabouts, reading).await else {
         tracing::warn!(target: "door", lend = %lend.name, "door: refused — no count of who uses the lend, so none can be let in");
         return Err(LendRefusal::fault(UNCOUNTED));
