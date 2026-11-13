@@ -201,3 +201,250 @@ impl IrohTransport {
         ))
     }
 }
+
+/// The computers of one test met in this process, no endpoint bound, no
+/// socket (docs/CHECKS.md, harness 3): each key's acceptor decision, as
+/// [`Net::accept`] registers it. A request reaches the router its peer's
+/// decision names for the asker's key, by tower `oneshot`, the asker's
+/// `Dialer` inserted as the acceptor inserts it; a Blobs get is served by
+/// the peer's own provider over an in-memory pipe. It decides nothing:
+/// every admission and route is the node's own.
+#[derive(Clone, Default)]
+pub struct Wire(
+    #[expect(
+        clippy::disallowed_types,
+        reason = "a test's in-process network, shared by its nodes"
+    )]
+    Arc<std::sync::Mutex<std::collections::BTreeMap<[u8; 32], crate::iroh::Admitting>>>,
+);
+
+/// One computer's place on a [`Wire`]: its key.
+pub struct OnWire {
+    key: PublicKey,
+    wire: Wire,
+}
+
+impl OnWire {
+    /// What `peer`'s acceptor decides for this computer on `alpn`, or why
+    /// nothing answers: no computer on the wire, or one that refuses.
+    fn admitted(&self, peer: &PublicKey, alpn: Alpn) -> Result<Admit, Unsent> {
+        let admit = self.wire.0.lock().unwrap().get(peer.as_bytes()).cloned();
+        match admit.ok_or(Unsent::NoPath)?(alpn.bytes(), &self.key) {
+            Admit::Refuse => Err(Unsent::NotAdmitted),
+            admitted => Ok(admitted),
+        }
+    }
+}
+
+impl Fetch for OnWire {
+    fn fetch<'a>(
+        &'a self,
+        peer: &'a Contact,
+        req: crate::iroh::WholeRequest,
+    ) -> crate::iroh::Fetched<'a> {
+        Box::pin(async move {
+            let (head, body) = self.send(peer, req.map(Into::into)).await?.into_parts();
+            let body = axum::body::to_bytes(body, usize::MAX).await;
+            Ok(crate::iroh::Whole::from_parts(
+                head,
+                body.map_err(|e| Unsent::Failed(e.to_string()))?,
+            ))
+        })
+    }
+}
+
+/// One end of a pipe, as iroh-blobs reads or writes a QUIC stream's half.
+struct Half<T>(T);
+
+impl iroh_blobs::util::AsyncReadRecvStreamExtra for Half<tokio::io::DuplexStream> {
+    fn inner(&mut self) -> &mut (impl tokio::io::AsyncRead + Unpin + Send) {
+        &mut self.0
+    }
+    fn stop(&mut self, _: iroh::endpoint::VarInt) -> std::io::Result<()> {
+        Ok(())
+    }
+    fn id(&self) -> u64 {
+        0
+    }
+}
+
+impl iroh_blobs::util::AsyncWriteSendStreamExtra for Half<tokio::io::DuplexStream> {
+    fn inner(&mut self) -> &mut (impl tokio::io::AsyncWrite + Unpin + Send) {
+        &mut self.0
+    }
+    fn reset(&mut self, _: iroh::endpoint::VarInt) -> std::io::Result<()> {
+        Ok(())
+    }
+    async fn stopped(&mut self) -> std::io::Result<Option<iroh::endpoint::VarInt>> {
+        std::future::pending().await
+    }
+    fn id(&self) -> u64 {
+        0
+    }
+}
+
+impl Net for OnWire {
+    fn id(&self) -> PublicKey {
+        self.key
+    }
+    fn addr(&self) -> EndpointAddr {
+        EndpointAddr::new(self.key)
+    }
+    fn addrs(&self) -> n0_future::boxed::BoxStream<EndpointAddr> {
+        Box::pin(n0_future::stream::pending())
+    }
+    fn homes(&self) -> n0_future::boxed::BoxStream<Vec<iroh::endpoint::RelayStatus>> {
+        Box::pin(n0_future::stream::pending())
+    }
+    fn online(&self) -> crate::iroh::Later<'_, ()> {
+        Box::pin(async {})
+    }
+    fn relays(
+        &self,
+        _: Vec<crate::iroh::RelayUrl>,
+        _: Vec<crate::iroh::RelayUrl>,
+    ) -> crate::iroh::Later<'_, ()> {
+        Box::pin(async {})
+    }
+    fn send<'a>(
+        &'a self,
+        peer: &'a Contact,
+        req: crate::iroh::Request,
+    ) -> crate::iroh::Sent<'a, crate::iroh::Streamed> {
+        Box::pin(async move {
+            use tower::ServiceExt;
+            let Admit::Serve(router) = self.admitted(&peer.key, Alpn::Member)? else {
+                return Err(Unsent::Failed("not served on the members' protocol".into()));
+            };
+            let mut req = req;
+            req.extensions_mut().insert(Dialer(self.key));
+            Ok(router
+                .oneshot(req)
+                .await
+                .unwrap_or_else(|never| match never {}))
+        })
+    }
+    fn dial(
+        &self,
+        _: EndpointAddr,
+        alpn: Alpn,
+        _: Option<Duration>,
+    ) -> crate::iroh::Sent<'_, iroh::endpoint::Connection> {
+        Box::pin(async move {
+            Err(Unsent::Failed(format!(
+                "no QUIC connection on a wire, {alpn:?}"
+            )))
+        })
+    }
+    fn get<'a>(
+        &'a self,
+        peer: &'a Contact,
+        store: &'a iroh_blobs::api::Store,
+        request: iroh_blobs::protocol::GetRequest,
+    ) -> crate::iroh::Sent<'a, iroh_blobs::api::remote::GetProgress> {
+        Box::pin(async move {
+            use iroh_blobs::util::{AsyncReadRecvStream, AsyncWriteSendStream};
+            let Admit::Blobs(theirs, events) = self.admitted(&peer.key, Alpn::Blobs)? else {
+                return Err(Unsent::Failed("not served on the Blobs protocol".into()));
+            };
+            // Told to the holder's events as a QUIC connection is, by the
+            // asker's key, which decide whether it is served.
+            static CONNECTIONS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+            let id = CONNECTIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+            let connected = || iroh_blobs::provider::events::ClientConnected {
+                connection_id: id,
+                endpoint_id: Some(self.key),
+            };
+            if events.client_connected(connected).await.is_err() {
+                return Err(Unsent::NotAdmitted);
+            }
+            // One pipe each way, as a QUIC stream's halves: the provider
+            // reads the ask to its end, which the asker's dropped writer
+            // gives, and the asker reads the answer.
+            let (asks, their_read) = tokio::io::duplex(64 * 1024);
+            let (their_write, answers) = tokio::io::duplex(64 * 1024);
+            let served = iroh_blobs::provider::StreamPair::new(
+                id,
+                AsyncReadRecvStream::new(Half(their_read)),
+                AsyncWriteSendStream::new(Half(their_write)),
+                events,
+            );
+            tokio::spawn(iroh_blobs::provider::handle_stream(served, theirs));
+            let asked = iroh_blobs::get::StreamPair::new(
+                id,
+                AsyncReadRecvStream::new(Half(answers)),
+                AsyncWriteSendStream::new(Half(asks)),
+            );
+            Ok(store.remote().execute_get(asked, request))
+        })
+    }
+    fn let_go(&self, _: &PublicKey, _: Alpn) {}
+    fn add_known_peer(&self, _: PublicKey, _: Vec<std::net::SocketAddr>) {}
+    fn endpoint_addr_for(&self, peer: &Contact) -> Option<EndpointAddr> {
+        Some(EndpointAddr::new(peer.key))
+    }
+    fn accept(&self, admit: crate::iroh::Admitting) -> crate::iroh::IrohAcceptor {
+        self.wire
+            .0
+            .lock()
+            .unwrap()
+            .insert(*self.key.as_bytes(), admit);
+        n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {}))
+    }
+    fn close(&self) -> crate::iroh::Later<'_, ()> {
+        self.wire.0.lock().unwrap().remove(self.key.as_bytes());
+        Box::pin(async {})
+    }
+}
+
+impl Node {
+    /// A node over `data_dir` on `wire`, signing as `key`, its seeds read by
+    /// `seeds`: no endpoint, no relay and no API listener; its record API
+    /// asked by [`Node::api_routes`]. Its groups' folders are placed in
+    /// `data_dir`'s `svrngs`, as [`Node::start`] places them.
+    pub async fn on_wire(
+        wire: &Wire,
+        data_dir: PathBuf,
+        key: SigningKey,
+        seeds: SeedText,
+    ) -> Result<Self, NodeError> {
+        crate::declared::secret_dir(&data_dir).map_err(|source| NodeError::DataDir {
+            path: data_dir.clone(),
+            source,
+        })?;
+        let net = Arc::new(OnWire {
+            key: SecretKey::from_bytes(&key.to_bytes()).public(),
+            wire: wire.clone(),
+        });
+        let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
+        let token = crate::api::kept_token(&data_dir)?;
+        let (held, _) =
+            crate::tiers::Held::built(svrngs_core::relay::Meeting::of([], &[]), Default::default());
+        let relay = RelayConfig {
+            relay_urls: Vec::new(),
+            n0_services: false,
+            loopback_only: true,
+        };
+        // A port no socket holds, one per key, so a test tells its nodes'
+        // APIs apart by address as their programs would.
+        let port = 1024 + u16::from(net.key.as_bytes()[0]);
+        let unbound: Serve = Box::new(move |_| {
+            Ok(crate::api::Serving {
+                addr: SocketAddr::from(([127, 0, 0, 1], port)),
+                _task: n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {})),
+            })
+        });
+        let places = Some(data_dir.join("svrngs"));
+        let every = crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+        Self::start_on(
+            net,
+            (data_dir, places),
+            rail,
+            (&relay, held),
+            seeds,
+            (token, port, unbound),
+            every,
+        )
+        .await
+    }
+}

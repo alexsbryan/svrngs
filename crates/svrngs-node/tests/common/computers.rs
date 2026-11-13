@@ -77,6 +77,10 @@ pub fn found(name: &str, salt: u8, ana: &Node, others: &[(&Node, u8)]) -> String
 
 /// Each of `nodes` told where each listens, for the round and for a dial
 /// by key alike.
+#[allow(
+    dead_code,
+    reason = "folders.rs meets its computers on a wire; carried.rs over QUIC"
+)]
 pub fn known(nodes: &[&Node]) {
     for who in nodes {
         let book = MemoryLookup::new();
@@ -113,6 +117,10 @@ pub async fn until_on(nodes: &[&Node], done: impl Fn() -> bool) -> bool {
     done()
 }
 
+#[allow(
+    dead_code,
+    reason = "folders.rs meets its computers on a wire; carried.rs over QUIC"
+)]
 pub fn http() -> reqwest::Client {
     reqwest::Client::builder().no_proxy().build().unwrap()
 }

@@ -1,14 +1,21 @@
 //! A folder synced both ways (sy-1, the mesh-Dropbox spike; PLAN §2):
 //! Ana, Ben and Cy in one group, each change reaching the others' disks,
-//! and the bytes served to members alone. Three nodes in one process, no
-//! relay, each reached by the addresses seeded in the others' lookup.
+//! and the bytes served to members alone. Three nodes in one process on
+//! one wire (common/on_wire.rs; docs/CHECKS.md, harness 3), no endpoint,
+//! no socket. Q's contained test is the first here, over QUIC on
+//! loopback, each node reached by the addresses seeded in the others'
+//! lookup; and a scripted holder (`Asking`) answers over QUIC, its bytes
+//! and its pauses being what its tests claim.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 #[path = "common/computers.rs"]
 mod computers;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 use common::{heard, loopback_sockets, noise};
-use computers::{found, http, known, round, seed, signing, start, until_on};
+use computers::{found, round, seed, signing, start as start_quic, until_on};
+use on_wire::{http, start};
 
 use std::path::Path;
 use std::time::Duration;
@@ -43,13 +50,33 @@ impl Group {
         }
     }
 
+    /// [`Self::new`] over QUIC on loopback: Q's contained test.
+    async fn over_quic() -> Self {
+        let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
+        let ana = start_quic(1, dirs[0].path()).await;
+        let ben = start_quic(2, dirs[1].path()).await;
+        let cy = start_quic(3, dirs[2].path()).await;
+        computers::known(&[&ana, &ben, &cy]);
+        for node in [&ana, &ben, &cy] {
+            on_wire::served(node);
+        }
+        let group = Group {
+            ana,
+            ben,
+            cy,
+            _dirs: dirs,
+        };
+        found("films", 9, &group.ana, &[(&group.ben, 2), (&group.cy, 3)]);
+        group.settle().await;
+        group
+    }
+
     /// Ana's, Ben's and Cy's computers, in no group yet.
     async fn computers() -> Self {
         let dirs: Vec<_> = (0..3).map(|_| tempfile::tempdir().unwrap()).collect();
         let ana = start(1, dirs[0].path()).await;
         let ben = start(2, dirs[1].path()).await;
         let cy = start(3, dirs[2].path()).await;
-        known(&[&ana, &ben, &cy]);
         Group {
             ana,
             ben,
@@ -60,7 +87,7 @@ impl Group {
 
     async fn close(self) {
         for node in [self.ana, self.ben, self.cy] {
-            node.endpoint().close().await;
+            node.net().close().await;
         }
     }
 }
@@ -114,14 +141,17 @@ async fn get(
     dir: &Path,
 ) -> Result<u64, String> {
     let store = iroh_blobs::store::fs::FsStore::load(dir).await.unwrap();
-    let conn = from
-        .endpoint()
-        .connect(holder.endpoint().id(), b"/iroh-bytes/4")
-        .await;
-    let conn = conn.map_err(|e| format!("the dial: {e}"))?;
-    let get = store
-        .remote()
-        .execute_get(conn, iroh_blobs::protocol::GetRequest::blob(hash));
+    let holder = svrngs_node::iroh::Contact {
+        key: holder.net().id(),
+        relays: Default::default(),
+        iroh_direct_addrs: Vec::new(),
+    };
+    let request = iroh_blobs::protocol::GetRequest::blob(hash);
+    let get = from.net().get(&holder, &store, request).await;
+    let get = get.map_err(|e| match e {
+        svrngs_node::iroh::Unsent::NotAdmitted => "the dial: not admitted".to_string(),
+        e => format!("the dial: {e}"),
+    })?;
     let got = tokio::time::timeout(Duration::from_secs(10), get).await;
     let got = got.map_err(|_| "no answer".to_string())?;
     got.map(|s| s.payload_bytes_read)
@@ -138,9 +168,10 @@ fn contents(dir: &Path) -> std::collections::BTreeSet<Vec<u8>> {
 /// each sync a directory; a file Ana writes appears in Ben's, byte for
 /// byte; Ben's edit of it appears in Ana's; Ben's delete of it takes it
 /// from Ana's. Red with the node's apply taken out (nothing reaches Ben).
+/// Over QUIC: the Q seam's contained test (docs/CHECKS.md).
 #[tokio::test]
 async fn a_change_by_any_member_reaches_another_s_directory() {
-    let group = Group::new().await;
+    let group = Group::over_quic().await;
     let (ra, rb) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
     let (ana, ben) = (
         both_ways(&group.ana, ra.path()).await,
@@ -197,19 +228,12 @@ async fn a_synced_file_is_served_by_a_member_who_did_not_write_it_and_to_no_one_
 
     let dee_dir = tempfile::tempdir().unwrap();
     let dee = start(4, dee_dir.path()).await;
-    let book = MemoryLookup::new();
-    let mut addr = EndpointAddr::new(group.ben.endpoint().id());
-    for a in loopback_sockets(group.ben.endpoint()) {
-        addr = addr.with_ip_addr(a);
-    }
-    book.add_endpoint_info(addr);
-    dee.endpoint().address_lookup().unwrap().add(book);
     let refused = get(&dee, &group.ben, hash, &dee_dir.path().join("asked")).await;
     assert!(
         refused.as_ref().is_err_and(|e| e.contains("not admitted")),
         "Dee, in no group, is closed at the accept: {refused:?}"
     );
-    dee.endpoint().close().await;
+    dee.net().close().await;
     group.close().await;
 }
 
@@ -390,7 +414,7 @@ async fn a_step_s_act_names_its_changes_in_the_walk_s_order() {
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
     let line = act().expect("one act names all 24");
-    ana.endpoint().close().await;
+    ana.net().close().await;
     let mut named = walked.clone();
     named.sort_by_key(|n| line.find(n.as_str()));
     assert_eq!(named, walked, "the act's order is the walk's");
@@ -519,7 +543,7 @@ async fn a_holder_asleep_is_waited_on_for_a_bound_then_the_next_asked() {
     assert!(until(&group, || at(&ben)).await, "Ana's file reaches Ben");
     // Cy's record holds Ana's act before Ana goes.
     round(&group.cy).await;
-    group.ana.endpoint().close().await;
+    group.ana.net().close().await;
     let t0 = std::time::Instant::now();
     let cy = both_ways(&group.cy, rc.path()).await;
     // No round: one would wait on Ana too, and Cy's record needs none.
@@ -533,7 +557,7 @@ async fn a_holder_asleep_is_waited_on_for_a_bound_then_the_next_asked() {
         t0.elapsed()
     );
     for node in [&group.ben, &group.cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1029,7 +1053,8 @@ impl Asking {
         use std::os::unix::fs::PermissionsExt as _;
         use svrngs_core::{Change, ContentHash, SyncPath};
         let dir = tempfile::tempdir().unwrap();
-        let ana = start(1, dir.path()).await;
+        let ana = start_quic(1, dir.path()).await;
+        on_wire::served(&ana);
         let ns = found("films", 9, &ana, &[]);
         svrngs_core::tests_support::let_in_by(&ns, &signing(2), "ben", |act| {
             let act = svrngs_core::tests_support::Fixture { act };
@@ -1116,7 +1141,7 @@ impl Asking {
 
     async fn close(self) {
         self.ben.close().await;
-        self.ana.endpoint().close().await;
+        self.ana.net().close().await;
     }
 }
 
@@ -1454,7 +1479,7 @@ async fn bytes_an_app_put_are_held_by_a_member_who_asks_and_carried_to_the_next(
     let only_ana = noise(20_000, b"only Ana's bytes");
     assert_eq!(put_blob(&group.ana, &films, 60, &only_ana).await.0, 200);
 
-    group.ana.endpoint().close().await;
+    group.ana.net().close().await;
     let (status, holder, got) = get_blob(&group.cy, &films, &hash).await;
     let text = String::from_utf8_lossy(&got);
     assert_eq!(status, 200, "Cy holds it with Ana stopped: {text}");
@@ -1472,7 +1497,7 @@ async fn bytes_an_app_put_are_held_by_a_member_who_asks_and_carried_to_the_next(
         "Ana named, with why she said nothing: {said}"
     );
     for node in [&group.ben, &group.cy] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
 }
 
@@ -1794,7 +1819,7 @@ async fn a_programs_file_not_here_yet_is_refused_as_still_being_fetched() {
         until(&group, placed).await,
         "Ana's record places Ben's file"
     );
-    group.ben.endpoint().close().await;
+    group.ben.net().close().await;
     let (status, said) = programs(&group.ana, "late").await;
     assert_eq!(
         (status, said.as_str()),
@@ -1806,33 +1831,27 @@ async fn a_programs_file_not_here_yet_is_refused_as_still_being_fetched() {
 /// `body` posted to `node`'s home page at `/running`, as its own page asks,
 /// with the token: the status and the answer.
 async fn lend_from_the_page(node: &Node, body: serde_json::Value) -> (u16, serde_json::Value) {
-    on_the_page(node, reqwest::Method::POST, "/running", body).await
+    on_the_page(node, axum::http::Method::POST, "/running", body).await
 }
 
 /// `body` sent to `node`'s home page at `path`, as its own page asks, with
 /// the token: the status and the answer.
 async fn on_the_page(
     node: &Node,
-    method: reqwest::Method,
+    method: axum::http::Method,
     path: &str,
     body: serde_json::Value,
 ) -> (u16, serde_json::Value) {
     let home = format!("svrngs.localhost:{}", node.api_addr().port());
-    let http = reqwest::Client::builder()
-        .no_proxy()
-        .resolve("svrngs.localhost", node.api_addr());
-    let answer = (http
-        .build()
-        .unwrap()
-        .request(method, format!("http://{home}{path}")))
-    .bearer_auth(node.token().trim())
-    .header("sec-fetch-site", "same-origin")
-    .header("sec-fetch-mode", "cors")
-    .header("origin", format!("http://{home}"))
-    .json(&body)
-    .send()
-    .await
-    .unwrap();
+    let answer = (http().request(method, format!("http://{home}{path}")))
+        .bearer_auth(node.token().trim())
+        .header("sec-fetch-site", "same-origin")
+        .header("sec-fetch-mode", "cors")
+        .header("origin", format!("http://{home}"))
+        .json(&body)
+        .send()
+        .await
+        .unwrap();
     (answer.status().as_u16(), answer.json().await.unwrap())
 }
 
@@ -1947,7 +1966,7 @@ async fn the_home_page_says_how_apps_read_a_lend_by_its_group_s_terms() {
     let lent = || {
         on_the_page(
             &group.ana,
-            reqwest::Method::GET,
+            axum::http::Method::GET,
             "/lent",
             serde_json::Value::Null,
         )
