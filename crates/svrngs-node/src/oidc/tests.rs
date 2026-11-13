@@ -204,3 +204,306 @@ fn the_services_own_address_is_the_doors_one_set_of_hosts() {
         );
     }
 }
+
+/// The browser at `host` as the door names it to the front channel
+/// (door.rs `lend_for`): its scheme, as `scheme_of` reads the host, and the host.
+fn browser_at(host: &str) -> String {
+    format!("{}://{host}", crate::door::scheme_of(host))
+}
+
+/// The authorize path takes a redirect on the lend's own origin, the
+/// browser's, as it takes one on the service's own address: a computer's
+/// `<label>.localhost` in http, a page host's name in https, the room's
+/// address in http; answered relative to that origin. Another lend's
+/// origin, the label on a host that is not the browser's, and the browser's
+/// host in the other scheme are refused 400, no code (tests/door
+/// oidc.rs:536-593, 686-688). Planted, watched failing: `LendPath::parse`
+/// reading no browser origin, as the front channel before oidc-jellyfin.
+#[test]
+fn the_authorize_path_takes_the_lend_s_own_origin_and_no_other() {
+    const AT: &str = "umfrj1nx.localhost:6473";
+    for host in [AT, "umfrj1nx.svrngs.example", "192.168.1.20:7123"] {
+        let browser = browser_at(host);
+        let (status, location) = authorized(&format!("{browser}/signin-oidc"), Some(&browser));
+        assert_eq!(status, 302, "{host}: {location:?}");
+        assert!(
+            location
+                .as_deref()
+                .is_some_and(|l| l.starts_with("/signin-oidc?code=")),
+            "{host}: {location:?}"
+        );
+    }
+    for redirect in [
+        "http://pickslbl.localhost:6473/signin-oidc",
+        "http://umfrj1nx.other.example/signin-oidc",
+        "https://umfrj1nx.localhost:6473/signin-oidc",
+    ] {
+        let (status, location) = authorized(redirect, Some(&browser_at(AT)));
+        assert_eq!((status, location.as_deref()), (400, None), "{redirect}");
+    }
+}
+
+const CLIENT: &str = "svrngs-media";
+const CLIENT_SECRET: &str = "media-secret_2026.10";
+const REDIRECT: &str = "http://localhost:8096/signin-oidc";
+const VERIFIER: &str = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+/// `S256` of [`VERIFIER`].
+const CHALLENGE: &str = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM";
+
+/// Ada's computer (key 1), holding the house with bo (key 2), lending
+/// `media` and `other` to it, each signing people in with svrngs; and its
+/// provider, on the same data dir and rail.
+struct Lender {
+    dir: tempfile::TempDir,
+    rail: std::sync::Arc<crate::RingRail>,
+    provider: Provider,
+}
+
+fn lender() -> Lender {
+    let dir = tempfile::tempdir().unwrap();
+    let key = |seed: u8| crate::SigningKey::from_bytes(&[seed; 32]);
+    let rail = std::sync::Arc::new(crate::RingRail::new(dir.path(), key(1).into()));
+    let people = [("ada", 1), ("bo", 2)].map(|(p, k)| {
+        (
+            crate::Person::parse(p).unwrap(),
+            vec![crate::actor_of(&key(k))],
+        )
+    });
+    rail.set_seed("house", &crate::Roster::new(people.into_iter().collect()))
+        .unwrap();
+    let lends = crate::lend::lends_dir(dir.path());
+    std::fs::create_dir_all(&lends).unwrap();
+    for (name, client) in [("media", CLIENT), ("other", "svrngs-other")] {
+        let body = serde_json::json!({
+            "port": 8096, "kind": "k", "groups": ["house"],
+            "sign_in_with_svrngs": { "client_id": client, "client_secret": CLIENT_SECRET },
+        });
+        std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let provider = Provider::new(dir.path().to_path_buf(), 1, rail.clone()).unwrap();
+    Lender {
+        dir,
+        rail,
+        provider,
+    }
+}
+
+impl Lender {
+    /// The code the door's front channel answers `who`, let in through the
+    /// house on `device`, asking `media` with `extra` on the ask.
+    fn code(&self, who: svrngs_core::token::Subject, device: &str, extra: &str) -> String {
+        let name = crate::lend::LendName::parse("media").unwrap();
+        let lend = crate::lend::read(self.dir.path(), &name).unwrap().unwrap();
+        let client = lend.sign_in_with_svrngs.clone().unwrap();
+        let redirect: String = form_urlencoded::byte_serialize(REDIRECT.as_bytes()).collect();
+        let query = format!(
+            "response_type=code&client_id={CLIENT}&redirect_uri={redirect}&scope=openid\
+             &state=st-1&code_challenge={CHALLENGE}&code_challenge_method=S256{extra}"
+        );
+        let port = std::num::NonZeroU16::new(8096).unwrap();
+        let group = ("house".to_string(), device.to_string());
+        let answer = authorize(
+            &self.provider,
+            &lend,
+            &client,
+            port,
+            None,
+            (who, group.0, group.1),
+            Some(&query),
+        );
+        assert_eq!(answer.status(), 302);
+        let location = answer.headers()[axum::http::header::LOCATION]
+            .to_str()
+            .unwrap();
+        let query = location.split_once('?').unwrap().1;
+        let code = form_urlencoded::parse(query.as_bytes()).find(|(k, _)| k == "code");
+        code.unwrap().1.into_owned()
+    }
+
+    /// The token route's answer for `lend`, asked in process, `form` beside
+    /// the client's id and secret.
+    async fn token(&self, lend: &str, form: &[(&str, &str)]) -> (u16, serde_json::Value) {
+        use tower::ServiceExt;
+        let client = if lend == "media" {
+            CLIENT
+        } else {
+            "svrngs-other"
+        };
+        let body = form_urlencoded::Serializer::new(String::new())
+            .extend_pairs(form)
+            .extend_pairs([("client_id", client), ("client_secret", CLIENT_SECRET)])
+            .finish();
+        let asked = axum::http::Request::post(format!("/oidc/{lend}/token"))
+            .header("content-type", "application/x-www-form-urlencoded")
+            .body(axum::body::Body::from(body))
+            .unwrap();
+        let answer = self.provider.clone().router().oneshot(asked).await.unwrap();
+        let status = answer.status().as_u16();
+        let body = axum::body::to_bytes(answer.into_body(), usize::MAX)
+            .await
+            .unwrap();
+        (status, serde_json::from_slice(&body).unwrap_or_default())
+    }
+
+    async fn redeem(
+        &self,
+        lend: &str,
+        code: &str,
+        redirect: &str,
+        verifier: &str,
+    ) -> (u16, serde_json::Value) {
+        let form = [
+            ("grant_type", "authorization_code"),
+            ("code", code),
+            ("redirect_uri", redirect),
+            ("code_verifier", verifier),
+        ];
+        self.token(lend, &form).await
+    }
+}
+
+fn subject(
+    sub: &str,
+    name: &str,
+    username: &str,
+    group: svrngs_core::token::Group,
+) -> svrngs_core::token::Subject {
+    svrngs_core::token::Subject {
+        sub: sub.into(),
+        name: name.into(),
+        username: username.into(),
+        group,
+    }
+}
+
+/// The code's claims, as a stock client reads the id token.
+fn id_claims(answer: &serde_json::Value) -> serde_json::Value {
+    let token = answer["id_token"].as_str().expect("an id token");
+    let (input, _) = token.rsplit_once('.').unwrap();
+    let (_, payload) = input.split_once('.').unwrap();
+    serde_json::from_slice(&URL_SAFE_NO_PAD.decode(payload).unwrap()).unwrap()
+}
+
+/// A code the front channel minted for the door's person redeems at the
+/// token route, once, for that person's claims and the ask's nonce, never a
+/// `sub` the ask names; at another lend's route, with another login's
+/// verifier, or for another redirect, it is refused; once its person is
+/// removed from the group it was minted through, or the lend is no longer
+/// lent there, `invalid_grant` (tests/door oidc.rs:163-301, 445-456,
+/// 481-491). In process, no socket. Planted, watched failing, one at a
+/// time: the token route not asking the code's person's standing; not
+/// asking `reached`.
+#[tokio::test]
+async fn a_code_redeems_for_the_door_s_person_only_while_the_door_would_let_them_in() {
+    use svrngs_core::token::Group;
+    let l = lender();
+    let bo = crate::actor_of(&crate::SigningKey::from_bytes(&[2; 32]));
+    let username = format!("bo-{}", &bo[..16]);
+    let bos = || subject(&bo, "bo", &username, Group::Member);
+    let code = l.code(bos(), &bo, "&nonce=n-0S6_WzA2Mj&sub=cy");
+    let (status, answer) = l.redeem("media", &code, REDIRECT, VERIFIER).await;
+    assert_eq!(status, 200, "{answer:#}");
+    let claims = id_claims(&answer);
+    assert_eq!(claims["sub"], bo.as_str(), "{claims:#}");
+    assert_eq!(claims["name"], "bo");
+    assert_eq!(claims["preferred_username"], username.as_str());
+    assert_eq!(claims["groups"], serde_json::json!(["member"]));
+    assert_eq!(claims["nonce"], "n-0S6_WzA2Mj");
+    let again = l.redeem("media", &code, REDIRECT, VERIFIER).await;
+    assert_eq!(again.0, 400, "a code redeems once: {:#}", again.1);
+
+    for (why, lend, redirect, verifier) in [
+        ("another lend's route", "other", REDIRECT, VERIFIER),
+        (
+            "another login's verifier",
+            "media",
+            REDIRECT,
+            "another-login-attempt-s-verifier-43-characters",
+        ),
+        (
+            "another redirect",
+            "media",
+            "http://localhost:8096/elsewhere",
+            VERIFIER,
+        ),
+    ] {
+        let code = l.code(bos(), &bo, "");
+        let (status, answer) = l.redeem(lend, &code, redirect, verifier).await;
+        assert_eq!(status, 400, "{why}: {answer:#}");
+    }
+
+    let invalid = Some("invalid_grant");
+    let gone = l.code(bos(), &bo, "");
+    let name = crate::lend::LendName::parse("media").unwrap();
+    assert!(crate::lend::set_audience(l.dir.path(), &name, vec!["yard".into()]).unwrap());
+    let (status, answer) = l.redeem("media", &gone, REDIRECT, VERIFIER).await;
+    assert_eq!(
+        (status, answer["error"].as_str()),
+        (400, invalid),
+        "no longer lent: {answer:#}"
+    );
+    assert!(crate::lend::set_audience(l.dir.path(), &name, vec!["house".into()]).unwrap());
+
+    let left = l.code(bos(), &bo, "");
+    let removal = svrngs_core::Removal {
+        person: crate::Person::parse("bo").unwrap(),
+        joined: None,
+    };
+    l.rail.commit("house", &removal).unwrap().unwrap();
+    let (status, answer) = l.redeem("media", &left, REDIRECT, VERIFIER).await;
+    assert_eq!(
+        (status, answer["error"].as_str()),
+        (400, invalid),
+        "removed: {answer:#}"
+    );
+}
+
+/// A guest's code names the guest, never the host, and is held to the
+/// guest's visit by the door's one decision (`guest_admitted`): Sam's code,
+/// Kim's visit live, redeems for Sam's visit key, account and name, group
+/// `guest`; a guest code for a key no visit here names is refused for the
+/// visit (tests/door oidc.rs:797-805, 873-888). Planted, watched failing:
+/// the token route holding a guest's code to the audience alone.
+#[tokio::test]
+async fn a_guest_s_code_names_the_guest_and_holds_to_their_visit() {
+    use svrngs_core::token::Group;
+    let l = lender();
+    let key = |seed: u8| crate::actor_of(&crate::SigningKey::from_bytes(&[seed; 32]));
+    let (sam, ada) = (key(9), key(1));
+    let mut opens = std::collections::BTreeMap::new();
+    opens.insert(ada.clone(), ["media".to_string()].into());
+    let visit = crate::Visit {
+        guest: crate::Person::parse("Sam").unwrap(),
+        key: sam.clone(),
+        opens,
+        until: crate::door::unix_now().unwrap() + 24 * 3600,
+    };
+    let act = svrngs_core::tests_support::Fixture {
+        act: crate::RailAct::Visit(visit),
+    };
+    l.rail.commit("house", &act).unwrap().unwrap();
+    let username = format!("Sam-{}.guest", &sam[..16]);
+    let sams = subject(&sam, "Sam (ada's guest)", &username, Group::Guest);
+    let code = l.code(sams, &sam, "");
+    let (status, answer) = l.redeem("media", &code, REDIRECT, VERIFIER).await;
+    assert_eq!(status, 200, "{answer:#}");
+    let claims = id_claims(&answer);
+    assert_eq!(claims["sub"], sam.as_str());
+    assert_eq!(claims["preferred_username"], username.as_str());
+    assert_eq!(claims["groups"], serde_json::json!(["guest"]));
+    assert!(
+        !answer.to_string().contains(&ada),
+        "the host's key reached the app"
+    );
+
+    let nobody = key(5);
+    let stray = subject(&nobody, "Nobody (ada's guest)", "x.guest", Group::Guest);
+    let code = l.code(stray, &nobody, "");
+    let (status, answer) = l.redeem("media", &code, REDIRECT, VERIFIER).await;
+    assert_eq!(
+        (status, answer["error"].as_str()),
+        (400, Some("invalid_grant"))
+    );
+    let why = answer["error_description"].as_str().unwrap_or_default();
+    assert!(why.contains("guest"), "refused for the visit: {answer:#}");
+}

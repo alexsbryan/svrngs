@@ -418,3 +418,53 @@ fn an_unscoped_answer_from_a_computer_on_4_is_relayed_to_nobody() {
         "a lend with no groups is listed to nobody"
     );
 }
+
+/// Whom the acceptor serves, by key and protocol, over the register alone:
+/// a member on every protocol; a guest's visit key on the pass holders'
+/// protocol, where the door asks its pass, and on none that syncs, reads
+/// people or fetches blobs; a key the keeper cut on none, though the
+/// register still names it removed, which turns the members' protocol into
+/// the routes that tell it so (tests/door guests.rs:304-354, main.rs:1773-1797).
+/// Planted, watched failing: `admit_dialer` admitting a key with a visit
+/// held here on every protocol.
+#[test]
+fn a_visit_key_and_a_removed_key_are_served_no_member_s_protocol() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = |seed: u8| SigningKey::from_bytes(&[seed; 32]);
+    let rail = RingRail::new(dir.path(), Arc::new(key(1)));
+    let people = [("ada", 1), ("bo", 2), ("cy", 3)]
+        .map(|(p, k)| (Person::parse(p).unwrap(), vec![actor_of(&key(k))]));
+    rail.set_seed("house", &crate::Roster::new(people.into_iter().collect()))
+        .unwrap();
+    let mut opens = BTreeMap::new();
+    opens.insert(actor_of(&key(1)), BTreeSet::from(["jellyfin".to_string()]));
+    let visit = crate::Visit {
+        guest: Person::parse("Sam").unwrap(),
+        key: actor_of(&key(9)),
+        opens,
+        until: crate::door::unix_now().unwrap() + 3600,
+    };
+    let act = svrngs_core::tests_support::Fixture {
+        act: crate::RailAct::Visit(visit),
+    };
+    rail.commit("house", &act).unwrap().unwrap();
+    let removal = svrngs_core::Removal {
+        person: Person::parse("cy").unwrap(),
+        joined: None,
+    };
+    rail.commit("house", &removal).unwrap().unwrap();
+    let dialer = |seed: u8| PublicKey::from_bytes(key(seed).verifying_key().as_bytes()).unwrap();
+    for (who, seed, alpn, served) in [
+        ("bo", 2, Alpn::Member, Some(Alpn::Member)),
+        ("bo", 2, Alpn::Blobs, Some(Alpn::Blobs)),
+        ("Sam's visit key", 9, Alpn::Member, None),
+        ("Sam's visit key", 9, Alpn::Blobs, None),
+        ("Sam's visit key", 9, Alpn::Lend, Some(Alpn::Lend)),
+        ("cy, removed", 3, Alpn::Member, None),
+    ] {
+        let got = admit_dialer(&rail, alpn.bytes(), &dialer(seed));
+        assert_eq!(got, served, "{who} on {alpn:?}");
+    }
+    assert!(rail.removed_anywhere(&actor_of(&key(3))).is_some());
+    assert!(rail.removed_anywhere(&actor_of(&key(9))).is_none());
+}
