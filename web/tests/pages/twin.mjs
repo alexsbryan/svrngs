@@ -311,8 +311,9 @@ export async function open(address, answers) {
       fire(el, 'change');
       return page.settle();
     },
-    tick: (selector) => {
-      const [el] = page.all(selector);
+    // The `nth` box a selector names ticked, or unticked, as a person does.
+    tick: (selector, nth = 0) => {
+      const el = page.all(selector)[nth];
       el.checked = !el.checked;
       fire(el, 'change');
       fire(el, 'click');
