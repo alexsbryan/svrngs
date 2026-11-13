@@ -692,10 +692,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # 21,240, js 8,510 -> 8,552; native 29,679 -> 29,792. The economizing pass
 # before it (81f5c577) cut 36; the rest found (about 23 lines, uncertain)
 # would have left it about 22 over.
+# (2026-11-13) Harness 3 (docs/CHECKS.md), a node's network half behind
+# iroh.rs `Net`, so a node runs with no socket: +85, within the operator's
+# "raise the non-JS cap by up to +90 for harness 3" (2026-11-13, through
+# AskUserQuestion, after the economizing pass 9787472e, -24). . 21,240 ->
+# 21,325.
 BUDGET = {
     "crates/svrngs-core": 3527,
 
-    ".": 21241,
+    ".": 21326,
 
     "js": 8553,
 

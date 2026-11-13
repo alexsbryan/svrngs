@@ -67,8 +67,8 @@ use svrngs_core::relay::{Meeting, Url};
 
 use crate::door::LENDS_ROUTE;
 use crate::iroh::{
-    actor_key, build_relayed_endpoint, key_actor, Admit, Alpn, Contact, Dialer, Endpoint,
-    EndpointAddr, IrohAcceptor, IrohTransport, PublicKey, RelayConfig, SecretKey, Unsent,
+    actor_key, build_relayed_endpoint, key_actor, Admit, Alpn, Contact, Dialer, EndpointAddr,
+    Fetch, IrohAcceptor, IrohTransport, Net, PublicKey, RelayConfig, SecretKey, Unsent,
 };
 use crate::lend::Offered;
 use crate::rail::{carry, visiting, LiveBuffer, RailApi, CARRY_ROUTE};
@@ -209,6 +209,11 @@ pub enum NodeError {
     Oidc(#[from] crate::oidc::KeyFailure),
 }
 
+/// How [`Node::start_on`] serves the record API's routes: on the listener
+/// [`Node::start_every`] bound, or as a test's node serves them, unbound.
+pub(crate) type Serve =
+    Box<dyn FnOnce(axum::Router) -> Result<crate::api::Serving, crate::api::ApiError> + Send>;
+
 /// A running node. Dropping it stops its round and its accept loop.
 pub struct Node {
     host: Arc<Host>,
@@ -235,9 +240,9 @@ pub struct Node {
 /// trait went, and the round calls this (RUST_ARCH 7).
 pub struct Host {
     pub(crate) rail: Arc<RingRail>,
-    pub(crate) endpoint: Endpoint,
-    /// The transport a member's contact is resolved through.
-    pub(crate) transport: Arc<IrohTransport>,
+    /// Its endpoint and the dials it makes ([`Net`]): the node's
+    /// `IrohTransport`, or a test's network in this process.
+    pub(crate) transport: Arc<dyn Net>,
     /// The key this node signs and dials with, as the record spells an actor.
     pub(crate) actor: String,
     /// Whether this computer reaches the network through a relay at all
@@ -289,20 +294,11 @@ impl Node {
             path: data_dir.clone(),
             source,
         })?;
-        let actor = actor_of(&key);
         let secret = SecretKey::from_bytes(&key.to_bytes());
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
-        let mut stood_in = rail.namespaces().unwrap_or_default();
-        stood_in.retain(|group| crate::door::stands_here(&rail, group));
-        crate::lend::stamp(&data_dir, &stood_in);
+        let token = crate::api::kept_token(&data_dir)?;
         // Bound before the endpoint, so a refused address leaves no endpoint
         // dropped open.
-        // Notify holds a permit for a change during a round, so the next
-        // round carries it rather than waiting on the interval.
-        let nudge = Arc::new(Notify::new());
-        // One live buffer: the live route fills it, the loopback drain empties it.
-        let live = Arc::new(LiveBuffer::default());
-        let token = crate::api::kept_token(&data_dir)?;
         let api = crate::api::bind(api).await?;
         // Built at the tier its groups' own relays answer at; the first ask
         // moves it to the build's at once if none does (crate::tiers).
@@ -321,19 +317,60 @@ impl Node {
         )
         .await
         .map_err(NodeError::Endpoint)?;
+        let (port, dir) = (api.addr.port(), data_dir.clone());
+        let serve = move |routes| {
+            let api = crate::api::serve(routes, api);
+            crate::api::write_address(&dir, api.addr).map(|()| api)
+        };
         // One transport: the round dials through it, and so does the live
         // lane's fan-out, which the record API runs (u3-3).
-        let transport = Arc::new(IrohTransport::new(endpoint.clone()));
+        let (net, served) = (
+            Arc::new(IrohTransport::new(endpoint)),
+            (token, port, Box::new(serve) as Serve),
+        );
+        Self::start_on(
+            net,
+            (data_dir, places),
+            rail,
+            (relay, held),
+            seeds,
+            served,
+            every,
+        )
+        .await
+    }
+
+    /// [`Self::start_every`] once its endpoint and the record API's
+    /// listener are bound: the node over `net`, its API served by `serve`.
+    /// A test passes a network and a serving of its own, so a node runs
+    /// with no socket (docs/CHECKS.md, harness 3).
+    pub(crate) async fn start_on(
+        transport: Arc<dyn Net>,
+        (data_dir, places): (PathBuf, Option<PathBuf>),
+        rail: Arc<RingRail>,
+        (relay, held): (&RelayConfig, crate::tiers::Held),
+        seeds: SeedText,
+        (token, api_port, serve): (crate::api::Bearer, u16, Serve),
+        every: Duration,
+    ) -> Result<Self, NodeError> {
+        let actor = actor_of(rail.signer());
+        let mut stood_in = rail.namespaces().unwrap_or_default();
+        stood_in.retain(|group| crate::door::stands_here(&rail, group));
+        crate::lend::stamp(&data_dir, &stood_in);
+        // Notify holds a permit for a change during a round, so the next
+        // round carries it rather than waiting on the interval.
+        let nudge = Arc::new(Notify::new());
+        // One live buffer: the live route fills it, the loopback drain empties it.
+        let live = Arc::new(LiveBuffer::default());
         let admitting = rail.clone();
         let host = Arc::new(Host {
             transport: transport.clone(),
             rail: rail.clone(),
-            endpoint: endpoint.clone(),
             actor: actor.clone(),
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             build: relay.build(),
             held: tokio::sync::watch::Sender::new(held),
-            api_port: api.addr.port(),
+            api_port,
             minting: Default::default(),
         });
         let (folders, blobs) =
@@ -371,7 +408,7 @@ impl Node {
         let door = crate::door::Door {
             ring: AskRound::new(nudge.clone(), &rounds),
             rail: rail.clone(),
-            key: endpoint.id().as_bytes().to_owned(),
+            key: transport.id().as_bytes().to_owned(),
             data_dir: data_dir.clone(),
             using: crate::door::Using::spawn(),
             choices: crate::door::choices::Choices::spawn(),
@@ -395,7 +432,7 @@ impl Node {
         let rail_api = RailApi {
             rail: rail.clone(),
             live: live.clone(),
-            transport,
+            transport: transport.clone(),
             build: host.build.clone(),
         };
         let routes = crate::api::router(
@@ -411,16 +448,16 @@ impl Node {
             crate::home::router(asking.clone(), rail_api),
             token,
         );
-        let api = crate::api::serve(routes.clone(), api);
-        if let Err(e) = crate::api::write_address(&data_dir, api.addr) {
-            endpoint.close().await;
-            return Err(e.into());
+        let api = serve(routes.clone());
+        if api.is_err() {
+            transport.close().await;
         }
+        let api = api?;
         tracing::info!(
             target: "node",
             actor,
             data_dir = %data_dir.display(),
-            dial = ?endpoint.addr(),
+            dial = ?transport.addr(),
             api = %api.addr,
             "node: endpoint bound with the signing key"
         );
@@ -448,14 +485,12 @@ impl Node {
         // words on every route (U7), and served nothing else but the lines
         // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
         let gone = ring_routes::router(inbound).fallback(|| async { crate::door::gone() });
-        let acceptor = IrohAcceptor::spawn(
-            endpoint.clone(),
-            host.transport.accepted.clone(),
+        let acceptor = transport.accept(Arc::new(
             move |alpn: &[u8], dialer: &PublicKey| match admit_dialer(&admitting, alpn, dialer) {
                 Some(Alpn::Member) => Admit::Serve(members.clone()),
                 Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                 Some(Alpn::Lend) => Admit::Serve(holders.clone()),
-                Some(Alpn::Blobs) => Admit::Blobs(blobs.clone()),
+                Some(Alpn::Blobs) => Admit::Blobs(blobs.0.clone(), blobs.1.clone()),
                 Some(Alpn::Port) => Admit::Port(Box::new(udp.clone())),
                 None if Alpn::of(alpn) == Some(Alpn::Member)
                     && admitting.removed_anywhere(&key_actor(dialer)).is_some() =>
@@ -465,7 +500,7 @@ impl Node {
                 }
                 None => Admit::Refuse,
             },
-        );
+        ));
         let round = spawn_ring_sync_loop(host.clone(), every, nudge, rounds);
         Ok(Self {
             host,
@@ -490,9 +525,9 @@ impl Node {
         self.api.addr
     }
 
-    /// The endpoint this node dials and is dialled on.
-    pub fn endpoint(&self) -> &Endpoint {
-        &self.host.endpoint
+    /// The endpoint this node dials and is dialled on, and its dials.
+    pub fn net(&self) -> &dyn Net {
+        &*self.host.transport
     }
 
     /// This computer's folders, where `new` and `join` place a group's.
@@ -518,7 +553,7 @@ impl Host {
     /// Whether this computer's home relay is reached, waited for up to
     /// [`ONLINE_WAIT`]; true at once with no relay to reach.
     pub async fn online(&self) -> bool {
-        let wait = tokio::time::timeout(ONLINE_WAIT, self.endpoint.online());
+        let wait = tokio::time::timeout(ONLINE_WAIT, self.transport.online());
         !self.relayed || wait.await.is_ok()
     }
 
@@ -721,7 +756,7 @@ impl Host {
         for (actor, person, contact) in peers {
             let transport = self.transport.clone();
             asks.push(tokio::spawn(async move {
-                let asked = tokio::time::timeout(ANSWER_WITHIN, ask_lends(&transport, &actor, contact));
+                let asked = tokio::time::timeout(ANSWER_WITHIN, ask_lends(&*transport, &actor, contact));
                 let answer = asked.await.unwrap_or_else(|_| {
                     tracing::debug!(target: "node", actor, within_ms = ANSWER_WITHIN.as_millis() as u64,
                         "node: lends — the computer did not answer in time, so it is named unanswered");
@@ -826,11 +861,7 @@ pub(crate) enum Answered {
 /// one closes the connection as not admitted, read from that same dial
 /// (`demo/runs/first-minute/2026-10-12/`; arch-peer (c), where a second
 /// dial asked it once a request through the bridge had failed).
-pub(crate) async fn ask_lends(
-    transport: &IrohTransport,
-    actor: &str,
-    contact: Contact,
-) -> Answered {
+pub(crate) async fn ask_lends(transport: &dyn Fetch, actor: &str, contact: Contact) -> Answered {
     let asked = axum::http::Request::builder()
         .uri(LENDS_ROUTE)
         .header(SCOPE_HEADER, VERSION.to_string())

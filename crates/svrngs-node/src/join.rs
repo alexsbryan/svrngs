@@ -78,7 +78,7 @@ impl Host {
     pub async fn asked(&self, link: &Link) -> Result<(Asked, Seed), NotJoined> {
         self.meet_at(&link.token.relays).await;
         let request = AskRequest::sign(&link.token.key(), self.rail.signer());
-        let asked = ask(&self.endpoint, addr(&link.token), &request).await;
+        let asked = ask(&*self.transport, addr(&link.token), &request).await;
         let asked = asked.map_err(|e| not_let_in(e, None))?;
         let Some(seed) = group::answered(&asked.group, &asked.seed) else {
             tracing::debug!(target: "join", group = %asked.group, "join: the issuer's answer is not believed, so nothing is redeemed");
@@ -128,7 +128,7 @@ impl Host {
             &person,
             Device::Computer,
         );
-        let redeemed = redeem(&self.endpoint, issuer.clone(), &request)
+        let redeemed = redeem(&*self.transport, issuer.clone(), &request)
             .await
             .map_err(|e| not_let_in(e, Some(seed.name())))?;
         tracing::debug!(target: "join", group = %id, redeemed = ?redeemed, "join: let in");

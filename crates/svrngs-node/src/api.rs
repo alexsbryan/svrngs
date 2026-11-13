@@ -279,7 +279,7 @@ pub fn check_loopback(listen: SocketAddr) -> Result<(), ApiError> {
 pub struct Serving {
     /// Where an app on this computer reaches the API.
     pub addr: SocketAddr,
-    _task: AbortOnDropHandle<()>,
+    pub(crate) _task: AbortOnDropHandle<()>,
 }
 
 /// A listener bound on loopback, not yet served. (svrngs: upstream's

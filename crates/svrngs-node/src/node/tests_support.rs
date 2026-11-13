@@ -4,6 +4,7 @@
 //! path of the product reaches them.
 
 use super::*;
+use crate::iroh::Endpoint;
 
 impl Node {
     /// Hold a deliberately historical or synthetic journal fixture still
@@ -60,9 +61,16 @@ impl Node {
     }
 
     /// The dial-by-key transport the round dials through; a caller seeds a
-    /// member's addresses here when no address lookup can find it.
+    /// member's addresses here when no address lookup can find it. A node
+    /// started over a test's own network has none.
     pub fn transport(&self) -> &IrohTransport {
-        &self.host.transport
+        let net: &dyn std::any::Any = &*self.host.transport;
+        net.downcast_ref().expect("a node started over iroh")
+    }
+
+    /// The endpoint this node dials and is dialled on: its transport's.
+    pub fn endpoint(&self) -> &Endpoint {
+        &self.transport().endpoint
     }
 
     /// What this computer's endpoint holds now, as [`crate::tiers`] spells

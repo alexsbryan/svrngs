@@ -27,7 +27,7 @@ use tokio::{sync::mpsc, task::JoinSet};
 
 use super::udp::{admitted, opening, Lending, Opened, Tell};
 pub use super::udp::{Carried, Unopened};
-use crate::iroh::{Endpoint, EndpointAddr};
+use crate::iroh::EndpointAddr;
 use crate::lend::{LendName, Raw};
 
 /// The lender's half, the lend opened: each stream the member opens, one
@@ -74,12 +74,12 @@ async fn connection(lent: Lending<'_>, mut send: SendStream, mut recv: RecvStrea
 /// program makes to `local` carried on a stream of its own: the member's
 /// half of the door.
 pub async fn carried(
-    endpoint: &Endpoint,
+    net: &dyn crate::iroh::Net,
     to: EndpointAddr,
     lend: &LendName,
     local: TcpListener,
 ) -> Result<Carried, Unopened> {
-    let (conn, opened) = opening(endpoint, to, Raw::Tcp, lend).await?;
+    let (conn, opened) = opening(net, to, Raw::Tcp, lend).await?;
     let (tell, told) = mpsc::unbounded_channel();
     let task = tokio::spawn(member(conn, local, opened, tell));
     Ok((told, AbortOnDropHandle::new(task)))

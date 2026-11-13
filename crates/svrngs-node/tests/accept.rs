@@ -53,7 +53,7 @@ async fn spawn_a(admitted: PublicKey) -> (Endpoint, IrohAcceptor, Arc<AtomicUsiz
             Admit::Refuse
         }
     };
-    let acceptor = IrohAcceptor::spawn(a.clone(), Default::default(), admit);
+    let acceptor = svrngs_node::iroh::spawn_acceptor(a.clone(), Default::default(), admit);
     (a, acceptor, served)
 }
 

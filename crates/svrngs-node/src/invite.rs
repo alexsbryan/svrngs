@@ -111,7 +111,7 @@ impl Host {
         device_of: Option<String>,
         now: i64,
     ) -> Result<Token, Unminted> {
-        let token = draw(self.endpoint.id(), relays);
+        let token = draw(self.transport.id(), relays);
         // Where this computer is reached, in the record before a joiner
         // pulls it, so the joiner can dial it back (relay-in-record).
         self.say_relay();
@@ -232,7 +232,7 @@ impl Host {
             }
             Some(length) => {
                 let (token, dir) = (
-                    draw(self.endpoint.id(), relays),
+                    draw(self.transport.id(), relays),
                     self.rail.root().join(VISIT_LINKS),
                 );
                 let kept = serde_json::to_vec(&(group, length, now)).map_err(|e| unkept(&e))?;

@@ -148,7 +148,7 @@ async fn open(
 ) -> (Result<Carried, Unopened>, SocketAddr) {
     let local = UdpSocket::bind("127.0.0.1:0").await.unwrap();
     let addr = local.local_addr().unwrap();
-    let carried = udp::carried(who.node.endpoint(), at(&sam.node), &lend.name, local).await;
+    let carried = udp::carried(who.node.net(), at(&sam.node), &lend.name, local).await;
     (carried, addr)
 }
 

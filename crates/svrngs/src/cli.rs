@@ -1043,7 +1043,7 @@ async fn start(
     let ran = serve(command, &root, &node, &key, relay).await;
     // iroh says at error when an endpoint is dropped open, so it is closed
     // first, on a refusal as on Ctrl-C.
-    node.endpoint().close().await;
+    node.net().close().await;
     ran
 }
 
@@ -1768,10 +1768,7 @@ pub async fn join_group(
     link: &Link,
     person: &Name,
 ) -> Result<Said, Refusal> {
-    debug_assert_eq!(
-        node.endpoint().id().as_bytes(),
-        key.verifying_key().as_bytes()
-    );
+    debug_assert_eq!(node.net().id().as_bytes(), key.verifying_key().as_bytes());
     // Its home relay reached before the exchange, so the joiner says it
     // there and the issuer can dial it back; else not before its first
     // round (demo/runs/relay-in-record/2026-10-12/: 60 s). Before the ask,
@@ -1914,7 +1911,7 @@ pub async fn new_group(
 ) -> Result<(Seed, Printed), Refusal> {
     // The founder is the key this computer signs and dials with (PLAN
     // §4, U1's "One key signs and dials").
-    let founder = VerifyingKey::from_bytes(node.endpoint().id().as_bytes())
+    let founder = VerifyingKey::from_bytes(node.net().id().as_bytes())
         .expect("an iroh endpoint id is an Ed25519 key");
     let seed = group::draw(name, person, founder);
     let id = seed.id();

@@ -10,7 +10,7 @@
 //! per peer that every iroh tunnel rode, went in arch-peer (d): any program
 //! on the computer reached a friend's door through it as this computer's
 //! person, `tests/peer.rs`. A request rides the stream itself,
-//! [`crate::iroh::IrohTransport::send`].)
+//! [`crate::iroh::Net::send`].)
 
 use std::net::SocketAddr;
 use std::sync::Arc;

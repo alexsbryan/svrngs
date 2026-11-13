@@ -38,7 +38,7 @@ pub(crate) struct OnStream {
 pub(crate) async fn serve_on_stream(router: axum::Router, dialer: SecretKey) -> (String, OnStream) {
     let served = hermetic_endpoint(0xEE, vec![ALPN.to_vec()]).await;
     let addrs = loopback_sockets(&served);
-    let acceptor = IrohAcceptor::spawn(served.clone(), Default::default(), move |_, _| {
+    let acceptor = spawn_acceptor(served.clone(), Default::default(), move |_, _| {
         Admit::Serve(router.clone())
     });
     let dialling = EndpointBuilder::empty()
@@ -248,7 +248,7 @@ async fn served(seed: u8, admits: bool) -> (Endpoint, Arc<std::sync::atomic::Ato
     let endpoint = hermetic_endpoint(seed, vec![ALPN.to_vec()]).await;
     let asked = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let counted = asked.clone();
-    let acceptor = IrohAcceptor::spawn(endpoint.clone(), Default::default(), move |_, _| {
+    let acceptor = spawn_acceptor(endpoint.clone(), Default::default(), move |_, _| {
         counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         if admits {
             Admit::Serve(router.clone())

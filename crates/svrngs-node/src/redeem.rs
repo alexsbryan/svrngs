@@ -55,7 +55,7 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 
 use crate::invite::Unminted;
-use crate::iroh::{Alpn, Dialer, Endpoint, EndpointAddr};
+use crate::iroh::{Alpn, Dialer, EndpointAddr, Net};
 use crate::node::Asking;
 use crate::register::Standing;
 use crate::ring_routes::err;
@@ -396,23 +396,23 @@ pub enum RedeemError {
 }
 
 /// Ask the issuer's node at `issuer` what `req`'s link is for, dialling
-/// from `endpoint` on [`Alpn::Redeem`].
+/// from `net` on [`Alpn::Redeem`].
 pub async fn ask(
-    endpoint: &Endpoint,
+    net: &dyn Net,
     issuer: EndpointAddr,
     req: &AskRequest,
 ) -> Result<Asked, RedeemError> {
-    call(endpoint, issuer, ASK_ROUTE, req).await
+    call(net, issuer, ASK_ROUTE, req).await
 }
 
-/// Present `req` to the issuer's node at `issuer`, dialling from `endpoint`
+/// Present `req` to the issuer's node at `issuer`, dialling from `net`
 /// on [`Alpn::Redeem`].
 pub async fn redeem(
-    endpoint: &Endpoint,
+    net: &dyn Net,
     issuer: EndpointAddr,
     req: &RedeemRequest,
 ) -> Result<Redeemed, RedeemError> {
-    call(endpoint, issuer, ROUTE, req).await
+    call(net, issuer, ROUTE, req).await
 }
 
 /// Post `body` to `route` on the issuer's node, and read its answer: on a
@@ -420,12 +420,12 @@ pub async fn redeem(
 /// within [`crate::iroh::ANSWERED_WITHIN`] (arch-peer (c), where a bridge
 /// and the round's reqwest client carried it, with the same 10 s).
 async fn call<T: DeserializeOwned>(
-    endpoint: &Endpoint,
+    net: &dyn Net,
     issuer: EndpointAddr,
     route: &str,
     body: &impl Serialize,
 ) -> Result<T, RedeemError> {
-    use crate::iroh::{dialled, on_stream, whole};
+    use crate::iroh::{on_stream, whole};
     let no_answer = |e: String| RedeemError::NoAnswer(e);
     let body = serde_json::to_vec(body).map_err(|e| no_answer(e.to_string()))?;
     let ask = axum::http::Request::post(route)
@@ -434,13 +434,8 @@ async fn call<T: DeserializeOwned>(
         .body(body.into())
         .map_err(|e| no_answer(e.to_string()))?;
     tracing::debug!(target: "redeem", route, issuer = %issuer.id.fmt_short(), "redeem: dialling the issuer by key");
-    let answered = whole(async {
-        on_stream(
-            &dialled(endpoint, issuer, Alpn::Redeem.bytes(), None).await?,
-            ask,
-        )
-        .await
-    });
+    let answered =
+        whole(async { on_stream(&net.dial(issuer, Alpn::Redeem, None).await?, ask).await });
     let answer = answered.await.map_err(|e| no_answer(e.to_string()))?;
     let status = answer.status();
     tracing::debug!(target: "redeem", route, status = status.as_u16(), "redeem: the issuer answered");

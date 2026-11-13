@@ -179,7 +179,7 @@ async fn play(at: &Asking, on: &[On], open: &mut Opened) -> Vec<Playing> {
 async fn opened(at: &Asking, o: &On, (label, port): (Label, u16), open: &mut Opened) -> Open {
     let local = (Ipv4Addr::LOCALHOST, port);
     let to = (at.host.contact(&o.key)).and_then(|c| at.host.transport.endpoint_addr_for(&c));
-    let (Some(to), endpoint, name) = (to, &at.host.endpoint, &o.name) else {
+    let (Some(to), net, name) = (to, &*at.host.transport, &o.name) else {
         return Open::Apart;
     };
     let taken = |e: std::io::Error| {
@@ -188,11 +188,11 @@ async fn opened(at: &Asking, o: &On, (label, port): (Label, u16), open: &mut Ope
     };
     let carried = match o.raw {
         Raw::Udp => match UdpSocket::bind(local).await {
-            Ok(socket) => udp::carried(endpoint, to, name, socket).await,
+            Ok(socket) => udp::carried(net, to, name, socket).await,
             Err(e) => return taken(e),
         },
         Raw::Tcp => match TcpListener::bind(local).await {
-            Ok(listener) => tcp::carried(endpoint, to, name, listener).await,
+            Ok(listener) => tcp::carried(net, to, name, listener).await,
             Err(e) => return taken(e),
         },
     };

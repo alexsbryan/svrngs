@@ -41,7 +41,7 @@ use iroh_blobs::provider::events::{
 };
 use iroh_blobs::store::fs::{options::Options, FsStore};
 use iroh_blobs::store::{GcConfig, ProtectCb, ProtectOutcome};
-use iroh_blobs::{BlobFormat, BlobsProtocol, Hash};
+use iroh_blobs::{BlobFormat, Hash};
 use n0_future::StreamExt as _;
 use std::convert::Infallible;
 
@@ -167,7 +167,7 @@ impl Folders {
         (data_dir, places): (&Path, Option<PathBuf>),
         host: Arc<Host>,
         nudge: Arc<Notify>,
-    ) -> Result<(Self, BlobsProtocol), String> {
+    ) -> Result<(Self, (Store, EventSender)), String> {
         // The sweep runs on the store's own runtime and asks this node what
         // to keep; a sweep told nothing keeps everything.
         let (ask_keep, mut keep_asked) = mpsc::unbounded_channel::<KeepAsk>();
@@ -573,20 +573,13 @@ impl Folders {
         // the connection the transport keeps to it (#177).
         let peer =
             (self.host.contact(key)).ok_or(Nothing::Said("not a computer of the group".into()))?;
-        let kept = self.host.transport.kept(&peer, Alpn::Blobs, ANSWER_WITHIN);
-        let conn = match kept.await {
-            Ok(conn) => conn,
+        let got = match self.host.transport.get(&peer, &self.store, request).await {
+            Ok(got) => got,
             Err(Unsent::Asleep(_)) => return Err(Nothing::Silent),
             Err(e) => return Err(Nothing::Said(format!("the dial: {e}"))),
         };
         let dial_ms = ms(t0);
-        let paths = conn.paths();
-        let path = paths.iter().find(|p| p.is_selected());
-        let relayed = path.as_ref().map(|p| p.is_relay());
-        let addr = path.as_ref().map(|p| format!("{:?}", p.remote_addr()));
-        let rtt_ms = path.as_ref().map(|p| p.rtt().as_micros() as f64 / 1000.0);
-        drop(paths);
-        let mut got = std::pin::pin!(self.store.remote().execute_get(conn, request).stream());
+        let mut got = std::pin::pin!(got.stream());
         let (mut first_ms, mut by) = (None, t0 + ANSWER_WITHIN);
         let done = loop {
             let Ok(next) = tokio::time::timeout_at(by.into(), got.next()).await else {
@@ -602,7 +595,7 @@ impl Folders {
                 None => break Err(Nothing::Said("the get ended without a result".into())),
             }
         };
-        tracing::debug!(target: "folder", holder = %key, dial_ms, first_ms, last_ms = ms(t0), ?relayed, addr, rtt_ms, ok = done.is_ok(), "folder: the fetch's phases, and the path iroh selected");
+        tracing::debug!(target: "folder", holder = %key, dial_ms, first_ms, last_ms = ms(t0), ok = done.is_ok(), "folder: the fetch's phases");
         if done.is_err() {
             self.host.transport.let_go(&peer.key, Alpn::Blobs);
         }
@@ -694,7 +687,7 @@ impl<A> Sends<A> {
     clippy::disallowed_methods,
     reason = "times each get's read of the record for its trace (perf-1); no decision reads it"
 )]
-fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
+fn provider(store: &Store, folders: Folders) -> (Store, EventSender) {
     let mask = EventMask {
         connected: ConnectMode::Intercept,
         get: RequestMode::InterceptLog,
@@ -791,7 +784,7 @@ fn provider(store: &Store, folders: Folders) -> BlobsProtocol {
             });
         }
     });
-    BlobsProtocol::new(store, Some(events))
+    (store.clone(), events)
 }
 
 /// The directories this computer keeps in step with `group`'s folders, as

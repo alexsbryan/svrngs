@@ -670,7 +670,7 @@ async fn declared(at: &Asking, label: &Label, serving: &Serving) -> Option<Offer
     let (lends, version) = match contact {
         None => (door::offered(&at.door).await.ok()?, crate::version::VERSION),
         Some(c) => {
-            match crate::node::ask_lends(&at.host.transport, label.as_str(), c.clone()).await {
+            match crate::node::ask_lends(&*at.host.transport, label.as_str(), c.clone()).await {
                 crate::node::Answered::Lends(lends, version) => (lends, version),
                 _ => return None,
             }

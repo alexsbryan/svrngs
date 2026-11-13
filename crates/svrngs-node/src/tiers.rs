@@ -121,16 +121,10 @@ impl Host {
         if tier != was {
             tracing::debug!(target: "tiers", from = ?was, to = ?tier, "tiers: this computer meets its groups at another tier now");
         }
-        for relay in add.into_iter().map(RelayUrl::from) {
-            tracing::debug!(target: "tiers", %relay, ?tier, "tiers: a relay given to this computer's endpoint");
-            self.endpoint
-                .insert_relay(relay.clone(), Arc::new(relay.into()))
-                .await;
-        }
-        for relay in drop.into_iter().map(RelayUrl::from) {
-            tracing::debug!(target: "tiers", %relay, ?tier, "tiers: a relay taken from this computer's endpoint");
-            self.endpoint.remove_relay(&relay).await;
-        }
+        let add: Vec<_> = add.into_iter().map(RelayUrl::from).collect();
+        let drop: Vec<_> = drop.into_iter().map(RelayUrl::from).collect();
+        tracing::debug!(target: "tiers", ?add, ?drop, ?tier, "tiers: relays given to this computer's endpoint, and taken from it");
+        self.transport.relays(add, drop).await;
     }
 
     /// The relays `new --relay` or a link asks for, held as a group's own
@@ -217,7 +211,7 @@ impl Host {
     /// `RelayStatus::is_connected`, :1906, what `Endpoint::online` reads).
     async fn registered(&self, relays: &BTreeSet<Url>) -> bool {
         use n0_future::StreamExt as _;
-        let mut homes = iroh::Watcher::stream(self.endpoint.home_relay_status());
+        let mut homes = self.transport.homes();
         let at = |h: &iroh::endpoint::RelayStatus| {
             h.is_connected() && relays.contains(&h.url().clone().into())
         };
@@ -246,7 +240,7 @@ impl Host {
 
     /// This computer's home relay now, if it has reached one.
     pub(crate) fn home(&self) -> Option<Url> {
-        self.endpoint
+        self.transport
             .addr()
             .relay_urls()
             .next()
@@ -275,7 +269,7 @@ impl Host {
     /// (browser/carried.rs `an_entry_another_s_computer_wrote_says_whose`).
     pub(crate) async fn moved(self: Arc<Self>) {
         use n0_future::StreamExt as _;
-        let mut addrs = iroh::Watcher::stream(self.endpoint.watch_addr());
+        let mut addrs = self.transport.addrs();
         let mut home = None;
         while let Some(addr) = addrs.next().await {
             let now = addr.relay_urls().next().cloned().map(Url::from);

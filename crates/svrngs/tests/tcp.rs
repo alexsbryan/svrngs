@@ -181,7 +181,7 @@ async fn open(
 ) -> (Result<Carried, Unopened>, SocketAddr) {
     let local = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = local.local_addr().unwrap();
-    let carried = tcp::carried(who.node.endpoint(), at(&sam.node), &lend.name, local).await;
+    let carried = tcp::carried(who.node.net(), at(&sam.node), &lend.name, local).await;
     (carried, addr)
 }
 

@@ -221,13 +221,13 @@ async fn present_from(
 
 /// The issuer's answer to `req`, sent by `who` to `link`'s issuer.
 async fn send(who: &Computer, link: &Link, req: &RedeemRequest) -> Result<Redeemed, String> {
-    words(redeem(who.node.endpoint(), issuer::addr(&link.token), req).await)
+    words(redeem(who.node.net(), issuer::addr(&link.token), req).await)
 }
 
 /// The issuer's answer to `who` asking what `link` is for.
 async fn asks(who: &Computer, link: &Link) -> Result<Asked, String> {
     let req = AskRequest::sign(&link.token.key(), &who.key);
-    words(ask(who.node.endpoint(), issuer::addr(&link.token), &req).await)
+    words(ask(who.node.net(), issuer::addr(&link.token), &req).await)
 }
 
 /// An answer, or a refusal's words; never no answer.
@@ -410,7 +410,7 @@ async fn three_people_open_one_link_and_each_is_let_in_once() {
     let mut asked = AskRequest::sign(&forged.token.key(), &gus.key);
     asked.link = actor_of(&open.token.key());
     let unsigned_ask =
-        words(ask(gus.node.endpoint(), issuer::addr(&open.token), &asked).await).map(|_| ());
+        words(ask(gus.node.net(), issuer::addr(&open.token), &asked).await).map(|_| ());
     assert!(!stands(&sam.node, &group, &gus.key));
 
     // ── Sam's link, past its lapse: Eve is refused.

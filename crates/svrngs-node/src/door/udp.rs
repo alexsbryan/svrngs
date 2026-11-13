@@ -40,7 +40,7 @@ use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 
 use super::{busy_words, find, member_for, now, Door, InFlight, Verdict, LENDS_NOTHING};
-use crate::iroh::{closed_unadmitted, key_actor, Alpn, Endpoint, EndpointAddr, Via, NOT_ADMITTED};
+use crate::iroh::{closed_unadmitted, key_actor, Alpn, EndpointAddr, Via, NOT_ADMITTED};
 use crate::lend::{Lend, LendName, Raw, Source};
 
 /// The frame's bytes before a fragment: flow, number, index and count.
@@ -328,12 +328,12 @@ pub(super) type Tell = mpsc::UnboundedSender<String>;
 /// the programs on 127.0.0.1 sending to `local`, each by its port: the
 /// member's half of the door.
 pub async fn carried(
-    endpoint: &Endpoint,
+    net: &dyn crate::iroh::Net,
     to: EndpointAddr,
     lend: &LendName,
     local: UdpSocket,
 ) -> Result<Carried, Unopened> {
-    let (conn, opened) = opening(endpoint, to, Raw::Udp, lend).await?;
+    let (conn, opened) = opening(net, to, Raw::Udp, lend).await?;
     let (tell, told) = mpsc::unbounded_channel();
     let task = tokio::spawn(member(conn, local, opened, tell));
     Ok((told, AbortOnDropHandle::new(task)))
@@ -342,13 +342,13 @@ pub async fn carried(
 /// The opening of `lend` at `to`, as `raw`: the member's one connection
 /// for it, and the stream the lender's words come on.
 pub(super) async fn opening(
-    endpoint: &Endpoint,
+    net: &dyn crate::iroh::Net,
     to: EndpointAddr,
     raw: Raw,
     lend: &LendName,
 ) -> Result<(Connection, Opened), Unopened> {
     let within = Some(crate::dial::DIAL_WITHIN);
-    let dialled = crate::iroh::dialled(endpoint, to, Alpn::Port.bytes(), within).await;
+    let dialled = net.dial(to, Alpn::Port, within).await;
     let conn = dialled.map_err(|e| Unopened::Unreached(e.to_string()))?;
     let opened = async {
         let (mut send, recv) = conn.open_bi().await?;

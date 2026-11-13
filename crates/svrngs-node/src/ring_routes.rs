@@ -15,7 +15,7 @@
 //! What a member may then read is each ring's own question —
 //! the sync route (and, svrngs u3-3, the live route) asks the ring's
 //! register whether the dialer's key stands in it ([`RingRail::standing`], the one answer the sender also asks), the
-//! key the acceptor ([`crate::iroh::IrohAcceptor`]) puts on every request it
+//! key the acceptor ([`crate::iroh::spawn_acceptor`]) puts on every request it
 //! serves as a [`Dialer`] extension. No header names the asker. (svrngs:
 //! upstream asked whether the ring's seed named the key,
 //! `ring_sync::roster_names`; a ring this node does not hold is refused in

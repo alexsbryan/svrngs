@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! How long a dial to a lend's computer waits to be answered (events-asleep):
 //! one constant for both dials, a running computer's to each member
-//! (`iroh.rs`, `IrohTransport::send`) and a
+//! (`iroh.rs`, `Net::send`) and a
 //! phone's page's dial to a lender (`web/src/lib.rs` `Endpoint::dial` and
 //! `dial_lend`; the page compiles this file by `#[path]`). An asleep
 //! computer answers no dial, and iroh gave one up after 30 s on both sides,

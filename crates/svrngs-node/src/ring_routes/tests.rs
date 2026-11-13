@@ -7,7 +7,7 @@
 //! neither did its tests; the live route's and the sync route's refusal
 //! test did.)
 //!
-//! Each asks the router in-process, as [`IrohAcceptor`](crate::iroh::IrohAcceptor)
+//! Each asks the router in-process, as [`spawn_acceptor`](crate::iroh::spawn_acceptor)
 //! hands it a request: with the `Dialer` iroh verified as an extension, or
 //! with none, as a request off the stream comes. No endpoint, socket or
 //! clock (docs/CHECKS.md, unit 4): that the acceptor inserts the verified
