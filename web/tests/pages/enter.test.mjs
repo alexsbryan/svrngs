@@ -5,8 +5,10 @@
 // name. The edge's io is not run here: each step's effects are read as data.
 
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { register } from 'node:module';
 import { test } from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 register('./layout.mjs', import.meta.url);
 const { compose } = await import('../../page/page.js?v=__VERSION__');
@@ -356,4 +358,164 @@ test('what keeps a phone from going on at home is said under what its group lend
   const none = { unanswered: [], unheard: [], refused: [], behind: [], people: [] };
   const state = { ...none, group: { name: 'house' }, lent, stale: '', unready };
   assert.deepEqual(response.enter(state), unready);
+});
+
+// Read and kept, what `fragment` names is handed to the lend's origin
+// (index.js `hand`), as the group's page opens it in a browser: each step
+// the page takes from the address to the hand, its effects run as the
+// page's io would answer them, `apart` as readLends applies it.
+// Moved from browser/main.rs
+// `a_links_token_with_what_it_opens_opens_it_and_a_garbled_fragment_says_why`;
+// that the hand lands at its path stays in the browser's cold-open test.
+const app = { key: 'ka', name: 'app', person: 'ada', kind: 'k', label: 'app-label' };
+const founder = {
+  person: 'ada',
+  key: 'ka',
+  person_key: 'ka',
+  joined: 'started',
+  device: 'computer',
+};
+const handed = (fragment, lent = [app], people = [founder], state = first) => {
+  const kept = parts.step(state, { type: 'looked', fragment, kept: [house], linked: true });
+  assert.equal(kept.refused, undefined, kept.refused);
+  const effects = kept.effects.map((f) => [f.run, f.m?.type]);
+  // The line offered is the computer flow's, which a phone's page refuses.
+  const read = through(
+    kept.state,
+    { type: 'held' },
+    { type: 'opened', group: house },
+    { type: 'read', n: 1, ok: true, body: { ...body, unanswered: [], people }, lent },
+  );
+  const wanted = parts.step(read, { type: 'kept' });
+  const sent = wanted.effects.filter((f) => f.run === 'send').map((f) => f.m);
+  const opened = sent.reduce((at, m) => {
+    const r = parts.step(at.state, m);
+    assert.equal(r.refused, undefined, `${m.type}: ${r.refused}`);
+    return r;
+  }, wanted);
+  const open = opened.effects.find((f) => f.m?.type === 'open')?.m;
+  const hand = open ? parts.step(opened.state, open).effects : [];
+  return { effects, hand: hand.map((f) => [f.run, f.label, f.at]), state: opened.state };
+};
+
+test('a link’s token with what it opens opens it, at its path', () => {
+  const opened = handed('TOKEN&open=app@ada');
+  assert.deepEqual(
+    opened.effects,
+    [
+      ['send', 'offer'],
+      ['lock', undefined],
+    ],
+    'its line offered, its group held with what it opens',
+  );
+  assert.deepEqual(opened.hand, [['hand', 'app-label', '/']], 'read, it opens');
+  assert.deepEqual(
+    handed('TOKEN&open=app@ada&at=/a/path?n=1').hand,
+    [['hand', 'app-label', '/a/path?n=1']],
+    'and at its path',
+  );
+  assert.deepEqual(handed('TOKEN&open=app-label&at=/x').hand, [['hand', 'app-label', '/x']]);
+});
+
+// The edge's `issued` (enter.js), cut from its text: what io.look gives
+// `looked` as `linked`, with a core that answers as web/src/lib.rs
+// `issuer_of` does, refusing what svrngs-core `Token::decode` cannot read
+// (link_tests.rs, an unknown format byte: "not-a-token" decodes to 0x9e).
+const ENTER = readFileSync(new URL('../../page/enter.js', import.meta.url), 'utf8');
+const issued = runInNewContext(`${/^const issued = [^]*?\n};\n/m.exec(ENTER)?.[0]}\nissued`, {
+  Boolean,
+});
+const core = {
+  issuer_of: (token) => {
+    if (token === 'TOKEN') return 'ka';
+    throw new Error('not a link’s token');
+  },
+};
+// The heading a fragment draws, as io.look reads it: its token the part
+// before the first `&`.
+const headed = (fragment) => {
+  const linked = issued(core, fragment.split('&')[0]);
+  const looked = parts.step(first, { type: 'looked', fragment, kept: [house], linked });
+  return parts.heading(through(looked.state, ...looked.effects.map((f) => f.m)));
+};
+
+test('a fragment the page cannot read says why in the heading, never the browser’s line', () => {
+  assert.equal(issued(core, 'TOKEN'), true);
+  assert.deepEqual(headed('not-a-token'), [
+    'This link isn’t one svrngs can read. Ask whoever sent it for a new one.',
+    'bad',
+  ]);
+  assert.deepEqual(headed('opne=app@ada'), [
+    'This address asks for something this page can’t read: opne. Open your group’s link again.',
+    'bad',
+  ]);
+});
+
+// Moved from browser/main.rs `a_lends_alias_is_one_in_every_time_zone`, in
+// both engines: two people called ada each lend `app`, the second joined at
+// `AT`, 4 Oct in UTC (`date -u -r 1791100000`), 4 Oct at UTC+14 and 3 Oct
+// at UTC-11. In a browser whose clock reads in either zone, the page's
+// addresses, the alias it gives a computer to keep and what `#open=<alias>`
+// hands are one. That the alias opens the app in a browser stays in
+// `a_lends_alias_opens_it_from_the_groups_page`, in both engines.
+test('a lend’s alias is one in every time zone: the addresses kept and what it opens', async () => {
+  const { apart } = await import('../../question.js?v=__VERSION__');
+  const { view } = await import('../../page/index.js?v=__VERSION__');
+  const AT = 1_791_100_000;
+  const other = { key: 'kb', name: 'app', person: 'ada', kind: 'k', label: 'other-label' };
+  const people = [founder, { ...founder, key: 'kb', person_key: 'kb', joined: { at: AT } }];
+  // Each `href` the drawing `v` links to, its components drawn.
+  const hrefs = (v) => {
+    if (Array.isArray(v)) return v.flatMap(hrefs);
+    if (!v || typeof v !== 'object') return [];
+    if (typeof v.type === 'function') return hrefs(v.type(v.props));
+    return [...(v.type === 'a' ? [v.props.href] : []), ...hrefs(v.props?.children)];
+  };
+  globalThis.location = { origin: 'https://page.example', pathname: '/' };
+  // The zone this process had, given back after, so no other law reads in
+  // these (an unset TZ assigned `undefined` would read as "undefined").
+  const zone = process.env.TZ;
+  const seen = [];
+  try {
+    for (const TZ of ['Pacific/Kiritimati', 'Pacific/Pago_Pago']) {
+      process.env.TZ = TZ;
+      const lent = [{ ...app }, { ...other }];
+      apart(lent, people);
+      const { state } = handed('', lent, people, parts.first({ fine: true }));
+      const opens = handed('open=app@ada+(joined+4+Oct)', lent, people).hand;
+      const keep = hrefs(view.lent({ s: state, send: () => {} }));
+      seen.push({
+        TZ,
+        day: new Date(AT * 1000).getDate(),
+        addresses: state.group.addresses,
+        keep,
+        opens,
+      });
+    }
+  } finally {
+    if (zone === undefined) delete process.env.TZ;
+    else process.env.TZ = zone;
+    delete globalThis.location;
+  }
+  assert.deepEqual(
+    seen.map((s) => s.day),
+    [4, 3],
+    'each browser’s own day differs',
+  );
+  for (const { TZ, addresses, keep, opens } of seen) {
+    assert.deepEqual(
+      addresses,
+      ['app-label', 'other-label', 'app@ada (started the group)', 'app@ada (joined 4 Oct)'],
+      TZ,
+    );
+    assert.deepEqual(
+      keep,
+      [
+        'https://page.example/#open=app@ada+(started+the+group)',
+        'https://page.example/#open=app@ada+(joined+4+Oct)',
+      ],
+      TZ,
+    );
+    assert.deepEqual(opens, [['hand', 'other-label', '/']], TZ);
+  }
 });
