@@ -316,11 +316,9 @@ function longPage() {
 // (Demo B's Android phones: Chromium as a Pixel 7). With `args`, the
 // browser's own flags (arch-peer (a): Chromium told a page is public).
 // `unopened`: a context svrngs opened no host in, as a browser no open
-// reached (give-session). With `zone`, an IANA time zone, the browser's
-// clock reads in it, as a browser elsewhere does (Playwright's
-// `timezoneId`). With `b`, the home page as a person now has it; without
+// reached (give-session). With `b`, the home page as a person now has it; without
 // it, a driver that reads one long page: `longPage`, the sunset's worklist.
-export async function launch(engine, { profile, device: as, args, unopened, zone, b } = {}) {
+export async function launch(engine, { profile, device: as, args, unopened, b } = {}) {
   if (!(engine in ENGINES)) {
     console.error(`no engine ${JSON.stringify(engine)}: one of ${Object.keys(ENGINES).join(', ')}`);
     process.exit(1);
@@ -333,7 +331,7 @@ export async function launch(engine, { profile, device: as, args, unopened, zone
     process.exit(3);
   }
   const named = as ?? ENGINES[engine];
-  const device = { ...(named ? pw.devices[named] : {}), ...(zone ? { timezoneId: zone } : {}) };
+  const device = named ? pw.devices[named] : {};
   let made;
   try {
     const flags = engine === 'chromium' ? [...IGNORING, ...(args ?? [])] : args;
@@ -528,14 +526,14 @@ export async function held(page, origin, args) {
 
 // A driver of the group's page, its preamble written once (#168): the
 // page served from `args.site` (at `args.port` when given), `args.engine`
-// launched, in `args.zone` when given, each console line and page error kept, and `drive({ page,
+// launched, each console line and page error kept, and `drive({ page,
 // context, origin, logs })` run on a page holding the group `args` names; what it
 // answers printed as the JSON line with the log, or the page's failure and
 // its log, exit 1. Closed after, either way.
 export async function driving(args, drive) {
   const server = await serve(args.site, { port: args.port });
   const origin = pageAt(server);
-  const { context, close } = await launch(args.engine, { zone: args.zone });
+  const { context, close } = await launch(args.engine);
   const logs = [];
   context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
   try {

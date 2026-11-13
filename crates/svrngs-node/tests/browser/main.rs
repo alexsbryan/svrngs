@@ -43,9 +43,6 @@ mod sends;
 mod grouped;
 #[path = "../common/keeping.rs"]
 mod keeping;
-// A way to a relay a test can cut, relay_tiers.rs's too.
-#[path = "../common/cuttable.rs"]
-mod cuttable;
 // A lent port opened on this computer while Play is on (give-play).
 mod keep_going;
 mod native_arrival;
@@ -1492,72 +1489,6 @@ async fn a_lent_page_is_told_the_lends_it_reads_and_opens_one_at_a_path(engine: 
     drop((ada, cy));
 }
 
-/// A service that answers a script at every path, with a cookie and a
-/// `Cache-Control` of its own.
-async fn script_origin() -> std::net::SocketAddr {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let addr = listener.local_addr().unwrap();
-    tokio::spawn(async move {
-        while let Ok((mut sock, _)) = listener.accept().await {
-            tokio::spawn(async move {
-                let mut head = [0u8; 8192];
-                let _ = tokio::io::AsyncReadExt::read(&mut sock, &mut head).await;
-                let body = "export const ran = 'ran in the page, at its origin';";
-                let answer = format!(
-                    "HTTP/1.1 200 OK\r\ncontent-type: text/javascript\r\ncache-control: public, max-age=3600\r\nset-cookie: lend=1\r\ncontent-length: {}\r\nconnection: close\r\n\r\n{body}",
-                    body.len()
-                );
-                let _ = sock.write_all(answer.as_bytes()).await;
-            });
-        }
-    });
-    addr
-}
-
-in_webkit!(
-    /// **A lend's script is refused at a phone's page** (capability
-    /// connections §5 step 7; web/lend.js `inert`, found by the step 0
-    /// repro, where the script ran in the page at its origin): a page
-    /// reading a lend that answers a script is refused 403 `closed`, and
-    /// importing it fails. Planted: `inert` returning the lend's answer
-    /// whole, watched failing.
-    a_phone_page_is_handed_a_lend_s_script_refused_at_its_own_origin
-);
-async fn a_phone_page_is_handed_a_lend_s_script_refused_at_its_own_origin(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(ada_dir.path(), &relay, &bo).await;
-    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
-    let page = page_origin("<!doctype html><title>ada's page</title>").await;
-    lend_reading(ada_dir.path(), "page", page.port(), &["k"]);
-    let script = script_origin().await;
-    lend(cy_dir.path(), "shelf", script.port());
-    let seen = drive(
-        engine,
-        "reads-script.mjs",
-        json!({
-            "site": site,
-            "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
-            "open": "page",
-        }),
-        None,
-    )
-    .await;
-    eprintln!("the script read: {seen:#}");
-    let script = &seen["script"];
-    assert_eq!(script["status"], 403, "{seen:#}");
-    assert_eq!(script["ran"], Value::Null, "it must not run: {seen:#}");
-    let headers = script["headers"].to_string();
-    assert!(
-        headers.contains("x-svrngs-refused: closed") && !headers.contains("set-cookie"),
-        "{seen:#}"
-    );
-    drop((ada, cy));
-}
-
 in_webkit!(
     /// A lent app writes a link into itself that opens on a phone
     /// (events-links (a); DESIGN §3, "What an app gets"). The door tells
@@ -1940,67 +1871,6 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
 }
 
 in_both_engines!(
-    /// **A lend's alias is one in every time zone** (question.js `alias`,
-    /// its day in UTC; DESIGN §3, "Lent apps", call 1). Two people called
-    /// ada each lend `app`, the second joined today. Bo's page in a browser
-    /// whose clock reads at UTC+14 (Pacific/Kiritimati), and in one at
-    /// UTC-11 (Pacific/Pago_Pago), 25 hours apart so their days always
-    /// differ, opens `app@ada (joined <today in UTC>)`, and each lands on
-    /// the second ada's app; in a computer's browser each gives the same
-    /// addresses to keep. Red on a0132a41, the day the browser's own: one
-    /// of the two said another day and opened nothing.
-    a_lends_alias_is_one_in_every_time_zone
-);
-async fn a_lends_alias_is_one_in_every_time_zone(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let (dir, other_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(dir.path(), &relay, &bo).await;
-    let other = joined(other_dir.path(), &relay, &ada, 2, "ada").await;
-    let (app, _) = linking_app().await;
-    lend(dir.path(), "app", app.port());
-    let second = page_origin("<!doctype html><title>the app of the other ada</title>").await;
-    lend(other_dir.path(), "app", second.port());
-    let theirs = format!("app@ada (joined {})", chrono::Utc::now().format("%-d %b"));
-    let mut kept = Vec::new();
-    for zone in ["Pacific/Kiritimati", "Pacific/Pago_Pago"] {
-        let args = json!({
-            "site": site,
-            "key": hex::encode(bo.to_bytes()),
-            "token": token(&signing(1), &relay),
-            "aliases": [theirs],
-            "keep": true,
-            "zone": zone,
-        });
-        let seen = drive(engine, "cold.mjs", args, None).await;
-        eprintln!("the alias's run in {zone}: {seen:#}");
-        let landed = &seen["aliases"][0];
-        assert!(
-            at_origin(&landed["url"], &label(2, "app"))
-                && landed["title"] == "the app of the other ada",
-            "in {zone}, {theirs} opens the other ada's app:\n{seen:#}"
-        );
-        // Each address to keep past its page's own, which each run serves
-        // at a port of its own.
-        let keep: Vec<Option<String>> =
-            serde_json::from_value(seen["keep"].clone()).unwrap_or_default();
-        let mut keep: Vec<Option<String>> = (keep.into_iter())
-            .map(|k| Some(k?.split_once("#open=")?.1.to_string()))
-            .collect();
-        keep.sort();
-        kept.push(keep);
-    }
-    assert_eq!(kept[0], kept[1], "the addresses to keep, in both zones");
-    let encoded = format!("{} Bookmark this.", theirs.replace(' ', "+"));
-    assert!(
-        matches!(engine, Engine::Webkit) || kept[0].contains(&Some(encoded.clone())),
-        "{theirs} is an address to keep, as {encoded}: {kept:?}"
-    );
-    drop((ada, other));
-}
-
-in_both_engines!(
     /// **A person in two groups opens each one's lend where it is lent**
     /// (svrn-docs `rings/current/IN_THE_BROWSER.md` §4; DESIGN §3, "Lent
     /// apps", call 1). Bo's browser holds house, ada's, and club, founded
@@ -2088,64 +1958,10 @@ async fn a_person_in_two_groups_opens_each_ones_lend_where_it_is_lent(engine: En
     drop((ada, club));
 }
 
-in_both_engines!(
-    /// **A link's token with what it opens opens it, and a fragment the
-    /// page cannot read says why** (the operator's iPhone, 2026-10-31: the
-    /// group's link, `#<token>`, with `&open=films@<name>` added, said
-    /// "This browser could not open the page."). Bo's page, holding house
-    /// by ada's link, opens `#<token>&open=app@ada` on ada's app, and with
-    /// `&at=/a/path?n=1` at that path; `#not-a-token` says it is no link
-    /// svrngs can read, and `#opne=app@ada` names the part it cannot read,
-    /// each in the page's words, never the browser's line. Red on
-    /// 15460c1e: each read as one token, joined, and said "This browser
-    /// could not open the page."
-    a_links_token_with_what_it_opens_opens_it_and_a_garbled_fragment_says_why
-);
-async fn a_links_token_with_what_it_opens_opens_it_and_a_garbled_fragment_says_why(engine: Engine) {
-    let site = site();
-    let relay = relay().await;
-    let bo = signing(7);
-    let dir = tempfile::tempdir().unwrap();
-    let ada = node(dir.path(), &relay, &bo).await;
-    let app = page_origin("<!doctype html><title>the app of ada</title>").await;
-    lend(dir.path(), "app", app.port());
-    let link = token(&signing(1), &relay);
-    let args = json!({
-        "site": site,
-        "key": hex::encode(bo.to_bytes()),
-        "token": link,
-        "fragments": [
-            format!("{link}&open=app@ada"),
-            format!("{link}&open=app@ada&at=/a/path?n=1"),
-            "not-a-token",
-            "opne=app@ada",
-        ],
-    });
-    let seen = drive(engine, "cold.mjs", args, None).await;
-    eprintln!("the fragments' run: {seen:#}");
-    let landed = |i: usize| &seen["fragments"][i];
-    assert!(
-        at_origin(&landed(0)["url"], &label(1, "app")) && landed(0)["title"] == "the app of ada",
-        "the link's token with what it opens opens it:\n{seen:#}"
-    );
-    assert!(
-        at_origin(&landed(1)["url"], &label(1, "app"))
-            && landed(1)["url"].as_str().unwrap().ends_with("/a/path?n=1"),
-        "and at its path:\n{seen:#}"
-    );
-    assert_eq!(
-        (&landed(2)["status"], &landed(3)["status"]),
-        (
-            &json!("This link isn’t one svrngs can read. Ask whoever sent it for a new one."),
-            &json!("This address asks for something this page can’t read: opne. Open your group’s link again.")
-        ),
-        "a fragment the page cannot read says why:\n{seen:#}"
-    );
-    drop(ada);
-}
-
-// Alias collisions and time zones are direct Node contracts in question.test.mjs;
-// the browser alias navigation tests above still verify the actual destination.
+// Alias collisions and time zones, a link's token with what it opens, and a
+// fragment the page cannot read are Node laws (question.test.mjs,
+// pages/enter.test.mjs); the alias and cold-open tests above still land in
+// the browser.
 
 in_webkit!(
     /// A lent page asks its person through the group's page, and is stopped

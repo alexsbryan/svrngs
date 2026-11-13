@@ -179,7 +179,7 @@ map changed with it.
 
 | # | Unit | Tests | Moves to | Needs |
 |---|---|---|---|---|
-| 1 | browser step: claims the map finds covered by laws and handlers | 54 | the laws named in the map | none |
+| 1 | browser step: claims the map finds covered by laws and handlers. 4 of 54 retired (6 rows): an alias in two zones, a fragment's open and its words, a lend's script at a phone's page, a lost post. 50 kept: 21 on the home page (harness 5); 21 whose node answers are claimed only under `crates/*/tests` (door, carried, surface, lend_origin, guests, relay_fallback, a removed dialer's admission, the issuer's `/ask`: harnesses 1-4); 8 on a browser mechanism (a real alias landing, the wasm's streaming, a signer frame's cookie, a worker's update, a relay move, Cache across a restart, Web Locks across tabs, clipboard and request log) | 54 | `pages/enter.test.mjs`, `proxied.test.mjs` | none |
 | 2 | door, oidc, session, accept: pure rows and in-process routers | 68 | door.rs pure functions, `door::router` | harness 1, then 2, 3 |
 | 3 | n0 out of the gate | 25 | a relay on 127.0.0.1 | harness 8 |
 | 4 | the node's unit tests that dial (ring_routes, ring_sync, rail, iroh, blob); ring_routes' 7 landed, asked in-process | 36, 29 left | routers by oneshot with a `Dialer`; transport | harness 1, 4 |

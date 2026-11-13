@@ -18,18 +18,13 @@
 //   where it lands, with the buttons it offers; one whose words hold
 //   `choose` pressed, and where that lands.
 //
-// - `fragments`: each opened on the group's page at `#<fragment>`, and
-//   where it lands.
-//
 // With `second`, `{token, id, name}`, the browser holds a second group
 // too, joined by the same key, and opens it once after the first, so the
 // steps start with it the group last opened.
 //
-// With `zone`, the browser's clock reads in that time zone.
-//
 //   node web/tests/cold.mjs '{"engine": ..., "site": ..., "port": N,
 //     "key": ..., "token": ..., "cold": "<label>", "keep": true,
-//     "aliases": ["app@ada", ...], "zone": "Pacific/Kiritimati"}'
+//     "aliases": ["app@ada", ...]}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
@@ -125,12 +120,6 @@ await driving(args, async ({ page, origin }) => {
       await page.goto(at);
       seen.kept.push({ at, ...(await landed(page, 45_000)) });
     }
-  }
-  seen.fragments = [];
-  for (const fragment of args.fragments ?? []) {
-    await page.goto('about:blank');
-    await page.goto(`${origin}#${fragment}`);
-    seen.fragments.push({ fragment, ...(await landed(page, 45_000)) });
   }
   seen.aliases = [];
   for (const alias of args.aliases ?? []) {

@@ -1,4 +1,4 @@
-//! A way to a relay that a test can cut: relay_tiers.rs's, and the browser's.
+//! A way to a relay that a test can cut: relay_tiers.rs's.
 
 use std::net::SocketAddr;
 
