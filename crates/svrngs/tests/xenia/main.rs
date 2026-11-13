@@ -33,6 +33,12 @@ mod common;
 #[allow(dead_code)]
 mod people;
 
+/// The worlds' svrngs (people.rs `program`): the product this build makes,
+/// n0's reach and all, as a stranger runs it; it prints nothing first.
+fn svrngs() -> (std::path::PathBuf, &'static [&'static str]) {
+    (env!("CARGO_BIN_EXE_svrngs").into(), &[])
+}
+
 // Give's scripted scenes register with libtest; here only their world-building
 // helpers are reused. Xenia's strangers, not those scripts, do the acting.
 macro_rules! scene {

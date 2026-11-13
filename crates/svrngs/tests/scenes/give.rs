@@ -71,8 +71,9 @@ pub(crate) async fn give_built() -> PathBuf {
     Path::new(env!("CARGO_TARGET_TMPDIR")).join("../debug/give")
 }
 
-/// `give <args>` on `who`'s computer, beside the svrngs running there: this
-/// build's svrngs first on the PATH, as an install leaves it. Its svrngs
+/// `give <args>` on `who`'s computer, beside the svrngs running there: the
+/// scene's svrngs first on the PATH (people.rs `program`), as an install
+/// leaves it. Its svrngs
 /// is named by `SVRNGS_DIR`, which give and svrngs's own command read
 /// first, and its `HOME` is this host's: podman finds its machine through
 /// the person's own home (on a Mac, `~/.config/containers`), and with a
@@ -85,7 +86,8 @@ pub(crate) fn run_give(
     scratch: &Path,
     args: &[&str],
 ) -> Command {
-    let svrngs = Path::new(env!("CARGO_BIN_EXE_svrngs")).parent().unwrap();
+    let svrngs = crate::people::program().0;
+    let svrngs = svrngs.parent().unwrap();
     let path = format!(
         "{}:{}",
         svrngs.display(),

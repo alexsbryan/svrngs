@@ -4,7 +4,10 @@
 //! this computer's environment but its `PATH`; the scene's group made by
 //! `svrngs new --relay` at the relay on 127.0.0.1 and joined by `svrngs
 //! join` at the link the founder's home page makes, so every act goes
-//! through the real door, relay and record. What each person sees is read
+//! through the real door, relay and record. Each svrngs is src/main.rs's
+//! but for the build's relays ([`program`]): it meets at the scene's relay
+//! and at one more on 127.0.0.1, never n0's, whose reach is check.sh's
+//! `n0` step alone (docs/CHECKS.md, seam R). What each person sees is read
 //! in a browser, through `drive` (tests/browser/drive.rs).
 
 use std::net::SocketAddr;
@@ -142,7 +145,7 @@ impl Scene {
         let run = svrngs(&home, name, args).stdin(Stdio::null()).output();
         let out = tokio::time::timeout(Duration::from_secs(90), run);
         let out = out.await.expect("the command ends within 90 s").unwrap();
-        let said = String::from_utf8_lossy(&out.stdout).to_string();
+        let said = printed(&out.stdout);
         assert!(
             out.status.success(),
             "{name} `svrngs {args:?}` failed: {said}{}",
@@ -190,7 +193,7 @@ impl Scene {
         drop(stdin);
         let out = tokio::time::timeout(Duration::from_secs(60), run.wait_with_output());
         let out = out.await.expect("the command ends within 60 s").unwrap();
-        let said = String::from_utf8_lossy(&out.stdout).to_string();
+        let said = printed(&out.stdout);
         assert!(
             out.status.success(),
             "{} `svrngs {args:?}` failed: {said}{}",
@@ -273,14 +276,35 @@ impl Scene {
     }
 }
 
-/// `svrngs <args>`, this build's, in `home`, with nothing else of this
-/// computer's environment but its `PATH`.
+/// The program a scene runs as `svrngs`, and the lines it prints before
+/// svrngs's own. A consumer rehearsal pins the shipped product by
+/// `SCENES_BINARY`, which prints nothing first: Cargo's test and ordinary
+/// profiles otherwise replace the same target/debug executable. Else the
+/// binary's own (`crate::svrngs`): in the scenes, this test binary run as
+/// src/main.rs's `main` at a relay on 127.0.0.1 (scenes/main.rs), so no
+/// person's svrngs meets n0 (bdd3bd51 did so for the CLI's tests).
+pub fn program() -> (PathBuf, &'static [&'static str]) {
+    match std::env::var_os("SCENES_BINARY") {
+        Some(pinned) => (pinned.into(), &[]),
+        None => crate::svrngs(),
+    }
+}
+
+/// What a `svrngs` printed, `out`, past what its [`program`] prints
+/// before it; anything else there fails, never skipped.
+fn printed(out: &[u8]) -> String {
+    let said = String::from_utf8_lossy(out);
+    let first: String = program().1.iter().map(|l| format!("{l}\n")).collect();
+    match said.strip_prefix(&first) {
+        Some(own) => own.to_string(),
+        None => panic!("svrngs's program says {first:?} first: {said}"),
+    }
+}
+
+/// `svrngs <args>`, this build's ([`program`]), in `home`, with nothing
+/// else of this computer's environment but its `PATH`.
 fn svrngs(home: &std::path::Path, name: &str, args: &[&str]) -> Command {
-    // A consumer rehearsal can pin the just-built product: Cargo's test and
-    // ordinary profiles otherwise replace the same target/debug executable.
-    let binary =
-        std::env::var_os("SCENES_BINARY").unwrap_or_else(|| env!("CARGO_BIN_EXE_svrngs").into());
-    let mut c = Command::new(binary);
+    let mut c = Command::new(program().0);
     c.args(args)
         .env_clear()
         .env("HOME", home)

@@ -66,11 +66,17 @@ pub fn svrngs() -> Command {
 /// svrngs is placed and started by a script with an environment of its
 /// own (install.sh, a stub launchd): the relay and this binary written in.
 pub fn installed(dir: &Path) -> PathBuf {
+    installed_at(dir, build_relay())
+}
+
+/// [`installed`], meeting at `relay` in place of [`build_relay`]: the
+/// scenes' is the browser harness's relay, behind its TLS front, so a
+/// phone's page can reach a computer's home relay there (scenes/main.rs).
+pub fn installed_at(dir: &Path, relay: &str) -> PathBuf {
     let exe = std::env::current_exe().unwrap();
     let path = dir.join("svrngs");
     let script = format!(
-        "#!/bin/sh\n{BUILD}='{}' exec '{}' --exact --ignored --nocapture --quiet {NAME} -- \"$@\"\n",
-        build_relay(),
+        "#!/bin/sh\n{BUILD}='{relay}' exec '{}' --exact --ignored --nocapture --quiet {NAME} -- \"$@\"\n",
         exe.display()
     );
     std::fs::write(&path, script).unwrap();

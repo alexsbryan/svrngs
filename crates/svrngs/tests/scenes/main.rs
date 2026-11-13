@@ -20,6 +20,10 @@ mod drive;
 #[allow(dead_code)]
 mod load;
 mod people;
+// Each person's svrngs, this binary run as `main` meeting at a relay on
+// 127.0.0.1 (people.rs `program`; docs/CHECKS.md harness 8).
+#[path = "../common/as_main.rs"]
+mod as_main;
 // The one helper that proves a request as home/session-worker.js does,
 // for what a scene writes before a person's browser arrives (people.rs).
 #[path = "../../../svrngs-node/tests/common/mod.rs"]
@@ -84,3 +88,45 @@ mod give;
 mod give_move;
 // Give, scenes 4 and 5: Bo's computer gone, Dee keeps it; Bo's back.
 mod give_gone;
+
+/// svrngs itself, as each person's computer runs it ([`svrngs`]).
+#[test]
+#[ignore = "run by a scene's people, each in a process of its own, as svrngs"]
+fn svrngs_here() {
+    as_main::main()
+}
+
+/// The scenes' svrngs (people.rs `program`): a program named `svrngs` that
+/// runs [`svrngs_here`] at this binary's build relay, made once
+/// (as_main.rs `installed_at`). A script, so the relay is named whatever
+/// environment a scene clears, and give and HolyArrs's driver run the same
+/// svrngs, off the `PATH` or by its path. Then libtest's two lines, which
+/// it prints before svrngs's own.
+///
+/// The build relay is the browser harness's (harness.rs `relay`), on
+/// 127.0.0.1 behind its TLS front, not as_main.rs's plain one: a link
+/// carries its issuer's home relay first (svrngs-core relay.rs `carried`),
+/// and a phone's page over TLS reaches a relay over TLS alone. At
+/// as_main.rs `build_relay`, every phone that joined failed ("A TLS error
+/// caused the secure connection to fail", creator.rs:155, events.rs:134),
+/// as their computers' home relay had been n0's until then.
+fn svrngs() -> (std::path::PathBuf, &'static [&'static str]) {
+    static MADE: std::sync::OnceLock<(tempfile::TempDir, std::path::PathBuf)> =
+        std::sync::OnceLock::new();
+    let (_, svrngs) = MADE.get_or_init(|| {
+        let (tx, rx) = std::sync::mpsc::channel();
+        std::thread::spawn(move || {
+            let runtime = tokio::runtime::Runtime::new().unwrap();
+            runtime.block_on(async move {
+                let relay = harness::relay().await;
+                tx.send(harness::relay_url(&relay)).unwrap();
+                std::future::pending::<()>().await;
+            });
+        });
+        let relay = rx.recv().expect("the build's relay said where it is");
+        let dir = tempfile::tempdir().unwrap();
+        let svrngs = as_main::installed_at(dir.path(), &relay);
+        (dir, svrngs)
+    });
+    (svrngs.clone(), &as_main::HEADER)
+}

@@ -201,7 +201,7 @@ async fn holyarrs(engine: Engine) {
         "bo_at": home(bo.lent_by(&group, "Ana", "holyarrs").await),
         "night": bo.opens(&group, "Movie-Night").await,
         "jf_secrets": secrets, "jf": jf.at(),
-        "binary": env!("CARGO_BIN_EXE_svrngs"), "ana_dir": ana.home,
+        "binary": crate::people::program().0, "ana_dir": ana.home,
         "dump": scene.scratch("received"), "out": out, "phone_link": phone_link,
         "plant": std::env::var("SCENES_PLANT").unwrap_or_default(),
     });
