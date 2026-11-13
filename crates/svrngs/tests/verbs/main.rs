@@ -8,6 +8,8 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 
 mod join;
+mod leave;
+mod meet;
 mod new;
 mod share;
 
