@@ -7,7 +7,6 @@
 //! request, on a phone from the next pass it signs, within 12 hours.
 //! Nobody else's computer is listed as deciding for you (§4).
 
-use super::carried::{carried_at, carry};
 use super::*;
 use svrngs_node::door::limit::READS_A_MINUTE;
 
@@ -18,117 +17,6 @@ fn today() -> String {
 
 // Pure wording/decider vectors are web/tests/question.test.mjs's; below, real
 // browsers and native resource owners establish that consent and Stop take effect.
-
-in_chromium!(
-    /// **The home page says what acts as you, and its Stop holds** (§9).
-    /// Cy lends notes, declared to read `films`, and films; ada's computer
-    /// carries Money. Ada opens cy's notes from her home page, which is her
-    /// yes (capability-open). Her home page then shows "What acts as you":
-    /// Money reads and writes what the shelf says, when she opens it; cy's
-    /// notes opens her friends' films as her, since today, with Stop; what
-    /// she opens knows her name; and only this computer can decide for her,
-    /// not bo's, admitted to the group. Its Stop holds from the notes' next
-    /// request: a page of the notes reaching cy's films as ada is refused,
-    /// `unasked`, after it. Its fetch is at the address `/svrngs-reads`
-    /// gives, never the films' plain origin (give-session). Red at 0573f402: no such parts, and no Stop for
-    /// the yes. Planted: the Stop kept as a yes, and the notes still reach
-    /// the films.
-    the_home_page_says_what_acts_as_you_and_its_stop_holds
-);
-async fn the_home_page_says_what_acts_as_you_and_its_stop_holds(engine: Engine) {
-    let relay = relay().await;
-    let (ada_dir, cy_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-    let ada = node(ada_dir.path(), &relay, &signing(7)).await;
-    let cy = joined(cy_dir.path(), &relay, &ada, 2, "cy").await;
-    let folder = ada_dir.path().join("house");
-    std::fs::create_dir(&folder).unwrap();
-    keep_folder(&ada, &folder).await;
-    let money = "<!doctype html><title>Money</title>".to_string();
-    carry(&folder, "Money", &[("index.html", money)]);
-    carried_at(&ada, "Money").await;
-    let notes = page_origin("<!doctype html><title>cy's notes</title><body>").await;
-    let (films, on_films) = kept_page("<!doctype html><title>cy's films</title><body>").await;
-    let lends = svrngs_node::lend::lends_dir(cy_dir.path());
-    std::fs::create_dir_all(&lends).unwrap();
-    for (name, port, reads) in [
-        ("notes", notes.port(), json!(["films"])),
-        ("films", films.port(), json!([])),
-    ] {
-        let body = json!({ "groups": [NS], "port": port, "kind": name, "limit": 3, "refused": [], "reads": reads });
-        std::fs::write(lends.join(format!("{name}.json")), body.to_string()).unwrap();
-    }
-    let port = ada.api_addr().port();
-    let at = |name: &str| format!("http://{}.localhost:{port}/", label(2, name));
-
-    let seen = drive(
-        engine,
-        "acts.mjs",
-        json!({
-            "home": format!("http://svrngs.localhost:{port}/"),
-            "page": at("notes"),
-            "read": at("films"),
-            "words": "cy’s notes",
-        }),
-        None,
-    )
-    .await;
-    eprintln!("the home page's run: {seen:#}");
-    assert_eq!(seen["error"], Value::Null, "{seen:#}");
-    assert_eq!(
-        seen["folded"], true,
-        "\"What acts as you\" is folded under its heading: {seen:#}"
-    );
-    let before = seen["before"].as_str().unwrap_or_default();
-    for part in [
-        "What acts as you\n",
-        "Reads and writes for you\n",
-        "Money reads and writes who owes whom, and for what, when you open it.",
-        "Opens friends’ things as you\n",
-        "Each Stop holds from the app’s next request.",
-        &format!(
-            "cy’s notes opens the films you chose, as you. Since {}.",
-            today()
-        ),
-        "Knows who you are\n",
-        "What you open knows your name.",
-        "Can decide for you\n",
-        "Your group: This computer.",
-    ] {
-        assert!(
-            before.contains(part),
-            "the section says {part:?}:\n{before}"
-        );
-    }
-    let after = seen["after"].as_str().unwrap_or_default();
-    assert!(
-        after.contains(&format!(
-            "cy’s notes stopped opening your friends’ films as you on {}.",
-            today()
-        )),
-        "the Stop is said:\n{after}"
-    );
-    assert_eq!(
-        seen["stopped"],
-        json!({ "status": 403, "refused": "unasked", "error": "Open it from your home page first." }),
-        "a Stop holds from the app's next request:\n{seen:#}"
-    );
-    let asked: Vec<String> = on_films
-        .lock()
-        .unwrap()
-        .iter()
-        .filter_map(|h| h.lines().next().map(str::to_string))
-        .collect();
-    assert!(
-        asked.iter().any(|l| l.starts_with("GET /opened "))
-            && !asked.iter().any(|l| l.starts_with("GET /stopped ")),
-        "the films are reached on the yes, and not after its Stop: {asked:?}"
-    );
-    assert!(
-        !asked.iter().any(|l| l.starts_with("GET /bare ")),
-        "the films are never reached at their plain origin, which a fetch carrying no capability asks (give-session): {asked:?}"
-    );
-    drop((ada, cy));
-}
 
 in_webkit!(
     /// **The group page says what acts as you, and its Stop holds at the

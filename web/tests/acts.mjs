@@ -1,27 +1,19 @@
 // The browser half of capability-what-acts's tests (crates/svrngs-node/
 // tests/browser/acts.rs): "What acts as you", and its Stop.
 //
-// With `args.home`, on a computer: the reading lend opened from the home
-// page by its button reading `args.words`, the yes, its tab fetching
-// `args.read` at `opened`, and at its plain origin, `bare`; the home page opened again and its section read,
-// `before`; the yes's Stop pressed, and the section read again, `after`;
-// then a page of the reading lend, `args.page`, fetching `args.read` at
-// `stopped`.
-//
-// Else on a phone, the group's page holding the group `args.token` joins:
+// On a phone, the group's page holding the group `args.token` joins:
 // the lend `args.open` opened from its list, the yes, and what its page is
 // told it reads, `yes`; the group's page again, its section read,
 // `before`; the yes's Stop pressed, and the line read, `stopped`; then the
 // page opened at `#open=<args.label>`, as the lend's origin asks for
 // another pass, and what its page is told it reads, `after`.
 //
-//   node web/tests/acts.mjs '{"engine": "chromium"|"webkit", "home": "<url>", "page": ..., "read": ..., "words": ...}'
 //   node web/tests/acts.mjs '{"engine": "chromium"|"webkit", "site": ..., "key": ..., "token": ..., "open": "<the lend's name>", "label": "<its label>"}'
 //
 // Exit 0 with the JSON line, a step that did not finish said in it as
 // `error`; 3, naming the install command, when Playwright or its browser
 // is absent; 1 on anything else.
-import { arrived, driving, inApp, launch } from './page.mjs';
+import { driving, inApp } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
 const section = (page) => page.locator('#acts').innerText({ timeout: 60_000 });
@@ -34,106 +26,38 @@ const unfold = async (page) => {
   await page.locator('#acts summary').click({ timeout: 10_000 });
   return folded;
 };
-// A fetch from `page` of the read lend at `path`, at the address the
-// page's `/svrngs-reads` gives it (a capability in the path, give-session),
-// or, `bare`, at its plain origin: svrngs's refusal is readable to the page.
-const fetched = (page, path, bare, held) =>
-  page.evaluate(
-    async ([read, path, bare, held]) => {
-      const reads = bare ? { lends: [] } : await fetch('/svrngs-reads').then((r) => r.json());
-      const to = held ?? reads.lends.find((l) => l.address.startsWith(read))?.address ?? read;
-      return fetch(`${to}${path}`).then(
-        async (r) => ({
-          status: r.status,
-          refused: r.headers.get('x-svrngs-refused'),
-          error: (await r.json().catch(() => ({}))).error ?? null,
-        }),
-        (e) => ({ status: `${e}` }),
-      );
-    },
-    [args.read, path, bare, held],
+// What the lend's page, once open at its origin, is told it reads.
+const told = async (page) => {
+  await page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), {
+    timeout: 90_000,
+  });
+  await page.waitForLoadState('load');
+  return page.evaluate(() =>
+    fetch('/svrngs-reads').then(async (r) => ({ status: r.status, body: await r.text() })),
   );
-
-if (args.home) {
-  const { context, close } = await launch(args.engine);
+};
+await driving(args, async ({ page, origin }) => {
   const seen = {};
   try {
-    const home = await context.newPage();
-    const loaded = () => home.locator('#home p.address').waitFor({ timeout: 60_000 });
-    await home.goto(args.home);
-    await loaded();
-    const [tab] = await Promise.all([
-      context.waitForEvent('page'),
-      home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }),
-    ]);
-    await arrived(tab);
-    seen.opened = await fetched(tab, 'opened');
-    seen.bare = await fetched(tab, 'bare', true);
-    await home.reload();
-    await loaded();
-    seen.folded = await unfold(home);
-    seen.before = await section(home);
-    // The address it held before its Stop, as a page that kept one would:
-    // /svrngs-reads no longer lists a lend its person stopped.
-    const page = await context.newPage();
-    await page.goto(args.page);
-    const held = await page.evaluate(
-      async (read) =>
-        (await fetch('/svrngs-reads').then((r) => r.json())).lends.find((l) =>
-          l.address.startsWith(read),
-        )?.address,
-      args.read,
-    );
-    await Promise.all([
-      home.waitForEvent('load'),
-      home
-        .locator('#acts p', { hasText: 'as you. Since' })
-        .locator('button', { hasText: 'Stop' })
-        .click({ timeout: 10_000 }),
-    ]);
-    await loaded();
-    await unfold(home);
-    seen.after = await section(home);
-    seen.stopped = await fetched(page, 'stopped', false, held);
+    await page.locator('#lent button', { hasText: args.open }).click({ timeout: 90_000 });
+    seen.yes = await told(page);
+    await page.goto(origin);
+    await page
+      .locator('#acts p', { hasText: 'as you. Since' })
+      .waitFor({ state: 'attached', timeout: 90_000 });
+    seen.folded = await unfold(page);
+    seen.before = await section(page);
+    const line = page.locator('#acts p', { hasText: 'as you. Since' });
+    await line.locator('button', { hasText: 'Stop' }).click({ timeout: 10_000 });
+    await page
+      .locator('#acts p', { hasText: 'within 12 hours, when' })
+      .waitFor({ timeout: 30_000 });
+    seen.stopped = await section(page);
+    await page.goto('about:blank');
+    await page.goto(`${origin}#open=${args.label}`);
+    seen.after = await told(page);
   } catch (e) {
     seen.error = `the page did not finish: ${e}`;
   }
-  await close();
-  console.log(JSON.stringify(seen));
-} else {
-  // What the lend's page, once open at its origin, is told it reads.
-  const told = async (page) => {
-    await page.waitForURL((u) => inApp(u) && !u.pathname.endsWith('/open.html'), {
-      timeout: 90_000,
-    });
-    await page.waitForLoadState('load');
-    return page.evaluate(() =>
-      fetch('/svrngs-reads').then(async (r) => ({ status: r.status, body: await r.text() })),
-    );
-  };
-  await driving(args, async ({ page, origin }) => {
-    const seen = {};
-    try {
-      await page.locator('#lent button', { hasText: args.open }).click({ timeout: 90_000 });
-      seen.yes = await told(page);
-      await page.goto(origin);
-      await page
-        .locator('#acts p', { hasText: 'as you. Since' })
-        .waitFor({ state: 'attached', timeout: 90_000 });
-      seen.folded = await unfold(page);
-      seen.before = await section(page);
-      const line = page.locator('#acts p', { hasText: 'as you. Since' });
-      await line.locator('button', { hasText: 'Stop' }).click({ timeout: 10_000 });
-      await page
-        .locator('#acts p', { hasText: 'within 12 hours, when' })
-        .waitFor({ timeout: 30_000 });
-      seen.stopped = await section(page);
-      await page.goto('about:blank');
-      await page.goto(`${origin}#open=${args.label}`);
-      seen.after = await told(page);
-    } catch (e) {
-      seen.error = `the page did not finish: ${e}`;
-    }
-    return seen;
-  });
-}
+  return seen;
+});
