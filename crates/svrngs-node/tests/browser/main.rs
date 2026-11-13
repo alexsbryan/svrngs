@@ -1651,31 +1651,6 @@ async fn a_lent_page_asks_its_person_through_the_group_s_page_and_is_stopped(eng
     drop((ada, cy));
 }
 
-/// Ada's computer removes `who` from house as `svrngs remove` asks it.
-async fn removal(ada: &Node, who: &str) -> svrngs_node::removal::Outcome {
-    reqwest::Client::builder()
-        .no_proxy()
-        .build()
-        .unwrap()
-        .post(format!(
-            "http://{}{}",
-            ada.api_addr(),
-            svrngs_node::removal::REMOVALS_ROUTE
-        ))
-        .bearer_auth(ada.token())
-        .json(&svrngs_node::removal::RemovalAsk {
-            group: NS.into(),
-            person: who.into(),
-            joined: None,
-        })
-        .send()
-        .await
-        .unwrap()
-        .json()
-        .await
-        .unwrap()
-}
-
 in_chromium!(
     /// The group's link on a computer (v1-onboarding (c); DESIGN §7): the
     /// page offers the one line that gets svrngs, composed from the
