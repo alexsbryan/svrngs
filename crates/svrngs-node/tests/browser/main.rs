@@ -1450,18 +1450,8 @@ async fn a_lends_alias_opens_it_from_the_groups_page(engine: Engine) {
             "each address kept opens its own app:\n{seen:#}"
         );
     }
-    // How this reaches you, for someone at a computer, in the page's words
-    // (DESIGN §1); on a phone, out of Ana's first look.
-    let how = &seen["how"];
-    assert_eq!(how["hidden"], matches!(engine, Engine::Webkit), "{seen:#}");
-    let told = how["text"].as_str().unwrap_or_default().to_lowercase();
-    let universe = [
-        "key", "member", "ring", "sync", "journal", "node", "relay", "vpn", "tunnel",
-    ];
-    assert!(
-        told.contains("how this reaches you") && words_said(&told, &universe).is_empty(),
-        "{seen:#}"
-    );
+    // How this reaches you, shown at a computer alone and in no word of
+    // the system's, is web/tests/pages/among.test.mjs's.
     let landed = |i: usize| &seen["aliases"][i];
     assert!(
         at_origin(&landed(0)["url"], &label(1, "app")) && landed(0)["title"] == "the app",
@@ -1769,17 +1759,6 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
         .collect::<Vec<_>>();
     assert!(faults.is_empty(), "{faults:#?}");
     drop(dee);
-}
-
-/// Each of `words`, or its plural, that `text` holds as a whole word.
-fn words_said<'a>(text: &str, words: &[&'a str]) -> Vec<&'a str> {
-    let said: BTreeSet<&str> = text
-        .split(|c: char| !c.is_alphanumeric())
-        .filter(|w| !w.is_empty())
-        .collect();
-    (words.iter().copied())
-        .filter(|w| said.contains(w) || said.contains(format!("{w}s").as_str()))
-        .collect()
 }
 
 in_chromium!(
