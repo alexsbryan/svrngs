@@ -22,6 +22,10 @@
 //! the fallback, not the joiner's own reach, is what carried the ask.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
+mod common;
+#[path = "common/on_wire.rs"]
+mod on_wire;
+
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -302,4 +306,92 @@ async fn cut_and_contribute(public_only: bool) {
 
     ada.endpoint().close().await;
     bo.endpoint().close().await;
+}
+
+/// [`a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone`]
+/// on one wire (common/on_wire.rs): each relay the wire's
+/// (`Wire::relay`), the clock paused, no relay process or endpoint.
+#[tokio::test(start_paused = true)]
+async fn a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone_on_the_wire() {
+    use svrngs_node::node::Relaying;
+    let (a, b) = ("http://127.0.0.1:1/", "http://127.0.0.1:2/");
+    on_wire::relay(a, Relaying::Up);
+    on_wire::relay(b, Relaying::Up);
+    let at_a: svrngs_core::relay::Url = a.parse().unwrap();
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let started = |seed: u8| async move {
+        let dir = tempfile::tempdir().unwrap();
+        let key = SigningKey::from_bytes(&[seed; 32]);
+        let node = on_wire::relayed(key, dir.path(), b, &[], every).await;
+        (dir, node)
+    };
+    let (_ada_dir, ada) = started(5).await;
+    let house = group::draw(
+        Name::parse("house").unwrap(),
+        Name::parse("ada").unwrap(),
+        SigningKey::from_bytes(&[5; 32]).verifying_key(),
+    );
+    ada.host()
+        .keep_group(&house, None, &[at_a.clone()])
+        .expect("Ada keeps house, met at A");
+    let (_bo_dir, bo) = started(6).await;
+    bo.host()
+        .keep_group(&house, None, &[at_a.clone()])
+        .expect("Bo keeps house, met at A");
+    let (ns, rail) = (house.id(), ada.rail());
+    svrngs_core::tests_support::let_in(
+        (&ns, &actor_of(rail.signer())),
+        (
+            &SigningKey::from_bytes(&[6; 32]),
+            "bo",
+            svrngs_node::Device::Computer,
+        ),
+        |mint| {
+            rail.commit(&ns, mint).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        },
+        |redeem| drop(rail.commit(&ns, redeem).unwrap().unwrap()),
+    );
+    for (host, seed) in [(ada.host(), 5), (bo.host(), 6)] {
+        let away = group::draw(
+            Name::parse("away").unwrap(),
+            Name::parse("ada").unwrap(),
+            SigningKey::from_bytes(&[seed; 32]).verifying_key(),
+        );
+        host.keep_group(&away, None, &[])
+            .expect("a public-only group");
+    }
+    homed_on(&ada, b).await;
+    homed_on(&bo, b).await;
+
+    // The public reach is cut, and both computers move to the group's own.
+    on_wire::relay(b, Relaying::Down);
+    homed_on(&ada, a).await;
+    homed_on(&bo, a).await;
+
+    ada.rail()
+        .commit(&house.id(), &Batch(vec![record("after the cut")]))
+        .unwrap()
+        .unwrap();
+    tokio::time::timeout(Duration::from_secs(30), ada.round())
+        .await
+        .expect("Ada's round finishes");
+    assert!(
+        holds(&bo, &house.id(), "after the cut"),
+        "a fresh contribution reached Bo with the public reach cut"
+    );
+}
+
+/// Up to 60 s on the test's clock, until the relay `node`'s address names
+/// is `want`.
+async fn homed_on(node: &Node, want: &str) {
+    for _ in 0..600 {
+        let home = node.net().addr().relay_urls().next().map(|r| r.to_string());
+        if home.as_deref() == Some(want) {
+            return;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    panic!("not homed at {want} within 60 s");
 }
