@@ -5,8 +5,7 @@
 //! `reach(SHIPPED)`'s n0 (docs/CHECKS.md, harness 8). The shipped binary
 //! meets n0's relays and lookup on the internet, so a test that spawned it
 //! leaned on a service the gate does not own; `tests/shipped.rs` pins what
-//! `reach(SHIPPED)` is, and home_group.rs `dee_s_computer` is this pattern
-//! for one test. Each binary that includes this file names [`main`] in an
+//! `reach(SHIPPED)` is. Each binary that includes this file names [`main`] in an
 //! ignored test called [`NAME`]. (Allowed dead: each binary uses a part.)
 
 #![allow(dead_code)]
