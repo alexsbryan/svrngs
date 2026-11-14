@@ -211,13 +211,16 @@ fn unshare_of_nothing_lent_says_what_is() {
     );
 }
 
-/// Sam's computer on `wire` holding Lab, its svrngs running: the data
-/// dir's lock held and its API's address written, as `svrngs` keeps them.
+/// Sam's computer on `wire` holding Lab, its folder placed, its svrngs
+/// running: the data dir's lock held and its API's address written, as
+/// `svrngs` keeps them.
 async fn sams_lab(wire: &Wire) -> (crate::Computer, std::fs::File) {
     let sam = computer(wire, 5).await;
     let relay = no_relay();
     let made = cli::new_group(&sam.node, name("Lab"), name("Sam"), None, &[], &relay);
-    made.await.expect("Sam makes Lab");
+    let (lab, _) = made.await.expect("Sam makes Lab");
+    let (_, placed) = sam.node.folders().place(&lab);
+    placed.expect("Lab's folder, placed as `svrngs new` places it");
     let held = cli::claim(sam.dir.path()).expect("svrngs holds the data dir");
     let api = format!("http://{}", sam.node.api_addr());
     std::fs::write(sam.dir.path().join(svrngs_node::api::API_FILE), api).unwrap();
@@ -460,4 +463,167 @@ async fn share_4533_alone_lends_navidrome_asking_nothing_and_says_what_to_set() 
     assert!(!dir.join("secrets/lends/navidrome").exists());
     assert_eq!(lender.asked.borrow().len(), 0, "a password was asked");
     plain(&seen);
+}
+
+/// Until svrngs running on `sam`'s computer answers `group`'s
+/// `programs/<word>.txt` with `text` in it, as its record now places it
+/// (`/v1/programs`, the ask `share` makes); its answer.
+async fn until_read(sam: &crate::Computer, group: &str, word: &str, text: &str) -> String {
+    let asked = serde_json::json!([[group], word]);
+    for _ in 0..600 {
+        let (_, said) = crate::ask(
+            &sam.node,
+            "POST",
+            svrngs_node::folder::PROGRAMS_ROUTE,
+            &asked,
+        )
+        .await;
+        if said.contains(text) {
+            return said;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    }
+    panic!("{word}: never read with {text}");
+}
+
+/// **`svrngs share` keeps what a group's own `programs/<word>.txt` adds,
+/// and says whose words they are** (CONTRACTS §2), svrngs running and
+/// asked through `cli::Here`: Sam writes `programs/kokoro.txt` in Lab's
+/// folder; once svrngs reads it through Lab's record, `share --program
+/// kokoro` keeps back `/admin`, saying Lab's file keeps it, beside the
+/// paths svrngs ships for kokoro; the lend's own file holds it. Lab's
+/// `programs/tea.txt` says how tea's lender makes each person an account,
+/// and `share` says it as Sam's words, in Lab's file. A file outside the
+/// closed set is refused, its line and group named, and nothing lent; Lab
+/// and Trip each with a different `programs/notes.txt` refuse a lend to
+/// both, naming them. With svrngs not running, what `share` says keeps
+/// only what ships, and says so. Watched failing on two plants: `terms_of`
+/// never asked (cli.rs `answer`'s Share arm: no `/admin` line, the bad
+/// file lent), and who wrote the file left out of what `share` says
+/// (cli.rs `Said`).
+#[tokio::test]
+async fn share_keeps_what_a_group_s_programs_file_adds_and_says_so() {
+    let wire = Wire::default();
+    let (sam, _held) = sams_lab(&wire).await;
+    let relay = no_relay();
+    let made = cli::new_group(&sam.node, name("Trip"), name("Sam"), None, &[], &relay);
+    let (trip, _) = made.await.expect("Sam makes Trip");
+    sam.node.folders().place(&trip).1.expect("Trip's folder");
+    let lender = Lender::of(&sam, "");
+    let ids: std::collections::BTreeMap<String, String> = svrngs::group::groups(sam.dir.path())
+        .into_iter()
+        .map(|s| (s.name().to_string(), s.id()))
+        .collect();
+    let folders = sam.dir.path().join("svrngs");
+    let (lab, trip) = (folders.join("Lab/programs"), folders.join("Trip/programs"));
+    std::fs::create_dir_all(&lab).unwrap();
+    std::fs::create_dir_all(&trip).unwrap();
+
+    std::fs::write(
+        lab.join("kokoro.txt"),
+        "# Lab's kokoro\n- kokoro keeps: /admin\n",
+    )
+    .unwrap();
+    until_read(&sam, &ids["Lab"], "kokoro", "/admin").await;
+    let said = shares(&lender, &["9011", "--program", "kokoro", "--group", "Lab"]).await;
+    let said = said.expect("kokoro is lent");
+    assert!(
+        said.lines().any(
+            |l| l == "They cannot open /admin: your groups' programs/kokoro.txt keeps it back."
+        ),
+        "{said}"
+    );
+    assert!(
+        said.lines().any(
+            |l| l.starts_with("They cannot open /docs, /openapi.json: svrngs keeps these back")
+        ),
+        "{said}"
+    );
+    let lent = std::fs::read_to_string(sam.dir.path().join("lends/kokoro.json")).unwrap();
+    assert!(lent.contains("/admin") && lent.contains("/docs"), "{lent}");
+
+    std::fs::write(
+        lab.join("tea.txt"),
+        "- tea accounts: Settings, People, Add for each person\n",
+    )
+    .unwrap();
+    until_read(&sam, &ids["Lab"], "tea", "Add for each person").await;
+    let said = shares(&lender, &["9014", "--program", "tea", "--group", "Lab"]).await;
+    let said = said.expect("tea is lent");
+    assert!(
+        said.lines().any(|l| l == "tea asks each person to sign in once, with an account you make them. In tea, as Sam wrote in Lab's programs/tea.txt: Settings, People, Add for each person. Then tell each person theirs."),
+        "{said}"
+    );
+
+    std::fs::write(lab.join("kokoro.txt"), "- kokoro opens: /admin\n").unwrap();
+    until_read(&sam, &ids["Lab"], "kokoro", "is no term").await;
+    let args = [
+        "9012",
+        "--program",
+        "kokoro",
+        "--name",
+        "bad",
+        "--group",
+        "Lab",
+    ];
+    let refused = shares(&lender, &args)
+        .await
+        .expect_err("the bad file refuses it");
+    assert_eq!(refused.exit_code(), 1);
+    let told = refused.to_string();
+    assert!(
+        told.contains(
+            "In Lab, programs/kokoro.txt can't be used: `kokoro opens: /admin` is no term"
+        ),
+        "{told}"
+    );
+    assert!(
+        !sam.dir.path().join("lends/bad.json").exists(),
+        "nothing lent"
+    );
+
+    std::fs::write(lab.join("notes.txt"), "- notes keeps: /lab\n").unwrap();
+    std::fs::write(trip.join("notes.txt"), "- notes keeps: /trip\n").unwrap();
+    until_read(&sam, &ids["Lab"], "notes", "/lab").await;
+    until_read(&sam, &ids["Trip"], "notes", "/trip").await;
+    let args = [
+        "9013",
+        "--program",
+        "notes",
+        "--group",
+        "Lab",
+        "--group",
+        "Trip",
+    ];
+    let refused = shares(&lender, &args)
+        .await
+        .expect_err("two files refuse it");
+    assert_eq!(refused.exit_code(), 1);
+    let told = refused.to_string();
+    assert!(
+        told.contains("Lab and Trip say different things in programs/notes.txt"),
+        "{told}"
+    );
+    assert!(
+        !sam.dir.path().join("lends/notes.json").exists(),
+        "nothing lent"
+    );
+
+    // svrngs not running: no terms read, and `share` says so before it runs.
+    let pad = share_of(9010, "pad");
+    let lend = share::lend_of(&pad, listens, None, "").unwrap();
+    let said = Said::Shared {
+        lend,
+        secret: false,
+        accounts: None,
+        client: None,
+        issuer: None,
+        terms: None,
+    };
+    assert!(
+        said.to_string().lines().any(|l| l.starts_with(
+            "svrngs wasn't running, so this keeps only the terms svrngs ships for pad."
+        )),
+        "{said}"
+    );
 }
