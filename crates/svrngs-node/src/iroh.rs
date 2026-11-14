@@ -246,7 +246,11 @@ pub trait Net: Fetch + std::any::Any {
     fn id(&self) -> PublicKey;
     fn addr(&self) -> EndpointAddr;
     fn addrs(&self) -> BoxStream<EndpointAddr>;
-    fn homes(&self) -> BoxStream<Vec<iroh::endpoint::RelayStatus>>;
+    /// The relays this endpoint is registered at now, its handshake done
+    /// (iroh's `RelayStatus::is_connected`), each change.
+    fn homes(&self) -> BoxStream<Vec<RelayUrl>>;
+    /// Whether `relay` answers this computer's ask ([`crate::tiers`]).
+    fn answers<'a>(&'a self, relay: &'a svrngs_core::relay::Url) -> Later<'a, bool>;
     fn online(&self) -> Later<'_, ()>;
     /// `add` given to the endpoint as relays, and `drop` taken from it.
     fn relays(&self, add: Vec<RelayUrl>, drop: Vec<RelayUrl>) -> Later<'_, ()>;
@@ -292,8 +296,14 @@ impl Net for IrohTransport {
     fn addrs(&self) -> BoxStream<EndpointAddr> {
         Box::pin(iroh::Watcher::stream(self.endpoint.watch_addr()))
     }
-    fn homes(&self) -> BoxStream<Vec<iroh::endpoint::RelayStatus>> {
-        Box::pin(iroh::Watcher::stream(self.endpoint.home_relay_status()))
+    fn homes(&self) -> BoxStream<Vec<RelayUrl>> {
+        use n0_future::StreamExt as _;
+        let at = |h: Vec<iroh::endpoint::RelayStatus>| h.into_iter().filter(|h| h.is_connected());
+        let homes = iroh::Watcher::stream(self.endpoint.home_relay_status());
+        Box::pin(homes.map(move |h| at(h).map(|h| h.url().clone()).collect()))
+    }
+    fn answers<'a>(&'a self, relay: &'a svrngs_core::relay::Url) -> Later<'a, bool> {
+        Box::pin(crate::tiers::answers(relay))
     }
     fn online(&self) -> Later<'_, ()> {
         Box::pin(self.endpoint.online())

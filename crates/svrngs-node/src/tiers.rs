@@ -161,7 +161,7 @@ impl Host {
             // the build's until the first ask says otherwise.
             let answered = build.is_empty()
                 || match tier {
-                    Tier::Own => ask && any_answers(&build).await,
+                    Tier::Own => ask && any_answers(&*self.transport, &build).await,
                     _ => self.registered(&build).await,
                 };
             misses = if answered { 0 } else { misses + 1 };
@@ -193,7 +193,7 @@ impl Host {
     pub(crate) async fn check_now(&self) -> &'static str {
         let meeting = self.held.borrow().meeting.clone();
         let (build, own) = (meeting.build(), meeting.own());
-        let answered = build.is_empty() || any_answers(build).await;
+        let answered = build.is_empty() || any_answers(&*self.transport, build).await;
         self.decide(Some(answered).filter(|a| !a)).await;
         let moved = !answered && self.registered(own).await;
         tracing::debug!(target: "tiers", answered, moved, "tiers: a person asked now whether the build's fallback answers, and left it if not");
@@ -212,9 +212,7 @@ impl Host {
     async fn registered(&self, relays: &BTreeSet<Url>) -> bool {
         use n0_future::StreamExt as _;
         let mut homes = self.transport.homes();
-        let at = |h: &iroh::endpoint::RelayStatus| {
-            h.is_connected() && relays.contains(&h.url().clone().into())
-        };
+        let at = |h: &RelayUrl| relays.contains(&h.clone().into());
         let registered =
             tokio::time::timeout(REGISTERED_WITHIN, homes.any(|homes| homes.iter().any(at))).await;
         tracing::debug!(target: "tiers", ?registered, "tiers: whether this endpoint is registered at the relays asked of");
@@ -303,13 +301,11 @@ pub(crate) fn everywhere(
         .unwrap_or_else(|| Meeting::of([], build))
 }
 
-/// Whether any of `relays` answers ([`answers`]), all asked at once.
-async fn any_answers(relays: &BTreeSet<Url>) -> bool {
-    let mut asks = tokio::task::JoinSet::new();
-    for relay in relays.clone() {
-        asks.spawn(async move { answers(&relay).await });
-    }
-    asks.join_all().await.contains(&true)
+/// Whether any of `relays` answers `net`'s ask ([`answers`]), all asked
+/// at once.
+async fn any_answers(net: &dyn crate::iroh::Net, relays: &BTreeSet<Url>) -> bool {
+    let asks = relays.iter().map(|r| net.answers(r));
+    n0_future::join_all(asks).await.contains(&true)
 }
 
 /// Whether `relay` answers within [`ANSWERS_WITHIN`]: a plain-HTTP relay,
@@ -317,7 +313,7 @@ async fn any_answers(relays: &BTreeSet<Url>) -> bool {
 /// (iroh-relay-1.0.2 http.rs:15, server.rs:738); one over HTTPS, a
 /// connection taken at its address, since the node holds no TLS client of
 /// its own to ask the probe through.
-async fn answers(relay: &Url) -> bool {
+pub(crate) async fn answers(relay: &Url) -> bool {
     let host = relay
         .host_str()
         .unwrap_or_default()

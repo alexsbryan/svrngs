@@ -265,6 +265,35 @@ fn head_of(status: StatusCode, headers: &HeaderMap) -> String {
     said + "\r\n"
 }
 
+/// `url`, a relay on this test's wire, does as `now` says from here on
+/// ([`Wire::relay`]).
+pub fn relay(url: &str, now: svrngs_node::node::Relaying) {
+    WIRE.with(|w| w.relay(&url.parse().unwrap(), now));
+}
+
+/// `key`'s computer over `dir` on this test's wire, met at the build's
+/// relay `build` and the relays `asked`, its round every `every`
+/// ([`Node::on_wire_relayed`]), its API asked by [`http`].
+pub async fn relayed(
+    key: SigningKey,
+    dir: &Path,
+    build: &str,
+    asked: &[svrngs_core::relay::Url],
+    every: Duration,
+) -> Node {
+    let wire = WIRE.with(Clone::clone);
+    let relay = svrngs_node::iroh::RelayConfig {
+        relay_urls: vec![build.into()],
+        n0_services: false,
+        loopback_only: false,
+    };
+    let node = Node::on_wire_relayed(&wire, (dir.to_path_buf(), key), &relay, asked, every)
+        .await
+        .expect("a node starts on the wire");
+    served(&node);
+    node
+}
+
 /// No path on this test's wire from `from`'s computer to `to`'s, as when
 /// `from` knows no address of `to` ([`Wire::part`]).
 pub fn part(from: &Node, to: &Node) {

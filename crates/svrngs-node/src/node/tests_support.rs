@@ -229,6 +229,37 @@ struct Met {
     asleep: std::collections::BTreeSet<[u8; 32]>,
     services: std::collections::BTreeMap<([u8; 32], u16), Listening>,
     holders: std::collections::BTreeMap<[u8; 32], Holding>,
+    relays: std::collections::BTreeMap<crate::iroh::RelayUrl, Relaying>,
+    /// Each computer's relays held, as its endpoint was given them
+    /// ([`Net::relays`]).
+    held: std::collections::BTreeMap<[u8; 32], std::collections::BTreeSet<crate::iroh::RelayUrl>>,
+    /// Told of every change to a relay or to what a computer holds, so a
+    /// computer's homes are read again.
+    changed: Changed,
+}
+
+/// [`Met`]'s change, which a computer's homes are read again on.
+struct Changed(tokio::sync::watch::Sender<u64>);
+
+impl Default for Changed {
+    fn default() -> Self {
+        Self(tokio::sync::watch::Sender::new(0))
+    }
+}
+
+/// What a relay on a [`Wire`] does now ([`Wire::relay`]), as a relay
+/// process, a way to one, or a server that is none would.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Relaying {
+    /// Answers svrngs's ask and registers every endpoint that holds it.
+    Up,
+    /// Answers the ask and registers nobody, as a captive portal does.
+    Pings,
+    /// The way to it cut: the ask waits out [`crate::tiers::ANSWERS_WITHIN`]
+    /// unanswered, and nobody is registered.
+    Cut,
+    /// Nothing there: the ask is refused at once, nobody registered.
+    Down,
 }
 
 /// Where [`Wire::listen`]'s connections arrive, one pipe's end each.
@@ -253,6 +284,23 @@ impl Wire {
     /// [`Unsent::Asleep`], as [`IrohTransport`]'s dial is.
     pub fn asleep(&self, key: PublicKey) {
         self.0.lock().unwrap().asleep.insert(*key.as_bytes());
+    }
+
+    /// `url` does as `now` says from here on, each computer's homes read
+    /// again: a relay a test starts, cuts the way to, stops or brings back.
+    pub fn relay(&self, url: &crate::iroh::RelayUrl, now: Relaying) {
+        let mut met = self.0.lock().unwrap();
+        met.relays.insert(url.clone(), now);
+        met.changed.0.send_modify(|n| *n += 1);
+    }
+
+    /// The relays `key`'s computer holds that register it now, in order:
+    /// its homes, the first the one its address names.
+    fn homes_of(&self, key: &PublicKey) -> Vec<crate::iroh::RelayUrl> {
+        let met = self.0.lock().unwrap();
+        let held = met.held.get(key.as_bytes()).into_iter().flatten();
+        let up = |r: &&crate::iroh::RelayUrl| met.relays.get(*r) == Some(&Relaying::Up);
+        held.filter(up).cloned().collect()
     }
 
     /// A service on `key`'s computer at `port`, answered in this process
@@ -296,6 +344,16 @@ pub struct OnWire {
 }
 
 impl OnWire {
+    /// Now, then each change on its wire ([`Changed`]).
+    fn changes(&self) -> n0_future::boxed::BoxStream<()> {
+        let mut changed = self.wire.0.lock().unwrap().changed.0.subscribe();
+        changed.mark_changed();
+        Box::pin(n0_future::stream::unfold(changed, |mut c| async move {
+            c.changed().await.ok()?;
+            Some(((), c))
+        }))
+    }
+
     /// What `peer`'s acceptor decides for this computer on `alpn`, or why
     /// nothing answers: no computer on the wire, or none on a path from
     /// here, one asleep, or one that refuses.
@@ -425,23 +483,59 @@ impl Net for OnWire {
     fn id(&self) -> PublicKey {
         self.key
     }
+    /// Its key, at its first home on the wire when it has one.
     fn addr(&self) -> EndpointAddr {
-        EndpointAddr::new(self.key)
+        let home = self.wire.homes_of(&self.key).into_iter().next();
+        let addr = EndpointAddr::new(self.key);
+        home.map_or(addr.clone(), |h| addr.with_relay_url(h))
     }
     fn addrs(&self) -> n0_future::boxed::BoxStream<EndpointAddr> {
-        Box::pin(n0_future::stream::pending())
+        use n0_future::StreamExt as _;
+        let (wire, key) = (self.wire.clone(), self.key);
+        let at = move |_| {
+            OnWire {
+                key,
+                wire: wire.clone(),
+            }
+            .addr()
+        };
+        Box::pin(self.changes().map(at))
     }
-    fn homes(&self) -> n0_future::boxed::BoxStream<Vec<iroh::endpoint::RelayStatus>> {
-        Box::pin(n0_future::stream::pending())
+    /// The relays it holds that are up on the wire, at each change.
+    fn homes(&self) -> n0_future::boxed::BoxStream<Vec<crate::iroh::RelayUrl>> {
+        use n0_future::StreamExt as _;
+        let (wire, key) = (self.wire.clone(), self.key);
+        Box::pin(self.changes().map(move |_| wire.homes_of(&key)))
+    }
+    /// As [`Wire::relay`] says `relay` does: an unknown one is down.
+    fn answers<'a>(&'a self, relay: &'a svrngs_core::relay::Url) -> crate::iroh::Later<'a, bool> {
+        let url = crate::iroh::RelayUrl::from(relay.clone());
+        let now = self.wire.0.lock().unwrap().relays.get(&url).copied();
+        Box::pin(async move {
+            match now.unwrap_or(Relaying::Down) {
+                Relaying::Up | Relaying::Pings => true,
+                Relaying::Cut => {
+                    tokio::time::sleep(crate::tiers::ANSWERS_WITHIN).await;
+                    false
+                }
+                Relaying::Down => false,
+            }
+        })
     }
     fn online(&self) -> crate::iroh::Later<'_, ()> {
         Box::pin(async {})
     }
+    /// Held on the wire, its homes read again.
     fn relays(
         &self,
-        _: Vec<crate::iroh::RelayUrl>,
-        _: Vec<crate::iroh::RelayUrl>,
+        add: Vec<crate::iroh::RelayUrl>,
+        drop: Vec<crate::iroh::RelayUrl>,
     ) -> crate::iroh::Later<'_, ()> {
+        let mut met = self.wire.0.lock().unwrap();
+        let held = met.held.entry(*self.key.as_bytes()).or_default();
+        held.extend(add);
+        held.retain(|r| !drop.contains(r));
+        met.changed.0.send_modify(|n| *n += 1);
         Box::pin(async {})
     }
     fn send<'a>(
@@ -598,6 +692,52 @@ impl Node {
             crate::api::write_address(&dir, api.addr).map(|()| api)
         });
         Self::on_wire_serving(wire, (data_dir, key, seeds), (port, serve)).await
+    }
+
+    /// [`Node::on_wire`] met at `relay`'s build relays and the relays
+    /// `asked`, its round every `every`: its tiers decided as a started
+    /// node's are ([`crate::tiers`]), each relay's answer and registration
+    /// the wire's ([`Wire::relay`]).
+    pub async fn on_wire_relayed(
+        wire: &Wire,
+        (data_dir, key): (PathBuf, SigningKey),
+        relay: &RelayConfig,
+        asked: &[Url],
+        every: Duration,
+    ) -> Result<Self, NodeError> {
+        let public = SecretKey::from_bytes(&key.to_bytes()).public();
+        let [hi, lo, ..] = *public.as_bytes();
+        let port = 1024 + u16::from_be_bytes([hi, lo]) % 64_000;
+        let unbound: Serve = Box::new(move |_| {
+            Ok(crate::api::Serving {
+                addr: SocketAddr::from(([127, 0, 0, 1], port)),
+                _task: n0_future::task::AbortOnDropHandle::new(tokio::spawn(async {})),
+            })
+        });
+        let net = Arc::new(OnWire {
+            key: public,
+            wire: wire.clone(),
+        });
+        let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
+        let token = crate::api::kept_token(&data_dir)?;
+        let asked: std::collections::BTreeSet<Url> = asked.iter().cloned().collect();
+        let groups = rail.namespaces().unwrap_or_default();
+        let meeting = crate::tiers::everywhere(&rail, &groups, &relay.build(), &asked);
+        let (held, relays) = crate::tiers::Held::built(meeting, asked);
+        net.relays(relays.into_iter().map(Into::into).collect(), Vec::new())
+            .await;
+        let places = Some(data_dir.join("svrngs"));
+        let seeds: SeedText = |_| Ok(None);
+        Self::start_on(
+            net,
+            (data_dir, places),
+            rail,
+            (relay, held),
+            seeds,
+            (token, port, unbound),
+            every,
+        )
+        .await
     }
 
     /// A node on `wire` whose record API, at `port`, `serve` serves.

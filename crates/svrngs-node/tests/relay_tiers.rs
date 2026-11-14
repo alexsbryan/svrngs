@@ -11,6 +11,8 @@
 mod common;
 #[path = "common/cuttable.rs"]
 mod cuttable;
+#[path = "common/on_wire.rs"]
+mod on_wire;
 use cuttable::cuttable;
 
 use std::net::SocketAddr;
@@ -19,7 +21,7 @@ use std::time::{Duration, Instant};
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs_core::relay::Url;
 use svrngs_node::iroh::{build_relayed_endpoint, EndpointAddr, RelayConfig, RelayUrl, SecretKey};
-use svrngs_node::node::Node;
+use svrngs_node::node::{Node, Relaying};
 use svrngs_node::SigningKey;
 
 /// A plain-HTTP relay on 127.0.0.1 at `at` (port 0 for any), and its URL.
@@ -483,4 +485,248 @@ async fn a_fallback_this_computer_cannot_register_at_is_left() {
     eprintln!("TIERS at its own {at_a} of 180 half-seconds");
     assert!(at_a >= 108, "at A only {at_a} of 180 half-seconds");
     node.endpoint().close().await;
+}
+
+// ---- The tiers' decisions on one wire (common/on_wire.rs): each relay's
+// answer and registration the wire's (`Wire::relay`), the clock paused,
+// no relay process, socket or endpoint.
+
+/// The own relay and the build's, on the wire: names, never dialled.
+const A: &str = "http://127.0.0.1:1/";
+const B: &str = "http://127.0.0.1:2/";
+
+/// [`ada`] on this test's wire, her round every `every`.
+async fn ada_on_wire(build: &str, own: &str, every: Duration) -> (tempfile::TempDir, Node) {
+    let (dir, key) = (
+        tempfile::tempdir().unwrap(),
+        SigningKey::from_bytes(&[3; 32]),
+    );
+    let node = on_wire::relayed(key.clone(), dir.path(), build, &[], every).await;
+    let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
+    let seed = svrngs_node::group::draw(name("house"), name("Ada"), key.verifying_key());
+    let at_own = [own.parse::<Url>().unwrap()];
+    node.host()
+        .keep_group(&seed, None, &at_own)
+        .expect("Ada keeps house, met at her own relay");
+    (dir, node)
+}
+
+/// The relay `node`'s address names now.
+fn home(node: &Node) -> Option<String> {
+    node.net()
+        .addr()
+        .relay_urls()
+        .next()
+        .map(ToString::to_string)
+}
+
+/// [`homed`] on the wire's clock: the wait in ms.
+async fn homed_on(node: &Node, want: &str) -> u128 {
+    let (t, by) = (tokio::time::Instant::now(), homing_by());
+    while t.elapsed() < by {
+        if home(node).as_deref() == Some(want) {
+            return t.elapsed().as_millis();
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    panic!("not homed at {want} within {by:?}");
+}
+
+/// [`pressed`], `node`'s routes asked in this process.
+async fn pressed_on(node: &Node) -> String {
+    let (browser, home) = (
+        on_wire::Browser::of(node),
+        format!("svrngs.localhost:{}", node.api_addr().port()),
+    );
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let path = browser.path(&home, "/connection", &own);
+    let proof = browser.proof("POST", &home, &path, &own, "").await;
+    let asked = format!("POST {path} HTTP/1.1\r\nHost: {home}\r\n{own}{proof}Content-Length: 0\r\nConnection: close\r\n\r\n");
+    let (reply, _) = on_wire::raw(browser.api(), &asked).await;
+    let to = reply.lines().find_map(|l| {
+        l.to_ascii_lowercase()
+            .strip_prefix("location: ")
+            .map(str::to_string)
+    });
+    to.unwrap_or_else(|| panic!("no page to go to: {reply}"))
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_group_meets_at_the_builds_fallback_while_it_answers_on_the_wire() {
+    on_wire::relay(A, Relaying::Up);
+    on_wire::relay(B, Relaying::Up);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node) = ada_on_wire(B, A, every).await;
+    eprintln!(
+        "TIERS at the build's fallback while it answers: {} ms",
+        homed_on(&node, B).await
+    );
+    // Reached: the first ask, at the node's start, found her registered
+    // at B, as iroh's registration had by the time a real relay homed her.
+    tokio::time::sleep(Duration::from_secs(1)).await;
+    let away = tokio::time::Instant::now();
+    on_wire::relay(B, Relaying::Cut);
+    let mut back = false;
+    while away.elapsed() < Duration::from_secs(45) {
+        if away.elapsed() > Duration::from_secs(15) && !back {
+            on_wire::relay(B, Relaying::Up);
+            back = true;
+        }
+        assert_ne!(
+            home(&node).as_deref(),
+            Some(A),
+            "at A {:?} after the cut",
+            away.elapsed()
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    on_wire::relay(B, Relaying::Down);
+    eprintln!(
+        "TIERS the fallback stopped, at its own: {} ms",
+        homed_on(&node, A).await
+    );
+    on_wire::relay(B, Relaying::Up);
+    eprintln!(
+        "TIERS the fallback back, at the fallback: {} ms",
+        homed_on(&node, B).await
+    );
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_keeper_taking_away_the_last_relay_is_met_nowhere_near_it_again_on_the_wire() {
+    on_wire::relay(A, Relaying::Up);
+    on_wire::relay(B, Relaying::Cut);
+    let (dir, key) = (
+        tempfile::tempdir().unwrap(),
+        SigningKey::from_bytes(&[4; 32]),
+    );
+    let node = on_wire::relayed(key.clone(), dir.path(), B, &[], Duration::from_secs(1)).await;
+    let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
+    let seed = svrngs_node::group::draw(name("house"), name("Ada"), key.verifying_key());
+    let at_own = [A.parse::<Url>().unwrap()];
+    node.host().meet_at(&at_own).await;
+    node.host().keep_group(&seed, None, &at_own).unwrap();
+    homed_on(&node, A).await;
+
+    node.rail()
+        .commit(&seed.id(), &svrngs_core::MeetsAt(Default::default()))
+        .expect("the journal takes it")
+        .expect("the keeper's act counts");
+    let link = node.host().link(&seed.id(), false, None, None).unwrap();
+    assert!(
+        !link.token.relays.contains(&at_own[0]),
+        "a new link still carries A: {:?}",
+        link.token.relays
+    );
+    on_wire::relay(B, Relaying::Up);
+    homed_on(&node, B).await;
+    on_wire::relay(B, Relaying::Cut);
+    let (away, by) = (tokio::time::Instant::now(), homing_by());
+    while away.elapsed() < by {
+        assert_ne!(
+            home(&node).as_deref(),
+            Some(A),
+            "back at A {:?} after the cut",
+            away.elapsed()
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn pressed_with_the_fallback_cut_this_computer_moves_now_on_the_wire() {
+    on_wire::relay(A, Relaying::Up);
+    on_wire::relay(B, Relaying::Up);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node) = ada_on_wire(B, A, every).await;
+    homed_on(&node, B).await;
+    on_wire::relay(B, Relaying::Cut);
+    let t = tokio::time::Instant::now();
+    assert_eq!(pressed_on(&node).await, "/?view=computer&moved");
+    homed_on(&node, A).await;
+    let took = t.elapsed();
+    eprintln!("TIERS pressed, at its own: {took:?}");
+    let automatic = svrngs_node::tiers::ASKED_EVERY * svrngs_node::tiers::LEFT_AFTER;
+    assert!(
+        took < automatic,
+        "{took:?}, no sooner than the automatic move"
+    );
+    let group = node.rail().namespaces().unwrap().remove(0);
+    let journal = node
+        .rail()
+        .group_dir(&group)
+        .unwrap()
+        .join("ring_oplog.jsonl");
+    let says = |l: &str| l.contains(A) && !l.contains("\"relays\"");
+    let round = tokio::time::timeout(Duration::from_secs(5), async {
+        while !(std::fs::read_to_string(&journal).unwrap().lines()).any(says) {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    });
+    round.await.expect("the round fired says where she is now");
+    while t.elapsed() < took + svrngs_node::tiers::ASKED_EVERY + Duration::from_secs(6) {
+        assert_eq!(
+            home(&node).as_deref(),
+            Some(A),
+            "not kept at A {:?} after the press",
+            t.elapsed()
+        );
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn an_ask_under_way_does_not_undo_a_press_on_the_wire() {
+    on_wire::relay(A, Relaying::Up);
+    on_wire::relay(B, Relaying::Up);
+    let every = svrngs_node::tiers::ASKED_EVERY;
+    // The asks fall every ASKED_EVERY from the node's start.
+    let started = tokio::time::Instant::now();
+    let round = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node) = ada_on_wire(B, A, round).await;
+    homed_on(&node, B).await;
+    let lead = Duration::from_millis(1500);
+    let asks = started.elapsed().as_millis() / every.as_millis() + 2;
+    let due = started + every * asks as u32 - lead;
+    tokio::time::sleep_until(due).await;
+    on_wire::relay(B, Relaying::Cut);
+    assert_eq!(pressed_on(&node).await, "/?view=computer&moved");
+    let until = due + lead + svrngs_node::tiers::REGISTERED_WITHIN + Duration::from_secs(4);
+    while tokio::time::Instant::now() < until {
+        let held = node.tier_held();
+        assert!(held.contains("tier: Own"), "{held}");
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+}
+
+#[tokio::test(start_paused = true)]
+async fn pressed_with_the_fallback_answering_nothing_moves_on_the_wire() {
+    on_wire::relay(A, Relaying::Up);
+    on_wire::relay(B, Relaying::Up);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node) = ada_on_wire(B, A, every).await;
+    homed_on(&node, B).await;
+    assert_eq!(pressed_on(&node).await, "/?view=computer&stayed");
+    tokio::time::sleep(Duration::from_secs(5)).await;
+    homed_on(&node, B).await;
+}
+
+#[tokio::test(start_paused = true)]
+async fn a_fallback_this_computer_cannot_register_at_is_left_on_the_wire() {
+    on_wire::relay(A, Relaying::Up);
+    on_wire::relay(B, Relaying::Pings);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node) = ada_on_wire(B, A, every).await;
+    eprintln!(
+        "TIERS unregistered at the fallback, at its own: {} ms",
+        homed_on(&node, A).await
+    );
+    let (t, mut at_a) = (tokio::time::Instant::now(), 0);
+    while t.elapsed() < Duration::from_secs(90) {
+        tokio::time::sleep(Duration::from_millis(500)).await;
+        at_a += usize::from(home(&node).as_deref() == Some(A));
+    }
+    eprintln!("TIERS at its own {at_a} of 180 half-seconds");
+    assert!(at_a >= 108, "at A only {at_a} of 180 half-seconds");
 }
