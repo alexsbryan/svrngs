@@ -506,3 +506,60 @@ async fn a_round_never_cuts_over_a_group_half_kept() {
     host.cut_over(&ns);
     assert_eq!(meets(host), Some(own), "the keeper's MeetsAt stands");
 }
+
+/// **A home that passes through another relay and comes back is not said**
+/// (relay moves; svrn-docs `rings/current/INCREMENTAL_FOLD.md` §7): one
+/// computer's record held 594 `Relay` lines in 23 days, its home leaving
+/// usw1 for one round and coming back. Here Sam's home is A, then B for one
+/// ask and back to A, ten times, then B for two asks running: the group
+/// holds two of Sam's `Relay` lines, A's and B's, where saying each move
+/// wrote 22. Planted, watched red: a move said at the first ask that finds
+/// it (`moved` always false), as before.
+#[tokio::test]
+async fn a_home_that_flips_and_comes_back_is_said_once() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[97; 32]);
+    let seed = crate::group::draw(
+        crate::Name::parse("Trip").unwrap(),
+        crate::Name::parse("Sam").unwrap(),
+        key.verifying_key(),
+    );
+    let wire = Wire::default();
+    let node = Node::on_wire(&wire, dir.path().into(), key, crate::group::seed_text)
+        .await
+        .unwrap();
+    drop(node._round);
+    drop(node._tasks);
+    let (host, ns) = (&node.host, seed.id());
+    host.keep_group(&seed, None, &[]).unwrap();
+    let (a, b): (Url, Url) = (
+        "https://usw1.example/".parse().unwrap(),
+        "https://use1.example/".parse().unwrap(),
+    );
+    let lines = || {
+        let (ops, _) = (host.rail)
+            .ops_missing_from_within(&ns, &Default::default(), usize::MAX)
+            .unwrap();
+        let said = |op: &&svrngs_runtime::Op<svrngs_runtime::SignedOp>| {
+            op.actor == host.actor && matches!(op.kind.act, svrngs_core::RailAct::Relay { .. })
+        };
+        ops.iter().filter(said).count()
+    };
+    let named = || match host.rail.standing(&ns).unwrap() {
+        Standing::Members(m) => m[&host.actor].relay.clone(),
+        other => panic!("Sam stands in Trip: {other:?}"),
+    };
+    assert!(host.say_relay(Some(a.clone())), "a first say is at once");
+    for _ in 0..10 {
+        host.say_relay(Some(b.clone()));
+        host.say_relay(Some(a.clone()));
+    }
+    assert_eq!(
+        (lines(), named()),
+        (1, Some(a)),
+        "A, passed through B and back"
+    );
+    assert!(!host.say_relay(Some(b.clone())), "one ask at B");
+    assert!(host.say_relay(Some(b.clone())), "two asks running at B");
+    assert_eq!((lines(), named()), (2, Some(b)), "A, then B");
+}

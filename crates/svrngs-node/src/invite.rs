@@ -114,7 +114,7 @@ impl Host {
         let token = draw(self.transport.id(), relays);
         // Where this computer is reached, in the record before a joiner
         // pulls it, so the joiner can dial it back (relay-in-record).
-        self.say_relay();
+        self.say_relay(self.home());
         let mint = MintInvite {
             key: actor_of(&token.key()),
             until: now + LINK_LIFE_SECS,

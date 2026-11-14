@@ -291,7 +291,7 @@ pub async fn run_one_round(
     // out in this round (relay-in-record); and where its groups meet read
     // again, so a keeper's new list is met from this round on (relay
     // fallbacks).
-    host.say_relay();
+    host.say_relay(host.home());
     host.refresh();
     host.decide(None).await;
 

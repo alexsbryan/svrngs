@@ -239,7 +239,7 @@ impl Host {
     }
 
     /// This computer's home relay now, if it has reached one.
-    pub(crate) fn home(&self) -> Option<Url> {
+    pub fn home(&self) -> Option<Url> {
         self.transport
             .addr()
             .relay_urls()

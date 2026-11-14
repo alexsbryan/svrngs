@@ -272,6 +272,9 @@ pub struct Host {
     pub(crate) build: Vec<Url>,
     /// What its endpoint holds now, at which tier ([`crate::tiers`]).
     pub(crate) held: tokio::sync::watch::Sender<crate::tiers::Held>,
+    /// The home the last [`Host::say_relay`] was asked to say, which the
+    /// next reads to tell a home that stayed from one passing through.
+    asked: tokio::sync::watch::Sender<Option<Url>>,
     /// The record API's port, where each lend has its origin (u5-2).
     pub(crate) api_port: u16,
     /// Held while a link is minted, and across `new`'s keeping of a group
@@ -400,6 +403,7 @@ impl Node {
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             build: relay.build(),
             held: tokio::sync::watch::Sender::new(held),
+            asked: tokio::sync::watch::Sender::new(None),
             api_port,
             minting: Default::default(),
             meeting: Default::default(),
@@ -610,24 +614,37 @@ impl Host {
         // A joiner says its relay once the exchange brought its admission,
         // and takes it to the peer in a second: until one member holds it,
         // no member can dial this computer (relay-in-record).
-        if out.stop.is_none() && self.say_relay() {
+        if out.stop.is_none() && self.say_relay(self.home()) {
             out.pushed += exchange(to, &self.rail, namespace).await.pushed;
         }
         out
     }
 
-    /// Say in each group held where this computer is reached — its home
-    /// relay, or none when it reaches the network through none — by
-    /// svrngs-core's `RelayAt`, which writes only when the record says
-    /// otherwise (relay-in-record). With relays and none reached yet it
-    /// says nothing, so a computer starting never withdraws its relay.
+    /// Say in each group held where this computer is reached — `home`, its
+    /// home relay ([`Host::home`]), or none when it reaches the network
+    /// through none — by svrngs-core's `RelayAt`, which writes only when the
+    /// record says otherwise (relay-in-record). With relays and none reached
+    /// yet it says nothing, so a computer starting never withdraws its relay.
     /// Whether anything was written.
-    pub fn say_relay(&self) -> bool {
-        let home = self.home();
+    ///
+    /// A move off the relay the record names is said once two asks running
+    /// find the new home. iroh moves a home for one net report and back: a
+    /// full report (every 5 min) chooses with no hysteresis, its last report
+    /// dropped (iroh-1.0.2 net_report.rs:316-317, 749-751), and an
+    /// incremental one, done after one probe (:715-730), skips it when the
+    /// home's probe is not among them (:808-815). Each such move said was a
+    /// signed line held forever: 594 in 23 days from one computer (svrn-docs
+    /// `rings/current/INCREMENTAL_FOLD.md` §7). Until the move is said the
+    /// relay named still reaches this computer, as iroh keeps an old home
+    /// until it is idle 60 s (socket/transports/relay/actor.rs:65, 473), and
+    /// a member dials its group's relays beside it ([`Contact::named`]). A
+    /// first say is at once: until a member holds one, none can dial here.
+    pub fn say_relay(&self, home: Option<Url>) -> bool {
         if home.is_none() && self.relayed {
             tracing::debug!(target: "node", "node: no relay reached yet, so the record keeps what it says of this computer");
             return false;
         }
+        let stayed = self.asked.send_replace(home.clone()) == home;
         let at = svrngs_core::RelayAt {
             key: self.actor.clone(),
             url: home,
@@ -642,9 +659,11 @@ impl Host {
             // its lock, which every idle round paid (scale.rs's ceiling, 0.59 s
             // at 42e36ca against 0.02 s before). The core still decides a move.
             if let Ok(Standing::Members(m)) = self.rail.standing(&namespace) {
-                if m.get(&self.actor).is_some_and(|me| me.relay == at.url) {
-                    tracing::debug!(target: "node", namespace, url = ?at.url,
-                        "node: the group already names this computer's relay, so nothing is committed");
+                let named = m.get(&self.actor).map(|me| &me.relay);
+                let moved = named.is_some_and(Option::is_some) && !stayed;
+                if named == Some(&at.url) || moved {
+                    tracing::debug!(target: "node", namespace, url = ?at.url, ?named, stayed,
+                        "node: the group names this computer's relay, or keeps the one it names while the home moved since the last ask, so nothing is committed");
                     continue;
                 }
             }
