@@ -3,7 +3,7 @@
 //! are asked, not stored"): A's `/lends`, a member's computer's own list
 //! with where to reach each lend, and the people's lends A asks of each
 //! lender's computer, each with its key and relay. One crossing, five
-//! computers on loopback; what each list keeps or leaves out is judged on
+//! computers on one wire (common/on_wire.rs), A's service answered there; what each list keeps or leaves out is judged on
 //! its own (`src/lend/tests.rs` `a_lend_is_listed_only_through_a_group_it_is_lent_to`,
 //! `declarations_that_cannot_be_read_are_an_error_never_none`;
 //! `src/door/limit/tests.rs`). Each step names the test it came from,
@@ -34,7 +34,7 @@ async fn lends_of(pair: &Pair) -> Vec<(String, String, u64, u64)> {
 /// An origin that answers a request's head and first chunk, then holds the
 /// rest of its answer until `release` fires.
 async fn held_origin() -> (SocketAddr, tokio::sync::oneshot::Sender<()>) {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let mut listener = origins::Listener::bind().await;
     let addr = listener.local_addr().unwrap();
     let (release, released) = tokio::sync::oneshot::channel::<()>();
     tokio::spawn(async move {
@@ -75,27 +75,19 @@ async fn peoples(pair: &Pair) -> serde_json::Value {
 /// relay.
 #[tokio::test]
 async fn what_is_lent_is_asked_of_each_computer_now() {
-    let (pair, heads) = lending_heads().await;
+    let (pair, heads) = lending_heads(true).await;
 
     // a_member_asks_what_is_lent_and_how_many_use_it_now (main.rs:722-768).
     let (origin, release) = held_origin().await;
     pair.lend("slow", origin.port(), &[]);
     let row = |name: &str, using| (name.to_string(), "k".to_string(), 3, using);
     assert_eq!(lends_of(&pair).await, vec![row("shelf", 0), row("slow", 0)]);
-    let mut sock = tokio::net::TcpStream::connect(pair.bridge).await.unwrap();
-    sock.write_all(b"GET /lend/slow/x HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n")
-        .await
-        .unwrap();
-    let mut got = Vec::new();
-    while !got.windows(5).any(|w| w == b"hello") {
-        let mut buf = [0u8; 256];
-        let n = tokio::time::timeout(Duration::from_secs(20), sock.read(&mut buf))
-            .await
-            .expect("the first chunk comes through")
-            .unwrap();
-        assert!(n > 0, "the answer ended early: {got:?}");
-        got.extend_from_slice(&buf[..n]);
-    }
+    // The answer's head and first chunk read, the rest held.
+    let asked = "GET /lend/slow/x HTTP/1.1\r\nHost: local\r\nConnection: close\r\n\r\n";
+    let (_, mut body) = on_wire::raw_held(pair.bridge, asked).await.expect("let in");
+    let first = http_body_util::BodyExt::frame(&mut body).await;
+    let first = first.expect("the first chunk comes through").unwrap();
+    assert_eq!(first.data_ref().map(|d| &d[..]), Some(&b"hello"[..]));
     let slow = |l: &Vec<(String, String, u64, u64)>| l.iter().find(|x| x.0 == "slow").unwrap().3;
     assert_eq!(
         slow(&lends_of(&pair).await),
@@ -103,7 +95,7 @@ async fn what_is_lent_is_asked_of_each_computer_now() {
         "bo is using it while it streams"
     );
     release.send(()).unwrap();
-    sock.read_to_end(&mut got).await.unwrap();
+    axum::body::to_bytes(body, usize::MAX).await.unwrap();
     assert_eq!(
         slow(&lends_of(&pair).await),
         1,
@@ -144,11 +136,7 @@ async fn what_is_lent_is_asked_of_each_computer_now() {
             .collect(),
     );
     pair.b.rail().set_seed(NS, &seed).unwrap();
-    let mut addr = svrngs_node::iroh::EndpointAddr::new(pair.a.endpoint().id());
-    for a in loopback_sockets(pair.a.endpoint()) {
-        addr = addr.with_ip_addr(a);
-    }
-    let synced = pair.b.host().sync_with(NS, &addr).await;
+    let synced = pair.b.host().sync_with(NS, &pair.addr()).await;
     assert!(synced.stop.is_none(), "{synced:?}");
     let lends = pair.b.lends().await;
     let unanswered = lends.unlisted.unanswered.iter().map(|n| &n.person);
@@ -164,19 +152,15 @@ async fn what_is_lent_is_asked_of_each_computer_now() {
         ("shelf", "k")
     );
     assert_eq!(lent.offered.using, 0);
-    let label = svrngs_core::pass::Label::of(pair.a.endpoint().id().as_bytes(), "shelf");
+    let label = svrngs_core::pass::Label::of(pair.a.net().id().as_bytes(), "shelf");
     let host = format!("{label}.localhost");
     assert_eq!(
         lent.address,
         format!("http://{host}:{}/", pair.b.api_addr().port())
     );
-    let http = reqwest::Client::builder()
-        .no_proxy()
-        .resolve(&host, pair.b.api_addr())
-        .build()
-        .unwrap();
-    // As a program on B asks it, with B's token (give-session).
-    let reply = http
+    // As a program on B asks it, with B's token (give-session), its name
+    // resolved to B's API, in this process.
+    let reply = on_wire::http()
         .get(format!("{}whoami", lent.address))
         .bearer_auth(pair.b.token().trim())
         .send()
@@ -268,7 +252,7 @@ async fn what_is_lent_is_asked_of_each_computer_now() {
         "a folder's fetch and the origin, then the round and the lend asks"
     );
     for node in [cy, eve] {
-        node.endpoint().close().await;
+        node.net().close().await;
     }
     pair.close().await;
 }

@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The identity tests: ported from commonwealth-ai commonwealth/crates/commonwealth-transport/src/iroh_identity_forward.rs@e1a43bcd2
 //! The member door, through it (DESIGN §3; PLAN §4, U3's inventory; the u3-4
-//! row): the door working across QUIC, each test a contained one
-//! (docs/CHECKS.md, "Seam migration ledger", unit 2). A lends a service on
-//! its loopback; a key standing in A's group dials A by key and asks through
-//! a loopback bridge, as a member's browser will. Nodes in one process, no
-//! relay, each listening on 127.0.0.1 alone: on a wildcard, iroh may carry
-//! the requests on this computer's private address, and the door guesses a
-//! viewer there is home and counts no one (ralph/REVIEW_FINDINGS.md #33).
+//! row) (docs/CHECKS.md, "Seam migration ledger", unit 2). A lends a
+//! service; a key standing in A's group dials A by key and asks, as a
+//! member's browser will. What the door decides is asked on one wire
+//! (common/on_wire.rs): A's services answered there (harness 2), each key's
+//! ask a wire's bridge, no socket (the forged identity, the refusals, the
+//! lists, the authorize path). Over QUIC, each its seam's own: bytes both
+//! ways, a live answer cut, a newcomer while a computer sleeps; nodes in one
+//! process, no relay, each listening on 127.0.0.1 alone: on a wildcard, iroh
+//! may carry the requests on this computer's private address, and the door
+//! guesses a viewer there is home and counts no one
+//! (ralph/REVIEW_FINDINGS.md #33).
 //!
 //! Each rule the door applies is judged on its own from explicit inputs in
 //! `src/door/tests.rs`, `src/oidc/tests.rs`, `src/door/limit/tests.rs`,
@@ -24,6 +28,8 @@ mod lists;
 mod live;
 mod newcomer;
 mod oidc;
+#[path = "../common/on_wire.rs"]
+mod on_wire;
 mod origins;
 mod refusals;
 
@@ -79,14 +85,31 @@ struct Pair {
     dir: tempfile::TempDir,
     _db: tempfile::TempDir,
     bridge: SocketAddr,
+    /// Whether A and B meet on this test's wire ([`Pair::on_wire`]).
+    wire: bool,
 }
 
 impl Pair {
     /// A founds the group as ada and admits bo, B's key.
     async fn new() -> Self {
+        Self::of(false).await
+    }
+
+    /// [`Pair::new`] with A and B on this test's wire, A's services
+    /// answered there (harness 2), B's bridge a wire's: no socket.
+    async fn on_wire() -> Self {
+        Self::of(true).await
+    }
+
+    async fn of(wire: bool) -> Self {
         let (dir, db) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
-        let a = start(1, dir.path()).await;
-        let b = start(2, db.path()).await;
+        let (a, b) = match wire {
+            true => (
+                on_wire::start(1, dir.path()).await,
+                on_wire::start(2, db.path()).await,
+            ),
+            false => (start(1, dir.path()).await, start(2, db.path()).await),
+        };
         let seed = Roster::new(
             [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
                 .into_iter()
@@ -99,6 +122,20 @@ impl Pair {
                 .id
                 .clone()
         });
+        if wire {
+            answer_at_a();
+            let bo = signing(2);
+            let bridge = on_wire::bridge_as(&bo, &a, svrngs_core::alpn::Alpn::Member);
+            let bridge = bridge.await.local_addr();
+            return Pair {
+                a,
+                b,
+                dir,
+                _db: db,
+                bridge,
+                wire,
+            };
+        }
         Self::dialling(a, b, dir, db).await
     }
 
@@ -120,6 +157,7 @@ impl Pair {
             dir,
             _db: db,
             bridge,
+            wire: false,
         }
     }
 
@@ -139,6 +177,9 @@ impl Pair {
 
     /// One raw request through B's bridge; the whole reply, scanned.
     async fn raw(&self, request: &[u8]) -> Reply {
+        if self.wire {
+            return raw_to(self.bridge, String::from_utf8_lossy(request).into_owned()).await;
+        }
         let mut sock = tokio::net::TcpStream::connect(self.bridge).await.unwrap();
         sock.write_all(request).await.unwrap();
         let mut reply = Vec::new();
@@ -147,6 +188,17 @@ impl Pair {
             .expect("the door answers")
             .unwrap();
         Reply::of(reply)
+    }
+
+    /// Where B dials A: its key, and on loopback its sockets.
+    fn addr(&self) -> svrngs_node::iroh::EndpointAddr {
+        let mut addr = svrngs_node::iroh::EndpointAddr::new(self.a.net().id());
+        if !self.wire {
+            for at in loopback_sockets(self.a.endpoint()) {
+                addr = addr.with_ip_addr(at);
+            }
+        }
+        addr
     }
 
     async fn get(&self, path: &str, headers: &str) -> Reply {
@@ -158,7 +210,7 @@ impl Pair {
     }
 
     async fn close(self) {
-        self.a.endpoint().close().await;
+        self.a.net().close().await;
     }
 }
 
@@ -202,8 +254,8 @@ fn header_values<'a>(head: &'a str, name: &str) -> Vec<&'a str> {
 }
 
 /// A, lending the head-keeping origin as `shelf` with [`SECRET`].
-async fn lending_heads() -> (Pair, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
-    let pair = Pair::new().await;
+async fn lending_heads(wire: bool) -> (Pair, std::sync::Arc<std::sync::Mutex<Vec<String>>>) {
+    let pair = Pair::of(wire).await;
     let (origin, heads) = origins::head_origin().await;
     pair.lend("shelf", origin.port(), &["/Auth/Keys"]);
     pair.secret("shelf", "authorization", SECRET);
@@ -226,10 +278,24 @@ fn last(heads: &std::sync::Mutex<Vec<String>>) -> String {
 struct World {
     a: Node,
     dir: tempfile::TempDir,
+    /// Whether A is on this test's wire (common/on_wire.rs), its services
+    /// answered there: each key's ask is then a wire's bridge.
+    wire: bool,
 }
 
 impl World {
     async fn new(before: impl FnOnce(&std::path::Path)) -> Self {
+        Self::of(before, false).await
+    }
+
+    /// [`World::new`] with A on this test's wire, each stub of origins.rs
+    /// answered at A's ports there (harness 2): no socket, endpoint or
+    /// relay.
+    async fn on_wire(before: impl FnOnce(&std::path::Path)) -> Self {
+        Self::of(before, true).await
+    }
+
+    async fn of(before: impl FnOnce(&std::path::Path), wire: bool) -> Self {
         let dir = tempfile::tempdir().unwrap();
         let rail = svrngs_runtime::RingRail::new(dir.path(), std::sync::Arc::new(signing(1)));
         let people = |list: &[(&str, &[u8])]| {
@@ -254,8 +320,14 @@ impl World {
         }
         drop(rail);
         before(dir.path());
-        let a = start(1, dir.path()).await;
-        World { a, dir }
+        let a = match wire {
+            true => on_wire::start(1, dir.path()).await,
+            false => start(1, dir.path()).await,
+        };
+        if wire && !origins::answering() {
+            answer_at_a();
+        }
+        World { a, dir, wire }
     }
 
     /// A lends `name` as `body` declares it.
@@ -273,12 +345,15 @@ impl World {
 
     /// A port that dials A as `key` on `alpn`.
     async fn as_key(&self, key: u8, alpn: svrngs_core::alpn::Alpn) -> SocketAddr {
-        bridge_as(&signing(key), &self.a, alpn).await.local_addr()
+        match self.wire {
+            true => (on_wire::bridge_as(&signing(key), &self.a, alpn).await).local_addr(),
+            false => bridge_as(&signing(key), &self.a, alpn).await.local_addr(),
+        }
     }
 
     /// The label of A's lend `name`.
     fn label(&self, name: &str) -> svrngs_core::pass::Label {
-        svrngs_core::pass::Label::of(self.a.endpoint().id().as_bytes(), name)
+        svrngs_core::pass::Label::of(self.a.net().id().as_bytes(), name)
     }
 
     /// `person`, key `seed`, let into `ns` by A's keeper.
@@ -314,6 +389,13 @@ impl World {
         let recorded = self.a.rail().commit(NS, &fixture).unwrap().unwrap();
         recorded.lines()[0].id.clone()
     }
+}
+
+/// This thread's stubs answered at A's ports on the wire (origins.rs
+/// `answer_on`), A being key 1 whether or not it has started.
+fn answer_at_a() {
+    let key = svrngs_node::iroh::SecretKey::from_bytes(&signing(1).to_bytes()).public();
+    origins::answer_on(move |port| on_wire::listen(key, port));
 }
 
 /// Sam's visit key, which Sam's page makes fresh for a visit.
@@ -495,7 +577,10 @@ fn lends_on(dir: &std::path::Path, name: &str, port: u16) {
 /// `node` stands in `ns`, founded by ada, and A knows where it listens.
 async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfile::TempDir) {
     let dir = tempfile::tempdir().unwrap();
-    let node = start(seed, dir.path()).await;
+    let node = match pair.wire {
+        true => on_wire::start(seed, dir.path()).await,
+        false => start(seed, dir.path()).await,
+    };
     let roster = Roster::new(
         [(Person::parse("ada").unwrap(), vec![actor_of(&signing(1))])]
             .into_iter()
@@ -511,16 +596,15 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
             .id
             .clone()
     });
-    pair.a
-        .transport()
-        .add_known_peer(node.endpoint().id(), loopback_sockets(node.endpoint()));
+    if !pair.wire {
+        pair.a
+            .transport()
+            .add_known_peer(node.endpoint().id(), loopback_sockets(node.endpoint()));
+    }
     // Its admission in its own record too, synced from A as a computer that
     // joined holds it: one its record does not name lends nothing through
     // that group (door.rs `lends`, `reached`).
-    let mut a = svrngs_node::iroh::EndpointAddr::new(pair.a.endpoint().id());
-    for at in loopback_sockets(pair.a.endpoint()) {
-        a = a.with_ip_addr(at);
-    }
+    let a = pair.addr();
     let synced = node.host().sync_with(ns, &a).await;
     assert!(synced.stop.is_none(), "{synced:?}");
     (node, dir)
@@ -528,6 +612,10 @@ async fn beside(pair: &Pair, ns: &str, seed: u8, person: &str) -> (Node, tempfil
 
 /// One raw request to `addr`; the whole reply, scanned.
 async fn raw_to(addr: SocketAddr, request: String) -> Reply {
+    if on_wire::bridged(addr) {
+        let (head, body) = on_wire::raw(addr, &request).await;
+        return Reply::of(format!("{head}{body}").into_bytes());
+    }
     let mut sock = tokio::net::TcpStream::connect(addr).await.unwrap();
     sock.write_all(request.as_bytes()).await.unwrap();
     let mut reply = Vec::new();
@@ -1021,5 +1109,5 @@ async fn a_forged_identity_header_is_replaced_by_the_verified_one() {
         !pages.contains(NS),
         "Sam's open was told the group's page: {pages}"
     );
-    world.a.endpoint().close().await;
+    world.a.net().close().await;
 }

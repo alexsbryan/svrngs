@@ -245,7 +245,9 @@ Movie Night's startup is B's own: a module held in flight.
    (`Wire::listen`; on_wire.rs `serve` answers it with a stub); the HTTP
    door and the TCP door both dial through it. Paid for by `connected`'s
    two warn arms made one, so the count did not move. lend_origin's 7,
-   session's 4 and carried's 5 (its lent services) on the wire; kept there, the WebSocket through two doors (Q) and the
+   session's 4, carried's 5 (its lent services) and the door's 4 (the
+   forged identity, the refusals, the lists, the authorize path; origins.rs
+   `answer_on`) on the wire; kept there, the WebSocket through two doors (Q) and the
    dial's cap on a slow and an asleep path (C's contained test).
 3. A `Door` without a `Host`: `Folders::start` needs a bound endpoint
    (folder.rs `start`), so even an in-process door binds QUIC today.

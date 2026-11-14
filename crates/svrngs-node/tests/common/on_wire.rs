@@ -211,7 +211,7 @@ where
     F: Fn(tokio::io::DuplexStream) -> Fut + Send + 'static,
     Fut: std::future::Future<Output = ()> + Send + 'static,
 {
-    let mut at = WIRE.with(|w| w.listen(node.net().id(), port));
+    let mut at = listen(node.net().id(), port);
     tokio::spawn(async move {
         while let Some(conn) = at.recv().await {
             tokio::spawn(answer(conn));
@@ -223,31 +223,46 @@ where
 /// program's socket sends it: the answer's head, its status line and a
 /// line per header up to the blank line, and its body whole.
 pub async fn raw(api: SocketAddr, text: &str) -> (String, String) {
+    let answer = asked_raw(api, text)
+        .send()
+        .await
+        .expect("a node's own routes answer");
+    let said = head_of(answer.status, &answer.headers);
+    (said, String::from_utf8_lossy(&answer.body).into_owned())
+}
+
+/// [`raw`] with the answer's body still to read, a stream held: its head
+/// as [`raw`] says it; or the acceptor's refusal.
+pub async fn raw_held(at: SocketAddr, text: &str) -> Result<(String, axum::body::Body), Unsent> {
+    let (head, body) = asked_raw(at, text).sent().await?.into_parts();
+    Ok((head_of(head.status, &head.headers), body))
+}
+
+/// The request a raw request's `text` is, asked at `at`.
+fn asked_raw(at: SocketAddr, text: &str) -> Asked {
     let (head, body) = text.split_once("\r\n\r\n").unwrap_or((text, ""));
     let mut lines = head.split("\r\n");
     let mut line = lines.next().unwrap().split_whitespace();
     let (method, path) = (line.next().unwrap(), line.next().unwrap());
-    let mut asked = http().request(method.parse().unwrap(), format!("http://{api}{path}"));
+    let mut asked = http().request(method.parse().unwrap(), format!("http://{at}{path}"));
     for (name, value) in lines.filter_map(|l| l.split_once(':')) {
         let name = axum::http::HeaderName::from_bytes(name.trim().as_bytes()).unwrap();
         asked.headers.insert(name, value.trim().parse().unwrap());
     }
-    let answer = asked
-        .body(body)
-        .send()
-        .await
-        .expect("a node's own routes answer");
-    let status = answer.status();
+    asked.body(body)
+}
+
+/// An answer's status line and a line per header, to the blank line.
+fn head_of(status: StatusCode, headers: &HeaderMap) -> String {
     let mut said = format!(
         "HTTP/1.1 {} {}\r\n",
         status.as_u16(),
         status.canonical_reason().unwrap_or_default()
     );
-    for (name, value) in answer.headers() {
+    for (name, value) in headers {
         said += &format!("{name}: {}\r\n", value.to_str().unwrap_or_default());
     }
-    said += "\r\n";
-    (said, String::from_utf8_lossy(&answer.body).into_owned())
+    said + "\r\n"
 }
 
 /// No path on this test's wire from `from`'s computer to `to`'s, as when
@@ -336,6 +351,20 @@ pub async fn bridge_as(key: &SigningKey, to: &Node, alpn: Alpn) -> Bridge {
     })
 }
 
+/// Whether `at` is a [`bridge_as`] address on this test's wire.
+pub fn bridged(at: SocketAddr) -> bool {
+    BRIDGES.with(|b| b.borrow().contains_key(&at))
+}
+
+/// `key`'s computer's connections at `port` on this test's wire
+/// ([`Wire::listen`]): each one a pipe's end, as a listener accepts.
+pub fn listen(
+    key: PublicKey,
+    port: u16,
+) -> tokio::sync::mpsc::UnboundedReceiver<tokio::io::DuplexStream> {
+    WIRE.with(|w| w.listen(key, port))
+}
+
 /// [`bridge_as`]'s address, read as the bridge's port was.
 pub struct Bridge(SocketAddr);
 
@@ -421,33 +450,36 @@ impl Asked {
     /// a [`bridge_as`] address, of the computer it reaches, as its key.
     /// Refused at the acceptor, it is the error a closed connection is.
     pub async fn send(self) -> Result<Answer, Unsent> {
-        let mut req = axum::http::Request::builder()
-            .method(self.method)
-            .uri(&self.path);
-        *req.headers_mut().unwrap() = self.headers;
-        let mut req = req.body(axum::body::Body::from(self.body)).unwrap();
-        let bridged = BRIDGES.with(|b| b.borrow().get(&self.at).cloned());
-        let answer = if let Some((key, to, alpn)) = bridged {
-            let wire = WIRE.with(Clone::clone);
-            wire.ask_as(&key, &to, alpn, req).await?
-        } else {
-            let routes = APIS.with(|a| a.borrow().get(&self.at).map(|(_, r)| r.clone()));
-            let routes = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
-            let caller = SocketAddr::from(([127, 0, 0, 1], 50_000));
-            req.extensions_mut()
-                .insert(axum::extract::ConnectInfo(caller));
-            routes
-                .oneshot(req)
-                .await
-                .unwrap_or_else(|never| match never {})
-        };
-        let (head, body) = answer.into_parts();
+        let (head, body) = self.sent().await?.into_parts();
         let body = axum::body::to_bytes(body, usize::MAX).await.unwrap();
         Ok(Answer {
             status: head.status,
             headers: head.headers,
             body,
         })
+    }
+
+    /// [`Asked::send`], its answer's body still to read: a stream held.
+    pub async fn sent(self) -> Result<axum::response::Response, Unsent> {
+        let mut req = axum::http::Request::builder()
+            .method(self.method)
+            .uri(&self.path);
+        *req.headers_mut().unwrap() = self.headers;
+        let mut req = req.body(axum::body::Body::from(self.body)).unwrap();
+        let bridged = BRIDGES.with(|b| b.borrow().get(&self.at).cloned());
+        if let Some((key, to, alpn)) = bridged {
+            let wire = WIRE.with(Clone::clone);
+            return wire.ask_as(&key, &to, alpn, req).await;
+        }
+        let routes = APIS.with(|a| a.borrow().get(&self.at).map(|(_, r)| r.clone()));
+        let routes = routes.unwrap_or_else(|| panic!("no node's API at {}", self.at));
+        let caller = SocketAddr::from(([127, 0, 0, 1], 50_000));
+        req.extensions_mut()
+            .insert(axum::extract::ConnectInfo(caller));
+        Ok(routes
+            .oneshot(req)
+            .await
+            .unwrap_or_else(|never| match never {}))
     }
 }
 

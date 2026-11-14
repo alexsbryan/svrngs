@@ -44,10 +44,7 @@ pub fn byte_at(i: u64) -> u8 {
 /// draft of this campaign shipped with.
 /// (svrngs: the header it judges is `header`, lowercase.)
 pub async fn picky_origin(header: &'static str, token: &'static str) -> std::net::SocketAddr {
-    let listener = match tokio::net::TcpListener::bind("127.0.0.1:0").await {
-        Ok(l) => l,
-        Err(e) => panic!("the picky origin could not bind: {e}"),
-    };
+    let mut listener = Listener::bind().await;
     let addr = match listener.local_addr() {
         Ok(a) => a,
         Err(e) => panic!("the picky origin has no local addr: {e}"),
@@ -228,7 +225,7 @@ async fn serve_http(
 /// received in `x-seen-authorization`, as a careless service might, so every
 /// test through it watches the door keep a secret from going back.
 pub async fn head_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
-    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let mut listener = Listener::bind().await;
     let addr = listener.local_addr().unwrap();
     let heads = Arc::new(Mutex::new(Vec::new()));
     let kept = heads.clone();
@@ -273,7 +270,7 @@ pub async fn answer_head(mut sock: impl Conn, kept: Arc<Mutex<Vec<String>>>) {
 /// (`x-svrngs-refused: pass`), which the door must drop: the lend's word
 /// is the lend's.
 pub async fn refusing_origin() -> SocketAddr {
-    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let mut listener = Listener::bind().await;
     let addr = listener.local_addr().unwrap();
     tokio::spawn(async move {
         while let Ok((mut sock, _)) = listener.accept().await {
@@ -352,7 +349,7 @@ pub async fn upload_origin() -> (SocketAddr, tokio::sync::oneshot::Receiver<()>)
 /// someone reads it, as a player's stream is fed, and any other path with
 /// 200 `ok` at once.
 pub async fn streaming_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
-    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let mut listener = Listener::bind().await;
     let addr = listener.local_addr().unwrap();
     let heads = Arc::new(Mutex::new(Vec::new()));
     let kept = heads.clone();
@@ -388,6 +385,77 @@ pub async fn streaming_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
     (addr, heads)
 }
 
+thread_local! {
+    /// Where this thread's stubs are answered in place of a loopback port
+    /// ([`answer_on`]): the next port, and what listens at one.
+    static ON: std::cell::RefCell<Option<(u16, Listens)>> = Default::default();
+}
+
+/// What listens at a port on a wire ([`answer_on`]).
+type Listens = std::rc::Rc<dyn Fn(u16) -> Pipes>;
+
+/// A wire's connections to one port, one pipe's end each
+/// (`Wire::listen`, docs/CHECKS.md harness 2).
+pub type Pipes = tokio::sync::mpsc::UnboundedReceiver<tokio::io::DuplexStream>;
+
+/// This thread's stubs answered on a wire from here on, each at a port of
+/// its own from 9001, `listen` giving its connections: no port is bound.
+#[allow(
+    dead_code,
+    reason = "only the binaries whose computers meet on a wire ask it"
+)]
+pub fn answer_on(listen: impl Fn(u16) -> Pipes + 'static) {
+    ON.with(|on| *on.borrow_mut() = Some((9000, std::rc::Rc::new(listen))));
+}
+
+/// Whether this thread's stubs are answered on a wire ([`answer_on`]).
+#[allow(
+    dead_code,
+    reason = "only the binaries whose computers meet on a wire ask it"
+)]
+pub fn answering() -> bool {
+    ON.with(|on| on.borrow().is_some())
+}
+
+/// Where a stub takes its connections: a loopback port, or a wire's pipes
+/// when this thread answers on one ([`answer_on`]).
+pub enum Listener {
+    Port(TcpListener),
+    Wire(u16, Pipes),
+}
+
+impl Listener {
+    pub async fn bind() -> Self {
+        let on = ON.with(|on| {
+            let mut on = on.borrow_mut();
+            let (next, listen) = on.as_mut()?;
+            *next += 1;
+            Some((*next, listen.clone()))
+        });
+        match on {
+            Some((port, listen)) => Self::Wire(port, listen(port)),
+            None => Self::Port(TcpListener::bind("127.0.0.1:0").await.expect("bind")),
+        }
+    }
+
+    pub fn local_addr(&self) -> std::io::Result<SocketAddr> {
+        match self {
+            Self::Port(l) => l.local_addr(),
+            Self::Wire(port, _) => Ok(SocketAddr::from(([127, 0, 0, 1], *port))),
+        }
+    }
+
+    pub async fn accept(&mut self) -> std::io::Result<(Box<dyn svrngs_node::iroh::Duplex>, ())> {
+        match self {
+            Self::Port(l) => Ok((Box::new(l.accept().await?.0), ())),
+            Self::Wire(_, pipes) => match pipes.recv().await {
+                Some(pipe) => Ok((Box::new(pipe), ())),
+                None => Err(std::io::ErrorKind::NotConnected.into()),
+            },
+        }
+    }
+}
+
 /// A request head off `sock`, up to its blank line.
 pub async fn read_head(sock: &mut (impl AsyncReadExt + Unpin)) -> Option<String> {
     let mut head = Vec::new();
@@ -408,7 +476,7 @@ pub async fn read_head(sock: &mut (impl AsyncReadExt + Unpin)) -> Option<String>
 /// request is answered 426 naming the upgrade it wants. It keeps each
 /// request head.
 pub async fn upgrade_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
-    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let mut listener = Listener::bind().await;
     let addr = listener.local_addr().unwrap();
     let heads = Arc::new(Mutex::new(Vec::new()));
     let kept = heads.clone();
@@ -430,7 +498,7 @@ pub async fn upgrade_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
                 if sock.write_all(yes).await.is_err() {
                     return;
                 }
-                let (mut r, mut w) = sock.split();
+                let (mut r, mut w) = tokio::io::split(sock);
                 let _ = tokio::io::copy(&mut r, &mut w).await;
             });
         }
@@ -446,7 +514,7 @@ pub async fn upgrade_origin() -> (SocketAddr, Arc<Mutex<Vec<String>>>) {
 /// as another host's were the door to make them paths. Any other `Host` is
 /// refused 403 naming it.
 pub async fn host_origin() -> SocketAddr {
-    let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let mut listener = Listener::bind().await;
     let addr = listener.local_addr().unwrap();
     let own = format!("localhost:{}", addr.port());
     tokio::spawn(async move {

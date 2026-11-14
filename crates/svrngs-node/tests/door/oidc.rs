@@ -113,7 +113,7 @@ async fn token(
     secret: &str,
     form: &[(&str, &str)],
 ) -> (u16, Value) {
-    let answer = reqwest::Client::new()
+    let answer = on_wire::http()
         .post(format!("http://{}/oidc/{lend}/token", node.api_addr()))
         .basic_auth(client, Some(secret))
         .form(form)
@@ -139,7 +139,7 @@ fn claims(token: &str) -> Value {
 /// or an unsaid app; a guest's code naming the host.
 #[tokio::test]
 async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
-    let pair = Pair::new().await;
+    let pair = Pair::on_wire().await;
     let (origin, heads) = origins::head_origin().await;
     let port = origin.port();
     signs_in(&pair, LEND, port, CLIENT, SECRET);
@@ -202,7 +202,7 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
     // the_authorize_path_accepts_the_lends_own_origin_as_the_redirect (oidc.rs:519-566):
     // a computer's browser at <label>.localhost, a phone's at a page host, read as https;
     // and a_rooms_address_is_told_http_and_its_origin_passes_authorize (oidc.rs:675-688).
-    let label = Label::of(pair.a.endpoint().id().as_bytes(), LEND);
+    let label = Label::of(pair.a.net().id().as_bytes(), LEND);
     let api = pair.a.api_addr().port();
     for (browser, scheme) in [
         (format!("{label}.localhost:{api}"), "http"),
@@ -249,7 +249,7 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         SECRET,
         json!({ "asks": "the app reads your films" }),
     );
-    let a = *pair.a.endpoint().id().as_bytes();
+    let a = *pair.a.net().id().as_bytes();
     let (asks, night) = (Label::of(&a, asking), Label::of(&a, "night"));
     let passed = |app: &Label| {
         let pass = Pass::sign(
@@ -329,7 +329,7 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         (label.clone(), vec![]),
         unix_now() + 3600,
     );
-    let bridge = bridge_as(&holder, &pair.a, Alpn::Lend).await;
+    let bridge = on_wire::bridge_as(&holder, &pair.a, Alpn::Lend).await;
     let reply = raw_to(
         bridge.local_addr(),
         format!(
@@ -375,7 +375,7 @@ async fn a_members_authorize_answers_a_code_the_token_route_redeems() {
         joined: None,
     };
     pair.a.rail().commit(NS, &removal).unwrap().unwrap();
-    let gone = bridge_as(&signing(2), &pair.a, Alpn::Member).await;
+    let gone = on_wire::bridge_as(&signing(2), &pair.a, Alpn::Member).await;
     let refused = get(gone.local_addr(), &path, "").await;
     assert_eq!(refused.status, 403, "{}", refused.text);
     assert!(

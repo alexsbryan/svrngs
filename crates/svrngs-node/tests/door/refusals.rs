@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! Each family of the door's refusals, decided before the lend's service
-//! is asked: one crossing, A's door over QUIC, holding that `lend_for`,
+//! is asked: one crossing, A's door on one wire (common/on_wire.rs), its
+//! services answered there (harness 2), holding that `lend_for`,
 //! `holder_of`, `choices::check`, the acceptor and the listing routes ask
 //! the decisions `src/door/tests.rs`, `src/door/choices/tests.rs`,
 //! `src/door/limit/tests.rs`, `src/lend/tests.rs` and `src/node/tests.rs`
@@ -45,6 +46,15 @@ async fn listed(at: SocketAddr, marker: &str) -> (u16, serde_json::Value) {
 /// What `at` answers `request` on its connection, every byte: none when it
 /// closes the connection unserved.
 async fn served(at: SocketAddr, request: &str) -> String {
+    if on_wire::bridged(at) {
+        let Ok((head, body)) = on_wire::raw_held(at, request).await else {
+            return String::new();
+        };
+        let body = axum::body::to_bytes(body, usize::MAX)
+            .await
+            .unwrap_or_default();
+        return format!("{head}{}", String::from_utf8_lossy(&body));
+    }
     let mut sock = tokio::net::TcpStream::connect(at).await.unwrap();
     sock.write_all(request.as_bytes()).await.unwrap();
     let mut reply = Vec::new();
@@ -57,6 +67,15 @@ async fn served(at: SocketAddr, request: &str) -> String {
 /// three seconds, having served it nothing.
 async fn closes_to_sam(a: &Node, alpn: Alpn) -> bool {
     use svrngs_node::guest::ring_crypto_provider;
+    if origins::answering() {
+        // On a wire (its stubs answered there), the acceptor's refusal of
+        // Sam's key is the closed connection (`Wire::ask_as`).
+        let at = on_wire::bridge_as(&signing(SAM), a, alpn)
+            .await
+            .local_addr();
+        let asked = "GET / HTTP/1.1\r\nHost: local\r\n\r\n";
+        return on_wire::raw_held(at, asked).await.is_err();
+    }
     use svrngs_node::iroh::{EndpointAddr, SecretKey};
     let sam = iroh::endpoint::Builder::empty()
         .crypto_provider(ring_crypto_provider())
@@ -78,7 +97,19 @@ async fn closes_to_sam(a: &Node, alpn: Alpn) -> bool {
 
 /// `who` streams `path` through `at`: the answer's head and first chunk
 /// read, the rest left to come for as long as the socket is held.
-async fn streaming(at: SocketAddr, path: &str) -> (tokio::net::TcpStream, String) {
+async fn streaming(at: SocketAddr, path: &str) -> (Held, String) {
+    if on_wire::bridged(at) {
+        use http_body_util::BodyExt;
+        let asked = format!("GET {path} HTTP/1.1\r\nHost: local\r\n\r\n");
+        let (head, mut body) = on_wire::raw_held(at, &asked).await.expect("let in");
+        let mut got = head.into_bytes();
+        while !got.windows(5).any(|w| w == b"hello") {
+            let frame = body.frame().await.expect("the stream ended early");
+            got.extend_from_slice(frame.unwrap().data_ref().expect("a chunk"));
+        }
+        clean(&got);
+        return (Held::Body(body), String::from_utf8_lossy(&got).into_owned());
+    }
     let mut sock = tokio::net::TcpStream::connect(at).await.unwrap();
     sock.write_all(format!("GET {path} HTTP/1.1\r\nHost: local\r\n\r\n").as_bytes())
         .await
@@ -94,7 +125,17 @@ async fn streaming(at: SocketAddr, path: &str) -> (tokio::net::TcpStream, String
         got.extend_from_slice(&buf[..n]);
     }
     clean(&got);
-    (sock, String::from_utf8_lossy(&got).into_owned())
+    (
+        Held::Socket(sock),
+        String::from_utf8_lossy(&got).into_owned(),
+    )
+}
+
+/// A stream held open by whoever holds this, its socket or its body.
+#[allow(dead_code, reason = "held only to be dropped")]
+enum Held {
+    Socket(tokio::net::TcpStream),
+    Body(axum::body::Body),
 }
 
 fn share_in(reply: &str) -> Vec<&str> {
@@ -117,8 +158,9 @@ fn share_in(reply: &str) -> Vec<&str> {
 #[tokio::test]
 async fn each_refusal_is_decided_before_the_service_is_asked() {
     let (said, _heard) = common::heard("node=debug");
+    answer_at_a();
     let (legacy, legacy_heads) = origins::head_origin().await;
-    let world = World::new(|dir| {
+    let world = World::on_wire(|dir| {
         // a_lend_from_before_groups_opens_as_it_did_and_can_then_be_pared_down
         // (scope.rs:404-449): declarations from before groups, found at start.
         let lends = lend::lends_dir(dir);
@@ -801,7 +843,11 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
         .contains("That number is the choice of the person who lends it, and they can change it."));
     assert!(share_in(&full.text).is_empty(), "{}", full.text);
     drop(streams.remove(1));
+    // The door's clock is the runtime's (door.rs `now`): paused, the
+    // window passes at once, whatever the load (seam C).
+    tokio::time::pause();
     tokio::time::sleep(WINDOW + Duration::from_secs(2)).await;
+    tokio::time::resume();
     for who in ["eve", "bo", "dee"] {
         let reply = ask(crowd[who], "GET", "/lend/stream/seek", "").await;
         assert_eq!(reply.status, 200, "{who}: {}", reply.text);
@@ -830,5 +876,5 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
             reply.text
         );
     }
-    world.a.endpoint().close().await;
+    world.a.net().close().await;
 }
