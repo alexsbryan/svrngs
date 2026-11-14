@@ -1762,59 +1762,28 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
 }
 
 in_chromium!(
-    /// **Open versus files** (docs/APP_ACCESS_AND_STOP.md A1, A2, §5; start-home,
-    /// from start-measure's ranked row 12: the folder was a path read as
-    /// words, `demo/runs/start/2026-10-13/README.md` §3 (c) 14). Ada lends
-    /// her shelf and keeps house's folder. Her page's "Open ada’s shelf
-    /// (k)" opens the shelf's own page in a tab, by the keyboard and by
-    /// the mouse; "Open shared files in Finder", or "in your file manager"
-    /// off a Mac, asks this computer's file browser to open the folder,
-    /// and says so. The browser is a planted `open` and `xdg-open`, first
-    /// on the test's `PATH`, writing what it was asked to open beside it,
-    /// so no window opens, and the open is judged by what it was asked,
-    /// never by the page staying still. Planted, watched failing: the
-    /// page as ab6ef1f left it, with no such button; and the link saying
-    /// only the lend's name, as lend-name.js did before A1.
+    /// **A lend's link opens its own page in a tab, by keyboard and by
+    /// mouse** (docs/APP_ACCESS_AND_STOP.md A1, §5; start-home): Ada lends
+    /// her shelf; her home page's "Open ada’s shelf (k)" opens the shelf's
+    /// own page in a tab, by the keyboard and by the mouse. The link's words
+    /// and target are web/tests/pages/home.test.mjs's; "Open shared files"
+    /// asking this computer's opener the folder is tests/home.rs `folder`'s,
+    /// and its words home.test.mjs's ('the shared folder opened twice is
+    /// said opened once'). Planted, watched failing: the link saying only
+    /// the lend's name, as lend-name.js did before A1.
     the_home_page_opens_the_group_s_folder
 );
 async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
-    use std::os::unix::fs::PermissionsExt;
     let relay = relay().await;
     let dir = tempfile::tempdir().unwrap();
     let ada = node(dir.path(), &relay, &signing(7)).await;
-    let (folder, bin) = (dir.path().join("house"), dir.path().join("bin"));
-    std::fs::create_dir(&folder).unwrap();
-    std::fs::create_dir(&bin).unwrap();
-    // Written beside what it opens, so whichever engine's bin is found
-    // first, each test reads its own: both run at once in this process.
-    let opened = dir.path().join("house.opened");
-    for opener in ["open", "xdg-open"] {
-        let at = bin.join(opener);
-        std::fs::write(&at, "#!/bin/sh\necho \"$1\" >> \"$1.opened\"\n").unwrap();
-        std::fs::set_permissions(&at, std::fs::Permissions::from_mode(0o755)).unwrap();
-    }
-    // The planted bin first: every other program is found as before. Read
-    // and set under one lock, else both engines read the same `PATH` and
-    // the one set last drops the other's bin: once its own test ends, the
-    // other finds the real `open` (REVIEW-audit-v1ui-auto-1's check run).
-    static PATH_SET: std::sync::Mutex<()> = std::sync::Mutex::new(());
-    let set = PATH_SET.lock().unwrap();
-    let path = std::env::var_os("PATH").unwrap_or_default();
-    let paths = std::iter::once(bin.clone()).chain(std::env::split_paths(&path));
-    std::env::set_var("PATH", std::env::join_paths(paths).unwrap());
-    drop(set);
-    keep_folder(&ada, &folder).await;
     let shelf =
         page_origin("<!doctype html><title>ada's shelf</title><body>the shelf itself").await;
     lend(dir.path(), "shelf", shelf.port());
     let seen = home_page(
         engine,
         &ada,
-        json!({
-            "all": "#home section p",
-            "labelled": "Open ada’s shelf (k)",
-            "do": [["#home section button:has-text('Open shared files in ')", null, true]],
-        }),
+        json!({ "all": "#home section p", "labelled": "Open ada’s shelf (k)" }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
@@ -1828,22 +1797,6 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
         assert!(at_origin(&tab["url"], &label(1, "shelf")), "{seen:#}");
         assert_eq!(tab["words"], "the shelf itself", "{seen:#}");
     }
-    let said = seen["after"][0].to_string();
-    let files = [
-        "Open shared files in Finder",
-        "Open shared files in your file manager",
-    ];
-    assert!(
-        files
-            .iter()
-            .any(|f| said.contains(&format!("{f} Opened, in a window of its own."))),
-        "{seen:#}"
-    );
-    let asked = std::fs::read_to_string(&opened).unwrap_or_default();
-    assert!(
-        asked.lines().any(|l| l == folder.display().to_string()),
-        "{asked:?}"
-    );
     drop(ada);
 }
 
