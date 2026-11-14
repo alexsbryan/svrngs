@@ -899,6 +899,10 @@ fn one_person_s_two_devices_resolve_to_one_person_key() {
 /// with no app, the person's own, is never held to the rate; the
 /// refusal is 429 `limit`, its wait in whole seconds.
 #[tokio::test]
+#[expect(
+    clippy::disallowed_methods,
+    reason = "the rate refills on the real clock"
+)]
 async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again() {
     let shelf = port_lend("shelf", &["house"]);
     let app = Label::of(&[1; 32], "page");
