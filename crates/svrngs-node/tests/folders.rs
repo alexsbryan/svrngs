@@ -1328,6 +1328,298 @@ async fn a_file_no_member_gave_is_asked_again_with_nothing_to_wake_it() {
     );
 }
 
+// ── The same holders on the wire: a test's script, no endpoint ───────
+
+/// As [`Asking`], on this test's wire (common/on_wire.rs), no endpoint and
+/// no socket: Ben's key a holder that is this test's script
+/// (`Wire::holder`), answering each get with `wire` in `pieces` parts
+/// `pause` apart, its first `silent` gets with nothing; Ana's fetch reads
+/// it through the same pipes a node's provider answers on, verified by her
+/// own store. What it claims is the folder's: what Ana's directory and
+/// `/v1/groups` say of a holder that answers so.
+struct Held {
+    ana: Node,
+    shared: std::path::PathBuf,
+    asked: std::sync::Arc<std::sync::atomic::AtomicUsize>,
+    _dir: tempfile::TempDir,
+}
+
+impl Held {
+    async fn new(
+        root: &Path,
+        held: (iroh_blobs::Hash, u64),
+        wire: Vec<u8>,
+        (pieces, pause, silent): (usize, Duration, usize),
+        read_only: bool,
+    ) -> Self {
+        use std::os::unix::fs::PermissionsExt as _;
+        use svrngs_core::{Change, ContentHash, SyncPath};
+        use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
+        let (hash, size) = held;
+        let dir = tempfile::tempdir().unwrap();
+        let ana = start(1, dir.path()).await;
+        let ns = found("films", 9, &ana, &[]);
+        svrngs_core::tests_support::let_in_by(&ns, &signing(2), "ben", |act| {
+            let act = svrngs_core::tests_support::Fixture { act };
+            ana.rail().commit(&ns, &act).unwrap().unwrap().lines()[0]
+                .id
+                .clone()
+        });
+        let ben = svrngs_node::iroh::SecretKey::from_bytes(&[2; 32]).public();
+        let mut gets = on_wire::holder(ben);
+        let asked = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let counted = asked.clone();
+        let part = wire.len().div_ceil(pieces);
+        tokio::spawn(async move {
+            while let Some((mut ask, mut answer)) = gets.recv().await {
+                let mut read = Vec::new();
+                ask.read_to_end(&mut read).await.ok();
+                let n = counted.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                if n < silent {
+                    // Held open, never written: the asker's bound runs out.
+                    tokio::spawn(async move {
+                        tokio::time::sleep(Duration::from_secs(30)).await;
+                        drop(answer);
+                    });
+                    continue;
+                }
+                let wire = wire.clone();
+                tokio::spawn(async move {
+                    for (i, piece) in wire.chunks(part).enumerate() {
+                        if i > 0 {
+                            tokio::time::sleep(pause).await;
+                        }
+                        answer.write_all(piece).await.ok();
+                    }
+                    answer.shutdown().await.ok();
+                });
+            }
+        });
+
+        let shared = synced_in(&ana, root, &ns).await;
+        if read_only {
+            std::fs::set_permissions(&shared, std::fs::Permissions::from_mode(0o555)).unwrap();
+        }
+        let act = RailAct::Synced {
+            folder: "Shared".into(),
+            changes: vec![Change {
+                path: SyncPath::parse("f.bin").unwrap(),
+                now: Some((ContentHash::from_bytes(*hash.as_bytes()), size)),
+                base: None,
+            }],
+        };
+        let written = svrngs_core::tests_support::Fixture { act };
+        ana.rail().commit(&ns, &written).unwrap().unwrap();
+        Held {
+            ana,
+            shared,
+            asked,
+            _dir: dir,
+        }
+    }
+
+    fn asked(&self) -> usize {
+        self.asked.load(std::sync::atomic::Ordering::SeqCst)
+    }
+
+    async fn close(self) {
+        self.ana.net().close().await;
+    }
+}
+
+/// **A file only on a computer that is off is said, and goes when it
+/// arrives, on the wire**: as
+/// `a_file_only_on_a_computer_that_is_off_is_said_and_goes_when_it_arrives`,
+/// Ben's key a scripted holder ([`Held`]), no endpoint. Planted: `waiting`
+/// never recorded in the step (synced.rs `step`); the tally counting
+/// `Unfetched::NotWritten` in `NoHolder`'s place (synced.rs `apply`).
+#[tokio::test]
+async fn a_file_only_on_a_computer_that_is_off_is_said_on_the_wire() {
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(20_000, b"only on one");
+    let (hash, wire) = wire_of(&bytes).await;
+    let script = (1, Duration::ZERO, 2);
+    let held = Held::new(ra.path(), (hash, 20_000), wire, script, false).await;
+    let at = held.shared.join("f.bin");
+    let (t0, mut said) = (std::time::Instant::now(), None);
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(30)
+    {
+        let w = waiting(&held.ana).await;
+        if w.as_array().is_some_and(|a| !a.is_empty()) {
+            said = Some(w);
+        }
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    assert_eq!(
+        std::fs::read(&at).ok().as_deref(),
+        Some(&bytes[..]),
+        "the file arrives"
+    );
+    assert_eq!(
+        said,
+        Some(serde_json::json!([["ana", 1]])),
+        "the line named the writer"
+    );
+    let t0 = std::time::Instant::now();
+    while waiting(&held.ana).await != serde_json::json!([])
+        && t0.elapsed() < Duration::from_secs(10)
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        waiting(&held.ana).await,
+        serde_json::json!([]),
+        "and goes once it arrives"
+    );
+    held.close().await;
+}
+
+/// **A file a disk would not take is never said to be waiting on a
+/// person, on the wire**: as
+/// `a_file_a_disk_would_not_take_is_never_said_to_be_waiting_on_a_person`,
+/// Ben's key a scripted holder ([`Held`]). Planted: a write failure
+/// answered as `Unfetched::NoHolder` (synced.rs `fetch_placed`); every
+/// unwritten file tallied as waiting on its writer (synced.rs `apply`).
+#[tokio::test]
+async fn a_file_a_disk_would_not_take_is_never_waiting_on_a_person_on_the_wire() {
+    use std::os::unix::fs::PermissionsExt as _;
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(20_000, b"no disk");
+    let (hash, wire) = wire_of(&bytes).await;
+    let script = (1, Duration::ZERO, 0);
+    let held = Held::new(ra.path(), (hash, 20_000), wire, script, true).await;
+    let t0 = std::time::Instant::now();
+    while held.asked() == 0 && t0.elapsed() < Duration::from_secs(15) {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert!(held.asked() > 0, "Ben was asked for it");
+    tokio::time::sleep(Duration::from_millis(1_500)).await;
+    let at = held.shared.join("f.bin");
+    assert!(!at.exists(), "a read-only directory took no file");
+    assert_eq!(
+        waiting(&held.ana).await,
+        serde_json::json!([]),
+        "no writer is blamed"
+    );
+    let writable = std::fs::Permissions::from_mode(0o755);
+    std::fs::set_permissions(&held.shared, writable).unwrap();
+    let t0 = std::time::Instant::now();
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(20)
+    {
+        tokio::time::sleep(Duration::from_millis(200)).await;
+    }
+    assert_eq!(
+        std::fs::read(&at).ok().as_deref(),
+        Some(&bytes[..]),
+        "the file lands"
+    );
+    held.close().await;
+}
+
+/// **A holder that sends a flipped byte is refused by name, on the wire**:
+/// as `a_holder_that_sends_a_flipped_byte_is_refused_by_name`, Ben's key a
+/// scripted holder ([`Held`]) answering with the file's encoding one byte
+/// flipped. Planted: the get's error not said in the refusal (folder.rs
+/// `fetch`); the holder not named in it (folder.rs `hold`).
+#[tokio::test]
+async fn a_holder_that_sends_a_flipped_byte_is_refused_by_name_on_the_wire() {
+    let (said, _heard) = heard("folder=debug");
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(10_000, b"flipped");
+    let (hash, mut wire) = wire_of(&bytes).await;
+    assert_eq!(
+        wire.len(),
+        8 + 10_000,
+        "one chunk group: its size, then its bytes"
+    );
+    wire[8 + 5_000] ^= 1;
+    let script = (1, Duration::ZERO, 0);
+    let held = Held::new(ra.path(), (hash, 10_000), wire, script, false).await;
+    for _ in 0..50 {
+        if held.asked() >= 2 {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    tokio::time::sleep(Duration::from_millis(500)).await;
+    let log = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let refusal = log
+        .lines()
+        .find(|l| {
+            l.contains("a holder gave nothing of what the store lacks")
+                && l.contains(&actor_of(&signing(2)))
+        })
+        .unwrap_or_default()
+        .to_string();
+    let (names, asked) = (names(&held.shared), held.asked());
+    held.close().await;
+    assert!(asked >= 1, "Ben's key was asked: {log}");
+    assert!(
+        names.is_empty(),
+        "Ana's directory never holds the flipped file: {names:?}"
+    );
+    assert!(
+        refusal.contains("Mismatch") || refusal.contains("mismatch"),
+        "the fetch names Ben and the mismatch: {refusal:?}"
+    );
+}
+
+/// **A holder slower than the bound to its last byte still answers, on
+/// the wire**: as `a_holder_slower_than_the_bound_to_its_last_byte_still_answers`,
+/// Ben's key a scripted holder ([`Held`]) sending 200,000 bytes in four
+/// parts 1.5 s apart. Planted: the bound on the whole fetch, not renewed
+/// by a part (folder.rs `fetch`); `ANSWER_WITHIN` under a part's pause.
+#[tokio::test]
+async fn a_holder_slower_than_the_bound_to_its_last_byte_still_answers_on_the_wire() {
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(200_000, b"slow");
+    let (hash, wire) = wire_of(&bytes).await;
+    let script = (4, Duration::from_millis(1_500), 0);
+    let held = Held::new(ra.path(), (hash, 200_000), wire, script, false).await;
+    let at = held.shared.join("f.bin");
+    let t0 = std::time::Instant::now();
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(20)
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    let (got, took, asked) = (std::fs::read(&at).ok(), t0.elapsed(), held.asked());
+    held.close().await;
+    assert!(
+        got.as_deref() == Some(&bytes[..]),
+        "Ana holds Ben's file, 4.5 s to its last byte; asked {asked} times in {took:?}"
+    );
+}
+
+/// **A file no member gave is asked again, with nothing to wake it, on the
+/// wire**: as `a_file_no_member_gave_is_asked_again_with_nothing_to_wake_it`,
+/// Ben's key a scripted holder ([`Held`]) silent at its first get.
+/// Planted: the retry out (synced.rs, the step's `retry`); its first wait,
+/// `RETRY_FIRST`, past the test's 15 s.
+#[tokio::test]
+async fn a_file_no_member_gave_is_asked_again_with_nothing_to_wake_it_on_the_wire() {
+    let ra = tempfile::tempdir().unwrap();
+    let bytes = noise(20_000, b"asked again");
+    let (hash, wire) = wire_of(&bytes).await;
+    let script = (1, Duration::ZERO, 1);
+    let held = Held::new(ra.path(), (hash, 20_000), wire, script, false).await;
+    let at = held.shared.join("f.bin");
+    let t0 = std::time::Instant::now();
+    while std::fs::read(&at).ok().as_deref() != Some(&bytes[..])
+        && t0.elapsed() < Duration::from_secs(15)
+    {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    let (got, took, asked) = (std::fs::read(&at).ok(), t0.elapsed(), held.asked());
+    held.close().await;
+    assert!(
+        got.as_deref() == Some(&bytes[..]),
+        "Ana holds the file Ben's key gave at its second ask; asked {asked} times in {took:?}"
+    );
+}
+
 /// **A removed member gets nothing new from the folder, and keeps what
 /// they had** (U7 (e); DESIGN §6; demo/c.md, "Removed"). Ana, Ben and Cy
 /// sync the folder; a file Ana writes reaches Cy. Ana removes Cy as

@@ -228,10 +228,16 @@ struct Met {
     parted: std::collections::BTreeSet<([u8; 32], [u8; 32])>,
     asleep: std::collections::BTreeSet<[u8; 32]>,
     services: std::collections::BTreeMap<([u8; 32], u16), Listening>,
+    holders: std::collections::BTreeMap<[u8; 32], Holding>,
 }
 
 /// Where [`Wire::listen`]'s connections arrive, one pipe's end each.
 type Listening = tokio::sync::mpsc::UnboundedSender<tokio::io::DuplexStream>;
+
+/// Where [`Wire::holder`]'s gets arrive: the ask to read, the answer to
+/// write, each one end of a pipe.
+type Holding =
+    tokio::sync::mpsc::UnboundedSender<(tokio::io::DuplexStream, tokio::io::DuplexStream)>;
 
 impl Wire {
     /// No path from `from`'s computer to `to`'s, as when `from` knows no
@@ -262,6 +268,23 @@ impl Wire {
         let (to, at) = tokio::sync::mpsc::unbounded_channel();
         let mut met = self.0.lock().unwrap();
         met.services.insert((*key.as_bytes(), port), to);
+        at
+    }
+
+    /// A Blobs holder at `key` that is a test's script, past any store and
+    /// any node: each get asked of it arrives here as its ask, to be read
+    /// to its end, and its answer, to be written, the raw bytes a QUIC
+    /// stream carries, so a test answers silent, slow or with a byte
+    /// flipped. The asker's fetch reads the answer as it reads any
+    /// holder's, verified by its own store; the script decides nothing it
+    /// does. Its receiver dropped, a get of it fails as an unanswered dial.
+    pub fn holder(
+        &self,
+        key: PublicKey,
+    ) -> tokio::sync::mpsc::UnboundedReceiver<(tokio::io::DuplexStream, tokio::io::DuplexStream)>
+    {
+        let (to, at) = tokio::sync::mpsc::unbounded_channel();
+        self.0.lock().unwrap().holders.insert(*key.as_bytes(), to);
         at
     }
 }
@@ -458,6 +481,23 @@ impl Net for OnWire {
     ) -> crate::iroh::Sent<'a, iroh_blobs::api::remote::GetProgress> {
         Box::pin(async move {
             use iroh_blobs::util::{AsyncReadRecvStream, AsyncWriteSendStream};
+            let scripted = (self.wire.0.lock().unwrap().holders)
+                .get(peer.key.as_bytes())
+                .cloned();
+            if let Some(holding) = scripted {
+                // A test's holder ([`Wire::holder`]): the same two pipes,
+                // their far ends handed to its script.
+                let (asks, their_read) = tokio::io::duplex(64 * 1024);
+                let (their_write, answers) = tokio::io::duplex(64 * 1024);
+                let gone = |_| Unsent::Failed("the test's holder is gone".into());
+                holding.send((their_read, their_write)).map_err(gone)?;
+                let asked = iroh_blobs::get::StreamPair::new(
+                    0,
+                    AsyncReadRecvStream::new(Half(answers)),
+                    AsyncWriteSendStream::new(Half(asks)),
+                );
+                return Ok(store.remote().execute_get(asked, request));
+            }
             let Admit::Blobs(theirs, events) = self.admitted(&peer.key, Alpn::Blobs).await? else {
                 return Err(Unsent::Failed("not served on the Blobs protocol".into()));
             };

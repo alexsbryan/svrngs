@@ -276,6 +276,16 @@ pub fn asleep(key: PublicKey) {
     WIRE.with(|w| w.asleep(key));
 }
 
+/// A Blobs holder at `key` on this test's wire that is the test's script
+/// ([`Wire::holder`]): each get of it, its ask and its answer's pipe.
+pub fn holder(key: PublicKey) -> Holding {
+    WIRE.with(|w| w.holder(key))
+}
+
+/// What [`holder`] receives: each get's ask, to read, and answer, to write.
+pub type Holding =
+    tokio::sync::mpsc::UnboundedReceiver<(tokio::io::DuplexStream, tokio::io::DuplexStream)>;
+
 /// `from` asks `holder`'s provider for `hash` whole, into a store of its
 /// own under `dir`: the payload's bytes, or why none came.
 pub async fn get(
