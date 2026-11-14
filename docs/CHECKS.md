@@ -369,7 +369,8 @@ the relays registered at, as URLs, since iroh's `RelayStatus` has no
 public constructor. On a `Wire`, `Wire::relay` says what each relay does
 (`Relaying`: Up, Pings, Cut, Down), a computer's homes are the relays it
 holds that are Up, and `Node::on_wire_relayed` starts a node at a
-build's relay. relay_tiers' six decisions run there on a paused clock.
+build's relay. relay_tiers' six decisions and relay_fallback's
+public-only group run there on a paused clock.
 What it does not claim: iroh's own choice among relays held and its
 registration (the dial at a relay not held, and the relay that carried
 an action, kept over real relays).

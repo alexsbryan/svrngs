@@ -226,20 +226,10 @@ async fn a_fallback_home_reaches_the_issuer_and_the_local_primary_takes_over() {
 /// moves and nothing is reached (red: not homed at A within 30 s).
 #[tokio::test(flavor = "multi_thread")]
 async fn a_fresh_contribution_syncs_after_the_public_reach_is_cut() {
-    cut_and_contribute(false).await;
+    cut_and_contribute().await;
 }
 
-/// **A group that knows only the public relay pins nobody to it**
-/// (KEEP_GOING_AT_HOME 8): the same cut, with Ada and Bo each in a second
-/// group naming no relay of its own. Both still move to A, and the record
-/// still arrives. Planted: `Meeting::decide` keeping the build's tier for
-/// every group when any one names none (red: not homed at A).
-#[tokio::test(flavor = "multi_thread")]
-async fn a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone() {
-    cut_and_contribute(true).await;
-}
-
-async fn cut_and_contribute(public_only: bool) {
+async fn cut_and_contribute() {
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
     let ((_own, a), (build, b)) = (relay(any).await, relay(any).await);
     let at_a: svrngs_core::relay::Url = a.parse().unwrap();
@@ -272,17 +262,6 @@ async fn cut_and_contribute(public_only: bool) {
         },
         |redeem| drop(rail.commit(&ns, redeem).unwrap().unwrap()),
     );
-    if public_only {
-        for (host, seed) in [(ada.host(), 5), (bo.host(), 6)] {
-            let away = group::draw(
-                Name::parse("away").unwrap(),
-                Name::parse("ada").unwrap(),
-                SigningKey::from_bytes(&[seed; 32]).verifying_key(),
-            );
-            host.keep_group(&away, None, &[])
-                .expect("a public-only group");
-        }
-    }
     homed_at(&ada, &b).await;
     homed_at(&bo, &b).await;
 
@@ -308,11 +287,15 @@ async fn cut_and_contribute(public_only: bool) {
     bo.endpoint().close().await;
 }
 
-/// [`a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone`]
-/// on one wire (common/on_wire.rs): each relay the wire's
+/// **A group that knows only the public relay pins nobody to it**
+/// (KEEP_GOING_AT_HOME 8): the same cut, with Ada and Bo each in a second
+/// group naming no relay of its own. Both still move to A, and the record
+/// still arrives. On one wire (common/on_wire.rs): each relay the wire's
 /// (`Wire::relay`), the clock paused, no relay process or endpoint.
+/// Planted: `Meeting::decide` keeping the fallback unanswered, and
+/// `Meeting::join` emptying the own tier for a group naming none.
 #[tokio::test(start_paused = true)]
-async fn a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone_on_the_wire() {
+async fn a_public_only_group_does_not_pin_a_computer_to_a_relay_that_is_gone() {
     use svrngs_node::node::Relaying;
     let (a, b) = ("http://127.0.0.1:1/", "http://127.0.0.1:2/");
     on_wire::relay(a, Relaying::Up);
