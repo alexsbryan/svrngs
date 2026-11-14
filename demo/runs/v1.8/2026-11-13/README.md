@@ -41,3 +41,32 @@ on this Mac it lacked the `aarch64-unknown-linux-musl` target that
 `scripts/build-release.sh` builds linux-aarch64 for. It was added with
 `rustup target add aarch64-unknown-linux-musl --toolchain 1.95.0` before
 the build, so no platform is missing.
+
+## Publication
+
+`publish.py` ran `scripts/deploy-page.sh` under the gate lock in a clean
+detached worktree at 3c54f1ec (`v1.8`), 2026-11-14 02:15 to 02:23 UTC, exit
+0 (`publish.json`, `publish.log`). Its record was written outside the
+worktree, which `publish.py` holds clean, and copied here after. The build
+meets its groups at n0's relays (`SHIPPED`), so no relay was asked. The page
+built as version ba66ef18e374, `svrngs` and `give` built for all four
+platforms, and Vercel deployment `dpl_BsFWDaKY5dxpHBZG2hey9A7z72xf` reached
+production, READY, aliased to `https://group.svrnme.sh`. The `.vercel/` and
+`.env.local` the CLI wrote into the upload directory were deleted after.
+
+## Readback
+
+`verify.py` passed (`verification.json`). It is V1.7's, plus two checks: the
+page version `publish.log` names is not V1.7's `f21ccefa713c` and is the one
+the live `sw.js` names, and the live `install.sh` equals the built one and
+fetches `SHA256SUMS` and each tarball from the `get/` of the page it came
+from. Its five planted faults were rejected first. Then 78 public files
+fetched from `group.svrnme.sh` each equaled the built site's bytes; the live
+`get/SHA256SUMS` equaled the built one (`SHA256SUMS`, `live-sums.txt`) and
+named exactly the eight downloads, so the install line fetches this build;
+the live page is version ba66ef18e374; both frame policies were as
+`vercel.json` sets them; the wildcard name `release-3c54f1ec.group.svrnme.sh`
+served the same page; `.env.local`, `.vercel/project.json` and `vercel.json`
+each answered 404; and the downloaded darwin-aarch64 `svrngs --help` (exit
+0) and `give` (exit 2, its usage) started. No other platform's program was
+run here.
