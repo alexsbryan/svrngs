@@ -45,6 +45,8 @@ mod computers;
 mod opens;
 #[path = "home/publication.rs"]
 mod publication;
+#[path = "home/shelf.rs"]
+mod shelf;
 
 fn declare(
     dir: &std::path::Path,
