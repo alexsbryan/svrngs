@@ -361,6 +361,19 @@ body where two stood (iroh.rs), so the count does not move. What it does
 not claim: a fresh connection's dial (`Net::dial`, kept for the UDP
 door's datagrams) and the acceptor's close (`accept`'s tests).
 
+**The tiers on the wire.** The tiers' decider (tiers.rs `check`,
+`check_now`) asks the network two things: whether a relay answers, and
+whether this endpoint is registered at one. Both are `Net`'s:
+`Net::answers` (tiers.rs `answers` in `IrohTransport`) and `Net::homes`,
+the relays registered at, as URLs, since iroh's `RelayStatus` has no
+public constructor. On a `Wire`, `Wire::relay` says what each relay does
+(`Relaying`: Up, Pings, Cut, Down), a computer's homes are the relays it
+holds that are Up, and `Node::on_wire_relayed` starts a node at a
+build's relay. relay_tiers' six decisions run there on a paused clock.
+What it does not claim: iroh's own choice among relays held and its
+registration (the dial at a relay not held, and the relay that carried
+an action, kept over real relays).
+
 ### Units, in order
 
 Largest share and flake history first. Each lands per the verification
