@@ -1,5 +1,93 @@
 # svrngs releases
 
+## V1.8, 13 November 2026
+
+V1.8 brings every group under one set of rules: who is in it, who keeps it,
+removals, leaving, handing on, recovery, lending and guests. **Groups made
+before V1.8 can't be changed after updating.** Each one stays on your
+computer and you can still read it, and its page says to make it again.
+Update every computer in the group, then one of you makes the group again
+and invites everyone back.
+
+**Make your group again.** After you update, an older group's section on
+your home page says *"Pier was made by an older svrngs, so nothing in it
+changes now. To carry on, make it again and invite people by link."* The
+terminal says the same, and so does one of its old invitations. Nothing new
+reaches that group and nobody joins it, but its folder stays where it was.
+To carry on together, make a new group on your home page and send everyone
+its link. Copy what you want to keep from the old folder into the new one,
+and tick the new group under **Who can open it?** for each thing you lend.
+
+**Update before you join the new group.** A computer still on V1.7 can't
+join a group made on V1.8. Whoever makes the group again updates first, and
+so does everyone they invite: **Update** on the home page, or `svrngs
+update`. Someone installing svrngs for the first time from the link gets
+V1.8.
+
+**Handing on the group waits for a yes.** When the person who keeps the
+order of removals hands it on, it passes once the other person accepts it,
+with **Accept it** on their home page or `svrngs accept <group>`. Until
+then nobody decides who is removed, and the one who handed it on can **Take
+it back**. You can now leave a group you keep without handing it on first;
+svrngs says before you go that nobody keeps the order of removals until the
+others agree on who does.
+
+**Choose how many guests each computer can have.** Each computer can have
+two guests at once. The group's keeper changes that for the whole group with
+**One fewer** or **One more** beside the group's visits on the home page, up
+to 8. Lowering it ends no visit already going. A guest's link opened while
+a computer has as many as it can lets nobody in: stop a visit, then send a
+new link. A guest's own page now confirms which computer is hosting them,
+so nobody else in the group can take over or cancel someone's guest.
+
+**Apps can read what your friends lend.** Movie Night joins Money, Events
+and House rules: it shows the films your friends lend through Jellyfin, and
+who has each, and writes nothing. An app reads a friend's lend only after
+you open it from your home page, where its line says whose lends it reads,
+each with a box you can untick. To let apps read something you lend, make
+one account in it for your group and save it with **Save the account**
+under **What you lend**, or `svrngs share --readers`. svrngs keeps what the
+program gives it, not the password, and apps can only look.
+
+**Lending.** `svrngs share --program` is the new name for `--kind`, and the
+old spelling still works. svrngs knows Immich (2283) and Audiobookshelf
+(13378) by their ports, and a slip such as `Jellyfin` gets *"Did you mean
+jellyfin?"*
+
+**For people who build apps.**
+- `svrngs --help` opens with how to build an app in your group's folder,
+  and `svrngs guide` prints the guide.
+- `svrngs check ~/svrngs/<group>/apps/<name>` says what the browser will
+  refuse, by file and line, and the app's line on the home page says the
+  same.
+- A change you make to an app runs for you at once. Everyone else still
+  chooses **Open the new version**.
+- An app writes up to 200 entries as one person at once, then one every 18
+  seconds. It reads a lend up to 600 times at once, then 10 a second.
+- `reads.txt` beside `index.html` names the programs an app reads, and
+  `sends.txt` those it may send to, where the lender's terms allow it.
+  [`docs/guide/build.md`](docs/guide/build.md) has the whole of it.
+
+**Smaller changes.**
+- A computer no longer writes to the group's record each time it hops to
+  another meeting point and back for a minute. Those lines were most of
+  what a busy group's record held. Reading the record after a change takes
+  about half as long as before.
+- Your home page says which files are still only on a computer that's off:
+  "3 files are still only on Ana's computer. They'll arrive when it's back
+  on."
+- A computer sending large files to several others sends them in turns, so
+  its internet connection stays usable meanwhile.
+- Each lend's line on your home page starts with **Open** and its name.
+  **Shared apps** and **Shared files** are apart, with **Open shared files
+  in Finder** and **Folder location**.
+- In Give, the person whose computer keeps an app can **Stop running and
+  keep a copy**, and start it again from that copy.
+
+V1.8 is the build at `group.svrnme.sh`, from the commit tagged `v1.8`. Its
+publication and readback are recorded in
+`demo/runs/v1.8/2026-11-13/README.md`.
+
 ## V1.7, 7 November 2026
 
 V1.7 lets you choose which of your groups can open what you lend, welcomes
