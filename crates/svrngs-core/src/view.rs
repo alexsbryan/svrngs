@@ -143,9 +143,7 @@ impl<'de> Deserialize<'de> for Digest {
                     .get("entries")
                     .cloned()
                     .ok_or_else(|| D::Error::custom("digest v2 carries no `entries`"))?;
-                let entries: BTreeMap<String, View> =
-                    serde_json::from_value(entries).map_err(D::Error::custom)?;
-                Ok(Digest(entries))
+                serde_json::from_value(entries).map(Digest).map_err(D::Error::custom)
             }
             Some(v) => Err(D::Error::custom(format!(
                 "digest v{} is not spoken here (this node speaks v{DIGEST_V})",

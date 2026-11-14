@@ -262,7 +262,8 @@ impl Membership {
     /// when a race or a member's hand gave two people one name. svrngs
     /// never guesses which of two (bash-same-name).
     pub fn one_named(&self, name: &Person, when: Option<Joined>) -> Result<&str, Vec<Joined>> {
-        let all: BTreeSet<(Joined, &str)> = (self.keys_of(name))
+        let all: BTreeSet<(Joined, &str)> = (self.standing.iter())
+            .filter(|k| self.bindings.get(*k) == Some(name))
             .filter_map(|k| self.person_of(k))
             .map(|(first, _)| (self.joined(first), first))
             .collect();
@@ -276,14 +277,6 @@ impl Membership {
             [first] => Ok(first),
             _ => Err(all.iter().map(|(j, _)| *j).collect()),
         }
-    }
-
-    /// The keys standing now under the name `person`.
-    pub fn keys_of<'a, 'p>(
-        &'a self,
-        person: &'p Person,
-    ) -> impl Iterator<Item = &'a String> + use<'a, 'p> {
-        (self.standing.iter()).filter(move |k| self.bindings.get(*k) == Some(person))
     }
 
     /// The relay `key` is reached through, if it stands now and the

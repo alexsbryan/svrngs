@@ -144,13 +144,11 @@ struct SeedFile {
 /// The seed an issuer answered for `group`, believed only when it hashes
 /// to `group`: an issuer answering another group's seed is not believed.
 pub fn answered(group: &str, text: &str) -> Option<Seed> {
-    let seed = match Seed::from_text(text) {
-        Ok(seed) => seed,
-        Err(why) => {
+    let seed = Seed::from_text(text)
+        .inspect_err(|why| {
             tracing::debug!(target: "group", group, why, "group: refused — the seed answered is not a seed");
-            return None;
-        }
-    };
+        })
+        .ok()?;
     if seed.id() != group {
         tracing::debug!(target: "group", group, hashes_to = %seed.id(), "group: refused — the seed answered is another group's");
         return None;

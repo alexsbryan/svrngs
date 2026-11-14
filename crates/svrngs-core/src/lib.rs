@@ -792,10 +792,8 @@ impl Journaled for SignedOp {
     /// and a ring with no membership act folds byte-identically to the build
     /// before.
     fn line_version(&self) -> u32 {
-        if matches!(self.act, RailAct::Authority { .. } | RailAct::Accept { .. }) {
-            return AUTHORITY_LINE_VERSION;
-        }
         match self.act {
+            RailAct::Authority { .. } | RailAct::Accept { .. } => AUTHORITY_LINE_VERSION,
             RailAct::GuestSlots { .. } | RailAct::Visit(Visit { under: Some(_), .. }) => {
                 GUESTS_LINE_VERSION
             }

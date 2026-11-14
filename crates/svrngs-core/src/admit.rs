@@ -376,9 +376,7 @@ impl Admission {
     pub(crate) fn tips(&self, actor: &str) -> &[OpId] {
         self.tips.get(actor).map_or(&[], Vec::as_slice)
     }
-}
 
-impl Admission {
     /// Whether this answer covers every act that could be in it. `false` is
     /// the signal a UI must not hide: the acts are real but they are a
     /// subset — a gap of [`GapClass::Absence`] can be hiding acts that
@@ -643,8 +641,15 @@ pub fn admit(
     // Forks void nothing (svrngs, U7; DESIGN §6): both branches are held and
     // each act is weighed as itself, so no second act at a seq takes back the
     // first. The fork is named beside a complete answer.
+    //
+    // Holes are audited from zero. A seal is held as an act that does
+    // nothing (arch-seal; svrn-docs A_RECORD_FOR_YEARS §6 q2): an older
+    // build's seal set a floor that hid the holes below it, and here it
+    // hides none, so a copy an older build pruned says what it is missing.
+    // The gaps' order here is free: they are sorted before they are said.
     for (actor, by_seq) in &seqs {
-        for (seq, ids) in by_seq {
+        let mut next = 0u64;
+        for (&seq, ids) in by_seq {
             if ids.len() > 1 {
                 let mut ids = ids.clone();
                 ids.sort();
@@ -652,10 +657,18 @@ pub fn admit(
                     "admit: a fork — every branch counts");
                 gaps.push(RailGap::SequenceFork {
                     actor: (*actor).to_string(),
-                    seq: *seq,
+                    seq,
                     ids,
                 });
             }
+            if seq > next {
+                gaps.push(RailGap::SequenceHole {
+                    actor: (*actor).to_string(),
+                    from: next,
+                    to: seq - 1,
+                });
+            }
+            next = seq.saturating_add(1);
         }
     }
 
@@ -666,10 +679,6 @@ pub fn admit(
     // targets and everything that target admitted. This pass only NAMES the
     // corrections whose target nobody here holds: the ask, never a hole
     // (GapClass::Contradiction).
-    // Cloned, not moved: the whole walk — voided set included — is carried
-    // out on `Admission` below, so the membership a reader sees is the one
-    // this fold applied.
-    let voided = m.voided.clone();
     for a in admitted.values() {
         if let RailAct::Correct { corrects, .. } = &a.op.kind.act {
             if !admitted.contains_key(corrects) {
@@ -681,26 +690,10 @@ pub fn admit(
         }
     }
 
-    // Holes are audited from zero. A seal is held as an act that does
-    // nothing (arch-seal; svrn-docs A_RECORD_FOR_YEARS §6 q2): an older
-    // build's seal set a floor that hid the holes below it, and here it
-    // hides none, so a copy an older build pruned says what it is missing.
+    // A seal is held and retires nothing (the holes, audited from zero above).
     for c in (admitted.values()).filter(|c| matches!(c.op.kind.act, RailAct::Seal)) {
         tracing::debug!(namespace, id = %c.id, actor = %crate::actor_prefix(&c.op.actor), seq = c.op.kind.seq,
             "ring rail: a seal is held and retires nothing — an older build's act, read as one that does nothing");
-    }
-    for (actor, by_seq) in &seqs {
-        let mut next = 0u64;
-        for &seq in by_seq.keys() {
-            if seq > next {
-                gaps.push(RailGap::SequenceHole {
-                    actor: (*actor).to_string(),
-                    from: next,
-                    to: seq - 1,
-                });
-            }
-            next = seq.saturating_add(1);
-        }
     }
 
     // ── the content-derived total order ──────────────────────
@@ -753,7 +746,7 @@ pub fn admit(
                 seq: a.op.kind.seq,
                 ts_unix: a.op.ts_unix,
                 corrects,
-                voided: voided.contains(&a.id),
+                voided: m.voided.contains(&a.id),
                 payload,
                 on_behalf_of: a.op.kind.on_behalf_of.clone(),
             }
@@ -769,7 +762,7 @@ pub fn admit(
         held = acts.len(),
         admitted = out.len(),
         applied = out.iter().filter(|o| o.applies()).count(),
-        voided = voided.len(),
+        voided = m.voided.len(),
         gaps = gaps.len(),
         "ring rail: admission"
     );
