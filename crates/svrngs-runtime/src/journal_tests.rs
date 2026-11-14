@@ -40,7 +40,10 @@ fn the_fold_of_the_kept_lines_is_the_fold_of_the_file_read_whole() {
     use crate::tests::Doors;
     use svrngs_core::tests_support::*;
     let dir = tempfile::tempdir().unwrap();
-    let (a, b) = (RingJournal::open(dir.path(), NS).unwrap(), RingJournal::open(dir.path(), NS).unwrap());
+    let (a, b) = (
+        RingJournal::open(dir.path(), NS).unwrap(),
+        RingJournal::open(dir.path(), NS).unwrap(),
+    );
     let r = ring();
     let same = |why: &str| {
         a.folded(&r).unwrap();
