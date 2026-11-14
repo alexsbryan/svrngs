@@ -72,10 +72,13 @@ after an economizing pass: its commit gives the reason, names what that pass
 cut, and says why the rest could not be found in the code there is. A pass's
 cuts lower the cap to where they land.
 
-While iterating, `scripts/check.sh --touched` runs the cheap steps and, of
-the slow ones, only those a change since the upstream can reach, each said
-with the file that reached it (`scripts/touched.py`); a file it cannot place
-runs them all. It is never the gate: the whole check runs once before a push.
+While iterating, `scripts/check.sh --touched` is the quick tier: the cheap
+steps, then of the slow ones only those a change since the upstream can
+reach, each said with the file that reached it (`scripts/touched.py`); a
+file it cannot place reaches them all. It runs no fragile test: each test
+`docs/seams.tsv` calls `fragile` is said could-not-judge, so no browser and
+no scene runs, and the rest run in `tests` (docs/CHECKS.md, "The touched
+tier"). It is never the gate: the whole check runs once before a push.
 
 For the edit loop use `node web/tests/run.mjs unit`, one `node --test <file>`, or
 a focused pure Rust target. `--fast` runs static checks and isolated Node laws;

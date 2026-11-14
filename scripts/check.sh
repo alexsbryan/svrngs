@@ -19,7 +19,7 @@ echo "note       open files: $soft, raised to $(ulimit -n)"
 # $SECONDS, which does not. Idle sleep only: a closed lid on battery still sleeps.
 command -v caffeinate >/dev/null && { caffeinate -i -w $$ & echo "note       kept awake while this runs (caffeinate, pid $!)"; }
 failed=0
-unset SVRNGS_STEPS SVRNGS_TESTS  # set only by --touched, below
+unset SVRNGS_STEPS SVRNGS_TESTS SVRNGS_RUN  # set only by --touched, below
 # Each step's time limit, so a hung step fails in minutes, not when the
 # loop's budget ends (capability-step-limit: `app laws` held 2h35m, its
 # runner kept open by a page test's server). The limit is 5 times the step's
@@ -44,12 +44,13 @@ slowest() { case $1 in tests) echo 307 ;; browser) echo 246 ;; scenes) echo 544 
 # TERM, or a Ctrl-C, is passed on to the step running.
 set -m
 trap 'kill -TERM -${running:-} 2>/dev/null; exit 1' INT TERM HUP
-# A step the touched tier leaves out (`--touched`, below) is said untouched.
+# A step the touched tier leaves out (`--touched`, below) is said so, and
+# scripts/touched.py says why: untouched, or folded into `tests`.
 reached() { [ -z "${SVRNGS_STEPS+x}" ] || printf '%s\n' "$SVRNGS_STEPS" | grep -qxF "$1"; }
 step() {  # step <name> <command...>
-  reached "$1" || { echo "untouched  $1: nothing changed reaches it (scripts/touched.py)"; return; }
+  reached "$1" || { echo "not run    $1: as scripts/touched.py planned, above"; return; }
   local name=$1 began=$SECONDS limit=$((5 * $(slowest "$1"))) status watch unjudged="target/could-not-judge/$1.step"; shift
-  "$@" >/tmp/svrngs-check.$$ 2>&1 & running=$!
+  SVRNGS_STEP=$name "$@" >/tmp/svrngs-check.$$ 2>&1 & running=$!
   (sleep "$limit"; kill -TERM -$running) 2>/dev/null & watch=$!
   wait $running; status=$?; { kill -TERM -$watch; kill -TERM -$running && sleep 2; kill -KILL -$running; } 2>/dev/null
   if [ $status = 0 ] && [ -s "$unjudged" ]; then echo "could-not-judge $name ($((SECONDS - began)) s): $(cat "$unjudged")"
@@ -87,18 +88,18 @@ if [ "$failed" != 0 ] || [ "${1:-}" = --fast ]; then exit "$failed"; fi
 # `--touched [base]`: only the steps below a change since `base` can reach,
 # by scripts/touched.py, which says why each runs. Never the gate before a push.
 if [ "${1:-}" = --touched ]; then plan=$(python3 scripts/touched.py "${@:2}") || exit 1; eval "$plan"; fi
+# What a step could not judge, and the conformance canary's verdicts: kept
+# from this check alone.
+rm -rf target/could-not-judge target/conformance target/playback target/scenes/night_played-*
 # Actual Redis/Lua lifecycle and WebKit/CSS evidence, never replaced by fixtures.
-step "page integration" node web/tests/run.mjs integration
+step "page integration" ${SVRNGS_RUN:-} node web/tests/run.mjs integration
 # Then the test targets `cargo test` skips (`test = false`), which
 # --all-targets leaves out and a glob of names reaches.
 step "clippy"   sh -c "cargo clippy --quiet --all-targets -- -D warnings && cargo clippy --quiet --workspace --test '*' -- -D warnings"
-# What the browser tests could not judge, printed after the browser's step,
-# and the conformance canary's verdicts: kept from this check alone.
-rm -rf target/could-not-judge target/conformance target/playback target/scenes/night_played-*
 # The canaries, browser, joining and conformance targets are `test = false`
 # (crates/svrngs-node/Cargo.toml, crates/svrngs/Cargo.toml), so each runs
 # once, in its own step below, and not again here.
-step "tests"    cargo test --quiet --no-fail-fast ${SVRNGS_TESTS:-}
+step "tests"    ${SVRNGS_RUN:-} cargo test --quiet --no-fail-fast ${SVRNGS_TESTS:-}
 # The canaries (DESIGN §5), by name: the apps that keep the infra general.
 step "canaries" cargo test --quiet --workspace --test canaries
 # The ceiling's canary (DESIGN §5, "The canaries"; PLAN §4, "The ceiling";
@@ -206,6 +207,6 @@ elif reached playback; then echo "never-ran  WebKit's seeks back to back, a rate
 # step is could-not-judge, with why (`step`, above); a failure with n0
 # answering is ours.
 step "n0" cargo test -p svrngs --test n0
-step "app laws" node web/tests/run.mjs apps
+step "app laws" ${SVRNGS_RUN:-} node web/tests/run.mjs apps
 rm -f /tmp/svrngs-check.$$; echo "note       took $SECONDS s in all"
 exit $failed

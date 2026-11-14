@@ -19,11 +19,15 @@ HEAD left its upstream) and every untracked one. A file reaches:
   name it; docs/, ralph/ and demo/runs/ and *.md the cheap steps alone read.
 
 A file nothing above places reaches every step: what the graph cannot prove
-unaffected runs. Prints `export` lines for check.sh to eval, the reasons on
-stderr.
+unaffected runs. A step running named test binaries is folded into `tests`,
+which runs none docs/seams.tsv calls fragile (`--run`, below). Prints `export`
+lines for check.sh to eval, the reasons on stderr.
 """
+import collections
+import csv
 import fnmatch
 import json
+import os
 import re
 import subprocess
 import sys
@@ -118,8 +122,8 @@ def main(base, given=None):
             reach(["page integration"], f, "its Node resource contract")
         crate = max((c for c, h in home.items() if f.startswith(h + "/")), key=lambda c: len(home[c]), default=None)
         if f in EVERYTHING or f.startswith(".cargo/"):
-            print(f"note       {f} reaches every step", file=sys.stderr)
-            return
+            reach([*bins, *steps], f, "reaches every step")
+            break
         if f in catalogs["unit"] or f.startswith(QUIET) or (f.endswith(".md") and not f.startswith("apps/")):
             continue
         if crate and f.startswith(home[crate] + "/tests/"):
@@ -151,8 +155,8 @@ def main(base, given=None):
             named.add("page integration")
         named |= {s for s, cmd in re.findall(every, check, re.M) if f in cmd or (name == "apps" and s == "app laws")}
         if not named and not any(fnmatch.fnmatch(f, g) for g in typed):
-            print(f"note       {f}: nothing places it, so every step runs", file=sys.stderr)
-            return
+            reach([*bins, *steps], f, "nothing places it, so every step")
+            break
         reach(named, f, "names it")
     while more := {p["name"] for p in meta["packages"] if p["name"] not in crates and any(d["name"] in crates and d.get("path") for d in p["dependencies"])}:
         crates |= more
@@ -165,22 +169,61 @@ def main(base, given=None):
     # The steps: one a binary in it was reached, or named; `tests` the rest.
     runs = {s: set(re.findall(r"--test (\w+)", cmd)) for s, cmd in steps.items()}
     run_ = {s for s in steps if s in reached or any(b in bins and b[1] in runs[s] for b in reached)}
+    # A step running named test binaries is folded into `tests`, which runs
+    # their tests docs/seams.tsv does not call fragile (`deterministic`).
+    folded = {s for s in run_ if runs[s]}
+    gate = {b for b in bins if bins[b][2] or any(b[1] in runs[s] for s in steps)}
+    plain = {b for b in gate if b in reached or any(b[1] in runs[s] for s in folded & reached)}
     # `tests`: whole crates, or one crate's binaries alone, never a mix.
-    plain = {b for b in reached if b in bins and bins[b][2]}
     whole = crates | {b[0] for b in plain} if crates or len({b[0] for b in plain}) > 1 else set()
-    pick = [f"-p {c}" for c in sorted(whole)] or [f"-p {b[0]}" for b in sorted(plain)][:1]
-    pick += [] if whole else [f"--test {b[1]}" for b in sorted(plain)]
-    if pick:
-        run_.add("tests")
+    pick = [f"-p {c}" for c in sorted(whole)] + ["--lib --bins"] if whole else [f"-p {b[0]}" for b in sorted(plain)][:1]
+    pick += [f"--test {b[1]}" for b in sorted(gate) if (b[0] in whole if whole else b in plain)]
+    run_ = run_ - folded | ({"tests"} if plain else set())
     for s in sorted(steps):
         hit = next((why[b] for b in sorted(reached, key=str) if b == s or (b in bins and b[1] in runs[s])), None)
-        print(f"{'reached' if s in run_ else 'untouched':<10} {s}{f' ({hit})' if hit and s in run_ else ''}", file=sys.stderr)
+        said = "folded" if s in folded else "reached" if s in run_ else "untouched"
+        print(f"{said:<10} {s}{f' ({hit})' if hit and s in run_ | folded else ''}", file=sys.stderr)
     listed = "\n".join(sorted(run_))
-    print(f"export SVRNGS_STEPS='{listed}' SVRNGS_TESTS='{' '.join(pick)}'")
+    print(f"export SVRNGS_STEPS='{listed}' SVRNGS_TESTS='{' '.join(pick)}' SVRNGS_RUN='python3 scripts/touched.py --run'")
+
+
+# `--run <a step's command>`, the touched tier's: a test docs/seams.tsv calls
+# fragile is not run, and is said could-not-judge, never passed (AGENTS.md 6);
+# every other test the command selects runs. A Node file runs whole, or not at
+# all when a row of it is fragile; a Rust test without a row runs (CHECKS.md).
+def deterministic(cmd):
+    fragile = {r[0].split(" (")[0] for r in csv.reader((ROOT / "docs/seams.tsv").open(), delimiter="\t") if r[2:3] == ["fragile"]}
+    skipped, failed, ran = [], 0, []
+    if cmd[0] == "node":
+        ran = run(*cmd, "--list").split()
+        skipped = sorted(k for k in fragile if k.split("::")[0] in ran)
+        ran = [f for f in ran if f not in {k.split("::")[0] for k in skipped}]
+        failed = ran and subprocess.run(["node", "--test", *ran], cwd=ROOT).returncode
+    else:
+        built = subprocess.run([*cmd[:2], "--no-run", "--message-format=json-render-diagnostics", *cmd[2:]], cwd=ROOT, stdout=subprocess.PIPE, text=True)
+        failed = built.returncode
+        for m in (m for m in map(json.loads, built.stdout.splitlines()) if m.get("executable") and m["profile"]["test"]):
+            exe, name = m["executable"], m["target"]["name"].replace("-", "_")
+            listed = [t[:-6] for t in run(exe, "--list", "--format", "terse").splitlines() if t.endswith(": test")]
+            mine, ran = [t for t in listed if f"{name}::{t}" in fragile], ran + listed
+            skipped += [f"{name}::{t}" for t in mine]
+            failed |= subprocess.run([exe, "-q", "--exact", *(a for t in mine for a in ("--skip", t))], cwd=Path(m["manifest_path"]).parent).returncode
+        if "--lib" in cmd:  # the doctests: their compile_fail cases are the types' laws
+            failed |= subprocess.run([*cmd[:2], "--doc", *(a for i, a in enumerate(cmd) if "-p" in cmd[i - 1:i + 1])], cwd=ROOT).returncode
+    out = ROOT / "target/could-not-judge" / os.environ.get("SVRNGS_STEP", "tests")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.with_suffix(".txt").write_text("".join(f"{k}\n" for k in skipped))
+    if skipped:
+        by = collections.Counter(k.split("::")[0] for k in skipped).most_common()
+        out.with_suffix(".step").write_text(f"{len(skipped)} fragile tests by docs/seams.tsv not run ({', '.join(f'{t} {n}' for t, n in by)}), each named in {out.with_suffix('.txt')}\n")
+    print("" if ran or skipped else "never-ran: the command selected no test")
+    return 1 if failed or not (ran or skipped) else 0
 
 
 if __name__ == "__main__":
     # `--files <path>...` plans those files as changed, for a look at a plan.
+    if sys.argv[1:2] == ["--run"]:
+        sys.exit(deterministic(sys.argv[2:]))
     if sys.argv[1:2] == ["--files"]:
         main("", sys.argv[2:])
     else:

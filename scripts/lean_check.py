@@ -707,10 +707,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # writes `MeetsAt({})` over its founder's (flakes 2026-11-12, row 201), +3;
 # paid by cli.rs `checked_page` taking the `--origin` that `new` and `link`
 # each matched on (-5). . 21,319 -> 21,317.
+# (2026-11-13) The touched tier runs no fragile test (scripts/touched.py
+# `deterministic`, its plan's fold; docs/CHECKS.md, "The touched tier"),
+# +35; paid by the economizing pass a808146d (svrngs-core, -25) and
+# d2e6d8c7 (svrngs-node, -35). Core 3,526 -> 3,501; . 21,317 -> 21,292.
 BUDGET = {
-    "crates/svrngs-core": 3527,
+    "crates/svrngs-core": 3502,
 
-    ".": 21318,
+    ".": 21293,
 
     "js": 8553,
 

@@ -16,13 +16,37 @@ reimplement authorization. Fast presentation tests are not signing/I/O evidence.
 | One real creator workflow | `cargo test -p svrngs --test scenes creator -- --test-threads=1` | Native publication/signing/version routes and computer/phone browsers |
 | That the shipped binary reaches n0 | `cargo test -p svrngs --test n0` (check.sh `n0`) | n0's relays and lookup on the internet, the shipped `svrngs` as built; could-not-judge when n0 does not answer iroh alone |
 | That a browser decodes a lent film | `cargo test --test browser playback:: && cargo test --test conformance seeks_back_to_back:: && cargo test -p svrngs --test scenes night_played::` (check.sh `playback`) | Actual Chromium and WebKit media decoders, and Jellyfin's player on the night scene's TV through a lend's worker; the one place a test waits on playback |
+| Every deterministic test a change reaches | `scripts/check.sh --touched` (or `--touched --files <path>...`) | The cheap steps, clippy, and each test `docs/seams.tsv` does not call fragile; no browser, scene, relay or service |
 | Complete regression gate | `scripts/check.sh` | Every tier, before shipping |
 
-`--fast` keeps its static checks and isolated Node laws. The complete gate also
-runs Node integration and the apps' tests. `--touched --files <path>...` is a
-conservative regression selector, not an excuse to erase another session's work.
-Unknown reach still runs the complete set. Shared instrument changes are held to
-all their consumers. The whole gate remains the gate.
+`--fast` keeps its static checks and isolated Node laws: the pre-commit hook,
+under a minute. The complete gate also runs Node integration and the apps' tests.
+`--touched` is a conservative regression selector, not an excuse to erase
+another session's work. Unknown reach still runs the complete tier. Shared
+instrument changes are held to all their consumers. The whole gate remains the gate.
+
+### The touched tier
+
+`--touched` runs no fragile test. `scripts/touched.py` folds each slow step
+that runs named test binaries (browser, scenes, canaries, playback, n0...) into
+`tests`; `touched.py --run` builds the binaries, lists each, and gives libtest
+`--exact --skip` for each test whose `docs/seams.tsv` row says `fragile`, the one
+decider: a row moved to `deterministic` joins with no second list. A test with
+no row runs, as do the doctests; a Node file runs whole, or not at all when a
+row of it is fragile. Each skipped test is named in
+`target/could-not-judge/<step>.txt` and the step said could-not-judge, never
+passed. Not nextest (no dependency here), nor a binary per kind (moves tests).
+It shares `target/` with the gate, so either warms the other; its own would
+start cold and double the disk.
+
+Timed on this Mac (12 cores, load under 8, CARGO_BUILD_JOBS=12, the gate's
+lock), a one-line change to crates/svrngs-node/src/node.rs: 377 s cold (empty
+target, CARGO_INCREMENTAL=0; clippy 77 s, tests 274 s); 172 s and 168 s warm as
+a developer runs it (incremental on; cheap steps 27 s, clippy 12 s, tests
+133 s). It ran 409 tests and the doctests and skipped 172. Running the binaries
+one after another is most of `tests`: 104 s at a load of 35, of which 41 s the
+browser binary's one deterministic test, which builds the page. Before, the
+change reached every slow step, about 25 min.
 
 ## Structural classification
 
