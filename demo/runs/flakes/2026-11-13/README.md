@@ -193,3 +193,27 @@ first load is still fetching its wasm, so the browser aborts the fetch.
 The crash report's frames name only the nearest exported symbols of a
 stripped chrome-headless-shell (temporal_rs, rust_png), so the CHECK that
 fired is not known; it is upstream's, held in the playback step.
+
+## Seams out of setup, the touched tier, and the gate at e09e8462
+
+The operator's rule (2026-11-13): a brittle seam is never a setup step;
+a test asserts its seam alone or reaches its state deterministically.
+Three passes moved the rows whose claim kind named no seam: the svrngs
+command's verbs through `cli::Here` (6ab693fd, 77a82d2e), a lend's
+service in process (harness 2, 21162c9c), relays scripted on the wire,
+browser rows shrunk to their seam or split into laws. Cuts a808146d
+(core -25) and d2e6d8c7 (node -35) paid for the touched tier
+(e09e8462): `scripts/check.sh --touched` runs every deterministic test
+and names each fragile one could-not-judge; 172 s and 168 s warm, 377 s
+cold for a one-line change to node.rs (docs/CHECKS.md "The touched tier").
+
+`gate-e09e8462.txt`: scripts/check.sh under the gate lock in a clean
+detached worktree, Eudoxia from git e995acd4, CARGO_INCREMENTAL=0:
+1,708 s, **exit 0**, every step passed, nothing could-not-judge; tests
+505 s, scenes 434 s, playback 178 s, browser 129 s. It covers svrngs-46's
+f1b0cbcc, 7fef4a17 and 8e71db1e.
+
+`recount-e09e8462.out` (`recount.py`, unchanged, the twelve verbs tests
+on `cli::Here` mapped in seams.tsv first): 896 gate Rust tests, 720
+(80.4%) crossing no seam, 176 at least one: P 163, Q 149, R 101, B 73,
+C 61, D 10, M 7.
