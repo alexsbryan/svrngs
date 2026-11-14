@@ -38,7 +38,6 @@ use tokio::sync::{mpsc, oneshot};
 
 use super::{
     find, holder_of, own_app, unix_now, Asker, Door, LendRefusal, PersonKey, LENDS_NOTHING,
-    PASS_HEADER,
 };
 use crate::iroh::Dialer;
 use crate::lend::{choices_path, Lend};
@@ -138,19 +137,16 @@ fn read(door: &Door, lend: &Lend) -> Result<Kept, Response> {
 /// The door's one check, by the design's §4 table, decided by the
 /// community profile's rules (`lend::choose`): a lend that asks nobody, or
 /// asked by its own pages, is carried; else the app the request names must
-/// have its person's yes. `None` to carry it, else svrngs's refusal.
+/// have its person's yes. `Ok` to carry it, else svrngs's refusal.
 pub(super) fn check(
     door: &Door,
     lend: &Lend,
     person: &PersonKey,
     app: Option<&Label>,
-) -> Option<Response> {
+) -> Result<(), Response> {
     let own = lend.label(&door.key);
     let choice = match (&lend.asks, app) {
-        (Some(_), Some(app)) => match read(door, lend) {
-            Ok(mut kept) => kept.remove(person).and_then(|mut k| k.remove(app)),
-            Err(refused) => return Some(refused),
-        },
+        (Some(_), Some(app)) => (read(door, lend)?.remove(person)).and_then(|mut k| k.remove(app)),
         _ => None,
     };
     let (asks, app) = (lend.asks.is_some(), app.map(Label::as_str));
@@ -158,11 +154,12 @@ pub(super) fn check(
     let judged = rules::choose(&door.key, asks, own.as_str(), app, said);
     tracing::debug!(target: "door", lend = %lend.name, %person, app, asks,
         ?choice, ?judged, "door: the person's choice for the app, by the community profile's rules");
-    let (kind, words) = match judged.err()? {
-        Refusal::Stopped => (LendRefusal::Stopped, "you stopped this app using"),
-        _ => (LendRefusal::Unasked, "only an app you said yes to uses"),
+    let (kind, words) = match judged {
+        Ok(_) => return Ok(()),
+        Err(Refusal::Stopped) => (LendRefusal::Stopped, "you stopped this app using"),
+        Err(_) => (LendRefusal::Unasked, "only an app you said yes to uses"),
     };
-    Some(kind.say(StatusCode::FORBIDDEN, format!("{words} {}", lend.name)))
+    Err(kind.say(StatusCode::FORBIDDEN, format!("{words} {}", lend.name)))
 }
 
 /// The task every choice is written through, so two never interleave
@@ -260,14 +257,9 @@ async fn say(door: &Door, lend: &Lend, person: PersonKey, app: Label, said: Said
 }
 
 /// `person`'s own choices on `lend`.
-fn kept(door: &Door, lend: &Lend, person: &PersonKey) -> Response {
-    match read(door, lend) {
-        Ok(mut kept) => {
-            Json(serde_json::json!({ "choices": kept.remove(person).unwrap_or_default() }))
-                .into_response()
-        }
-        Err(refused) => refused,
-    }
+fn kept(door: &Door, lend: &Lend, person: &PersonKey) -> Result<Response, Response> {
+    let choices = read(door, lend)?.remove(person).unwrap_or_default();
+    Ok(Json(serde_json::json!({ "choices": choices })).into_response())
 }
 
 /// A dialler standing in a group held here, as the person it is, and the
@@ -297,8 +289,8 @@ pub(super) async fn choose(
     body: Bytes,
 ) -> Result<Response, Response> {
     let (dialer, person, lend) = member(&door, dialer, &raw)?;
-    if headers.contains_key(PASS_HEADER) {
-        let app = own_app(&door, &dialer, &headers, &lend)?.expect("a pass is present");
+    // `own_app` is `None` with no pass, and names the pass's app with one.
+    if let Some(app) = own_app(&door, &dialer, &headers, &lend)? {
         return Ok(stop(&door, &lend, person, app, &body).await);
     }
     match serde_json::from_slice::<Saying>(&body) {
@@ -336,7 +328,7 @@ pub(super) async fn choices_of(
     Segment(raw): Segment<String>,
 ) -> Result<Response, Response> {
     let (_, person, lend) = member(&door, dialer, &raw)?;
-    Ok(kept(&door, &lend, &person))
+    kept(&door, &lend, &person)
 }
 
 /// This computer's person's `said` of `app` on its own lend `label`, with
@@ -399,9 +391,8 @@ pub(crate) async fn own_reaching(door: &Door, app: Label, told: Told) -> Respons
 
 /// This computer's person's choices on its own lend `label`.
 pub(crate) fn own_choices(door: &Door, label: &Label) -> Response {
-    match found(door, label.as_str()).and_then(|lend| Ok((own(door)?, lend))) {
-        Ok((person, lend)) => kept(door, &lend, &person),
-        Err(refused) => refused,
+    match found(door, label.as_str()).and_then(|lend| kept(door, &lend, &own(door)?)) {
+        Ok(answer) | Err(answer) => answer,
     }
 }
 

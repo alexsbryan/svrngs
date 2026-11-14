@@ -834,7 +834,7 @@ pub(crate) fn guest_admitted(rail: &RingRail, key: &str, lend: &Lend) -> bool {
 /// task, not the asker's reading, waits on `cut`, so an asker that stops
 /// reading is cut all the same.
 fn cut_by<B>(
-    body: B,
+    mut body: B,
     cut: impl std::future::Future<Output = ()> + Send + 'static,
     lend: String,
 ) -> Body
@@ -844,7 +844,6 @@ where
 {
     let (tx, rx) = mpsc::channel::<Result<hyper::body::Frame<_>, axum::BoxError>>(1);
     tokio::spawn(async move {
-        let mut body = body;
         let pump = async {
             while let Some(frame) = body.frame().await {
                 if tx.send(frame.map_err(Into::into)).await.is_err() {
@@ -1240,14 +1239,9 @@ async fn holder_of(
     let label = lend.label(&door.key);
     let now = unix_now().ok_or_else(|| refused("this computer's clock cannot be read"))?;
     // A link carried lapses no later than its pass ([`svrngs_core::authority::resolve`]).
-    let link = match headers
-        .get(LINK_HEADER)
-        .map(|v| v.to_str().ok().and_then(Pass::decode))
-    {
-        None => None,
-        Some(Some(link)) => Some(link),
-        Some(None) => return Err(refused("a link that does not read")),
-    };
+    let link = (headers.get(LINK_HEADER)).map(|v| v.to_str().ok().and_then(Pass::decode));
+    let link = link.map(|l| l.ok_or_else(|| refused("a link that does not read")));
+    let link = link.transpose()?;
     let until = link.as_ref().map_or(pass.until, |p| p.until);
     let (issuer, app) =
         svrngs_core::authority::resolve(&pass, link.as_ref(), &key, &label, now, || {
@@ -1260,7 +1254,7 @@ async fn holder_of(
         member_for(&door.rail, lend, &issuer)
             .map(|(group, member)| (group, member.person, PersonKey(member.person_key)))
     };
-    let standing = stands();
+    let mut standing = stands();
     // A key the keeper cut never stands again (U7), so it is told so at once
     // rather than after the ring is asked.
     if standing.is_none() && door.rail.removed_anywhere(&issuer).is_some() {
@@ -1268,7 +1262,7 @@ async fn holder_of(
             "door: refused — the pass's signer was removed from a group held here");
         return Err(gone());
     }
-    let standing = if standing.is_none() {
+    if standing.is_none() {
         if let Some(visit) = door.rail.visit_anywhere(&issuer) {
             let (group, host, person) =
                 guest_of(&hex::encode(door.key), visit, &issuer, lend, now)?;
@@ -1285,13 +1279,10 @@ async fn holder_of(
         tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
             "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
         let in_time = door.ring.until(ASK_WITHIN, || stands().is_some()).await;
-        let again = stands();
-        tracing::debug!(target: "door", signer = issuer, in_time, known = again.is_some(),
+        standing = stands();
+        tracing::debug!(target: "door", signer = issuer, in_time, known = standing.is_some(),
             "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
-        again
-    } else {
-        standing
-    };
+    }
     let (group, person, actor) =
         standing.ok_or_else(|| refused("its signer stands in no group this lends to"))?;
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until,
@@ -1523,9 +1514,7 @@ pub(crate) async fn lend_for(
     if let Who::Member(dialer) = &who {
         app = own_app(door, dialer, req.headers(), &lend)?;
     }
-    if let Some(refused) = choices::check(door, &lend, &whose, app.as_ref()) {
-        return Err(refused);
-    }
+    choices::check(door, &lend, &whose, app.as_ref())?;
     if let Some(refused) = lend.refusing(&service_path) {
         tracing::debug!(target: "door", actor, lend = %lend.name, path = service_path, refused = refused.as_str(),
             "door: refused — the lend refuses this path");
@@ -1878,7 +1867,6 @@ async fn forward(
     tracing::debug!(target: "door", actor, lender = ?lender.as_ref().map(|p| p.as_str()), "door: the lend's lender, by whom a refusal names it; none here names this computer, so \"Its lender\"");
     let lender = lender.as_ref().map_or("Its lender", |p| p.as_str());
     let away = format!("{lender}’s {name} is not answering now: try again later");
-    let unanswered = || LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away.clone());
     let label = lend.label(&door.key);
     let target = parts
         .uri
@@ -1919,7 +1907,7 @@ async fn forward(
     // has the whole answer or leaves it: the answer's body holds it.
 
     let Some(mut answer) = send_to((door, port.get()), request, lend.name.as_str()).await else {
-        let unanswered = unanswered();
+        let unanswered = LendRefusal::Away.say(StatusCode::BAD_GATEWAY, away);
         carriage.answered = Some((unanswered.status().as_u16(), None));
         return Err(unanswered);
     };

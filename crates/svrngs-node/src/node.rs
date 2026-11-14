@@ -357,17 +357,13 @@ impl Node {
         };
         // One transport: the round dials through it, and so does the live
         // lane's fan-out, which the record API runs (u3-3).
-        let (net, served) = (
-            Arc::new(IrohTransport::new(endpoint)),
-            (token, port, Box::new(serve) as Serve),
-        );
         Self::start_on(
-            net,
+            Arc::new(IrohTransport::new(endpoint)),
             (data_dir, places),
             rail,
             (relay, held),
             seeds,
-            served,
+            (token, port, Box::new(serve) as Serve),
             every,
         )
         .await
@@ -395,7 +391,6 @@ impl Node {
         let nudge = Arc::new(Notify::new());
         // One live buffer: the live route fills it, the loopback drain empties it.
         let live = Arc::new(LiveBuffer::default());
-        let admitting = rail.clone();
         let host = Arc::new(Host {
             transport: transport.clone(),
             rail: rail.clone(),
@@ -505,7 +500,6 @@ impl Node {
             .route(CARRY_ROUTE, axum::routing::post(carry))
             .with_state(asking.clone());
         let holders = crate::door::holders_router(asking.door.clone()).merge(carry);
-        let kept = asking.clone();
         let udp = asking.door.clone();
         let inbound = RingInbound {
             rail: rail.clone(),
@@ -514,22 +508,22 @@ impl Node {
         };
         let members = ring_routes::router(inbound.clone())
             .merge(crate::door::router(asking.door.clone()))
-            .merge(people_router(asking))
+            .merge(people_router(asking.clone()))
             .merge(crate::folder::members_router(folders));
-        let redeem = crate::redeem::router(kept.clone());
+        let redeem = crate::redeem::router(asking.clone());
         // A dialer the keeper cut, on the members' protocol, is told so in
         // words on every route (U7), and served nothing else but the lines
         // that cut it, where it asks to sync (#179; ring_routes.rs `told_cut`).
         let gone = ring_routes::router(inbound).fallback(|| async { crate::door::gone() });
         let acceptor = transport.accept(Arc::new(
-            move |alpn: &[u8], dialer: &PublicKey| match admit_dialer(&admitting, alpn, dialer) {
+            move |alpn: &[u8], dialer: &PublicKey| match admit_dialer(&rail, alpn, dialer) {
                 Some(Alpn::Member) => Admit::Serve(members.clone()),
                 Some(Alpn::Redeem) => Admit::Serve(redeem.clone()),
                 Some(Alpn::Lend) => Admit::Serve(holders.clone()),
                 Some(Alpn::Blobs) => Admit::Blobs(blobs.0.clone(), blobs.1.clone()),
                 Some(Alpn::Port) => Admit::Port(Box::new(udp.clone())),
                 None if Alpn::of(alpn) == Some(Alpn::Member)
-                    && admitting.removed_anywhere(&key_actor(dialer)).is_some() =>
+                    && rail.removed_anywhere(&key_actor(dialer)).is_some() =>
                 {
                     tracing::debug!(target: "node", "node: the dialer was cut here, so it is told its cut");
                     Admit::Serve(gone.clone())
@@ -541,7 +535,7 @@ impl Node {
         Ok(Self {
             _folders: Stop(store, host.clone()),
             host,
-            asking: kept,
+            asking,
             api,
             #[cfg(any(test, feature = "test-support"))]
             routes,

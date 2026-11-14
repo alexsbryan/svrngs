@@ -691,7 +691,7 @@ pub(crate) enum Serving {
 impl Serving {
     /// The contact dialled, none for this computer's own, and the lender's
     /// key, `own` for this computer's.
-    fn dialled<'a>(&'a self, own: &'a str) -> (Option<&'a Contact>, &'a str) {
+    pub(crate) fn dialled<'a>(&'a self, own: &'a str) -> (Option<&'a Contact>, &'a str) {
         match self {
             Self::Own => (None, own),
             Self::At(contact, lender) => (Some(contact), lender),

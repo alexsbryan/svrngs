@@ -439,10 +439,8 @@ async fn read_by(
     at: &Asking,
     app: &Label,
 ) -> Result<(Vec<Lending>, Unlisted, Vec<String>), Response> {
-    let reader = match crate::origin::serving(at, app).await? {
-        crate::origin::Serving::Own => at.host.actor.clone(),
-        crate::origin::Serving::At(_, lender) => lender,
-    };
+    let serving = crate::origin::serving(at, app).await?;
+    let reader = serving.dialled(&at.host.actor).1.to_owned();
     let host = &at.host;
     let (mut groups, own) = host.shared_with(&reader)?;
     groups.retain(|(_, s)| s.contains_key(&host.actor));

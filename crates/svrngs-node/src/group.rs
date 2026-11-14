@@ -225,14 +225,7 @@ impl crate::node::Host {
             return Err(only());
         }
         let asked: BTreeSet<Url> = relays.iter().cloned().map(Into::into).collect();
-        self.rail
-            .commit_said(group, &svrngs_core::MeetsAt(asked))
-            .map_err(|e| e.to_string())?
-            .map_err(|why| match why {
-                svrngs_core::HandOnRefusal::NotKeeper => only(),
-                _ => format!("{why:?}"),
-            })?;
-        self.refresh();
+        self.by_keeper(group, &svrngs_core::MeetsAt(asked), only())?;
         Ok(relays.to_vec())
     }
 
@@ -247,14 +240,20 @@ impl crate::node::Host {
                 "each computer can have at most {most} visiting at once"
             ));
         }
-        let said = self
-            .rail
-            .commit_said(group, &svrngs_core::SlotsAt(per_computer));
+        let only = "only the group's keeper decides how many each computer can have visiting";
+        self.by_keeper(group, &svrngs_core::SlotsAt(per_computer), only.into())
+    }
+
+    /// The keeper's `act` committed to `group`, then the node refreshed: [`Self::meet`]'s
+    /// and [`Self::slots`]'s. Refused `only` when this computer is not the keeper, else
+    /// in the record's words.
+    fn by_keeper<C>(&self, group: &str, act: &C, only: String) -> Result<(), String>
+    where
+        C: svrngs_core::Command<Refusal = svrngs_core::HandOnRefusal>,
+    {
+        let said = self.rail.commit_said(group, act);
         said.map_err(|e| e.to_string())?.map_err(|why| match why {
-            svrngs_core::HandOnRefusal::NotKeeper => {
-                "only the group's keeper decides how many each computer can have visiting"
-                    .to_string()
-            }
+            svrngs_core::HandOnRefusal::NotKeeper => only,
             _ => format!("{why:?}"),
         })?;
         self.refresh();
