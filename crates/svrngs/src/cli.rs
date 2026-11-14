@@ -1876,7 +1876,7 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
 /// on its own screens, else `$USER` itself (bash-person (e); the login was
 /// what people read of each other, Demo C's dry run, finding 4). `new` and
 /// `join` print it, so it is never silent.
-fn user_name() -> Option<Name> {
+pub fn user_name() -> Option<Name> {
     let user = std::env::var("USER").ok()?;
     let full = full_name(&user);
     let taken =
