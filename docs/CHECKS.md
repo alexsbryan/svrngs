@@ -277,7 +277,25 @@ Movie Night's startup is B's own: a module held in flight.
    (`web/tests/pages/home.test.mjs`, twenty laws). No production seam.
 6. A probe passed in at home.rs's `share::listening`, so no test scans ports.
 7. `now` passed in where a bar is a timing: door.rs `unix_now`, carried's
-   `spent`, the visit tests' end set from the real clock.
+   `spent`, the visit tests' end set from the real clock. The door's use
+   and read counts landed without it: door.rs `now` is the runtime's clock,
+   so a paused test clock holds them. Owed, sized, not paid: carried's
+   budget (its four C rows) reads the wall clock (`unix_now`), which a
+   paused clock does not move, and a line's stamp must follow its signer's
+   join, so a test cannot stamp a burst in the past. The design: `Net::now`
+   (the clock read at the network half, `IrohTransport` the system's, a
+   `Wire` one a test sets), handed to `spent` by `Budgeted` and
+   `line_spent`'s callers (rail.rs `append_act`, `carry`, origin.rs).
+   About 7 product lines; lean_check non-JS stood at its cap, 21,317 of
+   21,317, and no honest cut was found beside it.
+9. The room's network and listener (room.rs's three rows): room/owner.rs
+   `serve` reads the host's network (`crate::network::now`) and binds a
+   listener on its LAN address (`listen`), so a test of what the room
+   decides crosses both. The design: the read as `Net::network` and the
+   bind-and-serve as one `Net` method taking the room's `Router`, a
+   `Wire`'s answering a set network and serving the router in this
+   process. About 8 product lines (two trait methods, their impls
+   moving the existing calls); not paid, at the cap as above.
 8. Landed: the CLI's spawned `svrngs` is `crates/svrngs/tests/common/as_main.rs`,
    the test binary run again as `main` but meeting at one relay on 127.0.0.1
    per binary, n0 nowhere, as home_group.rs `dee_s_computer` was alone:
