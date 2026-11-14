@@ -41,6 +41,8 @@ const WORDS: &str = "the app receives ranked suggestions; your history stays whe
 #[allow(dead_code)]
 #[path = "common/computers.rs"]
 mod computers;
+#[path = "home/folder.rs"]
+mod folder;
 #[path = "home/opens.rs"]
 mod opens;
 #[path = "home/publication.rs"]
