@@ -81,11 +81,18 @@ struct Writer {
 /// from, and every `Remove` held, which the register shows and a leaver's
 /// round tells. A line entering voids the fold and the register; a seed
 /// unlike the one they were folded from folds them again.
+///
+/// And every line it read is kept, parsed (`acts`): the fold and the commit
+/// decide over it, not over the file read and parsed whole again, which was
+/// about half of each refold (svrn-docs `rings/current/INCREMENTAL_FOLD.md`
+/// Stage 1). The same lines, judged by the same rules ([`Oplog::read_since`]),
+/// so the same fold; what restarts the fold empties it with the rest.
 #[derive(Default)]
 struct Held {
     cursor: crate::oplog::Cursor,
     newest: std::collections::HashMap<String, Newest>,
     ids: std::collections::HashSet<OpId>,
+    acts: ActSet,
     forged: std::collections::HashSet<(OpId, String)>,
     digest: DigestFold,
     passed: Passed,
@@ -176,6 +183,7 @@ impl Held {
             if matches!(op.kind.act, RailAct::Remove { .. }) {
                 self.removes.push(op.clone());
             }
+            self.acts.insert(op.clone());
         }
         // The fold reads every act (G2), so any act moves it.
         if !tail.ops.is_empty() {
@@ -306,16 +314,9 @@ impl RingJournal {
         if let Some((_, register)) = log.held.standing.as_ref().filter(|(from, _)| from == seed) {
             return Ok((register.clone(), true));
         }
-        // The interpreter reads the whole log (G2).
+        // The interpreter reads every line held (G2), as `Held` kept them.
         if log.held.kept.as_ref().is_none_or(|(from, _)| from != seed) {
-            let (all, _) = log.oplog.read_all_with_skips().map_err(io)?;
-            let a = admit(
-                &ActSet::of(&all),
-                &[],
-                seed,
-                &self.namespace,
-                &Checked(&log.held.passed),
-            );
+            let a = admit(&log.held.acts, &[], seed, &self.namespace, &Checked(&log.held.passed));
             log.held.kept = Some((seed.clone(), a));
         }
         let m = log.held.kept.as_ref().map(|(_, a)| a.membership()).expect("kept above");
@@ -478,14 +479,13 @@ impl svrngs_core::Store for RingJournal {
     ) -> Result<R, RailError> {
         let (mut guard, _) = self.caught_up()?;
         let log = &mut *guard;
-        let (held_ops, _) = log.oplog.read_all_with_skips().map_err(io)?;
         let tip = log.held.newest.get(actor).map(|n| svrngs_core::Tip {
             seq: n.seq,
             lines: n.lines.clone(),
         });
         let kept = log.held.kept.as_ref().map(|(seed, a)| (seed, a));
         let (authored, answer) = f(svrngs_core::Held {
-            acts: &ActSet::of(&held_ops),
+            acts: &log.held.acts,
             tip,
             verifier: &Checked(&log.held.passed),
             kept,
