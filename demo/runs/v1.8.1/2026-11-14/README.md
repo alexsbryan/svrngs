@@ -31,3 +31,37 @@ again.
 `aarch64-apple-darwin`, `x86_64-apple-darwin`, `x86_64-unknown-linux-musl`
 and `aarch64-unknown-linux-musl`, every target `scripts/build-release.sh`
 builds, so no platform is missing.
+
+## Publication
+
+`publish.py` ran `scripts/deploy-page.sh` under the gate lock in a clean
+detached worktree at 83f1cdab (`v1.8.1`), 2026-11-15 03:35 to 03:47 UTC,
+exit 0 (`publish.json`, `publish.log`), at a load of about 6 with 60 GiB
+free. Its record was written outside the worktree, which `publish.py` holds
+clean, and copied here after. The build meets its groups at n0's relays
+(`SHIPPED`), so no relay was asked. The page built as version
+7a84f5701243, `svrngs` and `give` built for all four platforms, and Vercel
+deployment `dpl_JDRawCkzKnvKXJ2MjReenofiLW6q` reached production, Ready,
+aliased to `https://group.svrnme.sh` and `https://*.group.svrnme.sh`
+(`vercel inspect svrngs-page-d4n3aknks-svrnmesh.vercel.app --scope
+svrnmesh`; this CLI's deploy printed no JSON summary into the log). The
+`.vercel/` and `.env.local` the CLI wrote into the upload directory were
+deleted after.
+
+## Readback
+
+`verify.py` passed (`verification.json`). It is V1.8's, plus one check:
+the live `sw.js` equals the built one, and its `answered` sends a
+navigation to the network before the cache. Its six planted faults were
+rejected first, a cache-first `answered` among them, and V1.8's live
+`sw.js`, read before the run, was rejected by the same check. Then 78
+public files fetched from `group.svrnme.sh` each equaled the built site's
+bytes; the live `get/SHA256SUMS` equaled the built one (`SHA256SUMS`,
+`live-sums.txt`) and named exactly the eight downloads, so the install
+line fetches this build; the live page is version 7a84f5701243, not V1.8's
+ba66ef18e374, and is the one the live `sw.js` names; the live `install.sh`
+equals the built one; both frame policies were as `vercel.json` sets them;
+the wildcard name `release-83f1cdab.group.svrnme.sh` served the same page;
+`.env.local`, `.vercel/project.json` and `vercel.json` each answered 404;
+and the downloaded darwin-aarch64 `svrngs --help` (exit 0) and `give`
+(exit 2, its usage) started. No other platform's program was run here.
