@@ -1,5 +1,42 @@
 # svrngs releases
 
+## V1.8.2, 15 November 2026
+
+V1.8.2 fixes three things you could run into after updating to V1.8.
+
+**"What you lend" shows again.** On a computer that still had groups made
+before V1.8, the home page's **What you lend** section never appeared, and
+**What acts as you** with it: the page kept waiting on the older groups,
+which say only that they were made by an older svrngs. Now it leaves them
+out, and both sections show on **This computer**.
+
+**Opening a lend on your WiFi works with a VPN on.** With a VPN that carries
+all your traffic, such as Mullvad, WireGuard, OpenVPN or a Tailscale exit
+node, opening a lend to this computer's WiFi said *"this computer cannot
+tell which WiFi it is on"* and opened nothing. svrngs now reads the WiFi or
+cable your devices are on, whatever the VPN does with your traffic, so a
+café's WiFi still reads as the café's and your lends stay closed there.
+
+**Your VPN may still keep your TV out.** Many VPNs refuse the devices on
+your own WiFi until you let them in (Mullvad's *Local network sharing* is
+off at first). When a VPN is on, the lend's line now says so: *"This
+computer's traffic goes through a VPN, which may keep devices on this WiFi
+from reaching it: if one cannot open it, allow local network sharing (LAN
+access) in your VPN's settings."* svrngs never changes your VPN's settings.
+
+**Opening an app works every time in Linux's WebKit browsers.** In a
+browser built on WebKit on Linux, such as GNOME Web, about one opening of
+an app in a few hundred said *"This could not be opened. Open it again
+from your group's page."* Opening it again worked. Now every opening
+works.
+
+Everything else works as in V1.8.1. **Update** on your home page, or
+`svrngs update`, then restart svrngs.
+
+V1.8.2 is the build at `group.svrnme.sh`, from the commit tagged `v1.8.2`.
+Its publication and readback are recorded in
+`demo/runs/v1.8.2/2026-11-15/README.md`.
+
 ## V1.8.1, 14 November 2026
 
 V1.8.1 opens the newest page every time, invitations included, with no
