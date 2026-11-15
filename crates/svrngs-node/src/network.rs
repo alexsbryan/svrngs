@@ -163,29 +163,21 @@ pub fn here() -> Here {
     let read = |f: &Face| hardware_in(&routers(&f.name)?, router_of(f)?);
     let network = chosen.and_then(|(f, _)| read(f).map(Network).ok_or(Unread::NoHardwareAddress));
     tracing::debug!(target: "network", error = ?default.err(), ?network, ?listed, ?tunnel, "network: read by its router's hardware address, or why not");
-    let address = pick(&listed, route());
     Here {
         network,
-        address,
+        address: pick(&listed, route()),
         tunnel,
-    }
-}
-
-impl Here {
-    /// Nothing read, for `why`.
-    pub fn unread(why: Unread) -> Here {
-        Here {
-            network: Err(why),
-            address: None,
-            tunnel: None,
-        }
     }
 }
 
 /// [`here`], read off the async runtime, as its callers ask it.
 pub async fn now() -> Here {
     let read = tokio::task::spawn_blocking(here).await;
-    read.unwrap_or(Here::unread(Unread::Stopped))
+    read.unwrap_or(Here {
+        network: Err(Unread::Stopped),
+        address: None,
+        tunnel: None,
+    })
 }
 
 /// Where this computer keeps its router's hardware address for `iface`:

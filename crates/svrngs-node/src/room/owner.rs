@@ -20,7 +20,7 @@ use svrngs_core::pass::Label;
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
 use crate::lend::LendName;
-use crate::network::{guess, Here, Unread, Whereabouts};
+use crate::network::{guess, Whereabouts};
 use crate::node::Asking;
 use crate::origin::{Appending, Unconsented};
 
@@ -53,22 +53,20 @@ pub(crate) fn spawn(at: Asking, asked: kept::Asks<Turn, InRoom>) -> AbortOnDropH
 /// served anew, and dropped, with `listening`'s rest, where it is not; and
 /// the room as it stands.
 async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom> {
-    let here = match on.is_empty() {
-        true => Here::unread(Unread::NoRouter),
-        false => crate::network::now().await,
-    };
+    if on.is_empty() {
+        tracing::debug!(target: "room", "room: no lend on, so no network read and no listener kept");
+        listening.clear();
+        return Vec::new();
+    }
+    let here = crate::network::now().await;
+    let (network, address, tunnel) = (here.network, here.address, here.tunnel);
     let (mut was, rail) = (std::mem::take(listening), &at.host.rail);
     let mut room = Vec::new();
     for o in on {
         let Some(label) = Label::of_hex(&o.key, o.name.as_str()) else {
             continue;
         };
-        let served = match serves(
-            &o.network,
-            here.network.as_ref(),
-            here.address,
-            port_of(&label),
-        ) {
+        let served = match serves(&o.network, network.as_ref(), address, port_of(&label)) {
             Served::At(addr) => match was.remove(&label).filter(|(a, _)| *a == addr) {
                 Some(kept) => {
                     listening.insert(label, kept);
@@ -82,7 +80,7 @@ async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom>
             person: rail.standing_anywhere(&o.key).map(|(_, m)| m.person),
             key: o.key.clone(),
             name: o.name.clone(),
-            said: served.said_beside(here.tunnel.as_deref()),
+            said: served.said_beside(tunnel.as_deref()),
             served,
         });
     }
