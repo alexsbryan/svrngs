@@ -95,6 +95,20 @@ impl Served {
             Served::Taken => "Closed for now: another program on this computer holds the port it needs. Stop that program, and it opens again.".into(),
         }
     }
+
+    /// [`Served::said`], and, when it is served while a VPN carries this
+    /// computer's traffic (`tunnel`, [`crate::network::Here`]), that the
+    /// VPN may keep the devices here from reaching it, and what to let in
+    /// it: many VPNs refuse their own network's devices until told to
+    /// (Mullvad's "Local network sharing" is off at first). The VPN's
+    /// settings are its person's; svrngs only says so.
+    pub fn said_beside(&self, tunnel: Option<&str>) -> String {
+        const VPN: &str = " This computer's traffic goes through a VPN, which may keep devices on this WiFi from reaching it: if one cannot open it, allow local network sharing (LAN access) in your VPN's settings.";
+        match (self, tunnel) {
+            (Served::At(_), Some(_)) => self.said() + VPN,
+            _ => self.said(),
+        }
+    }
 }
 
 /// Whether a lend turned on at `kept` is served at `port`, with this

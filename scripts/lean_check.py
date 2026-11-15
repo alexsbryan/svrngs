@@ -711,10 +711,20 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # `deterministic`, its plan's fold; docs/CHECKS.md, "The touched tier"),
 # +35; paid by the economizing pass a808146d (svrngs-core, -25) and
 # d2e6d8c7 (svrngs-node, -35). Core 3,526 -> 3,501; . 21,317 -> 21,292.
+# (2026-11-14) The room's network beside a VPN (network.rs `lan`,
+# `service_on`; room.rs `said_beside`): the interface the devices here are
+# on, not the tunnel a VPN carries the traffic by, on Linux and macOS, and
+# the VPN said where it may refuse them. +100, raised by the operator
+# ("Raise the cap", 2026-11-14) after the change's own economizing pass,
+# -32: netdev's `Interface` judged as it is, not copied into a struct of
+# our own (-19), the owner reading the read's fields in place (-4), and
+# scutil's answers read by one `value` (-9). The rest is the feature: the
+# choice, macOS's service by interface, and the VPN's sentence.
+# . 21,292 -> 21,360.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21293,
+    ".": 21361,
 
     "js": 8553,
 

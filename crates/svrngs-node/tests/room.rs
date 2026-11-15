@@ -15,7 +15,7 @@
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
 mod common;
 
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::net::{Ipv4Addr, SocketAddr};
 use std::path::Path;
 use std::process::Stdio;
 use std::time::Duration;
@@ -63,15 +63,16 @@ async fn start(seed: u8, dir: &Path) -> Node {
     .expect("a node starts")
 }
 
-/// This host's private address, where the room serves; could-not-judge
+/// This host's private address on the network it is on, where the room
+/// serves, as the room reads it (`network::here`, the one decider): not
+/// the outward route's, which a VPN carrying the traffic makes its own
+/// (10.156.8.102, Mullvad's, on the Fedora box, 2026-11-14); could-not-judge
 /// on a host with none.
 fn here() -> Ipv4Addr {
-    match svrngs_node::network::route() {
-        Some(IpAddr::V4(v4)) if v4.is_private() => v4,
-        other => panic!(
-            "could not judge: this host's route leaves by {other:?}, no private address to serve a room on"
-        ),
-    }
+    let read = svrngs_node::network::here();
+    read.address.unwrap_or_else(|| {
+        panic!("could not judge: this host has no private address on a network to serve a room on ({read:?})")
+    })
 }
 
 /// Alex's computer, started over `dir`, its group holding Sam's key `sam`.
@@ -276,10 +277,12 @@ async fn a_lend_turned_on_is_served_to_this_network_until_it_is_turned_off() {
     assert_eq!(status, 200, "{turned}");
     let want = json!([sams(SAM, "app", json!({ "at": at.to_string() }))]);
     assert_eq!(bare(&turned), want);
-    assert_eq!(
-        turned[0]["said"],
-        format!("Open to this WiFi: type http://{at}/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you.")
-    );
+    // In the one wording (room.rs `said_beside`), its VPN said when one
+    // carries this host's traffic, as Mullvad's did here (2026-11-14).
+    let tunnel = svrngs_node::network::here().tunnel;
+    let said = room::Served::At(at).said_beside(tunnel.as_deref());
+    assert!(said.starts_with(&format!("Open to this WiFi: type http://{at}/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you.")));
+    assert_eq!(turned[0]["said"], said);
     assert_eq!(bare(&on(&alex).await), want);
     let loopback = SocketAddr::new(Ipv4Addr::LOCALHOST.into(), at.port());
     assert!(

@@ -42,7 +42,7 @@ async fn turn(State(at): State<Asking>, Json(ask): Json<RoomAsk>) -> Response {
         .ok_or_else(|| "That is not something lent in your groups.".to_string()),
         RoomAsk::Names(names) => named(&at, &names).await,
     };
-    let (network, _) = crate::network::now().await;
+    let network = crate::network::now().await.network;
     tracing::debug!(target: "room", ?lends, ?network, "room: turned on at the network read now, or refused");
     let refused = |words: &str| LendRefusal::Closed.say(StatusCode::CONFLICT, words);
     match (lends, network) {

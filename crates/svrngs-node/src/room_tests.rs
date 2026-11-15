@@ -140,6 +140,19 @@ fn served_only_on_the_network_it_was_turned_on_at() {
     assert!(Served::At(served)
         .said()
         .contains("http://192.168.1.4:41234/"));
+    // Served while a VPN carries the traffic, it says the VPN may refuse
+    // the devices here and what to allow in it; closed, nothing of a VPN.
+    let beside = Served::At(served).said_beside(Some("wg0-mullvad"));
+    assert!(beside.starts_with(&Served::At(served).said()));
+    assert!(beside.contains("allow local network sharing"));
+    assert_eq!(
+        Served::At(served).said_beside(None),
+        Served::At(served).said()
+    );
+    assert_eq!(
+        Served::Unread.said_beside(Some("wg0-mullvad")),
+        Served::Unread.said()
+    );
 }
 
 /// **The room door consents to no entry.** Its one check is the caller's

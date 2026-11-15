@@ -20,7 +20,7 @@ use svrngs_core::pass::Label;
 
 use super::{kept, port_of, serves, InRoom, On, Served, Turn, ROOM_FILE};
 use crate::lend::LendName;
-use crate::network::{guess, Unread, Whereabouts};
+use crate::network::{guess, Here, Unread, Whereabouts};
 use crate::node::Asking;
 use crate::origin::{Appending, Unconsented};
 
@@ -53,8 +53,8 @@ pub(crate) fn spawn(at: Asking, asked: kept::Asks<Turn, InRoom>) -> AbortOnDropH
 /// served anew, and dropped, with `listening`'s rest, where it is not; and
 /// the room as it stands.
 async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom> {
-    let (network, address) = match on.is_empty() {
-        true => (Err(Unread::NoRouter), None),
+    let here = match on.is_empty() {
+        true => Here::unread(Unread::NoRouter),
         false => crate::network::now().await,
     };
     let (mut was, rail) = (std::mem::take(listening), &at.host.rail);
@@ -63,7 +63,12 @@ async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom>
         let Some(label) = Label::of_hex(&o.key, o.name.as_str()) else {
             continue;
         };
-        let served = match serves(&o.network, network.as_ref(), address, port_of(&label)) {
+        let served = match serves(
+            &o.network,
+            here.network.as_ref(),
+            here.address,
+            port_of(&label),
+        ) {
             Served::At(addr) => match was.remove(&label).filter(|(a, _)| *a == addr) {
                 Some(kept) => {
                     listening.insert(label, kept);
@@ -77,7 +82,7 @@ async fn serve(at: &Asking, on: &[On], listening: &mut Listening) -> Vec<InRoom>
             person: rail.standing_anywhere(&o.key).map(|(_, m)| m.person),
             key: o.key.clone(),
             name: o.name.clone(),
-            said: served.said(),
+            said: served.said_beside(here.tunnel.as_deref()),
             served,
         });
     }

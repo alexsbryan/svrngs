@@ -1532,7 +1532,13 @@ assume no screen, a TV one device among others.
    address. A lend is kept on across restarts, by its lender's key and its
    name, with the network it was turned on at, told apart by that
    network's router's hardware address; it is served only while this
-   computer is on that network, read again every few seconds. On another
+   computer is on that network, read again every few seconds. The network
+   is the one the devices beside this computer stand on: when a VPN
+   carries its traffic, the one interface beside the VPN's tunnel that has
+   a router, never the tunnel, so a café still reads as the café; two such,
+   WiFi and a cable, are not told apart and not guessed. Served beside a
+   VPN, the room says the VPN may refuse those devices, and to allow local
+   network sharing in it; the VPN's settings stay its person's. On another
    network, or one that cannot be read, it stays closed and says why, and
    opens again on the network it was turned on at. Its listener is bound
    by its label alone, so the room opens as svrngs starts, before any
