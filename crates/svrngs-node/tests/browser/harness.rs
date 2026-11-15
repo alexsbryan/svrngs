@@ -135,7 +135,7 @@ pub fn site() -> &'static Path {
 
 /// The name the tests serve the group's page at, each app at a name under
 /// it (web/tests/page.mjs `PAGE_HOST`, which reaches it through a proxy).
-pub const PAGE_HOST: &str = "group.svrnme.test";
+pub const PAGE_HOST: &str = "group.svrnme.example.com";
 
 /// The relay's address, `http://127.0.0.1:<port>/`: its front's ([`relay`]).
 pub fn relay_url(relay: &Server) -> String {

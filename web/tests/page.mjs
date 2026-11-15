@@ -72,15 +72,21 @@ const UPGRADED = { 'content-security-policy': 'upgrade-insecure-requests' };
 
 // The page at the shape production's has, over TLS at a name with each
 // app at a name of its own under it (DESIGN §3, "the page's host must serve
-// the page at every name under it"): `https://group.svrnme.test:<port>/`,
-// an app `https://<label>.group.svrnme.test:<port>/`. On `localhost` and
+// the page at every name under it"): `https://group.svrnme.example.com:<port>/`,
+// an app `https://<label>.group.svrnme.example.com:<port>/`. On `localhost` and
 // `<label>.localhost` WebKit gives the group's signer, framed under an app,
 // none of the page's cookies, and the signer's handoff is one
 // (HOLDER_APPROVAL §3.D; demo/runs/security/2026-11-02-webkit-partition/,
-// holder-design/run-localhost*.txt). No name resolves: each context reaches
-// them through `proxied`, which ends their TLS and hands each to the page's
-// server, plain HTTP on 127.0.0.1 at the name's port.
-export const PAGE_HOST = 'group.svrnme.test';
+// holder-design/run-localhost*.txt). Under example.com (RFC 2606), a suffix
+// the public suffix list names, as production's .sh is: the page's name and
+// an app's are then one site, as group.svrnme.sh and its apps' are. Under
+// .test, which the list does not name, Linux's WebKit refused the signer,
+// framed under an app, every cookie it wrote, its deletion of the handoff
+// too, while Chromium and the Mac's WebKit took them (demo/runs/
+// webkit-cookie/2026-11-15/). No name resolves: each context reaches them through
+// `proxied`, which ends their TLS and hands each to the page's server,
+// plain HTTP on 127.0.0.1 at the name's port.
+export const PAGE_HOST = 'group.svrnme.example.com';
 export const pageAt = (server) => `https://${PAGE_HOST}:${server.address().port}/`;
 export const appAt = (label, port) => `https://${label}.${PAGE_HOST}:${port}`;
 export const inApp = (url) => url.hostname.endsWith(`.${PAGE_HOST}`);
@@ -90,10 +96,14 @@ const TLS = new URL('../../target/tls/', import.meta.url).pathname;
 // which macOS and every Linux carry, in a directory of its own put in
 // place whole, so two drivers making it at once each read one pair: the
 // browsers take it as they are told to (`launch`), so it need name nothing
-// they check. Exported for dev.mjs, which names it to Chrome by its key.
+// they check, kept by the name it is for. Exported for dev.mjs, which names
+// it to Chrome by its key.
 export function certified() {
   try {
-    return { key: readFileSync(`${TLS}page/key.pem`), cert: readFileSync(`${TLS}page/cert.pem`) };
+    return {
+      key: readFileSync(`${TLS}${PAGE_HOST}/key.pem`),
+      cert: readFileSync(`${TLS}${PAGE_HOST}/cert.pem`),
+    };
   } catch {
     mkdirSync(TLS, { recursive: true });
     const made = mkdtempSync(`${TLS}making-`);
@@ -128,7 +138,7 @@ export function certified() {
       process.exit(3);
     }
     try {
-      renameSync(made, `${TLS}page`);
+      renameSync(made, `${TLS}${PAGE_HOST}`);
     } catch {
       rmSync(made, { recursive: true, force: true });
     }

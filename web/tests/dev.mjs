@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The group's page for a person working on it, served on this computer as
 // the browser tests serve it (page.mjs `serve`, `proxied`, `certified`): the
-// built page at `https://group.svrnme.test:<port>/`, each app at a name
+// built page at `https://group.svrnme.example.com:<port>/`, each app at a name
 // under it, reached through the tests' proxy, which ends TLS with their
 // certificate. An app saves only there: on `localhost` and its names no
 // engine gives the group's signer, framed under an app, the page's cookie,

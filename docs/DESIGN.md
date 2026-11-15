@@ -2365,10 +2365,12 @@ with the open's digest, and only then deletes the cookie (`sign.js`
 open of the app replaces the older one, whose pages are refused. A missing
 cookie or record, another app's open, or an older one, each ends in "Open
 this app again from your group's page". This needs the page over TLS on a
-real name: the browser tests reach `https://group.svrnme.test` through a
-proxy (`web/tests/page.mjs`), since WebKit gives a frame under a
-`<label>.localhost` page no cookie. `web/tests/dev.mjs` serves it the same
-way for a person working on the page, in Chrome alone.
+real name: the browser tests reach `https://group.svrnme.example.com`
+through a proxy (`web/tests/page.mjs`), since WebKit gives a frame under a
+`<label>.localhost` page no cookie, and Linux's WebKit lets a frame under
+`<label>.group.svrnme.test` write none, so the signer's deletion never
+took. `web/tests/dev.mjs` serves it the same way for a person working on
+the page, in Chrome alone.
 
 **The phone's app adds what the page can't; the page stays the way in.**
 Designed, not built: it waits in PLAN §2 until it is resourced, not

@@ -33,11 +33,12 @@ const watched = (b) => (
   b
 );
 // The handoff cookies the group's page left that no signer has taken,
-// once the signer's deletion has reached the browser's cookie store: a
-// frame's `document.cookie` write reaches it after the frame goes on, so
-// read at once WebKit's store still held the deleted cookie (the Fedora gate
-// image, demo/runs/flakes/2026-11-12). Asked again until none is left or
-// 10 s have passed: a cookie never deleted is still counted.
+// once the signer's deletion has reached the browser's cookie store, asked
+// again until none is left or 10 s have passed: a cookie never deleted is
+// still counted. The wait was for a frame's write read too early (C5,
+// demo/runs/flakes/2026-11-12); the Fedora gate image's cookie, still there
+// after it, had never been deleted: under the page's old name Linux's
+// WebKit refused the signer's write (page.mjs `PAGE_HOST`).
 const handoffs = async (b) => {
   const left = async () =>
     (await b.context.cookies(origin)).filter((c) => c.name.startsWith('__Host-svrngs-')).length;
