@@ -721,10 +721,14 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # scutil's answers read by one `value` (-9). The rest is the feature: the
 # choice, macOS's service by interface, and the VPN's sentence.
 # . 21,292 -> 21,360.
+# gate-podman (2026-11-15): the room's serve returning early with no lend
+# on, and `Here::unread` built in place (b9093fe9, -8), made room for the
+# gate image's entrypoint, scripts/gate/delegate.sh (+7), with no raise;
+# lowered to where both land. . 21,360 -> 21,359.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21361,
+    ".": 21360,
 
     "js": 8553,
 

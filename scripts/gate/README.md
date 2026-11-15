@@ -2,8 +2,8 @@
 
 `scripts/check.sh` is the definition of done (AGENTS.md). The Containerfile
 here is what it needs on a Linux computer that has none of it: Rust and cargo-deny, Node,
-Playwright's Chromium and WebKit, the wasm tools, Jellyfin and Redis, every
-one pinned, in a rootless podman image. Its command runs `npm ci --prefix web`,
+Playwright's Chromium and WebKit, the wasm tools, Jellyfin, Redis and
+podman, every one pinned, in a rootless podman image. Its command runs `npm ci --prefix web`,
 then `scripts/check.sh`, in the checkout at `/work`; its output and exit are
 check.sh's.
 
@@ -12,11 +12,14 @@ From a svrngs checkout:
     podman build -t svrngs-gate -f scripts/gate/Containerfile scripts/gate
     podman run --rm --init --userns=keep-id:uid=1000,gid=1000 \
       --security-opt label=disable --shm-size=2g --pids-limit=-1 \
+      --security-opt unmask=ALL --security-opt seccomp=unconfined \
+      --device /dev/net/tun \
       --sysctl net.ipv4.ip_local_port_range="49152 65535" \
       -v "$PWD:/work" \
       -v svrngs-gate-cargo-registry:/home/gate/.cargo/registry \
       -v svrngs-gate-cargo-git:/home/gate/.cargo/git \
-      -v svrngs-gate-npm:/home/gate/.npm svrngs-gate
+      -v svrngs-gate-npm:/home/gate/.npm \
+      -v svrngs-gate-containers:/home/gate/.local/share/containers svrngs-gate
 
 The build takes about 10 minutes, once. Each flag is for a reason:
 
@@ -43,8 +46,18 @@ The build takes about 10 minutes, once. Each flag is for a reason:
   went to Jo's old address. Since give-redial (bd344e4d) it passes there
   (demo/runs/redial/2026-10-27/README.md; every scenes run of
   demo/runs/flakes/2026-11-12).
-- The three volumes are the caches every run shares; `podman volume rm`
-  them to start clean. `target/` stays the checkout's own: cargo judges a
+- Podman runs inside, rootless as `gate`, for give's tests and the give
+  and holyarrs scenes (Containerfile). `unmask=ALL`: the kernel lets a
+  container mount its own `/proc` only where no part of the outer one is
+  masked ("mount `proc` to `proc`: Operation not permitted");
+  `seccomp=unconfined`: podman's filter refuses the inner `sethostname`
+  ("sethostname: Operation not permitted"); `/dev/net/tun` for the inner
+  containers' network (slirp4netns). The image enters as root only to give
+  `gate` the container's cgroup, for `pod pause` (delegate.sh). Each still
+  holds no more than your own user: the container is rootless.
+- The four volumes are the caches every run shares, the containers one
+  podman's storage, so each image is pulled once; `podman volume rm` them
+  to start clean. `target/` stays the checkout's own: cargo judges a
   build fresh by mtime, so a target shared by two checkouts could keep one
   older than its sources. Give each run a checkout of its own, or move one
   on with `git fetch` and `git checkout`.

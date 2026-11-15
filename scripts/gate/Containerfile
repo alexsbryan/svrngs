@@ -47,6 +47,21 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright
 RUN npx -y playwright@1.59.1 install --with-deps chromium webkit \
  && chmod -R a+rX /opt/ms-playwright && rm -rf /var/lib/apt/lists/* /root/.npm
 
+# Podman, rootless inside this container, for give (apps/give/tests/check.rs
+# `podman_here`) and the give and holyarrs scenes, which without it said
+# never-ran (C7, demo/runs/flakes/2026-11-12; the gate at 250aa65b here,
+# 2026-11-15). Its newuidmap and newgidmap by file capability, not setuid,
+# as podman's own image has them: setuid, writing a nested uid_map was
+# refused ("write to uid_map failed: Operation not permitted"). gate's
+# subordinate ids are below, with the user. containers.d/gate.conf says why
+# it sets what it sets; README.md the run flags it needs.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      podman uidmap slirp4netns libcap2-bin \
+ && rm -rf /var/lib/apt/lists/* \
+ && chmod 0755 /usr/bin/newuidmap /usr/bin/newgidmap \
+ && setcap cap_setuid=ep /usr/bin/newuidmap && setcap cap_setgid=ep /usr/bin/newgidmap
+COPY containers.d/gate.conf /etc/containers/containers.conf.d/gate.conf
+
 # The wasm-bindgen CLI build-web.sh checks for (0.2.128), and binaryen's
 # wasm-opt at the version the Mac has (133).
 RUN set -e; cd /tmp; \
@@ -62,8 +77,13 @@ RUN set -e; cd /tmp; \
 
 # The gate runs as `gate`, uid 1000, not root: a test that makes a file
 # unreadable and expects it unread would pass as root for the wrong reason.
-# README.md's `keep-id` maps the host's user onto it.
+# README.md's `keep-id` maps the host's user onto it. Its subordinate ids,
+# for podman, are the container's 1-999 and 1001-65535: within what keep-id
+# maps from a host's usual 65,536, and up to 65534, `nobody`, which an
+# image's layers chown to. Written over the 100000-165535 useradd gives it,
+# which keep-id maps none of, so podman's every command failed with it.
 RUN userdel -r ubuntu && useradd -m -u 1000 -s /bin/bash gate \
+ && printf 'gate:1:999\ngate:1001:64535\n' | tee /etc/subuid >/etc/subgid \
  && mkdir /work && chown gate:gate /work
 USER gate
 # Rust as rust-toolchain.toml pins it, 1.95.0, with rustfmt, clippy and the
@@ -91,4 +111,9 @@ WORKDIR /work
 # CARGO_INCREMENTAL=0 as the loops run, so target/ stays smaller; USER as
 # a login sets it and podman does not (crates/svrngs/tests/name.rs reads it).
 ENV CARGO_INCREMENTAL=0 USER=gate
+# Entered as root, which delegate.sh leaves for `gate` once it has given
+# it the container's cgroup, for podman's pauses.
+COPY delegate.sh /usr/local/bin/delegate
+USER root
+ENTRYPOINT ["/usr/local/bin/delegate"]
 CMD ["bash", "-c", "npm ci --prefix web --no-audit --no-fund || echo 'note       npm ci --prefix web failed'; exec scripts/check.sh"]
