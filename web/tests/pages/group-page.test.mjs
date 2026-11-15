@@ -193,8 +193,14 @@ const KEY = new Uint8Array(32);
 // The effects held at the edge, never run (see the head of this file).
 const EDGE = ['hand', 'again', 'cold', 'forget'];
 
-// Whether `promise` settles while nothing waits on a clock: every fake
-// here answers within a few turns of the loop.
+// Whether `promise` settles within SETTLE_MS, far short of the page's own
+// clock (dial.js PATIENCE, a minute), so a dial never answered is told from
+// one answered. Every fake here answers at once, but not every read is in
+// turns of this loop: dial.js `wasm` is an import() that the loader hooks
+// (layout.mjs, phone-core.mjs) answer on their own thread, in real time. On
+// Linux a read took up to 25 ms, 4,000 to 6,600 turns, past the 1,000 turns
+// this once allowed, so a computer that answered was said silent.
+const SETTLE_MS = 1000;
 async function settled(promise) {
   let done = false;
   let value;
@@ -202,7 +208,8 @@ async function settled(promise) {
     (v) => ((done = true), (value = { v })),
     (e) => ((done = true), (value = { e })),
   );
-  for (let turn = 0; turn < 1000 && !done; turn++) await new Promise((r) => setImmediate(r));
+  const start = performance.now();
+  while (!done && performance.now() - start < SETTLE_MS) await new Promise((r) => setImmediate(r));
   return done ? value : null;
 }
 
