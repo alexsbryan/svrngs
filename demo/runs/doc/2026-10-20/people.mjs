@@ -54,20 +54,32 @@ export async function person({ who, engine, device }) {
       await page.waitForSelector('.tiptap', { timeout: 60_000 });
       return { ms: Date.now() - t0, at: Date.now() };
     },
-    /** A new paragraph at the doc's end, typed. The caret is put at the
-     * last paragraph's end by the page's own selection, which the editor
-     * follows: End and its chords differ by engine and platform. */
-    async type(text) {
+    /** A new paragraph at the doc's end, typed, or after the paragraph
+     * whose words are `after`. The caret is put at that paragraph's end by
+     * the page's own selection, which the editor follows: End and its
+     * chords differ by engine and platform. Two people typing at once each
+     * type after a paragraph neither is writing: the last one can be the
+     * other's line still arriving, "Bo br", and the Enter split it, "Bo
+     * br" ¶ "Cy brings drinks" ¶ "ings chips" (the doc scene under load,
+     * 2 runs of 5, 2026-11-15). */
+    async type(text, after = null) {
       await page.locator('.tiptap').focus();
-      await page.evaluate(() => {
-        const last = document.querySelector('.tiptap').lastElementChild;
+      await page.evaluate((after) => {
+        const all = [...document.querySelector('.tiptap').children];
+        // A paragraph's own words, the carets drawn in it left out, as `read`.
+        const own = (p) => {
+          const c = p.cloneNode(true);
+          c.querySelectorAll('.collaboration-carets__caret').forEach((x) => x.remove());
+          return c.textContent;
+        };
+        const last = after === null ? all.at(-1) : all.find((p) => own(p) === after);
         const range = document.createRange();
         range.selectNodeContents(last);
         range.collapse(false);
         const s = getSelection();
         s.removeAllRanges();
         s.addRange(range);
-      });
+      }, after);
       await new Promise((r) => setTimeout(r, 50));
       await page.keyboard.press('Enter');
       const started = Date.now();
@@ -75,10 +87,15 @@ export async function person({ who, engine, device }) {
       return { started, at: Date.now() };
     },
     /** Until the editor holds every one of `texts`. */
-    has: (texts, within) => until(async () => {
-      const t = await words(page, '.tiptap');
-      return texts.every((x) => t.includes(x));
-    }, within),
+    has: async (texts, within) => {
+      let t = '';
+      const got = await until(async () => {
+        t = await words(page, '.tiptap');
+        return texts.every((x) => t.includes(x));
+      }, within);
+      // A wait that ran out says what the editor held at its end.
+      return got.at === null ? { ...got, held: t } : got;
+    },
     /** Until `sel` is shown (`shown`) or hidden. */
     shows: (sel, shown, within) => until(async () => (await page.locator(sel).isVisible().catch(() => false)) === shown, within),
     /** Until `sel`'s words match `re`. */

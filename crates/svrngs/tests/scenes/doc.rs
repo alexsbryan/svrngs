@@ -193,11 +193,12 @@ async fn doc(engine: Engine) {
         .await;
     }
 
-    // Both write at once; every page holds both lines, one doc.
+    // Both write at once, each after the first line; every page holds
+    // both lines, one doc.
     for (who, line) in LINES {
         tell(
             &mut browsers,
-            json!({ "do": "type", "who": who, "text": line }),
+            json!({ "do": "type", "who": who, "text": line, "after": FIRST }),
         )
         .await;
     }
