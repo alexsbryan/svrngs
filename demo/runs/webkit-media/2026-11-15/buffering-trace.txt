@@ -1,0 +1,29 @@
+0:00:00.131743426    91 0x55df200962d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2454:updateBufferingStatus:<regular-media-player-0> [Buffering] mode: GST_BUFFERING_DOWNLOAD, status: 100.000000%
+0:00:00.246788316    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2365:handleMessage:<regular-media-player-0> Stream is fully downloaded, stopping monitoring downloading progress.
+0:00:00.265955618    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.273320144    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.273326005    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2998:updateStates:<regular-media-player-0> Playback state changed from PAUSED to PLAYING. Notifying the media player cli
+0:00:00.440102751    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2974:updateStates:<regular-media-player-0> [Buffering] Pausing stream for buffering.
+0:00:00.440542860    91 0x55df200962d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2454:updateBufferingStatus:<regular-media-player-0> [Buffering] mode: GST_BUFFERING_DOWNLOAD, status: 100.000000%
+0:00:00.440559011    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.440562798    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2962:updateStates:<regular-media-player-0> [Buffering] Restarting playback (because of buffering or resuming from zero p
+0:00:00.440857684    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.440865649    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2998:updateStates:<regular-media-player-0> Playback state changed from PAUSED to PLAYING. Notifying the media player cli
+0:00:00.440955398    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.547729232    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:676:seekToTarget:<regular-media-player-0> [Seek] seek attempt to {40.000000}
+0:00:00.547739391    91 0x55df200962d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:698:seekToTarget:<regular-media-player-0> [Seek] seeking to {40.000000}
+0:00:00.547765770    91 0x55df200962d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:632:doSeek:<regular-media-player-0> [Seek] Performing actual seek to 0:00:40.000000000 (endTime: 99:99:99.999999999) at 
+0:00:00.551396928    91 0x55df200962d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2857:finishSeek:<regular-media-player-0> [Seek] seeked to {40.000000}
+2026-11-15T21:59:04.411Z pw:browser [pid=67] <gracefully close start>
+2026-11-15T21:59:04.455Z pw:browser [pid=67] <gracefully close end>
+0:00:00.122812836   213 0x55fce02ed2d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2454:updateBufferingStatus:<regular-media-player-0> [Buffering] mode: GST_BUFFERING_DOWNLOAD, status: 100.000000%
+0:00:00.229372075   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2365:handleMessage:<regular-media-player-0> Stream is fully downloaded, stopping monitoring downloading progress.
+0:00:00.246050124   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.252161557   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2928:updateStates:<regular-media-player-0> [Buffering] Complete.
+0:00:00.252168200   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2998:updateStates:<regular-media-player-0> Playback state changed from PAUSED to PLAYING. Notifying the media player cli
+0:00:00.418887948   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2974:updateStates:<regular-media-player-0> [Buffering] Pausing stream for buffering.
+0:00:15.261270690   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:676:seekToTarget:<regular-media-player-0> [Seek] seek attempt to {52.000000}
+0:00:15.261287151   213 0x55fce02ed2d0 INFO       webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:698:seekToTarget:<regular-media-player-0> [Seek] seeking to {52.000000}
+0:00:15.261321356   213 0x55fce02ed2d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:632:doSeek:<regular-media-player-0> [Seek] Performing actual seek to 0:00:52.000000000 (endTime: 99:99:99.999999999) at 
+0:00:15.263418761   213 0x55fce02ed2d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2454:updateBufferingStatus:<regular-media-player-0> [Buffering] mode: GST_BUFFERING_DOWNLOAD, status: 100.000000%
+0:00:15.265547565   213 0x55fce02ed2d0 DEBUG      webkitmediaplayer MediaPlayerPrivateGStreamer.cpp:2857:finishSeek:<regular-media-player-0> [Seek] seeked to {52.000000}

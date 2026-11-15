@@ -213,9 +213,15 @@ export const IGNORING = ['--ignore-certificate-errors'];
 // `launch`. WebKit on macOS starts through webkit.sh, with AppKit's window
 // animations off: each page's animation kept one of 64 threads while the
 // display was off, and from the 64th page on, the browser loaded nothing
-// (demo/runs/webkit-wall/2026-11-03). Anything else starts as Playwright
-// starts it.
+// (demo/runs/webkit-wall/2026-11-03). WebKit on Linux (Playwright's WPE)
+// starts with its media disk cache off: with it, a film loaded whole
+// before playing paused "for buffering" and was never restarted, on a
+// plain origin as under a lend's worker, so the playback step failed
+// there every run (demo/runs/webkit-media/2026-11-15). Anything else
+// starts as Playwright starts it.
 export function starting(type) {
+  if (type.name() === 'webkit' && process.platform === 'linux')
+    return { env: { ...process.env, WPE_SHELL_DISABLE_MEDIA_DISK_CACHE: '1' } };
   if (type.name() !== 'webkit' || process.platform !== 'darwin') return {};
   return {
     executablePath: fileURLToPath(new URL('./webkit.sh', import.meta.url)),
@@ -596,6 +602,15 @@ export async function play({ at, within }) {
           seeking: v.seeking,
           paused: v.paused,
           error: v.error?.message ?? null,
+          // Whether the bytes or the decoder stopped: what it holds to play
+          // (readyState 2 or less, data short of the next frame), whether
+          // it is fetching, and the ranges it has.
+          ready: v.readyState,
+          network: v.networkState,
+          buffered: Array.from({ length: v.buffered.length }, (_, i) => [
+            v.buffered.start(i),
+            v.buffered.end(i),
+          ]),
         });
       } else {
         setTimeout(check, 20);

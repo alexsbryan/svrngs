@@ -1,0 +1,21 @@
+# out3: no env, iPhone 15 or desktop, a click or none (four runs, one container)
+{"desktop":false,"click":false,"mode":"same","first":{"ms":271,"at":0.270871176},"seek":{"ms":272,"at":40.269177052},"again":{"ms":null,"at":0.167847284,"ready":2,"network":2,"paused":false},"seek2":{"ms":null,"at":52,"ready":2,"network":2,"paused":false}}
+{"desktop":false,"click":true,"mode":"same","first":{"ms":null,"at":0.167427943,"ready":2,"network":2,"paused":false},"seek":{"ms":null,"at":40,"ready":2,"network":2,"paused":false},"again":{"ms":null,"at":0.167624584,"ready":2,"network":2,"paused":false},"seek2":{"ms":null,"at":52,"ready":2,"network":2,"paused":false}}
+{"desktop":true,"click":false,"mode":"same","first":{"ms":null,"at":0.16699088,"ready":2,"network":2,"paused":false},"seek":{"ms":null,"at":40,"ready":2,"network":2,"paused":false},"again":{"ms":null,"at":0.167143176,"ready":2,"network":2,"paused":false},"seek2":{"ms":null,"at":52,"ready":2,"network":2,"paused":false}}
+{"desktop":true,"click":true,"mode":"same","first":{"ms":null,"at":0.167369974,"ready":2,"network":2,"paused":false},"seek":{"ms":null,"at":40,"ready":2,"network":2,"paused":false},"again":{"ms":null,"at":0.16690667,"ready":2,"network":2,"paused":false},"seek2":{"ms":null,"at":52,"ready":2,"network":2,"paused":false}}
+# out4: a fresh container, the GStreamer registry removed before the third
+{"desktop":false,"click":false,"mode":"ephemeral","first":{"ms":null,"at":0.167447009,"ready":2,"network":2,"paused":false},"seek":{"ms":null,"at":40,"ready":2,"network":2,"paused":false},"again":{"ms":null,"at":0.167239759,"ready":2,"network":2,"pau
+{"desktop":false,"click":false,"mode":"ephemeral","first":{"ms":null,"at":0.167268312,"ready":2,"network":2,"paused":false},"seek":{"ms":null,"at":40,"ready":2,"network":2,"paused":false},"again":{"ms":null,"at":0.167165609,"ready":2,"network":2,"pau
+{"desktop":false,"click":false,"mode":"ephemeral","first":{"ms":null,"at":0.167063796,"ready":2,"network":2,"paused":false},"seek":{"ms":null,"at":40,"ready":2,"network":2,"paused":false},"again":{"ms":null,"at":0.167657756,"ready":2,"network":2,"pau
+# out6: preload="metadata"
+{"desktop":false,"click":false,"mode":"same","first":{"ms":273,"at":0.273075683},"seek":{"ms":319,"at":40.262203042},"again":{"ms":269,"at":0.268865244},"seek2":{"ms":295,"at":52.272102378}}
+{"desktop":false,"click":false,"mode":"same","first":{"ms":271,"at":0.270394307},"seek":{"ms":308,"at":40.254205842},"again":{"ms":272,"at":0.271611372},"seek2":{"ms":272,"at":52.25264571}}
+# out7: WPE_SHELL_DISABLE_MEDIA_DISK_CACHE=1
+    131  MediaPlayerPrivateGStreamer.cpp:3338:isMediaDiskCacheDisabled: Should disable media disk cache: true
+      7  MediaPlayerPrivateGStreamer.cpp:3353:operator():<regular-media-player-0> Disabling on-disk buffering
+      7  MediaPlayerPrivateGStreamer.cpp:3379:updateDownloadBufferingFlag:<regular-media-player-0> Media on-disk cache is disabled
+{"desktop":false,"click":false,"mode":"same","first":{"ms":271,"at":0.270455562},"seek":{"ms":300,"at":40.25641116},"again":{"ms":270,"at":0.269969035},"seek2":{"ms":296,"at":52.273612175}}
+{"desktop":false,"click":false,"mode":"same","first":{"ms":272,"at":0.271867154},"seek":{"ms":324,"at":40.259255584},"again":{"ms":272,"at":0.271494231},"seek2":{"ms":272,"at":52.252528229}}
+{"desktop":false,"click":false,"mode":"same","first":{"ms":271,"at":0.270497382},"seek":{"ms":304,"at":40.256195374},"again":{"ms":270,"at":0.269930843},"seek2":{"ms":273,"at":52.253040535}}
+{"desktop":false,"click":false,"mode":"same","first":{"ms":270,"at":0.27017319},"seek":{"ms":320,"at":40.264434069},"again":{"ms":272,"at":0.27115969},"seek2":{"ms":272,"at":52.251933538}}
+{"desktop":false,"click":false,"mode":"same","first":{"ms":270,"at":0.269830424},"seek":{"ms":308,"at":40.255276732},"again":{"ms":272,"at":0.270935668},"seek2":{"ms":272,"at":52.250678942}}
