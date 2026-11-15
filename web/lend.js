@@ -1626,18 +1626,12 @@ scope.addEventListener('messageerror', async () => {
 function headOf(op, size) {
   if (size < 126) return [0x80 | op, 0x80 | size];
   if (size < 65536) return [0x80 | op, 0xfe, size >> 8, size & 255];
-  return [
-    0x80 | op,
-    0xff,
-    0,
-    0,
-    0,
-    0,
-    size >>> 24,
-    (size >>> 16) & 255,
-    (size >>> 8) & 255,
-    size & 255,
-  ];
+  // The 8-byte length's high four bytes are 0: no frame here is 4 GiB.
+  const head = new DataView(new ArrayBuffer(10));
+  head.setUint8(0, 0x80 | op);
+  head.setUint8(1, 0xff);
+  head.setUint32(6, size);
+  return [...new Uint8Array(head.buffer)];
 }
 
 // One frame from this end: masked, as a client's must be (RFC 6455 §5.3).
@@ -1803,16 +1797,15 @@ function frameAt(buf) {
   if (buf.length < at) return null;
   // `else`: a 2-byte length may itself be 127, and is a length, not the
   // 8-byte form's mark. Past the check above, each byte read here has come.
-  const byte = (/** @type {number} */ index) => /** @type {number} */ (buf[index]);
-  if (length === 126) {
-    length = (byte(2) << 8) | byte(3);
-  } else if (length === 127) {
-    length = byte(6) * 2 ** 24 + ((byte(7) << 16) | (byte(8) << 8) | byte(9));
-  }
+  // The 8-byte form's low four bytes, as before: a frame past 4 GiB is not
+  // one the door sends.
+  const view = new DataView(buf.buffer, buf.byteOffset);
+  if (length === 126) length = view.getUint16(2);
+  else if (length === 127) length = view.getUint32(6);
   if (buf.length < at + length) return null;
   return {
-    op: byte(0) & 15,
-    fin: byte(0) & 128,
+    op: view.getUint8(0) & 15,
+    fin: view.getUint8(0) & 128,
     data: buf.slice(at, at + length),
     rest: buf.slice(at + length),
   };
@@ -1828,10 +1821,7 @@ function frameAt(buf) {
 function closedBy(data, writer, port) {
   // A close frame's first two bytes, when it has them, are its code
   // (RFC 6455 §5.5.1); 1005 is "none was given" (§7.4.1).
-  let code = 1005;
-  if (data.length >= 2) {
-    code = (/** @type {number} */ (data[0]) << 8) | /** @type {number} */ (data[1]);
-  }
+  const code = data.length >= 2 ? new DataView(data.buffer, data.byteOffset).getUint16(0) : 1005;
   port.postMessage({ closed: code, reason: new TextDecoder().decode(data.slice(2)) });
   return writer.close().catch(() => {});
 }
