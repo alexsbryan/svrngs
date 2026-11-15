@@ -176,11 +176,23 @@ fn site_of(stand_in: Option<&str>, sums: Option<&str>) -> tempfile::TempDir {
         .status()
         .unwrap();
     assert!(made.success());
-    let summed = std::process::Command::new("shasum")
-        .args(["-a", "256", &tarball(), &tarball_of("give")])
+    // Summed as install.sh sums (web/install.sh:92): sha256sum, else
+    // shasum, which a Mac has and a Linux computer may not (Fedora's is
+    // perl-Digest-SHA's). Both write `<sum>  <file>`.
+    let tarballs = [tarball(), tarball_of("give")];
+    let summed = std::process::Command::new("sha256sum")
+        .args(&tarballs)
         .current_dir(&get)
         .output()
+        .or_else(|_| {
+            std::process::Command::new("shasum")
+                .args(["-a", "256"])
+                .args(&tarballs)
+                .current_dir(&get)
+                .output()
+        })
         .unwrap();
+    assert!(summed.status.success(), "the tarballs were not summed");
     let truth = String::from_utf8(summed.stdout).unwrap();
     std::fs::write(get.join("SHA256SUMS"), sums.unwrap_or(&truth)).unwrap();
     site
