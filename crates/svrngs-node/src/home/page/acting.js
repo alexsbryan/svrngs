@@ -67,6 +67,15 @@ const changedIn = (id, lends, acted) => {
   return [...listed, ...done];
 };
 
+/**
+ * The groups "What acts as you" is drawn from, and waits for each of to be
+ * told (group-told.js `GroupTold`): those this computer is in and was not
+ * removed from, nor cannot say whether it was.
+ * @param {Group[]} groups
+ */
+export const awaited = (groups) =>
+  groups.filter((group) => !group.left && group.removed === false);
+
 /** @param {HOME.PlaceProps} props */
 export function Acting({ s: homeState, home }) {
   const [state, send] = useMachine(() =>
@@ -78,9 +87,7 @@ export function Acting({ s: homeState, home }) {
     }),
   );
   // HOME draws the section once the groups are read (home-page.js `Home`).
-  const groups = /** @type {Group[]} */ (homeState.groups).filter(
-    (group) => !group.left && group.removed === false,
-  );
+  const groups = awaited(/** @type {Group[]} */ (homeState.groups));
   /** @param {Group} group */
   const told = (group) => homeState.told?.[group.id];
   /** @param {Group} group */
