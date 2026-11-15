@@ -93,7 +93,14 @@ async fn a_newcomer_is_let_in_while_a_computer_of_the_group_sleeps() {
         )
     };
 
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    // B's round woken by the sync above dials asleep Cy, and ends only when
+    // that dial gives up, at DIAL_WITHIN: an ask begun meanwhile waits for
+    // the next round (docs/PLAN.md, the row "skipping a round's members
+    // known offline"), the half this test does not hold. So nia is admitted
+    // once that round is over, as Dee's was when Movie Night's people
+    // joined. 2 s here was DIAL_WITHIN at events-asleep; at its 4 s
+    // (cb71f8e5) nia was answered at 2.00 s, as that round ended.
+    tokio::time::sleep(svrngs_node::dial::DIAL_WITHIN + Duration::from_secs(1)).await;
     admit("nia", 7);
     let joined = Instant::now();
     let mut refused = 0;
