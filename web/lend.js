@@ -1554,11 +1554,12 @@ const handsPass = (given) => given?.label === OWN && typeof given.pass === 'stri
  * @param {MessagePort | undefined} reply
  */
 async function holdPass(given, reply) {
-  // The holder's bytes, where its key was lost on the way (below):
+  // The holder's bytes, as a JWK (open.js `holderKey`), where its key was
+  // lost on the way (below):
   // imported here as a key no script can copy, held in memory alone.
-  const bytes = given.key instanceof Uint8Array;
+  const bytes = given.key?.kty === 'OKP';
   if (bytes) {
-    given.key = await crypto.subtle.importKey('pkcs8', given.key, 'Ed25519', false, ['sign']);
+    given.key = await crypto.subtle.importKey('jwk', given.key, 'Ed25519', false, ['sign']);
   }
   handed = given;
   dials.clear();

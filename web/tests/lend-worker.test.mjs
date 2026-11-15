@@ -39,7 +39,7 @@ import { register } from 'node:module';
 import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { gzipSync } from 'node:zlib';
-import { framing, fromHex, holderMatches, pkcs8, signerFor } from '../authority.js?v=__VERSION__';
+import { ed25519, framing, fromHex, holderMatches, signerFor } from '../authority.js?v=__VERSION__';
 import { silent, unreached } from '../../crates/svrngs-node/src/home/question.js?v=__VERSION__';
 
 register('./pages/layout.mjs', import.meta.url);
@@ -216,7 +216,7 @@ function lendOrigin({ keysLost }) {
       META: `${ORIGIN}/open.js?v=__VERSION__`,
       holderMatches,
       fromHex,
-      pkcs8,
+      ed25519,
       crypto,
       atob,
       URL,
@@ -232,7 +232,8 @@ function lendOrigin({ keysLost }) {
 // What the group's page hands for `seed`, a new holder's (web/page/hand.js
 // `handing`), as the fragment it opens the start page with.
 async function handoff(seed) {
-  const key = await crypto.subtle.importKey('pkcs8', pkcs8(seed), 'Ed25519', true, ['sign']);
+  const pkcs8 = Uint8Array.from([...fromHex('302e020100300506032b657004220420'), ...seed]);
+  const key = await crypto.subtle.importKey('pkcs8', pkcs8, 'Ed25519', true, ['sign']);
   const { x } = await crypto.subtle.exportKey('jwk', key);
   const handed = {
     label: OWN,

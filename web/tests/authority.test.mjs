@@ -8,8 +8,9 @@ import {
   hostCookie,
   handoffCookie,
   holderMatches,
+  ed25519,
 } from '../authority.js';
-import { webcrypto } from 'node:crypto';
+import { createPrivateKey, randomBytes, sign, webcrypto } from 'node:crypto';
 
 test('a write is caused by a page of this origin, or a navigation one of them began', async () => {
   const origin = 'https://app.example';
@@ -124,4 +125,28 @@ test('a private seed must prove the holder named by the trusted handoff', async 
   const holder = Buffer.from(await crypto.subtle.exportKey('raw', pair.publicKey)).toString('hex');
   assert.equal(await holderMatches(pair.privateKey, holder), true);
   assert.equal(await holderMatches(other.privateKey, holder), false);
+});
+
+// Linux's WebKit refuses a seed whose first byte is 0 as PKCS #8, so every
+// seed is imported as this JWK (demo/runs/webkit-ed25519/2026-11-15): each
+// one, those beginning with 0 bytes too, signs as Node's own key for it.
+test('a seed and its holder, as the JWK the page imports, sign as the seed does', async () => {
+  globalThis.crypto ??= webcrypto;
+  const pkcs8 = Buffer.from('302e020100300506032b657004220420', 'hex');
+  for (const lead of [[], [0], [0, 0], [0, 0, 0, 0]]) {
+    const seed = randomBytes(32);
+    seed.set(lead);
+    const node = createPrivateKey({
+      key: Buffer.concat([pkcs8, seed]),
+      format: 'der',
+      type: 'pkcs8',
+    });
+    const holder = Buffer.from(node.export({ format: 'jwk' }).x, 'base64url').toString('hex');
+    const jwk = ed25519(seed.toString('hex'), holder);
+    const key = await crypto.subtle.importKey('jwk', jwk, 'Ed25519', false, ['sign']);
+    const message = randomBytes(32);
+    const signed = Buffer.from(await crypto.subtle.sign('Ed25519', key, message));
+    assert.deepEqual(signed, sign(null, message, node), `a seed led by ${lead.length} 0 bytes`);
+    assert.equal(await holderMatches(key, holder), true);
+  }
 });

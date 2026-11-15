@@ -192,12 +192,23 @@ export const openMessage = (handoff) =>
 export const fromHex = (text) =>
   Uint8Array.from(text.match(/../g) ?? [], (pair) => parseInt(pair, 16));
 
-// An Ed25519 key's 32-byte seed as PKCS #8 (RFC 8410): the one form
-// WebCrypto imports a private Ed25519 key from in both engines. The signer
-// has the seed as bytes, the open page as hex (`fromHex`).
-/** @param {Uint8Array} seed */
-export const pkcs8 = (seed) =>
-  Uint8Array.from([...fromHex('302e020100300506032b657004220420'), ...seed]);
+// An Ed25519 key's 32-byte seed and its public half `pub`, each as hex, as
+// the JWK WebCrypto imports a private Ed25519 key from to sign. Not PKCS #8:
+// Linux's WebKit refuses there every seed whose first byte is 0, 1 in 256,
+// and takes each as a JWK, signing as Node does (demo/runs/webkit-ed25519/
+// 2026-11-15).
+/**
+ * @param {string} seed
+ * @param {string} pub
+ */
+export const ed25519 = (seed, pub) => ({ kty: 'OKP', crv: 'Ed25519', d: b64(seed), x: b64(pub) });
+// The bytes `text`, hex, spells, as base64url with no padding.
+/** @param {string} text */
+const b64 = (text) =>
+  btoa(String.fromCharCode(...fromHex(text)))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 
 // The seal's parameters, with the open's message as its additional data:
 // a seal opens only for the open it was made for.

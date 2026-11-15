@@ -11,11 +11,11 @@
 // group's page.
 import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import {
+  ed25519,
   handoffCookie,
   hostCookie,
   openMessage,
   openSeal,
-  pkcs8,
 } from './authority.js?v=__VERSION__';
 import * as store from './store.js?v=__VERSION__';
 /** @import { Handoff } from './authority.js?v=__VERSION__' */
@@ -77,7 +77,8 @@ async function approver(label, handoff, now) {
   const name = handoffCookie(label);
   const seed = await openSeal(handoff, hostCookie(document.cookie, name));
   if (seed) {
-    const key = await crypto.subtle.importKey('pkcs8', pkcs8(seed), 'Ed25519', false, ['sign']);
+    const jwk = ed25519(store.hex(seed), actor(seed));
+    const key = await crypto.subtle.importKey('jwk', jwk, 'Ed25519', false, ['sign']);
     const record = {
       label,
       pub: actor(seed),

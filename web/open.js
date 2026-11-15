@@ -26,13 +26,7 @@
 // the lent app's scripts read; a pass with no bytes here, the group's page
 // signs another, to a new holder (`anew`).
 import * as store from './store.js?v=__VERSION__';
-import {
-  fromHex,
-  holderMatches,
-  openMessage,
-  pkcs8,
-  signerFor,
-} from './authority.js?v=__VERSION__';
+import { ed25519, holderMatches, openMessage, signerFor } from './authority.js?v=__VERSION__';
 /** @import { Handoff } from './authority.js?v=__VERSION__' */
 // The open as this page holds it: the hand-off, the holder's key once
 // imported or found kept, and the lines the last pass's holder signed.
@@ -65,9 +59,13 @@ function decode(fragment) {
   return JSON.parse(new TextDecoder().decode(utf8));
 }
 
-// The holder's private key, from the seed the group's page handed as hex.
-/** @param {string} seed */
-const holderKey = (seed) => pkcs8(fromHex(seed));
+// The holder's private key as a JWK (authority.js `ed25519`), from the seed
+// the group's page handed as hex and the holder it named.
+/**
+ * @param {string} seed
+ * @param {{ holder: string }} handed
+ */
+const holderKey = (seed, { holder }) => ed25519(seed, holder);
 
 // The worker `registration` runs, once it runs.
 /**
@@ -202,8 +200,8 @@ async function handedHere() {
  */
 async function withHolder(handed, was) {
   if (handed.seed) {
-    const key = holderKey(handed.seed);
-    handed.key = await crypto.subtle.importKey('pkcs8', key, 'Ed25519', false, ['sign']);
+    const key = holderKey(handed.seed, handed);
+    handed.key = await crypto.subtle.importKey('jwk', key, 'Ed25519', false, ['sign']);
     return true;
   }
   if (was?.key && was.holder === handed.holder) {
@@ -254,9 +252,9 @@ async function handedOn({ handed, seed }, asked) {
   if (await store.whole())
     await issued(handed, '__VERSION__').catch((no) => console.debug(`OPEN: ${no}`));
   let held = await store.handOver(worker, { handed });
-  // Safari's worker loses the key (above): the seed's bytes go in its place.
+  // Safari's worker loses the key (above): the seed, as a JWK, goes in its place.
   if (!held && seed) {
-    held = await store.handOver(worker, { handed: { ...handed, key: holderKey(seed) } });
+    held = await store.handOver(worker, { handed: { ...handed, key: holderKey(seed, handed) } });
   }
   if (!held && !seed) {
     console.debug(

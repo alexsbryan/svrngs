@@ -1,0 +1,9 @@
+# ed.mjs, 3000 random seeds (webkit, then chromium)
+{"n":3000,"fails":{"import pkcs8: DataError Data provided to an operation does not meet requirements":7},"samples":[{"k":"import pkcs8: DataError Data provided to an operation does not meet requirements","seed":"002738d05027642942255e0e6f9d199ec8ec7afc00ccde90193d3ca96acd16a6"},{"k":"import pkcs8: DataError Data provided to an operation does not meet requirements","seed":"00d9e8f89835415756ebb3551119a215265fcba40a15fc54efa545900f3be0ca"},{"k":"import pkcs8: DataError Data provided to an operation does not meet requirements","seed":"00000ae722297858b412d41f422192f9e814d70483db5370045b0a5968262268"},{"k":"import pkcs8: DataError Data provided to an operation does not meet requirements","seed":"00729df29fa06ba8e5de6553d5d840501745b0a6536ed23ec9c5d2ee39865a84"},{"k":"import pkcs8: DataError Data provided to an operation does not meet requirements","seed":"00ee8dd1b3226d1e90a7baeb0f171c2c8e6521ef074120c94e240d1cd41798ca"},{"k":"import pkcs8: DataError Data provided to an operation does not meet requirements","seed":"00ac8909d05f2176450753e130386b7e523e22921c13f547328566d92ab00f1e"}]}
+{"n":3000,"fails":{},"samples":[]}
+# jwk.mjs, 300 seeds, 200 with a leading zero byte
+{"engine":"webkit","cases":300,"leading_zero":200,"pkcs8_failed":200,"jwk_failed":0,"jwk_wrong_signature":0,"jwk_ok":300,"errors":{}}
+{"engine":"chromium","cases":300,"leading_zero":200,"pkcs8_failed":0,"jwk_failed":0,"jwk_wrong_signature":0,"jwk_ok":300,"errors":{}}
+# page.mjs, web/authority.js ed25519 as changed, 300 seeds, 200 with a leading zero byte
+{"engine":"webkit","cases":300,"leading_zero":200,"ok":300,"failed":0,"wrong":0,"notHolder":0,"errors":{}}
+{"engine":"chromium","cases":300,"leading_zero":200,"ok":300,"failed":0,"wrong":0,"notHolder":0,"errors":{}}
