@@ -1,5 +1,27 @@
 # svrngs releases
 
+## V1.8.1, 14 November 2026
+
+V1.8.1 opens the newest page every time, invitations included, with no
+reload by hand. Until now, an invitation opened in a browser that had been
+to `group.svrnme.sh` before could say *"This browser could not open the
+page."* until a hard reload. The browser was showing the copy of the page
+it kept from an earlier visit, which couldn't read a newer invitation. Now
+a browser fetches the page each time it opens it, and uses its kept copy
+only when there's no connection, so a phone offline still opens its group.
+A page left open loads again by itself when a new version arrives.
+
+**Reload once if the old page shows.** A browser that kept V1.8's page may
+show it one more time, the first time it opens after V1.8.1. Reload and the
+new page opens; from then on it won't happen again.
+
+svrngs on your computers works as in V1.8. If your home page offers
+**Update**, taking it changes nothing else.
+
+V1.8.1 is the build at `group.svrnme.sh`, from the commit tagged `v1.8.1`.
+Its publication and readback are recorded in
+`demo/runs/v1.8.1/2026-11-14/README.md`.
+
 ## V1.8, 13 November 2026
 
 V1.8 brings every group under one set of rules: who is in it, who keeps it,
