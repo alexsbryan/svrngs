@@ -77,6 +77,13 @@ RUN set -e; cd /tmp; \
     chmod +x rustup-init; ./rustup-init -y --no-modify-path --profile minimal \
       --default-toolchain 1.95.0 -c rustfmt,clippy -t wasm32-unknown-unknown; \
     rm rustup-init; mkdir -p "$CARGO_HOME/registry" "$CARGO_HOME/git" /home/gate/.npm
+# cargo-deny for `advisories` (scripts/advisories.py, since 24cfec5a), at
+# the version the operator's computers have (0.20.2): without it the step
+# said never-ran and check.sh ran no slow step after it (the gate at
+# 250aa65b here, 2026-11-15). Into $CARGO_HOME/bin, beside the volumes the
+# run mounts over registry/ and git/; its build's registry is removed.
+RUN cargo install cargo-deny --locked --version 0.20.2 \
+ && rm -rf "$CARGO_HOME/registry"/* "$CARGO_HOME/git"/*
 WORKDIR /work
 # What the image runs, in the checkout mounted at /work: Linux builds of
 # oxlint and Playwright first, and check.sh either way, which fails its lint

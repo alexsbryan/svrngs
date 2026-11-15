@@ -1,7 +1,7 @@
 # The gate on a Linux computer
 
 `scripts/check.sh` is the definition of done (AGENTS.md). The Containerfile
-here is what it needs on a Linux computer that has none of it: Rust, Node,
+here is what it needs on a Linux computer that has none of it: Rust and cargo-deny, Node,
 Playwright's Chromium and WebKit, the wasm tools, Jellyfin and Redis, every
 one pinned, in a rootless podman image. Its command runs `npm ci --prefix web`,
 then `scripts/check.sh`, in the checkout at `/work`; its output and exit are
