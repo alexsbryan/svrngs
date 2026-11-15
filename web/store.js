@@ -485,6 +485,22 @@ export const whole = async () => {
 };
 const RUNTIME = new URL('./wasm/svrngs_web_bg.wasm?v=__VERSION__', import.meta.url);
 
+// An update's reload, from the page (web/sw.js `activated`): a page a worker
+// controlled, taken by a newer one, loads again on the build it kept, by
+// `reload()`, which loads it whatever the fragment of its address. A first
+// install takes a page no worker controlled, and leaves it be: loading the
+// page a person is just opening again would take the link's first screen
+// away. Its next change is an update.
+/** @param {ServiceWorkerContainer} workers @param {Location} location */
+export function reloadsOnUpdate(workers, location) {
+  let controlled = Boolean(workers.controller);
+  workers.addEventListener('controllerchange', () => {
+    console.debug(`STORE: a new worker took this page${controlled ? ', so it loads again' : ''}`);
+    if (controlled) location.reload();
+    controlled = true;
+  });
+}
+
 // The module's `Response`, for wasm-bindgen's `init({ module_or_path })`:
 // from the version's cache, else fetched and kept there. A page a worker
 // serves asks the worker, which answers from its cache: an older worker,

@@ -39,6 +39,8 @@ mod opens;
 
 mod grouped;
 mod keep_going;
+// A new build reaching the page at an invitation's address.
+mod updated;
 // The one place a lent film is played (scripts/check.sh `playback`).
 mod playback;
 // A browser half run and its JSON read: the demo scenes' too

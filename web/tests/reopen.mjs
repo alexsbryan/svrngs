@@ -173,13 +173,23 @@ try {
     reopened.fresh = true;
   }
   if (app && args.rebuilt) {
-    // Waited for by the worker's cache: the page the old worker moves is
-    // left, as Chromium under Playwright never finishes that navigation.
-    await page.evaluate(async (name) => {
+    // Waited for by the worker's cache, asked again in the page the new
+    // worker loads again (store.js `reloadsOnUpdate`), which ends a read
+    // under way in the page as it was.
+    const updated = async (name) => {
       await (await navigator.serviceWorker.getRegistration()).update();
       while (!(await caches.keys()).includes(name) || (await caches.keys()).length > 1)
         await new Promise((done) => setTimeout(done, 100));
-    }, `svrngs-web-${built}`);
+    };
+    for (let tries = 0; ; tries++) {
+      const read = await page.evaluate(updated, `svrngs-web-${built}`).then(
+        () => null,
+        (e) => e,
+      );
+      if (!read) break;
+      if (tries === 10 || !/context was destroyed/.test(String(read))) throw read;
+      await page.waitForLoadState();
+    }
     await page.close();
     page = watch(await context.newPage());
     await page.goto(origin);

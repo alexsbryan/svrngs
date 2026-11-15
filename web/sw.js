@@ -16,10 +16,10 @@
 // stuck on last week's wasm). The version is also on every shell URL, and
 // `answered` matches it exactly: a worker left in place while a newer build
 // deploys must miss, never answer the newer build's request with its own
-// cached wasm. An update also reloads the open pages (`activated`), since a
-// page takes its shell from the cache before the browser checks for a new
-// worker: a phone left open for weeks never navigates, so it would otherwise
-// run the build it opened with until someone reloaded it by hand.
+// cached wasm. The page itself comes from the network first, and an update
+// loads the open pages again (`activated`): a phone left open for weeks
+// never navigates, so it would otherwise run the build it opened with until
+// someone reloaded it by hand.
 import * as store from './store.js?v=__VERSION__';
 
 // `self` as a service worker's: the worker's lib names it a
@@ -49,25 +49,17 @@ async function installed() {
   await scope.skipWaiting();
 }
 
-// Every older version's cache gone, and the open pages served from here: an
-// update navigates them onto the build it just kept, since the page a person
-// is looking at was loaded from the old cache before this worker was found.
-// Only an update does: a first install has no older cache, and reloading the
-// page a person is just opening would take the link's first screen away.
+// Every older version's cache gone, and the open pages served from here.
+// Each loads again on this build from its own side, on `controllerchange`
+// (store.js `reloadsOnUpdate`): a worker's `page.navigate(page.url)` loads
+// nothing where the address has a fragment, as every group's and
+// invitation's does, since the HTML standard's navigate goes to the
+// fragment there, within the page (2026-11-14, web/tests/updated.mjs).
 async function activated() {
   const names = await caches.keys();
   const older = names.filter((name) => name !== store.CACHE);
   await Promise.all(older.map((name) => caches.delete(name)));
   await scope.clients.claim();
-  if (older.length === 0) return;
-  const pages = await scope.clients.matchAll({ type: 'window' });
-  await Promise.all(
-    pages.map((page) =>
-      page
-        .navigate(page.url)
-        .catch((error) => console.debug(`SW: a page was not moved to this build: ${error}`)),
-    ),
-  );
 }
 
 scope.addEventListener('install', (installing) => installing.waitUntil(installed()));
@@ -84,8 +76,21 @@ scope.addEventListener('fetch', (fetchEvent) => {
 // `request` from this build's cache, else the network. The URL is matched
 // exactly, its version query too, so a worker whose cache is an older build
 // cannot answer a newer build's request with last week's module or wasm.
+// The page itself, a navigation, from the network first: its address names
+// no version, so its cached copy ran this build at a newer build's
+// invitation, which it could not read (2026-11-14). This build's copy only
+// when the network fails, so a phone with no connection still opens its group.
 /** @param {Request} request */
 async function answered(request) {
+  if (request.mode === 'navigate') {
+    try {
+      const page = await fetch(request);
+      console.debug(`SW: ${request.url} answered from the network`);
+      return page;
+    } catch (error) {
+      console.debug(`SW: ${request.url} answered from this build's cache: ${String(error)}`);
+    }
+  }
   const hit = await caches.match(request);
   return hit ?? fetch(request);
 }
