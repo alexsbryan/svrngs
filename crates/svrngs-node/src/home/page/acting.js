@@ -70,11 +70,14 @@ const changedIn = (id, lends, acted) => {
 /**
  * The groups "What acts as you" is drawn from, and waits for each of to be
  * told (group-told.js `GroupTold`): those this computer is in and was not
- * removed from, nor cannot say whether it was.
+ * removed from, nor cannot say whether it was. A group an older svrngs made
+ * is drawn as what is said of it alone (group.js `below`), so it never tells,
+ * and nothing acts as you in it: waited for, it held this section unread,
+ * and "What you lend" behind it (home-page.js `Home`), forever.
  * @param {Group[]} groups
  */
 export const awaited = (groups) =>
-  groups.filter((group) => !group.left && group.removed === false);
+  groups.filter((group) => !group.left && !group.older && group.removed === false);
 
 /** @param {HOME.PlaceProps} props */
 export function Acting({ s: homeState, home }) {
