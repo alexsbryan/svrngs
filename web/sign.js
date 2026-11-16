@@ -11,6 +11,7 @@
 // group's page.
 import init, { actor, approve_line } from './wasm/svrngs_web.js?v=__VERSION__';
 import {
+  base64url,
   ed25519,
   handoffCookie,
   hostCookie,
@@ -33,10 +34,6 @@ let loaded;
 // what this reads of a pass stays as it was.
 /** @param {string} text */
 const decode = (text) => JSON.parse(atob(text.replace(/-/g, '+').replace(/_/g, '/')));
-
-// `text` as base64url, with no padding, as a pass is written.
-/** @param {string} text */
-const base64url = (text) => btoa(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 
 // What an approver remembers of the open it was adopted for.
 /** @param {Handoff} handoff */

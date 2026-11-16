@@ -60,19 +60,6 @@ export const Framed = Object.freeze({
 // `carried-signer`): the signer at the address `signerFor` derives.
 export const SIGNER_FRAME = 'frame-src {signer}';
 
-// A source list with the signer in it: `'none'` alone gives way to it,
-// as any other source would.
-/**
- * @param {string[]} list
- * @param {string} signer
- */
-function withSigner(list, signer) {
-  // Of length 1, `list[0]` is its one source.
-  const none = list.length === 1 && /** @type {string} */ (list[0]).toLowerCase() === "'none'";
-  if (none) return [signer];
-  return list.concat(signer);
-}
-
 // A lent app's own `Content-Security-Policy`, `header`, as the worker
 // serves it: never replaced, never narrowed. The signer at `signer` is let
 // in as a frame only where a policy already restricts frames — added to
@@ -114,7 +101,10 @@ function framedOne(one, signer) {
   // Not `Open`, `by` is a directive the policy holds, so `at(by)` finds it.
   const index = at(by);
   const [name, ...was] = /** @type {string[]} */ (words[index]);
-  const sources = withSigner(was, signer).join(' ');
+  // Its source list with the signer in it: `'none'` alone gives way to it,
+  // as any other source would. Of length 1, `was[0]` is its one source.
+  const none = was.length === 1 && /** @type {string} */ (was[0]).toLowerCase() === "'none'";
+  const sources = (none ? [signer] : was.concat(signer)).join(' ');
   if (by === Framed.Child || by === Framed.Default) {
     const trimmed = one.replace(/[\s;]*$/, '');
     return { policy: `${trimmed}; ${SIGNER_FRAME.replace('{signer}', sources)}`, by };
@@ -202,13 +192,13 @@ export const fromHex = (text) =>
  * @param {string} pub
  */
 export const ed25519 = (seed, pub) => ({ kty: 'OKP', crv: 'Ed25519', d: b64(seed), x: b64(pub) });
+// `text` as base64url, with no padding, as a pass is written.
+/** @param {string} text */
+export const base64url = (text) =>
+  btoa(text).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 // The bytes `text`, hex, spells, as base64url with no padding.
 /** @param {string} text */
-const b64 = (text) =>
-  btoa(String.fromCharCode(...fromHex(text)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
+const b64 = (text) => base64url(String.fromCharCode(...fromHex(text)));
 
 // The seal's parameters, with the open's message as its additional data:
 // a seal opens only for the open it was made for.
