@@ -55,12 +55,27 @@ const place = (lend, me) => {
   return (lend.reads ?? []).length > 0 ? 1.5 : 1;
 };
 
-// The sentence true of everything in a lend's grid, its caption: what
-// opening one lets it do, or what Play does; none for this computer's port.
+// Where a thing someone lends runs, which is when it opens: both kinds sit
+// under "Shared apps", and a person should not have to learn the difference
+// by one of them not opening. Said of one thing or of many alike, and with
+// no " it " of its own: `Grid` says the caption's first as "one of these".
+const LENT =
+  'What is here runs on the computer of whoever lends it, and opens only while that computer is on.';
+
+// The sentences true of everything in a lend's grid, its caption: where it
+// is, so when it opens, an app the group carries in its folder on every
+// computer (DESIGN §3, "Or a folder the group carries") and a lend on its
+// lender's; then what opening one lets it do, a sentence of its own, so it
+// is heard whole. Or what Play does; none for this computer's port.
 /** @param {Lent} lend @param {PlaceProps['g']} group @param {string} me */
 const says = (lend, group, me) => {
   if (place(lend, me) === 3) return '';
-  return lend.raw ? PLAYS : may(lend, group);
+  if (lend.raw) return PLAYS;
+  const name = group.name ?? 'your group';
+  const where = lend.group
+    ? `What is here is in ${name}’s folder on every computer in ${name}, and opens while any of them is on.`
+    : LENT;
+  return `${where} ${may(lend, group)}`;
 };
 
 /**

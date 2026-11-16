@@ -771,7 +771,12 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   people's computers lend that opens in a tab ("… lets it write its own
   part of House’s record, as you."), and ports ("Play opens one of these on
   this computer, for a program here to connect to."). A grid with nothing in
-  it is not drawn, and a thing alone in its grid is "it". A cell is a
+  it is not drawn, and a thing alone in its grid is "it". Before that
+  sentence each caption says, in one of its own, where its things are and
+  so when they open, since both kinds sit under one heading: an app the
+  group carries "is in House’s folder on every computer in House, and opens
+  while any of them is on"; what a person lends "runs on the computer of
+  whoever lends it, and opens only while that computer is on". A cell is a
   thing's name as its way in, a link that opens it in a tab, so it reads as
   the app's way in and never its files; a port by its name with its Play;
   its kind in its lender's word when it differs, never one of svrngs's own

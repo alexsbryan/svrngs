@@ -97,6 +97,15 @@ const ada = ({
 
 const home = (answers, path = '/?ui=a') => open(`${AT}${path}`, answers);
 
+// Where a thing runs, so when it opens, said before what opening it lets it
+// do: of an app the group carries, and of what a person lends. The same
+// words for one thing and for many. Planted, watched failing: index.js
+// `says` saying of a lend what is true of a carried app.
+const CARRIED =
+  'What is here is in your group’s folder on every computer in your group, and opens while any of them is on. ';
+const LENT =
+  'What is here runs on the computer of whoever lends it, and opens only while that computer is on. ';
+
 // The index's cells, each by its words less its popover's (wifi.js
 // `Address`): what a person reads in the cell before pressing Address.
 const cells = (page) => page.all('#home .index > ul > li').map(shown);
@@ -528,7 +537,7 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
   const page = await home(ada({ lent: [shelf] }));
   assert.deepEqual(page.text('#home .index > ul > li > a'), ['ada’s shelf (k)']);
   assert.deepEqual(page.text('#home .index > p'), [
-    'Opening it lets it write its own part of your group’s record, as you.',
+    `${LENT}Opening it lets it write its own part of your group’s record, as you.`,
   ]);
   assert.deepEqual(cells(page), ['ada’s shelf (k) Address']);
   const [link] = page.all('#home .index > ul > li > a');
@@ -560,8 +569,8 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   const people = [row('ada', ADA, 'started'), row('bo', BO)];
   const page = await home(ada({ lent, people }));
   assert.deepEqual(page.text('#home .index > p'), [
-    'Opening it lets it read and write only its own entries, as you in your group.',
-    'Opening one of these lets it write its own part of your group’s record, as you.',
+    `${CARRIED}Opening it lets it read and write only its own entries, as you in your group.`,
+    `${LENT}Opening one of these lets it write its own part of your group’s record, as you.`,
     'Play opens one of these on this computer, for a program here to connect to.',
   ]);
   assert.equal(page.all('#home .index > ul').length, 4);
@@ -685,8 +694,8 @@ test('the words outside the index’s cells are the same for 8 things and for 40
   };
   const [few, many] = [await drawn(8), await drawn(40)];
   assert.deepEqual(few, [
-    'Opening one of these lets it read and write only its own entries, as you in your group.',
-    'Opening one of these lets it write its own part of your group’s record, as you.',
+    `${CARRIED}Opening one of these lets it read and write only its own entries, as you in your group.`,
+    `${LENT}Opening one of these lets it write its own part of your group’s record, as you.`,
     'Play opens one of these on this computer, for a program here to connect to.',
   ]);
   assert.deepEqual(many, few);

@@ -10,6 +10,9 @@ something from a terminal.
 
 ![An app Ana lends opens only while Ana's computer is on; Money, brought to Elm, is in Elm's folder on every computer, so it opens while any of them is on.](../diagrams/guide/apps-carried.svg)
 
+On the home page both kinds are listed under **Shared apps**, and the
+sentence over each says which it is and when it opens.
+
 On your home page, open your group and press **Add an app**.
 Each app is listed with a tick box and a line saying what it's for:
 
