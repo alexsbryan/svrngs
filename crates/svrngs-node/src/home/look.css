@@ -97,6 +97,15 @@ ul.door li small { display: block; font-weight: 400; }
 ul.door li.on { border: var(--rule); background: var(--lit); color: var(--on-colour); }
 ul.door li.off { border-style: dashed; color: GrayText; }
 ul.door li.phone { border-style: dotted; }
+/* On the home page's group a person is one line, the name with how they
+   stand beside it in the same small words, and a cell is narrower, so 28
+   people are four rows where they were six of two lines: who is here is
+   read at a glance, above what they share. The words still say each; a
+   long name or standing wraps inside its cell. The screen (`body.screen`)
+   keeps its big cells, and the phone's page, which has no `#home`, its own. */
+body:not(.screen) #home ul.door { grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.35rem; }
+body:not(.screen) #home ul.door li { padding: 0.15rem 0.4rem; overflow-wrap: anywhere; }
+body:not(.screen) #home ul.door li small { display: inline; }
 
 /* The home page's index: what a group shares, in the door's cells, each
    grid under the sentence true of everything in it. A grid fills the width

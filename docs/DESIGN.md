@@ -758,7 +758,11 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
 - **the door**: each person once, a cell in a grid, in the order they
   joined — lit, "on now", while their computer answers; drawn off, "did not
   answer", when it did not; "in from a phone" when their only keys are a
-  browser's. Presence is only "on now", never when last seen.
+  browser's. Presence is only "on now", never when last seen. On the home
+  page a cell is one line, the name with those words beside it, so 28
+  people are four rows above what they share (`look.css`
+  `body:not(.screen) #home ul.door`); the screen and the phone's page keep
+  the taller cell.
 - **the index**: what is in the group, on any port, as grids of cells, the
   door's own look. What a group shares has no bound, so no word outside a
   cell grows with it: each grid is under the one sentence true of everything
