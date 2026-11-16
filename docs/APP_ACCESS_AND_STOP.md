@@ -28,7 +28,14 @@ host selection, stable-routing redesign, or change to handover consent.
 
 ## 2. A — opening is the obvious action
 
-**A1. An HTTP app's primary link says `Open <displayed name>`.** It goes
+**A1. An HTTP app's primary link is its displayed name, under a caption
+that says what opening it does.** As first built the link said `Open
+<displayed name>`. Since 2026-11-16, the operator's choice of wording, the
+home page lists what a group shares as grids of cells, and the verb is said
+once, in the caption above each grid ("Opening one of these lets it …"), so
+a plain link is the name alone ("Kim’s navidrome"). A button where the
+press is the yes, an app that also opens friends' things, still reads `Open
+<displayed name>`. Either way it goes
 through the same opener and any existing consent as the current name link,
 opens in a separate tab, and leaves the group workspace available. A lend
 that requires a yes still requires it. Do not add a second opening path.
