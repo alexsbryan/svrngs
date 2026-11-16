@@ -805,8 +805,9 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   acts on ("Address of Kim’s navidrome", "Play Sam’s minecraft"), and each
   lend's form under **What you lend** is a group named by its lend, so no
   list of buttons reads one word forty times. A popover is named, takes the
-  focus as it opens, and the browser gives the focus back to its button as
-  it closes. Cells are read and tabbed in the order they are drawn. A
+  focus as it opens, ends with a **Close** of the browser's own
+  (`popovertargetaction="hide"`), and the browser gives the focus back to
+  its button as it closes. Cells are read and tabbed in the order they are drawn. A
   group's page and This computer each have one first heading, an h1, where
   the page's own is hidden, and their headings step from it. "did not
   answer" is in the page's ink, with a dashed border, the system's gray on

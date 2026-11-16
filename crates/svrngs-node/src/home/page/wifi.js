@@ -238,13 +238,16 @@ export function Address({ l: lend, id, round }) {
   // outside it, all the browser's doing.
   // Named with its lend, "Address of Kim’s navidrome", the popover too: it
   // takes the focus as it opens, so what it is is said, and Tab goes on to
-  // its first button; the browser gives the focus back to "Address".
+  // its first button; the browser gives the focus back to "Address". Last
+  // in it, "Close", the browser's own too (`popovertargetaction="hide"`):
+  // Escape and a press outside close it, and nobody is told so.
   const name = `Address of ${named(lend)}`;
   return html`
     <button type="button" popovertarget=${id} aria-label=${name}>Address</button>
     <div popover="auto" id=${id} role="dialog" aria-label=${name} tabindex="-1" autofocus>
       <p>${OPEN_IT}</p>
       <ul class="wifi"><${Line} l=${lend} words=${`${named(lend)}:`} foot /></ul>
+      <button type="button" popovertarget=${id} popovertargetaction="hide" aria-label=${`Close: ${name}`}>Close</button>
     </div>
   `;
 }

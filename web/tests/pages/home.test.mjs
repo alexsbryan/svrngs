@@ -438,22 +438,23 @@ test('each way in is described by its caption, and each button is named with wha
       ['Play', words(captions[2])],
     ],
   );
-  const names = page
-    .all('#home .index > ul > li button')
-    .filter(
-      (button) =>
-        !['Open it to this WiFi', 'Copy its address for a program'].includes(words(button)),
-    )
-    .map((button) => button.attributes['aria-label'] ?? words(button));
+  const named = (button) => button.attributes['aria-label'] ?? words(button);
+  const names = page.all('#home .index > ul > li > button').map(named);
   assert.deepEqual(names, [
     'Address of Money',
     'Address of ada’s notes (k)',
     'Address of ada’s shelf (k)',
-    'Open ada’s page (k)',
     'Address of ada’s page (k)',
-    'Play bo’s echo',
-    'Play bo’s game',
   ]);
+  assert.deepEqual(
+    [...ways.slice(-3), ...page.all('#home .index > ul > li > div > button')].map(named),
+    [
+      'Open ada’s page (k)',
+      'Play bo’s echo',
+      'Play bo’s game',
+      ...names.map((name) => `Close: ${name}`),
+    ],
+  );
   const pops = page.all('#home .index > ul > li > div');
   assert.deepEqual(
     pops.map((pop) => [pop.attributes.role, pop.attributes['aria-label']]),
@@ -628,7 +629,8 @@ test('what acts as you names groups with the same deciders in one line, and head
 // clipboard then holds what the page wrote is Chromium's
 // (browser::the_page_offers_a_computer_one_line_and_sends_the_token_nowhere).
 // Planted, watched failing: lend-name.js naming the popover by its lend
-// alone, with no group, so both groups' popovers shared one id.
+// alone, with no group, so both groups' popovers shared one id; and, for
+// its Close, wifi.js `Address` drawing Close with no `popovertarget`.
 test('a lend’s address for a program is kept behind Address in its cell, and its Copy writes it and says so', async () => {
   const shelf = lend('shelf');
   const groups = [group(), group({ id: 'flat', name: 'Flat' })];
@@ -652,6 +654,12 @@ test('a lend’s address for a program is kept behind Address in its cell, and i
     );
     assert.ok(said[1].includes('Open it to this WiFi'), said[1]);
     assert.ok(said[1].includes('Copy its address for a program'), said[1]);
+    // Last, its Close, the browser's own: it names the popover it hides.
+    const close = pop.childNodes.filter((kid) => kid.nodeType === 1).at(-1);
+    assert.deepEqual(
+      [words(close), close.attributes.popovertarget, close.attributes.popovertargetaction],
+      ['Close', pop.id, 'hide'],
+    );
   }
   await page.press('#home section ul.wifi li button', 'Copy its address for a program');
   assert.deepEqual(page.copied, [shelf.origin]);

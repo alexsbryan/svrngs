@@ -329,6 +329,11 @@ try {
   await page.keyboard.press('Escape');
   await pop.waitFor({ state: 'detached' });
   assert.equal(await focused(), name, 'Escape gives the focus back to its button');
+  // Its Close, the browser's own, does the same, pressed by the keyboard.
+  await page.keyboard.press('Enter');
+  await pop.getByRole('button', { name: `Close: ${name}`, exact: true }).press('Enter');
+  await pop.waitFor({ state: 'detached' });
+  assert.equal(await focused(), name, 'Close gives the focus back to its button');
 
   // Normal links, Back, and rereads retain the selected group.
   await page.getByRole('link', { name: 'All your groups', exact: true }).click();
