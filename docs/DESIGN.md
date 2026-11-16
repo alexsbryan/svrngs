@@ -798,9 +798,11 @@ group is linked by its stable id, with maker and joining date still saying
 which namesake it is. Ordinary links, Back and refresh keep the selected
 destination; no browser preference or membership is changed. The overview is
 the heading, the one privacy line, the group cards and one row of actions:
-Join a group, Make a group, Open a link and Groups you left. A card says
-who the person is there and, from what the group's hidden section last
-read, one line: how many are on now, how many apps are shared, and
+Join a group, Make a group, Open a link and Groups you left. Who the person
+is in their groups is said once above the cards when it is the same in
+every one, and on a card only where it differs or cannot be read
+(`home/page/grouped.js` `GroupLinks`). A card says, from what the group's
+hidden section last read, one line: how many are on now, how many apps are shared, and
 versions to review; nothing before that read, and "cannot read" when a read
 failed, never an older count (`home/page/grouped.js` `Live`). Every other page's
 navigation is only **All your groups** and **This computer**, and a group's own

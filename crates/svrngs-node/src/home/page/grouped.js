@@ -49,14 +49,22 @@ function Live({ told }) {
   return html`<small>On now: ${on} of ${all}. Shared apps: ${once(lends.lent).length}.${changed > 0 && ` New versions to review: ${changed}.`}</small>`;
 }
 
+// The overview's cards. Who the person is in a group is said once above
+// the cards when it is the same in every one, as it mostly is, and on a
+// card only when it differs or cannot be read there.
 /** @param {{ s: State }} props */
 function GroupLinks({ s: state }) {
-  return state.groups
-    ?.filter((group) => !group.left)
-    .map((group) => {
-      const made = group.made ? ` (${whose(group.made)})` : '';
-      return html`<li><a href=${address('groups', group.id)} aria-current=${group.id === state.q.group ? 'page' : undefined}>${group.name ?? 'A group whose name cannot be read'}${made}</a><small>${group.person ? `You are ${group.person} here.` : 'This computer cannot say who you are here.'}</small><${Live} told=${state.told?.[group.id]} /></li>`;
-    });
+  const groups = (state.groups ?? []).filter((group) => !group.left);
+  const who = groups[0]?.person;
+  const same = who && groups.every((group) => group.person === who);
+  const cards = groups.map((group) => {
+    const made = group.made ? ` (${whose(group.made)})` : '';
+    const here = group.person
+      ? `You are ${group.person} here.`
+      : 'This computer cannot say who you are here.';
+    return html`<li><a href=${address('groups', group.id)} aria-current=${group.id === state.q.group ? 'page' : undefined}>${group.name ?? 'A group whose name cannot be read'}${made}</a>${!same && html`<small>${here}</small>`}<${Live} told=${state.told?.[group.id]} /></li>`;
+  });
+  return html`${same && html`<p>You are ${who} here.</p>`}<ul class="group-list">${cards}</ul>`;
 }
 
 // What needs the person on a group's page, a new version to review, is
@@ -101,7 +109,7 @@ export function Navigation({ s: state }) {
       ${
         overview &&
         html`
-        <ul class="group-list"><${GroupLinks} s=${state} /></ul>
+        <${GroupLinks} s=${state} />
         <p><a href=${address('join')}>Join a group</a> <a href=${address('make')}>Make a group</a> <a href=${address('open')}>Open a link</a> <a href=${address('left')}>Groups you left</a></p>
       `
       }

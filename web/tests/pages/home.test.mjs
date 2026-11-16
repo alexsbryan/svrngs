@@ -465,15 +465,37 @@ test('a group’s card on the overview says who is on and what is shared, or tha
   answers['GET /v1/lends?namespace=house'] = { ...read, changed };
   const page = await home(answers, '/');
   assert.deepEqual(page.text('.group-list small'), [
-    'You are ada here.',
     'On now: 1 of 2. Shared apps: 2. New versions to review: 1.',
   ]);
   // The next round's read of the lends fails: GROUP keeps the answer before.
   answers['GET /v1/lends?namespace=house'] = { status: 503, body: { error: 'off' } };
   await page.shown();
-  assert.deepEqual(page.text('.group-list small'), [
-    'You are ada here.',
-    'This computer cannot read who is on now.',
+  assert.deepEqual(page.text('.group-list small'), ['This computer cannot read who is on now.']);
+});
+
+// The overview says who the person is once, above its cards, when they are
+// the same person in every group; a card says it only when it differs
+// there, or cannot be read. Planted, watched failing: grouped.js
+// `GroupLinks` saying it on every card whatever the others say (`same`
+// never true).
+test('who you are is said once above the cards, and on a card only where it differs', async () => {
+  const flat = { id: 'flat', name: 'Flat' };
+  const said = async (more) => {
+    const page = await home(
+      ada({ groups: [group({ name: 'House' }), group({ ...flat, ...more })] }),
+      '/',
+    );
+    const once = page.text('.grouped-nav p').filter((words) => words.startsWith('You are'));
+    return [once, page.text('.group-list small').filter((words) => !words.startsWith('On now'))];
+  };
+  assert.deepEqual(await said({}), [['You are ada here.'], []]);
+  assert.deepEqual(await said({ person: 'addie' }), [
+    [],
+    ['You are ada here.', 'You are addie here.'],
+  ]);
+  assert.deepEqual(await said({ person: null }), [
+    [],
+    ['You are ada here.', 'This computer cannot say who you are here.'],
   ]);
 });
 
