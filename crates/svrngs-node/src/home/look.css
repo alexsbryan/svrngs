@@ -171,6 +171,15 @@ body.screen footer p { max-width: none; margin: 0; }
    address's face, broken anywhere, as a label is 62 letters long. */
 small.keep { display: block; font-family: var(--mono); overflow-wrap: anywhere; }
 
+/* "Addresses and WiFi" (wifi-foot.js): a thing a row, where the window has
+   the width for one: its name, its WiFi button, its Copy and its address
+   side by side, each button as wide as its words and the address taking
+   the rest; what a press answers takes the row's next line. Forty things
+   were three lines each. A narrow window keeps them one under another. */
+@media (min-width: 60rem) {
+  ul.wifi li { display: grid; grid-template-columns: 11rem auto auto 1fr; gap: 0 0.75rem; align-items: baseline; }
+}
+
 /* B, the home page's layout: the overview says what the page is, a group's
    banner heads its own, and only This computer has the page's foot. */
 body.layout-b h1 { margin-bottom: 0.75rem; padding: 0.75rem; font-size: 2.25rem; line-height: 1; }

@@ -820,8 +820,9 @@ manager" off a Mac, opens the group's folder in a window of its own, each
 of several folders named by its own name, and **Folder location**, closed
 at first, says where it is (`home/page/group-folder.js`). Last the folds: **Add an
 app** holds the existing shelf; **Addresses and WiFi** holds each app's
-line, its address for a program and its WiFi sharing, under what opening
-one to this WiFi does, said once; **Manage this group** holds the
+line, a row a thing where the window is wide enough: its name, its WiFi
+sharing, its Copy and its address for a program (`look.css` `ul.wifi li`),
+under what opening one to this WiFi does, said once; **Manage this group** holds the
 presentation screen, handover and leave (`home/page/grouped.js`
 `GroupPlaces`).
 **This computer** holds what acts as you, running-program discovery, and
