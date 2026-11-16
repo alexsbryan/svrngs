@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// "Already running here": what the look says (running-look.js RUNNING),
-// its button, and each program it found, a row of its own (found.js).
+// "Already running here" on the home page, once the person is in a group:
+// what the look says (running-look.js RUNNING), its button, and each
+// program it found, a row of its own (found.js).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
@@ -9,6 +10,8 @@ import { RUNNING } from './running-look.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import * as HOME from './home-reading.js?v=__VERSION__' */
 
 /** @type {Record<State['at']['running'], (s: State) => string>} */
 const SAID = {
@@ -30,7 +33,7 @@ const SAID = {
  */
 
 /** @param {RunningProps} props */
-export function Running({ groups, home }) {
+function Running({ groups, home }) {
   const [state, send] = useMachine(() =>
     machine('RUNNING', RUNNING, { at: { running: 'unlooked' } }),
   );
@@ -66,3 +69,14 @@ export function Running({ groups, home }) {
     </section>
   `;
 }
+
+/** @param {HOME.PlaceProps} props */
+function RunningPlace({ s: state, home }) {
+  // HOME draws its places once the groups are read (home-page.js `Home`).
+  const groups = /** @type {Choice[]} */ (state.groups);
+  if (groups.length === 0) return false;
+  return html`<${Running} groups=${groups} home=${home} />`;
+}
+
+/** @type {{ running: (props: HOME.PlaceProps) => Drawn }} */
+export const view = { running: RunningPlace };

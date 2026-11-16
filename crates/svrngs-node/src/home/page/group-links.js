@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// A group's links (group-link.js LINK): a button for each link it makes,
+// A group's links in its section, once the group's people are read
+// (group-link.js LINK): a button for each link it makes,
 // a guest's behind Have a guest, and below them the last link made
 // (link-said.js), or why it was not. The machine is the group's own
 // (ui/view.js `useMachine`), so HOME's step never sees it.
@@ -9,7 +10,8 @@ import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LINK } from './group-link.js?v=__VERSION__';
 import { LinkSaid } from './link-said.js?v=__VERSION__';
 import { Copy } from '../ui/copy.js?v=__VERSION__';
-/** @import { Group } from './group.js?v=__VERSION__' */
+/** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { State, Message, Publication } from './group-link.js?v=__VERSION__' */
 /** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 
@@ -73,7 +75,7 @@ function PublicationControls({ state, send, doing }) {
  */
 
 /** @param {LinksProps} props */
-export function Links({ g: group }) {
+function Links({ g: group }) {
   const [state, send] = useMachine(() =>
     machine(
       'LINK',
@@ -128,3 +130,13 @@ export function Links({ g: group }) {
     <p class="link">${said}</p>
   `;
 }
+
+/** @param {PlaceProps} props */
+function LinksPlace({ g: group, s: state }) {
+  // Its people read, as the group's section reads them (group-read.js `GroupRead`).
+  if (!state.people) return false;
+  return html`<${Links} g=${group} />`;
+}
+
+/** @type {{ links: (props: PlaceProps) => Drawn }} */
+export const view = { links: LinksPlace };

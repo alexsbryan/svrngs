@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// OPEN, the machine of "Open a link from your group" (open.js `Open`): a
+// OPEN, the machine of "Open a link from your group" (link-box.js `Open`): a
 // link from a group's page, `<page>#open=<label>&at=<path>`, pasted, opens
 // the lend it names at its path in a tab of its own, through `/to`, as the
 // group's page opens it on a phone. Where it opens is `to`, pure, and only

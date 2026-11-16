@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A group on a screen, for a TV, a spare laptop or a projector: opened in
-// a tab of its own at `/?screen=<its id>` (screen.js `ScreenLink`), where HOME
-// draws this alone (home-page.js `Home`). Its door alone, big, each person's
+// a tab of its own at `/?screen=<its id>` (`ScreenLink`, in each group's
+// section as `show`, once its lends are read), where HOME draws this alone,
+// its place `screen` (home-page.js `Home`). Its door alone, big, each person's
 // lends in their window (ui/door.js), read by SCREEN (on-screen.js), with
 // what arrived since it opened beside it (since-opened.js).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
@@ -13,6 +14,8 @@ import { SCREEN } from './on-screen.js?v=__VERSION__';
 import { SinceOpened } from './since-opened.js?v=__VERSION__';
 /** @import { Group, Lends } from './group.js?v=__VERSION__' */
 /** @import { Effect, State } from './on-screen.js?v=__VERSION__' */
+/** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+/** @import * as GROUP from './group.js?v=__VERSION__' */
 /** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
 
 /**
@@ -40,7 +43,7 @@ const countLine = (state, group) => {
 };
 
 /** @param {PlaceProps} props */
-export function Screen({ s: { groups, q: query } }) {
+function Screen({ s: { groups, q: query } }) {
   // HOME draws the screen once the groups are read (home-page.js `Home`).
   const group = /** @type {Group[]} */ (groups).find((one) => one.id === query.screen);
   const here = group && !group.left && group.removed === false;
@@ -76,3 +79,13 @@ export function Screen({ s: { groups, q: query } }) {
     </section>
   `;
 }
+
+/** @param {GROUP.PlaceProps} props */
+function ScreenLink({ g: group, s: state }) {
+  if (!state.lends) return null;
+  const href = `/?screen=${encodeURIComponent(group.id)}`;
+  return html`<p><a href=${href} target="_blank">Show ${group.name ?? 'this group'} on a screen</a></p>`;
+}
+
+/** @type {{ screen: (props: PlaceProps) => Drawn, show: (props: GROUP.PlaceProps) => Drawn }} */
+export const view = { screen: Screen, show: ScreenLink };
