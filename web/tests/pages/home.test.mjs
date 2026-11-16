@@ -738,6 +738,42 @@ test('a group’s page is its banner, what needs you, its people, what they shar
   ]);
 });
 
+// "Add an app" on a group's page answers how: the sentence saying the act
+// and what comes of it is the legend of the boxes; what is here already is
+// one line; and under the button, the home page's alone, where what is
+// added is found and the other ways to add something, the one that is on
+// this page a link to it. Planted, watched failing: page/shelf.js linking
+// to the overview where it says This computer.
+test('Add an app says how, what is here already, and the other ways to add one', async () => {
+  const money = lend('Money-house', { kind: 'Money', group: 'house' });
+  const shelf = [
+    { name: 'Money', words: 'who owes whom.' },
+    { name: 'Events', words: 'nights out.' },
+  ];
+  const answers = ada({ groups: [group({ name: 'House' })] });
+  answers['GET /v1/lends?namespace=house'] = lends({ lent: [money], shelf });
+  const page = await home(answers, '/?group=house');
+  const fold = page
+    .all('#group-house > details')
+    .find((at) => words(at.firstChild) === 'Add an app');
+  assert.deepEqual(page.text('#group-house > details legend'), [
+    'Tick what you want and press the button. It goes in House’s folder, and everyone in House can open it in a few seconds.',
+  ]);
+  const said = words(fold);
+  assert.ok(said.includes('Money is already in House.'), said);
+  assert.ok(
+    said.endsWith(
+      'What you add is listed under Shared apps. A program already running on this computer is lent from This computer instead, and an app of your own goes in House’s folder, under apps.',
+    ),
+    said,
+  );
+  const links = page.all('#group-house > details section a');
+  assert.deepEqual(
+    links.map((link) => [words(link), link.attributes.href]),
+    [['This computer', '/?view=computer']],
+  );
+});
+
 // "What you lend" is a line a lend, its form folded under the line, and no
 // button there is stretched: look.css's full-width button is the phone
 // page's index's alone (`tbody#lent`, web/page/lent-index.js), where the

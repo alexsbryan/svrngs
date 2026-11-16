@@ -6,6 +6,7 @@
 // through home-page.js and group.js as `joined`.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Shelf } from '../ui/shelf.js?v=__VERSION__';
+import { address } from './grouped.js?v=__VERSION__';
 import { post } from './routes.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
@@ -28,6 +29,7 @@ function GroupShelf({ g: group, s: state, home, joined }) {
       joined=${joined === group.name}
       bring=${bring}
       after=${() => home({ type: 'again' })}
+      more=${html`<p>What you add is listed under Shared apps. A program already running on this computer is lent from <a href=${address('computer')}>This computer</a> instead, and an app of your own goes in ${group.name ?? 'the group'}’s folder, under apps.</p>`}
     />
   `;
 }

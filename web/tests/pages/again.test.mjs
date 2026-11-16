@@ -444,7 +444,7 @@ test('a bring is in the home’s index, read again, with no reload', async () =>
 // while it brings, given back once answered, the second press refused by
 // SHELF, so /shelf is posted once; the answer the button's next sibling;
 // then the group read again, HOME's and GROUP's `again` after SHELF's
-// `brought`, which says Money is on the table and offers it no more, with
+// `brought`, which says Money is already in house and offers it no more, with
 // no reload (question.js@19b63b2b:207 replaced the words above the boxes).
 test('the home page’s bring is answered beside its button, the button held while it brings', async () => {
   let give;
@@ -472,7 +472,7 @@ test('the home page’s bring is answered beside its button, the button held whi
   for (const again of ['HOME: again: ', 'GROUP: again: '])
     assert.ok(first(at, again) > brought, `${again}: ${at.lines().join('\n')}`);
   const shelf = at.text('#home section section').find((s) => s.startsWith('Bring things')) ?? '';
-  assert.ok(shelf.includes('Money is on the table.'), shelf);
+  assert.ok(shelf.includes('Money is already in house.'), shelf);
   assert.ok(!shelf.includes('Money: who owes'), shelf);
   assert.deepEqual([at.went, at.unanswered], [[], []]);
 });
@@ -1035,7 +1035,7 @@ test('a bring is in the phone’s index, read again by the page', async () => {
 // ticked, the button pressed twice at once while the bring is out: held,
 // then given back; the second press refused by SHELF; one bring; the
 // answer the button's next sibling; then the page reads the group again,
-// which says Money is on the table and offers it no more
+// which says Money is already in house and offers it no more
 // (question.js@19b63b2b:207 replaced the words above the boxes).
 test('the phone’s bring is answered beside its button, the button held while it brings', async () => {
   const [hold, give] = [{}, {}];
@@ -1069,7 +1069,7 @@ test('the phone’s bring is answered beside its button, the button held while i
   await at.settle();
   const brought = first(at, 'SHELF: brought (');
   assert.ok(brought >= 0 && first(at, 'PAGE: reread: ') > brought, at.lines().join('\n'));
-  assert.ok(spaced(shelf()).includes('Money is on the table.'), spaced(shelf()));
+  assert.ok(spaced(shelf()).includes('Money is already in house.'), spaced(shelf()));
   assert.ok(!spaced(shelf()).includes('Money: who owes'), spaced(shelf()));
   assert.deepEqual(again(at), []);
 });

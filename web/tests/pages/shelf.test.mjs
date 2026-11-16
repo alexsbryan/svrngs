@@ -1,8 +1,9 @@
 // The shelf, both pages' (page-shelf (a); crates/svrngs-node/src/home/ui/
-// shelf.js), with no browser: its drawing held to question.js `table`,
-// which it moves, byte for byte, written out as parts.test.mjs writes
-// either; and SHELF's steps, each effect read as data, the io run against
-// a stand-in for the page's `bring`.
+// shelf.js), with no browser: its drawing written out as parts.test.mjs
+// writes one, byte for byte; and SHELF's steps, each effect read as data,
+// the io run against a stand-in for the page's `bring`. It was held to
+// question.js `table`, which it moved; since it says how to add an app and
+// what is here already in one line, its words are its own, written here.
 
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
@@ -11,7 +12,6 @@ import { test } from 'node:test';
 register('./layout.mjs', import.meta.url);
 const { SHELF, drawn } =
   await import('../../../crates/svrngs-node/src/home/ui/shelf.js?v=__VERSION__');
-import { v1 } from './before.mjs';
 
 // A document of plain objects, enough for v1's `el` (parts.test.mjs).
 class Node {
@@ -58,25 +58,65 @@ const sent = [];
 const send = (m) => sent.push(m);
 const step = SHELF(async () => []).step;
 
-test('drawn as question.js `table` draws it: offered, one on the table, all on it, a group unnamed', () => {
-  for (const [g, lent] of [
-    [house, []],
-    [house, [money]],
-    [house, SHELVED.map((a) => ({ group: 'g1', kind: a.name }))],
-    [{ id: 'g2' }, [money]],
-  ]) {
+// What it says, in order: what is in the group already, in one line
+// however many, by name; then, when something is left to add, how, and what
+// comes of it, as the legend of the boxes it is about, each box labelled
+// with its app's name and what it is for; then the button, naming the
+// group, in a line a screen reader is told of. Planted, watched failing:
+// shelf.js `already` saying a line an app.
+const box = (words) => `<p><label><input type="checkbox"></input> ${words}</label></p>`;
+const BOXES = {
+  Money: box('Money: who owes whom, and for what.'),
+  Events: box('Events: the get-togethers people post.'),
+  'House-rules': box('House rules: the rules your house agrees.'),
+};
+const lead = (name) =>
+  `<legend>Tick what you want and press the button. It goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.</legend>`;
+const button = (name) =>
+  `<p aria-live="polite"><button>Bring the ticked ones to ${name}</button></p>`;
+const HEAD = '<section><h3>Bring things to the table</h3>';
+
+test('it says how to add an app before the boxes, and what is here already in one line', () => {
+  const all = Object.values(BOXES).join('');
+  const cases = [
+    [house, [], `<fieldset>${lead('house')}${all}</fieldset>${button('house')}`],
+    [
+      house,
+      [money],
+      `<p>Money is already in house.</p><fieldset>${lead('house')}${BOXES.Events}${BOXES['House-rules']}</fieldset>${button('house')}`,
+    ],
+    [
+      house,
+      SHELVED.map((a) => ({ group: 'g1', kind: a.name })),
+      '<p>Money, Events and House rules are already in house.</p>',
+    ],
+    [
+      { id: 'g2' },
+      [money],
+      `<fieldset>${lead('your group')}${all}</fieldset>${button('your group')}`,
+    ],
+  ];
+  for (const [g, lent, inside] of cases)
     assert.equal(
       out(drawn(FIRST, send, { g, lent, shelf: SHELVED })),
-      out(v1.table(g, { lent, shelf: SHELVED }, () => {})),
+      `${HEAD}${inside}</section>`,
       JSON.stringify([g, lent]),
     );
-  }
 });
 
-test('folded as "Bring more to <group>" for someone who just joined, as `table` folds it', () => {
+// What a page adds under the button, the home page's other ways to add
+// something, is drawn last, and nothing when a page gives none (the
+// phone's).
+test('what a page adds is drawn under the button, and nothing where it adds none', () => {
+  const more = { type: 'p', props: { children: 'more' } };
+  const drawing = out(drawn(FIRST, send, { g: house, lent: [], shelf: SHELVED, more }));
+  assert.ok(drawing.endsWith(`${button('house')}<p>more</p></section>`), drawing);
+});
+
+test('folded as "Bring more to <group>" for someone who just joined', () => {
   const v2 = out(drawn(FIRST, send, { g: house, lent: [], shelf: SHELVED, joined: true }));
-  assert.equal(v2, out(v1.table(house, { lent: [], shelf: SHELVED }, () => {}, true)));
-  assert.ok(v2.startsWith('<details><summary>Bring more to house</summary><section>'), v2);
+  assert.ok(v2.startsWith(`<details><summary>Bring more to house</summary>${HEAD}`), v2);
+  assert.ok(v2.endsWith('</section></details>'), v2);
 });
 
 test('a tick is kept, and the button brings the ticked ones still offered', () => {
@@ -94,13 +134,14 @@ test('a tick is kept, and the button brings the ticked ones still offered', () =
     drawing,
   );
   sent.length = 0;
-  const act = drawn(ticked, send, { g: house, lent: [], shelf: SHELVED }).props.children.at(-1)
-    .props.children[0];
+  const act = drawn(ticked, send, { g: house, lent: [], shelf: SHELVED }).props.children.find(
+    (kid) => kid?.props?.['aria-live'],
+  ).props.children[0];
   act.type(act.props)[0].props.onClick();
   assert.deepEqual(sent, [{ type: 'bring', g: house, name: 'house', apps: ['House-rules'] }]);
 });
 
-test('each answer said beside the button, in v1’s words, the words above the boxes kept', () => {
+test('each answer said beside the button, the words above the boxes kept', () => {
   const bringing = step(FIRST, {
     type: 'bring',
     g: house,
@@ -117,16 +158,16 @@ test('each answer said beside the button, in v1’s words, the words above the b
   }).state;
   assert.equal(
     brought.said,
-    'You brought Money to house: everyone in it can open it in a few seconds. Events is on the table already.',
+    'You brought Money to house: everyone in it can open it in a few seconds. Events is already in house.',
   );
   const drawing = out(drawn(brought, send, { g: house, lent: [], shelf: SHELVED }));
   assert.ok(
     drawing.endsWith(
-      `<p><button>Bring the ticked ones to house</button> ${brought.said}</p></section>`,
+      `<p aria-live="polite"><button>Bring the ticked ones to house</button> ${brought.said}</p></section>`,
     ),
     drawing,
   );
-  assert.ok(drawing.includes('<p>These come with svrngs.'), drawing);
+  assert.ok(drawing.includes(lead('house')), drawing);
   assert.equal(
     step(bringing.state, { type: 'brought', answers: [] }).state.said,
     'Tick something to bring first.',
@@ -156,7 +197,7 @@ test('while it brings, a second bring and a tick are refused, the button and the
   assert.equal(drawing.match(/<input disabled type="checkbox">/g)?.length, 3, drawing);
   assert.ok(
     drawing.endsWith(
-      '<p><button disabled>Bring the ticked ones to house</button> Bringing…</p></section>',
+      '<p aria-live="polite"><button disabled>Bring the ticked ones to house</button> Bringing…</p></section>',
     ),
     drawing,
   );
@@ -168,7 +209,7 @@ test('while it brings, a second bring and a tick are refused, the button and the
   );
 });
 
-test('what it brought is offered no more, its tick gone; all brought, the answer stands alone', () => {
+test('what it brought is offered no more, its tick gone; all brought, the answer stays by its button', () => {
   const ticked = ['Money', 'Events'].reduce(
     (s, app) => step(s, { type: 'tick', app, on: true }).state,
     FIRST,
@@ -178,7 +219,7 @@ test('what it brought is offered no more, its tick gone; all brought, the answer
   assert.deepEqual([brought.brought, brought.ticked], [['Money'], ['Events']]);
   const drawing = out(drawn(brought, send, { g: house, lent: [], shelf: SHELVED }));
   assert.ok(
-    !drawing.includes('Money: who owes') && !drawing.includes('Money is on the table.'),
+    !drawing.includes('Money: who owes') && !drawing.includes('Money is already in'),
     drawing,
   );
   const all = step(
@@ -189,7 +230,7 @@ test('what it brought is offered no more, its tick gone; all brought, the answer
   const alone = out(drawn(all, send, { g: house, lent: [], shelf: SHELVED }));
   assert.ok(
     alone.endsWith(
-      '<p></p><p> You brought Events to house: everyone in it can open it in a few seconds. House rules is on the table already.</p></section>',
+      '<p aria-live="polite"><button>Bring the ticked ones to house</button> You brought Events to house: everyone in it can open it in a few seconds. House rules is already in house.</p></section>',
     ),
     alone,
   );

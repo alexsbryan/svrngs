@@ -49,6 +49,9 @@ button { margin: 0.25rem 0.5rem 0.25rem 0; padding: 0.35rem 0.8rem; border: var(
 form button:not([type="button"]) { background: var(--lit); color: var(--on-colour); }
 /* A field is a box to type in, said as plainly as a button. */
 input { min-width: 12ch; margin: 0 0.5rem 0.25rem 0.25rem; padding: 0.35rem 0.5rem; border: var(--rule); border-radius: 0; background: var(--paper); color: var(--ink); font: inherit; }
+/* A group of boxes under the sentence that says what ticking them does (ui/shelf.js): no frame, the sentence as wide as a paragraph. */
+fieldset { margin: 0; padding: 0; border: 0; }
+legend { max-width: 72ch; padding: 0; }
 /* A label wraps as one piece with the field it names. */
 label { display: inline-block; font-weight: 600; }
 

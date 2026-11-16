@@ -13,8 +13,10 @@ something from a terminal.
 On the home page both kinds are listed under **Shared apps**, and the
 sentence over each says which it is and when it opens.
 
-On your home page, open your group and press **Add an app**.
-Each app is listed with a tick box and a line saying what it's for:
+On your home page, open your group and press **Add an app**. It says
+how: *"Tick what you want and press the button. It goes in Elm’s folder,
+and everyone in Elm can open it in a few seconds."* Each app is listed with
+a tick box and a line saying what it's for:
 
 - **Money**: who owes whom, and for what.
 - **Events**: the get-togethers people post, and who’s coming.
@@ -29,8 +31,14 @@ bring first."*
 
 The app then shows up under **Shared apps** on everyone's home page and in
 the group's list on everyone's phone, as a link of its name, such as **Money**. Pressing that
-link is how you open it. An app already brought says *"Money is on the
-table."* and drops off the tick list.
+link is how you open it. Apps already brought drop off the tick list and
+are named in one line: *"Money and Events are already in Elm."*
+
+That is not the only way to add something. A program already running on
+your computer is lent from **This computer**, under **Already running
+here** ([lend.md](lend.md)), and an app you made yourself goes in the
+group's folder, under `apps` ([build.md](build.md)); **Add an app** points
+to both.
 
 The same list is on your group's page on a phone. Right after you join a
 group, it's folded under **Bring more to Elm**.

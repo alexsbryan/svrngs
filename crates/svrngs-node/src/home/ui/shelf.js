@@ -9,7 +9,7 @@
 // `SHELF:`. While it brings, the button and the boxes are held, "Bringing…"
 // said beside it, and a second bring is refused; then what it brought is
 // offered no more, and the page's `after()` reads the group again, so it
-// is said on the table from the group's own answer, never a reload.
+// is said in the group already from the group's own answer, never a reload.
 // The group lists an app brought once its folder has placed the files in
 // its record (carried.rs `carried`), a moment after the bring is answered,
 // so each read that does not list it yet is followed by another, a second,
@@ -17,7 +17,7 @@
 import { html, useEffect, useMachine } from './view.js?v=__VERSION__';
 import { assertNever, go, machine, no } from './machine.js?v=__VERSION__';
 import { Act, Fold, Tick } from './parts.js?v=__VERSION__';
-import { spoken } from '../question.js?v=__VERSION__';
+import { list, spoken } from '../question.js?v=__VERSION__';
 /** @import { Machine, Store } from './machine.js?v=__VERSION__' */
 /** @import { Drawn, Targeted } from './view.js?v=__VERSION__' */
 /** @import { Shelved } from '../question.js?v=__VERSION__' */
@@ -35,7 +35,7 @@ import { spoken } from '../question.js?v=__VERSION__';
  */
 
 /**
- * /shelf's answer for each app brought: whether it was on the table already.
+ * /shelf's answer for each app brought: whether it was in the group already.
  * @typedef {{ app: string, already: boolean }} Brought
  */
 
@@ -80,7 +80,7 @@ import { spoken } from '../question.js?v=__VERSION__';
 /** @param {string} name */
 const done = (name) => (/** @type {Brought} */ answer) =>
   answer.already
-    ? `${spoken(answer.app)} is on the table already.`
+    ? `${spoken(answer.app)} is already in ${name}.`
     : `You brought ${spoken(answer.app)} to ${name}: everyone in it can open it in a few seconds.`;
 const BUSY = 'a bring is under way, and is answered first';
 const TRIES = 4;
@@ -191,6 +191,7 @@ const FIRST = { at: { bring: 'idle' }, ticked: [], brought: [], open: false, sai
  * @property {boolean} [joined]
  * @property {(g: G, apps: string[]) => Promise<Brought[]>} bring
  * @property {() => void} after
+ * @property {Drawn} [more] what a page adds under the button: the other ways to add something, where it has them
  */
 
 /**
@@ -209,28 +210,34 @@ export function Shelf(props) {
   return drawn(state, send, props);
 }
 
+// What of the shelf is in the group already, in one line however many, by
+// name: an answer to someone who came to add one, where a line an app read
+// as a dead end.
+/** @param {string[]} names @param {string} name */
+const already = (names, name) =>
+  names.length > 0 &&
+  html`<p>${list(names)} ${names.length > 1 ? 'are' : 'is'} already in ${name}.</p>`;
+
 // `lent` and `shelf` as the group's last read gives them; `group` its id and name.
 /**
  * The shelf drawn from its state.
  * @template {ShelfGroup} G
  * @param {ShelfState} state
  * @param {Store<ShelfState, ShelfMessage<G>>['dispatch']} send
- * @param {Pick<ShelfProps<G>, 'g' | 'lent' | 'shelf' | 'joined'>} props
+ * @param {Pick<ShelfProps<G>, 'g' | 'lent' | 'shelf' | 'joined' | 'more'>} props
  * @returns {Drawn}
  */
-export function drawn(state, send, { g: group, lent, shelf, joined }) {
+export function drawn(state, send, { g: group, lent, shelf, joined, more }) {
   const name = group.name ?? 'your group';
   const listed = (/** @type {Shelved} */ app) => on(group, lent)(app.name);
   const offered = shelf.filter((app) => !listed(app) && !state.brought.includes(app.name));
   const tick = (/** @type {string} */ app) => (/** @type {Targeted<HTMLInputElement>} */ ticked) =>
     send({ type: 'tick', app: app, on: ticked.currentTarget.checked });
   const bringing = state.at.bring === 'bringing';
-  const onTable = shelf
-    .filter(listed)
-    .map((app) => html`<p>${spoken(app.name)} is on the table.</p>`);
-  const offering = offered.length
-    ? `These come with svrngs. Bring one, and everyone in ${name} opens it on their own computer or phone, while any computer in ${name} is on.`
-    : '';
+  const here = shelf.filter(listed).map((app) => spoken(app.name));
+  // How, and what comes of it, before the boxes it is about, as their
+  // group's legend: the result in the words said after a bring (`done`).
+  const offering = `Tick what you want and press the button. It goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.`;
   const boxes = offered.map((app) => {
     const words = ` ${spoken(app.name)}: ${app.words}`;
     return html`<${Tick}
@@ -244,9 +251,8 @@ export function drawn(state, send, { g: group, lent, shelf, joined }) {
   const bringLine =
     (offered.length > 0 || state.said) &&
     html`
-      <p>
+      <p aria-live="polite">
         <${Act}
-          answer=${offered.length ? 'beside' : 'instead'}
           words=${`Bring the ticked ones to ${name}`}
           doing=${doing}
           on=${{ type: 'bring', g: group, name, apps }}
@@ -258,10 +264,10 @@ export function drawn(state, send, { g: group, lent, shelf, joined }) {
   const section = html`
     <section>
       <h3>Bring things to the table</h3>
-      ${onTable}
-      <p>${offering}</p>
-      ${boxes}
+      ${already(here, name)}
+      ${offered.length > 0 && html`<fieldset><legend>${offering}</legend>${boxes}</fieldset>`}
       ${bringLine}
+      ${more}
     </section>
   `;
   if (!joined) return section;

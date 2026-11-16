@@ -426,7 +426,7 @@ export const reading = (lend, said) => {
 // cannot say "films" for a program it does not know.
 const HANDFUL = 4;
 /** @param {string[]} words */
-const list = (words) =>
+export const list = (words) =>
   words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words.at(-1)}` : `${words[0]}`;
 // What several share, said once: each of `pairs`' sayings, in order, with
 // the names it was said of listed. Said per name, the same sentence read as
