@@ -113,7 +113,6 @@ export const FILES = /** @type {const} */ ([
   'acts',
   'ask',
   'wifi',
-  'wifi-foot',
   'play',
   'update-line',
 ]);

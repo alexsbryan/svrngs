@@ -146,7 +146,7 @@ It says *"You no longer lend films."* Or press its line under **What you lend** 
 
 - **On a computer:** on their home page, under your group's **Shared apps**, they click *"Sam’s films (jellyfin)"*. It opens in a tab of its own.
 - **On a phone:** on the group's page (the link they joined from, or the icon on their Home Screen), they tap *"Sam’s films (jellyfin)"*. It opens in that tab.
-- **Bookmark it.** Every lend has an address that doesn't change. Below the group's list on the home page, each lend shows its address, `http://<…>.localhost:<port>/`, with *"Bookmark this."* On a computer that joined in a browser, the group's page shows one too.
+- **Bookmark it.** Every lend has an address that doesn't change. On the home page, press **Address** beside a lend: it shows its address, `http://<…>.localhost:<port>/`, with *"Bookmark this."* On a computer that joined in a browser, the group's page shows one too.
 - **Send it in the chat.** `#open=films@Sam` after your group's page opens Sam's films: `https://group.svrnme.sh/#open=films@Sam`. Added after a group link, it's `&open=films@Sam`: the link joins, then opens it.
 - **Two people called Sam?** The name says when each joined: `films@Sam (joined 24 Oct)`. A name that matches nothing says *"Nothing in Lab goes by films@Sam now."*; one that matches two says which to pick from the list.
 

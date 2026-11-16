@@ -55,7 +55,7 @@ A chat app, an editor's assistant or a script on your computer can call Sam's mo
 
 ![A program on Bo’s computer calls the copied address with Bo’s svrngs token; the token stops at Bo’s computer, and Sam’s computer checks it is Bo before llama-server answers.](../diagrams/guide/models.svg)
 
-1. On your home page, below your group's list, find Sam's model and press **Copy its address for a program**. The page says *"Copied: http://….localhost:…/. Paste it where a program on this computer, such as a chat app, asks for an address."* The address stays the same when svrngs or your computer restarts.
+1. On your home page, under your group's **Shared apps**, find Sam's model, press **Address** beside it, then **Copy its address for a program**. The page says *"Copied: http://….localhost:…/. Paste it where a program on this computer, such as a chat app, asks for an address."* The address stays the same when svrngs or your computer restarts.
 2. In the program, set the OpenAI base URL to that address with `v1` on the end.
 3. For the API key, give it your svrngs token: the text in `~/.svrngs/token`. svrngs lets a program on your computer through only with it, and doesn't pass it on to Sam.
 

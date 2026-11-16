@@ -8,7 +8,7 @@ In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doe
 
 ![A TV, a phone and a laptop on the home WiFi open Sam’s Jellyfin through Cy’s computer at http://192.168.1.4:48719/, as Cy; when Cy’s computer is on another WiFi, it is closed.](../diagrams/guide/tv.svg)
 
-On your home page, below your group's list, each lend has its own line. Find the one you want, say *"Sam’s jellyfin"*, and press **Open it to this WiFi**. The line then says:
+On your home page, under your group's **Shared apps**, find the one you want, say *"Sam’s jellyfin"*, and press **Address** beside it, then **Open it to this WiFi**. Its line there then says:
 
 ```
 Open to this WiFi: type http://192.168.1.4:48719/ into an app or a browser on a device here, such as your TV, a phone or another computer. Anyone on this WiFi can open it there as you.
@@ -28,7 +28,7 @@ What to know:
 
 - **It's you.** Anything on this WiFi that opens it opens it as you, so share the WiFi with people you'd lend your name to. A friend's lend counts it as one person: you.
 - **This WiFi only.** It stays open whenever svrngs runs on this computer and the computer is on that WiFi, after a restart too. On another WiFi it's closed: *"Closed for now: this computer is on another WiFi than the one where you turned it on. It opens again when you are there again."*
-- **Until you close it.** Press **Close it to this WiFi** on the same line. There's no terminal command for closing.
+- **Until you close it.** Press **Close it to this WiFi** in the same place. There's no terminal command for closing.
 - **A firewall can stop it.** svrngs never changes this computer's firewall. If it blocks the address, allow that port for your WiFi in the firewall's own settings.
 - **It's listed.** On your home page, open **What acts as you**: it shows it under **Open to this WiFi**, with its button to close it.
 
@@ -50,7 +50,7 @@ This works for whoever's computer is in the room with the TV, on the TV's WiFi, 
 
 ### Once: give the TV the address
 
-1. On your home page, find Jellyfin below your group's list and press **Open it to this WiFi**. Note the address its line gives.
+1. On your home page, find Jellyfin under your group's **Shared apps**, press **Address** beside it, then **Open it to this WiFi**. Note the address its line gives.
 2. On the TV, install Jellyfin's own app from its app store and type that address into it.
 
 ### Sign the TV in without typing on its remote
@@ -73,4 +73,4 @@ The cost: once their film starts, a phone signed in as someone other than the TV
 
 This has been tried with a browser standing in for the TV; a real TV hasn't been tested yet.
 
-To stop: press **Close it to this WiFi** on Jellyfin's line. More on lending Jellyfin itself is in [lend.md](lend.md).
+To stop: press **Address** beside Jellyfin, then **Close it to this WiFi**. More on lending Jellyfin itself is in [lend.md](lend.md).

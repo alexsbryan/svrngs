@@ -420,13 +420,11 @@ test('a lend opened to this WiFi says the address, and closed says so', async ()
   const line = '#home section ul.wifi li';
   const page = await home(ada({ lent: [shelf], 'POST /v1/room': turn }));
   const [wifi] = page.all('#home section ul.wifi');
-  const kin = wifi.parentNode.childNodes;
-  const [index] = page.all('#home section .index');
-  assert.ok(kin.indexOf(index) >= 0 && kin.indexOf(index) < kin.indexOf(wifi), 'below the index');
+  assert.equal(wifi.parentNode.attributes.popover, 'auto', 'in its cell’s popover');
   const [offered] = page.text(line);
   assert.ok(offered.startsWith('ada’s shelf (k):'), offered);
-  // What opening one does is said once, above the list, not on each line.
-  const does = 'Open one to this WiFi, and anyone on it can open it as you while svrngs runs.';
+  // What opening it does is said in its popover, over the line it is about.
+  const does = 'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.';
   assert.equal(page.text('#home section p').filter((p) => p === does).length, 1);
   assert.ok(!offered.includes('anyone on it'), offered);
   await page.press(`${line} button`, 'Open it to this WiFi');

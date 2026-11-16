@@ -97,6 +97,15 @@ const ada = ({
 
 const home = (answers, path = '/?ui=a') => open(`${AT}${path}`, answers);
 
+// The index's cells, each by its words less its popover's (lend-address.js):
+// what a person reads in the cell before pressing Address.
+const cells = (page) =>
+  page.all('#home .index > ul > li').map((li) => {
+    const pop = li.childNodes.find((kid) => kid.attributes?.popover);
+    const all = words(li);
+    return (pop ? all.replace(words(pop), '') : all).replace(/\s+/g, ' ').trim();
+  });
+
 // browser::the_home_page_asks_in_the_one_wording: the ask heads its
 // question as question.js words it, the lend named with its kind; an ask of
 // an app and a lend not lent says `unlent`.
@@ -313,18 +322,18 @@ test('what is done in a terminal is named with its one line, and nothing the pag
 
 // browser::the_home_page_s_links_say_what_they_open and
 // ::the_home_page_shows_less_to_puzzle_over: the index's link names the
-// lend and its kind, in a tab of its own, under what opening it does; no
-// WiFi or address in its cell; the box's words beside it; no "What apps
-// use" while nothing uses anything.
+// lend and its kind, in a tab of its own, under what opening it does; its
+// WiFi and address behind "Address", never in the cell's own words; the
+// box's words beside it; no "What apps use" while nothing uses anything.
 test('a lend’s link says what it opens and whose, in a tab of its own, and less to puzzle over', async () => {
   const shelf = lend('shelf');
   const page = await home(ada({ lent: [shelf] }));
-  assert.deepEqual(page.text('#home .index li a'), ['ada’s shelf (k)']);
+  assert.deepEqual(page.text('#home .index > ul > li > a'), ['ada’s shelf (k)']);
   assert.deepEqual(page.text('#home .index > p'), [
     'Opening it lets it write its own part of your group’s record, as you.',
   ]);
-  assert.deepEqual(page.text('#home .index li'), ['ada’s shelf (k)']);
-  const [link] = page.all('#home .index li a');
+  assert.deepEqual(cells(page), ['ada’s shelf (k) Address']);
+  const [link] = page.all('#home .index > ul > li > a');
   assert.equal(link.attributes.target, '_blank');
   assert.equal(page.all('#lent label')[0].textContent, 'How many people at once: ');
   assert.ok(!page.text('#home h2').includes('What apps use'), page.text('#home h2').join());
@@ -358,18 +367,24 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   ]);
   assert.equal(page.all('#home .index > ul').length, 4);
   assert.equal(page.all('#home .index table').length, 0);
-  assert.deepEqual(page.text('#home .index li'), [
-    'Money This app’s shared entries.',
-    'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks.',
-    'ada’s shelf (k)',
-    'bo’s notes (k)',
+  assert.deepEqual(cells(page), [
+    'Money This app’s shared entries. Address',
+    'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
+    'ada’s shelf (k) Address',
+    'bo’s notes (k) Address',
     'bo’s echo (k) Play',
     'bo’s game (k) Play',
     'ada’s mine (k) A port this computer lends.',
   ]);
-  assert.deepEqual(page.text('#home .index li button'), ['Open ada’s page (k)', 'Play', 'Play']);
+  assert.deepEqual(
+    [
+      ...page.text('#home .index > ul > li > form button'),
+      ...page.text('#home .index > ul > li > span button'),
+    ],
+    ['Open ada’s page (k)', 'Play', 'Play'],
+  );
   const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
-  assert.deepEqual(full.text('#home .index li'), ['ada’s shelf (k) Full now.']);
+  assert.deepEqual(cells(full), ['ada’s shelf (k) Full now. Address']);
 });
 
 // What a group shares has no bound, so the words outside the index's cells
@@ -383,12 +398,12 @@ test('the words outside the index’s cells are the same for 8 things and for 40
     const lent = Array.from({ length: count - 2 }, (_, i) => lend(`thing${i}`, kinds[i % 3]));
     for (const kind of ['Money', 'Doc']) lent.push(lend(`${kind}-house`, { kind, group: 'house' }));
     const page = await home(ada({ lent, people }));
-    const cells = page.text('#home .index li');
-    assert.equal(cells.length, count);
+    const whole = page.text('#home .index > ul > li');
+    assert.equal(whole.length, count);
     // The index's words, less each cell's, are its captions': whatever
     // element holds a word, it is in a cell or it is one of these.
     const said = page.text('#home .index > p');
-    const outside = cells.reduce(
+    const outside = whole.reduce(
       (rest, cell) => rest.replace(cell, ''),
       page.text('#home .index')[0],
     );
@@ -435,7 +450,6 @@ test('a group’s page is its banner, what needs you, its people, what they shar
     'Visiting now',
     'Invite people here',
     'Add an app',
-    'Addresses and WiFi',
     'Manage this group',
   ]);
 });
@@ -528,18 +542,41 @@ test('what acts as you names groups with the same deciders in one line, and head
   assert.ok(!said.includes('Flat: This computer.'), said.join('\n'));
 });
 
-// browser::the_home_page_copies_a_lend_s_address_for_a_program: below the
-// group's things, the lend's address to keep, and its Copy, which writes
-// that address and says where a program takes it; the group on a screen
-// last. That the clipboard then holds what the page wrote is Chromium's
+// browser::the_home_page_copies_a_lend_s_address_for_a_program: a lend's
+// address to keep, and its Copy, which writes that address and says where
+// a program takes it, are in its own cell, behind "Address": a button that
+// opens the browser's popover by its id (`popovertarget`), which holds what
+// opening it to this WiFi does over the button it is about. A port has
+// none; and a lend two groups share has a popover in each, each with an id
+// of its own, or one group's button would open the other's. That the
+// clipboard then holds what the page wrote is Chromium's
 // (browser::the_page_offers_a_computer_one_line_and_sends_the_token_nowhere).
-test('a lend’s address for a program is kept below the group, and its Copy writes it and says so', async () => {
+// Planted, watched failing: lend-name.js naming the popover by its lend
+// alone, with no group, so both groups' popovers shared one id.
+test('a lend’s address for a program is kept behind Address in its cell, and its Copy writes it and says so', async () => {
   const shelf = lend('shelf');
-  const page = await home(ada({ lent: [shelf] }));
+  const groups = [group(), group({ id: 'flat', name: 'Flat' })];
+  const page = await home(ada({ lent: [shelf, lend('port', { raw: 'tcp' })], groups }));
   const foot = page.text('#home section ul.wifi li');
   assert.ok(foot[0].includes(`${shelf.origin} Bookmark this.`), foot[0]);
-  const after = page.all('#home section ul.wifi')[0].nextSibling;
-  assert.ok(after.textContent.endsWith(' on a screen'), after.textContent);
+  const pops = page.all('#home .index > ul > li > div');
+  const opens = page.all('#home .index > ul > li > button');
+  assert.deepEqual(opens.map(words), ['Address', 'Address'], 'one a lend with an address, a group');
+  assert.deepEqual(
+    opens.map((button) => button.attributes.popovertarget),
+    pops.map((pop) => pop.id),
+  );
+  assert.equal(new Set(pops.map((pop) => pop.id)).size, 2, 'an id of its own in each group');
+  for (const pop of pops) {
+    assert.equal(pop.attributes.popover, 'auto');
+    const said = pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
+    assert.equal(
+      said[0],
+      'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.',
+    );
+    assert.ok(said[1].includes('Open it to this WiFi'), said[1]);
+    assert.ok(said[1].includes('Copy its address for a program'), said[1]);
+  }
   await page.press('#home section ul.wifi li button', 'Copy its address for a program');
   assert.deepEqual(page.copied, [shelf.origin]);
   assert.ok(

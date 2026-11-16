@@ -90,8 +90,8 @@ h2 small { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
 
 /* The door: each person a cell, lit while their computer answers, drawn off
    when it did not, a phone's marked; the words say each, not the colour. */
-ul.door, div.index ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; border: 0; }
-ul.door li, div.index li { padding: 0.5rem; border: var(--hair); }
+ul.door, div.index > ul { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.5rem; border: 0; }
+ul.door li, div.index > ul > li { padding: 0.5rem; border: var(--hair); }
 ul.door li { font-weight: 700; }
 ul.door li small { display: block; font-weight: 400; }
 ul.door li.on { border: var(--rule); background: var(--lit); color: var(--on-colour); }
@@ -112,15 +112,21 @@ body:not(.screen) #home ul.door li small { display: inline; }
    it has, so the same page holds eight things and eighty; a long name
    breaks inside its cell, never widens the page. Two grids in a row keep
    the gap between cells. */
-div.index ul { grid-auto-flow: dense; }
-div.index ul + ul { margin-top: 0; }
-div.index li { overflow-wrap: anywhere; }
-div.index li button { margin: 0; }
+div.index > ul { grid-auto-flow: dense; }
+div.index > ul + ul { margin-top: 0; }
+div.index > ul > li { overflow-wrap: anywhere; }
+div.index > ul > li > :is(span, form) button { margin: 0; }
+/* Forty things are a screen of cells, so a cell is as tight as the door's:
+   a line of words and little around it, its Play no taller than the line. */
+div.index > ul { gap: 0.35rem; }
+div.index > ul > li { padding: 0.2rem 0.4rem; }
+div.index > ul > li > span button { padding: 0 0.6rem; }
+div.index > p { margin: 0.6rem 0 0.4rem; }
 /* The cell that asks a yes says more than a name, and may list what it
    opens, each with a tick: it takes a row of its own, its button beside its
    words, and the cells after it fill the row it left. */
-div.index li:has(form) { grid-column: 1 / -1; }
-div.index li form { display: inline; }
+div.index > ul > li:has(form) { grid-column: 1 / -1; }
+div.index > ul > li > form { display: inline; }
 
 /* A table, on the phone's page and under "Addresses and WiFi": a rule under each row. */
 table { width: 100%; margin: 0.5rem 0; border-collapse: collapse; }
@@ -180,14 +186,12 @@ body.screen footer p { max-width: none; margin: 0; }
    address's face, broken anywhere, as a label is 62 letters long. */
 small.keep { display: block; font-family: var(--mono); overflow-wrap: anywhere; }
 
-/* "Addresses and WiFi" (wifi-foot.js): a thing a row, where the window has
-   the width for one: its name, its WiFi button, its Copy and its address
-   side by side, each button as wide as its words and the address taking
-   the rest; what a press answers takes the row's next line. Forty things
-   were three lines each. A narrow window keeps them one under another. */
-@media (min-width: 60rem) {
-  ul.wifi li { display: grid; grid-template-columns: 11rem auto auto 1fr; gap: 0 0.75rem; align-items: baseline; }
-}
+/* "Address" in a cell of the index (lend-address.js): a small button, plain
+   beside the name it belongs to, and the browser's own popover it opens,
+   which the browser puts over the page and closes on Escape or a press
+   outside it. The popover is the page's own box, no wider than the window. */
+div.index button[popovertarget] { margin: 0; padding: 0 0.3rem; border: var(--hair); font-size: 0.8rem; font-weight: 400; }
+[popover] { box-sizing: border-box; max-width: min(36rem, calc(100vw - 2rem)); padding: 0.75rem 1rem; border: var(--rule); background: var(--paper); color: var(--ink); overflow-wrap: anywhere; }
 
 /* B, the home page's layout: the overview says what the page is, a group's
    banner heads its own, and only This computer has the page's foot. */

@@ -164,8 +164,8 @@ that is the model, not svrngs.
 ![Sam's model answering Bo](runs/start/2026-10-13-story/data/shots/bo-chat-chromium.png)
 
 **9. A program on Bo's computer** — a chat app, an editor's assistant, a
-script — can ask Sam's model too. Press **Copy its address for a
-program**, beside **Sam’s llama-server**: the page says *"Copied:"*
+script — can ask Sam's model too. Press **Address** beside **Sam’s llama-server**, then **Copy its
+address for a program**: the page says *"Copied:"*
 and the address. Paste it where the program asks for an address (often
 called its *base URL*, or *OpenAI-compatible API*). The address stays the
 same when svrngs or the computer starts again. For its key, give it Bo's

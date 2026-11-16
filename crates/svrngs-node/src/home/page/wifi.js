@@ -3,12 +3,12 @@
 // WiFi, or closed, for any device on it, a TV among them, said as /v1/room
 // says it (room.rs `Served::said`). ROOM is the page's one read of
 // /v1/room, asked as this file loads, beside HOME's read of the groups, so
-// a group's foot has it to draw. It feeds two lists: the foot of each
-// group's section (wifi-foot.js, `ul.wifi`), each lend with its address
+// a lend's cell has it to draw. It feeds two lists: each
+// lend's cell in the index (lend-address.js, `ul.wifi`), with its address
 // for a program, and "Open to this WiFi" under "What acts as you"
 // (`part`, for acting.js, `ul#room`). Each read is counted, so an older
 // answer is refused by name, and is asked again on each of the groups'
-// rounds, once a round however many groups draw a foot. What is open that
+// rounds, once a round however many cells ask. What is open that
 // cannot be read is said once, in `part`, never read as none; a press in a
 // line then writes it over.
 import { html, useStore } from '../ui/view.js?v=__VERSION__';
@@ -145,8 +145,8 @@ export const room = machine(
 const on = (state, lend) => (state.at.room === 'unread' ? undefined : state.room?.find(same(lend)));
 
 /**
- * One lend's line: the lend, at its origin in a group's foot, what is said
- * of it before its press, and whether it is in the foot, with its Copy.
+ * One lend's line: the lend, at its origin in its cell's popover, what is
+ * said of it before its press, and whether it is there (`foot`), with its Copy.
  * @typedef {{ l: Which & { origin?: string }, words: string, foot?: boolean }} LineProps
  */
 
@@ -155,7 +155,7 @@ const CLOSED = 'Closed to this WiFi: nobody on it can open it through this compu
 // One lend's line, in either list, drawn from ROOM alone: what is open
 // said, or closed, if a press here closed it, and why a turn was refused.
 // What opening one does is said once above each list, never per line
-// (`ANYONE`, wifi-foot.js `OPEN_ONE`).
+// (`ANYONE`, lend-address.js `OPEN_IT`).
 // It stays beside ROOM, whose store it reads, as `rooms` draws it, and
 // web/tests/pages/rooms.test.mjs imports ROOM and `rooms` from this file.
 /** @param {LineProps} props */

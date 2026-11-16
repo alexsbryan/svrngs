@@ -784,10 +784,15 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   things and 40 and holds the words outside the cells equal is
   `web/tests/pages/home.test.mjs`'s). That a thing is on and opens in a tab
   is the usual and is not said; a cell says a port
-  is this computer's own, and "Full now." At the group's foot, off the first screen, what is for
-  other devices and programs: each can be opened to this WiFi, or closed
-  (the operator, 2026-10-26), and its address copied for a program; then
-  the group on a screen. In the index and the page's top they were words
+  is this computer's own, and "Full now." What is for other devices and programs is about one
+  thing and no part of deciding to open it, so it is behind **Address** in
+  that thing's cell, a button that opens the browser's own popover
+  (`popover`, `popovertarget`; no script of ours opens or closes it): there
+  it can be opened to this WiFi, or closed (the operator, 2026-10-26), under
+  the sentence saying what that does, and its address copied for a program
+  (`home/page/lend-address.js`). Only detail about one thing goes in a
+  popover; a consent sentence, or a state that needs the person, never does.
+  The group on a screen is under **Manage this group**. In the index and the page's top they were words
   read before Money (the fifth xenia set, Kim's Home 90 of her 30). The computers that did not say what they lend are one line
   under the grids, a sentence for each why, each naming whose, every one
   ("Ana’s and Eve’s computers did not answer, so what they lend is not
@@ -826,10 +831,7 @@ in a window of its own, each of several folders named by its own name, and
 (`home/page/group-folder.js`). After those, what is done now and then: who
 you have over, with who else is visiting, and every invitation and
 device-link control, unfolded, one row of buttons that wraps. Last the folds: **Add an
-app** holds the existing shelf; **Addresses and WiFi** holds each app's
-line, a row a thing where the window is wide enough: its name, its WiFi
-sharing, its Copy and its address for a program (`look.css` `ul.wifi li`),
-under what opening one to this WiFi does, said once; **Manage this group** holds the
+app** holds the existing shelf; **Manage this group** holds the
 presentation screen, handover and leave (`home/page/grouped.js`
 `GroupPlaces`).
 **This computer** holds what acts as you, running-program discovery, and

@@ -37,7 +37,7 @@ phone, and keeps running; beside it, `svrngs share 8096 --group <group>`, which 
 to make an account in Jellyfin's own pages; Sam makes one for the room,
 every library ticked, and the export of Jellyfin's users is taken after
 that. Dee: `svrngs join <link>` on the computer on the TV's WiFi, then
-**Open it to this WiFi** on Sam's jellyfin's line of the home page, or
+**Address** beside Sam's jellyfin on the home page, then **Open it to this WiFi**, or
 `svrngs room jellyfin`, which prints "Sam's jellyfin:" and
 `http://<an address on Dee's WiFi>:<port>/`, the same each time, and keeps
 running; that address typed into Jellyfin's app on the TV, "Use Quick

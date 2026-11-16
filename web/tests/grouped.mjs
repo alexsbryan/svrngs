@@ -10,17 +10,6 @@ const { context, close } = await launch(args.engine, { device: 'Desktop Chrome',
 const logs = [];
 context.on('console', (message) => logs.push(message.text()));
 try {
-  if (process.env.GROUPED_HOME_PLANT === 'missing-wifi') {
-    await context.route('**/page/grouped.js*', async (route) => {
-      const source = await readFile(
-        new URL('../../crates/svrngs-node/src/home/page/grouped.js', import.meta.url),
-        'utf8',
-      );
-      const body = source.replace("draw(['wifi'])", 'draw([])');
-      assert.notEqual(body, source, 'the plant found the place it removes');
-      await route.fulfill({ contentType: 'text/javascript', body });
-    });
-  }
   const ids = [args.group, '2'.repeat(64), '3'.repeat(64)];
   await context.addInitScript(
     ({ ids }) => {
@@ -198,8 +187,16 @@ try {
   const TWO = ['All your groups', 'This computer'];
   const inventory = async (selector) => {
     await page.locator(selector).evaluateAll((roots) => {
-      for (const root of roots)
+      for (const root of roots) {
         for (const detail of root.querySelectorAll('details')) detail.open = true;
+        // Each lend's popover too (lend-address.js), all at once: as the
+        // page makes them only one is open at a time, so each is opened by
+        // hand here, which the browser lets stand beside the others.
+        for (const pop of root.querySelectorAll('[popover]:not(:popover-open)')) {
+          pop.popover = 'manual';
+          pop.showPopover();
+        }
+      }
     });
     return page.locator(selector).evaluateAll((roots) =>
       roots
@@ -251,6 +248,21 @@ try {
   assert.equal(await page.locator('#terminal').isVisible(), true);
   assert.equal(await page.locator('#again').isVisible(), true);
   assert.equal(await page.locator('#intro').isVisible(), true);
+
+  // The plant, once A's controls are read: B is served each lend's popover
+  // without its line, so B lacks every "Open it to this WiFi", Copy and
+  // address that A has, and the inventory below must say so.
+  if (process.env.GROUPED_HOME_PLANT === 'missing-wifi') {
+    await context.route('**/page/lend-address.js*', async (route) => {
+      const source = await readFile(
+        new URL('../../crates/svrngs-node/src/home/page/lend-address.js', import.meta.url),
+        'utf8',
+      );
+      const body = source.replace(/<\$\{Line\}[^>]*\/>/, '');
+      assert.notEqual(body, source, 'the plant found the line it removes');
+      await route.fulfill({ contentType: 'text/javascript', body });
+    });
+  }
 
   // B has no foot to wait on: a place's controls are read until they are all drawn.
   const drawn = async (selector, want, why) => {
