@@ -49,12 +49,8 @@ const at = (date) => {
   const hhmm = Math.trunc(Math.abs(minutes) / 60) * 100 + (Math.abs(minutes) % 60);
   return `${date.toLocaleString('sv-SE')} ${sign}${String(hhmm).padStart(4, '0')}`;
 };
-// When someone joined, as `svrngs remove --joined` takes it: `started`, or
-// that time.
-export const joinedAt = (/** @type {Joined} */ joined) =>
-  joined === 'started' ? 'started' : at(new Date(joined.at * 1000));
 const when = (/** @type {Joined} */ joined) =>
-  joined === 'started' ? 'started the group' : `joined ${joinedAt(joined)}`;
+  joined === 'started' ? 'started the group' : `joined ${at(new Date(joined.at * 1000))}`;
 // Each person once, with their name as the door says it and what holds their keys.
 /**
  * @param {PeopleRow[]} rows
@@ -129,6 +125,8 @@ const theirs = (rows, lent, person, newest) =>
     });
 
 // A person's cell: their name, their own lends, then how they are judged.
+// Keyed by the person: when someone goes, their cell goes, and the next
+// person's is not drawn into it, taking what was open in it.
 /**
  * @param {DoorProps & { lent: DoorLent[] }} door
  * @param {Person} person
@@ -137,7 +135,7 @@ const cell = ({ rows, lent, lends, newest, about }, [person, name, devices]) => 
   const [drawn, words] = judged(person, devices, lends);
   const lending = theirs(rows, lent, person, newest);
   return html`
-    <li class=${drawn || undefined}>
+    <li key=${person.person_key} class=${drawn || undefined}>
       ${about ? about(person, name, drawn, words) : html`<strong>${name}</strong>`}
       ${lending}${' '}<small>${words}</small>
     </li>

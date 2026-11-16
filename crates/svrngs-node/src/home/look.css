@@ -159,9 +159,7 @@ tbody#lent button { width: 100%; text-align: left; }
    under both (the Draft 2 canvas's frames 8-10). Sized by the screen, so a
    TV, a laptop and a projector each fill theirs. */
 body.screen { max-width: none; height: 100vh; margin: 0; padding: 0; overflow: hidden; font-size: 1.4vw; }
-body.screen #intro, body.screen #terminal, body.screen #again { display: none; }
-/* In no group there is nobody to remove, so nothing to do in a terminal (home.js, `none`). */
-body:has(#home > p.none) #terminal { display: none; }
+body.screen #intro, body.screen #again { display: none; }
 body.screen main, body.screen section { height: 100%; }
 body.screen section { display: grid; grid-template: "name count" auto "door since" minmax(0, 1fr) "foot foot" auto / 2fr 1fr; padding: 0; border: 0; }
 body.screen section > h2 { grid-area: name; margin: 0; padding: 1.4vw 2vw 1vw; border: 0; border-bottom: var(--rule); font-size: 5.5vw; line-height: 0.85; letter-spacing: -0.055em; }
@@ -243,8 +241,8 @@ section > .group-place:first-of-type { margin-top: 0; border-top: 0; }
 /* "Add an app" opens straight to the shelf: its own heading, in other words, is the fold's. */
 .group-place > section > h3:first-child { display: none; }
 .grouped-notice { border-left: 0.3rem solid var(--link); padding-left: 0.75rem; }
-body.layout-b #terminal, body.layout-b #again { display: none; }
-body.layout-b:has(.grouped-nav[data-view="computer"]) #terminal, body.layout-b:has(.grouped-nav[data-view="computer"]) #again { display: block; }
+body.layout-b #again { display: none; }
+body.layout-b:has(.grouped-nav[data-view="computer"]) #again { display: block; }
 body.layout-b:has(.grouped-nav:not([data-view="groups"])) #intro { display: none; }
 /* With `#intro` hidden, a group's page and This computer would have no
    first heading for a screen reader to land on, so each one's own is an h1

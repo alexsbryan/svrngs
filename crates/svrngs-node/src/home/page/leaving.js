@@ -22,12 +22,12 @@ import { ENDED, sent } from './routes.js?v=__VERSION__';
  *   | 'not_decider_unread' | 'not_in' | 'fault'} Outcome
  */
 
-/** @typedef {'hand' | 'take' | 'leave'} On which button was pressed: Hand it on, Accept it or Take it back, or Leave */
+/** @typedef {'hand' | 'take' | 'leave' | 'remove'} On which button was pressed: Hand it on, Accept it or Take it back, Leave, or a person's Remove (people.js) */
 
 /**
  * What a press posts: the group, and for a hand-on, the people row of whom
  * it goes to.
- * @typedef {{ group: string, person?: string }} Body
+ * @typedef {{ group: string, person?: string, joined?: import('../question.js?v=__VERSION__').Joined }} Body
  */
 
 /**
@@ -42,6 +42,7 @@ import { ENDED, sent } from './routes.js?v=__VERSION__';
  * @property {string} name
  * @property {On} [on]
  * @property {string} [person]
+ * @property {string} [who] who decides removals, as an answer names them
  */
 
 /**
@@ -49,7 +50,7 @@ import { ENDED, sent } from './routes.js?v=__VERSION__';
  * pressed; the node's answer, or a refusal, with why; and HOME told.
  * @typedef {{ type: 'to', i: string }
  *   | { type: 'ask', on: On, path: string, body: Body }
- *   | { type: 'answered', o: Outcome, why: string }
+ *   | { type: 'answered', o: Outcome, who?: string, why: string }
  *   | { type: 'refused', why: string }
  *   | { type: 'sent', why: string }} Message
  */
@@ -67,8 +68,18 @@ import { ENDED, sent } from './routes.js?v=__VERSION__';
 const SAYS = {
   handed: (state) =>
     `${state.person} keeps the order of removals in ${state.name} now, so you can leave it.`,
+  // Asked of a leave, it is this computer's person who decides; asked of a
+  // removal, the person named.
   decides: (state) =>
-    `You keep the order of removals in ${state.name}: choose who keeps it after you, then leave.`,
+    state.on === 'remove'
+      ? `${state.person} decides who is removed from ${state.name}, so cannot be removed until they hand that on, under Manage this group on their own page.`
+      : `You keep the order of removals in ${state.name}: choose who keeps it after you, then leave.`,
+  // Who decides is named when the node says who (removal.rs `Outcome::Asked`).
+  asked: ({ name, person, who = `whoever decides who is removed from ${name}` }) =>
+    `You asked ${who} to remove ${person} from ${name}. ${person} stays in it until ${who} does.`,
+  not_in_group: (state) => `Nobody called ${state.person} is in ${state.name}.`,
+  which: (state) =>
+    `This computer cannot tell which person called ${state.person} in ${state.name} you mean, so nothing changed.`,
   not_in: (state) => `You are no longer in ${state.name}.`,
   not_offered: (state) =>
     `Nothing waits for you to accept in ${state.name}: it was accepted or taken back first. The page now shows who keeps it.`,
@@ -79,6 +90,10 @@ const SAYS = {
 const TELLS = {
   left: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
   left_vacant: (state) => ({ type: 'left', flow: 'leave', name: state.name }),
+  // A removal or an ask to remove: the groups read again draw the door
+  // without them, and the line of it under the door.
+  out: () => ({ type: 'again' }),
+  asked: () => ({ type: 'again' }),
   handed: () => ({ type: 'again' }),
   offered: () => ({ type: 'again' }),
   taken: () => ({ type: 'again' }),
@@ -90,6 +105,7 @@ const AFTER = {
   handed: 'handed',
   decides: 'decides',
   left: 'idle',
+  out: 'idle',
 };
 
 /**
@@ -127,7 +143,8 @@ export const LEAVE = (home) => ({
         if (message.o.startsWith('left') || (tell && !SAYS[message.o]))
           return go(state, { leave }, {}, ...told);
         const words =
-          SAYS[message.o]?.(state) ?? `${state.name} cannot be changed on this computer now.`;
+          SAYS[message.o]?.({ ...state, who: message.who }) ??
+          `${state.name} cannot be changed on this computer now.`;
         // An answer that reads the groups again is said beside Leave, since
         // the button pressed may go with them.
         const on = tell ? 'leave' : state.on;
@@ -152,7 +169,8 @@ export const LEAVE = (home) => ({
       const { response, answer } = await sent(path, body);
       /** @type {Outcome | undefined} */
       const outcome = answer.outcome;
-      if (outcome) return { type: 'answered', o: outcome, why: outcome };
+      if (outcome)
+        return { type: 'answered', o: outcome, who: answer.decides ?? undefined, why: outcome };
       if (response.status === 401) throw new Error(ENDED);
       throw new Error(answer.error || `answered ${response.status}`);
     },

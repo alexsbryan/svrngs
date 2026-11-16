@@ -186,22 +186,18 @@ test('the door tells two people of one name apart by when each joined, to the se
 // caption (`#at-…`, the id of the link, the yes's button or the Play), never
 // a second way in: no link of the popover opens anything. Someone whose
 // computer did not answer: that what they lend is not listed. You: that it
-// is you, and nothing more. Whoever keeps the removals is given the line
-// that removes each other person, whole, quoted as a shell takes a name with
-// an apostrophe, and of two people of one name saying which by `--joined`;
-// nobody else is given it, and nobody for themselves. Planted, each watched
-// failing: people.js `Person`'s link going to `/to` (a second way in); its
-// line shown whoever keeps the removals; `quoted` leaving an apostrophe
-// as it is.
-test('a person in the door is pressed for what the page holds of them, and the keeper for the line that removes them', async () => {
-  const people = [
-    row('ada', ADA, 'started'),
-    row('bo', BO),
-    row('cy', CY),
-    row("d'arcy", DEE),
-    row('eve', EVE, { at: 1_791_000_001 }),
-    row('eve', CY2, { at: 1_791_000_002 }),
-  ];
+// is you, and nothing more. Planted, watched failing: people.js `Person`'s
+// link going to `/to` (a second way in).
+const PEOPLE = [
+  row('ada', ADA, 'started'),
+  row('bo', BO),
+  row('cy', CY),
+  row('eve', EVE, { at: 1_791_000_001 }),
+  row('eve', CY2, { at: 1_791_000_002 }),
+];
+// House with those people, ada keeping its removals or not, bo lending
+// three things, cy's computer silent, and what a removal is answered.
+const door = async (keeps, removal) => {
   const theirs = { key: BO, person: 'bo' };
   const lent = [
     lend('shelf', theirs),
@@ -209,22 +205,22 @@ test('a person in the door is pressed for what the page holds of them, and the k
     lend('game', { ...theirs, raw: 'udp' }),
     lend('mine'),
   ];
-  const drawn = async (keeps) => {
-    const answers = ada({ people, groups: [group({ name: 'House', keeps })] });
-    answers['GET /v1/lends?namespace=house'] = lends({
-      lent,
-      unanswered: [{ person: 'cy', person_key: CY }],
-    });
-    return home(answers);
-  };
-  const page = await drawn(true);
+  const answers = ada({ people: PEOPLE, groups: [group({ name: 'House', keeps })] });
+  const silent = [{ person: 'cy', person_key: CY }];
+  answers['GET /v1/lends?namespace=house'] = lends({ lent, unanswered: silent });
+  answers['POST /v1/removals'] = removal;
+  return Object.assign(await home(answers), { answers });
+};
+const said = (pop) => pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
+
+test('a person in the door is pressed for what the page holds of them', async () => {
+  const page = await door(true);
   const buttons = page.all('#home .door > li > button');
   const pops = page.all('#home .door > li > div');
-  assert.deepEqual(buttons.map((button) => button.attributes['aria-label']).slice(0, 4), [
+  assert.deepEqual(buttons.map((button) => button.attributes['aria-label']).slice(0, 3), [
     'ada, on now',
     'bo, on now',
     'cy, did not answer',
-    "d'arcy, on now",
   ]);
   assert.deepEqual(
     buttons.map((button) => button.attributes.popovertarget),
@@ -241,16 +237,12 @@ test('a person in the door is pressed for what the page holds of them, and the k
       ['Close', pop.id, 'hide'],
     );
   }
-  const said = (pop) => pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
-  const [you, bo, cy, darcy, eve] = pops;
+  const [you, bo, cy] = pops;
   assert.deepEqual(said(you), ['This is you.', 'Close']);
-  assert.deepEqual(said(bo), [
+  assert.deepEqual(said(bo).slice(0, 3), [
     'bo, on now, joined 3 Oct.',
     'Shared here:',
     'shelfpagegame',
-    'To remove bo from House, paste this line in a terminal on this computer. What they already have stays with them; nothing new reaches them.',
-    "svrngs remove 'bo' --group 'House' Copy the line",
-    'Close',
   ]);
   // Each thing shared is a jump to its own way in, in the index, under its
   // caption; the popover holds no way in of its own.
@@ -280,16 +272,114 @@ test('a person in the door is pressed for what the page holds of them, and the k
     'cy, did not answer, joined 3 Oct.',
     'cy’s computer did not answer, so what they lend is not listed.',
   ]);
-  assert.equal(said(darcy).at(-2), "svrngs remove 'd'\\''arcy' --group 'House' Copy the line");
-  assert.deepEqual(said(darcy).slice(1, 3), ['Nothing shared here.', '']);
-  assert.match(
-    said(eve).at(-2),
-    /^svrngs remove 'eve' --group 'House' --joined '\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [+-]\d{4}' Copy the line$/,
+});
+
+// Removing someone is two presses in their popover, never one: a fold,
+// closed, whose summary names the person and the group, and in it what it
+// does and the button. The press asks the node what `svrngs remove` asks
+// (removal.rs `RemovalAsk`): the group, the person, and when they joined,
+// so of two people of one name the one pressed, never a guess. Whoever
+// keeps the removals removes; anyone else asks the keeper, and the words
+// say which. Nothing of it is drawn for yourself. Each answer the route
+// can give is said in the popover, in a line a screen reader is told of,
+// and a removal or an ask reads the groups again. Planted, each watched
+// failing: the body sent without `joined`; the fold drawn open; the fold
+// drawn for yourself; leaving.js saying nothing of `not_in_group`; and
+// ui/door.js giving a person's cell no key, so that the person after the
+// one removed took it, its fold open.
+test('removing a person is two presses in their popover, and every answer is said', async () => {
+  const asked = [];
+  const answer =
+    (outcome, status = 200) =>
+    (body) => {
+      asked.push(body);
+      return { status, body: { outcome } };
+    };
+  const fold = (pop) => pop.childNodes.find((kid) => kid.localName === 'details');
+  const pressed = async (keeps, name, removal) => {
+    const page = await door(keeps, removal);
+    const pop = page.all('#home .door > li > div').find((at) => words(at).startsWith(name));
+    assert.equal(fold(pop).attributes.open, undefined, 'the button waits in a closed fold');
+    const reads = () => page.lines().filter((line) => line.startsWith('HOME: again')).length;
+    const before = reads();
+    await page.press(`#${pop.id} details button`);
+    const status = pop.childNodes.find((kid) => kid.attributes?.role === 'status');
+    return [said(fold(pop)), words(status), reads() - before, page.text('#home section > p')];
+  };
+  const [keeper, out, again, byDoor] = await pressed(true, 'bo', answer('out'));
+  // Said by the door too, since the popover goes with the cell.
+  const is =
+    'bo is no longer in House. What they already have stays with them; nothing new reaches them.';
+  assert.ok(byDoor.includes(is), byDoor.join('\n'));
+  assert.deepEqual(keeper, [
+    'Remove bo from House',
+    'This puts bo out of House on every computer and phone of theirs. What they already have stays with them; nothing new reaches them. This page cannot undo it.',
+    'Remove bo',
+  ]);
+  assert.deepEqual([out, again], ['', 1], 'removed: the groups are read again, which draw it');
+  assert.deepEqual(asked.pop(), { group: 'house', person: 'bo', joined: { at: 1_791_000_000 } });
+  // Of two people of one name, the one pressed, by when they joined.
+  await pressed(true, 'eve (joined', answer('out'));
+  assert.deepEqual(asked.pop(), { group: 'house', person: 'eve', joined: { at: 1_791_000_001 } });
+  // Who decides is named when the node names them.
+  const named = (body) => (asked.push(body), { outcome: 'asked', decides: 'cy' });
+  assert.equal(
+    (await pressed(false, 'bo', named))[1],
+    'You asked cy to remove bo from House. bo stays in it until cy does.',
   );
-  const other = await drawn(false);
-  const lines = other.text('#home .door code');
-  assert.deepEqual(lines, [], 'no line for whoever does not keep the removals');
-  assert.equal(page.text('#home .door code').length, 5, 'a line for each but yourself');
+  const [other, asking, reread] = await pressed(false, 'bo', answer('asked'));
+  assert.deepEqual(other, [
+    'Ask to remove bo from House',
+    'This asks whoever decides who is removed from House. bo stays in it until they do.',
+    'Ask to remove bo',
+  ]);
+  assert.deepEqual(
+    [asking, reread],
+    [
+      'You asked whoever decides who is removed from House to remove bo from House. bo stays in it until whoever decides who is removed from House does.',
+      1,
+    ],
+  );
+  const SAID = {
+    decides:
+      'bo decides who is removed from House, so cannot be removed until they hand that on, under Manage this group on their own page.',
+    uncounted: 'House’s record would not count that from this computer, so nothing changed.',
+    not_in_group: 'Nobody called bo is in House.',
+    which:
+      'This computer cannot tell which person called bo in House you mean, so nothing changed.',
+    not_in: 'You are no longer in House.',
+    older: 'House cannot be changed on this computer now.',
+    fault: 'House cannot be changed on this computer now.',
+  };
+  for (const [outcome, words] of Object.entries(SAID))
+    assert.deepEqual(
+      (await pressed(false, 'bo', answer(outcome, 409))).slice(1, 3),
+      [words, 0],
+      outcome,
+    );
+  const failed = await pressed(true, 'bo', { status: 503, body: { error: 'off' } });
+  assert.equal(failed[1], 'House cannot be changed on this computer now: off');
+  // Removed, bo's cell is the next person's, and nothing of bo's popover is
+  // theirs: no fold left open for a press meant for bo to land on.
+  const gone = await door(true, (body) => {
+    gone.answers['GET /v1/rail/people?namespace=house'] = {
+      people: PEOPLE.filter((person) => person.person !== body.person),
+    };
+    return { outcome: 'out' };
+  });
+  const mine = gone.all('#home .door > li > div').find((at) => words(at).startsWith('bo'));
+  fold(mine).attributes.open = '';
+  await gone.press(`#${mine.id} details button`);
+  await gone.shown();
+  assert.deepEqual(
+    gone.all('#home .door > li > button').map((button) => button.attributes['aria-label'])[1],
+    'cy, did not answer',
+  );
+  assert.equal(gone.all('#home .door details').filter((at) => at.attributes.open === '').length, 0);
+  // Yourself: no fold, so no button.
+  const page = await door(true);
+  const [you] = page.all('#home .door > li > div');
+  assert.equal(fold(you), undefined);
 });
 
 // browser::the_home_page_shows_every_removal_and_ask: each removal and
@@ -401,7 +491,6 @@ test('the page says what it is for, and in no group offers joining, then making,
     served('intro')[0],
     'This page is yours, and only this computer opens it: nobody in your groups sees it.',
   );
-  assert.ok(INDEX.indexOf('id="terminal"') < INDEX.indexOf('id="again"'));
   assert.deepEqual(served('again'), [
     'To open it again, open svrngs from your Applications, or on Linux your applications menu. A bookmark of it opens it in this browser too.',
   ]);
@@ -420,12 +509,13 @@ test('the page says what it is for, and in no group offers joining, then making,
     assert.ok(!drawn.includes(gone), `${gone}: ${drawn}`);
 });
 
-// browser::the_home_page_names_what_the_terminal_does: the one line the
-// page cannot do, and no line for what it can.
-test('what is done in a terminal is named with its one line, and nothing the page does', () => {
-  const said = served('terminal').join('\n');
-  assert.ok(said.includes('svrngs remove <their name> --group <the group’s name>'), said);
-  for (const done of ['leave', 'svrngs new', 'svrngs share']) assert.ok(!said.includes(done), said);
+// browser::the_home_page_names_what_the_terminal_does, now that nothing
+// is: removing someone, the one thing the page sent a person to a terminal
+// for, is a press in that person's popover, so the page as served has no
+// section of lines to type.
+test('nothing the page does is left to a terminal', () => {
+  assert.ok(!INDEX.includes('id="terminal"'));
+  assert.ok(!/svrngs (remove|leave|new|share)/.test(INDEX), 'no line to type');
 });
 
 // browser::the_home_page_s_links_say_what_they_open and

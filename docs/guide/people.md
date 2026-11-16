@@ -86,31 +86,32 @@ in: stop a visit, then send a new link.
 ![One person decides who is removed: Bo's ask goes to Sam, Sam removes Dee, and Dee is out on every device while what Dee already has stays.](../diagrams/guide/people-remove.svg)
 
 One person decides who is removed from a group: whoever made it, until they
-hand that on. Sam made House, so Sam runs:
+hand that on. Sam made House, so Sam removes Dee on the home page. Under
+**People**, each person's box can be pressed: it says how they stand
+(*"Dee, on now, joined 3 Oct."*) and what they share in this group, each a
+link to where it opens on the page. Sam presses Dee's box, then **Remove
+Dee from House**, which says what it does, then **Remove Dee**: two
+presses, since the page cannot undo it. Pressing your own box says *"This
+is you."*
+
+Or in a terminal:
 
 ```
 ~/.local/bin/svrngs remove Dee --group House
 ```
 
-Sam doesn't have to type it. On the home page, under **People**, each
-person's box can be pressed: it says how they stand (*"Dee, on now, joined
-3 Oct."*), what they share in this group, each a link to where it opens
-on the page, and, for whoever decides who is removed, this line filled in
-for that person, with **Copy the line**. Pressing your own box says *"This
-is you."* The page removes nobody: the line is pasted in a terminal.
-
 *Dee is no longer in House. What Dee already has stays with them; nothing
 new reaches them.* Every computer and phone of Dee's is out. If Dee had
 **Play** on for a game someone lends, it stops within seconds.
 
-If Bo runs the same command, Bo can't remove Dee directly, so it asks Sam:
+If Bo does the same, on the page (**Ask to remove Dee**) or with the
+command, Bo can't remove Dee directly, so it asks Sam:
 
 *You asked Sam to remove Dee from House. Dee stays in it until Sam does.*
 
 Everyone's home page lists it in the group's section, for example *Bo
 asked to remove Dee on 12 Oct 2026, 14:03*, and later *Sam removed Dee on
-…*. There is no remove button on the home page; it's the command, run
-while svrngs is running.
+…*.
 
 Dee's home page then says *You are no longer in House. What you already
 have stays on this computer; nothing new reaches it.*

@@ -216,6 +216,9 @@ export async function open(address, answers) {
     createElementNS: (_space, name) => new Element(name, document),
     createTextNode: (data) => new Words(data),
     getElementById: (id) => select(document.body, `#${id}`)[0] ?? null,
+    // Where the focus is is a browser's to say (people.js `Person` asks it
+    // as a person's cell goes; web/tests/grouped.mjs walks it): here, nowhere.
+    querySelector: () => null,
     addEventListener: (type, listener) => (document.listeners[type] = listener),
   };
   document.body = new Element('body', document);

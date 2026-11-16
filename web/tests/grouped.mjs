@@ -114,6 +114,7 @@ try {
             '/visits',
             '/v1/leaves',
             '/v1/handovers',
+            '/v1/removals',
           ].includes(path)
         ) {
           const body = JSON.parse(init.body);
@@ -133,6 +134,7 @@ try {
           if (path === '/publication/close')
             return json({ id: 'pub', state: 'closed', address: null, until: 1893404800 });
           if (path === '/lent') return json({});
+          if (path === '/v1/removals') return json({ outcome: 'uncounted' });
           return json({});
         }
         if (path === '/v1/groups') {
@@ -182,7 +184,6 @@ try {
     assert.equal(await button.count(), foot ? 1 : 0, `${name}: the connection button`);
     assert.equal(await page.locator('#home p.address').count(), foot ? 1 : 0, `${name}: address`);
     assert.equal(await page.locator('#again').isVisible(), foot, `${name}: how it opens again`);
-    assert.equal(await page.locator('#terminal').isVisible(), foot, `${name}: the terminal`);
   };
   const TWO = ['All your groups', 'This computer'];
   const inventory = async (selector) => {
@@ -245,7 +246,6 @@ try {
   for (const name of ['acts', 'open', 'join', 'make', 'running', 'lent'])
     baselineHome[name] = await inventory(`#${name}`);
   assert.equal(await nav.count(), 0);
-  assert.equal(await page.locator('#terminal').isVisible(), true);
   assert.equal(await page.locator('#again').isVisible(), true);
   assert.equal(await page.locator('#intro').isVisible(), true);
 
@@ -373,6 +373,23 @@ try {
   );
   await page.keyboard.press('Escape');
   await pop.waitFor({ state: 'detached' });
+  // Removing them is two presses by the keyboard, against this file's
+  // stubbed node alone: Enter on the fold's summary, then on the button it
+  // held, which was not there to press before. What was asked names the
+  // person by when they joined, and its answer is said in the popover.
+  await door.nth(1).press('Enter');
+  const remove = pop.getByRole('button', { name: 'Remove Sam', exact: true });
+  assert.equal(await remove.isVisible(), false, 'the button waits in its fold');
+  await pop.locator('summary').press('Enter');
+  await remove.press('Enter');
+  await pop.getByRole('status').getByText('would not count that').waitFor();
+  const removal = await page.evaluate(() => JSON.parse(sessionStorage.getItem('grouped-writes')));
+  assert.deepEqual(removal.at(-1), {
+    path: '/v1/removals',
+    body: { group: ids[2], person: 'Sam', joined: { at: 1793404801 } },
+  });
+  assert.equal(await pop.evaluate((el) => el.contains(document.activeElement)), true);
+  await page.keyboard.press('Escape');
 
   // Normal links, Back, and rereads retain the selected group.
   await page.getByRole('link', { name: 'All your groups', exact: true }).click();
@@ -459,7 +476,6 @@ try {
 
   await page.goto(`${origin}/#group-${ids[2]}`);
   await page.getByRole('heading', { name: 'Welcome to Welcome room', exact: true }).waitFor();
-  assert.equal(await page.locator('#terminal').isVisible(), false);
   assert.deepEqual(
     await page.locator('#home a').evaluateAll((all) => all.map((a) => a.getAttribute('href'))),
     [`/?group=${ids[2]}`, '/'],

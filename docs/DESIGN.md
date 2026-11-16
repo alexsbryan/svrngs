@@ -799,12 +799,18 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   one person and no more — how they stand and when they joined; what they
   share here, each a jump to that thing's own way in under its caption,
   never a second way in, so what opening it agrees to stays beside it; or
-  that what they lend is not listed; of yourself, that it is you. Whoever
-  keeps the group's order of removals is given, there, the whole line that
-  removes that person, to paste in a terminal, quoted for any name and
-  saying which of two namesakes by `--joined`; from anyone else the same
-  line only asks the keeper, so it is not offered them, and the page
-  removes nobody (`home/page/people.js` `Person`; `ui/door.js` draws the
+  that what they lend is not listed; of yourself, that it is you. Removing
+  them is there too, two presses since no press undoes it: a fold, closed,
+  that says what it does, and in it the button, which asks the node what
+  `svrngs remove` asks (`POST /v1/removals`), naming the person and when
+  they joined, so never one of two namesakes by guess. From whoever keeps
+  the group's order of removals it removes; from anyone else it asks the
+  keeper, and the words say which. Every answer the route gives is said in
+  the popover, in a line a screen reader is told of; removed, it is said by the
+  door in the command's words ("Sam is no longer in House. …"), the person's
+  cell goes with the groups' next read, the line of it is under the door,
+  and nothing on the page is left to a terminal (`home/page/people.js`
+  `Person`, `leaving.js`; `ui/door.js` draws the
   name alone unless a page gives it `about`, so the phone's page and the
   screen are as they were). The group on a screen is under
   **Manage this group**.
@@ -870,8 +876,8 @@ app** holds the existing shelf; **Manage this group** holds the
 presentation screen, handover and leave (`home/page/grouped.js`
 `GroupPlaces`).
 **This computer** holds what acts as you, running-program discovery, and
-lending/sign-in/limit controls; terminal-only removal instructions are shown
-there, with **Check the connection now**, whose answer lands on that page, and
+lending/sign-in/limit controls,
+with **Check the connection now**, whose answer lands on that page, and
 the page's address. Joining, making a group, opening a link and groups left
 each have a destination from the overview. How this computer reaches a
 group the public way is said after the group's controls, under
