@@ -743,12 +743,20 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # popover's Close). The rest is the feature: about 3 more lines were found
 # (people.js and removals.js into door.js), not 29. js 8,537 -> 8,566.
 # It landed one under (b89c49e8), so the cap is where it landed. js 8,566 -> 8,565.
+# (2026-11-16) No raise, by the operator ("Hold; economize first"): an
+# economizing pass (493e12d0..1410e3e4, -57: ten single-use home files folded
+# into their one user, the phone page's single-caller helpers inlined,
+# `base64url` held once) made room for removing a person by two presses in
+# their popover where a line was pasted in a terminal (95acdd8c, +29), each
+# caption saying where its things run (e9931c6e, +7), "Add an app" saying
+# how (22855229, 0) and a Stop named for its app (e315d5d8, +1). The cap
+# comes down to where they land. js 8,565 -> 8,545.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
     ".": 21360,
 
-    "js": 8566,
+    "js": 8546,
 
     "swift": 1,
 }
