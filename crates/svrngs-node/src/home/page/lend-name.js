@@ -6,42 +6,49 @@
 // opens friends' lends as you is a button, "Open" and its name: pressing it
 // is the yes. A port does not open in a tab: it is named, then said to be
 // this computer's own, or given the Play that opens another's here
-// (play-cell.js). Last in a cell that opens in a tab, "Address": what is for
-// other devices and programs, in a popover (lend-address.js).
+// (play.js `Turn`). Last in a cell that opens in a tab, "Address": what is for
+// other devices and programs, in a popover (wifi.js `Address`).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { agreed, label, may, named, opens } from '../question.js?v=__VERSION__';
-import { Address } from './lend-address.js?v=__VERSION__';
-import { PlayCell } from './play-cell.js?v=__VERSION__';
+import { Turn } from './play.js?v=__VERSION__';
+import { Address } from './wifi.js?v=__VERSION__';
 import { Opening, Reach } from './reach.js?v=__VERSION__';
 /** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 
 /**
- * The lend, the group's shelf, and what its cell is drawn with.
- * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { l: Lent, shelf: Lends['shelf'] }} LendNameProps
+ * The lend, the group's shelf, the id of its grid's caption, none for this
+ * computer's own port, and what its cell is drawn with.
+ * @typedef {Pick<PlaceProps, 'g' | 's'> & { l: Lent, shelf: Lends['shelf'], by?: string }} LendNameProps
  */
 
 /** @param {LendNameProps} props */
-export function LendName({ l: lend, shelf, g: group, s: state, me }) {
+export function LendName({ l: lend, shelf, by, g: group, s: state }) {
+  const round = state.asked?.lends ?? 1;
   if (lend.raw) {
-    const how =
-      lend.key === me ? 'A port this computer lends.' : html`<${PlayCell} l=${lend} s=${state} />`;
+    const how = by
+      ? html`<${Turn} l=${lend} round=${round} by=${by} />`
+      : 'A port this computer lends.';
     return html`${named(lend)} ${how}`;
   }
   // A lend reading friends' lends opens by the form posting its yes; any
   // other through `/to` (home.rs), which gives its origin a code of its
-  // own that becomes its session there.
+  // own that becomes its session there. Each way in is described by its
+  // grid's caption and by what its own cell says (`aria-describedby`), so
+  // someone who reaches it from a list of links, never having seen what is
+  // above it, still hears what opening it lets it do.
+  const id = `${group.id}-${label(lend)}`;
+  const said = `${by} said-${id}`;
   const to = `/to?${new URLSearchParams({ lend: label(lend) })}`;
   const words = `Open ${named(lend)}`;
   const plain =
     lend.reads && lend.reads.length > 0
-      ? html`<${Reach} app=${label(lend)} words=${words} />`
-      : html`<a href=${to} target="_blank">${named(lend)}</a>`;
+      ? html`<${Reach} app=${label(lend)} words=${words} by=${said} />`
+      : html`<a href=${to} target="_blank" aria-describedby=${said}>${named(lend)}</a>`;
   const opener = lend.reading
-    ? html`<${Opening} app=${label(lend)} words=${words} reading=${lend.reading} kinds=${lend.reads ?? []} />`
+    ? html`<${Opening} app=${label(lend)} words=${words} reading=${lend.reading} kinds=${lend.reads ?? []} by=${said} />`
     : plain;
   // What opening it lets it do is the grid's caption, never said again
   // here; that it is on is the usual, so only that it is full is said.
-  const full = opens(lend) === 'full' ? ' Full now. ' : ' ';
-  const id = `address-${group.id}-${label(lend)}`;
-  return html`${opener}${` ${agreed(lend, shelf, group, [may(lend, group)])}${full}`}<${Address} l=${lend} id=${id} round=${state.asked?.lends ?? 1} />`;
+  const full = opens(lend) === 'full' ? ' Full now.' : '';
+  return html`${opener}${' '}<span id=${`said-${id}`}>${agreed(lend, shelf, group, [may(lend, group)])}${full}</span>${' '}<${Address} l=${lend} id=${`address-${id}`} round=${round} />`;
 }

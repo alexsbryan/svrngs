@@ -6,13 +6,12 @@
 // where apps cannot read it until its lender does something (`undone`): who
 // can open it, one box a group of HOME's, each by its stable id, with a
 // button for each change (lend-change.js CHANGE), and the app form's fill
-// once signing people in is turned on (signing-on.js).
+// once signing people in is turned on (`SigningOn`).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
-import { SigningOn } from './signing-on.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 /** @import { AppsAccount } from './lent-read.js?v=__VERSION__' */
 /** @import { State, Message } from './lend-change.js?v=__VERSION__' */
@@ -30,6 +29,21 @@ import { SigningOn } from './signing-on.js?v=__VERSION__';
  * @property {Choice[]} groups
  * @property {HOME.PlaceProps['home']} home
  */
+
+/** @import { Signed } from './lend-change.js?v=__VERSION__' */
+
+// What a lend's app form is filled with, the one time its lender turns
+// signing people in with svrngs on: the issuer, the client and its secret,
+// and the deviations in their words. The secret is shown here once and
+// nowhere else, never in a request, a link or a trace line
+// (SIGN_IN_WITH_SVRNGS §5 "Turning it on"): a read again keeps its row, so
+// keeps it shown, and a load of the page, which reads none, shows it no
+// more.
+/** @param {{ c: Signed }} props */
+function SigningOn({ c: fill }) {
+  const after = `. ${fill.deviations} Copy the secret now: it is not shown again. `;
+  return html`<p>Sign-in credentials created; app setup still required. Follow the app’s OpenID Connect setup guide: install any required OpenID Connect plugin, then configure it with issuer <code>${fill.issuer}</code>, client id <code>${fill.client_id}</code>, client secret <code>${fill.client_secret}</code>. Reach the issuer from the app server on this computer, not the computer of the person opening the app; a container has its own loopback. Test sign-in through the group’s app list after setup. <a href="https://github.com/alexsbryan/svrngs/tree/main/apps">App setup guides</a>${after}</p>`;
+}
 
 // What the row says it is lent to: the names of the groups it holds, none
 // when paused, and needing selection when the answer gave none.
@@ -170,7 +184,7 @@ export function Lent({ l: lend, signs, account, groups, home }) {
   `;
   return html`
     <li>
-      <details open=${undone(account)}>
+      <details open=${undone(account)} aria-label=${lend.name}>
       <summary>${words}</summary>
       <${Field}
         words="How many people at once: "

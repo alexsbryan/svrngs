@@ -93,7 +93,7 @@ function Context({ s: state }) {
   if (!Object.hasOwn(VIEWS, view))
     return html`<p class="bad">This page is not available. Choose a destination above.</p>`;
   if (view === 'computer')
-    return html`<h2>This computer</h2><p>What you share, and what can act as you, across your groups.</p>`;
+    return html`<h1>This computer</h1><p>What you share, and what can act as you, across your groups.</p>`;
   if (view === 'left' && !groups.some((group) => group.left))
     return html`<p>You have no groups you left on this computer.</p>`;
   return null;
@@ -138,14 +138,14 @@ export function ArrivalLinks({ s: state, g: group }) {
 // the group now and then: who they have over, with who else is visiting,
 // and the invitation buttons, never folded with leaving. Last the folds.
 // An app's address and its WiFi line are in its own cell's popover
-// (lend-address.js), being about that app, not about managing the group.
+// (wifi.js `Address`), being about that app, not about managing the group.
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
 export function GroupPlaces({ draw }) {
   return html`
     <details class="group-place" open><summary>People</summary>${draw(['people', 'removals'])}</details>
-    <h3>Shared apps</h3>
+    <h2>Shared apps</h2>
     ${draw(['index'])}
-    <h3>Shared files</h3>
+    <h2>Shared files</h2>
     ${draw(['folder'])}
     ${draw(['visits', 'links'])}
     <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>

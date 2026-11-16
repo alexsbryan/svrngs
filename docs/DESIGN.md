@@ -790,9 +790,30 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   (`popover`, `popovertarget`; no script of ours opens or closes it): there
   it can be opened to this WiFi, or closed (the operator, 2026-10-26), under
   the sentence saying what that does, and its address copied for a program
-  (`home/page/lend-address.js`). Only detail about one thing goes in a
+  (`home/page/wifi.js` `Address`). Only detail about one thing goes in a
   popover; a consent sentence, or a state that needs the person, never does.
-  The group on a screen is under **Manage this group**. In the index and the page's top they were words
+  The button is always there to be seen: nothing a person can press waits
+  for a hover or a focus to be painted. The group on a screen is under
+  **Manage this group**.
+
+  The index is built for someone who cannot see where a thing sits, too.
+  Each grid is a list named by its caption, and each way in, a link, a
+  yes's button or a Play, is described by that caption and by what its own
+  cell says (`aria-describedby`): reached from a screen reader's list of
+  links, "Kim’s navidrome" still says what opening it lets it do, which is
+  the consent wording said without sight. Each button is named with what it
+  acts on ("Address of Kim’s navidrome", "Play Sam’s minecraft"), and each
+  lend's form under **What you lend** is a group named by its lend, so no
+  list of buttons reads one word forty times. A popover is named, takes the
+  focus as it opens, and the browser gives the focus back to its button as
+  it closes. Cells are read and tabbed in the order they are drawn. A
+  group's page and This computer each have one first heading, an h1, where
+  the page's own is hidden, and their headings step from it. "did not
+  answer" is in the page's ink, with a dashed border, the system's gray on
+  white being 3.9 to 1; text follows the size the person set in their
+  browser; and a button is 24px tall at least (`look.css`; the laws are
+  `web/tests/pages/home.test.mjs`'s 'each way in is described by its
+  caption, …' and the keyboard walk in `web/tests/grouped.mjs`). In the index and the page's top they were words
   read before Money (the fifth xenia set, Kim's Home 90 of her 30). The computers that did not say what they lend are one line
   under the grids, a sentence for each why, each naming whose, every one
   ("Ana’s and Eve’s computers did not answer, so what they lend is not

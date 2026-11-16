@@ -97,7 +97,7 @@ const ada = ({
 
 const home = (answers, path = '/?ui=a') => open(`${AT}${path}`, answers);
 
-// The index's cells, each by its words less its popover's (lend-address.js):
+// The index's cells, each by its words less its popover's (wifi.js `Address`):
 // what a person reads in the cell before pressing Address.
 const cells = (page) =>
   page.all('#home .index > ul > li').map((li) => {
@@ -344,8 +344,9 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
 // only what differs, so the cell that differs is the one with a sentence.
 // Nothing a row said is lost: each sentence is a caption or in its cell.
 // One person's things sit together, the group's own first, then what opens
-// in a tab, then ports, this computer's own port last, with no caption: it
-// has no Play. A lend that opens friends' lends as you keeps "Open" on its
+// in a tab, the one that asks a yes last among them, as its cell takes a
+// row of its own; then ports, this computer's own port last, with no
+// caption: it has no Play. A lend that opens friends' lends as you keeps "Open" on its
 // button, where the press is the yes.
 test('each grid of the index is under the sentence its cells share, and a cell says only what differs', async () => {
   const bo = { key: BO, person: 'bo', raw: 'udp' };
@@ -369,9 +370,9 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   assert.equal(page.all('#home .index table').length, 0);
   assert.deepEqual(cells(page), [
     'Money This app’s shared entries. Address',
-    'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
     'ada’s shelf (k) Address',
     'bo’s notes (k) Address',
+    'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks. Address',
     'bo’s echo (k) Play',
     'bo’s game (k) Play',
     'ada’s mine (k) A port this computer lends.',
@@ -385,6 +386,79 @@ test('each grid of the index is under the sentence its cells share, and a cell s
   );
   const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
   assert.deepEqual(cells(full), ['ada’s shelf (k) Full now. Address']);
+});
+
+// The index for someone who cannot see where a thing sits. Each grid is a
+// list named by its caption. Each way in, a link, a yes's button or a Play,
+// is described by its grid's caption, and a way in that opens in a tab by
+// what its own cell says too, so reached from a list of links it still
+// says what opening it lets it do: the consent wording, said without
+// sight. And each button says what it acts on, so no two in the index have
+// one name. Planted, watched failing: lend-name.js's link with no
+// `aria-describedby`.
+test('each way in is described by its caption, and each button is named with what it acts on', async () => {
+  const bo = { key: BO, person: 'bo', raw: 'udp' };
+  const lent = [
+    lend('shelf'),
+    lend('notes', { using: 3 }),
+    lend('page', { reads: ['films'] }),
+    lend('Money-house', { kind: 'Money', group: 'house' }),
+    lend('game', bo),
+    lend('echo', bo),
+  ];
+  const page = await home(ada({ lent, people: [row('ada', ADA, 'started'), row('bo', BO)] }));
+  const byId = (id) => page.all('#home .index *').find((at) => at.id === id);
+  const grids = page.all('#home .index > ul');
+  const captions = page.all('#home .index > p');
+  assert.equal(grids.length, 3);
+  for (const [at, grid] of grids.entries()) {
+    assert.equal(grid.attributes.role, 'list');
+    assert.equal(grid.attributes['aria-labelledby'], captions[at].id);
+    assert.ok(captions[at].id, 'a caption has an id');
+  }
+  const described = (way) =>
+    way.attributes['aria-describedby'].split(' ').map((id) => words(byId(id)));
+  const ways = [
+    ...page.all('#home .index > ul > li > a'),
+    ...page.all('#home .index > ul > li > form button'),
+    ...page.all('#home .index > ul > li > span button'),
+  ];
+  assert.deepEqual(
+    ways.map((way) => [words(way), ...described(way)]),
+    [
+      ['Money', words(captions[0]), 'This app’s shared entries.'],
+      ['ada’s notes (k)', words(captions[1]), 'Full now.'],
+      ['ada’s shelf (k)', words(captions[1]), ''],
+      [
+        'Open ada’s page (k)',
+        words(captions[1]),
+        'It also opens your friends’ films as you, and they can see what it asks.',
+      ],
+      ['Play', words(captions[2])],
+      ['Play', words(captions[2])],
+    ],
+  );
+  const names = page
+    .all('#home .index > ul > li button')
+    .filter(
+      (button) =>
+        !['Open it to this WiFi', 'Copy its address for a program'].includes(words(button)),
+    )
+    .map((button) => button.attributes['aria-label'] ?? words(button));
+  assert.deepEqual(names, [
+    'Address of Money',
+    'Address of ada’s notes (k)',
+    'Address of ada’s shelf (k)',
+    'Open ada’s page (k)',
+    'Address of ada’s page (k)',
+    'Play bo’s echo',
+    'Play bo’s game',
+  ]);
+  const pops = page.all('#home .index > ul > li > div');
+  assert.deepEqual(
+    pops.map((pop) => [pop.attributes.role, pop.attributes['aria-label']]),
+    names.filter((name) => name.startsWith('Address')).map((name) => ['dialog', name]),
+  );
 });
 
 // What a group shares has no bound, so the words outside the index's cells
@@ -435,12 +509,14 @@ test('a group’s page is its banner, what needs you, its people, what they shar
   const changed = [{ group: 'house', app: 'Money', by: 'bo', by_key: BO, at: 1_791_000_900 }];
   answers['GET /v1/lends?namespace=house'] = lends({ lent: [lend('shelf')], changed });
   const page = await home(answers, '/?group=house');
-  const [banner] = page.all('#group-house > h2');
+  const [banner] = page.all('#group-house > h1');
   assert.equal(banner.nextSibling.attributes.class, 'grouped-notice');
   const heads = page
     .all('#group-house *')
     .filter((at) => at.parentNode.id === 'group-house')
-    .filter((at) => ['h3', 'details'].includes(at.localName) || at.className === 'publication')
+    .filter(
+      (at) => ['h2', 'h3', 'details'].includes(at.localName) || at.className === 'publication',
+    )
     .map((at) => (at.localName === 'details' ? words(at.firstChild) : words(at)));
   assert.deepEqual(heads, [
     'People',

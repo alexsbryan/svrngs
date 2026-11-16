@@ -5,10 +5,10 @@
 // the page's one read of /v1/play, asked as this file loads and again once
 // a round of the groups' reads. Each read is counted, so an older answer
 // is refused by name. It feeds two lists: the index's cell for each port
-// (play-cell.js), and each Play on with its Stop under "What acts as you"
+// (lend-name.js), and each Play on with its Stop under "What acts as you"
 // (`part`, for acting.js). What has Play on that cannot be read is said
 // once, in `part`, never read as none; Play then writes it over.
-import { html, useStore } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { go, machine } from '../ui/machine.js?v=__VERSION__';
 import { Act } from '../ui/parts.js?v=__VERSION__';
 import { keyOf, same, turns } from './lend-key.js?v=__VERSION__';
@@ -137,17 +137,24 @@ const on = (state, lend) =>
 export const PLAYS = 'Play opens it on this computer, for a program here to connect to.';
 
 /**
- * A port's Play or Stop: the port; and in "What acts as you", what is said
- * of it before its Stop.
- * @typedef {{ l: Port, words?: (l: Port) => string }} TurnProps
+ * A port's Play or Stop: the port; in "What acts as you", what is said of
+ * it before its Stop; in the index, the round of its group's reads, and
+ * the id of the caption that says what Play does.
+ * @typedef {{ l: Port, words?: (l: Port) => string, round?: number, by?: string }} TurnProps
  */
 
 // A port's Play or Stop, in either list, drawn from PLAY alone: what has
-// Play on said, with what its press copied, and why a turn was refused. It
-// stays beside PLAY, whose store it reads, as `plays` draws it, and
-// web/tests/pages/play.test.mjs imports PLAY and `plays` from this file.
+// Play on said, with what its press copied, and why a turn was refused. In
+// the index it asks PLAY again on each round of its group's reads, so PLAY
+// reads once a round however many cells ask. Its button is named with its
+// port, "Play Sam’s minecraft": a list of buttons each named "Play" says
+// nothing. It stays beside PLAY, whose store it reads, as `plays` draws it,
+// and web/tests/pages/play.test.mjs imports PLAY and `plays` from this file.
 /** @param {TurnProps} props */
-export function Turn({ l: lend, words }) {
+export function Turn({ l: lend, words, round, by }) {
+  useEffect(() => {
+    if (round !== undefined) play.dispatch({ type: 'read', round });
+  }, [round]);
   const state = useStore(play);
   const open = on(state, lend);
   const said = open && `${open.said}${state.copied[keyOf(lend)] ?? ''} `;
@@ -155,14 +162,17 @@ export function Turn({ l: lend, words }) {
   const Tag = words ? 'p' : 'span';
   const doing = { state: state.at.play === 'turning' ? 'busy' : 'idle' };
   const turn = { type: 'turn', l: { key: lend.key, name: lend.name }, off: Boolean(open) };
+  const act = open ? 'Stop' : 'Play';
+  const whose = `${lend.person ? `${lend.person}’s ` : ''}${lend.name}`;
   return html`
     <${Tag}>
       ${before}
       <${Act}
-        words=${open ? 'Stop' : 'Play'}
+        words=${act}
         doing=${doing}
         on=${turn}
         send=${play.dispatch}
+        aria=${{ 'aria-label': `${act} ${whose}`, 'aria-describedby': by }}
       />
       ${state.said[keyOf(lend)]}
     <//>

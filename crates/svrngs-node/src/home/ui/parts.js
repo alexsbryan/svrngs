@@ -31,12 +31,13 @@ const IDLE = { state: 'idle', said: '' };
  * @property {'submit' | 'button'} [type]
  * @property {'beside' | 'instead'} [answer]
  * @property {(message: Message) => void} send
+ * @property {Record<string, string | undefined>} [aria] its name and what describes it, where its words alone do not say what it acts on
  */
 /**
  * @template Message
  * @param {ActProps<Message>} props
  */
-export function Act({ words, doing = IDLE, on, type, answer = 'beside', send }) {
+export function Act({ words, doing = IDLE, on, type, answer = 'beside', send, aria }) {
   const busy = doing.state === 'busy';
   const said = busy ? '' : (doing.said ?? '');
   if (answer === 'instead' && said) return said;
@@ -44,7 +45,7 @@ export function Act({ words, doing = IDLE, on, type, answer = 'beside', send }) 
     if (!busy && on !== undefined) send(on);
   };
   return html`
-    <button type=${type} disabled=${busy} onClick=${on === undefined ? undefined : press}>
+    <button type=${type} disabled=${busy} onClick=${on === undefined ? undefined : press} ...${aria}>
       ${words}
     </button>
     ${said}

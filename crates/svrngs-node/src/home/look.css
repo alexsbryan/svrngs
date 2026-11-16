@@ -30,7 +30,7 @@
 /* What a page hides stays hidden, whatever display a rule here gives it. */
 [hidden] { display: none !important; }
 
-body { max-width: 64rem; margin: 0 auto; padding: 0 1rem 3rem; background: var(--paper); color: var(--ink); font: 16px/1.45 var(--face); }
+body { max-width: 64rem; margin: 0 auto; padding: 0 1rem 3rem; background: var(--paper); color: var(--ink); font: 1rem/1.45 var(--face); }
 
 /* The page's name, in a band of colour. */
 h1 { margin: 1.5rem 0; padding: 1.25rem 1.25rem 1rem; border: var(--rule); background: var(--band); color: var(--on-colour); font-size: clamp(2rem, 7vw, 5.5rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.045em; overflow-wrap: anywhere; }
@@ -52,7 +52,9 @@ input { min-width: 12ch; margin: 0 0.5rem 0.25rem 0.25rem; padding: 0.35rem 0.5r
 label { display: inline-block; font-weight: 600; }
 
 /* A list is rows between rules; two lists in a row share the rule between them. */
-ul { margin: 0.5rem 0; padding: 0; list-style: none; }
+/* No marker, as `list-style-type: ""`, not `none`: Safari tells VoiceOver
+   that a list styled `none` is no list, and these are lists. */
+ul { margin: 0.5rem 0; padding: 0; list-style-type: ""; }
 ul:not(:empty) { border-top: var(--hair); }
 ul + ul { margin-top: -0.5rem; border-top: 0; }
 li { padding: 0.5rem 0; border-bottom: var(--hair); }
@@ -86,7 +88,7 @@ section[data-colour="9"] { --group: lightsalmon; }
 section[data-colour="10"] { --group: palegreen; }
 section[data-colour="11"] { --group: lightskyblue; }
 section[data-colour] > h2 { padding: 0.25rem 0.5rem; border: var(--rule); background: var(--group); color: var(--on-colour); }
-h2 small { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
+:is(h1, h2) small { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
 
 /* The door: each person a cell, lit while their computer answers, drawn off
    when it did not, a phone's marked; the words say each, not the colour. */
@@ -106,25 +108,29 @@ ul.door li.phone { border-style: dotted; }
 body:not(.screen) #home ul.door { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: 0.35rem; }
 body:not(.screen) #home ul.door li { padding: 0.15rem 0.4rem; overflow-wrap: anywhere; }
 body:not(.screen) #home ul.door li small { display: inline; }
+/* "did not answer" in the page's own ink: the system's gray on the page is
+   under 4.5 to 1 (#808080 on white, 3.9), and the dashed border and the
+   words already say it. */
+body:not(.screen) #home ul.door li.off { color: inherit; }
 
 /* The home page's index: what a group shares, in the door's cells, each
    grid under the sentence true of everything in it. A grid fills the width
    it has, so the same page holds eight things and eighty; a long name
    breaks inside its cell, never widens the page. Two grids in a row keep
    the gap between cells. */
-div.index > ul { grid-auto-flow: dense; }
 div.index > ul + ul { margin-top: 0; }
 div.index > ul > li { overflow-wrap: anywhere; }
 div.index > ul > li > :is(span, form) button { margin: 0; }
 /* Forty things are a screen of cells, so a cell is as tight as the door's:
    a line of words and little around it, its Play no taller than the line. */
-div.index > ul { gap: 0.35rem; }
+div.index > ul { grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); gap: 0.35rem; }
 div.index > ul > li { padding: 0.2rem 0.4rem; }
 div.index > ul > li > span button { padding: 0 0.6rem; }
 div.index > p { margin: 0.6rem 0 0.4rem; }
 /* The cell that asks a yes says more than a name, and may list what it
    opens, each with a tick: it takes a row of its own, its button beside its
-   words, and the cells after it fill the row it left. */
+   words. It is drawn last in its grid (index.js `place`), so no row before
+   it is left part empty, and cells are read and tabbed in the order drawn. */
 div.index > ul > li:has(form) { grid-column: 1 / -1; }
 div.index > ul > li > form { display: inline; }
 
@@ -186,11 +192,15 @@ body.screen footer p { max-width: none; margin: 0; }
    address's face, broken anywhere, as a label is 62 letters long. */
 small.keep { display: block; font-family: var(--mono); overflow-wrap: anywhere; }
 
-/* "Address" in a cell of the index (lend-address.js): a small button, plain
-   beside the name it belongs to, and the browser's own popover it opens,
-   which the browser puts over the page and closes on Escape or a press
-   outside it. The popover is the page's own box, no wider than the window. */
-div.index button[popovertarget] { margin: 0; padding: 0 0.3rem; border: var(--hair); font-size: 0.8rem; font-weight: 400; }
+/* "Address" in a cell of the index (wifi.js `Address`): a small button,
+   always there to be seen, pressed and spoken to, at the right of its
+   cell's first line. The cell keeps that room free of words, so no name
+   wraps under it and no cell grows a line for it; it is 24px tall at
+   least, a target a finger or a switch can take. The popover it opens is
+   the browser's own, over the page, closed on Escape or a press outside
+   it: the page's own box, no wider than the window. */
+div.index > ul > li:has(> button[popovertarget]) { position: relative; padding-right: 4.6rem; }
+div.index > ul > li > button[popovertarget] { position: absolute; top: 0.2rem; right: 0.4rem; min-height: 1.5rem; margin: 0; padding: 0 0.3rem; border: var(--hair); font-size: 0.8rem; font-weight: 400; }
 [popover] { box-sizing: border-box; max-width: min(36rem, calc(100vw - 2rem)); padding: 0.75rem 1rem; border: var(--rule); background: var(--paper); color: var(--ink); overflow-wrap: anywhere; }
 
 /* B, the home page's layout: the overview says what the page is, a group's
@@ -223,3 +233,11 @@ section > .group-place:first-of-type { margin-top: 0; border-top: 0; }
 body.layout-b #terminal, body.layout-b #again { display: none; }
 body.layout-b:has(.grouped-nav[data-view="computer"]) #terminal, body.layout-b:has(.grouped-nav[data-view="computer"]) #again { display: block; }
 body.layout-b:has(.grouped-nav:not([data-view="groups"])) #intro { display: none; }
+/* With `#intro` hidden, a group's page and This computer would have no
+   first heading for a screen reader to land on, so each one's own is an h1
+   (group.js `Group`, grouped.js `Context`) and a group's headings under
+   its banner are h2. Each is drawn as it was while it was an h2 or an h3:
+   the level is for whoever cannot see the size. */
+body.layout-b #home > h1, body.layout-b section[data-colour] > h1 { margin: 0 0 0.5rem; padding: 0; border: 0; background: none; color: inherit; font-size: 1.75rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; }
+body.layout-b section[data-colour] > h1 { padding: 0.25rem 0.5rem; border: var(--rule); background: var(--group); color: var(--on-colour); }
+body.layout-b section[data-colour] > h2 { margin: 1.17rem 0; padding: 0; border: 0; background: none; color: inherit; font-size: 1.17rem; font-weight: 700; line-height: inherit; letter-spacing: 0; }

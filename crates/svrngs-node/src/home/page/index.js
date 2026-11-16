@@ -44,12 +44,15 @@ const unsaid = (lends, people) =>
     .join(' ');
 
 // Where a lend's grid comes: the group's own apps, then what people's
-// computers lend that opens in a tab, then their ports, this computer's
-// own last, which has no Play.
+// computers lend that opens in a tab, the one that asks a yes last, since
+// its cell takes a row of its own and a cell is read and tabbed in the
+// order it is drawn; then their ports, this computer's own last, which has
+// no Play.
 /** @param {Lent} lend @param {string} me */
 const place = (lend, me) => {
-  if (!lend.raw) return lend.group ? 0 : 1;
-  return lend.key === me ? 3 : 2;
+  if (lend.raw) return lend.key === me ? 3 : 2;
+  if (lend.group) return 0;
+  return (lend.reads ?? []).length > 0 ? 1.5 : 1;
 };
 
 // The sentence true of everything in a lend's grid, its caption: what
@@ -60,14 +63,25 @@ const says = (lend, group, me) => {
   return lend.raw ? PLAYS : may(lend, group);
 };
 
-// A grid under its caption. Over several the caption says "one of these"
-// where a lend alone is "it": "Opening one of these lets it …". A function,
-// so a `$` is only a `$`.
-/** @param {[caption: string, cells: Drawn[]]} grid */
-const grid = ([caption, cells]) => html`
-  ${caption && html`<p>${cells.length > 1 ? caption.replace(' it ', () => ' one of these ') : caption}</p>`}
-  <ul>${cells}</ul>
-`;
+/**
+ * A grid's caption, its lends, the caption's id, and what a cell is drawn with.
+ * @typedef {Pick<PlaceProps, 'g' | 's'> & { caption: string, lent: Lent[], by: string, shelf: Lends['shelf'] }} GridProps
+ */
+
+// A grid under its caption, a list named by it. Over several the caption
+// says "one of these" where a lend alone is "it": "Opening one of these
+// lets it …". A function, so a `$` is only a `$`. `role="list"`: a list
+// drawn with no markers is no list to VoiceOver without it. A lend's
+// origin is its own, so it keys its cell.
+/** @param {GridProps} props */
+function Grid({ caption, lent, by, ...props }) {
+  const said = lent.length > 1 ? caption.replace(' it ', () => ' one of these ') : caption;
+  const id = caption ? by : undefined;
+  const cells = lent.map(
+    (lend) => html`<li key=${lend.origin}><${LendName} l=${lend} by=${id} ...${props} /></li>`,
+  );
+  return html`${caption && html`<p id=${by}>${said}</p>`}<ul role="list" aria-labelledby=${id}>${cells}</ul>`;
+}
 
 /** @param {PlaceProps} props */
 function Index({ g: group, s: state, me }) {
@@ -79,22 +93,19 @@ function Index({ g: group, s: state, me }) {
   const lent = once(lends.lent.map((lend) => lentBy(lend, people))).sort(
     (one, other) => place(one, me) - place(other, me) || named(one).localeCompare(named(other)),
   );
-  /** @type {Map<string, Drawn[]>} */
+  /** @type {Map<string, Lent[]>} */
   const grids = new Map();
   for (const lend of lent) {
     const caption = says(lend, group, me);
-    // A lend's origin is its own, so it keys its cell.
-    const cell = html`
-      <li key=${lend.origin}>
-        <${LendName} l=${lend} shelf=${lends.shelf} g=${group} s=${state} me=${me} />
-      </li>
-    `;
-    grids.set(caption, [...(grids.get(caption) ?? []), cell]);
+    grids.set(caption, [...(grids.get(caption) ?? []), lend]);
   }
   const under = unsaid(lends, people) || (lent.length ? '' : 'Nobody lends anything here yet.');
   return html`
     <div class="index">
-      ${[...grids].map(grid)}
+      ${[...grids].map(
+        ([caption, each], at) =>
+          html`<${Grid} caption=${caption} lent=${each} by=${`says-${group.id}-${at}`} shelf=${lends.shelf} g=${group} s=${state} />`,
+      )}
       ${under && html`<p>${under}</p>`}
     </div>
   `;

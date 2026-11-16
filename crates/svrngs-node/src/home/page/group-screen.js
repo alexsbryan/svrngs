@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A group on a screen, for a TV, a spare laptop or a projector: opened in
-// a tab of its own at `/?screen=<its id>` (screen-link.js), where HOME
+// a tab of its own at `/?screen=<its id>` (screen.js `ScreenLink`), where HOME
 // draws this alone (home-page.js `Home`). Its door alone, big, each person's
 // lends in their window (ui/door.js), read by SCREEN (on-screen.js), with
 // what arrived since it opened beside it (since-opened.js).
