@@ -742,12 +742,13 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # signing-on, screen-link, -9, spent on every control's name and the
 # popover's Close). The rest is the feature: about 3 more lines were found
 # (people.js and removals.js into door.js), not 29. js 8,537 -> 8,566.
+# It landed one under (b89c49e8), so the cap is where it landed. js 8,566 -> 8,565.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
     ".": 21360,
 
-    "js": 8567,
+    "js": 8566,
 
     "swift": 1,
 }
