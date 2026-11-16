@@ -120,31 +120,45 @@ export const named = (lend) => {
  */
 const does = (kind, shelf) =>
   shelf.find((app) => app.name === kind)?.words ?? 'this app’s shared entries.';
+// What opening `lend` lets it do, in one sentence: `agreed` says it beside
+// the open, and the home page's index says it once above its table for the
+// apps that share it (home/page/index.js `shared`).
+/**
+ * @param {Lend} lend
+ * @param {{ name?: string | null }} group
+ */
+export const may = (lend, group) => {
+  const name = group.name ?? 'your group';
+  if (!lend.group) return `Opening it lets it write its own part of ${name}’s record, as you.`;
+  const how =
+    (lend.reads ?? []).length > 0 ? 'read but never write' : 'read and write only its own entries';
+  return `Opening it lets it ${how}, as you in ${name}.`;
+};
+// `above`: the sentences of `may` already said over the list this is said
+// in, which it does not say again.
 /**
  * @param {Lend} lend
  * @param {Shelved[]} shelf
  * @param {{ name?: string | null }} group
+ * @param {string[]} [above]
  */
-export const agreed = (lend, shelf, group) => {
+export const agreed = (lend, shelf, group, above = []) => {
   const reads = lend.reads ?? [];
   // The open's own line names them (`readLine`) where it was told what it
   // reads; this computer's own app, which needs no yes, says it by kind.
   const also =
-    reads.length > 0 && !lend.reading
-      ? ` It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`
-      : '';
-  if (lend.group) {
-    const words = does(lend.kind, shelf);
-    // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
-    // sentence for the app, or its own.
-    const first = /** @type {string} */ (words[0]).toUpperCase();
-    const may = reads.length > 0 ? 'read but never write' : 'read and write only its own entries';
-    // What its page asks that apps can't load, before anyone opens it
-    // (EXTENSION_POINT §6.3): else a blank page says nothing.
-    const told = lend.check ? ` ${lend.check}` : '';
-    return `${first}${words.slice(1)} Opening it lets it ${may}, as you in ${group.name ?? 'your group'}.${also}${told}`;
-  }
-  return `Opening it lets it write its own part of ${group.name ?? 'your group'}’s record, as you.${also}`;
+    reads.length > 0 &&
+    !lend.reading &&
+    `It also opens your friends’ ${reads.map(spoken).join(' and ')} as you, and they can see what it asks.`;
+  const words = lend.group ? does(lend.kind, shelf) : '';
+  // tsc reads `words[0]` as possibly missing: `does` answers the shelf's
+  // sentence for the app, or its own.
+  const what = words && `${/** @type {string} */ (words[0]).toUpperCase()}${words.slice(1)}`;
+  const opening = may(lend, group);
+  // What its page asks that apps can't load, before anyone opens it
+  // (EXTENSION_POINT §6.3): else a blank page says nothing.
+  const told = lend.group && lend.check;
+  return [what, !above.includes(opening) && opening, also, told].filter(Boolean).join(' ');
 };
 
 // Until when a guest visits (svrn-docs GUESTS §5 "The pages"), as
@@ -421,9 +435,9 @@ export const reading = (lend, said) => {
 // name, or who can see it. Kinds, `spoken`, say what it reads: svrngs
 // cannot say "films" for a program it does not know.
 const HANDFUL = 4;
-/** @param {string[]} words */
-const list = (words) =>
-  words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words.at(-1)}` : `${words[0]}`;
+/** @param {string[]} words @param {string} [last] */
+export const list = (words, last = 'and') =>
+  words.length > 1 ? `${words.slice(0, -1).join(', ')} ${last} ${words.at(-1)}` : `${words[0]}`;
 /** @param {string[]} people */
 const owners = (people) => list(people.map((person) => `${person}’s`));
 /**

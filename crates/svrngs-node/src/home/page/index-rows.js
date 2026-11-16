@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The rows of the group's index once GROUP has read its lends: each lend
-// (lend-row.js), whose by the key its computer joined with (question.js
-// `apart`, never written into the read); then each computer whose lends
-// are not listed, said by why, so what a computer lends is never stale and
-// never nobody's.
+// (lend-row.js), whose by the key its computer joined with (index.js gives
+// each its lender by question.js `lentBy`, never written into the read);
+// then each computer whose lends are not listed, said by why, so what a
+// computer lends is never stale and never nobody's.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
-import { called, label, lentBy, once } from '../question.js?v=__VERSION__';
+import { called, label } from '../question.js?v=__VERSION__';
 import { LendRow } from './lend-row.js?v=__VERSION__';
-/** @import { Lends, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 
 const UNLISTED = {
   unanswered: 'did not answer, so what they lend is not listed',
@@ -18,24 +18,23 @@ const UNLISTED = {
 };
 
 /**
- * The lends read, and what each row is drawn with.
- * @typedef {Omit<PlaceProps, 'joined'> & { lends: Lends }} IndexRowsProps
+ * The lends read, each listed once with its lender (`lent`), what is said
+ * once above the table (`above`), and what each row is drawn with.
+ * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { lends: Lends, lent: Lent[], above: string[] }} IndexRowsProps
  */
 
 /** @param {IndexRowsProps} props */
-export function IndexRows({ lends, g: group, s: state, send, home, me }) {
+export function IndexRows({ lends, lent, above, g: group, s: state, me }) {
   const people = state.people?.people ?? [];
-  const lent = lends.lent.map((lend) => lentBy(lend, people));
-  const each = once(lent).map(
+  const each = lent.map(
     (lend) => html`
       <${LendRow}
         key=${label(lend)}
         l=${lend}
         shelf=${lends.shelf}
+        above=${above}
         g=${group}
         s=${state}
-        send=${send}
-        home=${home}
         me=${me}
       />
     `,
@@ -48,6 +47,6 @@ export function IndexRows({ lends, g: group, s: state, send, home, me }) {
     ),
   );
   const none = each.length || unlisted.length ? [] : ['Nobody lends anything here yet.'];
-  const said = [...unlisted, ...none].map((words) => html`<${Row} cells=${[words]} span=${4} />`);
+  const said = [...unlisted, ...none].map((words) => html`<${Row} cells=${[words]} span=${2} />`);
   return [...each, ...said];
 }

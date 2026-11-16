@@ -322,6 +322,50 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
   assert.ok(!page.text('#home h2').includes('What apps use'), page.text('#home h2').join());
 });
 
+// The index says once, above its table, what two or more rows would each
+// say, naming them; a row keeps only its own words, so the row that differs
+// is the one with a sentence. Nothing a row said is lost: each sentence is
+// above the table or on its row, never neither. A lend alone in its sentence
+// keeps it on its row (the law above). Planted, watched failing: index.js
+// `shared` keeping no sentence (`names.length > 9`), every row saying its own.
+test('what several rows of the index share is said once above it, and a row says only what differs', async () => {
+  const bo = { key: BO, person: 'bo', raw: 'udp' };
+  const lent = [
+    lend('shelf'),
+    lend('page', { reads: ['films'] }),
+    lend('Money-house', { kind: 'Money', group: 'house' }),
+    lend('game', bo),
+    lend('echo', bo),
+    lend('mine', { raw: 'tcp' }),
+  ];
+  const people = [row('ada', ADA, 'started'), row('bo', BO)];
+  const page = await home(ada({ lent, people }));
+  const may = 'lets it write its own part of your group’s record, as you.';
+  const said = page.text('#home section > p');
+  assert.ok(said.includes(`Opening ada’s shelf (k) or ada’s page (k) ${may}`), said.join('\n'));
+  const plays = 'on this computer, for a program here to connect to.';
+  assert.ok(said.includes(`Play opens bo’s game (k) or bo’s echo (k) ${plays}`), said.join('\n'));
+  assert.deepEqual(page.text('#home table.index th'), ['What', 'Whose']);
+  const cells = page.text('#home table.index td');
+  assert.deepEqual(
+    cells.filter((_, i) => i % 2 === 1),
+    ['ada', 'ada', 'your group', 'bo', 'bo', 'ada'],
+  );
+  assert.deepEqual(
+    cells.filter((_, i) => i % 2 === 0),
+    [
+      'Open ada’s shelf (k)',
+      'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks.',
+      'Open Money This app’s shared entries. Opening it lets it read and write only its own entries, as you in your group.',
+      'bo’s game (k) Play',
+      'bo’s echo (k) Play',
+      'ada’s mine (k) A port this computer lends.',
+    ],
+  );
+  const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
+  assert.ok(full.text('#home table.index td')[0].endsWith('as you. Full now.'));
+});
+
 // browser::the_home_page_copies_a_lend_s_address_for_a_program: below the
 // group's things, the lend's address to keep, and its Copy, which writes
 // that address and says where a program takes it; the group on a screen

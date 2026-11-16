@@ -764,9 +764,13 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   as the app's way in and never its files, a port by its name alone with
   its Play; its kind in its lender's word when it differs,
   never one of svrngs's own (`scripts/vocab_check.py` reads the pages'
-  scripts too), and beside it what opening it agrees to; whose; how it
-  opens (in a tab, signing you in once when its lender's program does); and
-  on or full now. At the group's foot, off the first screen, what is for
+  scripts too), and beside it what opening it agrees to; and whose. What
+  two or more rows would each say is said once above the table, naming the
+  apps it is true of ("Opening Money or Events lets it …", and what Play
+  does), and a row keeps only its own words, so the app that asks for more
+  is the row with a sentence (`home/page/index.js` `shared`). That a thing
+  is on and opens in a tab is the usual and is not said; a row says a port
+  is this computer's own, and "Full now." At the group's foot, off the first screen, what is for
   other devices and programs: each can be opened to this WiFi, or closed
   (the operator, 2026-10-26), and its address copied for a program; then
   the group on a screen. In the row and the page's top they were words
