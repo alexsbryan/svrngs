@@ -366,6 +366,28 @@ test('what several rows of the index share is said once above it, and a row says
   assert.ok(full.text('#home table.index td')[0].endsWith('as you. Full now.'));
 });
 
+// "What you lend" is a line a lend, its form folded under the line, and no
+// button there is stretched: look.css's full-width button is the phone
+// page's index's alone (`tbody#lent`, web/page/lent-index.js), where the
+// home page's section, also `#lent`, once took it. Planted, watched failing:
+// lent-row.js drawing the form with no <details>.
+test('each lend is one line with its form folded under it, and the wide button is the phone’s', async () => {
+  const page = await home(ada({ lent: [lend('shelf')] }));
+  assert.deepEqual(page.text('#lent li details summary'), [
+    'shelf: up to 3 people at once, 0 using it now. Lent to a group whose name this computer cannot read.',
+  ]);
+  const folded = page.text('#lent li details button');
+  for (const words of ['Let in this many', 'Save who can open this', 'Stop lending'])
+    assert.ok(folded.includes(words), folded.join());
+  assert.equal(page.text('#lent button').length, folded.length, 'no button outside the fold');
+  const look = readFileSync(new URL('look.css', HOME), 'utf8');
+  assert.deepEqual(look.match(/^.*#lent button.*$/gm), [
+    'tbody#lent button { width: 100%; text-align: left; }',
+  ]);
+  const phone = readFileSync(new URL('../../page/lent-index.js', import.meta.url), 'utf8');
+  assert.ok(phone.includes('<tbody id="lent">'));
+});
+
 // browser::the_home_page_copies_a_lend_s_address_for_a_program: below the
 // group's things, the lend's address to keep, and its Copy, which writes
 // that address and says where a program takes it; the group on a screen

@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// A lend in "What you lend": how many it lets in at once and how many use
-// it now, who can open it, one box a group of HOME's, each by its stable
-// id, showing what it is lent to, paused when empty and needing selection
-// when legacy (`null`), with a button for each change (lend-change.js
-// CHANGE), and the app form's fill once signing people in is turned on
-// (signing-on.js).
+// A lend in "What you lend", one line: how many it lets in at once and how
+// many use it now, and what it is lent to, paused when empty and needing
+// selection when legacy (`null`). Folded under that line, since five lends'
+// forms were two screens before anything was asked, and open at first only
+// where apps cannot read it until its lender does something (`undone`): who
+// can open it, one box a group of HOME's, each by its stable id, with a
+// button for each change (lend-change.js CHANGE), and the app form's fill
+// once signing people in is turned on (signing-on.js).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
@@ -118,6 +120,10 @@ function AppsAccount({ name, account, state, doing, send }) {
   `;
 }
 
+// Whether apps wait on the lender: an account or key to make, or why not.
+const undone = (/** @type {AppsAccount | undefined} */ account) =>
+  account !== undefined && !account.kept;
+
 /** @param {LentProps} props */
 export function Lent({ l: lend, signs, account, groups, home }) {
   const [state, send] = useMachine(() =>
@@ -134,9 +140,6 @@ export function Lent({ l: lend, signs, account, groups, home }) {
   const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now. ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
-  const letMany = html`
-    <${Act} words="Let in this many" doing=${doing} on=${{ type: 'many', value }} send=${send} />
-  `;
   const letEveryone =
     limited &&
     html`
@@ -165,19 +168,17 @@ export function Lent({ l: lend, signs, account, groups, home }) {
       send=${send}
     />
   `;
-  const stop = html`
-    <${Act} words="Stop lending" doing=${doing} on=${{ type: 'change', to: 'stop' }} send=${send} />
-  `;
   return html`
     <li>
-      ${words}
+      <details open=${undone(account)}>
+      <summary>${words}</summary>
       <${Field}
         words="How many people at once: "
         value=${value}
         attrs=${{ type: 'number', min: 1 }}
         send=${send}
       />
-      ${letMany}
+      <${Act} words="Let in this many" doing=${doing} on=${{ type: 'many', value }} send=${send} />
       ${letEveryone}
       <p>Who can open it:</p>
       <${GroupChoice}
@@ -189,9 +190,10 @@ export function Lent({ l: lend, signs, account, groups, home }) {
       ${saveAudience}
       <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
       ${signIn}
-      ${stop}
+      <${Act} words="Stop lending" doing=${doing} on=${{ type: 'change', to: 'stop' }} send=${send} />
       ${state.said}
       ${state.shown && html`<${SigningOn} c=${state.shown} />`}
+      </details>
     </li>
   `;
 }

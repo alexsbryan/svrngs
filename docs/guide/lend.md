@@ -19,7 +19,7 @@ If svrngs doesn't know the program, the row says *"Something at http://localhost
 
 The home page asks for a password in one place only: the account apps read through, in the next paragraph. It goes to this computer and nowhere else. If a program wants a password on every request, lend it from a terminal (below).
 
-If apps read the program, as Movie Night reads Jellyfin, its row under **What you lend** says *"Apps can't read your jellyfin yet. To let them, make one account for your group."* Unfold **How to make the account**, make it the way that says, type its name and password, and press **Save the account**. svrngs signs in once and keeps only what the program gives it, not the password. The row then says *"Apps your friends open can read your jellyfin with the account you made. They can't change anything."*
+If apps read the program, as Movie Night reads Jellyfin, its line under **What you lend** opens to say *"Apps can't read your jellyfin yet. To let them, make one account for your group."* Unfold **How to make the account**, make it the way that says, type its name and password, and press **Save the account**. svrngs signs in once and keeps only what the program gives it, not the password. The row then says *"Apps your friends open can read your jellyfin with the account you made. They can't change anything."*
 
 ## Lend it from a terminal
 
@@ -105,7 +105,7 @@ Your friends see *"Sam’s films (jellyfin)"*. Without `--name`, the name is the
 svrngs share 8096 --limit 3 --group <group>
 ```
 
-On your home page, under **What you lend**, type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in the groups you chose can use it at once.
+On your home page, under **What you lend**, press its line to open it, then type a number in **How many people at once:** and press **Let in this many**; **Let everyone in** takes the limit off. Someone counts as using it while a request of theirs is running and for 30 seconds after. The fourth person sees *"jellyfin is lent to 3 people at once, and 3 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* With no limit, everyone in the groups you chose can use it at once.
 
 ## Keep part of it back
 
@@ -123,7 +123,7 @@ For an app that speaks OpenID Connect, such as Jellyfin with its SSO plugin, svr
 svrngs share 8096 --sign-in-with-svrngs --group <group>
 ```
 
-Or press **Sign people in with svrngs** beside it under **What you lend**. Either way you get three things to copy into the app's own settings: *"choose OpenID Connect, and fill in: issuer http://127.0.0.1:…/oidc/jellyfin, client id …, client secret …"*, then *"It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none. Copy the secret now: it is not shown again."*
+Or press its line under **What you lend**, then **Sign people in with svrngs**. Either way you get three things to copy into the app's own settings: *"choose OpenID Connect, and fill in: issuer http://127.0.0.1:…/oidc/jellyfin, client id …, client secret …"*, then *"It is plain http on this computer, not https; it signs tokens with ES256; and it tells the app no email address, because svrngs has none. Copy the secret now: it is not shown again."*
 
 For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those three values, and in the plugin's settings allow plain http (`DisableHttps`) and turn off its endpoint check (`DoNotValidateEndpoints`). In Jellyfin's networking settings, set the known proxies (`KnownProxies`) to `127.0.0.1`. Then each friend who opens it from the group's list signs in with one press, on a computer or a phone, and two people watching at once stay apart.
 
@@ -140,7 +140,7 @@ For Jellyfin: install Jellyfin's SSO plugin, add an OpenID provider with those t
 svrngs unshare films
 ```
 
-It says *"You no longer lend films."* Or press **Stop lending** beside it on your home page.
+It says *"You no longer lend films."* Or press its line under **What you lend** on your home page, then **Stop lending**.
 
 ## How your friends open it
 

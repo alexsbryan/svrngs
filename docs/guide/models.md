@@ -94,7 +94,7 @@ A model can only answer so many people at once. Set how many:
 svrngs share 8101 --program llama-server --name coder --limit 2 --group <group>
 ```
 
-Or on your home page, under **What you lend**, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
+Or on your home page, under **What you lend**, press its line to open it, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
 
 ## The pantry: every friend's model behind one address
 
