@@ -30,18 +30,50 @@ passed, 1,217 s (`gate-3da19985-linux.txt`). This was the first whole
 Linux run to pass. The causes of the earlier runs' failures are in the
 bodies of bb46c17c, 7d817c69, 6829f24f, b7aece62 and 3da19985.
 
-To run before publishing, on the Mac: the whole gate at the release
-commit. 3da19985 makes the page import Ed25519 seeds as JWK, which the
-Mac's WebKit has not yet run. Then the four targets
-`scripts/build-release.sh` builds; this Linux machine has neither Apple
-target.
+On the Mac, `scripts/check.sh` then ran whole at d2510734, the release
+commit, under the gate lock, so the Mac's WebKit ran 3da19985's JWK
+import too. It passed: exit 0, 45 steps, 1,268 s (`gate-d2510734.txt`).
+The run before it failed `tests` alone (`gate-d2510734-podman-down.txt`).
+give's one real-Podman test, `the_stand_in_keeps_its_state_across_a_restore`
+(`apps/give/tests/check.rs`), said never-ran: the Mac had rebooted and
+Podman's VM was down ("unable to connect to Podman socket"). After
+`podman machine start`, `cargo test -p give --test check` passed 7 of 7,
+and the whole gate was run again. Every other step of the failed run
+passed.
+
+`rustup target list --installed --toolchain 1.95.0` lists all four
+targets `scripts/build-release.sh` builds.
 
 ## Publication
 
-To do: `publish.py <clean worktree at v1.8.2> <this directory>`, as for
-V1.8.1.
+`publish.py` ran `scripts/deploy-page.sh` under the gate lock in a clean
+detached worktree at d2510734 (`v1.8.2`), from 2026-11-16 00:46 to 00:53
+UTC, exit 0 (`publish.json`, `publish.log`). Load was about 3.4, with 96
+GiB free. The record was written outside the worktree and copied here
+after. The build meets its groups at n0's relays (`SHIPPED`), so no relay
+was asked. The page built as version e022fd11ba8f, and `svrngs` and `give`
+built for all four platforms. Vercel deployment
+`dpl_HkQngztQNcB1GiL9Qk5wr7MbGTL9` reached production as Ready, aliased to
+`https://group.svrnme.sh` and `https://*.group.svrnme.sh` (`vercel inspect
+svrngs-page-haxudhzsu-svrnmesh.vercel.app --scope svrnmesh`). The CLI
+wrote `.vercel/`, `.env.local` and `.gitignore` into the upload
+directory. All three answered 404 live and were deleted after.
 
 ## Readback
 
-To do: `verify.py`, which is V1.8.1's with `PREVIOUS_VERSION` set to
-V1.8.1's `7a84f5701243`.
+`verify.py` passed (`verification.json`). Its six planted faults were
+rejected first. Then:
+
+- 78 public files fetched from `group.svrnme.sh` each equaled the built
+  site's bytes.
+- The live `get/SHA256SUMS` equaled the built one (`SHA256SUMS`,
+  `live-sums.txt`) and named exactly the eight downloads.
+- The live page is version e022fd11ba8f, not V1.8.1's 7a84f5701243, and
+  the live `sw.js` names it and sends a navigation to the network first.
+- The live `install.sh` equals the built one.
+- Both frame policies were as `vercel.json` sets them.
+- `release-d2510734.group.svrnme.sh` served the same page.
+- `.env.local`, `.vercel/project.json` and `vercel.json` answered 404.
+- The downloaded darwin-aarch64 `svrngs` and `give` started.
+
+No other platform's program was run here.

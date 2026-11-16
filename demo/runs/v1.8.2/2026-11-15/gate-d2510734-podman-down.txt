@@ -1,0 +1,492 @@
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 16851)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (16 s)
+passed     rustfmt (1 s)
+passed     script laws (6 s)
+passed     page integration (7 s)
+passed     clippy (20 s)
+failed     tests (396 s)
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 7 tests
+           ..... 5/7
+           the_stand_in_keeps_its_state_across_a_restore --- FAILED
+           .
+           failures:
+           
+           ---- the_stand_in_keeps_its_state_across_a_restore stdout ----
+           
+           thread 'the_stand_in_keeps_its_state_across_a_restore' (154330) panicked at apps/give/tests/check.rs:31:9:
+           never-ran: podman does not answer on this computer, so no card can run here (`podman info --format {{.Host.Security.Rootless}}` exited 125: Cannot connect to Podman. Please verify your connection to the Linux system using `podman system connection list`, or try `podman machine init` and `podman machine start` to manage a new Linux VM
+           Error: unable to connect to Podman socket: failed to connect: dial tcp 127.0.0.1:62636: connect: connection refused)
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               the_stand_in_keeps_its_state_across_a_restore
+           
+           test result: FAILED. 6 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+           
+           error: test failed, to rerun pass `-p give --test check`
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.12s
+           
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 18 tests
+           ..................
+           test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+           
+           
+           running 24 tests
+           ........................
+           test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 5 tests
+           i....
+           test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.01s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.36s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.14s
+           
+           
+           running 16 tests
+           ...i........
+           running 1 test
+           ....
+           test result: ok. 15 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 16.19s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 3 tests
+           ..test the_program_joins_at_home_with_the_public_relay_gone has been running for over 60 seconds
+           .
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 68.52s
+           
+           
+           running 3 tests
+           iii
+           test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+           
+           
+           running 11 tests
+           ...........
+           test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 9.39s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: sam_through_a_relay_on_this_computer, ignore_message: U4's dry run, run by demo/runs/u4/2026-10-05/dry.sh
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.78s
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.22s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 11 tests
+           i..........
+           test result: ok. 10 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 4.59s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.21s
+           
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.83s
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.77s
+           
+           
+           running 39 tests
+           .......................................
+           test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.16s
+           
+           
+           running 208 tests
+           ....................................................................................... 87/208
+           .......................................................................i............... 174/208
+           ....................i.............
+           test result: ok. 206 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 1.63s
+           
+           
+           running 2 tests
+           ii
+           test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 6 tests
+           ii....
+           test result: ok. 4 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 178 tests
+           ....................................................................................... 87/178
+           ....................................................................................... 174/178
+           ....
+           test result: ok. 178 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.13s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s
+           
+           
+           running 33 tests
+           iii..............................
+           test result: ok. 30 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 20.30s
+           
+           
+           running 7 tests
+           .......
+           test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.64s
+           
+           
+           running 32 tests
+           ................................
+           test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.53s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.57s
+           
+           
+           running 24 tests
+           ...
+           running 1 test
+           ...test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.34s
+           
+           .
+           running 1 test
+           ....test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.16s
+           
+           .
+           running 1 test
+           test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.17s
+           
+           ..
+           running 1 test
+           .test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.18s
+           
+           
+           running 1 test
+           .test publication::publication_restart_child ... ok
+           
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.07s
+           
+           ........
+           test result: ok. 24 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 12.31s
+           
+           
+           running 5 tests
+           i....
+           test result: ok. 4 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 3.72s
+           
+           
+           running 9 tests
+           .........
+           test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.98s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.95s
+           
+           
+           running 4 tests
+           iiii
+           test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 13 tests
+           .............
+           test result: ok. 13 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.72s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 40.42s
+           
+           
+           running 8 tests
+           ........
+           test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.31s
+           
+           
+           running 9 tests
+           .........
+           test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.14s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.90s
+           
+           
+           running 3 tests
+           ii.
+           test result: ok. 1 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 7.57s
+           
+           
+           running 3 tests
+           ...
+           test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 4 tests
+           ....
+           test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
+           
+           
+           running 11 tests
+           ...........
+           test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.86s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: dee_asks_a_member, ignore_message: the spike's instrument: run by demo/runs/sy/2026-10-09/run.py
+           
+           
+           running 6 tests
+           ......
+           test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+           
+           
+           running 1 test
+           .
+           test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 46 tests
+           ..............................................
+           test result: ok. 46 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.09s
+           
+           
+           running 1 test
+           i
+           test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           test: a_sources_group_written_and_refolded_at_each_size, ignore_message: an instrument: run with --ignored --nocapture
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 0 tests
+           
+           test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+           
+           
+           running 12 tests
+           ............
+           test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.88s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+           
+           
+           running 2 tests
+           ..
+           test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.26s
+           
+           error: 1 target failed:
+               `-p give --test check`
+passed     canaries (17 s)
+passed     ceiling canary (41 s)
+           CEILING idle round at 25 x 10,000: 0.0460 s of processor, the median of [2.866848000000001, 0.046022999999994596, 0.044620999999999356], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.044620999999999356,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.007655}
+passed     web rustfmt and clippy (5 s)
+passed     browser (118 s)
+passed     types (17 s)
+passed     typed lint (0 s)
+passed     joining in a browser (54 s)
+passed     pages (23 s)
+passed     scenes (376 s)
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene grapevine (chromium)
+passed     scene give_gone (chromium)
+passed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (51 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+passed     playback (174 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	407	passed	2184	passed
+           computer	bo	385	passed	4248	passed
+           wildcard	sam	432	passed	1991	passed
+           wildcard	bo	432	passed	3648	passed
+           of 822 here since 2026-10-22T17:12:29Z: 3 missed 5 s through a lend, 131 straight; 556 ended at a load above 12 cores
+passed     n0 (15 s)
+passed     app laws (16 s)
+note       took 1357 s in all
+exit 1
