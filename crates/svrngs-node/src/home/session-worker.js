@@ -5,6 +5,7 @@ import { session, proof, hex, Browser, browserAuthority } from '/svrngs-session.
 // (jsconfig.workers.json). Its own first, so `addEventListener` gives each
 // listener its event's type, as web/sw.js says it.
 /** @typedef {ServiceWorkerGlobalScope & typeof self} Scope */
+const worker = /** @type {Scope} */ (self);
 
 /**
  * What an app's own worker hears, as this worker hands it on: a fetch,
@@ -47,15 +48,11 @@ async function authenticated(request, intent = false) {
   outgoing.headers.set('x-svrngs-browser', await proof(key, outgoing, epoch));
   return fetch(outgoing);
 }
-/** @type {Scope} */ (self).addEventListener('install', () =>
-  /** @type {Scope} */ (self).skipWaiting(),
-);
-/** @type {Scope} */ (self).addEventListener('activate', (activation) =>
-  activation.waitUntil(/** @type {Scope} */ (self).clients.claim()),
-);
+worker.addEventListener('install', () => worker.skipWaiting());
+worker.addEventListener('activate', (activation) => activation.waitUntil(worker.clients.claim()));
 // A page's message comes from its `Client` (session-client.js); one from
 // any other source has no `url`, which the first test refuses.
-/** @type {Scope} */ (self).addEventListener('message', (received) => {
+worker.addEventListener('message', (received) => {
   if (
     !(/** @type {Client | null} */ (received.source)?.url) ||
     new URL(/** @type {Client} */ (received.source).url).origin !== self.location.origin ||
@@ -83,9 +80,7 @@ async function authenticated(request, intent = false) {
       const fetched = (input, init) =>
         authenticated(
           new Request(
-            input instanceof Request
-              ? input
-              : new URL(input, /** @type {Scope} */ (self).registration.scope),
+            input instanceof Request ? input : new URL(input, worker.registration.scope),
             init,
           ),
           true,
@@ -113,7 +108,7 @@ async function authenticated(request, intent = false) {
     })().catch((err) => received.ports[0]?.postMessage({ error: String(err) })),
   );
 });
-/** @type {Scope} */ (self).addEventListener('fetch', (fetchEvent) => {
+worker.addEventListener('fetch', (fetchEvent) => {
   const url = new URL(fetchEvent.request.url);
   if (
     url.origin !== self.location.origin ||
@@ -138,11 +133,7 @@ async function authenticated(request, intent = false) {
  * @param {URL} url
  */
 async function served(fetchEvent, url) {
-  const authority = await browserAuthority(
-    fetchEvent,
-    /** @type {Scope} */ (self).clients,
-    self.location.origin,
-  );
+  const authority = await browserAuthority(fetchEvent, worker.clients, self.location.origin);
   if (!authority) return unproved(fetchEvent.request, url);
   const intent = authority === Browser.Own;
   const response = await (appAnswer(fetchEvent, intent) ??
