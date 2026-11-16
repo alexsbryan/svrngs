@@ -4,16 +4,15 @@
 // section as `show`, once its lends are read), where HOME draws this alone,
 // its place `screen` (home-page.js `Home`). Its door alone, big, each person's
 // lends in their window (ui/door.js), read by SCREEN (on-screen.js), with
-// what arrived since it opened beside it (since-opened.js).
+// what arrived since it opened beside it (`SinceOpened`).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { counted, Door } from '../ui/door.js?v=__VERSION__';
 import { whose } from '../question.js?v=__VERSION__';
 import { colour } from './group.js?v=__VERSION__';
 import { SCREEN } from './on-screen.js?v=__VERSION__';
-import { SinceOpened } from './since-opened.js?v=__VERSION__';
 /** @import { Group, Lends } from './group.js?v=__VERSION__' */
-/** @import { Effect, State } from './on-screen.js?v=__VERSION__' */
+/** @import { Effect, Since, State } from './on-screen.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import * as GROUP from './group.js?v=__VERSION__' */
 /** @import { PlaceProps } from './home-reading.js?v=__VERSION__' */
@@ -41,6 +40,30 @@ const countLine = (state, group) => {
   const [people, on, things] = counted(state.rows, lends.lent, lends);
   return `${many(people, 'person', 'people')} · ${on} on now · ${many(things, 'thing', 'things')} lent`;
 };
+
+// Beside a group on a screen: who joined and what was lent since the
+// screen opened, newest first, the newest marked new (on-screen.js
+// SCREEN's `since`).
+/**
+ * What arrived since the screen opened, newest first.
+ * @typedef {{ since: Since[] }} SinceOpenedProps
+ */
+
+/** @param {SinceOpenedProps} props */
+function SinceOpened({ since }) {
+  const lines = since.map(
+    ([time, words], i) =>
+      html`<li><time>${time}</time> ${words} ${i === 0 && html`<mark>new</mark>`}</li>`,
+  );
+  return html`
+    <aside>
+      <h2>Since this screen opened</h2>
+      <p>Kept on this screen only: it starts over when the screen is opened again.</p>
+      <ol>${lines}</ol>
+      <p>Nothing new yet. Who joins, and what they lend, shows here as it happens.</p>
+    </aside>
+  `;
+}
 
 /** @param {PlaceProps} props */
 function Screen({ s: { groups, q: query } }) {

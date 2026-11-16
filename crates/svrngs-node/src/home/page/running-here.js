@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // "Already running here" on the home page, once the person is in a group:
 // what the look says (running-look.js RUNNING), its button, and each
-// program it found, a row of its own (found.js).
+// program it found, a row of its own (`Found`).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
-import { Act } from '../ui/parts.js?v=__VERSION__';
-import { Found } from './found.js?v=__VERSION__';
-import { RUNNING } from './running-look.js?v=__VERSION__';
+import { Act, Field } from '../ui/parts.js?v=__VERSION__';
+import { LEND } from './lend-found.js?v=__VERSION__';
+import { GroupChoice } from './group-choice.js?v=__VERSION__';
+import { needs, RUNNING } from './running-look.js?v=__VERSION__';
 /** @import { Home } from './group.js?v=__VERSION__' */
 /** @import { Choice } from './group-choice.js?v=__VERSION__' */
 /** @import { Shown, State } from './running-look.js?v=__VERSION__' */
@@ -25,6 +26,89 @@ const SAID = {
       ? 'You looked just now: the programs running on this computer, each at its address. Lend one to the groups you choose, and the people in them open it in their browser, as themselves, while this computer is on. You can change who can open it, or stop lending it, below at any time.'
       : 'You looked just now: nothing else on this computer is running at an address. Start a program, then look again.',
 };
+
+// A program found running here, a row of "Already running here": a kind
+// svrngs knows named with what it needs first, any other with fields for
+// its name and what it is; who can open it, one box a group of HOME's,
+// each by its stable id, so it is lent to the groups ticked and never to
+// everyone by default (SCOPE_PARALLEL.md, "Shared API shape"); one button
+// lends it (lend-found.js LEND), and the row then says what happened, or
+// why not.
+/** @type {[field: 'name' | 'kind', words: string][]} */
+const FIELDS = [
+  ['name', 'Its name: '],
+  ['kind', 'Which program: '],
+];
+
+/**
+ * A program found: it, the kinds the table knows by name alone, HOME's
+ * groups to lend it to, and HOME's `dispatch`, told once it is lent.
+ * @typedef {{ r: Shown, named: string[], groups: Choice[], home: Home }} FoundProps
+ */
+
+// The names of the groups ticked, "House, Trip", for the lend's button.
+/**
+ * @param {Choice[]} groups
+ * @param {string[]} ticked
+ */
+const chosen = (groups, ticked) =>
+  groups.filter((group) => ticked.includes(group.id)).map((group) => group.name ?? 'this group');
+
+/** @param {FoundProps} props */
+function Found({ r: shown, named, groups, home }) {
+  const [state, send] = useMachine(() =>
+    machine('LEND', LEND(home), {
+      at: { lend: 'unlent' },
+      port: shown.port,
+      name: '',
+      kind: '',
+      said: '',
+      groups: [],
+    }),
+  );
+  const at = `http://localhost:${shown.port}`;
+  if (state.at.lend === 'lent') {
+    // `state.l` is the lend 'lent' made, which set 'lent' with it.
+    const lent = /** @type {Shown} */ (state.l);
+    return html`<li>${`You lent ${lent.name}, at ${at}: the groups you chose can open it now. ${needs(lent)} `}</li>`;
+  }
+  const known = named.length ? `; if it is ${named.join(' or ')}, say that` : '';
+  const said = shown.kind
+    ? `${shown.kind}, at ${at}. ${needs(shown)} `
+    : `Something at ${at}. To lend it, give it a name and say which program it is, each one word${known}. `;
+  const fields =
+    !shown.kind &&
+    FIELDS.map(
+      ([name, words]) =>
+        html`<${Field} name=${name} words=${words} value=${state[name]} send=${send} />`,
+    );
+  const busy = state.at.lend === 'lending' ? 'busy' : 'idle';
+  const names = chosen(groups, state.groups);
+  const who = shown.kind ? `Who can open ${shown.kind}?` : 'Who can open it?';
+  const words = names.length
+    ? `Lend ${shown.kind ?? 'it'} to ${names.join(' and ')}`
+    : `Lend ${shown.kind ?? 'it'}`;
+  return html`
+    <li>
+      ${said}
+      ${fields}
+      <p>${who}</p>
+      <${GroupChoice}
+        groups=${groups}
+        ticked=${state.groups}
+        waiting=${busy === 'busy'}
+        send=${send}
+      />
+      <${Act}
+        words=${words}
+        doing=${{ state: busy }}
+        on=${{ type: 'lend' }}
+        send=${send}
+      />
+      ${state.said}
+    </li>
+  `;
+}
 
 /**
  * "Already running here": HOME's groups to lend one to, and its `dispatch`,

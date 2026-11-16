@@ -5,7 +5,7 @@
 // by this computer's key; then what opens friends' things as you, each
 // with its Stop, and what apps use of each asking lend (ui/uses.js); what
 // you open knows; and WiFi and Play. Each group's GROUP read is told to
-// HOME by its section (group-told.js `GroupTold`), and the section is drawn once
+// HOME by its section (acts.js `GroupTold`), and the section is drawn once
 // every group has been told and /reaching read, and kept after. The
 // machine is the section's own (ui/view.js `useMachine`).
 import { html, useEffect, useMachine } from '../ui/view.js?v=__VERSION__';
@@ -69,7 +69,7 @@ const changedIn = (id, lends, acted) => {
 
 /**
  * The groups "What acts as you" is drawn from, and waits for each of to be
- * told (group-told.js `GroupTold`): those this computer is in and was not
+ * told (acts.js `GroupTold`): those this computer is in and was not
  * removed from, nor cannot say whether it was. A group an older svrngs made
  * is drawn as what is said of it alone (group.js `below`), so it never tells,
  * and nothing acts as you in it: waited for, it held this section unread,

@@ -35,7 +35,7 @@ export function exposes(state, place) {
 }
 
 // A group's card says what a person opens its page to learn, from what its
-// hidden section last told HOME (group-told.js): no read is added. Nothing is
+// hidden section last told HOME (acts.js `GroupTold`): no read is added. Nothing is
 // said until it has told; when either read failed, that is said, never the
 // older answer as now's; and versions to review only when that was read.
 /** @param {{ told?: Told }} props */

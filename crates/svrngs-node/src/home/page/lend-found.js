@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// LEND, the machine of a program found running here (found.js `Found`): a
+// LEND, the machine of a program found running here (running-here.js `Found`): a
 // kind svrngs knows is lent as it is, any other only once the person names
 // it and says what it is. It is made to an explicit set of groups, never
 // to everyone by default (SCOPE_PARALLEL.md, "Shared API shape"): with no

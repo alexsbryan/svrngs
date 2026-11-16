@@ -12,7 +12,7 @@ import { GroupPlaces } from './grouped.js?v=__VERSION__';
 // Each place of a group's section, in the order it draws them: the index,
 // its people, its folder, the links made here, leaving, removals, who is
 // visiting, the shelf, and its link to a screen (`show`); then what it read, told to HOME for "What acts as you"
-// (group-told.js `GroupTold`), drawing nothing.
+// (acts.js `GroupTold`), drawing nothing.
 export const PLACES = /** @type {const} */ ([
   'index',
   'people',

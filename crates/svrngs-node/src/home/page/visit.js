@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// VISITS, the machine of a visit's Stop on the home page (stop-visit.js
+// VISITS, the machine of a visit's Stop on the home page (visits.js
 // `Stop`): /visits stops the visit and answers its Stop's time. That time
 // is after every act its computer holds, so it may be a second on
 // (svrngs-core command.rs `sign_lines`); the machine waits for it before

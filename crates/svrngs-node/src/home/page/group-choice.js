@@ -2,7 +2,7 @@
 // Who can open a lend: one box a group of HOME's, each by its stable id,
 // ticked when it is the lend's, so a lend is made to the groups ticked and
 // never to everyone by default (SCOPE_PARALLEL.md, "Shared API shape").
-// The same boxes draw a new lend (found.js) and a change of one
+// The same boxes draw a new lend (running-here.js `Found`) and a change of one
 // (lent-row.js), each sending `choose` with the group's id and whether it
 // was ticked.
 import { html } from '../ui/view.js?v=__VERSION__';

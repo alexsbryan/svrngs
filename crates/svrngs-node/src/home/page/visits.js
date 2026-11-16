@@ -2,14 +2,15 @@
 // Who is visiting a group, in its section on the home page (GUESTS §5 "The
 // pages"), from the record as every member's page shows them, once GROUP
 // has read its people: who you have over first, in words that are not an
-// app's noun, each with its Stop (stop-visit.js); then everyone's, by host,
+// app's noun, each with its Stop (`Stop`); then everyone's, by host,
 // with until when (ui/visitors.js).
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { assertNever, go, machine } from '../ui/machine.js?v=__VERSION__';
 import { post } from './routes.js?v=__VERSION__';
 import { Visiting } from '../ui/visitors.js?v=__VERSION__';
-import { Stop } from './stop-visit.js?v=__VERSION__';
-/** @import { Group, Home, PlaceProps } from './group.js?v=__VERSION__' */
+import { until } from '../question.js?v=__VERSION__';
+import { VISITS } from './visit.js?v=__VERSION__';
+/** @import { Group, Home, PlaceProps, Visit } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
 
@@ -83,6 +84,35 @@ function Slots({ g: group, n, home }) {
   const fewer = group.keeps && n > 0 && html`<button onClick=${change(n - 1)}>One fewer</button>`;
   const more = group.keeps && html`<button onClick=${change(n + 1)}>One more</button>`;
   return html`<p class="slots">Each computer can have ${n} visiting at once ${fewer} ${more}${state.said}</p>`;
+}
+
+// A visit you host, with its Stop (visit.js VISITS). The line says what
+// Stop does before the person presses it.
+/**
+ * A visit you host: the group, the visit, the group's name as said, and
+ * HOME's `dispatch`, told to read again once it ends.
+ * @typedef {object} StopProps
+ * @property {Group} g
+ * @property {Visit} v
+ * @property {string} name
+ * @property {Home} home
+ */
+
+/** @param {StopProps} props */
+function Stop({ g: group, v: visit, name, home }) {
+  const [state, send] = useMachine(() =>
+    machine('VISITS', VISITS(home), { at: { visit: 'on' }, said: [] }),
+  );
+  const guest = visit.guest;
+  const words = `${guest}, until ${until(visit)}. Stop ends the visit now: what you lend stops opening to ${guest}, and everyone in ${name} sees it ended. `;
+  const stop = () => send({ type: 'stop', g: group.id, id: visit.id });
+  return html`
+    <li>
+      ${words}
+      <button onClick=${stop}>${`Stop ${guest}’s visit`}</button>
+      ${state.said}
+    </li>
+  `;
 }
 
 /** @param {PlaceProps} props */

@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // "What acts as you" on the home page (acting.js `Acting`), once the person
-// is in a group; each group's read told to HOME (group-told.js `GroupTold`); and
+// is in a group; each group's read told to HOME (`GroupTold`); and
 // HOME's part of it: what each group told (`take`), and the page's foot
 // held until the section has read (`holds`).
-import { html } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect } from '../ui/view.js?v=__VERSION__';
 import { go } from '../ui/machine.js?v=__VERSION__';
 import { Acting } from './acting.js?v=__VERSION__';
-import { GroupTold } from './group-told.js?v=__VERSION__';
 /** @import { Group, Lends, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import { Step } from '../ui/machine.js?v=__VERSION__' */
@@ -50,6 +49,29 @@ export const take = (state, message) => {
 // HOME asks once the groups are read (home-page.js `Home`).
 /** @param {HOME.State} state */
 export const holds = (state) => /** @type {Group[]} */ (state.groups).length > 0 && !state.actsRead;
+
+// A group's GROUP read, told to HOME (acts.js `take`) by its place in the
+// group's section (group-read.js PLACES), once neither its people nor its lends
+// are reading, so "What acts as you" (acting.js) draws from every group's
+// read. `fresh` says both were read this round: a read that failed keeps
+// what the one before answered, which the overview must not count as now's
+// (grouped.js `Live`). It draws nothing.
+/** @param {PlaceProps} props */
+function GroupTold({ g: group, s: state, home }) {
+  useEffect(() => {
+    if (state.at.people === 'reading' || state.at.lends === 'reading') return;
+    home({
+      type: 'told',
+      flow: 'acts',
+      id: group.id,
+      people: state.people?.people,
+      lends: state.lends,
+      fresh: state.at.people === 'read' && state.at.lends === 'read',
+      why: `${group.name}: people ${state.at.people}, lends ${state.at.lends}`,
+    });
+  }, [state.people, state.lends, state.at.people, state.at.lends]);
+  return null;
+}
 
 /** @param {HOME.PlaceProps} props */
 function ActsPlace({ s: state, home }) {

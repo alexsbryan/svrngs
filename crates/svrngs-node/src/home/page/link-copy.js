@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copy beside a link made (link-said.js): it says only its last answer,
+// Copy beside a link made (group-links.js `LinkSaid`): it says only its last answer,
 // where ui/copy.js's `Copy` says each in turn, since a person presses it
 // again and again as they send the link to one place after another.
 import { useMachine } from '../ui/view.js?v=__VERSION__';
