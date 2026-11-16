@@ -732,12 +732,22 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # popover, where a fold's place listed every thing again (wifi-foot.js's
 # place gone). No raise; the cuts lower the cap to where they land.
 # js 8,552 -> 8,537.
+# (2026-11-16) A person in a group's door can be pressed (the people the
+# operator sat with each tried to): a popover of the browser's own says
+# their state, when they joined, what they share here as jumps to those
+# cells, and for whoever keeps the removals the whole line that removes
+# them. +29, raised by the operator ("Raise to 8,566", 2026-11-16) after
+# the economizing above and the accessibility pass's own: five single-use
+# files folded into their one user (play-cell, lend-address, address-copy,
+# signing-on, screen-link, -9, spent on every control's name and the
+# popover's Close). The rest is the feature: about 3 more lines were found
+# (people.js and removals.js into door.js), not 29. js 8,537 -> 8,566.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
     ".": 21360,
 
-    "js": 8538,
+    "js": 8567,
 
     "swift": 1,
 }
