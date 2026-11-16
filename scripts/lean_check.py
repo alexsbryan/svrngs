@@ -725,12 +725,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # on, and `Here::unread` built in place (b9093fe9, -8), made room for the
 # gate image's entrypoint, scripts/gate/delegate.sh (+7), with no raise;
 # lowered to where both land. . 21,360 -> 21,359.
+# (2026-11-16) The home page's group at scale: what a group shares drawn as
+# grids of cells under captions that name nothing, where a table and its
+# name-listing sentences were (index-rows.js gone, question.js `owner`, the
+# `above` and `quiet` plumbing); each thing's address in its own cell's
+# popover, where a fold's place listed every thing again (wifi-foot.js's
+# place gone). No raise; the cuts lower the cap to where they land.
+# js 8,552 -> 8,537.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
     ".": 21360,
 
-    "js": 8553,
+    "js": 8538,
 
     "swift": 1,
 }
