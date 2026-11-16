@@ -159,7 +159,8 @@ export function Acting({ s: homeState, home }) {
             lent.find((one) => label(one) === app && one.reads && one.reads.length > 0)
           );
           const stop =
-            choice.said === 'yes' && html`<${Reach} app=${app} words="Stop" said="stop" />`;
+            choice.said === 'yes' &&
+            html`<${Reach} app=${app} words="Stop" said="stop" aria-label=${`Stop ${lend ? `${lend.person}’s ${lend.name}` : app}`} />`;
           return html`<p>${reading(lend, choice)}${stop}</p>`;
         });
   // Read past `reading`, the choices are set: the read's, or none.

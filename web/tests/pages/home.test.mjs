@@ -774,6 +774,22 @@ test('Add an app says how, what is here already, and the other ways to add one',
   );
 });
 
+// Under "What acts as you", each Stop of an app that opens friends' things
+// as you is named with the app it stops: several read "Stop" alike in a
+// screen reader's list of buttons. Planted, watched failing: acting.js's
+// Stop given no name.
+test('a Stop under What acts as you is named with the app it stops', async () => {
+  const page = lend('page', { reads: ['films'] });
+  const answers = ada({ lent: [page] });
+  answers['GET /reaching'] = { [q.label(page)]: { said: 'yes', at: 1_791_000_000 } };
+  const drawn = await home(answers, '/?view=computer');
+  const stops = drawn.all('#acts form button');
+  assert.deepEqual(
+    stops.map((stop) => [words(stop), stop.attributes['aria-label']]),
+    [['Stop', 'Stop ada’s page']],
+  );
+});
+
 // "What you lend" is a line a lend, its form folded under the line, and no
 // button there is stretched: look.css's full-width button is the phone
 // page's index's alone (`tbody#lent`, web/page/lent-index.js), where the

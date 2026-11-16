@@ -12,13 +12,15 @@ import { Fold, Tick } from '../ui/parts.js?v=__VERSION__';
 /**
  * The form's props: the app's label, the button's words, and what it posts:
  * the lends its open names, ticked and unticked, and those ticked to send to.
- * `by` is the ids of what describes its button, the sentence its press agrees to;
- * `id`, its button's own, where something links to it.
- * @typedef {{ app: string, words: Drawn, said?: 'yes' | 'stop', reads?: string[], left?: string[], sends?: string[], by?: string, id?: string }} ReachProps
+ * The rest is its button's own attributes: what describes it, the sentence its
+ * press agrees to (`aria-describedby`); its `id`, where something links to it;
+ * and its name, where its words alone, "Stop", do not say what it stops
+ * (`aria-label`).
+ * @typedef {{ app: string, words: Drawn, said?: 'yes' | 'stop', reads?: string[], left?: string[], sends?: string[], id?: string, 'aria-describedby'?: string, 'aria-label'?: string }} ReachProps
  */
 
 /** @param {ReachProps} props */
-export function Reach({ app, words, said = 'yes', reads = [], left = [], sends = [], by, id }) {
+export function Reach({ app, words, said = 'yes', reads = [], left = [], sends = [], ...button }) {
   const target = said === 'yes' ? '_blank' : undefined;
   return html`
     <form method="post" action="/reaching" target=${target}>
@@ -27,7 +29,7 @@ export function Reach({ app, words, said = 'yes', reads = [], left = [], sends =
       <input type="hidden" name="reads" value=${reads.join(' ')} />
       <input type="hidden" name="left" value=${left.join(' ')} />
       <input type="hidden" name="sends" value=${sends.join(' ')} />
-      <button id=${id} aria-describedby=${by}>${words}</button>
+      <button ...${button}>${words}</button>
     </form>
   `;
 }
@@ -88,7 +90,7 @@ export function Opening({ app, words, reading, kinds, by, id }) {
       reads=${on.map((one) => one.label)}
       left=${off}
       sends=${sent}
-      by=${by}
+      aria-describedby=${by}
       id=${id}
     />
     ${

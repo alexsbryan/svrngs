@@ -44,7 +44,7 @@ export function LendName({ l: lend, shelf, by, g: group, s: state }) {
   const words = `Open ${named(lend)}`;
   const plain =
     lend.reads && lend.reads.length > 0
-      ? html`<${Reach} app=${label(lend)} words=${words} by=${said} id=${`at-${id}`} />`
+      ? html`<${Reach} app=${label(lend)} words=${words} aria-describedby=${said} id=${`at-${id}`} />`
       : html`<a id=${`at-${id}`} href=${to} target="_blank" aria-describedby=${said}>${named(lend)}</a>`;
   const opener = lend.reading
     ? html`<${Opening} app=${label(lend)} words=${words} reading=${lend.reading} kinds=${lend.reads ?? []} by=${said} id=${`at-${id}`} />`
