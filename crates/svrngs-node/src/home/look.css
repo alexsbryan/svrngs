@@ -204,6 +204,11 @@ body.layout-b section[data-colour] { border-top: 0; padding-top: 0; }
 .group-list li { padding: 0.75rem; border: var(--hair); }
 .group-list a { font-weight: 700; }
 .group-list small { display: block; }
+/* The invitation buttons (group-links.js) are one row that wraps: the
+   paragraph each pair is in runs on with the next, where a paragraph of
+   its own a pair, 72ch wide, stacked four buttons in three rows. What an
+   open invitation says keeps its own lines above them. */
+.publication, .publication > p:last-child, .publication + p { display: inline; }
 .group-place { margin: 1rem 0; padding: 0.75rem 0; border-top: var(--hair); }
 .group-place > summary { font-size: 1.1rem; }
 /* People, first under the group's banner, needs no rule of its own above it. */

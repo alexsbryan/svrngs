@@ -132,21 +132,22 @@ export function ArrivalLinks({ s: state, g: group }) {
   return html`<p>${state.grouped && group && html`<a href=${address('groups', group.id)}>Continue to ${group.name ?? 'your group'}</a> `}<a href="/">All your groups</a></p>`;
 }
 
-// A group's page, the bounded before the unbounded: its people first, who
-// are bounded by the group and why the page is opened, with inviting beside
-// the people it adds to, never folded with leaving; then what they share,
-// which has no bound; then its files. Last the folds: each app's address
-// and WiFi line has one of its own, being about an app, not about managing
-// the group.
+// A group's page, what is before what is done: who is here, the door, a
+// few rows however many; then what they share, which is what a person
+// opens the page for, and its files. After those, what a person does to
+// the group now and then: who they have over, with who else is visiting,
+// and the invitation buttons, never folded with leaving. Last the folds:
+// each app's address and WiFi line has one of its own, being about an app,
+// not about managing the group.
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
 export function GroupPlaces({ draw }) {
   return html`
-    <details class="group-place" open><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
-    ${draw(['links'])}
+    <details class="group-place" open><summary>People</summary>${draw(['people', 'removals'])}</details>
     <h3>Shared apps</h3>
     ${draw(['index'])}
     <h3>Shared files</h3>
     ${draw(['folder'])}
+    ${draw(['visits', 'links'])}
     <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>
     <details class="group-place"><summary>Addresses and WiFi</summary>${draw(['wifi'])}</details>
     <details class="group-place"><summary>Manage this group</summary>${draw(['show', 'leave'])}</details>

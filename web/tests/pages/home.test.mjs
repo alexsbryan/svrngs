@@ -404,12 +404,19 @@ test('the words outside the index’s cells are the same for 8 things and for 40
   assert.deepEqual(many, few);
 });
 
-// A group's page puts the bounded before the unbounded: under the banner
-// what needs the person, then People and inviting, then what they share,
-// its files, and the folds. Planted, watched failing: grouped.js
-// `GroupPlaces` drawing Shared apps before People, as it did.
-test('a group’s page is its banner, what needs you, its people, then what they share', async () => {
-  const answers = ada({ lent: [lend('shelf')] });
+// A group's page is what is, then what is done: under the banner what
+// needs the person, then the door, what the group shares and its files;
+// after those who you have over, who else is visiting, and inviting; then
+// the folds. Planted, watched failing: grouped.js `GroupPlaces` drawing
+// who is visiting and the invitations under People, above Shared apps, as
+// it did.
+test('a group’s page is its banner, what needs you, its people, what they share, then inviting', async () => {
+  const visiting = [
+    { id: 'v1', guest: 'jo', host: 'ada', host_key: ADA, until: 1_893_000_000, yours: true },
+    { id: 'v2', guest: 'sy', host: 'bo', host_key: BO, until: 1_893_000_000, yours: false },
+  ];
+  const people = [row('ada', ADA, 'started'), row('bo', BO)];
+  const answers = ada({ lent: [lend('shelf')], people, groups: [group({ visiting })] });
   const changed = [{ group: 'house', app: 'Money', by: 'bo', by_key: BO, at: 1_791_000_900 }];
   answers['GET /v1/lends?namespace=house'] = lends({ lent: [lend('shelf')], changed });
   const page = await home(answers, '/?group=house');
@@ -417,12 +424,16 @@ test('a group’s page is its banner, what needs you, its people, then what they
   assert.equal(banner.nextSibling.attributes.class, 'grouped-notice');
   const heads = page
     .all('#group-house *')
-    .filter((at) => at.parentNode.id === 'group-house' && ['h3', 'details'].includes(at.localName))
-    .map((at) => words(at.localName === 'h3' ? at : at.firstChild));
+    .filter((at) => at.parentNode.id === 'group-house')
+    .filter((at) => ['h3', 'details'].includes(at.localName) || at.className === 'publication')
+    .map((at) => (at.localName === 'details' ? words(at.firstChild) : words(at)));
   assert.deepEqual(heads, [
     'People',
     'Shared apps',
     'Shared files',
+    'Who you have over',
+    'Visiting now',
+    'Invite people here',
     'Add an app',
     'Addresses and WiFi',
     'Manage this group',

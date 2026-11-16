@@ -815,16 +815,17 @@ is frozen at `/?ui=a`, linked from nowhere, and goes within a couple of weeks
 of 2026-11-06 (the operator). An old `/?ui=b` bookmark opens B
 (`home/page/home-reading.js` `first`, `home/page/grouped.js`).
 
-B's workspace puts the bounded before the unbounded. Under the banner, first
-what needs the person: a new version to review (`home/page/grouped.js`
-`Notice`). Then **People**, open at first, who are bounded by the group and
-why the page is opened: presence, visitors and removals, and under it,
-unfolded, every invitation and device-link control, beside the people it
-adds to. Then **Shared apps**, the app index, which has no bound, and
-**Shared files**: **Open shared files in Finder**, or "in your file
-manager" off a Mac, opens the group's folder in a window of its own, each
-of several folders named by its own name, and **Folder location**, closed
-at first, says where it is (`home/page/group-folder.js`). Last the folds: **Add an
+B's workspace is what is, then what is done. Under the banner, first what
+needs the person: a new version to review (`home/page/grouped.js`
+`Notice`). Then **People**, open at first, the door and any removals: who
+is here, a few rows however many. Then what a person opens the page for:
+**Shared apps**, the app index, and **Shared files**: **Open shared files
+in Finder**, or "in your file manager" off a Mac, opens the group's folder
+in a window of its own, each of several folders named by its own name, and
+**Folder location**, closed at first, says where it is
+(`home/page/group-folder.js`). After those, what is done now and then: who
+you have over, with who else is visiting, and every invitation and
+device-link control, unfolded, one row of buttons that wraps. Last the folds: **Add an
 app** holds the existing shelf; **Addresses and WiFi** holds each app's
 line, a row a thing where the window is wide enough: its name, its WiFi
 sharing, its Copy and its address for a program (`look.css` `ul.wifi li`),
