@@ -34,9 +34,10 @@ const GROUP: &str = "lake-trip";
 /// (capability-signed, F1; question.js `named`, `agreed`).
 const OPEN_FILMS: &str = "Sam’s films";
 
-/// The home page's link to Sam's films: Open and its name, the app's way
-/// in (docs/APP_ACCESS_AND_STOP.md A1).
-const OPEN_FILMS_HERE: &str = "Open Sam’s films";
+/// The home page's link to Sam's films: its name, the app's way in, in a
+/// cell under the caption that says what opening one does (docs/DESIGN.md
+/// §3, "the index").
+const OPEN_FILMS_HERE: &str = "Sam’s films";
 
 /// The home page's way to the group's folder, Finder's on a Mac and the
 /// file manager's elsewhere (A2): its path is under Folder location, closed.
@@ -345,7 +346,7 @@ async fn life(engine: Engine) {
     let eve = scene.joins("Eve", link, GROUP).await;
     let took = on_disk(&eve, &group, &photos, Duration::from_secs(120)).await;
     eprintln!("Eve's disk held the trip {took:?} after she was in, Ana's computer stopped");
-    let asleep = "Ana's computer did not answer";
+    let asleep = "Ana’s computer did not answer";
     home_says(&mut browsers, &eve, asleep, Duration::from_secs(60)).await;
     let got = browsers
         .tell(json!({ "do": "follow", "who": "eve", "link": OPEN_FILMS_HERE }))

@@ -55,8 +55,8 @@ function Live({ told }) {
 /** @param {{ s: State }} props */
 function GroupLinks({ s: state }) {
   const groups = (state.groups ?? []).filter((group) => !group.left);
-  const who = groups[0]?.person;
-  const same = who && groups.every((group) => group.person === who);
+  const who = groups[0]?.person ?? null;
+  const same = who !== null && groups.every((group) => group.person === who);
   const cards = groups.map((group) => {
     const made = group.made ? ` (${whose(group.made)})` : '';
     const here = group.person
@@ -73,7 +73,7 @@ function GroupLinks({ s: state }) {
 /** @param {{ s: State, g: Group }} props */
 export function Notice({ s: state, g: group }) {
   const changes = state.told?.[group.id]?.lends?.changed;
-  if (!changes?.length) return null;
+  if (!changes || changes.length === 0) return null;
   return html`
     <p class="grouped-notice"><a href=${`${address('computer')}&review=${encodeURIComponent(group.id)}`}>${changes.length} ${changes.length === 1 ? 'app has a new version' : 'apps have new versions'} you can review.</a> Your current versions keep running.</p>
   `;

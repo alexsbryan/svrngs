@@ -49,7 +49,8 @@ async fn opened(who: &Person, group: &str, name: &str) -> Value {
         "home.mjs",
         json!({
             "ask": format!("{}?group={group}", who.home_page()),
-            "heading": false, "b": true, "after": ["body", format!("Open {name}")], "open": name,
+            // The group's index once it lists `name`: its caption and cells.
+            "heading": false, "b": true, "after": [format!("#group-{group} .index"), name], "open": name,
         }),
     )
     .await

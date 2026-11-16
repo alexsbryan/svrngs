@@ -206,6 +206,10 @@ try {
         .flatMap((root) =>
           [...root.querySelectorAll('a,button,input,select')]
             .filter((el) => el.getAttribute('type') === 'hidden' || el.checkVisibility())
+            // B's link to a new version is its own, pressed below, never one
+            // of A's controls: it is drawn under the group's banner, inside
+            // the section inventoried here.
+            .filter((el) => !el.closest('.grouped-notice'))
             .map((el) => [
               el.tagName,
               el.getAttribute('type'),
