@@ -785,7 +785,11 @@ group is linked by its stable id, with maker and joining date still saying
 which namesake it is. Ordinary links, Back and refresh keep the selected
 destination; no browser preference or membership is changed. The overview is
 the heading, the one privacy line, the group cards and one row of actions:
-Join a group, Make a group, Open a link and Groups you left. Every other page's
+Join a group, Make a group, Open a link and Groups you left. A card says
+who the person is there and, from what the group's hidden section last
+read, one line: how many are on now, how many apps are shared, and
+versions to review; nothing before that read, and "cannot read" when a read
+failed, never an older count (`home/page/grouped.js` `Live`). Every other page's
 navigation is only **All your groups** and **This computer**, and a group's own
 banner is its page's heading. The first layout, **A**, the groups on one page,
 is frozen at `/?ui=a`, linked from nowhere, and goes within a couple of weeks
@@ -796,8 +800,8 @@ B's workspace leads with **Shared apps**, the app index, then **Shared
 files**: **Open shared files in Finder**, or "in your file manager" off a
 Mac, opens the group's folder in a window of its own, each of several
 folders named by its own name, and **Folder location**, closed at first,
-says where it is (`home/page/group-folder.js`). **People**
-holds presence, visitors and removals, and under it, unfolded, every
+says where it is (`home/page/group-folder.js`). **People**, open at
+first, holds presence, visitors and removals, and under it, unfolded, every
 invitation and device-link control, beside the people it adds to; **Add an
 app** holds the existing shelf; **Addresses and WiFi** holds each app's
 line, its address for a program and its WiFi sharing, under what opening

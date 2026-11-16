@@ -11,9 +11,15 @@ import { agreed, label, named } from '../question.js?v=__VERSION__';
 import { PLAYS } from './play.js?v=__VERSION__';
 import { PlayCell } from './play-cell.js?v=__VERSION__';
 import { Opening, Reach } from './reach.js?v=__VERSION__';
-/** @import { LendRowProps } from './lend-row.js?v=__VERSION__' */
+/** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 
-/** @param {LendRowProps} props */
+/**
+ * The lend, the group's shelf, what the index says once above its table
+ * (index.js `shared`), and what its cell is drawn with.
+ * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { l: Lent, shelf: Lends['shelf'], above: string[] }} LendNameProps
+ */
+
+/** @param {LendNameProps} props */
 export function LendName({ l: lend, shelf, above, g: group, s: state, me }) {
   if (lend.raw) {
     const how =

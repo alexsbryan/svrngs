@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The rows of the group's index once GROUP has read its lends: each lend
-// (lend-row.js), whose by the key its computer joined with (index.js gives
+// (lend-name.js), whose by the key its computer joined with (index.js gives
 // each its lender by question.js `lentBy`, never written into the read);
 // then each computer whose lends are not listed, said by why, so what a
 // computer lends is never stale and never nobody's.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
-import { called, label } from '../question.js?v=__VERSION__';
-import { LendRow } from './lend-row.js?v=__VERSION__';
+import { called, label, opens, owner } from '../question.js?v=__VERSION__';
+import { LendName } from './lend-name.js?v=__VERSION__';
 /** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 
 const UNLISTED = {
@@ -26,17 +26,17 @@ const UNLISTED = {
 /** @param {IndexRowsProps} props */
 export function IndexRows({ lends, lent, above, g: group, s: state, me }) {
   const people = state.people?.people ?? [];
+  // That a lend is on and opens in a tab is the usual, so its row says only
+  // what differs: a port's Play (lend-name.js), and that it is full now.
   const each = lent.map(
     (lend) => html`
-      <${LendRow}
-        key=${label(lend)}
-        l=${lend}
-        shelf=${lends.shelf}
-        above=${above}
-        g=${group}
-        s=${state}
-        me=${me}
-      />
+      <tr key=${label(lend)}>
+        <td>
+          <${LendName} l=${lend} shelf=${lends.shelf} above=${above} g=${group} s=${state} me=${me} />
+          ${opens(lend) === 'full' && ' Full now.'}
+        </td>
+        <td>${owner(lend, group)}</td>
+      </tr>
     `,
   );
   const unlisted = Object.entries(UNLISTED).flatMap(([how, why]) =>

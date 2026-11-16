@@ -388,6 +388,34 @@ test('each lend is one line with its form folded under it, and the wide button i
   assert.ok(phone.includes('<tbody id="lent">'));
 });
 
+// The overview's card says a line of what the group's hidden section read:
+// who is on, how many apps, versions to review. A read that failed is said
+// as that, never counted, and a group not yet told says nothing. Planted,
+// watched failing: grouped.js `Live` not asking `told.fresh`, the lends'
+// failed read then counted as "On now: 1 of 2."
+test('a group’s card on the overview says who is on and what is shared, or that it cannot be read', async () => {
+  const people = [row('ada', ADA, 'started'), row('bo', BO)];
+  const answers = ada({ people, lent: [lend('shelf'), lend('films')] });
+  const changed = [{ group: 'house', app: 'Money', by: 'bo', by_key: BO, at: 1_791_000_900 }];
+  const read = lends({
+    lent: [lend('shelf'), lend('films')],
+    unanswered: [{ person: 'bo', person_key: BO }],
+  });
+  answers['GET /v1/lends?namespace=house'] = { ...read, changed };
+  const page = await home(answers, '/');
+  assert.deepEqual(page.text('.group-list small'), [
+    'You are ada here.',
+    'On now: 1 of 2. Shared apps: 2. New versions to review: 1.',
+  ]);
+  // The next round's read of the lends fails: GROUP keeps the answer before.
+  answers['GET /v1/lends?namespace=house'] = { status: 503, body: { error: 'off' } };
+  await page.shown();
+  assert.deepEqual(page.text('.group-list small'), [
+    'You are ada here.',
+    'This computer cannot read who is on now.',
+  ]);
+});
+
 // browser::the_home_page_copies_a_lend_s_address_for_a_program: below the
 // group's things, the lend's address to keep, and its Copy, which writes
 // that address and says where a program takes it; the group on a screen

@@ -3,11 +3,13 @@
 // home places stay mounted: their reads still supply the computer-wide access
 // and lending controls.
 import { html } from '../ui/view.js?v=__VERSION__';
-import { whose } from '../question.js?v=__VERSION__';
+import { once, whose } from '../question.js?v=__VERSION__';
+import { counted } from '../ui/door.js?v=__VERSION__';
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 /** @import { State } from './home-reading.js?v=__VERSION__' */
 /** @import { PlaceName } from './group-read.js?v=__VERSION__' */
 /** @import { Group } from './group.js?v=__VERSION__' */
+/** @import { Told } from './acts.js?v=__VERSION__' */
 
 /** @type {Record<string, readonly string[]>} */
 const VIEWS = {
@@ -32,13 +34,28 @@ export function exposes(state, place) {
   return !state.q.group && Object.hasOwn(VIEWS, view) && VIEWS[view]?.includes(place) === true;
 }
 
+// A group's card says what a person opens its page to learn, from what its
+// hidden section last told HOME (group-told.js): no read is added. Nothing is
+// said until it has told; when either read failed, that is said, never the
+// older answer as now's; and versions to review only when that was read.
+/** @param {{ told?: Told }} props */
+function Live({ told }) {
+  if (!told) return null;
+  const { people, lends } = told;
+  if (!told.fresh || !people || !lends)
+    return html`<small>This computer cannot read who is on now.</small>`;
+  const [all, on] = counted(people, [], lends);
+  const changed = lends.changed?.length ?? 0;
+  return html`<small>On now: ${on} of ${all}. Shared apps: ${once(lends.lent).length}.${changed > 0 && ` New versions to review: ${changed}.`}</small>`;
+}
+
 /** @param {{ s: State }} props */
 function GroupLinks({ s: state }) {
   return state.groups
     ?.filter((group) => !group.left)
     .map((group) => {
       const made = group.made ? ` (${whose(group.made)})` : '';
-      return html`<li><a href=${address('groups', group.id)} aria-current=${group.id === state.q.group ? 'page' : undefined}>${group.name ?? 'A group whose name cannot be read'}${made}</a><small>${group.person ? `You are ${group.person} here.` : 'This computer cannot say who you are here.'}</small></li>`;
+      return html`<li><a href=${address('groups', group.id)} aria-current=${group.id === state.q.group ? 'page' : undefined}>${group.name ?? 'A group whose name cannot be read'}${made}</a><small>${group.person ? `You are ${group.person} here.` : 'This computer cannot say who you are here.'}</small><${Live} told=${state.told?.[group.id]} /></li>`;
     });
 }
 
@@ -106,6 +123,7 @@ export function ArrivalLinks({ s: state, g: group }) {
   return html`<p>${state.grouped && group && html`<a href=${address('groups', group.id)}>Continue to ${group.name ?? 'your group'}</a> `}<a href="/">All your groups</a></p>`;
 }
 
+// Who is here is why people open the page, so People is open at first.
 // Inviting is beside the people it adds to, never folded with leaving. Each
 // app's address and WiFi line has a fold of its own: they are about an app,
 // not about managing the group, and were most of that fold's buttons.
@@ -116,7 +134,7 @@ export function GroupPlaces({ draw }) {
     ${draw(['index'])}
     <h3>Shared files</h3>
     ${draw(['folder'])}
-    <details class="group-place"><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
+    <details class="group-place" open><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
     ${draw(['links'])}
     <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>
     <details class="group-place"><summary>Addresses and WiFi</summary>${draw(['wifi'])}</details>

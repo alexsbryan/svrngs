@@ -18,19 +18,20 @@ import { GroupTold } from './group-told.js?v=__VERSION__';
  * read, and what each group's GROUP last read, by its id.
  * @typedef {object} Fields
  * @property {boolean} [actsRead]
- * @property {Record<string, { people: PeopleRow[] | undefined, lends: Lends | undefined }>} [told]
+ * @property {Record<string, Told>} [told]
  */
 
 /**
  * HOME's messages this file takes: "What acts as you" read, or what a
  * group's GROUP read (`Told`).
  * @typedef {{ type: 'told', flow: 'acts', read: true, why: string }
- *   | { type: 'told', flow: 'acts', id: string, people: PeopleRow[] | undefined, lends: Lends | undefined, why: string, read?: undefined }} Taken
+ *   | { type: 'told', flow: 'acts', id: string, people: PeopleRow[] | undefined, lends: Lends | undefined, fresh: boolean, why: string, read?: undefined }} Taken
  */
 
 /**
- * What a group's GROUP last read, as HOME keeps it (`Fields`' `told`).
- * @typedef {{ people: PeopleRow[] | undefined, lends: Lends | undefined }} Told
+ * What a group's GROUP last read, as HOME keeps it (`Fields`' `told`), and
+ * whether both were read in its last round (`fresh`).
+ * @typedef {{ people: PeopleRow[] | undefined, lends: Lends | undefined, fresh: boolean }} Told
  */
 
 // HOME's: what each group's GROUP last read, by its id.
@@ -41,7 +42,7 @@ import { GroupTold } from './group-told.js?v=__VERSION__';
  */
 export const take = (state, message) => {
   if (message.read) return go(state, {}, { actsRead: true });
-  const told = { people: message.people, lends: message.lends };
+  const told = { people: message.people, lends: message.lends, fresh: message.fresh };
   return go(state, {}, { told: { ...state.told, [message.id]: told } });
 };
 
