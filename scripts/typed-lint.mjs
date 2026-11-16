@@ -84,8 +84,14 @@ function program(config, copy) {
   const files = filesOf(config)
     .filter((file) => file.endsWith('.js'))
     .map((file) => relative(ROOT, file));
+  // Each copied file with each URL specifier naming the file it is served
+  // from, in `copy`.
   for (const file of files) {
-    rewrite(join(copy, file), copy);
+    const at = join(copy, file);
+    const text = readFileSync(at, 'utf8').replace(URL_SPECIFIER, (_, quote, specifier) => {
+      return `${quote}${inCopy(served(specifier), at, copy)}${quote}`;
+    });
+    writeFileSync(at, text);
   }
   const run = spawnSync(join(BIN, 'oxlint'), ['--type-aware', ...files], {
     cwd: copy,
@@ -108,19 +114,6 @@ function copied(path) {
   return !['node_modules', 'tests', 'src', 'target'].some(
     (left) => inside === left || inside.startsWith(`${left}/`),
   );
-}
-
-/**
- * The copied file at `at` with each URL specifier naming the file it is
- * served from, in `copy`.
- * @param {string} at
- * @param {string} copy
- */
-function rewrite(at, copy) {
-  const text = readFileSync(at, 'utf8').replace(URL_SPECIFIER, (_, quote, specifier) => {
-    return `${quote}${inCopy(served(specifier), at, copy)}${quote}`;
-  });
-  writeFileSync(at, text);
 }
 
 /**
