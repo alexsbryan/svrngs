@@ -27,8 +27,8 @@ const UNLISTED = {
 };
 
 // The computers whose lends are not listed, in one line for them all: a
-// sentence for each why, naming whose (question.js `computers`), so a group
-// with many asleep is not a line a computer.
+// sentence for each why, naming whose, every one (question.js `computers`),
+// so a group with many asleep is not a line a computer.
 /** @param {Lends} lends @param {PeopleRow[]} people */
 const unsaid = (lends, people) =>
   Object.entries(UNLISTED)

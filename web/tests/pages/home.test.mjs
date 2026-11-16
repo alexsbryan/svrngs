@@ -226,8 +226,10 @@ test('where the group’s folder is on this computer is said', async () => {
 // browser::the_home_page_says_a_refusal_apart_from_no_answer: the
 // computers whose lends are not listed are said in one line for them all,
 // a sentence for each how, from /v1/lends' `unanswered`, `unheard`,
-// `refused` and `older` (node.rs `Unlisted`), each naming whose; past a
-// handful of one how, how many, so the line does not grow with the group.
+// `refused` and `older` (node.rs `Unlisted`), each naming whose, every
+// one however many: the door marks only who did not answer, so a name left
+// out of the others would be said nowhere. Planted, watched failing:
+// question.js `computers` saying how many past four, "5 computers have …".
 // Planted, watched failing: index.js `unsaid` joining nothing, a sentence a
 // computer as before (its `whose` mapped one by one).
 test('a computer that refused is said apart from one that did not answer', async () => {
@@ -256,7 +258,7 @@ test('a computer that refused is said apart from one that did not answer', async
   });
   const many = await home(answers);
   assert.deepEqual(many.text('#home .index > p'), [
-    '5 computers have not heard of yours yet, so what they lend is not listed yet.',
+    'bo’s, cy’s, dee’s, eve’s and fay’s computers have not heard of yours yet, so what they lend is not listed yet.',
   ]);
 });
 

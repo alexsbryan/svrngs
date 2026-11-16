@@ -789,10 +789,10 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   (the operator, 2026-10-26), and its address copied for a program; then
   the group on a screen. In the index and the page's top they were words
   read before Money (the fifth xenia set, Kim's Home 90 of her 30). The computers that did not say what they lend are one line
-  under the grids, a sentence for each why, each naming whose, or past a
-  handful how many ("Ana’s and Eve’s computers did not answer, so what they
-  lend is not listed."), so nothing is stale, nobody is left out, and many
-  asleep are not a line each — among them one
+  under the grids, a sentence for each why, each naming whose, every one
+  ("Ana’s and Eve’s computers did not answer, so what they lend is not
+  listed."), so nothing is stale, nobody is left out, and many asleep are
+  not a line each — among them one
   running an older svrngs, whose answer is not read field by field
   (`crates/svrngs-node/src/version.rs`).
 

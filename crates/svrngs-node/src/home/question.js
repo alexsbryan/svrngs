@@ -443,14 +443,11 @@ export const shared = (pairs) => {
 };
 /** @param {string[]} people */
 const owners = (people) => list(people.map((person) => `${person}’s`));
-// Whose computers, in one phrase however many: each person by name, "Ana’s
-// and Bo’s computers", or past a handful how many, "7 computers", so the
-// line they are said in does not grow with the group.
+// Whose computers, in one phrase however many, each person by name: "Ana’s
+// and Bo’s computers". People are bounded by their group, and a name left
+// out is one nobody can go and ask.
 /** @param {string[]} people */
-export const computers = (people) =>
-  people.length > HANDFUL
-    ? `${people.length} computers`
-    : `${owners(people)} computer${people.length > 1 ? 's' : ''}`;
+export const computers = (people) => `${owners(people)} computer${people.length > 1 ? 's' : ''}`;
 /**
  * A lend its open names, as /v1/lends answers it (surface.rs `opening`):
  * `sends`, the rows it may send to, ticked apart, `sending` when the last
