@@ -425,25 +425,32 @@ export const reading = (lend, said) => {
 // name, or who can see it. Kinds, `spoken`, say what it reads: svrngs
 // cannot say "films" for a program it does not know.
 const HANDFUL = 4;
-/** @param {string[]} words @param {string} [last] */
-const list = (words, last = 'and') =>
-  words.length > 1 ? `${words.slice(0, -1).join(', ')} ${last} ${words.at(-1)}` : `${words[0]}`;
+/** @param {string[]} words */
+const list = (words) =>
+  words.length > 1 ? `${words.slice(0, -1).join(', ')} and ${words.at(-1)}` : `${words[0]}`;
 // What several share, said once: each of `pairs`' sayings, in order, with
-// the names it was said of listed, and how many they are. Said per name, the
-// same sentence read as volume, and the one that differed was hard to find.
+// the names it was said of listed. Said per name, the same sentence read as
+// volume, and the one that differed was hard to find.
 /**
  * @param {[said: string, name: string][]} pairs
- * @param {string} [last]
- * @returns {[said: string, names: string, count: number][]}
+ * @returns {[said: string, names: string][]}
  */
-export const shared = (pairs, last) => {
+export const shared = (pairs) => {
   /** @type {Map<string, string[]>} */
   const by = new Map();
   for (const [said, name] of pairs) by.set(said, [...(by.get(said) ?? []), name]);
-  return [...by].map(([said, names]) => [said, list(names, last), names.length]);
+  return [...by].map(([said, names]) => [said, list(names)]);
 };
 /** @param {string[]} people */
 const owners = (people) => list(people.map((person) => `${person}’s`));
+// Whose computers, in one phrase however many: each person by name, "Ana’s
+// and Bo’s computers", or past a handful how many, "7 computers", so the
+// line they are said in does not grow with the group.
+/** @param {string[]} people */
+export const computers = (people) =>
+  people.length > HANDFUL
+    ? `${people.length} computers`
+    : `${owners(people)} computer${people.length > 1 ? 's' : ''}`;
 /**
  * A lend its open names, as /v1/lends answers it (surface.rs `opening`):
  * `sends`, the rows it may send to, ticked apart, `sending` when the last

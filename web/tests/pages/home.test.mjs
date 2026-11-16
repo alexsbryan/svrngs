@@ -223,32 +223,40 @@ test('where the group’s folder is on this computer is said', async () => {
   ]);
 });
 
-// browser::the_home_page_says_a_refusal_apart_from_no_answer: each
-// computer whose lends are not listed is said by how, from /v1/lends'
-// `unanswered`, `unheard` and `refused` (node.rs `Unlisted`).
+// browser::the_home_page_says_a_refusal_apart_from_no_answer: the
+// computers whose lends are not listed are said in one line for them all,
+// a sentence for each how, from /v1/lends' `unanswered`, `unheard`,
+// `refused` and `older` (node.rs `Unlisted`), each naming whose; past a
+// handful of one how, how many, so the line does not grow with the group.
+// Planted, watched failing: index.js `unsaid` joining nothing, a sentence a
+// computer as before (its `whose` mapped one by one).
 test('a computer that refused is said apart from one that did not answer', async () => {
   const named = (person, key) => ({ person, person_key: key, joined: { at: 1_791_000_000 } });
-  const people = [
-    row('ada', ADA, 'started'),
-    ...[
-      ['bo', BO],
-      ['cy', CY],
-      ['dee', DEE],
-      ['eve', EVE],
-    ].map(([p, k]) => row(p, k)),
+  const others = [
+    ['bo', BO],
+    ['cy', CY],
+    ['dee', DEE],
+    ['eve', EVE],
+    ['fay', CY2],
   ];
+  const people = [row('ada', ADA, 'started'), ...others.map(([p, k]) => row(p, k))];
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = lends({
     unanswered: [named('bo', BO), named('dee', DEE)],
     unheard: [named('eve', EVE)],
     refused: [named('cy', CY)],
+    older: [named('fay', CY2)],
   });
   const page = await home(answers);
-  assert.deepEqual(page.text('#home .index > p').sort(), [
-    "bo's computer did not answer, so what they lend is not listed.",
-    "cy's computer answered without saying what they lend, so it is not listed.",
-    "dee's computer did not answer, so what they lend is not listed.",
-    "eve's computer has not heard of yours yet, so what they lend is not listed yet.",
+  assert.deepEqual(page.text('#home .index > p'), [
+    'bo’s and dee’s computers did not answer, so what they lend is not listed. eve’s computer has not heard of yours yet, so what they lend is not listed yet. cy’s computer answered without saying what they lend, so it is not listed. fay’s computer runs an older svrngs, so what they lend is not listed.',
+  ]);
+  answers['GET /v1/lends?namespace=house'] = lends({
+    unheard: others.map(([p, k]) => named(p, k)),
+  });
+  const many = await home(answers);
+  assert.deepEqual(many.text('#home .index > p'), [
+    '5 computers have not heard of yours yet, so what they lend is not listed yet.',
   ]);
 });
 

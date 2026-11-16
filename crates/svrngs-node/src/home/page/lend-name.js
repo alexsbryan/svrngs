@@ -8,7 +8,7 @@
 // this computer's own, or given the Play that opens another's here
 // (play-cell.js).
 import { html } from '../ui/view.js?v=__VERSION__';
-import { agreed, label, may, named } from '../question.js?v=__VERSION__';
+import { agreed, label, may, named, opens } from '../question.js?v=__VERSION__';
 import { PlayCell } from './play-cell.js?v=__VERSION__';
 import { Opening, Reach } from './reach.js?v=__VERSION__';
 /** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
@@ -37,6 +37,8 @@ export function LendName({ l: lend, shelf, g: group, s: state, me }) {
   const opener = lend.reading
     ? html`<${Opening} app=${label(lend)} words=${words} reading=${lend.reading} kinds=${lend.reads ?? []} />`
     : plain;
-  // What opening it lets it do is the grid's caption, never said again here.
-  return html`${opener}${` ${agreed(lend, shelf, group, [may(lend, group)])}`}`;
+  // What opening it lets it do is the grid's caption, never said again
+  // here; that it is on is the usual, so only that it is full is said.
+  const full = opens(lend) === 'full' ? ' Full now.' : '';
+  return html`${opener}${` ${agreed(lend, shelf, group, [may(lend, group)])}${full}`}`;
 }

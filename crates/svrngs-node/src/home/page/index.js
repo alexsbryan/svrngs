@@ -7,33 +7,41 @@
 // port another computer lends. The sentence names nothing, so the words
 // outside the cells are the same for eight things and for eighty; a cell is
 // a thing's name as its way in (lend-name.js), and a remark only where it
-// differs. Then each computer whose lends are not listed, said by why, so
-// what a computer lends is never stale and never nobody's.
+// differs. Then, in one line, the computers whose lends are not listed,
+// said by why, so what a computer lends is never stale and never nobody's.
 import { html } from '../ui/view.js?v=__VERSION__';
-import { called, label, lentBy, may, named, once, opens } from '../question.js?v=__VERSION__';
+import { called, computers, lentBy, may, named, once } from '../question.js?v=__VERSION__';
 import { LendName } from './lend-name.js?v=__VERSION__';
 import { PLAYS } from './play.js?v=__VERSION__';
 /** @import { Lends, Lent, PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
+// Why a computer's lends are not listed, by how its read names it; `a|b`
+// is the word for one computer, then for several.
 const UNLISTED = {
   unanswered: 'did not answer, so what they lend is not listed',
-  unheard: 'has not heard of yours yet, so what they lend is not listed yet',
+  unheard: 'has|have not heard of yours yet, so what they lend is not listed yet',
   refused: 'answered without saying what they lend, so it is not listed',
-  older: 'runs an older svrngs, so what they lend is not listed',
+  older: 'runs|run an older svrngs, so what they lend is not listed',
 };
 
-// Each computer whose lends are not listed, by why.
+// The computers whose lends are not listed, in one line for them all: a
+// sentence for each why, naming whose (question.js `computers`), so a group
+// with many asleep is not a line a computer.
 /** @param {Lends} lends @param {PeopleRow[]} people */
 const unsaid = (lends, people) =>
-  Object.entries(UNLISTED).flatMap(([how, why]) =>
-    // Object.entries names each key a string; each is UNLISTED's, a list of
-    // the lends' read.
-    lends[/** @type {keyof typeof UNLISTED} */ (how)].map(
-      (person) => `${called(people, person.person_key) ?? person.person}'s computer ${why}.`,
-    ),
-  );
+  Object.entries(UNLISTED)
+    .flatMap(([how, why]) => {
+      // Object.entries names each key a string; each is UNLISTED's, a list
+      // of the lends' read.
+      const whose = lends[/** @type {keyof typeof UNLISTED} */ (how)].map(
+        (person) => called(people, person.person_key) ?? person.person,
+      );
+      const said = why.replace(/(\w+)\|(\w+)/, whose.length > 1 ? '$2' : '$1');
+      return whose.length ? [`${computers(whose)} ${said}.`] : [];
+    })
+    .join(' ');
 
 // Where a lend's grid comes: the group's own apps, then what people's
 // computers lend that opens in a tab, then their ports, this computer's
@@ -75,21 +83,19 @@ function Index({ g: group, s: state, me }) {
   const grids = new Map();
   for (const lend of lent) {
     const caption = says(lend, group, me);
-    // That a lend is on is the usual, so its cell says only that it is full.
+    // A lend's origin is its own, so it keys its cell.
     const cell = html`
-      <li key=${label(lend)}>
+      <li key=${lend.origin}>
         <${LendName} l=${lend} shelf=${lends.shelf} g=${group} s=${state} me=${me} />
-        ${opens(lend) === 'full' && ' Full now.'}
       </li>
     `;
     grids.set(caption, [...(grids.get(caption) ?? []), cell]);
   }
-  const unlisted = unsaid(lends, people);
-  const none = lent.length || unlisted.length ? [] : ['Nobody lends anything here yet.'];
+  const under = unsaid(lends, people) || (lent.length ? '' : 'Nobody lends anything here yet.');
   return html`
     <div class="index">
       ${[...grids].map(grid)}
-      ${[...unlisted, ...none].map((words) => html`<p>${words}</p>`)}
+      ${under && html`<p>${under}</p>`}
     </div>
   `;
 }

@@ -241,7 +241,7 @@ const silent = (person, key) => ({ person, person_key: key });
 // browser::whose_computer_did_not_answer_and_who_asked_are_told_by_key,
 // the page's half: two people are in house as cy, the first's computer
 // answering, the second's not, and the second asks to remove dee. The
-// door draws the first cy on and the second off; the row saying whose
+// door draws the first cy on and the second off; the line saying whose
 // computer did not answer, and the ask, name that cy, told apart by when
 // they joined; bo's and dee's computers do not answer either. That a
 // computer that does not answer is named so in /v1/lends, by name and
@@ -279,14 +279,9 @@ test('whose computer did not answer, and who asked, are told by key', async () =
     ['on', 'on now'],
   ]);
   const second = q.called(people, CY2);
-  const rows = page.text('#home .index > p');
-  const unheard = rows.filter(
-    (line) =>
-      line.startsWith('cy') &&
-      line.endsWith("'s computer did not answer, so what they lend is not listed."),
-  );
-  assert.equal(unheard.length, 1, rows.join('\n'));
-  assert.ok(unheard[0].startsWith(`${second}'s computer`), unheard[0]);
+  assert.deepEqual(page.text('#home .index > p'), [
+    `bo’s, ${second}’s and dee’s computers did not answer, so what they lend is not listed.`,
+  ]);
   assert.ok(second.startsWith('cy (joined '), second);
   const asked = page
     .text('#home .removals li')
@@ -465,7 +460,7 @@ test('an older computer is said once on the home page, and nothing it lends list
   answers['GET /v1/lends?namespace=house'] = lends({ older: [silent('cy', CY)] });
   const page = await home(answers);
   const cells = page.text('#home .index p');
-  const said = "cy's computer runs an older svrngs, so what they lend is not listed.";
+  const said = 'cy’s computer runs an older svrngs, so what they lend is not listed.';
   assert.equal(cells.filter((cell) => cell === said).length, 1, cells.join('\n'));
   assert.equal(cells.join('').split('runs an older svrngs').length - 1, 1, cells.join('\n'));
 });
