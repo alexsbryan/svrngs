@@ -151,18 +151,18 @@ const on = (state, lend) => (state.at.room === 'unread' ? undefined : state.room
  */
 
 const CLOSED = 'Closed to this WiFi: nobody on it can open it through this computer now. ';
-const OPEN_IT = 'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.';
 
 // One lend's line, in either list, drawn from ROOM alone: what is open
 // said, or closed, if a press here closed it, and why a turn was refused.
+// What opening one does is said once above each list, never per line
+// (`ANYONE`, wifi-foot.js `OPEN_ONE`).
 // It stays beside ROOM, whose store it reads, as `rooms` draws it, and
 // web/tests/pages/rooms.test.mjs imports ROOM and `rooms` from this file.
 /** @param {LineProps} props */
 export function Line({ l: lend, words, foot }) {
   const state = useStore(room);
   const open = on(state, lend);
-  const closed = state.closed.some(same(lend)) ? CLOSED : '';
-  const said = open?.said ?? `${closed}${OPEN_IT}`;
+  const said = open?.said ?? (state.closed.some(same(lend)) ? CLOSED : '');
   const doing = { state: state.at.room === 'turning' ? 'busy' : 'idle' };
   const turn = {
     type: 'turn',

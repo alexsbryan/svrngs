@@ -106,6 +106,9 @@ export function ArrivalLinks({ s: state, g: group }) {
   return html`<p>${state.grouped && group && html`<a href=${address('groups', group.id)}>Continue to ${group.name ?? 'your group'}</a> `}<a href="/">All your groups</a></p>`;
 }
 
+// Inviting is beside the people it adds to, never folded with leaving. Each
+// app's address and WiFi line has a fold of its own: they are about an app,
+// not about managing the group, and were most of that fold's buttons.
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
 export function GroupPlaces({ draw }) {
   return html`
@@ -114,8 +117,10 @@ export function GroupPlaces({ draw }) {
     <h3>Shared files</h3>
     ${draw(['folder'])}
     <details class="group-place"><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
+    ${draw(['links'])}
     <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>
-    <details class="group-place"><summary>Manage this group</summary>${draw(['links', 'wifi', 'show', 'leave'])}</details>
+    <details class="group-place"><summary>Addresses and WiFi</summary>${draw(['wifi'])}</details>
+    <details class="group-place"><summary>Manage this group</summary>${draw(['show', 'leave'])}</details>
     ${draw(['told'])}
   `;
 }

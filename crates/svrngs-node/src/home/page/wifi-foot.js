@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The foot of a group's section: each lend of the group's that is a page,
-// with its line (wifi.js `Line`) and its address for a program. It is
+// with its line (wifi.js `Line`) and its address for a program, under what
+// opening one to this WiFi does, said once. It is
 // drawn once ROOM has answered, so no line says a lend is closed before
 // ROOM has said what is open. This file, not wifi.js, names the place: it
 // imports wifi.js, so wifi.js cannot import it back (`import/no-cycle`),
@@ -11,6 +12,8 @@ import { keyOf } from './lend-key.js?v=__VERSION__';
 import { Line, room } from './wifi.js?v=__VERSION__';
 /** @import { PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
+
+const OPEN_ONE = 'Open one to this WiFi, and anyone on it can open it as you while svrngs runs.';
 
 /**
  * @param {PlaceProps} props
@@ -31,7 +34,7 @@ function WifiFoot({ s: state }) {
       const whose = lentBy(lend, people);
       return html`<${Line} key=${keyOf(lend)} l=${whose} words=${`${named(whose)}:`} foot />`;
     });
-  return html`<ul class="wifi">${lines}</ul>`;
+  return html`${lines.length > 0 && html`<p>${OPEN_ONE}</p>`}<ul class="wifi">${lines}</ul>`;
 }
 
 /** @type {{ wifi: (props: PlaceProps) => Drawn }} */

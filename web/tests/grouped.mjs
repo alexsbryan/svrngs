@@ -16,10 +16,8 @@ try {
         new URL('../../crates/svrngs-node/src/home/page/grouped.js', import.meta.url),
         'utf8',
       );
-      const body = source.replace(
-        "draw(['links', 'wifi', 'show', 'leave'])",
-        "draw(['links', 'show', 'leave'])",
-      );
+      const body = source.replace("draw(['wifi'])", 'draw([])');
+      assert.notEqual(body, source, 'the plant found the place it removes');
       await route.fulfill({ contentType: 'text/javascript', body });
     });
   }

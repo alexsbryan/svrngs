@@ -430,12 +430,10 @@ test('a lend opened to this WiFi says the address, and closed says so', async ()
   assert.ok(kin.indexOf(index) >= 0 && kin.indexOf(index) < kin.indexOf(wifi), 'below the index');
   const [offered] = page.text(line);
   assert.ok(offered.startsWith('ada’s shelf (k):'), offered);
-  assert.ok(
-    offered.includes(
-      'Open it to this WiFi, and anyone on it can open it as you while svrngs runs.',
-    ),
-    offered,
-  );
+  // What opening one does is said once, above the list, not on each line.
+  const does = 'Open one to this WiFi, and anyone on it can open it as you while svrngs runs.';
+  assert.equal(page.text('#home section p').filter((p) => p === does).length, 1);
+  assert.ok(!offered.includes('anyone on it'), offered);
   await page.press(`${line} button`, 'Open it to this WiFi');
   assert.ok(page.text(line)[0].includes(open[0].said), page.text(line)[0]);
 

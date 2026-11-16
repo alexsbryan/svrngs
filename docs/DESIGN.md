@@ -797,9 +797,13 @@ files**: **Open shared files in Finder**, or "in your file manager" off a
 Mac, opens the group's folder in a window of its own, each of several
 folders named by its own name, and **Folder location**, closed at first,
 says where it is (`home/page/group-folder.js`). **People**
-holds presence, visitors and removals; **Add an app** holds the existing
-shelf; **Manage this group** holds every invitation and device-link control,
-WiFi sharing, program addresses, the presentation screen, handover and leave.
+holds presence, visitors and removals, and under it, unfolded, every
+invitation and device-link control, beside the people it adds to; **Add an
+app** holds the existing shelf; **Addresses and WiFi** holds each app's
+line, its address for a program and its WiFi sharing, under what opening
+one to this WiFi does, said once; **Manage this group** holds the
+presentation screen, handover and leave (`home/page/grouped.js`
+`GroupPlaces`).
 **This computer** holds what acts as you, running-program discovery, and
 lending/sign-in/limit controls; terminal-only removal instructions are shown
 there, with **Check the connection now**, whose answer lands on that page, and

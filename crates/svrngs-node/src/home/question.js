@@ -130,9 +130,8 @@ const does = (kind, shelf) =>
 export const may = (lend, group) => {
   const name = group.name ?? 'your group';
   if (!lend.group) return `Opening it lets it write its own part of ${name}’s record, as you.`;
-  const how =
-    (lend.reads ?? []).length > 0 ? 'read but never write' : 'read and write only its own entries';
-  return `Opening it lets it ${how}, as you in ${name}.`;
+  const reads = (lend.reads ?? []).length > 0;
+  return `Opening it lets it ${reads ? 'read but never write' : 'read and write only its own entries'}, as you in ${name}.`;
 };
 // `above`: the sentences of `may` already said over the list this is said
 // in, which it does not say again.
