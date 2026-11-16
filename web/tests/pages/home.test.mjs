@@ -394,6 +394,31 @@ test('the words outside the index’s cells are the same for 8 things and for 40
   assert.deepEqual(many, few);
 });
 
+// A group's page puts the bounded before the unbounded: under the banner
+// what needs the person, then People and inviting, then what they share,
+// its files, and the folds. Planted, watched failing: grouped.js
+// `GroupPlaces` drawing Shared apps before People, as it did.
+test('a group’s page is its banner, what needs you, its people, then what they share', async () => {
+  const answers = ada({ lent: [lend('shelf')] });
+  const changed = [{ group: 'house', app: 'Money', by: 'bo', by_key: BO, at: 1_791_000_900 }];
+  answers['GET /v1/lends?namespace=house'] = lends({ lent: [lend('shelf')], changed });
+  const page = await home(answers, '/?group=house');
+  const [banner] = page.all('#group-house > h2');
+  assert.equal(banner.nextSibling.attributes.class, 'grouped-notice');
+  const heads = page
+    .all('#group-house *')
+    .filter((at) => at.parentNode.id === 'group-house' && ['h3', 'details'].includes(at.localName))
+    .map((at) => words(at.localName === 'h3' ? at : at.firstChild));
+  assert.deepEqual(heads, [
+    'People',
+    'Shared apps',
+    'Shared files',
+    'Add an app',
+    'Addresses and WiFi',
+    'Manage this group',
+  ]);
+});
+
 // "What you lend" is a line a lend, its form folded under the line, and no
 // button there is stretched: look.css's full-width button is the phone
 // page's index's alone (`tbody#lent`, web/page/lent-index.js), where the

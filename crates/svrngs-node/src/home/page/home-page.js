@@ -7,7 +7,7 @@
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
 import { Group } from './group.js?v=__VERSION__';
 import { Folder } from './group-folder.js?v=__VERSION__';
-import { ArrivalLinks, Choices, exposes } from './grouped.js?v=__VERSION__';
+import { ArrivalLinks, Choices, Notice, exposes } from './grouped.js?v=__VERSION__';
 /** @import { Store } from '../ui/machine.js?v=__VERSION__' */
 /** @import { Group as Held } from './group.js?v=__VERSION__' */
 /** @import { Flows, Message, Places, Said, State } from './home-reading.js?v=__VERSION__' */
@@ -142,6 +142,7 @@ export function Home({ store, flows, places }) {
           home=${home}
           grouped=${grouped}
           hidden=${grouped && query.group !== group.id}
+          notice=${grouped && query.group === group.id && html`<${Notice} s=${state} g=${group} />`}
         />
       `,
     );

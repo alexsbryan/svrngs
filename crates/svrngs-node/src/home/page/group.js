@@ -114,6 +114,7 @@ const BACKUP = {
  * @property {string} [joined]
  * @property {boolean} [grouped]
  * @property {boolean} [hidden]
+ * @property {Drawn} [notice] what needs the person, said under the heading (grouped.js `Notice`)
  */
 
 // The colour a group is drawn in on every page, one of look.css's twelve
@@ -141,19 +142,20 @@ function below(group, name, props) {
 }
 
 // The section, in its group's colour (look.css `data-colour`), headed by
-// its name and whose it is; when this computer meets the group at its
+// its name and whose it is, with what needs the person under it; when this computer meets the group at its
 // fallback (surface.rs `Held::fallback`), said after the group's controls
 // under Connection details, closed at first: how it reaches the group is
 // not what a person came to do (docs/APP_ACCESS_AND_STOP.md A3). A group
 // that cannot be read is said under the heading, where it stops them.
 /** @param {GroupProps} props */
-export function Group({ g: group, ...props }) {
+export function Group({ g: group, notice, ...props }) {
   const name = group.name ?? 'this group';
   const heading = group.name ?? 'A group whose name this computer cannot read';
   const made = group.made && html`<small> (${whose(group.made)})</small>`;
   return html`
     <section id=${`group-${group.id}`} data-colour=${colour(group.id)} hidden=${props.hidden}>
       <h2>${heading}${made}</h2>
+      ${notice}
       ${below(group, name, props)}
       ${group.fallback && html`<details class="said"><summary>Connection details</summary><p>${BACKUP[group.fallback](name)}</p></details>`}
     </section>

@@ -59,13 +59,15 @@ function GroupLinks({ s: state }) {
     });
 }
 
-/** @param {{ s: State }} props */
-function Notice({ s: state }) {
-  const selected = state.groups?.find((group) => group.id === state.q.group && !group.left);
-  const changes = selected && state.told?.[selected.id]?.lends?.changed;
-  if (!selected || !changes || changes.length === 0) return null;
+// What needs the person on a group's page, a new version to review, is
+// said directly under its banner (home-page.js gives it to group.js
+// `Group`), where they look first, never above the banner among the rules.
+/** @param {{ s: State, g: Group }} props */
+export function Notice({ s: state, g: group }) {
+  const changes = state.told?.[group.id]?.lends?.changed;
+  if (!changes?.length) return null;
   return html`
-    <p class="grouped-notice"><a href=${`${address('computer')}&review=${encodeURIComponent(selected.id)}`}>${changes.length} ${changes.length === 1 ? 'app has a new version' : 'apps have new versions'} you can review.</a> Your current versions keep running.</p>
+    <p class="grouped-notice"><a href=${`${address('computer')}&review=${encodeURIComponent(group.id)}`}>${changes.length} ${changes.length === 1 ? 'app has a new version' : 'apps have new versions'} you can review.</a> Your current versions keep running.</p>
   `;
 }
 
@@ -105,7 +107,6 @@ export function Navigation({ s: state }) {
       }
     </nav>
     <${Context} s=${state} />
-    <${Notice} s=${state} />
   `;
 }
 
@@ -123,19 +124,21 @@ export function ArrivalLinks({ s: state, g: group }) {
   return html`<p>${state.grouped && group && html`<a href=${address('groups', group.id)}>Continue to ${group.name ?? 'your group'}</a> `}<a href="/">All your groups</a></p>`;
 }
 
-// Who is here is why people open the page, so People is open at first.
-// Inviting is beside the people it adds to, never folded with leaving. Each
-// app's address and WiFi line has a fold of its own: they are about an app,
-// not about managing the group, and were most of that fold's buttons.
+// A group's page, the bounded before the unbounded: its people first, who
+// are bounded by the group and why the page is opened, with inviting beside
+// the people it adds to, never folded with leaving; then what they share,
+// which has no bound; then its files. Last the folds: each app's address
+// and WiFi line has one of its own, being about an app, not about managing
+// the group.
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
 export function GroupPlaces({ draw }) {
   return html`
+    <details class="group-place" open><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
+    ${draw(['links'])}
     <h3>Shared apps</h3>
     ${draw(['index'])}
     <h3>Shared files</h3>
     ${draw(['folder'])}
-    <details class="group-place" open><summary>People</summary>${draw(['people', 'visits', 'removals'])}</details>
-    ${draw(['links'])}
     <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>
     <details class="group-place"><summary>Addresses and WiFi</summary>${draw(['wifi'])}</details>
     <details class="group-place"><summary>Manage this group</summary>${draw(['show', 'leave'])}</details>

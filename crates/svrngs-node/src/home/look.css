@@ -185,6 +185,8 @@ body.layout-b .folder, body.layout-b .address { overflow-wrap: anywhere; }
 .group-list small { display: block; }
 .group-place { margin: 1rem 0; padding: 0.75rem 0; border-top: var(--hair); }
 .group-place > summary { font-size: 1.1rem; }
+/* People, first under the group's banner, needs no rule of its own above it. */
+section > .group-place:first-of-type { margin-top: 0; border-top: 0; }
 /* "Add an app" opens straight to the shelf: its own heading, in other words, is the fold's. */
 .group-place > section > h3:first-child { display: none; }
 .grouped-notice { border-left: 0.3rem solid var(--link); padding-left: 0.75rem; }
