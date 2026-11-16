@@ -19,7 +19,7 @@ try {
     await arrived(home, 90_000);
     [page] = await Promise.all([
       context.waitForEvent('page'),
-      home.getByRole('link', { name: /^Open .*holyarrs$/ }).click(),
+      home.getByRole('link', { name: /holyarrs$/ }).click(),
     ]);
   }
   await page.getByLabel('Name', { exact: true }).fill(state.ana.name);

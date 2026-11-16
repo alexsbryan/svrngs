@@ -44,7 +44,7 @@ try {
   // The home page reads its groups and lends again each second.
   const button = page.getByRole('button', { name: args.opener, exact: true });
   await button.waitFor({ timeout: 60_000 });
-  seen.row = await button.locator('xpath=ancestor::td[1]').innerText();
+  seen.row = await button.locator('xpath=ancestor::li[1]').innerText();
 
   at = 'Movie Night, opened';
   const [tab] = await Promise.all([

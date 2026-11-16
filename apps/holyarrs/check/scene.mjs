@@ -140,12 +140,12 @@ try {
   } else {
     [page] = await Promise.all([
       bo.context.waitForEvent('page'),
-      home.getByRole('link', { name: /^Open .*holyarrs$/ }).click(),
+      home.getByRole('link', { name: /holyarrs$/ }).click(),
     ]);
   }
   [own] = await Promise.all([
     ana.context.waitForEvent('page'),
-    own.getByRole('link', { name: /^Open .*holyarrs$/ }).click(),
+    own.getByRole('link', { name: /holyarrs$/ }).click(),
   ]);
   for (const p of [page, own]) watchErrors(p);
   await login(page, services.bo);
