@@ -251,7 +251,6 @@ export function compose(flows) {
   );
   /** @type {Record<string, Filled>} */
   const claimed = {};
-  const keys = Object.keys;
   const owner = (/** @type {string} */ kind, /** @type {string} */ name) =>
     claimed[`${kind} ${name}`]?.name;
   /**
@@ -270,12 +269,12 @@ export function compose(flows) {
     }
   };
   for (const flow of all) {
-    claim(flow, 'message type', keys(flow.takes));
-    claim(flow, 'region', keys(flow.states));
-    claim(flow, 'io', keys(flow.io));
-    claim(flow, 'place', keys(flow.view));
+    claim(flow, 'message type', Object.keys(flow.takes));
+    claim(flow, 'region', Object.keys(flow.states));
+    claim(flow, 'io', Object.keys(flow.io));
+    claim(flow, 'place', Object.keys(flow.view));
     claim(flow, 'field', flow.owns);
-    const slots = [...keys(flow.heading), ...keys(flow.response)];
+    const slots = [...Object.keys(flow.heading), ...Object.keys(flow.response)];
     const slot = slots.find((name) => !ORDER.includes(name));
     if (slot) {
       const order = ORDER.join(', ');

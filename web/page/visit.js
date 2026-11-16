@@ -164,21 +164,6 @@ const stay = (core, token, visit) => {
   };
 };
 /**
- * The visit, asked of the computer that made the link as `guest`.
- * @param {typeof Wasm} core
- * @param {string} token
- * @param {string} guest
- * @returns {Promise<Visit>}
- */
-async function visiting(core, token, guest) {
-  const ask = JSON.parse(core.ask(/** @type {Uint8Array} */ (key), token));
-  const consent = core.consent(/** @type {Uint8Array} */ (key), token);
-  const body = JSON.stringify({ ask, guest, consent });
-  return JSON.parse(
-    await posted(core, /** @type {Uint8Array} */ (key), token, { path: '/visit', body }),
-  );
-}
-/**
  * The visit kept for this link, its key unsealed, or `unkept` when none is.
  * @param {string} token
  * @returns {Promise<PageMessage>}
@@ -201,7 +186,12 @@ async function recalling(token) {
 async function redeeming(token, guest) {
   const core = await wasm();
   key = crypto.getRandomValues(new Uint8Array(32));
-  const visit = await visiting(core, token, guest);
+  // The visit, asked of the computer that made the link as `guest`.
+  const ask = JSON.parse(core.ask(key, token));
+  const consent = core.consent(key, token);
+  const body = JSON.stringify({ ask, guest, consent });
+  /** @type {Visit} */
+  const visit = JSON.parse(await posted(core, key, token, { path: '/visit', body }));
   await store.keepVisit(token, visit, key);
   return stay(core, token, visit);
 }

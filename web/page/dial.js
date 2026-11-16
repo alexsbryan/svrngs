@@ -286,11 +286,7 @@ export const lends = (core, group, tried) =>
  */
 export const dialled = (group, lend) =>
   wasm().then((core) =>
-    patiently(
-      Promise.resolve(endpoint(core, group)).then((dialer) =>
-        dialer.dial(lend.key, lend.relay ?? null),
-      ),
-    ),
+    patiently(endpoint(core, group).then((dialer) => dialer.dial(lend.key, lend.relay ?? null))),
   );
 
 /**

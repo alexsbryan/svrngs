@@ -217,14 +217,6 @@ const HOW = {
 /** @typedef {Extract<Message, { type: 'looked' }>} Looked */
 /** @typedef {Step<State, Effect | Send>} Stepped */
 
-// A link's token: the fragment's first part, unless it names a part.
-/** @param {string} fragment */
-const tokenOf = (fragment) => {
-  // `split` always answers one part.
-  const first = /** @type {string} */ (fragment.split('&')[0]);
-  return first.includes('=') ? '' : first;
-};
-
 // Why a fragment cannot be read: a part this page does not read, or a
 // token svrngs-core cannot (`linked`). None when it can be.
 /**
@@ -325,7 +317,10 @@ export const takes = {
     if (fragment.startsWith('visit='))
       return go(state, {}, {}, sending('visit', { token: fragment.slice('visit='.length) }));
     const parts = new URLSearchParams(fragment);
-    const token = tokenOf(fragment);
+    // A link's token: the fragment's first part, unless it names a part.
+    // `split` always answers one part.
+    const first = /** @type {string} */ (fragment.split('&')[0]);
+    const token = first.includes('=') ? '' : first;
     const unreadable = unreadableIn(parts, token, linked);
     if (unreadable) return go(state, {}, {}, say(unreadable));
     return addressed(state, message, parts, token);
@@ -379,17 +374,7 @@ export const takes = {
     const { lent } = message;
     // Answered, at this version or later, so the body is whole: an answer
     // is never read field by field (version.rs `older`).
-    const {
-      unanswered,
-      unheard,
-      refused,
-      older: behind,
-      removals,
-      visiting,
-      people,
-      shelf,
-      changed,
-    } = /** @type {Body} */ (message.body);
+    const body = /** @type {Body} */ (message.body);
     const computers = [
       ...new Map(
         lent.map((lend) => [
@@ -404,7 +389,7 @@ export const takes = {
       meets: message.meets ?? state.group.meets,
       addresses: [
         ...lent.map((lend) => lend.label),
-        ...once(lent).map((lend) => alias(lend, lent, people)),
+        ...once(lent).map((lend) => alias(lend, lent, body.people)),
       ],
     };
     return go(
@@ -415,15 +400,15 @@ export const takes = {
         via: message.via,
         stale: '',
         lent,
-        people,
-        shelf,
-        unanswered,
-        unheard,
-        refused,
-        behind,
-        removals,
-        visiting,
-        changed,
+        people: body.people,
+        shelf: body.shelf,
+        unanswered: body.unanswered,
+        unheard: body.unheard,
+        refused: body.refused,
+        behind: body.older,
+        removals: body.removals,
+        visiting: body.visiting,
+        changed: body.changed,
         me: message.me,
       },
       { run: 'keep', group, lent, failed: 'failed' },
