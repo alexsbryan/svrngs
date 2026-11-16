@@ -57,9 +57,9 @@ group**. The page says *"You made Lab. Invite someone to it below."*, and
 shows **Open shared files in Finder** (in your file manager, off a Mac),
 which opens Lab's folder; **Folder location** says where it is.
 
-Under Lab you see who is in it, a list of what the group has (empty for
-now), and **Bring things to the table**: Money, Events and House rules,
-which come with svrngs. [Apps](apps.md) says what each does.
+Under Lab you see who is in it, **Shared apps** (empty for now), and
+**Add an app**: press it for Money, Events and House rules, which come
+with svrngs. [Apps](apps.md) says what each does.
 
 ## Invite someone
 

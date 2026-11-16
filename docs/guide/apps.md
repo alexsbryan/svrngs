@@ -10,7 +10,7 @@ something from a terminal.
 
 ![An app Ana lends opens only while Ana's computer is on; Money, brought to Elm, is in Elm's folder on every computer, so it opens while any of them is on.](../diagrams/guide/apps-carried.svg)
 
-On your home page, under your group, find **Bring things to the table**.
+On your home page, open your group and press **Add an app**.
 Each app is listed with a tick box and a line saying what it's for:
 
 - **Money**: who owes whom, and for what.
@@ -24,8 +24,8 @@ everyone in it can open it in a few seconds."* Nothing is ticked to start
 with; press the button with nothing ticked and it says *"Tick something to
 bring first."*
 
-The app then shows up in your group's list on everyone's home page and on
-everyone's phone, as a link of its name, such as **Money**. Pressing that
+The app then shows up under **Shared apps** on everyone's home page and in
+the group's list on everyone's phone, as a link of its name, such as **Money**. Pressing that
 link is how you open it. An app already brought says *"Money is on the
 table."* and drops off the tick list.
 
