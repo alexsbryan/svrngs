@@ -13,10 +13,14 @@ something from a terminal.
 On the home page both kinds are listed under **Shared apps**, and the
 sentence over each says which it is and when it opens.
 
-On your home page, open your group and press **Add an app**. It says
-how: *"Tick what you want and press the button. It goes in Elm’s folder,
-and everyone in Elm can open it in a few seconds."* Each app is listed with
-a tick box and a line saying what it's for:
+On your home page, open your group and press **Add an app**. It opens on
+what an app is: *"An app here is a folder in this group’s shared files,
+under apps: a page, index.html, and whatever it needs. Put one there, and
+everyone in the group can open it under Shared apps."* The apps that come
+with svrngs are examples of that, and it says so: *"These are svrngs’s
+examples, to use or to change. Tick what you want and press the button: it
+goes in Elm’s folder, and everyone in Elm can open it in a few seconds."*
+Each is listed with a tick box and a line saying what it's for:
 
 - **Money**: who owes whom, and for what.
 - **Events**: the get-togethers people post, and who’s coming.
@@ -34,11 +38,11 @@ the group's list on everyone's phone, as a link of its name, such as **Money**. 
 link is how you open it. Apps already brought drop off the tick list and
 are named in one line: *"Money and Events are already in Elm."*
 
-That is not the only way to add something. A program already running on
-your computer is lent from **This computer**, under **Already running
-here** ([lend.md](lend.md)), and an app you made yourself goes in the
-group's folder, under `apps` ([build.md](build.md)); **Add an app** points
-to both.
+An app of your own goes in the same place, the group's folder, under
+`apps` ([build.md](build.md)), and shows up the same way. A program already
+running on your computer is something else: it is lent from **This
+computer**, under **Already running here** ([lend.md](lend.md)). **Add an
+app** says both.
 
 The same list is on your group's page on a phone. Right after you join a
 group, it's folded under **Bring more to Elm**.

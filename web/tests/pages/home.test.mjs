@@ -738,40 +738,46 @@ test('a group’s page is its banner, what needs you, its people, what they shar
   ]);
 });
 
-// "Add an app" on a group's page answers how: the sentence saying the act
-// and what comes of it is the legend of the boxes; what is here already is
-// one line; and under the button, the home page's alone, where what is
-// added is found and the other ways to add something, the one that is on
-// this page a link to it. Planted, watched failing: page/shelf.js linking
-// to the overview where it says This computer.
-test('Add an app says how, what is here already, and the other ways to add one', async () => {
-  const money = lend('Money-house', { kind: 'Money', group: 'house' });
+// "Add an app" on a group's page opens on what an app here is, a folder
+// anyone can put in the group's shared files, and where that folder is
+// opened from; then what is in the group already, in one line; then
+// svrngs's own apps, said to be examples, with how to bring one, as the
+// legend of their boxes; then the button; and last the other way to add
+// something, a link to it. With nothing left to tick it is the same fold
+// less the boxes and the button, so never a dead end. Planted, each
+// watched failing: grouped.js `GroupPlaces` drawing the shelf before what
+// an app is; page/shelf.js linking to the overview where it says This
+// computer.
+test('Add an app leads with what an app is, then svrngs’s examples, then the other way', async () => {
+  const carried = (kind) => lend(`${kind}-house`, { kind, group: 'house' });
   const shelf = [
     { name: 'Money', words: 'who owes whom.' },
     { name: 'Events', words: 'nights out.' },
   ];
-  const answers = ada({ groups: [group({ name: 'House' })] });
-  answers['GET /v1/lends?namespace=house'] = lends({ lent: [money], shelf });
-  const page = await home(answers, '/?group=house');
-  const fold = page
-    .all('#group-house > details')
-    .find((at) => words(at.firstChild) === 'Add an app');
-  assert.deepEqual(page.text('#group-house > details legend'), [
-    'Tick what you want and press the button. It goes in House’s folder, and everyone in House can open it in a few seconds.',
-  ]);
-  const said = words(fold);
-  assert.ok(said.includes('Money is already in House.'), said);
-  assert.ok(
-    said.endsWith(
-      'What you add is listed under Shared apps. A program already running on this computer is lent from This computer instead, and an app of your own goes in House’s folder, under apps.',
-    ),
-    said,
-  );
-  const links = page.all('#group-house > details section a');
-  assert.deepEqual(
-    links.map((link) => [words(link), link.attributes.href]),
-    [['This computer', '/?view=computer']],
-  );
+  const opened = async (lent) => {
+    const answers = ada({ groups: [group({ name: 'House' })] });
+    answers['GET /v1/lends?namespace=house'] = lends({ lent, shelf });
+    const page = await home(answers, '/?group=house');
+    const fold = page
+      .all('#group-house > details')
+      .find((at) => words(at.firstChild) === 'Add an app');
+    const within = (at) => at && (at === fold || within(at.parentNode));
+    const parts = page
+      .all('#group-house > details *')
+      .filter((at) => within(at) && ['p', 'legend'].includes(at.localName));
+    const links = page.all('#group-house > details section a');
+    return [parts.map(words).filter(Boolean), links.map((link) => link.attributes.href)];
+  };
+  const IS =
+    'An app here is a folder in this group’s shared files, under apps: a page, index.html, and whatever it needs. Put one there, and everyone in the group can open it under Shared apps. Shared files, on this page, opens the group’s folder.';
+  const OTHER = 'A program already running on this computer is lent from This computer instead.';
+  const [some, links] = await opened([carried('Money')]);
+  assert.deepEqual([some[0], some[1], some.at(-1)], [IS, 'Money is already in House.', OTHER]);
+  assert.ok(some[2].startsWith('These are svrngs’s examples, to use or to change. Tick '), some[2]);
+  assert.deepEqual(some.slice(3, 5), ['Events: nights out.', 'Bring the ticked ones to House']);
+  assert.deepEqual(links, ['/?view=computer']);
+  const [none] = await opened([carried('Money'), carried('Events')]);
+  assert.deepEqual(none, [IS, 'Money and Events are already in House.', OTHER]);
 });
 
 // Under "What acts as you", each Stop of an app that opens friends' things

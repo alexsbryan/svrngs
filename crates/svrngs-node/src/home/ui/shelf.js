@@ -191,7 +191,7 @@ const FIRST = { at: { bring: 'idle' }, ticked: [], brought: [], open: false, sai
  * @property {boolean} [joined]
  * @property {(g: G, apps: string[]) => Promise<Brought[]>} bring
  * @property {() => void} after
- * @property {Drawn} [more] what a page adds under the button: the other ways to add something, where it has them
+ * @property {Drawn} [more] what a page adds under the button: the other way to add something, where it has one
  */
 
 /**
@@ -235,9 +235,11 @@ export function drawn(state, send, { g: group, lent, shelf, joined, more }) {
     send({ type: 'tick', app: app, on: ticked.currentTarget.checked });
   const bringing = state.at.bring === 'bringing';
   const here = shelf.filter(listed).map((app) => spoken(app.name));
-  // How, and what comes of it, before the boxes it is about, as their
-  // group's legend: the result in the words said after a bring (`done`).
-  const offering = `Tick what you want and press the button. It goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.`;
+  // The shelf's apps are examples, to use or to change (docs/guide/apps.md,
+  // "Make them your own"), and said so, never the list of what a group may
+  // have. Then how, and what comes of it, in the words said after a bring
+  // (`done`): the legend of the boxes it is about.
+  const offering = `These are svrngs’s examples, to use or to change. Tick what you want and press the button: it goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.`;
   const boxes = offered.map((app) => {
     const words = ` ${spoken(app.name)}: ${app.words}`;
     return html`<${Tick}

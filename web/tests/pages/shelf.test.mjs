@@ -62,8 +62,10 @@ const step = SHELF(async () => []).step;
 // however many, by name; then, when something is left to add, how, and what
 // comes of it, as the legend of the boxes it is about, each box labelled
 // with its app's name and what it is for; then the button, naming the
-// group, in a line a screen reader is told of. Planted, watched failing:
-// shelf.js `already` saying a line an app.
+// group, in a line a screen reader is told of. The legend says first that
+// these are svrngs's examples, to use or to change: the list is never what
+// a group may have. Planted, watched failing: shelf.js `already` saying a
+// line an app; and its legend not saying they are examples.
 const box = (words) => `<p><label><input type="checkbox"></input> ${words}</label></p>`;
 const BOXES = {
   Money: box('Money: who owes whom, and for what.'),
@@ -71,7 +73,7 @@ const BOXES = {
   'House-rules': box('House rules: the rules your house agrees.'),
 };
 const lead = (name) =>
-  `<legend>Tick what you want and press the button. It goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.</legend>`;
+  `<legend>These are svrngs’s examples, to use or to change. Tick what you want and press the button: it goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.</legend>`;
 const button = (name) =>
   `<p aria-live="polite"><button>Bring the ticked ones to ${name}</button></p>`;
 const HEAD = '<section><h3>Bring things to the table</h3>';

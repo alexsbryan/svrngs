@@ -137,6 +137,9 @@ export function ArrivalLinks({ s: state, g: group }) {
 // opens the page for, and its files. After those, what a person does to
 // the group now and then: who they have over, with who else is visiting,
 // and the invitation buttons, never folded with leaving. Last the folds.
+// "Add an app" opens on what an app here is, a folder anyone can put in
+// the group's files, so the shelf's apps under it read as the examples
+// they are, never as the list of what a group may have.
 // An app's address and its WiFi line are in its own cell's popover
 // (wifi.js `Address`), being about that app, not about managing the group.
 /** @param {{ draw: (names: readonly PlaceName[]) => Drawn }} props */
@@ -148,7 +151,7 @@ export function GroupPlaces({ draw }) {
     <h2>Shared files</h2>
     ${draw(['folder'])}
     ${draw(['visits', 'links'])}
-    <details class="group-place"><summary>Add an app</summary>${draw(['shelf'])}</details>
+    <details class="group-place"><summary>Add an app</summary><p>An app here is a folder in this group’s shared files, under apps: a page, index.html, and whatever it needs. Put one there, and everyone in the group can open it under Shared apps. Shared files, on this page, opens the group’s folder.</p>${draw(['shelf'])}</details>
     <details class="group-place"><summary>Manage this group</summary>${draw(['show', 'leave'])}</details>
     ${draw(['told'])}
   `;

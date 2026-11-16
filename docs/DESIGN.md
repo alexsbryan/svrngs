@@ -877,13 +877,16 @@ in a window of its own, each of several folders named by its own name, and
 (`home/page/group-folder.js`). After those, what is done now and then: who
 you have over, with who else is visiting, and every invitation and
 device-link control, unfolded, one row of buttons that wraps. Last the folds: **Add an
-app** holds the shelf, which answers how: one sentence, the legend of its
-boxes, says the act and what comes of it; what is in the group already is
-one line by name; the answer to a bring is told to a screen reader; and
-under the button, on the home page alone, where what is added is found and
-the other two ways to add something, a program running here lent from
-**This computer** and an app of one's own in the group's folder
-(`home/ui/shelf.js`, `home/page/shelf.js`); **Manage this group** holds the
+app** opens on what an app here is, a folder under `apps` in the group's
+shared files that anyone in it can put there, and where that folder is
+opened from: the thing a group extends leads. Under it the shelf, whose
+apps are said to be examples, to use or to change, never the list of what
+a group may have: what is in the group already is one line by name; the
+legend of the boxes says how to bring one and what comes of it; the answer
+to a bring is told to a screen reader; and last, on the home page alone,
+the other way to add something, a program running here lent from **This
+computer** (`home/page/grouped.js` `GroupPlaces`, `home/ui/shelf.js`,
+`home/page/shelf.js`); **Manage this group** holds the
 presentation screen, handover and leave (`home/page/grouped.js`
 `GroupPlaces`).
 **This computer** holds what acts as you, running-program discovery, and
