@@ -327,7 +327,7 @@ test('a lend’s link says what it opens and whose, in a tab of its own, and les
 // is the one with a sentence. Nothing a row said is lost: each sentence is
 // above the table or on its row, never neither. A lend alone in its sentence
 // keeps it on its row (the law above). Planted, watched failing: index.js
-// `shared` keeping no sentence (`names.length > 9`), every row saying its own.
+// `above` keeping no sentence (`rows > 9`), every row saying its own.
 test('what several rows of the index share is said once above it, and a row says only what differs', async () => {
   const bo = { key: BO, person: 'bo', raw: 'udp' };
   const lent = [
@@ -414,6 +414,22 @@ test('a group’s card on the overview says who is on and what is shared, or tha
     'You are ada here.',
     'This computer cannot read who is on now.',
   ]);
+});
+
+// "What acts as you" on This computer says a thing once: groups with the
+// same deciders share a line, each named, and a group nothing reads and
+// writes for you in has no heading there. Planted, watched failing:
+// acting.js `readsIn` answering its heading whatever is under it.
+test('what acts as you names groups with the same deciders in one line, and heads no empty group', async () => {
+  const groups = [group({ name: 'House' }), group({ id: 'flat', name: 'Flat' })];
+  const answers = ada({ groups });
+  const money = lend('Money-house', { kind: 'Money', group: 'house' });
+  answers['GET /v1/lends?namespace=house'] = lends({ lent: [money] });
+  const page = await home(answers, '/?view=computer');
+  assert.deepEqual(page.text('#acts h4'), ['House']);
+  const said = page.text('#acts p');
+  assert.ok(said.includes('House and Flat: This computer.'), said.join('\n'));
+  assert.ok(!said.includes('Flat: This computer.'), said.join('\n'));
 });
 
 // browser::the_home_page_copies_a_lend_s_address_for_a_program: below the

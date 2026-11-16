@@ -505,10 +505,10 @@ test('every home page lists Sam visiting, and Kim’s Stop posts it and lists no
   answers['GET /v1/groups'] = () => ({ groups: [{ ...g, visiting: listing.now }], key: KIM });
   const kim = await open(`${AT}/?ui=a`, answers);
   const onKims = listed(kim);
-  assert.equal(onKims.length, 2, onKims.join('\n'));
+  // Her own guest is said once, with its Stop, not again as visiting.
+  assert.equal(onKims.length, 1, onKims.join('\n'));
   assert.ok(onKims[0].startsWith(`Sam, until ${day}`), onKims[0]);
   assert.ok(onKims[0].includes('Stop ends the visit now'), onKims[0]);
-  assert.ok(onKims[1].startsWith(`Sam, Kim’s guest, until ${day}`), onKims[1]);
   await kim.press('#home .yours button', 'Stop');
   assert.deepEqual(stopped, [['house', 'v1']]);
   assert.deepEqual(listed(kim), [], 'read again, with no reload');

@@ -2,43 +2,31 @@
 // The group's index on the home page: one table of what is in the group,
 // on any port, drawn from GROUP's last read of its people and what they
 // lend, so each read draws it again (index-rows.js). Above it, once, what
-// two or more of its rows would each say (`shared`).
+// two or more of its rows would each say (question.js `shared`).
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Row } from '../ui/parts.js?v=__VERSION__';
-import { lentBy, list, may, named, once } from '../question.js?v=__VERSION__';
+import { lentBy, may, named, once, shared } from '../question.js?v=__VERSION__';
 import { IndexRows } from './index-rows.js?v=__VERSION__';
 import { PLAYS } from './play.js?v=__VERSION__';
-/** @import { Group, Lent, PlaceProps } from './group.js?v=__VERSION__' */
+/** @import { PlaceProps } from './group.js?v=__VERSION__' */
 /** @import { Drawn } from '../ui/view.js?v=__VERSION__' */
 
 const HEADS = ['What', 'Whose'];
-
-// Each sentence two or more of `lent` share, and the lends it is true of
-// by name: what opening one lets it do (question.js `may`), and what Play
-// does for a port another computer lends. Said per row, eight rows read as
-// eight sentences of one shape, and the row that differs was the hardest to
-// find. A sentence only one row says stays on its row.
-/**
- * @param {Lent[]} lent
- * @param {Group} group
- * @param {string} me
- */
-function shared(lent, group, me) {
-  /** @type {Map<string, string[]>} */
-  const said = new Map();
-  // A port this computer lends has no Play here.
-  for (const lend of lent.filter((one) => !one.raw || one.key !== me)) {
-    const words = lend.raw ? PLAYS : may(lend, group);
-    said.set(words, [...(said.get(words) ?? []), named(lend)]);
-  }
-  return [...said].filter(([, names]) => names.length > 1);
-}
 
 /** @param {PlaceProps} props */
 function Index({ g: group, s: state, me }) {
   const people = state.people?.people ?? [];
   const lent = once((state.lends?.lent ?? []).map((lend) => lentBy(lend, people)));
-  const above = shared(lent, group, me);
+  // Each sentence two or more rows share, with the lends it is true of by
+  // name: what opening one lets it do (question.js `may`), and what Play
+  // does for a port another computer lends; this computer's own has no Play.
+  // A sentence only one row says stays on its row.
+  const above = shared(
+    lent
+      .filter((lend) => !lend.raw || lend.key !== me)
+      .map((lend) => [lend.raw ? PLAYS : may(lend, group), named(lend)]),
+    'or',
+  ).filter(([, , rows]) => rows > 1);
   const rows = state.lends
     ? html`
         <${IndexRows}
@@ -54,7 +42,7 @@ function Index({ g: group, s: state, me }) {
   // Each sentence names its lends where it said "it": "Opening Money or
   // Events lets it …". A function, so a `$` in a name is only a `$`.
   return html`
-    ${above.map(([words, names]) => html`<p>${words.replace(' it ', () => ` ${list(names, 'or')} `)}</p>`)}
+    ${above.map(([words, names]) => html`<p>${words.replace(' it ', () => ` ${names} `)}</p>`)}
     <table class="index">
       <thead><${Row} tag="th" cells=${HEADS} /></thead>
       <tbody>${rows}</tbody>

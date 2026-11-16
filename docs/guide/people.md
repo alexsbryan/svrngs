@@ -70,9 +70,9 @@ and asks Dee's name. Then it says *You’re Cy’s guest until …* and lists wh
 Cy lends, to open. Dee sees only what Cy lends, never anyone else's, and
 never reads the group's record.
 
-Everyone in House sees Dee under **Visiting now**: *Dee, Cy’s guest, until
-Saturday 9:00 PM*. On Cy's home page Dee is under **Who you have over**,
-with **Stop Dee’s visit**, which ends it now. A guest's visit is stopped
+Everyone else in House sees Dee under **Visiting now**: *Dee, Cy’s guest,
+until Saturday 9:00 PM*. On Cy's home page Dee is under **Who you have
+over**, with **Stop Dee’s visit**, which ends it now. A guest's visit is stopped
 only on the computer that made the link.
 
 A guest's link lets one guest in, once, within a day, while your computer

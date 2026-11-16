@@ -122,7 +122,7 @@ const does = (kind, shelf) =>
   shelf.find((app) => app.name === kind)?.words ?? 'this app’s shared entries.';
 // What opening `lend` lets it do, in one sentence: `agreed` says it beside
 // the open, and the home page's index says it once above its table for the
-// apps that share it (home/page/index.js `shared`).
+// apps that share it (home/page/index.js `above`).
 /**
  * @param {Lend} lend
  * @param {{ name?: string | null }} group
@@ -435,8 +435,22 @@ export const reading = (lend, said) => {
 // cannot say "films" for a program it does not know.
 const HANDFUL = 4;
 /** @param {string[]} words @param {string} [last] */
-export const list = (words, last = 'and') =>
+const list = (words, last = 'and') =>
   words.length > 1 ? `${words.slice(0, -1).join(', ')} ${last} ${words.at(-1)}` : `${words[0]}`;
+// What several share, said once: each of `pairs`' sayings, in order, with
+// the names it was said of listed, and how many they are. Said per name, the
+// same sentence read as volume, and the one that differed was hard to find.
+/**
+ * @param {[said: string, name: string][]} pairs
+ * @param {string} [last]
+ * @returns {[said: string, names: string, count: number][]}
+ */
+export const shared = (pairs, last) => {
+  /** @type {Map<string, string[]>} */
+  const by = new Map();
+  for (const [said, name] of pairs) by.set(said, [...(by.get(said) ?? []), name]);
+  return [...by].map(([said, names]) => [said, list(names, last), names.length]);
+};
 /** @param {string[]} people */
 const owners = (people) => list(people.map((person) => `${person}’s`));
 /**
@@ -505,6 +519,18 @@ export const deciders = (rows, me, here) => {
     .join(', ')
     .replace(/, ([^,]*)$/, ', and $1');
 };
+
+// Who can decide for you in each of `groups`, by name and people rows, a
+// line: groups with the same deciders share theirs, each named.
+/**
+ * @param {[name: string, rows: PeopleRow[]][]} groups
+ * @param {string} me
+ * @param {'computer' | 'browser'} here
+ */
+export const deciding = (groups, me, here) =>
+  shared(groups.map(([name, rows]) => [deciders(rows, me, here), name])).map(
+    ([who, names]) => `${names}: ${who}.`,
+  );
 
 // Whether `lend` is full now: the index's row
 // as both pages judge it, so a change to either lands on both (#158).

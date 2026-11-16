@@ -13,13 +13,13 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Acts } from '../ui/acts.js?v=__VERSION__';
 import { Changes } from '../ui/changes.js?v=__VERSION__';
 import { Uses } from '../ui/uses.js?v=__VERSION__';
-import { carrying, deciders, label, lentBy, once, reading } from '../question.js?v=__VERSION__';
+import { carrying, deciding, label, lentBy, once, reading } from '../question.js?v=__VERSION__';
 import { ACTS } from './acts-read.js?v=__VERSION__';
 import { Reach } from './reach.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';
 import * as play from './play.js?v=__VERSION__';
 /** @import { Group, Lends } from './group.js?v=__VERSION__' */
-/** @import { Lend } from '../question.js?v=__VERSION__' */
+/** @import { Lend, PeopleRow } from '../question.js?v=__VERSION__' */
 /** @import { Asked } from '../ui/uses.js?v=__VERSION__' */
 /** @import { Change } from '../ui/changes.js?v=__VERSION__' */
 /** @import { Acted, Choice, Message, State, Yes } from './acts-read.js?v=__VERSION__' */
@@ -142,7 +142,8 @@ export function Acting({ s: homeState, home }) {
       send: yes(group),
     });
     const heading = homeState.grouped && html`<h4>${group.name ?? 'Your group'}</h4>`;
-    return [heading, ...carried, ...changes];
+    // A group with nothing under its heading draws no heading.
+    return carried.length + changes.length > 0 ? [heading, ...carried, ...changes] : [];
   };
   const reads = shown.filter((group) => /** @type {Told} */ (told(group)).lends).flatMap(readsIn);
   // The yeses are read, or why not, once ACTS is past 'reading'.
@@ -170,12 +171,13 @@ export function Acting({ s: homeState, home }) {
     said: state.said,
     send,
   });
-  const decides = shown
+  /** @type {[string, PeopleRow[]][]} */
+  const read = shown
     .filter((group) => /** @type {Told} */ (told(group)).people)
-    .map((group) => {
-      const who = deciders(rows(group), /** @type {string} */ (homeState.key), 'computer');
-      return html`<p>${`${group.name ?? 'Your group'}: ${who}.`}</p>`;
-    });
+    .map((group) => [group.name ?? 'Your group', rows(group)]);
+  const decides = deciding(read, /** @type {string} */ (homeState.key), 'computer').map(
+    (line) => html`<p>${line}</p>`,
+  );
   // WiFi's and Play's parts read their stores as hooks of this section's
   // (wifi.js and play.js `part`), so they are called here, in this order,
   // on each draw past `reading`.

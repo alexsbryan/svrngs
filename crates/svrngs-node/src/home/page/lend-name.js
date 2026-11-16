@@ -3,7 +3,7 @@
 // it in a tab, with what opening it agrees to beside it (question.js
 // `agreed`), so it reads as the app's way in and never its files
 // (docs/APP_ACCESS_AND_STOP.md A1); what the index says once above its
-// table (index.js `shared`) is not said again here. A port does not open in
+// table (index.js `above`) is not said again here. A port does not open in
 // a tab: it is named, then said to be this computer's own, or given the Play
 // that opens another's here (play-cell.js).
 import { html } from '../ui/view.js?v=__VERSION__';
@@ -15,7 +15,7 @@ import { Opening, Reach } from './reach.js?v=__VERSION__';
 
 /**
  * The lend, the group's shelf, what the index says once above its table
- * (index.js `shared`), and what its cell is drawn with.
+ * (index.js `above`), and what its cell is drawn with.
  * @typedef {Pick<PlaceProps, 'g' | 's' | 'me'> & { l: Lent, shelf: Lends['shelf'], above: string[] }} LendNameProps
  */
 

@@ -133,7 +133,7 @@ const on = (state, lend) =>
   state.at.play === 'unread' ? undefined : state.plays?.find(same(lend));
 
 // What Play does, said beside a port's Play, or once above the index for
-// the ports that share it (index.js `shared`).
+// the ports that share it (index.js `above`).
 export const PLAYS = 'Play opens it on this computer, for a program here to connect to.';
 
 /**

@@ -768,7 +768,7 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   two or more rows would each say is said once above the table, naming the
   apps it is true of ("Opening Money or Events lets it …", and what Play
   does), and a row keeps only its own words, so the app that asks for more
-  is the row with a sentence (`home/page/index.js` `shared`). That a thing
+  is the row with a sentence (`home/page/index.js` `above`). That a thing
   is on and opens in a tab is the usual and is not said; a row says a port
   is this computer's own, and "Full now." At the group's foot, off the first screen, what is for
   other devices and programs: each can be opened to this WiFi, or closed

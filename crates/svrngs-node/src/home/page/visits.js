@@ -102,11 +102,13 @@ function Visits({ g: group, s: state, home }) {
       <h3>Who you have over</h3>
       <ul class="yours">${stops}</ul>
     `;
+  // Their own guests are said above, with Stop, so not again here.
+  const others = (visiting ?? []).filter((visit) => !visit.yours);
   const now =
-    (visiting?.length ?? 0) > 0 &&
+    others.length > 0 &&
     html`
       <h3>Visiting now</h3>
-      <${Visiting} vs=${visiting} rows=${rows} />
+      <${Visiting} vs=${others} rows=${rows} />
     `;
   const each = group.slots;
   const slots = each != null && html`<${Slots} g=${group} n=${each} home=${home} />`;
