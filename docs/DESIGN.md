@@ -793,7 +793,20 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   (`home/page/wifi.js` `Address`). Only detail about one thing goes in a
   popover; a consent sentence, or a state that needs the person, never does.
   The button is always there to be seen: nothing a person can press waits
-  for a hover or a focus to be painted. The group on a screen is under
+  for a hover or a focus to be painted. The door's second use of a popover:
+  on the home page a person's name is a button, named with how they stand
+  ("Kim, on now"), and pressing it says what the page already holds of that
+  one person and no more — how they stand and when they joined; what they
+  share here, each a jump to that thing's own way in under its caption,
+  never a second way in, so what opening it agrees to stays beside it; or
+  that what they lend is not listed; of yourself, that it is you. Whoever
+  keeps the group's order of removals is given, there, the whole line that
+  removes that person, to paste in a terminal, quoted for any name and
+  saying which of two namesakes by `--joined`; from anyone else the same
+  line only asks the keeper, so it is not offered them, and the page
+  removes nobody (`home/page/people.js` `Person`; `ui/door.js` draws the
+  name alone unless a page gives it `about`, so the phone's page and the
+  screen are as they were). The group on a screen is under
   **Manage this group**.
 
   The index is built for someone who cannot see where a thing sits, too.

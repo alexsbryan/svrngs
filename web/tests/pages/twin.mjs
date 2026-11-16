@@ -188,6 +188,15 @@ const select = (root, selector) => {
 
 // What a person reads of an element: its words, each run of space one.
 export const words = (el) => el.textContent.replace(/\s+/g, ' ').trim();
+// An element's words as a person reads them before pressing anything: less
+// those of each popover in it, which a browser draws only once its button
+// is pressed (home/page/wifi.js `Address`, people.js `Person`).
+export const shown = (el) =>
+  el.childNodes
+    .filter((kid) => kid.attributes?.popover)
+    .reduce((all, pop) => all.replace(words(pop), ''), words(el))
+    .replace(/\s+/g, ' ')
+    .trim();
 
 let opened = 0;
 

@@ -92,6 +92,13 @@ hand that on. Sam made House, so Sam runs:
 ~/.local/bin/svrngs remove Dee --group House
 ```
 
+Sam doesn't have to type it. On the home page, under **People**, each
+person's box can be pressed: it says how they stand (*"Dee, on now, joined
+3 Oct."*), what they share in this group, each a link to where it opens
+on the page, and, for whoever decides who is removed, this line filled in
+for that person, with **Copy the line**. Pressing your own box says *"This
+is you."* The page removes nobody: the line is pasted in a terminal.
+
 *Dee is no longer in House. What Dee already has stays with them; nothing
 new reaches them.* Every computer and phone of Dee's is out. If Dee had
 **Play** on for a game someone lends, it stops within seconds.

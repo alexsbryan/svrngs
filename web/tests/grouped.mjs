@@ -249,22 +249,26 @@ try {
   assert.equal(await page.locator('#again').isVisible(), true);
   assert.equal(await page.locator('#intro').isVisible(), true);
 
-  // The plants, set once A's controls are read. `missing-wifi`: B is served
-  // each lend's popover without its line, so B lacks every "Open it to this
-  // WiFi", Copy and address that A has, and the inventory below must say so.
-  // `no-focus`: the popover is served without `autofocus`, so opening it
-  // leaves the focus on its button, and the keyboard walk below must say so.
-  const plant = {
-    'missing-wifi': [/<\$\{Line\} l=\$\{lend\}[^>]*foot \/>/, ''],
-    'no-focus': [' tabindex="-1" autofocus>', '>'],
-  }[process.env.GROUPED_HOME_PLANT];
-  if (plant) {
-    await context.route('**/page/wifi.js*', async (route) => {
+  // The plants, set once A's controls are read, each a file of the page
+  // served changed. `missing-wifi`: B is served each lend's popover without
+  // its line, so B lacks every "Open it to this WiFi", Copy and address that
+  // A has, and the inventory below must say so. `no-focus` and
+  // `no-person-focus`: a lend's popover, or a person's, is served without
+  // `autofocus`, so opening it leaves the focus on its button, and the
+  // keyboard walks below must say so.
+  const [file, ...change] =
+    {
+      'missing-wifi': ['wifi.js', /<\$\{Line\} l=\$\{lend\}[^>]*foot \/>/, ''],
+      'no-focus': ['wifi.js', ' tabindex="-1" autofocus>', '>'],
+      'no-person-focus': ['people.js', ' tabindex="-1" autofocus>', '>'],
+    }[process.env.GROUPED_HOME_PLANT] ?? [];
+  if (file) {
+    await context.route(`**/page/${file}*`, async (route) => {
       const source = await readFile(
-        new URL('../../crates/svrngs-node/src/home/page/wifi.js', import.meta.url),
+        new URL(`../../crates/svrngs-node/src/home/page/${file}`, import.meta.url),
         'utf8',
       );
-      const body = source.replace(...plant);
+      const body = source.replace(...change);
       assert.notEqual(body, source, 'the plant found what it removes');
       await route.fulfill({ contentType: 'text/javascript', body });
     });
@@ -334,6 +338,41 @@ try {
   await pop.getByRole('button', { name: `Close: ${name}`, exact: true }).press('Enter');
   await pop.waitFor({ state: 'detached' });
   assert.equal(await focused(), name, 'Close gives the focus back to its button');
+
+  // A person, by the keyboard alone. Tab from the first person reaches the
+  // second, in reading order, named with how they stand; Enter opens their
+  // popover and the focus goes into it; Escape gives it back. Opened again,
+  // a thing they share is a jump: Enter on it moves the focus to that
+  // thing's own way in, under its caption in the index.
+  const door = page.locator(`#group-${ids[2]} .door > li > button`);
+  await door.first().focus();
+  await page.keyboard.press('Tab');
+  assert.equal(await focused(), 'Sam, on now', 'Tab goes from a person to the next');
+  await page.keyboard.press('Enter');
+  await pop.waitFor();
+  assert.equal(await pop.getAttribute('aria-label'), 'Sam, on now');
+  assert.equal(
+    await pop.evaluate((el) => el.contains(document.activeElement)),
+    true,
+    'the focus goes into the person’s popover',
+  );
+  await page.keyboard.press('Escape');
+  await pop.waitFor({ state: 'detached' });
+  assert.equal(await focused(), 'Sam, on now', 'Escape gives the focus back to the person');
+  await page.keyboard.press('Enter');
+  await pop.getByRole('link').first().press('Enter');
+  const landed = await page.evaluate(() => [
+    `#${document.activeElement.id}` === location.hash,
+    document.activeElement.textContent.trim(),
+    Boolean(document.activeElement.closest('.index')),
+  ]);
+  assert.deepEqual(
+    landed,
+    [true, 'Open Sam’s library (books)', true],
+    'a jump lands on the way in',
+  );
+  await page.keyboard.press('Escape');
+  await pop.waitFor({ state: 'detached' });
 
   // Normal links, Back, and rereads retain the selected group.
   await page.getByRole('link', { name: 'All your groups', exact: true }).click();

@@ -140,7 +140,7 @@ export const PLAYS = 'Play opens it on this computer, for a program here to conn
  * A port's Play or Stop: the port; in "What acts as you", what is said of
  * it before its Stop; in the index, the round of its group's reads, and
  * the id of the caption that says what Play does.
- * @typedef {{ l: Port, words?: (l: Port) => string, round?: number, by?: string }} TurnProps
+ * @typedef {{ l: Port, words?: (l: Port) => string, round?: number, by?: string, id?: string }} TurnProps
  */
 
 // A port's Play or Stop, in either list, drawn from PLAY alone: what has
@@ -151,7 +151,7 @@ export const PLAYS = 'Play opens it on this computer, for a program here to conn
 // nothing. It stays beside PLAY, whose store it reads, as `plays` draws it,
 // and web/tests/pages/play.test.mjs imports PLAY and `plays` from this file.
 /** @param {TurnProps} props */
-export function Turn({ l: lend, words, round, by }) {
+export function Turn({ l: lend, words, round, by, id }) {
   useEffect(() => {
     if (round !== undefined) play.dispatch({ type: 'read', round });
   }, [round]);
@@ -172,7 +172,7 @@ export function Turn({ l: lend, words, round, by }) {
         doing=${doing}
         on=${turn}
         send=${play.dispatch}
-        aria=${{ 'aria-label': `${act} ${whose}`, 'aria-describedby': by }}
+        aria=${{ 'aria-label': `${act} ${whose}`, 'aria-describedby': by, id }}
       />
       ${state.said[keyOf(lend)]}
     <//>

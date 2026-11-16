@@ -249,7 +249,7 @@ export const day = (seconds, utc) => {
 // midnight differ, one at UTC+14 and one at UTC-11 always. So the name the
 // page shows beside a lend and the alias it gives to keep say one day.
 /** @param {Joined} joined */
-const joinedSaid = (joined) =>
+export const joinedSaid = (joined) =>
   joined === 'started' ? 'started the group' : `joined ${day(joined.at, true)}`;
 
 // The person whose first key is `key`, as the people rows `rows`

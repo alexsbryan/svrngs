@@ -16,6 +16,7 @@
 import { html } from './view.js?v=__VERSION__';
 import { called } from '../question.js?v=__VERSION__';
 /** @import { Joined, Named, PeopleRow } from '../question.js?v=__VERSION__' */
+/** @import { Drawn } from './view.js?v=__VERSION__' */
 
 /**
  * A lend as the door draws it: its group, when an app the group carries;
@@ -48,8 +49,12 @@ const at = (date) => {
   const hhmm = Math.trunc(Math.abs(minutes) / 60) * 100 + (Math.abs(minutes) % 60);
   return `${date.toLocaleString('sv-SE')} ${sign}${String(hhmm).padStart(4, '0')}`;
 };
+// When someone joined, as `svrngs remove --joined` takes it: `started`, or
+// that time.
+export const joinedAt = (/** @type {Joined} */ joined) =>
+  joined === 'started' ? 'started' : at(new Date(joined.at * 1000));
 const when = (/** @type {Joined} */ joined) =>
-  joined === 'started' ? 'started the group' : `joined ${at(new Date(joined.at * 1000))}`;
+  joined === 'started' ? 'started the group' : `joined ${joinedAt(joined)}`;
 // Each person once, with their name as the door says it and what holds their keys.
 /**
  * @param {PeopleRow[]} rows
@@ -128,12 +133,12 @@ const theirs = (rows, lent, person, newest) =>
  * @param {DoorProps & { lent: DoorLent[] }} door
  * @param {Person} person
  */
-const cell = ({ rows, lent, lends, newest }, [person, name, devices]) => {
+const cell = ({ rows, lent, lends, newest, about }, [person, name, devices]) => {
   const [drawn, words] = judged(person, devices, lends);
   const lending = theirs(rows, lent, person, newest);
   return html`
     <li class=${drawn || undefined}>
-      <strong>${name}</strong>
+      ${about ? about(person, name, drawn, words) : html`<strong>${name}</strong>`}
       ${lending}${' '}<small>${words}</small>
     </li>
   `;
@@ -148,11 +153,15 @@ const cell = ({ rows, lent, lends, newest }, [person, name, devices]) => {
  * @property {DoorLent[]} [lent]
  * @property {Unanswered | null} [lends]
  * @property {string} [newest]
+ * @property {(person: PeopleRow, name: string | undefined, drawn: string, words: string) => Drawn} [about]
+ *   what stands for a person's name, where a page makes it a control (the
+ *   home page's, page/people.js); not given, the name alone, as the phone's
+ *   page and the screen draw it
  */
 
 /** @param {DoorProps} props */
-export function Door({ rows, lent = [], lends, newest }) {
-  const cells = people(rows).map((person) => cell({ rows, lent, lends, newest }, person));
+export function Door({ rows, lent = [], lends, newest, about }) {
+  const cells = people(rows).map((person) => cell({ rows, lent, lends, newest, about }, person));
   return html`<ul class="door">${cells}</ul>`;
 }
 

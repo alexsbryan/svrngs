@@ -20,7 +20,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { open, words } from './twin.mjs';
+import { open, shown, words } from './twin.mjs';
 
 const HOME = new URL('../../../crates/svrngs-node/src/home/', import.meta.url);
 const q = await import(new URL('question.js?v=__VERSION__', HOME).href);
@@ -584,16 +584,29 @@ test('the door is judged again when the page is shown again', async () => {
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = () => lends({ unanswered: held.unanswered });
   const at = await home(answers);
-  const door = () => at.text('#home .door li');
-  assert.deepEqual(at.text('#home .door li.off'), ['bo did not answer'], door().join('\n'));
+  const door = () => at.all('#home .door > li').map(shown);
+  assert.deepEqual(
+    at.all('#home .door > li.off').map(shown),
+    ['bo did not answer'],
+    door().join('\n'),
+  );
   assert.ok(
-    at.text('#home .door li.on').some((li) => li.startsWith('cy')),
+    at
+      .all('#home .door > li.on')
+      .map(shown)
+      .some((li) => li.startsWith('cy')),
     door().join('\n'),
   );
   held.unanswered = [off('bo', BO), off('cy', CY)];
   await at.shown();
   assert.equal(traced(at, 'GROUP: answered (lends 2)'), 1, at.lines().join('\n'));
-  assert.ok(!at.text('#home .door li.on').some((li) => li.startsWith('cy')), door().join('\n'));
+  assert.ok(
+    !at
+      .all('#home .door > li.on')
+      .map(shown)
+      .some((li) => li.startsWith('cy')),
+    door().join('\n'),
+  );
   assert.ok(door().at(-1).endsWith('cy did not answer'), door().join('\n'));
   assert.deepEqual([at.went, at.unanswered], [[], []]);
 });
@@ -619,8 +632,11 @@ test('ten screen ticks never read asking again, each read out or landed', async 
         ? new Promise((give) => gives.push(() => give(lends({ unanswered: [off] }))))
         : lends({ unanswered: [off] });
     const at = await home(answers, '/?screen=house');
-    assert.ok(at.text('#home .door li.on')[0].startsWith('ada'), at.text('#home').join());
-    assert.deepEqual(at.text('#home .door li.off'), ['bo did not answer']);
+    assert.ok(
+      at.all('#home .door > li.on').map(shown)[0].startsWith('ada'),
+      at.text('#home').join(),
+    );
+    assert.deepEqual(at.all('#home .door > li.off').map(shown), ['bo did not answer']);
     const asking = [];
     held.on = true;
     for (let tick = 0; tick < 10; tick++) {

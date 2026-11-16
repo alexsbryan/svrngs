@@ -14,7 +14,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { open, words } from './twin.mjs';
+import { open, shown, words } from './twin.mjs';
 
 const HOME = new URL('../../../crates/svrngs-node/src/home/', import.meta.url);
 const q = await import(new URL('question.js?v=__VERSION__', HOME).href);
@@ -97,14 +97,9 @@ const ada = ({
 
 const home = (answers, path = '/?ui=a') => open(`${AT}${path}`, answers);
 
-// The index's cells, each by its words less its popover's (wifi.js `Address`):
-// what a person reads in the cell before pressing Address.
-const cells = (page) =>
-  page.all('#home .index > ul > li').map((li) => {
-    const pop = li.childNodes.find((kid) => kid.attributes?.popover);
-    const all = words(li);
-    return (pop ? all.replace(words(pop), '') : all).replace(/\s+/g, ' ').trim();
-  });
+// The index's cells, each by its words less its popover's (wifi.js
+// `Address`): what a person reads in the cell before pressing Address.
+const cells = (page) => page.all('#home .index > ul > li').map(shown);
 
 // browser::the_home_page_asks_in_the_one_wording: the ask heads its
 // question as question.js words it, the lend named with its kind; an ask of
@@ -182,6 +177,119 @@ test('the door tells two people of one name apart by when each joined, to the se
   assert.deepEqual(read.sort(), joined);
   for (const kept of ['key', 'member', 'keeper', 'ring', ' act', 'journal'])
     assert.ok(!names.join(', ').toLowerCase().includes(kept), names.join());
+});
+
+// A person in the door is pressed: the name is a button, named with how
+// they stand, that opens the browser's popover by its id, saying only what
+// the page holds of them. Someone on: how they stand, when they joined, and
+// what they share here, each a jump to that thing's way in under its
+// caption (`#at-…`, the id of the link, the yes's button or the Play), never
+// a second way in: no link of the popover opens anything. Someone whose
+// computer did not answer: that what they lend is not listed. You: that it
+// is you, and nothing more. Whoever keeps the removals is given the line
+// that removes each other person, whole, quoted as a shell takes a name with
+// an apostrophe, and of two people of one name saying which by `--joined`;
+// nobody else is given it, and nobody for themselves. Planted, each watched
+// failing: people.js `Person`'s link going to `/to` (a second way in); its
+// line shown whoever keeps the removals; `quoted` leaving an apostrophe
+// as it is.
+test('a person in the door is pressed for what the page holds of them, and the keeper for the line that removes them', async () => {
+  const people = [
+    row('ada', ADA, 'started'),
+    row('bo', BO),
+    row('cy', CY),
+    row("d'arcy", DEE),
+    row('eve', EVE, { at: 1_791_000_001 }),
+    row('eve', CY2, { at: 1_791_000_002 }),
+  ];
+  const theirs = { key: BO, person: 'bo' };
+  const lent = [
+    lend('shelf', theirs),
+    lend('page', { ...theirs, reads: ['films'] }),
+    lend('game', { ...theirs, raw: 'udp' }),
+    lend('mine'),
+  ];
+  const drawn = async (keeps) => {
+    const answers = ada({ people, groups: [group({ name: 'House', keeps })] });
+    answers['GET /v1/lends?namespace=house'] = lends({
+      lent,
+      unanswered: [{ person: 'cy', person_key: CY }],
+    });
+    return home(answers);
+  };
+  const page = await drawn(true);
+  const buttons = page.all('#home .door > li > button');
+  const pops = page.all('#home .door > li > div');
+  assert.deepEqual(buttons.map((button) => button.attributes['aria-label']).slice(0, 4), [
+    'ada, on now',
+    'bo, on now',
+    'cy, did not answer',
+    "d'arcy, on now",
+  ]);
+  assert.deepEqual(
+    buttons.map((button) => button.attributes.popovertarget),
+    pops.map((pop) => pop.id),
+  );
+  for (const [at, pop] of pops.entries()) {
+    assert.deepEqual(
+      [pop.attributes.popover, pop.attributes.role, pop.attributes['aria-label']],
+      ['auto', 'dialog', buttons[at].attributes['aria-label']],
+    );
+    const close = pop.childNodes.filter((kid) => kid.nodeType === 1).at(-1);
+    assert.deepEqual(
+      [words(close), close.attributes.popovertarget, close.attributes.popovertargetaction],
+      ['Close', pop.id, 'hide'],
+    );
+  }
+  const said = (pop) => pop.childNodes.filter((kid) => kid.nodeType === 1).map(words);
+  const [you, bo, cy, darcy, eve] = pops;
+  assert.deepEqual(said(you), ['This is you.', 'Close']);
+  assert.deepEqual(said(bo), [
+    'bo, on now, joined 3 Oct.',
+    'Shared here:',
+    'shelfpagegame',
+    'To remove bo from House, paste this line in a terminal on this computer. What they already have stays with them; nothing new reaches them.',
+    "svrngs remove 'bo' --group 'House' Copy the line",
+    'Close',
+  ]);
+  // Each thing shared is a jump to its own way in, in the index, under its
+  // caption; the popover holds no way in of its own.
+  const links = page.all('#home .door > li > div a');
+  const ways = links.map((link) =>
+    page.all('#home .index *').find((at) => `#${at.id}` === link.attributes.href),
+  );
+  assert.deepEqual(
+    links.map((link) => [words(link), link.attributes.target]),
+    [
+      ['shelf', undefined],
+      ['page', undefined],
+      ['game', undefined],
+    ],
+  );
+  assert.deepEqual(
+    ways.map((way) => [way.localName, way.attributes['aria-label'] ?? words(way)]),
+    [
+      ['a', 'bo’s shelf (k)'],
+      ['button', 'Open bo’s page (k)'],
+      ['button', 'Play bo’s game'],
+    ],
+  );
+  for (const way of ways) assert.ok(way.attributes['aria-describedby'], 'under its caption');
+  assert.equal(page.all('#home .door form').length, 0);
+  assert.deepEqual(said(cy).slice(0, 2), [
+    'cy, did not answer, joined 3 Oct.',
+    'cy’s computer did not answer, so what they lend is not listed.',
+  ]);
+  assert.equal(said(darcy).at(-2), "svrngs remove 'd'\\''arcy' --group 'House' Copy the line");
+  assert.deepEqual(said(darcy).slice(1, 3), ['Nothing shared here.', '']);
+  assert.match(
+    said(eve).at(-2),
+    /^svrngs remove 'eve' --group 'House' --joined '\d{4}-\d\d-\d\d \d\d:\d\d:\d\d [+-]\d{4}' Copy the line$/,
+  );
+  const other = await drawn(false);
+  const lines = other.text('#home .door code');
+  assert.deepEqual(lines, [], 'no line for whoever does not keep the removals');
+  assert.equal(page.text('#home .door code').length, 5, 'a line for each but yourself');
 });
 
 // browser::the_home_page_shows_every_removal_and_ask: each removal and
@@ -684,11 +792,11 @@ test('a group’s people are drawn before its slowest computer answers, and it i
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = () => held;
   const page = await home(answers);
-  assert.deepEqual(page.text('#home .door li'), ['ada asking…', 'bo asking…']);
-  assert.equal(page.all('#home .door li.off').length, 0);
+  assert.deepEqual(page.all('#home .door > li').map(shown), ['ada asking…', 'bo asking…']);
+  assert.equal(page.all('#home .door > li.off').length, 0);
   answer(lends({ unanswered: [{ person: 'bo', person_key: BO, joined: { at: 1_791_000_000 } }] }));
   await page.settle();
-  assert.deepEqual(page.text('#home .door li.off'), ['bo did not answer']);
+  assert.deepEqual(page.all('#home .door > li.off').map(shown), ['bo did not answer']);
 });
 
 // browser::the_home_page_opens_a_link_only_within_its_lend (#153): a

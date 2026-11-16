@@ -12,12 +12,13 @@ import { Fold, Tick } from '../ui/parts.js?v=__VERSION__';
 /**
  * The form's props: the app's label, the button's words, and what it posts:
  * the lends its open names, ticked and unticked, and those ticked to send to.
- * `by` is the ids of what describes its button, the sentence its press agrees to.
- * @typedef {{ app: string, words: Drawn, said?: 'yes' | 'stop', reads?: string[], left?: string[], sends?: string[], by?: string }} ReachProps
+ * `by` is the ids of what describes its button, the sentence its press agrees to;
+ * `id`, its button's own, where something links to it.
+ * @typedef {{ app: string, words: Drawn, said?: 'yes' | 'stop', reads?: string[], left?: string[], sends?: string[], by?: string, id?: string }} ReachProps
  */
 
 /** @param {ReachProps} props */
-export function Reach({ app, words, said = 'yes', reads = [], left = [], sends = [], by }) {
+export function Reach({ app, words, said = 'yes', reads = [], left = [], sends = [], by, id }) {
   const target = said === 'yes' ? '_blank' : undefined;
   return html`
     <form method="post" action="/reaching" target=${target}>
@@ -26,7 +27,7 @@ export function Reach({ app, words, said = 'yes', reads = [], left = [], sends =
       <input type="hidden" name="reads" value=${reads.join(' ')} />
       <input type="hidden" name="left" value=${left.join(' ')} />
       <input type="hidden" name="sends" value=${sends.join(' ')} />
-      <button aria-describedby=${by}>${words}</button>
+      <button id=${id} aria-describedby=${by}>${words}</button>
     </form>
   `;
 }
@@ -34,7 +35,7 @@ export function Reach({ app, words, said = 'yes', reads = [], left = [], sends =
 /**
  * An app reading friends' lends, opened from its button: `reading`, what
  * /v1/lends says its open names (surface.rs `opening`), and the kinds.
- * @typedef {{ app: string, words: Drawn, reading: ReadLend[], kinds: string[], by?: string }} OpeningProps
+ * @typedef {{ app: string, words: Drawn, reading: ReadLend[], kinds: string[], by?: string, id?: string }} OpeningProps
  */
 
 // Open and its line, and under the line each lend it names, tickable: the
@@ -44,7 +45,7 @@ export function Reach({ app, words, said = 'yes', reads = [], left = [], sends =
 // preticked but by the last yes, posted only while its read's is ticked
 // (CONTRACTS §6.6).
 /** @param {OpeningProps} props */
-export function Opening({ app, words, reading, kinds, by }) {
+export function Opening({ app, words, reading, kinds, by, id }) {
   const [off, setOff] = useState(() =>
     reading.filter((one) => !one.ticked).map((one) => one.label),
   );
@@ -88,6 +89,7 @@ export function Opening({ app, words, reading, kinds, by }) {
       left=${off}
       sends=${sent}
       by=${by}
+      id=${id}
     />
     ${
       reading.length === 0

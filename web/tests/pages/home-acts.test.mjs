@@ -16,7 +16,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { register } from 'node:module';
 import { test } from 'node:test';
-import { open, words } from './twin.mjs';
+import { open, shown, words } from './twin.mjs';
 
 const HOME = new URL('../../../crates/svrngs-node/src/home/', import.meta.url);
 const q = await import(new URL('question.js?v=__VERSION__', HOME).href);
@@ -231,8 +231,8 @@ test('two people of one name: the other changed an app, and is offered the hand-
 // main.rs `drew_the_door` read them (the browser's `className`).
 const door = (page) =>
   page
-    .all('#home .door li')
-    .map((li) => [li.attributes.class ?? '', words(li)])
+    .all('#home .door > li')
+    .map((li) => [li.attributes.class ?? '', shown(li)])
     .sort(([, a], [, b]) => a.localeCompare(b));
 // One not answering, by name and first key, as node.rs `Unlisted` names
 // them in /v1/lends' `unanswered`.
@@ -314,8 +314,8 @@ test('the door draws who is on now: lit, off once answered, and in from a phone'
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = () => held;
   const page = await home(answers);
-  assert.equal(page.all('#home .door li.off').length, 0, door(page).join('\n'));
-  assert.equal(page.all('#home .door li.on').length, 0, door(page).join('\n'));
+  assert.equal(page.all('#home .door > li.off').length, 0, door(page).join('\n'));
+  assert.equal(page.all('#home .door > li.on').length, 0, door(page).join('\n'));
   answer(lends({ unanswered: [silent('bo', BO)] }));
   await page.settle();
   assert.deepEqual(door(page), [
