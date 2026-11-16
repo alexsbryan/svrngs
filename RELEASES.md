@@ -1,5 +1,64 @@
 # svrngs releases
 
+## V1.9, 16 November 2026
+
+V1.9 lays out your home page so a large group fits on it, and you can now
+remove someone from a group there, with no terminal.
+
+**A group's page opens on its people.** **People** is open at the top, one
+line a person, so 28 people take four rows of a wide window. Under it come
+**Shared apps** and **Shared files**, then who you have over. The
+invitation buttons, which were under **Manage this group**, come after
+those. On the overview, each group's card says who is on and what is
+shared: *"On now: 6 of 8. Shared apps: 8. New versions to review: 1."*
+
+**Press a person for what they share.** Pressing someone under **People**
+shows how they stand and when they joined, *"Sam, on now, joined 31
+Oct."*, and each thing they share in the group, as a link to where it
+opens on the page. If you decide who is removed from the group, the same
+box holds **Remove Sam from House**, which says what that does, then
+**Remove Sam**: two presses, since the page can't undo it. Anyone else gets
+**Ask to remove Sam**, which asks whoever decides. The **Done in a
+terminal** section is gone, and `svrngs remove` still works.
+
+**Shared apps are grids of small cells.** A cell is the thing's name, and
+the name is its link. The sentence saying what opening a thing lets it do
+is said once, above the cells it is true of, and it starts with where they
+run: *"What is here runs on the computer of whoever lends it, and opens
+only while that computer is on."* An app in the group's folder says it
+opens while any computer in the group is on. An app that also opens your
+friends' things still asks with a button, **Open** and its name.
+
+**Address.** A thing that opens in a tab has an **Address** button in its
+cell. It shows the thing's address, **Copy its address for a program** and
+**Open it to this WiFi**, which were under **Manage this group**.
+
+**What you lend is a line a lend.** Under **What you lend**, press a lend's
+line to open its settings. A lend that waits on you for an account or a
+key is open already.
+
+**Add an app says what an app is.** *"An app here is a folder in this
+group’s shared files, under apps: a page, index.html, and whatever it
+needs."* The apps that come with svrngs are listed as examples, *"to use
+or to change"*, on your phone's page too. A program already running on
+your computer is lent from **This computer** instead, and the fold says
+so.
+
+**Screen readers and keyboards.** Each button is named with what it acts
+on, as *"Address of Kim’s navidrome"*, each way to open a thing is tied to
+the sentence saying what opening it allows, a group's page and **This
+computer** each have a first heading, and the page's text follows the size
+you set in your browser. We checked this in Chromium. We haven't run
+VoiceOver in Safari, or Firefox.
+
+Groups, lends and invitations work as in V1.8.2. **Update** on your home
+page, or `svrngs update`, then restart svrngs. Your phone's page updates
+itself.
+
+V1.9 is the build at `group.svrnme.sh`, from the commit tagged `v1.9`.
+Its publication and readback are recorded in
+`demo/runs/v1.9/2026-11-16/README.md`.
+
 ## V1.8.2, 15 November 2026
 
 V1.8.2 fixes three things you could run into after updating to V1.8.

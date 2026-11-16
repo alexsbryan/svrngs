@@ -1,0 +1,47 @@
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 64527)
+passed     principles pinned (1 s)
+passed     lean and RUST_ARCH (0 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (1 s)
+passed     page laws (17 s)
+passed     rustfmt (1 s)
+passed     script laws (7 s)
+reached    app laws (apps/holyarrs/check/prepare-newcomer.mjs: names it)
+folded     browser (apps/holyarrs/check/prepare-newcomer.mjs: names it)
+folded     canaries (apps/holyarrs/check/prepare-newcomer.mjs: names it)
+folded     ceiling canary (crates/svrngs-node: its crate, or one it depends on)
+reached    clippy (crates/svrngs-node/src/home.rs: Rust)
+folded     conformance canary (apps/holyarrs/check/prepare-newcomer.mjs: names it)
+folded     joining in a browser (web/authority.js: the phone's site)
+folded     n0 (crates/svrngs: its crate, or one it depends on)
+untouched  page integration
+folded     pages (web/authority.js: the phone's site)
+folded     playback (apps/holyarrs/check/prepare-newcomer.mjs: names it)
+folded     scenes (apps/holyarrs/check/prepare-newcomer.mjs: names it)
+reached    tests
+reached    typed lint (scripts/typed-lint.mjs: names it)
+reached    types (crates/svrngs-node/src/home/page/acting.js: the pages' types)
+untouched  web rustfmt and clippy
+not run    page integration: as scripts/touched.py planned, above
+passed     clippy (1 s)
+could-not-judge tests (88 s): 175 fragile tests by docs/seams.tsv not run (browser 37, scenes 20, home 10, svrngs_node 8, conformance 8, tcp 7, install 7, share 6, join_page 6, udp 6, relay 5, folders 5, peer 4, play 4, room 4, carried 4, door 3, address 3, pages 3, kept 3, scale 2, accept 2, new 2, meet 2, lend_origin 2, relay_tiers 2, relay_fallback 2, canaries 2, n0 1, new_relay 1, default_relay 1, shipped 1, surface 1, check 1), each named in /Users/alexsbryan/dev/svrngs/target/could-not-judge/tests.txt
+not run    canaries: as scripts/touched.py planned, above
+not run    ceiling canary: as scripts/touched.py planned, above
+not run    web rustfmt and clippy: as scripts/touched.py planned, above
+not run    browser: as scripts/touched.py planned, above
+passed     types (8 s)
+passed     typed lint (1 s)
+not run    joining in a browser: as scripts/touched.py planned, above
+not run    pages: as scripts/touched.py planned, above
+not run    scenes: as scripts/touched.py planned, above
+not run    conformance canary: as scripts/touched.py planned, above
+not run    playback: as scripts/touched.py planned, above
+not run    n0: as scripts/touched.py planned, above
+could-not-judge app laws (0 s): 7 fragile tests by docs/seams.tsv not run (apps/canon/page.test.mjs 1, apps/doc/socket.test.mjs 1, apps/events/page.test.mjs 1, apps/give/page.test.mjs 1, apps/grapevine/page.test.mjs 1, apps/movie-night/startup.test.mjs 1, apps/pantry/address.test.mjs 1), each named in /Users/alexsbryan/dev/svrngs/target/could-not-judge/app laws.txt
+note       took 127 s in all
+exit 0
