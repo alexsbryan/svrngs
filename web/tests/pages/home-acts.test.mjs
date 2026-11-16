@@ -279,7 +279,7 @@ test('whose computer did not answer, and who asked, are told by key', async () =
     ['on', 'on now'],
   ]);
   const second = q.called(people, CY2);
-  const rows = page.text('#home table.index td[colspan]');
+  const rows = page.text('#home .index > p');
   const unheard = rows.filter(
     (line) =>
       line.startsWith('cy') &&
@@ -426,7 +426,7 @@ test('a lend opened to this WiFi says the address, and closed says so', async ()
   const page = await home(ada({ lent: [shelf], 'POST /v1/room': turn }));
   const [wifi] = page.all('#home section ul.wifi');
   const kin = wifi.parentNode.childNodes;
-  const [index] = page.all('#home section table.index');
+  const [index] = page.all('#home section .index');
   assert.ok(kin.indexOf(index) >= 0 && kin.indexOf(index) < kin.indexOf(wifi), 'below the index');
   const [offered] = page.text(line);
   assert.ok(offered.startsWith('ada’s shelf (k):'), offered);
@@ -464,7 +464,7 @@ test('an older computer is said once on the home page, and nothing it lends list
   const answers = ada({ people });
   answers['GET /v1/lends?namespace=house'] = lends({ older: [silent('cy', CY)] });
   const page = await home(answers);
-  const cells = page.text('#home table.index td');
+  const cells = page.text('#home .index p');
   const said = "cy's computer runs an older svrngs, so what they lend is not listed.";
   assert.equal(cells.filter((cell) => cell === said).length, 1, cells.join('\n'));
   assert.equal(cells.join('').split('runs an older svrngs').length - 1, 1, cells.join('\n'));

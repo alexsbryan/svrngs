@@ -759,23 +759,33 @@ first, then who is in it (the operator, 2026-10-26: Money found first):
   joined — lit, "on now", while their computer answers; drawn off, "did not
   answer", when it did not; "in from a phone" when their only keys are a
   browser's. Presence is only "on now", never when last seen.
-- **the index**: one table of what is in the group, on any port — each thing
-  by a link, **Open** and its name ("Open Sam’s llama-server"), so it reads
-  as the app's way in and never its files, a port by its name alone with
-  its Play; its kind in its lender's word when it differs,
-  never one of svrngs's own (`scripts/vocab_check.py` reads the pages'
-  scripts too), and beside it what opening it agrees to; and whose. What
-  two or more rows would each say is said once above the table, naming the
-  apps it is true of ("Opening Money or Events lets it …", and what Play
-  does), and a row keeps only its own words, so the app that asks for more
-  is the row with a sentence (`home/page/index.js` `above`). That a thing
-  is on and opens in a tab is the usual and is not said; a row says a port
+- **the index**: what is in the group, on any port, as grids of cells, the
+  door's own look. What a group shares has no bound, so no word outside a
+  cell grows with it: each grid is under the one sentence true of everything
+  in it, which names nothing — the group's own apps ("Opening one of these
+  lets it read and write only its own entries, as you in House."), what
+  people's computers lend that opens in a tab ("… lets it write its own
+  part of House’s record, as you."), and ports ("Play opens one of these on
+  this computer, for a program here to connect to."). A grid with nothing in
+  it is not drawn, and a thing alone in its grid is "it". A cell is a
+  thing's name as its way in, a link that opens it in a tab, so it reads as
+  the app's way in and never its files; a port by its name with its Play;
+  its kind in its lender's word when it differs, never one of svrngs's own
+  (`scripts/vocab_check.py` reads the pages' scripts too). The name says
+  whose ("Kim’s navidrome"), and cells sort by person, so one person's
+  things sit together. A cell says more only where it differs: a group's own
+  app its one line, and the app that also opens your friends' things its
+  sentence on a row of its own, with "Open" on its button, since that press
+  is the yes (`home/page/index.js`, `lend-name.js`; the law that draws 8
+  things and 40 and holds the words outside the cells equal is
+  `web/tests/pages/home.test.mjs`'s). That a thing is on and opens in a tab
+  is the usual and is not said; a cell says a port
   is this computer's own, and "Full now." At the group's foot, off the first screen, what is for
   other devices and programs: each can be opened to this WiFi, or closed
   (the operator, 2026-10-26), and its address copied for a program; then
-  the group on a screen. In the row and the page's top they were words
-  read before Money (the fifth xenia set, Kim's Home 90 of her 30). A computer that did not say what it lends is a row of its
-  own, by why, so nothing is stale and nobody is left out — among them one
+  the group on a screen. In the index and the page's top they were words
+  read before Money (the fifth xenia set, Kim's Home 90 of her 30). A computer that did not say what it lends is a line of its
+  own under the grids, by why, so nothing is stale and nobody is left out — among them one
   running an older svrngs, whose answer is not read field by field
   (`crates/svrngs-node/src/version.rs`).
 

@@ -79,11 +79,11 @@ async fn lends(scene: &Scene, who: &Person, port: u16, how: &str, name: &str) {
 /// row says to connect to, which the page copied.
 async fn plays(engine: Engine, who: &Person, name: &str) -> SocketAddr {
     let press = json!([
-        format!("#home table.index tr:has-text('{name}') button:has-text('Play')"),
+        format!("#home .index li:has-text('{name}') button:has-text('Play')"),
         null,
         true
     ]);
-    let args = json!({ "ask": who.home_page(), "all": "#home table.index td", "do": [press] });
+    let args = json!({ "ask": who.home_page(), "all": "#home .index li", "do": [press] });
     let seen = sees(engine, "home.mjs", args).await;
     eprintln!("{}'s home page, Play on {name}: {seen:#}", who.name);
     let after = seen["after"][0].to_string();

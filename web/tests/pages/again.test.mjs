@@ -288,10 +288,7 @@ test('a lend from what runs here is in the index and in What you lend at once', 
     { port, name: 'notes', kind: 'notes', groups: ['house'], terms: null },
   ]);
   assert.ok(at.text(row)[0].startsWith('You lent notes'), at.text(row)[0]);
-  assert.ok(
-    at.text('#home table.index').join().includes('ada’s notes'),
-    at.text('#home table.index').join(),
-  );
+  assert.ok(at.text('#home .index').join().includes('ada’s notes'), at.text('#home .index').join());
   assert.ok(
     at.text('#lent li')[0].startsWith('notes: everyone in the groups you chose at once'),
     at.text('#lent li').join('\n'),
@@ -429,12 +426,12 @@ const shelved = (held, hold) =>
 test('a bring is in the home’s index, read again, with no reload', async () => {
   const held = { brought: false, posts: [] };
   const at = await home({ ...ada(), ...shelved(held) });
-  assert.ok(!at.text('#home table.index tr').join().includes('Money'));
+  assert.ok(!at.text('#home .index li').join().includes('Money'));
   await at.tick('#home label input');
   await at.press('#home button', 'Bring the ticked ones');
   assert.ok(
-    at.text('#home table.index tr').some((tr) => tr.includes('Money Who owes')),
-    at.text('#home table.index tr').join('\n'),
+    at.text('#home .index li').some((tr) => tr.includes('Money Who owes')),
+    at.text('#home .index li').join('\n'),
   );
   assert.ok(first(at, 'SHELF: brought (') < first(at, 'HOME: again: '), at.lines().join('\n'));
   assert.deepEqual([at.went, at.unanswered], [[], []]);

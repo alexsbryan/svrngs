@@ -123,13 +123,13 @@ test('Play says where to connect and copies it, and its Stop under what acts as 
       'GET /v1/play': playing,
       'POST /v1/play': (body) => (turns.push(body), body.on ? on : []),
     });
-  const cells = (page) => page.text('#home table.index td').join('\n');
+  const cells = (page) => page.text('#home .index li').join('\n');
 
   const page = await open(`${AT}/?ui=a`, answers([]));
   assert.ok(cells(page).includes('Play'), cells(page));
   assert.ok(!cells(page).includes('Copy its address for a program'), cells(page));
   assert.ok(!cells(page).includes('Connect to'), cells(page));
-  await page.press('#home table.index td button', 'Play');
+  await page.press('#home .index li button', 'Play');
   assert.ok(cells(page).includes(`Connect to 127.0.0.1:${port}`), cells(page));
   assert.deepEqual(page.copied, [`127.0.0.1:${port}`]);
 

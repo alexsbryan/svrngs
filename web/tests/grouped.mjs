@@ -264,7 +264,7 @@ try {
     const group = page.locator(`#group-${id}`);
     assert.equal(await page.locator('#home > section[id^="group-"]:visible').count(), 1);
     assert.equal(await group.isVisible(), true);
-    await group.locator('table.index').waitFor();
+    await group.locator('.index').waitFor();
     await group
       .getByRole('button', { name: /^Open shared files in (Finder|your file manager)$/ })
       .waitFor();
@@ -416,7 +416,7 @@ try {
     fullPage: true,
   });
   await visit(`?group=${ids[2]}`);
-  await page.locator(`#group-${ids[2]} table.index`).waitFor();
+  await page.locator(`#group-${ids[2]} .index`).waitFor();
   assert.equal(
     await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
     false,

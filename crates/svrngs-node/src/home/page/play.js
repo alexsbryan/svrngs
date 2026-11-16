@@ -132,14 +132,14 @@ export const play = machine(
 const on = (state, lend) =>
   state.at.play === 'unread' ? undefined : state.plays?.find(same(lend));
 
-// What Play does, said beside a port's Play, or once above the index for
-// the ports that share it (index.js `above`).
+// What Play does, said once as the caption of the index's ports that have
+// one (index.js), never beside each Play.
 export const PLAYS = 'Play opens it on this computer, for a program here to connect to.';
 
 /**
- * A port's Play or Stop: the port; in "What acts as you", what is said of
- * it before its Stop; and `quiet` where what Play does is said above it.
- * @typedef {{ l: Port, words?: (l: Port) => string, quiet?: boolean }} TurnProps
+ * A port's Play or Stop: the port; and in "What acts as you", what is said
+ * of it before its Stop.
+ * @typedef {{ l: Port, words?: (l: Port) => string }} TurnProps
  */
 
 // A port's Play or Stop, in either list, drawn from PLAY alone: what has
@@ -147,10 +147,10 @@ export const PLAYS = 'Play opens it on this computer, for a program here to conn
 // stays beside PLAY, whose store it reads, as `plays` draws it, and
 // web/tests/pages/play.test.mjs imports PLAY and `plays` from this file.
 /** @param {TurnProps} props */
-export function Turn({ l: lend, words, quiet }) {
+export function Turn({ l: lend, words }) {
   const state = useStore(play);
   const open = on(state, lend);
-  const said = open ? `${open.said}${state.copied[keyOf(lend)] ?? ''} ` : !quiet && `${PLAYS} `;
+  const said = open && `${open.said}${state.copied[keyOf(lend)] ?? ''} `;
   const before = words ? words(lend) : said;
   const Tag = words ? 'p' : 'span';
   const doing = { state: state.at.play === 'turning' ? 'busy' : 'idle' };

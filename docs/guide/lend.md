@@ -144,7 +144,7 @@ It says *"You no longer lend films."* Or press its line under **What you lend** 
 
 ## How your friends open it
 
-- **On a computer:** on their home page, under your group, the table lists *"Sam’s films (jellyfin)"*. Clicking it opens it in a tab of its own.
+- **On a computer:** on their home page, under your group's **Shared apps**, they click *"Sam’s films (jellyfin)"*. It opens in a tab of its own.
 - **On a phone:** on the group's page (the link they joined from, or the icon on their Home Screen), they tap *"Sam’s films (jellyfin)"*. It opens in that tab.
 - **Bookmark it.** Every lend has an address that doesn't change. Below the group's list on the home page, each lend shows its address, `http://<…>.localhost:<port>/`, with *"Bookmark this."* On a computer that joined in a browser, the group's page shows one too.
 - **Send it in the chat.** `#open=films@Sam` after your group's page opens Sam's films: `https://group.svrnme.sh/#open=films@Sam`. Added after a group link, it's `&open=films@Sam`: the link joins, then opens it.

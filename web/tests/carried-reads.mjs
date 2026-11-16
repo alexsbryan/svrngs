@@ -54,11 +54,11 @@ try {
   const loaded = () => home.locator('#home p.address').waitFor({ timeout: 60_000 });
   await home.goto(args.home);
   await loaded();
-  await home.locator('#home table.index button').first().waitFor({ timeout: 60_000 });
-  seen.cells = await home.locator('#home table.index tr td:first-child').allTextContents();
+  await home.locator('#home .index button').first().waitFor({ timeout: 60_000 });
+  seen.cells = await home.locator('#home .index li').allTextContents();
   const [tab] = await Promise.all([
     context.waitForEvent('page'),
-    home.locator('#home table.index button', { hasText: args.words }).click({ timeout: 10_000 }),
+    home.locator('#home .index button', { hasText: args.words }).click({ timeout: 10_000 }),
   ]);
   await arrived(tab);
   seen.yes = await tried(tab);

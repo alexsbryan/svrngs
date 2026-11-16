@@ -121,8 +121,8 @@ export const named = (lend) => {
 const does = (kind, shelf) =>
   shelf.find((app) => app.name === kind)?.words ?? 'this app’s shared entries.';
 // What opening `lend` lets it do, in one sentence: `agreed` says it beside
-// the open, and the home page's index says it once above its table for the
-// apps that share it (home/page/index.js `above`).
+// the open, and the home page's index says it once, as the caption of the
+// apps that share it (home/page/index.js).
 /**
  * @param {Lend} lend
  * @param {{ name?: string | null }} group
@@ -169,15 +169,6 @@ export const until = (visit) =>
     hour: 'numeric',
     minute: '2-digit',
   });
-
-// Whose a lend is on `group`'s index: its lender's, or the group's for an
-// app the group carries, whichever computer's copy is listed (`once`).
-/**
- * @param {Lend} lend
- * @param {{ name?: string | null }} group
- */
-export const owner = (lend, group) =>
-  lend.group ? (group.name ?? 'your group') : (lend.called ?? lend.person);
 
 // One copy of each app a group carries, the first listed, and every other
 // lend as it is: each computer holding the app lends its copy
@@ -280,7 +271,7 @@ export const called = (rows, key, when = joinedSaid) => {
 };
 
 // `lend` given `called`, its lender as `called` says them by the key of
-// the computer lending it, so `named` and `owner` tell two lenders of one
+// the computer lending it, so `named` tells two lenders of one
 // name apart: the one way a lend read from a group is given whose it is.
 /**
  * @template {{ key: string }} T

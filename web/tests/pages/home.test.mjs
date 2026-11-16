@@ -244,7 +244,7 @@ test('a computer that refused is said apart from one that did not answer', async
     refused: [named('cy', CY)],
   });
   const page = await home(answers);
-  assert.deepEqual(page.text('#home table.index td[colspan]').sort(), [
+  assert.deepEqual(page.text('#home .index > p').sort(), [
     "bo's computer did not answer, so what they lend is not listed.",
     "cy's computer answered without saying what they lend, so it is not listed.",
     "dee's computer did not answer, so what they lend is not listed.",
@@ -303,32 +303,32 @@ test('what is done in a terminal is named with its one line, and nothing the pag
 
 // browser::the_home_page_s_links_say_what_they_open and
 // ::the_home_page_shows_less_to_puzzle_over: the index's link names the
-// lend and its kind, what opening it does beside it, in a tab of its own;
-// no WiFi or address in the row; the box's words beside it; no "What apps
+// lend and its kind, in a tab of its own, under what opening it does; no
+// WiFi or address in its cell; the box's words beside it; no "What apps
 // use" while nothing uses anything.
 test('a lend’s link says what it opens and whose, in a tab of its own, and less to puzzle over', async () => {
   const shelf = lend('shelf');
   const page = await home(ada({ lent: [shelf] }));
-  assert.deepEqual(page.text('#home table.index td a'), ['Open ada’s shelf (k)']);
-  const [cell] = page.text('#home table.index td');
-  assert.equal(
-    cell,
-    'Open ada’s shelf (k) Opening it lets it write its own part of your group’s record, as you.',
-  );
-  assert.ok(!/WiFi|Copy its address/.test(page.text('#home table.index td').join()));
-  const [link] = page.all('#home table.index td a');
+  assert.deepEqual(page.text('#home .index li a'), ['ada’s shelf (k)']);
+  assert.deepEqual(page.text('#home .index > p'), [
+    'Opening it lets it write its own part of your group’s record, as you.',
+  ]);
+  assert.deepEqual(page.text('#home .index li'), ['ada’s shelf (k)']);
+  const [link] = page.all('#home .index li a');
   assert.equal(link.attributes.target, '_blank');
   assert.equal(page.all('#lent label')[0].textContent, 'How many people at once: ');
   assert.ok(!page.text('#home h2').includes('What apps use'), page.text('#home h2').join());
 });
 
-// The index says once, above its table, what two or more rows would each
-// say, naming them; a row keeps only its own words, so the row that differs
-// is the one with a sentence. Nothing a row said is lost: each sentence is
-// above the table or on its row, never neither. A lend alone in its sentence
-// keeps it on its row (the law above). Planted, watched failing: index.js
-// `above` keeping no sentence (`rows > 9`), every row saying its own.
-test('what several rows of the index share is said once above it, and a row says only what differs', async () => {
+// The index is grids of cells, each grid under the one sentence true of
+// everything in it, which names none of them; a cell is a lend's name and
+// only what differs, so the cell that differs is the one with a sentence.
+// Nothing a row said is lost: each sentence is a caption or in its cell.
+// One person's things sit together, the group's own first, then what opens
+// in a tab, then ports, this computer's own port last, with no caption: it
+// has no Play. A lend that opens friends' lends as you keeps "Open" on its
+// button, where the press is the yes.
+test('each grid of the index is under the sentence its cells share, and a cell says only what differs', async () => {
   const bo = { key: BO, person: 'bo', raw: 'udp' };
   const lent = [
     lend('shelf'),
@@ -337,33 +337,61 @@ test('what several rows of the index share is said once above it, and a row says
     lend('game', bo),
     lend('echo', bo),
     lend('mine', { raw: 'tcp' }),
+    lend('notes', { key: BO, person: 'bo' }),
   ];
   const people = [row('ada', ADA, 'started'), row('bo', BO)];
   const page = await home(ada({ lent, people }));
-  const may = 'lets it write its own part of your group’s record, as you.';
-  const said = page.text('#home section > p');
-  assert.ok(said.includes(`Opening ada’s shelf (k) or ada’s page (k) ${may}`), said.join('\n'));
-  const plays = 'on this computer, for a program here to connect to.';
-  assert.ok(said.includes(`Play opens bo’s game (k) or bo’s echo (k) ${plays}`), said.join('\n'));
-  assert.deepEqual(page.text('#home table.index th'), ['What', 'Whose']);
-  const cells = page.text('#home table.index td');
-  assert.deepEqual(
-    cells.filter((_, i) => i % 2 === 1),
-    ['ada', 'ada', 'your group', 'bo', 'bo', 'ada'],
-  );
-  assert.deepEqual(
-    cells.filter((_, i) => i % 2 === 0),
-    [
-      'Open ada’s shelf (k)',
-      'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks.',
-      'Open Money This app’s shared entries. Opening it lets it read and write only its own entries, as you in your group.',
-      'bo’s game (k) Play',
-      'bo’s echo (k) Play',
-      'ada’s mine (k) A port this computer lends.',
-    ],
-  );
+  assert.deepEqual(page.text('#home .index > p'), [
+    'Opening it lets it read and write only its own entries, as you in your group.',
+    'Opening one of these lets it write its own part of your group’s record, as you.',
+    'Play opens one of these on this computer, for a program here to connect to.',
+  ]);
+  assert.equal(page.all('#home .index > ul').length, 4);
+  assert.equal(page.all('#home .index table').length, 0);
+  assert.deepEqual(page.text('#home .index li'), [
+    'Money This app’s shared entries.',
+    'Open ada’s page (k) It also opens your friends’ films as you, and they can see what it asks.',
+    'ada’s shelf (k)',
+    'bo’s notes (k)',
+    'bo’s echo (k) Play',
+    'bo’s game (k) Play',
+    'ada’s mine (k) A port this computer lends.',
+  ]);
+  assert.deepEqual(page.text('#home .index li button'), ['Open ada’s page (k)', 'Play', 'Play']);
   const full = await home(ada({ lent: [lend('shelf', { using: 3 })] }));
-  assert.ok(full.text('#home table.index td')[0].endsWith('as you. Full now.'));
+  assert.deepEqual(full.text('#home .index li'), ['ada’s shelf (k) Full now.']);
+});
+
+// What a group shares has no bound, so the words outside the index's cells
+// do not grow with it: with 8 things and with 40 they are the same, word
+// for word, and name no lend. Planted, watched failing: index.js's caption
+// listing its cells' names (`${caption} ${cells.length}` stood in for it).
+test('the words outside the index’s cells are the same for 8 things and for 40', async () => {
+  const kinds = [{ reads: [] }, { key: BO, person: 'bo' }, { key: BO, person: 'bo', raw: 'udp' }];
+  const people = [row('ada', ADA, 'started'), row('bo', BO)];
+  const drawn = async (count) => {
+    const lent = Array.from({ length: count - 2 }, (_, i) => lend(`thing${i}`, kinds[i % 3]));
+    for (const kind of ['Money', 'Doc']) lent.push(lend(`${kind}-house`, { kind, group: 'house' }));
+    const page = await home(ada({ lent, people }));
+    const cells = page.text('#home .index li');
+    assert.equal(cells.length, count);
+    // The index's words, less each cell's, are its captions': whatever
+    // element holds a word, it is in a cell or it is one of these.
+    const said = page.text('#home .index > p');
+    const outside = cells.reduce(
+      (rest, cell) => rest.replace(cell, ''),
+      page.text('#home .index')[0],
+    );
+    assert.equal(outside.replace(/\s/g, ''), said.join('').replace(/\s/g, ''));
+    return said;
+  };
+  const [few, many] = [await drawn(8), await drawn(40)];
+  assert.deepEqual(few, [
+    'Opening one of these lets it read and write only its own entries, as you in your group.',
+    'Opening one of these lets it write its own part of your group’s record, as you.',
+    'Play opens one of these on this computer, for a program here to connect to.',
+  ]);
+  assert.deepEqual(many, few);
 });
 
 // "What you lend" is a line a lend, its form folded under the line, and no
@@ -887,18 +915,18 @@ test('Play in one group’s index is said on in every index, and its Stop too', 
   );
   const cells = () =>
     page
-      .all('#home section table.index td')
+      .all('#home section .index li')
       .filter((td) => td.textContent.match(/(Play|Stop)$/))
       .map(words);
   assert.equal(cells().length, 2, cells().join('\n'));
-  const [house, flat] = page.all('#home section table.index');
+  const [house, flat] = page.all('#home section .index');
   const id = (table) => ancestorId(table);
-  await page.press(`#${id(house)} table.index td button`, 'Play');
+  await page.press(`#${id(house)} .index li button`, 'Play');
   assert.ok(
     cells().every((cell) => cell.includes('Connect to 127.0.0.1:') && cell.endsWith('Stop')),
     cells().join('\n'),
   );
-  await page.press(`#${id(flat)} table.index td button`, 'Stop');
+  await page.press(`#${id(flat)} .index li button`, 'Stop');
   assert.ok(
     cells().every((cell) => !cell.includes('Connect to') && cell.endsWith('Play')),
     cells().join('\n'),

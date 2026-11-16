@@ -89,9 +89,9 @@ const answers = (sending, lent = [probe(sending)]) => ({
 // The row's ticks, the read's then the send's, and what its Open posts, as
 // web/tests/sends.mjs `ticks` read them in a browser.
 const ticks = (page) => {
-  const boxes = page.all('#home table.index details input');
-  const send = page.all('#home table.index details label').find((l) => /Sends to/.test(words(l)));
-  const posted = (name) => page.all(`#home table.index input[name=${name}]`)[0].value;
+  const boxes = page.all('#home .index details input');
+  const send = page.all('#home .index details label').find((l) => /Sends to/.test(words(l)));
+  const posted = (name) => page.all(`#home .index input[name=${name}]`)[0].value;
   return {
     line: send ? words(send) : null,
     checked: boxes.map((b) => b.checked),
@@ -117,15 +117,15 @@ test('the send’s tick is drawn under its read’s, posted only while its read 
     reads: LLAMA,
     sends: '',
   });
-  await page.tick('#home table.index details input', 1);
+  await page.tick('#home .index details input', 1);
   assert.equal(ticks(page).sends, LLAMA, 'ticked, the Open posts the send');
-  await page.tick('#home table.index details input', 0);
+  await page.tick('#home .index details input', 0);
   const unread = ticks(page);
   assert.deepEqual([unread.disabled, unread.sends], [[false, true], ''], 'its read unticked');
-  await page.tick('#home table.index details input', 0);
+  await page.tick('#home .index details input', 0);
   assert.equal(ticks(page).sends, LLAMA, 'its read ticked again, the send posted again');
-  await page.press('#home table.index form button', 'Open Probe');
-  const form = page.all('#home table.index form')[0];
+  await page.press('#home .index form button', 'Open Probe');
+  const form = page.all('#home .index form')[0];
   assert.deepEqual(page.went, [['submit', '/reaching']]);
   assert.equal(form.attributes.target, '_blank', 'the Open goes on to the app in a tab of its own');
   const again = await open(`${AT}/?ui=a`, answers(true));
@@ -148,6 +148,6 @@ test('a carried app the policy blanks is told why on its card', async () => {
   delete blank.reading;
   const page = await open(`${AT}/?ui=a`, answers(false, [blank]));
   assert.deepEqual(page.unanswered, []);
-  const row = page.text('#home table.index td')[0];
+  const row = page.text('#home .index li')[0];
   for (const words of said) assert.ok(row.includes(words), `the card lacks ${words}: ${row}`);
 });

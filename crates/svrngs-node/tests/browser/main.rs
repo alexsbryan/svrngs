@@ -1766,13 +1766,15 @@ async fn the_home_page_says_what_it_is_for(engine: Engine) {
 in_chromium!(
     /// **A lend's link opens its own page in a tab, by keyboard and by
     /// mouse** (docs/APP_ACCESS_AND_STOP.md A1, §5; start-home): Ada lends
-    /// her shelf; her home page's "Open ada’s shelf (k)" opens the shelf's
-    /// own page in a tab, by the keyboard and by the mouse. The link's words
-    /// and target are web/tests/pages/home.test.mjs's; "Open shared files"
+    /// her shelf; her home page's link "ada’s shelf (k)", under the caption
+    /// that says what opening one does, opens the shelf's own page in a
+    /// tab, by the keyboard and by the mouse. The link's words and target
+    /// are web/tests/pages/home.test.mjs's; "Open shared files"
     /// asking this computer's opener the folder is tests/home.rs `folder`'s,
     /// and its words home.test.mjs's ('the shared folder opened twice is
-    /// said opened once'). Planted, watched failing: the link saying only
-    /// the lend's name, as lend-name.js did before A1.
+    /// said opened once'). Planted, watched failing: the link by other
+    /// words than the driver is given, "Open ada’s shelf (k)", as
+    /// lend-name.js said it while each row carried its own verb.
     the_home_page_opens_the_group_s_folder
 );
 async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
@@ -1785,7 +1787,7 @@ async fn the_home_page_opens_the_group_s_folder(engine: Engine) {
     let seen = home_page(
         engine,
         &ada,
-        json!({ "all": "#home section p", "labelled": "Open ada’s shelf (k)" }),
+        json!({ "all": "#home section p", "labelled": "ada’s shelf (k)" }),
     )
     .await;
     eprintln!("the home page's run: {seen:#}");
