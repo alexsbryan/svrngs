@@ -2,6 +2,8 @@
 # What goes in is formatted by the commit, so a misformatted commit cannot be
 # made; then check.sh's cheap steps refuse what no formatter can fix. A file
 # with changes not going in is left for those steps, so nothing else is swept.
+# A trust floor change staged whole is said could-not-judge there, and its
+# reason judged by commit-msg, which reads the message this hook cannot.
 files=$(git diff --cached --name-only --diff-filter=ACM)
 for file in $files; do
   git diff --quiet -- "$file" || continue

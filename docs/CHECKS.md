@@ -20,7 +20,10 @@ reimplement authorization. Fast presentation tests are not signing/I/O evidence.
 | Complete regression gate | `scripts/check.sh` | Every tier, before shipping |
 
 `--fast` keeps its static checks and isolated Node laws: the pre-commit hook,
-under a minute. The complete gate also runs Node integration and the apps' tests.
+under a minute. A trust floor change staged whole is the commit's own, so
+there its trust floor step says could-not-judge, and the commit-msg hook
+refuses a message with no `Trust floor:` line (`scripts/trust_check.py` rule 7).
+The complete gate also runs Node integration and the apps' tests.
 `--touched` is a conservative regression selector, not an excuse to erase
 another session's work. Unknown reach still runs the complete tier. Shared
 instrument changes are held to all their consumers. The whole gate remains the gate.

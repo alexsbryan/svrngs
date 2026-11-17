@@ -1,0 +1,9 @@
+#!/bin/sh
+# A commit that changes scripts/trust_floor.txt says why on a line of its
+# message, `Trust floor: <the reason>` (the floor's head). The pre-commit
+# step reads no message, so a change staged whole is judged here
+# (scripts/trust_check.py rule 7); the history check judges every commit after.
+git diff --cached --quiet -- scripts/trust_floor.txt && exit 0
+grep -q '^Trust floor: [^[:space:]]' "$1" && exit 0
+echo "trust floor: this commit changes scripts/trust_floor.txt, and its message has no 'Trust floor: <the reason, and what was tried first>' line" >&2
+exit 1

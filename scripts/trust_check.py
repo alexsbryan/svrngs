@@ -15,8 +15,11 @@
 #    names that is gone;
 # 6. a behavioural gate the floor names whose test is gone, or ignored;
 # 7. the floor changed in a commit whose body has no `Trust floor:` line, or
-#    changed and not committed, so no reason can be read.
-import re, subprocess, sys
+#    changed and not committed, so no reason can be read. During a commit (git
+#    sets GIT_INDEX_FILE for its hooks) a change staged whole is the commit's,
+#    its reason in a message no pre-commit step can read: this step says
+#    could-not-judge, and .githooks/commit-msg judges the message.
+import os, re, subprocess, sys
 from collections import Counter
 from pathlib import Path
 
@@ -85,7 +88,13 @@ def main():
     broken += [f"{file}: the gate `{test}` is gone or ignored, which widens the floor" for file, test in gates if not (m := re.search(
         rf"((?:#\[[^\]]*\]\s*)+)(?:pub\s+)?(?:async\s+)?fn {test}\(", read(file))) or "test" not in m[1] or "ignore" in m[1]]
     log = git("log", "--no-merges", "--format=%h%x00%B%x01", "--", FLOOR)
-    if log.returncode != 0 or git("status", "--porcelain", "--", FLOOR).stdout:
+    status = git("status", "--porcelain", "--", FLOOR).stdout
+    unjudged = ROOT / "target/could-not-judge" / f"{os.environ.get('SVRNGS_STEP', 'trust floor')}.step"
+    unjudged.unlink(missing_ok=True)
+    if log.returncode == 0 and os.environ.get("GIT_INDEX_FILE") and status[:2] in ("M ", "A "):
+        unjudged.parent.mkdir(parents=True, exist_ok=True)
+        unjudged.write_text(f"{FLOOR}'s change, staged whole, is judged by .githooks/commit-msg, which refuses a message with no `Trust floor:` line\n")
+    elif log.returncode != 0 or status:
         broken.append(f"{FLOOR} is not committed here, so whether its change gives a reason could not be judged")
     broken += [f"{c} changed {FLOOR} and its body gives no `Trust floor:` reason" for c, _, b in
                (e.strip().partition("\x00") for e in log.stdout.split("\x01") if e.strip()) if not re.search(r"^Trust floor: \S", b, re.M)]
