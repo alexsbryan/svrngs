@@ -298,9 +298,17 @@ a one-use, path-bound open for a browser WebSocket. The worker and a small
 page shim carry an app's sockets (`home/session*.js`). The worker runs
 svrngs's code alone, under a policy of its own (`session.rs` `POLICY`, in
 scripts/trust_floor.txt): no `eval`, no wasm, this origin alone. An app's
-own service worker is refused in words, since it would run there beside
-the session; the app goes on without it, as on a phone, whose lend worker
-holds the pass under its own policy (`web/vercel.json`).
+own service worker runs in a realm of its own: the shim's `register` starts
+a dedicated worker at the app's script, which loads through svrngs's worker
+like any request and so under the policy the app's pages get, with a short
+svrngs prelude first (and, for a cross-origin isolated page, `require-corp`
+where the script names no embedder policy, which a dedicated worker needs
+and a service worker does not). svrngs's worker hands it, over a port, the
+fetches its own page asks, by the page's client and else any open page of
+the app's, and takes its answer; with no page open the lend answers, and
+its stand-ins for `clients`, `registration` and `skipWaiting` do nothing
+(`home/session.js` `realmKept`). A phone's lend worker does the same,
+holding the pass under its own policy (`web/vercel.json`).
 An absence says "Open svrngs from your computer", naming the opener.
 Neither request proofs nor the token reach the lent service. Upgrading
 from cookie sessions requires each browser origin to be opened again.
@@ -1976,7 +1984,7 @@ number:
   `crates/svrngs-node/tests/conformance.rs`): the web carried whole. One
   route per thing a self-hosted app leans on — a page asking for
   `/`-absolute paths, a WebSocket echo, a 64 MiB file read by Range and
-  uploaded streaming, its own service worker refused in svrngs's words and
+  uploaded streaming, its own service worker in a realm of its own and
   svrngs's worker refusing `eval`, `SharedArrayBuffer` under
   COOP/COEP, a Host check with an absolute redirect, a cookie sign-in, local
   storage, a script policy by nonce, a post it takes only from its own

@@ -234,6 +234,11 @@ try {
     seen.storage = await run('storage', lend.who);
     if (phone)
       seen.unsealable = await page.evaluate(unsealable).catch((e) => ({ error: String(e) }));
+    // With no page of the lend's open, the app's worker gone with it, a
+    // navigation is the lend's to answer (session.js `realmOf`).
+    await page.goto('about:blank');
+    const cold = await (await page.goto(new URL('sw-probe', seen.at).href))?.text();
+    seen.cold = { ok: cold === 'from the server', saw: String(cold) };
     if (args.api) {
       seen.recordPost = await page.evaluate(
         ([api, body]) =>

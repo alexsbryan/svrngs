@@ -109,6 +109,168 @@ const wholeTab = (request) =>
   request.mode === 'navigate' &&
   request.destination === 'document';
 
+// ── an app's own worker, in a realm of its own ────────────────────────────
+//
+// An app that registers a service worker is given a dedicated worker its
+// page starts at the app's script (session-client.js on a computer, shim.js
+// on a phone). That script and all it loads come through svrngs's worker
+// like any request, so the realm runs under the policy the app's own pages
+// get, and no app code runs in svrngs's worker. svrngs's worker hands it,
+// over a port, the fetches it would answer from the lend for the app's own
+// page, takes an answer it gives, and decides everything else itself. A
+// realm lasts while the page that started it is open; with none open, the
+// lend answers. Both workers import this: session-worker.js, and web/lend.js
+// (scripts/build-web.sh puts this file beside it).
+
+/** @typedef {{ script: string, isolated: boolean, port: MessagePort, ready: boolean }} Realm */
+/** Each open page's realm, by the page's client id. @type {Map<string, Realm>} */
+const realms = new Map();
+
+/**
+ * A page's realm, from its message: `realm` the script's URL, `isolated`
+ * whether the page is cross-origin isolated, its ports the realm's and one
+ * to tell the page by, `kept`, then `ready` once the realm's prelude runs.
+ * Taken from a window of this origin alone, never a worker; whether it was
+ * one.
+ * @param {{ source: unknown, data: unknown, ports: readonly MessagePort[] }} message
+ */
+export function realmKept({ source, data, ports: [port, told] }) {
+  const page = /** @type {{ id: string, type: string, url: string } | null} */ (source);
+  const asked = /** @type {{ realm?: unknown, isolated?: unknown } | null} */ (data);
+  const script = asked?.realm;
+  const here = (/** @type {unknown} */ url) =>
+    typeof url === 'string' && URL.canParse(url) && new URL(url).origin === self.location.origin;
+  if (page?.type !== 'window' || !here(page.url) || !here(script) || !port || !told) return false;
+  const isolated = asked?.isolated === true;
+  const realm = { script: /** @type {string} */ (script), isolated, port, ready: false };
+  port.onmessage = () => {
+    realm.ready = true;
+    told.postMessage('ready');
+  };
+  realms.set(page.id, realm);
+  told.postMessage('kept');
+  return true;
+}
+
+/**
+ * The realm whose own script `fetched` asks, for the page that started it.
+ * @param {{ request: Request, clientId: string }} fetched
+ */
+export const realmScript = ({ request, clientId }) => {
+  const realm = realms.get(clientId);
+  return request.destination === 'worker' && realm?.script === request.url ? realm : undefined;
+};
+
+/**
+ * `response`, `realm`'s script as the lend answered it, its headers kept,
+ * the policy the app's pages get among them, with svrngs's prelude first.
+ * A service worker's script names no embedder policy, which a dedicated
+ * worker an isolated page starts must, or Chromium and WebKit refuse to
+ * start it: the page's own is given it there, `require-corp`, the one both
+ * take (measured 2026-11-17, Chromium 147, WebKit 26.4).
+ * @param {Response} response
+ * @param {Realm} realm
+ */
+export async function preluded(response, realm) {
+  const headers = new Headers(response.headers);
+  headers.delete('content-length');
+  headers.delete('content-encoding');
+  const embedder = 'cross-origin-embedder-policy';
+  if (realm.isolated && !headers.has(embedder)) headers.set(embedder, 'require-corp');
+  const { status, statusText } = response;
+  const source = `(${prelude.toString()})();\n${await response.text()}`;
+  return new Response(source, { status, statusText, headers });
+}
+
+/**
+ * The answer a realm gives `fetched`, or none (`realmOf`).
+ * @param {{ request: Request, clientId: string }} fetched
+ * @param {{ get: (id: string) => Promise<{ type: string } | undefined> }} clients
+ * @returns {Promise<Response | undefined>}
+ */
+export async function realmAnswer(fetched, clients) {
+  const realm = await realmOf(fetched, clients);
+  if (!realm) return;
+  const { url, method, mode, destination, headers } = fetched.request;
+  const body = ['GET', 'HEAD'].includes(method)
+    ? null
+    : await fetched.request.clone().arrayBuffer();
+  const { port1, port2 } = new MessageChannel();
+  realm.port.postMessage({ url, method, mode, destination, headers: [...headers], body }, [port2]);
+  /** @type {(ResponseInit & { body: ArrayBuffer | null }) | null} */
+  const answer = await new Promise((done) => (port1.onmessage = ({ data }) => done(data)));
+  return answer ? new Response(answer.body, answer) : undefined;
+}
+
+/**
+ * The realm `fetched` is handed to, once ready: the one of the page that
+ * asked, else of any page of this origin's still open; none for a
+ * worker's request, a realm's own among them, which the lend answers.
+ * @param {{ request: Request, clientId: string }} fetched
+ * @param {{ get: (id: string) => Promise<{ type: string } | undefined> }} clients
+ */
+async function realmOf(fetched, clients) {
+  const own = realms.get(fetched.clientId);
+  if (own) return own.ready ? own : undefined;
+  const asker = fetched.clientId ? await clients.get(fetched.clientId) : undefined;
+  if (asker && asker.type !== 'window') return;
+  for (const [page, open] of realms)
+    if (!(await clients.get(page))) realms.delete(page);
+    else if (open.ready) return open;
+  return undefined;
+}
+
+// svrngs's prelude, the first line of an app's worker in its realm
+// (`preluded`), so its own source and nothing it closes over: what an app's
+// service worker reads of its global stands in, and each fetch svrngs's
+// worker hands over arrives as a `fetch` event, for the app's listeners to
+// answer by `respondWith`, or not.
+function prelude() {
+  Object.assign(self, {
+    registration: { scope: new URL('./', location.href).href },
+    clients: { claim: async () => {}, matchAll: async () => [] },
+    skipWaiting: async () => {},
+  });
+  addEventListener('message', function handed(message) {
+    const port = message.data === 'svrngs-realm' ? message.ports[0] : undefined;
+    if (!port) return;
+    message.stopImmediatePropagation();
+    removeEventListener('message', handed);
+    for (const type of ['install', 'activate'])
+      dispatchEvent(Object.assign(new CustomEvent(type), { waitUntil() {} }));
+    port.onmessage = ({ data, ports: [reply] }) => {
+      const { url, method, headers, body, mode, destination } = data;
+      const request = new Request(url, { method, headers, body });
+      // As the browser asked it: a navigation's mode no `Request` takes.
+      Object.defineProperties(request, {
+        mode: { value: mode },
+        destination: { value: destination },
+      });
+      /** @type {Promise<Response> | undefined} */
+      let given;
+      const respondWith = (/** @type {Response | PromiseLike<Response>} */ answer) =>
+        (given ??= Promise.resolve(answer));
+      dispatchEvent(
+        Object.assign(new CustomEvent('fetch'), { request, respondWith, waitUntil() {} }),
+      );
+      void Promise.resolve(given)
+        .then(async (response) =>
+          response && response.status > 0
+            ? {
+                body: response.body && (await response.arrayBuffer()),
+                status: response.status,
+                statusText: response.statusText,
+                headers: [...response.headers],
+              }
+            : null,
+        )
+        .catch(() => null)
+        .then((answer) => reply?.postMessage(answer));
+    };
+    port.postMessage('ready');
+  });
+}
+
 if (typeof document !== 'undefined' && document.getElementById('svrngs-session-state')) {
   // Found by the test above.
   const said = /** @type {HTMLElement} */ (document.getElementById('svrngs-session-state'));

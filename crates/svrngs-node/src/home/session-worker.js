@@ -1,4 +1,6 @@
 import { session, proof, hex, Browser, browserAuthority } from '/svrngs-session.js';
+// An app's own worker's realm, svrngs's side of it.
+import { preluded, realmAnswer, realmKept, realmScript } from '/svrngs-session.js';
 
 // `self` as a service worker's: the worker's lib names it a
 // `WorkerGlobalScope`, which every kind of worker shares
@@ -40,6 +42,9 @@ async function authenticated(request, intent) {
 }
 worker.addEventListener('install', () => worker.skipWaiting());
 worker.addEventListener('activate', (activation) => activation.waitUntil(worker.clients.claim()));
+// A page's message: its app's own worker, to run in a realm of its own,
+// which a window of this origin alone hands over (session.js `realmKept`).
+worker.addEventListener('message', (received) => void realmKept(received));
 worker.addEventListener('fetch', (fetchEvent) => {
   const url = new URL(fetchEvent.request.url);
   if (
@@ -57,8 +62,10 @@ worker.addEventListener('fetch', (fetchEvent) => {
 });
 
 // The answer to a fetch of this origin's, `fetchEvent` at `url`: refused
-// unless the browser's authority is read from it, else the node's to it
-// proved, a page with the session's client in it.
+// unless the browser's authority is read from it; the app's own worker's
+// answer, in its realm, when this origin's own page asked; else the node's
+// to it proved, a page with the session's client in it, and a realm's
+// script with svrngs's prelude before it.
 /**
  * @param {FetchEvent} fetchEvent
  * @param {URL} url
@@ -66,7 +73,12 @@ worker.addEventListener('fetch', (fetchEvent) => {
 async function served(fetchEvent, url) {
   const authority = await browserAuthority(fetchEvent, worker.clients, self.location.origin);
   if (!authority) return unproved(fetchEvent.request, url);
-  const response = await authenticated(fetchEvent.request, authority === Browser.Own);
+  const intent = authority === Browser.Own;
+  const script = realmScript(fetchEvent);
+  const answer = intent && !script ? await realmAnswer(fetchEvent, worker.clients) : undefined;
+  if (answer) return answer;
+  const response = await authenticated(fetchEvent.request, intent);
+  if (script) return preluded(response, script);
   if (
     url.hostname === 'svrngs.localhost' ||
     fetchEvent.request.method !== 'GET' ||

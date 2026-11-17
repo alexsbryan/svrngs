@@ -102,9 +102,10 @@ fi
 # group's page too: question.js, svrngs's words, so both say a thing in
 # one wording (#110), look.css, svrngs's one look, so both look one way,
 # and away.html, a lend's computer that did not answer, so both say it
-# one way; and the tab's icon and the Home Screen's, the svrngs mark from
-# its one home (docs/brand/).
-SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/look.css crates/svrngs-node/src/home/away.html docs/brand/favicon.svg docs/brand/apple-touch-icon.png)
+# one way; session.js, whose realm for an app's own worker both workers
+# run (lend.js imports it); and the tab's icon and the Home Screen's, the
+# svrngs mark from its one home (docs/brand/).
+SHARED=(crates/svrngs-node/src/home/question.js crates/svrngs-node/src/home/session.js crates/svrngs-node/src/home/look.css crates/svrngs-node/src/home/away.html docs/brand/favicon.svg docs/brand/apple-touch-icon.png)
 PAGE=(index.html app.js store.js sw.js open.html open.js lend.js shim.js authority.js sign.html sign.js)
 mkdir -p "$OUT/page" "$OUT/ui" "$OUT/vendor"
 cp "${SHARED[@]}" "${PAGE[@]/#/$APP/}" "$OUT/"

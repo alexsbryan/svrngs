@@ -9,8 +9,9 @@
 //   An answer that set cookies names those pages may read, taken in at once.
 // - `WebSocket`, which a worker never sees, is carried to the worker over
 //   a message port, and the worker speaks it to the lend's computer.
-// - An app's own service worker is refused in words: it would run in the
-//   lend's worker, beside the pass.
+// - An app's own service worker runs in a realm of its own the page starts,
+//   a dedicated worker at its script, never in the lend's worker, which
+//   hands it the page's fetches (session.js `realmKept`).
 // - An entry the worker signs for the app is first approved by the group's
 //   signer (sign.html), which only a page can frame: framed here, once, at
 //   the address the worker derives from its own host (lend.js `SIGNER`).
@@ -228,10 +229,38 @@
   // `CONNECTING` and the rest are on it by `Object.assign`, just above.
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
+  // The lend's worker, an older one, not answering a realm's hand-over.
+  const UNHEARD = "svrngs's worker did not answer: open this page again";
   if (workers)
-    workers.register = async () => {
-      throw new Error(
-        "svrngs didn't start this app's own service worker: it would run inside svrngs's worker, which holds your pass here. The app still works without it.",
+    workers.register = async (script, options) => {
+      const svrngs = worker();
+      if (!svrngs) throw new Error('no worker serves this page');
+      const url = new URL(script, location.href);
+      const realm = new MessageChannel();
+      const told = new MessageChannel();
+      const heard = () => new Promise((done) => (told.port1.onmessage = done));
+      let next = heard();
+      svrngs.postMessage({ realm: url.href, isolated: crossOriginIsolated }, [
+        realm.port1,
+        told.port2,
+      ]);
+      await Promise.race([next, new Promise((_, no) => setTimeout(no, 10000, new Error(UNHEARD)))]);
+      next = heard();
+      const app = new Worker(url, { type: options?.type ?? 'classic' });
+      app.postMessage('svrngs-realm', [realm.port2]);
+      await new Promise((ready, failed) => {
+        void next.then(ready);
+        app.onerror = (error) =>
+          failed(new Error(`this app's worker did not start: ${error.message}`));
+      });
+      // What an app's page reads of its registration; it has no more.
+      return /** @type {ServiceWorkerRegistration} */ (
+        /** @type {unknown} */ ({
+          scope: new URL(options?.scope ?? './', url).href,
+          active: svrngs,
+          update: async () => {},
+          unregister: async () => false,
+        })
       );
     };
 })();

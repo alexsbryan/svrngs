@@ -40,8 +40,8 @@
 // - A redirect to a path: read under the lend's own address.
 // - A WebSocket, which a worker never sees: the shim carries it here, and
 //   the worker speaks its frames over a socket the door switches (`socket`).
-// - The app's own worker is refused (shim.js): it would run here, beside
-//   the pass.
+// - The app's own worker: a realm of its own its page starts (shim.js),
+//   handed the fetches its page asks of this lend (session.js `realmKept`).
 //
 // Its trace is at `<scope>svrngs-trace`: a phone has no console to read.
 // It is kept in this origin's store as it is written, so it outlives the
@@ -59,6 +59,7 @@ import init, {
 import * as store from './store.js?v=__VERSION__';
 import { silent, unreached } from './question.js?v=__VERSION__';
 import { framing, fromHex, maySign, openMessage, signerFor } from './authority.js?v=__VERSION__';
+import { preluded, realmAnswer, realmKept, realmScript } from './session.js?v=__VERSION__';
 /** @import { Handoff, Passed } from './authority.js?v=__VERSION__' */
 /** @import { Dialled, Endpoint } from './wasm/svrngs_web.js?v=__VERSION__' */
 
@@ -1332,8 +1333,10 @@ async function stopping(label) {
   }
 }
 
-// The lend's answer, signed as the person when this origin's own page
-// asked it (authority.js `maySign`), and never for a lend it only reads.
+// The app's own worker's answer, in its realm, when this origin's own page
+// asked this lend; else the lend's, signed as the person when this origin's
+// own page asked it (authority.js `maySign`) and never for a lend it only
+// reads, and a realm's script with svrngs's prelude before it.
 /**
  * @param {FetchEvent} fetchEvent
  * @param {URL} url
@@ -1341,7 +1344,13 @@ async function stopping(label) {
  */
 async function answered(fetchEvent, url, where) {
   const allowed = await maySign(fetchEvent, scope.clients, SCOPE.origin);
-  return lent(fetchEvent.request, url, where, allowed && !where.read);
+  const script = realmScript(fetchEvent);
+  // App code must not turn an untrusted navigation into an authorized fetch.
+  const asked = allowed && where.label === OWN && !script;
+  const answer = asked ? await realmAnswer(fetchEvent, scope.clients) : undefined;
+  if (answer) return answer;
+  const response = await lent(fetchEvent.request, url, where, allowed && !where.read);
+  return script ? preluded(response, script) : response;
 }
 
 scope.addEventListener('fetch', (event) => {
@@ -1424,7 +1433,8 @@ scope.addEventListener('message', async (event) => {
     return;
   }
   // A page's hand-over, each part read as its kind before it is taken: an
-  // open (`handsPass`), a cookie by `typeof`, a socket as shim.js asks one.
+  // open (`handsPass`), a cookie by `typeof`, a socket as shim.js asks one,
+  // or its app's worker's realm (session.js `realmKept`).
   /**
    * @type {{
    *   handed?: any,
@@ -1440,7 +1450,7 @@ scope.addEventListener('message', async (event) => {
     event.waitUntil(cookieKept(cookie, reply));
   } else if (asked && reply) {
     event.waitUntil(socket(asked, reply));
-  } else {
+  } else if (!realmKept(event)) {
     trace(`RUNTIME: a message that hands over nothing, refused: ${Object.keys(data).join(',')}`);
   }
 });

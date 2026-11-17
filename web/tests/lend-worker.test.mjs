@@ -175,6 +175,7 @@ function lendOrigin({ keysLost }) {
       URL,
       encodeURIComponent,
       cookieKept: () => assert.fail('no cookie here'),
+      realmKept: () => false,
       socket: () => assert.fail('no socket here'),
     });
     worker = {

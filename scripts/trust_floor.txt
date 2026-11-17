@@ -22,9 +22,11 @@
 # a computer's session at each lend's origin and a phone's pass at each
 # lend's. They run svrngs's code alone, under the session scripts' policy
 # and the lend worker's below: never `eval`, no wasm but svrngs's own on a
-# phone, and reach only what svrngs needs. An app's own service worker is
-# refused there, in words (session-client.js, shim.js), never run beside
-# them. A worker an app's page starts itself is held by that page's policy.
+# phone, and reach only what svrngs needs. An app's own service worker runs
+# in a realm of its own, a dedicated worker its page starts, never beside
+# them: its script loads through svrngs's worker like any request, so it is
+# held by the policy that app's pages get (home/session.js `realmKept`), as
+# is any worker an app's page starts itself.
 #
 # page <name> <file> <anchor>: the policy that file serves, the one string
 #   literal after the anchor, which the file holds once. Under it, each
