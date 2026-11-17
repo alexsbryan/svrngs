@@ -13,7 +13,9 @@
 //! same-origin — can neither read its list nor say a yes. Every answer
 //! sends `frame-ancestors 'none'`, so no page frames it to borrow a click,
 //! and `default-src 'self'`; its one page, its module and its look are
-//! served from the node, and it runs no app's code.
+//! served from the node, and it runs no app's code. Every answer sends
+//! `Cross-Origin-Opener-Policy: same-origin` too, so no app that opens it,
+//! or that it opens, holds a handle on it or shares its process.
 //!
 //! **What it shows** is what `/v1/groups`, `/v1/lends` and
 //! `/v1/rail/people` answer, from the same functions ([`crate::surface`],
@@ -84,6 +86,17 @@ const HOST: &str = "svrngs.localhost";
 const UNCHANGED: &str = "that cannot be changed on this computer";
 
 const POLICY: &str = "default-src 'self'; frame-ancestors 'none'";
+
+/// The opener policy's header, which `http` names no constant for.
+const COOP: &str = "cross-origin-opener-policy";
+
+/// What every answer of the home page's carries ([`only_itself`]): its
+/// policy, pinned in scripts/trust_floor.txt, and an opener policy that puts
+/// it in a browsing context group of its own, so a page of another origin
+/// that opens it, or that it opens, holds no handle on it and, in WebKit,
+/// never runs in its process (WebKit 26.4, measured: svrn-docs
+/// rings/current/wasm-guard-spike/data/step6-proc-webkit.json).
+const HEADS: [(&str, &str); 2] = [("content-security-policy", POLICY), (COOP, "same-origin")];
 
 /// When a person joined, as the page says it (home.js `people`) and
 /// `svrngs remove --joined` takes it: this computer's time to the second
@@ -184,7 +197,8 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     })
 }
 
-/// The home page's one rule (the module doc), and its policy on every answer.
+/// The home page's one rule (the module doc), and its [`HEADS`] on every
+/// answer.
 async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> Response {
     let own = format!("{HOST}:{}", at.host.api_port);
     let ([site, mode, origin, host], own_page) = crate::origin::fetch(req.headers());
@@ -198,7 +212,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
         };
     let public = || at.sessions.public(crate::session::HOME, &req);
     if let Some(answer) = at_own.then(public).flatten() {
-        return ([(header::CONTENT_SECURITY_POLICY, POLICY)], answer).into_response();
+        return (HEADS, answer).into_response();
     }
     let shown = at.sessions.shown(&req, crate::session::HOME);
     let opening = at_own && req.uri().path() == crate::session::OPEN_PATH;
@@ -228,7 +242,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
     } else {
         next.run(req).await
     };
-    ([(header::CONTENT_SECURITY_POLICY, POLICY)], answer).into_response()
+    (HEADS, answer).into_response()
 }
 
 /// `POST /connection`, the form of "Check the connection now": this

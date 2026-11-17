@@ -146,8 +146,10 @@ async fn ask(
 
 /// **The home page answers only itself, shows what `/v1/lends` answers, and
 /// takes only the person's yes and stop.** Typed, it serves its page and
-/// module, never to be framed; a lend's page navigated to `/ask` gets the
-/// page too. Its `/v1/groups` and `/v1/lends` answer what the record API's
+/// module, never to be framed, and every answer, its session's bootstrap
+/// and a refusal included, keeps its opener policy, so no app that opens it
+/// or that it opens holds a handle on it; a lend's page navigated to `/ask`
+/// gets the page too. Its `/v1/groups` and `/v1/lends` answer what the record API's
 /// answer an app, the same body. A lend's page reading its list is refused
 /// `closed`, and so is a post with no exact `Origin` or not from its own
 /// origin: a lend's page's yes. The person's yes, from its own origin, lets
@@ -157,7 +159,7 @@ async fn ask(
 /// words and its `ask` address. `night`'s page stops itself at its origin,
 /// at both, and is refused `stopped` after. Planted, each watched failing:
 /// a lend page's yes accepted; a lend page reading the home page's list;
-/// the home page framed.
+/// the home page framed; its opener policy left out (home.rs `HEADS`).
 #[tokio::test]
 async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices() {
     let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
@@ -227,11 +229,18 @@ async fn the_home_page_answers_only_itself_and_takes_only_the_person_s_choices()
     for got in [
         &page,
         &ask(browser, "GET", &home, "/v1/groups", &from_night, "").await,
+        &ask(browser, "GET", &home, "/svrngs-session.js", typed, "").await,
     ] {
         assert_eq!(
             got.header("content-security-policy"),
             Some("default-src 'self'; frame-ancestors 'none'"),
             "never framed, answered or refused: {}",
+            got.head
+        );
+        assert_eq!(
+            got.header("cross-origin-opener-policy"),
+            Some("same-origin"),
+            "no opener's handle, answered or refused: {}",
             got.head
         );
     }

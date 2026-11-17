@@ -2567,10 +2567,13 @@ survive a restart; another program holding it is said by the command, exit
 `http://svrngs.localhost:<port>/`, answers only itself — reads from its own
 origin, a typed address or a navigation, and writes only with its own exact
 `Origin` — so a lent page, same-site but never same-origin, can neither read
-it nor say a yes; it sends `frame-ancestors 'none'`. A lend's address in a
-browser that holds no session there, a bookmark of a lend it never opened,
-sends the whole tab, a `GET` navigation of a document and nothing else, to
-the home page's `/to`, which opens the lend as its own links do, by a code
+it nor say a yes; it sends `frame-ancestors 'none'`, and
+`Cross-Origin-Opener-Policy: same-origin`, so no app that opens it, or that
+it opens, holds a handle on it or, in WebKit, shares its process. A lend's
+address in a browser that holds no session there, a bookmark of a lend it
+never opened, sends the whole tab, a `GET` navigation of a document and
+nothing else, to the home page's `/to`, which opens the lend as its own
+links do, by a code
 for that origin alone, only with the home page's session, and back at the
 path (`origin.rs`, `homeward`). Every open comes back once to
 `/svrngs-open?kept=<path>` to see the browser kept its session before going
