@@ -3,6 +3,14 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync, realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
+// A stuck wait holds the loop, and node:test without a timeout waits forever
+// (a timer-held law ran to the shell's cut with every other law done,
+// demo/runs/test-audit/2026-11-16): this ends a hang by failing its test by
+// name. 120 s is 60x the slowest law of 2026-11-16 (the pages' twin) and
+// 15x the whole apps step, so it never races real work. No web/tests file
+// is named here: touched.py reads a name in a file's text as an edge.
+const TEST_TIMEOUT_MS = 120_000;
+
 const ROOT = new URL('../../', import.meta.url);
 const TIERS = ['unit', 'integration', 'apps'];
 
@@ -42,7 +50,8 @@ function main(args) {
     return 0;
   }
   console.log(`${tier}: ${files.length} test files`);
-  const result = spawnSync(process.execPath, ['--test', ...files], { cwd: ROOT, stdio: 'inherit' });
+  const runArgs = ['--test', `--test-timeout=${TEST_TIMEOUT_MS}`, ...files];
+  const result = spawnSync(process.execPath, runArgs, { cwd: ROOT, stdio: 'inherit' });
   if (result.error) throw new Error(`never-ran: ${result.error.message}`);
   if (result.signal) throw new Error(`could-not-judge: tests ended by ${result.signal}`);
   if (result.status === null) throw new Error('could-not-judge: no test exit status');
