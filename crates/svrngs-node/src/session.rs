@@ -140,14 +140,14 @@ impl Nonces {
             return Err(Spent::TooManyOrigins);
         }
         let window = seen.entry(origin.to_string()).or_default();
-        if window.contains(&(stamp, nonce)) {
-            return Err(Spent::Replayed);
-        }
-        if window.len() >= PER_ORIGIN {
+        if window.len() >= PER_ORIGIN && !window.contains(&(stamp, nonce)) {
             return Err(Spent::OriginFull);
         }
-        window.insert((stamp, nonce));
-        Ok(())
+        // Inserted once: a nonce shown before is a replay, the window full or not.
+        window
+            .insert((stamp, nonce))
+            .then_some(())
+            .ok_or(Spent::Replayed)
     }
 }
 
@@ -273,13 +273,11 @@ impl Sessions {
         format!("{name}.localhost:{}", self.port)
     }
 
-    fn browser_key(&self, name: &str) -> Vec<u8> {
+    fn browser_key(&self, name: &str) -> ring::hmac::Tag {
         ring::hmac::sign(
             &self.key,
             format!("browser/{name}/{}", self.port).as_bytes(),
         )
-        .as_ref()
-        .to_vec()
     }
 
     /// The capability a read's address carries (`/svrngs-as/<cap>/`): the
@@ -333,7 +331,7 @@ impl Sessions {
             req.uri(),
             self.epoch
         );
-        let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, &self.browser_key(name));
+        let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, self.browser_key(name).as_ref());
         let signature = URL_SAFE_NO_PAD
             .decode(signature)
             .map_err(|_| Unproven::Malformed)?;
@@ -439,13 +437,11 @@ impl Sessions {
         {
             return false;
         }
-        let Some(query) = req.uri().query() else {
-            return false;
-        };
-        let code = query
+        let query = req.uri().query().unwrap_or_default();
+        let Some(code) = query
             .split('&')
-            .find_map(|p| p.strip_prefix("__svrngs_socket="));
-        let Some(code) = code.map(str::to_string) else {
+            .find_map(|p| p.strip_prefix("__svrngs_socket="))
+        else {
             return false;
         };
         let rest = query
@@ -461,7 +457,7 @@ impl Sessions {
         );
         let valid = self
             .sockets
-            .redeem(&code)
+            .redeem(code)
             .is_ok_and(|(host, path)| host == name && path == at);
         if let Ok(uri) = at.parse() {
             *req.uri_mut() = uri;

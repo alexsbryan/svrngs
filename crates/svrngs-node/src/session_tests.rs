@@ -29,7 +29,7 @@ fn cookies_never_authorize_and_proofs_bind_the_request_and_cannot_replay() {
         "svrngs.localhost:4321\nPOST\n/group\n{now}.{nonce}\n\n\n{}",
         s.epoch
     );
-    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, &s.browser_key(HOME));
+    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, s.browser_key(HOME).as_ref());
     let tag = URL_SAFE_NO_PAD.encode(ring::hmac::sign(&key, message.as_bytes()));
     let proof = format!("{now}.{nonce}.{tag}");
     for (method, path, port) in [
@@ -131,7 +131,7 @@ fn proof_for(s: &Sessions, method: &str, path: &str, nonce: char) -> String {
         "svrngs.localhost:4321\n{method}\n{path}\n{now}.{nonce}\n\n\n{}",
         s.epoch
     );
-    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, &s.browser_key(HOME));
+    let key = ring::hmac::Key::new(ring::hmac::HMAC_SHA256, s.browser_key(HOME).as_ref());
     let tag = URL_SAFE_NO_PAD.encode(ring::hmac::sign(&key, message.as_bytes()));
     format!("{now}.{nonce}.{tag}")
 }
