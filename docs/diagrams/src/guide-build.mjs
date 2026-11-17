@@ -42,7 +42,7 @@ export function guideBuild(k, draw) {
     b += top(W, 'Three links, each for someone different.');
     const cols = [
       {
-        btn: 'Invite someone to House',
+        btn: 'Invite people',
         who: 'a new person',
         sub: 'joins House as themselves',
         can: [
@@ -103,7 +103,7 @@ export function guideBuild(k, draw) {
       H,
       b,
       'Three links, each for someone different',
-      'Invite someone to House lets in a new person, who can open the group’s record and what everyone lends; the link works for a day. Add your phone or another computer lets you in again, as you. Have a guest lets in a guest for 48, 24 or 6 hours, who opens only what Cy lends and never the group’s record.',
+      'Invite people lets in a new person, who can open the group’s record and what everyone lends; the link works for a day. Add your phone or another computer lets you in again, as you. Have a guest lets in a guest for 48, 24 or 6 hours, who opens only what Cy lends and never the group’s record.',
     );
   }
 

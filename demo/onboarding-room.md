@@ -36,7 +36,7 @@ the scene. No deployment, publish or push is authorized by this document.
 
 ## The scene
 
-1. The host presses **Invite people here**, copies the address, then reloads
+1. The host presses **Invite people**, copies the address, then reloads
    the page and confirms its controls recover. Restart the host's svrngs and
    confirm recovery again before attendees start. Record the observed expiry
    and reachability guidance.

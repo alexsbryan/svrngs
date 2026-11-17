@@ -3,8 +3,11 @@
 // group-link.js LINK's publication), drawn whole over twin.mjs with no
 // browser: the page's half of browser::publication::onboarding_host_controls_survive_restart,
 // each of its five phases from the receipt /publication answers (src
-// publication.rs `status`: id, state, phrase, address, until; 503 and
-// `{ error }` when the resolver failed). The node's half, each phase's
+// publication.rs `status`: id, state, phrase, address, until, and while it
+// admits, pending or open, the link and its QR code; 503 and `{ error }`
+// when the resolver failed). Pressed once, Invite people shows the
+// invitation three ways: its link with Copy, its short address with Copy,
+// and the link's QR code, named for a screen reader. The node's half, each phase's
 // one resolver call and the invitation kept or ended across a restart of
 // the process, is crates/svrngs-node/tests/home/publication.rs's
 // publication_recovers_pending_open_closing_and_closed_across_process_restarts.
@@ -16,6 +19,8 @@ import { open, words } from './twin.mjs';
 const AT = 'http://svrngs.localhost:4000';
 const ADA = 'a1'.repeat(32);
 const ADDRESS = 'https://join.example/acorn-basil-cabin-daisy-eagle';
+const LINK = 'https://group.example/#ordinary_invitation';
+const QR = { size: 29, path: 'M4 4h1v1h-1z' };
 const UNAVAILABLE = {
   status: 503,
   body: {
@@ -29,6 +34,7 @@ const receipt = (state) => ({
   phrase: 'acorn-basil-cabin-daisy-eagle',
   address: ADDRESS,
   until: 1_791_000_000,
+  ...(['pending', 'open'].includes(state) && { link: LINK, qr: QR }),
 });
 const group = {
   id: 'house',
@@ -80,50 +86,67 @@ const controls = (page) => words(page.all('.publication')[0]);
 const pressed = (page, button) => page.press('.publication button', button);
 
 test('the host’s controls: each phase drawn from its receipt, one post a press, and drawn again from the receipt kept', async () => {
-  // pending: nothing published; Invite people here fails at the resolver.
+  // pending: nothing published; Invite people fails at the resolver, and
+  // the invitation's link and QR code work without it.
   let held = { now: null };
   let at = ada(held, () => ((held.now = receipt('pending')), UNAVAILABLE));
   let page = await open(`${AT}/?ui=a`, at.answers);
-  assert.ok(controls(page).includes('Invite people here'), controls(page));
-  await pressed(page, 'Invite people here');
+  assert.ok(controls(page).includes('Invite people'), controls(page));
+  await pressed(page, 'Invite people');
   assert.deepEqual(at.asked, [['publish', { group: 'house' }]]);
   let said = controls(page);
-  assert.ok(said.includes('joining is temporarily unavailable'), said);
-  assert.ok(said.includes('Joining is temporarily unavailable. Retry in a minute'), said);
+  assert.ok(said.includes('The short address isn’t ready'), said);
+  assert.ok(!said.includes('joining is temporarily unavailable'), 'said once, not twice');
   assert.ok(!/invitation ended|Joining is closed/.test(said), said);
+  assert.deepEqual(
+    page.all('.publication code').map(words),
+    [LINK],
+    'the link works without the resolver',
+  );
+  assert.equal(page.all('.publication svg.qr').length, 1);
   assert.ok(
-    page.all('.publication button').some((b) => words(b) === 'Retry joining'),
+    page.all('.publication button').some((b) => words(b) === 'Retry the short address'),
     said,
   );
   page = await open(`${AT}/?ui=a`, at.answers);
-  assert.ok(controls(page).includes('Retry joining'), 'drawn again from the receipt kept');
+  assert.ok(controls(page).includes('Retry the short address'), 'drawn again from the receipt');
 
-  // open: the pending receipt retried by its id, and the address shown.
+  // open: the pending receipt retried by its id, and the invitation shown
+  // three ways: the link, the address, and the link's QR code.
   held = { now: receipt('pending') };
   at = ada(held, () => (held.now = receipt('open')));
   page = await open(`${AT}/?ui=a`, at.answers);
-  await pressed(page, 'Retry joining');
+  await pressed(page, 'Retry the short address');
   assert.deepEqual(at.asked, [['publish', { group: 'house', id: 'p1' }]]);
-  assert.equal(words(page.all('.publication code')[0]), ADDRESS);
+  assert.deepEqual(page.all('.publication code').map(words), [LINK, ADDRESS]);
+  const [qr] = page.all('.publication svg.qr');
+  assert.equal(qr.attributes.role, 'img');
+  assert.match(qr.attributes['aria-label'], /QR code/);
+  // twin.mjs's setAttribute keeps a name in lower case, as HTML's does.
+  assert.equal(qr.attributes.viewbox, '0 0 29 29');
+  assert.equal(page.all('.publication svg.qr path')[0].attributes.d, QR.path);
+  assert.equal(page.all('.publication')[0].attributes['aria-live'], 'polite');
   page = await open(`${AT}/?ui=a`, at.answers);
-  assert.equal(words(page.all('.publication code')[0]), ADDRESS, 'drawn again');
+  assert.deepEqual(page.all('.publication code').map(words), [LINK, ADDRESS], 'drawn again');
 
-  // closing: the address large, copied by its button, how long it lasts;
-  // Close joining fails at the resolver.
+  // closing: the address large, each copied by its button, how long it
+  // lasts; Close joining fails at the resolver, and the link is not shown
+  // while joining is being closed.
   held = { now: receipt('open') };
   at = ada(held, () => ((held.now = receipt('closing')), UNAVAILABLE));
   page = await open(`${AT}/?ui=a`, at.answers);
-  const [code] = page.all('.publication code');
+  const code = page.all('.publication code')[1];
   assert.equal(words(code), ADDRESS);
   assert.match(code.style.cssText, /font-size:\s*1\.4em/);
   assert.match(controls(page), /Ends .+Keep this computer on and awake until everyone’s in\./);
+  await pressed(page, 'Copy the link');
   await pressed(page, 'Copy the address');
-  assert.deepEqual(page.copied, [ADDRESS]);
+  assert.deepEqual(page.copied, [LINK, ADDRESS]);
   await pressed(page, 'Close joining');
   assert.deepEqual(at.asked, [['close', { group: 'house', id: 'p1' }]]);
   said = controls(page);
-  assert.ok(said.includes('joining is temporarily unavailable'), said);
-  assert.ok(said.includes('so closing isn’t confirmed yet'), said);
+  assert.ok(said.includes('Closing isn’t confirmed'), said);
+  assert.ok(!said.includes(LINK) && page.all('.publication svg').length === 0, said);
   assert.ok(!/invitation ended|Joining is closed/.test(said), said);
   assert.ok(
     page.all('.publication button').some((b) => words(b) === 'Retry closing'),

@@ -345,52 +345,56 @@ test('the door draws who is on now: lit, off once answered, and in from a phone'
   assert.deepEqual(looked, [], page.text().join('\n'));
 });
 
-// browser::the_home_page_makes_a_link_to_invite_someone, the page's half:
-// each button says what it makes; pressed, it posts /link for the group,
-// a device's or not, and shows the link home.rs `link` answers, saying who
-// it is for and how long it works; Copy the link writes the link shown and
-// says so beside it. That the link names this computer as its issuer, and
-// lets someone in, is home.rs's: tests/home.rs
-// a_link_the_page_makes_before_a_home_names_the_home_it_comes_to (Bo
-// joins by it); its token parses as svrngs-core link_tests.rs holds.
-test('a link to invite someone, and one for your own device, made, shown and copied', async () => {
+// browser::the_home_page_makes_a_link_to_invite_someone, the page's half,
+// for the one link the page still makes by /link to let someone in: Add
+// your phone or another computer posts /link for the group, a device's,
+// and shows the link home.rs `link` answers, saying who it is for and how
+// long it works; Copy the link writes the link shown and says so beside
+// it. While an invitation lets people in (publication.rs `shown`, open or
+// pending), a device link would end it (one open invitation a person and
+// group, DESIGN §3), so the first press posts nothing and says so, and the
+// second makes it. Planted, watched failing: group-link.js LINK's `make`
+// making the device link at the first press, as it did. That the link
+// names this computer as its issuer, and lets someone in, is home.rs's:
+// tests/home.rs a_link_the_page_makes_before_a_home_names_the_home_it_comes_to
+// (Bo joins by it); its token parses as svrngs-core link_tests.rs holds.
+test('a link for your own device, made, shown and copied, said first to end an open invitation', async () => {
   const made = [];
-  const page = await home(
-    ada({
-      'POST /link': (body) => {
-        made.push(body);
-        const client = `svrngs://join/TOKEN${made.length}`;
-        return { client, https: null, device: body.device };
-      },
-    }),
-  );
+  const answers = ada({
+    'POST /link': (body) => {
+      made.push(body);
+      const client = `svrngs://join/TOKEN${made.length}`;
+      return { client, https: null, device: body.device };
+    },
+  });
+  const page = await home(answers);
   const last =
     'It works for a day, while this computer is on. A new link stops this one letting anyone new in; everyone it let in stays. Copy the link';
   const said = () => page.text('#home section p.link')[0] ?? '';
-  for (const [button, starts, n] of [
-    [
-      'Invite someone to ',
-      'Send this link to the person you are inviting: svrngs://join/TOKEN1 ',
-      1,
-    ],
-    [
-      'Add your phone or another computer',
-      'Open this link on your other computer or phone; it joins as you, so send it to nobody else: svrngs://join/TOKEN2 ',
-      2,
-    ],
-  ]) {
-    await page.press('#home section button', button);
-    assert.equal(made.length, n);
-    assert.ok(said().startsWith(starts), said());
-    assert.ok(said().endsWith(last), said());
-  }
-  assert.deepEqual(made, [
-    { group: 'house', device: false },
-    { group: 'house', device: true },
-  ]);
+  const device = 'Add your phone or another computer';
+  await page.press('#home section button', device);
+  assert.deepEqual(made, [{ group: 'house', device: true }], 'nothing open: made at once');
+  const to =
+    'Open this link on your other computer or phone; it joins as you, so send it to nobody else: svrngs://join/TOKEN1 ';
+  assert.ok(said().startsWith(to), said());
+  assert.ok(said().endsWith(last), said());
   await page.press('#home section p.link button', 'Copy the link');
   assert.ok(said().endsWith('Copy the link Copied.'), said());
-  assert.deepEqual(page.copied, ['svrngs://join/TOKEN2']);
+  assert.deepEqual(page.copied, ['svrngs://join/TOKEN1']);
+  assert.equal(page.all('#home section p.link')[0].attributes.role, 'status');
+
+  for (const state of ['open', 'pending']) {
+    answers['GET /publication?group=house'] = { id: 'p1', state, address: null, until: 1 };
+    const open = await home(answers);
+    made.length = 0;
+    await open.press('#home section button', device);
+    assert.deepEqual(made, [], `${state}: the first press posts nothing`);
+    const told = open.text('#home section p.link')[0] ?? '';
+    assert.ok(told.startsWith('This ends the invitation people are using to join'), told);
+    assert.ok(told.includes('Everyone already in stays.'), told);
+    await open.press('#home section button', device);
+    assert.deepEqual(made, [{ group: 'house', device: true }], `${state}: the second makes it`);
+  }
   assert.deepEqual([page.went, page.unanswered], [[], []]);
 });
 

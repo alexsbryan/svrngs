@@ -237,6 +237,11 @@ body.layout-b section[data-colour] { border-top: 0; padding-top: 0; }
    its own a pair, 72ch wide, stacked four buttons in three rows. What an
    open invitation says keeps its own lines above them. */
 .publication, .publication > p:last-child, .publication + p { display: inline; }
+/* An invitation's QR code (group-links.js `ways`): dark on light in either
+   setting, as a camera reads one, and wide enough for a phone across a
+   table to read it, a phone's width on a phone. */
+.publication svg.qr { display: block; width: min(100%, 24rem); height: auto; margin: 0.5rem 0; border: var(--rule); background: white; }
+.publication svg.qr path { fill: black; }
 .group-place { margin: 1rem 0; padding: 0.75rem 0; border-top: var(--hair); }
 .group-place > summary { font-size: 1.1rem; }
 /* People, first under the group's banner, needs no rule of its own above it. */

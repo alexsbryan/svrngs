@@ -1145,13 +1145,22 @@ svrngs's own, `https://join.svrnme.sh/` (`publication.rs` `resolver`):
 batteries included, never the only choice, and a file there that cannot be
 read is said, never passed over for ours. The native status includes the short address at that resolver's
 origin; the browser never constructs a distribution origin from it. The
-group's existing link machine and view (`home/page/group-link.js` and
-`group-links.js`) offer **Invite people here**, the large copyable address,
-expiry, reachability guidance and **Close joining**. They read the local
-receipt on mount and after an uncertain mutation; pending publication and
-closure offer explicit retries, with no automatic network retry. Ordinary
-and device links reread publication status because they supersede it. Reload
-and restart recover these controls from the native receipt. The public resolver
+group's link machine and view (`home/page/group-link.js` and
+`group-links.js`) offer **Invite people**: one invitation, shown three ways,
+its link to paste in a chat and the large short address to read aloud, each
+with Copy, and the link's QR code, named for a screen reader, which a phone
+scans without asking the resolver; then its expiry, the guidance to keep this
+computer on and awake until everyone's in, and **Close joining**. They read
+the local receipt on mount and after an uncertain mutation; pending
+publication and closure offer explicit retries, with no automatic network
+retry, and a failure the receipt says itself is not said twice. The page
+makes no other ordinary link (`svrngs link` still does). A device link,
+**Add your phone or another computer**, rereads publication status because it
+supersedes the invitation (one open invitation per issuer and group, which
+admission keeps); while the invitation admits, its first press says that it
+ends the invitation people are using to join and makes nothing, and its
+second makes it. Reload and restart recover these controls from the native
+receipt. The public resolver
 is provisioned; the people scene remains the onboarding queue's work (`ONBOARDING.md`).
 
 *The short-address resolver* (`resolver/handler.mjs`, at `join.svrnme.sh`) maps five

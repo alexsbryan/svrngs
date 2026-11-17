@@ -61,19 +61,21 @@ Under Lab you see who is in it (press a person's box for what they share), **Sha
 **Add an app**: press it for Money, Events and House rules, which come
 with svrngs. [Apps](apps.md) says what each does.
 
-## Invite someone
+## Invite people
 
-Press **Invite someone to Lab**. The page says *"Send this link to the
-person you are inviting:"*, then the link. Press **Copy the link** and
-paste it in your chat.
+Press **Invite people**. The page shows a link with **Copy the link**, a
+short address with **Copy the address**, and a QR code. Paste the link in
+your chat, read the address out, or have people point their phone's camera
+at the code.
 
-- The link works for a day, while your computer is on. Your computer has
-  to be on when they open it.
-- Several people can join by the same link. Making a new one stops the old
-  one letting anyone new in; everyone already in stays.
+- The invitation works for a day, while your computer is on. Keep it on
+  and awake until everyone's in.
+- Several people can join by the same invitation. **Close joining** stops
+  it letting anyone new in; everyone already in stays.
 - To add your own phone or second computer, press **Add your phone or
   another computer** instead. That link joins as you, so send it to nobody
-  else. See [People](people.md).
+  else, and it ends the invitation, so while people are joining it asks
+  you to press it twice. See [People](people.md).
 
 ## Join on a computer
 

@@ -8,7 +8,7 @@ it once and the rest of the guide makes sense. To get going first, see
 
 A group is the people you already talk to in a chat: a house, a team, the
 friends you plan with. Sam makes a group called Lab on their computer,
-presses **Invite someone to Lab**, and drops the link in the chat. Bo opens
+presses **Invite people**, and drops the link in the chat. Bo opens
 it, gives a name, and is in. So does Ana, from a phone.
 
 - Nobody makes an account. The name you give is the name everyone in the

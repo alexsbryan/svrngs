@@ -1,30 +1,36 @@
 # Who's in your group
 
-This page covers everything about who's in: inviting someone, adding your
+This page covers everything about who's in: inviting people, adding your
 own phone or other computer, having a guest over, removing someone, and
 leaving. `svrngs` below means `~/.local/bin/svrngs` if your terminal doesn't
 find it.
 
-![Three links let in three different people: Invite someone to House lets in a new person, who opens the record and what everyone lends; Add your phone or another computer lets in you again; Have a guest lets in a guest, who opens only what Cy lends and never the record.](../diagrams/guide/people-links.svg)
+![Three links let in three different people: Invite people lets in a new person, who opens the record and what everyone lends; Add your phone or another computer lets in you again; Have a guest lets in a guest, who opens only what Cy lends and never the record.](../diagrams/guide/people-links.svg)
 
-## Invite someone
+## Invite people
 
-On your home page, in your group's section, press **Invite someone to
-House**. The page shows the link, with **Copy the link**:
+On your home page, in your group's section, press **Invite people**. The
+page shows one invitation three ways:
 
-*Send this link to the person you are inviting: … It works for a day,
-while this computer is on. A new link stops this one letting anyone new in;
-everyone it let in stays.*
+- a link to paste in your chat, with **Copy the link**;
+- a short address to read out, such as
+  `join.svrnme.sh/cedar-otter-moon-lamp-fern`, with **Copy the address**;
+- a QR code: people point their phone's camera at it to open the link.
 
-Paste it into your chat. Or make one in a terminal:
+*Ends … Keep this computer on and awake until everyone's in.*
+
+Everyone you invite joins by the same invitation, for a day. The person
+joining reaches your computer to get in, so keep it on until they're in.
+**Close joining** stops it letting anyone new in; everyone already in
+stays. Or make a link in a terminal:
 
 ```
 ~/.local/bin/svrngs link House
 ```
 
-The person joining reaches your computer to get in, so keep it on until
-they're in. Links are made on a computer; your group's page on a phone has
-no invite button.
+A link made there, or **Add your phone or another computer**, ends the
+invitation too. Invitations are made on a computer; your group's page on a
+phone has no invite button.
 
 How the person joins, on a computer or a phone, is in [start.md](start.md).
 
@@ -35,6 +41,9 @@ Ana wants House on a phone too. On the home page of Ana's computer, Ana presses
 
 *Open this link on your other computer or phone; it joins as you, so send
 it to nobody else: …*
+
+If people are joining by an invitation right now, the first press says
+that this link ends it, and makes nothing; press it again to go ahead.
 
 Ana opens that link on the phone, and it joins as Ana, with no name asked.
 In a terminal it's:

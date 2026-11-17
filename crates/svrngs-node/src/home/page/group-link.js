@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// LINK, the machine of a group's links (group-links.js `Links`), as
-// `svrngs link` makes them: to invite someone, to add a phone or another
-// computer, or a guest's, whose length is asked first, 48 hours chosen to
-// start and nothing longer offered (GUESTS §5). One per group, so a
-// second press while its link is made is refused; the last link made is
-// kept while the next is made, and a refusal shown in its place.
+// LINK, the machine of a group's links (group-links.js `Links`): the
+// invitation, made by /publication and shown as its link, its short address
+// and its QR code; and, as `svrngs link` makes them, a link to add a phone
+// or another computer, or a guest's, whose length is asked first, 48 hours
+// chosen to start and nothing longer offered (GUESTS §5). One per group, so
+// a second press while its link is made is refused; the last link made is
+// kept while the next is made, and a refusal shown in its place. A device
+// link ends the invitation people are using to join (one open invitation
+// a person and group, DESIGN §3), so while one is, its first press says so
+// and its second makes it.
 import { assertNever, go, no } from '../ui/machine.js?v=__VERSION__';
 import { get, post } from './routes.js?v=__VERSION__';
 /** @import { Machine } from '../ui/machine.js?v=__VERSION__' */
@@ -34,10 +38,13 @@ import { get, post } from './routes.js?v=__VERSION__';
  * @property {string} [why]
  * @property {Publication | null} [publication]
  * @property {string} [publicationWhy]
+ * @property {boolean} [ending] a device link's first press said it ends the invitation
  */
 
-/** The native receipt's public projection; no invitation secret or API token.
- * @typedef {{ id: string, state: 'pending' | 'open' | 'closing' | 'closed' | 'ended', address: string | null, until: number }} Publication
+/** The native receipt as /publication shows it (publication.rs `shown`): while
+ * it admits, the long link /link gives this page too, and its QR code; never
+ * the API token.
+ * @typedef {{ id: string, state: 'pending' | 'open' | 'closing' | 'closed' | 'ended', address: string | null, until: number, link?: string | null, qr?: { size: number, path: string } | null }} Publication
  */
 
 /**
@@ -67,6 +74,9 @@ const REREAD = /** @type {Effect} */ ({ run: 'publicationRead', failed: 'publica
 // Whether a press waits: a link is being made, or the invitation read or changed.
 export const busy = (/** @type {State} */ state) =>
   state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication);
+// Whether the invitation lets people in now, so a new link would end it.
+export const admits = (/** @type {Publication | null | undefined} */ receipt) =>
+  ['open', 'pending'].includes(receipt?.state ?? '');
 
 /**
  * LINK, for the group of id `group`.
@@ -103,7 +113,7 @@ export const LINK = (group) => ({
           : go(
               state,
               { publication: 'working' },
-              { publicationWhy: undefined },
+              { publicationWhy: undefined, ending: undefined },
               {
                 run: 'publicationChange',
                 action: message.action,
@@ -125,10 +135,12 @@ export const LINK = (group) => ({
         return go(state, {}, { visit: message.value });
       case 'make':
         if (busy(state)) return no(state, 'a link is being made, and is answered first');
+        if (message.device && !state.ending && admits(state.publication))
+          return go(state, {}, { ending: true });
         return go(
           state,
           { link: 'making' },
-          {},
+          { ending: undefined },
           {
             run: 'make',
             asked: message,

@@ -71,7 +71,7 @@ export function guideUse(k, draw) {
     b +=
       k.rect(156, 320, 70, 32, { fill: C.people, sw: 2 }) +
       k.text(191, 342, 'Sam', { size: 16, weight: 700, anchor: 'middle' });
-    b += btn(76, 372, 'Invite someone to Lab');
+    b += btn(76, 372, 'Invite people');
     b += keeps(60, 446, 350, 40);
 
     b += k.text(470, 262, 'The link goes in the chat.', { size: 16, weight: 700 });
@@ -105,7 +105,7 @@ export function guideUse(k, draw) {
       H,
       b,
       'Start: one line, one group, one link',
-      'Sam pastes one line in Terminal; the home page opens, Sam makes Lab and presses Invite someone to Lab, and the link goes in the chat. Bo opens it on a computer with one line in Terminal; Ana opens it on a phone, types Ana and presses Join. Sam’s and Bo’s computers keep Lab, each with its folder; Ana’s phone opens it while a computer in Lab is on.',
+      'Sam pastes one line in Terminal; the home page opens, Sam makes Lab and presses Invite people, and the link goes in the chat. Bo opens it on a computer with one line in Terminal; Ana opens it on a phone, types Ana and presses Join. Sam’s and Bo’s computers keep Lab, each with its folder; Ana’s phone opens it while a computer in Lab is on.',
     );
   }
 

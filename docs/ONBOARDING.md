@@ -58,10 +58,13 @@ runs on Mac and Linux for now, and that the same address joins from a phone.
 
 ## 2. The host and attendee paths
 
-**Host:** on a group's home page, press **Invite people here**. The result
-shows a large, copyable short address, when it ends, and to keep this
-computer on and awake until everyone's in. **Close joining** ends admission through that
-invitation. The address and controls survive reloading and restarting.
+**Host:** on a group's home page, press **Invite people**. The result shows
+one invitation three ways: a link to paste in a chat and a large short
+address to read aloud, each copyable, and the link's QR code for phones,
+which never asks the resolver. It says when the invitation ends, and to keep
+this computer on and awake until everyone's in. **Close joining** ends
+admission through that invitation. The invitation and controls survive
+reloading and restarting.
 
 **Attendee:** type the address, see who invited them and which group it
 is, give their name, and copy one installation command. The command
@@ -103,7 +106,8 @@ Closing must invalidate the underlying invitation, including a copied
 long link, before reporting admission closed. Existing participants stay.
 A stale close must not invalidate a newer invitation. The current rule of
 one open invitation per issuer and group remains: making another ordinary
-or device invitation supersedes it.
+or device invitation supersedes it. On the home page, a device link's first
+press says so while the invitation admits, and only its second makes it.
 
 Persist the publication receipt owner-only on the host. Include recovery
 from a lost response, failed publication, restart, and failed withdrawal.

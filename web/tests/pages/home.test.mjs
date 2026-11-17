@@ -732,7 +732,7 @@ test('a group’s page is its banner, what needs you, its people, what they shar
     'Shared files',
     'Who you have over',
     'Visiting now',
-    'Invite people here',
+    'Invite people',
     'Add an app',
     'Manage this group',
   ]);
@@ -1074,7 +1074,7 @@ test('a group made is said and drawn with its links, with no reload', async () =
   const page = await home({ ...answers, ...making(add) }, '/?view=make');
   await make(page);
   assert.ok(page.text('#home > p').join().includes('You made Lab.'), page.text('#home > p').join());
-  assert.ok(page.text('#home section button').includes('Invite someone to Lab'));
+  assert.ok(page.text('#home section button').includes('Invite people'));
   assert.deepEqual(
     page.asked.filter(([how]) => how === 'POST').map(([, , body]) => body),
     [['Lab', 'Ada']],
@@ -1133,10 +1133,7 @@ test('a group made or joined says it is being read until it is, and house keeps 
     page.text('#home section[data-colour]').find((words) => words.startsWith(head)) ?? '';
   await make(page);
   const housed = section('house (yours');
-  assert.ok(
-    housed.includes('Invite someone to house') && !housed.includes('Reading house…'),
-    housed,
-  );
+  assert.ok(housed.includes('Invite people') && !housed.includes('Reading house…'), housed);
   assert.ok(section('Lab (yours').includes('Reading Lab…'), section('Lab'));
   await join(page);
   assert.ok(section('Trip (Sam’s').includes('Reading Trip…'), section('Trip'));
@@ -1150,8 +1147,9 @@ test('a group made or joined says it is being read until it is, and house keeps 
 
 // home_group::the_home_page_makes_a_group_another_computer_joins_with_no_restart,
 // the page's half: Dee, in Lab, makes Trip; the page says so and where
-// home.rs `found` placed its folder, and Invite shows the https link
-// home.rs `link` answers on the page svrngs came from. Then trip, a name
+// home.rs `found` placed its folder, and Invite people shows the https link
+// /publication answers on the page svrngs came from (publication.rs `shown`,
+// the link home.rs `link` spells). Then trip, a name
 // held already: said as it is typed and again once made, in question.js
 // `namesakes`'s words. The node's half, that Trip is made, placed and
 // joined by Bo, and the one rule traced: verbs/home.rs.
@@ -1176,9 +1174,9 @@ test('a group made says where its folder is and links on the page svrngs came fr
       add(placed(name === 'Trip' ? made : twice)),
       [name, null, name === 'Trip' ? [] : [held]]
     ),
-    'POST /link': (body) => (
+    'POST /publication': (body) => (
       links.push(body),
-      { client: 'svrngs://join/T', https: 'http://127.0.0.1:9/#T', device: false }
+      { id: 'p1', state: 'pending', address: null, until: since, link: 'http://127.0.0.1:9/#T' }
     ),
   });
   const said = () => page.text('#home > p').join('\n');
@@ -1189,13 +1187,10 @@ test('a group made says where its folder is and links on the page svrngs came fr
   const section = () =>
     page.text('#home section[data-colour]').find((w) => w.startsWith('Trip (yours')) ?? '';
   assert.ok(section().includes('Trip’s folder is on this computer at /h/svrngs/Trip'), section());
-  await page.press('#home section button', 'Invite someone to Trip');
-  assert.deepEqual(links, [{ group: 'trip', device: false }]);
-  const link = page.text('#home section p.link').find(Boolean) ?? '';
-  assert.ok(
-    link.startsWith('Send this link to the person you are inviting: http://127.0.0.1:9/#T '),
-    link,
-  );
+  await page.press('#group-trip button', 'Invite people');
+  assert.deepEqual(links, [{ group: 'trip' }]);
+  const link = page.text('#group-trip .publication p').find(Boolean) ?? '';
+  assert.ok(link.startsWith('Paste this link in a chat: http://127.0.0.1:9/#T '), link);
   const day = q.day(since);
   await page.type('#make input[name=name]', 'trip');
   const before = page.text('#make p').join('\n');
@@ -1425,7 +1420,7 @@ test('a refusal or an answer is said once at each press, never one after another
   assert.equal(page.lines().filter((line) => line.startsWith('CHANGE: many: ')).length, 2);
   // The clipboard refuses, as the pages step's browser, granted none, did.
   navigator.clipboard.writeText = async () => Promise.reject(new Error('not allowed'));
-  await page.press('#home section button', 'Invite someone to house');
+  await page.press('#home section button', 'Add your phone or another computer');
   const select = ' Select it above to copy it.';
   assert.equal(page.text('#home p.link').join().split(select).length - 1, 0);
   for (let n = 0; n < 2; n++)

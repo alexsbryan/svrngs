@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // A group's links in its section, once the group's people are read
-// (group-link.js LINK): a button for each link it makes,
-// a guest's behind Have a guest, and below them the last link made
-// (`LinkSaid`), or why it was not. The machine is the group's own
-// (ui/view.js `useMachine`), so HOME's step never sees it.
+// (group-link.js LINK): Invite people, the invitation shown three ways
+// (`PublicationControls`), then a button for each other link it makes, a
+// guest's behind Have a guest, and below them the last link made
+// (`LinkSaid`), or why it was not, or that a device link ends the
+// invitation. The machine is the group's own (ui/view.js `useMachine`),
+// so HOME's step never sees it.
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
-import { LINK, busy } from './group-link.js?v=__VERSION__';
+import { LINK, admits, busy } from './group-link.js?v=__VERSION__';
 import { LinkCopy } from './link-copy.js?v=__VERSION__';
 import { Copy } from '../ui/copy.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
@@ -26,12 +28,12 @@ function publicationAction(state) {
     case 'closing':
       return { action: 'close', words: 'Retry closing' };
     case 'pending':
-      return { action: 'publish', words: 'Retry joining' };
+      return { action: 'publish', words: 'Retry the short address' };
     case undefined:
     case 'open':
     case 'closed':
     case 'ended':
-      return { action: 'publish', words: 'Invite people here' };
+      return { action: 'publish', words: 'Invite people' };
   }
 }
 
@@ -39,39 +41,51 @@ function publicationAction(state) {
 function publicationInfo(receipt) {
   switch (receipt?.state) {
     case 'open':
-      return html`<p>Ends ${new Date(receipt.until * 1000).toLocaleString()}. Keep this computer on and awake until everyone’s in. A new invitation or device link ends this one; everyone already in stays.</p>`;
+    case 'pending':
+      return html`<p>Ends ${new Date(receipt.until * 1000).toLocaleString()}. Keep this computer on and awake until everyone’s in.${receipt.state === 'pending' && ' The short address isn’t ready: the service that makes it didn’t answer. Retry it in a minute from this computer.'}</p>`;
     case 'closed':
       return html`<p>Joining is closed</p>`;
     case 'ended':
       return html`<p>This invitation ended. Everyone already in stays.</p>`;
-    case 'pending':
-      return html`<p>Joining is temporarily unavailable. Retry in a minute from this computer; your invitation is kept for retry.</p>`;
     case 'closing':
-      return html`<p>Joining is temporarily unavailable, so closing isn’t confirmed yet. Retry in a minute from this computer.</p>`;
+      return html`<p>Closing isn’t confirmed: the service that holds the short address didn’t answer, so people can still join. Retry in a minute from this computer.</p>`;
     case undefined:
       return null;
   }
 }
 
+// The invitation, three ways (publication.rs `shown`): its link, for a
+// chat; its short address, large, to read aloud; and the link's QR code,
+// for a phone's camera, which never asks the resolver.
+/** @param {Publication} receipt */
+const ways = ({ link, address, qr, state }) => html`
+  ${link && html`<p>Paste this link in a chat: <code>${link}</code> <${Copy} key=${link} text=${link} words=${{ copy: 'Copy the link', copied: 'Copied.' }} /></p>`}
+  ${address && ['open', 'closing'].includes(state) && html`<p>Or read this address aloud: <code style="font-size:1.4em">${address}</code> <${Copy} key=${address} text=${address} words=${{ copy: 'Copy the address', copied: 'Copied.' }} /></p>`}
+  ${qr && html`<p>Or have people point their phone’s camera at this code:</p><svg class="qr" viewBox=${`0 0 ${qr.size} ${qr.size}`} role="img" aria-label="QR code of the link above" shape-rendering="crispEdges"><path d=${qr.path} /></svg>`}
+`;
+
+// Invite people, its invitation (`ways`) and what it says, and Close
+// joining. Each change is said as it is drawn (`aria-live`). A failure the
+// receipt says itself, pending or closing, is not said twice.
 /** @param {{ state: State, send: Store<State, Message>['dispatch'], doing: { state: string } }} props */
 function PublicationControls({ state, send, doing }) {
   const receipt = state.publication;
   const phase = receipt?.state ?? 'none';
   const { action, words } = publicationAction(state);
-  return html`<div class="publication">
-    ${receipt?.address && ['open', 'closing'].includes(phase) && html`<p><code style="font-size:1.4em">${receipt.address}</code> <${Copy} key=${receipt.address} text=${receipt.address} words=${{ copy: 'Copy the address', copied: 'Copied.' }} /></p>`}
+  return html`<div class="publication" aria-live="polite">
+    ${receipt && ways(receipt)}
     ${publicationInfo(receipt)}
-    ${state.publicationWhy && html`<p role="status">${state.publicationWhy}</p>`}
+    ${state.publicationWhy && !['pending', 'closing'].includes(phase) && html`<p>${state.publicationWhy}</p>`}
     <p>
       ${(phase !== 'open' || state.at.publication === 'refused') && html`<${Act} words=${words} doing=${doing} on=${{ type: 'publication', action }} send=${send} />`}
-      ${['open', 'pending'].includes(phase) && html`<${Act} words="Close joining" doing=${doing} on=${{ type: 'publication', action: 'close' }} send=${send} />`}
+      ${admits(receipt) && html`<${Act} words="Close joining" doing=${doing} on=${{ type: 'publication', action: 'close' }} send=${send} />`}
     </p>
   </div>`;
 }
 
 // A link made for a group (group-link.js LINK), in the words of whom it is
-// for: a guest, your other computer or phone, or someone invited; then
-// its Copy (link-copy.js).
+// for: a guest, or your other computer or phone; then its Copy
+// (link-copy.js).
 const WORDS = {
   copy: 'Copy the link',
   copied: ' Copied.',
@@ -99,12 +113,11 @@ function LinkSaid({ shown, name }) {
       ` They open it in a browser and give their name. For ${asked.hours} from then they can open what you lend, and everyone in ${name} sees they are your guest. It lets one guest in, once, within a day, while this computer is on. `,
       copy,
     ];
-  const to = asked.device
-    ? 'Open this link on your other computer or phone; it joins as you, so send it to nobody else: '
-    : 'Send this link to the person you are inviting: ';
   const how = answer.https
     ? ' It opens in a browser, which says how to join from there.'
     : ' They join with svrngs join and this link.';
+  const to =
+    'Open this link on your other computer or phone; it joins as you, so send it to nobody else: ';
   return [to, code, how, LAST, copy];
 }
 
@@ -152,12 +165,6 @@ function Links({ g: group }) {
     <${PublicationControls} state=${state} send=${send} doing=${doing} />
     <p>
       <${Act}
-        words=${`Invite someone to ${name}`}
-        doing=${doing}
-        on=${{ type: 'make', device: false }}
-        send=${send}
-      />
-      <${Act}
         words="Add your phone or another computer"
         doing=${doing}
         on=${{ type: 'make', device: true }}
@@ -165,7 +172,7 @@ function Links({ g: group }) {
       />
       ${guest}
     </p>
-    <p class="link">${said}</p>
+    <p class="link" role="status">${state.ending ? 'This ends the invitation people are using to join: its link, address and QR code stop letting anyone new in. Everyone already in stays. To go ahead, press Add your phone or another computer again.' : said}</p>
   `;
 }
 

@@ -18,7 +18,8 @@ Every line and every button below is one a recorded run typed or pressed,
 on one computer, with a program playing each person
 (`runs/start/2026-10-13-story/README.md`, "the run" below), except
 lending from the page in step 5 and joining from the home page in step 6,
-which came after it. Each picture is from
+which came after it, and inviting in step 4, which the run did with a
+button since replaced by **Invite people**. Each picture is from
 that run.
 
 ## Sam: make a group and lend the model
@@ -82,10 +83,10 @@ rest agree or object, and canon, the library under it, decides when a rule
 holds (`../RELEASES.md`, "Next"). (Not in the run, which came before House
 rules.)
 
-Press **Invite someone to Lab**. The page says *"Send this
-link to the person you are inviting: …"* with **Copy the link**. Send it
-to Bo however you two talk — a chat, a message, an email. It works for a
-day, while Sam's computer is on.
+Press **Invite people**. The page shows the link with **Copy the
+link**, a short address and a QR code. Send the link to Bo however you two
+talk — a chat, a message, an email. It works for a day, while Sam's
+computer is on.
 
 ![The link to send](runs/start/2026-10-13-story/data/shots/sam-home-link.png)
 
