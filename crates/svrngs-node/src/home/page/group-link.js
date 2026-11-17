@@ -74,6 +74,9 @@ const REREAD = /** @type {Effect} */ ({ run: 'publicationRead', failed: 'publica
 // Whether a press waits: a link is being made, or the invitation read or changed.
 export const busy = (/** @type {State} */ state) =>
   state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication);
+// The receipt /publication answered, read or changed, as the step takes it.
+const published = (/** @type {Publication | null} */ publication) =>
+  /** @type {Message} */ ({ type: 'published', publication });
 // Whether the invitation lets people in now, so a new link would end it.
 export const admits = (/** @type {Publication | null | undefined} */ receipt) =>
   ['open', 'pending'].includes(receipt?.state ?? '');
@@ -89,16 +92,12 @@ export const LINK = (group) => ({
     publication: ['reading', 'ready', 'working', 'refused'],
   },
   io: {
-    publicationRead: () =>
-      get(`/publication?group=${encodeURIComponent(group)}`).then((publication) => ({
-        type: 'published',
-        publication,
-      })),
+    publicationRead: () => get(`/publication?group=${encodeURIComponent(group)}`).then(published),
     publicationChange: ({ action, id }) =>
       post(action === 'close' ? '/publication/close' : '/publication', {
         group,
         ...(id && { id }),
-      }).then((publication) => ({ type: 'published', publication })),
+      }).then(published),
     make: ({ asked, visit }) =>
       post('/link', { group, device: asked.device, ...(visit && { visit: Number(visit) }) }).then(
         (answer) => ({ type: 'made', a: answer, asked, why: answer.https ?? answer.client }),

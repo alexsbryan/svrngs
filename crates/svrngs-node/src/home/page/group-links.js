@@ -138,8 +138,7 @@ function Links({ g: group }) {
   );
   const name = group.name ?? 'this group';
   const doing = { state: busy(state) ? 'busy' : 'idle' };
-  // `state.visit` is the Field's string, as `Number` reads it.
-  const hours = `${Number(state.visit) / 3600} hours`;
+  // A guest's hours: `state.visit` is the Field's string, as `Number` reads it.
   const guest = state.guest
     ? html`
         <${Field}
@@ -152,7 +151,7 @@ function Links({ g: group }) {
         <${Act}
           words="Make a link for your guest"
           doing=${doing}
-          on=${{ type: 'make', device: false, guest: true, hours }}
+          on=${{ type: 'make', device: false, guest: true, hours: `${Number(state.visit) / 3600} hours` }}
           send=${send}
         />
       `
