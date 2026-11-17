@@ -18,7 +18,7 @@ export const otherKey = createPrivateKey({
 });
 export const hash = (text) => createHash('sha256').update(text).digest('hex');
 export const fixed = 'acorn-basil-robin-0042';
-// A five-word phrase, the shape issued until 2026-11-16, which still resolves.
+// A five-word phrase, the shape issued before, which still resolves.
 export const old = 'acid-acorn-acre-acts-afar';
 export const seconds = () => Math.floor(Date.now() / 1000);
 export const body = (changes = {}) => ({

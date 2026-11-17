@@ -58,7 +58,7 @@ any case, any run of other characters between parts (`-`, `%20`, `.`, `_`,
 slip in a word (a letter changed, added, dropped or two neighbors swapped)
 read as the only word it can be. Each request is still one lookup of one
 phrase against the same budgets, so forgiveness gives a guesser nothing. Five
-of EFF's words with no number are a phrase issued before 2026-11-16 and keep
+of EFF's words with no number are a phrase issued before this resolver and keep
 resolving: an open one until its day ends, a closed or expired one as ended.
 
 Each answer says what happened. An address that cannot be read is 404
@@ -138,7 +138,7 @@ loads, in about 20 ms: sorted shortest first, then alphabetically, a word is
 kept unless a word already kept is within one edit of it (Levenshtein
 distance 1). That keeps 818 words, no two within one edit, and needs no second
 list to keep in step; `words.txt` itself still reads the five-word phrases
-issued until 2026-11-16. A phrase is three independent `crypto.randomInt`
+issued before it. A phrase is three independent `crypto.randomInt`
 draws from the 818 and a four-digit number, such as `cedar-otter-robin-4821`,
 with rejection sampling and no modulo bias: 818^3 x 10^4 possibilities,
 42.32 bits. A collision refuses this attempt; a later explicit retry samples

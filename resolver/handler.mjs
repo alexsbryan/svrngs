@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { isIP } from 'node:net';
 import { GENERATION, PREFIX, SCRIPT } from './store.mjs';
 
-// EFF's short list, which the five-word phrases issued until 2026-11-16 drew from.
+// EFF's short list, which the five-word phrases issued before this resolver drew from.
 const eff = readFileSync(new URL('./words.txt', import.meta.url), 'utf8')
   .trim()
   .split(/\s+/);
@@ -68,7 +68,7 @@ export function read(path) {
   const text = path.toLowerCase().replace(/%[0-9a-f]{2}/g, '-');
   const typed = text.match(/[a-z]+/g) ?? [];
   const number = text.replace(/[^0-9]/g, '');
-  // Five of EFF's words: a phrase issued before 2026-11-16, read as it was.
+  // Five of EFF's words: a phrase issued before this resolver, read as it was.
   if (typed.length === 5 && !number && typed.every((w) => eff.includes(w)))
     return { phrase: typed.join('-') };
   if (path.length > 64 || typed.length !== WORDS || number.length !== DIGITS)
