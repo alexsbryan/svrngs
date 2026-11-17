@@ -751,12 +751,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # caption saying where its things run (e9931c6e, +7), "Add an app" saying
 # how (22855229, 0) and a Stop named for its app (e315d5d8, +1). The cap
 # comes down to where they land. js 8,565 -> 8,545.
+# (2026-11-16) No raise: the invite flow's two economizing passes (35c53cc3,
+# -12 js -23 other: the line's offer carries what was asked, publication says
+# each thing once; 7dc3ffe4 and 551d6a1c, -49 js: the resolver's refusal codes
+# a type, its EVAL's key count from its keys) made room for a phone joining
+# from a short address (03e7ac52, 0), Windows offered no line (77d355a9), one
+# Invite people press with a QR code (65074824, 57c170bb), a default resolver
+# (51f5e669), and the resolver's new phrase and miss budgets (c327032f,
+# 2241e350). The caps come down to where they land. js 8,545 -> 8,540;
+# all code but JavaScript 21,359 -> 21,357.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21360,
+    ".": 21358,
 
-    "js": 8546,
+    "js": 8541,
 
     "swift": 1,
 }
