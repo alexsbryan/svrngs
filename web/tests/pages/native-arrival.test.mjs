@@ -94,3 +94,37 @@ test('native arrival asks the name once and offers a literal shell command witho
   assert.equal(state.at.join, 'installing');
   assert.equal(parts.step(state, { type: 'named' }).effects.length, 0);
 });
+
+// A phone has no terminal, so no line is offered there (computer.js): the
+// short address joins it as any group link joins a phone, in the browser.
+const atShortAddress = (kept) => {
+  const looked = parts.step(parts.first({ fine: false }), {
+    type: 'looked',
+    fragment: `${token}&native`,
+    kept,
+    linked: true,
+  });
+  const joining = parts.step(looked.state, looked.effects[0].m);
+  assert.deepEqual(joining.effects, [{ run: 'ask', token, native: false, failed: 'unjoined' }]);
+  return parts.step(joining.state, {
+    type: 'asked',
+    told: 'issuer-answer',
+    group: { id: 'abcd', name: 'House', maker: 'Founder' },
+  });
+};
+
+test('a phone at a short address joins in the browser, never waits on an installation', () => {
+  const asked = atShortAddress([]);
+  assert.equal(parts.heading(asked.state)[0], 'Join House');
+  const state = parts.step(asked.state, { type: 'typed', field: 'name', value: 'Sam' }).state;
+  const named = parts.step(state, { type: 'named' });
+  assert.equal(named.state.at.join, 'redeeming');
+  assert.equal(named.effects[0].run, 'admit');
+  assert.equal(named.effects[0].name, 'Sam');
+});
+
+test('a phone in the group already, at its short address, holds it and joins nobody twice', () => {
+  const asked = atShortAddress([{ id: 'abcd', name: 'House', token: 'another' }]);
+  assert.equal(asked.state.at.join, 'joined');
+  assert.equal(asked.effects[0].m.type, 'hold');
+});

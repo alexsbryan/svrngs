@@ -250,7 +250,8 @@ const lendingIn = (kept, wants) =>
 
 // A readable address, `parts`, with its `token` if any: the group it
 // opens, held, or each group offered that lends what it opens, or the
-// link's join; else said why not.
+// link's join; else said why not. A short address's `native` asks a
+// computer to install; a phone joins as from any link (join.js `join`).
 /**
  * @param {State} state
  * @param {Looked} message
@@ -261,7 +262,7 @@ const lendingIn = (kept, wants) =>
 const addressed = (state, { kept }, parts, token) => {
   const wants = wantsOf(parts);
   if (token && parts.has('native'))
-    return go(state, {}, {}, sending('join', { token, kept: [], wants: null, native: true }));
+    return go(state, {}, {}, sending('join', { token, kept, wants: null, native: true }));
   const offer = token ? [sending('offer', { token })] : [];
   const lending = lendingIn(kept, wants);
   if (!token && lending.length > 1) {

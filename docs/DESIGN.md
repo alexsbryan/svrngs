@@ -1178,7 +1178,11 @@ the issuing computer's current person's name; `/ask` without that option keeps
 its existing wire shape. The page believes the seed as before and shows who
 invited the attendee and which group it is, then quotes the chosen name as one
 literal shell argument. It makes no browser redemption or persisted browser
-membership. The canonical page supplies the installer and the saved page origin.
+membership. That is a computer's arrival, one with a fine pointer as
+`computer.js` reads it; a phone has no terminal, so at a short address it
+ignores `native` and joins in the browser as from any link, or holds the
+group it is in already (`join.js` `join`). The canonical page supplies the
+installer and the saved page origin.
 The installer keeps the existing identity and join idempotence, restores a
 previously stopped service on failure or interruption, and retains its refusal
 exit status. Its optional `--at` is carried by `svrngs open <local destination>`
