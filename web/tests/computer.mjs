@@ -17,7 +17,10 @@ const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
 const origin = pageAt(server);
 const link = `${origin}#${args.token}`;
-const DESKTOP = { chromium: 'Desktop Chrome', webkit: 'Desktop Safari' };
+// A Mac or Linux computer, which the line is for. Chromium as itself, as the
+// host it runs on: Playwright's 'Desktop Chrome' says Windows NT 10.0 in its
+// user agent, and Windows is offered no line (computer.js `lines`).
+const DESKTOP = { chromium: null, webkit: 'Desktop Safari' };
 const logs = [];
 const requests = [];
 

@@ -12,7 +12,9 @@ import { launch, pageAt, serve } from '../page.mjs';
 const args = JSON.parse(process.argv[2]);
 const server = await serve(args.site);
 const origin = pageAt(server);
-const DESKTOP = { chromium: 'Desktop Chrome', webkit: 'Desktop Safari' };
+// A Mac or Linux computer: Chromium as itself, since Playwright's 'Desktop
+// Chrome' says Windows, which is offered no line (computer.js `lines`).
+const DESKTOP = { chromium: null, webkit: 'Desktop Safari' };
 const { context, close } = await launch(args.engine, { device: DESKTOP[args.engine] });
 const errors = [];
 try {
