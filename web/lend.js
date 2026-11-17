@@ -1459,8 +1459,11 @@ const handsPass = (given) => given?.label === OWN && typeof given.pass === 'stri
  */
 async function holdPass(given, reply) {
   // The holder's bytes, as a JWK (open.js `holderKey`), where its key was
-  // lost on the way (below):
-  // imported here as a key no script can copy, held in memory alone.
+  // lost on the way (below): imported here as a key no script can copy,
+  // and the bytes kept nowhere. The key itself is kept with the pass in
+  // this origin's store (`pass <label>`) at each line signed and carried
+  // (`writeSigned`, `carried`), as open.js keeps the one the page took, so
+  // this origin's own pages can read it and sign as the holder (DESIGN §3).
   const bytes = given.key?.kty === 'OKP';
   if (bytes) {
     given.key = await crypto.subtle.importKey('jwk', given.key, 'Ed25519', false, ['sign']);
