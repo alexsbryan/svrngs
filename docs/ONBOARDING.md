@@ -307,6 +307,20 @@ graceful-failure requirement ("We should fail gracefully in the case we hit
 any of those limits"). The adapter uses those values and the reset guard; no
 public deployment or paid usage is authorized.
 
+On 2026-11-16 the operator asked for a phrase easier to say, with numbers,
+after five words read aloud caused typos, and for sensible brute-force
+limits. The phrase is now three words and a four-digit number, such as
+`cedar-otter-robin-4821`. The words are EFF's list pruned so no two are within
+one edit (818 of 1,295, `resolver/README.md`), so one slip in a word is read as
+the word meant or named as wrong, never as another word: 818^3 x 10^4
+phrases, 42.3 bits, down from 51.7. That is the trade asked for: at 20,000
+guesses a month against 100 open invitations, the worst case moves from
+5.5e-10 (`ralph/next/onboarding/NEEDS_HUMAN.md:191`) to 3.7e-7 a month, about
+1 in 2.7 million. Case, separators, a glued number and one slip are forgiven
+before any store call, and a slip is said as a slip: a word that cannot be
+read, or a phrase never issued, is never "ended" or "temporarily
+unavailable". Five-word phrases already issued keep resolving.
+
 ## 6. Order and proof
 
 After the JavaScript queue closes, work follows `PLAN.md` §1. Keep any

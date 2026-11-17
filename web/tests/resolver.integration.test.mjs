@@ -193,6 +193,24 @@ test('authenticated lifecycle, immutable binding, closure and no reopen', async 
   console.log(`lifecycle command maximum: ${Math.max(...commands)}`);
 });
 
+test('a phrase never issued reads missing, a closed one ended, a slip as its phrase', async () => {
+  reset();
+  candidate = fixed;
+  const missing = await lookup(fixed);
+  assert.equal(missing.status, 404);
+  assert.equal((await missing.json()).state, 'missing');
+  const q = body();
+  assert.equal((await publish(q)).status, 200);
+  assert.equal((await (await lookup('Acorm basil robin0042/')).json()).token, q.token);
+  await publish({ ...q, action: 'close', token: null });
+  const ended = await lookup(fixed);
+  assert.equal(ended.status, 200);
+  assert.equal((await ended.json()).state, 'ended');
+  const before = commands.length;
+  assert.equal((await lookup('acron-basil-robin-0042')).status, 404);
+  assert.equal(commands.length, before, 'a word that cannot be read never reaches Redis');
+});
+
 test('old phrase cannot name a later owner and close-before-publish is final', async () => {
   reset();
   candidate = fixed;
@@ -269,7 +287,11 @@ test('every write boundary is uncertain-safe and reconciles the same operation',
         ) {
           assert.equal(observed.status, 503, 'partial close is unavailable, not ended');
         }
-        assert.ok(observed.status === 503 || value.state === 'ended' || value.state === 'open');
+        // Before the pending reservation (write 3) nothing names the phrase.
+        if (action === 'publish' && (which < 3 || (which === 3 && when === 'before')))
+          assert.equal(value.state, 'missing', `${action}/${when}/${which}: nothing reserved`);
+        else
+          assert.ok(observed.status === 503 || value.state === 'ended' || value.state === 'open');
         const retried = await publish(action === 'publish' ? q : { ...q, action, token: null });
         assert.equal(retried.status, 200, `${action}/${when}/${which}: recover`);
         const final = await (await lookup(fixed)).json();
@@ -316,7 +338,7 @@ test('distributed guessing and owner limits include misses, retries and status',
     reset();
     readOverride = { command: 'TIME', value: [String(clock), '0'] };
     cli('SET', key, JSON.stringify({ [name]: [bucket, cap - 1] }));
-    assert.equal((await lookup(fixed)).status, 200, `${name}: last allowed miss`);
+    assert.equal((await lookup(fixed)).status, 404, `${name}: last allowed miss`);
     // A new handler instance still shares Redis counters.
     const another = createResolver({ token: 'fixture', fetch: localFetch });
     await refused(await another(new Request(`https://join.example/${fixed}`), '127.0.0.1'));

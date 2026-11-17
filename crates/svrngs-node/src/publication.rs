@@ -291,8 +291,10 @@ async fn send(
     let phrase = reply["phrase"]
         .as_str()
         .ok_or_else(|| Fault("resolver omitted phrase".into()))?;
-    if phrase.split('-').count() != 5
-        || !phrase.bytes().all(|b| b.is_ascii_lowercase() || b == b'-')
+    // Three words and a number (resolver/handler.mjs `phrase`), or five words
+    // from a resolver not yet redeployed.
+    if !(4..=5).contains(&phrase.split('-').count())
+        || phrase.contains(|c: char| !matches!(c, 'a'..='z' | '0'..='9' | '-'))
         || phrase.split('-').any(str::is_empty)
     {
         return Err(Fault("resolver returned an invalid phrase".into()));

@@ -40,18 +40,36 @@ and paste at the prompt (never on the command line), then deploy.
 
 POST `/` implements the native signed contract in
 `../demo/runs/onboarding/2026-11-04-native/README.md`. It additionally accepts
-signed `status` with null token. GET `/<five-word-phrase>` returns the ordinary
+signed `status` with null token. GET `/<phrase>` returns the ordinary
 invitation and canonical page origin as JSON, for the native-arrival UI.
 An HTML navigation instead redirects to that canonical page's native-install
 mode, carrying the ordinary token in its fragment. It uses `no-store` and
 `no-referrer`; missing/invalid canonical-page data refuses the handoff. HTML
-ended/unavailable answers contain only fixed text with a script-free policy.
+answers that are not a redirect contain only fixed text, and at most one
+quoted word of letters, under a script-free policy.
 The canonical page reuses its name form and installation/copy controls without
 redeeming a browser identity. The short-address host is never a download source.
 There is no list route, CORS access, background retry or generation seeding.
-Ended responses include instructions to reopen svrngs; every refusal/provider
-failure is 503 `unavailable`, `Retry-After: 60`, and manual-retry guidance.
 Debug events contain operation/verdict only, never phrases, IPs or tokens.
+
+`read()` turns the path into the one phrase it can mean before any store call:
+any case, any run of other characters between parts (`-`, `%20`, `.`, `_`,
+`+`, `/`), the number glued to a word or split, a query string ignored, and one
+slip in a word (a letter changed, added, dropped or two neighbors swapped)
+read as the only word it can be. Each request is still one lookup of one
+phrase against the same budgets, so forgiveness gives a guesser nothing. Five
+of EFF's words with no number are a phrase issued before 2026-11-16 and keep
+resolving: an open one until its day ends, a closed or expired one as ended.
+
+Each answer says what happened. An address that cannot be read is 404
+`wrong` and names the part: the shape ("three words and a four-digit
+number") or the word ("“acron” isn't one of the words"), and to check it with
+whoever gave it. A well-formed phrase never issued is 404 `missing`, "No
+invitation has this address", since reservations are permanent and tell it
+apart from `ended`. Ended (200) includes instructions to reopen svrngs. A
+limit, a pending publication or a provider failure is 503 `unavailable`,
+`Retry-After: 60`, with manual-retry guidance and the way around it: ask for
+the link in a chat or its QR code, which do not use this address.
 
 `store.mjs` owns the atomic lifecycle and limits. Permanent reservations bind
 owner/id, digest, expiry and phrase, not group names or capability. A pending
@@ -85,6 +103,16 @@ whitespace regrouped, and **only `yo-yo` removed** to keep hyphens as separators
 Copyright Electronic Frontier Foundation, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 [Source](https://www.eff.org/files/2016/09/08/eff_short_wordlist_1.txt);
 [explanation](https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases).
-Five independent `crypto.randomInt` draws use rejection sampling with no modulo
-bias: 1295^5 possibilities, 51.69 bits. A collision refuses this attempt; a
-later explicit retry samples again, with no tight internal retry loop.
+
+It is the one home of the words. Read aloud, five of them caused typos, and
+1,079 pairs in it are one letter apart (afar/ajar, alike/alive), so a slip
+could spell another word. `handler.mjs` derives the drawn list from it as it
+loads, in about 20 ms: sorted shortest first, then alphabetically, a word is
+kept unless a word already kept is within one edit of it (Levenshtein
+distance 1). That keeps 818 words, no two within one edit, and needs no second
+list to keep in step; `words.txt` itself still reads the five-word phrases
+issued until 2026-11-16. A phrase is three independent `crypto.randomInt`
+draws from the 818 and a four-digit number, such as `cedar-otter-robin-4821`,
+with rejection sampling and no modulo bias: 818^3 x 10^4 possibilities,
+42.32 bits. A collision refuses this attempt; a later explicit retry samples
+again, with no tight internal retry loop.

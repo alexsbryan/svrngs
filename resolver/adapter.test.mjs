@@ -35,12 +35,12 @@ async function adapter(token) {
 }
 
 const lookup = (headers) =>
-  new Request('https://join.svrnme.sh/acid-acorn-acre-acts-afar', { headers });
+  new Request('https://join.svrnme.sh/acorn-basil-robin-0042', { headers });
 
 async function refused(response) {
   assert.equal(response.status, 503);
   assert.equal(response.headers.get('retry-after'), '60');
-  assert.match(await response.text(), /joining is temporarily unavailable/);
+  assert.match(await response.text(), /Joining is temporarily unavailable/);
 }
 
 test('the overwritten x-forwarded-for is the IP handler.mjs sees', async () => {

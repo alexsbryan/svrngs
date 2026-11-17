@@ -17,7 +17,9 @@ export const otherKey = createPrivateKey({
   type: 'pkcs8',
 });
 export const hash = (text) => createHash('sha256').update(text).digest('hex');
-export const fixed = 'acid-acorn-acre-acts-afar';
+export const fixed = 'acorn-basil-robin-0042';
+// A five-word phrase, the shape issued until 2026-11-16, which still resolves.
+export const old = 'acid-acorn-acre-acts-afar';
 export const seconds = () => Math.floor(Date.now() / 1000);
 export const body = (changes = {}) => ({
   action: 'publish',
@@ -49,7 +51,8 @@ export async function refused(response) {
   assert.equal(response.status, 503);
   assert.equal(response.headers.get('retry-after'), '60');
   const text = await response.text();
-  assert.match(text, /joining is temporarily unavailable/);
+  assert.match(text, /Joining is temporarily unavailable/);
   assert.match(text, /at least a minute/);
+  assert.match(text, /send the link in a chat or show its QR code/);
   assert.doesNotMatch(text, /invitation has ended/);
 }

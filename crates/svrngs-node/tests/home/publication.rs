@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, oneshot};
 
-const PHRASE: &str = "acorn-basil-cabin-daisy-eagle";
+const PHRASE: &str = "acorn-basil-robin-0042";
 /// The page the seeded computer came from (`seeded`), its links' https origin.
 const PAGE: &str = "https://group.example/";
 

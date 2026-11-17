@@ -26,7 +26,7 @@ const said = (v) => {
 };
 const page = 'https://groups.example/';
 const token = 'ordinary_invitation';
-const address = 'https://join.example/acid-acorn-acre-acts-afar';
+const address = 'https://join.example/acorn-basil-robin-0042';
 const secret = { token, page, until: Math.floor(Date.now() / 1000) + 3600 };
 const resolve = (result, status = 200) =>
   createResolver({
@@ -51,7 +51,7 @@ test('a resolver limit renders temporary unavailability and manual retry, never 
   assert.equal(answer.status, 503);
   assert.match(answer.headers.get('content-type'), /text\/html/);
   const text = await answer.text();
-  assert.match(text, /joining is temporarily unavailable/);
+  assert.match(text, /Joining is temporarily unavailable/);
   assert.match(text, /minute/);
   assert.doesNotMatch(text, /invitation has ended|http-equiv="refresh"/);
 });

@@ -1163,8 +1163,11 @@ second makes it. Reload and restart recover these controls from the native
 receipt. The public resolver
 is provisioned; the people scene remains the onboarding queue's work (`ONBOARDING.md`).
 
-*The short-address resolver* (`resolver/handler.mjs`, at `join.svrnme.sh`) maps five
-independently sampled EFF words to that ordinary invitation. Native mutations
+*The short-address resolver* (`resolver/handler.mjs`, at `join.svrnme.sh`) maps three
+words and a four-digit number to that ordinary invitation. The words are EFF's
+short list pruned as it loads so no two are within one edit, and the address
+is read forgivingly before any store call: case, separators and one slip in a
+word, each request still one lookup of one phrase. Native mutations
 verify the existing key's `svrngs-app:onboarding:` signature over exact bytes;
 the hosting edge supplies the trusted ingress IP. The Vercel Node adapter
 (`resolver/api/join.mjs`) reads the platform-overwritten ingress header and
@@ -1180,11 +1183,14 @@ Missing/mismatched generation refuses every operation without reseeding.
 The approved paired phrase/limits are in `ONBOARDING.md` §5 and held in
 `resolver/store.mjs`; new allocation stops conservatively on capacity, and
 leaves two mutation attempts per active-secret slot for close/recovery near the
-monthly ceiling. Provider errors and limits produce 503 with retry guidance.
+monthly ceiling. A slip is said as a slip: an address that cannot be read names
+the part that is wrong, and a phrase never issued says no invitation has it;
+ended stays ended. Provider errors and limits produce 503 with retry guidance
+and the way around the resolver, a link in a chat or its QR code.
 No installed member operation depends on the resolver. Its JSON lookup remains
 the program boundary. A browser navigation receives a no-store, no-referrer 303
 to the invitation's canonical page, with the token and `native` mode in the
-fragment. Ended and unavailable navigations receive plain, script-free HTML;
+fragment. Every other navigation receives plain, script-free HTML;
 unavailability asks for a manual retry after a minute. A missing canonical page
 refuses the native handoff, never substitutes the short-address host.
 

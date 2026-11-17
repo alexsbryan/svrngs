@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // All keys share {onboarding}. Pending reservations survive any script error;
 // only the final marker exposes a secret. Redis isolates EVAL, not rollback.
+// Reservations are permanent, so a lookup with no record is a phrase never
+// issued ('missing'), told apart from a closed or expired one ('ended').
 export const GENERATION = 'onboarding-2026-11-04-v1';
 export const PREFIX = 'svrngs:{onboarding}';
 export const SCRIPT = `
@@ -60,7 +62,8 @@ if fresh or (q.action == 'close' and not r) then
   local used = tonumber(string.match(memory, 'used_memory:(%d+)'))
   if not used or used >= 100000000 then return refuse('memory_limit') end
 end
-if q.action == 'lookup' or q.action == 'status' then
+if public then
+  if q.action == 'lookup' and not r then return reply('missing') end
   if not r or r.state == 'closed' or r['until'] <= now then return reply('ended', r) end
   if r.state ~= 'open' then return refuse('pending') end
   local secret = redis.call('GET', KEYS[2]..':secret:'..id)

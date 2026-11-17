@@ -4,23 +4,69 @@ import { readFileSync } from 'node:fs';
 import { isIP } from 'node:net';
 import { GENERATION, PREFIX, SCRIPT } from './store.mjs';
 
-const words = readFileSync(new URL('./words.txt', import.meta.url), 'utf8')
+// EFF's short list, which the five-word phrases issued until 2026-11-16 drew from.
+const eff = readFileSync(new URL('./words.txt', import.meta.url), 'utf8')
   .trim()
   .split(/\s+/);
-const wordset = new Set(words);
-if (words.length !== 1295 || wordset.size !== 1295 || words.some((w) => !/^[a-z]{3,5}$/.test(w))) {
+if (eff.length !== 1295 || new Set(eff).size !== 1295 || eff.some((w) => !/^[a-z]{3,5}$/.test(w)))
   throw new Error('resolver: invalid pinned wordlist');
-}
+// One letter changed, added or dropped: a Levenshtein distance of at most 1.
+const near = (a, b) => {
+  if (a.length > b.length) [a, b] = [b, a];
+  let i = 0;
+  while (i < a.length && a[i] === b[i]) i++;
+  return b.length - a.length < 2 && a.slice(i + (a.length === b.length)) === b.slice(i + 1);
+};
+// Two neighboring letters exchanged: two Levenshtein edits, one slip of the hand.
+const swapped = (a, b) =>
+  [...a].some((c, i) => i + 1 < a.length && a.slice(0, i) + a[i + 1] + c + a.slice(i + 2) === b);
+// Phrases draw from that list pruned so no two words are near: shortest first,
+// then alphabetically, a word is kept unless a kept word is near it (818 of
+// 1,295). A letter changed, added or dropped can then never spell another word.
+export const words = [];
+for (const w of eff.toSorted((a, b) => a.length - b.length || (a < b ? -1 : 1)))
+  if (!words.some((kept) => near(kept, w))) words.push(w);
+// Three words and a four-digit number, such as cedar-otter-robin-4821.
+const [WORDS, DIGITS] = [3, 4];
+export const SPACE = words.length ** WORDS * 10 ** DIGITS;
+export const phrase = () =>
+  Array.from({ length: WORDS }, () => words[randomInt(words.length)]).join('-') +
+  `-${String(randomInt(10 ** DIGITS)).padStart(DIGITS, '0')}`;
 const HEX = /^[0-9a-f]{64}$/;
+const shape =
+  'An invitation address is three words and a four-digit number, like cedar-otter-robin-4821. Check yours with whoever gave it to you.';
+const missing =
+  'No invitation has this address. Check each word and the number with whoever gave it to you.';
 const unavailable =
-  'joining is temporarily unavailable. Please wait at least a minute, then try again. If it keeps happening, ask the person who invited you to check joining. If you have already joined, open svrngs on your computer to continue.';
+  'Joining is temporarily unavailable. Wait at least a minute, then try again, or ask the person who invited you to send the link in a chat or show its QR code, which work without this address. If you have already joined, open svrngs on your computer to continue.';
 const ended =
   'This invitation has ended. Ask the person who invited you for a new address. If you have already joined, open svrngs on your computer to continue.';
 const hash = (text) => createHash('sha256').update(text).digest('hex');
-export const phrase = () =>
-  Array.from({ length: 5 }, () => words[randomInt(words.length)]).join('-');
-const validPhrase = (text) =>
-  text.split('-').length === 5 && text.split('-').every((w) => wordset.has(w));
+
+// The address as typed, read as the one phrase it can mean, or what is wrong
+// with it, before any store call: any case; any run of other characters
+// between parts; the number glued to a word; one slip in a word, read as the
+// only word it can be. Each request is still one lookup of one phrase against
+// the same budgets, so forgiveness gives a guesser nothing.
+export function read(path) {
+  const text = path.toLowerCase().replace(/%[0-9a-f]{2}/g, '-');
+  const typed = text.match(/[a-z]+/g) ?? [];
+  const number = text.replace(/[^0-9]/g, '');
+  // Five of EFF's words: a phrase issued before 2026-11-16, read as it was.
+  if (typed.length === 5 && !number && typed.every((w) => eff.includes(w)))
+    return { phrase: typed.join('-') };
+  if (path.length > 64 || typed.length !== WORDS || number.length !== DIGITS)
+    return { wrong: shape };
+  const meant = typed.map((part) =>
+    words.includes(part) ? [part] : words.filter((w) => near(w, part) || swapped(w, part)),
+  );
+  const unknown = meant.findIndex((found) => found.length !== 1);
+  if (unknown >= 0)
+    return {
+      wrong: `“${typed[unknown]}” isn't one of the words. Check the address with whoever gave it to you.`,
+    };
+  return { phrase: [...meant.flat(), number].join('-') };
+}
 // The handler's own refusals. A debug event names their code, never a foreign
 // error's text, which can quote a phrase or token.
 class Refusal extends Error {}
@@ -93,7 +139,8 @@ async function navigation(response) {
     'content-security-policy',
     "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'none'",
   );
-  const message = response.ok && body.state === 'ended' ? ended : unavailable;
+  // Fixed text; the one quoted word read() names is letters only.
+  const message = body.message ?? unavailable;
   return new Response(
     `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Join your group</title><h1>Join your group</h1><p>${message}</p></html>`,
     {
@@ -145,8 +192,11 @@ export function createResolver(config) {
     const at = new URL(request.url);
     let q;
     let subject;
-    if (request.method === 'GET' && !at.search && validPhrase(at.pathname.slice(1))) {
-      q = { action: 'lookup', phrase: at.pathname.slice(1) };
+    if (request.method === 'GET') {
+      const typed = read(at.pathname.slice(1));
+      debug(`read:${typed.wrong ? 'wrong' : 'phrase'}`);
+      if (typed.wrong) return answer({ state: 'wrong', message: typed.wrong }, 404);
+      q = { action: 'lookup', phrase: typed.phrase };
       subject = ipKey;
     } else if (request.method === 'POST' && at.pathname === '/' && !at.search) {
       const raw = await bounded(request.body, signal);
@@ -228,13 +278,16 @@ export function createResolver(config) {
     if (result.state === 'unavailable')
       debug(`store:${reasons.has(result.reason) ? result.reason : 'refused'}`);
     debug(
-      `${q.action}:${['open', 'closed', 'ended', 'unavailable'].includes(result.state) ? result.state : 'invalid'}`,
+      `${q.action}:${['open', 'closed', 'ended', 'missing', 'unavailable'].includes(result.state) ? result.state : 'invalid'}`,
     );
     if (result.state === 'ended' && (q.action === 'lookup' || q.action === 'status'))
       return answer({ state: 'ended', message: ended });
+    if (result.state === 'missing' && q.action === 'lookup')
+      return answer({ state: 'missing', message: missing }, 404);
     if (result.state === 'closed' && q.action === 'close')
       return answer({ id: q.id, closed: true });
-    if (result.state !== 'open' || !validPhrase(result.phrase)) throw new Refusal('store_refusal');
+    if (result.state !== 'open' || read(result.phrase).phrase !== result.phrase)
+      throw new Refusal('store_refusal');
     if (q.action === 'lookup') {
       const secret = JSON.parse(result.secret);
       if (typeof secret.token !== 'string' || !Number.isSafeInteger(secret.until))
