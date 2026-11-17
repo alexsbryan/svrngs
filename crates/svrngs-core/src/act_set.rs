@@ -14,13 +14,12 @@ use crate::SignedOp;
 pub struct ActSet(BTreeMap<ContentHash, Op<SignedOp>>);
 
 impl ActSet {
-    /// The set of `ops`, however ordered or repeated.
+    /// The set of `ops`, however ordered or repeated. Collecting keeps the
+    /// last of identical lines where `insert` keeps the first: the same
+    /// choice, since identical keys are identical serialised lines.
     pub fn of<'a>(ops: impl IntoIterator<Item = &'a Op<SignedOp>>) -> Self {
-        let mut set = Self::default();
-        for op in ops {
-            set.insert(op.clone());
-        }
-        set
+        let keyed = ops.into_iter().map(|op| (line_key(op), op.clone()));
+        Self(keyed.collect())
     }
 
     /// Adds `op`; `false` when the set already held that exact line.
