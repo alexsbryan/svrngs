@@ -162,6 +162,16 @@ export function realmKept({ source, data, ports: [port, told] }) {
 }
 
 /**
+ * Each page of this origin's asked for its realm again, as svrngs's worker
+ * starts: a worker the browser stopped keeps none of `realms`, which is its
+ * memory, so each page hands its realm anew (`registered`).
+ * @param {{ matchAll: (options: { type: 'window' }) => Promise<readonly { postMessage: (message: string) => void }[]> }} clients
+ */
+export async function realmsAsked(clients) {
+  for (const page of await clients.matchAll({ type: 'window' })) page.postMessage('svrngs-realms');
+}
+
+/**
  * The realm whose own script `fetched` asks, for the page that started it.
  * @param {{ request: Request, clientId: string }} fetched
  */
@@ -224,20 +234,35 @@ export async function realmAnswer(fetched) {
  */
 export async function registered(svrngs, script, options) {
   const url = new URL(script, location.href);
-  const realm = new MessageChannel();
-  const told = new MessageChannel();
-  const heard = () => new Promise((done) => (told.port1.onmessage = done));
-  let next = heard();
-  svrngs.postMessage({ realm: url.href, isolated: crossOriginIsolated }, [realm.port1, told.port2]);
-  // An older svrngs's worker, which takes no realm, says nothing.
-  const unheard = new Error("svrngs's worker did not answer: open this page again");
-  await Promise.race([next, new Promise((_, no) => setTimeout(no, 10000, unheard))]);
-  next = heard();
-  const app = new Worker(url, { type: options?.type ?? 'classic' });
-  app.postMessage('svrngs-realm', [realm.port2]);
-  await new Promise((ready, failed) => {
-    void next.then(ready);
-    app.onerror = (error) => failed(new Error(`this app's worker did not start: ${error.message}`));
+  /** @type {Worker | undefined} */
+  let app;
+  // The realm handed to svrngs's worker and kept there, then to the app's
+  // worker, started the first time; again each time svrngs's worker starts
+  // afresh and asks (`realmsAsked`).
+  const hand = async () => {
+    const realm = new MessageChannel();
+    const told = new MessageChannel();
+    const heard = () => new Promise((done) => (told.port1.onmessage = done));
+    let next = heard();
+    svrngs.postMessage({ realm: url.href, isolated: crossOriginIsolated }, [
+      realm.port1,
+      told.port2,
+    ]);
+    // An older svrngs's worker, which takes no realm, says nothing.
+    const unheard = new Error("svrngs's worker did not answer: open this page again");
+    await Promise.race([next, new Promise((_, no) => setTimeout(no, 10000, unheard))]);
+    next = heard();
+    const started = (app ??= new Worker(url, { type: options?.type ?? 'classic' }));
+    started.postMessage('svrngs-realm', [realm.port2]);
+    await new Promise((ready, failed) => {
+      void next.then(ready);
+      started.onerror = (error) =>
+        failed(new Error(`this app's worker did not start: ${error.message}`));
+    });
+  };
+  await hand();
+  navigator.serviceWorker.addEventListener('message', ({ data }) => {
+    if (data === 'svrngs-realms') void hand();
   });
   // What an app's page reads of its registration; it has no more.
   return /** @type {ServiceWorkerRegistration} */ (
@@ -261,13 +286,15 @@ function prelude() {
     clients: { claim: async () => {}, matchAll: async () => [] },
     skipWaiting: async () => {},
   });
-  addEventListener('message', function handed(message) {
+  let started = false;
+  addEventListener('message', (message) => {
     const port = message.data === 'svrngs-realm' ? message.ports[0] : undefined;
     if (!port) return;
     message.stopImmediatePropagation();
-    removeEventListener('message', handed);
-    for (const type of ['install', 'activate'])
+    // Once, though each start of svrngs's worker hands a port anew.
+    for (const type of started ? [] : ['install', 'activate'])
       dispatchEvent(Object.assign(new CustomEvent(type), { waitUntil() {} }));
+    started = true;
     port.onmessage = ({ data, ports: [reply] }) => {
       const { url, method, headers, body, mode, destination } = data;
       const request = new Request(url, { method, headers, body });

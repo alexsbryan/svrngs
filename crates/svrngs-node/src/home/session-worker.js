@@ -1,6 +1,6 @@
 import { session, proof, hex, Browser, browserAuthority } from '/svrngs-session.js';
 // An app's own worker's realm, svrngs's side of it.
-import { preluded, realmAnswer, realmKept, realmScript } from '/svrngs-session.js';
+import { preluded, realmAnswer, realmKept, realmScript, realmsAsked } from '/svrngs-session.js';
 
 // `self` as a service worker's: the worker's lib names it a
 // `WorkerGlobalScope`, which every kind of worker shares
@@ -45,6 +45,8 @@ worker.addEventListener('activate', (activation) => activation.waitUntil(worker.
 // A page's message: its app's own worker, to run in a realm of its own,
 // which a window of this origin alone hands over (session.js `realmKept`).
 worker.addEventListener('message', (received) => void realmKept(received));
+// Started afresh, it holds no realm: each page is asked for its own again.
+void realmsAsked(worker.clients);
 worker.addEventListener('fetch', (fetchEvent) => {
   const url = new URL(fetchEvent.request.url);
   if (

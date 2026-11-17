@@ -59,7 +59,13 @@ import init, {
 import * as store from './store.js?v=__VERSION__';
 import { silent, unreached } from './question.js?v=__VERSION__';
 import { framing, fromHex, maySign, openMessage, signerFor } from './authority.js?v=__VERSION__';
-import { preluded, realmAnswer, realmKept, realmScript } from './session.js?v=__VERSION__';
+import {
+  preluded,
+  realmAnswer,
+  realmKept,
+  realmScript,
+  realmsAsked,
+} from './session.js?v=__VERSION__';
 /** @import { Handoff, Passed } from './authority.js?v=__VERSION__' */
 /** @import { Dialled, Endpoint } from './wasm/svrngs_web.js?v=__VERSION__' */
 
@@ -151,6 +157,8 @@ self.__trace = (line) => {
 };
 const trace = self.__trace;
 trace(`RUNTIME: this run of the worker begins`);
+// Started afresh, it holds no app's realm: each page is asked for its own again.
+void realmsAsked(scope.clients);
 
 // This build's pieces kept whole or not at all: one that fails fails the
 // install, so an older worker keeps serving and open.js says this could not

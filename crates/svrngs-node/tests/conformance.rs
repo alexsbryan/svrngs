@@ -216,19 +216,22 @@ impl Way {
 }
 
 /// The canary's routes, as the row names them, each with its check: all
-/// but the one that plays, `SEEKS`, the playback step's. `realm` and
-/// `cold` are the driver's, not the canary's: the policy svrngs serves its
-/// own worker with, at the lend's origin, sent with a worker that asks
-/// whether `eval` runs under it (web/tests/conformance.mjs `realm`); and a
-/// navigation with no page of the lend's open, which the lend answers, not
-/// the app's worker, whose realm closed with its page.
-const ROUTES: [(&str, &str); 13] = [
+/// but the one that plays, `SEEKS`, the playback step's. `realm`,
+/// `restarted` and `cold` are the driver's, not the canary's: the policy
+/// svrngs serves its own worker with, at the lend's origin, sent with a
+/// worker that asks whether `eval` runs under it (web/tests/conformance.mjs
+/// `realm`); the app's worker answering again once svrngs's worker was
+/// stopped and started (`restarted`, Chromium's alone); and a navigation
+/// with no page of the lend's open, which the lend answers, not the app's
+/// worker, whose realm closed with its page.
+const ROUTES: [(&str, &str); 14] = [
     ("/-absolute paths", "root"),
     ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
     ("64 MiB uploaded, its length told", "upload"),
     ("its own service worker", "worker"),
     ("its worker answers no page or worker", "documents"),
+    ("its worker, after svrngs's restarts", "restarted"),
     ("svrngs's worker refuses eval", "realm"),
     ("a cold navigation, the lend's", "cold"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),
@@ -260,6 +263,11 @@ fn a_rate(engine: Engine, check: &str) -> bool {
 /// was past `load::BUSY` times `cores`, `could-not-judge` with that load
 /// (`load::past_busy`).
 fn verdict(engine: Engine, check: &str, ok: bool, load: &str, cores: usize) -> String {
+    // WebKit's service worker is not stopped on ask from here (DevTools is
+    // Chromium's; ralph/REVIEW_FINDINGS.md #46), never a pass.
+    if matches!(engine, Engine::Webkit) && check == "restarted" {
+        return "could-not-judge, WebKit stops no worker on ask".to_string();
+    }
     let held = if ok { "passed" } else { "failed" };
     if a_rate(engine, check) {
         return format!("{held}, a rate");

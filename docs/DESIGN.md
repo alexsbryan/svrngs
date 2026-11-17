@@ -311,7 +311,10 @@ under the policy svrngs serves it with and with the session's client in
 it, since an answer's headers set a document's or a worker's policy. With
 no page open the lend answers everything, and the realm's stand-ins for
 `clients`, `registration` and `skipWaiting` do nothing (`home/session.js`
-`realmKept`, `SUBRESOURCES`). A phone's lend worker does the same, its
+`realmKept`, `SUBRESOURCES`). svrngs's worker keeps its realms in memory,
+which a browser stopping it idle takes: started again, it asks each page,
+which hands its realm anew to the worker it already runs (`realmsAsked`),
+and only the request that woke it goes to the lend. A phone's lend worker does the same, its
 shim in each page, holding the pass under its own policy
 (`web/vercel.json`).
 An absence says "Open svrngs from your computer", naming the opener.

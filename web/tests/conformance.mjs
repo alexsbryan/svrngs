@@ -102,6 +102,27 @@ self.addEventListener('fetch', (e) => {
 });
 const policies = [];
 await new Promise((done) => realms.listen(0, '127.0.0.1', done));
+// svrngs's worker stopped while the page is open, as a browser stops an
+// idle one, and its realms with it, which are its memory: started again, it
+// asks each page for its realm, which the page hands anew (session.js
+// `realmsAsked`), so the app's worker answers `sw-probe` again, from the
+// second ask at most (the first wakes svrngs's worker). Chromium alone is
+// told to stop a worker from here (DevTools); WebKit is could-not-judge
+// (ralph/REVIEW_FINDINGS.md #46).
+async function restarted(page) {
+  if (args.engine !== 'chromium') return { ok: false, saw: 'WebKit stops no worker on ask' };
+  const tools = await context.newCDPSession(page);
+  await tools.send('ServiceWorker.enable');
+  await tools.send('ServiceWorker.stopAllWorkers');
+  const said = [];
+  for (let n = 0; n < 10 && said.at(-1) !== "from the app's worker"; n++) {
+    said.push(await page.evaluate(() => fetch('sw-probe').then((r) => r.text())));
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  await tools.detach();
+  return { ok: said.at(-1) === "from the app's worker", saw: said.join(', ') };
+}
+
 // `page`'s worker's policy, as its server sends it with the worker's
 // script (the node, or the page's host here), and what `eval` does under it.
 async function realm(page) {
@@ -212,6 +233,7 @@ try {
       seen[route] = await run(route);
     }
     seen.load.push(load());
+    if (!args.routes) seen.restarted = await restarted(page);
     if (!args.routes) seen.realm = await realm(page);
     seen.requests = sent.filter((l) => l.includes(lend.label));
     seen.memory = memory;
