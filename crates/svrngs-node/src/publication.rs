@@ -107,6 +107,20 @@ fn qr(link: &str) -> Option<serde_json::Value> {
     Some(serde_json::json!({"size": n + 8, "path": path}))
 }
 
+/// svrngs's own resolver, for a computer whose `join-resolver` file names
+/// none: batteries included, and never the only choice.
+const RESOLVER: &str = "https://join.svrnme.sh/";
+
+/// The resolver this computer's `join-resolver` file names, `named`, else
+/// svrngs's own: a file that is there and cannot be read is said, never
+/// passed over for ours.
+fn resolver(named: std::io::Result<String>) -> Result<String, Fault> {
+    match named {
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(RESOLVER.into()),
+        named => named.map_err(fault),
+    }
+}
+
 fn answer(result: Result<serde_json::Value, Fault>) -> Response {
     match result {
         Ok(value) => Json(value).into_response(),
@@ -151,8 +165,9 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
             }
             _ if closing => return Err(Fault("no publication to close".into())),
             _ => {
-                let resolver = std::fs::read_to_string(host.rail.root().join("join-resolver"))
-                    .map_err(fault)?;
+                let resolver = resolver(std::fs::read_to_string(
+                    host.rail.root().join("join-resolver"),
+                ))?;
                 let url = reqwest13::Url::parse(resolver.trim()).map_err(fault)?;
                 let local = matches!(url.host_str(), Some("127.0.0.1" | "[::1]"));
                 if !(url.scheme() == "https" || url.scheme() == "http" && local)
@@ -188,7 +203,7 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
             return r.shown(host, &q.group);
         }
         r.keep(host, &q.group)?;
-        tracing::debug!(target: "publication", group = q.group, phase = ?r.phase, "publication: pending receipt kept before resolver request");
+        tracing::debug!(target: "publication", group = q.group, phase = ?r.phase, resolver = r.resolver, "publication: pending receipt kept before resolver request");
         r
     };
     // No invitation mutex crosses an await. A concurrent link or close wins
@@ -284,3 +299,7 @@ async fn send(
     }
     Ok(Some(phrase.into()))
 }
+
+#[cfg(test)]
+#[path = "publication_tests.rs"]
+mod tests;

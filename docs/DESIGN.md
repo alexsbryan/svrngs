@@ -1140,8 +1140,10 @@ of Nayuki's `qrcodegen` encoding (`publication.rs` `qr`); so both work while
 the resolver is unavailable and survive reload and restart, and a closing,
 closed or ended invitation's link is never shown again. The resolver's native mutation contract and
 fake-resolver proof are in `demo/runs/onboarding/2026-11-04-native/README.md`.
-The resolver endpoint is read from the host's `join-resolver` file for this
-boundary. The native status includes the short address at that resolver's
+The resolver endpoint is the one the host's `join-resolver` file names, else
+svrngs's own, `https://join.svrnme.sh/` (`publication.rs` `resolver`):
+batteries included, never the only choice, and a file there that cannot be
+read is said, never passed over for ours. The native status includes the short address at that resolver's
 origin; the browser never constructs a distribution origin from it. The
 group's existing link machine and view (`home/page/group-link.js` and
 `group-links.js`) offer **Invite people here**, the large copyable address,

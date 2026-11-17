@@ -171,9 +171,13 @@ async fn publish(browser: &Browser<'_>, method: &str, path: &str, body: &str) ->
     ask(browser, method, &home, path, &own, body).await
 }
 
+// A resolver this computer cannot ask, here one its `join-resolver` file
+// names as no address at all, so nothing is sent anywhere (a computer that
+// names none publishes to svrngs's own: src publication_tests.rs).
 #[tokio::test]
 async fn publication_unavailable_is_retryable_not_an_ended_invitation() {
     let dir = tempfile::tempdir().unwrap();
+    std::fs::write(dir.path().join("join-resolver"), "not an address").unwrap();
     let node = on_wire::start(1, dir.path()).await;
     node.rail()
         .set_seed(
