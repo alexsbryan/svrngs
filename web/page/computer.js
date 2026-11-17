@@ -4,7 +4,8 @@
 // the link's `#` part, which no request carries. With no token, it is a
 // founder's line, which joins nothing and opens the home page. A phone's
 // pointer is coarse and a phone has no terminal, so no line is offered
-// there. #how (how-it-reaches.js) says how this page reaches you.
+// there; a Windows computer has no `sh` to pipe it to, so it is told so
+// (`lines`). #how (how-it-reaches.js) says how this page reaches you.
 import { go, no } from '../ui/machine.js?v=__VERSION__';
 import { ComputerLine } from './computer-line.js?v=__VERSION__';
 import { HowItReaches } from './how-it-reaches.js?v=__VERSION__';
@@ -16,7 +17,7 @@ import { HowItReaches } from './how-it-reaches.js?v=__VERSION__';
 /**
  * The fields this flow owns (`owns`): the line offered, what it does and
  * its text.
- * @typedef {{ line?: ['joins' | 'founds' | 'opens' | 'installs', string] }} Fields
+ * @typedef {{ line?: ['joins' | 'founds' | 'opens' | 'installs' | 'windows', string] }} Fields
  */
 
 /**
@@ -35,6 +36,9 @@ import { HowItReaches } from './how-it-reaches.js?v=__VERSION__';
 export const owns = ['line'];
 export const states = /** @type {const} */ ({ offer: ['unoffered', 'offered'] });
 const quote = (/** @type {string} */ text) => `'${text.replaceAll("'", "'\\''")}'`;
+// The one decider of whether this device takes the line: a computer, by
+// its pointer, that svrngs runs on, which a Windows one does not yet.
+export const lines = (/** @type {State} */ state) => state.fine && !state.windows;
 
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
@@ -58,7 +62,9 @@ export const takes = {
     const joined = token ? 'joins' : 'founds';
     const installs = name !== undefined ? 'installs' : joined;
     /** @type {Fields['line']} */
-    const line = href ? ['opens', href] : [installs, install];
+    const told = lines(state) ? [installs, install] : ['windows', ''];
+    /** @type {Fields['line']} */
+    const line = href ? ['opens', href] : told;
     return go(state, { offer: 'offered' }, { line });
   },
 };

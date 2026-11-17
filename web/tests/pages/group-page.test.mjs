@@ -219,7 +219,7 @@ async function settled(promise) {
  * left. Answers what the page did and says, and `send`, which steps a
  * message as a press does.
  */
-async function opened(fragment, { kept = [house], fine = false } = {}) {
+async function opened(fragment, { kept = [house], fine = false, windows = false } = {}) {
   globalThis.location = new URL('https://page.example/');
   const written = [];
   globalThis.navigator = { clipboard: { writeText: async (text) => void written.push(text) } };
@@ -244,7 +244,13 @@ async function opened(fragment, { kept = [house], fine = false } = {}) {
       others: kept.filter((group) => group.id !== id && group.addresses !== undefined),
     }),
   };
-  const page = { state: parts.first({ fine }), ran: [], refused: [], pending: [], written };
+  const page = {
+    state: parts.first({ fine, windows }),
+    ran: [],
+    refused: [],
+    pending: [],
+    written,
+  };
   // Each effect after the step that gave it, in its order, as ui/machine.js
   // `machine` runs them; a refusal is kept, as its trace says it.
   const run = async (effects) => {
@@ -591,6 +597,30 @@ test('a computer is offered one line, a founder’s with no link and a joiner’
     if (!fragment)
       for (const page of [computer, phone])
         assert.deepEqual(page.heading(), ['Open this page from your group’s link.', 'bad']);
+  }
+});
+
+// A Windows computer has no `sh` to pipe the line to, so it is offered
+// none, at a link or with none: it is told svrngs runs on Mac and Linux
+// for now, and that the same link joins from its phone (computer.js
+// `lines`). Its pointer is fine, so it is still a computer, never told
+// what a phone is.
+test('a Windows computer is offered no line, and told the same link joins from its phone', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  runtime({ tokens: { TOKEN: ADA }, computers: {} });
+  for (const fragment of ['', 'TOKEN']) {
+    const windows = await opened(fragment, { kept: [], fine: true, windows: true });
+    assert.deepEqual(windows.state.line, ['windows', ''], fragment);
+    const drawn = windows.drawn(ComputerLine);
+    assert.equal(byId(drawn, 'computer').props.hidden, false, `${fragment}: told`);
+    const shown = tagged(drawn, 'p').filter((p) => !p.props.hidden);
+    assert.deepEqual(
+      shown.map((p) => p.props.id),
+      ['windows'],
+    );
+    assert.match(text(shown), /Mac and Linux for now.+phone/);
+    assert.deepEqual([byId(drawn, 'line'), byId(drawn, 'copy')], [undefined, undefined]);
+    assert.ok(!JSON.stringify(windows.state).includes('curl'), 'no line anywhere');
   }
 });
 

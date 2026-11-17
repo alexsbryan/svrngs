@@ -16,6 +16,8 @@ const SAYS = {
     'To make your group, paste this line in a terminal on your computer: it gets svrngs and opens your home page, where you make your group and invite people to it.',
   opens:
     'Copy this link, open your svrngs home page, and paste it under “Open a link from your group”: it opens there. If svrngs is not on this computer, open the link on your phone.',
+  windows:
+    'svrngs runs on Mac and Linux for now, not on Windows. To join from your phone, open this same link or address on it.',
 };
 
 const WORDS = { copy: 'Copy', copied: 'Copied', unwritten: 'Select the line and copy it' };
@@ -25,13 +27,12 @@ export function ComputerLine({ s: state }) {
   // No line offered draws nothing: no words, and an empty line.
   const [says, text = ''] = state.line ?? [];
   const words = Object.entries(SAYS)
-    .filter(([id]) => id !== 'installs' || says === 'installs')
+    .filter(([id]) => !['installs', 'windows'].includes(id) || says === id)
     .map(([id, said]) => html`<p id=${id} hidden=${id !== says}>${said}</p>`);
   return html`
     <section id="computer" hidden=${!says}>
       ${words}
-      <pre id="line">${text}</pre>
-      <${Copy} id="copy" text=${text} words=${WORDS} />
+      ${says !== 'windows' && html`<pre id="line">${text}</pre><${Copy} id="copy" text=${text} words=${WORDS} />`}
     </section>
   `;
 }

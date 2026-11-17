@@ -1178,10 +1178,13 @@ the issuing computer's current person's name; `/ask` without that option keeps
 its existing wire shape. The page believes the seed as before and shows who
 invited the attendee and which group it is, then quotes the chosen name as one
 literal shell argument. It makes no browser redemption or persisted browser
-membership. That is a computer's arrival, one with a fine pointer as
-`computer.js` reads it; a phone has no terminal, so at a short address it
-ignores `native` and joins in the browser as from any link, or holds the
-group it is in already (`join.js` `join`). The canonical page supplies the
+membership. That is the arrival of a computer that takes the line, as
+`computer.js` `lines` decides: a fine pointer, and not Windows, which has no
+`sh` to pipe the line to. Any other device opens a short address as any link
+(`enter.js` `addressed`): a phone joins in the browser, or holds the group it
+is in already, and a Windows computer is offered no line, at a short address
+or a link, and told that svrngs runs on Mac and Linux for now and that the
+same address or link joins from its phone. The canonical page supplies the
 installer and the saved page origin.
 The installer keeps the existing identity and join idempotence, restores a
 previously stopped service on failure or interruption, and retains its refusal

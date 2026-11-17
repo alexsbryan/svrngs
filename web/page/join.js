@@ -94,17 +94,16 @@ const asks = (/** @type {State} */ state) => ['naming', 'taken'].includes(state.
 const guest = (/** @type {State} */ state) => state.at.visit === 'naming';
 /** @type {Takes<State, Message, Effect | Send>} */
 export const takes = {
-  // A short address asks a computer to install (`native`). A phone has no
-  // terminal (computer.js offers it no line), so it joins here as from any
-  // link, told by the groups it keeps if it is in this one already.
+  // A short address asks a computer that takes the line to install
+  // (`native`); any other device opens it as any link (enter.js `addressed`).
   join: (state, { token, kept, wants, native }) => {
     if (state.at.join !== 'unasked') return no(state, `a link is ${state.at.join} already`);
-    const joining = { token, kept, wants, native: native && state.fine };
+    const joining = { token, kept, wants, native };
     return go(
       state,
       { join: 'asking' },
       { joining },
-      { run: 'ask', token, native: joining.native, failed: 'unjoined' },
+      { run: 'ask', token, native, failed: 'unjoined' },
     );
   },
   asked: (state, { group, told }) => {

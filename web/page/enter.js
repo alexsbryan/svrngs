@@ -13,6 +13,7 @@ import { named as saidOf } from '../question.js?v=__VERSION__';
 import * as store from '../store.js?v=__VERSION__';
 import { actor, hold, lends, trace, wasm, when } from './dial.js?v=__VERSION__';
 import { sending } from './page.js?v=__VERSION__';
+import { lines } from './computer.js?v=__VERSION__';
 /** @import { Group, Computer } from '../store.js?v=__VERSION__' */
 /** @import * as Wasm from '../wasm/svrngs_web.js?v=__VERSION__' */
 /** @import { Lend, Removal, PeopleRow, Shelved } from '../question.js?v=__VERSION__' */
@@ -248,10 +249,17 @@ const lendingIn = (kept, wants) =>
     ? kept.filter((group) => group.addresses?.includes(/** @type {string} */ (wants.open)))
     : [];
 
+// A short address's `native` asks a computer to install, one that takes
+// the line (computer.js `lines`). Any other device opens it as any link
+// (`addressed`): a phone joins in the browser, held by the groups it keeps
+// if it is in this one already, and a Windows computer is told why it is
+// offered no line.
+const installs = (/** @type {State} */ state, /** @type {URLSearchParams} */ parts) =>
+  parts.has('native') && lines(state);
+
 // A readable address, `parts`, with its `token` if any: the group it
 // opens, held, or each group offered that lends what it opens, or the
-// link's join; else said why not. A short address's `native` asks a
-// computer to install; a phone joins as from any link (join.js `join`).
+// link's join; else said why not.
 /**
  * @param {State} state
  * @param {Looked} message
@@ -261,7 +269,7 @@ const lendingIn = (kept, wants) =>
  */
 const addressed = (state, { kept }, parts, token) => {
   const wants = wantsOf(parts);
-  if (token && parts.has('native'))
+  if (token && installs(state, parts))
     return go(state, {}, {}, sending('join', { token, kept, wants: null, native: true }));
   const offer = token ? [sending('offer', { token })] : [];
   const lending = lendingIn(kept, wants);

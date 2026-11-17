@@ -44,7 +44,7 @@ import { Heading } from '../ui/parts.js?v=__VERSION__';
 /**
  * The frame's own fields: the browser, read once at the edge (app.js), and
  * the words of a failed effect.
- * @typedef {{ fine: boolean, standalone?: boolean, said?: string }} FrameFields
+ * @typedef {{ fine: boolean, windows?: boolean, standalone?: boolean, said?: string }} FrameFields
  */
 
 /**
@@ -171,10 +171,10 @@ export const sending = /** @type {Sender} */ (
   (type, message) => ({ run: 'send', m: { type, ...message } })
 );
 
-// The frame's own flow: `fine` and `standalone`, read once at the edge,
-// and a failed effect, its words in `said` when it has any.
+// The frame's own flow: `fine`, `windows` and `standalone`, read once at
+// the edge, and a failed effect, its words in `said` when it has any.
 const frame = {
-  owns: ['fine', 'standalone', 'said'],
+  owns: ['fine', 'windows', 'standalone', 'said'],
   states: /** @type {const} */ ({ page: ['opening', 'failed'] }),
   io: {
     /** @param {Send} send */

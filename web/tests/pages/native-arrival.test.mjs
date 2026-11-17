@@ -95,17 +95,20 @@ test('native arrival asks the name once and offers a literal shell command witho
   assert.equal(parts.step(state, { type: 'named' }).effects.length, 0);
 });
 
-// A phone has no terminal, so no line is offered there (computer.js): the
-// short address joins it as any group link joins a phone, in the browser.
-const atShortAddress = (kept) => {
-  const looked = parts.step(parts.first({ fine: false }), {
+// A phone has no terminal, so no line is offered there (computer.js
+// `lines`): the short address opens as any group link opens on a phone
+// (enter.js `addressed`), and joins it in the browser.
+const atShortAddress = (kept, frame = { fine: false }) => {
+  const looked = parts.step(parts.first(frame), {
     type: 'looked',
     fragment: `${token}&native`,
     kept,
     linked: true,
   });
-  const joining = parts.step(looked.state, looked.effects[0].m);
-  assert.deepEqual(joining.effects, [{ run: 'ask', token, native: false, failed: 'unjoined' }]);
+  const join = looked.effects.find((effect) => effect.m.type === 'join');
+  assert.deepEqual(join.m, { type: 'join', token, kept, wants: null });
+  const joining = parts.step(looked.state, join.m);
+  assert.deepEqual(joining.effects, [{ run: 'ask', token, native: undefined, failed: 'unjoined' }]);
   return parts.step(joining.state, {
     type: 'asked',
     told: 'issuer-answer',
@@ -127,4 +130,25 @@ test('a phone in the group already, at its short address, holds it and joins nob
   const asked = atShortAddress([{ id: 'abcd', name: 'House', token: 'another' }]);
   assert.equal(asked.state.at.join, 'joined');
   assert.equal(asked.effects[0].m.type, 'hold');
+});
+
+// A Windows computer takes no line (computer.js `lines`), so a short
+// address opens on it as any link (enter.js `addressed`): it is told what
+// a Windows computer is told at any link, that svrngs runs on Mac and
+// Linux for now and the same address joins from its phone, and it can
+// join in the browser, as a phone does.
+test('a Windows computer at a short address is offered no line, and told to use its phone', () => {
+  const windows = { fine: true, windows: true };
+  const looked = parts.step(parts.first(windows), {
+    type: 'looked',
+    fragment: `${token}&native`,
+    kept: [],
+    linked: true,
+  });
+  const [offer] = looked.effects;
+  assert.deepEqual(offer.m, { type: 'offer', token });
+  const where = parts.step(looked.state, offer.m);
+  const told = parts.step(where.state, { type: 'offered', ...where.effects[0], page });
+  assert.deepEqual(told.state.line, ['windows', '']);
+  assert.equal(parts.heading(atShortAddress([], windows).state)[0], 'Join House');
 });

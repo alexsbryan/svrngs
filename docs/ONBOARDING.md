@@ -52,7 +52,9 @@ An operator-provisioned address per demo was considered and rejected.
 
 The first build assumes working internet and the existing Mac/Linux
 one-command installer. Native Windows support and graphical installers
-are separate work; browser-only joining does not meet this demo's bar.
+are separate work; browser-only joining does not meet this demo's bar. A
+Windows computer at the address is offered no line: it is told that svrngs
+runs on Mac and Linux for now, and that the same address joins from a phone.
 
 ## 2. The host and attendee paths
 

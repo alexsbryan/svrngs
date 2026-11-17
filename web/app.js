@@ -61,6 +61,8 @@ const page = machine(
   parts,
   parts.first({
     fine: matchMedia('(pointer: fine)').matches,
+    // A Windows computer takes no line (web/page/computer.js `lines`).
+    windows: /Windows/.test(navigator.userAgent),
     // iPhone Safari's own: false outside a Home Screen web app, absent in
     // every other browser (web/page/name-form.js `NameForm`), so no lib declares it.
     standalone: /** @type {Navigator & { standalone?: boolean }} */ (navigator).standalone,
