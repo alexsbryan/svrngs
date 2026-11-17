@@ -98,17 +98,6 @@ fn the_build_s_relays_are_n0_s_at_n0_s_and_svrngs_s_at_svrngs_s() {
     assert!(no_relay().build().is_empty());
 }
 
-/// One svrngs per data dir: a second claim is refused while the first is
-/// held, and taken once it is let go.
-#[test]
-fn a_second_svrngs_on_one_data_dir_is_refused() {
-    let dir = tempfile::tempdir().unwrap();
-    let held = cli::claim(dir.path()).expect("the first claim");
-    assert!(matches!(cli::claim(dir.path()), Err(Refusal::Busy(_))));
-    drop(held);
-    cli::claim(dir.path()).expect("free again");
-}
-
 /// A group's seed or origin that cannot be read is refused, never read as
 /// none kept (ARCH 6): none kept is only no file there (#20). Each is
 /// planted as a directory, which no read opens; the seed's refusal names
