@@ -56,6 +56,13 @@ function step(n, what, ok, seen) {
   steps.push(`  ${n}. ${(ms / 1000).toFixed(3).padStart(7)} s  ${what}`);
 }
 const has = (v, s) => JSON.stringify(v).includes(s);
+// Whether `v` names `who`, as a word of its own. Sealed boxes, nonces and
+// handles are base64, whose letters spell a short name now and then: in
+// 400 runs' Waller logs, "Zed", "Bob", "Max" and "Lou" turned up six times
+// (demo/runs/grapevine/2026-11-16-names/README.md). So a name counts only
+// where no base64 character touches it.
+const named = (v, who) =>
+  new RegExp(`(^|[^A-Za-z0-9+/])${who}([^A-Za-z0-9+/]|$)`).test(JSON.stringify(v));
 const carries = [];
 /** A value for each of a kind's fields, by its type: what someone might type. */
 const example = (fields) =>
@@ -102,7 +109,7 @@ async function main() {
   step(
     3,
     'Kim sees it carried by Jo, told she might have one, never who asked',
-    kim?.carriers.join() === 'Jo' && kim.notice === true && !has(kim, 'Sam'),
+    kim?.carriers.join() === 'Jo' && kim.notice === true && !named(kim, 'Sam'),
     JSON.stringify(kim),
   );
   await p.Kim.reply({ ask: id, group: 'waller', fields: OFFER });
@@ -166,7 +173,7 @@ async function main() {
       throw new Error(`step 7, Jo may not carry Sam's ${k.kind} to Waller block`);
     carries.push(await p.Jo.carry({ ask: other, group: 'waller' }));
     const seen = (await view('Kim')).asks.find((a) => a.id === other);
-    if (!(seen?.carriers.join() === 'Jo' && !has(seen, 'Sam')))
+    if (!(seen?.carriers.join() === 'Jo' && !named(seen, 'Sam')))
       throw new Error(
         `step 7, Kim does not see Sam's ${k.kind} carried by Jo alone:\n${JSON.stringify(seen)}`,
       );
@@ -183,9 +190,9 @@ async function main() {
   const waller = (await store.log('waller')).ops;
   const leak = SEALED.find((s) => kept.includes(s));
   const by = [carry, ...carries].map((c) => waller.find((o) => o.id === c)?.person);
-  if (leak || by.some((b) => b !== 'Jo') || has(waller, 'Sam'))
+  if (leak || by.some((b) => b !== 'Jo') || named(waller, 'Sam'))
     throw new Error(
-      `the records after: ${leak ? `hold ${JSON.stringify(leak)}` : `the carries are ${by.join(', ')}'s, Waller's log ${has(waller, 'Sam') ? 'names Sam' : 'is clean'}`}`,
+      `the records after: ${leak ? `hold ${JSON.stringify(leak)}` : `the carries are ${by.join(', ')}'s, Waller's log ${named(waller, 'Sam') ? 'names Sam' : 'is clean'}`}`,
     );
 
   const ms = reads.map((r) => r.ms).sort((a, b) => a - b);

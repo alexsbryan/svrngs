@@ -1,0 +1,6 @@
+base64-old exit=1 the records after: the carries are Jo, Jo, Jo's, Waller's log names Sam
+base64-new exit=0 
+plain-new exit=1 the records after: the carries are Jo, Jo, Jo's, Waller's log names Sam
+possessive-new exit=1 the records after: the carries are Jo, Jo, Jo's, Waller's log names Sam
+person-new exit=1 the records after: the carries are Jo, Jo, Jo's, Waller's log names Sam
+unplanted exit=0

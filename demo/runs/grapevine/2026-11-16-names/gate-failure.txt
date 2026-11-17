@@ -1,0 +1,26 @@
+           # Subtest: the canary runs §10's scene on demo.json, each step timed
+           not ok 106 - the canary runs §10's scene on demo.json, each step timed
+             ---
+             duration_ms: 237.708833
+             location: '/Users/alexsbryan/dev/svrngs/apps/grapevine/canary.test.mjs:19:1'
+             failureType: 'testCodeFailure'
+             error: |-
+               the grapevine canary failed: the records after: the carries are Jo, Jo, Jo's, Waller's log names Sam
+               it got through:
+                 1.   0.043 s  Sam asks in 1400 Page
+                 2.   0.043 s  Jo sees it, and may carry it to Waller block
+                 3.   0.046 s  Kim sees it carried by Jo, told she might have one, never who asked
+                 4.   0.053 s  Sam reads the offer; Jo sees a sealed message pass, and none of it
+                 5.   0.084 s  two yeses, then each sees the other's name
+                 6.   0.099 s  Sam takes it back; within one turn the carry in Waller is gone
+                 7.   0.173 s  every other kind's ask carried one ring, by Jo: ask, room
+               
+               
+               1 !== 0
+               
+             code: 'ERR_ASSERTION'
+             name: 'AssertionError'
+             expected: 0
+             actual: 1
+             operator: 'strictEqual'
+             stack: |-
