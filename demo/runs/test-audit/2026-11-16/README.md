@@ -98,6 +98,11 @@ all but one addressed in this audit's commits.
 
 ## What this audit changed
 
+Commits 1cc00b07 (the `of` fold, behaviour kept), d893b559 (the ActSet
+laws), 071ffb80 (the tier timeout), 24205d87 (the recounts), 46f002f3
+(this record). After them all: `scripts/check.sh` exit 0 in 1,449 s,
+45 steps passed, nothing could-not-judge (`gate.txt`).
+
 - `web/tests/run.mjs` passes `--test-timeout=120000` to every tier. Plant:
   a law holding a timer that no one clears. Before, the tier never ended on
   its own — every other law done, the run killed only by the shell's 40 s
