@@ -77,6 +77,13 @@ const ORIGINS: usize = 64;
 const ONWARDS: usize = 4096;
 /// Kept by no cache: the session's epoch, scripts, browser key and refusal page.
 const NO_STORE: (header::HeaderName, &str) = (header::CACHE_CONTROL, "no-store");
+/// What svrngs's scripts here may do, its worker above all (`home/
+/// session-worker.js`, which holds the session): run this origin's own
+/// scripts and reach this origin alone. No `eval`, no wasm, no other
+/// address, so no code but svrngs's runs where the session's key is used.
+/// Pinned in scripts/trust_floor.txt; the home page sends its own.
+const POLICY: &str = "default-src 'none'; script-src 'self'; connect-src 'self'";
+const SCRIPTS: (header::HeaderName, &str) = (header::CONTENT_SECURITY_POLICY, POLICY);
 
 /// Why a request shows no session ([`Sessions::shown`]).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -421,7 +428,7 @@ impl Sessions {
             }
             _ => return None,
         };
-        let headers = [(header::CONTENT_TYPE, "text/javascript"), NO_STORE];
+        let headers = [(header::CONTENT_TYPE, "text/javascript"), NO_STORE, SCRIPTS];
         Some((headers, file).into_response())
     }
 

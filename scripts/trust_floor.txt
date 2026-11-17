@@ -18,6 +18,14 @@
 # §5; DESIGN §3, "Or a folder the group carries"). A sandbox for code from
 # outside your rings waits for its trigger (PLAN §2).
 #
+# Workers: svrngs's own service workers hold what lets a browser act as you,
+# a computer's session at each lend's origin and a phone's pass at each
+# lend's. They run svrngs's code alone, under the session scripts' policy
+# and the lend worker's below: never `eval`, no wasm but svrngs's own on a
+# phone, and reach only what svrngs needs. An app's own service worker is
+# refused there, in words (session-client.js, shim.js), never run beside
+# them. A worker an app's page starts itself is held by that page's policy.
+#
 # page <name> <file> <anchor>: the policy that file serves, the one string
 #   literal after the anchor, which the file holds once. Under it, each
 #   directive as served, token by token, in any order. Anything past 'self'
@@ -89,6 +97,21 @@ page open web/open.html <meta http-equiv="Content-Security-Policy" content=
   frame-src https: | open.js frames the group's signer, at the address it derives from its own host, to learn whether this browser's group page issued the open before any of it is kept
   base-uri 'none'
   form-action 'none'
+
+# svrngs's scripts at a lend's origin on a computer (crates/svrngs-node/src/
+# session.rs `public`), its session worker's above all: svrngs's code, and
+# this origin alone. The home page sends its own policy over them.
+page session-scripts crates/svrngs-node/src/session.rs const POLICY: &str =
+  default-src 'none'
+  script-src 'self'
+  connect-src 'self'
+
+# A lend's worker on a phone, web/lend.js, as the page host sends it
+# (web/vercel.json): svrngs's code and its iroh wasm, and the relays.
+page lend-worker web/vercel.json "key": "content-security-policy", "value":
+  default-src 'none'
+  connect-src 'self' wss: https: | the relays a pass names: their WebSocket, and iroh's probe of each one's /ping, as the group's page reaches them (web/index.html)
+  script-src 'self' 'wasm-unsafe-eval' | svrngs's own wasm (web/src), the lend's iroh endpoint that dials its lender; no other code, and no app's
 
 # Where svrngs listens.
 listen crates/svrngs-node/src/api.rs: let listener = tokio::net::TcpListener::bind(listen) | loopback alone: the record API, the home page and each lend's origin, refused off loopback by `check_loopback` just before (api.rs:308)

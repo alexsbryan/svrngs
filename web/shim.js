@@ -9,8 +9,8 @@
 //   An answer that set cookies names those pages may read, taken in at once.
 // - `WebSocket`, which a worker never sees, is carried to the worker over
 //   a message port, and the worker speaks it to the lend's computer.
-// - An app's own worker, which would put itself over the lend's, is
-//   handed to the lend's worker, which asks its listeners first.
+// - An app's own service worker is refused in words: it would run in the
+//   lend's worker, beside the pass.
 // - An entry the worker signs for the app is first approved by the group's
 //   signer (sign.html), which only a page can frame: framed here, once, at
 //   the address the worker derives from its own host (lend.js `SIGNER`).
@@ -57,24 +57,6 @@
       document.documentElement.append(frame);
     });
   }
-
-  // What lend.js's `worker` answers a script handed it.
-  /** @typedef {'running' | { error: string }} Started */
-  /**
-   * @param {{ worker: string }} message
-   * @returns {Promise<Started>}
-   */
-  const ask = (message) =>
-    new Promise((done) => {
-      const { port1, port2 } = new MessageChannel();
-      port1.onmessage = (event) => done(event.data);
-      const serving = worker();
-      if (serving) {
-        serving.postMessage(message, [port2]);
-      } else {
-        done({ error: 'no worker serves this page' });
-      }
-    });
 
   // A `name=value; …` line of cookies, as `[name, value]` pairs.
   /**
@@ -246,11 +228,10 @@
   // `CONNECTING` and the rest are on it by `Object.assign`, just above.
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
-  if (workers) {
-    workers.register = async (script) => {
-      const said = await ask({ worker: new URL(script, location.href).href });
-      if (said !== 'running') throw new TypeError(`the app's worker did not start: ${said.error}`);
-      return workers.ready;
+  if (workers)
+    workers.register = async () => {
+      throw new Error(
+        "svrngs didn't start this app's own service worker: it would run inside svrngs's worker, which holds your pass here. The app still works without it.",
+      );
     };
-  }
 })();

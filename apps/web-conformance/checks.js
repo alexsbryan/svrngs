@@ -152,17 +152,18 @@
           ws.onerror = () => done({ ok: false, saw: 'the socket failed' });
         }),
     ),
-    // Its own service worker, answering `sw-probe`.
+    // Its own service worker, refused in svrngs's words where svrngs carries
+    // the canary: svrngs runs no app's worker inside its own, which holds the
+    // computer's session or the phone's pass (DESIGN §3). The page goes on
+    // without it, `sw-probe` answered by the canary's server.
     worker: judged(async () => {
-      await navigator.serviceWorker.register('app-sw.js', { scope: './' });
-      await navigator.serviceWorker.ready;
-      if (!navigator.serviceWorker.controller) {
-        await new Promise((r) =>
-          navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }),
-        );
-      }
+      const said = await navigator.serviceWorker.register('app-sw.js', { scope: './' }).then(
+        () => 'registered',
+        (refused) => String(refused.message),
+      );
       const text = await (await fetch('sw-probe')).text();
-      return { ok: text === "from the app's worker", saw: text };
+      const words = said.startsWith("svrngs didn't start this app's own service worker");
+      return { ok: words && text === 'from the server', saw: `${said}; sw-probe: ${text}` };
     }),
     // A cookie sign-in: the cookie set, then sent, and read by the page
     // before any reload, as Immich reads its sign-in's.

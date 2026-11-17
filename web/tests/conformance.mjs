@@ -28,6 +28,7 @@
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
 // or its browser is absent; 1 on anything else.
 import { execSync, spawn } from 'node:child_process';
+import http from 'node:http';
 import { hold, launch, pageAt, serve } from './page.mjs';
 
 const args = JSON.parse(process.argv[2]);
@@ -65,6 +66,66 @@ const routes = args.routes ?? ROUTES;
 const load = () => execSync('echo $(date -u +%FT%TZ) $(uptime)').toString().trim();
 
 const { context, close } = await launch(args.engine);
+// What `eval` does in a worker served as svrngs serves its own (the session
+// worker on a computer, lend.js on a phone): the policy that came with the
+// page's worker's script, sent with a worker at an origin of this driver's
+// own, which answers `probe` with what `eval` did there. The policy is
+// carried, not the script rewritten: a worker the browser stopped runs
+// again from the bytes its server sent, in Chromium and WebKit alike.
+const realms = http.createServer((req, res) => {
+  const [, n, file] = /^\/(\d+)\/(.*)$/.exec(new URL(req.url, 'http://x').pathname) ?? [];
+  if (file === '')
+    return res
+      .writeHead(200, { 'content-type': 'text/html' })
+      .end('<!doctype html><title>realm</title><script src=page.js></script>');
+  if (file === 'page.js')
+    return res.writeHead(200, { 'content-type': 'text/javascript' }).end(`(async () => {
+  await navigator.serviceWorker.register('sw.js');
+  await navigator.serviceWorker.ready;
+  if (!navigator.serviceWorker.controller) await new Promise((r) => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
+  document.title = await (await fetch('probe')).text();
+})().catch((e) => (document.title = String(e)));`);
+  if (file === 'sw.js')
+    return res.writeHead(200, {
+      'content-type': 'text/javascript',
+      ...(policies[n] ? { 'content-security-policy': policies[n] } : {}),
+    }).end(`self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener('fetch', (e) => {
+  if (!e.request.url.endsWith('/probe')) return;
+  let said = 'eval ran';
+  try { (0, eval)('1'); } catch (error) { said = error.name; }
+  e.respondWith(new Response(said));
+});`);
+  res.writeHead(404).end();
+});
+const policies = [];
+await new Promise((done) => realms.listen(0, '127.0.0.1', done));
+// `page`'s worker's policy, as its server sends it with the worker's
+// script (the node, or the page's host here), and what `eval` does under it.
+async function realm(page) {
+  const script = new URL(await page.evaluate(() => navigator.serviceWorker.controller.scriptURL));
+  const policy = await new Promise((done, failed) =>
+    http
+      .get(
+        {
+          host: '127.0.0.1',
+          port: script.port,
+          path: script.pathname + script.search,
+          headers: { host: script.host },
+        },
+        (res) => (res.resume(), done(res.headers['content-security-policy'] ?? null)),
+      )
+      .on('error', failed),
+  );
+  const n = policies.push(policy) - 1;
+  const probe = await context.newPage();
+  await probe.goto(`http://127.0.0.1:${realms.address().port}/${n}/`);
+  await probe.waitForFunction(() => document.title !== 'realm', null, { timeout: 30_000 });
+  const said = await probe.title();
+  await probe.close();
+  return { ok: said === 'EvalError', saw: `${said} under ${policy}` };
+}
 const logs = [];
 const leaked = [];
 // Each request under the lend being opened, `<time> <method> <url> <status>
@@ -150,6 +211,7 @@ try {
       seen[route] = await run(route);
     }
     seen.load.push(load());
+    if (!args.routes) seen.realm = await realm(page);
     seen.requests = sent.filter((l) => l.includes(lend.label));
     seen.memory = memory;
     // What the page's host was asked meanwhile that is not the page's own
@@ -196,4 +258,5 @@ try {
   started?.kill();
   await close();
   server?.close();
+  realms.close();
 }

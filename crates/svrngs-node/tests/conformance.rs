@@ -216,13 +216,17 @@ impl Way {
 }
 
 /// The canary's routes, as the row names them, each with its check: all
-/// but the one that plays, `SEEKS`, the playback step's.
-const ROUTES: [(&str, &str); 10] = [
+/// but the one that plays, `SEEKS`, the playback step's. `realm` is the
+/// driver's, not the canary's: the policy svrngs serves its own worker
+/// with, at the lend's origin, sent with a worker that asks whether `eval`
+/// runs under it (web/tests/conformance.mjs `realm`).
+const ROUTES: [(&str, &str); 11] = [
     ("/-absolute paths", "root"),
     ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
     ("64 MiB uploaded, its length told", "upload"),
-    ("its own service worker", "worker"),
+    ("its own service worker, refused", "worker"),
+    ("svrngs's worker refuses eval", "realm"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),
     ("Host check, absolute redirect", "host"),
     ("cookie sign-in, read unreloaded", "signin"),

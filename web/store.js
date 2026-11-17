@@ -424,9 +424,8 @@ export function handOver(worker, message) {
 // What a lend's origin keeps, by name, in IndexedDB `svrngs-lend`: what
 // the page handed it (`pass <label>`: the pass, its holder's key, the
 // lends it opens, the relay and the page to ask for another), the
-// cookies its worker keeps for each lend (`cookies <label>`), an app's
-// own worker (`worker <label>`), and the worker's trace (`trace <label>`,
-// lend.js). Never the person's key.
+// cookies its worker keeps for each lend (`cookies <label>`), and the
+// worker's trace (`trace <label>`, lend.js). Never the person's key.
 const lendDb = () => openDb('svrngs-lend', 1, (db) => db.createObjectStore('kept'));
 
 /** @param {string} name */

@@ -295,7 +295,12 @@ worker's `Sec-Fetch-Site` at the node. A same-origin redirect's onward request
 carries the proof that asked for it, taken once at the address the answer
 named, through at most 20 redirects. A proved fetch mints
 a one-use, path-bound open for a browser WebSocket. The worker and a small
-page shim carry an app's own worker and sockets (`home/session*.js`).
+page shim carry an app's sockets (`home/session*.js`). The worker runs
+svrngs's code alone, under a policy of its own (`session.rs` `POLICY`, in
+scripts/trust_floor.txt): no `eval`, no wasm, this origin alone. An app's
+own service worker is refused in words, since it would run there beside
+the session; the app goes on without it, as on a phone, whose lend worker
+holds the pass under its own policy (`web/vercel.json`).
 An absence says "Open svrngs from your computer", naming the opener.
 Neither request proofs nor the token reach the lent service. Upgrading
 from cookie sessions requires each browser origin to be opened again.
@@ -1971,7 +1976,8 @@ number:
   `crates/svrngs-node/tests/conformance.rs`): the web carried whole. One
   route per thing a self-hosted app leans on — a page asking for
   `/`-absolute paths, a WebSocket echo, a 64 MiB file read by Range and
-  uploaded streaming, its own service worker, `SharedArrayBuffer` under
+  uploaded streaming, its own service worker refused in svrngs's words and
+  svrngs's worker refusing `eval`, `SharedArrayBuffer` under
   COOP/COEP, a Host check with an absolute redirect, a cookie sign-in, local
   storage, a script policy by nonce, a post it takes only from its own
   address, a film sought twenty times — lent by two computers at once and

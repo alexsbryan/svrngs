@@ -776,7 +776,8 @@ page's `Response` drops it); reads a redirect to a path under the lend;
 asks for another pass through the page when the door refuses one; and puts
 `shim.js` in each lent page, which gives the page its lend's cookies,
 carries `WebSocket` to the worker (`socket`, the door switching a raw
-stream) and hands an app's own worker to it. At `/svrngs-reads` (mnp-2,
+stream) and refuses an app's own service worker, in words, which would
+run beside the pass. At `/svrngs-reads` (mnp-2,
 `told`) it tells its pages the lends they read from what the page handed —
 each one's kind, name and lender, the people whose computer did not
 answer, and an address under `/svrngs-reads/<label>/` of this origin to

@@ -18,6 +18,12 @@
       ]
     },
     {
+      "source": "/lend.js",
+      "headers": [
+        { "key": "content-security-policy", "value": "default-src 'none'; connect-src 'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'" }
+      ]
+    },
+    {
       "source": "/",
       "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
     },

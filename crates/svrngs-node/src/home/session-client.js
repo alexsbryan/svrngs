@@ -1,5 +1,6 @@
-// WebSockets use a one-use open minted by a proved fetch. Apps' own workers
-// run behind the session worker, as they do behind the phone's lend worker.
+// WebSockets use a one-use open minted by a proved fetch. An app's own
+// service worker is refused in words: it would run in the session worker,
+// beside the session it holds, as on a phone it would beside the pass.
 (() => {
   const Native = window.WebSocket;
   // A socket's `on<type>` handlers, which a page sets on it by name, as on
@@ -103,31 +104,9 @@
   // `navigator.serviceWorker` is `[SecureContext]`).
   const workers = /** @type {ServiceWorkerContainer | undefined} */ (navigator.serviceWorker);
   if (workers)
-    workers.register = async (url) => {
-      const worker = workers.controller;
-      if (!worker) throw new Error('svrngs has not opened this origin');
-      const channel = new MessageChannel();
-      /** @type {Promise<void>} */
-      const ready = new Promise((yes, no) => {
-        const timeout = setTimeout(() => no(new Error('the worker did not answer')), 10000);
-        // The worker's answer (lend.js `workerRun`): 'running', which has no
-        // `error`, or why not.
-        channel.port1.onmessage = (/** @type {MessageEvent<{ error?: string }>} */ { data }) => {
-          clearTimeout(timeout);
-          if (data.error) no(new Error(data.error));
-          else yes();
-        };
-      });
-      worker.postMessage({ worker: new URL(url, location.href).href }, [channel.port2]);
-      await ready;
-      // What an app's page reads of its registration; it has no more.
-      return /** @type {ServiceWorkerRegistration} */ (
-        /** @type {unknown} */ ({
-          scope: location.origin + '/',
-          active: worker,
-          update: async () => {},
-          unregister: async () => false,
-        })
+    workers.register = async () => {
+      throw new Error(
+        "svrngs didn't start this app's own service worker: it would run inside svrngs's worker, which holds your sign-in here. The app still works without it.",
       );
     };
 })();

@@ -52,7 +52,8 @@ const HOST = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url
 // Only at the page's TLS name (`PAGE_HOST`): a page a test opens on
 // 127.0.0.1 in the clear upgrades nothing, or its own files would be asked
 // over TLS of a server that speaks none.
-// A page whose `connect-src` no longer reads as below stops the tests,
+// So is the lend's worker's, the header vercel.json gives lend.js. A page
+// or worker whose `connect-src` no longer reads as below stops the tests,
 // said, rather than serving it without the allowance.
 const CONNECT = "connect-src 'self' wss: https:;";
 const LOOPBACK = 'ws://127.0.0.1:* http://127.0.0.1:*';
@@ -68,7 +69,6 @@ function tests(page, upgraded) {
     `${CONNECT.slice(0, -1)} ${LOOPBACK};${upgraded ? ' upgrade-insecure-requests;' : ''}`,
   );
 }
-const UPGRADED = { 'content-security-policy': 'upgrade-insecure-requests' };
 
 // The page at the shape production's has, over TLS at a name with each
 // app at a name of its own under it (DESIGN §3, "the page's host must serve
@@ -254,10 +254,10 @@ export function serve(dir, { worker, port = 0, policy } = {}) {
       if (/\/(index|404)\.html$/.test(file) && policy !== 'production')
         body = tests(body, upgraded);
       if (worker && path === '/lend.js') body = `${worker}\n${body}`;
-      res.writeHead(200, {
-        'content-type': TYPES[extname(file)] ?? 'application/octet-stream',
-        ...(upgraded && path === '/lend.js' ? UPGRADED : {}),
-      });
+      const own = res.getHeader('content-security-policy');
+      if (path === '/lend.js' && policy !== 'production')
+        res.setHeader('content-security-policy', tests(own, upgraded));
+      res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
       res.end(body);
     } catch {
       // A path with no file: the site's 404.html, as a static host serves

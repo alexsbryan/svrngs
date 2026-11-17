@@ -40,8 +40,8 @@
 // - A redirect to a path: read under the lend's own address.
 // - A WebSocket, which a worker never sees: the shim carries it here, and
 //   the worker speaks its frames over a socket the door switches (`socket`).
-// - The app's own worker: the shim hands its script here, and its listeners
-//   answer before the lend's (`appWorker`).
+// - The app's own worker is refused (shim.js): it would run here, beside
+//   the pass.
 //
 // Its trace is at `<scope>svrngs-trace`: a phone has no console to read.
 // It is kept in this origin's store as it is written, so it outlives the
@@ -103,9 +103,6 @@ const scope = /** @type {Scope} */ (self);
 // What this worker's own answer says it is: the three of the door's kinds
 // it gives (door.rs, `LendRefusal`).
 /** @typedef {'pass' | 'closed' | 'away'} Refusal */
-// An app's own worker's listener, as `appWorker` hands it its events.
-/** @typedef {(event: object) => void} Listener */
-/** @typedef {Record<'fetch' | 'install' | 'activate' | 'message', Listener[]>} On */
 
 const SCOPE = new URL(scope.registration.scope);
 // Where the page's files are on this origin, and those it saves, so a phone
@@ -183,7 +180,7 @@ scope.addEventListener('activate', (event) => event.waitUntil(activated()));
 
 // What this run of the worker holds, all of it lost when the browser stops
 // it: what the page handed it, the wasm, its endpoint, a dial per lender,
-// each lend's cookies, the app's worker.
+// each lend's cookies.
 //
 // `handed` is none until a page hands it over or `holding` reads it back,
 // and is read as held: every reader but `holding` and `whereOf` runs after
@@ -202,8 +199,6 @@ let linked = null;
 const dials = new Map();
 /** @type {Map<string, Cookie[]>} */
 const jars = new Map();
-/** @type {On | null | undefined} */
-let app;
 /** @type {Promise<unknown>} */
 let signing = Promise.resolve();
 // The last page served whose own `<meta>` sets a policy (`lent`).
@@ -1337,76 +1332,8 @@ async function stopping(label) {
   }
 }
 
-// ── the app's own worker ────────────────────────────────────────────────
-//
-// An app that registers a worker of its own would put it over this one,
-// which serves its every request; the shim hands its script here instead,
-// kept in this origin's store, and its listeners are asked first.
-
-/**
- * @param {string} code
- * @returns {On}
- */
-function appWorker(code) {
-  /** @type {On} */
-  const on = { fetch: [], install: [], activate: [], message: [] };
-  const own = {
-    // A type the app names that is none of `on`'s is let go.
-    /**
-     * @param {string} type
-     * @param {Listener} listener
-     */
-    addEventListener: (type, listener) => {
-      /** @type {Partial<On>} */ (on)[/** @type {keyof On} */ (type)]?.push(listener);
-    },
-    skipWaiting: async () => {},
-    /**
-     * @param {RequestInfo | URL} input
-     * @param {RequestInit} [options]
-     */
-    fetch: (input, options) => {
-      const request = new Request(
-        input instanceof Request ? input : new URL(input, SCOPE),
-        options,
-      );
-      const where = whereOf(new URL(request.url));
-      return where ? lent(request, new URL(request.url), where, true) : fetch(request);
-    },
-  };
-  // The app's `self`: what `own` names, else the worker's own, its
-  // functions bound to it.
-  const appScope = new Proxy(/** @type {Record<string | symbol, any>} */ (self), {
-    get: (target, property) => {
-      if (property in own) return own[/** @type {keyof typeof own} */ (property)];
-      if (typeof target[property] === 'function') return target[property].bind(target);
-      return target[property];
-    },
-  });
-  // The app's own worker, run as its code: the one way a worker runs a script
-  // it has as text, in the scope above.
-  // oxlint-disable-next-line typescript/no-implied-eval
-  new Function('self', 'addEventListener', 'skipWaiting', 'fetch', code)(
-    appScope,
-    own.addEventListener,
-    own.skipWaiting,
-    own.fetch,
-  );
-  for (const listener of [...on.install, ...on.activate]) listener({ waitUntil: () => {} });
-  trace(`RUNTIME: the app's worker runs, ${on.fetch.length} fetch listener(s)`);
-  return on;
-}
-
-async function appLoaded() {
-  if (app === undefined) {
-    const code = /** @type {string | undefined | null} */ (
-      await store.lendKept(`worker ${OWN}`).catch(() => null)
-    );
-    app = code ? appWorker(code) : null;
-  }
-  return app;
-}
-
-// The app's listeners first: an answer one of them gives, else the lend's.
+// The lend's answer, signed as the person when this origin's own page
+// asked it (authority.js `maySign`), and never for a lend it only reads.
 /**
  * @param {FetchEvent} fetchEvent
  * @param {URL} url
@@ -1414,26 +1341,7 @@ async function appLoaded() {
  */
 async function answered(fetchEvent, url, where) {
   const allowed = await maySign(fetchEvent, scope.clients, SCOPE.origin);
-  // App code must not turn an untrusted navigation into an authorized fetch.
-  const on = allowed && where.label === OWN ? await appLoaded() : null;
-  /** @type {Response | PromiseLike<Response> | null} */
-  let given = null;
-  if (on) {
-    const event = {
-      request: fetchEvent.request,
-      clientId: fetchEvent.clientId,
-      /** @param {Response | PromiseLike<Response>} promise */
-      respondWith: (promise) => (given ??= promise),
-      waitUntil: () => {},
-    };
-    for (const listener of on.fetch) listener.call(self, event);
-  }
-  // Set by a listener's `respondWith`, which the checker does not follow
-  // into the listener, so it reads `given` as still `null` here.
-  return (
-    /** @type {Response | PromiseLike<Response> | null} */ (given) ??
-    lent(fetchEvent.request, url, where, allowed && !where.read)
-  );
+  return lent(fetchEvent.request, url, where, allowed && !where.read);
 }
 
 scope.addEventListener('fetch', (event) => {
@@ -1516,24 +1424,20 @@ scope.addEventListener('message', async (event) => {
     return;
   }
   // A page's hand-over, each part read as its kind before it is taken: an
-  // open (`handsPass`), a cookie or a worker by `typeof`, a socket as
-  // shim.js asks one.
+  // open (`handsPass`), a cookie by `typeof`, a socket as shim.js asks one.
   /**
    * @type {{
    *   handed?: any,
    *   cookie?: unknown,
-   *   worker?: unknown,
    *   socket?: { url: string, protocols?: string[] },
    * }}
    */
   const data = event.data ?? {};
-  const { handed: given, cookie, worker, socket: asked } = data;
+  const { handed: given, cookie, socket: asked } = data;
   if (handsPass(given)) {
     await holdPass(given, reply);
   } else if (typeof cookie === 'string') {
     event.waitUntil(cookieKept(cookie, reply));
-  } else if (typeof worker === 'string') {
-    event.waitUntil(workerRun(worker, reply));
   } else if (asked && reply) {
     event.waitUntil(socket(asked, reply));
   } else {
@@ -1580,30 +1484,6 @@ async function cookieKept(cookie, reply) {
   setCookie(jar, cookie);
   await keepJar(OWN);
   reply?.postMessage('kept');
-}
-
-// The app's own worker, its script read through the lend at `worker`,
-// kept and run (`appWorker`).
-/**
- * @param {string} worker
- * @param {MessagePort | undefined} reply
- */
-async function workerRun(worker, reply) {
-  const url = new URL(worker, SCOPE);
-  const where = whereOf(url);
-  try {
-    const res = where && (await lent(new Request(url), url, where));
-    if (!res?.ok) {
-      reply?.postMessage({ error: `its worker answered ${res?.status}` });
-      return;
-    }
-    const code = await res.text();
-    await store.lendKeep(`worker ${OWN}`, code);
-    app = appWorker(code);
-    reply?.postMessage('running');
-  } catch (error) {
-    reply?.postMessage({ error: String(error) });
-  }
 }
 
 // Safari on an iPhone loses a message carrying a CryptoKey, the holder's,
