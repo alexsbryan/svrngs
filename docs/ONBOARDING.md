@@ -341,6 +341,17 @@ at most a tenth of the global day, where four addresses at 300 lookups spent
 all of it before. A refusal still points to a link in a chat or its QR code,
 which do not use the resolver.
 
+What this leaves open is availability, and the operator accepted it on
+2026-11-16: "if worst case is we lose a day of invites to learn about an
+attack surface that's a trade we can accept at this scrappy phase". About
+ten networks spending their miss budgets spend the global day, and an IPv6
+/48 holds 256 /56s, so a guesser can stop short-address joining for everyone
+until the day's bucket turns. A flood of refused requests still costs Free's
+allowance 5 or 6 commands each, so a big enough one stops it until the month
+turns, with no paid overage. Links in a chat and QR codes keep working
+throughout. A rate limit at the hosting edge, before the handler runs, is the
+answer to both, and waits for an attack to be seen.
+
 ## 6. Order and proof
 
 After the JavaScript queue closes, work follows `PLAN.md` §1. Keep any
