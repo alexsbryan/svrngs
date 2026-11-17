@@ -58,6 +58,43 @@ the last one, and this release has none.
 `rustup target list --installed --toolchain 1.95.0` lists all four
 targets `scripts/build-release.sh` builds.
 
+## Publication
+
+`publish.py` ran `scripts/deploy-page.sh` under the gate lock in a clean
+detached worktree at 16b7eb46 (`v1.9`), with a target directory of its
+own, from 2026-11-16 23:58 to 2026-11-17 00:05 UTC, exit 0
+(`publish.json`, `publish.log`). Load was about 3.8 at the start, with 89
+GiB free. The record was written outside the worktree and copied here
+after. The build meets its groups at n0's relays (`SHIPPED`), so no relay
+was asked. The page built as version fb5ab80cf0a6, and `svrngs` and `give`
+built for all four platforms. Vercel deployment
+`dpl_8A7h2fMpfw3ziaqJ4oVCDuYwyeL4` reached production as Ready, aliased to
+`https://group.svrnme.sh` and `https://*.group.svrnme.sh` (`vercel inspect
+svrngs-page-huntrwfsz-svrnmesh.vercel.app --scope svrnmesh`). The CLI
+wrote `.vercel/`, `.env.local` and `.gitignore` into the upload
+directory. All three answered 404 live and were deleted after.
+
+## Readback
+
+`verify.py` passed at 2026-11-17 00:05 UTC (`verification.json`). Its six
+planted faults were rejected first. Then:
+
+- 78 public files fetched from `group.svrnme.sh` each equaled the built
+  site's bytes.
+- The live `get/SHA256SUMS` equaled the built one (`SHA256SUMS`,
+  `live-sums.txt`) and named exactly the eight downloads.
+- The live page is version fb5ab80cf0a6, not V1.8.2's e022fd11ba8f, and
+  the live `sw.js` names it and sends a navigation to the network first.
+- The live `install.sh` equals the built one.
+- Both frame policies were as `vercel.json` sets them.
+- `release-16b7eb46.group.svrnme.sh` served the same page.
+- `.env.local`, `.vercel/project.json` and `vercel.json` answered 404.
+- The downloaded darwin-aarch64 `svrngs` and `give` started.
+
+No other platform's program was run here, and no home page was opened
+from the published build: the home page's own evidence is the gate at
+c4c58ac0.
+
 ## Not verified, not done
 
 - Safari with VoiceOver, and Firefox, were not run. What the notes say of
@@ -66,5 +103,3 @@ targets `scripts/build-release.sh` builds.
   "Stop" alone.
 - The Join, Make and Open views have no first heading.
 - Layout A (`/?ui=a`) remains.
-
-The publication, the readback and the record remain.
