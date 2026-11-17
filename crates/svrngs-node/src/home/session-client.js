@@ -103,41 +103,10 @@
   // Absent where the origin is not secure (Service Workers,
   // `navigator.serviceWorker` is `[SecureContext]`).
   const workers = /** @type {ServiceWorkerContainer | undefined} */ (navigator.serviceWorker);
-  // svrngs's worker, an older one, not answering a realm's hand-over.
-  const UNHEARD = "svrngs's worker did not answer: open this page again";
-  // The app's own worker: a dedicated worker at its script, loaded through
-  // svrngs's worker under the policy this app's pages get, and handed the
-  // fetches this page asks once its prelude runs; its registration a stand-in.
+  // The app's own worker, in a realm of its own (session.js `registered`).
   if (workers)
     workers.register = async (script, options) => {
-      const svrngs = workers.controller;
-      if (!svrngs) throw new Error('svrngs has not opened this origin');
-      const url = new URL(script, location.href);
-      const realm = new MessageChannel();
-      const told = new MessageChannel();
-      const heard = () => new Promise((done) => (told.port1.onmessage = done));
-      let next = heard();
-      svrngs.postMessage({ realm: url.href, isolated: crossOriginIsolated }, [
-        realm.port1,
-        told.port2,
-      ]);
-      await Promise.race([next, new Promise((_, no) => setTimeout(no, 10000, new Error(UNHEARD)))]);
-      next = heard();
-      const app = new Worker(url, { type: options?.type ?? 'classic' });
-      app.postMessage('svrngs-realm', [realm.port2]);
-      await new Promise((ready, failed) => {
-        void next.then(ready);
-        app.onerror = (error) =>
-          failed(new Error(`this app's worker did not start: ${error.message}`));
-      });
-      // What an app's page reads of its registration; it has no more.
-      return /** @type {ServiceWorkerRegistration} */ (
-        /** @type {unknown} */ ({
-          scope: new URL(options?.scope ?? './', url).href,
-          active: svrngs,
-          update: async () => {},
-          unregister: async () => false,
-        })
-      );
+      if (!workers.controller) throw new Error('svrngs has not opened this origin');
+      return (await import('/svrngs-session.js')).registered(workers.controller, script, options);
     };
 })();

@@ -229,38 +229,11 @@
   // `CONNECTING` and the rest are on it by `Object.assign`, just above.
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
-  // The lend's worker, an older one, not answering a realm's hand-over.
-  const UNHEARD = "svrngs's worker did not answer: open this page again";
+  // The app's own worker, in a realm of its own (session.js `registered`).
   if (workers)
     workers.register = async (script, options) => {
       const svrngs = worker();
       if (!svrngs) throw new Error('no worker serves this page');
-      const url = new URL(script, location.href);
-      const realm = new MessageChannel();
-      const told = new MessageChannel();
-      const heard = () => new Promise((done) => (told.port1.onmessage = done));
-      let next = heard();
-      svrngs.postMessage({ realm: url.href, isolated: crossOriginIsolated }, [
-        realm.port1,
-        told.port2,
-      ]);
-      await Promise.race([next, new Promise((_, no) => setTimeout(no, 10000, new Error(UNHEARD)))]);
-      next = heard();
-      const app = new Worker(url, { type: options?.type ?? 'classic' });
-      app.postMessage('svrngs-realm', [realm.port2]);
-      await new Promise((ready, failed) => {
-        void next.then(ready);
-        app.onerror = (error) =>
-          failed(new Error(`this app's worker did not start: ${error.message}`));
-      });
-      // What an app's page reads of its registration; it has no more.
-      return /** @type {ServiceWorkerRegistration} */ (
-        /** @type {unknown} */ ({
-          scope: new URL(options?.scope ?? './', url).href,
-          active: svrngs,
-          update: async () => {},
-          unregister: async () => false,
-        })
-      );
+      return (await import('./session.js?v=__VERSION__')).registered(svrngs, script, options);
     };
 })();

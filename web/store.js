@@ -472,7 +472,7 @@ export const CACHE = `${CACHES}__VERSION__`;
 // What a lend's origin saves, so a phone reopens with the public site gone
 // (KEEP_GOING_AT_HOME 10), and one piece's address, this build's.
 export const SAVED =
-  'open.html open.js lend.js shim.js store.js authority.js away.html wasm/svrngs_web.js wasm/svrngs_web_bg.wasm'.split(
+  'open.html open.js lend.js shim.js store.js authority.js session.js away.html wasm/svrngs_web.js wasm/svrngs_web_bg.wasm'.split(
     ' ',
   );
 /** @param {string} file */
