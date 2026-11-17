@@ -68,33 +68,20 @@ impl Receipt {
         let latest = host.rail.current_invite(group).map_err(fault)?;
         Ok(latest.is_some_and(|(_, i)| i.key == self.id))
     }
-    #[expect(
-        clippy::disallowed_methods,
-        reason = "status compares the persisted invitation expiry at the HTTP edge"
-    )]
+    /// The receipt as the page reads it, its expiry against the door's clock.
     fn shown(&self, host: &Host, group: &str) -> Result<serde_json::Value, Fault> {
         let current = self.current(host, group)?;
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_err(fault)?
-            .as_secs() as i64;
-        let state = if self.phase == Phase::Closed {
-            Phase::Closed
-        } else if !current || now >= self.until {
-            Phase::Ended
-        } else {
-            self.phase
+        let now =
+            crate::door::unix_now().ok_or_else(|| Fault("the clock reads before 1970".into()))?;
+        let state = match self.phase {
+            Phase::Closed => Phase::Closed,
+            _ if !current || now >= self.until => Phase::Ended,
+            phase => phase,
         };
         tracing::debug!(target: "publication", group, ?state, current, "publication: local status; no resolver request");
-        let address = self
-            .phrase
-            .as_ref()
-            .map(|phrase| {
-                reqwest13::Url::parse(&self.resolver)
-                    .map(|url| format!("{}/{phrase}", url.origin().ascii_serialization()))
-                    .map_err(fault)
-            })
-            .transpose()?;
+        let url = reqwest13::Url::parse(&self.resolver).map_err(fault)?;
+        let at = url.origin().ascii_serialization();
+        let address = self.phrase.as_ref().map(|phrase| format!("{at}/{phrase}"));
         Ok(
             serde_json::json!({"id": self.id, "state": state, "phrase": self.phrase, "address": address, "until": self.until}),
         )
@@ -106,11 +93,8 @@ fn answer(result: Result<serde_json::Value, Fault>) -> Response {
         Ok(value) => Json(value).into_response(),
         Err(e) => {
             tracing::debug!(target: "publication", error = %e, "publication: unavailable; receipt retained for explicit retry");
-            (
-                StatusCode::SERVICE_UNAVAILABLE,
-                Json(serde_json::json!({"error": UNAVAILABLE})),
-            )
-                .into_response()
+            let said = Json(serde_json::json!({"error": UNAVAILABLE}));
+            (StatusCode::SERVICE_UNAVAILABLE, said).into_response()
         }
     }
 }
@@ -151,24 +135,17 @@ async fn change(host: &Host, q: &Request, closing: bool) -> Result<serde_json::V
                 let resolver = std::fs::read_to_string(host.rail.root().join("join-resolver"))
                     .map_err(fault)?;
                 let url = reqwest13::Url::parse(resolver.trim()).map_err(fault)?;
-                let local = url
-                    .host_str()
-                    .is_some_and(|h| h == "127.0.0.1" || h == "[::1]");
+                let local = matches!(url.host_str(), Some("127.0.0.1" | "[::1]"));
                 if !(url.scheme() == "https" || url.scheme() == "http" && local)
                     || url.fragment().is_some()
                     || !url.username().is_empty()
                     || url.password().is_some()
                 {
-                    return Err(Fault(
-                        "resolver must use HTTPS (HTTP only on loopback)".into(),
-                    ));
+                    return Err(fault("resolver must use HTTPS (HTTP only on loopback)"));
                 }
                 let made = host.link_held(&q.group, false, None, None).map_err(fault)?;
-                let (_, invite) = host
-                    .rail
-                    .current_invite(&q.group)
-                    .map_err(fault)?
-                    .ok_or_else(|| Fault("invitation absent".into()))?;
+                let latest = host.rail.current_invite(&q.group).map_err(fault)?;
+                let (_, invite) = latest.ok_or_else(|| fault("invitation absent"))?;
                 Receipt {
                     id: actor_of(&made.token.key()),
                     token: made.token.encode(),

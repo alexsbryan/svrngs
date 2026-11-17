@@ -64,6 +64,9 @@ import { get, post } from './routes.js?v=__VERSION__';
 
 // The publication read again, after any change to it or a link made.
 const REREAD = /** @type {Effect} */ ({ run: 'publicationRead', failed: 'publicationUnread' });
+// Whether a press waits: a link is being made, or the invitation read or changed.
+export const busy = (/** @type {State} */ state) =>
+  state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication);
 
 /**
  * LINK, for the group of id `group`.
@@ -94,8 +97,7 @@ export const LINK = (group) => ({
   step: (state, message) => {
     switch (message.type) {
       case 'publication':
-        if (state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication))
-          return no(state, 'the invitation request is answered first');
+        if (busy(state)) return no(state, 'the invitation request is answered first');
         return message.action === 'read'
           ? go(state, { publication: 'reading' }, { publicationWhy: undefined }, REREAD)
           : go(
@@ -122,8 +124,7 @@ export const LINK = (group) => ({
       case 'typed':
         return go(state, {}, { visit: message.value });
       case 'make':
-        if (state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication))
-          return no(state, 'a link is being made, and is answered first');
+        if (busy(state)) return no(state, 'a link is being made, and is answered first');
         return go(
           state,
           { link: 'making' },

@@ -7,7 +7,7 @@
 import { html, useMachine } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
-import { LINK } from './group-link.js?v=__VERSION__';
+import { LINK, busy } from './group-link.js?v=__VERSION__';
 import { LinkCopy } from './link-copy.js?v=__VERSION__';
 import { Copy } from '../ui/copy.js?v=__VERSION__';
 /** @import { Group, PlaceProps } from './group.js?v=__VERSION__' */
@@ -124,8 +124,7 @@ function Links({ g: group }) {
     ),
   );
   const name = group.name ?? 'this group';
-  const busy = state.at.link === 'making' || ['reading', 'working'].includes(state.at.publication);
-  const doing = { state: busy ? 'busy' : 'idle' };
+  const doing = { state: busy(state) ? 'busy' : 'idle' };
   // `state.visit` is the Field's string, as `Number` reads it.
   const hours = `${Number(state.visit) / 3600} hours`;
   const guest = state.guest

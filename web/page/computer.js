@@ -38,20 +38,11 @@ const quote = (/** @type {string} */ text) => `'${text.replaceAll("'", "'\\''")}
 
 /** @type {Takes<State, Message, Effect>} */
 export const takes = {
-  offer: (state, message) =>
-    state.fine && /^[A-Za-z0-9_-]*$/.test(message.token)
-      ? go(
-          state,
-          {},
-          {},
-          {
-            run: 'where',
-            token: message.token,
-            name: message.name,
-            destination: message.destination,
-            failed: 'failed',
-          },
-        )
+  // The line asked for, its token, and a native arrival's name and
+  // destination, carried to `where` as asked.
+  offer: (state, { type, ...asked }) =>
+    state.fine && /^[A-Za-z0-9_-]*$/.test(asked.token)
+      ? go(state, {}, {}, { run: 'where', ...asked, failed: 'failed' })
       : no(state, 'no line offered: not a computer, or not a token'),
   // A link into a lend on a computer keeping no group here, its person's
   // svrngs elsewhere on it: the link itself, to open from its home page.
