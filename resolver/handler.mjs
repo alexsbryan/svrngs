@@ -21,6 +21,11 @@ export const phrase = () =>
   Array.from({ length: 5 }, () => words[randomInt(words.length)]).join('-');
 const validPhrase = (text) =>
   text.split('-').length === 5 && text.split('-').every((w) => wordset.has(w));
+// The handler's own refusals. A debug event names their code, never a foreign
+// error's text, which can quote a phrase or token.
+class Refusal extends Error {}
+// The store's refusal reasons, read from the script that gives them.
+const reasons = new Set(Array.from(SCRIPT.matchAll(/refuse\('(\w+)'\)/g), ([, reason]) => reason));
 
 // Bound streams while reading, not after response.text() has allocated them.
 async function bounded(stream, signal) {
@@ -35,14 +40,14 @@ async function bounded(stream, signal) {
   try {
     for (;;) {
       const { done, value } = await reader.read();
-      if (signal.aborted) throw new Error('timeout');
+      if (signal.aborted) throw new Refusal('timeout');
       // A BOM is signed data too; TextDecoder otherwise strips it.
       if (done)
         return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(
           Buffer.concat(chunks),
         );
       length += value.length;
-      if (length > 8192) throw new Error('body_limit');
+      if (length > 8192) throw new Refusal('body_limit');
       chunks.push(Buffer.from(value));
     }
   } finally {
@@ -51,7 +56,7 @@ async function bounded(stream, signal) {
   }
 }
 function answer(value, status = 200) {
-  if (Buffer.byteLength(JSON.stringify(value)) > 8192) throw new Error('response_limit');
+  if (Buffer.byteLength(JSON.stringify(value)) > 8192) throw new Refusal('response_limit');
   return Response.json(value, {
     status,
     headers: {
@@ -78,7 +83,7 @@ async function navigation(response) {
       page.hash ||
       !/^[A-Za-z0-9_-]+$/.test(body.token)
     )
-      throw new Error('secret');
+      throw new Refusal('secret');
     page.hash = `${body.token}&native`;
     headers.set('location', page.href);
     return new Response(null, { status: 303, headers });
@@ -117,30 +122,14 @@ export function createResolver(config) {
     try {
       // Promise.race bounds the whole request, including stalled inbound streams.
       const timeout = new Promise((_, reject) =>
-        abort.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true }),
+        abort.signal.addEventListener('abort', () => reject(new Refusal('timeout')), {
+          once: true,
+        }),
       );
       const response = await Promise.race([run(request, ip, abort.signal), timeout]);
       return html ? await navigation(response) : response;
     } catch (error) {
-      const known = [
-        'timeout',
-        'configuration',
-        'body_limit',
-        'response_limit',
-        'signature_shape',
-        'signature',
-        'body',
-        'secret_response_limit',
-        'route',
-        'provider_status',
-        'provider_result',
-        'store_refusal',
-        'secret',
-        'close_not_acknowledged',
-      ];
-      debug(
-        `unavailable:${known.includes(error?.message) ? error.message : 'transport_or_decode'}`,
-      );
+      debug(`unavailable:${error instanceof Refusal ? error.message : 'transport_or_decode'}`);
       const response = answer({ error: 'unavailable', message: unavailable }, 503);
       return html ? navigation(response) : response;
     } finally {
@@ -150,7 +139,8 @@ export function createResolver(config) {
   };
 
   async function run(request, ip, signal) {
-    if (!config.token || !isIP(ip) || !url.startsWith('https://')) throw new Error('configuration');
+    if (!config.token || !isIP(ip) || !url.startsWith('https://'))
+      throw new Refusal('configuration');
     const ipKey = `ip:${hash(isIP(ip) === 6 ? new URL(`http://[${ip}]/`).hostname : ip)}`;
     const at = new URL(request.url);
     let q;
@@ -163,7 +153,7 @@ export function createResolver(config) {
       const owner = request.headers.get('x-svrngs-key') ?? '';
       const signature = request.headers.get('x-svrngs-signature') ?? '';
       if (!HEX.test(owner) || !/^[0-9a-f]{128}$/.test(signature))
-        throw new Error('signature_shape');
+        throw new Refusal('signature_shape');
       const key = createPublicKey({
         key: Buffer.from(`302a300506032b6570032100${owner}`, 'hex'),
         format: 'der',
@@ -177,7 +167,7 @@ export function createResolver(config) {
           Buffer.from(signature, 'hex'),
         )
       )
-        throw new Error('signature');
+        throw new Refusal('signature');
       const body = JSON.parse(raw);
       if (
         Object.keys(body).sort().join(',') !== 'action,group,id,page,token,until' ||
@@ -196,7 +186,7 @@ export function createResolver(config) {
           ? typeof body.token === 'string' && body.token.length > 0
           : body.token === null)
       )
-        throw new Error('body');
+        throw new Refusal('body');
       q = {
         action: body.action,
         idkey: hash(`${owner}:${body.id}`),
@@ -218,10 +208,10 @@ export function createResolver(config) {
           }),
         ) > 8192
       )
-        throw new Error('secret_response_limit');
+        throw new Refusal('secret_response_limit');
       subject = body.action === 'status' ? ipKey : `owner:${owner}`;
     } else {
-      throw new Error('route');
+      throw new Refusal('route');
     }
     const date = new Date();
     q.monthStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1) / 1000;
@@ -247,31 +237,13 @@ export function createResolver(config) {
     });
     if (!response.ok) {
       await response.body?.cancel();
-      throw new Error('provider_status');
+      throw new Refusal('provider_status');
     }
     const envelope = JSON.parse(await bounded(response.body, signal));
-    if (envelope.error || typeof envelope.result !== 'string') throw new Error('provider_result');
+    if (envelope.error || typeof envelope.result !== 'string') throw new Refusal('provider_result');
     const result = JSON.parse(envelope.result);
-    if (result.state === 'unavailable') {
-      const reasons = [
-        'generation',
-        'clock',
-        'binding',
-        'digest',
-        'lifetime',
-        'active_limit',
-        'collision',
-        'reservation_limit',
-        'memory_limit',
-        'lookup_limit',
-        'mutation_limit',
-        'publication_limit',
-        'close_headroom',
-        'pending',
-        'missing_secret',
-      ];
-      debug(`store:${reasons.includes(result.reason) ? result.reason : 'refused'}`);
-    }
+    if (result.state === 'unavailable')
+      debug(`store:${reasons.has(result.reason) ? result.reason : 'refused'}`);
     debug(
       `${q.action}:${['open', 'closed', 'ended', 'unavailable'].includes(result.state) ? result.state : 'invalid'}`,
     );
@@ -279,14 +251,14 @@ export function createResolver(config) {
       return answer({ state: 'ended', message: ended });
     if (result.state === 'closed' && q.action === 'close')
       return answer({ id: q.id, closed: true });
-    if (result.state !== 'open' || !validPhrase(result.phrase)) throw new Error('store_refusal');
+    if (result.state !== 'open' || !validPhrase(result.phrase)) throw new Refusal('store_refusal');
     if (q.action === 'lookup') {
       const secret = JSON.parse(result.secret);
       if (typeof secret.token !== 'string' || !Number.isSafeInteger(secret.until))
-        throw new Error('secret');
+        throw new Refusal('secret');
       return answer({ state: 'open', ...secret });
     }
-    if (q.action === 'close') throw new Error('close_not_acknowledged');
+    if (q.action === 'close') throw new Refusal('close_not_acknowledged');
     return answer({ id: q.id, phrase: result.phrase, state: 'open' });
   }
 }

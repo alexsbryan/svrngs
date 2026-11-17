@@ -122,6 +122,45 @@ test('resolver refuses provider failure with retry guidance, never ended', async
   assert.match(await answer.text(), /joining is temporarily unavailable/);
 });
 
+test('debug events name codes and store reasons, never foreign text', async () => {
+  const seen = async (reply, request = new Request(`https://join.example/${fixed}`)) => {
+    const events = [];
+    const handle = createResolver({
+      token: 'fixture',
+      fetch: async () => reply(),
+      debug: (e) => events.push(e),
+    });
+    await handle(request, '127.0.0.1');
+    return events;
+  };
+  const refusing = (reason) => () =>
+    Response.json({ result: JSON.stringify({ state: 'unavailable', reason }) });
+  assert.deepEqual(await seen(() => new Response('', { status: 500 })), [
+    'unavailable:provider_status',
+  ]);
+  assert.deepEqual(await seen(() => new Response(`{"result": ${fixed}`)), [
+    'unavailable:transport_or_decode',
+  ]);
+  assert.deepEqual(
+    await seen(() => {
+      throw new Error(`TLS ${fixed}`);
+    }),
+    ['unavailable:transport_or_decode'],
+  );
+  for (const reason of ['generation', 'lookup_limit', 'pending', 'missing_secret'])
+    assert.deepEqual(await seen(refusing(reason)), [
+      `store:${reason}`,
+      'lookup:unavailable',
+      'unavailable:store_refusal',
+    ]);
+  assert.deepEqual(await seen(refusing(fixed)), [
+    'store:refused',
+    'lookup:unavailable',
+    'unavailable:store_refusal',
+  ]);
+  assert.deepEqual(await seen(refusing(), mutation('x'.repeat(8193))), ['unavailable:body_limit']);
+});
+
 test('whole-response timeout cancels stalled streams and cannot later publish', async (t) => {
   // node:test's mocked setTimeout holds the handler's 8 s bound, so the
   // bound is an order (not before 8000 ms, at it), never a wait.
