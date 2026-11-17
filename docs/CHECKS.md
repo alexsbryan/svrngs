@@ -208,6 +208,10 @@ cut-from-text edges, and to wire tests in tests/carried.rs and
 surface.rs. The isolated Node laws, 309, all deterministic: with them,
 926 of 1,208 (76.7%).
 
+Recounted at 6c30c2aa (`recount-6c30c2aa.out`), the gate exit 0 in
+1,686 s before unit 7 ran: 900, of which 618 (68.7%) cross no seam and
+282 at least one: P 267, Q 234, R 140, B 90, C 75, D 10, M 7.
+
 Recounted at 18cd2afb (`recount-18cd2afb.out`), after unit 7's pass:
 900, of which 651 (72.3%) cross no seam and 249 at least one: P 237,
 Q 209, R 133, B 90, C 71, D 10, M 7. join_by_link 12 to 2, share 14 to
@@ -217,6 +221,16 @@ over a stubbed `curl` and a stand-in svrngs); record_api, removal and
 the node's settled rounds held to a paused clock. Left in the CLI: each
 verb that asks the svrngs running here (`ask_running`, a socket), a
 page's host, a relay, a real svrngs installed.
+
+Recounted at e09e8462 (`recount-e09e8462.out`), after the
+seams-out-of-setup passes — the svrngs command's verbs through
+`cli::Here`, a lend's service in process, relays scripted on the wire,
+browser rows shrunk to their seam or split into laws — with the twelve
+verbs tests on `cli::Here` mapped in the map first: 896, of which 720
+(80.4%) cross no seam and 176 at least one: P 163, Q 149, R 101, B 73,
+C 61, D 10, M 7. The touched tier this paid for ran every deterministic
+test and named each fragile one could-not-judge: 377 s cold, 168-172 s
+warm for a one-line change to node.rs.
 
 The Node side, from 2026-11-13: the resolver's Redis suite keeps eleven,
 each its seam's claim, since the Lua that Redis runs decides
