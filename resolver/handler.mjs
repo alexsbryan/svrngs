@@ -209,15 +209,8 @@ export function createResolver(config) {
         format: 'der',
         type: 'spki',
       });
-      if (
-        !verify(
-          null,
-          Buffer.from(`svrngs-app:onboarding:${raw}`),
-          key,
-          Buffer.from(signature, 'hex'),
-        )
-      )
-        throw new Refusal('signature');
+      const signed = Buffer.from(`svrngs-app:onboarding:${raw}`);
+      if (!verify(null, signed, key, Buffer.from(signature, 'hex'))) throw new Refusal('signature');
       const body = JSON.parse(raw);
       if (
         Object.keys(body).sort().join(',') !== 'action,group,id,page,token,until' ||
