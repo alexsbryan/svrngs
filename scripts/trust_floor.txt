@@ -54,6 +54,11 @@ page carried-prefetch crates/svrngs-node/src/carried.rs "x-dns-prefetch-control"
 page home crates/svrngs-node/src/home.rs const POLICY: &str =
   default-src 'self'
   frame-ancestors 'none'
+# Its opener policy, on every answer beside that one (home.rs `HEADS`): a
+# browsing context group of its own, so no app that opens it, or that it
+# opens, holds a handle on it or, in WebKit, shares its process.
+page home-opener crates/svrngs-node/src/home.rs (COOP,
+  same-origin
 
 # The group's page, as scripts/build-web.sh copies it and the page host
 # serves it (web/index.html's comment says each token's why).
@@ -108,3 +113,4 @@ gate crates/svrngs-node/tests/record_api.rs a_program_without_the_token_is_refus
 gate crates/svrngs-node/src/room_tests.rs picks_the_private_lan_address_or_none | the room door's address is the private LAN's, or none
 gate crates/svrngs-node/src/room_tests.rs a_caller_off_this_network_is_refused | the room door answers a caller on this network alone
 gate crates/svrngs-node/tests/browser/main.rs the_published_page_allows_no_loopback | the published page reaches nothing on this computer (v1patch-loopback)
+gate crates/svrngs-node/tests/home.rs the_home_page_answers_only_itself_and_takes_only_the_person_s_choices | every answer of the home page's, served or refused, carries its policy and its opener policy
