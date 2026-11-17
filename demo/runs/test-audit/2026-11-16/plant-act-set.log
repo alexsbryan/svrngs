@@ -1,0 +1,36 @@
+warning: unused import: `alloc::string::String`
+ --> crates/svrngs-core/src/act_set.rs:6:5
+  |
+6 | use alloc::string::String;
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+
+running 2 tests
+act_set::tests::two_copies_merge_by_union_and_only_the_exact_line_is_a_duplicate --- FAILED
+act_set::tests::neither_arrival_order_nor_repetition_can_be_written_down --- FAILED
+
+failures:
+
+---- act_set::tests::two_copies_merge_by_union_and_only_the_exact_line_is_a_duplicate stdout ----
+
+thread 'act_set::tests::two_copies_merge_by_union_and_only_the_exact_line_is_a_duplicate' (6472222) panicked at crates/svrngs-core/src/act_set_tests.rs:45:5:
+a line only they held is added
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+---- act_set::tests::neither_arrival_order_nor_repetition_can_be_written_down stdout ----
+
+thread 'act_set::tests::neither_arrival_order_nor_repetition_can_be_written_down' (6472221) panicked at crates/svrngs-core/src/act_set_tests.rs:29:9:
+assertion `left == right` failed: a different telling is the same set
+  left: ActSet({ContentHash(10e6cce06b39fbde): Op { id: OpId(ContentHash(31bf58d54bfcb15a)), v: 1, ts_unix: 102, actor: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c", kind: SignedOp { seq: 1, prev: Some(OpId(ContentHash(58a0c7ca3b89208e))), sig: "884e5df06e2d3d7d39d87abb060f6a165ba9eb827b48a39b468cfc582a8baea5b074bc4b4dae699ff35a7fa59c2504b212dd1a5e5ea80c3b1ecf00c5f42f5107", act: Record { payload: Payload(Object {"kind": String("thing"), "what": String("three")}) }, on_behalf_of: None, view: None, grant: None } }})
+ right: ActSet({ContentHash(10e6cce06b39fbde): Op { id: OpId(ContentHash(58a0c7ca3b89208e)), v: 1, ts_unix: 100, actor: "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c", kind: SignedOp { seq: 0, prev: None, sig: "505041aa7da6ad0e8bbfd2df061de9a8f73ba4e35d799b1dbafe31f3a2a34609659b8d93afb2a8cfdbd139281a7e96c3b78d62d5b065923b2205cc5c53754c03", act: Record { payload: Payload(Object {"kind": String("thing"), "what": String("one")}) }, on_behalf_of: None, view: None, grant: None } }})
+
+
+failures:
+    act_set::tests::neither_arrival_order_nor_repetition_can_be_written_down
+    act_set::tests::two_copies_merge_by_union_and_only_the_exact_line_is_a_duplicate
+
+test result: FAILED. 0 passed; 2 failed; 0 ignored; 0 measured; 208 filtered out; finished in 0.01s
+
+error: test failed, to rerun pass `-p svrngs-core --lib`

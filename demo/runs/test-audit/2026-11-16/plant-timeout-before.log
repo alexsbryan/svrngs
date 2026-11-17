@@ -1,0 +1,1906 @@
+unit: 57 test files
+TAP version 13
+# Subtest: the overwritten x-forwarded-for is the IP handler.mjs sees
+ok 1 - the overwritten x-forwarded-for is the IP handler.mjs sees
+  ---
+  duration_ms: 41.261916
+  ...
+# Subtest: a client-supplied x-real-ip cannot displace the platform value
+ok 2 - a client-supplied x-real-ip cannot displace the platform value
+  ---
+  duration_ms: 0.704292
+  ...
+# Subtest: the left-most value of a forwarded chain is the original client
+ok 3 - the left-most value of a forwarded chain is the original client
+  ---
+  duration_ms: 0.4885
+  ...
+# Subtest: an absent ingress IP refuses service
+ok 4 - an absent ingress IP refuses service
+  ---
+  duration_ms: 2.565917
+  ...
+# Subtest: a malformed ingress IP refuses service
+ok 5 - a malformed ingress IP refuses service
+  ---
+  duration_ms: 1.613416
+  ...
+# Subtest: a missing server-side token refuses service
+ok 6 - a missing server-side token refuses service
+  ---
+  duration_ms: 3.760833
+  ...
+# (node:88465) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: "What acts as you" waits only for groups whose section tells it
+ok 7 - "What acts as you" waits only for groups whose section tells it
+  ---
+  duration_ms: 0.64125
+  ...
+# (node:88466) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/authority.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a write is caused by a page of this origin, or a navigation one of them began
+ok 8 - a write is caused by a page of this origin, or a navigation one of them began
+  ---
+  duration_ms: 25.767416
+  ...
+# Subtest: the only extra frame remains at the platform parent origin
+ok 9 - the only extra frame remains at the platform parent origin
+  ---
+  duration_ms: 0.1825
+  ...
+# Subtest: an open’s approver opens only with its own W, for the open it was sealed to
+ok 10 - an open’s approver opens only with its own W, for the open it was sealed to
+  ---
+  duration_ms: 13.748167
+  ...
+# Subtest: the signer reads only the one __Host- cookie named for its app
+ok 11 - the signer reads only the one __Host- cookie named for its app
+  ---
+  duration_ms: 0.574709
+  ...
+# Subtest: a private seed must prove the holder named by the trusted handoff
+ok 12 - a private seed must prove the holder named by the trusted handoff
+  ---
+  duration_ms: 4.405792
+  ...
+# Subtest: a seed and its holder, as the JWK the page imports, sign as the seed does
+ok 13 - a seed and its holder, as the JWK the page imports, sign as the seed does
+  ---
+  duration_ms: 10.244
+  ...
+# (node:88467) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/authority.js is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a line past its app’s budget is let go, and the next is signed in its place
+ok 14 - a line past its app’s budget is let go, and the next is signed in its place
+  ---
+  duration_ms: 30.010667
+  ...
+# Subtest: the same page writes through the next computer once the first stops
+ok 15 - the same page writes through the next computer once the first stops
+  ---
+  duration_ms: 6.218417
+  ...
+# Subtest: a carried app that read friends’ lends is told it can’t write, and carries nothing
+ok 16 - a carried app that read friends’ lends is told it can’t write, and carries nothing
+  ---
+  duration_ms: 5.907041
+  ...
+# Subtest: unit, integration and app ownership are disjoint and exhaustive
+ok 17 - unit, integration and app ownership are disjoint and exhaustive
+  ---
+  duration_ms: 1.48675
+  ...
+# Subtest: the real catalog keeps Redis/WebKit outside unit and loses no web tests
+ok 18 - the real catalog keeps Redis/WebKit outside unit and loses no web tests
+  ---
+  duration_ms: 6.341208
+  ...
+# Subtest: unknown or empty selections are never-ran, not passing tests
+ok 19 - unknown or empty selections are never-ran, not passing tests
+  ---
+  duration_ms: 56.012541
+  ...
+# (node:88469) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/hooks.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a copy is written, then said copied, and traced as COPY
+ok 20 - a copy is written, then said copied, and traced as COPY
+  ---
+  duration_ms: 2.355333
+  ...
+# Subtest: a copy the clipboard refuses is unwritten, with why; one whose io answers nothing too
+ok 21 - a copy the clipboard refuses is unwritten, with why; one whose io answers nothing too
+  ---
+  duration_ms: 3.950208
+  ...
+# Subtest: a copy while one is copying is refused, and once answered a copy is taken again, each answer kept in turn
+ok 22 - a copy while one is copying is refused, and once answered a copy is taken again, each answer kept in turn
+  ---
+  duration_ms: 4.9785
+  ...
+# Subtest: an answer with no copy being written is refused, and so is a message COPY does not take
+ok 23 - an answer with no copy being written is refused, and so is a message COPY does not take
+  ---
+  duration_ms: 0.409416
+  ...
+# Subtest: without beside, the answer is the button’s word, as the phone’s \#copy is; a press sends the copy of its text
+ok 24 - without beside, the answer is the button’s word, as the phone’s \#copy is; a press sends the copy of its text
+  ---
+  duration_ms: 1.026792
+  ...
+# Subtest: with beside, each answer is said after the button and what beside draws, the second " Copied." kept
+ok 25 - with beside, each answer is said after the button and what beside draws, the second " Copied." kept
+  ---
+  duration_ms: 0.125916
+  ...
+# Subtest: why a dial failed is said truly, one cause apart from another
+ok 26 - why a dial failed is said truly, one cause apart from another
+  ---
+  duration_ms: 3.918292
+  ...
+# Subtest: an unfamiliar carried app names its own entries and the actual group at consent
+ok 27 - an unfamiliar carried app names its own entries and the actual group at consent
+  ---
+  duration_ms: 1.861792
+  ...
+# Subtest: a reader declaration never describes permission to write
+ok 28 - a reader declaration never describes permission to write
+  ---
+  duration_ms: 0.126458
+  ...
+# (node:88471) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a group met at its fallback says why in a person’s words, and one met at its own says nothing
+ok 29 - a group met at its fallback says why in a person’s words, and one met at its own says nothing
+  ---
+  duration_ms: 1.42525
+  ...
+# Subtest: the page says in a person’s words what pressing the button did
+ok 30 - the page says in a person’s words what pressing the button did
+  ---
+  duration_ms: 13.626042
+  ...
+# (node:88472) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: B places every original group capability exactly once
+ok 31 - B places every original group capability exactly once
+  ---
+  duration_ms: 1.093167
+  ...
+# Subtest: B destinations retain stable ids and refuse unknown views without exposing controls
+ok 32 - B destinations retain stable ids and refuse unknown views without exposing controls
+  ---
+  duration_ms: 0.251459
+  ...
+# Subtest: making and joining land where the new group is, leaving the form behind
+ok 33 - making and joining land where the new group is, leaving the form behind
+  ---
+  duration_ms: 0.120292
+  ...
+# Subtest: the layout is decided once, by the address: only `ui=a` is A
+ok 34 - the layout is decided once, by the address: only `ui=a` is A
+  ---
+  duration_ms: 0.201583
+  ...
+# Subtest: a pass names what the person's yes named, nothing new since
+ok 35 - a pass names what the person's yes named, nothing new since
+  ---
+  duration_ms: 0.984875
+  ...
+# Subtest: an open is its yes: it names every lend it read, by label
+ok 36 - an open is its yes: it names every lend it read, by label
+  ---
+  duration_ms: 0.625708
+  ...
+# Subtest: a re-signed pass keeps the yes it had
+ok 37 - a re-signed pass keeps the yes it had
+  ---
+  duration_ms: 0.113
+  ...
+# Subtest: a yes from before lends were named covers none, as a computer’s
+ok 38 - a yes from before lends were named covers none, as a computer’s
+  ---
+  duration_ms: 0.190333
+  ...
+# Subtest: a stop names none
+ok 39 - a stop names none
+  ---
+  duration_ms: 0.185333
+  ...
+# Subtest: its line says what is new since its last yes
+ok 40 - its line says what is new since its last yes
+  ---
+  duration_ms: 0.189292
+  ...
+# Subtest: a lent server named after a folder of the group is signed no writes
+ok 41 - a lent server named after a folder of the group is signed no writes
+  ---
+  duration_ms: 0.104375
+  ...
+# Subtest: a carried app once let read lends has no entry approved, through its Stop
+ok 42 - a carried app once let read lends has no entry approved, through its Stop
+  ---
+  duration_ms: 0.429417
+  ...
+# Subtest: a lend's script never reaches a page's origin, however its type is spelled
+ok 43 - a lend's script never reaches a page's origin, however its type is spelled
+  ---
+  duration_ms: 3.46275
+  ...
+# Subtest: only svrngs's own headers reach the page, the type in its own spelling
+ok 44 - only svrngs's own headers reach the page, the type in its own spelling
+  ---
+  duration_ms: 1.851791
+  ...
+# Subtest: a lend's answer naming acts is refused: a read never signs
+ok 45 - a lend's answer naming acts is refused: a read never signs
+  ---
+  duration_ms: 0.704542
+  ...
+# Subtest: an answer with no type keeps its status and has no body
+ok 46 - an answer with no type keeps its status and has no body
+  ---
+  duration_ms: 0.299209
+  ...
+# Subtest: svrngs's own refusal says what it is, its words not the lend's
+ok 47 - svrngs's own refusal says what it is, its words not the lend's
+  ---
+  duration_ms: 0.7995
+  ...
+# Subtest: an error from a page its step leaves is not judged, whatever it says
+ok 48 - an error from a page its step leaves is not judged, whatever it says
+  ---
+  duration_ms: 0.917333
+  ...
+# Subtest: every other error is judged: another person’s page, or a step that leaves nothing
+ok 49 - every other error is judged: another person’s page, or a step that leaves nothing
+  ---
+  duration_ms: 0.157542
+  ...
+# Subtest: a frame whose head comes split across reads is told whole, then the end
+    # Subtest: 70000 bytes, split at 1
+    ok 1 - 70000 bytes, split at 1
+      ---
+      duration_ms: 37.673083
+      ...
+    # Subtest: 70000 bytes, split at 2
+    ok 2 - 70000 bytes, split at 2
+      ---
+      duration_ms: 35.244417
+      ...
+    # Subtest: 70000 bytes, split at 3
+    ok 3 - 70000 bytes, split at 3
+      ---
+      duration_ms: 28.275792
+      ...
+    # Subtest: 70000 bytes, split at 4
+    ok 4 - 70000 bytes, split at 4
+      ---
+      duration_ms: 40.553292
+      ...
+    # Subtest: 70000 bytes, split at 5
+    ok 5 - 70000 bytes, split at 5
+      ---
+      duration_ms: 30.727166
+      ...
+    # Subtest: 70000 bytes, split at 6
+    ok 6 - 70000 bytes, split at 6
+      ---
+      duration_ms: 32.371584
+      ...
+    # Subtest: 70000 bytes, split at 7
+    ok 7 - 70000 bytes, split at 7
+      ---
+      duration_ms: 33.441542
+      ...
+    # Subtest: 70000 bytes, split at 8
+    ok 8 - 70000 bytes, split at 8
+      ---
+      duration_ms: 26.763792
+      ...
+    # Subtest: 70000 bytes, split at 9
+    ok 9 - 70000 bytes, split at 9
+      ---
+      duration_ms: 34.790292
+      ...
+    # Subtest: 70000 bytes, split at 10
+    ok 10 - 70000 bytes, split at 10
+      ---
+      duration_ms: 37.23
+      ...
+    # Subtest: 70000 bytes, split at 5000
+    ok 11 - 70000 bytes, split at 5000
+      ---
+      duration_ms: 28.784334
+      ...
+    # Subtest: 300 bytes, split at 1
+    ok 12 - 300 bytes, split at 1
+      ---
+      duration_ms: 15.532417
+      ...
+    # Subtest: 300 bytes, split at 2
+    ok 13 - 300 bytes, split at 2
+      ---
+      duration_ms: 17.827167
+      ...
+    # Subtest: 300 bytes, split at 3
+    ok 14 - 300 bytes, split at 3
+      ---
+      duration_ms: 21.511375
+      ...
+    # Subtest: 300 bytes, split at 4
+    ok 15 - 300 bytes, split at 4
+      ---
+      duration_ms: 13.892209
+      ...
+    # Subtest: 300 bytes, split at 100
+    ok 16 - 300 bytes, split at 100
+      ---
+      duration_ms: 14.40575
+      ...
+    # Subtest: 127 bytes, split at 1
+    ok 17 - 127 bytes, split at 1
+      ---
+      duration_ms: 13.619334
+      ...
+    # Subtest: 127 bytes, split at 2
+    ok 18 - 127 bytes, split at 2
+      ---
+      duration_ms: 19.811167
+      ...
+    # Subtest: 127 bytes, split at 3
+    ok 19 - 127 bytes, split at 3
+      ---
+      duration_ms: 14.998833
+      ...
+    # Subtest: 127 bytes, split at 4
+    ok 20 - 127 bytes, split at 4
+      ---
+      duration_ms: 14.574084
+      ...
+    # Subtest: 127 bytes, split at 100
+    ok 21 - 127 bytes, split at 100
+      ---
+      duration_ms: 12.297666
+      ...
+    1..21
+ok 50 - a frame whose head comes split across reads is told whole, then the end
+  ---
+  duration_ms: 533.16425
+  ...
+# Subtest: two frames in one read are told in turn
+ok 51 - two frames in one read are told in turn
+  ---
+  duration_ms: 32.046541
+  ...
+# (node:88478) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/authority.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:88478) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/among.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the worker dials with the pass its start page hands it
+ok 52 - the worker dials with the pass its start page hands it
+  ---
+  duration_ms: 19.911958
+  ...
+# Subtest: the worker dials with the pass its start page hands it, its keys lost: as the holder’s bytes
+ok 53 - the worker dials with the pass its start page hands it, its keys lost: as the holder’s bytes
+  ---
+  duration_ms: 12.222042
+  ...
+# Subtest: a start page with no key the worker takes has the group’s page sign to a new holder
+ok 54 - a start page with no key the worker takes has the group’s page sign to a new holder
+  ---
+  duration_ms: 0.972709
+  ...
+# Subtest: a lend’s ranges are its own lender’s, asked as the page asked them, the answer whole
+ok 55 - a lend’s ranges are its own lender’s, asked as the page asked them, the answer whole
+  ---
+  duration_ms: 11.113667
+  ...
+# Subtest: an open range comes back a part, 206, named of the whole, never the rest of the file
+ok 56 - an open range comes back a part, 206, named of the whole, never the rest of the file
+  ---
+  duration_ms: 14.727958
+  ...
+# Subtest: a <video>’s every range reaches the door a part of at most 2 MiB
+ok 57 - a <video>’s every range reaches the door a part of at most 2 MiB
+  ---
+  duration_ms: 0.549708
+  ...
+# Subtest: whose word a refusal is goes through the worker as the door said it
+ok 58 - whose word a refusal is goes through the worker as the door said it
+  ---
+  duration_ms: 1.839375
+  ...
+# Subtest: a lend answering only in gzip is asked for it, but for a range, and its page unpacked
+ok 59 - a lend answering only in gzip is asked for it, but for a range, and its page unpacked
+  ---
+  duration_ms: 11.739625
+  ...
+# Subtest: a tab whose lend’s computer did not answer is shown its person’s window, dark
+ok 60 - a tab whose lend’s computer did not answer is shown its person’s window, dark
+  ---
+  duration_ms: 1.10075
+  ...
+# Subtest: a socket opens again once its lender answers again, the page never loaded again
+ok 61 - a socket opens again once its lender answers again, the page never loaded again
+  ---
+  duration_ms: 1.09225
+  ...
+# Subtest: a lent page is told the lends it reads and who did not answer, never the pass or its holder
+ok 62 - a lent page is told the lends it reads and who did not answer, never the pass or its holder
+  ---
+  duration_ms: 0.69425
+  ...
+# Subtest: POST with body is sent once and its loss said
+ok 63 - POST with body is sent once and its loss said
+  ---
+  duration_ms: 18.77075
+  ...
+# Subtest: POST with no body is sent once and its loss said
+ok 64 - POST with no body is sent once and its loss said
+  ---
+  duration_ms: 0.592875
+  ...
+# Subtest: PUT with body is sent once and its loss said
+ok 65 - PUT with body is sent once and its loss said
+  ---
+  duration_ms: 0.705833
+  ...
+# Subtest: PATCH with body is sent once and its loss said
+ok 66 - PATCH with body is sent once and its loss said
+  ---
+  duration_ms: 0.602042
+  ...
+# Subtest: DELETE with no body is sent once and its loss said
+ok 67 - DELETE with no body is sent once and its loss said
+  ---
+  duration_ms: 0.528333
+  ...
+# Subtest: a read is tried once more, so the POST above is held by the rule and not by chance
+ok 68 - a read is tried once more, so the POST above is held by the rule and not by chance
+  ---
+  duration_ms: 0.665583
+  ...
+# Subtest: a read given up on by the idle timeout is not tried again
+ok 69 - a read given up on by the idle timeout is not tried again
+  ---
+  duration_ms: 0.946708
+  ...
+# Subtest: a POST whose answer was lost says it may have gone through
+ok 70 - a POST whose answer was lost says it may have gone through
+  ---
+  duration_ms: 1.013958
+  ...
+# Subtest: a PUT whose answer was lost says it may have gone through
+ok 71 - a PUT whose answer was lost says it may have gone through
+  ---
+  duration_ms: 0.976458
+  ...
+# Subtest: a PATCH whose answer was lost says it may have gone through
+ok 72 - a PATCH whose answer was lost says it may have gone through
+  ---
+  duration_ms: 0.721584
+  ...
+# Subtest: a DELETE whose answer was lost says it may have gone through
+ok 73 - a DELETE whose answer was lost says it may have gone through
+  ---
+  duration_ms: 0.328042
+  ...
+# Subtest: a form sent in a whole tab is told the same, not shown the dark window
+ok 74 - a form sent in a whole tab is told the same, not shown the dark window
+  ---
+  duration_ms: 0.340958
+  ...
+# Subtest: a GET keeps today's words
+ok 75 - a GET keeps today's words
+  ---
+  duration_ms: 0.278375
+  ...
+# Subtest: a HEAD keeps today's words
+ok 76 - a HEAD keeps today's words
+  ---
+  duration_ms: 0.320209
+  ...
+# Subtest: a carried app is tried at the next computer lending it
+ok 77 - a carried app is tried at the next computer lending it
+  ---
+  duration_ms: 1.31175
+  ...
+# Subtest: a step answers the next state, tells each subscriber once, and is traced
+ok 78 - a step answers the next state, tells each subscriber once, and is traced
+  ---
+  duration_ms: 1.060084
+  ...
+# Subtest: a refusal keeps the same state, tells nobody, runs nothing, and is traced with why
+ok 79 - a refusal keeps the same state, tells nobody, runs nothing, and is traced with why
+  ---
+  duration_ms: 2.76725
+  ...
+# Subtest: an effect rejected, thrown, or with no io answers its failed message, with why
+ok 80 - an effect rejected, thrown, or with no io answers its failed message, with why
+  ---
+  duration_ms: 4.026125
+  ...
+# Subtest: an effect that answers nothing answers its failed message, never a quiet idle
+ok 81 - an effect that answers nothing answers its failed message, never a quiet idle
+  ---
+  duration_ms: 0.990667
+  ...
+# Subtest: a late answer is refused by name, and the newer one taken
+ok 82 - a late answer is refused by name, and the newer one taken
+  ---
+  duration_ms: 0.248083
+  ...
+# Subtest: a step that answers a state outside its region is refused
+ok 83 - a step that answers a state outside its region is refused
+  ---
+  duration_ms: 0.132041
+  ...
+# Subtest: effects run in the order the step gives them, after the state is taken
+ok 84 - effects run in the order the step gives them, after the state is taken
+  ---
+  duration_ms: 1.900541
+  ...
+# Subtest: no file names a second UI, or the switch to it
+ok 85 - no file names a second UI, or the switch to it
+  ---
+  duration_ms: 341.408792
+  ...
+# (node:88482) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: "What acts as you" drawn as question.js `acts` draws it: folded, each part headed once it has a line, its note after
+ok 86 - "What acts as you" drawn as question.js `acts` draws it: folded, each part headed once it has a line, its note after
+  ---
+  duration_ms: 1.464375
+  ...
+# Subtest: an app’s new version drawn as question.js `changes` draws it: unknown, none, by you and by another, of this group only
+ok 87 - an app’s new version drawn as question.js `changes` draws it: unknown, none, by you and by another, of this group only
+  ---
+  duration_ms: 4.034167
+  ...
+# Subtest: a yes to a new version: sent by its button, its line said in its place once done, a refusal beside the button
+ok 88 - a yes to a new version: sent by its button, its line said in its place once done, a refusal beside the button
+  ---
+  duration_ms: 6.206459
+  ...
+# Subtest: what apps use drawn as question.js `uses` draws it, a line each, as `li` and as `p`; Stop sent with both labels
+ok 89 - what apps use drawn as question.js `uses` draws it, a line each, as `li` and as `p`; Stop sent with both labels
+  ---
+  duration_ms: 0.697083
+  ...
+# Subtest: a group read holding unsent lines answers their carry, then nothing once none is left (page-acts (d))
+ok 90 - a group read holding unsent lines answers their carry, then nothing once none is left (page-acts (d))
+  ---
+  duration_ms: 0.443458
+  ...
+# (node:88483) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a Stop on what apps use is read again in place, with no reload
+ok 91 - a Stop on what apps use is read again in place, with no reload
+  ---
+  duration_ms: 234.336666
+  ...
+# Subtest: a refused Stop on what apps use is said beside it
+ok 92 - a refused Stop on what apps use is said beside it
+  ---
+  duration_ms: 205.108125
+  ...
+# Subtest: a yes in another tab is shown when the page is shown again
+ok 93 - a yes in another tab is shown when the page is shown again
+  ---
+  duration_ms: 179.609334
+  ...
+# Subtest: a lend from what runs here is in the index and in What you lend at once
+ok 94 - a lend from what runs here is in the index and in What you lend at once
+  ---
+  duration_ms: 197.357583
+  ...
+# Subtest: three changes to a lend are each read again in place
+ok 95 - three changes to a lend are each read again in place
+  ---
+  duration_ms: 176.308958
+  ...
+# Subtest: the secret stays shown when the page is read again, and nothing carries it
+ok 96 - the secret stays shown when the page is read again, and nothing carries it
+  ---
+  duration_ms: 103.400708
+  ...
+# Subtest: a bring is in the home’s index, read again, with no reload
+ok 97 - a bring is in the home’s index, read again, with no reload
+  ---
+  duration_ms: 95.165209
+  ...
+# Subtest: the home page’s bring is answered beside its button, the button held while it brings
+ok 98 - the home page’s bring is answered beside its button, the button held while it brings
+  ---
+  duration_ms: 2605.633458
+  ...
+# Subtest: a group joined by the running svrngs is on the page when it is shown again
+ok 99 - a group joined by the running svrngs is on the page when it is shown again
+  ---
+  duration_ms: 82.837833
+  ...
+# Subtest: a guest’s Stop waits for its time, then the groups are read again and the guest is gone
+ok 100 - a guest’s Stop waits for its time, then the groups are read again and the guest is gone
+  ---
+  duration_ms: 99.445375
+  ...
+# Subtest: the door is judged again when the page is shown again
+ok 101 - the door is judged again when the page is shown again
+  ---
+  duration_ms: 83.707417
+  ...
+# Subtest: ten screen ticks never read asking again, each read out or landed
+ok 102 - ten screen ticks never read asking again, each read out or landed
+  ---
+  duration_ms: 186.056666
+  ...
+# Subtest: a guest at their link is asked their name once, and is in, ada’s notes listed
+ok 103 - a guest at their link is asked their name once, and is in, ada’s notes listed
+  ---
+  duration_ms: 62.626166
+  ...
+# Subtest: a guest’s visit ends while shown: said ended, nothing listed
+ok 104 - a guest’s visit ends while shown: said ended, nothing listed
+  ---
+  duration_ms: 74.1705
+  ...
+# Subtest: a visit that ends while the phone’s page is open drops from it
+ok 105 - a visit that ends while the phone’s page is open drops from it
+  ---
+  duration_ms: 35.512083
+  ...
+# Subtest: a bring is in the phone’s index, read again by the page
+ok 106 - a bring is in the phone’s index, read again by the page
+  ---
+  duration_ms: 49.8355
+  ...
+# Subtest: the phone’s bring is answered beside its button, the button held while it brings
+ok 107 - the phone’s bring is answered beside its button, the button held while it brings
+  ---
+  duration_ms: 77.771958
+  ...
+# Subtest: a lend filled while shown reads Full now on coming back
+ok 108 - a lend filled while shown reads Full now on coming back
+  ---
+  duration_ms: 32.072542
+  ...
+# Subtest: a refused yes is said in the heading, and the ask stays shown
+ok 109 - a refused yes is said in the heading, and the ask stays shown
+  ---
+  duration_ms: 36.147708
+  ...
+# (node:88484) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/among.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: an alias or address nothing in the group goes by is said so, and of the other groups held
+ok 110 - an alias or address nothing in the group goes by is said so, and of the other groups held
+  ---
+  duration_ms: 0.443458
+  ...
+# Subtest: a lend’s address opened cold goes to its group’s page once a minute, then says why not
+ok 111 - a lend’s address opened cold goes to its group’s page once a minute, then says why not
+  ---
+  duration_ms: 0.53675
+  ...
+# Subtest: how this reaches you is shown at a computer once the group is read, a phone’s first look without it, in no word of the system’s
+ok 112 - how this reaches you is shown at a computer once the group is read, a phone’s first look without it, in no word of the system’s
+  ---
+  duration_ms: 1.663
+  ...
+# Subtest: Money, carried, adds what ada paid and lists it as hers
+ok 113 - Money, carried, adds what ada paid and lists it as hers
+  ---
+  duration_ms: 52.574
+  ...
+# Subtest: Events, carried, posts ada’s party as hers and says she’s coming
+ok 114 - Events, carried, posts ada’s party as hers and says she’s coming
+  ---
+  duration_ms: 55.621625
+  ...
+# Subtest: Taste sends its films once each time it opens and draws its guesses from what comes back
+ok 115 - Taste sends its films once each time it opens and draws its guesses from what comes back
+  ---
+  duration_ms: 129.133291
+  ...
+# (node:88486) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/dial.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the discovery read names the page’s svrngs version
+ok 116 - the discovery read names the page’s svrngs version
+  ---
+  duration_ms: 0.866125
+  ...
+# (node:88487) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: each fragment is routed as web/app.js opening routes it
+ok 117 - each fragment is routed as web/app.js opening routes it
+  ---
+  duration_ms: 1.850375
+  ...
+# Subtest: one tab holds the group: another says so, and takes it here when asked
+ok 118 - one tab holds the group: another says so, and takes it here when asked
+  ---
+  duration_ms: 0.787584
+  ...
+# Subtest: the read: its refusals said, an older answer refused by name, and what it read
+ok 119 - the read: its refusals said, an older answer refused by name, and what it read
+  ---
+  duration_ms: 0.584334
+  ...
+# Subtest: back on screen the list is read again, and a read again that fails keeps the list, saying why
+ok 120 - back on screen the list is read again, and a read again that fails keeps the list, saying why
+  ---
+  duration_ms: 0.476958
+  ...
+# Subtest: a read no computer answers keeps the tab and is asked again until one does
+ok 121 - a read no computer answers keeps the tab and is asked again until one does
+  ---
+  duration_ms: 0.480334
+  ...
+# Subtest: a group picked from the offer leaves it in the same step
+ok 122 - a group picked from the offer leaves it in the same step
+  ---
+  duration_ms: 0.178584
+  ...
+# Subtest: the relays a reply names are kept, capped and checked, and a later reply drops the rest
+ok 123 - the relays a reply names are kept, capped and checked, and a later reply drops the rest
+  ---
+  duration_ms: 3.557166
+  ...
+# Subtest: what keeps a phone from going on at home is said under what its group lends
+ok 124 - what keeps a phone from going on at home is said under what its group lends
+  ---
+  duration_ms: 0.133833
+  ...
+# Subtest: a link’s token with what it opens opens it, at its path
+ok 125 - a link’s token with what it opens opens it, at its path
+  ---
+  duration_ms: 1.870791
+  ...
+# Subtest: a fragment the page cannot read says why in the heading, never the browser’s line
+ok 126 - a fragment the page cannot read says why in the heading, never the browser’s line
+  ---
+  duration_ms: 0.702291
+  ...
+# Subtest: a lend’s alias is one in every time zone: the addresses kept and what it opens
+ok 127 - a lend’s alias is one in every time zone: the addresses kept and what it opens
+  ---
+  duration_ms: 4.850416
+  ...
+# Subtest: a link for Sam’s devices adds the phone as Sam’s, asking no name
+ok 128 - a link for Sam’s devices adds the phone as Sam’s, asking no name
+  ---
+  duration_ms: 0.3385
+  ...
+# (node:88508) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a message type taken by two flows is refused as PAGE composes
+ok 129 - a message type taken by two flows is refused as PAGE composes
+  ---
+  duration_ms: 0.756208
+  ...
+# Subtest: a part’s own message is taken by its name, so two flows each draw a Fold
+ok 130 - a part’s own message is taken by its name, so two flows each draw a Fold
+  ---
+  duration_ms: 0.385375
+  ...
+# Subtest: a region, a field, an io or a place two flows claim is refused as PAGE composes
+ok 131 - a region, a field, an io or a place two flows claim is refused as PAGE composes
+  ---
+  duration_ms: 0.287125
+  ...
+# Subtest: a take that moves a field or region its flow does not own is refused, naming it, and nobody is told
+ok 132 - a take that moves a field or region its flow does not own is refused, naming it, and nobody is told
+  ---
+  duration_ms: 0.813875
+  ...
+# Subtest: the heading is the first a slot gives, in ORDER; the response every slot’s lines, joined in that order
+ok 133 - the heading is the first a slot gives, in ORDER; the response every slot’s lines, joined in that order
+  ---
+  duration_ms: 0.47225
+  ...
+# Subtest: the flows compose, every flow built, their places web/index.html’s body in its order as first drawn
+ok 134 - the flows compose, every flow built, their places web/index.html’s body in its order as first drawn
+  ---
+  duration_ms: 28.416958
+  ...
+# (node:88511) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:88511) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a removed person’s read is refused as removed, and the page says they are no longer in the group
+ok 135 - a removed person’s read is refused as removed, and the page says they are no longer in the group
+  ---
+  duration_ms: 21.005084
+  ...
+# Subtest: every removal and ask to remove is listed on the group’s page, by name
+ok 136 - every removal and ask to remove is listed on the group’s page, by name
+  ---
+  duration_ms: 33.689875
+  ...
+# Subtest: a computer that did not answer, one that has not heard of yours and one that did not say are each said apart
+ok 137 - a computer that did not answer, one that has not heard of yours and one that did not say are each said apart
+  ---
+  duration_ms: 5.14425
+  ...
+# Subtest: a computer that did not answer is named by its person, never by the relay
+ok 138 - a computer that did not answer is named by its person, never by the relay
+  ---
+  duration_ms: 6.317542
+  ...
+# Subtest: while the link’s computer answers, the page goes through it, naming no one else’s
+ok 139 - while the link’s computer answers, the page goes through it, naming no one else’s
+  ---
+  duration_ms: 3.309292
+  ...
+# Subtest: with the link’s computer silent, the page goes through whoever answers, at once, and says whose
+ok 140 - with the link’s computer silent, the page goes through whoever answers, at once, and says whose
+  ---
+  duration_ms: 7.583584
+  ...
+# Subtest: a link naming no relay is refused in a person’s words, and nothing is dialled
+ok 141 - a link naming no relay is refused in a person’s words, and nothing is dialled
+  ---
+  duration_ms: 2.237042
+  ...
+# Subtest: the door and the index on a phone: who is on, whose group since when, and each lend a line
+ok 142 - the door and the index on a phone: who is on, whose group since when, and each lend a line
+  ---
+  duration_ms: 5.456417
+  ...
+# Subtest: a computer is offered one line, a founder’s with no link and a joiner’s with one, and Copy writes it; a phone none
+ok 143 - a computer is offered one line, a founder’s with no link and a joiner’s with one, and Copy writes it; a phone none
+  ---
+  duration_ms: 7.051792
+  ...
+# Subtest: a Windows computer is offered no line, and told the same link joins from its phone
+ok 144 - a Windows computer is offered no line, and told the same link joins from its phone
+  ---
+  duration_ms: 2.526708
+  ...
+# Subtest: in two groups, a lend’s address opens in the group that lends it, an alias of both is offered, and neither is said of both
+ok 145 - in two groups, a lend’s address opens in the group that lends it, an alias of both is offered, and neither is said of both
+  ---
+  duration_ms: 15.252042
+  ...
+# (node:88514) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a lend’s limit is changed in place: four, everyone, then stopped, each read back
+ok 146 - a lend’s limit is changed in place: four, everyone, then stopped, each read back
+  ---
+  duration_ms: 253.679667
+  ...
+# Subtest: signing people in is turned on once: the secret shown on the page alone, then never
+ok 147 - signing people in is turned on once: the secret shown on the page alone, then never
+  ---
+  duration_ms: 284.794584
+  ...
+# Subtest: two people of one name: the other changed an app, and is offered the hand-on, told apart
+ok 148 - two people of one name: the other changed an app, and is offered the hand-on, told apart
+  ---
+  duration_ms: 109.998875
+  ...
+# Subtest: whose computer did not answer, and who asked, are told by key
+ok 149 - whose computer did not answer, and who asked, are told by key
+  ---
+  duration_ms: 85.504209
+  ...
+# Subtest: the door draws who is on now: lit, off once answered, and in from a phone
+ok 150 - the door draws who is on now: lit, off once answered, and in from a phone
+  ---
+  duration_ms: 2631.271292
+  ...
+# Subtest: a link for your own device, made, shown and copied, said first to end an open invitation
+ok 151 - a link for your own device, made, shown and copied, said first to end an open invitation
+  ---
+  duration_ms: 259.442291
+  ...
+# Subtest: a lend opened to this WiFi says the address, and closed says so
+ok 152 - a lend opened to this WiFi says the address, and closed says so
+  ---
+  duration_ms: 150.856375
+  ...
+# Subtest: an older computer is said once on the home page, and nothing it lends listed
+ok 153 - an older computer is said once on the home page, and nothing it lends listed
+  ---
+  duration_ms: 67.587458
+  ...
+# Subtest: an older computer is said once on the group’s page, by whose it is, and nothing of it read
+ok 154 - an older computer is said once on the group’s page, by whose it is, and nothing of it read
+  ---
+  duration_ms: 1.0345
+  ...
+# Subtest: the screen says what was lent after it opened, marked new, and counts it
+ok 155 - the screen says what was lent after it opened, marked new, and counts it
+  ---
+  duration_ms: 1080.419125
+  ...
+# Subtest: an older answer to what a link is for is refused by name
+ok 156 - an older answer to what a link is for is refused by name
+  ---
+  duration_ms: 1.734
+  ...
+# Subtest: the name the link joins as is the one asked, and a second press is refused
+ok 157 - the name the link joins as is the one asked, and a second press is refused
+  ---
+  duration_ms: 0.217375
+  ...
+# Subtest: a refusal is said in place of the last, the link checked kept to press again
+ok 158 - a refusal is said in place of the last, the link checked kept to press again
+  ---
+  duration_ms: 0.106459
+  ...
+# Subtest: joined, the form is empty again, and HOME says so from what was joined
+ok 159 - joined, the form is empty again, and HOME says so from what was joined
+  ---
+  duration_ms: 0.15125
+  ...
+# Subtest: an older answer of namesakes is refused by name
+ok 160 - an older answer of namesakes is refused by name
+  ---
+  duration_ms: 0.849459
+  ...
+# Subtest: a second press is refused while it makes, and a refusal is said once
+ok 161 - a second press is refused while it makes, and a refusal is said once
+  ---
+  duration_ms: 0.115916
+  ...
+# Subtest: made, the form is empty again, and HOME says so from what was made
+ok 162 - made, the form is empty again, and HOME says so from what was made
+  ---
+  duration_ms: 0.113709
+  ...
+# (node:88523) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__&twin=1 is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the ask is headed in question.js’s one wording, and one of nothing lent says so
+ok 163 - the ask is headed in question.js’s one wording, and one of nothing lent says so
+  ---
+  duration_ms: 194.448958
+  ...
+# Subtest: the page says its own address at its foot, the origin it was opened at
+ok 164 - the page says its own address at its foot, the origin it was opened at
+  ---
+  duration_ms: 176.243958
+  ...
+# Subtest: a register that cannot be read, and a removal, are each said, and nothing of the group read
+ok 165 - a register that cannot be read, and a removal, are each said, and nothing of the group read
+  ---
+  duration_ms: 201.756209
+  ...
+# Subtest: the door tells two people of one name apart by when each joined, to the second
+ok 166 - the door tells two people of one name apart by when each joined, to the second
+  ---
+  duration_ms: 106.099541
+  ...
+# Subtest: a person in the door is pressed for what the page holds of them
+ok 167 - a person in the door is pressed for what the page holds of them
+  ---
+  duration_ms: 98.147958
+  ...
+# Subtest: removing a person is two presses in their popover, and every answer is said
+ok 168 - removing a person is two presses in their popover, and every answer is said
+  ---
+  duration_ms: 1067.076208
+  ...
+# Subtest: every removal and ask to remove is listed, by name, with when
+ok 169 - every removal and ask to remove is listed, by name, with when
+  ---
+  duration_ms: 52.990959
+  ...
+# Subtest: where the group’s folder is on this computer is said
+ok 170 - where the group’s folder is on this computer is said
+  ---
+  duration_ms: 55.227458
+  ...
+# Subtest: a computer that refused is said apart from one that did not answer
+ok 171 - a computer that refused is said apart from one that did not answer
+  ---
+  duration_ms: 108.868792
+  ...
+# Subtest: the page says what it is for, and in no group offers joining, then making, alone
+ok 172 - the page says what it is for, and in no group offers joining, then making, alone
+  ---
+  duration_ms: 36.463583
+  ...
+# Subtest: nothing the page does is left to a terminal
+ok 173 - nothing the page does is left to a terminal
+  ---
+  duration_ms: 0.101833
+  ...
+# Subtest: a lend’s link says what it opens and whose, in a tab of its own, and less to puzzle over
+ok 174 - a lend’s link says what it opens and whose, in a tab of its own, and less to puzzle over
+  ---
+  duration_ms: 54.104875
+  ...
+# Subtest: each grid of the index is under the sentence its cells share, and a cell says only what differs
+ok 175 - each grid of the index is under the sentence its cells share, and a cell says only what differs
+  ---
+  duration_ms: 110.646792
+  ...
+# Subtest: each way in is described by its caption, and each button is named with what it acts on
+ok 176 - each way in is described by its caption, and each button is named with what it acts on
+  ---
+  duration_ms: 59.394417
+  ...
+# Subtest: the words outside the index’s cells are the same for 8 things and for 40
+ok 177 - the words outside the index’s cells are the same for 8 things and for 40
+  ---
+  duration_ms: 129.357
+  ...
+# Subtest: a group’s page is its banner, what needs you, its people, what they share, then inviting
+ok 178 - a group’s page is its banner, what needs you, its people, what they share, then inviting
+  ---
+  duration_ms: 52.979
+  ...
+# Subtest: Add an app leads with what an app is, then svrngs’s examples, then the other way
+ok 179 - Add an app leads with what an app is, then svrngs’s examples, then the other way
+  ---
+  duration_ms: 121.983458
+  ...
+# Subtest: a Stop under What acts as you is named with the app it stops
+ok 180 - a Stop under What acts as you is named with the app it stops
+  ---
+  duration_ms: 54.780875
+  ...
+# Subtest: each lend is one line with its form folded under it, and the wide button is the phone’s
+ok 181 - each lend is one line with its form folded under it, and the wide button is the phone’s
+  ---
+  duration_ms: 51.255833
+  ...
+# Subtest: a group’s card on the overview says who is on and what is shared, or that it cannot be read
+ok 182 - a group’s card on the overview says who is on and what is shared, or that it cannot be read
+  ---
+  duration_ms: 76.653292
+  ...
+# Subtest: who you are is said once above the cards, and on a card only where it differs
+ok 183 - who you are is said once above the cards, and on a card only where it differs
+  ---
+  duration_ms: 160.705667
+  ...
+# Subtest: what acts as you names groups with the same deciders in one line, and heads no empty group
+ok 184 - what acts as you names groups with the same deciders in one line, and heads no empty group
+  ---
+  duration_ms: 51.353209
+  ...
+# Subtest: a lend’s address for a program is kept behind Address in its cell, and its Copy writes it and says so
+ok 185 - a lend’s address for a program is kept behind Address in its cell, and its Copy writes it and says so
+  ---
+  duration_ms: 68.785125
+  ...
+# Subtest: a group’s people are drawn before its slowest computer answers, and it is drawn off after
+ok 186 - a group’s people are drawn before its slowest computer answers, and it is drawn off after
+  ---
+  duration_ms: 2631.232708
+  ...
+# Subtest: a pasted link opens only within its lend
+ok 187 - a pasted link opens only within its lend
+  ---
+  duration_ms: 127.123625
+  ...
+# Subtest: two groups of one name are headed by who made each and since when
+ok 188 - two groups of one name are headed by who made each and since when
+  ---
+  duration_ms: 59.433041
+  ...
+# Subtest: what was done here is said once, and the address forgets it
+ok 189 - what was done here is said once, and the address forgets it
+  ---
+  duration_ms: 102.604
+  ...
+# Subtest: a group made is said and drawn with its links, with no reload
+ok 190 - a group made is said and drawn with its links, with no reload
+  ---
+  duration_ms: 105.59275
+  ...
+# Subtest: a group joined is said and drawn, its shelf folded, with no reload
+ok 191 - a group joined is said and drawn, its shelf folded, with no reload
+  ---
+  duration_ms: 103.227833
+  ...
+# Subtest: a group made or joined says it is being read until it is, and house keeps its drawing
+ok 192 - a group made or joined says it is being read until it is, and house keeps its drawing
+  ---
+  duration_ms: 10666.357875
+  ...
+# Subtest: a group made says where its folder is and links on the page svrngs came from
+ok 193 - a group made says where its folder is and links on the page svrngs came from
+  ---
+  duration_ms: 199.146208
+  ...
+# Subtest: a group joined beside one held is headed by whose, its shelf alone folded
+ok 194 - a group joined beside one held is headed by whose, its shelf alone folded
+  ---
+  duration_ms: 111.069708
+  ...
+# Subtest: a leave is said as a leave on both pages, and a link to it again is refused
+ok 195 - a leave is said as a leave on both pages, and a link to it again is refused
+  ---
+  duration_ms: 216.117916
+  ...
+# Subtest: every group left is listed under Groups you left, by whose it is
+ok 196 - every group left is listed under Groups you left, by whose it is
+  ---
+  duration_ms: 45.754791
+  ...
+# Subtest: Play in one group’s index is said on in every index, and its Stop too
+ok 197 - Play in one group’s index is said on in every index, and its Stop too
+  ---
+  duration_ms: 86.634875
+  ...
+# Subtest: a refusal or an answer is said once at each press, never one after another
+ok 198 - a refusal or an answer is said once at each press, never one after another
+  ---
+  duration_ms: 246.328083
+  ...
+# Subtest: a lapsed session is said as how to open the page again, once, beside its button
+ok 199 - a lapsed session is said as how to open the page again, once, beside its button
+  ---
+  duration_ms: 143.788125
+  ...
+# Subtest: a room this computer cannot read is said, and the line still offers to open it
+ok 200 - a room this computer cannot read is said, and the line still offers to open it
+  ---
+  duration_ms: 51.830875
+  ...
+# Subtest: opened to this WiFi in one group’s foot, every foot says so, and closed alike
+ok 201 - opened to this WiFi in one group’s foot, every foot says so, and closed alike
+  ---
+  duration_ms: 86.194083
+  ...
+# Subtest: the shared folder opened twice is said opened once
+ok 202 - the shared folder opened twice is said opened once
+  ---
+  duration_ms: 80.451959
+  ...
+# (node:88524) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a new lend chooses its groups and sends exactly those stable ids
+ok 203 - a new lend chooses its groups and sends exactly those stable ids
+  ---
+  duration_ms: 0.920291
+  ...
+# Subtest: terms drawn are posted back with the next press, and a tick lets them go
+ok 204 - terms drawn are posted back with the next press, and a tick lets them go
+  ---
+  duration_ms: 0.182334
+  ...
+# Subtest: a new lend with no group chosen is refused, never made to everyone
+ok 205 - a new lend with no group chosen is refused, never made to everyone
+  ---
+  duration_ms: 0.071084
+  ...
+# Subtest: a tick never expands the audience: it adds or removes just its own id
+ok 206 - a tick never expands the audience: it adds or removes just its own id
+  ---
+  duration_ms: 0.06725
+  ...
+# Subtest: a change sends only the audience, preserving every other setting
+ok 207 - a change sends only the audience, preserving every other setting
+  ---
+  duration_ms: 0.124125
+  ...
+# Subtest: a limit change keeps the row’s chosen audience
+ok 208 - a limit change keeps the row’s chosen audience
+  ---
+  duration_ms: 0.070417
+  ...
+# Subtest: saving the audience twice while one is under way is refused, then retried
+ok 209 - saving the audience twice while one is under way is refused, then retried
+  ---
+  duration_ms: 0.136917
+  ...
+# Subtest: a row’s words read paused from [], legacy needing selection from null, names otherwise
+ok 210 - a row’s words read paused from [], legacy needing selection from null, names otherwise
+  ---
+  duration_ms: 0.081375
+  ...
+# Subtest: two groups of one name are told apart in the boxes by who made them
+ok 211 - two groups of one name are told apart in the boxes by who made them
+  ---
+  duration_ms: 1.44
+  ...
+# Subtest: a row names every audience id, unheld ones by their id, namesakes apart
+ok 212 - a row names every audience id, unheld ones by their id, namesakes apart
+  ---
+  duration_ms: 0.316959
+  ...
+# (node:88535) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a lend’s link on a computer keeping no group is said to open in svrngs, and shown
+ok 213 - a lend’s link on a computer keeping no group is said to open in svrngs, and shown
+  ---
+  duration_ms: 3.612208
+  ...
+# (node:88536) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the door as question.js `door` draws it: unjudged, judged, not known now
+ok 214 - the door as question.js `door` draws it: unjudged, judged, not known now
+  ---
+  duration_ms: 19.923042
+  ...
+# Subtest: given what is lent, each person’s own lends in their window, the group’s in nobody’s
+ok 215 - given what is lent, each person’s own lends in their window, the group’s in nobody’s
+  ---
+  duration_ms: 1.333916
+  ...
+# Subtest: who is visiting as question.js `visiting` draws it, by host
+ok 216 - who is visiting as question.js `visiting` draws it, by host
+  ---
+  duration_ms: 0.97125
+  ...
+# (node:88537) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/page.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a typed short address redirects only to the canonical page in native mode
+ok 217 - a typed short address redirects only to the canonical page in native mode
+  ---
+  duration_ms: 15.537208
+  ...
+# Subtest: a resolver limit renders temporary unavailability and manual retry, never ended
+ok 218 - a resolver limit renders temporary unavailability and manual retry, never ended
+  ---
+  duration_ms: 0.872334
+  ...
+# Subtest: native arrival asks the name once and offers a literal shell command without browser admission
+ok 219 - native arrival asks the name once and offers a literal shell command without browser admission
+  ---
+  duration_ms: 9.693667
+  ...
+# Subtest: a phone at a short address joins in the browser, never waits on an installation
+ok 220 - a phone at a short address joins in the browser, never waits on an installation
+  ---
+  duration_ms: 0.424125
+  ...
+# Subtest: a phone in the group already, at its short address, holds it and joins nobody twice
+ok 221 - a phone in the group already, at its short address, holds it and joins nobody twice
+  ---
+  duration_ms: 0.194584
+  ...
+# Subtest: a Windows computer at a short address is offered no line, and told to use its phone
+ok 222 - a Windows computer at a short address is offered no line, and told to use its phone
+  ---
+  duration_ms: 0.220583
+  ...
+# (node:88549) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__&twin=1 is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Play says where to connect and copies it, and its Stop under what acts as you is the row’s own
+ok 223 - Play says where to connect and copies it, and its Stop under what acts as you is the row’s own
+  ---
+  duration_ms: 328.913375
+  ...
+# Subtest: the apps’ account is made on the home page, and its password sent once, to /lent alone
+ok 224 - the apps’ account is made on the home page, and its password sent once, to /lent alone
+  ---
+  duration_ms: 194.746834
+  ...
+# Subtest: a readers’ key is pasted on the home page, and sent once, to /lent alone
+ok 225 - a readers’ key is pasted on the home page, and sent once, to /lent alone
+  ---
+  duration_ms: 141.509083
+  ...
+# Subtest: native arrival asks the issuer, names once, offers a line, and never admits or keeps the browser
+ok 226 - native arrival asks the issuer, names once, offers a line, and never admits or keeps the browser
+  ---
+  duration_ms: 9.188416
+  ...
+# Subtest: a native arrival welcomes to its group alone, with its folder, until All your groups
+ok 227 - a native arrival welcomes to its group alone, with its folder, until All your groups
+  ---
+  duration_ms: 210.990042
+  ...
+# Subtest: a native arrival says why it cannot welcome, and never shows a group of its name instead
+ok 228 - a native arrival says why it cannot welcome, and never shows a group of its name instead
+  ---
+  duration_ms: 2683.780542
+  ...
+# Subtest: what acts as you is said part by part, and its Stop is posted and said
+ok 229 - what acts as you is said part by part, and its Stop is posted and said
+  ---
+  duration_ms: 140.503708
+  ...
+# Subtest: every home page lists Sam visiting, and Kim’s Stop posts it and lists nobody
+ok 230 - every home page lists Sam visiting, and Kim’s Stop posts it and lists nobody
+  ---
+  duration_ms: 255.668375
+  ...
+# Subtest: the phone’s page lists Sam visiting as Bo’s computer answers, and nobody once it answers none
+ok 231 - the phone’s page lists Sam visiting as Bo’s computer answers, and nobody once it answers none
+  ---
+  duration_ms: 12.183625
+  ...
+# (node:88550) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/htm.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the group’s page on a phone says what acts as you, folded, and its Stop says when it holds
+ok 232 - the group’s page on a phone says what acts as you, folded, and its Stop says when it holds
+  ---
+  duration_ms: 187.79825
+  ...
+# (node:88551) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: read as it loads, then once a round of the groups’ reads, however many cells ask
+ok 233 - read as it loads, then once a round of the groups’ reads, however many cells ask
+  ---
+  duration_ms: 0.671834
+  ...
+# Subtest: a turn is PLAY’s: its answer is what has Play on, what it copied kept for its lend, a second turn and a read refused while it runs
+ok 234 - a turn is PLAY’s: its answer is what has Play on, what it copied kept for its lend, a second turn and a read refused while it runs
+  ---
+  duration_ms: 0.627375
+  ...
+# Subtest: a refused turn goes back to where it was, each refusal kept for that lend
+ok 235 - a refused turn goes back to where it was, each refusal kept for that lend
+  ---
+  duration_ms: 0.130083
+  ...
+# Subtest: "What acts as you" lists each Play on with its Stop, or why none can be read; none when nothing is on
+ok 236 - "What acts as you" lists each Play on with its Stop, or why none can be read; none when nothing is on
+  ---
+  duration_ms: 0.450458
+  ...
+# (node:88552) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__&twin=1 is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the host’s controls: each phase drawn from its receipt, one post a press, and drawn again from the receipt kept
+ok 237 - the host’s controls: each phase drawn from its receipt, one post a press, and drawn again from the receipt kept
+  ---
+  duration_ms: 841.626291
+  ...
+# Subtest: the answer to a press takes the focus its button lost
+ok 238 - the answer to a press takes the focus its button lost
+  ---
+  duration_ms: 2705.98125
+  ...
+# (node:88553) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: read as it loads, then once a round of the groups’ reads, however many groups ask
+ok 239 - read as it loads, then once a round of the groups’ reads, however many groups ask
+  ---
+  duration_ms: 6.632958
+  ...
+# Subtest: a turn is ROOM’s: its answer is what is open, a second turn and a read refused while it runs
+ok 240 - a turn is ROOM’s: its answer is what is open, a second turn and a read refused while it runs
+  ---
+  duration_ms: 0.208375
+  ...
+# Subtest: a refused turn goes back to where it was, why kept for that lend
+ok 241 - a refused turn goes back to where it was, why kept for that lend
+  ---
+  duration_ms: 0.0975
+  ...
+# Subtest: "Open to this WiFi" lists what is open and what a press here closed; none when nothing is
+ok 242 - "Open to this WiFi" lists what is open and what a press here closed; none when nothing is
+  ---
+  duration_ms: 0.507625
+  ...
+# (node:88557) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/acts.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a new version is asked of the home page, and its yes posts /runs and is said
+ok 243 - a new version is asked of the home page, and its yes posts /runs and is said
+  ---
+  duration_ms: 160.030542
+  ...
+# Subtest: the phone posts a group’s act to the computer it reaches, its answer read and a refusal said
+ok 244 - the phone posts a group’s act to the computer it reaches, its answer read and a refusal said
+  ---
+  duration_ms: 12.06825
+  ...
+# Subtest: the phone’s yes to a new version runs it, one act at a time
+ok 245 - the phone’s yes to a new version runs it, one act at a time
+  ---
+  duration_ms: 0.170292
+  ...
+# Subtest: the phone’s yes to a new version is signed as its next line and carried
+ok 246 - the phone’s yes to a new version is signed as its next line and carried
+  ---
+  duration_ms: 1.317583
+  ...
+# (node:88558) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__&twin=1 is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the send’s tick is drawn under its read’s, posted only while its read is, and the last yes ticks it
+ok 247 - the send’s tick is drawn under its read’s, posted only while its read is, and the last yes ticks it
+  ---
+  duration_ms: 321.817209
+  ...
+# Subtest: a carried app the policy blanks is told why on its card
+ok 248 - a carried app the policy blanks is told why on its card
+  ---
+  duration_ms: 104.709792
+  ...
+# (node:88559) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: it says how to add an app before the boxes, and what is here already in one line
+ok 249 - it says how to add an app before the boxes, and what is here already in one line
+  ---
+  duration_ms: 2.015708
+  ...
+# Subtest: what a page adds is drawn under the button, and nothing where it adds none
+ok 250 - what a page adds is drawn under the button, and nothing where it adds none
+  ---
+  duration_ms: 0.17525
+  ...
+# Subtest: folded as "Bring more to <group>" for someone who just joined
+ok 251 - folded as "Bring more to <group>" for someone who just joined
+  ---
+  duration_ms: 0.1555
+  ...
+# Subtest: a tick is kept, and the button brings the ticked ones still offered
+ok 252 - a tick is kept, and the button brings the ticked ones still offered
+  ---
+  duration_ms: 6.709
+  ...
+# Subtest: each answer said beside the button, the words above the boxes kept
+ok 253 - each answer said beside the button, the words above the boxes kept
+  ---
+  duration_ms: 0.195125
+  ...
+# Subtest: while it brings, a second bring and a tick are refused, the button and the boxes held
+ok 254 - while it brings, a second bring and a tick are refused, the button and the boxes held
+  ---
+  duration_ms: 0.205708
+  ...
+# Subtest: what it brought is offered no more, its tick gone; all brought, the answer stays by its button
+ok 255 - what it brought is offered no more, its tick gone; all brought, the answer stays by its button
+  ---
+  duration_ms: 0.168208
+  ...
+# Subtest: brought, the page reads its group again, by the `after` it gives
+ok 256 - brought, the page reads its group again, by the `after` it gives
+  ---
+  duration_ms: 8.60025
+  ...
+# Subtest: the io answers brought, with what it brought as why
+ok 257 - the io answers brought, with what it brought as why
+  ---
+  duration_ms: 0.248791
+  ...
+# (node:88560) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__&twin=1 is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: a member who does not keep the group reads how many, and changes nothing
+ok 258 - a member who does not keep the group reads how many, and changes nothing
+  ---
+  duration_ms: 135.662291
+  ...
+# Subtest: the keeper’s One more posts the next number, and the groups read again say it
+ok 259 - the keeper’s One more posts the next number, and the groups read again say it
+  ---
+  duration_ms: 127.412583
+  ...
+# Subtest: a change refused says why, and the number stays
+ok 260 - a change refused says why, and the number stays
+  ---
+  duration_ms: 121.91375
+  ...
+# (node:88561) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Keep is question.js `keeping`, byte for byte
+ok 261 - Keep is question.js `keeping`, byte for byte
+  ---
+  duration_ms: 0.880625
+  ...
+# Subtest: Row is question.js `row`, a head row too, and a line across the table as home.js draws it
+ok 262 - Row is question.js `row`, a head row too, and a line across the table as home.js draws it
+  ---
+  duration_ms: 0.995584
+  ...
+# Subtest: Act is a button with its answer beside it, as home.js draws one; disabled and silent while busy
+ok 263 - Act is a button with its answer beside it, as home.js draws one; disabled and silent while busy
+  ---
+  duration_ms: 1.197875
+  ...
+# Subtest: Act's answer in its place, and a form's own button, which sends nothing itself
+ok 264 - Act's answer in its place, and a form's own button, which sends nothing itself
+  ---
+  duration_ms: 0.327666
+  ...
+# Subtest: Fold is the shelf’s and acts’ <details>, and says each toggle
+ok 265 - Fold is the shelf’s and acts’ <details>, and says each toggle
+  ---
+  duration_ms: 7.35875
+  ...
+# Subtest: Field: the join’s label and box, the home page’s wrapped ones and its select, and what each sends
+ok 266 - Field: the join’s label and box, the home page’s wrapped ones and its select, and what each sends
+  ---
+  duration_ms: 0.312583
+  ...
+# Subtest: Heading is the phone’s \#status
+ok 267 - Heading is the phone’s \#status
+  ---
+  duration_ms: 0.078333
+  ...
+# Subtest: a lend's script read at a page's own origin is refused closed: no cookie, nothing to run
+ok 268 - a lend's script read at a page's own origin is refused closed: no cookie, nothing to run
+  ---
+  duration_ms: 18.349625
+  ...
+# Subtest: a write whose answer is lost is said once, 502 away, and the check after dials afresh
+ok 269 - a write whose answer is lost is said once, 502 away, and the check after dials afresh
+  ---
+  duration_ms: 2.009958
+  ...
+# Subtest: what acts as you is said in one wording
+ok 270 - what acts as you is said in one wording
+  ---
+  duration_ms: 14.040041
+  ...
+# Subtest: the open says what an app does in one wording
+ok 271 - the open says what an app does in one wording
+  ---
+  duration_ms: 4.692208
+  ...
+# Subtest: the index row is judged once for both pages
+ok 272 - the index row is judged once for both pages
+  ---
+  duration_ms: 3.414792
+  ...
+# Subtest: the real browser writer and reader rows keep their complete wording
+ok 273 - the real browser writer and reader rows keep their complete wording
+  ---
+  duration_ms: 0.115042
+  ...
+# Subtest: a lend alias never collides within a group, including opposite time zones
+ok 274 - a lend alias never collides within a group, including opposite time zones
+  ---
+  duration_ms: 68.764417
+  ...
+# (node:88574) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/page/dial.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# (node:88574) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: the page's dial binds again after a refused bind
+ok 275 - the page's dial binds again after a refused bind
+  ---
+  duration_ms: 1.350208
+  ...
+# Subtest: a lend worker's dial opens its endpoint again after a refused open
+ok 276 - a lend worker's dial opens its endpoint again after a refused open
+  ---
+  duration_ms: 1.637
+  ...
+# Subtest: a guest's lends name no one relay, so every route the link carries is raced
+ok 277 - a guest's lends name no one relay, so every route the link carries is raced
+  ---
+  duration_ms: 0.737083
+  ...
+# Subtest: a pass kept before relay fallbacks opens at its one relay
+ok 278 - a pass kept before relay fallbacks opens at its one relay
+  ---
+  duration_ms: 0.648792
+  ...
+# Subtest: a relay the page refuses for a lend is said by name as it goes as none
+ok 279 - a relay the page refuses for a lend is said by name as it goes as none
+  ---
+  duration_ms: 1.231584
+  ...
+# Subtest: the page's endpoint binds again, closing the old, when the group's relays change
+ok 280 - the page's endpoint binds again, closing the old, when the group's relays change
+  ---
+  duration_ms: 2.759292
+  ...
+# Subtest: no crate gives test-support to anything but a test
+ok 281 - no crate gives test-support to anything but a test
+  ---
+  duration_ms: 21.003583
+  ...
+# Subtest: test-support under svrngs's [dependencies] is caught, by line
+ok 282 - test-support under svrngs's [dependencies] is caught, by line
+  ---
+  duration_ms: 0.246291
+  ...
+# Subtest: the release and the deploy name no feature
+ok 283 - the release and the deploy name no feature
+  ---
+  duration_ms: 0.16125
+  ...
+# worst case a month: 3.65e-7, 1 in 2736717
+# (node:88577) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: phrase source, pruned list, space and Rust signing-key vector are pinned
+ok 284 - phrase source, pruned list, space and Rust signing-key vector are pinned
+  ---
+  duration_ms: 979.888625
+  ...
+# Subtest: an address is read forgivingly, before any store call, as one canonical phrase
+ok 285 - an address is read forgivingly, before any store call, as one canonical phrase
+  ---
+  duration_ms: 16.989084
+  ...
+# Subtest: an address that cannot be read names what is wrong, and asks the store nothing
+ok 286 - an address that cannot be read names what is wrong, and asks the store nothing
+  ---
+  duration_ms: 5.842708
+  ...
+# Subtest: each answer says what happened: never issued, ended, or unavailable
+ok 287 - each answer says what happened: never issued, ended, or unavailable
+  ---
+  duration_ms: 2.86675
+  ...
+# Subtest: a guesser spending every miss for a month finds an open invitation one time in a million or fewer
+ok 288 - a guesser spending every miss for a month finds an open invitation one time in a million or fewer
+  ---
+  duration_ms: 0.5125
+  ...
+# Subtest: a budget is kept per network: IPv4 by address, IPv6 by its /56
+ok 289 - a budget is kept per network: IPv4 by address, IPv6 by its /56
+  ---
+  duration_ms: 5.234417
+  ...
+# Subtest: provider failures are unavailable with one attempt and no false ended
+ok 290 - provider failures are unavailable with one attempt and no false ended
+  ---
+  duration_ms: 13.014792
+  ...
+# Subtest: ingress bounds, authentication, trusted IP and no public directory
+ok 291 - ingress bounds, authentication, trusted IP and no public directory
+  ---
+  duration_ms: 2.105792
+  ...
+# Subtest: a UTF-8 BOM cannot change the bytes whose signature is checked
+ok 292 - a UTF-8 BOM cannot change the bytes whose signature is checked
+  ---
+  duration_ms: 0.476791
+  ...
+# Subtest: resolver refuses provider failure with retry guidance, never ended
+ok 293 - resolver refuses provider failure with retry guidance, never ended
+  ---
+  duration_ms: 0.154583
+  ...
+# Subtest: debug events name codes and store reasons, never foreign text
+ok 294 - debug events name codes and store reasons, never foreign text
+  ---
+  duration_ms: 2.146709
+  ...
+# Subtest: a lookup is one EVAL of five keys under one hash tag
+ok 295 - a lookup is one EVAL of five keys under one hash tag
+  ---
+  duration_ms: 0.203416
+  ...
+# Subtest: whole-response timeout cancels stalled streams and cannot later publish
+ok 296 - whole-response timeout cancels stalled streams and cannot later publish
+  ---
+  duration_ms: 6.473666
+  ...
+# Subtest: browser proof covers port, method, raw path, body digest, intent and boot challenge
+ok 297 - browser proof covers port, method, raw path, body digest, intent and boot challenge
+  ---
+  duration_ms: 14.389042
+  ...
+# Subtest: the authentication worker never lends its key to a foreign frame or form
+ok 298 - the authentication worker never lends its key to a foreign frame or form
+  ---
+  duration_ms: 0.383625
+  ...
+# Subtest: a navigation the worker is shown no Origin of is its own page’s only by its referrer
+ok 299 - a navigation the worker is shown no Origin of is its own page’s only by its referrer
+  ---
+  duration_ms: 0.219625
+  ...
+# Subtest: a `for in` over the socket finds its states, on the class and on a socket
+ok 300 - a `for in` over the socket finds its states, on the class and on a socket
+  ---
+  duration_ms: 0.995916
+  ...
+# Subtest: a socket sends the bytes each ArrayBufferView views, and nothing of its buffer past them
+ok 301 - a socket sends the bytes each ArrayBufferView views, and nothing of its buffer past them
+  ---
+  duration_ms: 9.391
+  ...
+# Subtest: a string, an ArrayBuffer and a Blob are sent as they are
+ok 302 - a string, an ArrayBuffer and a Blob are sent as they are
+  ---
+  duration_ms: 6.035375
+  ...
+# Subtest: every import into vendor/, ui/, page/ or question.js is versioned, and only ui/view.js imports vendor/
+ok 303 - every import into vendor/, ui/, page/ or question.js is versioned, and only ui/view.js imports vendor/
+  ---
+  duration_ms: 17.730458
+  ...
+# Subtest: a bare ../vendor/preact.js is caught, twice, by name
+ok 304 - a bare ../vendor/preact.js is caught, twice, by name
+  ---
+  duration_ms: 0.330959
+  ...
+# Subtest: an app not saved, storage not kept and the home network not let in are each said, until they are
+ok 305 - an app not saved, storage not kept and the home network not let in are each said, until they are
+  ---
+  duration_ms: 3.759333
+  ...
+# Subtest: the page checks as it opens; current says nothing and runs nothing
+ok 306 - the page checks as it opens; current says nothing and runs nothing
+  ---
+  duration_ms: 0.864208
+  ...
+# Subtest: available offers it; update asks, updated waits, back reloads
+ok 307 - available offers it; update asks, updated waits, back reloads
+  ---
+  duration_ms: 0.100875
+  ...
+# Subtest: a check that cannot be judged is not current, and says nothing until asked
+ok 308 - a check that cannot be judged is not current, and says nothing until asked
+  ---
+  duration_ms: 0.077625
+  ...
+# Subtest: an unknown answer is unread, never current
+ok 309 - an unknown answer is unread, never current
+  ---
+  duration_ms: 0.059333
+  ...
+# Subtest: a refusal keeps its why, and can be tried again or left
+ok 310 - a refusal keeps its why, and can be tried again or left
+  ---
+  duration_ms: 0.073625
+  ...
+# Subtest: a wait that hears nothing says how to open svrngs again
+ok 311 - a wait that hears nothing says how to open svrngs again
+  ---
+  duration_ms: 0.054292
+  ...
+# Subtest: later dismisses an offered update
+ok 312 - later dismisses an offered update
+  ---
+  duration_ms: 0.128375
+  ...
+# Subtest: an update that was already current reloads once, and the reload does not ask again
+ok 313 - an update that was already current reloads once, and the reload does not ask again
+  ---
+  duration_ms: 0.066042
+  ...
+# Subtest: every vendored file is the one pinned
+ok 314 - every vendored file is the one pinned
+  ---
+  duration_ms: 1.914666
+  ...
+# Subtest: one byte changed in hooks.js is caught, by name
+ok 315 - one byte changed in hooks.js is caught, by name
+  ---
+  duration_ms: 6.103375
+  ...
+# Subtest: no file keeps a source map line, and hooks.js imports one Preact, versioned
+ok 316 - no file keeps a source map line, and hooks.js imports one Preact, versioned
+  ---
+  duration_ms: 0.389375
+  ...
+# (node:88595) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/vendor/preact.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: htm bound to Preact writes a vnode, and the hooks load beside it
+ok 317 - htm bound to Preact writes a vnode, and the hooks load beside it
+  ---
+  duration_ms: 8.390042
+  ...
+# (node:88596) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/alexsbryan/dev/svrngs/web/sw.js?v=__VERSION__ is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /Users/alexsbryan/dev/svrngs/web/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# SW: https://group.svrnme.sh/ answered from the network
+# SW: https://group.svrnme.sh/ answered from this build's cache: TypeError: Failed to fetch
+# STORE: a new worker took this page, so it loads again
+# STORE: a new worker took this page
+# STORE: a new worker took this page, so it loads again
+# Subtest: this build's shell is served from its cache
+ok 318 - this build's shell is served from its cache
+  ---
+  duration_ms: 0.66575
+  ...
+# Subtest: an older build's cache does not answer a newer build's request
+ok 319 - an older build's cache does not answer a newer build's request
+  ---
+  duration_ms: 0.089167
+  ...
+# Subtest: the page itself is answered from the network when it answers
+ok 320 - the page itself is answered from the network when it answers
+  ---
+  duration_ms: 0.172167
+  ...
+# Subtest: the page itself is answered from this build's cache when the network fails
+ok 321 - the page itself is answered from this build's cache when the network fails
+  ---
+  duration_ms: 0.157917
+  ...
+# Subtest: an update drops older builds' caches and takes the open pages
+ok 322 - an update drops older builds' caches and takes the open pages
+  ---
+  duration_ms: 0.371333
+  ...
+# Subtest: a page a worker controlled loads again on a new worker's build
+ok 323 - a page a worker controlled loads again on a new worker's build
+  ---
+  duration_ms: 0.118291
+  ...
+# Subtest: a first install leaves the page the person is opening alone, and a later update loads it again
+ok 324 - a first install leaves the page the person is opening alone, and a later update loads it again
+  ---
+  duration_ms: 0.073375
+  ...
+# Subtest: a lend's worker answers its own build's piece, however the address goes on
+ok 325 - a lend's worker answers its own build's piece, however the address goes on
+  ---
+  duration_ms: 1.452959
+  ...
+# Subtest: a lend's worker never answers a newer build's request with its own copy
+ok 326 - a lend's worker never answers a newer build's request with its own copy
+  ---
+  duration_ms: 0.441833
+  ...
+# Subtest: a piece neither saved nor reachable is said, not a broken load
+ok 327 - a piece neither saved nor reachable is said, not a broken load
+  ---
+  duration_ms: 0.476
+  ...
+# Subtest: activation drops older builds' caches and leaves the app's own
+ok 328 - activation drops older builds' caches and leaves the app's own
+  ---
+  duration_ms: 0.393208
+  ...
+# Subtest: one piece that cannot be fetched fails the install, so no worker runs half saved
+ok 329 - one piece that cannot be fetched fails the install, so no worker runs half saved
+  ---
+  duration_ms: 0.4455
+  ...
+# Subtest: an app's window goes dark only for a computer that was reached for
+ok 330 - an app's window goes dark only for a computer that was reached for
+  ---
+  duration_ms: 5.675958
+  ...
