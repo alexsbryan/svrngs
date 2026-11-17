@@ -130,3 +130,25 @@ laws), 071ffb80 (the tier timeout), 24205d87 (the recounts), 46f002f3
 - `tests` step 387-505 s is build-dominated; the touched tier already
   covers the edit loop (172 s warm, CHECKS.md), and the whole gate remains
   the gate before a push.
+
+## Addendum: how many of the fragile can move, computed from the map
+
+Of the 178 fragile gate Rust rows in docs/seams.tsv (the recount's 176
+plus two whose mapping drifted), by the row's own `moves to` and
+`harness missing` columns:
+
+| Bucket | Rows | Where the mass is |
+|---|---|---|
+| KEEP: contained, the fragility is the claim (`moves to` says stays) | 102 | browser 31, svrngs_node 9, conformance 6, install 7 + address 3 + share 2 (as_main landed, a relay remains), join_page 4, peer 4, scenes 4, door/tcp/kept/pages 3 each |
+| MOVE, no harness missing: write the deterministic half, shrink | 13 | scenes 7, browser 3, udp 2 |
+| MOVE, test-only harness (fixture, fake clock, Dialer ctor) | 31 | scenes 9, carried 4, tcp 4, browser 3, udp 3 |
+| MOVE, small product seam the map designs, at the cap | 32 | home 9, relay 4, folders 3, play 3, room 3 |
+
+So 76 can move with no loss of claim (44 without touching product
+code), 102 stay as the contained set. Engine-pairs and binary variants
+count as separate rows, so the distinct kept claims are fewer than 102
+— that is how the 95% target (~51 rows) stays reachable. The 13
+resolver Redis rows are Node-tier and outside this count (the Lua
+Redis runs is the decider). Basis: `python3` over docs/seams.tsv,
+fragile rows, `moves to` prefix `stays` vs a named home, and the
+harness column's own words; run 2026-11-17 at 6be96134.
