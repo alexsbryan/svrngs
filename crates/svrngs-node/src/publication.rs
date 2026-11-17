@@ -78,14 +78,33 @@ impl Receipt {
             _ if !current || now >= self.until => Phase::Ended,
             phase => phase,
         };
-        tracing::debug!(target: "publication", group, ?state, current, "publication: local status; no resolver request");
+        // While the invitation admits, the long link /link gives this page
+        // too (home.rs `link`, svrngs-core `https_link`'s spelling), and its
+        // QR code: a phone scanning it never asks the resolver.
+        let link = (self.page.as_ref())
+            .filter(|_| matches!(state, Phase::Pending | Phase::Open))
+            .map(|p| format!("{p}#{}", self.token));
+        let qr = link.as_deref().and_then(qr);
+        tracing::debug!(target: "publication", group, ?state, current, link = link.is_some(), qr = qr.is_some(), "publication: local status; no resolver request");
         let url = reqwest13::Url::parse(&self.resolver).map_err(fault)?;
         let at = url.origin().ascii_serialization();
         let address = self.phrase.as_ref().map(|phrase| format!("{at}/{phrase}"));
         Ok(
-            serde_json::json!({"id": self.id, "state": state, "phrase": self.phrase, "address": address, "until": self.until}),
+            serde_json::json!({"id": self.id, "state": state, "phrase": self.phrase, "address": address, "until": self.until, "link": link, "qr": qr}),
         )
     }
+}
+
+/// `link` as a QR code the home page draws (group-links.js): an SVG path,
+/// a unit square for each dark module, in a square `size` wide with the
+/// quiet zone of four around it. None when the link is too long for one.
+fn qr(link: &str) -> Option<serde_json::Value> {
+    let code = qrcodegen::QrCode::encode_text(link, qrcodegen::QrCodeEcc::Medium).ok()?;
+    let n = code.size();
+    let dark = |i: &i32| code.get_module(i % n, i / n);
+    let square = |i: i32| format!("M{} {}h1v1h-1z", i % n + 4, i / n + 4);
+    let path: String = (0..n * n).filter(dark).map(square).collect();
+    Some(serde_json::json!({"size": n + 8, "path": path}))
 }
 
 fn answer(result: Result<serde_json::Value, Fault>) -> Response {

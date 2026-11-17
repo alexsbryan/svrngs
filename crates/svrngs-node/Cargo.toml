@@ -81,6 +81,10 @@ irpc = { version = "=0.17.0", default-features = false }
 # #182), and read back by the home page's browser test (home.rs `WHEN`):
 # the chrono and clock the command's already takes from the lock.
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
+# An invitation's QR code, for the home page to draw (publication.rs `qr`):
+# Nayuki's reference encoder, MIT, with no dependency of its own, where a
+# vendored JavaScript one would be counted against the page's budget.
+qrcodegen = "=1.8.0"
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a

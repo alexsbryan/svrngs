@@ -1132,8 +1132,13 @@ Any resolver refusal, unreadable answer or timeout leaves a recoverable
 pending publication or withdrawal and says "joining is temporarily
 unavailable" with retry guidance. The shared HTTP/TLS builder is used with
 redirects and automatic retries disabled, a ten-second whole-response bound
-and an 8 KiB response ceiling. The browser receives neither the invitation
-secret nor the record API token. The resolver's native mutation contract and
+and an 8 KiB response ceiling. The browser never receives the record API
+token. While the invitation admits, pending or open, the status carries its
+long link, the https link `/link` already gives this same page
+(svrngs-core `https_link`'s spelling), and that link's QR code, an SVG path
+of Nayuki's `qrcodegen` encoding (`publication.rs` `qr`); so both work while
+the resolver is unavailable and survive reload and restart, and a closing,
+closed or ended invitation's link is never shown again. The resolver's native mutation contract and
 fake-resolver proof are in `demo/runs/onboarding/2026-11-04-native/README.md`.
 The resolver endpoint is read from the host's `join-resolver` file for this
 boundary. The native status includes the short address at that resolver's

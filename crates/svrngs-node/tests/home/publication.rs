@@ -5,6 +5,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::sync::{mpsc, oneshot};
 
 const PHRASE: &str = "acorn-basil-cabin-daisy-eagle";
+/// The page the seeded computer came from (`seeded`), its links' https origin.
+const PAGE: &str = "https://group.example/";
 
 struct Call {
     body: Value,
@@ -141,6 +143,7 @@ fn valid(node: &Node, token: &str) -> bool {
 }
 
 async fn seeded(dir: &std::path::Path) -> Node {
+    std::fs::write(dir.join(svrngs_node::invite::ORIGIN_FILE), PAGE).unwrap();
     let node = on_wire::start(1, dir).await;
     node.rail()
         .set_seed(
@@ -256,7 +259,18 @@ async fn publication_survives_reload_and_closes_only_its_invitation() {
         }
     };
     node.rail().commit(NS, &redeem(2, "sam")).unwrap().unwrap();
-    assert!(!got.body.contains(sent["token"].as_str().unwrap()));
+    // The long link /link gives this page, and its QR code, while the
+    // invitation admits (publication.rs `shown`): the page's https link
+    // with the invitation's token, as home.rs `link` spells it.
+    let link = format!("{PAGE}#{}", sent["token"].as_str().unwrap());
+    assert_eq!(got.json()["link"], link.as_str());
+    let qr = &got.json()["qr"];
+    let size = qr["size"].as_u64().unwrap();
+    assert!(
+        (29..=185).contains(&size),
+        "a QR code with its quiet zone: {size}"
+    );
+    assert!(qr["path"].as_str().unwrap().starts_with('M'), "{qr}");
     assert_eq!(status(&node).await, got.json());
     let close = json!({"group": NS, "id": kept["id"]}).to_string();
     let (closed, sent_close) = tokio::join!(
@@ -265,6 +279,11 @@ async fn publication_survives_reload_and_closes_only_its_invitation() {
     );
     assert_eq!(closed.status, 200, "{}", closed.body);
     assert_eq!(closed.json()["state"], "closed");
+    assert!(
+        !closed.body.contains(sent["token"].as_str().unwrap()),
+        "a closed invitation's link is never shown again: {}",
+        closed.body
+    );
     assert_eq!(sent_close["id"], kept["id"]);
     assert_eq!(sent_close["token"], Value::Null);
     assert!(
