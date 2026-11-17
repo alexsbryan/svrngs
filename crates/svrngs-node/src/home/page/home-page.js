@@ -86,7 +86,7 @@ function Arrival({ state }) {
           ? html`
         <p>Start with your shared folder. What you put there reaches everyone in this group, and what they add reaches you.</p>
         ${welcomeFolders(welcome)}
-        <p>Open the folder to get started. If there is a WELCOME.txt, read it for your host’s welcome. Add a small text file named after you to say hello.</p>
+        <p>Open the folder to get started. If there is a WELCOME.txt, read it for your host’s welcome. To say hello, drag a photo, or any file, into the folder.</p>
       `
           : html`<p>Try refreshing this page, or ask the person who invited you for help.</p>`
       }

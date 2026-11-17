@@ -343,7 +343,11 @@ test('a native arrival welcomes to its group alone, with its folder, until All y
     ['group-h1'],
   );
   assert.deepEqual(page.text('#home h2'), ['Welcome to house']);
-  assert.ok(!page.text().join('\n').includes('Invite people here'));
+  assert.ok(!page.text().join('\n').includes('Invite people'));
+  // A first hello any computer can make: Finder makes no empty file, and
+  // TextEdit saves rich text (demo/runs/onboarding/2026-11-04-scene/FEDORA.md:32).
+  const hello = page.text('#group-h1 p').find((p) => p.includes('say hello')) ?? '';
+  assert.ok(hello.includes('drag a photo, or any file, into the folder'), hello);
   assert.ok(page.text('#group-h1 .folder')[0].includes(FOLDER), page.text('.folder').join());
   const opener = page.text('#group-h1 button').filter((b) => b.startsWith('Open shared files in '));
   assert.deepEqual(opener, ['Open shared files in Finder']);
