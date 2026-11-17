@@ -172,3 +172,41 @@ test('the host’s controls: each phase drawn from its receipt, one post a press
     'the page asks its own origin alone',
   );
 });
+
+// A press here disables its button while it is answered, or takes it away
+// once it is, and either drops a browser's focus to the top of the page
+// (Chromium and WebKit both, with Playwright 1.59.1). So the answer takes
+// the focus (group-links.js `PublicationControls`): the invitation's first
+// Copy once it lets people in, else what joining now says; and nothing is
+// taken on a look. A device link's button stays pressable while its link
+// is made, so it keeps the focus it was pressed with, the link said beside
+// it (`role="status"`).
+test('the answer to a press takes the focus its button lost', async () => {
+  const focused = (page) => words(page.document.activeElement);
+  let held = { now: null };
+  let at = ada(held, () => (held.now = receipt('open')));
+  let page = await open(`${AT}/?ui=a`, at.answers);
+  assert.equal(page.document.activeElement, page.document.body, 'nothing taken on a look');
+  await pressed(page, 'Invite people');
+  assert.equal(focused(page), 'Copy the link');
+
+  held = { now: receipt('open') };
+  at = ada(held, () => (held.now = receipt('closed')));
+  page = await open(`${AT}/?ui=a`, at.answers);
+  assert.equal(page.document.activeElement, page.document.body, 'nothing taken on a look');
+  await pressed(page, 'Close joining');
+  assert.equal(focused(page), 'Joining is closed');
+
+  at = ada({ now: null }, () => ({}));
+  let made;
+  at.answers['POST /link'] = () => new Promise((give) => (made = give));
+  page = await open(`${AT}/?ui=a`, at.answers);
+  await page.press('#home section button', 'Add your phone or another computer');
+  const [device] = page
+    .all('#home section button')
+    .filter((b) => words(b) === 'Add your phone or another computer');
+  assert.ok(!('disabled' in device.attributes), 'pressable while its link is made');
+  made({ client: 'svrngs://join/DEVICE', https: null, device: true });
+  await page.settle();
+  assert.ok(words(page.all('#home section p.link')[0]).includes('svrngs://join/DEVICE'));
+});

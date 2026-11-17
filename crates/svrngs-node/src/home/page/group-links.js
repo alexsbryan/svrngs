@@ -6,7 +6,7 @@
 // (`LinkSaid`), or why it was not, or that a device link ends the
 // invitation. The machine is the group's own (ui/view.js `useMachine`),
 // so HOME's step never sees it.
-import { html, useMachine } from '../ui/view.js?v=__VERSION__';
+import { html, useEffect, useMachine, useRef } from '../ui/view.js?v=__VERSION__';
 import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { LINK, admits, busy } from './group-link.js?v=__VERSION__';
@@ -44,11 +44,11 @@ function publicationInfo(receipt) {
     case 'pending':
       return html`<p>Ends ${new Date(receipt.until * 1000).toLocaleString()}. Keep this computer on and awake until everyone’s in.${receipt.state === 'pending' && ' The short address isn’t ready: the service that makes it didn’t answer. Retry it in a minute from this computer.'}</p>`;
     case 'closed':
-      return html`<p>Joining is closed</p>`;
+      return html`<p tabindex="-1">Joining is closed</p>`;
     case 'ended':
-      return html`<p>This invitation ended. Everyone already in stays.</p>`;
+      return html`<p tabindex="-1">This invitation ended. Everyone already in stays.</p>`;
     case 'closing':
-      return html`<p>Closing isn’t confirmed: the service that holds the short address didn’t answer, so people can still join. Retry in a minute from this computer.</p>`;
+      return html`<p tabindex="-1">Closing isn’t confirmed: the service that holds the short address didn’t answer, so people can still join. Retry in a minute from this computer.</p>`;
     case undefined:
       return null;
   }
@@ -66,16 +66,25 @@ const ways = ({ link, address, qr, state }) => html`
 
 // Invite people, its invitation (`ways`) and what it says, and Close
 // joining. Each change is said as it is drawn (`aria-live`). A failure the
-// receipt says itself, pending or closing, is not said twice.
+// receipt says itself, pending or closing, is not said twice. A press here
+// disables its button while it is answered, or takes it away once it is,
+// either of which drops a browser's focus to the top of the page; so once
+// answered, the focus goes to the answer: the invitation's first Copy while
+// it lets people in, else what joining now says (`tabindex="-1"`).
 /** @param {{ state: State, send: Store<State, Message>['dispatch'], doing: { state: string } }} props */
 function PublicationControls({ state, send, doing }) {
   const receipt = state.publication;
   const phase = receipt?.state ?? 'none';
   const { action, words } = publicationAction(state);
-  return html`<div class="publication" aria-live="polite">
+  const part = useRef(/** @type {HTMLDivElement | null} */ (null));
+  useEffect(() => {
+    const to = part.current?.querySelector(admits(receipt) ? 'button' : '[tabindex]');
+    if (state.pressed && !busy(state)) /** @type {HTMLElement | null | undefined} */ (to)?.focus();
+  }, [receipt, state.publicationWhy]);
+  return html`<div class="publication" aria-live="polite" ref=${part}>
     ${receipt && ways(receipt)}
     ${publicationInfo(receipt)}
-    ${state.publicationWhy && !['pending', 'closing'].includes(phase) && html`<p>${state.publicationWhy}</p>`}
+    ${state.publicationWhy && !['pending', 'closing'].includes(phase) && html`<p tabindex="-1">${state.publicationWhy}</p>`}
     <p>
       ${(phase !== 'open' || state.at.publication === 'refused') && html`<${Act} words=${words} doing=${doing} on=${{ type: 'publication', action }} send=${send} />`}
       ${admits(receipt) && html`<${Act} words="Close joining" doing=${doing} on=${{ type: 'publication', action: 'close' }} send=${send} />`}
@@ -137,6 +146,9 @@ function Links({ g: group }) {
     ),
   );
   const name = group.name ?? 'this group';
+  // The invitation's presses go busy while answered (`PublicationControls`).
+  // A link's do not: disabled, a button drops the focus to the top of the
+  // page, and LINK refuses a second press while one is made (`busy`).
   const doing = { state: busy(state) ? 'busy' : 'idle' };
   // A guest's hours: `state.visit` is the Field's string, as `Number` reads it.
   const guest = state.guest
@@ -150,7 +162,6 @@ function Links({ g: group }) {
         />
         <${Act}
           words="Make a link for your guest"
-          doing=${doing}
           on=${{ type: 'make', device: false, guest: true, hours: `${Number(state.visit) / 3600} hours` }}
           send=${send}
         />
@@ -165,7 +176,6 @@ function Links({ g: group }) {
     <p>
       <${Act}
         words="Add your phone or another computer"
-        doing=${doing}
         on=${{ type: 'make', device: true }}
         send=${send}
       />

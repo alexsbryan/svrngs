@@ -139,6 +139,14 @@ class Element {
   remove() {
     this.parentNode?.removeChild(this);
   }
+  // The first element under this one a selector names (`select`), and the
+  // focus taken, which the document then names (`activeElement`).
+  querySelector(selector) {
+    return select(this, selector)[0] ?? null;
+  }
+  focus() {
+    this.ownerDocument.activeElement = this;
+  }
 }
 const sibling = (node, step) => {
   const kin = node.parentNode?.childNodes ?? [];
@@ -222,6 +230,8 @@ export async function open(address, answers) {
     addEventListener: (type, listener) => (document.listeners[type] = listener),
   };
   document.body = new Element('body', document);
+  // A page as opened: nothing focused, so the body, as a browser says it.
+  document.activeElement = document.body;
   document.body.className = 'layout-b';
   // home/index.html's #home, the one place the edge draws into.
   document.body.appendChild(document.createElement('main')).setAttribute('id', 'home');

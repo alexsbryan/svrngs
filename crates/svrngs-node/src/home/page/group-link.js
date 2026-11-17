@@ -39,6 +39,7 @@ import { get, post } from './routes.js?v=__VERSION__';
  * @property {Publication | null} [publication]
  * @property {string} [publicationWhy]
  * @property {boolean} [ending] a device link's first press said it ends the invitation
+ * @property {boolean} [pressed] the invitation's last change was pressed for, so its answer takes the focus
  */
 
 /** The native receipt as /publication shows it (publication.rs `shown`): while
@@ -71,6 +72,8 @@ import { get, post } from './routes.js?v=__VERSION__';
 
 // The publication read again, after any change to it or a link made.
 const REREAD = /** @type {Effect} */ ({ run: 'publicationRead', failed: 'publicationUnread' });
+// A press for the invitation: why the last was refused, said no more.
+const PRESSED = { publicationWhy: undefined, pressed: true };
 // Whether a press waits: a link is being made, or the invitation read or changed.
 export const busy = (/** @type {State} */ state) =>
   state.at.link === 'making' || ['working', 'reading'].includes(state.at.publication);
@@ -108,11 +111,11 @@ export const LINK = (group) => ({
       case 'publication':
         if (busy(state)) return no(state, 'the invitation request is answered first');
         return message.action === 'read'
-          ? go(state, { publication: 'reading' }, { publicationWhy: undefined }, REREAD)
+          ? go(state, { publication: 'reading' }, PRESSED, REREAD)
           : go(
               state,
               { publication: 'working' },
-              { publicationWhy: undefined, ending: undefined },
+              { ...PRESSED, ending: undefined },
               {
                 run: 'publicationChange',
                 action: message.action,
@@ -139,7 +142,7 @@ export const LINK = (group) => ({
         return go(
           state,
           { link: 'making' },
-          { ending: undefined },
+          { ending: undefined, pressed: undefined },
           {
             run: 'make',
             asked: message,
