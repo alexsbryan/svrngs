@@ -197,17 +197,9 @@ export function createResolver(config) {
         secret: JSON.stringify({ token: body.token, page: body.page, until: body.until }),
         id: body.id,
       };
-      if (
-        Buffer.byteLength(
-          JSON.stringify({
-            result: JSON.stringify({
-              state: 'open',
-              phrase: 'xxxxx-xxxxx-xxxxx-xxxxx-xxxxx',
-              secret: q.secret,
-            }),
-          }),
-        ) > 8192
-      )
+      // The largest reply a lookup of this secret can bring, under the 8 KiB read.
+      const largest = { state: 'open', phrase: 'xxxxx-xxxxx-xxxxx-xxxxx-xxxxx', secret: q.secret };
+      if (Buffer.byteLength(JSON.stringify({ result: JSON.stringify(largest) })) > 8192)
         throw new Refusal('secret_response_limit');
       subject = body.action === 'status' ? ipKey : `owner:${owner}`;
     } else {
@@ -216,18 +208,9 @@ export function createResolver(config) {
     const date = new Date();
     q.monthStart = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1) / 1000;
     q.monthEnd = Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1) / 1000;
-    const command = [
-      'EVAL',
-      SCRIPT,
-      '5',
-      `${PREFIX}:generation`,
-      `${PREFIX}:reservations`,
-      `${PREFIX}:active`,
-      `${PREFIX}:quotas`,
-      `${PREFIX}:quota:${subject}`,
-      GENERATION,
-      JSON.stringify(q),
-    ];
+    const keys = ['generation', 'reservations', 'active', 'quotas', `quota:${subject}`];
+    const named = keys.map((key) => `${PREFIX}:${key}`);
+    const command = ['EVAL', SCRIPT, String(keys.length), ...named, GENERATION, JSON.stringify(q)];
     const response = await fetcher(url, {
       method: 'POST',
       redirect: 'error',

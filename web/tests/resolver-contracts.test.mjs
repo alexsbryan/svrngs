@@ -5,6 +5,7 @@ import { sign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { createResolver, phrase } from '../../resolver/handler.mjs';
+import { GENERATION, PREFIX, SCRIPT } from '../../resolver/store.mjs';
 import { ownerKey, owner, hash, fixed, body, mutation, refused } from './resolver-fixture.mjs';
 
 test('phrase source, space and Rust signing-key vector are pinned', () => {
@@ -159,6 +160,43 @@ test('debug events name codes and store reasons, never foreign text', async () =
     'unavailable:store_refusal',
   ]);
   assert.deepEqual(await seen(refusing(), mutation('x'.repeat(8193))), ['unavailable:body_limit']);
+  // 2,000 quotes fit the 8 KiB body, but escaped twice in the store's reply they do not.
+  assert.deepEqual(await seen(refusing(), mutation(body({ token: '"'.repeat(2000) }))), [
+    'unavailable:secret_response_limit',
+  ]);
+  assert.deepEqual(await seen(refusing('lookup_limit'), mutation(body())), [
+    'store:lookup_limit',
+    'publish:unavailable',
+    'unavailable:store_refusal',
+  ]);
+});
+
+test('a lookup is one EVAL of five keys under one hash tag', async () => {
+  const sent = [];
+  const handle = createResolver({
+    token: 'fixture',
+    fetch: async (_url, options) => {
+      sent.push(JSON.parse(options.body));
+      return Response.json({
+        result: JSON.stringify({ state: 'ended', phrase: '', secret: false }),
+      });
+    },
+  });
+  await handle(new Request(`https://join.example/${fixed}`), '127.0.0.1');
+  assert.equal(sent.length, 1);
+  const [command] = sent;
+  assert.deepEqual(command.slice(0, 2), ['EVAL', SCRIPT]);
+  assert.deepEqual(command.slice(2, 9), [
+    '5',
+    `${PREFIX}:generation`,
+    `${PREFIX}:reservations`,
+    `${PREFIX}:active`,
+    `${PREFIX}:quotas`,
+    `${PREFIX}:quota:ip:${hash('127.0.0.1')}`,
+    GENERATION,
+  ]);
+  assert.equal(JSON.parse(command[9]).phrase, fixed);
+  assert.equal(command.length, 10);
 });
 
 test('whole-response timeout cancels stalled streams and cannot later publish', async (t) => {
