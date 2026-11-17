@@ -1,0 +1,67 @@
+deploy-resolver: 18d3b04e to svrngs-join (svrnmesh) from /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.SaShhBktg5/upload
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+
+  Directory       /private/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.SaShhBktg5/upload
+
+Searching for existing projects…
+
+✓ Linked          svrnmesh/svrngs-join
+
+Retrieving project…
+> Downloading a fresh `VERCEL_OIDC_TOKEN` for svrnmesh/svrngs-join
+Downloading
+
+✓ Created         .env.local file and added it to .gitignore
+<claude-code-hint v="1" type="plugin" value="vercel@claude-plugins-official" />
+Vercel CLI 59.10.0 (Node.js 20.20.2)
+Deploying svrngs-join
+Uploading [--------------------] (0.0B/20.3KB)
+Uploading [=====---------------] (5.9KB/20.3KB)
+Uploading [====================] (20.3KB/20.3KB)
+  Inspect         https://vercel.com/svrnmesh/svrngs-join/8wrJw4Z2rAXgCVJrc1wbA3JK4t8R
+  Production      https://svrngs-join-9k42dycms-svrnmesh.vercel.app
+Building…
+Building…
+Running build in Washington, D.C., USA (East) – iad1
+Build machine configuration: 2 cores, 7 GB
+Retrieving list of deployment files...
+Previous build caches not available.
+Downloading 6 deployment files...
+Running "vercel build"
+Vercel CLI 65.15.0
+Installing dependencies...
+npm warn Unknown env config "cache-dir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+up to date in 406ms
+Build Completed in /vercel/output [680ms]
+Deploying outputs...
+[2K[1A[2K[G  Production      https://svrngs-join-9k42dycms-svrnmesh.vercel.app
+Completing…
+▲ Aliased         https://join.svrnme.sh
+{
+  "status": "ok",
+  "deployment": {
+    "id": "dpl_8wrJw4Z2rAXgCVJrc1wbA3JK4t8R",
+    "url": "https://svrngs-join-9k42dycms-svrnmesh.vercel.app",
+    "inspectorUrl": "https://vercel.com/svrnmesh/svrngs-join/8wrJw4Z2rAXgCVJrc1wbA3JK4t8R",
+    "readyState": "READY",
+    "target": "production",
+    "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_8wrJw4Z2rAXgCVJrc1wbA3JK4t8R"
+  },
+  "message": "Deployment svrngs-join-9k42dycms-svrnmesh.vercel.app ready.",
+  "next": [
+    {
+      "command": "vercel curl https://svrngs-join-9k42dycms-svrnmesh.vercel.app",
+      "when": "Verify deployment, including when Deployment Protection is enabled"
+    },
+    {
+      "command": "vercel inspect svrngs-join-9k42dycms-svrnmesh.vercel.app --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.SaShhBktg5/upload",
+      "when": "Inspect deployment"
+    },
+    {
+      "command": "vercel deploy --prod --scope svrnmesh --cwd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.SaShhBktg5/upload",
+      "when": "Promote to production"
+    }
+  ]
+}
+deploy-resolver: upload left at /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.SaShhBktg5/upload, its CLI files deleted

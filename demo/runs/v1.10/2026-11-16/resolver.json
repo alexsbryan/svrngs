@@ -1,0 +1,42 @@
+{
+  "base": "https://join.svrnme.sh/",
+  "checked": "2026-11-17T06:10:11.250940+00:00",
+  "answers": {
+    "missing": {
+      "path": "acorn-basil-robin-8982",
+      "status": 404,
+      "verdict": "passed",
+      "body": {
+        "state": "missing",
+        "message": "No invitation has this address. Check each word and the number with whoever gave it to you."
+      }
+    },
+    "wrong": {
+      "path": "zzzzz-basil-robin-0042",
+      "status": 404,
+      "verdict": "passed",
+      "body": {
+        "state": "wrong",
+        "message": "\u201czzzzz\u201d isn't one of the words. Check the address with whoever gave it to you."
+      }
+    }
+  },
+  "files": {
+    "handler.mjs": {
+      "live": "9ebf69535e381f4e60579175653cf277f43da4c9b749706d4c6731148f438d72",
+      "source": "9ebf69535e381f4e60579175653cf277f43da4c9b749706d4c6731148f438d72",
+      "verdict": "passed"
+    },
+    "store.mjs": {
+      "live": "e897c0d3c478a2412edf09b4d7f164f0c4f93873a15e37897032ebe38088b62c",
+      "source": "e897c0d3c478a2412edf09b4d7f164f0c4f93873a15e37897032ebe38088b62c",
+      "verdict": "passed"
+    },
+    "words.txt": {
+      "live": "95a67ed8c2e5dee22d594f2f9b2752ad55b5149790bfe24dc895a9e0d7a13b39",
+      "source": "95a67ed8c2e5dee22d594f2f9b2752ad55b5149790bfe24dc895a9e0d7a13b39",
+      "verdict": "passed"
+    }
+  },
+  "state": "passed"
+}

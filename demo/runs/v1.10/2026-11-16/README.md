@@ -67,15 +67,71 @@ still the last one.
 
 ## Publication
 
-PUBLICATION
+`publish.py` ran `scripts/deploy-page.sh` under the gate lock in a clean
+detached worktree at 18d3b04e (`v1.10`), with a target directory of its
+own, from 2026-11-17 06:02 to 06:09 UTC, exit 0 (`publish.json`,
+`publish.log`). Free disk was 16 GiB at the start. The record was written
+outside the worktree and copied here after. The build meets its groups at
+n0's relays (`SHIPPED`), so no relay was asked. The page built as version
+660baf7db628, and `svrngs` and `give` built for all four platforms. Vercel
+deployment `dpl_4UVhJgrj875JKoMkjiSNvs6WnoBP` reached production, aliased
+to `https://group.svrnme.sh`. The CLI wrote `.vercel/`, `.env.local` and
+`.gitignore` into the upload directory. All three answered 404 live, and
+the directory was deleted after.
 
 ## Readback
 
-READBACK
+`verify.py` passed at 2026-11-17 06:09 UTC (`verification.json`). Its six
+planted faults were rejected first. Then:
+
+- 78 public files fetched from `group.svrnme.sh` each equaled the built
+  site's bytes.
+- The live `get/SHA256SUMS` equaled the built one (`SHA256SUMS`,
+  `live-sums.txt`) and named exactly the eight downloads.
+- The live page is version 660baf7db628, not V1.9's fb5ab80cf0a6, and the
+  live `sw.js` names it and sends a navigation to the network first.
+- The live `install.sh` equals the built one.
+- Both frame policies were as `vercel.json` sets them.
+- `release-18d3b04e.group.svrnme.sh` served the same page.
+- `.env.local`, `.vercel/project.json` and `vercel.json` answered 404.
+- The downloaded darwin-aarch64 `svrngs` and `give` started.
+
+No other platform's program was run here, and no home page was opened
+from the published build: the home page's own evidence is the gates
+above.
 
 ## The resolver
 
-RESOLVER
+After the page's readback, as the order asks: a V1.10 computer reads
+both five-word phrases and the new ones (`publication.rs:296`), so the
+downloads went first.
+
+`deploy-resolver.sh v1.10` ran at 2026-11-17 06:09:55 UTC, exit 0
+(`resolver-deploy.log`). It uploaded the six runtime files from
+`git archive v1.10 resolver`, their digests in `resolver-upload.txt`, to
+project `svrngs-join`. Deployment `dpl_8wrJw4Z2rAXgCVJrc1wbA3JK4t8R` was
+READY and aliased to `https://join.svrnme.sh`. The production
+`SVRNGS_RESOLVER_TOKEN` was the project's already (`vercel env ls
+production`, a Secret, 12 days old). No provider data, generation or
+reservation was touched. The store's keys are V1.9's: the new counters are
+fields in the same quota records, and `lookupMonth` keeps its count under
+a cap of 30,000 instead of 20,000 (`git diff v1.9..v1.10 --
+resolver/store.mjs`). The upload directory was deleted after.
+
+`verify-resolver.py` passed at 06:10 UTC (`resolver.json`), after its
+four plants were rejected:
+
+- `acorn-basil-robin-8982`, never issued, answered 404 `missing`, "No
+  invitation has this address…". The resolver before answered 503 to the
+  same shape (`resolver-before.txt`). So the new reading is live and it
+  reaches its store.
+- `zzzzz-basil-robin-0042` answered 404 `wrong`, naming “zzzzz”.
+- Both answers were `no-store` and `no-referrer`.
+- The live `handler.mjs`, `store.mjs` and `words.txt` equal the tag's.
+- `join.svrnme.sh/.env.local`, `.vercel/project.json` and `.gitignore`
+  reach the resolver, not a file (404 JSON).
+
+The two lookups spent one miss of this network's budget.
 
 ## Not verified, not done
 
