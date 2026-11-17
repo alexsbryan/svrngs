@@ -25,8 +25,12 @@
 //                     sound a media element plays and seeks by Range, sent
 //                     as it is read
 //   POST /upload      read as it streams; answers `<bytes> <sha-256> <its Content-Length>`
-//   GET  /app-sw.js   its own service worker, answering `sw-probe`
+//   GET  /app-sw.js   its own service worker, answering `sw-probe`, and
+//                     `realm-page.html`, `realm-frame.html` and
+//                     `realm-nested.js` with a probe of its own, under no policy
 //   GET  /sw-probe    `from the server`, when no worker of its own answers
+//   GET  /realm-page.html, /realm-frame.html, /realm-nested.js, /realm-probe.js
+//                     the same probe, from here, under a policy refusing `eval`
 //   GET  /redirect    refused unless asked on its own address,
 //                     `localhost:<port>`; else an absolute redirect there
 //   GET  /landed      where that lands
@@ -159,10 +163,28 @@ function big(req, res) {
   res.end();
 }
 
+// What a page, a frame or a worker says of itself (checks.js `documents`):
+// which it is, where it came from, and what `eval` did there.
+const probe = (
+  from,
+) => `const which = typeof document === 'undefined' ? 'worker' : self === top ? 'page' : 'frame';
+let ran = 'eval ran';
+try { eval('1'); } catch (error) { ran = error.name; }
+new BroadcastChannel('realm').postMessage({ which, from: '${from}', eval: ran });`;
+const STRICT = {
+  'content-security-policy': "default-src 'self'; script-src 'self'",
+  'cross-origin-embedder-policy': 'require-corp',
+};
 const worker = `self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
 self.addEventListener('fetch', (e) => {
-  if (new URL(e.request.url).pathname.endsWith('/sw-probe')) e.respondWith(new Response("from the app's worker"));
+  const path = new URL(e.request.url).pathname;
+  if (path.endsWith('/sw-probe')) e.respondWith(new Response("from the app's worker"));
+  const page = /\\/realm-(page|frame)\\.html$/.test(path);
+  if (page || path.endsWith('/realm-nested.js'))
+    e.respondWith(new Response(page ? '<!doctype html><script>' + ${JSON.stringify(probe('app'))} + '</script>' : ${JSON.stringify(probe('app'))}, {
+      headers: { 'content-type': page ? 'text/html' : 'text/javascript', 'cross-origin-embedder-policy': 'require-corp' },
+    }));
 });`;
 
 const server = http.createServer((req, res) => {
@@ -239,6 +261,18 @@ const server = http.createServer((req, res) => {
       return sends(res, 200, 'text/javascript', worker);
     case '/sw-probe':
       return sends(res, 200, 'text/plain', 'from the server');
+    case '/realm-page.html':
+    case '/realm-frame.html':
+      return sends(
+        res,
+        200,
+        'text/html',
+        '<!doctype html><script src="realm-probe.js"></script>',
+        STRICT,
+      );
+    case '/realm-probe.js':
+    case '/realm-nested.js':
+      return sends(res, 200, 'text/javascript', probe('lend'), STRICT);
     case '/redirect':
       if (!own.includes(req.headers.host))
         return sends(res, 403, 'text/plain', `host ${req.headers.host} is not allowed`);

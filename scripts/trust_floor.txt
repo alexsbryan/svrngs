@@ -25,8 +25,11 @@
 # phone, and reach only what svrngs needs. An app's own service worker runs
 # in a realm of its own, a dedicated worker its page starts, never beside
 # them: its script loads through svrngs's worker like any request, so it is
-# held by the policy that app's pages get (home/session.js `realmKept`), as
-# is any worker an app's page starts itself.
+# held by the policy that app's pages get (home/session.js `realmKept`). It
+# answers only the subresources of the page that started it. Every document
+# and worker, a navigation, a frame or a worker's script, comes from the
+# lend under the policy svrngs serves it with, since an answer's headers
+# would set its policy: no app's worker can answer one with none.
 #
 # page <name> <file> <anchor>: the policy that file serves, the one string
 #   literal after the anchor, which the file holds once. Under it, each

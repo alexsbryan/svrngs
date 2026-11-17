@@ -1333,8 +1333,8 @@ async function stopping(label) {
   }
 }
 
-// The app's own worker's answer, in its realm, when this origin's own page
-// asked this lend; else the lend's, signed as the person when this origin's
+// The app's own worker's answer, in its realm, to a subresource its page
+// asked of this lend; else the lend's, signed as the person when this origin's
 // own page asked it (authority.js `maySign`) and never for a lend it only
 // reads, and a realm's script with svrngs's prelude before it.
 /**
@@ -1344,11 +1344,11 @@ async function stopping(label) {
  */
 async function answered(fetchEvent, url, where) {
   const allowed = await maySign(fetchEvent, scope.clients, SCOPE.origin);
-  const script = realmScript(fetchEvent);
-  // App code must not turn an untrusted navigation into an authorized fetch.
-  const asked = allowed && where.label === OWN && !script;
-  const answer = asked ? await realmAnswer(fetchEvent, scope.clients) : undefined;
+  // A realm answers only its own page's subresources (session.js
+  // `realmAnswer`), at this lend's own address: never a navigation.
+  const answer = allowed && where.label === OWN ? await realmAnswer(fetchEvent) : undefined;
   if (answer) return answer;
+  const script = realmScript(fetchEvent);
   const response = await lent(fetchEvent.request, url, where, allowed && !where.read);
   return script ? preluded(response, script) : response;
 }

@@ -303,12 +303,17 @@ a dedicated worker at the app's script, which loads through svrngs's worker
 like any request and so under the policy the app's pages get, with a short
 svrngs prelude first (and, for a cross-origin isolated page, `require-corp`
 where the script names no embedder policy, which a dedicated worker needs
-and a service worker does not). svrngs's worker hands it, over a port, the
-fetches its own page asks, by the page's client and else any open page of
-the app's, and takes its answer; with no page open the lend answers, and
-its stand-ins for `clients`, `registration` and `skipWaiting` do nothing
-(`home/session.js` `realmKept`). A phone's lend worker does the same,
-holding the pass under its own policy (`web/vercel.json`).
+and a service worker does not). svrngs's worker hands it, over a port, only
+the subresources the page that started it asks (a fetch, a script, a style,
+an image, media and the like), and takes its answer. Every document and
+worker, a navigation, a frame or a worker's script, comes from the lend,
+under the policy svrngs serves it with and with the session's client in
+it, since an answer's headers set a document's or a worker's policy. With
+no page open the lend answers everything, and the realm's stand-ins for
+`clients`, `registration` and `skipWaiting` do nothing (`home/session.js`
+`realmKept`, `SUBRESOURCES`). A phone's lend worker does the same, its
+shim in each page, holding the pass under its own policy
+(`web/vercel.json`).
 An absence says "Open svrngs from your computer", naming the opener.
 Neither request proofs nor the token reach the lent service. Upgrading
 from cookie sessions requires each browser origin to be opened again.
@@ -1984,8 +1989,9 @@ number:
   `crates/svrngs-node/tests/conformance.rs`): the web carried whole. One
   route per thing a self-hosted app leans on — a page asking for
   `/`-absolute paths, a WebSocket echo, a 64 MiB file read by Range and
-  uploaded streaming, its own service worker in a realm of its own and
-  svrngs's worker refusing `eval`, `SharedArrayBuffer` under
+  uploaded streaming, its own service worker in a realm of its own, which
+  answers none of its pages, frames or workers, svrngs's worker refusing
+  `eval`, `SharedArrayBuffer` under
   COOP/COEP, a Host check with an absolute redirect, a cookie sign-in, local
   storage, a script policy by nonce, a post it takes only from its own
   address, a film sought twenty times — lent by two computers at once and

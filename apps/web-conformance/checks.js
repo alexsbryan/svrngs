@@ -165,6 +165,34 @@
       const text = await (await fetch('sw-probe')).text();
       return { ok: text === "from the app's worker", saw: text };
     }),
+    // A page it opens, a frame and a worker it starts, each at an address
+    // its own worker answers with a probe under no policy: each comes from
+    // the lend, under the lend's policy, which refuses `eval`, since an
+    // answer's headers set a document's or a worker's policy (DESIGN §3).
+    documents: judged(async () => {
+      await navigator.serviceWorker.register('app-sw.js', { scope: './' });
+      const channel = new BroadcastChannel('realm');
+      const saw = {};
+      const all = new Promise((done) => {
+        channel.onmessage = ({ data }) => {
+          saw[data.which] = data;
+          if (Object.keys(saw).length === 3) done();
+        };
+      });
+      const opened = window.open('realm-page.html');
+      const frame = Object.assign(document.createElement('iframe'), { src: 'realm-frame.html' });
+      document.body.append(frame);
+      const nested = new Worker('realm-nested.js');
+      await Promise.race([all, new Promise((r) => setTimeout(r, 20_000))]);
+      opened?.close();
+      frame.remove();
+      nested.terminate();
+      channel.close();
+      const ok = ['page', 'frame', 'worker'].every(
+        (w) => saw[w]?.from === 'lend' && saw[w]?.eval === 'EvalError',
+      );
+      return { ok, saw: JSON.stringify(saw) };
+    }),
     // A cookie sign-in: the cookie set, then sent, and read by the page
     // before any reload, as Immich reads its sign-in's.
     signin: judged(async () => {

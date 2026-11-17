@@ -777,8 +777,9 @@ asks for another pass through the page when the door refuses one; and puts
 `shim.js` in each lent page, which gives the page its lend's cookies,
 carries `WebSocket` to the worker (`socket`, the door switching a raw
 stream) and starts an app's own service worker in a realm of its own, a
-dedicated worker the worker hands the page's fetches (`home/session.js`
-`realmKept`), never beside the pass. At `/svrngs-reads` (mnp-2,
+dedicated worker the worker hands that page's subresource fetches alone
+(`home/session.js` `realmKept`), never beside the pass; every page, frame
+and worker comes from the lend, with the shim in it. At `/svrngs-reads` (mnp-2,
 `told`) it tells its pages the lends they read from what the page handed —
 each one's kind, name and lender, the people whose computer did not
 answer, and an address under `/svrngs-reads/<label>/` of this origin to

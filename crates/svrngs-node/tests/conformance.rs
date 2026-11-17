@@ -222,12 +222,13 @@ impl Way {
 /// whether `eval` runs under it (web/tests/conformance.mjs `realm`); and a
 /// navigation with no page of the lend's open, which the lend answers, not
 /// the app's worker, whose realm closed with its page.
-const ROUTES: [(&str, &str); 12] = [
+const ROUTES: [(&str, &str); 13] = [
     ("/-absolute paths", "root"),
     ("WebSocket echo, OPEN read", "websocket"),
     ("64 MiB read by Range", "range"),
     ("64 MiB uploaded, its length told", "upload"),
     ("its own service worker", "worker"),
+    ("its worker answers no page or worker", "documents"),
     ("svrngs's worker refuses eval", "realm"),
     ("a cold navigation, the lend's", "cold"),
     ("SharedArrayBuffer under COOP/COEP", "isolated"),

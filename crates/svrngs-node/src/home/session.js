@@ -116,13 +116,22 @@ const wholeTab = (request) =>
 // on a phone). That script and all it loads come through svrngs's worker
 // like any request, so the realm runs under the policy the app's own pages
 // get, and no app code runs in svrngs's worker. svrngs's worker hands it,
-// over a port, the fetches it would answer from the lend for the app's own
-// page, takes an answer it gives, and decides everything else itself. A
-// realm lasts while the page that started it is open; with none open, the
-// lend answers. Both workers import this: session-worker.js, and web/lend.js
+// over a port, the subresources the page that started it asks of the lend
+// (`SUBRESOURCES`), takes an answer it gives, and decides everything else
+// itself. Every document and worker comes from the lend, under the policy
+// svrngs serves it with: an answer's headers are its own, and a document's
+// or a worker's would set its policy. A realm lasts while its page is open.
+// Both workers import this: session-worker.js, and web/lend.js
 // (scripts/build-web.sh puts this file beside it).
 
 /** @typedef {{ script: string, isolated: boolean, port: MessagePort, ready: boolean }} Realm */
+// What a realm may answer: the Fetch standard's subresource destinations,
+// never a navigation, a frame, an embed or object, or a worker's script.
+const SUBRESOURCES = new Set(
+  ',audio,audioworklet,font,image,json,manifest,paintworklet,script,style,track,video,xslt'.split(
+    ',',
+  ),
+);
 /** Each open page's realm, by the page's client id. @type {Map<string, Realm>} */
 const realms = new Map();
 
@@ -183,14 +192,14 @@ export async function preluded(response, realm) {
 }
 
 /**
- * The answer a realm gives `fetched`, or none (`realmOf`).
+ * The answer a realm gives `fetched`, or none: the realm of the page that
+ * asked, once ready, and only for a subresource.
  * @param {{ request: Request, clientId: string }} fetched
- * @param {{ get: (id: string) => Promise<{ type: string } | undefined> }} clients
  * @returns {Promise<Response | undefined>}
  */
-export async function realmAnswer(fetched, clients) {
-  const realm = await realmOf(fetched, clients);
-  if (!realm) return;
+export async function realmAnswer(fetched) {
+  const realm = realms.get(fetched.clientId);
+  if (!realm?.ready || !SUBRESOURCES.has(fetched.request.destination)) return;
   const { url, method, mode, destination, headers } = fetched.request;
   const body = ['GET', 'HEAD'].includes(method)
     ? null
@@ -200,24 +209,6 @@ export async function realmAnswer(fetched, clients) {
   /** @type {(ResponseInit & { body: ArrayBuffer | null }) | null} */
   const answer = await new Promise((done) => (port1.onmessage = ({ data }) => done(data)));
   return answer ? new Response(answer.body, answer) : undefined;
-}
-
-/**
- * The realm `fetched` is handed to, once ready: the one of the page that
- * asked, else of any page of this origin's still open; none for a
- * worker's request, a realm's own among them, which the lend answers.
- * @param {{ request: Request, clientId: string }} fetched
- * @param {{ get: (id: string) => Promise<{ type: string } | undefined> }} clients
- */
-async function realmOf(fetched, clients) {
-  const own = realms.get(fetched.clientId);
-  if (own) return own.ready ? own : undefined;
-  const asker = fetched.clientId ? await clients.get(fetched.clientId) : undefined;
-  if (asker && asker.type !== 'window') return;
-  for (const [page, open] of realms)
-    if (!(await clients.get(page))) realms.delete(page);
-    else if (open.ready) return open;
-  return undefined;
 }
 
 // svrngs's prelude, the first line of an app's worker in its realm

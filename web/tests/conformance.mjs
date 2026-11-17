@@ -59,6 +59,7 @@ const ROUTES = [
   'signin',
   'guarded',
   'worker',
+  'documents',
 ];
 const routes = args.routes ?? ROUTES;
 // The clock and this host's load (the u5 queue's rule for a run that times

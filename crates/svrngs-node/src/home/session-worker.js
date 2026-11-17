@@ -63,9 +63,9 @@ worker.addEventListener('fetch', (fetchEvent) => {
 
 // The answer to a fetch of this origin's, `fetchEvent` at `url`: refused
 // unless the browser's authority is read from it; the app's own worker's
-// answer, in its realm, when this origin's own page asked; else the node's
-// to it proved, a page with the session's client in it, and a realm's
-// script with svrngs's prelude before it.
+// answer, in its realm, to a subresource of the page that started it;
+// else the node's to it proved, a page with the session's client in it,
+// and a realm's script with svrngs's prelude before it.
 /**
  * @param {FetchEvent} fetchEvent
  * @param {URL} url
@@ -75,7 +75,7 @@ async function served(fetchEvent, url) {
   if (!authority) return unproved(fetchEvent.request, url);
   const intent = authority === Browser.Own;
   const script = realmScript(fetchEvent);
-  const answer = intent && !script ? await realmAnswer(fetchEvent, worker.clients) : undefined;
+  const answer = intent ? await realmAnswer(fetchEvent) : undefined;
   if (answer) return answer;
   const response = await authenticated(fetchEvent.request, intent);
   if (script) return preluded(response, script);
