@@ -1,0 +1,22 @@
+before: 699187e3, five words, run on resolver/ and web/tests/resolver-fixture.mjs as they were at that commit
+node demo/runs/onboarding/2026-11-16-phrase/meter.mjs <those files> acid-acid-acid-acid-acid
+publish: 200, 16 commands
+lookup, open: 200, 9 commands
+lookup, never issued: 200, 7 commands
+lookup, cannot be read: 503, 0 commands
+status: 200, 8 commands
+close: 200, 10 commands
+lookup, ended: 200, 8 commands
+lookup, issued, refused: 503, 6 commands
+lookup, never issued, refused: 503, 5 commands
+after: a07799fe, three words and a number
+node demo/runs/onboarding/2026-11-16-phrase/meter.mjs . acorn-basil-robin-9999
+publish: 200, 16 commands
+lookup, open: 200, 9 commands
+lookup, never issued: 404, 7 commands
+lookup, cannot be read: 404, 0 commands
+status: 200, 8 commands
+close: 200, 10 commands
+lookup, ended: 200, 8 commands
+lookup, issued, refused: 503, 6 commands
+lookup, never issued, refused: 503, 5 commands
