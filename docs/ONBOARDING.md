@@ -59,8 +59,8 @@ runs on Mac and Linux for now, and that the same address joins from a phone.
 ## 2. The host and attendee paths
 
 **Host:** on a group's home page, press **Invite people here**. The result
-shows a large, copyable short address, when it ends, and that this computer
-must remain reachable. **Close joining** ends admission through that
+shows a large, copyable short address, when it ends, and to keep this
+computer on and awake until everyone's in. **Close joining** ends admission through that
 invitation. The address and controls survive reloading and restarting.
 
 **Attendee:** type the address, see who invited them and which group it

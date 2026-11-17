@@ -89,6 +89,7 @@ test('the host’s controls: each phase drawn from its receipt, one post a press
   assert.deepEqual(at.asked, [['publish', { group: 'house' }]]);
   let said = controls(page);
   assert.ok(said.includes('joining is temporarily unavailable'), said);
+  assert.ok(said.includes('Joining is temporarily unavailable. Retry in a minute'), said);
   assert.ok(!/invitation ended|Joining is closed/.test(said), said);
   assert.ok(
     page.all('.publication button').some((b) => words(b) === 'Retry joining'),
@@ -115,13 +116,14 @@ test('the host’s controls: each phase drawn from its receipt, one post a press
   const [code] = page.all('.publication code');
   assert.equal(words(code), ADDRESS);
   assert.match(code.style.cssText, /font-size:\s*1\.4em/);
-  assert.match(controls(page), /Ends .+This computer must remain reachable/);
+  assert.match(controls(page), /Ends .+Keep this computer on and awake until everyone’s in\./);
   await pressed(page, 'Copy the address');
   assert.deepEqual(page.copied, [ADDRESS]);
   await pressed(page, 'Close joining');
   assert.deepEqual(at.asked, [['close', { group: 'house', id: 'p1' }]]);
   said = controls(page);
   assert.ok(said.includes('joining is temporarily unavailable'), said);
+  assert.ok(said.includes('so closing isn’t confirmed yet'), said);
   assert.ok(!/invitation ended|Joining is closed/.test(said), said);
   assert.ok(
     page.all('.publication button').some((b) => words(b) === 'Retry closing'),

@@ -39,15 +39,15 @@ function publicationAction(state) {
 function publicationInfo(receipt) {
   switch (receipt?.state) {
     case 'open':
-      return html`<p>Ends ${new Date(receipt.until * 1000).toLocaleString()}. This computer must remain reachable. A new invitation or device link ends this one; everyone already in stays.</p>`;
+      return html`<p>Ends ${new Date(receipt.until * 1000).toLocaleString()}. Keep this computer on and awake until everyone’s in. A new invitation or device link ends this one; everyone already in stays.</p>`;
     case 'closed':
       return html`<p>Joining is closed</p>`;
     case 'ended':
       return html`<p>This invitation ended. Everyone already in stays.</p>`;
     case 'pending':
-      return html`<p>joining is temporarily unavailable; retry in a minute from this computer. Your invitation is kept for retry.</p>`;
+      return html`<p>Joining is temporarily unavailable. Retry in a minute from this computer; your invitation is kept for retry.</p>`;
     case 'closing':
-      return html`<p>joining is temporarily unavailable; retry in a minute from this computer. Closing has not been confirmed.</p>`;
+      return html`<p>Joining is temporarily unavailable, so closing isn’t confirmed yet. Retry in a minute from this computer.</p>`;
     case undefined:
       return null;
   }

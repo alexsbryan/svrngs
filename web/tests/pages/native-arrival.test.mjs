@@ -16,6 +16,14 @@ const flows = Object.fromEntries(
   ),
 );
 const parts = compose(flows);
+const { ComputerLine } = await import('../../page/computer-line.js?v=__VERSION__');
+// A drawing's words as a person reads them: what is not hidden, in order.
+const said = (v) => {
+  if (v == null || typeof v === 'boolean') return '';
+  if (Array.isArray(v)) return v.map(said).join('');
+  if (typeof v !== 'object') return String(v);
+  return v.props.hidden ? '' : said(v.props.children);
+};
 const page = 'https://groups.example/';
 const token = 'ordinary_invitation';
 const address = 'https://join.example/acid-acorn-acre-acts-afar';
@@ -65,6 +73,14 @@ test('native arrival asks the name once and offers a literal shell command witho
     group: { id: 'abcd', name: 'House', maker: 'Founder', inviter: 'Kim' },
   }).state;
   assert.match(parts.heading(state)[0], /Kim.*House/);
+  // What comes next, how long it takes and what it leaves, in a person's words.
+  const form = said(flows.join.view.join({ s: state, send: () => {} }));
+  assert.ok(
+    form.includes(
+      'Next you paste one line into Terminal. In about a minute, a page opens with House’s shared folder on this computer.',
+    ),
+    form,
+  );
   const name = `Sam O'Brien; $(touch NEVER) \`uname\` "friend"`;
   state = parts.step(state, { type: 'typed', field: 'name', value: name }).state;
   const named = parts.step(state, { type: 'named' });
@@ -75,6 +91,9 @@ test('native arrival asks the name once and offers a literal shell command witho
   state = parts.step(offer.state, { type: 'offered', ...offer.effects[0], page }).state;
   const line = state.line[1];
   assert.match(line, /^curl -fsSL https:\/\/groups.example\/install.sh/);
+  const told = said(ComputerLine({ s: state }));
+  assert.ok(told.startsWith('Paste this line into Terminal and press Return.'), told);
+  assert.ok(told.includes('in about a minute a page opens with the group’s shared folder'), told);
   assert.doesNotMatch(line, /join.example/);
   const args = spawnSync(
     '/bin/sh',

@@ -43,7 +43,7 @@ export const NameForm = ({ shown, group = '', keep, native, why, value, send, on
       <p id="keep" hidden=${!keep}>${home}</p>
       ${field}
       <p id="why" class="bad">${why}</p>
-      ${native && html`<p>Next, install svrngs on your Mac or Linux computer. It runs when you log in and shares this group’s folder. Your local page will show the exact folder to use. An existing installation and identity are kept.</p>`}
+      ${native && html`<p>Next you paste one line into Terminal. In about a minute, a page opens with ${group}’s shared folder on this computer.</p>`}
       <button>${native ? 'Get the installation command' : 'Join'}</button>
     </form>
   `;
