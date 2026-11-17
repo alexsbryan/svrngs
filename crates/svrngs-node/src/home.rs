@@ -196,10 +196,9 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
         } else {
             site == Some("same-origin") && origin.is_some_and(|o| o == format!("http://{own}"))
         };
-    if at_own {
-        if let Some(answer) = at.sessions.public(crate::session::HOME, &req) {
-            return ([(header::CONTENT_SECURITY_POLICY, POLICY)], answer).into_response();
-        }
+    let public = || at.sessions.public(crate::session::HOME, &req);
+    if let Some(answer) = at_own.then(public).flatten() {
+        return ([(header::CONTENT_SECURITY_POLICY, POLICY)], answer).into_response();
     }
     let shown = at.sessions.shown(&req, crate::session::HOME);
     let opening = at_own && req.uri().path() == crate::session::OPEN_PATH;
@@ -1090,12 +1089,10 @@ async fn at_door(
         Ok(ask) => (at.host.transport.fetch(&contact, ask).await).map_err(|e| e.to_string()),
         Err(e) => Err(e.to_string()),
     };
-    let answer = match answer {
-        Ok(answer) => answer,
-        Err(error) => {
-            tracing::debug!(target: "home", %lend, error, "home: the lender's door did not answer");
-            return crate::origin::away();
-        }
+    let Ok(answer) = answer.inspect_err(|error| {
+        tracing::debug!(target: "home", %lend, error, "home: the lender's door did not answer");
+    }) else {
+        return crate::origin::away();
     };
     let (head, bytes) = answer.into_parts();
     tracing::debug!(target: "home", %lend, status = head.status.as_u16(), refused = ?head.headers.get(REFUSED_HEADER), "home: the lender's door answered");
