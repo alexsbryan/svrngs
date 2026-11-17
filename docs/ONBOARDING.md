@@ -127,8 +127,10 @@ short-address arrivals, not an installed member's continued participation.
 
 **A limit or provider failure is said as itself.** Commands/day/month,
 bandwidth, storage, request size, rate limits, timeouts and provider 5xx/429
-all produce one person's answer, "joining is temporarily unavailable", with
-retry guidance. Existing members keep working, the host's pending receipt and
+all produce one person's answer, "Joining is temporarily unavailable", with
+retry guidance and the way around it, a link in a chat or its QR code. A
+network that missed too often is told that instead, with when to try again
+(§5). Existing members keep working, the host's pending receipt and
 the underlying invitation stay recoverable, and no partial publication or
 close is written. A limit is never shown as an ended or missing invitation,
 never triggers a paid upgrade, and never causes a tight retry loop. The policy
@@ -320,6 +322,24 @@ guesses a month against 100 open invitations, the worst case moves from
 before any store call, and a slip is said as a slip: a word that cannot be
 read, or a phrase never issued, is never "ended" or "temporarily
 unavailable". Five-word phrases already issued keep resolving.
+
+The limits count misses, lookups of a phrase never issued, not lookups, so
+real arrivals no longer spend the guessers' budget. Per network, an IPv4
+address or an IPv6 /56 so one host cannot rotate through its /64: 30 misses
+an hour and 100 a day; over that, every lookup from it is refused, hits too,
+with "Too many addresses from here didn't match an invitation". Globally,
+1,000 misses a day and 20,000 a month, the approved values, which keep the
+worst case above at 1 in 2.7 million; spent, every lookup is refused until
+the bucket turns. Every lookup also counts per network, 30 a minute and 300 a
+day as approved, and toward 30,000 a month, which keeps accepted commands at
+318,000 of Free's 500,000 (`resolver/README.md`). The per-network miss budget
+is sized for a room of about 30 behind one address: after the forgiving
+parse, one slip in a word never costs a miss, so a miss is a wrong number or
+a wrong word, and 30 an hour lets everyone in the room get the number wrong
+once in the same hour, 100 a day about three times each. One network spends
+at most a tenth of the global day, where four addresses at 300 lookups spent
+all of it before. A refusal still points to a link in a chat or its QR code,
+which do not use the resolver.
 
 ## 6. Order and proof
 

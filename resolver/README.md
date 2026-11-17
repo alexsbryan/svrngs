@@ -83,7 +83,34 @@ from the handler. See the store survey's RESET.md for rollback limitations.
 The 100,000 reservation cap counts hash fields conservatively (a published
 reservation uses two fields), so allocation can stop earlier. Redis used_memory
 at 100 MB also stops allocation; reads/closure remain available under their own
-quotas. Global/IP/owner counters are shared and expire after 32 days; calendar
+quotas.
+
+Guessing is bounded by misses, not lookups. A miss is a lookup of a phrase
+never issued; finding an open, ended or pending invitation spends none, so
+real arrivals no longer spend the guessers' budget. A miss spends its
+network's budget, 30 an hour and 100 a day, and the global one, 1,000 a day
+and 20,000 a month (`MISSES`). A network over its budget has every lookup
+refused, hits too, with one answer (429, "Too many addresses from here
+didn't match an invitation", try again in an hour or tomorrow); a spent global
+budget refuses every lookup until its bucket turns (503). Both are checked
+from the counters alone, so a refusal says nothing about which phrases exist.
+Every lookup and status also counts per network, 30 a minute and 300 a day,
+and toward 30,000 a month, which keeps accepted commands inside Upstash Free's
+500,000: 30,000 public operations at 9 commands at most plus 3,000 mutations
+at 16 is 318,000. Refused requests still cost 5 or 6 commands each, and no
+limit inside the store can bound them; only one at the hosting edge could.
+A network is an IPv4 address, or an IPv6 /56, one household's usual
+allocation, so a host cannot rotate through its /64 for fresh budgets; a
+mapped IPv4 address (`::ffff:a.b.c.d`) is kept whole.
+
+The worst case, every miss of a month spent guessing while all 100 slots
+(`OPEN`) stay open, finds one with chance 20,000 x 100 / (818^3 x 10^4) =
+3.7e-7, about 1 in 2.7 million; `resolver-contracts.test.mjs` holds it at
+1e-6 or less, reading the values the script runs. Commands per lookup,
+measured on redis-server 7.2.4 with every inner call counted: a hit 9, a miss
+7, an ended phrase 8, a refusal 5 or 6, an address that cannot be read 0.
+
+Global/IP/owner counters are shared and expire after 32 days; calendar
 month boundaries are checked against Redis TIME. Active-secret bounds use
 expiry scores reserved before writing a capability, independent of TTL cleanup
 timing. New allocation leaves two close/recovery attempts per active-secret

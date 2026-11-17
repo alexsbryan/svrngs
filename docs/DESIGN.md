@@ -1181,7 +1181,10 @@ until an explicit retry reconciles the same binding, never falsely ended or
 reopened. Absolute expiry erases secrets; reservations remain without TTL.
 Missing/mismatched generation refuses every operation without reseeding.
 The approved paired phrase/limits are in `ONBOARDING.md` §5 and held in
-`resolver/store.mjs`; new allocation stops conservatively on capacity, and
+`resolver/store.mjs`. Guessing is bounded by misses, lookups of a phrase never
+issued, per network (an IPv4 address or an IPv6 /56) and globally; a spent
+budget refuses hits too, from the counters alone, and a test holds the worst
+case a month at one in a million or less. New allocation stops conservatively on capacity, and
 leaves two mutation attempts per active-secret slot for close/recovery near the
 monthly ceiling. A slip is said as a slip: an address that cannot be read names
 the part that is wrong, and a phrase never issued says no invitation has it;

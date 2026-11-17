@@ -319,7 +319,7 @@ test('every write boundary is uncertain-safe and reconciles the same operation',
   console.log('before/after all 11 lifecycle writes and lost commit replies: passed');
 });
 
-test('distributed guessing and owner limits include misses, retries and status', async () => {
+test('every lookup and owner limits include retries and status', async () => {
   const clock = seconds();
   const date = new Date();
   const month = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1) / 1000;
@@ -332,8 +332,7 @@ test('distributed guessing and owner limits include misses, retries and status',
   for (const [key, name, bucket, cap] of [
     [ipQuota, 'minute', minute, 30],
     [ipQuota, 'day', day, 300],
-    [globalQuota, 'lookupDay', day, 1000],
-    [globalQuota, 'lookupMonth', month, 20000],
+    [globalQuota, 'lookupMonth', month, 30000],
   ]) {
     reset();
     readOverride = { command: 'TIME', value: [String(clock), '0'] };
@@ -380,7 +379,72 @@ test('distributed guessing and owner limits include misses, retries and status',
   await publish(q);
   cli('SET', ipQuota, JSON.stringify({ minute: [minute, 30] }));
   await refused(await publish({ ...q, action: 'status', token: null }));
-  console.log('all 9 approved request ceilings plus status counting: passed');
+  console.log('all 8 request ceilings plus status counting: passed');
+});
+
+test('misses, not lookups, spend the guessing budget, and a spent one refuses hits too', async () => {
+  const clock = seconds();
+  const date = new Date();
+  const month = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1) / 1000;
+  const hour = Math.floor(clock / 3600);
+  const day = Math.floor(clock / 86400);
+  const ipQuota = `${PREFIX}:quota:ip:${hash('127.0.0.1')}`;
+  const globalQuota = `${PREFIX}:quotas`;
+  const spent = (key, name) => JSON.parse(cli('GET', key) ?? '{}')[name];
+  const stranger = 'acorn-basil-robin-9999';
+  // An open, an ended and a pending invitation spend no miss; a phrase never issued does.
+  reset();
+  readOverride = { command: 'TIME', value: [String(clock), '0'] };
+  candidate = fixed;
+  const q = body();
+  await publish(q);
+  assert.equal((await (await lookup(fixed)).json()).token, q.token);
+  await publish({ ...q, action: 'close', token: null });
+  assert.equal((await (await lookup(fixed)).json()).state, 'ended');
+  assert.deepEqual(spent(ipQuota, 'missHour'), [hour, 0], 'two lookups found, none missed');
+  assert.equal((await lookup(stranger)).status, 404);
+  assert.deepEqual(spent(ipQuota, 'missHour'), [hour, 1]);
+  assert.deepEqual(spent(globalQuota, 'missMonth'), [month, 1]);
+  for (const [key, name, bucket, cap, status, said] of [
+    [ipQuota, 'missHour', hour, 30, 429, /try again in an hour/],
+    [ipQuota, 'missDay', day, 100, 429, /try again tomorrow/],
+    [globalQuota, 'missDay', day, 1000, 503, /Joining is temporarily unavailable/],
+    [globalQuota, 'missMonth', month, 20000, 503, /Joining is temporarily unavailable/],
+  ]) {
+    reset();
+    readOverride = { command: 'TIME', value: [String(clock), '0'] };
+    candidate = fixed;
+    const q = body();
+    assert.equal((await publish(q)).status, 200);
+    cli('SET', key, JSON.stringify({ [name]: [bucket, cap - 1] }));
+    assert.equal((await (await lookup(fixed)).json()).token, q.token, `${name}: a hit`);
+    assert.deepEqual(spent(key, name), [bucket, cap - 1], `${name}: a hit spends no miss`);
+    assert.equal((await lookup(stranger)).status, 404, `${name}: the last miss allowed`);
+    assert.deepEqual(spent(key, name), [bucket, cap]);
+    const hit = await lookup(fixed);
+    const miss = await lookup(stranger);
+    assert.equal(hit.status, status, `${name}: a hit is refused too`);
+    assert.equal(miss.status, status);
+    const said1 = await hit.text();
+    assert.equal(
+      said1,
+      await miss.text(),
+      `${name}: a refusal says nothing of which phrases exist`,
+    );
+    assert.match(said1, said);
+    assert.doesNotMatch(said1, /ordinary-invitation/);
+    assert.deepEqual(spent(key, name), [bucket, cap], `${name}: a refusal spends nothing`);
+    assert.equal((await publish({ ...q, action: 'status', token: null })).status, 200);
+  }
+  // One budget for a /56: a host cannot rotate through its /64 for fresh ones.
+  reset();
+  readOverride = { command: 'TIME', value: [String(clock), '0'] };
+  const net = `${PREFIX}:quota:ip:${hash('2001:db8:0:0/56')}`;
+  cli('SET', net, JSON.stringify({ missHour: [hour, 30] }));
+  assert.equal((await lookup(stranger, '2001:db8::2')).status, 429);
+  assert.equal((await lookup(stranger, '2001:db8:0:ff::9')).status, 429);
+  assert.equal((await lookup(stranger, '2001:db8:0:100::1')).status, 404);
+  console.log('4 miss budgets: hits free, refusals alike for hits and misses, /56 shared: passed');
 });
 
 test('new creation leaves two close attempts per active secret near monthly ceiling', async () => {

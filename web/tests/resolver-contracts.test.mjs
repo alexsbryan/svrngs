@@ -5,7 +5,7 @@ import { sign } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { createResolver, phrase, read, SPACE, words } from '../../resolver/handler.mjs';
-import { GENERATION, PREFIX, SCRIPT } from '../../resolver/store.mjs';
+import { GENERATION, MISSES, OPEN, PREFIX, SCRIPT } from '../../resolver/store.mjs';
 import { ownerKey, owner, hash, fixed, old, body, mutation, refused } from './resolver-fixture.mjs';
 
 // Levenshtein distance by the textbook table, an instrument apart from
@@ -153,6 +153,12 @@ test('each answer says what happened: never issued, ended, or unavailable', asyn
       503,
       /send the link in a chat or show its QR code/,
     ],
+    [
+      { state: 'unavailable', reason: 'miss_hour' },
+      429,
+      /Too many addresses from here didn't match an invitation\. Check yours with whoever gave it to you, and try again in an hour, or ask them to send the link in a chat or show its QR code/,
+    ],
+    [{ state: 'unavailable', reason: 'miss_day' }, 429, /and try again tomorrow, or ask them/],
   ])
     for (const headers of [{}, html]) {
       const { handle, asked } = store(result);
@@ -167,6 +173,46 @@ test('each answer says what happened: never issued, ended, or unavailable', asyn
       if (status !== 503) assert.doesNotMatch(text, /temporarily unavailable/);
       assert.deepEqual(asked, [fixed]);
     }
+});
+
+test('a guesser spending every miss for a month finds an open invitation one time in a million or fewer', () => {
+  // The worst case: every miss the month allows spent guessing, and every open
+  // slot open all month. The store's values are the ones its script runs.
+  assert.match(SCRIPT, new RegExp(`'missMonth', q\\.monthStart, ${MISSES}, miss\\)`));
+  assert.match(SCRIPT, new RegExp(`local activeCap, mutationCap = ${OPEN}, `));
+  const chance = (MISSES * OPEN) / SPACE;
+  assert.ok(chance <= 1e-6, `1 in ${Math.round(1 / chance)} a month`);
+  console.log(`worst case a month: ${chance.toExponential(2)}, 1 in ${Math.round(1 / chance)}`);
+});
+
+test('a budget is kept per network: IPv4 by address, IPv6 by its /56', async () => {
+  const subject = async (ip) => {
+    let key;
+    const handle = createResolver({
+      token: 'fixture',
+      fetch: async (_url, options) => {
+        key = JSON.parse(options.body)[7];
+        return Response.json({ result: JSON.stringify({ state: 'missing' }) });
+      },
+    });
+    await handle(new Request(`https://join.example/${fixed}`), ip);
+    return key;
+  };
+  const same = [
+    ['2001:db8::1', '2001:db8::2'],
+    ['2001:db8::1', '2001:db8:0:ff:ffff:ffff:ffff:ffff'],
+    ['2001:db8::1', '2001:DB8:0:0:0:0:0:1'],
+  ];
+  const apart = [
+    ['2001:db8::1', '2001:db8:0:100::1'],
+    ['2001:db8::1', '2001:db8:1::1'],
+    ['203.0.113.7', '203.0.113.8'],
+    ['::ffff:203.0.113.7', '::ffff:203.0.113.8'],
+  ];
+  for (const [a, b] of same) assert.equal(await subject(a), await subject(b), `${a} ${b}`);
+  for (const [a, b] of apart) assert.notEqual(await subject(a), await subject(b), `${a} ${b}`);
+  assert.equal(await subject('203.0.113.7'), `${PREFIX}:quota:ip:${hash('203.0.113.7')}`);
+  assert.equal(await subject('2001:db8::1'), `${PREFIX}:quota:ip:${hash('2001:db8:0:0/56')}`);
 });
 
 test('provider failures are unavailable with one attempt and no false ended', async () => {

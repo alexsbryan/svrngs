@@ -35,12 +35,28 @@ export const phrase = () =>
 const HEX = /^[0-9a-f]{64}$/;
 const shape =
   'An invitation address is three words and a four-digit number, like cedar-otter-robin-4821. Check yours with whoever gave it to you.';
+const unread = (word) =>
+  `“${word}” isn't one of the words. Check the address with whoever gave it to you.`;
 const missing =
   'No invitation has this address. Check each word and the number with whoever gave it to you.';
 const unavailable =
   'Joining is temporarily unavailable. Wait at least a minute, then try again, or ask the person who invited you to send the link in a chat or show its QR code, which work without this address. If you have already joined, open svrngs on your computer to continue.';
 const ended =
   'This invitation has ended. Ask the person who invited you for a new address. If you have already joined, open svrngs on your computer to continue.';
+const misses = (reason) =>
+  `Too many addresses from here didn't match an invitation. Check yours with whoever gave it to you, and try again ${reason === 'miss_day' ? 'tomorrow' : 'in an hour'}, or ask them to send the link in a chat or show its QR code, which work without this address.`;
+
+// The network a budget is kept for: IPv4 by its address, IPv6 by its /56, one
+// household's usual allocation, so a host cannot rotate through its /64. A
+// mapped IPv4 address is kept whole, not as the one /56 all of them share.
+function network(ip) {
+  const host = isIP(ip) === 6 ? new URL(`http://[${ip}]/`).hostname.slice(1, -1) : ip;
+  if (isIP(ip) === 4 || host.startsWith('::ffff:')) return host;
+  const [left, right = []] = host.split('::').map((half) => (half ? half.split(':') : []));
+  const groups = [...left, ...Array(8 - left.length - right.length).fill('0'), ...right];
+  // The first three groups and the high byte of the fourth: 56 bits.
+  return `${groups.slice(0, 3).join(':')}:${parseInt(groups[3], 16) >> 8}/56`;
+}
 const hash = (text) => createHash('sha256').update(text).digest('hex');
 
 // The address as typed, read as the one phrase it can mean, or what is wrong
@@ -61,10 +77,7 @@ export function read(path) {
     words.includes(part) ? [part] : words.filter((w) => near(w, part) || swapped(w, part)),
   );
   const unknown = meant.findIndex((found) => found.length !== 1);
-  if (unknown >= 0)
-    return {
-      wrong: `“${typed[unknown]}” isn't one of the words. Check the address with whoever gave it to you.`,
-    };
+  if (unknown >= 0) return { wrong: unread(typed[unknown]) };
   return { phrase: [...meant.flat(), number].join('-') };
 }
 // The handler's own refusals. A debug event names their code, never a foreign
@@ -188,7 +201,7 @@ export function createResolver(config) {
   async function run(request, ip, signal) {
     if (!config.token || !isIP(ip) || !url.startsWith('https://'))
       throw new Refusal('configuration');
-    const ipKey = `ip:${hash(isIP(ip) === 6 ? new URL(`http://[${ip}]/`).hostname : ip)}`;
+    const ipKey = `ip:${hash(network(ip))}`;
     const at = new URL(request.url);
     let q;
     let subject;
@@ -277,6 +290,8 @@ export function createResolver(config) {
       return answer({ state: 'ended', message: ended });
     if (result.state === 'missing' && q.action === 'lookup')
       return answer({ state: 'missing', message: missing }, 404);
+    if (result.reason === 'miss_hour' || result.reason === 'miss_day')
+      return answer({ error: 'misses', message: misses(result.reason) }, 429);
     if (result.state === 'closed' && q.action === 'close')
       return answer({ id: q.id, closed: true });
     if (result.state !== 'open' || read(result.phrase).phrase !== result.phrase)

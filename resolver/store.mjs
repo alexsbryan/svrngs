@@ -3,6 +3,18 @@
 // only the final marker exposes a secret. Redis isolates EVAL, not rollback.
 // Reservations are permanent, so a lookup with no record is a phrase never
 // issued ('missing'), told apart from a closed or expired one ('ended').
+//
+// Guessing is bounded by misses, lookups of a phrase never issued; finding an
+// open, ended or pending invitation spends none. A miss spends its network's
+// budget (30 an hour, 100 a day) and the global one (1,000 a day, MISSES a
+// month). A spent budget refuses every lookup, hits too, checked from the
+// counters alone, so a refusal says nothing about which phrases exist. Every
+// lookup and status also counts per network (30 a minute, 300 a day) and
+// toward a month's 30,000, which keeps accepted commands inside Upstash
+// Free's 500,000 (ONBOARDING.md §5). With handler.mjs's SPACE these bound a
+// guesser's chance a month at MISSES x OPEN / SPACE (resolver-contracts.test.mjs).
+export const MISSES = 20000;
+export const OPEN = 100;
 export const GENERATION = 'onboarding-2026-11-04-v1';
 export const PREFIX = 'svrngs:{onboarding}';
 export const SCRIPT = `
@@ -15,27 +27,31 @@ local q = cjson.decode(ARGV[2])
 local now = tonumber(redis.call('TIME')[1])
 if now < q.monthStart or now >= q.monthEnd then return refuse('clock') end
 local id = q.idkey
-if q.action == 'lookup' then id = redis.call('HGET', KEYS[2], 'p:'..q.phrase) end
+local lookup = q.action == 'lookup'
+if lookup then id = redis.call('HGET', KEYS[2], 'p:'..q.phrase) end
 local raw = id and redis.call('HGET', KEYS[2], 'i:'..id)
 local r = raw and cjson.decode(raw)
 local fresh = q.action == 'publish' and not r
+local miss = lookup and not r and 1 or 0
 local quotas = redis.call('MGET', KEYS[4], KEYS[5])
 local global = quotas[1] and cjson.decode(quotas[1]) or {}
 local subject = quotas[2] and cjson.decode(quotas[2]) or {}
-local function count(at, name, bucket, cap)
+local function count(at, name, bucket, cap, add)
   local old = at[name]
   local n = old and old[1] == bucket and old[2] or 0
   if type(n) ~= 'number' or n < 0 or n >= cap then return false end
-  at[name] = {bucket, n + 1}
+  at[name] = {bucket, n + (add or 1)}
   return true
 end
 local minute, hour, day = math.floor(now/60), math.floor(now/3600), math.floor(now/86400)
-local activeCap, mutationCap = 100, 3000
-local public = q.action == 'lookup' or q.action == 'status'
+local activeCap, mutationCap = ${OPEN}, 3000
+local public = lookup or q.action == 'status'
 if public then
   if not count(subject, 'minute', minute, 30) or not count(subject, 'day', day, 300)
-    or not count(global, 'lookupDay', day, 1000)
-    or not count(global, 'lookupMonth', q.monthStart, 20000) then return refuse('lookup_limit') end
+    or not count(global, 'lookupMonth', q.monthStart, 30000) or lookup and not (count(global, 'missDay', day, 1000, miss)
+    and count(global, 'missMonth', q.monthStart, ${MISSES}, miss)) then return refuse('lookup_limit') end
+  if lookup and not count(subject, 'missHour', hour, 30, miss) then return refuse('miss_hour') end
+  if lookup and not count(subject, 'missDay', day, 100, miss) then return refuse('miss_day') end
 else
   if not count(subject, 'minute', minute, 10) or not count(subject, 'hour', hour, 60)
     or not count(global, 'mutationMonth', q.monthStart, mutationCap) then return refuse('mutation_limit') end
@@ -63,7 +79,7 @@ if fresh or (q.action == 'close' and not r) then
   if not used or used >= 100000000 then return refuse('memory_limit') end
 end
 if public then
-  if q.action == 'lookup' and not r then return reply('missing') end
+  if miss == 1 then return reply('missing') end
   if not r or r.state == 'closed' or r['until'] <= now then return reply('ended', r) end
   if r.state ~= 'open' then return refuse('pending') end
   local secret = redis.call('GET', KEYS[2]..':secret:'..id)
