@@ -943,6 +943,9 @@ mod tests;
 mod tests_sealing;
 
 #[cfg(test)]
+mod act_set_tests;
+
+#[cfg(test)]
 mod tests_authority;
 #[cfg(test)]
 mod tests_grant;
