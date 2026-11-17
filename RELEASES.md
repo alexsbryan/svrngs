@@ -1,5 +1,64 @@
 # svrngs releases
 
+## V1.10, 16 November 2026
+
+V1.10 makes inviting people one press, and its short address easier to
+read aloud.
+
+**One press invites people.** On a group's page, **Invite people** shows
+your invitation three ways: a link to paste in a chat, a short address to
+read aloud, and a QR code for a phone's camera. Each has its own Copy, and
+the focus moves to **Copy the link** once the invitation is made.
+**Close joining** ends all three at once. **Invite someone to** your group
+is gone, since it made a second invitation that ended the first;
+`svrngs link` still makes a link.
+
+**It works on every computer.** Before, the short address worked only on a
+computer set up for it by hand, and everywhere else **Invite people here**
+said joining was unavailable. Now a computer uses svrngs's own address
+service, `join.svrnme.sh`, unless its data folder names another in a
+`join-resolver` file. If that service doesn't answer, the link and the QR
+code still work, and the page says to retry the short address in a minute.
+
+**A short address is three words and a number**, such as
+`cedar-otter-robin-4821`, instead of five words. No two of its words are a
+letter apart, so a word with one letter wrong, missing or added still
+finds the invitation. Capitals, and spaces or dots between the parts, are
+fine too. An address that can't be read says which word it couldn't
+read, and to check it with whoever gave it to you. Five-word addresses
+given out before keep working until they end.
+
+**Guessing an address is held back.** An address that matches no
+invitation counts against the network it came from: after 30 in an hour,
+or 100 in a day, that network is told to try again later. Finding a real
+invitation counts for nothing.
+
+**Adding your phone asks first.** While an invitation is letting people
+in, **Add your phone or another computer** says that its link would end
+that invitation, and makes the link only when you press it again.
+
+**A phone at a short address joins in its browser.** Before, it was shown
+the line that installs svrngs, which a phone can't run.
+
+**Windows is told what to do.** svrngs runs on Mac and Linux for now. A
+Windows computer is no longer shown a Terminal line that can't run there:
+*"svrngs runs on Mac and Linux for now, not on Windows. To join from your
+phone, open this same link or address on it."*
+
+**Plainer words.** The line to install says *"Paste this line into
+Terminal and press Return,"* and that in about a minute a page opens with
+the group's shared folder. The welcome suggests saying hello by dragging a
+photo, or any file, into the folder.
+
+Groups, lends and the record work as in V1.9. **Update** on your home
+page, or `svrngs update`, then restart svrngs, before you invite anyone: a
+V1.9 computer can't read the new short addresses. Your phone's page
+updates itself.
+
+V1.10 is the build at `group.svrnme.sh`, from the commit tagged `v1.10`.
+Its publication and readback are recorded in
+`demo/runs/v1.10/2026-11-16/README.md`.
+
 ## V1.9, 16 November 2026
 
 V1.9 lays out your home page so a large group fits on it, and you can now

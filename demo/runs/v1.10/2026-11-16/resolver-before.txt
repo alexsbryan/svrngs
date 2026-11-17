@@ -1,0 +1,4 @@
+HTTP/2 503 
+cache-control: no-store
+referrer-policy: no-referrer
+{"error":"unavailable","message":"joining is temporarily unavailable. Please wait at least a minute, then try again. If it keeps happening, ask the person who invited you to check joining. If you have already joined, open svrngs on your computer to continue."}

@@ -1,0 +1,999 @@
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 52071)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (2 s)
+passed     app nouns gate (0 s)
+passed     app nouns (0 s)
+passed     lint (0 s)
+passed     format (1 s)
+passed     page laws (22 s)
+passed     rustfmt (1 s)
+passed     script laws (12 s)
+passed     page integration (12 s)
+passed     clippy (1 s)
+passed     tests (386 s)
+passed     canaries (2 s)
+passed     ceiling canary (5 s)
+           CEILING idle round at 25 x 10,000: 0.0515 s of processor, the median of [2.980533000000001, 0.05148399999999853, 0.04965999999999937], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.04965999999999937,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.009366625}
+passed     web rustfmt and clippy (5 s)
+passed     browser (114 s)
+passed     types (19 s)
+passed     typed lint (1 s)
+passed     joining in a browser (51 s)
+passed     pages (21 s)
+passed     scenes (380 s)
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene grapevine (chromium)
+passed     scene give_gone (chromium)
+passed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (51 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+passed     playback (199 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	408	passed	3120	passed
+           computer	bo	424	passed	4031	passed
+           wildcard	sam	408	passed	10321	failed
+           wildcard	bo	407	passed	3936	passed
+           of 858 here since 2026-10-22T17:12:29Z: 3 missed 5 s through a lend, 134 straight; 572 ended at a load above 12 cores
+passed     n0 (14 s)
+failed     app laws (16 s)
+           apps: 31 test files
+           TAP version 13
+           # Subtest: the vendored build is the one proven, every file as pinned
+           ok 1 - the vendored build is the one proven, every file as pinned
+             ---
+             duration_ms: 5.964708
+             ...
+           # Subtest: one byte changed in the vendored canon.js is caught
+           ok 2 - one byte changed in the vendored canon.js is caught
+             ---
+             duration_ms: 18.704209
+             ...
+           # Subtest: the vendored build mints a rule and folds it, as canon
+           ok 3 - the vendored build mints a rule and folds it, as canon
+             ---
+             duration_ms: 125.382666
+             ...
+           # Subtest: a house answers the question, proposes a rule, and two others agree to it
+           ok 4 - a house answers the question, proposes a rule, and two others agree to it
+             ---
+             duration_ms: 516.284625
+             ...
+           # Subtest: canon’s actor is the record’s person, never the act’s text; another computer’s writing is said as via
+           ok 5 - canon’s actor is the record’s person, never the act’s text; another computer’s writing is said as via
+             ---
+             duration_ms: 77.501291
+             ...
+           # Subtest: a rule’s standing is the build’s, never counted in the page
+           ok 6 - a rule’s standing is the build’s, never counted in the page
+             ---
+             duration_ms: 14.114583
+             ...
+           # Subtest: a person outside the house has no say
+           ok 7 - a person outside the house has no say
+             ---
+             duration_ms: 14.386708
+             ...
+           # Subtest: the first question’s answer is the whole house’s rule
+           ok 8 - the first question’s answer is the whole house’s rule
+             ---
+             duration_ms: 19.526333
+             ...
+           # Subtest: an act that speaks as the house, or as anyone but its writer, is refused
+           ok 9 - an act that speaks as the house, or as anyone but its writer, is refused
+             ---
+             duration_ms: 4.815875
+             ...
+           # Subtest: under “unless someone objects”, a person’s objection counts
+           ok 10 - under “unless someone objects”, a person’s objection counts
+             ---
+             duration_ms: 17.388292
+             ...
+           # Subtest: a past rule keeps its agreement when someone joins later
+           ok 11 - a past rule keeps its agreement when someone joins later
+             ---
+             duration_ms: 29.219708
+             ...
+           # Subtest: a name with a dot is a person, never a corner of someone else’s
+           ok 12 - a name with a dot is a person, never a corner of someone else’s
+             ---
+             duration_ms: 11.973083
+             ...
+           # Subtest: the house’s acts are the same, ids included, however its people are listed
+           ok 13 - the house’s acts are the same, ids included, however its people are listed
+             ---
+             duration_ms: 2.249917
+             ...
+           # Subtest: the house’s seat is the only one taken open
+           ok 14 - the house’s seat is the only one taken open
+             ---
+             duration_ms: 1.556792
+             ...
+           # Subtest: no key is bound: the page writes none, and one in the record is not counted
+           ok 15 - no key is bound: the page writes none, and one in the record is not counted
+             ---
+             duration_ms: 3.665416
+             ...
+           # Subtest: the house is never said as a person
+           ok 16 - the house is never said as a person
+             ---
+             duration_ms: 12.153958
+             ...
+           # Subtest: no draw, rotation or subsidiarity is offered: canon 0.5.0 counts the house in their pools
+           ok 17 - no draw, rotation or subsidiarity is offered: canon 0.5.0 counts the house in their pools
+             ---
+             duration_ms: 0.137125
+             ...
+           # Subtest: no say over the house is granted or taken but by joining and leaving
+           ok 18 - no say over the house is granted or taken but by joining and leaving
+             ---
+             duration_ms: 18.3725
+             ...
+           # Subtest: a house that shrinks can still change how it decides (Everyone agrees)
+           ok 19 - a house that shrinks can still change how it decides (Everyone agrees)
+             ---
+             duration_ms: 22.766917
+             ...
+           # Subtest: a house that shrinks can still change how it decides (Most of you agree)
+           ok 20 - a house that shrinks can still change how it decides (Most of you agree)
+             ---
+             duration_ms: 33.448625
+             ...
+           # Subtest: someone who joins after a rule is proposed is not counted toward it
+           ok 21 - someone who joins after a rule is proposed is not counted toward it
+             ---
+             duration_ms: 14.638
+             ...
+           # Subtest: one answer has one clock: an agreement timed ahead of the browser’s clock is in force when the page asks
+           ok 22 - one answer has one clock: an agreement timed ahead of the browser’s clock is in force when the page asks
+             ---
+             duration_ms: 4.306042
+             ...
+           # Subtest: an answer the page could not read is said as unread, never as a house whose people are unsettled
+           ok 23 - an answer the page could not read is said as unread, never as a house whose people are unsettled
+             ---
+             duration_ms: 6.167583
+             ...
+           # Subtest: every decision the glue makes is traced, and what canon refused is traced in canon’s own words
+           ok 24 - every decision the glue makes is traced, and what canon refused is traced in canon’s own words
+             ---
+             duration_ms: 20.154
+             ...
+           # Subtest: the page loads under a carried policy, reads the house and writes a choice (chromium)
+           ok 25 - the page loads under a carried policy, reads the house and writes a choice (chromium)
+             ---
+             duration_ms: 634.4965
+             ...
+           # Subtest: the page loads under a carried policy, reads the house and writes a choice (webkit)
+           ok 26 - the page loads under a carried policy, reads the house and writes a choice (webkit)
+             ---
+             duration_ms: 1124.928541
+             ...
+           # Subtest: the bundle is the bytes vendor/README.md pins
+           ok 27 - the bundle is the bytes vendor/README.md pins
+             ---
+             duration_ms: 3.194709
+             ...
+           # Subtest: an update survives the base64 trip whole
+           ok 28 - an update survives the base64 trip whole
+             ---
+             duration_ms: 11.996416
+             ...
+           # Subtest: a caret colour is a hex triple, or Tiptap draws nothing
+           ok 29 - a caret colour is a hex triple, or Tiptap draws nothing
+             ---
+             duration_ms: 0.4975
+             ...
+           # Subtest: each paragraph says who last edited it, and how long ago
+           ok 30 - each paragraph says who last edited it, and how long ago
+             ---
+             duration_ms: 3.756833
+             ...
+           # Subtest: an update whose clientID is another person's still names the socket's person
+           ok 31 - an update whose clientID is another person's still names the socket's person
+             ---
+             duration_ms: 1.076125
+             ...
+           # Subtest: an edit svrngs named nobody for is said to be unnamed, never invented
+           ok 32 - an edit svrngs named nobody for is said to be unnamed, never invented
+             ---
+             duration_ms: 0.45175
+             ...
+           # Subtest: two copies that absorbed the same acts in different orders name the same author
+           ok 33 - two copies that absorbed the same acts in different orders name the same author
+             ---
+             duration_ms: 1.221292
+             ...
+           # (node:79603) ExperimentalWarning: The MockTimers API is an experimental feature and might change at any time
+           # (Use `node --trace-warnings ...` to show where the warning was created)
+           # Subtest: two pages write at once and read one doc, each named as the door named their socket
+           ok 34 - two pages write at once and read one doc, each named as the door named their socket
+             ---
+             duration_ms: 21.30775
+             ...
+           # Subtest: a page opened without svrngs is named nobody, and its paragraph says so
+           ok 35 - a page opened without svrngs is named nobody, and its paragraph says so
+             ---
+             duration_ms: 3.567958
+             ...
+           # \# goodnight after 5500 and 5500 ms; joined 0 and 0 ms after the lid opened
+           # Subtest: a lender gone quiet is goodnight within QUIET_MS and a tick, and what was written meanwhile joins once it answers
+           ok 36 - a lender gone quiet is goodnight within QUIET_MS and a tick, and what was written meanwhile joins once it answers
+             ---
+             duration_ms: 19.94575
+             ...
+           # Subtest: the server reads the doc back whole after a restart
+           ok 37 - the server reads the doc back whole after a restart
+             ---
+             duration_ms: 7.048125
+             ...
+           # Subtest: a page's socket is upgraded at /sync, greeted as the door named it, and its edit reaches another
+           ok 38 - a page's socket is upgraded at /sync, greeted as the door named it, and its edit reaches another
+             ---
+             duration_ms: 120.36375
+             ...
+           # Subtest: each group's people see only their own group's answers, the host every group's
+           ok 39 - each group's people see only their own group's answers, the host every group's
+             ---
+             duration_ms: 33.974208
+             ...
+           # Subtest: an answer another person's computer wrote says whose
+           ok 40 - an answer another person's computer wrote says whose
+             ---
+             duration_ms: 1.50025
+             ...
+           # Subtest: an event is its host's post, and who is coming is who said so, guests by name
+           ok 41 - an event is its host's post, and who is coming is who said so, guests by name
+             ---
+             duration_ms: 3.06
+             ...
+           # Subtest: who came is the came acts: a member's own, and the guests they brought, under them
+           ok 42 - who came is the came acts: a member's own, and the guests they brought, under them
+             ---
+             duration_ms: 0.360042
+             ...
+           # Subtest: changing your mind is a correction of your own act
+           ok 43 - changing your mind is a correction of your own act
+             ---
+             duration_ms: 0.522791
+             ...
+           # Subtest: a correction of someone else's answer counts for nothing, and says so
+           ok 44 - a correction of someone else's answer counts for nothing, and says so
+             ---
+             duration_ms: 0.334041
+             ...
+           # Subtest: a correction from another person of the same name counts for nothing; one from the author's other device counts
+           ok 45 - a correction from another person of the same name counts for nothing; one from the author's other device counts
+             ---
+             duration_ms: 0.394167
+             ...
+           # Subtest: two people of one name come as two; one person's devices and the old answers a computer wrote for them as one
+           ok 46 - two people of one name come as two; one person's devices and the old answers a computer wrote for them as one
+             ---
+             duration_ms: 0.656375
+             ...
+           # Subtest: the host is who posted it, by key: another of their name is not the host, nor shown the host's view
+           ok 47 - the host is who posted it, by key: another of their name is not the host, nor shown the host's view
+             ---
+             duration_ms: 0.96
+             ...
+           # Subtest: what changing your mind corrects is your own answers, by key, never another's of your name
+           ok 48 - what changing your mind corrects is your own answers, by key, never another's of your name
+             ---
+             duration_ms: 0.298167
+             ...
+           # Subtest: a person is said by name, and where two share it, with when each joined
+           ok 49 - a person is said by name, and where two share it, with when each joined
+             ---
+             duration_ms: 1.258209
+             ...
+           # Subtest: the record's voided flag is not this fold's: a voided act by another's correction still counts
+           ok 50 - the record's voided flag is not this fold's: a voided act by another's correction still counts
+             ---
+             duration_ms: 0.403375
+             ...
+           # Subtest: only the host changes the event, and no one else can post it again
+           ok 51 - only the host changes the event, and no one else can post it again
+             ---
+             duration_ms: 0.143125
+             ...
+           # Subtest: nothing records "no": no act for it, and an answer that tries is not counted at all
+           ok 52 - nothing records "no": no act for it, and an answer that tries is not counted at all
+             ---
+             duration_ms: 0.923125
+             ...
+           # Subtest: a correction of an act this copy does not hold yet is said, and changes nothing
+           ok 53 - a correction of an act this copy does not hold yet is said, and changes nothing
+             ---
+             duration_ms: 0.090375
+             ...
+           # Subtest: a correction ordered before its act, as one second's acts from two computers may be, still counts
+           ok 54 - a correction ordered before its act, as one second's acts from two computers may be, still counts
+             ---
+             duration_ms: 0.131875
+             ...
+           # Subtest: a person's own live answers, newest first, are what changing their mind corrects
+           ok 55 - a person's own live answers, newest first, are what changing their mind corrects
+             ---
+             duration_ms: 0.091041
+             ...
+           # Subtest: the host's view joins each group where they host the event; an unread group is said as unread
+           ok 56 - the host's view joins each group where they host the event; an unread group is said as unread
+             ---
+             duration_ms: 0.165292
+             ...
+           # Subtest: an answer to another group's event is an answer to none here: each record holds its own
+           ok 57 - an answer to another group's event is an answer to none here: each record holds its own
+             ---
+             duration_ms: 0.061958
+             ...
+           # Subtest: which computer wrote it is kept: `via` is its person when it wrote for another, else null; the answers unchanged
+           ok 58 - which computer wrote it is kept: `via` is its person when it wrote for another, else null; the answers unchanged
+             ---
+             duration_ms: 0.298083
+             ...
+           # Subtest: Events holds the five laws, the sixth and its own two
+           ok 59 - Events holds the five laws, the sixth and its own two
+             ---
+             duration_ms: 8.114166
+             ...
+           # Subtest: each law catches the fold planted to break it
+           ok 60 - each law catches the fold planted to break it
+             ---
+             duration_ms: 35.654042
+             ...
+           # Subtest: a post is pressed and its link copied, as the browser does it (chromium)
+           ok 61 - a post is pressed and its link copied, as the browser does it (chromium)
+             ---
+             duration_ms: 753.502959
+             ...
+           # Subtest: a post is pressed and its link copied, as the browser does it (webkit)
+           ok 62 - a post is pressed and its link copied, as the browser does it (webkit)
+             ---
+             duration_ms: 1009.704208
+             ...
+           # Subtest: a group not fully received is said so on the home list and in the host's view, never as nothing posted
+           ok 63 - a group not fully received is said so on the home list and in the host's view, never as nothing posted
+             ---
+             duration_ms: 15.87875
+             ...
+           # Subtest: two people called bo are two: each answers as themselves, told apart by when they joined
+           ok 64 - two people called bo are two: each answers as themselves, told apart by when they joined
+             ---
+             duration_ms: 6.232458
+             ...
+           # Subtest: ten dollars three ways keeps the penny and gives it to the first name
+           ok 65 - ten dollars three ways keeps the penny and gives it to the first name
+             ---
+             duration_ms: 0.946875
+             ...
+           # Subtest: shares always sum to the amount, whatever order the people came in
+           ok 66 - shares always sum to the amount, whatever order the people came in
+             ---
+             duration_ms: 1.737625
+             ...
+           # Subtest: the pizza: whoever confirms is in, and every fold sums to zero
+           ok 67 - the pizza: whoever confirms is in, and every fold sums to zero
+             ---
+             duration_ms: 0.559541
+             ...
+           # Subtest: confirming twice is confirming once
+           ok 68 - confirming twice is confirming once
+             ---
+             duration_ms: 0.511292
+             ...
+           # Subtest: the payer is in on their own expense and cannot be added twice
+           ok 69 - the payer is in on their own expense and cannot be added twice
+             ---
+             duration_ms: 0.389458
+             ...
+           # Subtest: a settlement recorded twice on one day is counted once, and on another day twice
+           ok 70 - a settlement recorded twice on one day is counted once, and on another day twice
+             ---
+             duration_ms: 0.941875
+             ...
+           # Subtest: a share of an expense that is not in the book is refused, not guessed
+           ok 71 - a share of an expense that is not in the book is refused, not guessed
+             ---
+             duration_ms: 0.175625
+             ...
+           # Subtest: a non-positive or fractional amount is refused whole
+           ok 72 - a non-positive or fractional amount is refused whole
+             ---
+             duration_ms: 0.461875
+             ...
+           # Subtest: paying yourself back is refused
+           ok 73 - paying yourself back is refused
+             ---
+             duration_ms: 0.271416
+             ...
+           # Subtest: an act from a newer version is reported, not misread
+           ok 74 - an act from a newer version is reported, not misread
+             ---
+             duration_ms: 0.419
+             ...
+           # Subtest: an act no one in the chat wrote moves no money
+           ok 75 - an act no one in the chat wrote moves no money
+             ---
+             duration_ms: 0.164167
+             ...
+           # Subtest: a person named __proto__ cannot make money vanish
+           ok 76 - a person named __proto__ cannot make money vanish
+             ---
+             duration_ms: 0.173292
+             ...
+           # Subtest: amounts are read the way people type them
+           ok 77 - amounts are read the way people type them
+             ---
+             duration_ms: 0.331167
+             ...
+           # Subtest: money renders the way a person reads it
+           ok 78 - money renders the way a person reads it
+             ---
+             duration_ms: 1.341625
+             ...
+           # Subtest: who owes whom settles every balance in a few payments
+           ok 79 - who owes whom settles every balance in a few payments
+             ---
+             duration_ms: 0.353375
+             ...
+           # Subtest: the record's log: `by` is whom an app wrote for, else the computer's person; voided and empty ops are not acts
+           ok 80 - the record's log: `by` is whom an app wrote for, else the computer's person; voided and empty ops are not acts
+             ---
+             duration_ms: 0.958167
+             ...
+           # Subtest: which computer wrote it is kept: `via` is its person when it wrote for another, else null; the sums unchanged
+           ok 81 - which computer wrote it is kept: `via` is its person when it wrote for another, else null; the sums unchanged
+             ---
+             duration_ms: 0.4505
+             ...
+           # Subtest: a correction counts only from its author: another member's leaves the expense counted, and is shown as not theirs
+           ok 82 - a correction counts only from its author: another member's leaves the expense counted, and is shown as not theirs
+             ---
+             duration_ms: 0.7665
+             ...
+           # Subtest: a correction from another person of the same name counts for nothing; one from the author's other device counts
+           ok 83 - a correction from another person of the same name counts for nothing; one from the author's other device counts
+             ---
+             duration_ms: 0.212625
+             ...
+           # Subtest: two people of one name keep two balances; one person's devices and the old entries a computer wrote for them keep one
+           ok 84 - two people of one name keep two balances; one person's devices and the old entries a computer wrote for them keep one
+             ---
+             duration_ms: 0.22075
+             ...
+           # Subtest: a payment names whom it pays by key; an older Money's, by name, pays the one person of that name, and is not counted where two have it
+           ok 85 - a payment names whom it pays by key; an older Money's, by name, pays the one person of that name, and is not counted where two have it
+             ---
+             duration_ms: 1.347084
+             ...
+           # Subtest: the penny still goes to the first name, whatever their keys
+           ok 86 - the penny still goes to the first name, whatever their keys
+             ---
+             duration_ms: 0.09025
+             ...
+           # Subtest: a person is said by name, and where two share it, with when each joined
+           ok 87 - a person is said by name, and where two share it, with when each joined
+             ---
+             duration_ms: 1.382959
+             ...
+           # Subtest: a correction from its author still counts: the expense they replace is gone, and so is one they take back
+           ok 88 - a correction from its author still counts: the expense they replace is gone, and so is one they take back
+             ---
+             duration_ms: 0.227375
+             ...
+           # Subtest: who the payer names waits on their own yes: naming moves no one's money, and a share counts as it always did
+           ok 89 - who the payer names waits on their own yes: naming moves no one's money, and a share counts as it always did
+             ---
+             duration_ms: 0.132667
+             ...
+           # Subtest: "not me" ends the wait and moves nothing; a yes after it clears it
+           ok 90 - "not me" ends the wait and moves nothing; a yes after it clears it
+             ---
+             duration_ms: 0.095209
+             ...
+           # Subtest: the payer names people by name, never themselves, never twice: else the expense is refused whole
+           ok 91 - the payer names people by name, never themselves, never twice: else the expense is refused whole
+             ---
+             duration_ms: 0.095375
+             ...
+           # Subtest: Expenses holds the five laws and the sixth
+           ok 92 - Expenses holds the five laws and the sixth
+             ---
+             duration_ms: 9.535375
+             ...
+           # Subtest: each law catches the reducer planted to break it
+           ok 93 - each law catches the reducer planted to break it
+             ---
+             duration_ms: 18.707333
+             ...
+           # Subtest: every case folds as written, in the JavaScript build
+           ok 94 - every case folds as written, in the JavaScript build
+             ---
+             duration_ms: 69.534791
+             ...
+           # Subtest: a request that is not ops is said so, in the JavaScript build
+           ok 95 - a request that is not ops is said so, in the JavaScript build
+             ---
+             duration_ms: 0.302125
+             ...
+           # Subtest: the vendored build is the one built from the fold as it is now
+           ok 96 - the vendored build is the one built from the fold as it is now
+             ---
+             duration_ms: 2.3765
+             ...
+           # Subtest: one byte changed in the fold since its build is caught
+           ok 97 - one byte changed in the fold since its build is caught
+             ---
+             duration_ms: 8.398833
+             ...
+           # Subtest: a group starts an app from the shelf, and every member reads who keeps it (chromium)
+           ok 98 - a group starts an app from the shelf, and every member reads who keeps it (chromium)
+             ---
+             duration_ms: 1149.462208
+             ...
+           # Subtest: a member moves an app to another computer on its person’s yes, and a no leaves it as it was (chromium)
+           ok 99 - a member moves an app to another computer on its person’s yes, and a no leaves it as it was (chromium)
+             ---
+             duration_ms: 656.705958
+             ...
+           # Subtest: a kept web app opens on the computer that keeps it now, and says why not yet (chromium)
+           ok 100 - a kept web app opens on the computer that keeps it now, and says why not yet (chromium)
+             ---
+             duration_ms: 6288.985334
+             ...
+           # Subtest: the person whose computer keeps an app stops it with a copy, and every page says how the stop goes (chromium)
+           ok 101 - the person whose computer keeps an app stops it with a copy, and every page says how the stop goes (chromium)
+             ---
+             duration_ms: 524.298708
+             ...
+           # Subtest: a member keeps an app whose computer stopped answering, and a returning computer’s state can be started instead (chromium)
+           ok 102 - a member keeps an app whose computer stopped answering, and a returning computer’s state can be started instead (chromium)
+             ---
+             duration_ms: 458.118166
+             ...
+           # Subtest: a page left open while svrngs is down says it can’t read the group, and reads it again once svrngs is back (chromium)
+           ok 103 - a page left open while svrngs is down says it can’t read the group, and reads it again once svrngs is back (chromium)
+             ---
+             duration_ms: 6181.585
+             ...
+           # Subtest: a press while svrngs is down says nothing reached the group, and the ask stays open to press again (chromium)
+           ok 104 - a press while svrngs is down says nothing reached the group, and the ask stays open to press again (chromium)
+             ---
+             duration_ms: 319.147542
+             ...
+           # Subtest: Give’s install line names the page this computer’s group links are on, ours where it keeps none (chromium)
+           ok 105 - Give’s install line names the page this computer’s group links are on, ours where it keeps none (chromium)
+             ---
+             duration_ms: 256.448542
+             ...
+           # Subtest: the canary runs §10's scene on demo.json, each step timed
+           not ok 106 - the canary runs §10's scene on demo.json, each step timed
+             ---
+             duration_ms: 237.708833
+             location: '/Users/alexsbryan/dev/svrngs/apps/grapevine/canary.test.mjs:19:1'
+             failureType: 'testCodeFailure'
+             error: |-
+               the grapevine canary failed: the records after: the carries are Jo, Jo, Jo's, Waller's log names Sam
+               it got through:
+                 1.   0.043 s  Sam asks in 1400 Page
+                 2.   0.043 s  Jo sees it, and may carry it to Waller block
+                 3.   0.046 s  Kim sees it carried by Jo, told she might have one, never who asked
+                 4.   0.053 s  Sam reads the offer; Jo sees a sealed message pass, and none of it
+                 5.   0.084 s  two yeses, then each sees the other's name
+                 6.   0.099 s  Sam takes it back; within one turn the carry in Waller is gone
+                 7.   0.173 s  every other kind's ask carried one ring, by Jo: ask, room
+               
+               
+               1 !== 0
+               
+             code: 'ERR_ASSERTION'
+             name: 'AssertionError'
+             expected: 0
+             actual: 1
+             operator: 'strictEqual'
+             stack: |-
+               TestContext.<anonymous> (file:///Users/alexsbryan/dev/svrngs/apps/grapevine/canary.test.mjs:22:10)
+               Test.runInAsyncScope (node:async_hooks:206:9)
+               Test.run (node:internal/test_runner/test:796:25)
+               Test.processPendingSubtests (node:internal/test_runner/test:526:18)
+               node:internal/test_runner/harness:255:12
+               node:internal/process/task_queues:140:7
+               AsyncResource.runInAsyncScope (node:async_hooks:206:9)
+               AsyncResource.runMicrotask (node:internal/process/task_queues:137:8)
+             ...
+           # Subtest: the canary fails on a carry left uncorrected after withdrawal
+           ok 107 - the canary fails on a carry left uncorrected after withdrawal
+             ---
+             duration_ms: 218.406625
+             ...
+           # Subtest: tweetnacl is the copy npm published, every file as pinned
+           ok 108 - tweetnacl is the copy npm published, every file as pinned
+             ---
+             duration_ms: 2.3705
+             ...
+           # Subtest: one byte changed in the vendored nacl-fast.js is caught
+           ok 109 - one byte changed in the vendored nacl-fast.js is caught
+             ---
+             duration_ms: 6.816375
+             ...
+           # Subtest: a sealed message opens at either end, and nowhere else
+           ok 110 - a sealed message opens at either end, and nowhere else
+             ---
+             duration_ms: 22.832042
+             ...
+           # Subtest: a sealed message holds none of its words
+           ok 111 - a sealed message holds none of its words
+             ---
+             duration_ms: 2.464458
+             ...
+           # Subtest: the most an act may be is svrngs-core's, and the largest sealed message is under it
+           ok 112 - the most an act may be is svrngs-core's, and the largest sealed message is under it
+             ---
+             duration_ms: 16.88375
+             ...
+           # Subtest: the three acts are §3's exactly, every one grapevine's
+           ok 113 - the three acts are §3's exactly, every one grapevine's
+             ---
+             duration_ms: 108.917417
+             ...
+           # Subtest: Jo sees a sealed message pass, its size and time, and nothing in it
+           ok 114 - Jo sees a sealed message pass, its size and time, and nothing in it
+             ---
+             duration_ms: 40.498625
+             ...
+           # Subtest: a message is relayed once, and down only to a replier whose message came up that way
+           ok 115 - a message is relayed once, and down only to a replier whose message came up that way
+             ---
+             duration_ms: 7.936583
+             ...
+           # Subtest: a carry of a carry cites the first ask, and a reply walks back two rings
+           ok 116 - a carry of a carry cites the first ask, and a reply walks back two rings
+             ---
+             duration_ms: 14.7045
+             ...
+           # Subtest: an ask past its end is gone with no act, and saying so is the decider's
+           ok 117 - an ask past its end is gone with no act, and saying so is the decider's
+             ---
+             duration_ms: 0.834333
+             ...
+           # Subtest: a withdrawal takes the ask away, and the carrier's relay corrects the carry
+           ok 118 - a withdrawal takes the ask away, and the carrier's relay corrects the carry
+             ---
+             duration_ms: 1.028625
+             ...
+           # Subtest: someone else's correction, an ask that shows its asker, and another app's acts are each said or skipped
+           ok 119 - someone else's correction, an ask that shows its asker, and another app's acts are each said or skipped
+             ---
+             duration_ms: 2.561416
+             ...
+           # Subtest: the person's own records reach notice; Kim, who listed a tile saw, is told
+           ok 120 - the person's own records reach notice; Kim, who listed a tile saw, is told
+             ---
+             duration_ms: 43.808125
+             ...
+           # Subtest: the two kinds keep the interface, and one that breaks it is refused, saying how
+           ok 121 - the two kinds keep the interface, and one that breaks it is refused, saying how
+             ---
+             duration_ms: 15.360958
+             ...
+           # Subtest: every kind in kinds/ imports nothing: the routing, handles, sealing and carrying it could reach are the app's
+           ok 122 - every kind in kinds/ imports nothing: the routing, handles, sealing and carrying it could reach are the app's
+             ---
+             duration_ms: 0.480042
+             ...
+           # Subtest: a listing is a plain record in its owner's own group, never an ask, so never carried
+           ok 123 - a listing is a plain record in its owner's own group, never an ask, so never carried
+             ---
+             duration_ms: 43.853084
+             ...
+           # Subtest: a longer text is refused at the form, with the limit said, and never cut
+           ok 124 - a longer text is refused at the form, with the limit said, and never cut
+             ---
+             duration_ms: 0.322792
+             ...
+           # Subtest: the largest a kind allows stays under an act's most: its sealed message and its ask
+           ok 125 - the largest a kind allows stays under an act's most: its sealed message and its ask
+             ---
+             duration_ms: 3.011333
+             ...
+           # Subtest: which computer wrote it is kept: `via` is its person when it wrote for another, else null; every answer unchanged
+           ok 126 - which computer wrote it is kept: `via` is its person when it wrote for another, else null; every answer unchanged
+             ---
+             duration_ms: 3.578292
+             ...
+           # Subtest: every gap a page may list, and every refusal it may say, is in the page's words (fence 9)
+           ok 127 - every gap a page may list, and every refusal it may say, is in the page's words (fence 9)
+             ---
+             duration_ms: 6.503333
+             ...
+           # Subtest: the README says the shortcut first: who sees that a sealed message went by, its size, its handle and its time
+           ok 128 - the README says the shortcut first: who sees that a sealed message went by, its size, its handle and its time
+             ---
+             duration_ms: 0.280167
+             ...
+           # Subtest: grapevine holds every law
+           ok 129 - grapevine holds every law
+             ---
+             duration_ms: 197.822208
+             ...
+           # Subtest: each law catches the change planted to break it
+           ok 130 - each law catches the change planted to break it
+             ---
+             duration_ms: 652.842416
+             ...
+           # Subtest: the page's script sends Sam's ask and reloads, and says a refusal beside its form (chromium)
+           ok 131 - the page's script sends Sam's ask and reloads, and says a refusal beside its form (chromium)
+             ---
+             duration_ms: 870.102459
+             ...
+           # Subtest: the page's script sends Sam's ask and reloads, and says a refusal beside its form (webkit)
+           ok 132 - the page's script sends Sam's ask and reloads, and says a refusal beside its form (webkit)
+             ---
+             duration_ms: 5981.950292
+             ...
+           # Subtest: the loop holds its laws
+           ok 133 - the loop holds its laws
+             ---
+             duration_ms: 115.956291
+             ...
+           # Subtest: each of the loop's laws catches the change planted to break it
+           ok 134 - each of the loop's laws catches the change planted to break it
+             ---
+             duration_ms: 180.661291
+             ...
+           # Subtest: a group whose people can't be read keeps svrngs's answer, and says so
+           ok 135 - a group whose people can't be read keeps svrngs's answer, and says so
+             ---
+             duration_ms: 13.105708
+             ...
+           # Subtest: §10's scene, by ?as=, every page a simulation
+           ok 136 - §10's scene, by ?as=, every page a simulation
+             ---
+             duration_ms: 264.417792
+             ...
+           # Subtest: a foreign Host is refused
+           ok 137 - a foreign Host is refused
+             ---
+             duration_ms: 22.059584
+             ...
+           # Subtest: a foreign Host is refused: caught when its guard is dropped
+           ok 138 - a foreign Host is refused: caught when its guard is dropped
+             ---
+             duration_ms: 50.263458
+             ...
+           # a page under another Host answered 200
+           # Subtest: a foreign Origin is refused
+           ok 139 - a foreign Origin is refused
+             ---
+             duration_ms: 1.10475
+             ...
+           # Subtest: a foreign Origin is refused: caught when its guard is dropped
+           ok 140 - a foreign Origin is refused: caught when its guard is dropped
+             ---
+             duration_ms: 90.371042
+             ...
+           # a write from another site answered 200 (Asked.), 1 written
+           # Subtest: a write not sent as JSON is refused
+           ok 141 - a write not sent as JSON is refused
+             ---
+             duration_ms: 19.793958
+             ...
+           # Subtest: a write not sent as JSON is refused: caught when its guard is dropped
+           ok 142 - a write not sent as JSON is refused: caught when its guard is dropped
+             ---
+             duration_ms: 38.938084
+             ...
+           # application/x-www-form-urlencoded: 200 (Asked.); text/plain: 200 (Asked.); no type: 200 (Asked.); 4 written, not 1
+           # Subtest: "me" is read per group from svrngs
+           ok 143 - "me" is read per group from svrngs
+             ---
+             duration_ms: 68.901125
+             ...
+           # Subtest: "me" is read per group from svrngs: caught when its guard is dropped
+           ok 144 - "me" is read per group from svrngs: caught when its guard is dropped
+             ---
+             duration_ms: 28.897583
+             ...
+           # Jo is not offered a carry to Waller block, where svrngs says this computer stands as Joanna
+           # Subtest: a title typed whole finds that film alone
+           ok 145 - a title typed whole finds that film alone
+             ---
+             duration_ms: 3.402666
+             ...
+           # Subtest: what every title shares finds them all
+           ok 146 - what every title shares finds them all
+             ---
+             duration_ms: 3.915
+             ...
+           # Subtest: a slip still finds the film, one card for its two copies
+           ok 147 - a slip still finds the film, one card for its two copies
+             ---
+             duration_ms: 0.441583
+             ...
+           # Subtest: nothing near is nothing
+           ok 148 - nothing near is nothing
+             ---
+             duration_ms: 0.559208
+             ...
+           # Subtest: Movie Night keeps its form inert until the actual module binds it
+           ok 149 - Movie Night keeps its form inert until the actual module binds it
+             ---
+             duration_ms: 660.9635
+             ...
+           # Subtest: the cut keeps every frame, whole and in order, in pieces of at least 4 s
+           ok 150 - the cut keeps every frame, whole and in order, in pieces of at least 4 s
+             ---
+             duration_ms: 1.3375
+             ...
+           # Subtest: the cut refuses what is not a frame, saying where
+           ok 151 - the cut refuses what is not a frame, saying where
+             ---
+             duration_ms: 0.2305
+             ...
+           # Subtest: a piece is played only as its hash
+           ok 152 - a piece is played only as its hash
+             ---
+             duration_ms: 1.904875
+             ...
+           # Subtest: a line is the station's only under its key and the app's domain
+           ok 153 - a line is the station's only under its key and the app's domain
+             ---
+             duration_ms: 100.904958
+             ...
+           # Subtest: svrngs-core's signature for an app checks here
+           ok 154 - svrngs-core's signature for an app checks here
+             ---
+             duration_ms: 3.530792
+             ...
+           # Subtest: serve answers at the same address across a restart and refuses a held one by name
+           ok 155 - serve answers at the same address across a restart and refuses a held one by name
+             ---
+             duration_ms: 12.233042
+             ...
+           # Subtest: caller authorization is a credential, never loopback or browser metadata
+           ok 156 - caller authorization is a credential, never loopback or browser metadata
+             ---
+             duration_ms: 1.270583
+             ...
+           # Subtest: every accepted request target preserves the selected lend authority
+           ok 157 - every accepted request target preserves the selected lend authority
+             ---
+             duration_ms: 0.350625
+             ...
+           # Subtest: a screenshot reaches a blind model as the vision model's description, tools intact, both hops named
+           ok 158 - a screenshot reaches a blind model as the vision model's description, tools intact, both hops named
+             ---
+             duration_ms: 32.307542
+             ...
+           # Subtest: a request with no image passes through untouched, and the vision model is never asked
+           ok 159 - a request with no image passes through untouched, and the vision model is never asked
+             ---
+             duration_ms: 6.415041
+             ...
+           # Subtest: the pantry's own files do not change for the bridge
+           ok 160 - the pantry's own files do not change for the bridge
+             ---
+             duration_ms: 11.249375
+             ...
+           # Subtest: the wrapper answers /v1/models and OpenAI transcription in front of whisper.cpp
+           ok 161 - the wrapper answers /v1/models and OpenAI transcription in front of whisper.cpp
+             ---
+             duration_ms: 42.0775
+             ...
+           # Subtest: a pantry lists and routes the wrapper as it is, and its own files do not change
+           ok 162 - a pantry lists and routes the wrapper as it is, and its own files do not change
+             ---
+             duration_ms: 4.058042
+             ...
+           # Subtest: list names each lend by asking it, with whose computer, its address and its tools
+           ok 163 - list names each lend by asking it, with whose computer, its address and its tools
+             ---
+             duration_ms: 27.8265
+             ...
+           # Subtest: serve routes chat, multipart transcription and speech by the prefixed model
+           ok 164 - serve routes chat, multipart transcription and speech by the prefixed model
+             ---
+             duration_ms: 13.107375
+             ...
+           # Subtest: a streamed answer reaches the client chunk by chunk, not buffered
+           ok 165 - a streamed answer reaches the client chunk by chunk, not buffered
+             ---
+             duration_ms: 2.986
+             ...
+           # Subtest: an unregistered server, path and body are listed and answered with the pantry unchanged
+           ok 166 - an unregistered server, path and body are listed and answered with the pantry unchanged
+             ---
+             duration_ms: 8.8355
+             ...
+           # Subtest: an asleep, full or unknown lender is named and never substituted
+           ok 167 - an asleep, full or unknown lender is named and never substituted
+             ---
+             duration_ms: 2.868375
+             ...
+           # Subtest: a lend that did not answer in time is could-not-judge, absent, and refused by name
+           ok 168 - a lend that did not answer in time is could-not-judge, absent, and refused by name
+             ---
+             duration_ms: 1.586834
+             ...
+           # Subtest: two people of one name are told apart by their key and both routed
+           ok 169 - two people of one name are told apart by their key and both routed
+             ---
+             duration_ms: 6.565459
+             ...
+           # Subtest: one person's two lends of one model id are both listed as serve routes them
+           ok 170 - one person's two lends of one model id are both listed as serve routes them
+             ---
+             duration_ms: 5.354709
+             ...
+           # Subtest: discovery is kept for a short time and its age is said
+           ok 171 - discovery is kept for a short time and its age is said
+             ---
+             duration_ms: 1.584709
+             ...
+           # Subtest: a lender asleep costs one ask of the record, not every message
+           ok 172 - a lender asleep costs one ask of the record, not every message
+             ---
+             duration_ms: 6.612333
+             ...
+           # Subtest: the door decides limits: its refusal and header pass through unchanged
+           ok 173 - the door decides limits: its refusal and header pass through unchanged
+             ---
+             duration_ms: 1.063333
+             ...
+           # Subtest: PANTRY_LOG=debug writes each probe, route and skip, and the answer names both
+           ok 174 - PANTRY_LOG=debug writes each probe, route and skip, and the answer names both
+             ---
+             duration_ms: 1.566042
+             ...
+           # Subtest: a client's Authorization and Cookie never reach a friend's lend
+           ok 175 - a client's Authorization and Cookie never reach a friend's lend
+             ---
+             duration_ms: 1.758458
+             ...
+           1..175
+           # tests 175
+           # suites 0
+           # pass 174
+           # fail 1
+           # cancelled 0
+           # skipped 0
+           # todo 0
+           # duration_ms 16033.364584
+note       took 1316 s in all
+exit=1
