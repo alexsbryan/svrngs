@@ -299,17 +299,25 @@ pub async fn upload_origin() -> (SocketAddr, tokio::sync::oneshot::Receiver<()>)
     let addr = listener.local_addr().unwrap();
     let (first, first_rx) = tokio::sync::oneshot::channel();
     tokio::spawn(async move {
-        let Ok((mut sock, _)) = listener.accept().await else {
-            return;
-        };
-        let mut head = Vec::new();
-        let mut byte = [0u8; 1];
-        while !head.ends_with(b"\r\n\r\n") {
-            if sock.read(&mut byte).await.unwrap_or(0) == 0 {
+        // The upload is the first connection that sends a head: one that
+        // sends nothing is its lender asking whether it runs (door.rs
+        // `answering`), and the next is taken.
+        let (mut sock, head) = loop {
+            let Ok((mut sock, _)) = listener.accept().await else {
                 return;
+            };
+            let mut head = Vec::new();
+            let mut byte = [0u8; 1];
+            while !head.ends_with(b"\r\n\r\n") {
+                if sock.read(&mut byte).await.unwrap_or(0) == 0 {
+                    break;
+                }
+                head.push(byte[0]);
             }
-            head.push(byte[0]);
-        }
+            if head.ends_with(b"\r\n\r\n") {
+                break (sock, head);
+            }
+        };
         let head = String::from_utf8_lossy(&head).to_ascii_lowercase();
         let length: u64 = head
             .lines()

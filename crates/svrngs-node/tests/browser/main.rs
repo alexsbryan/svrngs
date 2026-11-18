@@ -639,6 +639,11 @@ fn kept_at(
                 let n = tokio::io::AsyncReadExt::read(&mut sock, &mut head)
                     .await
                     .unwrap_or(0);
+                // A connection that sends nothing is its lender asking
+                // whether it runs (door.rs `answering`), not a request.
+                if n == 0 {
+                    return;
+                }
                 kept.lock()
                     .unwrap()
                     .push(String::from_utf8_lossy(&head[..n]).into_owned());
