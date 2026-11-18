@@ -6,20 +6,34 @@ computer, as themselves; you see who used how many tokens, never what they
 wrote; at the time you set, or when the tokens you allowed are spent, it
 stops answering.
 
-Lend it from a checkout of svrngs, with svrngs running:
+- **Shape:** lent. A program on your computer, holding the budget; svrngs
+  holds your key.
+- **Run it:** [below](#run-it), from svrngs's source
+  ([run one](../../docs/guide/examples.md#3-run-one)).
+- **How it's made:** [How it works](#how-it-works).
+- **Change it:** `server.mjs` is the server, `page.js` the chat. Restart it
+  after a change.
 
-```
-node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api & svrngs share 8090 --name deepseek-flash --program spot --group <group>
-```
+## Run it
 
-`share` asks *"If deepseek-flash takes a password on each request, paste
-what it takes in its Authorization header"*: paste `Bearer ` and your key.
-It isn't shown, and it stays on your computer: svrngs keeps it with the
-lend and adds it to each of your friends' requests on its way in. Spot
-itself never has it on disk. Or lend it from your home page instead: under
-**Already running here**, look for programs, name it `deepseek-flash`, say
-it is `spot`, tick the group, press **Lend** twice; then open its line under
-**What you lend** and add the header `Authorization`, `Bearer <your key>`.
+1. In a terminal, from svrngs's source, with svrngs running. Leave it open:
+   ```
+   node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api
+   ```
+2. Lend it from your home page: under **Already running here**, press
+   **Look for programs running on this computer**. Fill in **Its name:**
+   `deepseek-flash` and **Which program:** `spot`, tick the group, and
+   press **Lend it to** your group.
+   Then open its line under **What you lend** and add the header
+   `Authorization`, `Bearer <your key>`.
+
+   Or in a second terminal: `svrngs share 8090 --name deepseek-flash
+   --program spot --group <group>`, pasting `Bearer <your key>` where it
+   asks for a password.
+
+Your key isn't shown, and stays on your computer: svrngs keeps it with the
+lend and adds it to each friend's request on its way in. Spot never has it
+on disk.
 
 - `--provider` is any provider that speaks OpenAI's API, its address
   ending where `/chat/completions` goes on: DeepInfra

@@ -84,16 +84,17 @@ machinery keeps any app.
 happy to run a couple scripts well defined in a document", to "see how the
 sausage is made" and build their own). From the installed binary alone:
 use one, open one up, run one, make your own (DESIGN §1). In order:
-1. **The guide**, docs only: one page for the ladder; `apps/README.md` by
-   shape; each README as shape / run it / how it's made / change it.
-   **Node 24**, the oldest LTS supported past 2027 (to 2028-04-30),
-   landed: named once, in `.nvmrc`; the gate runs it and every ask names
-   it (`scripts/tests/test_node.py`).
-2. **Two touches**, each after an economizing pass (both budgets full at
-   `be20e26e`): `svrngs version` prints its source's address (+4 Rust;
-   tags differ in form, `v1.10`); the shelf's sentence links the ladder
-   (+2 JavaScript, `home/ui/shelf.js:242`). **Its files** beside each app
-   waits for a run that stalls there (about +25).
+1. **The guide**, docs only; landed: `docs/guide/examples.md`, the
+   four rungs; `apps/README.md` by shape; each example's README opens with
+   shape / run it / how it's made / change it. **Node 24**, the oldest LTS
+   supported past 2027 (to 2028-04-30), landed: named once, in `.nvmrc`;
+   the gate runs it and every ask names it (`scripts/tests/test_node.py`).
+2. **The shelf links the ladder**: *"to use or to change"*
+   (`home/ui/shelf.js:242`) leads to Examples, +2 JavaScript after an
+   economizing pass (the cap is full). The guide builds the source's
+   address from `svrngs version`, as `scripts/deploy-page.sh:46` tags
+   `v<version>`, so the binary needs no line of its own. **Its files**
+   beside each app waits for a run that stalls there (about +25).
 3. **Release 1.11.0**, the operator's.
 4. **The run**, `demo/runs/examples/`: the installed 1.11.0 and the
    guide's lines alone. Money changed in a group of one's own (C1, C4 of

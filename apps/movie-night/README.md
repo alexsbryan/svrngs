@@ -3,6 +3,13 @@
 One search over every Jellyfin your groups lend: each film a card, with each
 friend's copy under it, opening in that friend's Jellyfin.
 
+- **Shape:** carried. A static page; it reads what friends lend, never writes.
+- **Run it:** bring it from your home page (**Add an app**, Movie Night).
+- **How it's made:** `match.js` decides which films a search names and which
+  copies are one film; `index.js` is the page.
+- **Change it:** in a group of your own, edit `apps/Movie-Night/index.js`
+  ([open one up](../../docs/guide/examples.md#2-open-one-up)).
+
 An example to copy and bend, not part of svrngs: a static page with no server
 and no credential. svrngs knows nothing of films; the page reads what svrngs
 tells it at `/svrngs-reads`, and each library through the account its lender
