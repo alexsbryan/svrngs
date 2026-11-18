@@ -17,7 +17,7 @@ The row then says *"You lent jellyfin, at http://localhost:8096: the groups you 
 
 If svrngs doesn't know the program, the row says *"Something at http://localhost:5006. To lend it, give it a name and say which program it is, each one word…"*. Fill in **Its name:** and **Which program:** (for example `actual` and `actual`), tick who can open it, then press **Lend it to House** (the button names the groups you ticked).
 
-The home page asks for a password in one place only: the account apps read through, in the next paragraph. It goes to this computer and nowhere else. If a program wants a password on every request, lend it from a terminal (below).
+The home page asks for a password in two places: the account apps read through, in the next paragraph, and a header the program wants on each request, such as its API key (below). Each goes to this computer and nowhere else.
 
 If apps read the program, as Movie Night reads Jellyfin, its line under **What you lend** opens to say *"Apps can't read your jellyfin yet. To let them, make one account for your group."* Unfold **How to make the account**, make it the way that says, type its name and password, and press **Save the account**. svrngs signs in once and keeps only what the program gives it, not the password. The row then says *"Apps your friends open can read your jellyfin with the account you made. They can't change anything."*
 
@@ -90,6 +90,10 @@ If actual takes a password on each request, paste what it takes in its Authoriza
 ```
 
 Most apps with a sign-in page don't need this: press Enter. Paste something only if the program wants a header on every request, such as llama-server started with `--api-key abc123`: then paste `Bearer abc123`, the whole header value. What you type isn't shown. svrngs then says *"Its password stays on this computer; nobody you lend it to receives it."* Your friends never see it, but to the program they all arrive as that one password, so it can't tell them apart.
+
+**From your home page:** under **What you lend**, press its line to open it. It says *"If coder wants a header on each request, add it here: for llama-server started with --api-key abc123, Authorization with Bearer abc123."* **Header:** already says `Authorization`, which is what most programs want; type `Bearer abc123` in **What it says:** and press **Add this header**. The line then says *"svrngs adds authorization to each request your friends make to coder. They never receive what it says."*, and your friends' next request carries it, with nothing restarted. A program that wants another header, such as `X-API-Key`, gets it the same way, and you can add more than one. Adding one of the same name again replaces it; **Stop adding authorization** takes it off.
+
+svrngs puts its own in place of any header of that name a friend sends, so nobody can swap in theirs, and it drops one from any answer that repeats it. It won't add its own `X-Svrngs-` headers, `Host`, `Cookie`, `Content-Length` or the ones that frame a request, nor a value with a line break. It doesn't try the header first, so if your friends are told it was refused, add it again. A program svrngs knows signs each person in itself, such as Jellyfin or Immich, takes none: one header for everyone would make them all one person to it.
 
 ## Give it a name
 

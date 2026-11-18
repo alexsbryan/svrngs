@@ -61,6 +61,22 @@ since neither adds a product line (operator, 2026-11-17): Magnets' face in
 players, and the two design spikes, the merge rule and what a phone signs.
 The database itself still waits for stage 4.
 
+**Spotting** (operator, 2026-11-17): friends lend their group a night of a
+provider's model without handing out a key, and chat with it from a
+phone; one change to svrngs, two apps (DESIGN §1, "What we build"; §3, "A
+model or a tool is lent like any app"). In this order, each with its demo:
+1. headers the door adds to each request, given in a lend's row on the
+   home page, for the lends `svrngs share` asks one of; demo: a llama-server
+   started with `--api-key` lent from the home page alone, and a request
+   through the door answered;
+2. Chat on the shelf, a carried page for any lent model whose lender said
+   yes to `POST /v1/chat/completions`; demo: Bo, on a phone, chats with
+   Ana's llama-server;
+3. Spot as a program beside svrngs, as Give's is, offered by the install
+   line, its key the row's; demo: Ana lends a provider's model until 2 am
+   with no terminal, and Bo chats with it in Chat. The forwarder in
+   `apps/spot/` now, run from a terminal, is its first draft.
+
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
 groups, grapevine; V1 on n0" and "arch → groups → grapevine"; svrn-docs

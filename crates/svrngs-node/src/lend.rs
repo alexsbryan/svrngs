@@ -660,13 +660,24 @@ pub const SECRET_HEADER: &str = "authorization";
 
 /// Keep `(header, value)` as what apps reading the lend `name` are let in
 /// with ([`readers_dir`]), held as every change to the lend is.
-pub fn keep_readers(
+pub fn keep_readers(data_dir: &Path, name: &LendName, pair: (&str, &str)) -> Result<(), LendError> {
+    keep(data_dir, name, readers_dir(data_dir, name), pair)
+}
+
+/// Keep `(header, value)` as a header the lend `name`'s door adds to each
+/// request ([`secret_dir`]), in place of one of that name, the others and its
+/// readers' left as they are; an empty value stops adding it.
+pub fn keep_header(data_dir: &Path, name: &LendName, pair: (&str, &str)) -> Result<(), LendError> {
+    keep(data_dir, name, secret_dir(data_dir, name), pair)
+}
+
+fn keep(
     data_dir: &Path,
     name: &LendName,
+    path: PathBuf,
     (header, value): (&str, &str),
 ) -> Result<(), LendError> {
     let _held = lock_lend(data_dir, name)?;
-    let path = readers_dir(data_dir, name);
     crate::declared::write_declared_in(&path, header, value)
         .map_err(|source| LendError::Unwritable { path, source })
 }

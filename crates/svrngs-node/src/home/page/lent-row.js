@@ -26,6 +26,7 @@ import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
  * @property {Lend} l
  * @property {boolean} signs
  * @property {AppsAccount} [account]
+ * @property {string[]} [headers]
  * @property {Choice[]} groups
  * @property {HOME.PlaceProps['home']} home
  */
@@ -118,12 +119,35 @@ const READS = {
   }),
 };
 
+// What svrngs adds to each request it carries to a lend (home.rs `lent`,
+// `change`; share.rs `adds_headers`): the names of the headers kept, never
+// what they say, each with a button to stop it, and a header to add, its
+// value sent once to this computer and kept there. A header of a name kept
+// replaces it.
+/** @param {Omit<AppsProps, 'account'> & { kept?: string[] }} props */
+function Headers({ name, kept, state, doing, send }) {
+  if (kept === undefined) return null;
+  const header = state.header ?? 'Authorization';
+  const said = kept.length
+    ? `svrngs adds ${kept.join(' and ')} to each request your friends make to ${name}. They never receive what it says.`
+    : `If ${name} wants a header on each request, add it here: for llama-server started with --api-key abc123, Authorization with Bearer abc123.`;
+  /** @param {string} named @param {string} value */
+  const to = (named, value) => ({ type: 'change', to: { header: { name: named, value } } });
+  return html`
+    <p>${said}</p>
+    ${kept.map((named) => html`<${Act} words=${`Stop adding ${named}`} doing=${doing} on=${to(named, '')} send=${send} />`)}
+    <${Field} words="Header: " name="header" value=${header} send=${send} />
+    <${Field} words="What it says: " name="secret" value=${state.secret ?? ''} attrs=${HIDDEN} send=${send} />
+    <${Act} words="Add this header" doing=${doing} on=${to(header, state.secret ?? '')} send=${send} />
+  `;
+}
+
 // Whether apps wait on the lender: an account or key to make, or why not.
 const undone = (/** @type {AppsAccount | undefined} */ account) =>
   account !== undefined && !account.kept;
 
 /** @param {LentProps} props */
-export function Lent({ l: lend, signs, account, groups, home }) {
+export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const [state, send] = useMachine(() =>
     machine('CHANGE', CHANGE(lend.name, home), {
       at: { change: 'idle' },
@@ -187,6 +211,7 @@ export function Lent({ l: lend, signs, account, groups, home }) {
       />
       ${saveAudience}
       <${Apps} name=${lend.name} account=${account} state=${state} doing=${doing} send=${send} />
+      <${Headers} name=${lend.name} kept=${headers} state=${state} doing=${doing} send=${send} />
       ${signIn}
       <${Act} words="Stop lending" doing=${doing} on=${{ type: 'change', to: 'stop' }} send=${send} />
       ${state.said}

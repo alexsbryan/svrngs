@@ -320,6 +320,18 @@ pub fn accounts_of<'a>(kind: &Program, terms: &'a str) -> Option<Signs<'a>> {
     signs
 }
 
+/// Whether its lender may give headers its door adds to each request `lend`
+/// is asked, as `svrngs share` asks for an Authorization and its row on the
+/// home page for any: not when it signs people in with svrngs or itself
+/// ([`accounts_of`]), where one header sent for all made everyone one
+/// person, nor for a raw lend, which carries the person's own.
+pub fn adds_headers(lend: &Lend, terms: &str) -> bool {
+    let signs = lend.sign_in_with_svrngs.is_some() || matches!(lend.source, Source::Raw(..));
+    let signs = signs || accounts_of(&lend.kind, terms).is_some();
+    tracing::debug!(target: "share", lend = %lend.name, signs, "share: headers its door adds asked of its lender, unless it signs people in or is raw");
+    !signs
+}
+
 /// How [`PROGRAMS`] says a service trades the account its lender keeps
 /// for readers, a name and a password, for what an app reading it is let in
 /// with (`svrngs share --readers`, `lend::readers_dir`). Its row:

@@ -760,12 +760,24 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (51f5e669), and the resolver's new phrase and miss budgets (c327032f,
 # 2241e350). The caps come down to where they land. js 8,545 -> 8,540;
 # all code but JavaScript 21,359 -> 21,357.
+# (2026-11-17) Raised by the operator ("Raise it and proceed"), asked after an
+# economizing pass (837ff35f, -14 other -17 js: a lend's terms read once for
+# every change on the home page, apps' account and key one box, the command's
+# printed blocks whole, `lend_of`'s name and limit). The feature is headers the
+# door adds to each request, given in a lend’s row on the home page (+38 other, +25 js): the
+# change and its answer on /lent, one decider for it with `svrngs share`, the
+# store's keeper, the name and value refused unless a header can carry them,
+# and the door holding a file put there by hand to the same names. The rest
+# was not found: what remained cost precision (cli.rs's one-sentence refusal
+# variants merged, which tests match by name) or the closed set (`exit_code`'s
+# exhaustive match). all code but JavaScript 21,357 -> 21,381; js 8,540 -> 8,535,
+# where it lands.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21358,
+    ".": 21382,
 
-    "js": 8541,
+    "js": 8536,
 
     "swift": 1,
 }

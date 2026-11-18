@@ -650,6 +650,182 @@ async fn a_readers_key_is_pasted_on_the_home_page_and_never_told() {
     );
 }
 
+/// **A header the door adds to each request is given on the home page**
+/// (DESIGN §3, call 4): a lender with no terminal lends a llama-server
+/// started with `--api-key`. `/lent` names, for each lend that may have them,
+/// the headers kept, never their values; a header the door keeps for itself
+/// or a value with a line break is refused and keeps nothing; a program that
+/// signs each person in is refused any; one given is kept as `svrngs share`
+/// keeps it, and Sam's door sends it on Alex's next request with no restart,
+/// in place of the one Alex typed; an empty value stops it. Planted, watched
+/// failing: the change kept the header under the readers' directory; and the
+/// door sent a hand-written `x-svrngs-key` beside its own.
+#[tokio::test]
+async fn a_header_the_door_adds_is_given_on_the_home_page() {
+    let (alex_dir, sam_dir) = (tempfile::tempdir().unwrap(), tempfile::tempdir().unwrap());
+    let (alex, sam) = alex_lets_sam_in(alex_dir.path(), sam_dir.path()).await;
+    tokio::time::timeout(Duration::from_secs(30), sam.round())
+        .await
+        .expect("Sam's computer hears it lets Sam in");
+    let heads = head_on(&sam, 9002);
+    let at = lend::lends_dir(sam_dir.path());
+    std::fs::create_dir_all(&at).unwrap();
+    for (name, kind) in [("coder", "llama-server"), ("photos", "immich")] {
+        let body = serde_json::json!({ "port": 9002, "kind": kind, "groups": [NS] });
+        std::fs::write(at.join(format!("{name}.json")), body.to_string()).unwrap();
+    }
+    let (browser, home) = (
+        &Browser::of(&sam),
+        format!("svrngs.localhost:{}", sam.api_addr().port()),
+    );
+    let own =
+        format!("Sec-Fetch-Site: same-origin\r\nSec-Fetch-Mode: cors\r\nOrigin: http://{home}\r\n");
+    let kept = sam_dir.path().join("secrets/lends/coder/authorization");
+    let add = |lend: &str, name: &str, value: &str| {
+        serde_json::json!({ "lend": lend, "to": { "header": { "name": name, "value": value } } })
+            .to_string()
+    };
+    let coder = Label::of(&signing(2).verifying_key().to_bytes(), "coder");
+    // What Sam's llama-server saw of Alex's next request, which carries an
+    // Authorization of Alex's own.
+    let alexs = || async {
+        let host = format!("{coder}.localhost:{}", alex.api_addr().port());
+        let typed =
+            "Sec-Fetch-Site: none\r\nSec-Fetch-Mode: navigate\r\nAuthorization: Bearer alexs\r\n";
+        let got = ask(&Browser::of(&alex), "GET", &host, "/v1/models", typed, "").await;
+        assert_eq!(got.status, 200, "Alex, through Sam's door: {}", got.body);
+        heads
+            .lock()
+            .unwrap()
+            .pop()
+            .unwrap_or_default()
+            .to_ascii_lowercase()
+    };
+    let refused = |got: Got, words: &str| {
+        assert_eq!(
+            (got.status, got.json()["error"].as_str().map(str::to_owned)),
+            (403, Some(words.to_owned())),
+            "{}",
+            got.body
+        );
+    };
+
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(
+        listed["headers"]["coder"],
+        serde_json::json!([]),
+        "{listed:#}"
+    );
+    assert_eq!(
+        listed["headers"]["photos"],
+        serde_json::Value::Null,
+        "{listed:#}"
+    );
+    assert!(
+        alexs()
+            .await
+            .contains("\r\nauthorization: bearer alexs\r\n"),
+        "with none kept, Alex's own passes"
+    );
+
+    for (name, value, why) in [
+        ("x-svrngs-key", "sam", "the door's own"),
+        ("host", "elsewhere", "the address"),
+        ("transfer-encoding", "chunked", "a hop-by-hop one"),
+        (
+            "Authorization",
+            "Bearer abc123\r\nx-svrngs-key: sam",
+            "a value with a line break",
+        ),
+    ] {
+        let got = ask(
+            browser,
+            "POST",
+            &home,
+            "/lent",
+            &own,
+            &add("coder", name, value),
+        )
+        .await;
+        assert_eq!(got.status, 403, "{why}: {}", got.body);
+    }
+    assert!(
+        !sam_dir.path().join("secrets/lends/coder").exists(),
+        "nothing refused is kept"
+    );
+    refused(
+        ask(
+            browser,
+            "POST",
+            &home,
+            "/lent",
+            &own,
+            &add("photos", "Authorization", "Bearer abc123"),
+        )
+        .await,
+        "It signs each person in, so svrngs adds no header to it.",
+    );
+    assert!(!sam_dir.path().join("secrets/lends/photos").exists());
+
+    let given = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &add("coder", "Authorization", "Bearer abc123"),
+    )
+    .await;
+    assert_eq!(given.status, 204, "{}", given.body);
+    assert_eq!(std::fs::read_to_string(&kept).unwrap(), "Bearer abc123");
+    let listed = ask(browser, "GET", &home, "/lent", &own, "").await.json();
+    assert_eq!(
+        listed["headers"]["coder"],
+        serde_json::json!(["authorization"]),
+        "{listed:#}"
+    );
+    assert!(
+        !listed.to_string().contains("abc123"),
+        "never answered: {listed:#}"
+    );
+    let head = alexs().await;
+    assert!(
+        head.contains("\r\nauthorization: bearer abc123\r\n"),
+        "the door's, with no restart: {head}"
+    );
+    assert_eq!(
+        head.matches("\r\nauthorization:").count(),
+        1,
+        "Alex's own displaced: {head}"
+    );
+
+    // A file put there by hand is held to the same names.
+    std::fs::write(kept.with_file_name("x-svrngs-key"), "sam").unwrap();
+    let head = alexs().await;
+    assert_eq!(
+        head.matches("\r\nx-svrngs-key:").count(),
+        1,
+        "the door's identity alone: {head}"
+    );
+
+    let stopped = ask(
+        browser,
+        "POST",
+        &home,
+        "/lent",
+        &own,
+        &add("coder", "authorization", ""),
+    )
+    .await;
+    assert_eq!(stopped.status, 204, "{}", stopped.body);
+    assert!(!kept.exists(), "an empty value stops adding it");
+    assert!(alexs()
+        .await
+        .contains("\r\nauthorization: bearer alexs\r\n"));
+    sam.net().close().await;
+    alex.net().close().await;
+}
+
 /// **The account apps read through, set on the home page** (capability
 /// connections §5 step 5, §6 bar 1): `GET /lent` says which lends can have
 /// one, and whether one is kept, never what is kept. A wrong password is

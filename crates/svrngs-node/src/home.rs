@@ -417,6 +417,13 @@ enum LendChange {
     },
     /// The key apps reading it are let in with, kept as pasted.
     Key(String),
+    /// A header its door adds to each request, kept as typed, where
+    /// `svrngs share` would ask one (`share::adds_headers`); an empty value
+    /// stops adding it.
+    Header {
+        name: String,
+        value: String,
+    },
     Stop,
 }
 
@@ -439,7 +446,7 @@ async fn lent(State(at): State<Asking>) -> Response {
         .collect();
     // How apps read each, by its groups' own terms as well as svrngs's; a
     // lend whose groups' terms can't be read says why in their place.
-    let mut readers = serde_json::Map::new();
+    let (mut readers, mut headers) = (serde_json::Map::new(), serde_json::Map::new());
     for l in &all {
         let (terms, by) = match terms_of(&at, l).await {
             Ok(read) => read,
@@ -448,6 +455,14 @@ async fn lent(State(at): State<Asking>) -> Response {
                 continue;
             }
         };
+        if share::adds_headers(l, &terms) {
+            let kept =
+                crate::declared::read_declared_in(&lend::secret_dir(&at.door.data_dir, &l.name));
+            headers.insert(
+                l.name.to_string(),
+                kept.into_iter().map(|(header, _)| header).collect(),
+            );
+        }
         let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
         let key = share::key_of(&l.kind, &terms).is_some();
         let signs = share::accounts_of(&l.kind, &terms);
@@ -459,7 +474,7 @@ async fn lent(State(at): State<Asking>) -> Response {
         tracing::debug!(target: "home", lend = %l.name, read, by, "home: how apps read a lend, by its groups' terms and svrngs's, or why those can't be read");
         readers.extend(read.then(|| (l.name.to_string(), said)));
     }
-    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers }))
+    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers, "headers": headers }))
         .into_response()
 }
 
@@ -498,6 +513,23 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
                 share::key_said(&lent.kind, tried).map_err(LendRefusal::closed)?;
             }
             share::keep_key(dir, &c.lend, how, key.trim())
+        }
+        LendChange::Header { name, value } => {
+            // Never the door's own, a hop-by-hop one or the browser's, and
+            // nothing a header can't carry, such as a line break.
+            if !share::key_header_fits(&name)
+                || axum::http::HeaderValue::from_str(value.trim()).is_err()
+            {
+                tracing::debug!(target: "home", lend = %c.lend, "home: refused — a header svrngs keeps for itself, or a value no header carries");
+                return Err(LendRefusal::closed(format!("svrngs can’t add {name} with that: a header of its own, the browser’s, or a value with a line break.")));
+            }
+            let (lent, terms) = lent_with_terms(&at, &c.lend).await?;
+            if !share::adds_headers(&lent, &terms) {
+                return Err(LendRefusal::closed(
+                    "It signs each person in, so svrngs adds no header to it.",
+                ));
+            }
+            lend::keep_header(dir, &c.lend, (&name, value.trim())).map(|()| true)
         }
     };
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
@@ -545,6 +577,7 @@ fn kind_of(change: &LendChange) -> &'static str {
         LendChange::SignIn => "sign-in",
         LendChange::Readers { .. } => "readers",
         LendChange::Key(_) => "key",
+        LendChange::Header { .. } => "header",
         LendChange::Stop => "stop",
     }
 }

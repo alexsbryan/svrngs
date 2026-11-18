@@ -818,14 +818,12 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
                 lend.sign_in_with_svrngs = Some(client.clone());
             }
-            let raw = matches!(lend.source, Source::Raw(..));
-            let secret = match (client.is_some() || raw, accounts) {
-                (true, _) => None,
-                (false, Some(signs)) => {
-                    tracing::debug!(target: "cli", lend = %lend.name, ?signs, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes (Accounts), or it takes each person from the door's header (Header)");
+            let secret = match share::adds_headers(&lend, theirs) {
+                false => {
+                    tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
                     None
                 }
-                (false, None) => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
+                true => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
             };
             share_lend(&root, &lend, secret.as_deref())?;
             if asked.readers {

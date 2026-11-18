@@ -22,7 +22,7 @@ When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, i
 svrngs share 8101 --program llama-server --name coder --group <group>
 ```
 
-It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. Then:
+It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. (Lent from your home page, add it as a header in its line under **What you lend** instead: [Lend something that takes a password on each request](lend.md#lend-something-that-takes-a-password-on-each-request).) Then:
 
 ```
 You lend coder (port 8101) to the groups you chose, as many at once as want it. …
