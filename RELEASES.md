@@ -1,5 +1,36 @@
 # svrngs releases
 
+## V1.11.1, 18 November 2026
+
+V1.11.1 is a security release: update now.
+
+**A device you remove stays removed.** Before, a computer or phone that
+another of your devices removed could come back. It signed a removal of the
+device that removed it, as if it had never seen its own, and both stood
+again. Pressing **Leave** on two of your computers at once cancelled out
+the same way, and you stayed in the group. Now your removals of your own
+devices never cancel each other. A device you remove stays out, and if two
+of your devices remove each other, both are out. The trade: a stolen phone
+can remove your other computers too, and then your group's keeper invites
+you again. A removal by your group's keeper holds as before.
+
+**A lend whose program isn't running says so.** Before, a friend's lend
+whose program had stopped looked like any other, and opening it was the
+first anyone heard. Now its line says *"Not running now."* on your home
+page, your phone and your friends' pages.
+
+**Examples, a ladder.** [`docs/guide/examples.md`](docs/guide/examples.md)
+shows how each example is made: use one, open one up, run one, then make
+your own.
+
+Groups, lends and the record otherwise work as in V1.11. Press **Update
+and restart** on your home page, or run `svrngs update` and then
+`svrngs restart`. Your phone's page updates itself.
+
+V1.11.1 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.11.1`. Its publication and readback are recorded in
+`demo/runs/v1.11.1/2026-11-18/README.md`.
+
 ## V1.11, 18 November 2026
 
 V1.11 lets you lend a program that wants a key on each request from your
