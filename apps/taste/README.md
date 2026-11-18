@@ -3,6 +3,12 @@
 Rate films you've seen, and Taste guesses what else in your friends'
 libraries you'll like. Your ratings stay in your browser.
 
+- **Shape:** carried, copied by hand: it isn't on the shelf.
+- **Run it:** [Start it](#start-it).
+- **How it's made:** [How it's built](#how-its-built).
+- **Change it:** edit `index.js` in a group of your own first
+  ([open one up](../../docs/guide/examples.md#2-open-one-up)).
+
 An example to copy and bend, not part of svrngs: svrngs knows nothing of
 films or ratings. Taste is a folder with no server of its own. It uses what
 any app in a group's folder can: reading a friend's lent Jellyfin

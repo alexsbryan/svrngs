@@ -22,6 +22,7 @@ New here? Read [How it works](how-it-works.md) (five minutes), then
 | Split money, plan a night, agree on house rules | [Apps that come with svrngs](apps.md) |
 | Keep a folder the same on everyone's computer | [Shared folders](folders.md) |
 | Invite someone, add my phone, have a guest, remove someone, leave | [People](people.md) |
+| See how the examples are made, run one, change one | [Examples](examples.md) |
 | Build an app for my group | [Build an app](build.md) |
 | Fix something that isn't working | [Troubleshooting](troubleshooting.md) |
 

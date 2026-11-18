@@ -98,7 +98,7 @@ Or on your home page, under **What you lend**, press its line to open it, type `
 
 ## Spot your group a provider's model for the night
 
-If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, OpenRouter, Together, Groq, OpenAI), you can lend it to your group for a while without giving anyone your key. Your friends chat with it on a phone or a computer. Spot is an example that comes with svrngs's source, in `apps/spot/`, to run as it is or to start your own from. It needs Node 24 or later, on a Mac as on Linux.
+If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, OpenRouter, Together, Groq, OpenAI), you can lend it to your group for a while without giving anyone your key. Your friends chat with it on a phone or a computer. Spot is an example that comes with svrngs's source, in `apps/spot/`, to run as it is or to start your own from ([run one](examples.md#3-run-one)). It needs Node 24 or later, on a Mac as on Linux.
 
 Start it, saying the provider, the models, until when and how many tokens everyone together may use:
 
@@ -122,7 +122,7 @@ Leave Spot running. Each answer prints a line: who, which model, how many tokens
 
 ## The pantry: every friend's model behind one address
 
-When Ana lends a coder, Sam a voice and Bo some tools, the pantry gathers them into one address on your computer for your chat app. It comes with svrngs's source, in `apps/pantry/`, and needs Node 24 or later.
+When Ana lends a coder, Sam a voice and Bo some tools, the pantry gathers them into one address on your computer for your chat app. It comes with svrngs's source, in `apps/pantry/` ([run one](examples.md#3-run-one)), and needs Node 24 or later.
 
 ![A chat app on your computer points at the pantry’s one address; picking Ana/coder sends the chat to Ana’s computer and Sam/voice to Sam’s, while a friend’s tools are reached at their own address.](../diagrams/guide/pantry.svg)
 

@@ -240,6 +240,9 @@ export function drawn(state, send, { g: group, lent, shelf, joined, more }) {
   // have. Then how, and what comes of it, in the words said after a bring
   // (`done`): the legend of the boxes it is about.
   const offering = `These are svrngs’s examples, to use or to change. Tick what you want and press the button: it goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.`;
+  // How one is made, opened up and changed: the guide's ladder, after the
+  // boxes and never in their legend, which is read with each box.
+  const how = html`<p><a href="https://github.com/alexsbryan/svrngs/blob/main/docs/guide/examples.md">See how they’re made</a>, and how to change one.</p>`;
   const boxes = offered.map((app) => {
     const words = ` ${spoken(app.name)}: ${app.words}`;
     return html`<${Tick}
@@ -267,7 +270,7 @@ export function drawn(state, send, { g: group, lent, shelf, joined, more }) {
     <section>
       <h3>Bring things to the table</h3>
       ${already(here, name)}
-      ${offered.length > 0 && html`<fieldset><legend>${offering}</legend>${boxes}</fieldset>`}
+      ${offered.length > 0 && html`<fieldset><legend>${offering}</legend>${boxes}</fieldset>${how}`}
       ${bringLine}
       ${more}
     </section>

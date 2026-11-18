@@ -1,24 +1,26 @@
 # Apps
 
-None of these is svrngs. svrngs names no app (`scripts/vocab_check.py`); each
-here uses only what any app can ([DESIGN §3](../docs/DESIGN.md)), and is
-yours to copy and bend.
+None of these is svrngs. Each uses only what any app can
+([DESIGN §3](../docs/DESIGN.md)), and is yours to copy and bend. How to use,
+open up, run and change one: [Examples](../docs/guide/examples.md).
 
-**On the shelf.** They come with svrngs and are one tap to bring to a group
-([Apps](../docs/guide/apps.md)): `expenses/` (Money), `events/` (Events),
-`canon/` (House rules), `movie-night/` (Movie Night, which reads the groups' lent Jellyfins).
+**Carried**: a page in each person's browser; the group keeps its data.
+- On the shelf, one tap from the home page: `expenses/` (Money),
+  `events/` (Events), `canon/` (House rules), `movie-night/` (Movie Night).
+- Copied into a group's folder: `taste/` (Taste).
 
-**Examples to run yourself.** Each from svrngs's source, with its own README:
-`doc/`, `grapevine/`, `give/`, `pantry/`, and `spot/` (lend your group a
-provider's models for a night, your key kept by svrngs: friends chat on
-Spot's page, on a phone too).
+**Lent**: a program on your computer, opened by your group through svrngs.
+`spot/` (a provider's model for a night, your key kept by svrngs) and
+`doc/` (a document written together).
 
-**Examples to copy into a group's folder.** `taste/` (Taste, which reads
-the groups' lent Jellyfins and sends to a lent llama-server).
+**Yours alone**: a program on your computer, for you, that asks svrngs.
+`pantry/` (every friend's model behind one address) and `grapevine/` (asks
+carried group to group).
 
-**Notes for a program you already run.** `jellyfin/`: lending it, and the
-account apps read it by.
+**Kept by the group**: `give/`, which keeps an app on one member's computer
+at a time.
 
-**For svrngs's own checks.** `web-conformance/` (the conformance canary),
-`on-air/` (a proof of concept), `tap/` (nouns kept back for an app not yet
-written), `pinned.mjs` (how an app's vendored files are pinned).
+**Notes for a program you already run**: `jellyfin/`, `holyarrs/`.
+
+**For svrngs's own checks**: `web-conformance/`, `on-air/`, `tap/`,
+`pinned.mjs`.
