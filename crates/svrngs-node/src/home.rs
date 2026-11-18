@@ -464,7 +464,7 @@ async fn lent(State(at): State<Asking>) -> Response {
 }
 
 /// `POST /lent`: the person's change, written to the lend's declaration.
-async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
+async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Response, Response> {
     let dir = &at.door.data_dir;
     let to = kind_of(&c.to);
     let done = match c.to {
@@ -478,41 +478,45 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
             Ok(()) => lend::set_audience(dir, &c.lend, groups),
             Err(refused) => {
                 tracing::debug!(target: "home", lend = %c.lend, "home: refused — an audience names a group this computer does not hold");
-                return refused;
+                return Err(refused);
             }
         },
         LendChange::Stop => lend::withdraw(dir, &c.lend),
-        LendChange::SignIn => return sign_in(&at, &c.lend).await,
+        LendChange::SignIn => return Ok(sign_in(&at, &c.lend).await),
         LendChange::Readers { name, password } => {
-            return readers(&at, &c.lend, &name, &password).await
+            return Ok(readers(&at, &c.lend, &name, &password).await)
         }
         LendChange::Key(key) if key.trim().is_empty() => {
-            return LendRefusal::closed("Paste the key first.".to_string());
+            return Err(LendRefusal::closed("Paste the key first."));
         }
-        LendChange::Key(key) => match lend::read(dir, &c.lend) {
-            Ok(Some(lent)) => {
-                let terms = match terms_of(&at, &lent).await {
-                    Ok((terms, _)) => terms,
-                    Err(why) => return LendRefusal::closed(why),
-                };
-                let how = share::key_of(&lent.kind, &terms);
-                // Tried once on the lender's own service; refused, not kept.
-                if let Port(port) = lent.source {
-                    let tried = share::tried(port, how, key.trim()).await;
-                    if let Err(why) = share::key_said(&lent.kind, tried) {
-                        return LendRefusal::closed(why);
-                    }
-                }
-                share::keep_key(dir, &c.lend, how, key.trim())
+        LendChange::Key(key) => {
+            let (lent, terms) = lent_with_terms(&at, &c.lend).await?;
+            let how = share::key_of(&lent.kind, &terms);
+            // Tried once on the lender's own service; refused, not kept.
+            if let Port(port) = lent.source {
+                let tried = share::tried(port, how, key.trim()).await;
+                share::key_said(&lent.kind, tried).map_err(LendRefusal::closed)?;
             }
-            read => read.map(|_| false),
-        },
+            share::keep_key(dir, &c.lend, how, key.trim())
+        }
     };
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
-    match done {
+    Ok(match done {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         unchanged => unchanged_said(&c.lend, unchanged),
-    }
+    })
+}
+
+/// The lend `name` and its groups' terms read now ([`terms_of`]), or the
+/// refusal of a change to it: nothing lent by that name, or why its terms
+/// can't be read.
+async fn lent_with_terms(at: &Asking, name: &LendName) -> Result<(lend::Lend, String), Response> {
+    let found = lend::read(&at.door.data_dir, name);
+    let Ok(Some(lent)) = found else {
+        return Err(unchanged_said(name, found.map(|_| false)));
+    };
+    let (terms, _) = terms_of(at, &lent).await.map_err(LendRefusal::closed)?;
+    Ok((lent, terms))
 }
 
 /// A change not made, said: nothing lent by that name, another change
@@ -612,13 +616,9 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
 /// what it gives kept ([`lend::keep_readers`]); the password nowhere.
 async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) -> Response {
     let dir = &at.door.data_dir;
-    let found = lend::read(dir, name);
-    let Ok(Some(lent)) = found else {
-        return unchanged_said(name, found.map(|_| false));
-    };
-    let terms = match terms_of(at, &lent).await {
-        Ok((terms, _)) => terms,
-        Err(why) => return LendRefusal::closed(why),
+    let (lent, terms) = match lent_with_terms(at, name).await {
+        Ok(read) => read,
+        Err(refused) => return refused,
     };
     let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, &terms)) else {
         tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");

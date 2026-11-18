@@ -1185,14 +1185,10 @@ impl std::fmt::Display for Printed {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "  {}", self.client)?;
         if let Some(https) = &self.https {
-            writeln!(f)?;
-            writeln!(f, "or, to open it in a browser:")?;
-            writeln!(f)?;
-            writeln!(f, "  {https}")?;
+            writeln!(f, "\nor, to open it in a browser:\n\n  {https}")?;
         }
         if let Some((_, host)) = self.page.as_ref().and_then(place) {
-            writeln!(f)?;
-            writeln!(f, "On a phone, each app opens at an address of its own under {host}, which can see which app is opened.")?;
+            writeln!(f, "\nOn a phone, each app opens at an address of its own under {host}, which can see which app is opened.")?;
         }
         Ok(())
     }
@@ -1298,9 +1294,7 @@ impl std::fmt::Display for Said {
                 if !beside.is_empty() {
                     writeln!(f, "{}", namesakes_said(beside, seed.name().as_str()))?;
                 }
-                writeln!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:")?;
-                writeln!(f)?;
-                write!(f, "{link}")
+                write!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:\n\n{link}")
             }
             Said::Linked { seed, link, device } => {
                 let group = seed.name();
@@ -1311,9 +1305,7 @@ impl std::fmt::Display for Said {
                         writeln!(f, "A computer or phone already in {group} on its own stays as it joined.")?;
                     }
                 }
-                writeln!(f, "It works for a day, while this computer is on:")?;
-                writeln!(f)?;
-                write!(f, "{link}")
+                write!(f, "It works for a day, while this computer is on:\n\n{link}")
             }
             Said::Joined { seed, person } => {
                 writeln!(f, "You're in {}, as {person}.", seed.name())

@@ -549,10 +549,9 @@ pub fn lend_of(
         tracing::debug!(target: "share", port = share.port, "share: refused — no kind given, and the port is not a well-known one");
         return Err(ShareRefusal::NoKind(share.port));
     };
-    let name = match &share.name {
-        Some(n) => n.clone(),
-        None => LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule"),
-    };
+    let name = (share.name.clone()).unwrap_or_else(|| {
+        LendName::parse(kind.as_str()).expect("a kind is a lend's name, by one rule")
+    });
     // The word as `fits` holds it, one of these two, kept as long as the refusal.
     let carries = ["tcp", "udp"]
         .into_iter()
@@ -561,7 +560,6 @@ pub fn lend_of(
         tracing::debug!(target: "share", kind = %kind, carries, "share: refused — its terms carry it as bytes, and it is lent otherwise");
         return Err(ShareRefusal::Carries(kind, carries.unwrap_or_default()));
     }
-    let limit = share.limit;
     let mut refused = share.refused.clone();
     for path in kept_of(&kind, terms).into_iter().filter(|_| raw.is_none()) {
         if !refused.contains(&path) {
@@ -570,7 +568,7 @@ pub fn lend_of(
     }
     let sends = sends_of(&kind, terms).into_iter().filter(|_| raw.is_none());
     let sends: Vec<SendRow> = sends.collect();
-    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, ?limit, refused = refused.len(),
+    tracing::debug!(target: "share", lend = %name, kind = %kind, port = share.port, limit = ?share.limit, refused = refused.len(),
         named = share.name.is_some(), kind_given = share.kind.is_some(), limit_given = share.limit.is_some(), sends = sends.len(),
         "share: the lend decided");
     Ok(Lend {
@@ -578,7 +576,7 @@ pub fn lend_of(
         source: raw.map_or(Source::Port(share.port), |r| Source::Raw(r, share.port)),
         kind,
         audience: share.audience.clone(),
-        limit,
+        limit: share.limit,
         refused,
         upload: share.upload,
         reads: share.reads.clone(),

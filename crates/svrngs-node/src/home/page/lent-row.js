@@ -68,71 +68,55 @@ export const lentTo = (lend, groups) => {
  * @typedef {{ name: string, account: AppsAccount, state: State, doing: { state: string }, send: (message: Message) => void }} AppsProps
  */
 
+// What a password box hides and the browser never offers to fill.
+const HIDDEN = { type: 'password', autocomplete: 'off' };
+
 /**
  * How apps read a lend through its lender: whether an account or key is
- * made, how to make it, and its name and password, or the key, typed here
- * once (home.rs `readers`, `change`).
+ * made, how to make it, and its name and password, or the key its lender
+ * makes in it (home.rs `readers`, `change`, `lent`; share.rs `key_of`),
+ * typed here once, sent to this computer, and never drawn back.
  * @param {Omit<AppsProps, 'account'> & { account?: AppsAccount }} props
  */
-function Apps(props) {
-  const { account } = props;
+function Apps({ name, account, state, doing, send }) {
   if (!account) return null;
   if (account.why) return html`<p>${account.why}</p>`;
-  return account.key ? html`<${AppsKey} ...${props} />` : html`<${AppsAccount} ...${props} />`;
-}
-
-// What Apps draws when its program takes a key its lender makes (home.rs
-// `lent`, `key`, share.rs `key_of`): pasted here, sent once to this
-// computer, and never drawn back.
-/** @param {AppsProps} props */
-function AppsKey({ name, account, state, doing, send }) {
-  const save = { type: 'change', to: { key: state.password ?? '' } };
+  const what = account.key ? 'key' : 'account';
+  const [typed, password] = [state.account ?? '', state.password ?? ''];
+  const { make, how, field, to } = READS[what](name, typed, password);
   const said = account.kept
-    ? `Apps your friends open can read your ${name} with the key you made. They can’t change anything.`
-    : `Apps can’t read your ${name} yet. To let them, make a key in ${name} and paste it here.`;
+    ? `Apps your friends open can read your ${name} with the ${what} you made. They can’t change anything.`
+    : `Apps can’t read your ${name} yet. To let them, ${make}.`;
   return html`
     <p>${said}</p>
     <details>
-      <summary>${account.kept ? 'Use a different key' : 'How to make the key'}</summary>
-      <p>In ${name}${account.by}: ${account.signs?.accounts}. Paste the key here. It stays on this computer and goes only to ${name}.</p>
-      <${Field}
-        words="The key: "
-        name="password"
-        value=${state.password ?? ''}
-        attrs=${{ type: 'password', autocomplete: 'off' }}
-        send=${send}
-      />
-      <${Act} words="Save the key" doing=${doing} on=${save} send=${send} />
+      <summary>${account.kept ? `Use a different ${what}` : `How to make the ${what}`}</summary>
+      <p>In ${name}${account.by}: ${account.signs?.accounts}. ${how}</p>
+      ${what === 'account' && html`<${Field} words="Account name: " name="account" value=${typed} send=${send} />`}
+      <${Field} words=${field} name="password" value=${password} attrs=${HIDDEN} send=${send} />
+      <${Act} words=${`Save the ${what}`} doing=${doing} on=${{ type: 'change', to }} send=${send} />
     </details>
   `;
 }
 
-/** @param {AppsProps} props */
-function AppsAccount({ name, account, state, doing, send }) {
-  const said = account.kept
-    ? `Apps your friends open can read your ${name} with the account you made. They can’t change anything.`
-    : `Apps can’t read your ${name} yet. To let them, make one account for your group.`;
-  const save = {
-    type: 'change',
-    to: { readers: { name: state.account ?? '', password: state.password ?? '' } },
-  };
-  return html`
-    <p>${said}</p>
-    <details>
-      <summary>${account.kept ? 'Use a different account' : 'How to make the account'}</summary>
-      <p>In ${name}${account.by}: ${account.signs?.accounts}. Then type that account’s name and password here. svrngs signs in once and keeps only what ${name} gives it, not the password.</p>
-      <${Field} words="Account name: " name="account" value=${state.account ?? ''} send=${send} />
-      <${Field}
-        words="Its password: "
-        name="password"
-        value=${state.password ?? ''}
-        attrs=${{ type: 'password', autocomplete: 'off' }}
-        send=${send}
-      />
-      <${Act} words="Save the account" doing=${doing} on=${save} send=${send} />
-    </details>
-  `;
-}
+// What Apps says and sends for each way apps read a lend: a key its lender
+// makes and pastes, or an account's name and password, which svrngs signs
+// in with once.
+/** @type {Record<'key' | 'account', (name: string, typed: string, password: string) => { make: string, how: string, field: string, to: import('./lend-change.js?v=__VERSION__').To }>} */
+const READS = {
+  key: (name, _, password) => ({
+    make: `make a key in ${name} and paste it here`,
+    how: `Paste the key here. It stays on this computer and goes only to ${name}.`,
+    field: 'The key: ',
+    to: { key: password },
+  }),
+  account: (name, typed, password) => ({
+    make: 'make one account for your group',
+    how: `Then type that account’s name and password here. svrngs signs in once and keeps only what ${name} gives it, not the password.`,
+    field: 'Its password: ',
+    to: { readers: { name: typed, password } },
+  }),
+};
 
 // Whether apps wait on the lender: an account or key to make, or why not.
 const undone = (/** @type {AppsAccount | undefined} */ account) =>
