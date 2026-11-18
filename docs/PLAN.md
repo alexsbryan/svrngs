@@ -607,7 +607,14 @@ no exemption. A public page shows its use and funding with nothing kept by
 hand. The operator adds a server when an alert says it is filling. Anyone
 else self-hosts with a clear guide, and "we run your relay" waits for
 counted interest. This replaces a freemium sketch with paid tiers. DESIGN
-changes in the commits that build it.
+changes in the commits that build it. Then, the same day: "anyone doing
+something like streaming media on cellular network just can't do it on our
+relay for now (we'll make a mobile apps soon to enable it! or some other
+user friendly gate)". So a media lend is not answered over the commons,
+and the lender's door holds the rule. It lands with a phone's WebRTC path,
+which spike 1 found direct on a home's Wi-Fi and never on AT&T cellular
+(svrn-docs `rings/current/webrtc-spike/` and `webrtc-transport-spike/`; RELAY_COMMONS §4,
+"Media").
 
 By the operator, 2026-11-08, on `docs/LESSONS_FROM_BITTORRENT.md`: "Ok solve
 them all", all four parts built, overriding the counted-member trigger of the
