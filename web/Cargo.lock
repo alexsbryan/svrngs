@@ -508,7 +508,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c54e03a951783e8b327515db3f2a2fd0e3bed362a96b066f341ce66ed49b4ead"
 dependencies = [
  "data-encoding",
- "syn 2.0.119",
+ "syn 3.0.6",
 ]
 
 [[package]]
@@ -720,7 +720,7 @@ dependencies = [
 [[package]]
 name = "eudoxia"
 version = "0.1.0"
-source = "git+https://github.com/alexsbryan/eudoxia?rev=e995acd459f743ec8354311f7f9f32281889bcda#e995acd459f743ec8354311f7f9f32281889bcda"
+source = "git+https://github.com/alexsbryan/eudoxia?rev=560b0c27b14891111bc46c01e461a0fdb6f48377#560b0c27b14891111bc46c01e461a0fdb6f48377"
 dependencies = [
  "ed25519-dalek 2.2.0",
  "serde",
@@ -731,7 +731,7 @@ dependencies = [
 [[package]]
 name = "eudoxia-community"
 version = "0.1.0"
-source = "git+https://github.com/alexsbryan/eudoxia?rev=e995acd459f743ec8354311f7f9f32281889bcda#e995acd459f743ec8354311f7f9f32281889bcda"
+source = "git+https://github.com/alexsbryan/eudoxia?rev=560b0c27b14891111bc46c01e461a0fdb6f48377#560b0c27b14891111bc46c01e461a0fdb6f48377"
 dependencies = [
  "eudoxia",
  "serde",
