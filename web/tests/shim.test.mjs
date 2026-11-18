@@ -15,6 +15,18 @@ import { runInThisContext } from 'node:vm';
 // The worker the page's sockets are handed to: each socket's port, as the
 // shim posts it.
 const ports = [];
+// Node 21 on gives globalThis a `navigator` with a getter alone, so it is
+// defined over, not assigned (configurable, as Node's is).
+Object.defineProperty(globalThis, 'navigator', {
+  value: {
+    serviceWorker: {
+      controller: { postMessage: (asked, [port]) => asked.socket && ports.push(port) },
+      addEventListener: () => {},
+    },
+  },
+  configurable: true,
+  writable: true,
+});
 Object.assign(globalThis, {
   window: globalThis,
   location: { href: 'https://lend.example/' },
@@ -22,12 +34,6 @@ Object.assign(globalThis, {
   Document: class {},
   XMLHttpRequest: class {
     open() {}
-  },
-  navigator: {
-    serviceWorker: {
-      controller: { postMessage: (asked, [port]) => asked.socket && ports.push(port) },
-      addEventListener: () => {},
-    },
   },
 });
 runInThisContext(readFileSync(new URL('../shim.js', import.meta.url), 'utf8'));

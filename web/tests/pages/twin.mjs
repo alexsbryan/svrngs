@@ -256,6 +256,16 @@ export async function open(address, answers) {
       json: async () => (out === undefined ? Promise.reject(new Error('no body')) : out),
     };
   };
+  // Node 21 on gives globalThis a `navigator` with a getter alone, so it is
+  // defined over, not assigned (configurable, as Node's is).
+  Object.defineProperty(globalThis, 'navigator', {
+    value: {
+      platform: 'MacIntel',
+      clipboard: { writeText: async (text) => void page.copied.push(text) },
+    },
+    configurable: true,
+    writable: true,
+  });
   Object.assign(globalThis, {
     window: globalThis,
     document,
@@ -267,10 +277,6 @@ export async function open(address, answers) {
       reload: () => page.went.push(['reload']),
     },
     history: { replaceState: (_s, _t, to) => page.went.push(['replace', String(to)]) },
-    navigator: {
-      platform: 'MacIntel',
-      clipboard: { writeText: async (text) => void page.copied.push(text) },
-    },
     open: (to, target) => void page.opened.push([String(to), target]),
     requestAnimationFrame: (run) => setTimeout(run, 0),
     cancelAnimationFrame: (id) => clearTimeout(id),
