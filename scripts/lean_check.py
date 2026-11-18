@@ -783,10 +783,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # one-sentence refusal variants (tests match each by name) and leave/accept
 # into one arm (8 lines formatted, not 6); `exit_code`'s match stays
 # exhaustive (AGENTS 9). all code but JavaScript 21,381 -> 21,413.
+# (2026-11-18) Raised by the operator for PR #2, a lend whose program is not
+# running said so before it is opened (door.rs `answering`, lend.rs
+# `Offered::answering`). Its economizing pass (-3 js: lent-row.js's words
+# say `down` where they are made; session.js and session-worker.js drop a
+# page's sized headers in one statement) holds the JavaScript at the cap.
+# The rest is the feature (+14 other): the dial, its wait, the field. Not
+# found: folding the port into `offered`'s match, which rustfmt splits to
+# +9; the push routes' twin handlers, already a line each.
+# all code but JavaScript 21,413 -> 21,427.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21414,
+    ".": 21428,
 
     "js": 8536,
 
