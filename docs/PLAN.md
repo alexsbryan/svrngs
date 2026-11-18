@@ -98,6 +98,26 @@ Not an installer, a release or a `svrngs` verb of its own: an example is
 copied and run, and svrngs's distribution names no app but Give, whose
 machinery keeps any app.
 
+**Examples, a ladder** (operator, 2026-11-18: examples are for "people
+happy to run a couple scripts well defined in a document", to "see how the
+sausage is made" and build their own). From the installed binary alone:
+use one, open one up, run one, make your own (DESIGN §1). In order:
+1. **The guide**, docs only: one page for the ladder; `apps/README.md` by
+   shape; each README as shape / run it / how it's made / change it.
+   **Node 24**, the oldest LTS supported past 2027 (to 2028-04-30): named
+   once, in `.node-version`, and run by the gate, whose Node 20 ended
+   2026-04-30. Today's docs say 18 or 20.
+2. **Two touches**, each after an economizing pass (both budgets full at
+   `be20e26e`): `svrngs version` prints its source's address (+4 Rust;
+   tags differ in form, `v1.10`); the shelf's sentence links the ladder
+   (+2 JavaScript, `home/ui/shelf.js:242`). **Its files** beside each app
+   waits for a run that stalls there (about +25).
+3. **Release 1.11.0**, the operator's.
+4. **The run**, `demo/runs/examples/`: the installed 1.11.0 and the
+   guide's lines alone. Money changed in a group of one's own (C1, C4 of
+   `demo/creator-to-friend.md`); Spot lent from **Already running here**.
+   A newcomer's session is separate, the operator's.
+
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
 groups, grapevine; V1 on n0" and "arch → groups → grapevine"; svrn-docs

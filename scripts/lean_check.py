@@ -804,10 +804,23 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # and JavaScript at 8,535. The shared database's ceiling keeps its +1,700 and
 # +107 over them, and the core's 3,539. All code but JavaScript -> 23,087; js
 # -> 8,642.
+# (2026-11-18) Raised by the operator for PR #2, a lend whose program is not
+# running said so before it is opened (door.rs `answering`, lend.rs
+# `Offered::answering`). Its economizing pass (-3 js: lent-row.js's words
+# say `down` where they are made; session.js and session-worker.js drop a
+# page's sized headers in one statement) holds the JavaScript at the cap.
+# The rest is the feature (+14 other): the dial, its wait, the field. Not
+# found: folding the port into `offered`'s match, which rustfmt splits to
+# +9; the push routes' twin handlers, already a line each.
+# all code but JavaScript 21,413 -> 21,427.
+# (2026-11-18) Merged again, with V1.11's release: PR #2's +14 leaves all
+# code but JavaScript at 21,401. The shared database's ceiling keeps its
+# +1,700 over it. All code but JavaScript -> 23,101; js and the core as
+# above.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 23088,
+    ".": 23102,
 
     "js": 8643,
 

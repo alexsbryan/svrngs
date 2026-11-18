@@ -1094,6 +1094,19 @@ test('a lend filled while shown reads Full now on coming back', async () => {
   assert.deepEqual(again(at), []);
 });
 
+// A lend whose program is not running on its lender's computer is said so
+// on its line, from /lends' `answering` (door.rs `answering`): "Not running
+// now.", and nothing for one that answers or an svrngs that does not say.
+test('a lend whose program is not running says so on its line', async () => {
+  const down = lentHere('shelf', { kind: 'books', answering: false });
+  const at = await phone(readOnce(body(), [down]));
+  assert.ok(rows(at.draw())[0].includes('Not running now.'), rows(at.draw()).join('\n'));
+  for (const answering of [true, undefined]) {
+    const up = await phone(readOnce(body(), [lentHere('shelf', { kind: 'books', answering })]));
+    assert.ok(!rows(up.draw())[0].includes('Not running'), rows(up.draw()).join('\n'));
+  }
+});
+
 // ---- The ask, on the phone (pages/acts.rs) ----
 
 // pages::acts::a_refused_yes_keeps_the_ask_shown: bo's phone at

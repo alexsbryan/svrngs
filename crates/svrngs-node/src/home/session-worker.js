@@ -110,8 +110,7 @@ async function unproved(request, url) {
 /** @param {Response} response */
 async function withClient(response) {
   const headers = new Headers(response.headers);
-  headers.delete('content-length');
-  headers.delete('content-encoding');
+  for (const sized of ['content-length', 'content-encoding']) headers.delete(sized);
   const nonce = /'nonce-([^']+)'/.exec(headers.get('content-security-policy') ?? '')?.[1];
   const html = await response.text();
   const head = /<head[^>]*>/i.exec(html) ?? /<!doctype[^>]*>/i.exec(html);

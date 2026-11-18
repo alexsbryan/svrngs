@@ -27,6 +27,8 @@
  * @property {number | null} [version] the lending computer's svrngs
  * @property {number} [limit] how many may have it open at once
  * @property {number} [using] how many have it open now
+ * @property {boolean} [answering] whether its program took a connection as
+ *   its lender listed it; absent from an svrngs from before (door.rs)
  * @property {string[] | null} [groups] the stable ids of the groups that may
  *   open it, in the owner's own `/lent` answer: `[]` paused, `null` legacy
  *   and needing selection (SCOPE_PARALLEL.md, owner `GET /lent`)
@@ -538,3 +540,11 @@ export const deciding = (groups, me, here) =>
  */
 export const opens = (lend) =>
   /** @type {number} */ (lend.using) >= (lend.limit ?? Infinity) ? 'full' : 'on';
+
+/**
+ * `words` when the lend's program is not running on its lender's computer
+ * (door.rs `answering`), else nothing: never said of one that does not say.
+ * @param {Pick<Lend, 'answering'>} lend
+ * @param {string} [words]
+ */
+export const down = (lend, words = ' Not running now.') => (lend.answering === false ? words : '');

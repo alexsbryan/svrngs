@@ -9,7 +9,7 @@
 // (play.js `Turn`). Last in a cell that opens in a tab, "Address": what is for
 // other devices and programs, in a popover (wifi.js `Address`).
 import { html } from '../ui/view.js?v=__VERSION__';
-import { agreed, label, may, named, opens } from '../question.js?v=__VERSION__';
+import { agreed, down, label, may, named, opens } from '../question.js?v=__VERSION__';
 import { Turn } from './play.js?v=__VERSION__';
 import { Address } from './wifi.js?v=__VERSION__';
 import { Opening, Reach } from './reach.js?v=__VERSION__';
@@ -50,7 +50,8 @@ export function LendName({ l: lend, shelf, by, g: group, s: state }) {
     ? html`<${Opening} app=${label(lend)} words=${words} reading=${lend.reading} kinds=${lend.reads ?? []} by=${said} id=${`at-${id}`} />`
     : plain;
   // What opening it lets it do is the grid's caption, never said again
-  // here; that it is on is the usual, so only that it is full is said.
-  const full = opens(lend) === 'full' ? ' Full now.' : '';
+  // here; that it is on is the usual, so only that it is full, or that its
+  // program is not running on its lender's computer, is said.
+  const full = `${opens(lend) === 'full' ? ' Full now.' : ''}${down(lend)}`;
   return html`${opener}${' '}<span id=${`said-${id}`}>${agreed(lend, shelf, group, [may(lend, group)])}${full}</span>${' '}<${Address} l=${lend} id=${`address-${id}`} round=${round} />`;
 }

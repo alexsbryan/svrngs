@@ -553,6 +553,13 @@ pub struct Offered {
     /// passed over by an svrngs from before sends.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub sends: Vec<SendRow>,
+    /// Whether its service took a connection on its lender's computer as it
+    /// listed it (`door::offered`): `false` is a lend whose program is not
+    /// running, so a friend is told before opening it, not by a 502. Absent
+    /// for a carried app, which svrngs serves itself, for a UDP port, and
+    /// from an svrngs from before this, which said nothing.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub answering: Option<bool>,
 }
 
 impl Offered {

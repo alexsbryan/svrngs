@@ -98,7 +98,7 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Duplex, Via};
-use crate::lend::{self, Lend, LendName, Offered, Source};
+use crate::lend::{self, Lend, LendName, Offered, Raw, Source};
 use crate::network::Whereabouts;
 use crate::register::Member;
 use crate::ring_routes::err;
@@ -637,6 +637,7 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
         };
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
         let Ok(reads) = reads else { continue };
+        let answering = answering(&lend.source).await;
         let (group, groups, raw) = match lend.source {
             Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
             Source::Port(_) => (None, lend.audience.ids().map(<[String]>::to_vec), None),
@@ -654,9 +655,28 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             groups,
             raw,
             sends: lend.sends,
+            answering,
         });
     }
     Ok(offered)
+}
+
+/// How long a lend's port has to take a connection to be said running.
+/// A refused one says so at once; this bounds a port that drops it.
+const ANSWER_WAIT: Duration = Duration::from_millis(300);
+
+/// Whether a lend's service takes a TCP connection on 127.0.0.1, asked as
+/// its lender lists it ([`Offered::answering`]); none for what is not a
+/// port this can ask so: a carried app, or a UDP one.
+async fn answering(source: &Source) -> Option<bool> {
+    let port = match source {
+        Source::Port(port) | Source::Raw(Raw::Tcp, port) => *port,
+        _ => return None,
+    };
+    let dialed = tokio::net::TcpStream::connect((std::net::Ipv4Addr::LOCALHOST, port.get()));
+    let took = matches!(tokio::time::timeout(ANSWER_WAIT, dialed).await, Ok(Ok(_)));
+    tracing::debug!(target: "door", port = port.get(), took, "door: lends — whether a lend's port takes a connection");
+    Some(took)
 }
 
 /// A name as upstream's `rewrite_head` compared it (`compare_name`,
