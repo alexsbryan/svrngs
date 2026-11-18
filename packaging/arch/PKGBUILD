@@ -12,8 +12,8 @@
 # the svrngs release that carries it.
 pkgbase=svrngs-bin
 pkgname=(svrngs-bin svrngs-give-bin)
-pkgver=1.11.1
-pkgrel=2
+pkgver=1.11.2
+pkgrel=1
 pkgdesc="Keep what your group shares on your own computers"
 arch=('x86_64' 'aarch64')
 url="https://github.com/alexsbryan/svrngs"
@@ -37,14 +37,14 @@ sha256sums=('156550c74ba7b2f43db0ffc4774f02919a9cd5583de4f83982dda870cbfe742c'
             '167affad6218b4d1cf3aa15c3c9a427f474e0e71795a6f8d8ecc3f6e7e98c603')
 # Each tarball's sum is its line in the release's SHA256SUMS; each .sig's is
 # the sum of that asset as the release serves it, so none is SKIP.
-sha256sums_x86_64=('983a027f1c3a7ddaf2d8d509155876693c659c43dd03114591c290745ab976ea'
-                   '9da8e9097c95a74136b28d92047609aca9a466412599e2e09cf090f4edcade96'
-                   '7277cf615e0cb463de965dd5b37f6640cdfb8d153e5375915e5490e3ae11483b'
-                   'ac6868dcf4ee11aba15308bb79fd19cc1e981b9135b99c10e53d298e3fcdbc8c')
-sha256sums_aarch64=('822c6aa2bd7aca158115bacf68b78de0c0ea38bdc3786483241ea21fa9b09093'
-                    'd9d30b09484ef78cdbb3c5e9aea5de27541de569ed819f4057a0520876d3428d'
-                    '6af58313fdfcbc220d0a2a366c27e3ef0a7b072b748da93251382105aa55c222'
-                    'a2caf3e434127837666e008f7a4c0e2a86c46773dc3d7a56543dae2e72acc1fa')
+sha256sums_x86_64=('c2bcd519a3a3daf117557460c3d9dc4d76f08487dcf3fba0f1dc377d511d392e'
+                   '8b4057a5702543928f3bee0f60605a4f9047254150adbdef8c21fe8c688d7a4c'
+                   'd8fbd92a6decb0a7d8e8ca1f3360582e86f462675615fcb01aa4944607a0e98d'
+                   '8f4c9a09801cebee858dba4ede11f55c86cfa05a5196bd056f2ca505f9040d5b')
+sha256sums_aarch64=('720920f199bffaffec049b9992da10923f58f8beaf717a779ab39bd5064d17f6'
+                    '68d2531b0e68a9fb922ab984b883dbaa8dbf38ec96100706e790c601271c7dde'
+                    '1577c1374b23b6bf3ec59457c63d0eef3851a237d29ec843621ccb97be8e864e'
+                    '0ccc3b2adbdb342a0ecae0c961435d5fcbeec5f7edbd984a90652583b1e72274')
 
 package_svrngs-bin() {
   provides=('svrngs')

@@ -37,10 +37,26 @@ is empty.
 
 ## The GitHub release
 
-It waits for the operator's signature. The command is
-`scripts/sign-release.sh v1.11.2 76366903 <site>`, where the site is the
-one `publish.json` names. It now also signs `install.sh` as the commit has
-it.
+The operator ran `scripts/sign-release.sh v1.11.2 76366903 <site>`, with
+the site that `publish.json` names. GitHub release `v1.11.2`, titled
+V1.11.2, has 21 files: the eight downloads, `SHA256SUMS` and `install.sh`,
+a `.sig` for each, and `svrngs-release-key.asc`.
+
+Read back from `gh release download v1.11.2` into a keyring holding only
+the released key `46B4D67C5E6621093BB1AB2B057BF9082AA03CFB`:
+
+- all ten signatures said VALIDSIG, `install.sh.sig` among them;
+- `shasum -a 256 -c SHA256SUMS` passed for all eight downloads, and
+  `SHA256SUMS` equaled this run's;
+- `install.sh` equaled `git show 76366903:web/install.sh`;
+- planted: `SHA256SUMS` with one byte added said BADSIG;
+- `git verify-tag v1.11.2` said VALIDSIG, and the tag is `76366903`.
+
+packaging/arch's PKGBUILD moved to 1.11.2, pkgrel 1. Each sum was taken
+from those downloaded assets, and each tarball's sum equals its
+`SHA256SUMS` line. In an x86_64 Arch container, `makepkg --verifysource`
+passed every source sum and both signatures. aarch64's sums were taken the
+same way, but makepkg didn't check them.
 
 Not run: a Linux gate, an installed package of 1.11.2, and a phone
 against the published page.
