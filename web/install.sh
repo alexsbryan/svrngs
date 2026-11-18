@@ -96,6 +96,11 @@ stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $uni
 # menu on Linux (below).
 if [ "$os" = darwin ]; then opener="$HOME/Applications/svrngs.app"
 else opener="${XDG_DATA_HOME:-$HOME/.local/share}/applications/svrngs.desktop"; fi
+# A svrngs started by hand holds its data dir's lock, and no launchd or
+# systemd stops it: stopped by that lock, waited for, for a limit.
+by_hand() {
+  for pid in $(lsof -t "$dir/lock" 2>/dev/null); do kill "$pid" && say "Stopped the svrngs running here$1."; tries=0; while [ "$tries" -lt 50 ] && lsof -t "$dir/lock" >/dev/null 2>&1; do tries=$((tries + 1)); sleep 0.1; done; done
+}
 
 tmp="$(mktemp -d)"
 restart=""
@@ -139,7 +144,7 @@ svrngs_sum="$want"
 # too, and no launchd or systemd stops it: stopped here, kept at login below.
 # Waited for by its lock, for a limit: if it stays, joining says so.
 stopped
-[ -n "$relay" ] || for pid in $(lsof -t "$dir/lock" 2>/dev/null); do kill "$pid" && say "Stopped the svrngs running here, to update it."; tries=0; while [ "$tries" -lt 50 ] && lsof -t "$dir/lock" >/dev/null 2>&1; do tries=$((tries + 1)); sleep 0.1; done; done
+[ -n "$relay" ] || by_hand ", to update it"
 
 mkdir -p "$bin" "$dir"
 # The page it came from, by the name the node reads (svrngs-node invite.rs
