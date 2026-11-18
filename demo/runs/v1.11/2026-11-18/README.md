@@ -96,10 +96,17 @@ New since V1.10.1, `deploy-page.sh` ends by printing the line that keeps
 this version for packages (b97e7dd6): `git tag v1.11.0 && git push origin
 v1.11.0 && gh release create v1.11.0 <site>/get/*.tar.gz
 <site>/get/SHA256SUMS --notes 'See RELEASES.md.'`. It pushes, so it is
-the operator's, and it was not run. The release's tag is `v1.11`, as
-V1.10.1's is `v1.10.1`. The package's tag would be `v1.11.0`, and its
-files the eight downloads `SHA256SUMS` names. The upload directory's
-`get/` is kept outside the repository for that line, its CLI files gone.
+the operator's. The release's tag is `v1.11`, as V1.10.1's is `v1.10.1`;
+the package's is `v1.11.0`, on the same commit. The upload directory's
+`get/` was kept outside the repository for that line, its CLI files gone.
+
+By the operator's word, the line ran at 19:46 UTC, svrngs's first GitHub
+release: `v1.11.0` on 08441174, titled V1.11, marked latest, its notes
+RELEASES.md's V1.11 section, and its nine files the eight downloads and
+`SHA256SUMS`. The kept `get/` passed `shasum -a 256 -c SHA256SUMS` and
+equaled `SHA256SUMS` here before upload. After it, `gh release download
+v1.11.0` passed the same check and equaled it too, and the live
+`https://group.svrnme.sh/get/SHA256SUMS` still equaled it.
 
 ## Readback
 
