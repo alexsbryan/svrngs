@@ -25,9 +25,9 @@ fi
 echo "sign-release: $tag ($commit) by $key from $get"
 
 (cd "$get" && shasum -a 256 -c SHA256SUMS)
-# The installer too, as the release's commit has it: what svrngs.fam's Get
-# svrngs runs, only once its signature verifies (svrn-docs
-# rings/current/OMARCHY_PLUGIN.md), where the line on the page trusts HTTPS.
+# The installer too, as the release's commit has it, so whatever installs
+# svrngs for someone can check it before running it, where the line on the
+# page trusts HTTPS alone.
 git show "$commit:web/install.sh" >"$get/install.sh"
 for file in "$get"/*.tar.gz "$get"/SHA256SUMS "$get"/install.sh; do
   gpg --yes --local-user "$key" --detach-sign --output "$file.sig" "$file"

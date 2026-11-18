@@ -9,7 +9,7 @@ file, `<file>.sig`, by the svrngs release key, and the key itself,
 signed with it too. From the next release, it also carries the installer,
 `install.sh`, as the release's commit has it, with its signature, so
 something that installs svrngs for you can check the installer before it
-runs it, as the Omarchy plugin does. A package checks a download against
+runs it. A package checks a download against
 the key, and a PKGBUILD names this fingerprint in `validpgpkeys`, as
 svrngs's own does ([`packaging/arch`](packaging/arch/README.md)). To check
 one yourself, run `gpg --import svrngs-release-key.asc`, then
