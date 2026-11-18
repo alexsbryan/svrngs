@@ -1,0 +1,28 @@
+$ svrngs share 8312 --name deepseek-flash --program spot --group <group>
+exit 0
+You lend deepseek-flash (port 8312) to the groups you chose, as many at once as want it. To let fewer in at once, change it on your home page, or `svrngs share 8312 --group <group> --limit <number>`.
+svrngs doesn't know spot, so your friends can reach every part of it that its own sign-in allows.
+Its password stays on this computer; nobody you lend it to receives it.
+svrngs is running here already, so they can open it now.
+`svrngs unshare deepseek-flash` stops lending it.
+2026-11-18T07:17:04.656444Z DEBUG cli: cli: data dir from $SVRNGS_DIR dir="/home/alexbryan/dev/svrngs/demo/runs/spot/2026-11-17/data/home/Ana/.svrngs"
+2026-11-18T07:17:04.658660Z DEBUG cli: cli: the build's relays, where this computer meets every group beside the group's own at=N0 relay_urls=["https://aps1-1.relay.n0.iroh.link/", "https://euc1-1.relay.n0.iroh.link/", "https://use1-1.relay.n0.iroh.link/", "https://usw1-1.relay.n0.iroh.link/"]
+2026-11-18T07:17:04.659053Z DEBUG cli: cli: refused — another svrngs holds the data dir lock=/home/alexbryan/dev/svrngs/demo/runs/spot/2026-11-17/data/home/Ana/.svrngs/lock error=lock acquisition failed because the operation would block
+2026-11-18T07:17:04.664200Z DEBUG cli: cli: svrngs running here answered route="/v1/programs" ok=true
+2026-11-18T07:17:04.664235Z DEBUG cli: cli: share — its groups' own terms for the program, read through their records, or why not groups=["05bb5ccbd0904f37a2d73ec2ca87594eb7b67de3f2ea8da77bb6e7b25cbb0b91"] kind=spot ok=true text="[\"\",\"\"]"
+2026-11-18T07:17:04.664312Z DEBUG share: share: probed the port port=8312 up=true
+2026-11-18T07:17:04.664459Z DEBUG share: share: the paths the files keep back of the kind kind=spot kept=0 group=false
+2026-11-18T07:17:04.664514Z DEBUG share: share: the lend decided lend=deepseek-flash kind=spot port=8312 limit=None refused=0 named=true kind_given=true limit_given=false sends=0
+2026-11-18T07:17:04.664590Z DEBUG share: share: how the kind signs each person in, if its files say kind=spot signs=None
+2026-11-18T07:17:04.664660Z DEBUG share: share: how the kind signs each person in, if its files say kind=spot signs=None
+2026-11-18T07:17:04.664663Z DEBUG share: share: headers its door adds asked of its lender, unless it signs people in or is raw lend=deepseek-flash signs=false
+If deepseek-flash takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): 
+2026-11-18T07:17:04.664681Z DEBUG cli: cli: share — the password asked for lend=deepseek-flash given=true terminal=false
+2026-11-18T07:17:04.667012Z DEBUG lend: lend: declared lend=deepseek-flash source=Port(8312) kind=spot limit=None refused=0 upload=None secret=true asks=false
+2026-11-18T07:17:04.667029Z DEBUG lend: lend: its lock let go unlocked=Ok(())
+2026-11-18T07:17:04.667036Z DEBUG cli: cli: share — svrngs runs here already, and reads the lend from its declaration lock=/home/alexbryan/dev/svrngs/demo/runs/spot/2026-11-17/data/home/Ana/.svrngs/lock
+2026-11-18T07:17:04.667140Z DEBUG share: share: how the kind signs each person in, if its files say kind=spot signs=None
+2026-11-18T07:17:04.667228Z DEBUG share: share: a program the table does not know, its lender told kind=spot near=None
+2026-11-18T07:17:04.667268Z DEBUG share: share: the paths the files keep back of the kind kind=spot kept=0 group=false
+2026-11-18T07:17:04.667304Z DEBUG share: share: the paths the files keep back of the kind kind=spot kept=0 group=false
+

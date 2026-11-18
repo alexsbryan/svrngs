@@ -70,6 +70,10 @@ who used how much. `svrngs unshare deepseek-flash` stops lending it.
 - **It stops answering; it does not stop being lent.** Past `--until`, or
   with the budget spent, each chat is refused and the page says why, until
   you `svrngs unshare` it or stop the server.
+- **A budget can be passed by one chat.** It is checked as each chat
+  begins, and a chat's tokens are known only once it ends, so a chat begun
+  under it finishes: a 60-token budget let one 64-token chat through, then
+  refused (`demo/runs/spot/2026-11-17/`).
 - **It counts only what the provider reports.** A provider that sends no
   `usage` is counted as nothing, and says so in the line it prints.
 - **It keeps no log.** What it prints is all it says; send it to a file if

@@ -1,0 +1,19 @@
+[
+  {
+    "url": "/v1/openai/chat/completions",
+    "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+    "authorization": "Bearer <the key>",
+    "headers": [
+      "accept",
+      "accept-encoding",
+      "accept-language",
+      "authorization",
+      "connection",
+      "content-length",
+      "content-type",
+      "host",
+      "sec-fetch-mode",
+      "user-agent"
+    ]
+  }
+]

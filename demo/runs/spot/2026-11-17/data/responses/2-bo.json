@@ -1,0 +1,22 @@
+{
+  "answers": [
+    {
+      "sent": "Say hello to Bo.",
+      "said": "Hello, Bo. This came from the provider through Ana’s account.",
+      "strong": 1,
+      "error": false
+    },
+    {
+      "sent": "And again?",
+      "said": "its 60 tokens are spent",
+      "strong": 0,
+      "error": true
+    }
+  ],
+  "listed": "ana’s deepseek-flash (spot)",
+  "title": "ana’s deepseek-flash",
+  "standing": "until 11:59 PM · 60 of 60 tokens left",
+  "at": "<label>.localhost:35333",
+  "standingAfter": "its 60 tokens are spent",
+  "keyInBrowser": false
+}
