@@ -1,0 +1,15 @@
+[Unit]
+Description=give
+# Stopped before svrngs at logout: as Give stops it copies each app it keeps
+# and says each copy in the group's record, which svrngs keeps
+# (apps/give/src/keep.rs; apps/give/README.md, "Keeping an app").
+After=svrngs.service
+
+[Service]
+ExecStart=/usr/bin/give keep
+Restart=on-failure
+# Waited for as it stops, as install.sh waits for it.
+TimeoutStopSec=infinity
+
+[Install]
+WantedBy=default.target

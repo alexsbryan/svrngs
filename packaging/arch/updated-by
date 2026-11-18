@@ -1,0 +1,1 @@
+pacman installed this svrngs, so update it as a package: build the newer PKGBUILD with makepkg -si, or run your AUR helper's update.

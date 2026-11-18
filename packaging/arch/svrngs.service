@@ -1,0 +1,9 @@
+[Unit]
+Description=svrngs
+
+[Service]
+ExecStart=/usr/bin/svrngs
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,9 @@
+post_install() {
+  echo "give: to keep apps for your groups whenever you log in, run as yourself:"
+  echo "  systemctl --user enable --now give"
+}
+
+post_upgrade() {
+  echo "give: run 'systemctl --user restart give' to use the new version."
+  echo "  It copies each app it keeps as it stops, and starts them again."
+}

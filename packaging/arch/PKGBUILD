@@ -1,0 +1,69 @@
+# svrngs, and Give beside it, as pacman packages from svrngs's signed
+# GitHub Release: the bytes the group page's get/ serves
+# (scripts/build-release.sh). makepkg refuses a tarball unless its .sig is
+# by the release key (RELEASES.md, "Signed releases") and its sum is the
+# release's SHA256SUMS line. The binaries are static (musl) and kept as
+# released, so nothing is linked and nothing is stripped. README.md says how
+# to build, install and remove them.
+#
+# Two packages, as install.sh gets Give only when asked (--give): Give is a
+# program of its own that links no svrngs crate (apps/give/Cargo.toml), and
+# only it needs Podman. They share this pkgver, so Give's version here is
+# the svrngs release that carries it.
+pkgbase=svrngs-bin
+pkgname=(svrngs-bin svrngs-give-bin)
+pkgver=1.11.1
+pkgrel=1
+pkgdesc="Keep what your group shares on your own computers"
+arch=('x86_64' 'aarch64')
+url="https://github.com/alexsbryan/svrngs"
+license=('AGPL-3.0-or-later')
+options=('!strip' '!debug')
+validpgpkeys=('46B4D67C5E6621093BB1AB2B057BF9082AA03CFB') # the svrngs release key
+_get="$url/releases/download/v$pkgver"
+source=(updated-by svrngs.service svrngs.desktop give.service)
+source_x86_64=("svrngs-$pkgver-linux-x86_64.tar.gz::$_get/svrngs-linux-x86_64.tar.gz"
+               "svrngs-$pkgver-linux-x86_64.tar.gz.sig::$_get/svrngs-linux-x86_64.tar.gz.sig"
+               "give-$pkgver-linux-x86_64.tar.gz::$_get/give-linux-x86_64.tar.gz"
+               "give-$pkgver-linux-x86_64.tar.gz.sig::$_get/give-linux-x86_64.tar.gz.sig")
+source_aarch64=("svrngs-$pkgver-linux-aarch64.tar.gz::$_get/svrngs-linux-aarch64.tar.gz"
+                "svrngs-$pkgver-linux-aarch64.tar.gz.sig::$_get/svrngs-linux-aarch64.tar.gz.sig"
+                "give-$pkgver-linux-aarch64.tar.gz::$_get/give-linux-aarch64.tar.gz"
+                "give-$pkgver-linux-aarch64.tar.gz.sig::$_get/give-linux-aarch64.tar.gz.sig")
+sha256sums=('156550c74ba7b2f43db0ffc4774f02919a9cd5583de4f83982dda870cbfe742c'
+            'ba3cfc72b741341a849434e0c86be29d73a4c40e6d9574dfc09696b8649b3b4d'
+            'b2cf8f1cf3f89a46e5e530de4ffc82ea3aa4bd05fec69f29c90fea402a16e885'
+            '6da9f803e0968bd48b8292f70718cfe07ce0553e26c0f2682519f3447ff3dc4c')
+# Each tarball's sum is its line in the release's SHA256SUMS; each .sig's is
+# the sum of that asset as the release serves it, so none is SKIP.
+sha256sums_x86_64=('983a027f1c3a7ddaf2d8d509155876693c659c43dd03114591c290745ab976ea'
+                   '9da8e9097c95a74136b28d92047609aca9a466412599e2e09cf090f4edcade96'
+                   '7277cf615e0cb463de965dd5b37f6640cdfb8d153e5375915e5490e3ae11483b'
+                   'ac6868dcf4ee11aba15308bb79fd19cc1e981b9135b99c10e53d298e3fcdbc8c')
+sha256sums_aarch64=('822c6aa2bd7aca158115bacf68b78de0c0ea38bdc3786483241ea21fa9b09093'
+                    'd9d30b09484ef78cdbb3c5e9aea5de27541de569ed819f4057a0520876d3428d'
+                    '6af58313fdfcbc220d0a2a366c27e3ef0a7b072b748da93251382105aa55c222'
+                    'a2caf3e434127837666e008f7a4c0e2a86c46773dc3d7a56543dae2e72acc1fa')
+
+package_svrngs-bin() {
+  provides=('svrngs')
+  conflicts=('svrngs')
+  install=svrngs-bin.install
+  install -Dm755 svrngs "$pkgdir/usr/bin/svrngs"
+  # svrngs reads this beside itself, /usr/bin/../lib/svrngs/updated-by, and
+  # then never replaces itself: `svrngs update` says its first line
+  # (crates/svrngs-node/src/update.rs, UPDATED_BY and packaged).
+  install -Dm644 updated-by "$pkgdir/usr/lib/svrngs/updated-by"
+  # What install.sh writes in a person's home, here for every person:
+  # svrngs kept running at login, and the opener in the applications menu.
+  install -Dm644 svrngs.service "$pkgdir/usr/lib/systemd/user/svrngs.service"
+  install -Dm644 svrngs.desktop "$pkgdir/usr/share/applications/svrngs.desktop"
+}
+
+package_svrngs-give-bin() {
+  pkgdesc="Give: your group keeps an app on one member's computer at a time, in rootless Podman"
+  depends=('svrngs' 'podman')
+  install=svrngs-give-bin.install
+  install -Dm755 give "$pkgdir/usr/bin/give"
+  install -Dm644 give.service "$pkgdir/usr/lib/systemd/user/give.service"
+}

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=svrngs
+Comment=Open your svrngs home page
+Exec=svrngs open
+Terminal=false
+Categories=Network;

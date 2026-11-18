@@ -1,0 +1,8 @@
+post_install() {
+  echo "svrngs: to keep it running whenever you log in, run as yourself:"
+  echo "  systemctl --user enable --now svrngs"
+}
+
+post_upgrade() {
+  echo "svrngs: run 'svrngs restart' to use the new version."
+}
