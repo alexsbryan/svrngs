@@ -1,0 +1,19 @@
+What group.svrnme.sh served before this run, read at 2026-11-18T16:06:52Z:
+
+  curl -sS https://group.svrnme.sh/sw.js | grep -oE 'v=[0-9a-f]{12}' | sort -u
+  v=d5a753aadf4c
+
+  curl -sSI https://group.svrnme.sh/lend.js
+  HTTP/2 200
+  content-security-policy: default-src 'none'; connect-src 'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'
+
+  curl -sSI https://group.svrnme.sh/sign.html
+  content-security-policy: frame-ancestors https:
+
+  curl -sSI https://group.svrnme.sh/
+  HTTP/2 200
+  content-security-policy: frame-ancestors 'none'
+
+V1.10.1's page (its readback, ../../v1.10.1/2026-11-17/verification.json,
+page_version live d5a753aadf4c), with lend.js under the policy
+web/vercel.json sets for it.

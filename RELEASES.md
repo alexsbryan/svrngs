@@ -1,5 +1,58 @@
 # svrngs releases
 
+## V1.11, 18 November 2026
+
+V1.11 lets you lend a program that wants a key on each request from your
+home page, and tells you which svrngs you run.
+
+**Lend a program that wants a key.** Some programs want a header on every
+request, such as llama-server started with `--api-key`. Before, you could
+lend one only from a terminal. Now open its line under **What you lend**.
+It says *"If coder wants a header on each request, add it here: for
+llama-server started with --api-key abc123, Authorization with Bearer
+abc123."* **Header:** already says `Authorization`. Type `Bearer` and your
+key in **What it says:**, then press **Add this header**. Your friends'
+next request carries it, with nothing restarted. A program that wants
+another header, such as `X-API-Key`, gets it the same way, and **Stop
+adding** takes one off.
+
+**Your key stays on your computer.** The line names the header, never what
+it says, and your friends never receive it. svrngs puts its own in place of
+any header of that name a friend sends, and drops it from any answer that
+repeats it. The trade: the program sees all your friends arrive with the
+one key, so it can't tell them apart. A program that signs each person in
+itself, such as Jellyfin or Immich, takes no header, since one for everyone
+would make them all one person to it.
+[`docs/guide/lend.md`](docs/guide/lend.md) has the rest.
+
+**`svrngs version` says which svrngs you run**: its release and the commit
+it was built from. Each release now has one number, so V1.11 is
+*svrngs 1.11.0*.
+
+**A package updates the svrngs it installed.** A package can put one line
+beside svrngs saying how it's updated: for svrngs in `/usr/bin`, in
+`/usr/lib/svrngs/updated-by`. svrngs then never replaces itself.
+`svrngs update` says that line and changes nothing, and your home page
+offers no update. Installed with the line from your group's page, svrngs
+updates itself as before. Either way, svrngs no longer tries to replace a
+copy it can't write over: before downloading anything, it says that
+whoever installed it there updates it.
+
+**Spot, an example to run.** In a checkout of svrngs, `apps/spot` lends your
+group a model you pay a provider for, for a night, without giving anyone
+your key: svrngs adds it to each request as a header. Your friends chat
+with it from a phone. You see who used how many tokens, never what they
+wrote, and it stops answering at the time or token count you set.
+[`apps/spot/README.md`](apps/spot/README.md) says how.
+
+Groups, lends and the record otherwise work as in V1.10.1. Press **Update
+and restart** on your home page, or run `svrngs update` and then
+`svrngs restart`. Your phone's page updates itself.
+
+V1.11 is the build at `group.svrnme.sh`, from the commit tagged `v1.11`.
+Its publication and readback are recorded in
+`demo/runs/v1.11/2026-11-18/README.md`.
+
 ## V1.10.1, 17 November 2026
 
 V1.10.1 is a security release: update now.
