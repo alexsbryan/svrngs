@@ -48,9 +48,11 @@ beside the authority replacement, ahead of the economizing:
   the runtime. The core gains only the bytes a device signs for a change
   set, and the runtime and the record's format are untouched;
 - after a small economizing pass over the code it extends (the carried
-  routes and the ring sync), with a budget raise only for what that pass
-  leaves;
-- to the warranty MAGNETS_BUILD sets out. Each promise has its proof in the
+  routes and the ring sync; it cut 26, cc55495d), under one ceiling for the
+  whole build that comes down to where it lands (operator, 2026-11-18;
+  `scripts/lean_check.py`, 0c6276ec). Where each line goes, and its size,
+  is svrn-docs `APP_STATE.md` §10;
+- to the warranty in svrn-docs `APP_STATE.md` §11. Each promise has its proof in the
   gate: copies that agree under a seeded simulator of every delivery, no
   acknowledged write lost, only the right device writing, every call
   bounded, no split on an upgrade, all four release targets, `svrngs check`
