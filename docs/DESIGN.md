@@ -913,7 +913,9 @@ shared files that anyone in it can put there, and where that folder is
 opened from: the thing a group extends leads. Under it the shelf, whose
 apps are said to be examples, to use or to change, never the list of what
 a group may have: what is in the group already is one line by name; the
-legend of the boxes says how to bring one and what comes of it; the answer
+legend of the boxes says how to bring one and what comes of it; after the
+boxes, never in their legend, a link to how they're made and changed
+(`docs/guide/examples.md`); the answer
 to a bring is told to a screen reader; and last, on the home page alone,
 the other way to add something, a program running here lent from **This
 computer** (`home/page/grouped.js` `GroupPlaces`, `home/ui/shelf.js`,

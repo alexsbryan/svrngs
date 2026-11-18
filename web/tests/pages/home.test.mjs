@@ -774,8 +774,15 @@ test('Add an app leads with what an app is, then svrngs’s examples, then the o
   const [some, links] = await opened([carried('Money')]);
   assert.deepEqual([some[0], some[1], some.at(-1)], [IS, 'Money is already in House.', OTHER]);
   assert.ok(some[2].startsWith('These are svrngs’s examples, to use or to change. Tick '), some[2]);
-  assert.deepEqual(some.slice(3, 5), ['Events: nights out.', 'Bring the ticked ones to House']);
-  assert.deepEqual(links, ['/?view=computer']);
+  assert.deepEqual(some.slice(3, 6), [
+    'Events: nights out.',
+    'See how they’re made, and how to change one.',
+    'Bring the ticked ones to House',
+  ]);
+  assert.deepEqual(links, [
+    'https://github.com/alexsbryan/svrngs/blob/main/docs/guide/examples.md',
+    '/?view=computer',
+  ]);
   const [none] = await opened([carried('Money'), carried('Events')]);
   assert.deepEqual(none, [IS, 'Money and Events are already in House.', OTHER]);
 });

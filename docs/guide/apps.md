@@ -20,6 +20,7 @@ everyone in the group can open it under Shared apps."* The apps that come
 with svrngs are examples of that, and it says so: *"These are svrngs’s
 examples, to use or to change. Tick what you want and press the button: it
 goes in Elm’s folder, and everyone in Elm can open it in a few seconds."*
+Under the list, **See how they’re made** leads to [Examples](examples.md).
 Each is listed with a tick box and a line saying what it's for:
 
 - **Money**: who owes whom, and for what.

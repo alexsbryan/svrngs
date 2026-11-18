@@ -64,8 +64,10 @@ const step = SHELF(async () => []).step;
 // with its app's name and what it is for; then the button, naming the
 // group, in a line a screen reader is told of. The legend says first that
 // these are svrngs's examples, to use or to change: the list is never what
-// a group may have. Planted, watched failing: shelf.js `already` saying a
-// line an app; and its legend not saying they are examples.
+// a group may have. After the boxes, a link to how they are made and changed
+// (docs/guide/examples.md), never in the legend read with each box. Planted,
+// watched failing: shelf.js `already` saying a line an app; its legend not
+// saying they are examples; and no link after the boxes.
 const box = (words) => `<p><label><input type="checkbox"></input> ${words}</label></p>`;
 const BOXES = {
   Money: box('Money: who owes whom, and for what.'),
@@ -74,6 +76,8 @@ const BOXES = {
 };
 const lead = (name) =>
   `<legend>These are svrngs’s examples, to use or to change. Tick what you want and press the button: it goes in ${name}’s folder, and everyone in ${name} can open it in a few seconds.</legend>`;
+const HOW =
+  '<p><a href="https://github.com/alexsbryan/svrngs/blob/main/docs/guide/examples.md">See how they’re made</a>, and how to change one.</p>';
 const button = (name) =>
   `<p aria-live="polite"><button>Bring the ticked ones to ${name}</button></p>`;
 const HEAD = '<section><h3>Bring things to the table</h3>';
@@ -81,11 +85,11 @@ const HEAD = '<section><h3>Bring things to the table</h3>';
 test('it says how to add an app before the boxes, and what is here already in one line', () => {
   const all = Object.values(BOXES).join('');
   const cases = [
-    [house, [], `<fieldset>${lead('house')}${all}</fieldset>${button('house')}`],
+    [house, [], `<fieldset>${lead('house')}${all}</fieldset>${HOW}${button('house')}`],
     [
       house,
       [money],
-      `<p>Money is already in house.</p><fieldset>${lead('house')}${BOXES.Events}${BOXES['House-rules']}</fieldset>${button('house')}`,
+      `<p>Money is already in house.</p><fieldset>${lead('house')}${BOXES.Events}${BOXES['House-rules']}</fieldset>${HOW}${button('house')}`,
     ],
     [
       house,
@@ -95,7 +99,7 @@ test('it says how to add an app before the boxes, and what is here already in on
     [
       { id: 'g2' },
       [money],
-      `<fieldset>${lead('your group')}${all}</fieldset>${button('your group')}`,
+      `<fieldset>${lead('your group')}${all}</fieldset>${HOW}${button('your group')}`,
     ],
   ];
   for (const [g, lent, inside] of cases)
