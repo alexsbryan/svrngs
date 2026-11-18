@@ -121,6 +121,7 @@ use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
 };
 use svrngs_node::room;
+use svrngs_node::update;
 use svrngs_node::{Joined, Person, SigningKey};
 
 use crate::group::{self, Name, Seed};
@@ -228,6 +229,8 @@ pub enum Verb {
     Open(Option<String>, bool),
     /// `update`: the newest svrngs from the page this computer came from.
     Update,
+    /// `version`: this build's release, and the commit it was built from.
+    Version,
     /// `restart`: svrngs stopped and started by what keeps it running.
     Restart,
     Relay(Relay),
@@ -495,6 +498,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "open" => Ok(Verb::Open(positional, print)),
         "update" => Ok(Verb::Update),
+        "version" | "--version" => Ok(Verb::Version),
         "restart" => Ok(Verb::Restart),
         "guide" => Ok(Verb::Guide),
         "check" => {
@@ -747,16 +751,22 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
     let root = here.root().to_path_buf();
     let said = match verb {
         Verb::Help => format!("{USAGE}\n"),
+        // The release (1.10.0 is V1.10) and the commit build-release.sh
+        // built it from, which a build by hand has none of.
+        Verb::Version => match option_env!("SVRNGS_COMMIT") {
+            Some(commit) => format!("svrngs {} ({commit})\n", env!("CARGO_PKG_VERSION")),
+            None => format!("svrngs {}\n", env!("CARGO_PKG_VERSION")),
+        },
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
         Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
-        Verb::Update => match svrngs_node::update::apply(&root).await? {
-            svrngs_node::update::Outcome::Current => "This computer has the latest svrngs.\n",
-            svrngs_node::update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n",
-        }
-        .to_string(),
+        Verb::Update => match update::apply(&root).await? {
+            update::Outcome::Current => "This computer has the latest svrngs.\n".into(),
+            update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n".into(),
+            update::Outcome::Packaged(words) => format!("{words}\n"),
+        },
         Verb::Restart => restart(&root)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {

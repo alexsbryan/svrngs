@@ -1933,4 +1933,14 @@ dropped, the update's place one fixed directory, and the page read by
 `invite.rs`'s `kept_page`; the command's HTTP client moved to the node's
 one home, `http.rs`. The cap rose 388 in `.` and 145 in `js`
 (`scripts/lean_check.py`); `scripts/check.sh` passed at 1,385 s on
-2026-11-03.
+2026-11-03. Whoever installed svrngs updates it (2026-11-17, the operator,
+for svrngs as an Omarchy package; svrn-docs
+`rings/current/SVRNGS_PACKAGE.md`): a package that puts svrngs in
+`<prefix>/bin` puts `<prefix>/lib/svrngs/updated-by` beside it, saying how
+it is updated, and that svrngs never replaces itself: `svrngs update` says
+the package's words, `/update` answers `packaged` and the page offers
+nothing (`update.rs` `packaged`). One that cannot write beside itself is
+refused before the download. The workspace's version is the release's
+(1.10.0 is V1.10), `svrngs version` says it with the commit
+`build-release.sh` built it from, and `deploy-page.sh` says the GitHub
+Release that keeps each version for packages.

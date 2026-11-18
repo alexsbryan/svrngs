@@ -349,11 +349,14 @@ fn update_state(state: &str) -> Response {
 }
 
 /// `GET /update`: whether the page this computer came from offers a svrngs
-/// it does not run; `unknown` when that cannot be judged, never `current`.
+/// it does not run; `unknown` when that cannot be judged, never `current`;
+/// `packaged` when a package updates this one.
 async fn update_check(State(at): State<Asking>) -> Response {
     match crate::update::check(&at.door.data_dir).await {
         Ok(crate::update::Check::Current) => update_state("current"),
         Ok(crate::update::Check::Available) => update_state("available"),
+        // A package updates this svrngs: the page offers nothing.
+        Ok(crate::update::Check::Packaged(_)) => update_state("packaged"),
         Err(e) => {
             tracing::debug!(target: "home", error = %e, "home: an update cannot be judged");
             Json(serde_json::json!({ "state": "unknown", "why": e.to_string() })).into_response()
@@ -367,6 +370,7 @@ async fn update_check(State(at): State<Asking>) -> Response {
 async fn update_apply(State(at): State<Asking>) -> Response {
     match crate::update::apply(&at.door.data_dir).await {
         Ok(crate::update::Outcome::Current) => update_state("current"),
+        Ok(crate::update::Outcome::Packaged(_)) => update_state("packaged"),
         Ok(crate::update::Outcome::Updated) => {
             let answer = update_state("updated");
             tokio::spawn(async {

@@ -39,3 +39,8 @@ cp web/vercel.json "$OUT/vercel.json"
 echo "deploy-page: $(git rev-parse --short HEAD) to $PROJECT ($SCOPE) from $OUT"
 vercel link --yes --project "$PROJECT" --scope "$SCOPE" --cwd "$OUT" >/dev/null
 vercel deploy --prod --yes --scope "$SCOPE" --cwd "$OUT"
+# The page keeps only the latest release; every one is kept as a GitHub
+# Release too, the same files, for packages that name a version
+# (svrn-docs rings/current/SVRNGS_PACKAGE.md). The operator runs it.
+VERSION="$(sed -n 's/^version = "\(.*\)"$/\1/p' Cargo.toml | head -1)"
+echo "deploy-page: keep v$VERSION for packages: git tag v$VERSION && git push origin v$VERSION && gh release create v$VERSION $OUT/get/*.tar.gz $OUT/get/SHA256SUMS --notes 'See RELEASES.md.'"

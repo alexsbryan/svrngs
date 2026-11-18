@@ -35,6 +35,9 @@ TARGETS=(
   "linux-x86_64 x86_64-unknown-linux-musl cargo zigbuild"
   "linux-aarch64 aarch64-unknown-linux-musl cargo zigbuild"
 )
+# `svrngs version` names the commit each binary is built from.
+SVRNGS_COMMIT="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo -dirty)"
+export SVRNGS_COMMIT
 GET="$OUT/get"
 rm -rf "$GET"
 mkdir -p "$GET"
