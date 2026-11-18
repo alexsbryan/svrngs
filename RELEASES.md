@@ -17,6 +17,34 @@ one yourself, run `gpg --import svrngs-release-key.asc`, then
 `shasum -a 256 -c SHA256SUMS`. The key signs only when the person who
 releases svrngs types its passphrase (`scripts/sign-release.sh`).
 
+## V1.11.2, 18 November 2026
+
+V1.11.2 lets you install svrngs with pacman, and makes its Linux programs
+harder to attack.
+
+**Install with pacman.** On Arch Linux,
+[`packaging/arch`](packaging/arch/README.md) builds svrngs, and Give if
+you want it, from the signed release. makepkg checks every download
+against the svrngs release key before it installs anything. svrngs then
+runs as your user's service, shows in your app menu with its icon, and
+`svrngs update` leaves updating to pacman.
+
+**The installer is signed too.** Each release on GitHub now carries
+`install.sh` with its signature, so whatever installs svrngs for you can
+check the installer before it runs it.
+
+**Harder to attack on Linux.** svrngs and Give for Linux now load at a
+different address each time they start, and make what they load
+read-only before they run, as most Linux programs do.
+
+Groups, lends and the record work as in V1.11.1. Press **Update and
+restart** on your home page, or run `svrngs update` and then
+`svrngs restart`. Your phone's page updates itself.
+
+V1.11.2 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.11.2`. Its publication and readback are recorded in
+`demo/runs/v1.11.2/2026-11-18/README.md`.
+
 ## V1.11.1, 18 November 2026
 
 V1.11.1 is a security release: update now.
