@@ -1,0 +1,29 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-or-later -->
+<!-- Magnets: a sentence of word magnets the group shares. Its script is app.js; what it draws and says, board.js. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Magnets</title>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="app.js"></script>
+</head>
+<body>
+<main>
+<h1>Magnets</h1>
+<p id="said" role="status">Opening your group’s fridge…</p>
+<div id="board" hidden>
+<section aria-label="Your group’s sentence">
+<p id="sentence" aria-live="polite" aria-atomic="true"><span id="prompt"></span><span id="placed"></span><span id="blank" aria-hidden="true">____</span></p>
+<p id="out" class="hint" hidden>Tap a word in the sentence to take it out.</p>
+</section>
+<section aria-labelledby="add">
+<h2 id="add">Tap a word to add it</h2>
+<ul id="tray" aria-labelledby="add"></ul>
+</section>
+<p class="hint">Anyone in your group can change the sentence, and everyone sees the same one.</p>
+</div>
+</main>
+</body>
+</html>

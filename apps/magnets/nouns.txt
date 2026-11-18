@@ -1,0 +1,4 @@
+# Magnets' nouns: what knows a fridge of word magnets lives in apps/magnets/. The infra may not use them (scripts/vocab_check.py).
+magnet
+magnets
+fridge

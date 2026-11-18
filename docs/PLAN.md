@@ -57,7 +57,8 @@ lines (operator, 2026-11-17: "This is what I want to build to prove the
 promises of APP_STATE"; svrn-docs `rings/current/MAGNETS.md`, its plan
 `MAGNETS_BUILD.md`). Two parts of it start now, ahead of the economizing,
 since neither adds a product line (operator, 2026-11-17): Magnets' face in
-`apps/magnets/` against a stand-in for its route, tried on first-time
+`apps/magnets/` against a stand-in for its route (built, the route's shape
+pinned in `apps/magnets/tests/standin.mjs`), tried on first-time
 players, and the two design spikes, the merge rule and what a phone signs.
 The database itself still waits for stage 4.
 

@@ -14,6 +14,11 @@ yours to copy and bend.
 **Examples to copy into a group's folder.** `taste/` (Taste, which reads
 the groups' lent Jellyfins and sends to a lent llama-server).
 
+**Waiting on svrngs.** `magnets/` (Magnets), a sentence of word magnets
+a group shares, in a database svrngs doesn't give apps yet
+([PLAN §1](../docs/PLAN.md)). Until then it plays against a stand-in:
+`node apps/magnets/tests/standin.mjs`, and open the address it prints.
+
 **Notes for a program you already run.** `jellyfin/`: lending it, and the
 account apps read it by.
 
