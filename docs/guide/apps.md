@@ -151,7 +151,7 @@ by, its size and when, but never its words; the page says so on every
 conversation.
 
 The grapevine isn't on the tick list. Each person runs their own copy, on
-their own computer, from a copy of the svrngs source with Node.js 20 or
+their own computer, from a copy of the svrngs source with Node.js 24 or
 later; it isn't lent to the group. `apps/grapevine/README.md` has the one
 line to try it alone, and [the recorded walk-through](../../demo/grapevine.md)
 runs it with three people.

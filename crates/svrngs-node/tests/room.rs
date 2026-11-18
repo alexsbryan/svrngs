@@ -130,7 +130,7 @@ async fn canary(who: &str) -> (tokio::process::Child, u16) {
         .stdout(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .expect("node runs the canary: Node 18 or later");
+        .expect("node runs the canary: Node 24 or later");
     let mut lines = tokio::io::BufReader::new(child.stdout.take().unwrap()).lines();
     let first = lines.next_line().await.unwrap().expect("its port");
     let port = serde_json::from_str::<Value>(&first).unwrap()["port"]

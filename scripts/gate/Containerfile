@@ -34,10 +34,11 @@ RUN set -e; cd /tmp; base=https://repo.jellyfin.org/ubuntu/pool/main/j; \
     ln -s /usr/lib/jellyfin-ffmpeg/ffmpeg /usr/local/bin/ffmpeg; \
     ln -s /usr/lib/jellyfin-ffmpeg/ffprobe /usr/local/bin/ffprobe
 
-# Node as the operator's Mac runs the gate (`node --version`, v20.20.2).
-RUN set -e; cd /tmp; f=node-v20.20.2-linux-x64.tar.xz; \
-    curl -fsSLO "https://nodejs.org/dist/v20.20.2/$f"; \
-    echo "df770b2a6f130ed8627c9782c988fda9669fa23898329a61a871e32f965e007d  $f" | sha256sum -c -; \
+# Node, the major .nvmrc names (scripts/tests/test_node.py), its sha256 as
+# nodejs.org/dist/v24.22.3/SHASUMS256.txt gives it.
+RUN set -e; cd /tmp; f=node-v24.22.3-linux-x64.tar.xz; \
+    curl -fsSLO "https://nodejs.org/dist/v24.22.3/$f"; \
+    echo "4f2b175a6d53a5c617a80dba2676238a0688cef28c6da4eba35c7d844e66fcfb  $f" | sha256sum -c -; \
     mkdir /opt/node; tar -xJf "$f" -C /opt/node --strip-components=1; rm "$f"
 ENV PATH=/opt/node/bin:$PATH
 

@@ -144,7 +144,7 @@ and every raise gives its reason.
 
 You need:
 - Rust 1.91 or later, with rustfmt and clippy;
-- Node.js 20 or later, then `npm ci --prefix web`.
+- Node.js 24 or later, then `npm ci --prefix web`.
 
 Then run:
 

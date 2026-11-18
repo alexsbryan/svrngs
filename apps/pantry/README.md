@@ -4,7 +4,7 @@ Your friends lend models and tools on their own computers. The pantry is the
 one place on yours that shows them, and the one address your interface talks
 to.
 
-The pantry is a template: copy `apps/pantry/` and run it with Node 18 or
+The pantry is a template: copy `apps/pantry/` and run it with Node 24 or
 later.
 
 It has no API of its own. A server that answers OpenAI's `/v1/models` is a

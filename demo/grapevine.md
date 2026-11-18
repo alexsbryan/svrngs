@@ -25,7 +25,7 @@ says. Each page says so on every conversation.
 
 ## Before you start
 
-You need a copy of svrngs with its program built, and Node.js 20 or
+You need a copy of svrngs with its program built, and Node.js 24 or
 later. In a terminal, in your copy:
 
 ```

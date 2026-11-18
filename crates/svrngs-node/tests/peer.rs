@@ -272,7 +272,7 @@ async fn no_page_reaches_a_friends_door(browser: Browser) {
         .kill_on_drop(true)
         .output()
         .await
-        .expect("node runs: the browser tests need Node 18 or later");
+        .expect("node runs: the browser tests need Node 24 or later");
     assert!(
         out.status.success(),
         "the browser half failed ({}):\n{}",

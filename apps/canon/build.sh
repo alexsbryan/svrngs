@@ -40,7 +40,7 @@ done
 need() { command -v "$1" >/dev/null || { echo "build.sh: $1 is not on PATH — $2" >&2; exit 3; }; }
 need wasm2js "brew install binaryen (version $BINARYEN)"
 need wasm-opt "brew install binaryen (version $BINARYEN)"
-need node "install node 20 or later"
+need node "install node 24 or later"
 for t in wasm2js wasm-opt; do
   v=$($t --version | awk '{print $3}')
   [ "$v" = "$BINARYEN" ] || { echo "build.sh: $t is version $v, the build pins $BINARYEN" >&2; exit 3; }
