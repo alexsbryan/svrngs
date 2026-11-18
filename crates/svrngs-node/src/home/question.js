@@ -547,4 +547,5 @@ export const opens = (lend) =>
  * @param {Pick<Lend, 'answering'>} lend
  * @param {string} [words]
  */
-export const down = (lend, words = ' Not running now.') => (lend.answering === false ? words : '');
+export const notRunning = (lend, words = ' Not running now.') =>
+  lend.answering === false ? words : '';
