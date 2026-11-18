@@ -760,10 +760,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (51f5e669), and the resolver's new phrase and miss budgets (c327032f,
 # 2241e350). The caps come down to where they land. js 8,545 -> 8,540;
 # all code but JavaScript 21,359 -> 21,357.
+# (2026-11-17) The economizing pass before the shared database (operator,
+# "Now, own crate"; docs/PLAN.md §1, c0859400), over the code it extends:
+# carried.rs, door.rs, surface.rs, ring_routes.rs and ring_sync.rs. /v1/groups
+# fills each register field by name (57a31e07, -15), the door builds a pass
+# holder's Asker once (bd06f75c, -10), and a round's namespace trace lists its
+# skips as its offers (7c017670, -1). The cap comes down to where they land.
+# All code but JavaScript 21,357 -> 21,331.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21358,
+    ".": 21332,
 
     "js": 8541,
 
