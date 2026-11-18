@@ -1,7 +1,8 @@
-// Magnets' board, as MAGNETS.md's "The whole app" has it, run under Node on
-// its own SQL in SQLite (standin.mjs `database`, sqlite.py): each law a check
-// that returns why it broke, or null, and the second test plants one broken
-// board per law and watches its check catch it.
+// Magnets' board, as MAGNETS.md's "The whole app" has it, run under Node
+// against the stand-in's route in SQLite (standin.mjs `posted`, sqlite.py):
+// each read and each tap sent as the text the page sends. Each law is a
+// check that returns why it broke, or null, and the second test plants one
+// broken board, or one broken route, per law and watches its check catch it.
 
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
@@ -11,22 +12,33 @@ import { isDeepStrictEqual } from 'node:util';
 import { test } from 'node:test';
 
 import * as board from '../board.js';
-import { database, SCHEMA } from './standin.mjs';
+import { database, posted, Refused, SCHEMA } from './standin.mjs';
 
 const PACK = JSON.parse(readFileSync(new URL('../pack.json', import.meta.url), 'utf8'));
-const APP = { ...board, pack: PACK, schema: SCHEMA };
+// The board, its pack and schema, and the stand-in's database and route, so
+// a plant can break any one of them.
+const APP = { ...board, pack: PACK, schema: SCHEMA, database, posted };
 const differ = (got, want, what) =>
   isDeepStrictEqual(got, want)
     ? null
     : `${what}: ${JSON.stringify(got)}, not ${JSON.stringify(want)}`;
 
-/** `steps` on a fresh board of `app`'s schema, each `[sql, ...params]`; the last one's answer. */
-async function on(app, steps) {
-  const db = database(app.schema);
+/** `bodies` posted to a fresh board of `app`'s schema, each as the page sends one; the last one's answer. */
+async function on(app, bodies) {
+  const db = app.database(app.schema);
   try {
     let last;
-    for (const [sql, ...params] of steps) [last] = await db.run([{ sql, params }]);
+    for (const body of bodies) last = await app.posted(db, JSON.stringify(body));
     return last;
+  } finally {
+    db.stop();
+  }
+}
+/** `sql` on a fresh board of `app`'s schema, run as the stand-in runs its own, unchecked: its rows. */
+async function unchecked(app, sql) {
+  const db = app.database(app.schema);
+  try {
+    return (await db.run([{ sql }]))[0].rows;
   } finally {
     db.stop();
   }
@@ -50,20 +62,33 @@ export const LAWS = {
    * no position.
    */
   async 'a tap appends, and a tap back returns to the tray'(app) {
-    const db = database(app.schema);
-    const run = async (sql, ...params) => (await db.run([{ sql, params }]))[0];
-    const tap = async (id) => run(app.PUT, id, app.next((await run(app.BOARD)).rows));
+    const db = app.database(app.schema);
+    const post = (body) => app.posted(db, JSON.stringify(body));
+    const read = async () => post({ sql: app.BOARD });
+    // A tap as app.js `move` sends one: one op, a put at the position `next`
+    // reads from the board the page holds, or a back.
+    const tap = async (id) => post({ write: [app.put(id, app.next((await read()).rows))] });
+    const all = async () =>
+      (await db.run([{ sql: 'SELECT id, position FROM magnets ORDER BY id' }]))[0].rows;
     try {
-      const fresh = ids(await run(app.BOARD));
-      await tap('moon');
-      await tap('goose');
-      const two = ids(await run(app.BOARD));
-      await run(app.BACK, 'moon');
-      await tap('moon');
-      const again = (await run('SELECT id, position FROM magnets ORDER BY id')).rows;
+      const fresh = ids(await read());
+      const changed = [await tap('moon'), await tap('goose')];
+      const two = ids(await read());
+      changed.push(await post({ write: [app.back('moon')] }));
+      const out = await all();
+      changed.push(await tap('moon'));
+      const again = await all();
       return (
         differ(fresh, [], 'a fresh board') ??
         differ(two, ['moon', 'goose'], 'two taps') ??
+        differ(
+          out,
+          [
+            { id: 'goose', position: 2 },
+            { id: 'moon', position: null },
+          ],
+          'moon back in the tray',
+        ) ??
         differ(
           again,
           [
@@ -71,7 +96,8 @@ export const LAWS = {
             { id: 'moon', position: 3 },
           ],
           'moon back, then on again at the end',
-        )
+        ) ??
+        differ(changed, Array(4).fill({ count: 1 }), 'the rows each move changed')
       );
     } finally {
       db.stop();
@@ -79,12 +105,49 @@ export const LAWS = {
   },
   /** Two moves made apart that chose one position read by magnet ID. */
   async 'a tie is read by ID'(app) {
-    const tie = 'INSERT INTO magnets (id, position) VALUES (?, 1)';
+    const tie = (id) => ({ write: [app.put(id, 1)] });
     return differ(
-      ids(await on(app, [[tie, 'moon'], [tie, 'goose'], [app.BOARD]])),
+      ids(await on(app, [tie('moon'), tie('goose'), { sql: app.BOARD }])),
       ['goose', 'moon'],
       'two at one position',
     );
+  },
+  /**
+   * A write sent as SQL, as the page sent its moves before the write form,
+   * is refused, its words naming that form, and nothing of it kept. The
+   * route asks SQLite what a statement does, so a write behind a WITH or
+   * before a RETURNING is refused as well as one that begins INSERT.
+   */
+  async 'a write sent as SQL is refused'(app) {
+    const db = app.database(app.schema);
+    const post = (body) => app.posted(db, JSON.stringify(body)).catch((e) => e);
+    try {
+      for (const [sql, ...params] of [
+        [
+          'INSERT INTO magnets (id, position) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET position = excluded.position',
+          'moon',
+          1,
+        ],
+        ['UPDATE magnets SET position = NULL WHERE id = ?', 'moon'],
+        ['INSERT INTO magnets (id, position) VALUES (?, ?) RETURNING id', 'moon', 1],
+        [
+          'WITH placed (id, position) AS (VALUES (?, ?)) INSERT INTO magnets SELECT * FROM placed',
+          'moon',
+          1,
+        ],
+      ]) {
+        const answer = await post({ sql, params });
+        if (
+          answer.refused !== 'not-a-read' ||
+          !String(answer.message).includes('{write: [op, ...]}')
+        )
+          return `${sql}: answered ${answer instanceof Error ? `${answer.refused}, ${answer.message}` : JSON.stringify(answer)}, not refused naming the write form`;
+      }
+      const kept = await db.run([{ sql: 'SELECT id FROM magnets' }]);
+      return differ(kept[0].rows, [], 'what the refused writes kept');
+    } finally {
+      db.stop();
+    }
   },
   /** Every magnet has an ID of its own and a word, under one prompt. */
   'the pack names each magnet once'(app) {
@@ -105,14 +168,16 @@ export const LAWS = {
   // asks it (MAGNETS_BUILD S5), the one decider; this law goes then.
   /** Each table has a NOT NULL primary key, no other UNIQUE and no foreign key. */
   async 'the schema is one cr-sqlite takes'(app) {
-    const tables = ids(
-      await on(app, [["SELECT name AS id FROM sqlite_schema WHERE type = 'table'"]]),
-    );
+    // Read unchecked, as the stand-in reads its own schema: the route takes
+    // no PRAGMA as a read.
+    const tables = (
+      await unchecked(app, "SELECT name AS id FROM sqlite_schema WHERE type = 'table'")
+    ).map((r) => r.id);
     if (!tables.length) return 'the schema makes no table';
     for (const t of tables) {
       const [columns, indexes, keys] = await Promise.all(
-        [`table_info("${t}")`, `index_list("${t}")`, `foreign_key_list("${t}")`].map(
-          async (p) => (await on(app, [[`SELECT * FROM pragma_${p}`]])).rows,
+        [`table_info("${t}")`, `index_list("${t}")`, `foreign_key_list("${t}")`].map((p) =>
+          unchecked(app, `SELECT * FROM pragma_${p}`),
         ),
       );
       const pk = columns.filter((c) => c.pk > 0);
@@ -138,7 +203,7 @@ function schema(sql) {
 }
 
 test('each law catches its plant', async () => {
-  // Each plant, and the words its law must break with.
+  // Each plant, or plants, and the words its law must break with.
   const PLANTS = {
     'the board is drawn from the rows': {
       why: /^sentence, tray and unknown: \[\["a","c"\]/,
@@ -152,22 +217,44 @@ test('each law catches its plant', async () => {
         };
       },
     },
-    'a tap appends, and a tap back returns to the tray': {
-      why: /^two taps: \["goose","moon"\], not \["moon","goose"\]$/,
-      // Every tap at the first place.
-      next: () => 1,
-    },
+    'a tap appends, and a tap back returns to the tray': [
+      {
+        why: /^two taps: \["goose","moon"\], not \["moon","goose"\]$/,
+        // Every tap at the first place.
+        next: () => 1,
+      },
+      {
+        why: /^moon back in the tray: \[\{"id":"goose","position":2\}\], not /,
+        // A tap back that deletes the row in place of keeping it unplaced.
+        back: (id) => ({ delete: 'magnets', key: { id } }),
+      },
+    ],
     'a tie is read by ID': {
       why: /^two at one position: \["moon","goose"\]/,
       BOARD: 'SELECT id, position FROM magnets WHERE position IS NOT NULL ORDER BY position',
+    },
+    'a write sent as SQL is refused': {
+      why: /^WITH placed .*: answered \{"count":-?\d+\}, not refused naming the write form$/,
+      // A route that tells a read by its first word, as a keyword check
+      // would: a write behind a WITH gets through, run as given.
+      database: (schema) => {
+        const db = database(schema);
+        const read = async (sql, params) => {
+          if (/^\s*(INSERT|UPDATE|DELETE|REPLACE)\b/i.test(sql))
+            throw new Refused('not-a-read', 'A write goes as {write: [op, ...]}.');
+          return (await db.run([{ sql, params }]))[0];
+        };
+        return { ...db, read };
+      },
     },
     'the pack names each magnet once': {
       why: /^goose is in the pack twice$/,
       pack: { ...PACK, magnets: [...PACK.magnets, { id: 'goose', word: 'goose' }] },
     },
   };
-  for (const [name, { why, ...plant }] of Object.entries(PLANTS))
-    assert.match(String(await LAWS[name]({ ...APP, ...plant })), why, `${name}, planted`);
+  for (const [name, plants] of Object.entries(PLANTS))
+    for (const { why, ...plant } of [plants].flat())
+      assert.match(String(await LAWS[name]({ ...APP, ...plant })), why, `${name}, planted`);
   for (const [planted, why] of [
     ['CREATE TABLE magnets (id TEXT PRIMARY KEY, position INTEGER);', /key may be NULL/],
     [

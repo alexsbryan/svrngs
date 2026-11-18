@@ -1,22 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Magnets' board apart from the page (app.js): the SQL it runs, the sentence
-// and tray it draws from the rows, and every sentence it says. Nothing here
-// reads the page or the network, so its laws run in Node
-// (tests/board.test.mjs).
+// Magnets' board apart from the page (app.js): the read it subscribes to,
+// the writes a tap sends, the sentence and tray it draws from the rows, and
+// every sentence it says. Nothing here reads the page or the network, so its
+// laws run in Node (tests/board.test.mjs).
 
 /** The sentence: its magnets by position, then by ID where two moves made apart chose one position. */
 export const BOARD =
   'SELECT id, position FROM magnets WHERE position IS NOT NULL ORDER BY position, id';
+
+// A tap's write is one op of svrngs/sql's write form (tests/standin.mjs):
+// its row named by key and its values given, never SQL. A phone's worker
+// checks the one row it signs without a SQL parser (svrn-docs
+// magnets-spikes, S2), and a write that ran no condition and computed
+// nothing holds the same on every copy it reaches.
+
 /**
- * A magnet put at the sentence's end: its row made, or its position set, to
- * the position `next` gives. The position is a value, never a subquery, so
- * a phone's worker can check the one row it signs (svrn-docs
- * magnets-spikes, S2: on a phone a write names its row and its values).
+ * A magnet put at the sentence's end: its row made, or its position set, at
+ * `position`, which `next` reads from the board the page holds, since the
+ * write itself can't ask for the last one.
  */
-export const PUT =
-  'INSERT INTO magnets (id, position) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET position = excluded.position';
-/** A magnet back in the tray: its row kept, its position NULL. */
-export const BACK = 'UPDATE magnets SET position = NULL WHERE id = ?';
+export const put = (id, position) => ({ insert: 'magnets', row: { id, position } });
+/** A magnet back in the tray: its row kept, its position null. */
+export const back = (id) => ({ update: 'magnets', key: { id }, set: { position: null } });
 /** One past the last position among `rows`, the board as BOARD read it. */
 export const next = (rows) => Math.max(0, ...rows.map((r) => r.position ?? 0)) + 1;
 

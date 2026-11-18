@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Magnets' page: the board read from the group's database at this app's own
-// origin as a subscription (`GET svrngs/sql?q=`), and moved by one statement
-// a tap (`POST svrngs/sql`). What it draws and says is board.js's; the
-// route's shape is the one tests/standin.mjs pins.
+// origin as a subscription (`GET svrngs/sql?q=`), and moved by one write a
+// tap, by key (`POST svrngs/sql {write}`). What it draws, writes and says is
+// board.js's; the route's shape is the one tests/standin.mjs pins.
 import {
   answeredWith,
-  BACK,
+  back,
   BOARD,
   next,
   NONE,
   order,
-  PUT,
+  put,
   refused,
   RETRY_MS,
   SAID,
@@ -91,18 +91,15 @@ async function listen() {
 
 /** A magnet tapped: into the sentence's end from the tray, or back to the tray from the sentence. */
 async function move(magnet) {
-  const back = seen.rows.some((r) => r.id === magnet.id);
-  trace(back ? 'a magnet goes back to the tray' : 'a magnet goes on the sentence', magnet.id);
+  const placed = seen.rows.some((r) => r.id === magnet.id);
+  const op = placed ? back(magnet.id) : put(magnet.id, next(seen.rows));
+  trace(placed ? 'a magnet goes back to the tray' : 'a magnet goes on the sentence', op);
   let words = null;
   try {
     const res = await fetch('svrngs/sql', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(
-        back
-          ? { sql: BACK, params: [magnet.id] }
-          : { sql: PUT, params: [magnet.id, next(seen.rows)] },
-      ),
+      body: JSON.stringify({ write: [op] }),
     });
     if (!res.ok) words = (await why(res)).words;
   } catch (e) {
