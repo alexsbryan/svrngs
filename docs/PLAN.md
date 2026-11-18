@@ -36,33 +36,46 @@ that require them. `docs/CHECKS.md` is its extraction/coverage ledger and quick
 commands. The complete gate retains every tier; no slower assertion is removed
 without its equivalent check at the smaller real boundary.
 
+**Persistence for carried apps, now** (operator, 2026-11-17: "Let's not
+block on other people, let's reach a level of completeness where we can
+truly warranty this feature"; then, asked, "Now, own crate"). "Ship an SPA
+and a schema; the group's computers are your database": a SQLite per app per
+group on every member's computer, beside the record and never in it, its
+tables merged by cr-sqlite and each device's changes signed (svrn-docs
+`rings/current/APP_STATE.md`; its build, `MAGNETS_BUILD.md`). It is built
+beside the authority replacement, ahead of the economizing:
+- in a crate of its own, `crates/svrngs-db`, which the node owns as it owns
+  the runtime. The core gains only the bytes a device signs for a change
+  set, and the runtime and the record's format are untouched;
+- after a small economizing pass over the code it extends (the carried
+  routes and the ring sync), with a budget raise only for what that pass
+  leaves;
+- to the warranty MAGNETS_BUILD sets out. Each promise has its proof in the
+  gate: copies that agree under a seeded simulator of every delivery, no
+  acknowledged write lost, only the right device writing, every call
+  bounded, no split on an upgrade, all four release targets, `svrngs check`
+  and the guide, and Magnets with one harder app on it.
+
+It is proved by Magnets V1, a shared fridge in at most 1,000 lines
+(operator, 2026-11-17: "This is what I want to build to prove the promises
+of APP_STATE"; svrn-docs `rings/current/MAGNETS.md`). Its face is built in
+`apps/magnets/` against a stand-in for its route
+(`apps/magnets/tests/standin.mjs` pins the route's shape), tried as
+`demo/magnets.md` has it. Nothing waits on another seat: the two rules that
+are authority's, who may write an owned row and what counts from a removed
+device, are written as pure functions in Eudoxia for its seat to review
+after. A recorded xenia run is proof 1's rehearsal, and the people bar stays
+never-ran until people play.
+
 **After the authority replacement** (operator, 2026-11-17): the milestone
 economizing, svrn-docs `rings/current/ECONOMIZING_PLAN.md` stages 1-4. Its
 stage 1 row 2(a), one node-owned notification of journal changes to folder
 application and sync, landed first (operator, 2026-11-10;
-`demo/runs/economize/2026-11-10-write-notifications/`). Then two pieces for
-carried apps, with a budget raise only for what the cuts leave:
-- persistence, "ship an SPA and a schema; the group's computers are your
-  database": a SQLite per app per group on every member's computer, beside
-  the record and never in it, its tables merged by cr-sqlite and each
-  device's changes signed (svrn-docs `rings/current/APP_STATE.md`, its spike
-  `app-state-spike/`);
-- wasm in a carried page only from the app's own pinned files, held by a
-  guard in the first script that runs (svrn-docs
-  `rings/current/WASM_IN_CARRIED_PAGES.md`, option D, its spike
-  `wasm-guard-spike/`).
-
-Persistence is proved by Magnets V1, a shared fridge in at most 1,000
-lines (operator, 2026-11-17: "This is what I want to build to prove the
-promises of APP_STATE"; svrn-docs `rings/current/MAGNETS.md`, its plan
-`MAGNETS_BUILD.md`). Two parts of it start now, ahead of the economizing,
-since neither adds a product line (operator, 2026-11-17): Magnets' face in
-`apps/magnets/` against a stand-in for its route (built, the route's shape
-pinned in `apps/magnets/tests/standin.mjs`), tried on first-time
-players as `demo/magnets.md` has it (a xenia read first,
-`demo/runs/magnets/2026-11-17-xenia/`), and the two design spikes, the
-merge rule and what a phone signs.
-The database itself still waits for stage 4.
+`demo/runs/economize/2026-11-10-write-notifications/`). Its cuts lower the
+caps the database's raise set. Then wasm in a carried page only from the
+app's own pinned files, held by a guard in the first script that runs
+(svrn-docs `rings/current/WASM_IN_CARRIED_PAGES.md`, option D, its spike
+`wasm-guard-spike/`), with a budget raise only for what the cuts leave.
 
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
