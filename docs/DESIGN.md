@@ -82,7 +82,14 @@ a developer adds a kind of ask in one file (`apps/grapevine/`); House
 rules, where a house decides its rules (`apps/canon/`); and Give, an app
 the group keeps on one member's computer at a time, a carried page and a
 program of its own beside svrngs (`apps/give/`). Never the finished
-apps: the community builds those. "The iOS of groups" is an analogy for
+apps: the community builds those. Each example is a folder to use, open
+up, change, or start your own from (PLAN §1, "Examples, a ladder"). Its
+shape is where its code runs: *carried* (a page; state in the record),
+*lent* (a process behind its door) or *yours alone* (a process asking
+svrngs's API). A carried one is in the group's folder once brought; the
+rest come with svrngs's source at the binary's version and need only
+Node. The shelf and a checkout are ways a folder arrives, not kinds of
+app. "The iOS of groups" is an analogy for
 being the thing others build on. The iPhone app is a door beside the
 group's page, never the way in: it adds only what a page can't (§7).
 
