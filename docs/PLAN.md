@@ -36,12 +36,21 @@ that require them. `docs/CHECKS.md` is its extraction/coverage ledger and quick
 commands. The complete gate retains every tier; no slower assertion is removed
 without its equivalent check at the smaller real boundary.
 
-The operator selected one contained economizing unit on 2026-11-10:
-svrn-docs `rings/current/ECONOMIZING_PLAN.md`, stage 1, row 2(a), one node-owned notification of
-journal changes to folder application and sync, retiring callers' write
-nudges. Its recorded regression and convergence checks are in
-`demo/runs/economize/2026-11-10-write-notifications/`. The remaining
-economizing stages still wait for scheduling.
+**After the authority replacement** (operator, 2026-11-17): the milestone
+economizing, svrn-docs `rings/current/ECONOMIZING_PLAN.md` stages 1-4. Its
+stage 1 row 2(a), one node-owned notification of journal changes to folder
+application and sync, landed first (operator, 2026-11-10;
+`demo/runs/economize/2026-11-10-write-notifications/`). Then two pieces for
+carried apps, with a budget raise only for what the cuts leave:
+- persistence, "ship an SPA and a schema; the group's computers are your
+  database": a SQLite per app per group on every member's computer, beside
+  the record and never in it, its tables merged by cr-sqlite and each
+  device's changes signed (svrn-docs `rings/current/APP_STATE.md`, its spike
+  `app-state-spike/`);
+- wasm in a carried page only from the app's own pinned files, held by a
+  guard in the first script that runs (svrn-docs
+  `rings/current/WASM_IN_CARRIED_PAGES.md`, option D, its spike
+  `wasm-guard-spike/`).
 
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
@@ -430,7 +439,7 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 
 | Waits | Trigger |
 |---|---|
-| The milestone economizing: three roots and the simpler shape of each, and its plan in six stages (svrn-docs `rings/current/ECONOMIZING.md` and `ECONOMIZING_PLAN.md`, 2026-11-10); and where state must be explicit, most critical first (svrn-docs `rings/current/STATE_AND_INVARIANTS.md`). Read from code and history. | The operator places it in §1. |
+| The milestone economizing's stages 5-6 (svrn-docs `rings/current/ECONOMIZING_PLAN.md`; stages 1-4 are in §1); and where state must be explicit, most critical first (svrn-docs `rings/current/STATE_AND_INVARIANTS.md`). Read from code and history. | The operator places them in §1. |
 | Development-scene helpers to open the scene host, show its status and stop it, with the data-directory distinction explicit. Prefer the scene tooling over a platform-wide registry of arbitrary development nodes; a normal node already holds multiple groups. | The operator queued this for later during the 2026-11-04 onboarding bug bash; resume after the current welcome and portal fixes when development staging is next touched. |
 | an app SDK, a sandboxed fold engine, signed manifests and install acts (QuickJS behind an `Engine` trait was `crates/svrngs-engine`, deleted 2026-10-04 with no user; it is at tag `e0-bot`); and the runner that would carry an app's function to a person's data, its yes to that code at a version — scoped use's spike served its operation from a program its owner runs, as the survey orders (`rings/current/ACL_AND_SCOPED_USE.md` §4: "a subsequent convenience to earn with a real distributed app"; `demo/runs/su/2026-10-09/` §7) | an app needs its state offline on a device that is not its host, or strangers' code runs on members' devices, or an app sends its function to run beside a person's data |
 | the phone's app, built: the ios queue (`ralph/next/ios/`, its `CHARTER.md` and `STATE.md`), designed in DESIGN §7 and parked after its design. The demo it would move: Ana taps the chat link on her iPhone, types her name and presses Continue once; Jellyfin's app then plays Sam's film over cellular with nothing to turn on, and a stranger's key is refused. Its observations are `demo/runs/ios/2026-10-30-observe/README.md`; a TestFlight build of the spike installs from an individual's team. Until it is built, a phone is the group's page in its browser, and a lend stops when the browser leaves the screen | the operator resources it (the operator, 2026-10-30: "we aren't shipping a mobile app until 2027"; "finish the iOS design then park it until we can resource it") |
