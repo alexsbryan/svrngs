@@ -153,8 +153,10 @@ pub(crate) fn router(asking: Asking) -> Router {
         .with_state(asking)
 }
 
-/// A group as `GET /v1/groups` answers it.
-#[derive(Debug, Serialize)]
+/// A group as `GET /v1/groups` answers it. Its default is what a group
+/// whose register cannot be read is told of it: every field the register
+/// gives `null`, and `vacates` false.
+#[derive(Debug, Default, Serialize)]
 struct Held {
     id: String,
     /// `null` when its seed cannot be read on this computer, or does not
@@ -248,9 +250,8 @@ async fn groups(State(at): State<Asking>) -> Response {
         let made = seed.map(|s| Namesake::of(rail.root(), &s, me));
         // One read for both: a group not held or with no seed is the empty
         // register, said by the rail (`RingRail::register`).
-        let (person, removed, removals, left, keeps, visiting, slots, offered, vacates) = match rail
-            .register(&id)
-        {
+        let mut group = Held::default();
+        match rail.register(&id) {
             Ok(r) => {
                 let other = match &r.office {
                     Office::Pending { to, by, .. } if to == me => Some((true, by)),
@@ -261,57 +262,43 @@ async fn groups(State(at): State<Asking>) -> Response {
                     (r.members.get(k).map(|m| m.person.clone()))
                         .or_else(|| r.removed.get(k).cloned())
                 };
-                let offered = other.map(|(to_you, k)| Offer {
+                group.offered = other.map(|(to_you, k)| Offer {
                     to_you,
                     person: named(k),
                 });
-                let visiting = crate::rail::visiting(&r, me);
+                group.visiting = crate::rail::visiting(&r, me);
                 let person_of = |k: &str| r.members.get(k).map(|m| &m.person_key);
                 let keeper = r.keeper.as_ref().and_then(|k| r.members.get(k));
                 let keeps = keeper.is_some_and(|k| Some(&k.person_key) == person_of(me));
                 let left = (r.removals.iter()).any(|x| x.key == me && x.said == RemovalSaid::Left);
                 let others = (r.members.values()).any(|m| Some(&m.person_key) != person_of(me));
-                let person = r.members.get(me).map(|m| m.person.clone());
-                (
-                    person,
-                    Some(r.removed.contains_key(me)),
-                    Some(r.removals),
-                    Some(left),
-                    Some(keeps),
-                    visiting,
-                    Some(r.slots.unwrap_or(svrngs_core::GUESTS_DEFAULT)),
-                    offered,
-                    keeps && others,
-                )
+                group.person = r.members.get(me).map(|m| m.person.clone());
+                group.removed = Some(r.removed.contains_key(me));
+                group.removals = Some(r.removals);
+                group.left = Some(left);
+                group.keeps = Some(keeps);
+                group.slots = Some(r.slots.unwrap_or(svrngs_core::GUESTS_DEFAULT));
+                group.vacates = keeps && others;
             }
             Err(e) => {
                 tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — its register is unreadable, so neither this computer's person nor whether it was removed is known");
-                (None, None, None, None, None, None, None, None, false)
             }
-        };
+        }
         let folders = crate::folder::dirs_of(&at.door.data_dir, &id)
             .inspect_err(|e| tracing::warn!(target: "surface", namespace = id, error = %e, "surface: groups — where its folders are kept cannot be read"))
             .ok();
         let waiting = at.door.folders.waiting_in(&id);
-        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?person, removed = ?removed, ?left, ?keeps, ?offered, older = older.is_some(),
-            removals = ?removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
+        tracing::debug!(target: "surface", namespace = id, name = ?name, person = ?group.person, removed = ?group.removed, left = ?group.left, keeps = ?group.keeps, offered = ?group.offered, older = older.is_some(),
+            removals = ?group.removals.as_ref().map(Vec::len), folders = ?folders, "surface: groups — a group held");
         held.push(Held {
             fallback: at.host.at_fallback(&id),
             id,
             name,
             made,
-            person,
-            removed,
-            removals,
-            left,
-            keeps,
             folders,
-            visiting,
-            slots,
             waiting,
-            offered,
-            vacates,
             older,
+            ..group
         });
     }
     // This computer's key, so its home page tells its own devices from
