@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/jess.md",
+  "hash": "a255d92a833049c934b9eeac1d0613c9e4879713de3f5cbfa3359c749b084295",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 20.189857142857143,
+  "patienceLeft": 104.53,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 45,
+      "taps": 16,
+      "seconds": 14.189857142857143
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Played Magnets: tapped \"situation\" to finish \"I can explain the ____\". It slotted in and the game seemed to end. Didn't try other words."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected to build a longer sentence from several words, like a magnet poetry game. It ended after one tap, so I guess it was just one word."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "Found a word-magnet game. The phrase was \"I can explain the ____\", and the tiles were words like goose, invoice, moon, landlord, lasagna, raccoon, situation. \"Situation\" fit and the game wrapped up straight away. It's short and funny, and I liked it."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 2063,
+    "cache_read_input_tokens": 23516,
+    "output_tokens": 724
+  },
+  "total_cost_usd": 0.0178796,
+  "attachments": []
+}

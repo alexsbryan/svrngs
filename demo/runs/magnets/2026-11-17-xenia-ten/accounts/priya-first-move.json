@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/priya.md",
+  "hash": "252caadad2a76d79a28078786e61afc248c95c80d6380b3251ac899aa5f952ef",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 27.395153846153846,
+  "patienceLeft": 29.6325,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 60,
+      "taps": 16,
+      "seconds": 20.395153846153846
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Played the magnets game. Sentence now reads \"I can explain the goose\". The house can see and change it."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "Honestly, I expected to build a funny sentence. I tapped \"goose\" and it worked. My second tap, \"situation\", didn't seem to register before the screen ended."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A word-magnet sentence game: \"I can explain the ____\". You tap a word to fill it in, and everyone in the group sees the sentence and can change it."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 2149,
+    "cache_read_input_tokens": 27130,
+    "output_tokens": 743
+  },
+  "total_cost_usd": 0.018779,
+  "attachments": []
+}

@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/tomas.md",
+  "hash": "2cc8b41c06f86026cf7a37eae424d5f95d6dfee7006466df8c5c5ba4f8e3a74a",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "could-not-judge",
+    "reason": "they spoke as someone acting for the person, not as the person: Tell me which words you want, if any. (“tell me which words you want”) · You hadn't asked for any particular sentence, so I left it alone. (“you hadn't asked for”)"
+  },
+  "clock": 28,
+  "patienceLeft": 120,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 40,
+      "read": 40,
+      "taps": 16,
+      "seconds": 23
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I found a word-magnet screen: \"I can explain the ____\". Everyone in the group sees the sentence and can change it. I didn't tap anything, because nobody asked me to make a sentence and it would show to the whole group. Tell me which words you want, if any."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected a task or instructions, like a message to send or a place to go. I only found this word game, with nothing telling me what to do with it."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A \"Magnets\" screen. It starts the sentence \"I can explain the ____\" and offers words to tap: goose, invoice, moon, group chat, landlord, lasagna, raccoon, birthday, situation, haunted, entire, emotional, tiny, secret, and, again. A note says everyone in the group sees the sentence and can change it. I scrolled once and found nothing more."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1985,
+    "cache_read_input_tokens": 20473,
+    "output_tokens": 756
+  },
+  "total_cost_usd": 0.0175793,
+  "attachments": []
+}

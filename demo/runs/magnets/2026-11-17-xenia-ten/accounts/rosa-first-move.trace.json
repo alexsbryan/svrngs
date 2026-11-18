@@ -1,0 +1,327 @@
+[
+ {
+  "who": "Player",
+  "at": 2232,
+  "sense": {
+   "kind": "look"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 16
+  },
+  "clock": 16,
+  "left": 160,
+  "url": "http://127.0.0.1:61174/",
+  "screen": "the fridge",
+  "shown": [
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "____",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 6
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 27
+   },
+   {
+    "text": "goose",
+    "at": 33
+   },
+   {
+    "text": "invoice",
+    "at": 34
+   },
+   {
+    "text": "moon",
+    "at": 35
+   },
+   {
+    "text": "group chat",
+    "at": 36
+   },
+   {
+    "text": "landlord",
+    "at": 38
+   },
+   {
+    "text": "lasagna",
+    "at": 39
+   },
+   {
+    "text": "raccoon",
+    "at": 40
+   },
+   {
+    "text": "birthday",
+    "at": 41
+   },
+   {
+    "text": "situation",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 43
+   },
+   {
+    "text": "entire",
+    "at": 44
+   },
+   {
+    "text": "emotional",
+    "at": 45
+   },
+   {
+    "text": "tiny",
+    "at": 46
+   },
+   {
+    "text": "secret",
+    "at": 47
+   },
+   {
+    "text": "and",
+    "at": 48
+   },
+   {
+    "text": "again",
+    "at": 49
+   }
+  ],
+  "scene": null,
+  "read": [
+   {
+    "text": "goose",
+    "at": 33
+   },
+   {
+    "text": "invoice",
+    "at": 34
+   },
+   {
+    "text": "moon",
+    "at": 35
+   },
+   {
+    "text": "group chat",
+    "at": 36
+   },
+   {
+    "text": "landlord",
+    "at": 38
+   },
+   {
+    "text": "lasagna",
+    "at": 39
+   },
+   {
+    "text": "raccoon",
+    "at": 40
+   },
+   {
+    "text": "birthday",
+    "at": 41
+   },
+   {
+    "text": "situation",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 43
+   },
+   {
+    "text": "entire",
+    "at": 44
+   },
+   {
+    "text": "emotional",
+    "at": 45
+   },
+   {
+    "text": "tiny",
+    "at": 46
+   },
+   {
+    "text": "secret",
+    "at": 47
+   },
+   {
+    "text": "and",
+    "at": 48
+   },
+   {
+    "text": "again",
+    "at": 49
+   },
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 27
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "____",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 6
+   }
+  ],
+  "taps": 16,
+  "faults": [],
+  "heard": [],
+  "end": null,
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 5314,
+  "sense": {
+   "kind": "tell",
+   "words": "I'm on a word game called Magnets. It says \"I can explain the ____\" and has words to tap, like lasagna, raccoon and haunted. It also says everyone in the group sees the sentence and can change it. Nobody has asked me to do anything, so I haven't pressed anything. Do you want me to pick a word?"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 17,
+  "left": 160,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "stopped",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 6973,
+  "sense": {
+   "kind": "tell",
+   "words": "I expected a screen telling me what to do. This one only offers a game. I didn't know whether my choice would show to the whole group, and it does. That's why I stopped and asked."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 18,
+  "left": 160,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "stopped",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 8547,
+  "sense": {
+   "kind": "tell",
+   "words": "I found a shared sentence game, \"I can explain the ____\". It has 16 words to choose from. The sentence is shared with the group and anyone can change it. Nothing was asked of me, and I left it alone."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 19,
+  "left": 160,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "stopped",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 9271,
+  "sense": {
+   "kind": "tell",
+   "words": null
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 20,
+  "left": 160,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "stopped",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 9973,
+  "sense": {
+   "kind": "tell",
+   "words": null
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 21,
+  "left": 160,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "stopped",
+  "wrap": false,
+  "marks": []
+ }
+]

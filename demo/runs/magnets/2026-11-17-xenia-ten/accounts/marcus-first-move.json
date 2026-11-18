@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/marcus.md",
+  "hash": "b4570f3a7ad65d3c0f122a1db892d4e672a0065a938be5ca604ff4e38cdea665",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "failed",
+    "reason": "stopped before their goal"
+  },
+  "clock": 15.578947368421051,
+  "patienceLeft": 26,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 40,
+      "read": 24,
+      "taps": 16,
+      "seconds": 10.578947368421051
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Opened this. It's a word magnets game: \"I can explain the ____\" with words like goose, invoice, landlord, lasagna. It's a game, not for work, so I'm leaving it alone."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "Honestly, I didn't know. I figured something for work, like jobs or messages. It turned out to be a toy."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A screen titled Magnets with a blank sentence, \"I can explain the ____\", and about 15 tappable words: goose, invoice, moon, group chat, landlord, lasagna, raccoon, birthday, situation, haunted, entire, emotional, tiny, secret, and, again. I didn't tap any."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": "Yes, right at the start. I couldn't tell what it was for at a glance, and once I saw it was a game, I stopped."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1936,
+    "cache_read_input_tokens": 19972,
+    "output_tokens": 775
+  },
+  "total_cost_usd": 0.017523199999999996,
+  "attachments": []
+}

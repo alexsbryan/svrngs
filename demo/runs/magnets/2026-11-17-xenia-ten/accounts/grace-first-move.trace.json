@@ -1,0 +1,744 @@
+[
+ {
+  "who": "Player",
+  "at": 2407,
+  "sense": {
+   "kind": "look"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 10.434782608695652
+  },
+  "clock": 10.434782608695652,
+  "left": 200,
+  "url": "http://127.0.0.1:60806/",
+  "screen": "the fridge",
+  "shown": [
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "____",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 6
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 27
+   },
+   {
+    "text": "goose",
+    "at": 33
+   },
+   {
+    "text": "invoice",
+    "at": 34
+   },
+   {
+    "text": "moon",
+    "at": 35
+   },
+   {
+    "text": "group chat",
+    "at": 36
+   },
+   {
+    "text": "landlord",
+    "at": 38
+   },
+   {
+    "text": "lasagna",
+    "at": 39
+   },
+   {
+    "text": "raccoon",
+    "at": 40
+   },
+   {
+    "text": "birthday",
+    "at": 41
+   },
+   {
+    "text": "situation",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 43
+   },
+   {
+    "text": "entire",
+    "at": 44
+   },
+   {
+    "text": "emotional",
+    "at": 45
+   },
+   {
+    "text": "tiny",
+    "at": 46
+   },
+   {
+    "text": "secret",
+    "at": 47
+   },
+   {
+    "text": "and",
+    "at": 48
+   },
+   {
+    "text": "again",
+    "at": 49
+   }
+  ],
+  "scene": null,
+  "read": [
+   {
+    "text": "goose",
+    "at": 33
+   },
+   {
+    "text": "invoice",
+    "at": 34
+   },
+   {
+    "text": "moon",
+    "at": 35
+   },
+   {
+    "text": "group chat",
+    "at": 36
+   },
+   {
+    "text": "landlord",
+    "at": 38
+   },
+   {
+    "text": "lasagna",
+    "at": 39
+   },
+   {
+    "text": "raccoon",
+    "at": 40
+   },
+   {
+    "text": "birthday",
+    "at": 41
+   },
+   {
+    "text": "situation",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 43
+   },
+   {
+    "text": "entire",
+    "at": 44
+   },
+   {
+    "text": "emotional",
+    "at": 45
+   },
+   {
+    "text": "tiny",
+    "at": 46
+   },
+   {
+    "text": "secret",
+    "at": 47
+   },
+   {
+    "text": "and",
+    "at": 48
+   },
+   {
+    "text": "again",
+    "at": 49
+   },
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 27
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "____",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 6
+   }
+  ],
+  "taps": 16,
+  "faults": [],
+  "heard": [],
+  "end": null,
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 4817,
+  "sense": {
+   "kind": "scroll",
+   "dir": "down"
+  },
+  "charge": {
+   "act": 4,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 15.434782608695652,
+  "left": 200,
+  "url": "http://127.0.0.1:60806/",
+  "screen": "the fridge",
+  "shown": [
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "____",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 6
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 27
+   },
+   {
+    "text": "goose",
+    "at": 33
+   },
+   {
+    "text": "invoice",
+    "at": 34
+   },
+   {
+    "text": "moon",
+    "at": 35
+   },
+   {
+    "text": "group chat",
+    "at": 36
+   },
+   {
+    "text": "landlord",
+    "at": 38
+   },
+   {
+    "text": "lasagna",
+    "at": 39
+   },
+   {
+    "text": "raccoon",
+    "at": 40
+   },
+   {
+    "text": "birthday",
+    "at": 41
+   },
+   {
+    "text": "situation",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 43
+   },
+   {
+    "text": "entire",
+    "at": 44
+   },
+   {
+    "text": "emotional",
+    "at": 45
+   },
+   {
+    "text": "tiny",
+    "at": 46
+   },
+   {
+    "text": "secret",
+    "at": 47
+   },
+   {
+    "text": "and",
+    "at": 48
+   },
+   {
+    "text": "again",
+    "at": 49
+   }
+  ],
+  "scene": null,
+  "read": [
+   {
+    "text": "goose",
+    "at": 33
+   },
+   {
+    "text": "invoice",
+    "at": 34
+   },
+   {
+    "text": "moon",
+    "at": 35
+   },
+   {
+    "text": "group chat",
+    "at": 36
+   },
+   {
+    "text": "landlord",
+    "at": 38
+   },
+   {
+    "text": "lasagna",
+    "at": 39
+   },
+   {
+    "text": "raccoon",
+    "at": 40
+   },
+   {
+    "text": "birthday",
+    "at": 41
+   },
+   {
+    "text": "situation",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 43
+   },
+   {
+    "text": "entire",
+    "at": 44
+   },
+   {
+    "text": "emotional",
+    "at": 45
+   },
+   {
+    "text": "tiny",
+    "at": 46
+   },
+   {
+    "text": "secret",
+    "at": 47
+   },
+   {
+    "text": "and",
+    "at": 48
+   },
+   {
+    "text": "again",
+    "at": 49
+   },
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 27
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "____",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 6
+   }
+  ],
+  "taps": 16,
+  "faults": [],
+  "heard": [],
+  "end": null,
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 7169,
+  "sense": {
+   "kind": "tap",
+   "text": "situation"
+  },
+  "charge": {
+   "act": 4,
+   "surface": 0.583,
+   "read": 11.478260869565217
+  },
+  "clock": 31.496043478260866,
+  "left": 155.2032,
+  "url": "http://127.0.0.1:60806/",
+  "screen": "the fridge",
+  "shown": [
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "situation",
+    "at": 5
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 7
+   },
+   {
+    "text": "Tap a word in the sentence to take it out.",
+    "at": 18
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 28
+   },
+   {
+    "text": "goose",
+    "at": 34
+   },
+   {
+    "text": "invoice",
+    "at": 35
+   },
+   {
+    "text": "moon",
+    "at": 36
+   },
+   {
+    "text": "group chat",
+    "at": 37
+   },
+   {
+    "text": "landlord",
+    "at": 39
+   },
+   {
+    "text": "lasagna",
+    "at": 40
+   },
+   {
+    "text": "raccoon",
+    "at": 41
+   },
+   {
+    "text": "birthday",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 44
+   },
+   {
+    "text": "entire",
+    "at": 45
+   },
+   {
+    "text": "emotional",
+    "at": 46
+   },
+   {
+    "text": "tiny",
+    "at": 47
+   },
+   {
+    "text": "secret",
+    "at": 48
+   },
+   {
+    "text": "and",
+    "at": 49
+   },
+   {
+    "text": "again",
+    "at": 50
+   }
+  ],
+  "scene": null,
+  "read": [
+   {
+    "text": "situation",
+    "at": 5
+   },
+   {
+    "text": "goose",
+    "at": 34
+   },
+   {
+    "text": "invoice",
+    "at": 35
+   },
+   {
+    "text": "moon",
+    "at": 36
+   },
+   {
+    "text": "group chat",
+    "at": 37
+   },
+   {
+    "text": "landlord",
+    "at": 39
+   },
+   {
+    "text": "lasagna",
+    "at": 40
+   },
+   {
+    "text": "raccoon",
+    "at": 41
+   },
+   {
+    "text": "birthday",
+    "at": 42
+   },
+   {
+    "text": "haunted",
+    "at": 44
+   },
+   {
+    "text": "entire",
+    "at": 45
+   },
+   {
+    "text": "emotional",
+    "at": 46
+   },
+   {
+    "text": "tiny",
+    "at": 47
+   },
+   {
+    "text": "secret",
+    "at": 48
+   },
+   {
+    "text": "and",
+    "at": 49
+   },
+   {
+    "text": "again",
+    "at": 50
+   },
+   {
+    "text": "Magnets",
+    "at": 0
+   },
+   {
+    "text": "Tap a word to add it",
+    "at": 28
+   },
+   {
+    "text": "I can explain the",
+    "at": 1
+   },
+   {
+    "text": "Everyone in your group sees this sentence and can change it.",
+    "at": 7
+   },
+   {
+    "text": "Tap a word in the sentence to take it out.",
+    "at": 18
+   }
+  ],
+  "taps": 16,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 7194,
+  "sense": {
+   "kind": "look"
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 32.496043478260866,
+  "left": 155.2032,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 8561,
+  "sense": {
+   "kind": "tell",
+   "words": "It's a word-magnet app. I tapped \"situation\" and the shared sentence now reads \"I can explain the situation.\" The group can see and change it. Tapping a word in the sentence removes it."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 33.496043478260866,
+  "left": 155.2032,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 10131,
+  "sense": {
+   "kind": "tell",
+   "words": "I expected a sentence game with a pile of words to tap. I didn't know it was shared with a group until I read the line at the bottom. It was what I expected, apart from that."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 34.496043478260866,
+  "left": 155.2032,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 11705,
+  "sense": {
+   "kind": "tell",
+   "words": "I found a simple shared sentence, \"I can explain the ____\", with magnet words like goose, invoice and raccoon. I made it \"I can explain the situation.\" Nothing was confusing, and the instructions were clear."
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 35.496043478260866,
+  "left": 155.2032,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 12482,
+  "sense": {
+   "kind": "tell",
+   "words": null
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 36.496043478260866,
+  "left": 155.2032,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ },
+ {
+  "who": "Player",
+  "at": 13260,
+  "sense": {
+   "kind": "tell",
+   "words": null
+  },
+  "charge": {
+   "act": 0,
+   "surface": 0,
+   "read": 1
+  },
+  "clock": 37.496043478260866,
+  "left": 155.2032,
+  "url": null,
+  "screen": null,
+  "shown": [],
+  "scene": null,
+  "read": [],
+  "taps": 0,
+  "faults": [],
+  "heard": [],
+  "end": "goal",
+  "wrap": false,
+  "marks": []
+ }
+]

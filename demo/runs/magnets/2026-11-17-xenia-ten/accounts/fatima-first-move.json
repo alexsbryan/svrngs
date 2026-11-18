@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/fatima.md",
+  "hash": "0bb03a3e1c58b84578813e96d7d0d2a4653c7aedd28bda28bc726e3f226548ed",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 25.535,
+  "patienceLeft": 19.78125,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 30,
+      "taps": 16,
+      "seconds": 19.535
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Played the magnet game: filled \"I can explain the ____\" with \"situation\". Done."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I wasn't sure what to expect. No clear instructions, so I just picked a word to fill the blank."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A word-magnet page. Tapping \"situation\" put it in the blank: \"I can explain the situation.\" Then it said to tell you how it went."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 1975,
+    "cache_read_input_tokens": 23278,
+    "output_tokens": 651
+  },
+  "total_cost_usd": 0.0167738,
+  "attachments": []
+}

@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/ana.md",
+  "hash": "a5bbf77c1837bd4aeae972fe4d87b9dbc9a4e2afb27a94339a81a4e80eb67ed5",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 31.553,
+  "patienceLeft": 19.576,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 60,
+      "taps": 16,
+      "seconds": 26.553
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Found a shared fridge-magnets word game. I tapped \"situation\", so it now reads \"I can explain the situation\". The whole group can see and change it."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected a fun, low-stakes sentence game, and it was. I didn't expect that everyone in the house sees it and can edit it, but that's fine."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "I found the word magnets and one sentence I could add to. The sentence now says \"I can explain the situation\". Everyone in the house sees it and can change it."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 1438,
+    "cache_read_input_tokens": 23854,
+    "output_tokens": 650
+  },
+  "total_cost_usd": 0.0146734,
+  "attachments": []
+}

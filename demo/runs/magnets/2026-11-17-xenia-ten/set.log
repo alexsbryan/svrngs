@@ -1,0 +1,45 @@
+the strangers: claude-sonnet-5-5, as claude -p
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"situation","position":1}]
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"entire","position":1}]
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"situation","position":1}]
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"situation","position":1}]
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"situation","position":1}]
+run 1 first-move Player: failed, stopped before their goal; 0 hard fault(s)
+magnets first-move: the board left []
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"goose","position":1}]
+run 1 first-move Player: could-not-judge, they spoke as someone acting for the person, not as the person: Do you want me to pick a word? (“do you want me”); 0 hard fault(s)
+magnets first-move: the board left []
+run 1 first-move Player: could-not-judge, they spoke as someone acting for the person, not as the person: Tell me which words you want, if any. (“tell me which words you want”) · You hadn't asked for any particular sentence, so I left it alone. (“you hadn't asked for”); 0 hard fault(s)
+magnets first-move: the board left []
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+plant blind: passed, came back as it must in 1 of 1
+plant c0-speller: passed, came back as it must in 1 of 1
+plant c1-blind: passed, came back as it must in 1 of 1
+plant c3-false: passed, came back as it must in 1 of 1
+plant p0-clean: passed, came back as it must in 1 of 1
+plant p1-buried: passed, came back as it must in 1 of 1; the person's half in 1 of 1
+plant p1-prominent: passed, came back as it must in 1 of 1
+plant p2-hidden: passed, came back as it must in 1 of 1
+plant p3-glance: passed, came back as it must in 1 of 1
+plant p6-fear: passed, came back as it must in 1 of 1
+plant p4-relay: passed, came back as it must in 1 of 1
+plant p5-sealed: passed, came back as it must in 1 of 1
+plant p8-wrapped: passed, came back as it must in 1 of 1
+plant p9-twins: passed, came back as it must in 1 of 1
+plant p11-folded: passed, came back as it must in 1 of 1
+plant p10-explorer: passed, came back as it must in 1 of 1
+plant p7-faults: passed, came back as it must in 1 of 1
+plant p12-spent: passed, came back as it must in 1 of 1
+plant p13-ticked: passed, came back as it must in 1 of 1
+plant p12-busy: passed, came back as it must in 1 of 1
+plant p14-carried: passed, came back as it must in 1 of 1
+magnets first-move: the board left [{"id":"situation","position":1}]
+the set: passed, every plant came back as it must. Accounts and the summary in runs/2026-11-18T06-31-25-186Z
+findings: 1 in /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia-ten/findings
+xenia exit 0

@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/walt.md",
+  "hash": "875edd2f28056c5f402a5cc9cb1ad7964a6e8aae09ffa4497a43b003394e249c",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 59.372181818181815,
+  "patienceLeft": 135.703,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 84,
+      "taps": 16,
+      "seconds": 54.372181818181815
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I made the sentence \"I can explain the situation.\" Fun little word game. The others in the group can change it."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I figured tapping a word would put it in the blank, and it did."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "Words in a list, tap one and it goes in the sentence. Tap it in the sentence to take it out. Everyone in the group sees it. Small print was hard to read."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": "Nothing was too much. Just the small print."
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1839,
+    "cache_read_input_tokens": 20008,
+    "output_tokens": 568
+  },
+  "total_cost_usd": 0.015068799999999999,
+  "attachments": []
+}

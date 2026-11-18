@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/grace.md",
+  "hash": "3b7c5840d52e24b30cbccca8d387bdbcb8614c5707fa8350719fe284c5139bd7",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 37.496043478260866,
+  "patienceLeft": 155.2032,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 84,
+      "taps": 16,
+      "seconds": 31.496043478260866
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "It's a word-magnet app. I tapped \"situation\" and the shared sentence now reads \"I can explain the situation.\" The group can see and change it. Tapping a word in the sentence removes it."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected a sentence game with a pile of words to tap. I didn't know it was shared with a group until I read the line at the bottom. It was what I expected, apart from that."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "I found a simple shared sentence, \"I can explain the ____\", with magnet words like goose, invoice and raccoon. I made it \"I can explain the situation.\" Nothing was confusing, and the instructions were clear."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 2247,
+    "cache_read_input_tokens": 24688,
+    "output_tokens": 775
+  },
+  "total_cost_usd": 0.0192428,
+  "attachments": []
+}

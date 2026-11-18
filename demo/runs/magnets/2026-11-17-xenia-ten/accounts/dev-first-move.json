@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/dev.md",
+  "hash": "3c2318d1dd4cadc0b8ababcec41b6bc7dc8afea80e467009a100249ea908c2bd",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 23.339999999999996,
+  "patienceLeft": 34.6,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 45,
+      "taps": 16,
+      "seconds": 15.339999999999998
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Played with the magnets thing. Built \"I can explain the entire...\" and it worked, then the screen went to this. Tapped a few words, no complaints."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "Just a fun word-magnet game for making silly sentences. It was that."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "Words like goose, raccoon, lasagna, landlord, haunted. Tap to fill the blank in \"I can explain the ____\". Got \"entire\" in. Then the screen ended before I saw lasagna or situation land."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": "Yeah, a bit, when the screen went blank after my taps. Nearly bailed to the group chat."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 2227,
+    "cache_read_input_tokens": 27015,
+    "output_tokens": 826
+  },
+  "total_cost_usd": 0.019909500000000004,
+  "attachments": []
+}
