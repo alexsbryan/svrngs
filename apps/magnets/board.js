@@ -7,11 +7,18 @@
 /** The sentence: its magnets by position, then by ID where two moves made apart chose one position. */
 export const BOARD =
   'SELECT id, position FROM magnets WHERE position IS NOT NULL ORDER BY position, id';
-/** A magnet put at the sentence's end: its row made, or its position set, one past the last. */
+/**
+ * A magnet put at the sentence's end: its row made, or its position set, to
+ * the position `next` gives. The position is a value, never a subquery, so
+ * a phone's worker can check the one row it signs (svrn-docs
+ * magnets-spikes, S2: on a phone a write names its row and its values).
+ */
 export const PUT =
-  'INSERT INTO magnets (id, position) VALUES (?, (SELECT coalesce(max(position), 0) + 1 FROM magnets)) ON CONFLICT (id) DO UPDATE SET position = excluded.position';
+  'INSERT INTO magnets (id, position) VALUES (?, ?) ON CONFLICT (id) DO UPDATE SET position = excluded.position';
 /** A magnet back in the tray: its row kept, its position NULL. */
 export const BACK = 'UPDATE magnets SET position = NULL WHERE id = ?';
+/** One past the last position among `rows`, the board as BOARD read it. */
+export const next = (rows) => Math.max(0, ...rows.map((r) => r.position ?? 0)) + 1;
 
 // How long after the board stopped answering it is read again: soon enough
 // that someone reading why sees the fridge come back as a computer wakes,

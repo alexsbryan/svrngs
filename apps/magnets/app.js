@@ -7,6 +7,7 @@ import {
   answeredWith,
   BACK,
   BOARD,
+  next,
   NONE,
   order,
   PUT,
@@ -97,7 +98,11 @@ async function move(magnet) {
     const res = await fetch('svrngs/sql', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ sql: back ? BACK : PUT, params: [magnet.id] }),
+      body: JSON.stringify(
+        back
+          ? { sql: BACK, params: [magnet.id] }
+          : { sql: PUT, params: [magnet.id, next(seen.rows)] },
+      ),
     });
     if (!res.ok) words = (await why(res)).words;
   } catch (e) {

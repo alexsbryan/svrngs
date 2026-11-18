@@ -44,32 +44,38 @@ export const LAWS = {
       'sentence, tray and unknown',
     );
   },
-  /** A fresh board is an empty table; a tap appends, a tap back leaves the row with no position. */
+  /**
+   * A fresh board is an empty table; a tap appends at the position `next`
+   * reads from the board the page holds, and a tap back leaves the row with
+   * no position.
+   */
   async 'a tap appends, and a tap back returns to the tray'(app) {
-    return (
-      differ(ids(await on(app, [[app.BOARD]])), [], 'a fresh board') ??
-      differ(
-        ids(await on(app, [[app.PUT, 'moon'], [app.PUT, 'goose'], [app.BOARD]])),
-        ['moon', 'goose'],
-        'two taps',
-      ) ??
-      differ(
-        (
-          await on(app, [
-            [app.PUT, 'moon'],
-            [app.PUT, 'goose'],
-            [app.BACK, 'moon'],
-            [app.PUT, 'moon'],
-            ['SELECT id, position FROM magnets ORDER BY id'],
-          ])
-        ).rows,
-        [
-          { id: 'goose', position: 2 },
-          { id: 'moon', position: 3 },
-        ],
-        'moon back, then on again at the end',
-      )
-    );
+    const db = database(app.schema);
+    const run = async (sql, ...params) => (await db.run([{ sql, params }]))[0];
+    const tap = async (id) => run(app.PUT, id, app.next((await run(app.BOARD)).rows));
+    try {
+      const fresh = ids(await run(app.BOARD));
+      await tap('moon');
+      await tap('goose');
+      const two = ids(await run(app.BOARD));
+      await run(app.BACK, 'moon');
+      await tap('moon');
+      const again = (await run('SELECT id, position FROM magnets ORDER BY id')).rows;
+      return (
+        differ(fresh, [], 'a fresh board') ??
+        differ(two, ['moon', 'goose'], 'two taps') ??
+        differ(
+          again,
+          [
+            { id: 'goose', position: 2 },
+            { id: 'moon', position: 3 },
+          ],
+          'moon back, then on again at the end',
+        )
+      );
+    } finally {
+      db.stop();
+    }
   },
   /** Two moves made apart that chose one position read by magnet ID. */
   async 'a tie is read by ID'(app) {
@@ -149,7 +155,7 @@ test('each law catches its plant', async () => {
     'a tap appends, and a tap back returns to the tray': {
       why: /^two taps: \["goose","moon"\], not \["moon","goose"\]$/,
       // Every tap at the first place.
-      PUT: 'INSERT INTO magnets (id, position) VALUES (?, 1) ON CONFLICT (id) DO UPDATE SET position = 1',
+      next: () => 1,
     },
     'a tie is read by ID': {
       why: /^two at one position: \["moon","goose"\]/,
