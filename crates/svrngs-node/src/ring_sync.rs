@@ -344,14 +344,13 @@ pub async fn run_one_round(
         };
         let (offered_to, off): (Vec<&OnlinePeer>, Vec<_>) =
             (peers.iter()).partition(|p| standing.names(&key_actor(&p.contact.key)));
-        let skipped_not_standing: Vec<&str> = off.iter().map(|p| p.name.as_str()).collect();
         // GLASSBOX: the third list beside exchanged and offline. A namespace
         // that reaches nobody because nobody stands in it looks exactly
         // like a namespace with nothing to send.
         debug!(
             namespace,
             offered_to = ?offered_to.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
-            skipped_not_standing = ?skipped_not_standing,
+            skipped_not_standing = ?off.iter().map(|p| p.name.as_str()).collect::<Vec<_>>(),
             "ring sync: namespace register"
         );
 
