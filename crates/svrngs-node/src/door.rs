@@ -751,10 +751,8 @@ pub(crate) fn splice<H: Send + 'static>(
                 return;
             }
         };
-        let (mut a, mut s) = (
-            hyper_util::rt::TokioIo::new(asker),
-            hyper_util::rt::TokioIo::new(service),
-        );
+        let mut a = hyper_util::rt::TokioIo::new(asker);
+        let mut s = hyper_util::rt::TokioIo::new(service);
         match tokio::io::copy_bidirectional(&mut a, &mut s).await {
             Ok((up, down)) => {
                 tracing::debug!(target: "door", lend, up, down, "door: an upgraded connection ended")
@@ -1252,7 +1250,7 @@ async fn holder_of(
     // identity is resolved only through a group this lend is lent to.
     let stands = || {
         member_for(&door.rail, lend, &issuer)
-            .map(|(group, member)| (group, member.person, PersonKey(member.person_key)))
+            .map(|(group, member)| (group, member.person, PersonKey(member.person_key), None))
     };
     let mut standing = stands();
     // A key the keeper cut never stands again (U7), so it is told so at once
@@ -1266,24 +1264,18 @@ async fn holder_of(
         if let Some(visit) = door.rail.visit_anywhere(&issuer) {
             let (group, host, person) =
                 guest_of(&hex::encode(door.key), visit, &issuer, lend, now)?;
-            return Ok(Asker {
-                app: Some(app),
-                actor: PersonKey(issuer.clone()),
-                device: DeviceKey(issuer),
-                group,
-                person,
-                host: Some(host),
-                until: Some(until),
-            });
+            standing = Some((group, person, PersonKey(issuer.clone()), Some(host)));
+        } else {
+            tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
+                "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
+            let in_time = door.ring.until(ASK_WITHIN, || stands().is_some()).await;
+            standing = stands();
+            tracing::debug!(target: "door", signer = issuer, in_time, known = standing.is_some(),
+                "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
         }
-        tracing::debug!(target: "door", holder = key, signer = issuer, lend = %lend.name,
-            "door: the pass's signer stands in no eligible group held here, so the group's ring is asked once first");
-        let in_time = door.ring.until(ASK_WITHIN, || stands().is_some()).await;
-        standing = stands();
-        tracing::debug!(target: "door", signer = issuer, in_time, known = standing.is_some(),
-            "door: the ring asked — whether a member that knows the signer answered, or a round ended, in time, and whether the signer stands now");
     }
-    let (group, person, actor) =
+    // A guest asks as themselves, their host's guest ([`guest_of`]).
+    let (group, person, actor, host) =
         standing.ok_or_else(|| refused("its signer stands in no group this lends to"))?;
     tracing::debug!(target: "door", holder = key, person = person.as_str(), lend = %lend.name, until,
         "door: a pass opens this lend until the earlier of its and its link's time, so its holder asks as the person who signed it");
@@ -1293,7 +1285,7 @@ async fn holder_of(
         actor,
         group,
         person,
-        host: None,
+        host,
         until: Some(until),
     })
 }
@@ -1637,12 +1629,6 @@ pub(crate) async fn lend_for(
         (_, Some(_)) => Some((Watched::Guest(device.to_string()), until)),
         (_, None) => Some((Watched::Member(device.to_string()), until)),
     };
-    let told = Told {
-        share,
-        held,
-        watched,
-        secret,
-    };
     forward(
         door,
         (&lend, port),
@@ -1650,7 +1636,12 @@ pub(crate) async fn lend_for(
         host.as_ref(),
         service_path,
         req,
-        told,
+        Told {
+            share,
+            held,
+            watched,
+            secret,
+        },
     )
     .await
 }
