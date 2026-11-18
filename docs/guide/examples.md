@@ -48,9 +48,11 @@ svrngs's source at your version, nothing else.
 3. Start the one you want. Its README's **Run it** has the line. Leave that
    terminal open: closing it stops the example.
 4. A lent one: on your home page, under **Already running here**, press
-   **Look for programs running on this computer**. Fill in **Its name:**
-   and **Which program:**, tick your group, and press **Lend it to** your
-   group. More in [Lend](lend.md).
+   **Look for programs running on this computer**. Every program on your
+   computer is listed; on the line naming your example's port (*Something
+   at http://localhost:8090*), fill in **Its name:** and **Which
+   program:**, tick your group, and press **Lend it to** your group. More
+   in [Lend](lend.md).
 
 ## 4. Make your own
 
