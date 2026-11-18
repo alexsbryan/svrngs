@@ -755,7 +755,10 @@ not answer, named, their lends absent rather than stale
 kept. Each lender is asked for at most 3 s (`node::ANSWER_WITHIN`), and one
 that has not answered by then is named as not answering, never dropped: the
 same bound, in one function, on `/v1/lends`, a lent page's reads and a
-phone's list.
+phone's list. This computer's own lends are listed while the others are
+asked, every port's dial at once and each given 300 ms
+(`door::ANSWER_WAIT`), so the answer waits at most 3 s however many it
+lends.
 
 Bare `svrngs` starts the node when its data directory is free. If another
 svrngs holds it, the command succeeds with the home address read from the

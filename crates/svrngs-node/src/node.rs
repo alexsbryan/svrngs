@@ -1092,14 +1092,21 @@ impl Asking {
     /// person then name; and whose computer did not say. The refusal is
     /// [`crate::door::offered`]'s, when this computer's declarations cannot
     /// be read.
+    ///
+    /// This computer's own are listed while the others are asked, so the
+    /// answer waits [`ANSWER_WITHIN`] at most, however long its own ports
+    /// take to answer [`crate::door::offered`]'s dial (surface.rs
+    /// `a_lent_page_is_not_held_by_a_computer_that_never_answers`). `biased`
+    /// polls `offered` first: its refusal comes before its first await, so
+    /// a refused listing asks no other computer, as when it ran alone.
     pub(crate) async fn lent(
         &self,
         groups: &[Group],
         own: &Person,
         asker: Option<&str>,
     ) -> Result<(Vec<Lending>, Unlisted), Response> {
-        let offered = crate::door::offered(&self.door).await?;
-        let others = self.host.lends_in(groups, asker).await;
+        let others = async { Ok(self.host.lends_in(groups, asker).await) };
+        let (offered, others) = tokio::try_join!(biased; crate::door::offered(&self.door), others)?;
         let me = &self.host.actor;
         let mine = (offered.into_iter()).map(|o| (own.clone(), me.clone(), o, VERSION));
         let theirs = (others.lent.into_iter()).map(|l| (l.person, l.key, l.offered, l.version));

@@ -617,6 +617,11 @@ async fn lends(
 /// every route listing lends answers, a 500 in words. A declaration that
 /// cannot be read is left out, named at warn; a lend whose count cannot be
 /// had is left out too, never answered as used by none.
+///
+/// Each lend is listed at the same time as every other, in declared order,
+/// so a port that drops [`answering`]'s dial holds the list one
+/// [`ANSWER_WAIT`], not one per lend (surface.rs
+/// `a_lent_page_is_not_held_by_a_computer_that_never_answers`).
 pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
     let declared = lend::all(&door.data_dir).map_err(|e| {
         tracing::warn!(target: "door", error = %e, "door: lends — the declarations cannot be read");
@@ -625,25 +630,24 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             "the computer you reached cannot read what it lends",
         )
     })?;
-    let mut offered = Vec::new();
     let carried = door.folders.carried().into_iter().map(Ok);
-    for lend in declared.into_iter().chain(carried) {
+    let each = declared.into_iter().chain(carried).map(|lend| async move {
         let Ok(lend) = lend.inspect_err(|e| tracing::warn!(target: "door", error = %e, "door: lends — a declaration cannot be read, so it is left out")) else {
-            continue;
+            return None;
         };
         let Some(using) = door.using.people(&lend.name).await else {
             tracing::warn!(target: "door", lend = %lend.name, "door: lends — no count of who uses it, so it is left out");
-            continue;
+            return None;
         };
         let reads = (door.folders.reads(&lend).await).inspect_err(|(.., why)| tracing::warn!(target: "door", lend = %lend.name, why, "door: lends — what it reads cannot be read, so it is left out"));
-        let Ok(reads) = reads else { continue };
+        let Ok(reads) = reads else { return None };
         let answering = answering(&lend.source).await;
         let (group, groups, raw) = match lend.source {
             Source::Carried(_, group) => (Some(group.clone()), Some(vec![group]), None),
             Source::Port(_) => (None, lend.audience.ids().map(<[String]>::to_vec), None),
             Source::Raw(raw, _) => (None, lend.audience.ids().map(<[String]>::to_vec), Some(raw)),
         };
-        offered.push(Offered {
+        Some(Offered {
             name: lend.name,
             kind: lend.kind,
             limit: lend.limit,
@@ -656,9 +660,10 @@ pub(crate) async fn offered(door: &Door) -> Result<Vec<Offered>, Response> {
             raw,
             sends: lend.sends,
             answering,
-        });
-    }
-    Ok(offered)
+        })
+    });
+    let offered = n0_future::join_all(each).await;
+    Ok(offered.into_iter().flatten().collect())
 }
 
 /// How long a lend's port has to take a connection to be said running.
