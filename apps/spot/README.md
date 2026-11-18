@@ -18,7 +18,7 @@ stops answering.
 
 1. In a terminal, from svrngs's source, with svrngs running. Leave it open:
    ```
-   node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api
+   node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000
    ```
 2. Lend it from your home page: under **Already running here**, press
    **Look for programs running on this computer**. Fill in **Its name:**
@@ -44,8 +44,6 @@ on disk.
   friends see, and the provider's own id for it, as its `/models` lists it.
 - `--until HH:MM` (its next one) or a date and time; `--budget` in tokens,
   everyone together. Leave either out for none.
-- `--svrngs` is svrngs's `api` file, which tells the server your name, so
-  the page says whose it is.
 
 Everyone in the group then finds "deepseek-flash" among what you lend:
 tapped on a phone, or clicked on their home page, it opens Spot's chat
@@ -66,8 +64,8 @@ who used how much. `svrngs unshare deepseek-flash` stops lending it.
   for them, so two friends of one name are two. It binds loopback alone;
   svrngs carries everyone else to it.
 - `page.html`, `page.js`: the chat, for a phone first. It asks only its own
-  origin: `spot.json` for whose
-  it is, until when and what is left, and the chat, streamed. Each chat
+  origin: `spot.json` for what is lent, until when and what is left, and
+  the chat, streamed. Each chat
   stays in that browser (localStorage). svrngs's look: the browser's own
   fonts and colours, named colours.
 - `markdown.js`: the answers' Markdown, read into a tree of a closed set of
