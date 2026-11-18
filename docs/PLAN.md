@@ -112,11 +112,13 @@ use one, open one up, run one, make your own (DESIGN §1). In order:
    pass first. The guide builds the source's address from
    `svrngs version`, as `scripts/deploy-page.sh:46` tags `v<version>`.
    **Its files** beside each app waits for a run that stalls there.
-3. **Release 1.11.0**, the operator's.
-4. **The run**, `demo/runs/examples/`: the installed 1.11.0 and the
-   guide's lines alone. Money changed in a group of one's own (C1, C4 of
-   `demo/creator-to-friend.md`); Spot lent from **Already running here**.
-   A newcomer's session is separate, the operator's.
+3. **Release 1.11.0**, the operator's; landed, cut before units 1 and 2.
+4. **The run**, landed: `demo/runs/examples/2026-11-18/`, from the
+   installed 1.11.0 and the guide alone. 7 of 8 passed; **See how they’re
+   made** isn't in 1.11.0, nor its source's `examples.md` or READMEs' **Run
+   it**. The guide now names the line to lend from (14 programs listed).
+   Next: the release after 1.11.0 carries the ladder, the operator's; a
+   newcomer's session is separate, the operator's.
 
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
