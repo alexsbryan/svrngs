@@ -1,0 +1,107 @@
+# before: build-release.sh's Linux line as at 3b9a0506, no -pie, 2026-11-18T21:16:37Z
+# commit: c25fcd5f; rustc 1.95.0 (59807616e 2026-04-14); zig 0.17.0; cargo-zigbuild 0.23.4
+
+$ SVRNGS_COMMIT=c25fcd5f-dirty CARGO_INCREMENTAL=0 cargo zigbuild --release --locked -p svrngs -p give --target x86_64-unknown-linux-musl
+   Compiling iroh-util v0.6.0
+   Compiling svrngs v1.11.1 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 34s
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/x86_64-unknown-linux-musl/release/svrngs | grep -E 'Type:|Machine:'
+  Type:                              EXEC (Executable file)
+  Machine:                           Advanced Micro Devices X86-64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d target/x86_64-unknown-linux-musl/release/svrngs
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW target/x86_64-unknown-linux-musl/release/svrngs | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000001000040 0x0000000001000040 0x0001f8 0x0001f8 R   0x8
+  LOAD           0x000000 0x0000000001000000 0x0000000001000000 0xd66934 0xd66934 R   0x1000
+  LOAD           0xd66940 0x0000000001d67940 0x0000000001d67940 0x19f0c16 0x19f0c16 R E 0x1000
+  LOAD           0x2757558 0x0000000003759558 0x0000000003759558 0x123b30 0x124aa8 RW  0x1000
+  LOAD           0x287b0c0 0x000000000387e0c0 0x000000000387e0c0 0x010708 0x023748 RW  0x1000
+  TLS            0x2757558 0x0000000003759558 0x0000000003759558 0x000100 0x00041c R   0x8
+  GNU_RELRO      0x2757558 0x0000000003759558 0x0000000003759558 0x123b30 0x124aa8 R   0x1
+  GNU_EH_FRAME   0x9d56c0 0x00000000019d56c0 0x00000000019d56c0 0x0703fc 0x0703fc R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/x86_64-unknown-linux-musl/release/give | grep -E 'Type:|Machine:'
+  Type:                              EXEC (Executable file)
+  Machine:                           Advanced Micro Devices X86-64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d target/x86_64-unknown-linux-musl/release/give
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW target/x86_64-unknown-linux-musl/release/give | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000001000040 0x0000000001000040 0x0001f8 0x0001f8 R   0x8
+  LOAD           0x000000 0x0000000001000000 0x0000000001000000 0x16a694 0x16a694 R   0x1000
+  LOAD           0x16a6c0 0x000000000116b6c0 0x000000000116b6c0 0x221ebf 0x221ebf R E 0x1000
+  LOAD           0x38c580 0x000000000138e580 0x000000000138e580 0x0152d8 0x015a80 RW  0x1000
+  LOAD           0x3a1858 0x00000000013a4858 0x00000000013a4858 0x001688 0x00ac30 RW  0x1000
+  TLS            0x38c580 0x000000000138e580 0x000000000138e580 0x000098 0x00015c R   0x8
+  GNU_RELRO      0x38c580 0x000000000138e580 0x000000000138e580 0x0152d8 0x015a80 R   0x1
+  GNU_EH_FRAME   0x1268b8 0x00000000011268b8 0x00000000011268b8 0x009094 0x009094 R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+
+$ SVRNGS_COMMIT=c25fcd5f-dirty CARGO_INCREMENTAL=0 cargo zigbuild --release --locked -p svrngs -p give --target aarch64-unknown-linux-musl
+   Compiling iroh-util v0.6.0
+   Compiling svrngs v1.11.1 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 33s
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/aarch64-unknown-linux-musl/release/svrngs | grep -E 'Type:|Machine:'
+  Type:                              EXEC (Executable file)
+  Machine:                           AArch64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d target/aarch64-unknown-linux-musl/release/svrngs
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW target/aarch64-unknown-linux-musl/release/svrngs | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000001000040 0x0000000001000040 0x0001f8 0x0001f8 R   0x8
+  LOAD           0x000000 0x0000000001000000 0x0000000001000000 0xd71bb8 0xd71bb8 R   0x10000
+  LOAD           0xd71bc0 0x0000000001d81bc0 0x0000000001d81bc0 0x163f20c 0x163f20c R E 0x10000
+  LOAD           0x23b0dd0 0x00000000033d0dd0 0x00000000033d0dd0 0x118718 0x119230 RW  0x10000
+  LOAD           0x24c9500 0x00000000034f9500 0x00000000034f9500 0x0106f0 0x0236a0 RW  0x10000
+  TLS            0x23b0dd0 0x00000000033d0dd0 0x00000000033d0dd0 0x000100 0x00041c R   0x8
+  GNU_RELRO      0x23b0dd0 0x00000000033d0dd0 0x00000000033d0dd0 0x118718 0x119230 R   0x1
+  GNU_EH_FRAME   0x9b3ad4 0x00000000019b3ad4 0x00000000019b3ad4 0x07079c 0x07079c R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/aarch64-unknown-linux-musl/release/give | grep -E 'Type:|Machine:'
+  Type:                              EXEC (Executable file)
+  Machine:                           AArch64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d target/aarch64-unknown-linux-musl/release/give
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW target/aarch64-unknown-linux-musl/release/give | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000001000040 0x0000000001000040 0x0001f8 0x0001f8 R   0x8
+  LOAD           0x000000 0x0000000001000000 0x0000000001000000 0x16aedc 0x16aedc R   0x10000
+  LOAD           0x16aee0 0x000000000117aee0 0x000000000117aee0 0x1c5148 0x1c5148 R E 0x10000
+  LOAD           0x330028 0x0000000001350028 0x0000000001350028 0x0133c0 0x013fd8 RW  0x10000
+  LOAD           0x3433e8 0x00000000013733e8 0x00000000013733e8 0x001678 0x00ac38 RW  0x10000
+  TLS            0x330028 0x0000000001350028 0x0000000001350028 0x000098 0x00015c R   0x8
+  GNU_RELRO      0x330028 0x0000000001350028 0x0000000001350028 0x0133c0 0x013fd8 R   0x1
+  GNU_EH_FRAME   0x1208a0 0x00000000011208a0 0x00000000011208a0 0x0093cc 0x0093cc R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+

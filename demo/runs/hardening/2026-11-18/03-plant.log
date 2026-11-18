@@ -1,0 +1,30 @@
+# plant: RUSTFLAGS= in the environment, 2026-11-18T21:26:22Z
+# commit: c25fcd5f; rustc 1.95.0 (59807616e 2026-04-14); zig 0.17.0; cargo-zigbuild 0.23.4
+
+$ RUSTFLAGS= scripts/build-release.sh --out /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/plant
+build-release: linux-aarch64's svrngs is not position-independent (readelf -h says EXEC, not DYN)
+
+built: /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/plant/get
+5f65761b7f533c2574705e0252b759acfc05f1b0f4d3d95a4f6b27f4e1a27c0c  svrngs-darwin-aarch64.tar.gz
+d333f3bd4e20c48fd9db6acf700b45138da84a5ea53c5d3cb0cc352e74966693  svrngs-darwin-x86_64.tar.gz
+d6be7f0ba68c0e48721090bdd98f289e06efa2c7f821136d41323f2517cee07a  give-darwin-aarch64.tar.gz
+c81688ec3a2e7baceafd4230e8a93d0f3bfbfa03b763b2863709f5d0dbe5542f  give-darwin-x86_64.tar.gz
+build-release: not built: linux-x86_64 linux-aarch64
+[exit 1]
+
+$ ls /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/plant/get
+SHA256SUMS
+give-darwin-aarch64.tar.gz
+give-darwin-x86_64.tar.gz
+svrngs-darwin-aarch64.tar.gz
+svrngs-darwin-x86_64.tar.gz
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/x86_64-unknown-linux-musl/release/svrngs | grep Type:
+  Type:                              EXEC (Executable file)
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/aarch64-unknown-linux-musl/release/svrngs | grep Type:
+  Type:                              EXEC (Executable file)
+[exit 0]
+

@@ -1,0 +1,39 @@
+# x86_64: the after tarballs on the Fedora box, 2026-11-18T21:26:35Z
+# commit: c25fcd5f; rustc 1.95.0 (59807616e 2026-04-14); zig 0.17.0; cargo-zigbuild 0.23.4
+
+$ ssh alexbryan@fedora 'rm -rf /tmp/hardening && mkdir /tmp/hardening' && scp -q /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get/svrngs-linux-x86_64.tar.gz /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get/give-linux-x86_64.tar.gz alexbryan@fedora:/tmp/hardening/
+[exit 0]
+
+$ ssh alexbryan@fedora 'cd /tmp/hardening && for f in *.tar.gz; do tar -xzf $f; done && uname -srm && file svrngs give && readelf -h svrngs | grep Type: && readelf -d svrngs | grep -E "FLAGS|BIND" && readelf -lW svrngs | grep -E "GNU_RELRO|INTERP"; ./svrngs version; echo "[svrngs exit $?]"; ./give; echo "[give exit $?]"; rm -rf /tmp/hardening'
+Linux 7.3.3-300.fc45.x86_64 x86_64
+svrngs: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), static-pie linked, stripped
+give:   ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), static-pie linked, stripped
+  Type:                              DYN (Position-Independent Executable file)
+ 0x000000000000001e (FLAGS)              BIND_NOW
+ 0x000000006ffffffb (FLAGS_1)            Flags: NOW PIE
+  GNU_RELRO      0x28ed7d0 0x00000000028ef7d0 0x00000000028ef7d0 0x123da8 0x124830 R   0x1
+svrngs 1.11.1 (c25fcd5f-dirty)
+[svrngs exit 0]
+[give exit 2]
+give: the commands are check, keep and page
+
+usage: give check [--agree] [--name <name>] <card dir>
+       give keep [--card <card dir>]...
+       give page <group> [--card <card dir>]...
+
+  check: start the app a card describes from its pinned image, wait until
+  it is healthy, snapshot it, stop it, restore the snapshot and start it
+  again; then remove all of it. --agree says yes to the card's asks, once
+  you have read them. --name runs it under another name than
+  svrngs-check-<dir>.
+
+  keep: keep, on this computer, each app your groups' records name it for,
+  beside the svrngs running here: lend it while it is kept here, copy its
+  state to the group every few minutes and as it stops, and stop it when
+  another computer keeps it. Ctrl-C stops every app it keeps, each copied
+  to the group first. --card puts a card on the shelf beside give's own.
+
+  page: bring Give's page to <group> (its name or id), with the shelf of
+  give's cards and any --card, through the group's folder on this computer.
+[exit 0]
+

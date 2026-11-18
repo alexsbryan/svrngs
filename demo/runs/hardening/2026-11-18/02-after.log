@@ -1,0 +1,241 @@
+# after: scripts/build-release.sh with -pie for Linux, 2026-11-18T21:19:47Z
+# commit: c25fcd5f; rustc 1.95.0 (59807616e 2026-04-14); zig 0.17.0; cargo-zigbuild 0.23.4
+
+$ git diff HEAD -- scripts/build-release.sh
+diff --git a/scripts/build-release.sh b/scripts/build-release.sh
+index c14a6d21..081c19a6 100755
+--- a/scripts/build-release.sh
++++ b/scripts/build-release.sh
+@@ -35,6 +35,18 @@ TARGETS=(
+   "linux-x86_64 x86_64-unknown-linux-musl cargo zigbuild"
+   "linux-aarch64 aarch64-unknown-linux-musl cargo zigbuild"
+ )
++# Linux's two are static-pie with full RELRO: loaded at a random address,
++# relocated before main, then made read-only. namcap warns of a package's
++# program without them (demo/runs/pacman/2026-11-18/06-namcap.log). rustc
++# asks zig for -static-pie, which zig's cc drops as unused, linking a
++# fixed-address EXEC; a -pie after it zig takes, and with musl still links
++# nothing dynamic (demo/runs/hardening/2026-11-18/). rustc's own
++# -z relro -z now then gives BIND_NOW. To check a binary: `readelf -h` says
++# DYN, `readelf -d` BIND_NOW and FLAGS_1 NOW PIE, `readelf -l` GNU_RELRO and
++# no INTERP. A RUSTFLAGS in the environment, even empty, replaces these
++# flags, so a Linux binary that is not DYN is refused below.
++export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
++export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
+ # `svrngs version` names the commit each binary is built from.
+ SVRNGS_COMMIT="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo -dirty)"
+ export SVRNGS_COMMIT
+@@ -47,6 +59,12 @@ for t in "${TARGETS[@]}"; do
+   echo "build-release: $platform ($triple) by ${build}…"
+   # shellcheck disable=SC2086 # $build is a command and its subcommand
+   CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p give --target "$triple" || { echo "build-release: $platform did not build" >&2; failed+=("$platform"); continue; }
++  # The ELF header's e_type, its bytes 16 and 17: 3 is DYN, 2 is EXEC.
++  if [[ $triple == *-linux-* ]]; then
++    for p in svrngs give; do
++      [ "$(od -An -tu2 -j16 -N2 "target/$triple/release/$p" | tr -d ' \n')" = 3 ] || { echo "build-release: $platform's $p is not position-independent (readelf -h says EXEC, not DYN)" >&2; failed+=("$platform"); continue 2; }
++    done
++  fi
+   for p in svrngs give; do
+     COPYFILE_DISABLE=1 tar --no-xattrs -czf "$GET/$p-$platform.tar.gz" -C "target/$triple/release" $p
+   done
+[exit 0]
+
+$ scripts/build-release.sh --out /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after
+   Compiling svrngs v1.11.1 (/Users/alexsbryan/dev/svrngs/crates/svrngs)
+    Finished `release` profile [optimized] target(s) in 1m 36s
+
+built: /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get
+1de790340ab295cbd043478d4a93aa4289580e9ae1836c15fe8d902372637aea  svrngs-darwin-aarch64.tar.gz
+ffa9281696e709357ef5ec16527312922b6cb2063a0b9cfdd365324231dc9c16  svrngs-darwin-x86_64.tar.gz
+451496a0a586c26bff716f925e877b54960f1dedb3bcf898cf5e02aae2385da5  svrngs-linux-aarch64.tar.gz
+fe7f1024f7ed6c6c0aaea8eee760b265e3b7990c2dfbcd644f705d71dddad41a  svrngs-linux-x86_64.tar.gz
+e34451a6f2379f539e6a2bd192d71dfd67a66bdee6dbb20594258de437e111d3  give-darwin-aarch64.tar.gz
+44e56292d7000f080d747c8ded9ed0076cd8cfe92abe0b5cc3015b39b475368c  give-darwin-x86_64.tar.gz
+e59d0b253d6ccdce15479c87f04a8df280e3062e650f1200143ef84d855ba029  give-linux-aarch64.tar.gz
+a992425d768f8b95b46343380592e4c17f54d2d32f12fa35f9af63c6559ddc75  give-linux-x86_64.tar.gz
+[exit 0]
+
+$ mkdir -p /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64 && tar -xzf /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get/svrngs-linux-x86_64.tar.gz -C /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64 && tar -xzf /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get/give-linux-x86_64.tar.gz -C /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64/svrngs | grep -E 'Type:|Machine:'
+  Type:                              DYN (Shared object file)
+  Machine:                           Advanced Micro Devices X86-64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64/svrngs
+Dynamic section at offset 0x2a030f8 contains 20 entries:
+  Tag                Type           Name/Value
+  0x000000000000001e (FLAGS)        BIND_NOW 
+  0x000000006ffffffb (FLAGS_1)      NOW PIE 
+  0x0000000000000015 (DEBUG)        0x0
+  0x0000000000000007 (RELA)         0x2b8
+  0x0000000000000008 (RELASZ)       1665720 (bytes)
+  0x0000000000000009 (RELAENT)      24 (bytes)
+  0x000000006ffffff9 (RELACOUNT)    69405
+  0x0000000000000006 (SYMTAB)       0x270
+  0x000000000000000b (SYMENT)       24 (bytes)
+  0x0000000000000005 (STRTAB)       0x2b4
+  0x000000000000000a (STRSZ)        1 (bytes)
+  0x000000006ffffef5 (GNU_HASH)     0x288
+  0x0000000000000004 (HASH)         0x2a4
+  0x0000000000000019 (INIT_ARRAY)   0x2a050e8
+  0x000000000000001b (INIT_ARRAYSZ) 8 (bytes)
+  0x000000000000001a (FINI_ARRAY)   0x2a050f0
+  0x000000000000001c (FINI_ARRAYSZ) 8 (bytes)
+  0x000000000000000c (INIT)         0x28dbfb3
+  0x000000000000000d (FINI)         0x28dc502
+  0x0000000000000000 (NULL)         0x0
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64/svrngs | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000000000040 0x0000000000000040 0x000230 0x000230 R   0x8
+  LOAD           0x000000 0x0000000000000000 0x0000000000000000 0xefc6dc 0xefc6dc R   0x1000
+  LOAD           0xefc700 0x0000000000efd700 0x0000000000efd700 0x19f10c9 0x19f10c9 R E 0x1000
+  LOAD           0x28ed7d0 0x00000000028ef7d0 0x00000000028ef7d0 0x123da8 0x124830 RW  0x1000
+  LOAD           0x2a11580 0x0000000002a14580 0x0000000002a14580 0x010708 0x023788 RW  0x1000
+  TLS            0x28ed7d0 0x00000000028ef7d0 0x00000000028ef7d0 0x000100 0x00041c R   0x8
+  DYNAMIC        0x2a030f8 0x0000000002a050f8 0x0000000002a050f8 0x000140 0x000140 RW  0x8
+  GNU_RELRO      0x28ed7d0 0x00000000028ef7d0 0x00000000028ef7d0 0x123da8 0x124830 R   0x1
+  GNU_EH_FRAME   0xb6b420 0x0000000000b6b420 0x0000000000b6b420 0x070404 0x070404 R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64/give | grep -E 'Type:|Machine:'
+  Type:                              DYN (Shared object file)
+  Machine:                           Advanced Micro Devices X86-64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64/give
+Dynamic section at offset 0x3bdf00 contains 16 entries:
+  Tag                Type        Name/Value
+  0x000000000000001e (FLAGS)     BIND_NOW 
+  0x000000006ffffffb (FLAGS_1)   NOW PIE 
+  0x0000000000000015 (DEBUG)     0x0
+  0x0000000000000007 (RELA)      0x2b8
+  0x0000000000000008 (RELASZ)    124272 (bytes)
+  0x0000000000000009 (RELAENT)   24 (bytes)
+  0x000000006ffffff9 (RELACOUNT) 5178
+  0x0000000000000006 (SYMTAB)    0x270
+  0x000000000000000b (SYMENT)    24 (bytes)
+  0x0000000000000005 (STRTAB)    0x2b4
+  0x000000000000000a (STRSZ)     1 (bytes)
+  0x000000006ffffef5 (GNU_HASH)  0x288
+  0x0000000000000004 (HASH)      0x2a4
+  0x000000000000000c (INIT)      0x39b6f3
+  0x000000000000000d (FINI)      0x39bc42
+  0x0000000000000000 (NULL)      0x0
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-x86_64/give | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000000000040 0x0000000000000040 0x000230 0x000230 R   0x8
+  LOAD           0x000000 0x0000000000000000 0x0000000000000000 0x188a5c 0x188a5c R   0x1000
+  LOAD           0x188a80 0x0000000000189a80 0x0000000000189a80 0x22234f 0x22234f R E 0x1000
+  LOAD           0x3aadd0 0x00000000003acdd0 0x00000000003acdd0 0x0154f8 0x016230 RW  0x1000
+  LOAD           0x3c02c8 0x00000000003c32c8 0x00000000003c32c8 0x001688 0x00ac40 RW  0x1000
+  TLS            0x3aadd0 0x00000000003acdd0 0x00000000003acdd0 0x000098 0x00015c R   0x8
+  DYNAMIC        0x3bdf00 0x00000000003bff00 0x00000000003bff00 0x000100 0x000100 RW  0x8
+  GNU_RELRO      0x3aadd0 0x00000000003acdd0 0x00000000003acdd0 0x0154f8 0x016230 R   0x1
+  GNU_EH_FRAME   0x144c38 0x0000000000144c38 0x0000000000144c38 0x00909c 0x00909c R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+
+$ mkdir -p /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64 && tar -xzf /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get/svrngs-linux-aarch64.tar.gz -C /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64 && tar -xzf /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/after/get/give-linux-aarch64.tar.gz -C /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64/svrngs | grep -E 'Type:|Machine:'
+  Type:                              DYN (Shared object file)
+  Machine:                           AArch64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64/svrngs
+Dynamic section at offset 0x263bb78 contains 20 entries:
+  Tag                Type           Name/Value
+  0x000000000000001e (FLAGS)        BIND_NOW 
+  0x000000006ffffffb (FLAGS_1)      NOW PIE 
+  0x0000000000000015 (DEBUG)        0x0
+  0x0000000000000007 (RELA)         0x2b8
+  0x0000000000000008 (RELASZ)       1527720 (bytes)
+  0x0000000000000009 (RELAENT)      24 (bytes)
+  0x000000006ffffff9 (RELACOUNT)    63655
+  0x0000000000000006 (SYMTAB)       0x270
+  0x000000000000000b (SYMENT)       24 (bytes)
+  0x0000000000000005 (STRTAB)       0x2b4
+  0x000000000000000a (STRSZ)        1 (bytes)
+  0x000000006ffffef5 (GNU_HASH)     0x288
+  0x0000000000000004 (HASH)         0x2a4
+  0x0000000000000019 (INIT_ARRAY)   0x265bb58
+  0x000000000000001b (INIT_ARRAYSZ) 24 (bytes)
+  0x000000000000001a (FINI_ARRAY)   0x265bb70
+  0x000000000000001c (FINI_ARRAYSZ) 8 (bytes)
+  0x000000000000000c (INIT)         0x2523684
+  0x000000000000000d (FINI)         0x2523c84
+  0x0000000000000000 (NULL)         0x0
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64/svrngs | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000000000040 0x0000000000000040 0x000230 0x000230 R   0x8
+  LOAD           0x000000 0x0000000000000000 0x0000000000000000 0xee6adc 0xee6adc R   0x10000
+  LOAD           0xee6b00 0x0000000000ef6b00 0x0000000000ef6b00 0x163f47c 0x163f47c R E 0x10000
+  LOAD           0x2525f80 0x0000000002545f80 0x0000000002545f80 0x118958 0x119080 RW  0x10000
+  LOAD           0x263e900 0x000000000266e900 0x000000000266e900 0x0106f0 0x0236a0 RW  0x10000
+  TLS            0x2525f80 0x0000000002545f80 0x0000000002545f80 0x000100 0x00041c R   0x8
+  DYNAMIC        0x263bb78 0x000000000265bb78 0x000000000265bb78 0x000140 0x000140 RW  0x8
+  GNU_RELRO      0x2525f80 0x0000000002545f80 0x0000000002545f80 0x118958 0x119080 R   0x1
+  GNU_EH_FRAME   0xb289c4 0x0000000000b289c4 0x0000000000b289c4 0x0707a4 0x0707a4 R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -h /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64/give | grep -E 'Type:|Machine:'
+  Type:                              DYN (Shared object file)
+  Machine:                           AArch64
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -d /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64/give
+Dynamic section at offset 0x35bc38 contains 18 entries:
+  Tag                Type           Name/Value
+  0x000000000000001e (FLAGS)        BIND_NOW 
+  0x000000006ffffffb (FLAGS_1)      NOW PIE 
+  0x0000000000000015 (DEBUG)        0x0
+  0x0000000000000007 (RELA)         0x2b8
+  0x0000000000000008 (RELASZ)       100728 (bytes)
+  0x0000000000000009 (RELAENT)      24 (bytes)
+  0x000000006ffffff9 (RELACOUNT)    4197
+  0x0000000000000006 (SYMTAB)       0x270
+  0x000000000000000b (SYMENT)       24 (bytes)
+  0x0000000000000005 (STRTAB)       0x2b4
+  0x000000000000000a (STRSZ)        1 (bytes)
+  0x000000006ffffef5 (GNU_HASH)     0x288
+  0x0000000000000004 (HASH)         0x2a4
+  0x0000000000000019 (INIT_ARRAY)   0x37bc28
+  0x000000000000001b (INIT_ARRAYSZ) 16 (bytes)
+  0x000000000000000c (INIT)         0x34842c
+  0x000000000000000d (FINI)         0x348a2c
+  0x0000000000000000 (NULL)         0x0
+[exit 0]
+
+$ /opt/homebrew/opt/llvm/bin/llvm-readelf -lW /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64/give | sed -n '/Program Headers/,/^$/p'
+Program Headers:
+  Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align
+  PHDR           0x000040 0x0000000000000040 0x0000000000000040 0x000230 0x000230 R   0x8
+  LOAD           0x000000 0x0000000000000000 0x0000000000000000 0x183800 0x183800 R   0x10000
+  LOAD           0x183800 0x0000000000193800 0x0000000000193800 0x1c53a8 0x1c53a8 R E 0x10000
+  LOAD           0x348ba8 0x0000000000368ba8 0x0000000000368ba8 0x013608 0x014458 RW  0x10000
+  LOAD           0x35c1b0 0x000000000038c1b0 0x000000000038c1b0 0x001680 0x00ac70 RW  0x10000
+  TLS            0x348ba8 0x0000000000368ba8 0x0000000000368ba8 0x000098 0x00015c R   0x8
+  DYNAMIC        0x35bc38 0x000000000037bc38 0x000000000037bc38 0x000120 0x000120 RW  0x8
+  GNU_RELRO      0x348ba8 0x0000000000368ba8 0x0000000000368ba8 0x013608 0x014458 R   0x1
+  GNU_EH_FRAME   0x139190 0x0000000000139190 0x0000000000139190 0x0093d4 0x0093d4 R   0x4
+  GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x1000000 RW  0x0
+
+[exit 0]
+

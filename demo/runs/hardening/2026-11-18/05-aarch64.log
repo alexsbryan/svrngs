@@ -1,0 +1,30 @@
+# aarch64: the after tarballs in the Podman machine, 2026-11-18T21:26:43Z
+# commit: c25fcd5f; rustc 1.95.0 (59807616e 2026-04-14); zig 0.17.0; cargo-zigbuild 0.23.4
+
+$ podman run --rm -v /private/tmp/claude-502/-Users-alexsbryan-dev-svrngs/54aee34a-be84-4bce-a730-9f35826cb96a/scratchpad/work/x/linux-aarch64:/x:ro ad4f11f7c85f sh -c 'uname -srm; /x/svrngs version; echo "[svrngs exit $?]"; /x/give; echo "[give exit $?]"'
+Linux 7.0.12-201.fc44.aarch64 aarch64
+svrngs 1.11.1 (c25fcd5f-dirty)
+[svrngs exit 0]
+give: the commands are check, keep and page
+
+usage: give check [--agree] [--name <name>] <card dir>
+       give keep [--card <card dir>]...
+       give page <group> [--card <card dir>]...
+
+  check: start the app a card describes from its pinned image, wait until
+  it is healthy, snapshot it, stop it, restore the snapshot and start it
+  again; then remove all of it. --agree says yes to the card's asks, once
+  you have read them. --name runs it under another name than
+  svrngs-check-<dir>.
+
+  keep: keep, on this computer, each app your groups' records name it for,
+  beside the svrngs running here: lend it while it is kept here, copy its
+  state to the group every few minutes and as it stops, and stop it when
+  another computer keeps it. Ctrl-C stops every app it keeps, each copied
+  to the group first. --card puts a card on the shelf beside give's own.
+
+  page: bring Give's page to <group> (its name or id), with the shelf of
+  give's cards and any --card, through the group's folder on this computer.
+[give exit 2]
+[exit 0]
+

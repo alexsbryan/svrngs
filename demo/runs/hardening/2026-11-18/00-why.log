@@ -1,0 +1,43 @@
+# why, 2026-11-18T21:27:43Z
+# rustc 1.95.0 (59807616e 2026-04-14); zig 0.17.0; cargo-zigbuild 0.23.4
+
+$ cd /Users/alexsbryan/dev/svrngs && RUSTC_BOOTSTRAP=1 rustc -Z unstable-options --print target-spec-json --target x86_64-unknown-linux-musl | grep -E 'position-independent|crt-static-default'
+  "crt-static-default": true,
+  "position-independent-executables": true,
+  "static-position-independent-executables": true,
+[exit 0]
+
+$ cd /Users/alexsbryan/dev/svrngs && RUSTC_BOOTSTRAP=1 rustc -Z unstable-options --print target-spec-json --target aarch64-unknown-linux-musl | grep -E 'position-independent|crt-static-default'
+  "crt-static-default": true,
+  "position-independent-executables": true,
+[exit 0]
+
+$ cd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.kO4IAXcGmI && cargo init -q --name hello && cp /Users/alexsbryan/dev/svrngs/rust-toolchain.toml .
+[exit 0]
+
+$ cd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.kO4IAXcGmI && RUSTFLAGS=--print=link-args cargo zigbuild -q --release --target x86_64-unknown-linux-musl | tr ' ' '\n' | grep -xE '"-(static|static-pie|pie|no-pie)"|"-Wl,-z,relro,-z,now"'; /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/x86_64-unknown-linux-musl/release/hello | grep Type:
+"-static-pie"
+"-Wl,-z,relro,-z,now"
+  Type:                              EXEC (Executable file)
+[exit 0]
+
+$ cd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.kO4IAXcGmI && RUSTFLAGS=--print=link-args cargo zigbuild -q --release --target aarch64-unknown-linux-musl | tr ' ' '\n' | grep -xE '"-(static|static-pie|pie|no-pie)"|"-Wl,-z,relro,-z,now"'; /opt/homebrew/opt/llvm/bin/llvm-readelf -h target/aarch64-unknown-linux-musl/release/hello | grep Type:
+"-static"
+"-no-pie"
+"-Wl,-z,relro,-z,now"
+  Type:                              EXEC (Executable file)
+[exit 0]
+
+$ cd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.kO4IAXcGmI && rm -f m && zig cc -target x86_64-linux-musl -static-pie -Wl,-z,relro,-z,now -o m m.c && /opt/homebrew/opt/llvm/bin/llvm-readelf -h m | grep Type: && /opt/homebrew/opt/llvm/bin/llvm-readelf -d m | grep -E 'FLAGS|NEEDED'; /opt/homebrew/opt/llvm/bin/llvm-readelf -l m | grep -E 'INTERP|GNU_RELRO'
+zig: warning: argument unused during compilation: '-static-pie' [-Wunused-command-line-argument]
+  Type:                              EXEC (Executable file)
+[exit 1]
+
+$ cd /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.kO4IAXcGmI && rm -f m && zig cc -target x86_64-linux-musl -static-pie -Wl,-z,relro,-z,now -pie -o m m.c && /opt/homebrew/opt/llvm/bin/llvm-readelf -h m | grep Type: && /opt/homebrew/opt/llvm/bin/llvm-readelf -d m | grep -E 'FLAGS|NEEDED'; /opt/homebrew/opt/llvm/bin/llvm-readelf -l m | grep -E 'INTERP|GNU_RELRO'
+zig: warning: argument unused during compilation: '-static-pie' [-Wunused-command-line-argument]
+  Type:                              DYN (Shared object file)
+  0x000000000000001e (FLAGS)     BIND_NOW 
+  0x000000006ffffffb (FLAGS_1)   NOW PIE 
+  GNU_RELRO      0x02f2c0 0x00000000000312c0 0x00000000000312c0 0x000110 0x000d40 R   0x1
+[exit 0]
+

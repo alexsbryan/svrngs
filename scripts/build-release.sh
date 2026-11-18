@@ -35,6 +35,18 @@ TARGETS=(
   "linux-x86_64 x86_64-unknown-linux-musl cargo zigbuild"
   "linux-aarch64 aarch64-unknown-linux-musl cargo zigbuild"
 )
+# Linux's two are static-pie with full RELRO: loaded at a random address,
+# relocated before main, then made read-only. namcap warns of a package's
+# program without them (demo/runs/pacman/2026-11-18/06-namcap.log). rustc
+# asks zig for -static-pie, which zig's cc drops as unused, linking a
+# fixed-address EXEC; a -pie after it zig takes, and with musl still links
+# nothing dynamic (demo/runs/hardening/2026-11-18/). rustc's own
+# -z relro -z now then gives BIND_NOW. To check a binary: `readelf -h` says
+# DYN, `readelf -d` BIND_NOW and FLAGS_1 NOW PIE, `readelf -l` GNU_RELRO and
+# no INTERP. A RUSTFLAGS in the environment, even empty, replaces these
+# flags, so a Linux binary that is not DYN is refused below.
+export CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
+export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-C link-arg=-pie"
 # `svrngs version` names the commit each binary is built from.
 SVRNGS_COMMIT="$(git rev-parse --short HEAD)$(git diff --quiet HEAD || echo -dirty)"
 export SVRNGS_COMMIT
@@ -47,6 +59,12 @@ for t in "${TARGETS[@]}"; do
   echo "build-release: $platform ($triple) by ${build}…"
   # shellcheck disable=SC2086 # $build is a command and its subcommand
   CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p give --target "$triple" || { echo "build-release: $platform did not build" >&2; failed+=("$platform"); continue; }
+  # The ELF header's e_type, its bytes 16 and 17: 3 is DYN, 2 is EXEC.
+  if [[ $triple == *-linux-* ]]; then
+    for p in svrngs give; do
+      [ "$(od -An -tu2 -j16 -N2 "target/$triple/release/$p" | tr -d ' \n')" = 3 ] || { echo "build-release: $platform's $p is not position-independent (readelf -h says EXEC, not DYN)" >&2; failed+=("$platform"); continue 2; }
+    done
+  fi
   for p in svrngs give; do
     COPYFILE_DISABLE=1 tar --no-xattrs -czf "$GET/$p-$platform.tar.gz" -C "target/$triple/release" $p
   done
