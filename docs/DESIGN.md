@@ -81,11 +81,7 @@ grapevine, an ask carried from group to group by the people in both, where
 a developer adds a kind of ask in one file (`apps/grapevine/`); House
 rules, where a house decides its rules (`apps/canon/`); and Give, an app
 the group keeps on one member's computer at a time, a carried page and a
-program of its own beside svrngs (`apps/give/`); Chat, a carried page that
-talks to any model a friend lends, from a phone as from a computer
-(`apps/chat/`); and Spot, a program beside svrngs, as Give's is, that
-lends its lender's account at a model provider for a while, the key
-pasted once on their home page (`apps/spot/`). Never the finished
+program of its own beside svrngs (`apps/give/`). Never the finished
 apps: the community builds those. "The iOS of groups" is an analogy for
 being the thing others build on. The iPhone app is a door beside the
 group's page, never the way in: it adds only what a page can't (§7).
@@ -1323,15 +1319,16 @@ the consumer's computer — an OpenAI-in, OpenAI-out adapter that calls the
 pantry — so every lend it reaches is reached as that person; the vision
 bridge in `apps/pantry/examples/` is the worked example
 (`demo/runs/models/2026-10-22-run/`). A phone can't reach the pantry's
-address, which is on its person's loopback, so on a phone Chat is the way:
-a carried page that lists the group's lends that answer `/v1/models` and
-sends a chat only to one whose lender said yes to `POST
-/v1/chat/completions` among its `sends:`. A provider's model is one more
-lend (operator, 2026-11-17: spotting is a svrngs lend, not isaura's, and an
-app, not platform): Spot answers OpenAI's API on its lender's loopback and
-forwards each request to the provider with the key the door adds, keeps
-its own list of models, its end and its budget, and unshares itself at its
-end. svrngs learns no provider, no model and no token count.
+address, which is on its person's loopback, so on a phone a friend's model
+is opened as any lend is, by the page it comes with: llama-server's own chat
+page, or Spot's. A provider's model is one more lend (operator, 2026-11-17:
+spotting is a svrngs lend, not isaura's, and an app, not platform): Spot
+(`apps/spot/`), an example run from a checkout as `apps/doc/` is, answers
+OpenAI's API on its lender's loopback and forwards each chat to the
+provider with the key the door adds, the header its lender gave (call 4);
+it keeps its own models, its end and its budget, and counts each person by
+the door's key. svrngs learns no provider, no model and no token count. One
+page listing every friend's model waits for a group that wants it (PLAN §2).
 
 Seven calls:
 1. *Each lend at an origin of its own.* A computer serves every lend at

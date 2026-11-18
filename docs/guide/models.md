@@ -98,26 +98,27 @@ Or on your home page, under **What you lend**, press its line to open it, type `
 
 ## Spot your group a provider's model for the night
 
-If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, OpenRouter, Together, Groq, OpenAI), you can lend it to your group for a while without giving anyone your key. Your friends chat with it from their home page, on a phone or a computer. It comes with svrngs's source, in `apps/spot/`, and needs Node 18 or later, on a Mac as on Linux.
+If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, OpenRouter, Together, Groq, OpenAI), you can lend it to your group for a while without giving anyone your key. Your friends chat with it on a phone or a computer. Spot is an example that comes with svrngs's source, in `apps/spot/`, to run as it is or to start your own from. It needs Node 18 or later, on a Mac as on Linux.
 
-The first time, run:
-
-```
-node apps/spot/server.mjs
-```
-
-It says *"wrote your config, /Users/you/.svrngs/spot.toml, from the template: say your group in it, then run spot again"*. Open that file and set `group` to your group's name. It also says which models, until when (`until = "02:00"`) and how many tokens everyone together may use (`budget`). Then put your key where it looks for it, and run it again:
+Start it, saying the provider, the models, until when and how many tokens everyone together may use:
 
 ```
-export DEEPSEEK_API_KEY=<your key>
-node apps/spot/server.mjs
+node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api
 ```
 
-Without the variable it asks for the key, and doesn't show what you type. It checks the provider takes the key and lists each model, lends it, and says *"lending deepseek-flash to House until Wed 02:00 AM, 2,000,000 tokens. Ctrl-C stops it."* Leave it running. Each answer prints a line: who, which model, how many tokens. At `until`, or when you press Ctrl-C, it stops lending and says who used how much.
+It says *"spot: deepseek-flash at http://127.0.0.1:8090/. Lend it, pasting your key where it asks (Bearer <key>):"* and the line to lend it with. In another terminal:
 
-**Your friends** tap *"deepseek-flash"* on their home page, or the group's page on a phone. A chat page opens. It tells them their messages go to the provider under your account, and that you see how many tokens they used, not what they wrote. Their chats stay in their own browser.
+```
+svrngs share 8090 --name deepseek-flash --program spot --group <group>
+```
 
-**Your key** goes to svrngs once and stays on your computer. svrngs adds it to each request on its way out, so neither your friends nor the chat page ever have it. Keep `spot.toml` on your computer, never in a group's shared folder: everyone in the group can change what's there, and the file says where your key is sent.
+When it asks *"If deepseek-flash takes a password on each request, paste what it takes in its Authorization header"*, paste `Bearer ` and your key. It isn't shown. Or lend it from your home page, and add the header in its line: [Lend something that takes a password on each request](lend.md#lend-something-that-takes-a-password-on-each-request).
+
+Leave Spot running. Each answer prints a line: who, which model, how many tokens. At `--until`, or once the budget is spent, it refuses every chat and its page says why. Ctrl-C stops it and says who used how much; `svrngs unshare deepseek-flash` stops lending it.
+
+**Your friends** tap *"deepseek-flash"* on their home page, or the group's page on a phone. Spot's chat page opens: *"Ana's deepseek-flash"*. It tells them their messages go to the provider on your account, and that you see how many tokens they use, not what they write. Their chats stay in their own browser.
+
+**Your key** stays on your computer, with svrngs, which adds it to each of their requests on its way to Spot, in place of any key a friend sends. Neither your friends nor Spot's page ever have it, and Spot never writes it down. Everything your friends send reaches the provider under your account. More in [apps/spot/README.md](../../apps/spot/README.md).
 
 ## The pantry: every friend's model behind one address
 

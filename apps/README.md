@@ -10,8 +10,8 @@ yours to copy and bend.
 
 **Examples to run yourself.** Each from svrngs's source, with its own README:
 `doc/`, `grapevine/`, `give/`, `pantry/`, and `spot/` (lend your group a
-provider's models for a night, your key kept: friends chat from their home
-page, on a phone too; your copy of `spot.example.toml` says what).
+provider's models for a night, your key kept by svrngs: friends chat on
+Spot's page, on a phone too).
 
 **Examples to copy into a group's folder.** `taste/` (Taste, which reads
 the groups' lent Jellyfins and sends to a lent llama-server).

@@ -3,36 +3,26 @@
 <!-- spot's chat page: opened from a friend's svrngs home page, on a phone or a
      computer. It asks only its own origin (/spot.json, /v1/chat/completions);
      svrngs carries each request to the lender's computer as the person who
-     opened it, and the lender's svrngs adds the key. Chats stay in this
+     opened it, and the lender's svrngs adds their key. Chats stay in this
      browser's storage for this lend, never on the lender's computer. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#f6f5f2" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#161616" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="salmon" />
     <title>Chat</title>
     <style>
+      /* svrngs's look (crates/svrngs-node/src/home/look.css): the browser's
+         own fonts and colours, plain rules, warmth by named colours. */
       :root {
-        --bg: #f6f5f2;
-        --fg: #1b1b1a;
-        --dim: #6b6a66;
-        --line: #dedcd6;
-        --mine: #e7e4dc;
-        --accent: #2f5d50;
-        --warn: #8a3b12;
         color-scheme: light dark;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #161616;
-          --fg: #ecebe8;
-          --dim: #9a9893;
-          --line: #2c2b29;
-          --mine: #262523;
-          --accent: #8cc3b0;
-          --warn: #f0a36f;
-        }
+        --bg: Canvas;
+        --fg: CanvasText;
+        --dim: GrayText;
+        --line: GrayText;
+        --mine: color-mix(in srgb, CanvasText 8%, Canvas);
+        --accent: royalblue;
+        --warn: tomato;
       }
       * {
         box-sizing: border-box;
@@ -56,7 +46,9 @@
         gap: 8px;
         padding: 10px 16px;
         padding-top: max(10px, env(safe-area-inset-top));
-        border-bottom: 1px solid var(--line);
+        border-bottom: 3px solid black;
+        background: salmon;
+        color: black;
       }
       header h1 {
         font-size: 17px;

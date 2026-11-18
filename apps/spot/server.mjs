@@ -1,345 +1,251 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// spot: lend your group a provider's models for a while, your key kept.
-// `node apps/spot/server.mjs [config]`, the config's comments say the rest.
+// Spot's server: a provider's models, lent to your group for a while on your
+// account, chatted with from a phone or a computer.
 //
-// The key goes to `svrngs share` once, as the lend's secret; the door adds it
-// to each request and displaces any a friend sends
-// (crates/svrngs-node/src/door.rs:384), so the forwarder below holds none.
-// It serves its chat page (page.html, page.js, markdown.js: a friend's, on a phone or a computer),
-// what that page shows (/spot.json), and two OpenAI paths for the models
-// named, sending the provider only authorization, content-type and accept:
-// no X-Svrngs-*, no cookie, nobody's name.
-import { spawnSync, spawn } from 'node:child_process';
-import fs from 'node:fs';
-import http from 'node:http';
-import os from 'node:os';
-import path from 'node:path';
-import readline from 'node:readline';
-import { Readable } from 'node:stream';
+//   node apps/spot/server.mjs --port <port> --provider <its OpenAI address>
+//     --model <name>=<the provider's id> [--model ...] [--until HH:MM]
+//     [--budget <tokens>] [--svrngs <svrngs's api file>]
+//
+// It holds no key. You lend its port with `svrngs share`, and paste your key
+// where `share` asks for the password it takes on each request, or add it as
+// a header in the lend's row on your home page. svrngs keeps it, and its door
+// adds it to each request in place of any a friend sends
+// (crates/svrngs-node/src/door.rs `rewrite_headers`). The server forwards
+// that one, with content-type and accept and nothing else: no x-svrngs-*, no
+// cookie, nobody's name.
+//
+// It serves its chat page (page.html, page.js, markdown.js), what the page
+// shows (/spot.json), the names it lends (GET /v1/models) and a chat with one
+// of them (POST /v1/chat/completions), each name turned into the provider's
+// id. It counts the tokens the provider reports per person, by the key the
+// door names them by (`x-svrngs-key`), and refuses a chat past `--until` or
+// once `--budget` is spent. `--svrngs` is the `api` file in svrngs's data dir
+// (`~/.svrngs/api`): asked, with the `token` beside it, for your name in your
+// groups, so the page says whose it is. Without it, the page names nobody.
 
-const say = (line) => console.log(`spot: ${line}`);
-const fail = (line) => {
-  console.error(`spot: ${line}`);
-  process.exit(1);
-};
+import { readFileSync } from 'node:fs';
+import http from 'node:http';
+import { dirname, join, resolve } from 'node:path';
+import { Readable } from 'node:stream';
+import { fileURLToPath } from 'node:url';
+
 const n = (x) => x.toLocaleString('en-US');
 
-// The config: the subset of TOML its file uses; any other line is refused by number.
-function parse(text, file) {
-  const out = {};
-  let table = out;
-  text.split('\n').forEach((raw, i) => {
-    const line = raw.trim();
-    if (line === '' || line.startsWith('#')) return;
-    const section = line.match(/^\[([\w-]+)\]\s*(#.*)?$/);
-    if (section) return void (table = out[section[1]] = {});
-    const pair = line.match(/^"?([\w.-]+)"?\s*=\s*("(?:[^"\\]|\\.)*"|[\d_]+)\s*(#.*)?$/);
-    if (!pair) fail(`${file}:${i + 1} is not \`key = "text"\` or \`key = 123\`: ${line}`);
-    table[pair[1]] = pair[2].startsWith('"')
-      ? JSON.parse(pair[2])
-      : Number(pair[2].replaceAll('_', ''));
-  });
-  return out;
-}
+/** A header svrngs's door set, read as the UTF-8 it wrote (door.rs sets the name's bytes). */
+const told = (req, name) => {
+  const v = req.headers[name];
+  return typeof v === 'string' && v.length ? Buffer.from(v, 'latin1').toString('utf8') : null;
+};
 
-function endOf(until) {
-  if (until === undefined) return null;
+/** `HH:MM` as its next time on this computer's clock, or a date and time; none for none. */
+export function endOf(until, now = new Date()) {
+  if (until == null) return null;
   const hm = String(until).match(/^(\d{1,2}):(\d{2})$/);
-  const end = hm ? new Date() : new Date(until);
+  const end = hm ? new Date(now) : new Date(until);
   if (hm) {
     end.setHours(Number(hm[1]), Number(hm[2]), 0, 0);
-    if (end <= Date.now()) end.setDate(end.getDate() + 1);
+    if (end <= now) end.setDate(end.getDate() + 1);
   }
-  if (isNaN(end)) fail(`until = ${JSON.stringify(until)} is not "HH:MM" or a date and time`);
-  if (end <= Date.now()) fail(`until = ${JSON.stringify(until)} has already passed`);
+  if (isNaN(end) || end <= now) throw new Error(`--until ${until}: not "HH:MM" or a time to come`);
   return end;
 }
 
-async function askHidden(question) {
-  if (!process.stdin.isTTY)
-    fail(`no key: set the variable the config's key_env names, or run spot in a terminal`);
-  process.stdout.write(question);
-  // stty is the same on macOS and Linux; echo comes back even if Ctrl-C ends the wait.
-  process.once('exit', () => spawnSync('stty', ['echo'], { stdio: 'inherit' }));
-  spawnSync('stty', ['-echo'], { stdio: 'inherit' });
-  const rl = readline.createInterface({ input: process.stdin });
-  const line = await new Promise((done) => rl.once('line', done));
-  rl.close();
-  spawnSync('stty', ['echo'], { stdio: 'inherit' });
-  process.stdout.write('\n');
-  return line.trim();
-}
-
-// svrngs's data dir, as svrngs and pantry find it on any computer:
-// $SVRNGS_DIR, else ~/.svrngs (crates/svrngs/src/cli.rs:675, apps/pantry/pantry.mjs:42).
-const dataDir = process.env.SVRNGS_DIR || path.join(os.homedir(), '.svrngs');
-
-// The svrngs command: on PATH, else where its installer puts it on macOS and
-// Linux alike, ~/.local/bin, which a Mac's terminal often does not search
-// (docs/guide/models.md: "`svrngs` means `~/.local/bin/svrngs` if your
-// terminal doesn't find it"). $SVRNGS_BIN names another.
-function findSvrngs() {
-  if (process.env.SVRNGS_BIN) return process.env.SVRNGS_BIN;
-  const runs = (f) => {
-    try {
-      fs.accessSync(f, fs.constants.X_OK);
-      return fs.statSync(f).isFile();
-    } catch {
-      return false;
-    }
-  };
-  const onPath = (process.env.PATH ?? '')
-    .split(path.delimiter)
-    .filter(Boolean)
-    .map((dir) => path.join(dir, 'svrngs'));
-  const found = [...onPath, path.join(os.homedir(), '.local', 'bin', 'svrngs')].find(runs);
-  if (!found) fail('no svrngs here: not on PATH, nor at ~/.local/bin/svrngs; install it first');
-  return found;
-}
-
-// The config is the lender's, beside svrngs's own files on their computer:
-// the template beside this file is copied there the first time, never read
-// as the config itself.
-const ownConfig = path.join(dataDir, 'spot.toml');
-const file = path.resolve(process.argv[2] ?? ownConfig);
-if (!fs.existsSync(file)) {
-  if (process.argv[2]) fail(`no config at ${file}`);
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.copyFileSync(new URL('spot.example.toml', import.meta.url), file);
-  fail(`wrote your config, ${file}, from the template: say your group in it, then run spot again`);
-}
-const config = parse(fs.readFileSync(file, 'utf8'), file);
-for (const key of ['group', 'name'])
-  if (config[key] === undefined || config[key] === '') fail(`${file} says no \`${key}\``);
-if (!config.provider?.url) fail(`${file} says no [provider] url`);
-const models = new Map(Object.entries(config.models ?? {}));
-if (models.size === 0) fail(`${file} lends no [models]`);
-const upstream = config.provider.url.replace(/\/$/, '');
-const end = endOf(config.until);
-const budget = config.budget ?? null;
-const svrngs = findSvrngs();
-// Each night's log, by this computer's date: who used how many tokens.
-const logDir = path.join(dataDir, 'spot');
-fs.mkdirSync(logDir, { recursive: true, mode: 0o700 });
-const today = new Date();
-const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-const logPath = path.join(logDir, `${config.name}-${day}.jsonl`);
-
-const envKey = config.provider.key_env && process.env[config.provider.key_env];
-const key = envKey || (await askHidden(`Your ${new URL(upstream).hostname} key (not shown): `));
-if (!key) fail('no key given');
-const bearer = /^bearer /i.test(key) ? key : `Bearer ${key}`;
-
-// Before lending: does the provider take the key, and does it serve each model?
-const listed = await fetch(`${upstream}/models`, { headers: { authorization: bearer } }).catch(
-  (e) => fail(`${upstream} did not answer: ${e.cause?.code ?? e.message}`),
-);
-if (listed.status === 401 || listed.status === 403)
-  fail(`${new URL(upstream).hostname} refused the key (${listed.status})`);
-if (!listed.ok) fail(`${upstream}/models answered ${listed.status}`);
-const served = new Set(((await listed.json()).data ?? []).map((m) => m.id));
-for (const [alias, id] of models)
-  if (!served.has(id)) fail(`${new URL(upstream).hostname} does not list ${id} (for ${alias})`);
-
-// The page's files, read once: path → [type, bytes].
-const html = 'text/html; charset=utf-8';
-const js = 'text/javascript; charset=utf-8';
-const files = new Map(
-  [
-    ['/', 'page.html', html],
-    ['/index.html', 'page.html', html],
-    ['/page.js', 'page.js', js],
-    ['/markdown.js', 'markdown.js', js],
-  ].map(([at, file, type]) => [at, [type, fs.readFileSync(new URL(file, import.meta.url))]]),
-);
-const used = new Map(); // person → tokens the provider reported
-let spent = 0;
-const log = (row) =>
-  fs.appendFileSync(logPath, JSON.stringify({ at: new Date().toISOString(), ...row }) + '\n');
-const refuse = (res, who, status, why) => {
-  log({ who, refused: status, why });
-  console.log(`  ${who}: refused, ${why}`);
-  res.writeHead(status, { 'content-type': 'application/json' });
-  res.end(JSON.stringify({ error: { message: why, type: 'spot_refused' } }));
-};
-
-const server = http.createServer(async (req, res) => {
-  const who = req.headers['x-svrngs-person'] ?? '(not through svrngs)';
-  const route = req.url.split('?')[0];
-  if (req.method === 'GET' && files.has(route)) {
-    const [type, bytes] = files.get(route);
-    res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' });
-    return res.end(bytes);
+/** svrngs's name for this computer's person, one across its groups, or none. */
+async function askLender(api) {
+  try {
+    const base = readFileSync(api, 'utf8').trim().replace(/\/$/, '');
+    const token = readFileSync(join(dirname(api), 'token'), 'utf8').trim();
+    const asked = await fetch(`${base}/v1/groups`, {
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const names = new Set(((await asked.json()).groups ?? []).map((g) => g.person).filter(Boolean));
+    return names.size === 1 ? [...names][0] : null;
+  } catch {
+    return null;
   }
-  // What the page shows: what is lent, until when, what is left, what this person used.
-  if (req.method === 'GET' && route === '/spot.json') {
-    const ended =
-      end && Date.now() > end
-        ? `This lend ended at ${end.toLocaleTimeString()}.`
-        : budget !== null && spent >= budget
-          ? `This lend's ${n(budget)} tokens are spent.`
-          : null;
-    res.writeHead(200, { 'content-type': 'application/json', 'cache-control': 'no-store' });
-    return res.end(
-      JSON.stringify({
-        name: config.name,
+}
+
+/**
+ * The lend, with no listener: `handle(req, res)` answers each request, and
+ * `used` is each person's tokens by the door's key, `{ name, tokens }`.
+ * `provider` is where /chat/completions goes on; `models` maps each name
+ * lent to the provider's id.
+ */
+export async function spot({ provider, models, until = null, budget = null, api = null }) {
+  if (!provider) throw new Error("say the provider's OpenAI address: --provider <url>");
+  if (models.size === 0) throw new Error('lend a model: --model <name>=<the provider’s id>');
+  const upstream = provider.replace(/\/$/, '');
+  const host = new URL(upstream).hostname;
+  const end = until instanceof Date ? until : endOf(until);
+  const lender = api ? await askLender(api) : null;
+  const files = new Map(
+    [
+      ['/', 'page.html', 'text/html'],
+      ['/page.js', 'page.js', 'text/javascript'],
+      ['/markdown.js', 'markdown.js', 'text/javascript'],
+    ].map(([at, f, type]) => [
+      at,
+      [`${type}; charset=utf-8`, readFileSync(new URL(f, import.meta.url))],
+    ]),
+  );
+  const used = new Map();
+  let spent = 0;
+  const over = () =>
+    end && Date.now() > end
+      ? `this lend ended at ${end.toLocaleTimeString()}`
+      : budget !== null && spent >= budget
+        ? `its ${n(budget)} tokens are spent`
+        : null;
+  const json = (res, status, body) => {
+    res.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
+    res.end(JSON.stringify(body));
+  };
+  const refuse = (res, name, status, why) => {
+    console.log(`spot: ${name}, refused: ${why}`);
+    json(res, status, { error: { message: why, type: 'spot_refused' } });
+  };
+
+  const handle = async (req, res) => {
+    const [key, name] = [told(req, 'x-svrngs-key'), told(req, 'x-svrngs-person') ?? 'nobody'];
+    const route = new URL(req.url, 'http://spot').pathname;
+    if (req.method === 'GET' && files.has(route)) {
+      const [type, bytes] = files.get(route);
+      res.writeHead(200, { 'content-type': type, 'cache-control': 'no-cache' });
+      return res.end(bytes);
+    }
+    if (req.method === 'GET' && route === '/spot.json')
+      return json(res, 200, {
+        lender,
         models: [...models.keys()],
-        provider: new URL(upstream).hostname,
+        provider: host,
         until: end?.toISOString() ?? null,
         budget,
         spent,
-        yours: used.get(who) ?? 0,
-        ended,
-      }),
-    );
-  }
-  if (req.method === 'GET' && route === '/v1/models') {
-    res.writeHead(200, { 'content-type': 'application/json' });
-    const data = [...models.keys()].map((id) => ({ id, object: 'model', owned_by: config.name }));
-    return res.end(JSON.stringify({ object: 'list', data }));
-  }
-  if (!(req.method === 'POST' && route === '/v1/chat/completions'))
-    return refuse(
-      res,
-      who,
-      404,
-      `only the page, GET /v1/models and POST /v1/chat/completions are lent, not ${req.method} ${route}`,
-    );
-  if (end && Date.now() > end)
-    return refuse(res, who, 403, `this lend ended at ${end.toLocaleTimeString()}`);
-  if (budget !== null && spent >= budget)
-    return refuse(res, who, 403, `tonight's ${n(budget)} tokens are spent`);
-  if (!req.headers.authorization)
-    return refuse(res, who, 401, 'no key arrived: it reaches spot only through svrngs');
-  const chunks = [];
-  let size = 0;
-  for await (const c of req) {
-    if ((size += c.length) > 16 << 20) return refuse(res, who, 413, 'a request over 16 MiB');
-    chunks.push(c);
-  }
-  let body;
-  try {
-    body = JSON.parse(Buffer.concat(chunks));
-  } catch {
-    return refuse(res, who, 400, 'the body is not JSON');
-  }
-  const alias = body.model;
-  if (!models.has(alias))
-    return refuse(
-      res,
-      who,
-      400,
-      `${JSON.stringify(alias)} is not lent; lent: ${[...models.keys()].join(', ')}`,
-    );
-  body.model = models.get(alias);
-  if (body.stream) body.stream_options = { ...body.stream_options, include_usage: true };
-  let answer;
-  try {
-    answer = await fetch(`${upstream}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        authorization: req.headers.authorization,
-        'content-type': 'application/json',
-        accept: req.headers.accept ?? '*/*',
-      },
-      body: JSON.stringify(body),
-    });
-  } catch (e) {
-    return refuse(res, who, 502, `the provider did not answer: ${e.cause?.code ?? e.message}`);
-  }
-  res.writeHead(answer.status, {
-    'content-type': answer.headers.get('content-type') ?? 'application/json',
-  });
-  let tail = '';
-  const stream = Readable.fromWeb(answer.body);
-  stream.on('data', (c) => {
-    tail = (tail + c).slice(-8192);
-    res.write(c);
-  });
-  stream.on('error', (e) => {
-    log({ who, model: alias, status: answer.status, broke: e.message });
-    res.end();
-  });
-  stream.on('end', () => {
-    res.end();
-    let usage = null;
-    try {
-      usage = JSON.parse([...tail.matchAll(/"usage"\s*:\s*(\{[^{}]*\})/g)].pop()?.[1]);
-    } catch {}
-    const tokens = usage?.total_tokens;
-    if (tokens) {
-      spent += tokens;
-      used.set(who, (used.get(who) ?? 0) + tokens);
+        yours: used.get(key)?.tokens ?? 0,
+        ended: over(),
+      });
+    if (req.method === 'GET' && route === '/v1/models')
+      return json(res, 200, {
+        object: 'list',
+        data: [...models.keys()].map((id) => ({ id, object: 'model', owned_by: lender ?? 'spot' })),
+      });
+    if (!(req.method === 'POST' && route === '/v1/chat/completions'))
+      return refuse(
+        res,
+        name,
+        404,
+        `only the page and two OpenAI paths are lent, not ${req.method} ${route}`,
+      );
+    if (over()) return refuse(res, name, 403, over());
+    if (!key || !req.headers.authorization)
+      return refuse(res, name, 401, 'a chat comes through svrngs, which adds the key');
+    const chunks = [];
+    let size = 0;
+    for await (const c of req) {
+      if ((size += c.length) > 16 << 20) return refuse(res, name, 413, 'a request over 16 MiB');
+      chunks.push(c);
     }
-    log({ who, model: alias, status: answer.status, tokens: tokens ?? 'not reported', spent });
-    const what = answer.ok
-      ? `${tokens ? n(tokens) : 'unreported'} tokens`
-      : `the provider answered ${answer.status}`;
-    console.log(`  ${who}: ${alias}, ${what}${budget ? ` (${n(spent)} of ${n(budget)})` : ''}`);
-  });
-});
-
-let stopping = false;
-function stop(why) {
-  if (stopping) return;
-  stopping = true;
-  server.close();
-  const un = spawnSync(svrngs, ['unshare', config.name, '--group', config.group], {
-    stdio: 'inherit',
-  });
-  const who = [...used].map(([p, t]) => `${p} ${n(t)}`).join(', ') || 'nobody';
-  say(
-    `${why}. Used: ${who}${budget ? `, ${n(spent)} of ${n(budget)} tokens` : ''}. The log: ${logPath}`,
-  );
-  if (un.status !== 0) say(`svrngs unshare did not finish: run \`svrngs unshare ${config.name}\``);
-  process.exit(un.status === 0 ? 0 : 1);
+    let body;
+    try {
+      body = JSON.parse(Buffer.concat(chunks));
+    } catch {
+      return refuse(res, name, 400, 'the body is not JSON');
+    }
+    const asked = body.model;
+    if (!models.has(asked))
+      return refuse(
+        res,
+        name,
+        400,
+        `${JSON.stringify(asked)} is not lent: ${[...models.keys()].join(', ')}`,
+      );
+    body.model = models.get(asked);
+    // A stream says its tokens only when asked to, in its last event.
+    if (body.stream) body.stream_options = { ...body.stream_options, include_usage: true };
+    let answer;
+    try {
+      answer = await fetch(`${upstream}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          authorization: req.headers.authorization,
+          'content-type': 'application/json',
+          accept: req.headers.accept ?? '*/*',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch (e) {
+      return refuse(res, name, 502, `${host} did not answer: ${e.cause?.code ?? e.message}`);
+    }
+    res.writeHead(answer.status, {
+      'content-type': answer.headers.get('content-type') ?? 'application/json',
+    });
+    let tail = '';
+    const stream = Readable.fromWeb(answer.body);
+    stream.on('data', (c) => {
+      tail = (tail + c).slice(-8192);
+      res.write(c);
+    });
+    stream.on('error', () => res.end());
+    stream.on('end', () => {
+      res.end();
+      const usage = [...tail.matchAll(/"usage"\s*:\s*(\{[^{}]*\})/g)].pop()?.[1];
+      const tokens = usage ? (JSON.parse(usage).total_tokens ?? 0) : 0;
+      spent += tokens;
+      used.set(key, { name, tokens: (used.get(key)?.tokens ?? 0) + tokens });
+      const what = answer.ok
+        ? `${tokens ? n(tokens) : 'unreported'} tokens`
+        : `${host} answered ${answer.status}`;
+      console.log(
+        `spot: ${name}, ${asked}, ${what}${budget ? ` (${n(spent)} of ${n(budget)})` : ''}`,
+      );
+    });
+  };
+  return { handle, used, lender };
 }
 
-server.on('error', (e) =>
-  fail(
-    `port ${config.port}: ${e.code === 'EADDRINUSE' ? 'something else already listens there' : e.message}`,
-  ),
-);
-// A port the config names, else any free one: several spots can run at once.
-server.listen(config.port ?? 0, '127.0.0.1', () => {
-  const share = spawn(
-    svrngs,
-    [
-      'share',
-      String(server.address().port),
-      '--group',
-      config.group,
-      '--program',
-      'spot',
-      '--name',
-      config.name,
-    ],
-    {
-      stdio: ['pipe', 'inherit', 'inherit'],
-    },
+/** The lend listening on this computer's loopback alone: svrngs carries everyone else to it. */
+export async function start({ port, ...options }) {
+  const lend = await spot(options);
+  const server = http.createServer(lend.handle);
+  await new Promise((done, failed) => server.once('error', failed).listen(port, '127.0.0.1', done));
+  return { ...lend, server, port: server.address().port };
+}
+
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
+  const all = (flag) => process.argv.flatMap((a, i) => (a === flag ? [process.argv[i + 1]] : []));
+  const one = (flag) => all(flag)[0] ?? null;
+  const models = new Map(
+    all('--model').map((m) => [m.split('=')[0], m.split('=').slice(1).join('=')]),
   );
-  share.stdin.end(`${bearer}\n`);
-  share.on('error', (e) => fail(`could not run ${svrngs}: ${e.message}`));
-  share.on('exit', (code) => {
-    if (code !== 0) fail(`svrngs share did not lend it (exit ${code})`);
-    log({
-      lent: config.name,
-      group: config.group,
-      models: Object.fromEntries(models),
-      until: end?.toISOString() ?? null,
+  try {
+    const port = Number(one('--port'));
+    if (!Number.isInteger(port) || port <= 0) throw new Error('say its port: --port <port>');
+    const budget = one('--budget') === null ? null : Number(one('--budget').replaceAll('_', ''));
+    const lend = await start({
+      port,
+      provider: one('--provider'),
+      models,
+      until: one('--until'),
       budget,
+      api: one('--svrngs'),
     });
-    const left = end
-      ? ` until ${end.toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}`
-      : '';
-    say(
-      `lending ${[...models.keys()].join(', ')} to ${config.group}${left}${budget ? `, ${n(budget)} tokens` : ''}. Ctrl-C stops it.`,
+    console.log(
+      `spot: ${[...models.keys()].join(', ')} at http://127.0.0.1:${lend.port}/. Lend it, pasting your key where it asks (Bearer <key>):`,
     );
-    say(
-      `friends open ${config.name} from their svrngs home page, on a phone or a computer; programs reach it through pantry`,
+    console.log(
+      `  svrngs share ${lend.port} --name ${[...models.keys()][0]} --program spot --group <group>`,
     );
-    if (end) setTimeout(() => stop(`stopped at ${end.toLocaleTimeString()}`), end - Date.now());
-  });
-});
-process.on('SIGINT', () => stop('stopped'));
-process.on('SIGTERM', () => stop('stopped'));
+    const bye = () => {
+      const who = [...lend.used.values()].map((u) => `${u.name} ${n(u.tokens)}`).join(', ');
+      console.log(
+        `spot: stopped. Used: ${who || 'nothing'}. Stop lending it: svrngs unshare ${[...models.keys()][0]}`,
+      );
+      process.exit(0);
+    };
+    process.on('SIGINT', bye);
+    process.on('SIGTERM', bye);
+  } catch (e) {
+    console.error(`spot: ${e.message}`);
+    process.exit(1);
+  }
+}
