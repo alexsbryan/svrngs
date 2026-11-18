@@ -72,8 +72,10 @@ is lent like any app"). In this order, each with its demo:
 2. Spot, an example in `apps/spot/` run from a checkout as `apps/doc/` is
    (operator: "This is really just an example application for svrngs users
    to bootstrap with"), its key given where `share` asks or as that
-   header; demo: Ana lends a provider's model until a time, and Bo chats
-   with it on Spot's own page, through a real door.
+   header; landed (`91d18af7`), its demo `demo/runs/spot/2026-11-17/`:
+   Ana lent it against a stand-in provider, and Bo chatted with it on
+   Spot's own page from his home page, through a real door. A run against
+   a real provider's key, and from a phone, are its lender's.
 Not an installer, a release or a `svrngs` verb of its own: an example is
 copied and run, and svrngs's distribution names no app but Give, whose
 machinery keeps any app.
