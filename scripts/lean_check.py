@@ -772,10 +772,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # variants merged, which tests match by name) or the closed set (`exit_code`'s
 # exhaustive match). all code but JavaScript 21,357 -> 21,381; js 8,540 -> 8,535,
 # where it lands.
+# (2026-11-18) Raised by the operator for PR #1, svrngs as a package (svrn-docs
+# rings/current/SVRNGS_PACKAGE.md: "Waits on the size-budget raise (+30 Rust,
+# +2 JavaScript lines)"; "get [it] merged"). Its economizing pass (bb2e9334,
+# -3 js: a socket the door didn't switch said closed in one place) holds the
+# JavaScript, +3 with the update line's `packaged` case, under the cap. The
+# rest is the feature (+32 other): `svrngs version`, who updates svrngs read
+# from the package's `updated-by`, the can't-write guard before the download,
+# their answers on the page and the command. Not found: merging the command's
+# one-sentence refusal variants (tests match each by name) and leave/accept
+# into one arm (8 lines formatted, not 6); `exit_code`'s match stays
+# exhaustive (AGENTS 9). all code but JavaScript 21,381 -> 21,413.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
-    ".": 21382,
+    ".": 21414,
 
     "js": 8536,
 
