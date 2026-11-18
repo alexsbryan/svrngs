@@ -103,14 +103,14 @@ If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, Open
 The first time, run:
 
 ```
-node apps/spot/spot.mjs
+node apps/spot/server.mjs
 ```
 
 It says *"wrote your config, /Users/you/.svrngs/spot.toml, from the template: say your group in it, then run spot again"*. Open that file and set `group` to your group's name. It also says which models, until when (`until = "02:00"`) and how many tokens everyone together may use (`budget`). Then put your key where it looks for it, and run it again:
 
 ```
 export DEEPSEEK_API_KEY=<your key>
-node apps/spot/spot.mjs
+node apps/spot/server.mjs
 ```
 
 Without the variable it asks for the key, and doesn't show what you type. It checks the provider takes the key and lists each model, lends it, and says *"lending deepseek-flash to House until Wed 02:00 AM, 2,000,000 tokens. Ctrl-C stops it."* Leave it running. Each answer prints a line: who, which model, how many tokens. At `until`, or when you press Ctrl-C, it stops lending and says who used how much.

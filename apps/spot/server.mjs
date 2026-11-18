@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // spot: lend your group a provider's models for a while, your key kept.
-// `node apps/spot/spot.mjs [config]`, the config's comments say the rest.
+// `node apps/spot/server.mjs [config]`, the config's comments say the rest.
 //
 // The key goes to `svrngs share` once, as the lend's secret; the door adds it
 // to each request and displaces any a friend sends

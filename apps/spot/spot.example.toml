@@ -2,8 +2,8 @@
 #
 # This is the template. Your own copy lives on your computer, beside
 # svrngs's own files: ~/.svrngs/spot.toml (or in $SVRNGS_DIR, if you set
-# it), on a Mac as on Linux. `node apps/spot/spot.mjs` writes it from this
-# file the first time, and reads it after. Another: spot.mjs <file>.
+# it), on a Mac as on Linux. `node apps/spot/server.mjs` writes it from this
+# file the first time, and reads it after. Another: server.mjs <file>.
 #
 # Keep your copy on your own computer, never in a group's folder: every
 # member can write there, and this file says where your key is sent.
