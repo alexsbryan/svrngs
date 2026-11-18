@@ -13,7 +13,7 @@
 pkgbase=svrngs-bin
 pkgname=(svrngs-bin svrngs-give-bin)
 pkgver=1.11.1
-pkgrel=1
+pkgrel=2
 pkgdesc="Keep what your group shares on your own computers"
 arch=('x86_64' 'aarch64')
 url="https://github.com/alexsbryan/svrngs"
@@ -21,7 +21,7 @@ license=('AGPL-3.0-or-later')
 options=('!strip' '!debug')
 validpgpkeys=('46B4D67C5E6621093BB1AB2B057BF9082AA03CFB') # the svrngs release key
 _get="$url/releases/download/v$pkgver"
-source=(updated-by svrngs.service svrngs.desktop give.service)
+source=(updated-by svrngs.service svrngs.desktop give.service svrngs.svg)
 source_x86_64=("svrngs-$pkgver-linux-x86_64.tar.gz::$_get/svrngs-linux-x86_64.tar.gz"
                "svrngs-$pkgver-linux-x86_64.tar.gz.sig::$_get/svrngs-linux-x86_64.tar.gz.sig"
                "give-$pkgver-linux-x86_64.tar.gz::$_get/give-linux-x86_64.tar.gz"
@@ -32,8 +32,9 @@ source_aarch64=("svrngs-$pkgver-linux-aarch64.tar.gz::$_get/svrngs-linux-aarch64
                 "give-$pkgver-linux-aarch64.tar.gz.sig::$_get/give-linux-aarch64.tar.gz.sig")
 sha256sums=('156550c74ba7b2f43db0ffc4774f02919a9cd5583de4f83982dda870cbfe742c'
             'ba3cfc72b741341a849434e0c86be29d73a4c40e6d9574dfc09696b8649b3b4d'
-            'b2cf8f1cf3f89a46e5e530de4ffc82ea3aa4bd05fec69f29c90fea402a16e885'
-            '6da9f803e0968bd48b8292f70718cfe07ce0553e26c0f2682519f3447ff3dc4c')
+            'd5a74c9218a57af83ed52a922b7b664ed43dce9f1bcd1f87c91e5589f027144e'
+            '6da9f803e0968bd48b8292f70718cfe07ce0553e26c0f2682519f3447ff3dc4c'
+            '167affad6218b4d1cf3aa15c3c9a427f474e0e71795a6f8d8ecc3f6e7e98c603')
 # Each tarball's sum is its line in the release's SHA256SUMS; each .sig's is
 # the sum of that asset as the release serves it, so none is SKIP.
 sha256sums_x86_64=('983a027f1c3a7ddaf2d8d509155876693c659c43dd03114591c290745ab976ea'
@@ -58,6 +59,9 @@ package_svrngs-bin() {
   # svrngs kept running at login, and the opener in the applications menu.
   install -Dm644 svrngs.service "$pkgdir/usr/lib/systemd/user/svrngs.service"
   install -Dm644 svrngs.desktop "$pkgdir/usr/share/applications/svrngs.desktop"
+  # The menu entry's icon (Icon=svrngs): the app icon, which
+  # docs/brand/src/build.mjs writes here beside docs/brand/icon.svg.
+  install -Dm644 svrngs.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/svrngs.svg"
 }
 
 package_svrngs-give-bin() {

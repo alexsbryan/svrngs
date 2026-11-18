@@ -50,3 +50,10 @@ write(
   'svrngs',
   `<rect width="1024" height="1024" fill="black"/>${place(113, 113, 798, 'large', { ink: 'white' })}`,
 );
+
+// The same icon where the Arch package takes it from (packaging/arch, which
+// is copied out whole for Omarchy's package repository): the app menu's
+// svrngs entry shows it.
+const ARCH = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../../packaging/arch/svrngs.svg');
+fs.copyFileSync(path.join(OUT, 'icon.svg'), ARCH);
+console.log('wrote', path.relative(process.cwd(), ARCH));

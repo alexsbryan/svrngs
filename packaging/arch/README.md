@@ -33,7 +33,8 @@ apps in. Then run `systemctl --user enable --now svrngs give`.
 
 The `svrngs-bin` package owns `/usr/bin/svrngs`, its service
 `/usr/lib/systemd/user/svrngs.service`, its entry in your applications
-menu `/usr/share/applications/svrngs.desktop`, and
+menu `/usr/share/applications/svrngs.desktop` with its icon
+`/usr/share/icons/hicolor/scalable/apps/svrngs.svg`, and
 `/usr/lib/svrngs/updated-by`. That last file tells svrngs that pacman
 updates it, so svrngs never replaces itself. That's the trade:
 `svrngs update` says how to update instead of updating.
