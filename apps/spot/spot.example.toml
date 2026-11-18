@@ -1,0 +1,26 @@
+# What you spot your group: a provider's models, for a while, your key kept.
+#
+# This is the template. Your own copy lives on your computer, at
+# ~/.config/svrngs-spot/spot.toml: `node apps/spot/spot.mjs` writes it from
+# this file the first time, and reads it after. Another: spot.mjs <file>.
+#
+# Keep your copy on your own computer, never in a group's folder: every
+# member can write there, and this file says where your key is sent.
+#
+# Your key is never written here. spot reads it from the variable named
+# below, or asks for it, and gives it to svrngs, which keeps it on this
+# computer and adds it to each request. Your friends never receive it.
+
+group = "" # the group you lend to, as svrngs names it
+name = "deepseek-flash" # what your friends see it as
+until = "02:00" # it stops itself then: "HH:MM" (the next one) or "2026-11-18T02:00"; leave out to run until Ctrl-C
+budget = 2_000_000 # tokens, everyone together; leave out for none
+port = 8090 # on this computer only
+
+[provider]
+url = "https://api.deepinfra.com/v1/openai"
+key_env = "DEEPINFRA_API_KEY"
+
+# What a friend asks for = what the provider calls it. Only these are lent.
+[models]
+deepseek-flash = "deepseek-ai/DeepSeek-V4.1-Flash-1017"
