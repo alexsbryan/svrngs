@@ -1603,14 +1603,16 @@ async function socket(asked, port) {
  * @returns {Promise<Switched | null>}
  */
 async function switched({ url, protocols }, port) {
+  /** @param {string} reason */
+  const unswitched = (reason) => {
+    port.postMessage({ closed: 1006, reason });
+    return null;
+  };
   const http = new URL(url.replace(/^ws/, 'http'));
   const where = whereOf(http);
   const held = await holding();
   const lend = where && held?.lends.find((one) => one.label === where.label);
-  if (!lend) {
-    port.postMessage({ closed: 1006, reason: 'not open to this page' });
-    return null;
-  }
+  if (!lend) return unswitched('not open to this page');
   const key = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
   const headers = [
     ['connection', 'upgrade'],
@@ -1635,13 +1637,9 @@ async function switched({ url, protocols }, port) {
     // computer afresh once it answers again (demo/runs/doc/2026-10-20/found/).
     letGo(lend);
     trace(`RUNTIME: a socket at ${where.path} failed: ${String(error)}`);
-    port.postMessage({ closed: 1006, reason: String(error) });
-    return null;
+    return unswitched(String(error));
   }
-  if (remote.status !== 101) {
-    port.postMessage({ closed: 1006, reason: `answered ${remote.status}` });
-    return null;
-  }
+  if (remote.status !== 101) return unswitched(`answered ${remote.status}`);
   return remote;
 }
 
