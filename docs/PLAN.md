@@ -52,6 +52,15 @@ carried apps, with a budget raise only for what the cuts leave:
   `rings/current/WASM_IN_CARRIED_PAGES.md`, option D, its spike
   `wasm-guard-spike/`).
 
+Persistence is proved by Magnets V1, a shared fridge in at most 1,000
+lines (operator, 2026-11-17: "This is what I want to build to prove the
+promises of APP_STATE"; svrn-docs `rings/current/MAGNETS.md`, its plan
+`MAGNETS_BUILD.md`). Two parts of it start now, ahead of the economizing,
+since neither adds a product line (operator, 2026-11-17): Magnets' face in
+`apps/magnets/` against a stand-in for its route, tried on first-time
+players, and the two design spikes, the merge rule and what a phone signs.
+The database itself still waits for stage 4.
+
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
 groups, grapevine; V1 on n0" and "arch → groups → grapevine"; svrn-docs
