@@ -1,0 +1,22 @@
+{
+  "1": 401,
+  "2": [],
+  "6": [
+    null,
+    []
+  ],
+  "3": [
+    null,
+    [
+      "authorization"
+    ],
+    false
+  ],
+  "4": 200,
+  "5": false,
+  "7": [
+    null,
+    401
+  ],
+  "kept_after_stop": []
+}

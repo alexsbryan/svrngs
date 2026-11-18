@@ -1,0 +1,27 @@
+{
+  "act": "stop",
+  "row": "coder: everyone in the groups you chose at once, 1 using it now. Lent to Header Run (yours, since 17 Nov).\nHow many people at once: Let in this many\n\nWho can open it:\n\nHeader Run (yours, since 17 Nov)\n\nSave who can open this\n\nIf coder wants a header on each request, add it here: for llama-server started with --api-key abc123, Authorization with Bearer abc123.\n\nHeader: What it says: Add this headerSign people in with svrngsStop lending",
+  "lent": {
+    "headers": {
+      "coder": []
+    },
+    "lent": [
+      {
+        "groups": [
+          "5ad397e4660b401f121586b5baefb9640146b310c4c66d5c27a699cf30c46bbb"
+        ],
+        "kind": "llama-server",
+        "limit": null,
+        "name": "coder",
+        "reads": [],
+        "sends": [
+          "POST /v1/embeddings"
+        ],
+        "upload_bps": null,
+        "using": 1
+      }
+    ],
+    "readers": {},
+    "signing": []
+  }
+}

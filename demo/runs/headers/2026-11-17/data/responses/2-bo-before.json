@@ -1,0 +1,11 @@
+{
+  "status": 401,
+  "headers": {
+    "access-control-allow-origin": "",
+    "content-type": "application/json; charset=utf-8",
+    "server": "llama.cpp",
+    "content-length": "80",
+    "date": "Wed, 18 Nov 2026 06:28:35 GMT"
+  },
+  "body": "{\"error\":{\"message\":\"Invalid API Key\",\"type\":\"authentication_error\",\"code\":401}}"
+}
