@@ -42,7 +42,22 @@ named `783da285934f` and was network-first.
 
 ## The GitHub release
 
-It waits for the release key. The operator chose on 2026-11-18 that
+The operator made the release key, `46B4D67C5E6621093BB1AB2B057BF9082AA03CFB`
+("svrngs releases", ed25519, two years), and ran `sign-release.sh`.
+GitHub release `v1.11.1`, titled V1.11.1, has 19 files: the eight
+downloads, `SHA256SUMS`, a `.sig` for each, and `svrngs-release-key.asc`.
+
+Read back from `gh release download v1.11.1` into a keyring holding only
+that released key:
+
+- all nine signatures said VALIDSIG by the fingerprint;
+- `shasum -a 256 -c SHA256SUMS` passed for all eight downloads, and
+  `SHA256SUMS` equaled this run's;
+- planted: `SHA256SUMS` with one byte added said BADSIG;
+- `git verify-tag v1.11.1` said VALIDSIG by the same key, and the tag is
+  `24b6ee7c`.
+
+How it was set up: The operator chose on 2026-11-18 that
 releases are OpenPGP-signed for packagers, and that only the operator,
 typing the key's passphrase, signs. `scripts/sign-release.sh v1.11.1
 24b6ee7c <site>` does the rest:
