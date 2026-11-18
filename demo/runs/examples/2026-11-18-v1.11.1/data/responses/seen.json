@@ -1,0 +1,56 @@
+{
+  "release": {
+    "tarball sha256 listed": true,
+    "version": "svrngs 1.11.1 (24b6ee7c)"
+  },
+  "1-2 sandbox": {
+    "phase": "sandbox",
+    "howLink": 1,
+    "folder": "Sandbox’s folder is on this computer at <this run>/data/home/Ana/svrngs/Sandbox",
+    "headings": [
+      "Who pays whom",
+      "What people paid for",
+      "Add what you paid"
+    ],
+    "elmFolder": "Elm’s folder is on this computer at <this run>/data/home/Ana/svrngs/Elm"
+  },
+  "2 index.js there": true,
+  "3 opened again": {
+    "phase": "money",
+    "headings": [
+      "Who pays whom",
+      "What people paid for",
+      "Add what you paid for"
+    ]
+  },
+  "4 check": {
+    "exit": 0,
+    "said": "Nothing in <this run>/data/home/Ana/svrngs/Sandbox/apps/Money that apps can't load."
+  },
+  "5 bo": {
+    "phase": "money",
+    "listed": "Money"
+  },
+  "6 run one": {
+    "node": "v24.22.3",
+    "lines exit": 0,
+    "at": "svrngs-1.11.1",
+    "spot there": true,
+    "examples.md there": true,
+    "README has Run it": true
+  },
+  "7 spot line": "node apps/spot/server.mjs --port 8090 --provider http://127.0.0.1:8311/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api",
+  "7 lend": {
+    "phase": "lend",
+    "added": "svrngs adds authorization to each request your friends make to deepseek-flash. They never receive what it says."
+  },
+  "8 bo": {
+    "phase": "chat",
+    "listed": "ana’s deepseek-flash (spot)",
+    "title": "ana’s deepseek-flash",
+    "answer": "Hello, Bo. This came from the provider through Ana’s account."
+  },
+  "8 provider saw the key": [
+    true
+  ]
+}
