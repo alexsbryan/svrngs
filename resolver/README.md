@@ -5,7 +5,7 @@ The public native lifecycle proof and its limits are recorded in
 `../demo/runs/relay-meet/2026-11-04/README.md`.
 
 `createResolver({token, url?, debug?})` in `handler.mjs` returns a Fetch-API
-handler `(Request, trustedIngressIp) => Promise<Response>`. Node 20+; no SDK
+handler `(Request, trustedIngressIp) => Promise<Response>`. Node 24+; no SDK
 or dependency install. The hosting adapter must supply the actual ingress IP,
 never a caller's forwarded header. Missing IP/configuration refuses service.
 The default URL is the operator's Free database; credentials stay server-side.

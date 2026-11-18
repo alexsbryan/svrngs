@@ -104,7 +104,7 @@ async fn canary(program: &str, args: &[&str]) -> Canary {
         .stdout(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .expect("node runs the canary: Node 18 or later");
+        .expect("node runs the canary: Node 24 or later");
     let mut lines = tokio::io::BufReader::new(child.stdout.take().unwrap()).lines();
     let first = lines
         .next_line()
@@ -559,7 +559,7 @@ async fn browse(args: &Value, opens: &Value) -> Value {
         .env("SVRNGS_OPENS", opens.to_string())
         .output()
         .await
-        .expect("node runs: the browser tests need Node 18 or later");
+        .expect("node runs: the browser tests need Node 24 or later");
     assert!(
         out.status.success(),
         "the browser half failed ({}):\n{}",

@@ -24,7 +24,7 @@ none of its words (`nouns.txt`, `scripts/vocab_check.py`).
 
 ## Try it alone
 
-From your copy of svrngs, with Node.js 20 or later, one line:
+From your copy of svrngs, with Node.js 24 or later, one line:
 
 ```
 d=$(mktemp -d) && cp apps/grapevine/demo.json $d/town.json && echo "{\"file\": \"$d/town.json\", \"acting\": [\"Sam\", \"Jo\", \"Kim\"], \"data\": \"$d\"}" > $d/config.json && node apps/grapevine/server.mjs $d/config.json

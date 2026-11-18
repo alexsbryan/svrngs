@@ -98,7 +98,7 @@ async fn phone(
         .stderr(Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .expect("node runs: the browser tests need Node 18 or later");
+        .expect("node runs: the browser tests need Node 24 or later");
     let mut out = BufReader::new(phone.stdout.take().unwrap()).lines();
     let first = out.next_line().await.unwrap().unwrap_or_else(|| {
         panic!(

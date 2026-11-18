@@ -86,9 +86,9 @@ sausage is made" and build their own). From the installed binary alone:
 use one, open one up, run one, make your own (DESIGN §1). In order:
 1. **The guide**, docs only: one page for the ladder; `apps/README.md` by
    shape; each README as shape / run it / how it's made / change it.
-   **Node 24**, the oldest LTS supported past 2027 (to 2028-04-30): named
-   once, in `.node-version`, and run by the gate, whose Node 20 ended
-   2026-04-30. Today's docs say 18 or 20.
+   **Node 24**, the oldest LTS supported past 2027 (to 2028-04-30),
+   landed: named once, in `.nvmrc`; the gate runs it and every ask names
+   it (`scripts/tests/test_node.py`).
 2. **Two touches**, each after an economizing pass (both budgets full at
    `be20e26e`): `svrngs version` prints its source's address (+4 Rust;
    tags differ in form, `v1.10`); the shelf's sentence links the ladder

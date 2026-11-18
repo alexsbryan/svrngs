@@ -62,7 +62,7 @@ async fn sam_opens_the_link_kim_sent_and_watches_kims_film_as_kims_guest(engine:
         .stderr(std::process::Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .expect("node runs: the browser tests need Node 18 or later");
+        .expect("node runs: the browser tests need Node 24 or later");
     use tokio::io::{AsyncBufReadExt, AsyncReadExt};
     let mut out = tokio::io::BufReader::new(half.stdout.take().unwrap()).lines();
     let first = out
