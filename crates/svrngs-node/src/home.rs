@@ -349,11 +349,14 @@ fn update_state(state: &str) -> Response {
 }
 
 /// `GET /update`: whether the page this computer came from offers a svrngs
-/// it does not run; `unknown` when that cannot be judged, never `current`.
+/// it does not run; `unknown` when that cannot be judged, never `current`;
+/// `packaged` when a package updates this one.
 async fn update_check(State(at): State<Asking>) -> Response {
     match crate::update::check(&at.door.data_dir).await {
         Ok(crate::update::Check::Current) => update_state("current"),
         Ok(crate::update::Check::Available) => update_state("available"),
+        // A package updates this svrngs: the page offers nothing.
+        Ok(crate::update::Check::Packaged(_)) => update_state("packaged"),
         Err(e) => {
             tracing::debug!(target: "home", error = %e, "home: an update cannot be judged");
             Json(serde_json::json!({ "state": "unknown", "why": e.to_string() })).into_response()
@@ -367,6 +370,7 @@ async fn update_check(State(at): State<Asking>) -> Response {
 async fn update_apply(State(at): State<Asking>) -> Response {
     match crate::update::apply(&at.door.data_dir).await {
         Ok(crate::update::Outcome::Current) => update_state("current"),
+        Ok(crate::update::Outcome::Packaged(_)) => update_state("packaged"),
         Ok(crate::update::Outcome::Updated) => {
             let answer = update_state("updated");
             tokio::spawn(async {
@@ -417,6 +421,13 @@ enum LendChange {
     },
     /// The key apps reading it are let in with, kept as pasted.
     Key(String),
+    /// A header its door adds to each request, kept as typed, where
+    /// `svrngs share` would ask one (`share::adds_headers`); an empty value
+    /// stops adding it.
+    Header {
+        name: String,
+        value: String,
+    },
     Stop,
 }
 
@@ -439,7 +450,7 @@ async fn lent(State(at): State<Asking>) -> Response {
         .collect();
     // How apps read each, by its groups' own terms as well as svrngs's; a
     // lend whose groups' terms can't be read says why in their place.
-    let mut readers = serde_json::Map::new();
+    let (mut readers, mut headers) = (serde_json::Map::new(), serde_json::Map::new());
     for l in &all {
         let (terms, by) = match terms_of(&at, l).await {
             Ok(read) => read,
@@ -448,6 +459,14 @@ async fn lent(State(at): State<Asking>) -> Response {
                 continue;
             }
         };
+        if share::adds_headers(l, &terms) {
+            let kept =
+                crate::declared::read_declared_in(&lend::secret_dir(&at.door.data_dir, &l.name));
+            headers.insert(
+                l.name.to_string(),
+                kept.into_iter().map(|(header, _)| header).collect(),
+            );
+        }
         let kept = lend::readers_dir(&at.door.data_dir, &l.name).exists();
         let key = share::key_of(&l.kind, &terms).is_some();
         let signs = share::accounts_of(&l.kind, &terms);
@@ -459,12 +478,12 @@ async fn lent(State(at): State<Asking>) -> Response {
         tracing::debug!(target: "home", lend = %l.name, read, by, "home: how apps read a lend, by its groups' terms and svrngs's, or why those can't be read");
         readers.extend(read.then(|| (l.name.to_string(), said)));
     }
-    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers }))
+    Json(serde_json::json!({ "lent": lent, "signing": signing, "readers": readers, "headers": headers }))
         .into_response()
 }
 
 /// `POST /lent`: the person's change, written to the lend's declaration.
-async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
+async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Response, Response> {
     let dir = &at.door.data_dir;
     let to = kind_of(&c.to);
     let done = match c.to {
@@ -478,41 +497,62 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Response {
             Ok(()) => lend::set_audience(dir, &c.lend, groups),
             Err(refused) => {
                 tracing::debug!(target: "home", lend = %c.lend, "home: refused — an audience names a group this computer does not hold");
-                return refused;
+                return Err(refused);
             }
         },
         LendChange::Stop => lend::withdraw(dir, &c.lend),
-        LendChange::SignIn => return sign_in(&at, &c.lend).await,
+        LendChange::SignIn => return Ok(sign_in(&at, &c.lend).await),
         LendChange::Readers { name, password } => {
-            return readers(&at, &c.lend, &name, &password).await
+            return Ok(readers(&at, &c.lend, &name, &password).await)
         }
         LendChange::Key(key) if key.trim().is_empty() => {
-            return LendRefusal::closed("Paste the key first.".to_string());
+            return Err(LendRefusal::closed("Paste the key first."));
         }
-        LendChange::Key(key) => match lend::read(dir, &c.lend) {
-            Ok(Some(lent)) => {
-                let terms = match terms_of(&at, &lent).await {
-                    Ok((terms, _)) => terms,
-                    Err(why) => return LendRefusal::closed(why),
-                };
-                let how = share::key_of(&lent.kind, &terms);
-                // Tried once on the lender's own service; refused, not kept.
-                if let Port(port) = lent.source {
-                    let tried = share::tried(port, how, key.trim()).await;
-                    if let Err(why) = share::key_said(&lent.kind, tried) {
-                        return LendRefusal::closed(why);
-                    }
-                }
-                share::keep_key(dir, &c.lend, how, key.trim())
+        LendChange::Key(key) => {
+            let (lent, terms) = lent_with_terms(&at, &c.lend).await?;
+            let how = share::key_of(&lent.kind, &terms);
+            // Tried once on the lender's own service; refused, not kept.
+            if let Port(port) = lent.source {
+                let tried = share::tried(port, how, key.trim()).await;
+                share::key_said(&lent.kind, tried).map_err(LendRefusal::closed)?;
             }
-            read => read.map(|_| false),
-        },
+            share::keep_key(dir, &c.lend, how, key.trim())
+        }
+        LendChange::Header { name, value } => {
+            // Never the door's own, a hop-by-hop one or the browser's, and
+            // nothing a header can't carry, such as a line break.
+            if !share::key_header_fits(&name)
+                || axum::http::HeaderValue::from_str(value.trim()).is_err()
+            {
+                tracing::debug!(target: "home", lend = %c.lend, "home: refused — a header svrngs keeps for itself, or a value no header carries");
+                return Err(LendRefusal::closed(format!("svrngs can’t add {name} with that: a header of its own, the browser’s, or a value with a line break.")));
+            }
+            let (lent, terms) = lent_with_terms(&at, &c.lend).await?;
+            if !share::adds_headers(&lent, &terms) {
+                return Err(LendRefusal::closed(
+                    "It signs each person in, so svrngs adds no header to it.",
+                ));
+            }
+            lend::keep_header(dir, &c.lend, (&name, value.trim())).map(|()| true)
+        }
     };
     tracing::debug!(target: "home", lend = %c.lend, to, done = ?done.as_ref().ok(), "home: the person changed a lend");
-    match done {
+    Ok(match done {
         Ok(true) => StatusCode::NO_CONTENT.into_response(),
         unchanged => unchanged_said(&c.lend, unchanged),
-    }
+    })
+}
+
+/// The lend `name` and its groups' terms read now ([`terms_of`]), or the
+/// refusal of a change to it: nothing lent by that name, or why its terms
+/// can't be read.
+async fn lent_with_terms(at: &Asking, name: &LendName) -> Result<(lend::Lend, String), Response> {
+    let found = lend::read(&at.door.data_dir, name);
+    let Ok(Some(lent)) = found else {
+        return Err(unchanged_said(name, found.map(|_| false)));
+    };
+    let (terms, _) = terms_of(at, &lent).await.map_err(LendRefusal::closed)?;
+    Ok((lent, terms))
 }
 
 /// A change not made, said: nothing lent by that name, another change
@@ -541,6 +581,7 @@ fn kind_of(change: &LendChange) -> &'static str {
         LendChange::SignIn => "sign-in",
         LendChange::Readers { .. } => "readers",
         LendChange::Key(_) => "key",
+        LendChange::Header { .. } => "header",
         LendChange::Stop => "stop",
     }
 }
@@ -612,13 +653,9 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
 /// what it gives kept ([`lend::keep_readers`]); the password nowhere.
 async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) -> Response {
     let dir = &at.door.data_dir;
-    let found = lend::read(dir, name);
-    let Ok(Some(lent)) = found else {
-        return unchanged_said(name, found.map(|_| false));
-    };
-    let terms = match terms_of(at, &lent).await {
-        Ok((terms, _)) => terms,
-        Err(why) => return LendRefusal::closed(why),
+    let (lent, terms) = match lent_with_terms(at, name).await {
+        Ok(read) => read,
+        Err(refused) => return refused,
     };
     let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, &terms)) else {
         tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");

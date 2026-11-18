@@ -14,7 +14,8 @@ use std::path::Path;
 use sha2::{Digest, Sha256};
 use svrngs_node::invite::ORIGIN_FILE;
 use svrngs_node::update::{
-    apply_at, check_by, fetch, Check, Get, Outcome, UpdateError, RELEASE_FILE,
+    apply_at, check_by, fetch, packaged as packaged_words, Check, Get, Outcome, UpdateError,
+    RELEASE_FILE,
 };
 
 /// The tarball’s name, as `install.sh` and `scripts/build-release.sh`
@@ -222,4 +223,86 @@ async fn a_page_that_does_not_answer_is_not_current_with_no_socket() {
         matches!(checked, Err(UpdateError::CouldNotJudge(_))),
         "{checked:?}"
     );
+}
+
+/// `dir/bin/svrngs`, `the old svrngs`, beside a package's `updated-by`
+/// saying `said` (update.rs `UPDATED_BY`), installed from [`PAGE`].
+fn packaged(dir: &Path, said: &str) -> std::path::PathBuf {
+    std::fs::write(dir.join(ORIGIN_FILE), PAGE).unwrap();
+    std::fs::create_dir_all(dir.join("bin")).unwrap();
+    std::fs::create_dir_all(dir.join("lib/svrngs")).unwrap();
+    std::fs::write(dir.join("lib/svrngs/updated-by"), said).unwrap();
+    let exe = dir.join("bin/svrngs");
+    std::fs::write(&exe, b"the old svrngs").unwrap();
+    exe
+}
+
+/// **A svrngs a package updates never replaces itself, and says the
+/// package's words** (update.rs `packaged`, `apply_at`): a page offering a
+/// new release is not asked, the binary stays, no release file is kept;
+/// an `updated-by` that says nothing readable is said as svrngs's own
+/// words. Planted: `updated-by` not looked for (Updated, the bytes
+/// replaced); its first line not read (the default said for the
+/// package's).
+#[tokio::test]
+async fn a_svrngs_a_package_updates_never_replaces_itself() {
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let files = HashMap::from([
+        ("get/SHA256SUMS".to_string(), sums(&name, &tarball)),
+        (format!("get/{name}"), tarball),
+    ]);
+    let exe = packaged(dir.path(), "\n  Updated with pacman.  \nignored\n");
+
+    let applied = apply_at(dir.path(), &exe, page(&files)).await;
+    assert_eq!(
+        applied.unwrap(),
+        Outcome::Packaged("Updated with pacman.".into())
+    );
+    assert_eq!(std::fs::read(&exe).unwrap(), b"the old svrngs");
+    assert!(!dir.path().join(RELEASE_FILE).exists());
+
+    std::fs::write(dir.path().join("lib/svrngs/updated-by"), "\n\n").unwrap();
+    assert_eq!(
+        packaged_words(&exe).as_deref(),
+        Some("svrngs updates with this computer's system updates.")
+    );
+}
+
+/// **A svrngs that cannot write beside itself is refused before any
+/// download** (update.rs `apply_at`): its folder read-only, Refused
+/// naming why, the tarball never asked of the page, the binary kept.
+/// Planted: the write asked only after the download (the tarball asked).
+#[tokio::test]
+async fn a_svrngs_that_cannot_write_beside_itself_is_refused_before_the_download() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let name = tarball_name();
+    let tarball = tarball(dir.path(), &name, b"the new svrngs");
+    let files = HashMap::from([
+        ("get/SHA256SUMS".to_string(), sums(&name, &tarball)),
+        (format!("get/{name}"), tarball),
+    ]);
+    installed(dir.path());
+    let held = dir.path().join("held");
+    std::fs::create_dir(&held).unwrap();
+    let exe = held.join("svrngs");
+    std::fs::write(&exe, b"the old svrngs").unwrap();
+    std::fs::set_permissions(&held, std::fs::Permissions::from_mode(0o555)).unwrap();
+
+    let asked = std::sync::Mutex::new(Vec::new());
+    let watched = async |url: &str, max: usize| {
+        asked.lock().unwrap().push(url.to_string());
+        page(&files)(url, max).await
+    };
+    let applied = apply_at(dir.path(), &exe, watched).await;
+    std::fs::set_permissions(&held, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+    assert!(
+        matches!(&applied, Err(UpdateError::Refused(why)) if why.contains("whoever installed svrngs where it is updates it")),
+        "{applied:?}"
+    );
+    assert!(!asked.lock().unwrap().iter().any(|u| u.ends_with(&name)));
+    assert_eq!(std::fs::read(&exe).unwrap(), b"the old svrngs");
 }

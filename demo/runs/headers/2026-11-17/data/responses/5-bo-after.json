@@ -1,0 +1,11 @@
+{
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "",
+    "content-type": "application/json; charset=utf-8",
+    "server": "llama.cpp",
+    "content-length": "706",
+    "date": "Wed, 18 Nov 2026 06:28:37 GMT"
+  },
+  "body": "{\"choices\":[{\"finish_reason\":\"stop\",\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"lent\"}}],\"created\":1794983317,\"model\":\"/home/alexbryan/.cache/llama.cpp/Qwen_Qwen2.5-0.5B-Instruct-GGUF_qwen2.5-0.5b-instruct-q4_k_m.gguf\",\"system_fingerprint\":\"b0-unknown\",\"object\":\"chat.completion\",\"usage\":{\"completion_tokens\":3,\"prompt_tokens\":36,\"total_tokens\":39,\"prompt_tokens_details\":{\"cached_tokens\":0}},\"id\":\"chatcmpl-awjDA0uGZiiU6TN3DuZ5ddGaTl2a7lLR\",\"timings\":{\"cache_n\":0,\"prompt_n\":36,\"prompt_ms\":82.898,\"prompt_per_token_ms\":2.302722222222222,\"prompt_per_second\":434.2686192670511,\"predicted_n\":3,\"predicted_ms\":15.601,\"predicted_per_token_ms\":5.200333333333334,\"predicted_per_second\":192.2953656816871}}"
+}

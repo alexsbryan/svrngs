@@ -13,6 +13,11 @@
 //! page kept, no line for this platform, a page that does not answer — is
 //! never said as "current" (ARCH 6). The caller restarts the node into the
 //! new binary; this module only puts it in place.
+//!
+//! Whoever installed svrngs updates it. A package that puts svrngs in
+//! `<prefix>/bin` puts [`UPDATED_BY`] in `<prefix>/lib/svrngs`, saying how
+//! it is updated; this svrngs then never replaces itself, and says that
+//! instead (svrn-docs `rings/current/SVRNGS_PACKAGE.md`).
 
 use std::fs::{self, File};
 use std::io::ErrorKind;
@@ -28,6 +33,14 @@ use svrngs_core::link::Origin;
 /// spells the same file in shell; `tests/install.rs` pins the pair.
 pub const RELEASE_FILE: &str = "release";
 
+/// What a package beside svrngs's binary says of how it is updated, from
+/// the binary's own directory: `/usr/bin/svrngs` reads
+/// `/usr/lib/svrngs/updated-by`.
+pub const UPDATED_BY: &str = "../lib/svrngs/updated-by";
+
+/// Said when [`UPDATED_BY`] is there but says nothing that can be read.
+const PACKAGED: &str = "svrngs updates with this computer's system updates.";
+
 const LOCK_FILE: &str = "update.lock";
 const MAX_SUMS: usize = 64 * 1024;
 const MAX_TARBALL: usize = 64 * 1024 * 1024;
@@ -39,18 +52,32 @@ struct Latest {
     installed: Option<String>,
 }
 
-/// Whether the page has a svrngs this computer is not running.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Whether the page has a svrngs this computer is not running, or a
+/// package updates this one, in the package's words.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Check {
     Current,
     Available,
+    Packaged(String),
 }
 
-/// What an update did.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// What an update did: nothing, the new binary put in place, or nothing
+/// because a package updates this one, in its words.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Outcome {
     Current,
     Updated,
+    Packaged(String),
+}
+
+/// What [`UPDATED_BY`] beside `exe` says, if it is there: its first line,
+/// at most 300 characters, or [`PACKAGED`] when it says nothing.
+pub fn packaged(exe: &Path) -> Option<String> {
+    let said = fs::read_to_string(exe.parent()?.join(UPDATED_BY));
+    tracing::debug!(target: "update", packaged = said.is_ok(), "update: whether a package updates this svrngs");
+    let said = said.ok()?;
+    let line = said.lines().map(str::trim).find(|l| !l.is_empty());
+    Some(line.unwrap_or(PACKAGED).chars().take(300).collect())
 }
 
 /// Why an update was not judged, or was refused. The words are a person's
@@ -86,9 +113,13 @@ impl UpdateError {
 pub trait Get: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError> {}
 impl<F: AsyncFn(&str, usize) -> Result<Vec<u8>, UpdateError>> Get for F {}
 
-/// Whether the page offers a svrngs this computer does not run.
+/// Whether the page offers a svrngs this computer does not run, unless a
+/// package updates this one; then the page is not asked.
 pub async fn check(dir: &Path) -> Result<Check, UpdateError> {
-    check_by(dir, fetch).await
+    match std::env::current_exe().ok().as_deref().and_then(packaged) {
+        Some(words) => Ok(Check::Packaged(words)),
+        None => check_by(dir, fetch).await,
+    }
 }
 
 /// [`check`], the page's files read by `get`.
@@ -114,12 +145,20 @@ pub async fn apply(dir: &Path) -> Result<Outcome, UpdateError> {
 /// [`apply`] over `exe`, the page's files read by `get`: for a test whose
 /// svrngs is not the running one, and whose page is no socket.
 pub async fn apply_at(dir: &Path, exe: &Path, get: impl Get) -> Result<Outcome, UpdateError> {
+    if let Some(words) = packaged(exe) {
+        return Ok(Outcome::Packaged(words));
+    }
     let _held = claim(dir)?;
     let latest = latest(dir, &get).await?;
     if latest.installed.as_deref() == Some(latest.want.as_str()) {
         tracing::debug!(target: "update", tarball = %latest.tarball, "update: the release is the one this computer installed");
         return Ok(Outcome::Current);
     }
+    // Asked before the download: a svrngs that cannot write beside itself
+    // was put there by someone else, who updates it.
+    let new = exe.with_extension("new");
+    let place = File::create(&new).and_then(|_| fs::remove_file(&new));
+    place.map_err(refused("whoever installed svrngs where it is updates it"))?;
     let url = format!("{}{}", latest.base, latest.tarball);
     let bytes = get(&url, MAX_TARBALL).await?;
     if hash(&bytes) != latest.want {
@@ -151,7 +190,6 @@ pub async fn apply_at(dir: &Path, exe: &Path, get: impl Get) -> Result<Outcome, 
             "the new svrngs is not a regular file".to_string(),
         ));
     }
-    let new = exe.with_extension("new");
     fs::copy(&unpacked, &new).map_err(refused("the new svrngs cannot be put where svrngs runs"))?;
     fs::set_permissions(&new, std::os::unix::fs::PermissionsExt::from_mode(0o755))
         .map_err(refused("the new svrngs cannot be made runnable"))?;

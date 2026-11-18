@@ -91,6 +91,11 @@ an app's page svrngs won't load, and what to change.
   svrngs update
       Get the newest svrngs from the page this computer was installed
       from, if this computer's is not it. `svrngs restart` then uses it.
+      Where a package installed svrngs, the package updates it, and this
+      says how.
+
+  svrngs version
+      Which svrngs this is: its release, and the commit it was built from.
 
   svrngs restart
       Stop svrngs and start it again, as a new login would.

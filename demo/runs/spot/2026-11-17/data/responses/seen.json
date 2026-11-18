@@ -1,0 +1,36 @@
+{
+  "1": [
+    "ana’s deepseek-flash",
+    "ana’s deepseek-flash (spot)"
+  ],
+  "2": {
+    "sent": "Say hello to Bo.",
+    "said": "Hello, Bo. This came from the provider through Ana’s account.",
+    "strong": 1,
+    "error": false
+  },
+  "3": [
+    [
+      "/v1/openai/chat/completions",
+      "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+      true,
+      []
+    ]
+  ],
+  "5": false,
+  "6": [
+    [
+      {
+        "sent": "And again?",
+        "said": "its 60 tokens are spent",
+        "strong": 0,
+        "error": true
+      }
+    ],
+    1
+  ],
+  "4": [
+    "spot: bo, deepseek-flash, 64 tokens (64 of 60)",
+    "spot: bo, refused: its 60 tokens are spent"
+  ]
+}

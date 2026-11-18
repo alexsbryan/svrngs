@@ -1318,7 +1318,17 @@ and discovery follows no redirect. Behaviour is another app on
 the consumer's computer — an OpenAI-in, OpenAI-out adapter that calls the
 pantry — so every lend it reaches is reached as that person; the vision
 bridge in `apps/pantry/examples/` is the worked example
-(`demo/runs/models/2026-10-22-run/`).
+(`demo/runs/models/2026-10-22-run/`). A phone can't reach the pantry's
+address, which is on its person's loopback, so on a phone a friend's model
+is opened as any lend is, by the page it comes with: llama-server's own chat
+page, or Spot's. A provider's model is one more lend (operator, 2026-11-17:
+spotting is a svrngs lend, not isaura's, and an app, not platform): Spot
+(`apps/spot/`), an example run from a checkout as `apps/doc/` is, answers
+OpenAI's API on its lender's loopback and forwards each chat to the
+provider with the key the door adds, the header its lender gave (call 4);
+it keeps its own models, its end and its budget, and counts each person by
+the door's key. svrngs learns no provider, no model and no token count. One
+page listing every friend's model waits for a group that wants it (PLAN §2).
 
 Seven calls:
 1. *Each lend at an origin of its own.* A computer serves every lend at
@@ -1434,7 +1444,20 @@ Seven calls:
    reading page's one POST ended a Jellyfin token kept for all, and a
    secret sent on every request replaced each person's own sign-in. The
    person opening a lend and a lend's own page go on as themselves, with
-   the lend's secret, writes included.
+   the lend's secret, writes included. That secret is any headers its
+   lender gives for the door to add to each request it carries — most
+   often an `Authorization` with a bearer token: one at `svrngs share`'s
+   prompt, any in its row on the home page, asked of the same lends in both
+   (`share::adds_headers`, the one decider), never of one that keeps its own
+   accounts or signs in with svrngs. A header is added in place of the
+   client's of its name, never under the door's own prefix, a hop-by-hop
+   name, `host`, `cookie` or `content-length`, nor with a value no header
+   carries (`share::key_header_fits`, asked as it is given and again as the
+   door reads it), and dropped from any answer that echoes it; its value is
+   never answered, only its name. svrngs starts no program, so it injects no
+   environment: the request is where it stands. A program that wanted a
+   header could be lent only from a terminal, which a lightly technical
+   lender can't (`docs/guide/lend.md`).
 5. *Measured before built.* What a stock app does through the door — its
    sign-in, its live socket, two people's plays through one lend, whether
    any byte carries a secret the lend holds — is measured before anything is

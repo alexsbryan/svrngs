@@ -1,0 +1,29 @@
+{
+  "act": "lend",
+  "found": "Something at http://localhost:8301. To lend it, give it a name and say which program it is, each one word; if it is kokoro or llama-server or llama-server, say that. Its name: Which program: \n\nWho can open it?\n\nHeader Run (yours, since 17 Nov)\n\nLend it",
+  "drawn": "Something at http://localhost:8301. To lend it, give it a name and say which program it is, each one word; if it is kokoro or llama-server or llama-server, say that. Its name: Which program: \n\nWho can open it?\n\nHeader Run (yours, since 17 Nov)\n\nLend it to Header RunApps your friends open on their computers can send to llama-server at /v1/embeddings, if each says yes. To lend it with these, press Lend again.",
+  "row": "coder: everyone in the groups you chose at once, 0 using it now. Lent to Header Run (yours, since 17 Nov).",
+  "lent": {
+    "headers": {
+      "coder": []
+    },
+    "lent": [
+      {
+        "groups": [
+          "5ad397e4660b401f121586b5baefb9640146b310c4c66d5c27a699cf30c46bbb"
+        ],
+        "kind": "llama-server",
+        "limit": null,
+        "name": "coder",
+        "reads": [],
+        "sends": [
+          "POST /v1/embeddings"
+        ],
+        "upload_bps": null,
+        "using": 0
+      }
+    ],
+    "readers": {},
+    "signing": []
+  }
+}

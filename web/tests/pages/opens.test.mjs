@@ -244,6 +244,59 @@ test('a readers’ key is pasted on the home page, and sent once, to /lent alone
   assert.deepEqual([page.went, page.unanswered], [[], []]);
 });
 
+// A lend's row takes headers the door adds to each request: it says none
+// is kept, with llama-server's --api-key as the example; Authorization by
+// default, the value typed and added, it names the header kept, never what
+// it says; the value is sent once, to /lent alone; Stop adding sends an
+// empty value. That it is kept, sent by the door in place of the friend's
+// and never told: tests/home.rs a_header_the_door_adds_is_given_on_the_home_page.
+test('a header the door adds is given in a lend’s row, and its value sent once, to /lent alone', async () => {
+  const lent = lend('coder', { kind: 'llama-server', limit: null });
+  const kept = { now: [] };
+  const page = await open(
+    `${AT}/?ui=a`,
+    ada({
+      lent: [lent],
+      'GET /lent': () => ({ lent: [lent], signing: [], readers: {}, headers: { coder: kept.now } }),
+      'POST /lent': (body) => {
+        const { name, value } = body.to.header;
+        kept.now = value ? [name.toLowerCase()] : [];
+        return { status: 204, body: undefined };
+      },
+    }),
+  );
+  const before = page.text('#lent li').join('\n');
+  assert.ok(
+    before.includes(
+      'If coder wants a header on each request, add it here: for llama-server started with --api-key abc123, Authorization with Bearer abc123.',
+    ),
+    before,
+  );
+  await page.type('#lent li input[name=secret]', 'Bearer typed-1');
+  await page.press('#lent li button', 'Add this header');
+  const after = page.text('#lent li').join('\n');
+  assert.ok(
+    after.includes(
+      'svrngs adds authorization to each request your friends make to coder. They never receive what it says.',
+    ),
+    after,
+  );
+  assert.ok(!after.includes('typed-1'), after);
+  assert.deepEqual(holding(page, 'typed-1'), ['POST /lent']);
+  const [, , sent] = page.asked.find(([method]) => method === 'POST');
+  assert.deepEqual(sent, {
+    lend: 'coder',
+    to: { header: { name: 'Authorization', value: 'Bearer typed-1' } },
+  });
+  await page.press('#lent li button', 'Stop adding authorization');
+  const posts = page.asked.filter(([method]) => method === 'POST');
+  assert.deepEqual(posts.at(-1)[2], {
+    lend: 'coder',
+    to: { header: { name: 'authorization', value: '' } },
+  });
+  assert.deepEqual([page.went, page.unanswered], [[], []]);
+});
+
 // browser::native_arrival::native_arrival_names_once_and_shows_the_actual_folder,
 // the phone page's half: a link's `&native` (the resolver's 303,
 // native-arrival.test.mjs) is asked of the issuer as a native welcome

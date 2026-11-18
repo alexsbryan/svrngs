@@ -1,0 +1,7 @@
+# Spot's nouns. The infra may not use them (scripts/vocab_check.py). Not
+# "budget", "provider" or "completions": svrngs's own code says each of its
+# own (a size budget, the sign-in provider, llama-server's kept paths).
+spot
+spots
+deepinfra
+openrouter

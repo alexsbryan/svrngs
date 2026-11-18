@@ -79,6 +79,25 @@ app's own pinned files, held by a guard in the first script that runs
 (svrn-docs `rings/current/WASM_IN_CARRIED_PAGES.md`, option D, its spike
 `wasm-guard-spike/`), with a budget raise only for what the cuts leave.
 
+**Spotting** (operator, 2026-11-17): friends lend their group a night of a
+provider's model without handing out a key, and chat with it from a
+phone; one change to svrngs and one example (DESIGN §3, "A model or a tool
+is lent like any app"). In this order, each with its demo:
+1. headers the door adds to each request, given in a lend's row on the
+   home page, for the lends `svrngs share` asks one of; landed
+   (`e7e354cc`), its demo `demo/runs/headers/2026-11-17/`: a llama-server
+   started with `--api-key` lent from Ana's home page, Bo's chat answered;
+2. Spot, an example in `apps/spot/` run from a checkout as `apps/doc/` is
+   (operator: "This is really just an example application for svrngs users
+   to bootstrap with"), its key given where `share` asks or as that
+   header; landed (`91d18af7`), its demo `demo/runs/spot/2026-11-17/`:
+   Ana lent it against a stand-in provider, and Bo chatted with it on
+   Spot's own page from his home page, through a real door. A run against
+   a real provider's key, and from a phone, are its lender's.
+Not an installer, a release or a `svrngs` verb of its own: an example is
+copied and run, and svrngs's distribution names no app but Give, whose
+machinery keeps any app.
+
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,
 groups, grapevine; V1 on n0" and "arch → groups → grapevine"; svrn-docs
@@ -474,6 +493,7 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | "Ask the house": an App Intent in the phone's app, from Siri, Shortcuts and the Action button, to a model the group lends at the phone's loopback (ROAD_TO_IOS_GA §7, steps 3 and 4) | the ios queue's recorded run passes, and a group that lends a model asks for it on a phone, counted |
 | a carried app's reads on a phone, counted: its lend worker (`web/lend.js`) answers its reads at the carried page's own origin, under `READS`, by a pass naming the lends it read, its answers made anew (`inert`, CARRIED_APP_READS §5); run so far only by a lent page's script test on WebKit, and its request is the page's own, so a POST goes as far as the door's `admit` lets it, unlike a computer's `routed` (DESIGN §3, "What it reads beside its own") | a group opens a carried app that reads a lend on a phone, counted |
 | a yes given in the phone's app, for a lend that asks one: until then its line on House says the app can't give the yes yet and where it can be given, and never opens it without the yes (DESIGN §3, "Asking for a yes"; `ralph/next/ios/CHARTER.md`, "Decide") | a person in a group stops at that line, counted |
+| one page that lists every friend's model and chats with any, a carried app on the shelf (Chat), designed on 2026-11-17 and set aside for each model's own page (DESIGN §3, "A model or a tool is lent like any app"). Another app is let in as the lender's readers' account or as no one, never with the headers its lender gave the lend (eudoxia-community `lend::admit`), so a key-protected model needs its lender to keep that key for readers too | a group asks for its models in one place, or lends a model with no page of its own, counted |
 | the packet path: the phone's lends at tunnel addresses in place of a listener on the phone's 127.0.0.1, which Apple's TN3120 rules out for a packet tunnel (ROAD_TO_IOS_GA §4, item 5) | App Review asks for it |
 | on-demand by domain: the phone's tunnel up only while an app asks a lend's address, so iOS's one VPN slot is free between uses (ROAD_TO_IOS_GA §2.3, the sheet's other-VPN line) | several in a group already run a VPN on their phone (the house's answers to HUMAN-ios-observe check 5, `demo/runs/ios/2026-10-30-observe/README.md`, "Left"), counted |
 | the phone's app on the App Store: an organization's developer account, since guideline 5.4 holds a VPN app to one, its data declaration, and TestFlight's external review first (ROAD_TO_IOS_GA §5, §6 v1 and GA); until then the house gets it by TestFlight's internal testers or an ad hoc build | the organization's enrollment (D-U-N-S) completes and the ios queue's recorded run passes |
@@ -1931,4 +1951,14 @@ dropped, the update's place one fixed directory, and the page read by
 `invite.rs`'s `kept_page`; the command's HTTP client moved to the node's
 one home, `http.rs`. The cap rose 388 in `.` and 145 in `js`
 (`scripts/lean_check.py`); `scripts/check.sh` passed at 1,385 s on
-2026-11-03.
+2026-11-03. Whoever installed svrngs updates it (2026-11-17, the operator,
+for svrngs as an Omarchy package; svrn-docs
+`rings/current/SVRNGS_PACKAGE.md`): a package that puts svrngs in
+`<prefix>/bin` puts `<prefix>/lib/svrngs/updated-by` beside it, saying how
+it is updated, and that svrngs never replaces itself: `svrngs update` says
+the package's words, `/update` answers `packaged` and the page offers
+nothing (`update.rs` `packaged`). One that cannot write beside itself is
+refused before the download. The workspace's version is the release's
+(1.10.0 is V1.10), `svrngs version` says it with the commit
+`build-release.sh` built it from, and `deploy-page.sh` says the GitHub
+Release that keeps each version for packages.

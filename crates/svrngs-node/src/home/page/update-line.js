@@ -28,6 +28,7 @@ const said = (state) => {
       return `Couldn’t check for updates: ${state.why ?? 'the page did not answer'}.`;
     case 'checking':
     case 'current':
+    case 'packaged':
     case 'dismissed':
       return '';
   }

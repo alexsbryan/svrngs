@@ -1,0 +1,4 @@
+# Each person's HOME and svrngs dir, their keys and tokens among them, and
+# the programs' own logs: kept on the host, never committed.
+data/home/
+data/logs/

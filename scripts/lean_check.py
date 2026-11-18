@@ -760,6 +760,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (51f5e669), and the resolver's new phrase and miss budgets (c327032f,
 # 2241e350). The caps come down to where they land. js 8,545 -> 8,540;
 # all code but JavaScript 21,359 -> 21,357.
+# (2026-11-17) Raised by the operator ("Raise it and proceed"), asked after an
+# economizing pass (837ff35f, -14 other -17 js: a lend's terms read once for
+# every change on the home page, apps' account and key one box, the command's
+# printed blocks whole, `lend_of`'s name and limit). The feature is headers the
+# door adds to each request, given in a lend’s row on the home page (+38 other, +25 js): the
+# change and its answer on /lent, one decider for it with `svrngs share`, the
+# store's keeper, the name and value refused unless a header can carry them,
+# and the door holding a file put there by hand to the same names. The rest
+# was not found: what remained cost precision (cli.rs's one-sentence refusal
+# variants merged, which tests match by name) or the closed set (`exit_code`'s
+# exhaustive match). all code but JavaScript 21,357 -> 21,381; js 8,540 -> 8,535,
+# where it lands.
 # (2026-11-17) The economizing pass before the shared database (operator,
 # "Now, own crate"; docs/PLAN.md §1, c0859400), over the code it extends:
 # carried.rs, door.rs, surface.rs, ring_routes.rs and ring_sync.rs. /v1/groups
@@ -776,12 +788,28 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # stages 1-4's, which follow and lower these caps. At the build's end each
 # cap comes down to where it landed. The core 3,501 -> 3,539; all code but
 # JavaScript 21,331 -> 23,031; js 8,540 -> 8,647.
+# (2026-11-18) Raised by the operator for PR #1, svrngs as a package (svrn-docs
+# rings/current/SVRNGS_PACKAGE.md: "Waits on the size-budget raise (+30 Rust,
+# +2 JavaScript lines)"; "get [it] merged"). Its economizing pass (bb2e9334,
+# -3 js: a socket the door didn't switch said closed in one place) holds the
+# JavaScript, +3 with the update line's `packaged` case, under the cap. The
+# rest is the feature (+32 other): `svrngs version`, who updates svrngs read
+# from the package's `updated-by`, the can't-write guard before the download,
+# their answers on the page and the command. Not found: merging the command's
+# one-sentence refusal variants (tests match each by name) and leave/accept
+# into one arm (8 lines formatted, not 6); `exit_code`'s match stays
+# exhaustive (AGENTS 9). all code but JavaScript 21,381 -> 21,413.
+# (2026-11-18) The two lines of work merged: the economizing pass's -26 and
+# the headers and package raises' +56 leave all code but JavaScript at 21,387
+# and JavaScript at 8,535. The shared database's ceiling keeps its +1,700 and
+# +107 over them, and the core's 3,539. All code but JavaScript -> 23,087; js
+# -> 8,642.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 23032,
+    ".": 23088,
 
-    "js": 8648,
+    "js": 8643,
 
     "swift": 1,
 }

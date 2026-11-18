@@ -1,6 +1,6 @@
 # Lend an AI model, and use a friend's
 
-If you run a model on your computer with llama-server, your group can chat with it, and their own programs can call it, through your computer. This page covers lending one, using a friend's, and the pantry: every friend's model and tool behind one address.
+If you run a model on your computer with llama-server, or pay for one from a provider, your group can chat with it, and their own programs can call it, through your computer. This page covers lending one, spotting your group a provider's model for the night, using a friend's, and the pantry: every friend's model and tool behind one address.
 
 In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doesn't find it.
 
@@ -22,7 +22,7 @@ When `http://127.0.0.1:8101/` opens llama-server's chat page on your computer, i
 svrngs share 8101 --program llama-server --name coder --group <group>
 ```
 
-It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. Then:
+It asks *"If coder takes a password on each request, …"*. Press Enter, unless you started llama-server with `--api-key abc123`; then paste `Bearer abc123`. The key stays on your computer. (Lent from your home page, add it as a header in its line under **What you lend** instead: [Lend something that takes a password on each request](lend.md#lend-something-that-takes-a-password-on-each-request).) Then:
 
 ```
 You lend coder (port 8101) to the groups you chose, as many at once as want it. …
@@ -95,6 +95,30 @@ svrngs share 8101 --program llama-server --name coder --limit 2 --group <group>
 ```
 
 Or on your home page, under **What you lend**, press its line to open it, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
+
+## Spot your group a provider's model for the night
+
+If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, OpenRouter, Together, Groq, OpenAI), you can lend it to your group for a while without giving anyone your key. Your friends chat with it on a phone or a computer. Spot is an example that comes with svrngs's source, in `apps/spot/`, to run as it is or to start your own from. It needs Node 18 or later, on a Mac as on Linux.
+
+Start it, saying the provider, the models, until when and how many tokens everyone together may use:
+
+```
+node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api
+```
+
+It says *"spot: deepseek-flash at http://127.0.0.1:8090/. Lend it, pasting your key where it asks (Bearer <key>):"* and the line to lend it with. In another terminal:
+
+```
+svrngs share 8090 --name deepseek-flash --program spot --group <group>
+```
+
+When it asks *"If deepseek-flash takes a password on each request, paste what it takes in its Authorization header"*, paste `Bearer ` and your key. It isn't shown. Or lend it from your home page, and add the header in its line: [Lend something that takes a password on each request](lend.md#lend-something-that-takes-a-password-on-each-request).
+
+Leave Spot running. Each answer prints a line: who, which model, how many tokens. At `--until`, or once the budget is spent, it refuses every chat and its page says why. Ctrl-C stops it and says who used how much; `svrngs unshare deepseek-flash` stops lending it.
+
+**Your friends** tap *"deepseek-flash"* on their home page, or the group's page on a phone. Spot's chat page opens: *"Ana's deepseek-flash"*. It tells them their messages go to the provider on your account, and that you see how many tokens they use, not what they write. Their chats stay in their own browser.
+
+**Your key** stays on your computer, with svrngs, which adds it to each of their requests on its way to Spot, in place of any key a friend sends. Neither your friends nor Spot's page ever have it, and Spot never writes it down. Everything your friends send reaches the provider under your account. More in [apps/spot/README.md](../../apps/spot/README.md).
 
 ## The pantry: every friend's model behind one address
 

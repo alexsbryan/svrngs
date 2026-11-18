@@ -1,0 +1,5 @@
+{
+  "llama_server": "version: 0 (unknown)",
+  "svrngs_commit": "4b3de07328f449daf49a6b911b40f2eeaa2dcbc3",
+  "model": "Qwen_Qwen2.5-0.5B-Instruct-GGUF_qwen2.5-0.5b-instruct-q4_k_m.gguf"
+}

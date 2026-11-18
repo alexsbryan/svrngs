@@ -121,6 +121,7 @@ use svrngs_node::removal::{
     LeaveAsk, Outcome, RemovalAsk, ACCEPTS_ROUTE, HANDOVERS_ROUTE, LEAVES_ROUTE, REMOVALS_ROUTE,
 };
 use svrngs_node::room;
+use svrngs_node::update;
 use svrngs_node::{Joined, Person, SigningKey};
 
 use crate::group::{self, Name, Seed};
@@ -228,6 +229,8 @@ pub enum Verb {
     Open(Option<String>, bool),
     /// `update`: the newest svrngs from the page this computer came from.
     Update,
+    /// `version`: this build's release, and the commit it was built from.
+    Version,
     /// `restart`: svrngs stopped and started by what keeps it running.
     Restart,
     Relay(Relay),
@@ -495,6 +498,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         }
         "open" => Ok(Verb::Open(positional, print)),
         "update" => Ok(Verb::Update),
+        "version" | "--version" => Ok(Verb::Version),
         "restart" => Ok(Verb::Restart),
         "guide" => Ok(Verb::Guide),
         "check" => {
@@ -747,16 +751,22 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
     let root = here.root().to_path_buf();
     let said = match verb {
         Verb::Help => format!("{USAGE}\n"),
+        // The release (1.10.0 is V1.10) and the commit build-release.sh
+        // built it from, which a build by hand has none of.
+        Verb::Version => match option_env!("SVRNGS_COMMIT") {
+            Some(commit) => format!("svrngs {} ({commit})\n", env!("CARGO_PKG_VERSION")),
+            None => format!("svrngs {}\n", env!("CARGO_PKG_VERSION")),
+        },
         Verb::Guide => svrngs_node::surface::GUIDE.to_string(),
         Verb::Check(dir) => checked(&dir)?,
         Verb::Relay(asked) => relay::run(asked, &root).await.map(|()| String::new())?,
         Verb::Unshare(name, groups) => unshare(&root, &name, &groups)?.to_string(),
         Verb::Open(at, print) => open(here, at.as_deref(), print).await?,
-        Verb::Update => match svrngs_node::update::apply(&root).await? {
-            svrngs_node::update::Outcome::Current => "This computer has the latest svrngs.\n",
-            svrngs_node::update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n",
-        }
-        .to_string(),
+        Verb::Update => match update::apply(&root).await? {
+            update::Outcome::Current => "This computer has the latest svrngs.\n".into(),
+            update::Outcome::Updated => "Updated. `svrngs restart` uses it.\n".into(),
+            update::Outcome::Packaged(words) => format!("{words}\n"),
+        },
         Verb::Restart => restart(&root)?,
         Verb::Folder { dir, group } => format!("{}\n", folder(here, dir, &group).await?),
         Verb::Remove {
@@ -818,14 +828,12 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
                 tracing::debug!(target: "cli", lend = %lend.name, "cli: share — it signs people in with svrngs: a client id and secret made for its app form");
                 lend.sign_in_with_svrngs = Some(client.clone());
             }
-            let raw = matches!(lend.source, Source::Raw(..));
-            let secret = match (client.is_some() || raw, accounts) {
-                (true, _) => None,
-                (false, Some(signs)) => {
-                    tracing::debug!(target: "cli", lend = %lend.name, ?signs, "cli: share — no password asked: its people sign in to it once, with accounts its lender makes (Accounts), or it takes each person from the door's header (Header)");
+            let secret = match share::adds_headers(&lend, theirs) {
+                false => {
+                    tracing::debug!(target: "cli", lend = %lend.name, ?accounts, "cli: share — no password asked: it signs each person in, with svrngs, with accounts its lender makes (Accounts) or from the door's header (Header), or it is raw");
                     None
                 }
-                (false, None) => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
+                true => here.prompt(&lend.name, &format!("If {} takes a password on each request, paste what it takes in its Authorization header, then press Enter (Enter alone for none): ", lend.name), false)?,
             };
             share_lend(&root, &lend, secret.as_deref())?;
             if asked.readers {
@@ -1185,14 +1193,10 @@ impl std::fmt::Display for Printed {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "  {}", self.client)?;
         if let Some(https) = &self.https {
-            writeln!(f)?;
-            writeln!(f, "or, to open it in a browser:")?;
-            writeln!(f)?;
-            writeln!(f, "  {https}")?;
+            writeln!(f, "\nor, to open it in a browser:\n\n  {https}")?;
         }
         if let Some((_, host)) = self.page.as_ref().and_then(place) {
-            writeln!(f)?;
-            writeln!(f, "On a phone, each app opens at an address of its own under {host}, which can see which app is opened.")?;
+            writeln!(f, "\nOn a phone, each app opens at an address of its own under {host}, which can see which app is opened.")?;
         }
         Ok(())
     }
@@ -1298,9 +1302,7 @@ impl std::fmt::Display for Said {
                 if !beside.is_empty() {
                     writeln!(f, "{}", namesakes_said(beside, seed.name().as_str()))?;
                 }
-                writeln!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:")?;
-                writeln!(f)?;
-                write!(f, "{link}")
+                write!(f, "Send this link to the people you want in it. It works for a day, while this computer is on:\n\n{link}")
             }
             Said::Linked { seed, link, device } => {
                 let group = seed.name();
@@ -1311,9 +1313,7 @@ impl std::fmt::Display for Said {
                         writeln!(f, "A computer or phone already in {group} on its own stays as it joined.")?;
                     }
                 }
-                writeln!(f, "It works for a day, while this computer is on:")?;
-                writeln!(f)?;
-                write!(f, "{link}")
+                write!(f, "It works for a day, while this computer is on:\n\n{link}")
             }
             Said::Joined { seed, person } => {
                 writeln!(f, "You're in {}, as {person}.", seed.name())

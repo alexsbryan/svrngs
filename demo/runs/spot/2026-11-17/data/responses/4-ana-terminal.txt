@@ -1,0 +1,6 @@
+spot: deepseek-flash at http://127.0.0.1:8312/. Lend it, pasting your key where it asks (Bearer <key>):
+  svrngs share 8312 --name deepseek-flash --program spot --group <group>
+spot: bo, deepseek-flash, 64 tokens (64 of 60)
+spot: bo, refused: its 60 tokens are spent
+spot: stopped. Used: bo 64. Stop lending it: svrngs unshare deepseek-flash
+

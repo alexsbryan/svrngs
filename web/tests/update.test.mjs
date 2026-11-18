@@ -40,6 +40,11 @@ test('a check that cannot be judged is not current, and says nothing until asked
   );
 });
 
+test('a svrngs a package updates offers nothing, and runs nothing', () => {
+  const checked = step(FIRST, { type: 'checked', state: 'packaged' });
+  assert.deepEqual([checked.state.at.update, checked.effects], ['packaged', []]);
+});
+
 test('an unknown answer is unread, never current', () => {
   const checked = step(FIRST, { type: 'checked', state: 'unknown', why: 'no page kept' });
   assert.deepEqual([checked.state.at.update, checked.state.why], ['unread', 'no page kept']);

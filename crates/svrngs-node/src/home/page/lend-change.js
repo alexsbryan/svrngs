@@ -26,10 +26,12 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * (`null`); its audience, the group ids that can open it; or its lending
  * stopped; or the account apps read it through, its name and password
  * typed on this row and sent once, to this computer alone, or the key
- * pasted there. An audience-only change preserves every other setting
+ * pasted there, or a header svrngs adds to each request, an empty value
+ * stopping it. An audience-only change preserves every other setting
  * (SCOPE_PARALLEL.md, `POST /lent`).
  * @typedef {{ limit: number | null } | { groups: string[] } | 'stop'
- *   | { readers: { name: string, password: string } } | { key: string }} To
+ *   | { readers: { name: string, password: string } } | { key: string }
+ *   | { header: { name: string, value: string } }} To
  */
 
 /**
@@ -42,6 +44,8 @@ import { chosen } from './group-choice.js?v=__VERSION__';
  * @property {string} [many]
  * @property {string} [account]
  * @property {string} [password]
+ * @property {string} [header]
+ * @property {string} [secret]
  * @property {string[]} groups
  * @property {Signed} [shown]
  */
@@ -71,7 +75,14 @@ import { chosen } from './group-choice.js?v=__VERSION__';
 
 // What a change made clears: the typed fields, the password among them, and
 // what was said.
-const CLEARED = { many: undefined, account: undefined, password: undefined, said: '' };
+const CLEARED = {
+  many: undefined,
+  account: undefined,
+  password: undefined,
+  header: undefined,
+  secret: undefined,
+  said: '',
+};
 
 // The change asked, `effect` run, unless one is under way.
 /**

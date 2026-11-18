@@ -891,11 +891,12 @@ fn secret_headers(dir: &std::path::Path, lend: &LendName) -> Vec<(HeaderName, He
     read_declared_in(dir)
         .into_iter()
         .filter_map(|(name, value)| {
-            let pair =
-                (HeaderName::try_from(name.as_str()).ok()).zip(HeaderValue::try_from(value).ok());
+            // A file put there by hand is held to what the home page lets in.
+            let fits = crate::share::key_header_fits(&name).then_some(());
+            let pair = (fits.and(HeaderName::try_from(name.as_str()).ok())).zip(HeaderValue::try_from(value).ok());
             if pair.is_none() {
                 tracing::warn!(target: "door", lend = %lend, header = %name,
-                    "door: a declared secret cannot be a header, so it is not sent");
+                    "door: a declared secret cannot be a header, or names one the door keeps for itself, so it is not sent");
             }
             pair
         })
