@@ -17,7 +17,7 @@ computer answers again.
 
 1. In a terminal, from svrngs's source, with svrngs running. Leave it open:
    ```
-   node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api
+   node apps/doc/server.mjs --port 4318 --keep ~/doc
    ```
 2. Lend it from your home page: under **Already running here**, press
    **Look for programs running on this computer**. Fill in **Its name:**
@@ -28,9 +28,7 @@ computer answers again.
 
 `--keep` is where the doc is kept, as one JSON line per edit
 (`acts.jsonl`), read back whole on a restart; the doc is yours to move or
-delete. `--svrngs` is svrngs's `api` file, which tells the server your
-name, so every page says whose doc it is. Everyone in your groups then finds "doc"
-among what you lend, on their phone or on their svrngs home page.
+delete. Everyone in your groups then finds "doc" among what you lend, on their phone or on their svrngs home page.
 `?wall` after its address draws it for a projector.
 
 ## How it works

@@ -162,7 +162,7 @@ runs it with three people.
 One person lends a document everyone writes at once. Each person's cursor
 shows their name, and each paragraph says who last edited it. If the
 lending computer stops answering, every page says that computer *"didn’t
-answer"*, with *"Goodnight from Sam."*, and keeps what you write in your
+answer"*, with *"Goodnight."*, and keeps what you write in your
 browser, then joins it with everyone's when that computer answers again.
 
 The doc isn't on the tick list either. You lend it from svrngs's source

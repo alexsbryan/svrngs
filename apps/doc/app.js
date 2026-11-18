@@ -31,18 +31,6 @@ const ydoc = new Y.Doc();
 // not Tiptap, carries it.
 const awareness = new awarenessProtocol.Awareness(ydoc);
 
-// The lender's name, kept in this browser from the last time the server
-// said it, so a page that opens while the lender's computer is not
-// answering can still say whose doc this is.
-const LENDER = 'doc:lender';
-const remembered = () => {
-  try {
-    return localStorage.getItem(LENDER);
-  } catch {
-    return null;
-  }
-};
-let lender = remembered();
 let you;
 
 // The doc in this browser, so what is written while the server is not
@@ -107,20 +95,19 @@ const editor = new Editor({
   ],
 });
 
-const possessive = (name) => `${name}’s`;
 function named() {
-  el('title').textContent = lender ? `${possessive(lender)} doc` : 'Doc';
+  // Whose doc it is, the page it was opened from says.
+  el('title').textContent = 'Doc';
   document.title = el('title').textContent;
   // The goodnight's heading and last line are svrngs's own for a lend whose
   // computer did not answer (crates/svrngs-node/src/home/away.html, V1.1.3:
   // "☾ {whose} window is dark" … "Goodnight from {who}."), as is its look
   // (index.html). Its middle is the doc's: the doc stays open, and writing
   // goes on in it.
-  const whose = lender ? possessive(lender) : null;
-  el('night-title').textContent = whose ? `☾ ${whose} window is dark` : '☾ This window is dark';
+  el('night-title').textContent = '☾ This window is dark';
   el('night-words').textContent =
-    `${whose ? `${whose} computer` : 'The computer lending this doc'} didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.`;
-  el('night-bye').textContent = lender ? `Goodnight from ${lender}.` : 'Goodnight.';
+    'The computer lending this doc didn’t answer. You can keep writing: what you write stays in this browser, and joins everyone’s writing once that computer answers.';
+  el('night-bye').textContent = 'Goodnight.';
   if (you === undefined) return;
   el('you').textContent = you
     ? `You’re ${you}. Everyone here writes in it at once.`
@@ -204,14 +191,6 @@ sync({
   on: {
     hello(h) {
       you = h.you;
-      if (h.lender) {
-        lender = h.lender;
-        try {
-          localStorage.setItem(LENDER, lender);
-        } catch {
-          // A browser that keeps nothing still shows the name this time.
-        }
-      }
       awareness.setLocalStateField('user', { name: you ?? '', color: colorFor(you) });
       named();
     },
@@ -236,9 +215,8 @@ sync({
     },
     joined({ kept }) {
       if (!kept) return;
-      const who = lender ? `${possessive(lender)} computer` : 'The computer lending it';
       el('back').textContent =
-        `${who} answered, and what you wrote meanwhile joined everyone’s writing.`;
+        'The computer lending it answered, and what you wrote meanwhile joined everyone’s writing.';
       el('back').hidden = false;
       clearTimeout(backTimer);
       backTimer = setTimeout(() => (el('back').hidden = true), 10_000);

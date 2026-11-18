@@ -158,6 +158,10 @@ test("a page's socket is upgraded at /sync, greeted as the door named it, and it
   await until('both are greeted', () => bo.seen.hello && zoe.seen.hello);
   await until("both are told they hold the server's doc", () => bo.seen.synced && zoe.seen.synced);
   assert.deepEqual([bo.seen.hello.you, zoe.seen.hello.you], ['Bo', 'Zoë']);
+  // An app that runs, and asks svrngs nothing: the greeting is who the door
+  // named, never a lender's name asked of svrngs. Planted, watched failing:
+  // HELLO carrying `lender`.
+  assert.deepEqual(Object.keys(bo.seen.hello).sort(), ['key', 'you']);
   bo.write('bring chips');
   await until('Zoë reads it', () => zoe.text().includes('bring chips'));
 });
