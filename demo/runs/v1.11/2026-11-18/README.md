@@ -44,7 +44,7 @@ ships: `build-web.sh` copies `web/`, `crates/svrngs-node/src/home/` and
 | svrngs puts its own in place of a friend's header of that name, and drops it from an answer that repeats it | `door.rs` `rewrite_headers` (869) and `drop_echoed_secret` (1067), as before this release; `crates/svrngs-node/tests/door/main.rs` `a_forged_identity_header_is_replaced_by_the_verified_one` (a friend's `Authorization` in three spellings, then an echoed one) |
 | The program sees all your friends arrive with the one key | `door.rs` `secret_headers` (890): the lend's kept headers, the same for every asker; `docs/guide/lend.md` "they all arrive as that one password" |
 | A program that signs each person in itself takes no header | `share.rs` `adds_headers` (328), which `svrngs share`'s prompt and `home.rs` (531, "It signs each person in, so svrngs adds no header to it.") both read |
-| `svrngs version` says its release and the commit it was built from | b97e7dd6, `cli.rs:756`; `build-release.sh:39`; `help.txt:97`; READBACK_VERSION |
+| `svrngs version` says its release and the commit it was built from | b97e7dd6, `cli.rs:756`; `build-release.sh:39`; `help.txt:97`; the downloaded darwin-aarch64 `svrngs` said `svrngs 1.11.0 (08441174)` (`version.txt`) |
 | V1.11 is 1.11.0 | `Cargo.toml` `[workspace.package]`; svrn-docs `rings/current/SVRNGS_PACKAGE.md`, decision 1 ("the release called V1.10 is `1.10.0`; the next is `1.11.0`") |
 | A package's line beside svrngs: it never replaces itself, `svrngs update` says the line, the home page offers no update | b97e7dd6, `update.rs` `UPDATED_BY` (39) and `packaged` (75), `home.rs:359,373` (`packaged`), `update-line.js` `SHOWN` (12, no `packaged`); `crates/svrngs-node/tests/update.rs` `a_svrngs_a_package_updates_never_replaces_itself`; `web/tests/update.test.mjs` 'a svrngs a package updates offers nothing, and runs nothing'. No package was installed by this run |
 | Installed with the line, svrngs updates itself as before | `update.rs` `check` asks the page as before when no line is there; `tests/update.rs` `a_page_s_release_replaces_the_binary_read_with_no_socket` |
@@ -57,16 +57,100 @@ ships: `build-web.sh` copies `web/`, `crates/svrngs-node/src/home/` and
 
 ## Validation before packaging
 
-VALIDATION
+`scripts/check.sh` ran whole on the Mac at 08441174 (`v1.11`), in a
+clean detached worktree of its own after `npm ci --prefix web`, under the
+gate lock: exit 0 in 1,681 s, all 45 of its steps passed, none
+could-not-judge or never-ran (`gate-08441174.txt`). The check ran on the
+tagged commit itself, so what it passed is what was published.
+
+In the conformance canary, "its worker, after svrngs's restarts" was
+could-not-judge in WebKit, on a computer and with the wildcard, as in
+V1.10.1: the harness can't stop WebKit's worker. It passed in Chromium.
+The playback step's rate counts only the four seeks this worktree ran,
+since its record is kept in the checkout's own `target/`.
+
+Not run on Linux: V1.8.2's whole Linux run
+(`../../v1.8.2/2026-11-15/gate-3da19985-linux.txt`) is still the last one.
 
 ## Publication
 
-PUBLICATION
+The worktree was `/Users/alexsbryan/dev/svrngs-v1.11`, detached at
+08441174, with its own `target/` and `web/target/`. Free disk was 50 GiB
+at the start. After the check, its `target/debug` (7.6 GiB) was deleted
+before the release build, leaving 46 GiB.
+
+`publish.py` ran once, under the gate lock, with `CARGO_TARGET_DIR`
+unset, from 2026-11-18 16:38 to 16:45 UTC, exit 0 (`publish.json`,
+`publish.log`). Just before it started, the live `sw.js` still named
+`d5a753aadf4c`. The record was written outside the worktree and copied
+here after. The build meets its groups at n0's relays (`SHIPPED`), so no
+relay was asked. The page built as version 095d48338161, and `svrngs` and
+`give` built for all four platforms. Vercel deployment
+`dpl_97wDund553LUQbHCwydmorxTUdg6` reached production READY, aliased to
+`https://group.svrnme.sh`. The CLI wrote `.vercel/`, `.env.local` and
+`.gitignore` into the upload directory. All of them answered 404 live
+(`.vercel/README.txt` too, by `curl`; `version.txt`), and they were
+deleted from it after. Then the worktree was removed.
+
+New since V1.10.1, `deploy-page.sh` ends by printing the line that keeps
+this version for packages (b97e7dd6): `git tag v1.11.0 && git push origin
+v1.11.0 && gh release create v1.11.0 <site>/get/*.tar.gz
+<site>/get/SHA256SUMS --notes 'See RELEASES.md.'`. It pushes, so it is
+the operator's, and it was not run. The release's tag is `v1.11`, as
+V1.10.1's is `v1.10.1`. The package's tag would be `v1.11.0`, and its
+files the eight downloads `SHA256SUMS` names. The upload directory's
+`get/` is kept outside the repository for that line, its CLI files gone.
 
 ## Readback
 
-READBACK
+`verify.py` passed at 2026-11-18 16:46 UTC (`verification.json`). Its
+ten planted faults were rejected first. Then:
+
+- 79 public files fetched from `group.svrnme.sh` each equaled the built
+  site's bytes.
+- The live `get/SHA256SUMS` equaled the built one (`SHA256SUMS`,
+  `live-sums.txt`) and named exactly the eight downloads.
+- The live page is version 095d48338161, not V1.10.1's d5a753aadf4c, and
+  the live `sw.js` names it and sends a navigation to the network first.
+- The live `install.sh` equals the built one.
+- Both frame policies were as `vercel.json` sets them.
+- `lend.js` was served with exactly one policy, `default-src 'none';
+  connect-src 'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'`,
+  as `vercel.json` sets it, at `group.svrnme.sh` and at
+  `release-08441174.group.svrnme.sh`.
+- `release-08441174.group.svrnme.sh` served the same page.
+- `.env.local`, `.vercel/project.json`, `.gitignore` and `vercel.json`
+  answered 404.
+- The downloaded darwin-aarch64 `svrngs` and `give` started.
+
+Beside it, not one of its checks: the downloaded darwin-aarch64 `svrngs`,
+its digest the one `SHA256SUMS` names, said `svrngs 1.11.0 (08441174)` to
+`svrngs version` and to `svrngs --version` (`version.txt`).
+
+No other platform's program was run here, and no home page was opened
+from the published build: the home page's own evidence is the gates
+above.
 
 ## Not verified, not done
 
-NOT_VERIFIED
+- No header was added to a lend on the published build. Adding one is
+  held by the headers run, one host on Fedora with svrngs built at
+  4b3de073, and by the gate's `tests/home.rs` and
+  `web/tests/pages/opens.test.mjs`.
+- No package was installed. A package's `updated-by` line is held by
+  `tests/update.rs` and `web/tests/update.test.mjs`. svrn-docs
+  `SVRNGS_PACKAGE.md` records one run on LittleMac, from a local build of
+  the branch before it merged, not from this release.
+- The package's tag `v1.11.0` and its GitHub Release were not made: they
+  push, and they are the operator's.
+- Spot ran against a stand-in provider on one host (its run), not with a
+  provider's real key, and not by a phone's own way through the group's
+  page.
+- An app's own worker after svrngs's worker restarts was not judged in
+  WebKit, so not as on an iPhone (the canary's could-not-judge above).
+- No phone opened the published page.
+- No Linux gate ran; V1.8.2's is the last.
+- Safari with VoiceOver, and Firefox, were not run.
+- No platform's program but darwin-aarch64's was run.
+- The resolver was not deployed; its code is unchanged since `v1.10`,
+  and `join.svrnme.sh` was not read here.

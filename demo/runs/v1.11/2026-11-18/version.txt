@@ -1,0 +1,23 @@
+The downloaded darwin-aarch64 svrngs, asked its version, read at
+2026-11-18T16:46:28Z (an observation beside verify.py, not one of its checks):
+
+  curl -sS -o svrngs.tar.gz https://group.svrnme.sh/get/svrngs-darwin-aarch64.tar.gz
+  shasum -a 256 svrngs.tar.gz
+  41dfeda7b7b8746dd60d10a67794a16037dd52b885d53c9f25c0baa5e87e55d9  svrngs.tar.gz
+  (SHA256SUMS: 41dfeda7b7b8746dd60d10a67794a16037dd52b885d53c9f25c0baa5e87e55d9  svrngs-darwin-aarch64.tar.gz)
+
+  tar -xzf svrngs.tar.gz && HOME=<empty> SVRNGS_DIR=<empty>/data ./svrngs version
+  svrngs 1.11.0 (08441174)
+  exit 0
+
+  ./svrngs --version
+  svrngs 1.11.0 (08441174)
+  exit 0
+
+The hidden files, by curl, after the deploy:
+
+  404 .vercel/README.txt
+  404 .env.local
+  404 .vercel/project.json
+  404 .gitignore
+  404 vercel.json

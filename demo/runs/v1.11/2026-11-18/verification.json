@@ -1,0 +1,452 @@
+{
+  "source": "08441174127ac1140ec6c70c7199853aa7d8ded3",
+  "checked": "2026-11-18T16:45:40.740384+00:00",
+  "base": "https://group.svrnme.sh/",
+  "state": "passed",
+  "page_version": {
+    "previous": "d5a753aadf4c",
+    "live": "095d48338161"
+  },
+  "network_first": true,
+  "install": {
+    "from": "https://group.svrnme.sh/",
+    "sums": "https://group.svrnme.sh/get/SHA256SUMS",
+    "equal_to_built": true
+  },
+  "files": [
+    {
+      "path": "404.html",
+      "bytes": 4109,
+      "sha256": "043783af386eb623cdfb1527bb6d894ece8eb397e2628b55c1094931ed270401"
+    },
+    {
+      "path": "app.js",
+      "bytes": 4390,
+      "sha256": "14541880a6049feaabc3a9c5534f628d6a7590a426d2e68f4e3976632d184047"
+    },
+    {
+      "path": "apple-touch-icon.png",
+      "bytes": 10605,
+      "sha256": "eed43acddec15fc3ed5b597bf7d92365d0b55499b7dd62ecb1ceaf34684312d6"
+    },
+    {
+      "path": "authority.js",
+      "bytes": 11940,
+      "sha256": "d14197409085b4f36b283d6ca44984e21d87f03b9d00d85eb65af445c1de9a95"
+    },
+    {
+      "path": "away.html",
+      "bytes": 1526,
+      "sha256": "76f9e85e50b4c5dff7676d17caef1010c2227cd33533c0af5bbc148c1838e4d8"
+    },
+    {
+      "path": "favicon.svg",
+      "bytes": 866,
+      "sha256": "1033ebc04c4236b8624019f378d1b5bab4caa2ef898be3fcb7a2cce18ee51bd0"
+    },
+    {
+      "path": "get/SHA256SUMS",
+      "bytes": 744,
+      "sha256": "6e278b3e827441e4d13d9c1094d18b8a7984797a546ae292a6789868500a9df7"
+    },
+    {
+      "path": "get/give-darwin-aarch64.tar.gz",
+      "bytes": 1463631,
+      "sha256": "f1e0d307717c9bf9160815b8cc317ce1247f648fee5c84d35530727ab74f0720"
+    },
+    {
+      "path": "get/give-darwin-x86_64.tar.gz",
+      "bytes": 1542004,
+      "sha256": "3c6128e045d04cccd5398c8be61630627401fd78853cd4ce2fead49c574d8ce2"
+    },
+    {
+      "path": "get/give-linux-aarch64.tar.gz",
+      "bytes": 1377212,
+      "sha256": "07109248f898d39bc0ab6ce837888a73433be0b433e24c8e820cb7a5490cecd9"
+    },
+    {
+      "path": "get/give-linux-x86_64.tar.gz",
+      "bytes": 1474844,
+      "sha256": "c4b9780b10ce46e759896527d5e4c61aff9a87b0c2730c1846d40e545e9e29f5"
+    },
+    {
+      "path": "get/svrngs-darwin-aarch64.tar.gz",
+      "bytes": 15953667,
+      "sha256": "41dfeda7b7b8746dd60d10a67794a16037dd52b885d53c9f25c0baa5e87e55d9"
+    },
+    {
+      "path": "get/svrngs-darwin-x86_64.tar.gz",
+      "bytes": 16809264,
+      "sha256": "053a396271ce838707a3003b3a0a3b475af2e5ea3e4cf93d7a58810e1be53f97"
+    },
+    {
+      "path": "get/svrngs-linux-aarch64.tar.gz",
+      "bytes": 14775901,
+      "sha256": "1de694b345d62ea0cd36f36f5e1e0b0d5dc06b91c87ab6923871413a40f1d840"
+    },
+    {
+      "path": "get/svrngs-linux-x86_64.tar.gz",
+      "bytes": 15737593,
+      "sha256": "247402b9ad03f85f80a23647b2a94e44e1e3324cee3f02de969306417dbf6f83"
+    },
+    {
+      "path": "index.html",
+      "bytes": 4100,
+      "sha256": "af5db08028fc49314509e1b7f5f03c4a683d8c56ec0cb6898dde831d69111391"
+    },
+    {
+      "path": "install.sh",
+      "bytes": 12381,
+      "sha256": "93bf311e5fcb89669ead3c6f5e438bae39b015294d36a58f52976c43f057ffb6"
+    },
+    {
+      "path": "lend.js",
+      "bytes": 69629,
+      "sha256": "41102dd5cdfda4e068c9493490fae58d44f09cfe7a2bde9262ff7dc500fb2a6d"
+    },
+    {
+      "path": "look.css",
+      "bytes": 17730,
+      "sha256": "580490ddfc83455e8071c22aa3e406a6387e130587579a7572c82faecf7e42bd"
+    },
+    {
+      "path": "open.html",
+      "bytes": 872,
+      "sha256": "1436b5a1375288d15365109101a0ec114228cdfedaeb6cb29c49469292f1f99a"
+    },
+    {
+      "path": "open.js",
+      "bytes": 11064,
+      "sha256": "87a61b7af86299dba82524a606487095b84d2d1027ed4fab124f8b408b90451c"
+    },
+    {
+      "path": "page/acts.js",
+      "bytes": 8427,
+      "sha256": "28a145a275f1b0c1f6f618584417f9e884bfb3a64bcf0c01a1affe8908753bde"
+    },
+    {
+      "path": "page/among.js",
+      "bytes": 7541,
+      "sha256": "c34f53ba3ceedb67bceb1de4b6fa29a377e9a38bc1b3a677fb29e64bea204af8"
+    },
+    {
+      "path": "page/ask-form.js",
+      "bytes": 1369,
+      "sha256": "1db6759b7120e1a68f90b33223f15810a5319e47a1042dbf4cd95c93af492e19"
+    },
+    {
+      "path": "page/ask-when-read.js",
+      "bytes": 1017,
+      "sha256": "30358ad3d68aab0291fc0cc3c8e4120cc5bad9d24393a3be8f55abb80fe80be6"
+    },
+    {
+      "path": "page/ask.js",
+      "bytes": 5830,
+      "sha256": "b59cd5ed3be32eadca35c20935c246feb938cabda4592eab27c711d356f9c052"
+    },
+    {
+      "path": "page/computer-line.js",
+      "bytes": 2319,
+      "sha256": "516b966755b3300409b7fd9a441d413fb2ead17ee39d164d6ce8789969e29294"
+    },
+    {
+      "path": "page/computer.js",
+      "bytes": 4326,
+      "sha256": "b1900c9f7fea67d7dfa20c25fe0de054b0a057891aa3568c7e66268d105cbc1f"
+    },
+    {
+      "path": "page/dial.js",
+      "bytes": 11679,
+      "sha256": "244b3f65310984ddfb60e622aa98aa8dcaaa413c7b57544b9da712ed63d38b52"
+    },
+    {
+      "path": "page/door.js",
+      "bytes": 1938,
+      "sha256": "5eabfbe25566f45d031fccaa81e07c6093c49a17da4367bf941f7af764659d7a"
+    },
+    {
+      "path": "page/ends.js",
+      "bytes": 642,
+      "sha256": "8b5450ee457926cdd8b62e179e74671f87c1f5ce895314fdc4a085ee6f423fa5"
+    },
+    {
+      "path": "page/enter.js",
+      "bytes": 25166,
+      "sha256": "0eb7b41ff293a73be105c1e3a7f9a58d32e4bf39f685b316f74086ecf587cac8"
+    },
+    {
+      "path": "page/group-door.js",
+      "bytes": 1654,
+      "sha256": "3031bc256e75bcf3435a9864a52cb012ad04770bfe24afca140e368c57e4b40d"
+    },
+    {
+      "path": "page/guest-lends.js",
+      "bytes": 980,
+      "sha256": "7b48398be1751b6ebc7ee382a8c1c9e63d5b38fc623ce3a67e4ab7b0d83178f6"
+    },
+    {
+      "path": "page/hand.js",
+      "bytes": 10627,
+      "sha256": "6a265249369a2e1ad6601d60b30d84ef1dffbddfedec9097ddef17a599f04515"
+    },
+    {
+      "path": "page/how-it-reaches.js",
+      "bytes": 1674,
+      "sha256": "d077499ffcaa1599ba90faf59493ff7ffb1d266a0a9253d2970212d09eb9d7ac"
+    },
+    {
+      "path": "page/index.js",
+      "bytes": 3731,
+      "sha256": "556b52250b9061010bbe8450bb24e8db8514545148d9379ff3954c2ddd6ed2cb"
+    },
+    {
+      "path": "page/join.js",
+      "bytes": 12703,
+      "sha256": "2bb007f60a714e14291be17a0a51e09d173a186fb6ef20ec18c97f75b6a336d1"
+    },
+    {
+      "path": "page/lend-line.js",
+      "bytes": 2324,
+      "sha256": "8aebe2d2bb1b87c52e6d7784e84dc80a2fa2ec418443d248cf7105ed10e404d0"
+    },
+    {
+      "path": "page/lent-index.js",
+      "bytes": 1244,
+      "sha256": "61958ce8753482c911fa2ef67a7346da2d5280d0bf14a794d835776690754775"
+    },
+    {
+      "path": "page/name-form.js",
+      "bytes": 2476,
+      "sha256": "64336b8aad41d8f44132f8fcf166da155efe6d0deed0ab6eef6684453d32635d"
+    },
+    {
+      "path": "page/offered-groups.js",
+      "bytes": 1038,
+      "sha256": "177807e89ec0fe9f3fe69be42832055ae4c83795e94cbddbb94f1a05df32d5ef"
+    },
+    {
+      "path": "page/one-tab.js",
+      "bytes": 915,
+      "sha256": "7873fdae30ecaa30aa5ad27822eb303eccbb8578b0fb3cf36fb27fb147ca5b9e"
+    },
+    {
+      "path": "page/opens-as-you.js",
+      "bytes": 1609,
+      "sha256": "cf3c0161d1ae8755768e7c200b9a0b31d3ae08ce0fcb905770c4949dbc7e56dd"
+    },
+    {
+      "path": "page/page.js",
+      "bytes": 14066,
+      "sha256": "dcf25fa90790141709429b951c869c8746e9b5a5991178e5fec2ccaff4ab5249"
+    },
+    {
+      "path": "page/removals.js",
+      "bytes": 788,
+      "sha256": "b1f16d27db11b95b17c8f3dd3c9503cf4b087208d2c66809d4915c31b9f85227"
+    },
+    {
+      "path": "page/shelf.js",
+      "bytes": 1257,
+      "sha256": "e86c068fbcf760a5b818fea262d9ea6e55b46a86229b72e2e3fe2c006cdb4cdd"
+    },
+    {
+      "path": "page/uses-hidden.js",
+      "bytes": 659,
+      "sha256": "769eb4b8e435082406cf531b841333c1a914de180939368b6ed53d88075925e7"
+    },
+    {
+      "path": "page/uses.js",
+      "bytes": 6937,
+      "sha256": "eb3e7f0901ba02dcb2844a53acde243dd966d778f402294adc87d236d3cf8644"
+    },
+    {
+      "path": "page/visit.js",
+      "bytes": 8618,
+      "sha256": "192d332276e3aca968413e4ca09f0e2bd46fb54b72634199184f5751c144d42d"
+    },
+    {
+      "path": "page/visiting-now.js",
+      "bytes": 1573,
+      "sha256": "a268bd9328651bd0356d57622b8063075be8a5191faeef51a06977c39bd4d919"
+    },
+    {
+      "path": "page/visitors.js",
+      "bytes": 867,
+      "sha256": "a1dc90fe92956bf155b708be5a1a7257d126f8e545cee8178954b57c0ed428a2"
+    },
+    {
+      "path": "page/what-acts-as-you.js",
+      "bytes": 4576,
+      "sha256": "a0bc96987a21504350d97b149eccbfa40c720f63675b810e5095e8e460f83e95"
+    },
+    {
+      "path": "page/what-apps-use.js",
+      "bytes": 1046,
+      "sha256": "dcbcde45bc46063b7650e5bc7174c0d4489e9614161d4e848a48b68921863208"
+    },
+    {
+      "path": "question.js",
+      "bytes": 24128,
+      "sha256": "f3886311c4c41a7b144ddb9c24ff6585191b3363bc2e67a3ed261e0fe72894a7"
+    },
+    {
+      "path": "session.js",
+      "bytes": 16070,
+      "sha256": "0393d9c07f47ad4e51fe436afb2589eb30709c5d1a9980c1910fa41d631e609e"
+    },
+    {
+      "path": "shim.js",
+      "bytes": 10321,
+      "sha256": "dba7d43d1dd323118bb880af3a49f010700335bff920e0e3260fa67368040b2c"
+    },
+    {
+      "path": "sign.html",
+      "bytes": 299,
+      "sha256": "357454f26d66a722d77ba8ba1cfcffe9adb69bcc08f2fe6d3bc2182dde36fe93"
+    },
+    {
+      "path": "sign.js",
+      "bytes": 9622,
+      "sha256": "f3e988c56d62b3389d8428f722ce1b2b67aea06b6835ec1d71dfa1f4dbf5dc98"
+    },
+    {
+      "path": "store.js",
+      "bytes": 22750,
+      "sha256": "6ba07fd3ea8fde596d5683dc65cf829c911b22e71141c6e320c85a4e04342b70"
+    },
+    {
+      "path": "sw.js",
+      "bytes": 6666,
+      "sha256": "90eb5d62821311169760a9563c706724af86d486c75f64ca5e438a767d5cbfbe"
+    },
+    {
+      "path": "ui/acts.js",
+      "bytes": 2113,
+      "sha256": "1ff5bdfc353d355e0ae1bcf8c7240fb41a36ab0b67d6f69d2b0883abbc002177"
+    },
+    {
+      "path": "ui/changes.js",
+      "bytes": 3657,
+      "sha256": "8433c9d35b961884e4594c0b68398ff3031e465195f6def7687e74a3abf84eac"
+    },
+    {
+      "path": "ui/copy.js",
+      "bytes": 4376,
+      "sha256": "cd1eef5968d05c3999d332509ad66f5dabc7839d47d726c3c1f8fed171a18d57"
+    },
+    {
+      "path": "ui/door.js",
+      "bytes": 7423,
+      "sha256": "bc92d37e577ed4729665db81304202216257af34ce323c2197d312f14f100f04"
+    },
+    {
+      "path": "ui/machine.js",
+      "bytes": 10573,
+      "sha256": "f48a769177b221138f27493829947b6ab8097e57d10fa41917cc671bb91dbfc0"
+    },
+    {
+      "path": "ui/parts.js",
+      "bytes": 6677,
+      "sha256": "2eb31b09a57f7d9b75f6fc430536e99d6677cf85fc998aedebcc6e8022f89b19"
+    },
+    {
+      "path": "ui/shelf.js",
+      "bytes": 11531,
+      "sha256": "75af51d349210b96bc0ec3e1bdcb4fe89e6efcc9cced9c5c7537946b14d55157"
+    },
+    {
+      "path": "ui/trace.js",
+      "bytes": 596,
+      "sha256": "bc1d744c5f8ffeaec6f6fb5215d9e8abe545ddc3a109f1c6139fc8b34580801b"
+    },
+    {
+      "path": "ui/uses.js",
+      "bytes": 2929,
+      "sha256": "f8a754fed334e43982aae38efef63ccb8a4a3d97e97159fa1c88730251c17ff5"
+    },
+    {
+      "path": "ui/view.js",
+      "bytes": 2112,
+      "sha256": "a4e027ad2d5fdaaef6034ed5d5cf1ba968a351cb04d7722a820e25cf9f91f99f"
+    },
+    {
+      "path": "ui/visitors.js",
+      "bytes": 1264,
+      "sha256": "cb9d984f1ae1641ff89f6cafab1395a110252420824d258ebbe513f1ee512852"
+    },
+    {
+      "path": "vendor/hooks.js",
+      "bytes": 3621,
+      "sha256": "981aca0954404a046d805bfa38ff2d8fbd856555d398d690e049b808e58cc847"
+    },
+    {
+      "path": "vendor/htm.js",
+      "bytes": 1207,
+      "sha256": "ab33dd3f38059b9be4d5f5350128eefb2356639c4e0bbe9d9e8b3ba75847e9e4"
+    },
+    {
+      "path": "vendor/preact.js",
+      "bytes": 12054,
+      "sha256": "997a7750f38b9e493f3ffe14708f94774c14b9d7f357eb5ac689bf3a47b0ea54"
+    },
+    {
+      "path": "wasm/svrngs_web.d.ts",
+      "bytes": 19595,
+      "sha256": "369226842523034a9ffa83be345cdef9cc604a22b3f7ce9db52db71618f6aca4"
+    },
+    {
+      "path": "wasm/svrngs_web.js",
+      "bytes": 77896,
+      "sha256": "db35a99e607f508b63e35c9fc2fed67bbc33c38ee7222c3fb28c6ba5a149162e"
+    },
+    {
+      "path": "wasm/svrngs_web_bg.wasm",
+      "bytes": 4595698,
+      "sha256": "7528febb7ad4e65eb3f3f2b1cc78321ecfbd9a48406ea67e3ffd2ced5ffb8fb4"
+    },
+    {
+      "path": "wasm/svrngs_web_bg.wasm.d.ts",
+      "bytes": 6442,
+      "sha256": "4b11646c12d602b0a6adb11ce9e06da7b7e1bd071e1444c7e05f6f4b1a8d11c9"
+    }
+  ],
+  "archives": {
+    "svrngs-darwin-aarch64.tar.gz": "41dfeda7b7b8746dd60d10a67794a16037dd52b885d53c9f25c0baa5e87e55d9",
+    "svrngs-darwin-x86_64.tar.gz": "053a396271ce838707a3003b3a0a3b475af2e5ea3e4cf93d7a58810e1be53f97",
+    "svrngs-linux-aarch64.tar.gz": "1de694b345d62ea0cd36f36f5e1e0b0d5dc06b91c87ab6923871413a40f1d840",
+    "svrngs-linux-x86_64.tar.gz": "247402b9ad03f85f80a23647b2a94e44e1e3324cee3f02de969306417dbf6f83",
+    "give-darwin-aarch64.tar.gz": "f1e0d307717c9bf9160815b8cc317ce1247f648fee5c84d35530727ab74f0720",
+    "give-darwin-x86_64.tar.gz": "3c6128e045d04cccd5398c8be61630627401fd78853cd4ce2fead49c574d8ce2",
+    "give-linux-aarch64.tar.gz": "07109248f898d39bc0ab6ce837888a73433be0b433e24c8e820cb7a5490cecd9",
+    "give-linux-x86_64.tar.gz": "c4b9780b10ce46e759896527d5e4c61aff9a87b0c2730c1846d40e545e9e29f5"
+  },
+  "policies": {
+    "/": "frame-ancestors 'none'",
+    "sign.html": "frame-ancestors https:"
+  },
+  "wildcard": "https://release-08441174.group.svrnme.sh/",
+  "lend_policy": {
+    "https://group.svrnme.sh/lend.js": [
+      "default-src 'none'; connect-src 'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'"
+    ],
+    "https://release-08441174.group.svrnme.sh/lend.js": [
+      "default-src 'none'; connect-src 'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'"
+    ]
+  },
+  "hidden": {
+    ".env.local": 404,
+    ".vercel/project.json": 404,
+    ".gitignore": 404,
+    "vercel.json": 404
+  },
+  "native_smoke": {
+    "svrngs": {
+      "exit": 0,
+      "contains": "Give it again for each relay"
+    },
+    "give": {
+      "exit": 2,
+      "contains": "usage: give check"
+    }
+  }
+}
