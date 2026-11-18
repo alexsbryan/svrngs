@@ -767,12 +767,21 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # holder's Asker once (bd06f75c, -10), and a round's namespace trace lists its
 # skips as its offers (7c017670, -1). The cap comes down to where they land.
 # All code but JavaScript 21,357 -> 21,331.
+# (2026-11-17) The shared database's ceiling (operator, asked "Set one size
+# ceiling for the whole database build, cut back to where it lands", "A) One
+# ceiling"), for B1-B6 in svrn-docs rings/current/MAGNETS_BUILD.md: the core
+# only a change set's signed message (+40), crates/svrngs-db and the node's
+# routes (+1,700 in all), the phone's worker checking what it signs (+107).
+# The pass above found 26 lines. The larger cuts in that code are ECONOMIZING_PLAN
+# stages 1-4's, which follow and lower these caps. At the build's end each
+# cap comes down to where it landed. The core 3,501 -> 3,539; all code but
+# JavaScript 21,331 -> 23,031; js 8,540 -> 8,647.
 BUDGET = {
-    "crates/svrngs-core": 3502,
+    "crates/svrngs-core": 3540,
 
-    ".": 21332,
+    ".": 23032,
 
-    "js": 8541,
+    "js": 8648,
 
     "swift": 1,
 }
