@@ -192,8 +192,7 @@ export const realmScript = ({ request, clientId }) => {
  */
 export async function preluded(response, realm) {
   const headers = new Headers(response.headers);
-  headers.delete('content-length');
-  headers.delete('content-encoding');
+  for (const sized of ['content-length', 'content-encoding']) headers.delete(sized);
   const embedder = 'cross-origin-embedder-policy';
   if (realm.isolated && !headers.has(embedder)) headers.set(embedder, 'require-corp');
   const { status, statusText } = response;

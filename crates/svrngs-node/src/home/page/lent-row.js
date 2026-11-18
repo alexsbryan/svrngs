@@ -160,8 +160,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
   const howMany = limited ? `up to ${limit} ${people}` : 'everyone in the groups you chose';
-  const note = down(lend, ' Not running now: start it, and your people can open it.');
-  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${note} ${lentTo(lend, groups)}`;
+  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${down(lend, ' Not running now: start it, and your people can open it.')} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
   const letEveryone =
