@@ -72,6 +72,31 @@ case "$(uname -m)" in arm64 | aarch64) arch=aarch64 ;; x86_64 | amd64) arch=x86_
 [ -n "$os" ] && [ -n "$arch" ] ||
   no "svrngs runs on Mac and Linux computers, Intel or ARM; this one is $(uname -s) on $(uname -m), so nothing was installed."
 
+dir="${SVRNGS_DIR:-$HOME/.svrngs}"
+bin="$HOME/.local/bin"
+label="sh.svrnme.svrngs"
+unit=svrngs
+run="$bin/svrngs"
+[ -z "$relay" ] || label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
+# What runs at login finds svrngs and Podman (its installer's place, then
+# Homebrew's) here, since launchd and systemd give it no shell's PATH.
+paths="$bin:/opt/podman/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+# $label's (launchd) or $unit's (systemd) file, and stopping it if kept.
+if [ "$os" = darwin ]; then
+  at() { kept="$HOME/Library/LaunchAgents/$label.plist"; }
+  # bootout returns before launchd lets go, and until then a bootstrap fails
+  # with 5. No limit: launchd ends a service, and Give (ExitTimeOut 0) finishes.
+  stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null && while launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; do sleep 0.1; done; }
+else
+  at() { kept="$HOME/.config/systemd/user/$unit.service"; }
+  stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
+fi
+stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $unit, to update it."; fi; }
+# The opener, in the person's Applications on macOS and their applications
+# menu on Linux (below).
+if [ "$os" = darwin ]; then opener="$HOME/Applications/svrngs.app"
+else opener="${XDG_DATA_HOME:-$HOME/.local/share}/applications/svrngs.desktop"; fi
+
 tmp="$(mktemp -d)"
 restart=""
 cleanup() {
@@ -109,26 +134,6 @@ get svrngs
 svrngs_sum="$want"
 [ -z "$give" ] || get give
 
-dir="${SVRNGS_DIR:-$HOME/.svrngs}"
-bin="$HOME/.local/bin"
-label="sh.svrnme.svrngs"
-unit=svrngs
-run="$bin/svrngs"
-[ -z "$relay" ] || label="$label.relay" unit=svrngs-relay run="$run relay $relay $*"
-# What runs at login finds svrngs and Podman (its installer's place, then
-# Homebrew's) here, since launchd and systemd give it no shell's PATH.
-paths="$bin:/opt/podman/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
-# $label's (launchd) or $unit's (systemd) file, and stopping it if kept.
-if [ "$os" = darwin ]; then
-  at() { kept="$HOME/Library/LaunchAgents/$label.plist"; }
-  # bootout returns before launchd lets go, and until then a bootstrap fails
-  # with 5. No limit: launchd ends a service, and Give (ExitTimeOut 0) finishes.
-  stop() { launchctl bootout "gui/$(id -u)/$label" 2>/dev/null && while launchctl print "gui/$(id -u)/$label" >/dev/null 2>&1; do sleep 0.1; done; }
-else
-  at() { kept="$HOME/.config/systemd/user/$unit.service"; }
-  stop() { systemctl --user is-active --quiet $unit.service && systemctl --user stop $unit.service; }
-fi
-stopped() { at && if [ -f "$kept" ] && stop; then restart=yes; say "Stopped $unit, to update it."; fi; }
 # A svrngs kept running holds its data, which joining needs: stopped
 # first, started again below on the new one. One started by hand holds it
 # too, and no launchd or systemd stops it: stopped here, kept at login below.
@@ -230,12 +235,12 @@ fi
 # menu on Linux, where "Open svrngs from your computer" sends them: it runs
 # `svrngs open`, so the home page opens again with no terminal (give-session).
 if [ "$os" = darwin ]; then
-  app="$HOME/Applications/svrngs.app/Contents" where=Applications && mkdir -p "$app/MacOS"
+  app="$opener/Contents" where=Applications && mkdir -p "$app/MacOS"
   printf '<plist version="1.0"><dict><key>CFBundleExecutable</key><string>svrngs</string></dict></plist>\n' >"$app/Info.plist"
   printf '#!/bin/sh\nSVRNGS_DIR="%s" exec "%s/svrngs" open\n' "$dir" "$bin" >"$app/MacOS/svrngs" && chmod +x "$app/MacOS/svrngs"
 else
-  app="${XDG_DATA_HOME:-$HOME/.local/share}/applications" where="applications menu" && mkdir -p "$app"
-  printf '[Desktop Entry]\nType=Application\nName=svrngs\nExec=env "SVRNGS_DIR=%s" "%s/svrngs" open\n' "$dir" "$bin" >"$app/svrngs.desktop"
+  where="applications menu" && mkdir -p "$(dirname "$opener")"
+  printf '[Desktop Entry]\nType=Application\nName=svrngs\nExec=env "SVRNGS_DIR=%s" "%s/svrngs" open\n' "$dir" "$bin" >"$opener"
 fi
 # The home page opened, once svrngs answers there: `svrngs open` asks it as
 # any program asks it, with the token beside the address it writes to its
