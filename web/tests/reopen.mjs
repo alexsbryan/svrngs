@@ -38,6 +38,7 @@ const PIECES = [
   'shim.js',
   'store.js',
   'authority.js',
+  'session.js',
   'away.html',
   'wasm/svrngs_web.js',
   'wasm/svrngs_web_bg.wasm',

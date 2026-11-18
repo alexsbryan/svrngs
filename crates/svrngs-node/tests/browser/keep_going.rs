@@ -203,13 +203,13 @@ async fn a_new_release_replaces_a_lend_s_saved_pages(engine: Engine) {
     });
     let seen = reopened(engine, args, "reopen.mjs", async {}).await;
     eprintln!("{seen:#}");
-    assert_eq!(pieces(&seen["saved"]).len(), 9, "{seen:#}");
+    assert_eq!(pieces(&seen["saved"]).len(), 10, "{seen:#}");
     let name = format!("svrngs-web-{}", seen["reopened"]["built"].as_str().unwrap());
     assert!(
         seen["reopened"]["saved"].get(&name).is_some(),
         "the new build's cache: {seen:#}"
     );
-    assert_eq!(pieces(&seen["reopened"]["saved"]).len(), 9, "{seen:#}");
+    assert_eq!(pieces(&seen["reopened"]["saved"]).len(), 10, "{seen:#}");
 }
 
 /// Whether `node`'s copy of `group` holds `words`.
