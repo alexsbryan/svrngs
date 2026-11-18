@@ -103,10 +103,10 @@ If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, Open
 Start it, saying the provider, the models, until when and how many tokens everyone together may use:
 
 ```
-node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000 --svrngs ~/.svrngs/api
+node apps/spot/server.mjs --port 8090 --provider https://api.deepinfra.com/v1/openai --model deepseek-flash=deepseek-ai/DeepSeek-V4.1-Flash-1017 --until 02:00 --budget 2000000
 ```
 
-It says *"spot: deepseek-flash at http://127.0.0.1:8090/. Lend it, pasting your key where it asks (Bearer <key>):"* and the line to lend it with. In another terminal:
+It says *"spot: deepseek-flash at http://127.0.0.1:8090/"*. Leave it running, and lend it in another terminal:
 
 ```
 svrngs share 8090 --name deepseek-flash --program spot --group <group>
@@ -116,7 +116,7 @@ When it asks *"If deepseek-flash takes a password on each request, paste what it
 
 Leave Spot running. Each answer prints a line: who, which model, how many tokens. At `--until`, or once the budget is spent, it refuses every chat and its page says why. Ctrl-C stops it and says who used how much; `svrngs unshare deepseek-flash` stops lending it.
 
-**Your friends** tap *"deepseek-flash"* on their home page, or the group's page on a phone. Spot's chat page opens: *"Ana's deepseek-flash"*. It tells them their messages go to the provider on your account, and that you see how many tokens they use, not what they write. Their chats stay in their own browser.
+**Your friends** tap *"deepseek-flash"* on their home page, or the group's page on a phone. Spot's chat page opens: *"deepseek-flash"*. It tells them their messages go to the provider on your account, and that you see how many tokens they use, not what they write. Their chats stay in their own browser.
 
 **Your key** stays on your computer, with svrngs, which adds it to each of their requests on its way to Spot, in place of any key a friend sends. Neither your friends nor Spot's page ever have it, and Spot never writes it down. Everything your friends send reaches the provider under your account. More in [apps/spot/README.md](../../apps/spot/README.md).
 

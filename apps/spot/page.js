@@ -94,8 +94,8 @@ async function standing() {
     const r = await fetch('spot.json', { cache: 'no-store' });
     if (!r.ok) throw new Error(`${r.status}`);
     const s = await r.json();
-    // Whose it is, as svrngs names its lender: "Ana’s deepseek-flash".
-    const named = `${s.lender ? `${s.lender}’s ` : ''}${s.models.join(', ')}`;
+    // What is lent; whose it is, the page it was opened from says.
+    const named = s.models.join(', ');
     document.title = named;
     $('title').textContent = named;
     const was = $('model').value;
@@ -114,7 +114,7 @@ async function standing() {
     if (s.yours) parts.push(`you've used ${s.yours.toLocaleString()}`);
     $('standing').textContent = s.ended ?? (parts.join(' · ') || 'lent until its lender stops it');
     $('standing').classList.toggle('over', !!s.ended);
-    emptyNote.textContent = `Your messages go to ${s.provider} on ${s.lender ? `${s.lender}’s` : 'its lender’s'} account. ${s.lender ?? 'They'} see${s.lender ? 's' : ''} how many tokens you use, not what you write. Your chat stays in this browser.`;
+    emptyNote.textContent = `Your messages go to ${s.provider} on its lender’s account. They see how many tokens you use, not what you write. Your chat stays in this browser.`;
   } catch (e) {
     $('standing').textContent = `The lender's computer did not answer (${e.message}).`;
     $('standing').classList.add('over');

@@ -11,10 +11,9 @@ export const SYNC = 0;
 /** Who is here and where their caret is (y-protocols/awareness). */
 export const AWARENESS = 1;
 /**
- * The server to one page, on opening: `{you, key, lender}`. `you` is the
- * name svrngs's door gave the person on the upgrade (`x-svrngs-person`),
- * `null` when the page reached the server without svrngs; `lender` is the
- * name of the person lending the doc, `null` when the server was not told.
+ * The server to one page, on opening: `{you, key}`. `you` is the name
+ * svrngs's door gave the person on the upgrade (`x-svrngs-person`), `null`
+ * when the page reached the server without svrngs.
  */
 export const HELLO = 100;
 /** The server to every page: who last edited each paragraph, `[{person, ts} | null]`. */

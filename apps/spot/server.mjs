@@ -4,12 +4,11 @@
 //
 //   node apps/spot/server.mjs --port <port> --provider <its OpenAI address>
 //     --model <name>=<the provider's id> [--model ...] [--until HH:MM]
-//     [--budget <tokens>] [--svrngs <svrngs's api file>]
+//     [--budget <tokens>]
 //
-// It holds no key. You lend its port with `svrngs share`, and paste your key
-// where `share` asks for the password it takes on each request, or add it as
-// a header in the lend's row on your home page. svrngs keeps it, and its door
-// adds it to each request in place of any a friend sends
+// An app that runs, and asks svrngs nothing. It holds no key: you lend its
+// port, and give your key as the lend's Authorization header. svrngs keeps
+// it, and its door adds it to each request in place of any a friend sends
 // (crates/svrngs-node/src/door.rs `rewrite_headers`). The server forwards
 // that one, with content-type and accept and nothing else: no x-svrngs-*, no
 // cookie, nobody's name.
@@ -19,13 +18,11 @@
 // of them (POST /v1/chat/completions), each name turned into the provider's
 // id. It counts the tokens the provider reports per person, by the key the
 // door names them by (`x-svrngs-key`), and refuses a chat past `--until` or
-// once `--budget` is spent. `--svrngs` is the `api` file in svrngs's data dir
-// (`~/.svrngs/api`): asked, with the `token` beside it, for your name in your
-// groups, so the page says whose it is. Without it, the page names nobody.
+// once `--budget` is spent.
 
 import { readFileSync } from 'node:fs';
 import http from 'node:http';
-import { dirname, join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
@@ -50,34 +47,18 @@ export function endOf(until, now = new Date()) {
   return end;
 }
 
-/** svrngs's name for this computer's person, one across its groups, or none. */
-async function askLender(api) {
-  try {
-    const base = readFileSync(api, 'utf8').trim().replace(/\/$/, '');
-    const token = readFileSync(join(dirname(api), 'token'), 'utf8').trim();
-    const asked = await fetch(`${base}/v1/groups`, {
-      headers: { authorization: `Bearer ${token}` },
-    });
-    const names = new Set(((await asked.json()).groups ?? []).map((g) => g.person).filter(Boolean));
-    return names.size === 1 ? [...names][0] : null;
-  } catch {
-    return null;
-  }
-}
-
 /**
  * The lend, with no listener: `handle(req, res)` answers each request, and
  * `used` is each person's tokens by the door's key, `{ name, tokens }`.
  * `provider` is where /chat/completions goes on; `models` maps each name
  * lent to the provider's id.
  */
-export async function spot({ provider, models, until = null, budget = null, api = null }) {
+export async function spot({ provider, models, until = null, budget = null }) {
   if (!provider) throw new Error("say the provider's OpenAI address: --provider <url>");
   if (models.size === 0) throw new Error('lend a model: --model <name>=<the provider’s id>');
   const upstream = provider.replace(/\/$/, '');
   const host = new URL(upstream).hostname;
   const end = until instanceof Date ? until : endOf(until);
-  const lender = api ? await askLender(api) : null;
   const files = new Map(
     [
       ['/', 'page.html', 'text/html'],
@@ -115,7 +96,6 @@ export async function spot({ provider, models, until = null, budget = null, api 
     }
     if (req.method === 'GET' && route === '/spot.json')
       return json(res, 200, {
-        lender,
         models: [...models.keys()],
         provider: host,
         until: end?.toISOString() ?? null,
@@ -127,7 +107,7 @@ export async function spot({ provider, models, until = null, budget = null, api 
     if (req.method === 'GET' && route === '/v1/models')
       return json(res, 200, {
         object: 'list',
-        data: [...models.keys()].map((id) => ({ id, object: 'model', owned_by: lender ?? 'spot' })),
+        data: [...models.keys()].map((id) => ({ id, object: 'model', owned_by: 'spot' })),
       });
     if (!(req.method === 'POST' && route === '/v1/chat/completions'))
       return refuse(
@@ -200,7 +180,7 @@ export async function spot({ provider, models, until = null, budget = null, api 
       );
     });
   };
-  return { handle, used, lender };
+  return { handle, used };
 }
 
 /** The lend listening on this computer's loopback alone: svrngs carries everyone else to it. */
@@ -227,19 +207,11 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
       models,
       until: one('--until'),
       budget,
-      api: one('--svrngs'),
     });
-    console.log(
-      `spot: ${[...models.keys()].join(', ')} at http://127.0.0.1:${lend.port}/. Lend it, pasting your key where it asks (Bearer <key>):`,
-    );
-    console.log(
-      `  svrngs share ${lend.port} --name ${[...models.keys()][0]} --program spot --group <group>`,
-    );
+    console.log(`spot: ${[...models.keys()].join(', ')} at http://127.0.0.1:${lend.port}/`);
     const bye = () => {
       const who = [...lend.used.values()].map((u) => `${u.name} ${n(u.tokens)}`).join(', ');
-      console.log(
-        `spot: stopped. Used: ${who || 'nothing'}. Stop lending it: svrngs unshare ${[...models.keys()][0]}`,
-      );
+      console.log(`spot: stopped. Used: ${who || 'nothing'}.`);
       process.exit(0);
     };
     process.on('SIGINT', bye);

@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The doc's server: its page, and one socket per open page, through which
-// every edit and caret passes. Lent with `svrngs share`, so each page
-// reaches it through svrngs's door, which names the person on the socket's
+// every edit and caret passes. An app that runs, and asks svrngs nothing:
+// lent, each page reaches it through svrngs's door, which names the person on the socket's
 // upgrade (`x-svrngs-person`, `x-svrngs-key`): the server writes each edit
 // down as theirs (`wrote`), and tells every page who last edited each
 // paragraph (protocol.js `LINES`). It keeps the doc as those acts, one JSON
 // line each, in `<keep>/acts.jsonl`, so a restart reads it back whole.
 //
-//   node apps/doc/server.mjs --port <port> --keep <dir> [--svrngs <svrngs's api file>]
+//   node apps/doc/server.mjs --port <port> --keep <dir>
 //
-// `--svrngs` is the `api` file in svrngs's data dir (`~/.svrngs/api`): the
-// server asks it, with the token in the `token` file beside it, once a minute for this computer's name in its groups, so
-// every page can say whose doc it is, and whose computer is not answering
-// when it says goodnight. Without it, the pages name nobody.
 // `DOC_DEBUG=1` traces each decision as a JSON line on stderr.
 
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
@@ -51,8 +47,6 @@ const PAGE = new Set([
 ]);
 /** How long after an edit every page is told the paragraphs' last editors again. */
 const LINES_AFTER_MS = 250;
-/** How often the lender's name is asked of svrngs. */
-const LENDER_EVERY_MS = 60_000;
 
 const trace = process.env.DOC_DEBUG
   ? (what, fields = {}) =>
@@ -69,10 +63,9 @@ const told = (req, name) => {
  * The doc, its pages and its timers, with no listener: `opened(req, peer)`
  * takes a page's socket once upgraded (ws.mjs `accept`), `handle(req, res)`
  * answers a plain request, `close()` ends its timers and pages. `keep` is
- * the directory the doc's acts are kept in; `api` svrngs's api file, or
- * none.
+ * the directory the doc's acts are kept in.
  */
-export async function doc({ keep, api = null }) {
+export async function doc({ keep }) {
   if (!keep) throw new Error('say where the doc is kept: --keep <dir>');
   mkdirSync(keep, { recursive: true });
   const file = join(keep, 'acts.jsonl');
@@ -83,7 +76,6 @@ export async function doc({ keep, api = null }) {
   const pages = new Set();
   let seq = 0;
   let lastTs = 0;
-  let lender = null;
 
   // The doc as kept: every act, applied in the order written.
   if (existsSync(file)) {
@@ -166,7 +158,7 @@ export async function doc({ keep, api = null }) {
       named: page.person !== null,
       pages: pages.size,
     });
-    send(page, said(HELLO, { you: page.person, key: page.key, lender }));
+    send(page, said(HELLO, { you: page.person, key: page.key }));
     const e = encoding.createEncoder();
     encoding.writeVarUint(e, SYNC);
     syncProtocol.writeSyncStep1(e, doc);
@@ -221,37 +213,6 @@ export async function doc({ keep, api = null }) {
 
   const here = setInterval(() => toAll(bare(HERE)), HERE_EVERY_MS);
 
-  const askLender = async () => {
-    if (!api) return;
-    try {
-      const base = readFileSync(api, 'utf8').trim().replace(/\/$/, '');
-      const token = readFileSync(join(dirname(api), 'token'), 'utf8').trim();
-      const asked = await fetch(`${base}/v1/groups`, {
-        headers: { authorization: `Bearer ${token}` },
-      });
-      const groups = (await asked.json()).groups ?? [];
-      const names = [...new Set(groups.map((g) => g.person).filter(Boolean))];
-      const now = names.length === 1 ? names[0] : null;
-      trace("lender: asked svrngs this computer's name", {
-        names,
-        lender: now,
-        said: names.length > 1 ? 'two names in its groups, so none' : undefined,
-      });
-      if (now !== lender) {
-        lender = now;
-        pages.forEach((p) => send(p, said(HELLO, { you: p.person, key: p.key, lender })));
-      }
-    } catch (e) {
-      trace('lender: svrngs did not answer, so the lender stays as it was', {
-        api,
-        lender,
-        error: String(e),
-      });
-    }
-  };
-  await askLender();
-  const asking = setInterval(askLender, LENDER_EVERY_MS);
-
   const handle = (req, res) => {
     const path =
       decodeURIComponent(new URL(req.url, 'http://doc').pathname).replace(/^\/+/, '') ||
@@ -278,7 +239,6 @@ export async function doc({ keep, api = null }) {
     handle,
     close: () => {
       clearInterval(here);
-      clearInterval(asking);
       clearTimeout(linesTimer);
       pages.forEach((p) => p.peer.close(1001));
       // Its Awareness keeps a timer of its own (y-protocols' outdated check).
@@ -291,8 +251,8 @@ export async function doc({ keep, api = null }) {
  * Start the server; resolves to `{port, close}` once it listens: the doc
  * (`doc`) on 127.0.0.1, each page's socket accepted at /sync.
  */
-export async function start({ port = 0, keep, api = null }) {
-  const d = await doc({ keep, api });
+export async function start({ port = 0, keep }) {
+  const d = await doc({ keep });
   const server = http.createServer(d.handle);
   server.on('upgrade', (req, socket, head) => {
     if (new URL(req.url, 'http://doc').pathname !== '/sync') {
@@ -319,13 +279,9 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1
   };
   const port = Number(arg('--port'));
   if (!Number.isInteger(port) || !arg('--keep')) {
-    console.error(
-      "node apps/doc/server.mjs --port <port> --keep <dir> [--svrngs <svrngs's api file>]",
-    );
+    console.error('node apps/doc/server.mjs --port <port> --keep <dir>');
     process.exit(2);
   }
-  const { port: at } = await start({ port, keep: arg('--keep'), api: arg('--svrngs') });
-  console.log(
-    `The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}. Lend it: svrngs share ${at} --name doc --program doc --group <group>`,
-  );
+  const { port: at } = await start({ port, keep: arg('--keep') });
+  console.log(`The doc is at http://127.0.0.1:${at}/, kept in ${arg('--keep')}.`);
 }

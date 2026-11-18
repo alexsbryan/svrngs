@@ -117,8 +117,9 @@ use one, open one up, run one, make your own (DESIGN §1). In order:
    installed 1.11.0 and the guide alone. 7 of 8 passed; **See how they’re
    made** isn't in 1.11.0, nor its source's `examples.md` or READMEs' **Run
    it**. The guide now names the line to lend from (14 programs listed).
-   Next: the release after 1.11.0 carries the ladder, the operator's; a
-   newcomer's session is separate, the operator's.
+   Again on v1.11.1, which carries the ladder: 8 of 8
+   (`demo/runs/examples/2026-11-18-v1.11.1/`). A newcomer's session is
+   separate, the operator's.
 
 **V1 — the cut line** (after events; operator, 2026-10-15, of the
 grapevine demo app: "And then I think that's our V1 cut line"; asked, "arch,

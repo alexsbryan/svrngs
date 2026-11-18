@@ -9,10 +9,7 @@
 // commit that brought these laws.
 
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync } from 'node:fs';
 import http from 'node:http';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { test } from 'node:test';
 import { endOf, start as listen } from './server.mjs';
 
@@ -44,21 +41,6 @@ async function provider(t) {
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
   t.after(() => server.close() && server.closeAllConnections());
   return { seen, url: `http://127.0.0.1:${server.address().port}/v1/openai`, server };
-}
-
-// svrngs's record API, as `--svrngs` reads it: its api file, the token beside it.
-async function svrngs(t, person) {
-  const dir = mkdtempSync(join(tmpdir(), 'spot-'));
-  const server = http.createServer((req, res) => {
-    const ok = req.headers.authorization === 'Bearer tok';
-    res.writeHead(ok ? 200 : 401, { 'content-type': 'application/json' });
-    res.end(JSON.stringify(ok ? { groups: [{ id: 'g', person }] } : { error: 'no_token' }));
-  });
-  await new Promise((done) => server.listen(0, '127.0.0.1', done));
-  t.after(() => server.close() && server.closeAllConnections());
-  writeFileSync(join(dir, 'api'), `http://127.0.0.1:${server.address().port}\n`);
-  writeFileSync(join(dir, 'token'), 'tok\n');
-  return { api: join(dir, 'api'), server };
 }
 
 // A request as svrngs's door carries it to the lend: as `who`, with the key.
@@ -167,24 +149,26 @@ test('past its end, or its budget spent, a chat is refused and the page says why
   assert.equal(p.seen.length, 1);
 });
 
-test('the page names its lender as svrngs does, and lists what is lent', async (t) => {
+// Spot is an app that runs: it asks svrngs nothing, so its page names the
+// models lent and nobody's account (home page lines already say whose).
+// Planted, watched failing: spot.json's `lender`, and /v1/models owned by a name.
+test('the page lists what is lent, and names nobody', async (t) => {
   const p = await provider(t);
-  const s = await svrngs(t, 'ana');
   const models = new Map([
     ['flash', 'org/Flash-1'],
     ['pro', 'org/Pro-2'],
   ]);
-  const lend = await start(t, { provider: p.url, models, api: s.api });
+  const lend = await start(t, { provider: p.url, models });
   const said = JSON.parse((await ask(lend, 'GET', '/spot.json', as('bo'))).text);
-  assert.equal(said.lender, 'ana');
+  assert.equal('lender' in said, false, JSON.stringify(said));
   assert.deepEqual(said.models, ['flash', 'pro']);
   assert.equal(said.provider, '127.0.0.1');
   const listed = JSON.parse((await ask(lend, 'GET', '/v1/models', as('bo'))).text);
   assert.deepEqual(
     listed.data.map((m) => [m.id, m.owned_by]),
     [
-      ['flash', 'ana'],
-      ['pro', 'ana'],
+      ['flash', 'spot'],
+      ['pro', 'spot'],
     ],
   );
   const page = await ask(lend, 'GET', '/', as('bo'));

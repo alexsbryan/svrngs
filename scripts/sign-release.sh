@@ -25,7 +25,11 @@ fi
 echo "sign-release: $tag ($commit) by $key from $get"
 
 (cd "$get" && shasum -a 256 -c SHA256SUMS)
-for file in "$get"/*.tar.gz "$get"/SHA256SUMS; do
+# The installer too, as the release's commit has it: what svrngs.fam's Get
+# svrngs runs, only once its signature verifies (svrn-docs
+# rings/current/OMARCHY_PLUGIN.md), where the line on the page trusts HTTPS.
+git show "$commit:web/install.sh" >"$get/install.sh"
+for file in "$get"/*.tar.gz "$get"/SHA256SUMS "$get"/install.sh; do
   gpg --yes --local-user "$key" --detach-sign --output "$file.sig" "$file"
   gpg --verify "$file.sig" "$file"
 done
@@ -39,5 +43,6 @@ printf '\nSigned by the svrngs release key, %s: each file has its `.sig`, and `s
 git tag --sign --local-user "$key" --message "svrngs $version" "$tag" "$commit"
 git push origin "$tag"
 gh release create "$tag" --verify-tag --latest --title "$version" --notes-file "$notes" \
-  "$get"/*.tar.gz "$get"/*.tar.gz.sig "$get"/SHA256SUMS "$get"/SHA256SUMS.sig "$get"/svrngs-release-key.asc
+  "$get"/*.tar.gz "$get"/*.tar.gz.sig "$get"/SHA256SUMS "$get"/SHA256SUMS.sig \
+  "$get"/install.sh "$get"/install.sh.sig "$get"/svrngs-release-key.asc
 echo "sign-release: $tag released; read it back with gh release download $tag"
