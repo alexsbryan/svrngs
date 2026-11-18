@@ -738,7 +738,10 @@ its name, and this computer's person in it, `null` when its seed or its
 standing cannot be shown. `GET /v1/lends?namespace=<id>` answers what that
 group's people lend now, this computer's own among them: each with its
 lender's person and key, its name, kind, limit, how many use it, the upload
-its lender declares (`upload_bps`, `null` when none), and its `origin`,
+its lender declares (`upload_bps`, `null` when none), whether its program
+took a connection on its lender's computer as it was listed (`answering`,
+absent for a carried app, a UDP port, or an svrngs from before; the pages
+say "Not running now."), and its `origin`,
 where this computer's browser opens it — and the people whose computer did
 not answer, named, their lends absent rather than stale
 (`crates/svrngs-node/src/surface.rs`). Both are asked each time, nothing

@@ -12,6 +12,7 @@ import { machine } from '../ui/machine.js?v=__VERSION__';
 import { Act, Field } from '../ui/parts.js?v=__VERSION__';
 import { CHANGE } from './lend-change.js?v=__VERSION__';
 import { GroupChoice, called } from './group-choice.js?v=__VERSION__';
+import { down } from '../question.js?v=__VERSION__';
 /** @import { Lend } from '../question.js?v=__VERSION__' */
 /** @import { AppsAccount } from './lent-read.js?v=__VERSION__' */
 /** @import { State, Message } from './lend-change.js?v=__VERSION__' */
@@ -159,7 +160,8 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
   const howMany = limited ? `up to ${limit} ${people}` : 'everyone in the groups you chose';
-  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now. ${lentTo(lend, groups)}`;
+  const note = down(lend, ' Not running now: start it, and your people can open it.');
+  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${note} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
   const letEveryone =

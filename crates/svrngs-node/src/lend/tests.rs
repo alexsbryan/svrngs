@@ -405,6 +405,7 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
         groups,
         raw: None,
         sends: Vec::new(),
+        answering: None,
     };
     assert!(offered(Some(vec!["house".into()]), None).listed(house));
     assert!(!offered(Some(vec!["house".into()]), None).listed(|g| g == "trip"));

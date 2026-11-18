@@ -342,6 +342,43 @@ async fn an_app_asks_what_the_group_s_people_lend_its_own_included_and_none_stal
     house.close().await;
 }
 
+/// **A lend whose program is not running is said so before anyone opens
+/// it** (lend.rs `Offered::answering`, door.rs `answering`): Alex lends a
+/// port something listens on, Sam one nothing does, and Alex's `/v1/lends`
+/// says Alex's `answering: true` and Sam's, asked of Sam's computer,
+/// `false`. Planted: every port said answering (Sam's true); the field
+/// left off the wire (both absent).
+#[tokio::test]
+async fn a_lend_whose_program_is_not_running_is_said_so() {
+    let house = House::new().await;
+    let running = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let stopped = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let stopped_port = stopped.local_addr().unwrap().port();
+    drop(stopped);
+    lends(
+        house.alex_dir.path(),
+        &house.id,
+        "telly",
+        running.local_addr().unwrap().port(),
+        None,
+    );
+    lends(house.sam_dir.path(), &house.id, "films", stopped_port, None);
+
+    let body = house.lends().await;
+    let answering: Vec<_> = (body["lent"].as_array().unwrap().iter())
+        .map(|l| (l["name"].as_str().unwrap(), l["answering"].clone()))
+        .collect();
+    assert_eq!(
+        answering,
+        vec![
+            ("telly", serde_json::json!(true)),
+            ("films", serde_json::json!(false))
+        ],
+        "{body:#}"
+    );
+    house.close().await;
+}
+
 /// **An app finds the API by itself** (the u5-1 row): the data dir's `api`
 /// file names the loopback address the listener bound, a nonzero port, and
 /// an app asking `/v1/groups` there is answered by this computer, its key
