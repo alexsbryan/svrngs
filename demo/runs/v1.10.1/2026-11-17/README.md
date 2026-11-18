@@ -106,12 +106,76 @@ Not run on Linux: V1.8.2's whole Linux run
 
 ## Publication
 
-PUBLICATION
+`npm ci --prefix web` ran first in a clean detached worktree at 7b2628d7
+(`v1.10.1`). Free disk was 63 GiB at the start.
+
+The first run of `publish.py` failed in the build, at 2026-11-18 00:23
+UTC, exit 1, before any upload (`publish-first.json`,
+`publish-first.log`). It was started with `CARGO_TARGET_DIR` set to the
+worktree's `target/`. The wasm build then landed there, and
+`build-web.sh` reads it from `web/target/`: "failed reading
+'web/target/wasm32-unknown-unknown/release/svrngs_web.wasm'". The log
+never reaches `vercel`. The second run left the variable unset, so the
+worktree's own `target/` and `web/target/` held its builds, as V1.10's
+did.
+
+That run, under the gate lock, went from 2026-11-18 00:24 to 00:32 UTC,
+exit 0 (`publish.json`, `publish.log`). The record was written outside
+the worktree and copied here after. The build meets its groups at n0's
+relays (`SHIPPED`), so no relay was asked. The page built as version
+d5a753aadf4c, and `svrngs` and `give` built for all four platforms.
+Vercel deployment `dpl_FkxenjfLKhXoD8A8tpwxjouknFVA` reached production
+READY, aliased to `https://group.svrnme.sh`. The CLI wrote `.vercel/`,
+`.env.local` and `.gitignore` into the upload directory. All of them
+answered 404 live (`.vercel/README.txt` too, by `curl`), and the
+directory was deleted after, with the first run's.
 
 ## Readback
 
-READBACK
+`verify.py` passed at 2026-11-18 00:32 UTC (`verification.json`). Its
+ten planted faults were rejected first, the four new ones among them.
+Then:
+
+- 79 public files fetched from `group.svrnme.sh` each equaled the built
+  site's bytes, `session.js` among them, new beside `lend.js`.
+- The live `get/SHA256SUMS` equaled the built one (`SHA256SUMS`,
+  `live-sums.txt`) and named exactly the eight downloads.
+- The live page is version d5a753aadf4c, not V1.10's 660baf7db628, and
+  the live `sw.js` names it and sends a navigation to the network first.
+- The live `install.sh` equals the built one.
+- Both frame policies were as `vercel.json` sets them.
+- `lend.js` was served with exactly one policy, `default-src 'none';
+  connect-src 'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'`,
+  as `vercel.json` sets it, at `group.svrnme.sh` and at
+  `release-7b2628d7.group.svrnme.sh`, where before the deploy it had the
+  site's frame policy alone (`page-before.txt`).
+- `release-7b2628d7.group.svrnme.sh` served the same page.
+- `.env.local`, `.vercel/project.json`, `.gitignore` and `vercel.json`
+  answered 404.
+- The downloaded darwin-aarch64 `svrngs` and `give` started.
+
+No other platform's program was run here, and no home page was opened
+from the published build: the home page's own evidence is the gates
+above.
 
 ## Not verified, not done
 
-NOT_VERIFIED
+- No phone opened a lend from the published page: that `lend.js` under
+  its new policy still opens and dials a lend is held by the conformance
+  canary's wildcard half, which serves `lend.js` under `vercel.json`'s
+  policy (`web/tests/page.mjs`), in Chromium and WebKit, not by a phone
+  against `group.svrnme.sh`. No real phone was run.
+- An app's own worker after svrngs's worker restarts was not judged in
+  WebKit, so not as on an iPhone (the canary's could-not-judge above).
+- The cross-origin redirect a computer now refuses, and a page that
+  redirects to another address still opening, are read from the code and
+  `session.rs` `POLICY`; no test runs either.
+- The home page's separate process was measured in WebKit 26.4, not in
+  Safari, and not in Chromium or Firefox.
+- The browser step's run after 72334265 is the releasing session's
+  word: its output was not kept here.
+- No Linux gate ran; V1.8.2's is the last.
+- Safari with VoiceOver, and Firefox, were not run.
+- No platform's program but darwin-aarch64's was run.
+- The resolver was not deployed; its code is unchanged since `v1.10`,
+  and `join.svrnme.sh` was not read here.
