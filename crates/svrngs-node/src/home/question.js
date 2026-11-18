@@ -418,7 +418,7 @@ export const reading = (lend, said) => {
     return `${who} opens nothing of your friends’ as you. Open it again to choose what it can. `;
   const chosen = said.lends ? `the ${kinds} you chose,` : `your friends’ ${kinds}`;
   if (said.said === 'yes') return `${who} opens ${chosen} as you. Since ${day(said.at)}. `;
-  return `${who} down opening your friends’ ${kinds} as you on ${day(said.at)}. Opening it again says yes again.`;
+  return `${who} stopped opening your friends’ ${kinds} as you on ${day(said.at)}. Opening it again says yes again.`;
 };
 
 // What the line beside a reading app's Open says: who it names, by person,
