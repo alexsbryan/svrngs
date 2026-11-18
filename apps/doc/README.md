@@ -6,18 +6,30 @@ lender's computer stops answering, a goodnight on every page while each
 browser keeps what its person writes, joined with everyone's when the
 computer answers again.
 
-Lend it from a checkout of svrngs, with svrngs running:
+- **Shape:** lent. A program on your computer that keeps the document.
+- **Run it:** [below](#run-it), from svrngs's source
+  ([run one](../../docs/guide/examples.md#3-run-one)).
+- **How it's made:** [How it works](#how-it-works).
+- **Change it:** `server.mjs` is the server, `app.js` the page. Restart it
+  after a change.
 
-```
-node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --program doc --group <group> < /dev/null
-```
+## Run it
+
+1. In a terminal, from svrngs's source, with svrngs running. Leave it open:
+   ```
+   node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api
+   ```
+2. Lend it from your home page: under **Already running here**, press
+   **Look for programs running on this computer**. Fill in **Its name:**
+   `doc` and **Which program:** `doc`, tick the group, and press **Lend it
+   to** your group. Or in a second terminal:
+   `svrngs share 4318 --name doc --program doc --group <group>`, pressing
+   Enter where it asks for a password: the doc takes none.
 
 `--keep` is where the doc is kept, as one JSON line per edit
 (`acts.jsonl`), read back whole on a restart; the doc is yours to move or
 delete. `--svrngs` is svrngs's `api` file, which tells the server your
-name, so every page says whose doc it is. `< /dev/null` answers `share`'s
-password question with none: the doc asks no password, since svrngs names
-each person on their way in. Everyone in your groups then finds "doc"
+name, so every page says whose doc it is. Everyone in your groups then finds "doc"
 among what you lend, on their phone or on their svrngs home page.
 `?wall` after its address draws it for a projector.
 

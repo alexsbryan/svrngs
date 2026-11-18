@@ -4,7 +4,14 @@ Your friends lend models and tools on their own computers. The pantry is the
 one place on yours that shows them, and the one address your interface talks
 to.
 
-The pantry is a template: copy `apps/pantry/` and run it with Node 18 or
+- **Shape:** yours alone. A program on your computer, for your own chat app.
+- **Run it:** [Run it](#run-it), from svrngs's source
+  ([run one](../../docs/guide/examples.md#3-run-one)).
+- **How it's made:** `pantry.mjs` asks each lend its protocol; nothing is
+  registered.
+- **Change it:** [Write an adapter](#write-an-adapter).
+
+The pantry is a template: copy `apps/pantry/` and run it with Node 24 or
 later.
 
 It has no API of its own. A server that answers OpenAI's `/v1/models` is a

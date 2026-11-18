@@ -441,6 +441,8 @@ refused, and so is one without the token.
 
 ## Copy one to start
 
+[Examples](examples.md) shows how to open one up, or run one, first.
+
 - [`apps/expenses/`](../../apps/expenses/): Money, a carried app. The page
   is `index.html` and `index.js`; the arithmetic, one validator and its
   tests are in `expenses.js`.

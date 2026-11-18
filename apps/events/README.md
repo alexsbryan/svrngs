@@ -6,6 +6,14 @@ answer it, as three acts in the group's record. svrngs's code knows none of
 it (`nouns.txt`, `scripts/vocab_check.py`); `apps/` is outside the size
 budget (`scripts/lean_check.py`).
 
+- **Shape:** carried, and lent too. The page is carried; `server.mjs` is
+  the same app as a lent server.
+- **Run it:** bring it from your home page (**Add an app**, Events). Its
+  server alone: the last paragraph here.
+- **How it's made:** the list below. `events.js` is the fold both shapes share.
+- **Change it:** in a group of your own, edit `apps/Events/index.js`
+  ([open one up](../../docs/guide/examples.md#2-open-one-up)).
+
 - `events.js`: the fold: `event`, `coming` and `came`, a correction counted
   only from its own person, nothing that records "no", and the host's view
   of several groups (`hosted`).

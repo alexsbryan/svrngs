@@ -817,12 +817,19 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # code but JavaScript at 21,401. The shared database's ceiling keeps its
 # +1,700 over it. All code but JavaScript -> 23,101; js and the core as
 # above.
+# (2026-11-18) Raised by the operator for PR #3 (827d99aa), `notRunning`
+# for `down`: ralph/next/js/PROMPT.addendum.md fence 1 refuses a name
+# shortened to fit, and lend-line.js's import is as the formatter lays it,
+# one name a line. +9, the name kept whole; no pass cuts it. Its economizing
+# came before (59851ecb, -1). JavaScript 8,535 -> 8,544.
+# (2026-11-18) Merged with PR #3: the shared database's ceiling keeps its
+# +107 of JavaScript over the 8,544 PR #3 leaves. JavaScript -> 8,651.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
     ".": 23102,
 
-    "js": 8643,
+    "js": 8652,
 
     "swift": 1,
 }

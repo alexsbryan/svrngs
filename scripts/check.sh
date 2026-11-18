@@ -80,8 +80,9 @@ step "format" sh -c 'test -x web/node_modules/.bin/oxfmt || { echo "oxfmt is not
 # refuses an empty tier; *.integration.test.mjs has its own step below.
 step "page laws" node web/tests/run.mjs unit
 step "rustfmt"  cargo fmt --all --check
-# The scripts' own laws (scripts/tests: advisories, the touched tier's plans).
-step "script laws" python3 -m unittest scripts.tests.test_advisories scripts.tests.test_touched
+# The scripts' own laws (scripts/tests: advisories, the touched tier's plans,
+# one Node: what the gate runs and every ask for it, .nvmrc's).
+step "script laws" python3 -m unittest scripts.tests.test_advisories scripts.tests.test_touched scripts.tests.test_node
 # All of the above takes under a minute. A failure there is one the rest cannot
 # change, so it ends the run; `--fast` stops here always (.githooks/pre-commit).
 if [ "$failed" != 0 ] || [ "${1:-}" = --fast ]; then exit "$failed"; fi

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # The stand-in's database (standin.mjs): Magnets' schema.sql in SQLite, the
-# one Python carries. node:sqlite would keep the stand-in in one language,
-# but it starts at Node 22.13 and svrngs's tests run on Node 20 or later
-# (README.md). Each line in is a JSON object, and each line out its answer:
+# one Python carries. It was written while svrngs's tests ran on Node 20,
+# before node:sqlite (22.13); on Node 24 or later (.nvmrc) node:sqlite could
+# take its place and keep the stand-in in one language. Each line in is a
+# JSON object, and each line out its answer:
 #   {"run": [{sql, params}, ...]}  run as one transaction, nothing checked:
 #                                  {"answers": [...]}, each statement's
 #                                  {"rows": [...]} or its {"count": <n>}

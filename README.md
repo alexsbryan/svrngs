@@ -1,11 +1,10 @@
 # svrngs
 
-Your group's things, on your group's computers. The money you split, the
-nights you plan, the films you own, a friend's model: kept where you
-already are, opened from a link in the chat you already use. No accounts.
-No passwords. No landlord.
+  Software can now be made the way you make a meal: at home, for the people you know, exactly the way they like it. svrngs is where you serve it in your own little corner of what the internet was supposed to be.
 
-It holds to three things ([`NORTH_STAR.md`](NORTH_STAR.md)):
+  A film night drawn from everyone's shelves or the expenses for the trip. The graphics card in Sam's closet, answering questions for the whole group. The wedding photos, kept by the people who were there. A list of who owns what power tools. Or the silly thing only you and your friends would ever want, served up on a port and enjoyed on a random Friday. That's svrngs. Have fun pronouncing it.
+
+Some promises ([`NORTH_STAR.md`](NORTH_STAR.md)):
 - **Ten seconds from a link.** Open it, give your name, and you're in.
   Nothing new to learn.
 - **If you can run it on localhost, you can share it with your friends.**
@@ -144,7 +143,7 @@ and every raise gives its reason.
 
 You need:
 - Rust 1.91 or later, with rustfmt and clippy;
-- Node.js 20 or later, then `npm ci --prefix web`.
+- Node.js 24 or later, then `npm ci --prefix web`.
 
 Then run:
 

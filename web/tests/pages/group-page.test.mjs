@@ -222,7 +222,14 @@ async function settled(promise) {
 async function opened(fragment, { kept = [house], fine = false, windows = false } = {}) {
   globalThis.location = new URL('https://page.example/');
   const written = [];
-  globalThis.navigator = { clipboard: { writeText: async (text) => void written.push(text) } };
+  // Node 21 on gives globalThis a `navigator` with a getter alone, so it is
+  // defined over, not assigned (configurable, as Node's is).
+  const navigator = { clipboard: { writeText: async (text) => void written.push(text) } };
+  Object.defineProperty(globalThis, 'navigator', {
+    value: navigator,
+    configurable: true,
+    writable: true,
+  });
   const copy = machine('COPY', COPY, { at: { copy: 'idle' }, said: [] });
   const io = {
     ...parts.io,

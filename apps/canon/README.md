@@ -5,6 +5,14 @@ proposes a rule, the rest of you agree or object with a reason, and the page
 says when it has become your house's rule. It runs on every computer and
 phone in your group, so nobody keeps a server on and nobody keeps the book.
 
+- **Shape:** carried. A page in each person's browser; its entries are the
+  group's.
+- **Run it:** bring it from your home page (**Add an app**, House rules).
+- **How it's made:** [The files](#the-files). canon decides; `house.js` only
+  translates.
+- **Change it:** in a group of your own, edit `apps/House-rules/index.js`
+  ([open one up](../../docs/guide/examples.md#2-open-one-up)).
+
 Underneath it is [canon](https://github.com/alexsbryan/canon), a library for
 a group's rules, at its release 0.5.0. canon decides every answer the page
 gives: what is a rule, what is still waiting, who has a say. The page only

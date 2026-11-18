@@ -93,7 +93,7 @@ pub async fn drive(
         .stderr(std::process::Stdio::piped())
         .kill_on_drop(true)
         .spawn()
-        .expect("node runs: the browser tests need Node 18 or later");
+        .expect("node runs: the browser tests need Node 24 or later");
     let mut stdin = child.stdin.take().expect("stdin is piped");
     let told = tokio::spawn(async move {
         if let Some(Ok(())) = match release {

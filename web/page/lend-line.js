@@ -5,7 +5,15 @@
 // to keep.
 import { html } from '../ui/view.js?v=__VERSION__';
 import { Keep } from '../ui/parts.js?v=__VERSION__';
-import { agreed, alias, aliased, down, named, opens, readLine } from '../question.js?v=__VERSION__';
+import {
+  agreed,
+  alias,
+  aliased,
+  named,
+  notRunning,
+  opens,
+  readLine,
+} from '../question.js?v=__VERSION__';
 import { here, readingOf } from './hand.js?v=__VERSION__';
 /** @import { Lent } from './enter.js?v=__VERSION__' */
 /** @import { Props, State } from './page.js?v=__VERSION__' */
@@ -37,7 +45,7 @@ const kept = (state, lend) => {
 
 /** @param {LendLineProps} props */
 export function LendLine({ state, lend, send }) {
-  const full = `${opens(lend) === 'full' ? ' Full now.' : ''}${down(lend)}`;
+  const full = `${opens(lend) === 'full' ? ' Full now.' : ''}${notRunning(lend)}`;
   const reads = lend.reads ?? [];
   const lent = /** @type {Lent[]} */ (state.lent);
   const reading = reads.length ? readingOf(lend, lent, state.group.reads?.[lend.label]) : undefined;

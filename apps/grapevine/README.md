@@ -9,6 +9,12 @@ what it says. Every conversation on the page says so. This is the
 app's one shortcut (svrn-docs `rings/current/GRAPEVINE_DEMO.md` §6); it
 goes when svrngs carries notes between two computers (§9 there).
 
+- **Shape:** yours alone. Each person runs their own copy, which asks svrngs.
+- **Run it:** [Try it alone](#try-it-alone), from svrngs's source
+  ([run one](../../docs/guide/examples.md#3-run-one)).
+- **How it's made:** [What's here](#whats-here).
+- **Change it:** [Write a kind](#write-a-kind): a new kind of ask is one file.
+
 Grapevine lets you ask your groups for something, and lets the people in
 them carry your ask to their other groups, one tap a group. Sam asks
 1400 Page for a tile saw; Jo, in 1400 Page and Waller block, taps
@@ -24,7 +30,7 @@ none of its words (`nouns.txt`, `scripts/vocab_check.py`).
 
 ## Try it alone
 
-From your copy of svrngs, with Node.js 20 or later, one line:
+From your copy of svrngs, with Node.js 24 or later, one line:
 
 ```
 d=$(mktemp -d) && cp apps/grapevine/demo.json $d/town.json && echo "{\"file\": \"$d/town.json\", \"acting\": [\"Sam\", \"Jo\", \"Kim\"], \"data\": \"$d\"}" > $d/config.json && node apps/grapevine/server.mjs $d/config.json

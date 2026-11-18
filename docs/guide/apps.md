@@ -20,6 +20,7 @@ everyone in the group can open it under Shared apps."* The apps that come
 with svrngs are examples of that, and it says so: *"These are svrngs’s
 examples, to use or to change. Tick what you want and press the button: it
 goes in Elm’s folder, and everyone in Elm can open it in a few seconds."*
+Under the list, **See how they’re made** leads to [Examples](examples.md).
 Each is listed with a tick box and a line saying what it's for:
 
 - **Money**: who owes whom, and for what.
@@ -151,8 +152,8 @@ by, its size and when, but never its words; the page says so on every
 conversation.
 
 The grapevine isn't on the tick list. Each person runs their own copy, on
-their own computer, from a copy of the svrngs source with Node.js 20 or
-later; it isn't lent to the group. `apps/grapevine/README.md` has the one
+their own computer, from svrngs's source
+([run one](examples.md#3-run-one)); it isn't lent to the group. `apps/grapevine/README.md` has the one
 line to try it alone, and [the recorded walk-through](../../demo/grapevine.md)
 runs it with three people.
 
@@ -164,20 +165,15 @@ lending computer stops answering, every page says that computer *"didn’t
 answer"*, with *"Goodnight from Sam."*, and keeps what you write in your
 browser, then joins it with everyone's when that computer answers again.
 
-The doc isn't on the tick list either. You lend it from a copy of the svrngs
-source, with svrngs running:
-
-```
-node apps/doc/server.mjs --port 4318 --keep ~/doc --svrngs ~/.svrngs/api & svrngs share 4318 --name doc --program doc --group <group> < /dev/null
-```
-
-(`svrngs` here is `~/.local/bin/svrngs` if your terminal doesn't find it.)
-`--keep` is where the doc is saved. Everyone in your groups then finds
-**doc** among what you lend. Write its first line before others open it.
+The doc isn't on the tick list either. You lend it from svrngs's source
+([run one](examples.md#3-run-one)), as `apps/doc/README.md` says. Everyone
+in your groups then finds **doc** among what you lend. Write its first line
+before others open it.
 
 ## Make them your own
 
 These apps are small starting points, not finished products. Each is a
 handful of files you can read in an evening, meant to be copied and bent:
 add a field to Money, a "bring" list to Events. [Build an app for your
-group](build.md) shows how.
+group](build.md) shows how, and [Examples](examples.md) how to open one
+up first.
