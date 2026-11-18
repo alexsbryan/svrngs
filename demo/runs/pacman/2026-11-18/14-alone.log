@@ -1,0 +1,217 @@
+# steps.sh alone, 2026-11-18T21:00:15Z
+# VM: a, the lab's VM a: Omarchy 4.5.0 with svrngs from the install line (6 November, an older svrngs), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ gpg --import svrngs-release-key.asc
+gpg: directory '/home/cy/.gnupg' created
+gpg: /home/cy/.gnupg/trustdb.gpg: trustdb created
+gpg: key 057BF9082AA03CFB: public key "svrngs releases" imported
+gpg: Total number processed: 1
+gpg:               imported: 1
+[exit 0]
+
+$ cd packaging/arch && makepkg
+==> Making package: svrngs-bin 1.11.1-1 (Wed Nov 18 21:00:16 2026)
+==> Checking runtime dependencies...
+==> Checking buildtime dependencies...
+==> Retrieving sources...
+  -> Found updated-by
+  -> Found svrngs.service
+  -> Found svrngs.desktop
+  -> Found give.service
+  -> Downloading svrngs-1.11.1-linux-x86_64.tar.gz...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0 41 14.95M  41  6.27M   0      0  5.46M      0   00:02   00:01   00:01  6.27M 91 14.95M  91 13.66M   0      0  6.36M      0   00:02   00:02          6.83M100 14.95M 100 14.95M   0      0  6.40M      0   00:02   00:02          6.83M100 14.95M 100 14.95M   0      0  6.40M      0   00:02   00:02          6.83M100 14.95M 100 14.95M   0      0  6.40M      0   00:02   00:02          6.83M
+  -> Downloading svrngs-1.11.1-linux-x86_64.tar.gz.sig...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0100    147 100    147   0      0   1008      0                              0100    147 100    147   0      0   1008      0                              0100    147 100    147   0      0   1008      0                              0
+  -> Downloading give-1.11.1-linux-x86_64.tar.gz...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0100  1.40M 100  1.40M   0      0  3.87M      0                              0100  1.40M 100  1.40M   0      0  3.87M      0                              0100  1.40M 100  1.40M   0      0  3.87M      0                              0
+  -> Downloading give-1.11.1-linux-x86_64.tar.gz.sig...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0100    147 100    147   0      0    859      0                              0100    147 100    147   0      0    859      0                              0100    147 100    147   0      0    859      0                              0
+==> Validating source files with sha256sums...
+    updated-by ... Passed
+    svrngs.service ... Passed
+    svrngs.desktop ... Passed
+    give.service ... Passed
+==> Validating source_x86_64 files with sha256sums...
+    svrngs-1.11.1-linux-x86_64.tar.gz ... Passed
+    svrngs-1.11.1-linux-x86_64.tar.gz.sig ... Passed
+    give-1.11.1-linux-x86_64.tar.gz ... Passed
+    give-1.11.1-linux-x86_64.tar.gz.sig ... Passed
+==> Verifying source file signatures with gpg...
+    svrngs-1.11.1-linux-x86_64.tar.gz ... Passed
+    give-1.11.1-linux-x86_64.tar.gz ... Passed
+==> Extracting sources...
+  -> Extracting svrngs-1.11.1-linux-x86_64.tar.gz with bsdtar
+  -> Extracting give-1.11.1-linux-x86_64.tar.gz with bsdtar
+==> Entering fakeroot environment...
+==> Starting package_svrngs-bin()...
+==> Tidying install...
+  -> Removing libtool files...
+  -> Purging unreproducible ruby files...
+  -> Removing static library files...
+  -> Purging unwanted files...
+  -> Compressing man and info pages...
+==> Checking for packaging issues...
+==> Creating package "svrngs-bin"...
+  -> Generating .PKGINFO file...
+  -> Generating .BUILDINFO file...
+  -> Adding install file...
+  -> Generating .MTREE file...
+  -> Compressing package...
+==> Starting package_svrngs-give-bin()...
+==> Tidying install...
+  -> Removing libtool files...
+  -> Purging unreproducible ruby files...
+  -> Removing static library files...
+  -> Purging unwanted files...
+  -> Compressing man and info pages...
+==> Checking for packaging issues...
+==> Creating package "svrngs-give-bin"...
+  -> Generating .PKGINFO file...
+  -> Generating .BUILDINFO file...
+  -> Adding install file...
+  -> Generating .MTREE file...
+  -> Compressing package...
+==> Leaving fakeroot environment.
+==> Finished making: svrngs-bin 1.11.1-1 (Wed Nov 18 21:00:22 2026)
+[exit 0]
+
+$ cd packaging/arch && makepkg --packagelist
+/home/cy/svrngs-src/packaging/arch/svrngs-bin-1.11.1-1-x86_64.pkg.tar.zst
+/home/cy/svrngs-src/packaging/arch/svrngs-give-bin-1.11.1-1-x86_64.pkg.tar.zst
+[exit 0]
+
+$ cd packaging/arch && sudo pacman -U --noconfirm "$(makepkg --packagelist | grep /svrngs-bin-)"
+loading packages...
+resolving dependencies...
+looking for conflicting packages...
+
+Package (1)  New Version  Net Change
+
+svrngs-bin   1.11.1-1      40.55 MiB
+
+Total Installed Size:  40.55 MiB
+
+:: Proceed with installation? [Y/n] 
+checking keyring...
+checking package integrity...
+loading package files...
+checking for file conflicts...
+checking available disk space...
+:: Running pre-transaction hooks...
+(1/1) Waiting for limine-snapper-sync to finish...
+:: Processing package changes...
+installing svrngs-bin...
+svrngs: to keep it running whenever you log in, run as yourself:
+  systemctl --user enable --now svrngs
+:: Running post-transaction hooks...
+(1/3) Reloading user manager configuration...
+(2/3) Arming ConditionNeedsUpdate...
+(3/3) Updating the desktop file MIME type cache...
+[exit 0]
+
+$ systemctl --user enable --now svrngs
+Created symlink '/home/cy/.config/systemd/user/default.target.wants/svrngs.service' → '/usr/lib/systemd/user/svrngs.service'.
+[exit 0]
+
+$ sleep 3; systemctl --user is-active svrngs; command -v svrngs; svrngs version; pacman -Q svrngs-bin svrngs-give-bin podman
+active
+/usr/bin/svrngs
+svrngs 1.11.1 (24b6ee7c)
+error: package 'svrngs-give-bin' was not found
+error: package 'podman' was not found
+svrngs-bin 1.11.1-1
+[exit 1]
+
+$ svrngs open --print; cat ~/.svrngs/api; echo; journalctl --user -u svrngs -b --no-pager | tail -6
+Open this in your browser within a minute: http://svrngs.localhost:41633/svrngs-open?code=V-5azZIiH2o730298oqBoisqk6We3gr1R6tQX8wPe9o
+http://127.0.0.1:41633
+
+Nov 18 21:00:24 omarchy-lab systemd[626]: Started svrngs.
+Nov 18 21:00:24 omarchy-lab svrngs[14801]: The House was made by an older svrngs, so nothing in it changes now. To carry on, make it again and invite people by link.
+Nov 18 21:00:24 omarchy-lab svrngs[14801]: You are in no group yet: make one on your home page, at the address below, or with `svrngs new <name>`.
+Nov 18 21:00:24 omarchy-lab svrngs[14801]: Apps on this computer reach your groups at http://127.0.0.1:41633.
+Nov 18 21:00:24 omarchy-lab svrngs[14801]: Your home page, the same address each time svrngs starts: http://svrngs.localhost:41633/
+Nov 18 21:00:24 omarchy-lab svrngs[14801]: Leave this running; Ctrl-C stops it.
+[exit 0]
+
+$ svrngs update; ls -A ~/.svrngs ~/svrngs
+pacman installed this svrngs, so update it as a package: build the newer PKGBUILD with makepkg -si, or run your AUR helper's update.
+/home/cy/.svrngs:
+api
+blobs
+identity
+lends
+lock
+locks
+oidc
+origin
+release
+rings
+room.json
+synced.json
+token
+
+/home/cy/svrngs:
+The House
+[exit 0]
+
+$ systemctl --user disable --now svrngs
+Removed '/home/cy/.config/systemd/user/default.target.wants/svrngs.service'.
+[exit 0]
+
+$ sudo pacman -R --noconfirm svrngs-bin
+checking dependencies...
+
+Package (1)  Old Version  Net Change
+
+svrngs-bin   1.11.1-1     -40.55 MiB
+
+Total Removed Size:  40.55 MiB
+
+:: Do you want to remove these packages? [Y/n] 
+:: Running pre-transaction hooks...
+(1/1) Waiting for limine-snapper-sync to finish...
+:: Processing package changes...
+removing svrngs-bin...
+:: Running post-transaction hooks...
+(1/3) Reloading user manager configuration...
+(2/3) Arming ConditionNeedsUpdate...
+(3/3) Updating the desktop file MIME type cache...
+[exit 0]
+
+$ pacman -Q svrngs-bin; ls -d /usr/bin/svrngs /usr/lib/svrngs; ls -A ~/.svrngs ~/svrngs
+error: package 'svrngs-bin' was not found
+ls: cannot access '/usr/bin/svrngs': No such file or directory
+ls: cannot access '/usr/lib/svrngs': No such file or directory
+/home/cy/.svrngs:
+api
+blobs
+identity
+lends
+lock
+locks
+oidc
+origin
+release
+rings
+room.json
+synced.json
+token
+
+/home/cy/svrngs:
+The House
+[exit 0]
+

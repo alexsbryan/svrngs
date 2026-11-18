@@ -1983,4 +1983,8 @@ nothing (`update.rs` `packaged`). One that cannot write beside itself is
 refused before the download. The workspace's version is the release's
 (1.10.0 is V1.10), `svrngs version` says it with the commit
 `build-release.sh` built it from, and `deploy-page.sh` says the GitHub
-Release that keeps each version for packages.
+Release that keeps each version for packages. `packaging/arch/PKGBUILD`
+builds svrngs, and Give as a package of its own, from that release, each
+download checked against the release key; on Omarchy it installs, runs,
+says the package's line to `svrngs update` and removes cleanly, and refuses
+a wrong key or sum (`demo/runs/pacman/2026-11-18/`).

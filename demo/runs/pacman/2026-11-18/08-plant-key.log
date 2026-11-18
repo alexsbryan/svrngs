@@ -1,0 +1,60 @@
+# steps.sh plant-key, 2026-11-18T20:59:48Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ rm -rf ~/plant && mkdir ~/plant && cd packaging/arch && cp PKGBUILD *.install *.service *.desktop updated-by ~/plant && sed -i 's/2AA03CFB/2AA03CFA/' ~/plant/PKGBUILD && diff PKGBUILD ~/plant/PKGBUILD
+22c22
+< validpgpkeys=('46B4D67C5E6621093BB1AB2B057BF9082AA03CFB') # the svrngs release key
+---
+> validpgpkeys=('46B4D67C5E6621093BB1AB2B057BF9082AA03CFA') # the svrngs release key
+[exit 1]
+
+$ cd ~/plant && makepkg -f --noconfirm
+==> Making package: svrngs-bin 1.11.1-1 (Wed Nov 18 20:59:50 2026)
+==> Checking runtime dependencies...
+==> Checking buildtime dependencies...
+==> Retrieving sources...
+  -> Found updated-by
+  -> Found svrngs.service
+  -> Found svrngs.desktop
+  -> Found give.service
+  -> Downloading svrngs-1.11.1-linux-x86_64.tar.gz...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0 32 14.95M  32  4.88M   0      0  4.29M      0   00:03   00:01   00:02  4.87M 63 14.95M  63  9.48M   0      0  4.43M      0   00:03   00:02   00:01  4.73M 99 14.95M  99 14.89M   0      0  4.74M      0   00:03   00:03          4.95M100 14.95M 100 14.95M   0      0  4.75M      0   00:03   00:03          4.95M100 14.95M 100 14.95M   0      0  4.75M      0   00:03   00:03          4.95M100 14.95M 100 14.95M   0      0  4.75M      0   00:03   00:03          4.95M
+  -> Downloading svrngs-1.11.1-linux-x86_64.tar.gz.sig...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0100    147 100    147   0      0    900      0                              0100    147 100    147   0      0    899      0                              0100    147 100    147   0      0    899      0                              0
+  -> Downloading give-1.11.1-linux-x86_64.tar.gz...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0100  1.40M 100  1.40M   0      0  3.41M      0                              0100  1.40M 100  1.40M   0      0  3.41M      0                              0100  1.40M 100  1.40M   0      0  3.41M      0                              0
+  -> Downloading give-1.11.1-linux-x86_64.tar.gz.sig...
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0  0      0   0      0   0      0      0      0                              0
+  0      0   0      0   0      0      0      0                              0100    147 100    147   0      0    982      0                              0100    147 100    147   0      0    982      0                              0100    147 100    147   0      0    982      0                              0
+==> Validating source files with sha256sums...
+    updated-by ... Passed
+    svrngs.service ... Passed
+    svrngs.desktop ... Passed
+    give.service ... Passed
+==> Validating source_x86_64 files with sha256sums...
+    svrngs-1.11.1-linux-x86_64.tar.gz ... Passed
+    svrngs-1.11.1-linux-x86_64.tar.gz.sig ... Passed
+    give-1.11.1-linux-x86_64.tar.gz ... Passed
+    give-1.11.1-linux-x86_64.tar.gz.sig ... Passed
+==> Verifying source file signatures with gpg...
+    svrngs-1.11.1-linux-x86_64.tar.gz ... FAILED (invalid public key 46B4D67C5E6621093BB1AB2B057BF9082AA03CFB)
+    give-1.11.1-linux-x86_64.tar.gz ... FAILED (invalid public key 46B4D67C5E6621093BB1AB2B057BF9082AA03CFB)
+==> ERROR: One or more PGP signatures could not be verified!
+[exit 1]
+
+$ ls ~/plant/*.pkg.tar.zst
+ls: cannot access '/home/cy/plant/*.pkg.tar.zst': No such file or directory
+[exit 2]
+

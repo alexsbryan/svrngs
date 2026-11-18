@@ -1,0 +1,138 @@
+# steps.sh service, 2026-11-18T20:59:35Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ systemctl --user enable --now svrngs
+Created symlink '/home/cy/.config/systemd/user/default.target.wants/svrngs.service' → '/usr/lib/systemd/user/svrngs.service'.
+[exit 0]
+
+$ sleep 3; systemctl --user is-active svrngs; systemctl --user status svrngs --no-pager | head -6
+active
+● svrngs.service - svrngs
+     Loaded: loaded (/usr/lib/systemd/user/svrngs.service; enabled; preset: enabled)
+     Active: active (running) since Wed 2026-11-18 20:59:35 UTC; 3s ago
+ Invocation: 143f166afa864dbb930a426d00ad2f25
+   Main PID: 12251 (svrngs)
+      Tasks: 18 (limit: 9410)
+[exit 0]
+
+$ svrngs open --print
+Open this in your browser within a minute: http://svrngs.localhost:37199/svrngs-open?code=aZPc048R_Fbh95_1OszMyPVt7A51nP5Q6a98qh2z808
+[exit 0]
+
+$ curl -sS -o /dev/null -w "home page: %{http_code}\n" "$(cat ~/.svrngs/api)/"
+home page: 404
+[exit 0]
+
+$ ls -A ~/.svrngs; svrngs update; ls -A ~/.svrngs; sha256sum /usr/bin/svrngs
+api
+blobs
+identity
+lock
+oidc
+token
+pacman installed this svrngs, so update it as a package: build the newer PKGBUILD with makepkg -si, or run your AUR helper's update.
+api
+blobs
+identity
+lock
+oidc
+token
+5a1a54a04e3b76fd7796a45555a5801074ef43ba13a72274addcd7d3da3e3f6f  /usr/bin/svrngs
+[exit 0]
+
+$ systemctl --user enable --now give
+Created symlink '/home/cy/.config/systemd/user/default.target.wants/give.service' → '/usr/lib/systemd/user/give.service'.
+[exit 0]
+
+$ sleep 3; systemctl --user is-active give; journalctl --user -u give -b --no-pager | tail -3
+active
+Nov 18 20:59:38 omarchy-lab systemd[597]: Started give.
+Nov 18 20:59:38 omarchy-lab give[12327]: Keeping what your groups give this computer to keep. Ctrl-C stops it.
+[exit 0]
+
+$ svrngs restart; sleep 3; systemctl --user is-active svrngs
+svrngs is restarting. Your home page comes back in a moment.
+active
+[exit 0]
+
+$ systemd-analyze verify --user /usr/lib/systemd/user/svrngs.service /usr/lib/systemd/user/give.service
+[exit 0]
+
+$ desktop-file-validate /usr/share/applications/svrngs.desktop
+[exit 0]
+
+$ pacman -Qi svrngs-bin svrngs-give-bin
+Name            : svrngs-bin
+Version         : 1.11.1-1
+Description     : Keep what your group shares on your own computers
+Architecture    : x86_64
+URL             : https://github.com/alexsbryan/svrngs
+Licenses        : AGPL-3.0-or-later
+Groups          : None
+Provides        : svrngs
+Depends On      : None
+Optional Deps   : None
+Required By     : svrngs-give-bin
+Optional For    : None
+Conflicts With  : svrngs
+Replaces        : None
+Installed Size  : 40.55 MiB
+Packager        : Unknown Packager
+Build Date      : Wed Nov 18 20:59:19 2026
+Install Date    : Wed Nov 18 20:59:32 2026
+Install Reason  : Explicitly installed
+Install Script  : Yes
+Validated By    : None
+
+Name            : svrngs-give-bin
+Version         : 1.11.1-1
+Description     : Give: your group keeps an app on one member's computer at a time, in rootless Podman
+Architecture    : x86_64
+URL             : https://github.com/alexsbryan/svrngs
+Licenses        : AGPL-3.0-or-later
+Groups          : None
+Provides        : None
+Depends On      : svrngs  podman
+Optional Deps   : None
+Required By     : None
+Optional For    : None
+Conflicts With  : None
+Replaces        : None
+Installed Size  : 3.64 MiB
+Packager        : Unknown Packager
+Build Date      : Wed Nov 18 20:59:19 2026
+Install Date    : Wed Nov 18 20:59:32 2026
+Install Reason  : Explicitly installed
+Install Script  : Yes
+Validated By    : None
+
+[exit 0]
+
+$ pacman -Ql svrngs-bin svrngs-give-bin
+svrngs-bin /usr/
+svrngs-bin /usr/bin/
+svrngs-bin /usr/bin/svrngs
+svrngs-bin /usr/lib/
+svrngs-bin /usr/lib/svrngs/
+svrngs-bin /usr/lib/svrngs/updated-by
+svrngs-bin /usr/lib/systemd/
+svrngs-bin /usr/lib/systemd/user/
+svrngs-bin /usr/lib/systemd/user/svrngs.service
+svrngs-bin /usr/share/
+svrngs-bin /usr/share/applications/
+svrngs-bin /usr/share/applications/svrngs.desktop
+svrngs-give-bin /usr/
+svrngs-give-bin /usr/bin/
+svrngs-give-bin /usr/bin/give
+svrngs-give-bin /usr/lib/
+svrngs-give-bin /usr/lib/systemd/
+svrngs-give-bin /usr/lib/systemd/user/
+svrngs-give-bin /usr/lib/systemd/user/give.service
+[exit 0]
+
+$ pacman -Qkk svrngs-bin svrngs-give-bin
+svrngs-bin: 13 total files, 0 altered files
+svrngs-give-bin: 8 total files, 0 altered files
+[exit 0]
+

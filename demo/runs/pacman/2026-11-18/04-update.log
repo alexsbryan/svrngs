@@ -1,0 +1,20 @@
+# steps.sh update, 2026-11-18T20:59:35Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ sha256sum /usr/bin/svrngs; pacman -Qkk svrngs-bin; ls -A ~/.svrngs
+5a1a54a04e3b76fd7796a45555a5801074ef43ba13a72274addcd7d3da3e3f6f  /usr/bin/svrngs
+svrngs-bin: 13 total files, 0 altered files
+ls: cannot access '/home/cy/.svrngs': No such file or directory
+[exit 2]
+
+$ svrngs update
+pacman installed this svrngs, so update it as a package: build the newer PKGBUILD with makepkg -si, or run your AUR helper's update.
+[exit 0]
+
+$ sha256sum /usr/bin/svrngs; pacman -Qkk svrngs-bin; ls -A ~/.svrngs
+5a1a54a04e3b76fd7796a45555a5801074ef43ba13a72274addcd7d3da3e3f6f  /usr/bin/svrngs
+svrngs-bin: 13 total files, 0 altered files
+ls: cannot access '/home/cy/.svrngs': No such file or directory
+[exit 2]
+

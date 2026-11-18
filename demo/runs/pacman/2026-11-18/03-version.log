@@ -1,0 +1,13 @@
+# steps.sh version, 2026-11-18T20:59:34Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ command -v svrngs give
+/usr/bin/svrngs
+/usr/bin/give
+[exit 0]
+
+$ svrngs version
+svrngs 1.11.1 (24b6ee7c)
+[exit 0]
+

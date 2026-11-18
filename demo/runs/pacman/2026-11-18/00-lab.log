@@ -1,0 +1,30 @@
+# steps.sh lab, 2026-11-18T20:59:16Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ echo omarchy | sudo -S -p "" sh -c "echo \"cy ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/90-lab"
+[exit 0]
+
+$ pkill -x hypridle; pgrep -x hypridle || echo "hypridle stopped"
+hypridle stopped
+[exit 0]
+
+$ sudo pacman -Sy
+:: Synchronizing package databases...
+ omarchy downloading...
+ core downloading...
+ extra downloading...
+ multilib downloading...
+[exit 0]
+
+$ pacman -Qu
+aether 4.32.0-2 -> 4.33.0-1
+cliamp 2.3.0-3 -> 2.4.1-1
+gliff 0.4.2-1 -> 0.4.3-1
+herdr 0.9.1-2 -> 0.9.5-1
+mise-bin 2026.11.0-1 -> 2026.11.9-1
+owe 0.2.13-1 -> 0.2.14-1
+superwhisper-bin 1.2.0-1 -> 1.3.1-1
+yt-dlp 2026.08.19-1 -> 2026.10.26-1
+[exit 0]
+

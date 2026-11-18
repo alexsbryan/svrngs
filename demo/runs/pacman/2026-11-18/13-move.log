@@ -1,0 +1,17 @@
+# steps.sh move, 2026-11-18T21:00:14Z
+# VM: a, the lab's VM a: Omarchy 4.5.0 with svrngs from the install line (6 November, an older svrngs), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ systemctl --user disable --now svrngs
+Removed '/home/cy/.config/systemd/user/default.target.wants/svrngs.service'.
+[exit 0]
+
+$ mv ~/.local/bin/svrngs ~/.local/bin/svrngs.before-package
+[exit 0]
+
+$ mv ~/.config/systemd/user/svrngs.service ~/.config/systemd/user/svrngs.service.before-package
+[exit 0]
+
+$ mv ~/.local/share/applications/svrngs.desktop ~/.local/share/applications/svrngs.desktop.before-package
+[exit 0]
+

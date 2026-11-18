@@ -1,0 +1,64 @@
+# steps.sh remove, 2026-11-18T20:59:47Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ systemctl --user disable --now give svrngs
+Removed '/home/cy/.config/systemd/user/default.target.wants/svrngs.service'.
+Removed '/home/cy/.config/systemd/user/default.target.wants/give.service'.
+[exit 0]
+
+$ sudo pacman -R --noconfirm svrngs-give-bin svrngs-bin
+checking dependencies...
+
+Package (2)      Old Version  Net Change
+
+svrngs-bin       1.11.1-1     -40.55 MiB
+svrngs-give-bin  1.11.1-1      -3.64 MiB
+
+Total Removed Size:  44.18 MiB
+
+:: Do you want to remove these packages? [Y/n] 
+:: Running pre-transaction hooks...
+(1/1) Waiting for limine-snapper-sync to finish...
+:: Processing package changes...
+removing svrngs-give-bin...
+removing svrngs-bin...
+:: Running post-transaction hooks...
+(1/3) Reloading user manager configuration...
+(2/3) Arming ConditionNeedsUpdate...
+(3/3) Updating the desktop file MIME type cache...
+[exit 0]
+
+$ pacman -Q svrngs-bin svrngs-give-bin; pacman -Qo /usr/bin/svrngs /usr/bin/give
+error: package 'svrngs-bin' was not found
+error: package 'svrngs-give-bin' was not found
+error: No package owns /usr/bin/svrngs
+error: No package owns /usr/bin/give
+[exit 2]
+
+$ ls -d /usr/bin/svrngs /usr/bin/give /usr/lib/svrngs /usr/lib/systemd/user/svrngs.service /usr/lib/systemd/user/give.service /usr/share/applications/svrngs.desktop
+ls: cannot access '/usr/bin/svrngs': No such file or directory
+ls: cannot access '/usr/bin/give': No such file or directory
+ls: cannot access '/usr/lib/svrngs': No such file or directory
+ls: cannot access '/usr/lib/systemd/user/svrngs.service': No such file or directory
+ls: cannot access '/usr/lib/systemd/user/give.service': No such file or directory
+ls: cannot access '/usr/share/applications/svrngs.desktop': No such file or directory
+[exit 2]
+
+$ systemctl --user is-active svrngs give; ls ~/.config/systemd/user/default.target.wants; ls -A ~/.svrngs
+inactive
+inactive
+pipewire-pulse.service
+pipewire-pulse.socket
+api
+blobs
+identity
+lock
+oidc
+token
+[exit 0]
+
+$ pacman -Qdtq
+podman
+[exit 0]
+

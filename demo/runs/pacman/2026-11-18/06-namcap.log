@@ -1,0 +1,18 @@
+# steps.sh namcap, 2026-11-18T20:59:45Z
+# VM: pac, a new overlay on the lab's Omarchy 4.5.0 base.qcow2 (svrngs never installed), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ sudo pacman -S --noconfirm --needed namcap >/dev/null && cd packaging/arch && namcap PKGBUILD *.pkg.tar.zst
+PKGBUILD (svrngs-bin) W: Reference to x86_64 should be changed to $CARCH
+PKGBUILD (svrngs-bin) W: Reference to x86_64 should be changed to $CARCH
+PKGBUILD (svrngs-bin) W: Reference to x86_64 should be changed to $CARCH
+PKGBUILD (svrngs-bin) W: Reference to x86_64 should be changed to $CARCH
+PKGBUILD (svrngs-bin) W: Missing Maintainer tag
+svrngs-bin W: ELF file ('usr/bin/svrngs') lacks FULL RELRO, check LDFLAGS.
+svrngs-bin W: ELF file ('usr/bin/svrngs') lacks PIE.
+svrngs-give-bin W: ELF file ('usr/bin/give') lacks FULL RELRO, check LDFLAGS.
+svrngs-give-bin W: ELF file ('usr/bin/give') lacks PIE.
+svrngs-give-bin W: Dependency included, but may not be needed ('svrngs')
+svrngs-give-bin W: Dependency included, but may not be needed ('podman')
+[exit 0]
+

@@ -1,0 +1,34 @@
+# steps.sh before-move, 2026-11-18T21:00:13Z
+# VM: a, the lab's VM a: Omarchy 4.5.0 with svrngs from the install line (6 November, an older svrngs), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ command -v svrngs; svrngs version 2>&1 | head -1; systemctl --user is-active svrngs; cat ~/.svrngs/api; echo; ls -A ~/.svrngs ~/svrngs
+/home/cy/.local/bin/svrngs
+svrngs: unknown command `version`
+active
+http://127.0.0.1:41633
+
+/home/cy/.svrngs:
+api
+blobs
+identity
+lends
+lock
+oidc
+origin
+release
+rings
+room.json
+synced.json
+token
+
+/home/cy/svrngs:
+The House
+[exit 0]
+
+$ ls ~/.local/bin/svrngs ~/.config/systemd/user/svrngs.service ~/.local/share/applications/svrngs.desktop; command -v podman
+/home/cy/.config/systemd/user/svrngs.service
+/home/cy/.local/bin/svrngs
+/home/cy/.local/share/applications/svrngs.desktop
+[exit 1]
+

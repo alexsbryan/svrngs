@@ -1,0 +1,9 @@
+# steps.sh route, 2026-11-18T21:00:12Z
+# VM: a, the lab's VM a: Omarchy 4.5.0 with svrngs from the install line (6 November, an older svrngs), booted -snapshot; guest user cy
+# commit: 4bfc7adb (git archive 4bfc7adb svrngs-release-key.asc packaging/arch)
+
+$ echo omarchy | sudo -S -p "" ip route add default via 10.0.2.2 dev enp0s4; ip route | head -2
+default via 10.0.2.2 dev enp0s4 
+10.0.2.0/24 dev enp0s4 proto kernel scope link src 10.0.2.15 metric 900 
+[exit 0]
+
