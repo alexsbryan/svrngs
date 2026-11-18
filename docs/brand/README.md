@@ -45,7 +45,9 @@ The overview's diagrams sign their foot with it, from the same file
   page links it, and `scripts/build-web.sh` puts it beside the page, so a
   group's page added to the Home Screen shows the mark.
 - **The name goes with what it's short for:** "svrngs" alone reads as
-  "savings" ([`lockup.svg`](lockup.svg)).
+  "savings" ([`lockup.svg`](lockup.svg)). At the top of a README, which a
+  reader may see light or dark, the lockup sits on black as the app icon
+  does ([`lockup-on-black.svg`](lockup-on-black.svg)).
 
 ## What it must not become
 

@@ -1,3 +1,5 @@
+<img alt="svrngs, sovereign rings" src="docs/brand/lockup-on-black.svg" width="300">
+
 # svrngs
 
   Software can now be made the way you make a meal: at home, for the people you know, exactly the way they like it. svrngs is where you serve it in your own little corner of what the internet was supposed to be.

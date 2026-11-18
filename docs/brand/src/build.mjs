@@ -1,5 +1,6 @@
 // build.mjs — the svrngs mark's files, from mark.mjs. `node build.mjs`
-// writes them beside this folder: the three cuts, the lockup and the icon.
+// writes them beside this folder: the three cuts, the lockup (plain and on
+// black) and the icon.
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -24,13 +25,26 @@ for (const cut of ['large', 'medium', 'small']) {
 // The lockup: the name as the pages' h1 sets it, black (900) and tracked
 // tight, with what it is short for under it, since "svrngs" alone reads as
 // "savings".
+const words = (fill) =>
+  `<text x="192" y="104" font-family="${FACE}" font-size="104" font-weight="900" letter-spacing="-4.7" fill="${fill}">svrngs</text>` +
+  `<text x="196" y="150" font-family="${FACE}" font-size="33" fill="${fill}">sovereign rings</text>`;
 write(
   'lockup.svg',
   '0 0 560 180',
   'svrngs, sovereign rings',
-  place(10, 10, 160, 'large') +
-    `<text x="192" y="104" font-family="${FACE}" font-size="104" font-weight="900" letter-spacing="-4.7" fill="currentColor">svrngs</text>` +
-    `<text x="196" y="150" font-family="${FACE}" font-size="33" fill="currentColor">sovereign rings</text>`,
+  place(10, 10, 160, 'large') + words('currentColor'),
+);
+
+// The lockup on black, white as the app icon is, so a README shows it the
+// same on a light page and a dark one.
+write(
+  'lockup-on-black.svg',
+  '0 0 620 220',
+  'svrngs, sovereign rings',
+  `<rect width="620" height="220" rx="24" fill="black"/><g transform="translate(30 20)">` +
+    place(10, 10, 160, 'large', { ink: 'white' }) +
+    words('white') +
+    '</g>',
 );
 
 // The favicon: the small cut, its ink white when the browser is dark, or it
