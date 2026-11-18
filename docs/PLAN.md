@@ -59,7 +59,9 @@ promises of APP_STATE"; svrn-docs `rings/current/MAGNETS.md`, its plan
 since neither adds a product line (operator, 2026-11-17): Magnets' face in
 `apps/magnets/` against a stand-in for its route (built, the route's shape
 pinned in `apps/magnets/tests/standin.mjs`), tried on first-time
-players, and the two design spikes, the merge rule and what a phone signs.
+players as `demo/magnets.md` has it (a xenia read first,
+`demo/runs/magnets/2026-11-17-xenia/`), and the two design spikes, the
+merge rule and what a phone signs.
 The database itself still waits for stage 4.
 
 **V1 — the cut line** (after events; operator, 2026-10-15, of the

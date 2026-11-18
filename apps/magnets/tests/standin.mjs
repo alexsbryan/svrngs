@@ -36,7 +36,10 @@
 //   unreachable  every request answered 503, and every open stream cut
 //   refusing     {status, refused, words}: every POST answered with it
 //
-// Alone, `node apps/magnets/tests/standin.mjs [port]` prints where it serves.
+// Alone, `node apps/magnets/tests/standin.mjs [port] [address]` prints where
+// it serves: on 127.0.0.1 unless given an address of this computer's, such
+// as its WiFi's, for a phone on the same WiFi to play (demo/magnets.md,
+// proof 1).
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
@@ -101,7 +104,7 @@ export function database(schema = SCHEMA) {
 }
 
 /** The stand-in on 127.0.0.1 at `port`: where it serves, its database, its switches (`set`), and its end. */
-export async function serve({ port = 0 } = {}) {
+export async function serve({ port = 0, host = '127.0.0.1' } = {}) {
   const policy = await carriedPolicy();
   const db = database();
   const switches = { syncing: false, unreachable: false, refusing: null };
@@ -173,9 +176,9 @@ export async function serve({ port = 0 } = {}) {
       res.writeHead(404).end();
     }
   });
-  await new Promise((done) => server.listen(port, '127.0.0.1', done));
+  await new Promise((done) => server.listen(port, host, done));
   return {
-    at: `http://127.0.0.1:${server.address().port}/`,
+    at: `http://${host}:${server.address().port}/`,
     db,
     /** Change a switch: open streams are sent the board again, or cut while unreachable. */
     async set(change) {
@@ -192,6 +195,7 @@ export async function serve({ port = 0 } = {}) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const standin = await serve({ port: Number(process.argv[2] ?? 0) });
+  const [port = 0, host] = process.argv.slice(2);
+  const standin = await serve({ port: Number(port), ...(host ? { host } : {}) });
   console.log(standin.at);
 }
