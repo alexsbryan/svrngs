@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/marcus.md",
+  "hash": "b4570f3a7ad65d3c0f122a1db892d4e672a0065a938be5ca604ff4e38cdea665",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "failed",
+    "reason": "stopped before their goal"
+  },
+  "clock": 15.578947368421051,
+  "patienceLeft": 26,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 40,
+      "read": 24,
+      "taps": 16,
+      "seconds": 10.578947368421051
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "It's a word magnet game: \"I can explain the ___\" with words like goose, raccoon, lasagna. Looks like a game, not for work. I didn't play it."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected something for work, like calls, texts, maps or job photos. Not a game."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A screen called Magnets, \"Tap a word to add it\", with a sentence blank and silly words. A toy."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": "Nothing was too much. It was just not for me."
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": "Right away. I couldn't tell what it was for at a glance, so I'd have pocketed the phone."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1316,
+    "cache_read_input_tokens": 20311,
+    "output_tokens": 747
+  },
+  "total_cost_usd": 0.014797100000000002,
+  "attachments": []
+}

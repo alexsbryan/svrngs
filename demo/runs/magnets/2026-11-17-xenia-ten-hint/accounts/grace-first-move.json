@@ -1,0 +1,75 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/grace.md",
+  "hash": "3b7c5840d52e24b30cbccca8d387bdbcb8614c5707fa8350719fe284c5139bd7",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 37.44804347826087,
+  "patienceLeft": 155.664,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 84,
+      "taps": 16,
+      "seconds": 31.44804347826087
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "It's a magnet-poetry app where a group shares one sentence. The sentence started as \"I can explain the ____\". I added \"raccoon\", so it now reads \"I can explain the raccoon.\" Anyone in the group can change it, and tapping a word takes it out."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected a word-magnet game. The screen said \"Tap a word to add it\" and that the group sees the sentence, so that's what I expected, and that's what happened."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "It was simple and it did what it said. The word moved from the tray into the sentence. I only tapped once. I didn't try removing the word or adding more. I also never saw who is in the group."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": null,
+  "total_cost_usd": null,
+  "attachments": []
+}

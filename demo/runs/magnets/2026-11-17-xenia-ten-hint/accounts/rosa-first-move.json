@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/rosa.md",
+  "hash": "abd3969e18e008bf1bf1c778148bc7e0c0f1baade8f94ae0f9bf8d38bf344d02",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 43.527,
+  "patienceLeft": 119.82,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 80,
+      "taps": 16,
+      "seconds": 38.527
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I tapped \"lasagna\" on the word magnets. The sentence now reads \"I can explain the lasagna\". Nothing else happened."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected the word to go into the blank in the sentence, and it did. The group can see it and change it."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A small word game. The sentence is \"I can explain the lasagna\". The other words are still below it, and you can tap a word in the sentence to change it. I didn't press anything else."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": "A little, at the start. I wasn't sure what tapping a word would do, since the group sees it. It looked harmless, so I tried one."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1431,
+    "cache_read_input_tokens": 21041,
+    "output_tokens": 709
+  },
+  "total_cost_usd": 0.014950100000000003,
+  "attachments": []
+}

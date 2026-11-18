@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/walt.md",
+  "hash": "875edd2f28056c5f402a5cc9cb1ad7964a6e8aae09ffa4497a43b003394e249c",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 59.36118181818182,
+  "patienceLeft": 135.7635,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 84,
+      "taps": 16,
+      "seconds": 54.36118181818182
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I put \"situation\" in the blank. The sentence now reads \"I can explain the situation.\""
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected the word to go into the blank, and it did. I didn't know what the screen was for at first, so I just tapped a word to see."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "It's a word magnet game. You tap a word and it fills the blank in the sentence, and the group can see it and change it. Tapping a word in the sentence takes it out again. The word I picked moved out of the list and into the sentence."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": "Nothing was too much. The words are small, though, so I'd want my glasses."
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": "No, I never thought of leaving."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1361,
+    "cache_read_input_tokens": 20761,
+    "output_tokens": 676
+  },
+  "total_cost_usd": 0.0143121,
+  "attachments": []
+}

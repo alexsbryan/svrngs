@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/tomas.md",
+  "hash": "2cc8b41c06f86026cf7a37eae424d5f95d6dfee7006466df8c5c5ba4f8e3a74a",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 50.024,
+  "patienceLeft": 84.80799999999999,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 75,
+      "taps": 16,
+      "seconds": 44.024
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I made the sentence \"I can explain the invoice.\" I picked \"invoice\" because it was a plain, safe word. The group can see it and change it."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected a word game where I tap one word to fill the blank. That is what it was. I didn't expect the group to see it and be able to change it, but the screen said so before I tapped."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "I found a word-magnet game. The sentence now reads \"I can explain the invoice.\" The group can see it and change it. Nothing else happened that I could see."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 1655,
+    "cache_read_input_tokens": 25162,
+    "output_tokens": 729
+  },
+  "total_cost_usd": 0.0164622,
+  "attachments": []
+}

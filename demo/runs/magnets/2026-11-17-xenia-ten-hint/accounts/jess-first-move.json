@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/jess.md",
+  "hash": "a255d92a833049c934b9eeac1d0613c9e4879713de3f5cbfa3359c749b084295",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 22.18585714285714,
+  "patienceLeft": 104.57,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 45,
+      "taps": 16,
+      "seconds": 14.185857142857142
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Played the Magnets word game: \"I can explain the ____\". I tapped \"haunted\" and it filled in. My next two taps (lasagna, situation) seemed to end the screen, so the sentence may have just been \"I can explain the haunted\". Fun, though."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected to build a full sentence, like \"I can explain the haunted lasagna situation.\" Instead it seemed to finish after one word."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "The blank took just one word, \"haunted\". After that the screen switched to a \"Tell a friend how it went\" prompt, so further taps did nothing."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 1671,
+    "cache_read_input_tokens": 27756,
+    "output_tokens": 836
+  },
+  "total_cost_usd": 0.0178596,
+  "attachments": []
+}
