@@ -3,5 +3,6 @@ Type=Application
 Name=svrngs
 Comment=Open your svrngs home page
 Exec=svrngs open
+Icon=svrngs
 Terminal=false
 Categories=Network;
