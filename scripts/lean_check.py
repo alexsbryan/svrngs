@@ -792,12 +792,17 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # found: folding the port into `offered`'s match, which rustfmt splits to
 # +9; the push routes' twin handlers, already a line each.
 # all code but JavaScript 21,413 -> 21,427.
+# (2026-11-18) Raised by the operator for PR #3 (827d99aa), `notRunning`
+# for `down`: ralph/next/js/PROMPT.addendum.md fence 1 refuses a name
+# shortened to fit, and lend-line.js's import is as the formatter lays it,
+# one name a line. +9, the name kept whole; no pass cuts it. Its economizing
+# came before (59851ecb, -1). JavaScript 8,535 -> 8,544.
 BUDGET = {
     "crates/svrngs-core": 3502,
 
     ".": 21428,
 
-    "js": 8536,
+    "js": 8545,
 
     "swift": 1,
 }
