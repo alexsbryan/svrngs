@@ -1,0 +1,22 @@
+What group.svrnme.sh served before this run, read at 2026-11-18T00:17:24Z:
+
+  curl -sS https://group.svrnme.sh/sw.js | grep -oE 'v=[0-9a-f]{12}' | sort -u
+  v=660baf7db628
+
+  curl -sSI https://group.svrnme.sh/lend.js
+  HTTP/2 200
+  content-security-policy: frame-ancestors 'none'
+
+  curl -sSI https://group.svrnme.sh/sign.html
+  content-security-policy: frame-ancestors https:
+
+V1.10's page (its readback, ../../v1.10/2026-11-16/verification.json), and
+its lend.js under the whole site's frame policy alone. sign.html's answer
+shows the host sends one policy where two rules of web/vercel.json match,
+the later one's.
+
+verify.py's lend.js check, run against that live lend.js before the deploy
+(its helpers alone, by 2026-11-18T00:20Z), refused it:
+  live lend.js policy (V1.10): expected ["default-src 'none'; connect-src
+  'self' wss: https:; script-src 'self' 'wasm-unsafe-eval'"], got
+  ["frame-ancestors 'none'"]

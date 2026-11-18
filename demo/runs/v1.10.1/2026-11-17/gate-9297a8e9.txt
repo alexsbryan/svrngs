@@ -1,0 +1,568 @@
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 20946)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (1 s)
+passed     app nouns gate (0 s)
+passed     app nouns (1 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (17 s)
+passed     rustfmt (1 s)
+passed     script laws (7 s)
+passed     page integration (9 s)
+passed     clippy (0 s)
+passed     tests (462 s)
+passed     canaries (16 s)
+passed     ceiling canary (38 s)
+           CEILING idle round at 25 x 10,000: 0.0576 s of processor, the median of [3.3299810000000036, 0.05757099999999937, 0.052922000000002356], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.052922000000002356,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.010386541}
+passed     web rustfmt and clippy (5 s)
+failed     browser (117 s)
+           
+           running 39 tests
+           i............ 13/39
+           keep_going::a_new_release_replaces_a_lend_s_saved_pages::chromium --- FAILED
+           ...i.i..................test tabs::the_group_s_page_in_two_tabs_reaches_the_group_from_one::webkit has been running for over 60 seconds
+           .
+           failures:
+           
+           ---- keep_going::a_new_release_replaces_a_lend_s_saved_pages::chromium stdout ----
+           {
+             "again": {
+               "kind": "good",
+               "said": "You’re in house, as bo"
+             },
+             "app": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/",
+             "first": {
+               "group": {
+                 "addresses": [
+                   "umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx",
+                   "shelf@ada"
+                 ],
+                 "computers": [
+                   {
+                     "key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+                     "person": "ada",
+                     "relay": null
+                   }
+                 ],
+                 "id": "f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a",
+                 "iv": {
+                   "0": 23,
+                   "1": 232,
+                   "10": 2,
+                   "11": 18,
+                   "2": 97,
+                   "3": 70,
+                   "4": 127,
+                   "5": 14,
+                   "6": 224,
+                   "7": 97,
+                   "8": 117,
+                   "9": 43
+                 },
+                 "name": "house",
+                 "opened": 1794959015730,
+                 "person": "bo",
+                 "sealed": {
+                   "0": 219,
+                   "1": 158,
+                   "10": 60,
+                   "11": 223,
+                   "12": 116,
+                   "13": 240,
+                   "14": 74,
+                   "15": 95,
+                   "16": 170,
+                   "17": 14,
+                   "18": 238,
+                   "19": 237,
+                   "2": 86,
+                   "20": 121,
+                   "21": 241,
+                   "22": 249,
+                   "23": 90,
+                   "24": 129,
+                   "25": 32,
+                   "26": 159,
+                   "27": 14,
+                   "28": 167,
+                   "29": 220,
+                   "3": 80,
+                   "30": 77,
+                   "31": 221,
+                   "32": 210,
+                   "33": 188,
+                   "34": 9,
+                   "35": 97,
+                   "36": 73,
+                   "37": 127,
+                   "38": 144,
+                   "39": 174,
+                   "4": 86,
+                   "40": 253,
+                   "41": 235,
+                   "42": 91,
+                   "43": 207,
+                   "44": 84,
+                   "45": 214,
+                   "46": 232,
+                   "47": 156,
+                   "5": 13,
+                   "6": 94,
+                   "7": 157,
+                   "8": 117,
+                   "9": 38
+                 },
+                 "token": "AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTMyMTMv"
+               },
+               "kind": "good",
+               "said": "You’re in house, as bo"
+             },
+             "logs": [
+               "debug: STORE: the sealing key absent: making one",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+               "debug: PAGE: offer: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running where",
+               "debug: PAGE: offered: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: held (this tab holds f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a): opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opened: opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:53213/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: STORE: a new worker took this page",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:53213/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:53213/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: open: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=be9602f8aa11, a pass to 1 lend(s) until 1795002215",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=be9602f8aa11): opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:53213/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:53213/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:53213/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: STORE: a new worker took this page, so it loads again",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:53213/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:53213/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:53213/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=aaaaaaaabbaa, a pass to 1 lend(s) until 1795002218",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=aaaaaaaabbaa): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass"
+             ],
+             "reopened": {
+               "built": "aaaaaaaabbaa",
+               "saved": {
+                 "svrngs-web-aaaaaaaabbaa": [
+                   "/open.html",
+                   "/open.js",
+                   "/lend.js",
+                   "/shim.js",
+                   "/store.js",
+                   "/authority.js",
+                   "/session.js",
+                   "/away.html",
+                   "/wasm/svrngs_web.js",
+                   "/wasm/svrngs_web_bg.wasm"
+                 ]
+               }
+             },
+             "saved": {
+               "svrngs-web-be9602f8aa11": [
+                 "/open.html",
+                 "/open.js",
+                 "/lend.js",
+                 "/shim.js",
+                 "/store.js",
+                 "/authority.js",
+                 "/session.js",
+                 "/away.html",
+                 "/wasm/svrngs_web.js",
+                 "/wasm/svrngs_web_bg.wasm"
+               ]
+             }
+           }
+           
+           thread 'keep_going::a_new_release_replaces_a_lend_s_saved_pages::chromium' (9502668) panicked at crates/svrngs-node/tests/browser/keep_going.rs:206:5:
+           assertion `left == right` failed: {
+             "again": {
+               "kind": "good",
+               "said": "You’re in house, as bo"
+             },
+             "app": "https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/",
+             "first": {
+               "group": {
+                 "addresses": [
+                   "umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx",
+                   "shelf@ada"
+                 ],
+                 "computers": [
+                   {
+                     "key": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+                     "person": "ada",
+                     "relay": null
+                   }
+                 ],
+                 "id": "f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a",
+                 "iv": {
+                   "0": 23,
+                   "1": 232,
+                   "10": 2,
+                   "11": 18,
+                   "2": 97,
+                   "3": 70,
+                   "4": 127,
+                   "5": 14,
+                   "6": 224,
+                   "7": 97,
+                   "8": 117,
+                   "9": 43
+                 },
+                 "name": "house",
+                 "opened": 1794959015730,
+                 "person": "bo",
+                 "sealed": {
+                   "0": 219,
+                   "1": 158,
+                   "10": 60,
+                   "11": 223,
+                   "12": 116,
+                   "13": 240,
+                   "14": 74,
+                   "15": 95,
+                   "16": 170,
+                   "17": 14,
+                   "18": 238,
+                   "19": 237,
+                   "2": 86,
+                   "20": 121,
+                   "21": 241,
+                   "22": 249,
+                   "23": 90,
+                   "24": 129,
+                   "25": 32,
+                   "26": 159,
+                   "27": 14,
+                   "28": 167,
+                   "29": 220,
+                   "3": 80,
+                   "30": 77,
+                   "31": 221,
+                   "32": 210,
+                   "33": 188,
+                   "34": 9,
+                   "35": 97,
+                   "36": 73,
+                   "37": 127,
+                   "38": 144,
+                   "39": 174,
+                   "4": 86,
+                   "40": 253,
+                   "41": 235,
+                   "42": 91,
+                   "43": 207,
+                   "44": 84,
+                   "45": 214,
+                   "46": 232,
+                   "47": 156,
+                   "5": 13,
+                   "6": 94,
+                   "7": 157,
+                   "8": 117,
+                   "9": 38
+                 },
+                 "token": "AoqI4910CfGV_VLbLTy6XXLKZwm_HZQSG_N0iAG0D29cAAAAAAAAAAAAAAAAAAAAAGh0dHA6Ly8xMjcuMC4wLjE6NTMyMTMv"
+               },
+               "kind": "good",
+               "said": "You’re in house, as bo"
+             },
+             "logs": [
+               "debug: STORE: the sealing key absent: making one",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running send, lock",
+               "debug: PAGE: offer: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running where",
+               "debug: PAGE: offered: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: held (this tab holds f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a): opening/unheld/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opened: opening/holding/unasked/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:53213/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: STORE: a new worker took this page",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:53213/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:53213/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: open: opening/holding/read/offered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=be9602f8aa11, a pass to 1 lend(s) until 1795002215",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=be9602f8aa11): opening/holding/read/offered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/offered/unasked/none/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:53213/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:53213/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:53213/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: STORE: a new worker took this page, so it loads again",
+               "debug: PAGE: start: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running look",
+               "debug: PAGE: looked: opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running lock",
+               "debug: PAGE: held (this tab holds f0ff88327cca7384f8a5412cc801ffc66e84631d5d1491918e532cb8091e754a): opening/unheld/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut, running open",
+               "debug: PAGE: asked the browser to keep the page's storage: refused",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opened: opening/holding/unasked/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut, running read",
+               "debug: PAGE: dialling the link's computer and 0 other computer(s) at once",
+               "debug: LAYER parse: ok — issuer 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c",
+               "debug: LAYER page: wasm module loaded and dial entered (iroh =1.0.2)",
+               "debug: LAYER key: ok — the key ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c",
+               "debug: LAYER parse: ok — relay http://127.0.0.1:53213/",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: binding a browser endpoint (relay-only, held: true)…",
+               "debug: LAYER wasm-bindgen/iroh-endpoint: ok — local endpoint ea4a6c63e29c520abef5507b132ec5f9954776aebebe7b92421eea691446d22c bound",
+               "debug: LAYER relay-connect: waiting for the relay handshake (endpoint.online())…",
+               "debug: LAYER relay-connect: ok — endpoint reports online (relay handshake done)",
+               "debug: LAYER parse: no relay named for 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c — its group names none, or the page refused it — so every relay the link carries is tried",
+               "debug: LAYER tls/alpn+relay: dialing 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the [99, 119, 116, 104, 47, 104, 116, 116, 112, 47, 48] protocol through http://127.0.0.1:53213/…",
+               "debug: LAYER relay chosen: http://127.0.0.1:53213/, this page's own: true",
+               "debug: LAYER tls/alpn+relay: ok — QUIC connection established to 8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c on the Member protocol",
+               "debug: LAYER tls/alpn: negotiated ALPN = \"cwth/http/0\"",
+               "debug: PAGE: reached house through the link's computer",
+               "debug: HTTP: GET /people/lends — a bi-stream opened",
+               "debug: HTTP: GET /people/lends answered 200",
+               "debug: HTTP: the response has ended; finishing the request's send half",
+               "debug: HTTP: GET /people/lends — the stream is done",
+               "debug: PAGE: kept 0 of 0 relay(s) named",
+               "debug: PAGE: read (200, at version 6, 1 lent): opening/holding/reading/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut, running keep",
+               "debug: PAGE: kept: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut",
+               "debug: PAGE: open: opening/holding/read/unoffered/unasked/none/shut/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut, running hand",
+               "debug: STORE: the sealing key read back: CryptoKey AES-GCM/256 extractable=false usages=encrypt,decrypt",
+               "debug: PAGE: opening umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx at https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=aaaaaaaabbaa, a pass to 1 lend(s) until 1795002218",
+               "debug: PAGE: handed (to https://umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx.group.svrnme.example.com:53358/open.html?v=aaaaaaaabbaa): opening/holding/read/unoffered/unasked/none/opening/none/unasked/idle/shut -> opening/holding/read/unoffered/unasked/none/handed/none/unasked/idle/shut",
+               "debug: SIGN: adopted the approver of umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's newest open and deleted its cookie",
+               "debug: OPEN: umfrj1nxbj23n9mv5p0w3rv7rnghrcq9d0mbfh9wrvfadqasq7rapz4mq1z8fx's open is this browser's, its holder proved and kept",
+               "debug: OPEN: the lend’s worker runs; handing it the pass"
+             ],
+             "reopened": {
+               "built": "aaaaaaaabbaa",
+               "saved": {
+                 "svrngs-web-aaaaaaaabbaa": [
+                   "/open.html",
+                   "/open.js",
+                   "/lend.js",
+                   "/shim.js",
+                   "/store.js",
+                   "/authority.js",
+                   "/session.js",
+                   "/away.html",
+                   "/wasm/svrngs_web.js",
+                   "/wasm/svrngs_web_bg.wasm"
+                 ]
+               }
+             },
+             "saved": {
+               "svrngs-web-be9602f8aa11": [
+                 "/open.html",
+                 "/open.js",
+                 "/lend.js",
+                 "/shim.js",
+                 "/store.js",
+                 "/authority.js",
+                 "/session.js",
+                 "/away.html",
+                 "/wasm/svrngs_web.js",
+                 "/wasm/svrngs_web_bg.wasm"
+               ]
+             }
+           }
+             left: 10
+            right: 9
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           
+           failures:
+               keep_going::a_new_release_replaces_a_lend_s_saved_pages::chromium
+           
+           test result: FAILED. 35 passed; 1 failed; 3 ignored; 0 measured; 2 filtered out; finished in 110.92s
+           
+           error: test failed, to rerun pass `-p svrngs-node --test browser`
+passed     types (17 s)
+passed     typed lint (1 s)
+passed     joining in a browser (56 s)
+passed     pages (23 s)
+passed     scenes (385 s)
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene grapevine (chromium)
+passed     scene give_gone (chromium)
+passed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+passed     conformance canary (61 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  a cold navigation, the lend's      passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  its worker answers no page or worker passed
+           computer  its worker, after svrngs's restarts could-not-judge, WebKit stops no worker on ask
+           computer  its worker, after svrngs's restarts passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  svrngs's worker refuses eval       passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  a cold navigation, the lend's      passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  its worker answers no page or worker passed
+           wildcard  its worker, after svrngs's restarts could-not-judge, WebKit stops no worker on ask
+           wildcard  its worker, after svrngs's restarts passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  svrngs's worker refuses eval       passed
+passed     playback (174 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	412	passed	3432	passed
+           computer	bo	407	passed	4392	passed
+           wildcard	sam	312	passed	4296	passed
+           wildcard	bo	408	passed	2472	passed
+           of 862 here since 2026-10-22T17:12:29Z: 3 missed 5 s through a lend, 134 straight; 572 ended at a load above 12 cores
+passed     n0 (15 s)
+passed     app laws (16 s)
+note       took 1423 s in all
+exit 1

@@ -1,5 +1,44 @@
 # svrngs releases
 
+## V1.10.1, 17 November 2026
+
+V1.10.1 is a security release: update now.
+
+**An app's own service worker runs apart from svrngs's.** Before, svrngs
+ran an app's service worker inside its own worker, with no rules on what
+its code could do. There it could use what svrngs holds for that app's
+address, and load and run code from anywhere. Phones ran an app's worker
+that way from V1, and computers from V1.4. Now the app's worker runs in a
+worker of its own, which its page starts, under the same rules as the
+app's pages. It answers only what that page loads: its scripts, styles,
+images, media and data. Every page, frame and worker the app opens comes
+from the computer that lends it, as svrngs serves it, never from the app's
+worker. svrngs's own worker runs only svrngs's code, under rules of its
+own.
+
+**What an app sees.** `register` works, and the app's worker runs while
+its page is open. Opening any of the app's pages is answered by the
+computer that lends it, never by its worker, so an app can't open offline
+from its own worker. In its worker, `clients` and `skipWaiting` do
+nothing.
+
+**One redirect is now refused.** On a computer, when a lent service
+answers a page's request for data with a redirect to another address, the
+request fails, because following it could send svrngs's proof for that app
+on to that address. A page that redirects still opens.
+
+**Your home page keeps apart from your apps.** An app that your home page
+opens, or that opens it, gets no handle on it, and in Safari's engine
+doesn't share its process.
+
+Groups, lends and the record work as in V1.10. Press **Update and
+restart** on your home page, or run `svrngs update` and then
+`svrngs restart`. Your phone's page updates itself.
+
+V1.10.1 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.10.1`. Its publication and readback are recorded in
+`demo/runs/v1.10.1/2026-11-17/README.md`.
+
 ## V1.10, 16 November 2026
 
 V1.10 makes inviting people one press, and its short address easier to
