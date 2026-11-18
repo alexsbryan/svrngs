@@ -1,6 +1,6 @@
 # Lend an AI model, and use a friend's
 
-If you run a model on your computer with llama-server, your group can chat with it, and their own programs can call it, through your computer. This page covers lending one, using a friend's, and the pantry: every friend's model and tool behind one address.
+If you run a model on your computer with llama-server, or pay for one from a provider, your group can chat with it, and their own programs can call it, through your computer. This page covers lending one, spotting your group a provider's model for the night, using a friend's, and the pantry: every friend's model and tool behind one address.
 
 In the commands below, `svrngs` means `~/.local/bin/svrngs` if your terminal doesn't find it.
 
@@ -95,6 +95,29 @@ svrngs share 8101 --program llama-server --name coder --limit 2 --group <group>
 ```
 
 Or on your home page, under **What you lend**, press its line to open it, type `2` in **How many people at once:** and press **Let in this many**. The third person is told *"coder is lent to 2 people at once, and 2 are using it now: try again when one stops. That number is the choice of the person who lends it, and they can change it."* Someone counts as using it for 30 seconds after their last request ends.
+
+## Spot your group a provider's model for the night
+
+If you pay for a model from a provider that speaks OpenAI's API (DeepInfra, OpenRouter, Together, Groq, OpenAI), you can lend it to your group for a while without giving anyone your key. Your friends chat with it from their home page, on a phone or a computer. It comes with svrngs's source, in `apps/spot/`, and needs Node 18 or later, on a Mac as on Linux.
+
+The first time, run:
+
+```
+node apps/spot/spot.mjs
+```
+
+It says *"wrote your config, /Users/you/.svrngs/spot.toml, from the template: say your group in it, then run spot again"*. Open that file and set `group` to your group's name. It also says which models, until when (`until = "02:00"`) and how many tokens everyone together may use (`budget`). Then put your key where it looks for it, and run it again:
+
+```
+export DEEPSEEK_API_KEY=<your key>
+node apps/spot/spot.mjs
+```
+
+Without the variable it asks for the key, and doesn't show what you type. It checks the provider takes the key and lists each model, lends it, and says *"lending deepseek-flash to House until Wed 02:00 AM, 2,000,000 tokens. Ctrl-C stops it."* Leave it running. Each answer prints a line: who, which model, how many tokens. At `until`, or when you press Ctrl-C, it stops lending and says who used how much.
+
+**Your friends** tap *"deepseek-flash"* on their home page, or the group's page on a phone. A chat page opens. It tells them their messages go to the provider under your account, and that you see how many tokens they used, not what they wrote. Their chats stay in their own browser.
+
+**Your key** goes to svrngs once and stays on your computer. svrngs adds it to each request on its way out, so neither your friends nor the chat page ever have it. Keep `spot.toml` on your computer, never in a group's shared folder: everyone in the group can change what's there, and the file says where your key is sent.
 
 ## The pantry: every friend's model behind one address
 

@@ -59,6 +59,8 @@ async function askHidden(question) {
   if (!process.stdin.isTTY)
     fail(`no key: set the variable the config's key_env names, or run spot in a terminal`);
   process.stdout.write(question);
+  // stty is the same on macOS and Linux; echo comes back even if Ctrl-C ends the wait.
+  process.once('exit', () => spawnSync('stty', ['echo'], { stdio: 'inherit' }));
   spawnSync('stty', ['-echo'], { stdio: 'inherit' });
   const rl = readline.createInterface({ input: process.stdin });
   const line = await new Promise((done) => rl.once('line', done));
@@ -68,10 +70,37 @@ async function askHidden(question) {
   return line.trim();
 }
 
-// The config is the lender's, on their own computer: the template beside this
-// file is copied there the first time, never read as the config itself.
-const configHome = process.env.XDG_CONFIG_HOME ?? path.join(os.homedir(), '.config');
-const ownConfig = path.join(configHome, 'svrngs-spot', 'spot.toml');
+// svrngs's data dir, as svrngs and pantry find it on any computer:
+// $SVRNGS_DIR, else ~/.svrngs (crates/svrngs/src/cli.rs:675, apps/pantry/pantry.mjs:42).
+const dataDir = process.env.SVRNGS_DIR || path.join(os.homedir(), '.svrngs');
+
+// The svrngs command: on PATH, else where its installer puts it on macOS and
+// Linux alike, ~/.local/bin, which a Mac's terminal often does not search
+// (docs/guide/models.md: "`svrngs` means `~/.local/bin/svrngs` if your
+// terminal doesn't find it"). $SVRNGS_BIN names another.
+function findSvrngs() {
+  if (process.env.SVRNGS_BIN) return process.env.SVRNGS_BIN;
+  const runs = (f) => {
+    try {
+      fs.accessSync(f, fs.constants.X_OK);
+      return fs.statSync(f).isFile();
+    } catch {
+      return false;
+    }
+  };
+  const onPath = (process.env.PATH ?? '')
+    .split(path.delimiter)
+    .filter(Boolean)
+    .map((dir) => path.join(dir, 'svrngs'));
+  const found = [...onPath, path.join(os.homedir(), '.local', 'bin', 'svrngs')].find(runs);
+  if (!found) fail('no svrngs here: not on PATH, nor at ~/.local/bin/svrngs; install it first');
+  return found;
+}
+
+// The config is the lender's, beside svrngs's own files on their computer:
+// the template beside this file is copied there the first time, never read
+// as the config itself.
+const ownConfig = path.join(dataDir, 'spot.toml');
 const file = path.resolve(process.argv[2] ?? ownConfig);
 if (!fs.existsSync(file)) {
   if (process.argv[2]) fail(`no config at ${file}`);
@@ -80,7 +109,7 @@ if (!fs.existsSync(file)) {
   fail(`wrote your config, ${file}, from the template: say your group in it, then run spot again`);
 }
 const config = parse(fs.readFileSync(file, 'utf8'), file);
-for (const key of ['group', 'name', 'port'])
+for (const key of ['group', 'name'])
   if (config[key] === undefined || config[key] === '') fail(`${file} says no \`${key}\``);
 if (!config.provider?.url) fail(`${file} says no [provider] url`);
 const models = new Map(Object.entries(config.models ?? {}));
@@ -88,16 +117,13 @@ if (models.size === 0) fail(`${file} lends no [models]`);
 const upstream = config.provider.url.replace(/\/$/, '');
 const end = endOf(config.until);
 const budget = config.budget ?? null;
-const svrngs = process.env.SPOT_SVRNGS ?? 'svrngs';
-const stateDir = path.join(
-  process.env.XDG_STATE_HOME ?? path.join(os.homedir(), '.local/state'),
-  'svrngs-spot',
-);
-fs.mkdirSync(stateDir, { recursive: true });
-const logPath = path.join(
-  stateDir,
-  `${config.name}-${new Date().toISOString().slice(0, 10)}.jsonl`,
-);
+const svrngs = findSvrngs();
+// Each night's log, by this computer's date: who used how many tokens.
+const logDir = path.join(dataDir, 'spot');
+fs.mkdirSync(logDir, { recursive: true, mode: 0o700 });
+const today = new Date();
+const day = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+const logPath = path.join(logDir, `${config.name}-${day}.jsonl`);
 
 const envKey = config.provider.key_env && process.env[config.provider.key_env];
 const key = envKey || (await askHidden(`Your ${new URL(upstream).hostname} key (not shown): `));
@@ -274,12 +300,13 @@ server.on('error', (e) =>
     `port ${config.port}: ${e.code === 'EADDRINUSE' ? 'something else already listens there' : e.message}`,
   ),
 );
-server.listen(config.port, '127.0.0.1', () => {
+// A port the config names, else any free one: several spots can run at once.
+server.listen(config.port ?? 0, '127.0.0.1', () => {
   const share = spawn(
     svrngs,
     [
       'share',
-      String(config.port),
+      String(server.address().port),
       '--group',
       config.group,
       '--program',
