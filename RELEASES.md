@@ -1,5 +1,16 @@
 # svrngs releases
 
+## Signed releases
+
+From V1.11.1, each release on GitHub carries a signature beside each
+file, `<file>.sig`, by the svrngs release key, and the key itself,
+`svrngs-release-key.asc`. A package checks a download against the key,
+and a PKGBUILD names its fingerprint in `validpgpkeys`. To check one
+yourself, run `gpg --import svrngs-release-key.asc`, then
+`gpg --verify SHA256SUMS.sig SHA256SUMS`, then
+`shasum -a 256 -c SHA256SUMS`. The key signs only when the person who
+releases svrngs types its passphrase (`scripts/sign-release.sh`).
+
 ## V1.11.1, 18 November 2026
 
 V1.11.1 is a security release: update now.
