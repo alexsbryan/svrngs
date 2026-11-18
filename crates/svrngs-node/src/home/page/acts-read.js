@@ -119,6 +119,8 @@ export const ACTS = (home) => ({
     again: groupsAgain(home),
   },
   step: (state, message) => {
+    // The yes under way, as `acted` and `unacted` answer it.
+    const acting = /** @type {string} */ (state.acting);
     switch (message.type) {
       case 'read': {
         const [asked, serial] = ask(state, 'reaching');
@@ -141,19 +143,17 @@ export const ACTS = (home) => ({
       case 'yes': {
         if (state.at.doing === 'busy')
           return no(state, `${state.acting} is under way, and is answered first`);
-        const acting = `${message.g} ${message.app}`;
-        const acted = { ...state.acted, [acting]: { ...state.acted[acting], c: message.c } };
+        const next = `${message.g} ${message.app}`;
+        const acted = { ...state.acted, [next]: { ...state.acted[next], c: message.c } };
         return go(
           state,
           { doing: 'busy' },
-          { acting, acted },
+          { acting: next, acted },
           { run: 'yes', g: message.g, app: message.app, failed: 'unacted' },
         );
       }
-      // A yes's answer, to the yes that set `acting` and kept it in `acted`:
-      // `acting` read once, cast, where it was read at each use.
+      // A yes's answer, to the yes that set `acting` and kept it in `acted`.
       case 'acted': {
-        const acting = /** @type {string} */ (state.acting);
         return go(
           state,
           { doing: 'done' },
@@ -162,7 +162,6 @@ export const ACTS = (home) => ({
         );
       }
       case 'unacted': {
-        const acting = /** @type {string} */ (state.acting);
         return go(
           state,
           { doing: 'refused' },
