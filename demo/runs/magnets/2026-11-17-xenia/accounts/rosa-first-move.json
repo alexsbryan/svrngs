@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/rosa.md",
+  "hash": "abd3969e18e008bf1bf1c778148bc7e0c0f1baade8f94ae0f9bf8d38bf344d02",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "could-not-judge",
+    "reason": "they spoke as someone acting for the person, not as the person: Tell me if you'd like a particular word put in. (“tell me if you'd like”)"
+  },
+  "clock": 34.6,
+  "patienceLeft": 141,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 59,
+      "read": 59,
+      "taps": 32,
+      "seconds": 29.6
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I'm looking at a word-magnets game with the sentence \"I can explain the ____\". Anyone in the group can change it and everyone sees it. Nobody asked me to add anything, so I've left it alone. Tell me if you'd like a particular word put in."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I expected something I could read and understand before pressing. It's a magnets game with a shared sentence, so that matched. I didn't expect to be asked nothing, though."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "A list of words like goose, invoice, lasagna, damp and haunted, with a blank sentence, \"I can explain the ____\". Tapping a word adds it, and the whole group sees the change. I didn't tap any."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1998,
+    "cache_read_input_tokens": 20726,
+    "output_tokens": 671
+  },
+  "total_cost_usd": 0.016806599999999998,
+  "attachments": []
+}

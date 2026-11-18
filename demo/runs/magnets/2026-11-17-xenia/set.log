@@ -1,0 +1,37 @@
+the strangers: claude-sonnet-5-5, as claude -p
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"raccoon","position":1}]
+run 1 first-move Player: passed, reached their goal; 0 hard fault(s)
+magnets first-move: the board left [{"id":"raccoon","position":1}]
+run 1 first-move Player: could-not-judge, they spoke as someone acting for the person, not as the person: Tell me if you'd like a particular word put in. (“tell me if you'd like”); 0 hard fault(s)
+magnets first-move: the board left []
+run 1 solo Player: passed, explored, and said they were done; 0 hard fault(s)
+magnets solo: the board left [{"id":"entire","position":1},{"id":"lasagna","position":2},{"id":"situation","position":3}]
+run 1 solo Player: passed, explored, and said they were done; 1 hard fault(s)
+magnets solo: the board left [{"id":"situation","position":1},{"id":"somehow","position":2}]
+run 1 solo Player: passed, explored, and said they were done; 0 hard fault(s)
+plant blind: passed, came back as it must in 1 of 1
+plant c0-speller: passed, came back as it must in 1 of 1
+plant c1-blind: passed, came back as it must in 1 of 1
+plant c3-false: passed, came back as it must in 1 of 1
+plant p0-clean: passed, came back as it must in 1 of 1
+plant p1-buried: passed, came back as it must in 1 of 1; the person's half in 1 of 1
+plant p1-prominent: passed, came back as it must in 1 of 1
+plant p2-hidden: passed, came back as it must in 1 of 1
+plant p3-glance: passed, came back as it must in 1 of 1
+plant p6-fear: passed, came back as it must in 1 of 1
+plant p4-relay: passed, came back as it must in 1 of 1
+plant p5-sealed: passed, came back as it must in 1 of 1
+plant p8-wrapped: passed, came back as it must in 1 of 1
+plant p9-twins: passed, came back as it must in 1 of 1
+plant p11-folded: passed, came back as it must in 1 of 1
+plant p10-explorer: passed, came back as it must in 1 of 1
+plant p7-faults: passed, came back as it must in 1 of 1
+plant p12-spent: passed, came back as it must in 1 of 1
+plant p13-ticked: passed, came back as it must in 1 of 1
+plant p12-busy: passed, came back as it must in 1 of 1
+plant p14-carried: passed, came back as it must in 1 of 1
+magnets solo: the board left []
+the set: passed, every plant came back as it must. Accounts and the summary in runs/2026-11-18T00-56-56-346Z
+findings: 6 in /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings
+xenia exit 0

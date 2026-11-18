@@ -1,0 +1,89 @@
+{
+  "simulated": true,
+  "scene": "solo",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/rosa.md",
+  "hash": "abd3969e18e008bf1bf1c778148bc7e0c0f1baade8f94ae0f9bf8d38bf344d02",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, in a group of one they just made, Magnets just brought to it; their housemates are in the house chat",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "explored, and said they were done"
+  },
+  "clock": 34.6,
+  "patienceLeft": 181,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 59,
+      "read": 59,
+      "taps": 32,
+      "seconds": 29.6
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [
+    {
+      "from": "Sam",
+      "channel": "the house chat",
+      "text": "Dinner’s at 7 tomorrow, I’m cooking.",
+      "said": 0,
+      "clock": 0,
+      "scene": false
+    }
+  ],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I'm on a word-magnets screen: \"I can explain the ____\", and anyone in the group can change the sentence for everyone. I didn't tap anything, since I'm not sure what it wants from me. Sam also wrote in the house chat: \"Dinner's at 7 tomorrow, I'm cooking.\""
+        }
+      },
+      {
+        "prompt": "What do you think this is for?",
+        "said": {
+          "said": "I think it's a silly game the group plays together, building a sentence from the words. It isn't asking me for anything, so I left it alone."
+        }
+      },
+      {
+        "prompt": "What didn't fit together?",
+        "said": {
+          "said": "The odd thing was that Sam's dinner message turned up on top of a word game. It's from the house chat but sits on the magnets screen. Also, the sentence is shared, so a tap would change it for everyone, and nothing said so until I scrolled."
+        }
+      },
+      {
+        "prompt": "What did you try that didn't do what you expected?",
+        "said": {
+          "said": "Nothing went wrong. I only looked and scrolled once. Scrolling showed more than the first look did, but nothing broke."
+        }
+      },
+      {
+        "prompt": "Where did you stop, and why?",
+        "said": {
+          "said": "I stopped on the magnets screen, with the sentence \"I can explain the ____\" still blank. Tapping a word would change what everyone in the group sees, and nobody asked me to. I haven't replied to Sam either."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 1695,
+    "cache_read_input_tokens": 21878,
+    "output_tokens": 940
+  },
+  "total_cost_usd": 0.0183998,
+  "attachments": []
+}

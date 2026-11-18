@@ -1,0 +1,176 @@
+[
+ {
+  "key": "soft · too much · the fridge",
+  "scene": "",
+  "kind": "too much",
+  "hard": false,
+  "screen": "the fridge",
+  "element": "",
+  "read": "goose / invoice / moon / group chat / landlord / lasagna",
+  "often": [
+   "`first-move`: 1 of 3 accounts (Player run 1)"
+  ],
+  "happened": [
+   "`first-move` run 1, Player: passed, reached their goal. their last acts: look · tell · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Player, `first-move` run 1: “The word list was long and a bit much to scroll through, but nothing else.”"
+  ],
+  "file": "said-too-much-the-fridge",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia --runs 1 --model claude-sonnet-5-5 --people /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people --findings /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings --source /Users/alexsbryan/dev/svrngs",
+  "source": []
+ },
+ {
+  "key": "soft · almost left · the fridge",
+  "scene": "",
+  "kind": "almost left",
+  "hard": false,
+  "screen": "the fridge",
+  "element": "",
+  "read": "goose / invoice / moon / group chat / landlord / lasagna",
+  "often": [
+   "`first-move`: 1 of 3 accounts (Player run 1)"
+  ],
+  "happened": [
+   "`first-move` run 1, Player: passed, reached their goal. their last acts: look · tell · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Player, `first-move` run 1: “Yes, when the screen stopped responding to my taps after the first word. I'd have gone back to the group chat.”"
+  ],
+  "file": "said-almost-left-the-fridge",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia --runs 1 --model claude-sonnet-5-5 --people /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people --findings /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings --source /Users/alexsbryan/dev/svrngs",
+  "source": []
+ },
+ {
+  "key": "soft · didn't fit · the fridge",
+  "scene": "",
+  "kind": "didn't fit",
+  "hard": false,
+  "screen": "the fridge",
+  "element": "",
+  "read": "goose / invoice / moon / group chat / landlord / lasagna",
+  "often": [
+   "`solo`: 1 of 3 accounts (Player run 1)"
+  ],
+  "happened": [
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: tap “situation” · tell · tell · tell · tell · tell",
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: tap “somehow” · tell · tell · tell · tell · tell",
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: scroll · tell · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Player, `solo` run 1: “Nothing really. The word tiles kept reordering after each tap and the sentence box was a bit small, but it worked.”",
+   "Player, `solo` run 1: “Nothing really broke. \"somehow\" after \"situation\" was a bit odd, and there was no clear way to finish or send the sentence.”",
+   "Player, `solo` run 1: “The odd thing was that Sam's dinner message turned up on top of a word game. It's from the house chat but sits on the magnets screen. Also, the sentence is shared, so a tap would change it for everyone, and nothing said so until I scrolled.”"
+  ],
+  "file": "said-didn-t-fit-the-fridge",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia --runs 1 --model claude-sonnet-5-5 --people /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people --findings /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings --source /Users/alexsbryan/dev/svrngs",
+  "source": [
+   "apps/magnets/pack.json:29` holds “somehow”",
+   "crates/svrngs-core/src/admit.rs:716` holds “somehow”",
+   "ralph/next/canon/ctl/log/sessions/canon-pin-1.out:1222` holds “somehow”",
+   "apps/magnets/pack.json:14` holds “situation”",
+   "ralph/next/oidc/ctl/log/sessions/REVIEW-audit-oidc-auto-1-1.out:3107` holds “situation”"
+  ]
+ },
+ {
+  "key": "soft · not as expected · the fridge",
+  "scene": "",
+  "kind": "not as expected",
+  "hard": false,
+  "screen": "the fridge",
+  "element": "",
+  "read": "goose / invoice / moon / group chat / landlord / lasagna",
+  "often": [
+   "`solo`: 1 of 3 accounts (Player run 1)"
+  ],
+  "happened": [
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: tap “situation” · tell · tell · tell · tell · tell",
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: tap “somehow” · tell · tell · tell · tell · tell",
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: scroll · tell · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Player, `solo` run 1: “Nothing failed outright. I expected tapped words to stay put in the list, but they moved up into the sentence and the list shifted. I didn't check whether the sentence can be saved or shared.”",
+   "Player, `solo` run 1: “Nothing failed. I only tapped two words. I didn't try to remove one or send the sentence, so I don't know if that works.”",
+   "Player, `solo` run 1: “Nothing went wrong. I only looked and scrolled once. Scrolling showed more than the first look did, but nothing broke.”"
+  ],
+  "file": "said-not-as-expected-the-fridge",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia --runs 1 --model claude-sonnet-5-5 --people /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people --findings /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings --source /Users/alexsbryan/dev/svrngs",
+  "source": []
+ },
+ {
+  "key": "soft · where they stopped · the fridge",
+  "scene": "",
+  "kind": "where they stopped",
+  "hard": false,
+  "screen": "the fridge",
+  "element": "",
+  "read": "goose / invoice / moon / group chat / landlord / lasagna",
+  "often": [
+   "`solo`: 1 of 3 accounts (Player run 1)"
+  ],
+  "happened": [
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: tap “situation” · tell · tell · tell · tell · tell",
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: tap “somehow” · tell · tell · tell · tell · tell",
+   "`solo` run 1, Player: passed, explored, and said they were done. their last acts: scroll · tell · tell · tell · tell · tell"
+  ],
+  "said": [
+   "Player, `solo` run 1: “I stopped after one sentence. I'd made what I wanted and had no reason to go on. I didn't scroll through all the words or look for a share option.”",
+   "Player, `solo` run 1: “I stopped after \"I can explain the situation somehow\". It read like a finished joke and I couldn't see a send or done button. I also didn't scroll for one.”",
+   "Player, `solo` run 1: “I stopped on the magnets screen, with the sentence \"I can explain the ____\" still blank. Tapping a word would change what everyone in the group sees, and nobody asked me to. I haven't replied to Sam either.”"
+  ],
+  "file": "said-where-they-stopped-the-fridge",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia --runs 1 --model claude-sonnet-5-5 --people /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people --findings /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings --source /Users/alexsbryan/dev/svrngs",
+  "source": []
+ },
+ {
+  "key": "wordy · the fridge · ",
+  "scene": "",
+  "kind": "wordy",
+  "hard": true,
+  "screen": "the fridge",
+  "element": "",
+  "read": "goose / invoice / moon / group chat / landlord / lasagna",
+  "often": [
+   "`solo`: 1 of 3 accounts (Player run 1)"
+  ],
+  "happened": [
+   "`solo` run 1, Player: passed, explored, and said they were done. wordy {\"words\":24,\"budget\":15}; their last acts: look · say “nice, I'm in” · tap “situation” · look · tap “somehow”"
+  ],
+  "said": [
+   "Player, `solo` run 1: “didn't fit: Nothing really broke. \"somehow\" after \"situation\" was a bit odd, and there was no clear way to finish or send the sentence.”",
+   "Player, `solo` run 1: “not as expected: Nothing failed. I only tapped two words. I didn't try to remove one or send the sentence, so I don't know if that works.”",
+   "Player, `solo` run 1: “where they stopped: I stopped after \"I can explain the situation somehow\". It read like a finished joke and I couldn't see a send or done button. I also didn't scroll for one.”"
+  ],
+  "file": "wordy-the-fridge",
+  "status": "open",
+  "first": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "last": "the set `/Users/alexsbryan/dev/xenia/runs/2026-11-18T00-56-56-346Z`, 1 run(s) by claude-sonnet-5-5, as claude -p, xenia `df729c3`, the product `ba3e9cff`",
+  "notSeenSince": null,
+  "reproduce": "cd /Users/alexsbryan/dev/xenia && node /Users/alexsbryan/dev/xenia/src/run.ts run /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia --runs 1 --model claude-sonnet-5-5 --people /Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people --findings /Users/alexsbryan/dev/svrngs/demo/runs/magnets/2026-11-17-xenia/findings --source /Users/alexsbryan/dev/svrngs",
+  "source": [
+   "apps/magnets/pack.json:5` holds “invoice”",
+   "apps/magnets/tests/page.test.mjs:85` holds “invoice”",
+   "apps/magnets/tests/page.test.mjs:139` holds “invoice”"
+  ]
+ }
+]

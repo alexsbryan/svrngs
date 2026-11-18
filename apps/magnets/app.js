@@ -136,12 +136,23 @@ function refocus({ id, list, at }) {
   to?.focus();
 }
 
-/** One list redrawn only when its magnets changed, so a screen reader hears the sentence once a change. */
-function fill(list, magnets, each) {
+/** One list redrawn only when the magnets it shows changed, so a screen reader hears the sentence once a change. */
+function fill(list, magnets, make) {
   const key = magnets.map((m) => m.id).join(' ');
   if ($(list).dataset.key === key) return;
   $(list).dataset.key = key;
-  $(list).replaceChildren(...magnets.map(each));
+  $(list).replaceChildren(...make());
+}
+
+/** A tray place: the magnet's button, or, while it is in the sentence, an empty outline its size that nothing reads. */
+function place(magnet, gone) {
+  const li = document.createElement('li');
+  if (gone) {
+    li.className = 'gap';
+    li.setAttribute('aria-hidden', 'true');
+    li.append(Object.assign(document.createElement('span'), { textContent: magnet.word }));
+  } else li.append(button(magnet));
+  return li;
 }
 
 function draw() {
@@ -154,14 +165,11 @@ function draw() {
   const { sentence, tray, unknown } = order(pack, seen.rows);
   if (unknown.length) trace('rows the pack doesn’t name, left out', unknown);
   const keep = focused();
-  fill('placed', sentence, button);
-  fill('tray', tray, (m) => {
-    const li = document.createElement('li');
-    li.append(button(m));
-    return li;
-  });
+  const gone = new Set(sentence.map((m) => m.id));
+  fill('placed', sentence, () => sentence.map(button));
+  fill('tray', tray, () => pack.magnets.map((m) => place(m, gone.has(m.id))));
   $('blank').hidden = sentence.length > 0;
-  $('out').hidden = sentence.length === 0;
+  $('out').classList.toggle('unseen', sentence.length === 0);
   if (keep && !document.activeElement?.dataset?.id) refocus(keep);
 }
 

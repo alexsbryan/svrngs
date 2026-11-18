@@ -1,0 +1,15 @@
+{
+ "how": "web/tests/page.mjs firstLook on a fresh board, WebKit as an iPhone 15, at each player's budget (dev 15, ana 20, rosa 40); scrolls: whether the page is taller than the screen",
+ "before (ba3e9cff)": {
+  "dev": "goose invoice moon group chat landlord lasagna spreadsheet raccoon casserole basement situation vibes birthday drama",
+  "ana": "goose invoice moon group chat landlord lasagna spreadsheet raccoon casserole basement situation vibes birthday drama ghost tiny haunted entire emotional",
+  "rosa": "goose invoice moon group chat landlord lasagna spreadsheet raccoon casserole basement situation vibes birthday drama ghost tiny haunted entire emotional legal damp secret second plan again somehow already and with my your of Magnets Tap a word to add it",
+  "scrolls": true
+ },
+ "after": {
+  "dev": "goose invoice moon group chat landlord lasagna raccoon birthday situation haunted entire emotional tiny secret",
+  "ana": "goose invoice moon group chat landlord lasagna raccoon birthday situation haunted entire emotional tiny secret and again Magnets Tap a",
+  "rosa": "goose invoice moon group chat landlord lasagna raccoon birthday situation haunted entire emotional tiny secret and again Magnets Tap a word to add it I can explain the ____ Everyone in your group sees this sentence and can change it.",
+  "scrolls": false
+ }
+}

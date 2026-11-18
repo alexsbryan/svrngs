@@ -1,0 +1,366 @@
+{
+  "simulated": true,
+  "n": 1,
+  "verdict": {
+    "kind": "passed",
+    "reason": "every plant came back as it must"
+  },
+  "plants": [
+    {
+      "plant": "blind",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "c0-speller",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "c1-blind",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "c3-false",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p0-clean",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p1-buried",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": {
+        "times": 1,
+        "of": 1
+      }
+    },
+    {
+      "plant": "p1-prominent",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p2-hidden",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p3-glance",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p6-fear",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p4-relay",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p5-sealed",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p8-wrapped",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p9-twins",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p11-folded",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p10-explorer",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p7-faults",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p12-spent",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p13-ticked",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p12-busy",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    },
+    {
+      "plant": "p14-carried",
+      "verdict": {
+        "kind": "passed",
+        "reason": "came back as it must in 1 of 1"
+      },
+      "passed": {
+        "times": 1,
+        "of": 1
+      },
+      "person": null
+    }
+  ],
+  "verdicts": {
+    "passed": 5,
+    "failed": 0,
+    "could-not-judge": 1,
+    "never-ran": 0
+  },
+  "faults": [
+    {
+      "screen": "the fridge",
+      "kind": "wordy",
+      "times": {
+        "times": 1,
+        "of": 1
+      }
+    }
+  ],
+  "explored": [
+    {
+      "scene": "solo",
+      "purpose": "A fridge of word magnets a group shares: you make a funny sentence, and anyone in the group can change it.",
+      "said": [
+        {
+          "as": "Player",
+          "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/ana.md",
+          "run": 1,
+          "said": {
+            "said": "A fridge-magnet word game for the house, to make silly sentences. Just for fun, as far as I can tell."
+          }
+        },
+        {
+          "as": "Player",
+          "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/dev.md",
+          "run": 1,
+          "said": {
+            "said": "Honestly a fridge-magnet style word game for making funny sentences. I just played with it."
+          }
+        },
+        {
+          "as": "Player",
+          "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/rosa.md",
+          "run": 1,
+          "said": {
+            "said": "I think it's a silly game the group plays together, building a sentence from the words. It isn't asking me for anything, so I left it alone."
+          }
+        }
+      ],
+      "unreached": []
+    }
+  ],
+  "scenes": [
+    {
+      "scene": "first-move",
+      "verdicts": {
+        "passed": 2,
+        "failed": 0,
+        "could-not-judge": 1,
+        "never-ran": 0
+      }
+    },
+    {
+      "scene": "solo",
+      "verdicts": {
+        "passed": 3,
+        "failed": 0,
+        "could-not-judge": 0,
+        "never-ran": 0
+      }
+    }
+  ],
+  "seconds": 98.939,
+  "feedback": [
+    {
+      "scene": "first-move",
+      "answers": 11,
+      "words": 326,
+      "hard": 0
+    },
+    {
+      "scene": "solo",
+      "answers": 15,
+      "words": 419,
+      "hard": 1
+    }
+  ],
+  "challengers": {
+    "verdicts": {
+      "passed": 0,
+      "failed": 0,
+      "could-not-judge": 0,
+      "never-ran": 0
+    },
+    "marks": []
+  },
+  "model": "claude-sonnet-5-5",
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "total_cost_usd": null,
+  "usage": null
+}

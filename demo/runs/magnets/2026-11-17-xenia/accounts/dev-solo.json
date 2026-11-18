@@ -1,0 +1,103 @@
+{
+  "simulated": true,
+  "scene": "solo",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/dev.md",
+  "hash": "3c2318d1dd4cadc0b8ababcec41b6bc7dc8afea80e467009a100249ea908c2bd",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, in a group of one they just made, Magnets just brought to it; their housemates are in the house chat",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "explored, and said they were done"
+  },
+  "clock": 27.482000000000003,
+  "patienceLeft": 34.18,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 115,
+      "read": 60,
+      "taps": 32,
+      "seconds": 19.482
+    }
+  ],
+  "hard": [
+    {
+      "screen": "the fridge",
+      "at": 7893,
+      "kind": "wordy",
+      "words": 24,
+      "budget": 15
+    }
+  ],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [
+    {
+      "channel": "the house chat",
+      "text": "nice, I'm in",
+      "at": 4638
+    }
+  ],
+  "heard": [
+    {
+      "from": "Sam",
+      "channel": "the house chat",
+      "text": "Dinner’s at 7 tomorrow, I’m cooking.",
+      "said": 0,
+      "clock": 0,
+      "scene": false
+    }
+  ],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Made \"I can explain the situation somehow\" with the word magnets. Told the house chat I'm in for dinner."
+        }
+      },
+      {
+        "prompt": "What do you think this is for?",
+        "said": {
+          "said": "Honestly a fridge-magnet style word game for making funny sentences. I just played with it."
+        }
+      },
+      {
+        "prompt": "What didn't fit together?",
+        "said": {
+          "said": "Nothing really broke. \"somehow\" after \"situation\" was a bit odd, and there was no clear way to finish or send the sentence."
+        }
+      },
+      {
+        "prompt": "What did you try that didn't do what you expected?",
+        "said": {
+          "said": "Nothing failed. I only tapped two words. I didn't try to remove one or send the sentence, so I don't know if that works."
+        }
+      },
+      {
+        "prompt": "Where did you stop, and why?",
+        "said": {
+          "said": "I stopped after \"I can explain the situation somehow\". It read like a finished joke and I couldn't see a send or done button. I also didn't scroll for one."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 20,
+    "cache_creation_input_tokens": 1947,
+    "cache_read_input_tokens": 29043,
+    "output_tokens": 984
+  },
+  "total_cost_usd": 0.020572299999999998,
+  "attachments": []
+}

@@ -1,0 +1,90 @@
+{
+  "simulated": true,
+  "scene": "solo",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/ana.md",
+  "hash": "a5bbf77c1837bd4aeae972fe4d87b9dbc9a4e2afb27a94339a81a4e80eb67ed5",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, in a group of one they just made, Magnets just brought to it; their housemates are in the house chat",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "explored, and said they were done"
+  },
+  "clock": 53.273,
+  "patienceLeft": 0.4159999999999968,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 130,
+      "read": 99,
+      "taps": 32,
+      "seconds": 43.273
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [
+    {
+      "channel": "the house chat",
+      "text": "Sounds great Sam, I'll be there at 7! Want me to bring anything or help with cleanup?",
+      "at": 4250
+    }
+  ],
+  "heard": [
+    {
+      "from": "Sam",
+      "channel": "the house chat",
+      "text": "Dinner’s at 7 tomorrow, I’m cooking.",
+      "said": 0,
+      "clock": 0,
+      "scene": false
+    }
+  ],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "Replied to Sam that I'll be at dinner at 7. Then played with the fridge magnets app: \"I can explain the entire lasagna situation.\""
+        }
+      },
+      {
+        "prompt": "What do you think this is for?",
+        "said": {
+          "said": "A fridge-magnet word game for the house, to make silly sentences. Just for fun, as far as I can tell."
+        }
+      },
+      {
+        "prompt": "What didn't fit together?",
+        "said": {
+          "said": "Nothing really. The word tiles kept reordering after each tap and the sentence box was a bit small, but it worked."
+        }
+      },
+      {
+        "prompt": "What did you try that didn't do what you expected?",
+        "said": {
+          "said": "Nothing failed outright. I expected tapped words to stay put in the list, but they moved up into the sentence and the list shifted. I didn't check whether the sentence can be saved or shared."
+        }
+      },
+      {
+        "prompt": "Where did you stop, and why?",
+        "said": {
+          "said": "I stopped after one sentence. I'd made what I wanted and had no reason to go on. I didn't scroll through all the words or look for a share option."
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": null,
+  "total_cost_usd": null,
+  "attachments": []
+}

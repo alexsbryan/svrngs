@@ -66,9 +66,14 @@ test('a word goes in and out by mouse, then by keyboard (chromium)', async () =>
     await p.shown();
     assert.equal((await p.tray())[0], 'goose');
 
+    // A word in leaves its place in the tray empty: the word beside it
+    // stays where it was, under the thumb (xenia, demo/runs/magnets/
+    // 2026-11-17-xenia: "the word list rearranged after the first tap").
+    const before = await p.word('tray', 'invoice').boundingBox();
     await p.word('tray', 'goose').click();
     await p.reads(['goose']);
     assert.ok(!(await p.tray()).includes('goose'), 'out of the tray');
+    assert.deepEqual(await p.word('tray', 'invoice').boundingBox(), before, 'invoice stays put');
     await p.word('placed', 'goose').click();
     await p.reads([]);
     assert.equal((await p.tray())[0], 'goose', 'back at its place in the tray');

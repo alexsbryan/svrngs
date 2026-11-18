@@ -1,0 +1,80 @@
+{
+  "simulated": true,
+  "scene": "first-move",
+  "person": "/Users/alexsbryan/dev/svrngs/apps/magnets/tests/xenia/people/ana.md",
+  "hash": "a5bbf77c1837bd4aeae972fe4d87b9dbc9a4e2afb27a94339a81a4e80eb67ed5",
+  "model": "claude-sonnet-5-5",
+  "begins": "on a phone, their group’s Magnets already open; nobody told them anything about it",
+  "as": "Player",
+  "verdict": {
+    "kind": "passed",
+    "reason": "reached their goal"
+  },
+  "clock": 32.528,
+  "patienceLeft": 19.775999999999996,
+  "screens": [
+    {
+      "screen": "the fridge",
+      "shown": 84,
+      "read": 60,
+      "taps": 32,
+      "seconds": 26.528
+    }
+  ],
+  "hard": [],
+  "kind": "stranger",
+  "marks": [],
+  "refused": [],
+  "said": [],
+  "heard": [],
+  "helped": false,
+  "seen": [],
+  "soft": {
+    "asked": [
+      {
+        "prompt": "Tell a friend how it went.",
+        "said": {
+          "said": "I opened a word-tile app: \"I can explain the ____\". I tapped \"raccoon\" and it filled in. Nothing else asked of me, so I'm stopping. I didn't send anything to the house."
+        }
+      },
+      {
+        "prompt": "What did you expect?",
+        "said": {
+          "said": "I wasn't sure. I figured it was a playful sentence-builder for the house, maybe to share a funny line. I didn't expect it to end after one tap."
+        }
+      },
+      {
+        "prompt": "What did you find?",
+        "said": {
+          "said": "Just a tile screen with words like goose, invoice, raccoon, situation. Tapping a word fills the blank. \"I can explain the raccoon\" is what I ended up with. No send button that I saw."
+        }
+      },
+      {
+        "prompt": "Was anything too much? Leave it empty if nothing was.",
+        "said": {
+          "said": null
+        }
+      },
+      {
+        "prompt": "Was there a moment you almost left? Leave it empty if not.",
+        "said": {
+          "said": null
+        }
+      }
+    ],
+    "gaveUp": []
+  },
+  "route": {
+    "reach": "client",
+    "program": "claude",
+    "call": "claude-sonnet-5-5"
+  },
+  "usage": {
+    "input_tokens": 18,
+    "cache_creation_input_tokens": 1704,
+    "cache_read_input_tokens": 25165,
+    "output_tokens": 753
+  },
+  "total_cost_usd": 0.016898500000000004,
+  "attachments": []
+}
