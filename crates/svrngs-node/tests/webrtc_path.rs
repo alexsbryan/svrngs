@@ -36,10 +36,8 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 /// The node homed at `url`, with group `house` founded here, and that
 /// group's id.
 async fn node_at(url: &str) -> (tempfile::TempDir, Node, String) {
-    let (dir, key) = (
-        tempfile::tempdir().unwrap(),
-        SigningKey::from_bytes(&[3; 32]),
-    );
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[3; 32]);
     let relay = RelayConfig {
         relay_urls: vec![url.into()],
         n0_services: false,
@@ -270,19 +268,15 @@ async fn a_native_peer_carries_a_stream_over_the_wire_and_falls_back_in_four_sec
         assert!(Instant::now() < by, "not homed at {url}");
         tokio::time::sleep(Duration::from_millis(50)).await;
     }
-    let (page, worker) = (
-        SigningKey::from_bytes(&[9; 32]),
-        SigningKey::from_bytes(&[10; 32]),
-    );
+    let page = SigningKey::from_bytes(&[9; 32]);
+    let worker = SigningKey::from_bytes(&[10; 32]);
     let_in(&node, &group, &page, "page");
     let_in(&node, &group, &worker, "worker");
 
     // The page's two endpoints: the signalling one, and the fresh data one
     // whose wire carries the app's bytes.
     let signal = bind(SecretKey::from_bytes(&page.to_bytes()), &url, None).await;
-    let me = *SecretKey::from_bytes(&worker.to_bytes())
-        .public()
-        .as_bytes();
+    let me = worker.verifying_key().to_bytes();
     let (arrived, arrivals) = unbounded_channel();
     let (out, outgoing) = std::sync::mpsc::channel();
     let send: wire::Send = Arc::new(move |_to: &wire::PeerKey, datagram: &[u8]| {
