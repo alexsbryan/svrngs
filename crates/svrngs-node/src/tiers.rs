@@ -226,6 +226,16 @@ impl Host {
                 true => Answer::First,
                 false => self.second(&meeting).await,
             };
+            // An answer is about the meeting asked. A `new` or `join` that
+            // changed it while the ask ran (5 s at most, REGISTERED_WITHIN)
+            // leaves it about another: decided on, a group's own relay never
+            // asked reads as silent and n0's comes in (the audit:
+            // crates/svrngs/tests/new_relay.rs). The next ask starts afresh.
+            if self.held.borrow().meeting != meeting {
+                tracing::debug!(target: "tiers", ?answer, "tiers: the meeting changed while its tiers were asked, so this answer decides nothing and the next ask starts afresh");
+                (misses, reached, wait, held_for) = (0, false, 0, 0);
+                continue;
+            }
             self.decide(Some(answer)).await;
         }
     }
