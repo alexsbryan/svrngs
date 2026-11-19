@@ -8,7 +8,7 @@ row's figure is its own commits' sum, not a later reading.
 
 | Check | Verdict | Where |
 |---|---|---|
-| Full `scripts/check.sh`, svrngs-gate container, plain clone | failed at b170fc6e; rerun after the repairs (below, "The gate") | |
+| Full `scripts/check.sh`, svrngs-gate container, plain clone | passed at ab15a9ea (failed at b170fc6e; below, "The gate") | |
 | Each row's named checks, planted red then green | passed | "Plants", below |
 | HUMAN-relay-box: the box, `deploy-relay.sh`, load to drop, a phone on cellular | never-ran | the operator's |
 | HUMAN-phone-home: a real phone goes direct, falls back mid-stream, stays relayed on a network not enabled | never-ran | the operator's |
@@ -106,4 +106,10 @@ Every step passed but four:
   `navigations::` 8 runs of 8, 4 passed each. One crash in 9 runs is not
   a rate; the next gate run is the judge.
 
-**2.** Rerun after the repairs, recorded next.
+**2. ab15a9ea: passed**, exit 0 (1,214 s; ctl/log/sessions/REVIEW-audit-relay-commons-2.await.log,
+sha256 4ddf2534…72ad). All 26 steps passed, the browser step and 19
+scenes among them; no step failed or never ran. The conformance canary's
+two could-not-judge rows ("its worker, after svrngs's restarts", WebKit
+stops no worker on ask) are WebKit's, on both origins, each beside a
+passed row of the same check. The Playwright crash of run 1 did not recur: 1 in 10 runs.
+Only this ledger changed after ab15a9ea.
