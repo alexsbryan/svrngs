@@ -229,22 +229,20 @@ async fn offer(
     dialer: Option<Extension<crate::iroh::Dialer>>,
     headers: axum::http::HeaderMap,
     Json(asked): Json<Offered>,
-) -> Response {
+) -> Result<Response, Response> {
     let Some(Extension(dialer)) = dialer else {
-        return refused("no verified dialer, so the offer did not come on an iroh stream".into());
+        return Err(refused(
+            "no verified dialer, so the offer did not come on an iroh stream".into(),
+        ));
     };
-    if let Err(refusal) = crate::door::holder_of_offer(&door, &dialer, &headers).await {
-        return refusal;
-    }
+    crate::door::holder_of_offer(&door, &dialer, &headers).await?;
     let Some(data) = asked.key.parse::<EndpointId>().ok().map(|k| *k.as_bytes()) else {
-        return refused("the offer names no data key".into());
+        return Err(refused("the offer names no data key".into()));
     };
     let here = crate::network::now().await;
     let offer = serde_json::to_vec(&asked.offer).unwrap_or_default();
-    match webrtc.answer(&offer, data, &here) {
-        Ok(answer) => ([(header::CONTENT_TYPE, "application/json")], answer).into_response(),
-        Err(why) => refused(why),
-    }
+    let answer = webrtc.answer(&offer, data, &here).map_err(refused)?;
+    Ok(([(header::CONTENT_TYPE, "application/json")], answer).into_response())
 }
 
 /// An offer this computer does not answer: `400` and why, as the spike's
