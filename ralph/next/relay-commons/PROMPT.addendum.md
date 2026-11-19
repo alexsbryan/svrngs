@@ -161,3 +161,12 @@ the unchanged full scripts/check.sh in the svrngs-gate container, exit 0.
 Then run ralph-result done as its own shell command. Long checks use
 `ralph-result await <budget> -- <command>`; the loop owns their lifetime. An
 operator-only blocker gets a committed package and `ralph-result needs-human`.
+
+**The audit also checks** (director, 2026-11-19):
+- **Each trust floor `listen` line's description against the code it pins.**
+  `scripts/trust_check.py` matches the bind line alone, so a change in whom
+  a listener admits leaves the description stale with the check green
+  (13ffd41e found the relay's). Read each line this queue's code reaches.
+- **A group whose own relay is down along with ours.** n0's relays are held
+  only while none of ours answers (`tiers.rs`); test that a group with its
+  own relay, both down, still meets at n0's, and says so on the home page.
