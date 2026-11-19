@@ -351,18 +351,7 @@ async function opened() {
   const own = !seed;
   const bytes = seed ? fromHex(seed) : crypto.getRandomValues(new Uint8Array(32));
   linked = null;
-  if (own) {
-    const to = actor(bytes);
-    const sig = new Uint8Array(
-      await crypto.subtle.sign(
-        'Ed25519',
-        handed.key,
-        // The glue's bytes are a copy of its own, in a buffer of their own.
-        /** @type {Uint8Array<ArrayBuffer>} */ (link(handed.pass, to)),
-      ),
-    );
-    linked = new TextDecoder().decode(link(handed.pass, to, sig));
-  }
+  if (own) linked = await linkTo(actor(bytes));
   const as = own
     ? 'of this run, named by the holder’s link'
     : 'as the pass’s holder, for an older door';
@@ -370,6 +359,15 @@ async function opened() {
   // A pass kept before relay fallbacks names its one relay, and no `relays`.
   if (!handed.relays) trace('RUNTIME: the pass names one relay, as one kept before fallbacks');
   return holder_endpoint(bytes, handed.relays ?? (handed.relay ? [handed.relay] : []), handed.pass);
+}
+
+// The link naming the endpoint whose key is `to`, signed by the holder.
+/** @param {string} to */
+async function linkTo(to) {
+  // The glue's bytes are a copy of its own, in a buffer of their own.
+  const toSign = /** @type {Uint8Array<ArrayBuffer>} */ (link(handed.pass, to));
+  const sig = new Uint8Array(await crypto.subtle.sign('Ed25519', handed.key, toSign));
+  return new TextDecoder().decode(link(handed.pass, to, sig));
 }
 
 // The pass a request carries, and the link naming the endpoint it goes
@@ -414,17 +412,14 @@ async function direct(label, port) {
   // object owns, and letting the wrapper be collected would drop it.
   directs.set(lend.key, data);
   // The data endpoint's own key, named by a link the holder signs.
-  const to = data.key();
-  // The glue's bytes are a copy of its own, in a buffer of their own (`opened`).
-  const toSign = /** @type {Uint8Array<ArrayBuffer>} */ (link(handed.pass, to));
-  const sig = await crypto.subtle.sign('Ed25519', handed.key, toSign);
+  const named = await linkTo(data.key());
   const dial = await (await bound()).dial_webrtc(lend.key, lend.relay ?? null);
   // The offer crosses this run's own dial, so it presents this run's link
   // (`passed`, before the data endpoint's is set): the door checks the
   // dialer, which is this run's endpoint. The data endpoint's link is set
   // after, for the fetches that ride its connection.
   const via = await data.go(dial, await passed(held, lend), port);
-  dataLinks.set(lend.key, new TextDecoder().decode(link(handed.pass, to, new Uint8Array(sig))));
+  dataLinks.set(lend.key, named);
   if (via) dials.set(lend.key, Promise.resolve(via));
   trace(`RUNTIME: ${lend.name} goes direct: ${data.paths()}`);
 }

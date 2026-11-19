@@ -117,9 +117,6 @@ async function withClient(response) {
   const at = head ? head.index + head[0].length : 0;
   const nonced = nonce ? ` nonce="${nonce}"` : '';
   const script = `<script${nonced} src="/svrngs-session-client.js"></script>`;
-  return new Response(html.slice(0, at) + script + html.slice(at), {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+  const { status, statusText } = response;
+  return new Response(html.slice(0, at) + script + html.slice(at), { status, statusText, headers });
 }
