@@ -1019,5 +1019,6 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
     let named = (lends["lends"].as_array().unwrap().iter())
         .find(|l| l["name"] == "served")
         .map(|l| l["command"].clone());
-    assert_eq!(named, Some(serde_json::json!("serve")), "{lends:#}");
+    // Which program it is kept to is its lender's alone to see.
+    assert_eq!(named, Some(serde_json::Value::Null), "{lends:#}");
 }

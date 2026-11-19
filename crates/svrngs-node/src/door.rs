@@ -607,6 +607,9 @@ async fn lends(
     // computer has left lists nothing it would refuse to open.
     let stands = |g: &str| door.rail.standing(g).is_ok_and(|s| s.names(&actor));
     offered.retain_mut(|o| o.listed(|g| stands(g) && stands_here(&door.rail, g)));
+    // Which program a lend is kept to is its lender's to see, on their home
+    // page; a member is told only whether it opens.
+    offered.iter_mut().for_each(|o| o.command = None);
     tracing::debug!(target: "door", actor, lends = offered.len(), "door: lends — answered what this computer lends, each carried app only to its own group and each declared lend only through a group it is lent to");
     let version = crate::version::VERSION;
     Ok(Json(serde_json::json!({ "lends": offered, "version": version })).into_response())
