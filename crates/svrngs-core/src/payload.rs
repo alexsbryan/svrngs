@@ -54,7 +54,7 @@ use alloc::string::String;
 use alloc::string::ToString;
 use alloc::vec::Vec;
 use serde::{Deserialize, Deserializer, Serialize};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 /// The largest canonical payload the rail will carry.
 ///
@@ -124,32 +124,24 @@ impl Payload {
 /// order, recursively. Array order is data and is left alone.
 fn canonicalize(value: Value) -> Result<Value, PayloadError> {
     Ok(match value {
-        Value::Object(mut map) => {
-            let mut keys: Vec<String> = map.keys().cloned().collect();
-            keys.sort();
+        Value::Object(map) => {
+            let mut entries: Vec<(String, Value)> = map.into_iter().collect();
+            entries.sort_by(|(a, _), (b, _)| a.cmp(b));
             // Inserted in sorted order so that a `Map` backed by an IndexMap
             // (`preserve_order`, which is on here) iterates in the same order
             // as one backed by a BTreeMap. That equivalence is the whole
             // point — see the module docs.
-            let mut out = Map::new();
-            for k in keys {
-                let v = map.remove(&k).unwrap_or(Value::Null);
-                out.insert(k, canonicalize(v)?);
-            }
-            Value::Object(out)
-        }
-        Value::Array(items) => Value::Array(
-            items
+            let out = entries
                 .into_iter()
-                .map(canonicalize)
-                .collect::<Result<Vec<_>, _>>()?,
-        ),
-        Value::Number(n) => {
-            if n.is_f64() {
-                return Err(PayloadError::Fractional(n.to_string()));
-            }
-            Value::Number(n)
+                .map(|(k, v)| canonicalize(v).map(|v| (k, v)));
+            Value::Object(out.collect::<Result<_, _>>()?)
         }
+        // An array collects into `Value::Array`, its order kept.
+        Value::Array(items) => items
+            .into_iter()
+            .map(canonicalize)
+            .collect::<Result<_, _>>()?,
+        Value::Number(n) if n.is_f64() => return Err(PayloadError::Fractional(n.to_string())),
         other => other,
     })
 }

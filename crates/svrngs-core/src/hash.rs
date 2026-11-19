@@ -112,8 +112,7 @@ impl<'de> Deserialize<'de> for ContentHash {
         let s = String::deserialize(d)?;
         ContentHash::from_hex(&s).ok_or_else(|| {
             serde::de::Error::custom(format!(
-                "expected 64 hex characters (BLAKE3-256), got {:?}",
-                s
+                "expected 64 hex characters (BLAKE3-256), got {s:?}"
             ))
         })
     }
