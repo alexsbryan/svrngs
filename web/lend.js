@@ -291,14 +291,12 @@ function dialAt(lend) {
 // The dial `lend` was just at let go; for a carried app, its computer tried last.
 /** @param {Passed} lend */
 function letGo(lend) {
-  const key = lenderOf(lend);
+  const [key, others] = [lenderOf(lend), lend.lenders?.length ?? 0];
   // The dial at that lender, and the data endpoint that went with it: a
   // fetch of a dead dial's rides nothing.
   for (const maps of [dials, directs]) maps.delete(key);
-  if ((lend.lenders?.length ?? 0) > 0) failed.add(key);
-  trace(
-    `RUNTIME: ${key} let go for ${lend.name}, ${lend.lenders?.length ?? 0} other computers carry it`,
-  );
+  if (others > 0) failed.add(key);
+  trace(`RUNTIME: ${key} let go for ${lend.name}, ${others} other computers carry it`);
 }
 
 /**
@@ -488,9 +486,11 @@ const cookieFor = (jar, path, page) =>
     .map((cookie) => `${cookie.name}=${cookie.value}`)
     .join('; ');
 
-/** @param {string} label */
-async function keepJar(label) {
-  const jar = await jarOf(label);
+/**
+ * @param {string} label
+ * @param {Cookie[]} jar its jar (`jarOf`)
+ */
+async function keepJar(label, jar) {
   await store
     .lendKeep(`cookies ${label}`, jar)
     .catch((error) => trace(`RUNTIME: cookies not kept: ${error}`));
@@ -888,7 +888,7 @@ async function doorAnswer({ request, lend, path }, headers, body) {
  */
 async function keepCookies({ where, jar }, set) {
   for (const line of JSON.parse(set)) setCookie(jar, line);
-  await keepJar(where.label);
+  await keepJar(where.label, jar);
 }
 
 // The acts the answer names to be written (`APPEND`): refused unless the
@@ -1430,10 +1430,6 @@ async function answered(fetchEvent, url, where) {
 scope.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   const here = url.origin === self.location.origin;
-  if (here && shellAt(url)) {
-    event.respondWith(saved(event.request));
-    return;
-  }
   const own = here ? ownAnswer(event.request, url) : null;
   if (own) {
     event.respondWith(own);
@@ -1472,14 +1468,15 @@ async function saved(request) {
 }
 
 // The answer to `request` at one of this worker's own addresses on this
-// origin: its trace, the lends its pages read, an ask, or a stop. None at
-// any other.
+// origin: a piece of the page saved here (`shellAt`), its trace, the lends
+// its pages read, an ask, or a stop. None at any other.
 /**
  * @param {Request} request
  * @param {URL} url
  * @returns {Promise<Response> | null}
  */
 function ownAnswer(request, url) {
+  if (shellAt(url)) return saved(request);
   if (url.pathname === TRACE) return traceShown();
   if (url.pathname === READS) return told();
   if (url.pathname === ASK) return asking(url);
@@ -1582,7 +1579,7 @@ async function holdPass(given, reply) {
 async function cookieKept(cookie, reply) {
   const jar = await jarOf(OWN);
   setCookie(jar, cookie);
-  await keepJar(OWN);
+  await keepJar(OWN, jar);
   reply?.postMessage('kept');
 }
 
