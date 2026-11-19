@@ -111,11 +111,59 @@
     jar.clear();
     for (const [name, value] of pairs(line)) jar.set(name, value);
   };
+
+  // svrngs's own refusal of a subresource (lend.js `REFUSED`; door.rs
+  // `LendRefusal::say`): while the share is spent a large one is refused
+  // `share`, its words in the body's `error`, and shown in a banner over
+  // the page (share-refusal; RELAY_COMMONS design 3, "The words"), so
+  // something that waits says why instead of stalling silently.
+  const REFUSED = 'x-svrngs-refused';
+  /** @param {unknown} body */
+  const wordsIn = (body) => {
+    if (typeof body !== 'object' || body === null) return null;
+    const error = /** @type {{error?: unknown}} */ (body).error;
+    return typeof error === 'string' && error !== '' ? error : null;
+  };
+  /** @type {HTMLElement | null} */
+  let banner = null;
+  /** @param {string | null} words */
+  const shareSpent = (words) => {
+    if (words === null) return;
+    if (banner === null) {
+      banner = document.createElement('div');
+      banner.setAttribute(
+        'style',
+        'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#101014;color:#fff;padding:.75em 1em;font:16px/1.4 system-ui,sans-serif',
+      );
+      (document.body ?? document.documentElement).append(banner);
+    }
+    banner.textContent = words;
+  };
+  // An XHR's body as JSON, `null` when it is not (a `json` responseType
+  // holds the object itself, and its `responseText` throws).
+  /** @param {XMLHttpRequest} asked */
+  const parsed = (asked) => {
+    if (asked.responseType === 'json') return asked.response;
+    try {
+      return JSON.parse(asked.responseText);
+    } catch {
+      return null;
+    }
+  };
+
   const fetched = window.fetch;
   /** @param {Parameters<typeof fetch>} args */
   window.fetch = function (...args) {
     return fetched.apply(this, args).then((response) => {
       takeIn(response.headers.get(PAGE_COOKIES));
+      if (response.headers.get(REFUSED) === 'share')
+        void response
+          .clone()
+          .json()
+          .then(
+            (body) => shareSpent(wordsIn(body)),
+            () => {},
+          );
       return response;
     });
   };
@@ -128,6 +176,9 @@
     this.addEventListener('readystatechange', () => {
       // 2, HEADERS_RECEIVED: the answer's headers, before its body.
       if (this.readyState === 2) takeIn(this.getResponseHeader(PAGE_COOKIES));
+      // 4, DONE: the body, and svrngs's words in it, once the share is spent.
+      if (this.readyState === 4 && this.getResponseHeader(REFUSED) === 'share')
+        shareSpent(wordsIn(parsed(this)));
     });
     // `apply` reads `open`'s last form, whose `async` is not optional.
     return opened.apply(this, /** @type {Parameters<typeof opened>} */ (args));

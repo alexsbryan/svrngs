@@ -254,9 +254,10 @@ async function handoff(seed) {
   };
 }
 
-// A navigation to `url`, which a page's `fetch` cannot make.
-const navigating = (url) => {
-  const request = new Request(url);
+// A navigation to `url`, which a page's `fetch` cannot make, with `init`'s
+// headers as the browser sends its own.
+const navigating = (url, init) => {
+  const request = new Request(url, init);
   return new Proxy(request, {
     get: (target, name) => {
       if (name === 'mode') return 'navigate';
@@ -702,6 +703,50 @@ test('whose word a refusal is goes through the worker as the door said it', asyn
     { path: 'x', status: 403, refused: null },
     { path: 'private/x', status: 403, refused: 'path' },
   ]);
+});
+
+// The share's words (door.rs `spent_words`; share-refusal; RELAY_COMMONS
+// design 3, "The words"): a tab whose lend's door refused it is shown
+// svrngs's own page, as the door drew it (door.rs `paged`), and a
+// subresource goes through marked `share`, its words for the shim's banner
+// (shim.js). Planted, watched failing: the refusal page taken as the
+// lend's and shimmed, and the page carried the shim of a lend it is not.
+const SPENT =
+  'Sam’s computer has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi as Sam’s computer, through your group’s own relay, or in the svrngs app, soon.';
+test('a share refusal to a tab is svrngs’s own page, with the words', async () => {
+  const worker = lendWorker({
+    lends: [page],
+    door: ({ headers }) =>
+      /text\/html/.test(headers.get('accept') ?? '')
+        ? new Response(`<!doctype html><meta charset=utf-8><p>${SPENT}`, {
+            status: 429,
+            headers: { 'content-type': 'text/html; charset=utf-8', 'x-svrngs-refused': 'share' },
+          })
+        : new Response(JSON.stringify({ error: SPENT, kind: 'share' }), {
+            status: 429,
+            headers: { 'content-type': 'application/json', 'x-svrngs-refused': 'share' },
+          }),
+  });
+  const tab = await worker.fetched(
+    `${ORIGIN}/title.mp4`,
+    undefined,
+    navigating(`${ORIGIN}/title.mp4`, { headers: { accept: 'text/html,application/xhtml+xml' } }),
+  );
+  assert.equal(tab.status, 429);
+  assert.equal(tab.headers.get('x-svrngs-refused'), 'share');
+  assert.equal(tab.headers.get('content-type'), 'text/html; charset=utf-8');
+  const html = await tab.text();
+  assert.ok(html.includes(SPENT), html);
+  assert.ok(!html.includes('shim.js'), 'svrngs’s own page carries no shim of the lend’s');
+  assert.match(worker.traced.join('\n'), /svrngs's own share refusal, shown as its page/);
+  // A subresource's refusal is the door's own answer, marked, its words in
+  // its body for the shim to show (shim.js).
+  const part = await worker.fetched(`${ORIGIN}/title.mp4`, {
+    headers: { accept: '*/*', range: 'bytes=0-1023' },
+  });
+  assert.equal(part.status, 429);
+  assert.equal(part.headers.get('x-svrngs-refused'), 'share');
+  assert.equal((await part.json()).error, SPENT);
 });
 
 // llama-server's chat page, 415 unless asked gzip (browser/main.rs

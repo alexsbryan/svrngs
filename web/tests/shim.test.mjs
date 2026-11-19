@@ -6,6 +6,10 @@
 // a page runs it, in this process's one global, given what of a browser it
 // reads as it starts. Watched failing at 4b7160c0, whose `send` called a
 // DataView's `slice`, which a DataView has none of, and threw.
+//
+// It also shows a subresource refused while the share is spent in a banner
+// with svrngs's words (share-refusal; RELAY_COMMONS design 3, "The
+// words"), by fetch and by XMLHttpRequest, so a stalled player says why.
 
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -15,6 +19,10 @@ import { runInThisContext } from 'node:vm';
 // The worker the page's sockets are handed to: each socket's port, as the
 // shim posts it.
 const ports = [];
+// The elements the shim appends to the page, in order.
+const appended = [];
+// What the page's own `fetch` answers, replaced by each test.
+let answer = () => Promise.resolve(new Response('ok'));
 // Node 21 on gives globalThis a `navigator` with a getter alone, so it is
 // defined over, not assigned (configurable, as Node's is).
 Object.defineProperty(globalThis, 'navigator', {
@@ -30,11 +38,41 @@ Object.defineProperty(globalThis, 'navigator', {
 Object.assign(globalThis, {
   window: globalThis,
   location: { href: 'https://lend.example/' },
-  document: { currentScript: { src: 'https://lend.example/shim.js?l=lend&c=' } },
-  Document: class {},
-  XMLHttpRequest: class {
-    open() {}
+  document: {
+    currentScript: { src: 'https://lend.example/shim.js?l=lend&c=' },
+    createElement: (tag) => ({
+      tag,
+      textContent: '',
+      attributes: {},
+      setAttribute(name, value) {
+        this.attributes[name] = value;
+      },
+    }),
+    documentElement: { append: (element) => appended.push(element) },
   },
+  Document: class {},
+  // The page's XHR, as the shim wraps it: a request the test drives to
+  // HEADERS_RECEIVED and DONE itself.
+  XMLHttpRequest: class {
+    readyState = 0;
+    responseType = '';
+    responseText = '';
+    response = null;
+    headers = {};
+    listeners = [];
+    open() {}
+    addEventListener(type, heard) {
+      if (type === 'readystatechange') this.listeners.push(heard);
+    }
+    getResponseHeader(name) {
+      return this.headers[name.toLowerCase()] ?? null;
+    }
+    done() {
+      this.readyState = 4;
+      for (const heard of this.listeners) heard();
+    }
+  },
+  fetch: (...args) => answer(...args),
 });
 runInThisContext(readFileSync(new URL('../shim.js', import.meta.url), 'utf8'));
 
@@ -90,4 +128,53 @@ test('a string, an ArrayBuffer and a Blob are sent as they are', async () => {
   } finally {
     close();
   }
+});
+
+// The share's words (door.rs `spent_words`; share-refusal; RELAY_COMMONS
+// design 3, "The words"): a subresource refused `share` shows a banner
+// with the answer's words, once, replaced by the next — so a film that
+// waits says why. Planted, watched failing: the banner never shown, and
+// `appended` was empty.
+const SPENT =
+  'Sam’s computer has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi as Sam’s computer, through your group’s own relay, or in the svrngs app, soon.';
+// The banner chain runs in a microtask after the wrapper's answer.
+const settled = () => new Promise((done) => setTimeout(done, 0));
+// The answer a refused subresource gets from the door, as svrngs marks it.
+const refused = (words) =>
+  new Response(JSON.stringify({ error: words, kind: 'share' }), {
+    status: 429,
+    headers: { 'x-svrngs-refused': 'share' },
+  });
+
+test('a subresource refused while the share is spent shows the answer’s words in a banner, by fetch', async () => {
+  answer = async () => refused(SPENT);
+  const response = await window.fetch('https://lend.example/segment');
+  assert.equal(response.status, 429, 'the answer itself is kept');
+  await settled();
+  assert.equal(appended.length, 1, 'one banner');
+  assert.equal(appended[0].textContent, SPENT);
+  assert.match(appended[0].attributes.style, /position:fixed/);
+  // The next refusal says its words in the same banner, not a second one.
+  answer = async () => refused('Sam’s computer has used its share for now.');
+  await window.fetch('https://lend.example/segment');
+  await settled();
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].textContent, 'Sam’s computer has used its share for now.');
+  // An answer that is not svrngs's own shows nothing.
+  answer = async () => new Response('fine', { status: 200 });
+  await window.fetch('https://lend.example/segment');
+  await settled();
+  assert.equal(appended.length, 1);
+  assert.equal(appended[0].textContent, 'Sam’s computer has used its share for now.');
+});
+
+test('a subresource refused while the share is spent shows the answer’s words in a banner, by XMLHttpRequest', async () => {
+  const asked = new XMLHttpRequest();
+  asked.open('GET', 'https://lend.example/segment');
+  asked.readyState = 2;
+  for (const heard of asked.listeners) heard();
+  asked.headers['x-svrngs-refused'] = 'share';
+  asked.responseText = JSON.stringify({ error: SPENT, kind: 'share' });
+  asked.done();
+  assert.equal(appended.at(-1).textContent, SPENT);
 });
