@@ -289,6 +289,22 @@ nonextractable key in that origin's IndexedDB. `svrngs open`, install.sh's
 opener and the home page's `/to` mint these opens. Cookies authorize nothing:
 a different port on the same hostname shares cookies, not origin storage.
 
+**An open's code is never a program's argument.** Any account on a
+computer can read the arguments a program runs with (`ps`, Linux's
+`/proc/<pid>/cmdline`), so `svrngs open` gives the program that opens
+addresses no address with a code in it. It writes a page that sends the
+browser on to the open, by a refresh and by script, into `<data dir>/opens/`,
+a folder only this account can read (0700, each page 0600, an existing
+folder narrowed and a link refused), and hands the opener that page's
+`file://` address (`crates/svrngs/src/handoff.rs`). The folder is the data
+dir's own, so it is the same on every system and there wherever svrngs is.
+Each open clears the pages older than five minutes, since an open is spent
+once used and lapses in a minute. Where the folder cannot be kept private,
+`open` refuses, says why and how to come in instead, and hands nothing over;
+it never falls back to the argument. `svrngs open --print` still shows the
+address, on the person's own terminal. `/to` and the home page's opens of
+an app hand theirs by a redirect inside the browser, never through a program.
+
 The origin's authentication worker proves host, port, method, path/query,
 write intent and, for home-page writes, the body's SHA-256. Each proof is
 fresh for less than a minute, has a single-use nonce, and names a random

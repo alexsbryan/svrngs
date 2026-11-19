@@ -32,6 +32,10 @@ thiserror = { workspace = true }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "signal", "time", "net"] }
 tracing = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+# `svrngs open`'s page (handoff.rs): the open read as an http address before
+# it is written into a page, and the page's file:// address, as reqwest's
+# url, already in the lock, writes both.
+url = "2.5"
 
 # Linux's allocator (main.rs): the malloc of musl as zig builds it keeps
 # what the command frees (demo/runs/leak/2026-10-17/README.md).

@@ -153,13 +153,23 @@ fn an_opener_that_stays_does_not_hold_svrngs_open() {
         "{refused:?}"
     );
     // The opener is handed the home page, at the address the bare command
-    // said (moved from a_second_bare_command_reminds_without_starting_or_opening).
+    // said (moved from a_second_bare_command_reminds_without_starting_or_opening),
+    // by a page that sends its browser on to it (svrngs::handoff).
     let home = address_in(&running.until("//svrngs.localhost:"));
     let marker = logs.path().join("opened");
     stub(&format!("printf '%s' \"$1\" > '{}'", marker.display()));
     let opened = invoke();
     assert!(opened.status.success(), "{opened:?}");
-    assert!(std::fs::read_to_string(&marker).unwrap().starts_with(&home));
+    let handed = std::fs::read_to_string(&marker).unwrap();
+    let page = reqwest::Url::parse(&handed)
+        .unwrap()
+        .to_file_path()
+        .unwrap();
+    let page = std::fs::read_to_string(page).unwrap();
+    assert!(
+        page.contains(&format!("location.replace(\"{home}")),
+        "{page}"
+    );
 }
 
 /// **A second bare command reminds where the home page is, and starts,

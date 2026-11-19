@@ -274,7 +274,9 @@ fi
 # any program asks it, with the token beside the address it writes to its
 # data and keeps at each start after (start-address, give-token).
 tries=0
-until said="$(SVRNGS_DIR="$dir" "$bin/svrngs" open "$destination" 2>/dev/null)"; do
+until said="$(SVRNGS_DIR="$dir" "$bin/svrngs" open "$destination" 2>"$tmp/open")"; do
+  # 1 is svrngs's refusal, said in its words; else it has not started yet.
+  [ $? -ne 1 ] || { cat "$tmp/open" >&2; exit 1; }
   tries=$((tries + 1))
   [ "$tries" -lt 30 ] || no "svrngs did not start within 30 seconds; $dir/svrngs.log says why."
   sleep 1
