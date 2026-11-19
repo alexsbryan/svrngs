@@ -68,7 +68,7 @@ import {
   realmsAsked,
 } from './session.js?v=__VERSION__';
 /** @import { Handoff, Passed } from './authority.js?v=__VERSION__' */
-/** @import { Dialled, Endpoint } from './wasm/svrngs_web.js?v=__VERSION__' */
+/** @import { Dialled, Direct, Endpoint } from './wasm/svrngs_web.js?v=__VERSION__' */
 
 // `self` as a service worker's: the worker's lib names it a
 // `WorkerGlobalScope`, which every kind of worker shares
@@ -207,12 +207,20 @@ let endpoint = null;
 let linked = null;
 // The link each direct path's data endpoint holds, by its lender
 // (webrtc-page `direct`): the door checks it beside the pass, as this
-// run's own. And the lenders a direct attempt is running for: a page that
-// announces itself twice (a reload) is answered by the one attempt.
+// run's own.
 /** @type {Map<string, string>} */
 const dataLinks = new Map();
-/** @type {Set<string>} */
-const directs = new Set();
+// The direct attempt each lender is running: the attempt itself while it
+// runs, so a page that announces itself twice (a reload) is answered by
+// the one attempt, and the data endpoint it made once it has one — held
+// here because wasm-bindgen frees an exported object when its JS wrapper
+// is collected, and an iroh endpoint dropped that way aborts without
+// `close`, killing the connection mid-fetch (watched 2026-11-19:
+// "Endpoint dropped without calling `Endpoint::close`" in the trace, the
+// film's fetch then never ending; the wrapper was the `direct` local
+// alone).
+/** @type {Map<string, Direct | null>} */
+const directs = new Map();
 /** @type {Map<string, Promise<Dialled>>} */
 const dials = new Map();
 /** @type {Map<string, Cookie[]>} */
@@ -284,7 +292,9 @@ function dialAt(lend) {
 /** @param {Passed} lend */
 function letGo(lend) {
   const key = lenderOf(lend);
-  dials.delete(key);
+  // The dial at that lender, and the data endpoint that went with it: a
+  // fetch of a dead dial's rides nothing.
+  for (const maps of [dials, directs]) maps.delete(key);
   if ((lend.lenders?.length ?? 0) > 0) failed.add(key);
   trace(
     `RUNTIME: ${key} let go for ${lend.name}, ${lend.lenders?.length ?? 0} other computers carry it`,
@@ -393,13 +403,16 @@ async function direct(label, port) {
   const held = await holding();
   const lend = held?.lends.find((one) => one.label === label);
   if (!lend || !handed.key || directs.has(lend.key)) return null;
-  directs.add(lend.key);
+  directs.set(lend.key, null);
   await (loaded ??= init({ module_or_path: store.runtime() }));
   // The pass's relays, as this run's own endpoint is opened with; the data
   // endpoint falls back to the relay named for the lend when it names none.
   const data = await direct_start(lend.key, lend.relay ?? null, handed.relays ?? [], (bytes) =>
     port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]),
   );
+  // Held in `directs` from here on: the fetch rides the endpoint this
+  // object owns, and letting the wrapper be collected would drop it.
+  directs.set(lend.key, data);
   // The data endpoint's own key, named by a link the holder signs.
   const to = data.key();
   const sig = await crypto.subtle.sign('Ed25519', handed.key, link(handed.pass, to));
@@ -412,7 +425,6 @@ async function direct(label, port) {
   dataLinks.set(lend.key, new TextDecoder().decode(link(handed.pass, to, new Uint8Array(sig))));
   if (via) dials.set(lend.key, Promise.resolve(via));
   trace(`RUNTIME: ${lend.name} goes direct: ${data.paths()}`);
-  return via;
 }
 
 // ── cookies, a jar per lend ─────────────────────────────────────────────
@@ -1527,11 +1539,8 @@ const fromHere = (source) => !!source?.url && new URL(source.url).origin === SCO
 scope.addEventListener('message', (event) => {
   const given = /** @type {{ webrtc?: string, label?: string }} */ (event.data ?? {});
   if (given.webrtc !== 'here' || !event.ports[0] || !fromHere(event.source)) return;
-  event.waitUntil(
-    direct(/** @type {string} */ (given.label), event.ports[0]).catch((error) =>
-      trace(`RUNTIME: the direct path failed: ${String(error)}`),
-    ),
-  );
+  const lost = (error) => trace(`RUNTIME: the direct path failed: ${String(error)}`);
+  event.waitUntil(direct(/** @type {string} */ (given.label), event.ports[0]).catch(lost));
 });
 
 // Whether `given` is an open of this lend's, with its pass.
@@ -1555,7 +1564,9 @@ async function holdPass(given, reply) {
     given.key = await crypto.subtle.importKey('jwk', given.key, 'Ed25519', false, ['sign']);
   }
   handed = given;
-  dials.clear();
+  // The dials, and the direct attempts' endpoints with them: a new pass
+  // starts this origin's lends afresh.
+  for (const maps of [dials, directs]) maps.clear();
   endpoint = null;
   const lends = `${given.lends.length} lend(s)`;
   const imported = bytes ? ', and its holder’s bytes, imported here and kept nowhere' : '';

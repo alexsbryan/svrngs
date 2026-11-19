@@ -81,6 +81,7 @@ function worker(answer) {
     actsPosted: () => assert.fail('no acts posted here'),
     awayPage: async () => undefined,
     dials: new Map(),
+    directs: new Map(),
     dialFor: (lender) => scope.dials.get(lender) ?? dialFor(lender),
     failed: new Set(),
     trace: (line) => said.push(line),

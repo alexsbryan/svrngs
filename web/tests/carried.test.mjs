@@ -129,6 +129,7 @@ function worker(handed, carry, page = signer()) {
     OWN: LABEL,
     SIGNER: GROUP_PAGE,
     dials: new Map(),
+    directs: new Map(),
     dialled: async (lender) => dial(lender),
     trace: (line) => traced.push(line),
     store: {

@@ -92,6 +92,7 @@ const hex = (bytes) => Buffer.from(bytes).toString('hex');
 const WORKER = [
   'let handed = null;',
   'const dials = new Map();',
+  'const directs = new Map();',
   'let asks = 0;',
   'let endpoint = null;',
   ...['handedNow', 'PLAIN', 'REFUSED', 'say', 'unheld', 'fromHere', 'handsPass'].map((name) =>
@@ -444,6 +445,7 @@ const SERVED = [
   block(LEND, 'partAsked'),
   'let walled = null;',
   'const dials = new Map();',
+  'const directs = new Map();',
   'let asks = 0;',
   ...[
     'whereOf',
