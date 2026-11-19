@@ -1901,18 +1901,15 @@ open fits the burst (Jellyfin's 2.11 MB brotli, 5.66 MB decoded), and a
 film (3.73 Mbit/s) is held once its burst is spent, by the shape of the
 traffic alone, with no list of apps. A computer the relay held answers a
 large request that came over it — a range, or a body over the burst —
-with 429, `x-svrngs-refused: share`, and its words in the lender's name —
-the public way, never "relay", which a person's words never say (DESIGN
-§1, rule 1) — (`door.rs` `over_share`, `spent_words`), which its home page
-says the day of while the share is spent; nothing over a direct path or a
-group's own relay is refused, and the refusal holds until the connection
-to the relay ends of itself, since iroh 1.4.2 cannot remake one and
-nothing may clear it silently (the operator, 2026-11-18). Only the
-commons' relay is held; a
-group's own, and anyone's, is not. At a name the relay serves its
-counters on loopback (`metrics_addr`) and logs at warn, so a host's capped
-journal keeps what went wrong and never the debug decisions' keys and
-addresses.
+with 429, `x-svrngs-refused: share` and words in the lender's name
+(`door.rs` `over_share`, `spent_words`), and its home page says the day.
+Nothing over a direct path or a group's own relay is refused, and the
+refusal holds until the connection to the relay ends of itself: iroh
+1.4.2 cannot remake one, and nothing may clear it silently. Only the
+commons' relay is held; a group's own, and anyone's, is not. At a name the
+relay serves its counters on loopback (`metrics_addr`) and logs at warn,
+so a host's capped journal keeps what went wrong and never the debug
+decisions' keys and addresses.
 
 The stock iroh-relay 1.4.2 binary carries a group too, served over HTTPS
 at a name whose certificate a public authority signed (computers trust the
@@ -1922,21 +1919,18 @@ admission and its own certificates; a bare one admits whoever finds it.
 **Where a computer meets its groups.** A computer meets at its groups'
 own HTTPS relays while they answer, at the build's fallback while they do
 not (or when a group names none), and at n0's public relays, the emergency
-behind ours, only while neither answers, decided in one place (svrn-docs
-`rings/current/GROUP_RELAYS.md` §7, the operator's "Tiers", 2026-11-02;
-the relay-fallback charter, 2026-11-04: a browser holding only the
-published page's policy can reach a computer only through a relay it may
-take; RELAY_COMMONS 1, 2026-11-18: "n0's public relays come in
-only while ours does not answer"; self-host, 2026-11-19: a group's own
-HTTPS relay comes before the build's, and a plain-HTTP one, a page cannot
-take, stays behind it). Every link carries the build's fallback beside the
-group's own, so a phone can open the group whichever tier the
-computer was met at when the link was made. Its
-own are the relays its keeper names in its record by a `Meets` act (§6),
-made with `svrngs new <name> --relay <name or url>`, once for each;
-`svrngs link <group> --relay <name or url>` replaces them later, while
-svrngs runs or not, keeper
-only, and the new link carries them. The build's are one of a closed set,
+behind ours, only while neither answers, decided in one place
+(GROUP_RELAYS §7, the operator's "Tiers", 2026-11-02; the relay-fallback
+charter: a browser with only the published page's policy reaches a
+computer only through a relay it may take; RELAY_COMMONS 1-2; self-host:
+a plain-HTTP own relay, which a page cannot take, stays behind the
+build's). Every link carries the build's fallback beside the group's own,
+so a phone can open the group whichever tier the computer was met at
+when the link was made. Its own are the relays its keeper names in its
+record by a `Meets` act (§6), made with `svrngs new <name> --relay <name
+or url>`, once for each; `svrngs link <group> --relay <name or url>`
+replaces them later, while svrngs runs or not, keeper only, and the new
+link carries them. The build's are one of a closed set,
 `cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay at
 `https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup. The
 emergency is always n0's public relays, which the build names as it names
@@ -1970,15 +1964,13 @@ tier answered, or which this computer moved to, once this endpoint is
 registered at the one it left for; an answer moves nobody. The
 door's line for each request let in names the relay that carried it, none when
 it came direct, and `tiers` says at debug why this computer is at it. One
-endpoint serves every group; a computer meets at n0's while neither the
-build's fallback nor its groups' own relays answer, svrngs asking the
-other of ours when the first is silent, and comes back to whichever
-answers. A dial
-to a member reaches the group's own tier and the build's, and the relay
-the record names for it,
-whichever tier this computer is at, since iroh dials a relay its endpoint
-does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a member met at
-n0's is dialled at the relay its record names for it. A link carries
+endpoint serves every group; when the first tier is silent svrngs asks
+the other of ours, and holds n0's only while neither answers. A dial to a
+member reaches the group's own tier and the build's, and the relay the
+record names for it, whichever tier this computer is at, since iroh
+dials a relay its endpoint does not hold (`crates/svrngs-node/tests/
+relay_tiers.rs`); a member met at n0's is dialled at the relay its record
+names for it. A link carries
 at most two relays, the computer's home first, else the group's own
 first, and beside it the build's first, or the group's own when the home
 is the build's (`Meeting::carried`), so a phone's page dials them and asks
@@ -1997,35 +1989,30 @@ answer, so no dial is left running, and its next dial, or a lend worker's,
 binds again. Each change of tier and of home is traced,
 and the home page says when, and why, a group is met the backup way — its
 own HTTPS relay not answering, or naming none a page may take, or n0's
-while ours does not answer. A computer that reaches
-none of its relays in 10 s says which it
-tried, and goes on trying.
+while none of ours answers. A computer that reaches none of its relays
+in 10 s says which it tried, and goes on trying.
 
-**At home a phone goes direct**, on a network the lender enabled. The
-bytes of a film need not cross a relay when the phone and its lender are
-on one Wi-Fi: the lend's endpoint — the key its pass names, the page at
-its origin — offers the lender a WebRTC path on the dial it already holds
-(`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend worker's
-fresh endpoint; the offer is answered only to a dialer holding a live
-pass for a lend this computer lends, as the door's own routes are
-(`door::holder_of_offer`), and the window holds the channel, a worker
-having no `RTCPeerConnection`. The computer answers only while
-it is on a network its lender turned direct connections on for, from the
-home page (`webrtc/direct.rs`; one setting per network, by its router's
-hardware address), and only with a private address there
-(`network::pick`): the socket binds there, never at the outward route's
-address, host candidates alone — no STUN, no TURN, so the phone reaches
-it on this Wi-Fi and nothing past it. Else the offer is refused without a
-socket, and the phone stays on the relay. At most four peers are set up
-at once, and a peer's socket closes on setup timeout, on the session's
-end, after 30 s with no datagram either way, or when this computer is no
-longer read on the network it was answered on. iroh takes the path with
-the relay kept as backup, and nothing above iroh changes: the door, the
-pass and the HTTP on the dial stay as they are. A path is given up after
-3 s of silence with a 1 s keep-alive (`webrtc.rs` `PATH_IDLE`), so a
-phone that leaves the Wi-Fi falls back to the relay within seconds and a
-film finishes. Cellular is never direct: it stays on the relay, and
-meets the share.
+**At home a phone goes direct**, on a network the lender enabled. A
+film's bytes need not cross a relay when the phone and its lender share a
+Wi-Fi: the lend's endpoint offers the lender a WebRTC path on the dial it
+already holds (`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend
+worker's fresh endpoint, and the window holds the channel, since a worker
+has no `RTCPeerConnection`. The offer is answered only to a dialer
+holding a live pass for a lend this computer lends
+(`door::holder_of_offer`), only while this computer is on a network its
+lender turned direct connections on for from the home page
+(`webrtc/direct.rs`, by the router's hardware address), and only with a
+private address there (`network::pick`): the socket binds there, never at
+the outward route's address, with host candidates alone, no STUN and no
+TURN. Knowing the network guards against opening on another by accident;
+it is no firewall. Else the offer is refused without a socket, and the
+phone stays on the relay. At most four peers are set up at once, and a
+socket closes on setup timeout, the session's end, 30 s with no
+datagram, or a change of network. iroh takes the path with the relay as
+backup, and nothing above iroh changes. A path is given up after 3 s of
+silence with a 1 s keep-alive (`webrtc/paths.rs` `PATH_IDLE`), so a
+phone that leaves the Wi-Fi falls back to the relay and a film finishes.
+Cellular is never direct, and meets the share.
 
 ## 4. Domains, and the fork
 
