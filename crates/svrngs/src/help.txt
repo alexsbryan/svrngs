@@ -25,10 +25,11 @@ an app's page svrngs won't load, and what to change.
       people who open them in a browser. On a phone each app then opens at
       an address of its own under that page's host, which must serve the
       page at every name under it, as group.svrnme.sh does.
-      --relay meets the group at your own relay, `svrngs relay <name> --open`
-      (else newcomers are refused it), and at the one svrngs uses whenever
-      yours does not answer: every computer its links let in meets it there
-      too. Give it again for each relay the group may meet at.
+      --relay meets the group at your own relay, `svrngs relay <name>`, and
+      at the one svrngs uses whenever yours does not answer: every computer
+      its links let in meets it there too, a newcomer through the fallback
+      the link also carries. Give it again for each relay the group may
+      meet at.
 
   svrngs join <link> [--as <your name>] [--no-run]
       Join the group a link you were sent is for. The computer that sent it
@@ -143,8 +144,9 @@ an app's page svrngs won't load, and what to change.
 
   svrngs relay <name> [--open] [--staging]
       Relay at https://<name>/ for the computers and phones of the groups
-      this computer is in, beside svrngs: a phone reaches a computer only
-      through a relay. <name> must lead to this computer, which must take
+      this computer is in, and for a phone opening a lend of theirs, beside
+      svrngs: a phone reaches a computer only through a relay. <name> must
+      lead to this computer, which must take
       connections on TCP ports 80 and 443 and UDP port 7842. Its
       certificate is asked of Let's Encrypt, and kept in the data below.
       The group's page's install line, with --relay <name> after the
