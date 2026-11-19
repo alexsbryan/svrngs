@@ -123,3 +123,40 @@ yet written.
     window's channel, the worker's fresh endpoint and its two dials, and
     the offer through the lend's own dial.
 
+## 5. Where it stands, the second session (2026-11-19)
+
+The page side landed (`36ebb09a`, the cap raised by the operator), and the
+browser tier's first runs found and repaired its interface (`bf7fc59b`:
+the shim's missing label, the wasm glue called through `init`'s raw
+exports, `go`'s port protocol, three `passed(held)` call sites, the data
+link set before the offer's headers, `Direct::dial` closing the
+connection iroh 1.4 hands back, the test's node dropped before the drive,
+and runtime.mjs reading the trace after the worker's last lines may have
+been lost). The withholding plant now passes in Chromium and WebKit, and
+the direct path comes up in both (`page goes direct: [{"kind":"webrtc",
+"selected":true}]`).
+
+**What remains, intermittently**: the film's fetch over the data
+connection stalls mid-body — Chromium 2026-11-19 19:11Z ("answered 206
+bytes 0-1048575", "cancelled by the browser after 33600 bytes", 60001 ms),
+WebKit 19:04Z (15,302 bytes; the node's peer ended `why=Ok("idle")` after
+writing a trickle, `written=20/40/60`, and reading fewer than 20
+datagrams). The page's answers (QUIC ACKs) do not reach the node, so its
+send window never opens; the window's `channel.send` is called (a probe
+counted datagrams out and back) and the channel is open with
+`bufferedAmount 0`.
+
+Tried and reverted (no reproduction): the node's `run` loop reading the
+socket every turn — `crates/svrngs-node/src/webrtc.rs` is untouched.
+
+Leads, for the next session: (a) count the worker's datagrams in and out
+(`data_push` and the `out` closure in `web/src/lib.rs`) against the
+window's (the shim's two handlers) to localize where the answers stop —
+the `webrtc=debug` traces in `target/traces/browser.log` name the node's
+side; (b) the port the worker drives is the one the *first* announcement
+carried, and the lend's page loads twice (`open.html` navigates to the
+lend root): check whether the port's window is still the page the fetch
+is served in (`web/shim.js`'s `{webrtc: 'here', label}`); (c) the runs
+that finish take ~80 ms for the same 1 MiB, so the stall is a state, not
+a rate.
+
