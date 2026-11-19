@@ -10,13 +10,18 @@
 //! `demo/runs/relay-commons/PORT_MAP.md`).
 //!
 //! The node's half is the str0m peer of the spike's `native/src/main.rs`
-//! (`answer`, `run`, `lan_address`), reached by a page's offer over
+//! (`answer`, `run`), reached by a page's offer over
 //! [`Alpn::WebRtc`](crate::alpn::Alpn::WebRtc): one peer per offer, on a
-//! UDP socket of this computer's own network, host candidates only
-//! (CHARTER, "What the spikes learned"), keyed by the data endpoint's key
-//! the offer names — the fresh endpoint whose datagrams the channel
-//! carries. The channel's datagrams go to iroh as that key's, and iroh's
-//! datagrams for it into the channel ([`Route`]).
+//! UDP socket of a network the lender enabled ([`direct`]; the operator's
+//! UDP decision, 2026-11-19), at the private address [`crate::network::
+//! pick`] gives there, host candidates only (CHARTER, "What the spikes
+//! learned"), keyed by the data endpoint's key the offer names — the fresh
+//! endpoint whose datagrams the channel carries. The channel's datagrams
+//! go to iroh as that key's, and iroh's datagrams for it into the channel
+//! ([`Route`]). At most [`MAX_ATTEMPTS`] peers are set up at once, and a
+//! peer's socket closes on setup timeout, on the session's end, after
+//! [`IDLE`] with no datagram either way, or when this computer is no
+//! longer read on the network it was answered on.
 //!
 //! Paths are given up after [`PATH_IDLE`] of silence with a keep-alive
 //! each [`KEEP_ALIVE`] ([`quick_paths`]), set on this endpoint: the spike
@@ -24,6 +29,7 @@
 //! change()` does nothing for it (the spike's README, "The
 //! pre-requisites" 1).
 
+pub mod direct;
 pub mod wire;
 
 #[cfg(test)]
@@ -31,7 +37,9 @@ pub(crate) mod tests;
 
 use std::collections::HashMap;
 use std::io::ErrorKind;
-use std::net::{IpAddr, SocketAddr, UdpSocket};
+use std::net::{SocketAddr, UdpSocket};
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -45,6 +53,7 @@ use str0m::net::{Protocol, Receive};
 use str0m::{Candidate, Event, IceConnectionState, Input, Output, Rtc, RtcConfig};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
+use crate::network::{Here, Network, Unread};
 use wire::{PeerKey, Wire};
 
 /// How long a path with no answer is given up after (the spike's
@@ -55,6 +64,22 @@ pub const PATH_IDLE: Duration = Duration::from_secs(3);
 /// The keep-alive every path sends, a third of [`PATH_IDLE`] (the spike's
 /// `ms / 3`), so a live path is never idle that long.
 pub const KEEP_ALIVE: Duration = Duration::from_secs(1);
+
+/// The most peers one computer sets up at once: a few phones around one
+/// lender; past it, an offer waits for the public way (the operator,
+/// 2026-11-19: "cap outstanding attempts").
+const MAX_ATTEMPTS: usize = 4;
+
+/// How long an answered offer's peer is given to open its channel: host
+/// candidates answer in well under a second when the phone is on this
+/// WiFi, so ten is slack, and a phone that never arrives closes its
+/// socket rather than holding a peer forever.
+const SETUP: Duration = Duration::from_secs(10);
+
+/// How long a peer with no datagram either way is kept: iroh's keep-alive
+/// ([`KEEP_ALIVE`]) keeps a live path's channel busy, so this closes a
+/// socket nothing has used for half a minute.
+const IDLE: Duration = Duration::from_secs(30);
 
 /// The path timing this computer's endpoint is built with ([`crate::guest`]'s
 /// `build_relayed_endpoint_with`): both ends carry it, since the computer
@@ -82,6 +107,14 @@ pub struct WebRtc {
     /// What the routes' owner is told: a peer's channel, its end, and
     /// iroh's datagrams to send through it.
     routes: UnboundedSender<Route>,
+    /// The file the networks the lender enabled direct connections on are
+    /// kept in ([`direct::DIRECT_FILE`]): the home page turns them, and an
+    /// offer is answered only on one.
+    direct: PathBuf,
+    /// How many peers are being set up or running now: [`MAX_ATTEMPTS`],
+    /// past which an offer waits for the public way. One thread starts
+    /// and one ends per peer, so an atomic is the one count.
+    open: Arc<AtomicUsize>,
 }
 
 /// What the routes' one owner is told.
@@ -96,9 +129,10 @@ enum Route {
 }
 
 impl WebRtc {
-    /// This computer's `me`, its wire for the endpoint's builder, and the
-    /// handle its offers are answered through.
-    pub fn new(me: &PeerKey) -> (Arc<Self>, Arc<Wire>) {
+    /// This computer's `me`, the file its direct connections setting is
+    /// kept in, its wire for the endpoint's builder, and the handle its
+    /// offers are answered through.
+    pub fn new(me: &PeerKey, direct: PathBuf) -> (Arc<Self>, Arc<Wire>) {
         // The provider str0m's Rtc is built with, installed once for the
         // process (str0m 0.25 `crypto::from_feature_flags`; the spike's
         // `native/src/main.rs:41`).
@@ -110,27 +144,40 @@ impl WebRtc {
         let send: wire::Send = Arc::new(move |to: &PeerKey, datagram: &[u8]| {
             let _ = send_routes.send(Route::Send(*to, datagram.to_vec()));
         });
+        let open = Arc::new(AtomicUsize::new(0));
         (
-            Arc::new(Self { arrived, routes }),
+            Arc::new(Self {
+                arrived,
+                routes,
+                direct,
+                open,
+            }),
             Wire::new(me, arrivals, send),
         )
     }
 
     /// The offer `offer` answered for the data endpoint `data` names, its
     /// SDP answer as JSON (the spike's `answer`): a str0m peer on a UDP
-    /// socket of this computer's own network, host candidates only, its
-    /// channel's datagrams fed to iroh as `data`'s and iroh's for `data`
-    /// written to it, until it ends.
+    /// socket of `here`'s network when the lender enabled direct
+    /// connections there ([`direct::binds_at`]), at the private address
+    /// picked there and never the outward route's, host candidates only,
+    /// its channel's datagrams fed to iroh as `data`'s and iroh's for
+    /// `data` written to it, until it ends. Else nothing is bound and why
+    /// is said. Past [`MAX_ATTEMPTS`] peers at once, the offer waits.
     #[expect(
         clippy::disallowed_methods,
         reason = "str0m's own clock: the peer's loop times itself, as the spike's"
     )]
-    pub fn answer(&self, offer: &[u8], data: PeerKey) -> Result<String, String> {
+    pub fn answer(&self, offer: &[u8], data: PeerKey, here: &Here) -> Result<String, String> {
         let offer: SdpOffer =
             serde_json::from_slice(offer).map_err(|e| format!("not an offer: {e}"))?;
+        if self.open.load(Ordering::Relaxed) >= MAX_ATTEMPTS {
+            return Err(format!("{MAX_ATTEMPTS} direct connections are already being set up here; this one waits for the public way"));
+        }
+        let (network, address) = direct::binds_at(&self.direct, here)?;
         let mut rtc = RtcConfig::new().build(Instant::now());
         let socket =
-            UdpSocket::bind(SocketAddr::new(lan_address(), 0)).map_err(|e| e.to_string())?;
+            UdpSocket::bind(SocketAddr::new(address.into(), 0)).map_err(|e| e.to_string())?;
         let local = socket.local_addr().map_err(|e| e.to_string())?;
         rtc.add_local_candidate(Candidate::host(local, "udp").map_err(|e| e.to_string())?);
         let answer = rtc
@@ -139,13 +186,25 @@ impl WebRtc {
             .map_err(|e| e.to_string())?;
         let (out, outgoing) = std::sync::mpsc::channel();
         let _ = self.routes.send(Route::Opened(data, out));
-        let (arrived, routes) = (self.arrived.clone(), self.routes.clone());
+        let (arrived, routes, open) =
+            (self.arrived.clone(), self.routes.clone(), self.open.clone());
+        open.fetch_add(1, Ordering::Relaxed);
         std::thread::spawn(move || {
-            let why = run(rtc, socket, data, arrived, outgoing);
+            let why = run(
+                rtc,
+                socket,
+                data,
+                arrived,
+                outgoing,
+                network,
+                || crate::network::here().network,
+                crate::network::LOOK_EVERY,
+            );
             let _ = routes.send(Route::Ended(data));
+            open.fetch_sub(1, Ordering::Relaxed);
             tracing::debug!(target: "webrtc", peer = %hex::encode(data), ?why, "webrtc: a peer ended");
         });
-        tracing::debug!(target: "webrtc", peer = %hex::encode(data), at = %local, "webrtc: an offer answered, its peer on a socket of this computer's own network");
+        tracing::debug!(target: "webrtc", peer = %hex::encode(data), at = %local, "webrtc: an offer answered, its peer on a network the lender enabled");
         serde_json::to_string(&answer).map_err(|e| e.to_string())
     }
 }
@@ -193,8 +252,9 @@ async fn offer(State(webrtc): State<Arc<WebRtc>>, Json(asked): Json<Offered>) ->
     let Some(data) = asked.key.parse::<EndpointId>().ok().map(|k| *k.as_bytes()) else {
         return refused("the offer names no data key".into());
     };
+    let here = crate::network::now().await;
     let offer = serde_json::to_vec(&asked.offer).unwrap_or_default();
-    match webrtc.answer(&offer, data) {
+    match webrtc.answer(&offer, data, &here) {
         Ok(answer) => ([(header::CONTENT_TYPE, "application/json")], answer).into_response(),
         Err(why) => refused(why),
     }
@@ -211,22 +271,22 @@ fn refused(why: String) -> Response {
         .into_response()
 }
 
-/// This computer's address on its own network, where a phone on the same
-/// Wi-Fi reaches it: [`crate::network::route`], the one read of the
-/// outward route's address, else its own loopback, where a browser on the
-/// same computer reaches it. Host candidates only, never STUN or TURN
-/// (CHARTER, "What the spikes learned"; the trust floor's "this Wi-Fi").
-fn lan_address() -> IpAddr {
-    crate::network::route().unwrap_or(IpAddr::V4(std::net::Ipv4Addr::LOCALHOST))
-}
-
 /// The str0m loop of the spike's `native/src/main.rs:233-291`, its first
 /// tick given at once (spike 1, C): the channel's datagrams to the wire as
 /// `peer`'s, and the wire's for `peer` written to the channel while it
-/// takes them, dropped otherwise.
+/// takes them, dropped otherwise. The socket closes with the loop: no
+/// channel within [`SETUP`] of the offer, no datagram either way for
+/// [`IDLE`], and, checked each `every`, a `read` that is not the
+/// `network` the socket was bound on — the phone moved off the Wi-Fi, or
+/// the network cannot be read now, and a socket nothing can be said of is
+/// not kept.
 #[expect(
     clippy::disallowed_methods,
     reason = "str0m's own clock: the peer's loop times itself, as the spike's"
+)]
+#[expect(
+    clippy::too_many_arguments,
+    reason = "one call per peer: what it runs on, what it carries, and the network it was answered on"
 )]
 fn run(
     mut rtc: Rtc,
@@ -234,13 +294,29 @@ fn run(
     peer: PeerKey,
     arrived: UnboundedSender<(PeerKey, Vec<u8>)>,
     outgoing: std::sync::mpsc::Receiver<Vec<u8>>,
+    network: Network,
+    read: impl Fn() -> Result<Network, Unread>,
+    every: Duration,
 ) -> Result<String, String> {
     let e = |e: &dyn std::fmt::Display| e.to_string();
     let mut buf = vec![0u8; 2000];
     let mut channel = None;
+    let (answered, mut busy, mut looked) = (Instant::now(), Instant::now(), Instant::now());
     rtc.handle_input(Input::Timeout(Instant::now()))
         .map_err(|x| e(&x))?;
     loop {
+        if channel.is_none() && answered.elapsed() > SETUP {
+            return Ok("setup timed out".into());
+        }
+        if busy.elapsed() > IDLE {
+            return Ok("idle".into());
+        }
+        if looked.elapsed() > every {
+            looked = Instant::now();
+            if read() != Ok(network) {
+                return Ok("network changed".into());
+            }
+        }
         let timeout = loop {
             match rtc.poll_output().map_err(|x| e(&x))? {
                 Output::Timeout(t) => break t,
@@ -259,6 +335,7 @@ fn run(
                     channel = Some(id);
                 }
                 Output::Event(Event::ChannelData(d)) => {
+                    busy = Instant::now();
                     let _ = arrived.send((peer, d.data));
                 }
                 Output::Event(Event::ChannelClose(_)) => return Ok("channel closed".into()),
@@ -275,6 +352,7 @@ fn run(
             }
         }
         if wrote {
+            busy = Instant::now();
             continue;
         }
         let wait = timeout

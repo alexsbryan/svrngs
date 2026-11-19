@@ -85,6 +85,11 @@ test('"What acts as you" drawn as question.js `acts` draws it: folded, each part
     ],
   ]) {
     const [section, add] = v1.acts(notes);
+    // "Direct connections" landed after 19b63b2b (webrtc-network), so the
+    // frozen builder draws no div for it: the empty one the page draws now
+    // is inserted where PARTS' order puts it, after wifi (kids: summary,
+    // its words, then the parts' divs).
+    section.children[0].kids.splice(6, 0, v1.el('div'));
     for (const [k, ws] of Object.entries(lines)) add(k, ...ws.map(p));
     const parts = Object.fromEntries(
       Object.entries(lines).map(([k, ws]) => [

@@ -27,8 +27,18 @@
 //! identity is svrngs's own.
 
 use std::net::{IpAddr, Ipv4Addr};
+use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
+
+/// How often a caller re-reads which network this computer is on: the
+/// room's listeners ([`crate::room`]) and each WebRTC peer's socket
+/// ([`crate::webrtc`]) hold a network read this long, so it is the longest
+/// either stays on a network this computer has left. A read is the
+/// interface and routing tables (5-9 ms here, netdev's) and configd's
+/// state (5 ms a `scutil`), and sends nothing; nothing is read while
+/// nothing is held.
+pub const LOOK_EVERY: Duration = Duration::from_secs(5);
 
 /// A device's hardware (MAC) address: six bytes, said as six pairs of hex
 /// digits, `e4:f4:c6:0a:5e:a1`, and kept so.

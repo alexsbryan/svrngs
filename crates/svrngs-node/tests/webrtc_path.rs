@@ -34,9 +34,20 @@ use svrngs_node::SigningKey;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
 /// The node homed at `url`, with group `house` founded here, and that
-/// group's id.
+/// group's id. Direct connections are on for the network this host is on,
+/// as the home page turns them: an offer is answered only on a network the
+/// lender enabled (webrtc-network), and this test's lender is this host;
+/// could-not-judge on a host whose network cannot be read.
 async fn node_at(url: &str) -> (tempfile::TempDir, Node, String) {
     let dir = tempfile::tempdir().unwrap();
+    let network = svrngs_node::network::here().network.unwrap_or_else(|why| {
+        panic!("could not judge: this host's network cannot be read ({why:?})")
+    });
+    std::fs::write(
+        dir.path().join(svrngs_node::webrtc::direct::DIRECT_FILE),
+        serde_json::to_vec(&vec![network]).unwrap(),
+    )
+    .unwrap();
     let key = SigningKey::from_bytes(&[3; 32]);
     let relay = RelayConfig {
         relay_urls: vec![url.into()],

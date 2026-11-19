@@ -67,6 +67,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::ffi::OsStr;
 use std::num::NonZeroU16;
+use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 use svrngs_core::link::{client_link, https_link, Link};
@@ -142,14 +143,14 @@ pub fn address(port: u16) -> String {
 
 /// The home page's routes, beside the lends' origins: a request naming it
 /// is answered here, any other at its lend's origin.
-pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
+pub(crate) fn router(at: Asking, rail: crate::rail::RailApi, direct: PathBuf) -> Router {
     let page = || async { axum::response::Html(include_str!("home/index.html")) };
     let home = served! {
         "/home.js" "text/javascript" "home/home.js"
         "/question.js" "text/javascript" "home/question.js"
         "/look.css" "text/css" "home/look.css"
         "/favicon.svg" "image/svg+xml" "../../../docs/brand/favicon.svg";
-        "/page/" "home/page/" ["acting" "acts" "acts-read" "asked" "asking" "door" "folder" "folders" "group" "group-choice" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "groups-left" "home-page" "home-reading" "index" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lending" "lent-read" "lent-row" "link-box" "link-copy" "make" "make-form" "offered" "on-screen" "open-link" "people" "play" "reach" "routes" "running-here" "running-look" "shelf" "update" "update-line" "visit" "visits" "what-you-lend" "wifi"];
+        "/page/" "home/page/" ["acting" "acts" "acts-read" "asked" "asking" "direct" "door" "folder" "folders" "group" "group-choice" "group-folder" "group-link" "group-links" "group-read" "group-reading" "group-screen" "groups-left" "home-page" "home-reading" "index" "join" "join-form" "leave" "leave-group" "leaving" "lend-change" "lend-found" "lend-key" "lend-name" "lending" "lent-read" "lent-row" "link-box" "link-copy" "make" "make-form" "offered" "on-screen" "open-link" "people" "play" "reach" "routes" "running-here" "running-look" "shelf" "update" "update-line" "visit" "visits" "what-you-lend" "wifi"];
         "/page/" "home/page/" ["grouped"];
         "/ui/" "home/ui/" ["acts" "changes" "copy" "door" "machine" "parts" "shelf" "trace" "uses" "view" "visitors"];
         "/vendor/" "../../../web/vendor/" ["hooks" "htm" "preact"]
@@ -182,6 +183,7 @@ pub(crate) fn router(at: Asking, rail: crate::rail::RailApi) -> Router {
     .merge(crate::surface::router(at.clone()))
     .merge(crate::removal::router(at.clone()))
     .merge(crate::room::route::router(at.clone()))
+    .merge(crate::webrtc::direct::router(direct))
     .merge(crate::play::router(at.clone()));
     let home = home.layer(axum::middleware::from_fn_with_state(
         at.clone(),

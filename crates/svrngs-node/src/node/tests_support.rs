@@ -839,7 +839,8 @@ impl Node {
         // A test's network has no wire; the handle is what the acceptor's
         // WebRTC route answers through, and it binds nothing until an offer
         // comes (webrtc-node).
-        let (webrtc, _wire) = crate::webrtc::WebRtc::new(net.id().as_bytes());
+        let direct = data_dir.join(crate::webrtc::direct::DIRECT_FILE);
+        let (webrtc, _wire) = crate::webrtc::WebRtc::new(net.id().as_bytes(), direct);
         Self::start_on(
             net,
             (data_dir, places),
@@ -880,7 +881,8 @@ impl Node {
         };
         let places = Some(data_dir.join("svrngs"));
         let every = crate::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-        let (webrtc, _wire) = crate::webrtc::WebRtc::new(net.id().as_bytes());
+        let direct = data_dir.join(crate::webrtc::direct::DIRECT_FILE);
+        let (webrtc, _wire) = crate::webrtc::WebRtc::new(net.id().as_bytes(), direct);
         Self::start_on(
             net,
             (data_dir, places),

@@ -82,6 +82,7 @@ const answers = (sending, lent = [probe(sending)]) => ({
   'GET /lent': { lent: [], signing: [], readers: {} },
   'GET /reaching': {},
   'GET /v1/room': [],
+  'GET /v1/direct': { on: false, said: 'Direct connections are off for this WiFi.' },
   'GET /v1/play': [],
   'GET /update': { state: 'current' },
 });

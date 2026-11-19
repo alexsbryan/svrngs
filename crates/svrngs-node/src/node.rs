@@ -384,9 +384,10 @@ impl Node {
             ..relay.clone()
         };
         // The WebRTC wire is bound with the endpoint, so an offer's peer
-        // rides this computer's own network and nothing above iroh changes
-        // (webrtc-node; RELAY_COMMONS design 4).
-        let (webrtc, wire) = crate::webrtc::WebRtc::new(secret.public().as_bytes());
+        // rides a network the lender enabled and nothing above iroh
+        // changes (webrtc-node; webrtc-network; RELAY_COMMONS design 4).
+        let direct = data_dir.join(crate::webrtc::direct::DIRECT_FILE);
+        let (webrtc, wire) = crate::webrtc::WebRtc::new(secret.public().as_bytes(), direct.clone());
         let endpoint = crate::guest::build_relayed_endpoint_with(
             secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
@@ -435,6 +436,7 @@ impl Node {
         every: Duration,
         webrtc: Arc<crate::webrtc::WebRtc>,
     ) -> Result<Self, NodeError> {
+        let direct = data_dir.join(crate::webrtc::direct::DIRECT_FILE);
         let actor = actor_of(rail.signer());
         let mut stood_in = rail.namespaces().unwrap_or_default();
         stood_in.retain(|group| crate::door::stands_here(&rail, group));
@@ -531,10 +533,11 @@ impl Node {
                 .merge(crate::removal::router(asking.clone()))
                 .merge(crate::join::router(asking.clone()))
                 .merge(crate::room::route::router(asking.clone()))
+                .merge(crate::webrtc::direct::router(direct.clone()))
                 .merge(crate::play::router(asking.clone()))
                 .merge(crate::session::router(asking.sessions.clone())),
             asking.door.oidc.clone().router(),
-            crate::home::router(asking.clone(), rail_api),
+            crate::home::router(asking.clone(), rail_api, direct.clone()),
             token,
         );
         let api = serve(routes.clone());

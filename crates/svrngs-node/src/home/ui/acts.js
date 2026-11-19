@@ -16,6 +16,7 @@ const PARTS = {
   opens: 'Opens friends’ things as you',
   knows: 'Knows who you are',
   wifi: 'Open to this WiFi',
+  direct: 'Direct connections',
   play: 'Open to programs on this computer',
   decides: 'Can decide for you',
 };

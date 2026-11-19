@@ -1990,18 +1990,26 @@ fallback, or at n0's while ours does not answer. A computer that reaches
 none of its relays in 10 s says which it
 tried, and goes on trying.
 
-**At home a phone goes direct.** The bytes of a film need not cross a
-relay when the phone and its lender are on one Wi-Fi: the group page's
-endpoint offers the lender a WebRTC path on the dial it already holds
-(`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend worker's
-fresh endpoint, and the computer answers with a str0m peer on a UDP
-socket of its own network, host candidates alone — no STUN, no TURN, so
-the phone reaches it on this Wi-Fi and nothing past it. iroh takes the
-path with the relay kept as backup, and nothing above iroh changes: the
-door, the pass and the HTTP on the dial stay as they are. A path is given
-up after 3 s of silence with a 1 s keep-alive (`webrtc.rs` `PATH_IDLE`),
-so a phone that leaves the Wi-Fi falls back to the relay within seconds
-and a film finishes. Cellular is never direct: it stays on the relay, and
+**At home a phone goes direct**, on a network the lender enabled. The
+bytes of a film need not cross a relay when the phone and its lender are
+on one Wi-Fi: the group page's endpoint offers the lender a WebRTC path
+on the dial it already holds (`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`),
+naming the lend worker's fresh endpoint. The computer answers only while
+it is on a network its lender turned direct connections on for, from the
+home page (`webrtc/direct.rs`; one setting per network, by its router's
+hardware address), and only with a private address there
+(`network::pick`): the socket binds there, never at the outward route's
+address, host candidates alone — no STUN, no TURN, so the phone reaches
+it on this Wi-Fi and nothing past it. Else the offer is refused without a
+socket, and the phone stays on the relay. At most four peers are set up
+at once, and a peer's socket closes on setup timeout, on the session's
+end, after 30 s with no datagram either way, or when this computer is no
+longer read on the network it was answered on. iroh takes the path with
+the relay kept as backup, and nothing above iroh changes: the door, the
+pass and the HTTP on the dial stay as they are. A path is given up after
+3 s of silence with a 1 s keep-alive (`webrtc.rs` `PATH_IDLE`), so a
+phone that leaves the Wi-Fi falls back to the relay within seconds and a
+film finishes. Cellular is never direct: it stays on the relay, and
 meets the share.
 
 ## 4. Domains, and the fork

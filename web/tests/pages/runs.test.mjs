@@ -95,6 +95,7 @@ test('a new version is asked of the home page, and its yes posts /runs and is sa
     'GET /lent': { lent: [], signing: [], readers: {} },
     'GET /reaching': {},
     'GET /v1/room': [],
+    'GET /v1/direct': { on: false, said: 'Direct connections are off for this WiFi.' },
     'GET /v1/play': [],
     'GET /update': { state: 'current' },
     'POST /runs': {},

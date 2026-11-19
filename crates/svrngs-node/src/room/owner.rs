@@ -8,7 +8,6 @@
 
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
-use std::time::Duration;
 
 use axum::extract::{ConnectInfo, Request, State};
 use axum::http::StatusCode;
@@ -27,10 +26,9 @@ use crate::origin::{Appending, Unconsented};
 /// How often the room reads which network this computer is on: the
 /// longest a lend stays served after this computer moves to another
 /// network that gives it the same address, which iroh's watch of its
-/// addresses (`Endpoint::watch_addr`) never sees. A read is the interface
-/// and routing tables (5-9 ms here, netdev's) and configd's state (5 ms a
-/// `scutil`), and sends nothing; nothing is read while nothing is on.
-pub(crate) const LOOK_EVERY: Duration = Duration::from_secs(5);
+/// addresses (`Endpoint::watch_addr`) never sees ([`crate::network::
+/// LOOK_EVERY`], the cadence's one home).
+pub(crate) use crate::network::LOOK_EVERY;
 
 /// Each lend served, by its label: where, and its listener.
 type Listening = BTreeMap<Label, (SocketAddr, AbortOnDropHandle<()>)>;

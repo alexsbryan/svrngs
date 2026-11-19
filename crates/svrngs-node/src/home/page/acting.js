@@ -17,6 +17,7 @@ import { carrying, deciding, label, lentBy, once, reading } from '../question.js
 import { ACTS } from './acts-read.js?v=__VERSION__';
 import { Reach } from './reach.js?v=__VERSION__';
 import * as wifi from './wifi.js?v=__VERSION__';
+import * as direct from './direct.js?v=__VERSION__';
 import * as play from './play.js?v=__VERSION__';
 /** @import { Group, Lends } from './group.js?v=__VERSION__' */
 /** @import { Lend, PeopleRow } from '../question.js?v=__VERSION__' */
@@ -187,6 +188,7 @@ export function Acting({ s: homeState, home }) {
     opens: [...reached, ...uses],
     knows: [html`<p>What you open knows your name.</p>`],
     wifi: wifi.part(),
+    direct: direct.part(),
     play: play.part(),
     decides,
   };
