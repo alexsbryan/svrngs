@@ -246,16 +246,11 @@ async fn bind(
     // A pass's holder presents the pass to every relay it was handed: the
     // group's own admits it by the pass (self-host); the build's fallback
     // and n0's ignore the token.
-    let mode = match token {
-        Some(token) => iroh::RelayMode::Custom(
-            relays
-                .iter()
-                .cloned()
-                .collect::<iroh::RelayMap>()
-                .with_auth_token(token),
-        ),
-        None => iroh::RelayMode::custom(relays.clone()),
-    };
+    let map: iroh::RelayMap = relays.iter().cloned().collect();
+    let mode = iroh::RelayMode::Custom(match token {
+        Some(token) => map.with_auth_token(token),
+        None => map,
+    });
     let builder = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
         .secret_key(secret)
         .relay_mode(mode)
