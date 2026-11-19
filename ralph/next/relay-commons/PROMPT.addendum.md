@@ -60,6 +60,12 @@ This host is Fedora:
 - **Commits:** made inside the toolbox (`toolbox run -c sovereign-vulkan git
   commit -F <file>`), since the host's Node fails the hook. Never
   `--no-verify`.
+- **The container and the toolbox share `target/`, and
+  `crates/svrngs-node/build.rs` bakes its manifest path into the compiled
+  build script** (build.rs:13 reads `src/shelf.txt`): whichever side built
+  it last, the other panics `shelf.txt is read: Os { code: 2 }`.
+  `touch crates/svrngs-node/build.rs` before switching sides (iroh-1-4,
+  793e4827; the final audit needs it after any toolbox build).
 
 <!-- section: done -->
 For each intermediate row, done means its assigned focused checks, red and
