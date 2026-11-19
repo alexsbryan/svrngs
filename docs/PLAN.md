@@ -610,8 +610,7 @@ counted interest. This replaces a freemium sketch with paid tiers. DESIGN
 changes in the commits that build it. Then, the same day: "anyone doing
 something like streaming media on cellular network just can't do it on our
 relay for now (we'll make a mobile apps soon to enable it! or some other
-user friendly gate)". So a media lend is not answered over the commons,
-and the lender's door holds the rule. It lands with a phone's WebRTC path,
+user friendly gate)". So media is not streamed over the commons. It lands with a phone's WebRTC path,
 which spike 1 found direct on a home's Wi-Fi and never on AT&T cellular
 (svrn-docs `rings/current/webrtc-spike/` and `webrtc-transport-spike/`; RELAY_COMMONS §4,
 "Media"). Then: "we host our relay and just throttle anything that doesn't
@@ -619,7 +618,12 @@ seem like a normal discovery request for now", and "Yeah add that rule". So
 the relays hold it themselves, by the shape of the traffic: each computer
 gets a token bucket, a low steady rate with a burst that opens an app. What
 connects, chats and syncs passes; what streams is held. The door only says
-why (RELAY_COMMONS §1 item 8, §4).
+why (RELAY_COMMONS §1 item 8, §4). Then: "It's not about predicting apps -- it's about sending appropriate
+error codes and handling gracefully in the UI". So no list of apps. When the
+relay throttles a lender (iroh 1.4's `Status::RateLimited`), its door answers
+a large request that came over the commons with 429 and a new
+`LendRefusal::Share`, and the page says why and where it plays at full
+speed (RELAY_COMMONS §4, "When the share is spent").
 
 By the operator, 2026-11-08, on `docs/LESSONS_FROM_BITTORRENT.md`: "Ok solve
 them all", all four parts built, overriding the counted-member trigger of the
