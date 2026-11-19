@@ -9,7 +9,7 @@
 use std::collections::BTreeMap;
 use std::net::SocketAddr;
 
-use axum::extract::{ConnectInfo, Request, State};
+use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::Response;
@@ -128,17 +128,12 @@ async fn in_room(
 /// unique-local), so "this network" has one decider. Any other, or one
 /// whose address is unknown, is refused 403 before any lend is reached.
 pub(super) async fn from_this_network(request: Request, next: Next) -> Response {
-    let caller = request
-        .extensions()
-        .get::<ConnectInfo<SocketAddr>>()
-        .map(|c| c.0.ip());
+    let caller = crate::session::peer(&request).map(|c| c.ip());
     if guess(caller) == Whereabouts::Home {
         tracing::debug!(target: "room", ?caller, path = %request.uri().path(), "room: a caller on this network");
         return next.run(request).await;
     }
     tracing::debug!(target: "room", ?caller, path = %request.uri().path(), "room: refused — the caller is not on this computer's network");
-    crate::door::LendRefusal::Closed.say(
-        StatusCode::FORBIDDEN,
-        "this is opened only on the network of the computer that serves it",
-    )
+    let why = "this is opened only on the network of the computer that serves it";
+    crate::door::LendRefusal::Closed.say(StatusCode::FORBIDDEN, why)
 }

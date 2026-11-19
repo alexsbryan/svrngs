@@ -20,7 +20,7 @@
 
 use std::net::SocketAddr;
 
-use axum::extract::{ConnectInfo, Request, State};
+use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
@@ -236,10 +236,7 @@ async fn holds_the_token(State(token): State<Bearer>, request: Request, next: Ne
 /// upstream relied on the bind alone; DESIGN §3, "Localhost is the trust
 /// boundary".)
 async fn from_this_computer(request: Request, next: Next) -> Response {
-    let caller = request
-        .extensions()
-        .get::<ConnectInfo<SocketAddr>>()
-        .map(|c| c.0);
+    let caller = crate::session::peer(&request);
     let refused = |why: String| refuse(StatusCode::FORBIDDEN, "not_loopback", why);
     match caller {
         Some(addr) => match check_loopback(addr) {
