@@ -230,18 +230,13 @@ struct Offer {
 }
 
 /// `GET /v1/groups`.
-async fn groups(State(at): State<Asking>) -> Response {
+async fn groups(State(at): State<Asking>) -> Result<Response, Response> {
     let rail = &at.host.rail;
-    let namespaces = match rail.namespaces() {
-        Ok(n) => n,
-        Err(e) => {
-            tracing::warn!(target: "surface", error = %e, "surface: groups — the groups held cannot be listed");
-            return err(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "the groups this computer is in cannot be read on it",
-            );
-        }
-    };
+    let namespaces = rail.namespaces().map_err(|e| {
+        tracing::warn!(target: "surface", error = %e, "surface: groups — the groups held cannot be listed");
+        let why = "the groups this computer is in cannot be read on it";
+        err(StatusCode::INTERNAL_SERVER_ERROR, why)
+    })?;
     let mut held = Vec::with_capacity(namespaces.len());
     let me = at.host.actor.as_str();
     for id in namespaces {
@@ -311,7 +306,7 @@ async fn groups(State(at): State<Asking>) -> Response {
     // (share-refusal; RELAY_COMMONS design 3, "The words").
     let share = at.host.share.borrow();
     let share = share.limited.then_some(share.refused).flatten();
-    Json(serde_json::json!({ "groups": held, "key": me, "share": share })).into_response()
+    Ok(Json(serde_json::json!({ "groups": held, "key": me, "share": share })).into_response())
 }
 
 /// `POST /v1/sign?app=<app>`'s query: an app's name, refused unless it is
@@ -330,17 +325,14 @@ async fn sign(
     State(at): State<Asking>,
     Query(q): Query<SignQuery>,
     bytes: axum::body::Bytes,
-) -> Response {
-    let app = match App::parse(&q.app) {
-        Ok(app) => app,
-        Err(why) => {
-            tracing::debug!(target: "sign", app = q.app, %why, "sign: refused — not an app's name");
-            return err(StatusCode::BAD_REQUEST, why.to_string());
-        }
-    };
+) -> Result<Response, Response> {
+    let app = App::parse(&q.app).map_err(|why| {
+        tracing::debug!(target: "sign", app = q.app, %why, "sign: refused — not an app's name");
+        err(StatusCode::BAD_REQUEST, why.to_string())
+    })?;
     let (key, sig) = (&at.host.actor, app.sign(at.host.rail.signer(), &bytes));
     tracing::debug!(target: "sign", %app, bytes = bytes.len(), key, "sign: signed for the app with this computer's key");
-    Json(serde_json::json!({ "key": key, "sig": sig })).into_response()
+    Ok(Json(serde_json::json!({ "key": key, "sig": sig })).into_response())
 }
 
 /// The seed this computer keeps for `id`, or `None`, at warn, when it

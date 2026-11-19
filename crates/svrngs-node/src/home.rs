@@ -75,6 +75,7 @@ use svrngs_core::pass::Label;
 
 use crate::door::choices::{own_choices, own_choose, Said, Saying};
 use crate::door::{LendRefusal, PASS_HEADER, REFUSED_HEADER};
+use crate::folder::carried::Handled;
 use crate::join::{Entered, NotJoined};
 use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
@@ -507,9 +508,9 @@ async fn change(State(at): State<Asking>, Json(c): Json<Changing>) -> Result<Res
             }
         },
         LendChange::Stop => lend::withdraw(dir, &c.lend),
-        LendChange::SignIn => return Ok(sign_in(&at, &c.lend).await),
+        LendChange::SignIn => return sign_in(&at, &c.lend).await,
         LendChange::Readers { name, password } => {
-            return Ok(readers(&at, &c.lend, &name, &password).await)
+            return readers(&at, &c.lend, &name, &password).await
         }
         LendChange::Key(key) if key.trim().is_empty() => {
             return Err(LendRefusal::closed("Paste the key first."));
@@ -615,15 +616,12 @@ fn chosen(at: &Asking, groups: &[String]) -> Result<(), Response> {
 /// kept in its declaration at 0600, answered with the issuer and the
 /// deviations once (SIGN_IN_WITH_SVRNGS §5 "Turning it on", §8 9). The
 /// page shows them the once; `GET /lent` says only that it signs people in.
-async fn sign_in(at: &Asking, name: &LendName) -> Response {
+async fn sign_in(at: &Asking, name: &LendName) -> Handled {
     let dir = &at.door.data_dir;
-    let client = match crate::oidc::client() {
-        Ok(client) => client,
-        Err(e) => {
-            tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — no sign-in client can be made");
-            return LendRefusal::fault("this computer cannot make a sign-in for it");
-        }
-    };
+    let client = crate::oidc::client().map_err(|e| {
+        tracing::warn!(target: "home", lend = %name, error = %e, "home: refused — no sign-in client can be made");
+        LendRefusal::fault("this computer cannot make a sign-in for it")
+    })?;
     // Read, changed and written under the lend's lock, as every change is
     // (`lend::mutate`), so it never writes back an audience read stale.
     let mut had = false;
@@ -635,50 +633,44 @@ async fn sign_in(at: &Asking, name: &LendName) -> Response {
     match done {
         Ok(true) if had => {
             tracing::debug!(target: "home", lend = %name, "home: refused — it signs people in with svrngs already");
-            return LendRefusal::Closed.say(
+            return Err(LendRefusal::Closed.say(
                 StatusCode::CONFLICT,
                 format!("{name} already signs people in with svrngs: make a new secret with `svrngs share <port> --sign-in-with-svrngs`."),
-            );
+            ));
         }
         Ok(true) => {}
-        unchanged => return unchanged_said(name, unchanged),
+        unchanged => return Err(unchanged_said(name, unchanged)),
     }
     let issuer = crate::oidc::issuer(at.host.api_port, name.as_str());
     tracing::debug!(target: "home", lend = %name, %issuer, "home: it signs people in with svrngs now");
-    Json(serde_json::json!({
+    Ok(Json(serde_json::json!({
         "issuer": issuer,
         "client_id": client.client_id,
         "client_secret": client.client_secret,
         "deviations": crate::oidc::DEVIATIONS,
     }))
-    .into_response()
+    .into_response())
 }
 
 /// `POST /lent` with `to: {"readers": ...}`: the account apps reading `name`
 /// are let in as, signed in to once as `svrngs share --readers` does, and
 /// what it gives kept ([`lend::keep_readers`]); the password nowhere.
-async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) -> Response {
-    let dir = &at.door.data_dir;
-    let (lent, terms) = match lent_with_terms(at, name).await {
-        Ok(read) => read,
-        Err(refused) => return refused,
-    };
+async fn readers(at: &Asking, name: &LendName, account: &str, password: &str) -> Handled {
+    let (lent, terms) = lent_with_terms(at, name).await?;
     let (Port(port), Some(how)) = (lent.source, share::readers_of(&lent.kind, &terms)) else {
         tracing::debug!(target: "home", lend = %name, "home: refused — no account can be given for this program");
-        return LendRefusal::closed(format!("svrngs doesn’t know how to sign in to {name}."));
+        let why = format!("svrngs doesn’t know how to sign in to {name}.");
+        return Err(LendRefusal::closed(why));
     };
-    let line = match share::sign_in_readers(port, how, account, password).await {
-        Ok(line) => line,
-        Err(why) => {
-            tracing::debug!(target: "home", lend = %name, why, "home: refused — the account was not let in");
-            return LendRefusal::closed(format!("{name} didn’t let that account in: {why}."));
-        }
-    };
+    let line = share::sign_in_readers(port, how, account, password).await;
+    let line = line.map_err(|why| {
+        tracing::debug!(target: "home", lend = %name, why, "home: refused — the account was not let in");
+        LendRefusal::closed(format!("{name} didn’t let that account in: {why}."))
+    })?;
     tracing::debug!(target: "home", lend = %name, "home: the apps' account signed in once, what it gave kept");
-    match lend::keep_readers(dir, name, (lend::SECRET_HEADER, &line)) {
-        Ok(()) => StatusCode::NO_CONTENT.into_response(),
-        Err(e) => unchanged_said(name, Err(e)),
-    }
+    let kept = lend::keep_readers(&at.door.data_dir, name, (lend::SECRET_HEADER, &line));
+    kept.map_err(|e| unchanged_said(name, Err(e)))?;
+    Ok(StatusCode::NO_CONTENT.into_response())
 }
 
 /// A port as the page shows it ([`share::listening`]): the kind the table

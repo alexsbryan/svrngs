@@ -16,6 +16,7 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
+use crate::folder::carried::Handled;
 use crate::group::{self, Name, Seed};
 use crate::iroh::{EndpointAddr, PublicKey};
 use crate::link::{Link, Token};
@@ -299,25 +300,17 @@ fn not_taken(status: StatusCode, kind: &str, error: String) -> Response {
 /// here, as the home page joins it ([`Host::join`]) — nothing written
 /// until the link's issuer has let this computer in — and its folder
 /// placed as a joiner's is ([`crate::folder::Folders::place`]).
-async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Response {
+async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Handled {
     let Some(link) = Link::parse(&asked.link) else {
-        return not_taken(
-            StatusCode::BAD_REQUEST,
-            "no_link",
-            "That is not a whole link: paste all of it, to its end.".into(),
-        );
+        let why = "That is not a whole link: paste all of it, to its end.".into();
+        return Err(not_taken(StatusCode::BAD_REQUEST, "no_link", why));
     };
-    let person = match Name::parse(&asked.person) {
-        Ok(name) => name,
-        Err(why) => return not_taken(StatusCode::BAD_REQUEST, "no_name", why.to_string()),
-    };
-    let entered = match at.host.join(&link, &person).await {
-        Ok(entered) => entered,
-        Err(why) => {
-            tracing::debug!(target: "join", why = %why, "join: not let in, for the command");
-            return Outcome::of(why).into_response();
-        }
-    };
+    let person = Name::parse(&asked.person).map_err(|why| why.to_string());
+    let person = person.map_err(|why| not_taken(StatusCode::BAD_REQUEST, "no_name", why))?;
+    let entered = at.host.join(&link, &person).await.map_err(|why| {
+        tracing::debug!(target: "join", why = %why, "join: not let in, for the command");
+        Outcome::of(why).into_response()
+    })?;
     let (seed, person) = match entered {
         Entered::In { seed, person } => (seed, Some(person.to_string())),
         Entered::AlreadyIn(seed) => (seed, None),
@@ -326,7 +319,7 @@ async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Re
     let (dir, placed) = at.door.folders.place(&seed);
     let (dir, placed) = (dir.display().to_string(), placed.err());
     let seed = seed.to_text();
-    match person {
+    Ok(match person {
         Some(person) => Outcome::In {
             seed,
             person,
@@ -335,5 +328,5 @@ async fn joined_here(State(at): State<Asking>, Json(asked): Json<JoinAsk>) -> Re
         },
         None => Outcome::AlreadyIn { seed, dir, placed },
     }
-    .into_response()
+    .into_response())
 }
