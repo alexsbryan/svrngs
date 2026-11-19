@@ -154,7 +154,8 @@ fn libproc_s_records_are_read_where_they_hold_it() {
 /// [`ACCEPT_WITHIN`]; one never accepted is not this account's; a port of no
 /// socket of ours is not. Read as this computer reads them, so it passes on
 /// each only with its reader right. Planted on the Mac, watched failing:
-/// one scan, no look again (the late accept not this account's).
+/// one scan, no look again (the late accept not this account's); errno
+/// not cleared (a process with no files made the scan unjudged).
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 #[test]
 fn this_computer_answers_for_a_connection_made_here() {
@@ -211,5 +212,16 @@ fn this_computer_answers_for_a_connection_made_here() {
             peer: at("127.0.0.1:1"),
         };
         assert_eq!(owner(Raw::Udp, nobody, Side::Peer), Owner::NotMine);
+        // A process of ours with no open files, which libproc answers 0
+        // for, as it does a failure: the whole scan still answers.
+        let mut bare = std::process::Command::new("/bin/sh")
+            .args(["-c", "exec 0<&- 1>&- 2>&- /bin/sleep 5"])
+            .spawn()
+            .unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        let scanned = owner(Raw::Udp, nobody, Side::Peer);
+        bare.kill().unwrap();
+        bare.wait().unwrap();
+        assert_eq!(scanned, Owner::NotMine, "a process with no files");
     }
 }

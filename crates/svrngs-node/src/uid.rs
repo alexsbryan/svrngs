@@ -390,12 +390,19 @@ mod mac {
         let none: *mut c_void = std::ptr::null_mut();
         let len = |b: &Vec<u8>| c_int::try_from(b.len()).unwrap_or(c_int::MAX);
         let sized = |n: c_int| vec![0u8; usize::try_from(n).unwrap_or(0) + SLACK];
+        // libproc answers 0 for a failure, setting errno, and for a list
+        // with nothing in it, leaving errno as it was: a process with no
+        // open files answers 0 with errno 0 (seen 2026-11-18, `sleep` with
+        // its three closed). So errno is cleared before each answer read.
+        // SAFETY: `__error` is this thread's own errno, always valid.
+        let clear = || unsafe { *libc::__error() = 0 };
         let mut buf;
         let wrote = match ask {
             Ask::Pids(uid) => {
                 // SAFETY: with no buffer and a length of 0 it writes nothing,
                 // and answers the length it would fill.
                 buf = sized(unsafe { libc::proc_listpids(PROC_UID_ONLY, uid, none, 0) });
+                clear();
                 // SAFETY: the length passed is `buf`'s, so it writes nothing
                 // past its end.
                 unsafe {
@@ -407,6 +414,7 @@ mod mac {
                 // SAFETY: with no buffer and a length of 0 it writes nothing,
                 // and answers the length it would fill.
                 buf = sized(unsafe { libc::proc_pidinfo(pid, list, 0, none, 0) });
+                clear();
                 // SAFETY: the length passed is `buf`'s.
                 unsafe { libc::proc_pidinfo(pid, list, 0, buf.as_mut_ptr().cast(), len(&buf)) }
             }
@@ -426,8 +434,13 @@ mod mac {
                 unsafe { libc::proc_pidfdinfo(pid, fd, info, buf.as_mut_ptr().cast(), len(&buf)) }
             }
         };
-        let wrote = usize::try_from(wrote).ok().filter(|n| *n > 0);
-        buf.truncate(wrote.ok_or_else(std::io::Error::last_os_error)?);
+        let why = std::io::Error::last_os_error();
+        let wrote = usize::try_from(wrote).unwrap_or(0);
+        let list = matches!(ask, Ask::Pids(_) | Ask::Files(_));
+        if wrote == 0 && !(list && why.raw_os_error() == Some(0)) {
+            return Err(why);
+        }
+        buf.truncate(wrote);
         Ok(buf)
     }
 }
