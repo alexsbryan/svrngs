@@ -338,16 +338,12 @@ pub async fn socket(conn: Connection, path: &str, headers: &js_sys::Array) -> Re
     });
     let answer = js_sys::Object::new();
     let set = |k: &str, v: &JsValue| js_sys::Reflect::set(&answer, &k.into(), v).map(|_| ());
+    let readable = wasm_streams::ReadableStream::from_stream(read).into_raw();
+    let writable = wasm_streams::WritableStream::from_sink(write).into_raw();
     set("status", &status.into())
         .and(set("headers", &named))
-        .and(set(
-            "readable",
-            &wasm_streams::ReadableStream::from_stream(read).into_raw(),
-        ))
-        .and(set(
-            "writable",
-            &wasm_streams::WritableStream::from_sink(write).into_raw(),
-        ))
+        .and(set("readable", &readable))
+        .and(set("writable", &writable))
         .map_err(|e| Refused::Page(format!("{e:?}")))?;
     Ok(answer.into())
 }
