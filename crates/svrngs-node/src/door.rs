@@ -368,11 +368,9 @@ pub const LENDS_ROUTE: &str = "/lends";
 /// caller that sends it still passes the audience and membership checks.
 /// The node's own discovery route (`/people/lends`) asks it too.
 pub(crate) fn scope_aware(headers: &HeaderMap) -> bool {
-    headers
-        .get(crate::version::SCOPE_HEADER)
-        .and_then(|v| v.to_str().ok())
-        .and_then(|v| v.parse::<u32>().ok())
-        .is_some_and(|v| crate::version::scoped(Some(v)))
+    let marker = headers.get(crate::version::SCOPE_HEADER);
+    let marker = marker.and_then(|v| v.to_str().ok()?.parse().ok());
+    crate::version::scoped(marker)
 }
 
 /// Where a lend's choices are said and asked ([`choices`]).
@@ -787,13 +785,8 @@ pub(crate) fn splice<H: Send + 'static>(
     let name = lend.clone();
     let spliced = async move {
         let _held = held;
-        let (asker, service) = match tokio::try_join!(asker, service) {
-            Ok(both) => both,
-            Err(e) => {
-                tracing::debug!(target: "door", lend, error = %e, "door: an upgrade did not complete on both sides");
-                return;
-            }
-        };
+        let both = tokio::try_join!(asker, service).inspect_err(|e| tracing::debug!(target: "door", lend, error = %e, "door: an upgrade did not complete on both sides"));
+        let Ok((asker, service)) = both else { return };
         let mut a = hyper_util::rt::TokioIo::new(asker);
         let mut s = hyper_util::rt::TokioIo::new(service);
         match tokio::io::copy_bidirectional(&mut a, &mut s).await {
