@@ -535,8 +535,8 @@ impl Sessions {
             }
             None => Owner::Unjudged("no connection to read"),
         };
-        let ours = match (read, me) {
-            (Owner::Uid(uid), Ok(me)) => uid == me,
+        let ours = match (&read, me) {
+            (Owner::Uid(uid, _), Ok(me)) => *uid == me,
             (Owner::NoReader, _) => true,
             _ => false,
         };

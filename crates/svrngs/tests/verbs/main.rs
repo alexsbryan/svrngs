@@ -116,7 +116,7 @@ impl cli::Here for Running<'_> {
     /// Every port's program is this account's, as the wire says of each
     /// socket nobody says otherwise of (svrngs-node `Wire::owns`).
     fn owner(&self, _: Option<Raw>, _: std::num::NonZeroU16) -> Owner {
-        svrngs_node::uid::mine().map_or_else(Owner::Unjudged, Owner::Uid)
+        svrngs_node::uid::mine().map_or_else(Owner::Unjudged, |uid| Owner::Uid(uid, None))
     }
     /// Nobody types.
     fn prompt(&self, _: &svrngs_node::lend::LendName, _: &str, _: bool) -> cli::Prompted {

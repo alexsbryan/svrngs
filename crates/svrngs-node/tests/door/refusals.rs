@@ -889,8 +889,16 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
 /// another account's program answers. Planted, each watched failing: the
 /// held connection carried anyway (200, the service asked); the lend from
 /// before carried without its record (its `owner` none).
+///
+/// Then a sandboxed app of ada's own account (LEND_SANDBOX): on a port
+/// lent from a program in none, held in the same words, the service hearing
+/// nothing; on a port lent from that app, carried. The lend from before
+/// records the sandbox it next reads. Planted, each watched failing:
+/// `bound` not asked about the sandbox (the app carried); the record from
+/// before skipped (its `sandbox` none).
 #[tokio::test]
 async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
+    use svrngs_node::lend::Sandbox;
     use svrngs_node::uid::Owner;
     answer_at_a();
     let (origin, heads) = origins::head_origin().await;
@@ -908,10 +916,18 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         declare(dir, "shelf", origin.port(), &owned);
         declare(dir, "old", origin.port(), "");
         declare(dir, "listed", listed_port, &owned);
+        declare(
+            dir,
+            "boxed",
+            origin.port(),
+            &format!(r#"{owned},"sandbox":"no""#),
+        );
+        let app = r#","sandbox":{"app":"org.sabnzbd.sabnzbd"}"#;
+        declare(dir, "flat", origin.port(), &format!("{owned}{app}"));
     })
     .await;
     let bo = world.as_key(2, Alpn::Member).await;
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine + 1));
+    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine + 1, None));
     let reply = ask(bo, "GET", "/lend/shelf/whoami", "").await;
     let words = "ada’s shelf is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts shelf again.";
     refused(&reply, 502, "away", words);
@@ -927,7 +943,7 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         heads.lock().unwrap().is_empty(),
         "the service heard nothing"
     );
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine));
+    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, None));
     assert_eq!(ask(bo, "GET", "/lend/shelf/whoami", "").await.status, 200);
     assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
     let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
@@ -936,7 +952,28 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         Some(mine),
         "recorded at its first connection"
     );
-    on_wire::owns(&world.a, listed_port, Owner::Uid(mine + 1));
+    let sabnzbd = Some(Sandbox::App("org.sabnzbd.sabnzbd".into()));
+    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, sabnzbd));
+    let heard = heads.lock().unwrap().len();
+    let words = "ada’s boxed is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts boxed again.";
+    refused(
+        &ask(bo, "GET", "/lend/boxed/whoami", "").await,
+        502,
+        "away",
+        words,
+    );
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        heard,
+        "the service heard nothing"
+    );
+    assert_eq!(ask(bo, "GET", "/lend/flat/whoami", "").await.status, 200);
+    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, Some(Sandbox::No)));
+    assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
+    let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
+    let old = old.unwrap().unwrap();
+    assert_eq!((old.owner, old.sandbox), (Some(mine), Some(Sandbox::No)));
+    on_wire::owns(&world.a, listed_port, Owner::Uid(mine + 1, None));
     let (_, lends) = listed(bo, "x-svrngs-version: 5\r\n").await;
     let held: Vec<_> = (lends["lends"].as_array().unwrap().iter())
         .map(|l| (l["name"].as_str().unwrap(), l["held"].as_str()))

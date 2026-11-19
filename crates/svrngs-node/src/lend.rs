@@ -365,6 +365,23 @@ pub struct Lend {
     /// app, which svrngs serves itself, for one lent before this, which its
     /// first connection records, and where this computer has no reader.
     pub owner: Option<u32>,
+    /// The sandbox its program ran in when it was lent, read with `owner`
+    /// for a program of the account svrngs runs as: the door carries a
+    /// connection only to that one's, or to a program in none
+    /// ([`crate::door::bound`]). None where `owner` is, and for another
+    /// account's program, whose sandbox is that account's to read.
+    pub sandbox: Option<Sandbox>,
+}
+
+/// The sandbox a program runs in (svrn-docs LEND_SANDBOX): none, so it can
+/// read what svrngs keeps, as its account can; or an app's, which can't.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Sandbox {
+    No,
+    /// By the name its system gives it: a Flatpak's app id, a Mac App
+    /// Sandbox app's path.
+    App(String),
 }
 
 impl Lend {
@@ -418,6 +435,7 @@ impl Lend {
             asks: None,
             sends: Vec::new(),
             owner: None,
+            sandbox: None,
         })
     }
 
@@ -473,6 +491,8 @@ struct LendFile {
     /// (`deny_unknown_fields`), so a downgrade lends nothing unbound.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     owner: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    sandbox: Option<Sandbox>,
 }
 
 /// The characters a sign-in client's id and secret may be made of
@@ -582,7 +602,8 @@ pub struct Offered {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Hold {
-    /// Another account's program answers there, not the one it recorded.
+    /// Another program answers there, not the one it recorded: another
+    /// account's, or one in another sandbox.
     Another,
     /// Whose program answers there can't be told.
     Unjudged,
@@ -751,6 +772,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         asks: file.asks,
         sends: file.sends,
         owner: file.owner,
+        sandbox: file.sandbox,
     }))
 }
 
@@ -956,6 +978,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         asks: lend.asks.clone(),
         sends: lend.sends.clone(),
         owner: lend.owner,
+        sandbox: lend.sandbox.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));

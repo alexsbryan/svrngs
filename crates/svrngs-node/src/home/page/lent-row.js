@@ -144,10 +144,11 @@ function Headers({ name, kept, state, doing, send }) {
 }
 
 // Why nobody can open a lend while its program runs (door.rs `answering`):
-// whose program answers on its port isn't the account it was lent from.
+// whose program answers on its port isn't the account or sandbox it was
+// lent from.
 const HELD = {
   another: (/** @type {string} */ name) =>
-    ` Another account’s program is answering on ${name}’s port, so nobody can open ${name}. Start ${name} again, or stop lending it and lend what runs there now.`,
+    ` Another program is answering on ${name}’s port, so nobody can open ${name}. Start ${name} again, or stop lending it and lend what runs there now.`,
   unjudged: (/** @type {string} */ name) =>
     ` svrngs can’t tell whose program is on ${name}’s port, so nobody can open ${name}. Start it again, or lend it again.`,
 };

@@ -506,9 +506,21 @@ impl Net for OnWire {
             Side::Peer => conn.peer.port(),
         };
         let met = self.wire.0.lock().unwrap();
-        let said = met.owners.get(&(*self.key.as_bytes(), port)).copied();
-        let owner =
-            said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, Owner::Uid));
+        let said = met.owners.get(&(*self.key.as_bytes(), port)).cloned();
+        let mine = |uid| Owner::Uid(uid, None);
+        let owner = said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, mine));
+        Box::pin(async move { owner })
+    }
+    /// What [`Wire::owns`] says of the peer's port, else this account's,
+    /// in no sandbox.
+    fn program(&self, _: crate::lend::Raw, conn: Conn) -> crate::iroh::Later<'_, Owner> {
+        let met = self.wire.0.lock().unwrap();
+        let said = met
+            .owners
+            .get(&(*self.key.as_bytes(), conn.peer.port()))
+            .cloned();
+        let none = |uid| Owner::Uid(uid, Some(crate::lend::Sandbox::No));
+        let owner = said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, none));
         Box::pin(async move { owner })
     }
     fn id(&self) -> PublicKey {

@@ -83,10 +83,10 @@ async fn the_opener_is_handed_the_open_and_only_this_account_s_browser_can_use_i
     let origin = format!("http://{at}");
     let mine = svrngs_node::uid::mine().unwrap();
     // `browsed` asks from 127.0.0.1:50000, which the wire says is whose.
-    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine + 1));
+    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine + 1, None));
     let (status, keyed, _) = browsed(&alex.node, ("POST", &at, path), Some(&origin)).await;
     assert_eq!((status, keyed), (401, false), "another account's program");
-    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine));
+    wire.owns(alex.node.net().id(), 50_000, Owner::Uid(mine, None));
     let (status, keyed, body) = browsed(&alex.node, ("POST", &at, path), Some(&origin)).await;
     assert_eq!(
         (status, keyed),

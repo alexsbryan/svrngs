@@ -19,10 +19,20 @@
 //! What the kernel answers is parsed in safe Rust, every read
 //! bounds-checked; [`kernel`]'s calls are the one `unsafe` in svrngs
 //! (DESIGN §5).
+//!
+//! A lend's program, [`program`], is read with its sandbox when it runs as
+//! svrngs's account (svrn-docs LEND_SANDBOX): a sandboxed app of that
+//! account can't read what svrngs keeps, yet shares its network.
+//! - Linux: the Flatpak app id of the processes holding the sockets that
+//!   listen there, by each one's inode among this account's `/proc/<pid>/fd`.
+//! - macOS: whether the process holding the socket is an App Sandbox app,
+//!   by its code's entitlement as Security.framework says, and its path.
 
 use std::net::{IpAddr, SocketAddr};
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+use std::sync::PoisonError;
 
-use crate::lend::Raw;
+use crate::lend::{Raw, Sandbox};
 
 /// A connection on this computer, by its two ends as one of its sockets
 /// sees them: its own address, and the address it is connected to.
@@ -41,10 +51,13 @@ pub enum Side {
 }
 
 /// Whose a socket is, as this computer says now.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Owner {
-    /// The uid of the account that holds it.
-    Uid(u32),
+    /// The uid of the account that holds it, and the sandbox of the program
+    /// answering there when [`program`] asks and that account is svrngs's:
+    /// another account's programs are that account's to read, so its
+    /// account alone decides.
+    Uid(u32, Option<Sandbox>),
     /// A Mac's: no process of this account's holds it, a TCP end within
     /// [`ACCEPT_WITHIN`]; whose it is, a Mac doesn't show svrngs.
     NotMine,
@@ -63,13 +76,70 @@ pub enum Owner {
 pub const ACCEPT_WITHIN: std::time::Duration = std::time::Duration::from_millis(100);
 
 /// The uid holding the socket at `side` of `conn`, a TCP connection or a UDP
-/// flow as `raw` says, read now and never kept. A Mac's may wait up to
-/// [`ACCEPT_WITHIN`], so an async caller reads it off its runtime.
-pub fn owner(raw: Raw, conn: Conn, side: Side) -> Owner {
+/// flow as `raw` says, read now and never kept; asked with `seen` and of
+/// svrngs's own account, with the sandbox of the program whose socket took
+/// it, kept there, or why it can't be told ([`Owner::Unjudged`]). A Mac's
+/// may wait up to [`ACCEPT_WITHIN`], so an async caller reads it off its
+/// runtime.
+pub fn owner(raw: Raw, conn: Conn, side: Side, seen: Option<&Seen>) -> Owner {
     let (at, to) = ends(conn, side);
-    let owner = read(raw, at, to);
-    tracing::debug!(target: "uid", ?raw, %at, %to, ?owner, "uid: whose the socket at this end is");
+    let owner = read(raw, at, to, seen);
+    tracing::debug!(target: "uid", ?raw, %at, %to, ?owner, "uid: whose the socket at this end is, and in what sandbox");
     owner
+}
+
+/// The sandboxes [`owner`] read, each kept by what a program taking a
+/// lend's port must make anew: on Linux the inode of a socket listening
+/// there, since a new socket has a new one; on a Mac the pid and start of
+/// the process holding it, since a process's App Sandbox is fixed at its
+/// launch. So a holder is read once, not at each connection (Linux's scan
+/// took 5–18 ms, 2026-11-19), and no other program can answer within what
+/// is kept: the window LEND_OWNER §3 keeps a cache out for. A Mac program
+/// updated on disk while it runs, whose signature Security then won't
+/// judge, keeps what was read of it.
+#[derive(Debug, Default)]
+pub struct Seen(
+    #[expect(clippy::disallowed_types, reason = "the uid reader's cache")]
+    std::sync::Mutex<std::collections::HashMap<(u64, u64), Sandbox>>,
+);
+
+/// A sandbox read, or why it can't be.
+type Read = Result<Sandbox, &'static str>;
+
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+impl Seen {
+    /// The sandbox kept at `key`, else `read`'s, kept when it is one. The
+    /// lock is held while it reads, so one listener is read once.
+    fn get_or(&self, key: (u64, u64), read: impl FnOnce() -> Read) -> Read {
+        let mut seen = self.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if let Some(kept) = seen.get(&key) {
+            return Ok(kept.clone());
+        }
+        let read = read();
+        tracing::debug!(target: "uid", ?key, ?read, "uid: the sandbox of the program holding a socket, read and kept");
+        if let Ok(sandbox) = &read {
+            // Emptied when full, so a server forking a process for each
+            // connection can't grow it without end; what was kept is read
+            // again, as after a restart.
+            if seen.len() >= KEPT {
+                seen.clear();
+            }
+            seen.insert(key, sandbox.clone());
+        }
+        read
+    }
+}
+
+/// How many sandboxes [`Seen`] keeps before it empties.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+const KEPT: usize = 4096;
+
+/// `uid`'s, asked with `seen` with its program's sandbox as `read` reads
+/// it there, or why that can't be told.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+fn with(uid: u32, seen: Option<&Seen>, read: impl FnOnce(&Seen) -> Read) -> Owner {
+    let read = |seen| read(seen).map_or_else(Owner::Unjudged, |s| Owner::Uid(uid, Some(s)));
+    seen.map_or(Owner::Uid(uid, None), read)
 }
 
 /// The address of the socket at `side` of `conn`, and the one it is
@@ -102,17 +172,28 @@ fn holds(raw: Raw, (local, foreign): Ends, at: SocketAddr, to: SocketAddr) -> bo
 /// A socket's local address and the one it is connected to.
 type Ends = (SocketAddr, SocketAddr);
 
-/// The end at `at`, connected to `to`, as `/proc/net` lists it.
+/// The end at `at`, connected to `to`, as `/proc/net` lists it, and, asked
+/// with `seen` and of this account's, the sandbox of what listens there.
 #[cfg(target_os = "linux")]
-fn read(raw: Raw, at: SocketAddr, to: SocketAddr) -> Owner {
+fn read(raw: Raw, at: SocketAddr, to: SocketAddr, seen: Option<&Seen>) -> Owner {
     let rows = match proc_net::table(raw) {
         Ok(rows) => rows,
         Err(why) => return Owner::Unjudged(why),
     };
-    one(rows
-        .into_iter()
-        .filter(|r| holds(raw, r.0, at, to))
-        .map(|r| r.1))
+    let uids = rows.iter().filter(|r| holds(raw, r.0, at, to));
+    match one(uids.map(|r| r.1)) {
+        Owner::Uid(uid, _) if mine() == Ok(uid) => with(uid, seen, |seen| {
+            // What a connection there reaches: for TCP a socket bound there
+            // or to every address and connected to none, as one listening
+            // is; for UDP one bound so, as `holds` says for a datagram.
+            let unconnected = |r: &&proc_net::Row| raw == Raw::Udp || r.0 .1.port() == 0;
+            let reached = rows.iter().filter(unconnected);
+            let reached = reached.filter(|r| holds(Raw::Udp, r.0, at, to));
+            let read = reached.map(|r| seen.get_or((r.2, 0), || proc_net::holders(r.2)));
+            proc_net::alike(read, "no socket listens there")
+        }),
+        owner => owner,
+    }
 }
 
 /// The one uid among the sockets holding an end: none, or two accounts,
@@ -121,7 +202,7 @@ fn read(raw: Raw, at: SocketAddr, to: SocketAddr) -> Owner {
 fn one(mut uids: impl Iterator<Item = u32>) -> Owner {
     match uids.next() {
         None => Owner::Unjudged("no socket at that end on this computer"),
-        Some(uid) if uids.all(|u| u == uid) => Owner::Uid(uid),
+        Some(uid) if uids.all(|u| u == uid) => Owner::Uid(uid, None),
         Some(_) => Owner::Unjudged("sockets of more than one account at that end"),
     }
 }
@@ -141,7 +222,7 @@ pub fn mine() -> Result<u32, &'static str> {
     clippy::disallowed_methods,
     reason = "the Mac reader's wait for an accept, at the edge"
 )]
-fn read(raw: Raw, at: SocketAddr, to: SocketAddr) -> Owner {
+fn read(raw: Raw, at: SocketAddr, to: SocketAddr, seen: Option<&Seen>) -> Owner {
     let me = match mine() {
         Ok(me) => me,
         Err(why) => return Owner::Unjudged(why),
@@ -151,13 +232,13 @@ fn read(raw: Raw, at: SocketAddr, to: SocketAddr) -> Owner {
         std::time::Duration::from_millis(1),
     );
     loop {
-        match mac::ours(me, raw, at, to) {
-            Ok(true) => return Owner::Uid(me),
+        match mac::ours(me, raw, (at, to)) {
+            Ok(Some(pid)) => return with(me, seen, |seen| mac::sandbox(pid, seen)),
             Err(e) => {
                 tracing::debug!(target: "uid", %at, error = %e, "uid: this account's processes can't be read");
                 return Owner::Unjudged("this account's programs can't be read");
             }
-            Ok(false) => {}
+            Ok(None) => {}
         }
         let left = ACCEPT_WITHIN.saturating_sub(began.elapsed());
         tracing::debug!(target: "uid", %at, ?raw, ?left, "uid: not among this account's sockets now");
@@ -180,7 +261,7 @@ pub fn mine() -> Result<u32, &'static str> {
 
 /// No reader here.
 #[cfg(not(any(target_os = "linux", target_os = "macos")))]
-fn read(_: Raw, _: SocketAddr, _: SocketAddr) -> Owner {
+fn read(_: Raw, _: SocketAddr, _: SocketAddr, _: Option<&Seen>) -> Owner {
     Owner::NoReader
 }
 
@@ -196,9 +277,67 @@ pub fn mine() -> Result<u32, &'static str> {
 mod proc_net {
     use super::*;
 
+    /// A socket as a `/proc/net` table lists it: its local address and the
+    /// one it is connected to, its account and its inode.
+    pub(super) type Row = (Ends, u32, u64);
+
+    /// The sandbox of the processes holding socket `inode`, by their files.
+    /// Yama's `ptrace_scope` 1 refuses none of these reads: they are
+    /// ptrace's read mode, not attach (seen on Omarchy 4.5, 2026-11-19).
+    /// Held by none whose files can be read, it is judged by the scopes of
+    /// those whose files can't be (svrn-docs LEND_SANDBOX).
+    #[cfg(target_os = "linux")]
+    pub(super) fn holders(inode: u64) -> Read {
+        use std::fs::{read_dir, read_link, read_to_string, DirEntry};
+        let held = std::path::PathBuf::from(format!("socket:[{inode}]"));
+        let procs = read_dir("/proc").map_err(|_| "this computer's programs can't be listed")?;
+        let procs: Vec<DirEntry> = procs.flatten().collect();
+        let link = |f: DirEntry| read_link(f.path()).is_ok_and(|l| l == held);
+        let files = |p: &&DirEntry| read_dir(p.path().join("fd")).map(|fs| fs.flatten().any(link));
+        let holding = procs.iter().filter(|p| files(p).is_ok_and(|held| held));
+        let read: Vec<Read> = holding.map(|p| flatpak(&p.path())).collect();
+        if !read.is_empty() {
+            return alike(read.into_iter(), "no program holds it");
+        }
+        let scope = format!("user@{}.service/app.slice/app-flatpak-", mine()?);
+        let theirs = |p: &DirEntry| read_to_string(p.path().join("cgroup"));
+        let boxed = |p: &DirEntry| theirs(p).is_ok_and(|c| c.contains(&scope));
+        match procs.iter().filter(|p| files(p).is_err()).any(boxed) {
+            true => Err("a Flatpak whose files can't be read may hold the socket"),
+            false => Ok(Sandbox::No),
+        }
+    }
+
+    /// The Flatpak app the process at `proc` (its `/proc/<pid>`) runs in, by
+    /// its root's `.flatpak-info`, which Flatpak mounts read-only; none
+    /// where its root has none, as xdg-desktop-portal reads it. Its root is
+    /// read again, so a process that exited is no answer, never none.
+    pub(super) fn flatpak(proc: &std::path::Path) -> Read {
+        match std::fs::read_to_string(proc.join("root/.flatpak-info")) {
+            Ok(info) => (info.lines().find_map(|l| l.strip_prefix("name=")))
+                .map(|app| Sandbox::App(app.to_owned()))
+                .ok_or("a Flatpak that names no app holds the socket"),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound && proc.join("root").exists() => {
+                Ok(Sandbox::No)
+            }
+            Err(_) => Err("the sandbox of the program holding the socket can't be read"),
+        }
+    }
+
+    /// The one sandbox all of `read` say, or why not: none said, `none`.
+    pub(super) fn alike(read: impl Iterator<Item = Read>, none: &'static str) -> Read {
+        let mut said: Vec<Sandbox> = read.collect::<Result<_, _>>()?;
+        said.dedup();
+        match &said[..] {
+            [one] => Ok(one.clone()),
+            [] => Err(none),
+            _ => Err("programs in more than one sandbox hold the sockets there"),
+        }
+    }
+
     /// `raw`'s table, IPv4's and IPv6's.
     #[cfg(target_os = "linux")]
-    pub(super) fn table(raw: Raw) -> Result<Vec<(Ends, u32)>, &'static str> {
+    pub(super) fn table(raw: Raw) -> Result<Vec<Row>, &'static str> {
         let files = match raw {
             Raw::Tcp => ["/proc/net/tcp", "/proc/net/tcp6"],
             Raw::Udp => ["/proc/net/udp", "/proc/net/udp6"],
@@ -221,16 +360,16 @@ mod proc_net {
     }
 
     /// The rows of a `/proc/net` table past its header: each line's local and
-    /// remote address and its uid, the eighth field. A TCP socket in
-    /// TIME_WAIT (state `06`) is passed over: it lists uid 0 whoever held it,
-    /// and a new connection on loopback may take its four numbers. A line not
-    /// read so refuses the table.
-    pub(super) fn rows(text: &str) -> Result<Vec<(Ends, u32)>, &'static str> {
+    /// remote address, its uid, the eighth field, and its inode, the tenth. A TCP socket in TIME_WAIT (state
+    /// `06`) is passed over: it lists uid 0 whoever held it, and a new
+    /// connection on loopback may take its four numbers. A line not read so
+    /// refuses the table.
+    pub(super) fn rows(text: &str) -> Result<Vec<Row>, &'static str> {
         let row = |line: &str| {
             let fields: Vec<&str> = line.split_whitespace().collect();
             let ends = (addr(fields.get(1)?)?, addr(fields.get(2)?)?);
-            let waiting = *fields.get(3)? == "06";
-            Some((!waiting).then_some((ends, fields.get(7)?.parse().ok()?)))
+            let (uid, inode) = (fields.get(7)?.parse().ok()?, fields.get(9)?.parse().ok()?);
+            Some((*fields.get(3)? != "06").then_some((ends, uid, inode)))
         };
         let mut rows = Vec::new();
         for line in text.lines().skip(1).filter(|l| !l.trim().is_empty()) {
@@ -312,6 +451,15 @@ mod record {
         (bsd.len() == BSD_LEN).then(|| word(bsd, UID)).flatten()
     }
 
+    /// A `proc_bsdinfo`'s start, its `pbi_start_tvsec` and `pbi_start_tvusec`
+    /// as microseconds: none for a record of another length.
+    pub(super) fn start(bsd: &[u8]) -> Option<u64> {
+        let at = |at: usize| Some(u64::from_ne_bytes(bsd.get(at..at + 8)?.try_into().ok()?));
+        let micros = |secs: u64, us: u64| secs.wrapping_mul(1_000_000).wrapping_add(us);
+        (bsd.len() == BSD_LEN).then(|| Some(micros(at(START)?, at(START + 8)?)))?
+    }
+    const START: usize = 120;
+
     /// The 32-bit word at `at` in `bytes`, in this computer's byte order.
     pub(super) fn word(bytes: &[u8], at: usize) -> Option<u32> {
         Some(u32::from_ne_bytes(bytes.get(at..at + 4)?.try_into().ok()?))
@@ -323,10 +471,37 @@ mod record {
 mod mac {
     use super::*;
 
-    /// Whether one of `me`'s processes holds the `raw` end at `at` connected
-    /// to `to`; an error when libproc fails, but for a process that exited
-    /// or a file it closed while asked.
-    pub(super) fn ours(me: u32, raw: Raw, at: SocketAddr, to: SocketAddr) -> std::io::Result<bool> {
+    /// Whether process `pid` is an App Sandbox app, by its code's
+    /// entitlement as Security.framework reads it, and if so its code's
+    /// path; kept by its pid and start ([`Seen`]). Signed without the
+    /// entitlement (`errSecCSReqFailed`) or unsigned (`errSecCSUnsigned`)
+    /// is none; any other answer can't be judged.
+    pub(super) fn sandbox(pid: i32, seen: &Seen) -> Read {
+        use security_framework::os::macos::code_signing::{Flags, GuestAttributes, SecCode};
+        let bsd = kernel(Ask::Bsd(pid)).unwrap_or_default();
+        let start = record::start(&bsd).ok_or("the program's start can't be read")?;
+        seen.get_or((u64::from(pid.unsigned_abs()), start), || {
+            let mut asked = GuestAttributes::new();
+            asked.set_pid(pid);
+            let app = r#"entitlement["com.apple.security.app-sandbox"] exists"#.parse();
+            let code = SecCode::copy_guest_with_attribues(None, &asked, Flags::NONE);
+            match code.and_then(|c| c.check_validity(Flags::NONE, &app?).map(|()| c)) {
+                Ok(code) => (code.path(Flags::NONE).ok().and_then(|u| u.to_path()))
+                    .map(|path| Sandbox::App(path.display().to_string()))
+                    .ok_or("the path of the app holding the socket can't be read"),
+                Err(e) if matches!(e.code(), -67050 | -67062) => Ok(Sandbox::No),
+                Err(e) => {
+                    tracing::debug!(target: "uid", pid, error = %e, "uid: Security can't judge the signature of the process holding the socket");
+                    Err("the signature of the program holding the socket can't be read")
+                }
+            }
+        })
+    }
+
+    /// The pid of one of `me`'s processes holding the `raw` end at `at`
+    /// connected to `to`; an error when libproc fails, but for a process
+    /// that exited or a file it closed while asked.
+    pub(super) fn ours(me: u32, raw: Raw, (at, to): Ends) -> std::io::Result<Option<i32>> {
         // Gone since it was listed: ESRCH, the process exited; EBADF, the
         // file was closed; ENOTSOCK, the file was closed and its number
         // reused for one that isn't a socket (seen 2026-11-18, the night
@@ -360,11 +535,11 @@ mod mac {
                 }
                 let read = record::socket(&socket);
                 if read.is_some_and(|(r, ends)| r == raw && holds(raw, ends, at, to)) {
-                    return Ok(true);
+                    return Ok(Some(pid));
                 }
             }
         }
-        Ok(false)
+        Ok(None)
     }
 
     /// What this Mac's kernel is asked, one libproc call each ([`kernel`]).

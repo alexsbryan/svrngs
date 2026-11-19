@@ -862,7 +862,7 @@ test('a lend held from another account’s program says why on its lender’s li
     )[0];
   assert.ok(
     (await summary('another')).includes(
-      'Another account’s program is answering on shelf’s port, so nobody can open shelf. Start shelf again, or stop lending it and lend what runs there now.',
+      'Another program is answering on shelf’s port, so nobody can open shelf. Start shelf again, or stop lending it and lend what runs there now.',
     ),
   );
   assert.ok(

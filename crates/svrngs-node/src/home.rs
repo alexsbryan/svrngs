@@ -79,7 +79,7 @@ use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share, ShareRefusal};
-use crate::uid::{Conn, Owner, Side};
+use crate::uid::{Conn, Owner};
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -833,7 +833,7 @@ async fn lend_one(
         })
     };
     let read = match asked.as_ref().ok().and_then(ends) {
-        Some(conn) => at.host.transport.owner(Raw::Tcp, conn, Side::Peer).await,
+        Some(conn) => at.host.transport.program(Raw::Tcp, conn).await,
         None => Owner::Unjudged("nothing answers on the port"),
     };
     share::bound(&mut lend, read).map_err(|e| refused(&e.to_string(), &e))?;

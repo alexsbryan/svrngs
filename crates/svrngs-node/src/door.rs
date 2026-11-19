@@ -98,12 +98,12 @@ use tokio::sync::{mpsc, oneshot};
 
 use crate::declared::read_declared_in;
 use crate::iroh::{Dialer, Duplex, Via};
-use crate::lend::{self, Hold, Lend, LendName, Offered, Raw, Source};
+use crate::lend::{self, Hold, Lend, LendName, Offered, Raw, Sandbox, Source};
 use crate::network::Whereabouts;
 use crate::register::Member;
 use crate::ring_routes::err;
 use crate::surface::AppRoute;
-use crate::uid::{Conn, Owner, Side};
+use crate::uid::{Conn, Owner};
 use crate::{register::Visiting, Person, RingRail};
 use eudoxia_community::app;
 use eudoxia_community::lend::{self as rules, Admit, Asked};
@@ -694,15 +694,11 @@ async fn answering(door: &Door, lend: &Lend) -> (Option<bool>, Option<Hold>) {
     };
     let held = match took.as_ref().and_then(ends) {
         Some(conn) => match bound(
-            lend.owner,
-            door.folders
-                .host
-                .transport
-                .owner(Raw::Tcp, conn, Side::Peer)
-                .await,
+            (lend.owner, lend.sandbox.as_ref()),
+            &door.folders.host.transport.program(Raw::Tcp, conn).await,
         ) {
             Bound::Held(held) => Some(held),
-            Bound::Carry | Bound::Record(_) => None,
+            Bound::Carry | Bound::Record(..) => None,
         },
         None => None,
     };
@@ -1750,27 +1746,37 @@ fn busy_words(lend: &Lend, using: u32, limit: std::num::NonZeroU16) -> String {
     )
 }
 
-/// What a connection to a lend's program may do, by the account its lend
-/// recorded and the one read at the connection's far end (LEND_OWNER §3).
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// What a connection to a lend's program may do, by the account and
+/// sandbox its lend recorded and those read at the connection's far end
+/// (LEND_OWNER §3, LEND_SANDBOX).
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) enum Bound {
-    /// Carry it: the account read is the one recorded, or no reader here.
+    /// Carry it: the account read is the one recorded, its program in the
+    /// sandbox recorded or in none; or no reader here.
     Carry,
-    /// Carry it, and record the account read: a lend from before owners.
-    Record(u32),
+    /// Carry it, and record what was read: a lend from before owners, or
+    /// from before sandboxes.
+    Record(u32, Option<Sandbox>),
     /// Refuse it, held as its lender is told.
     Held(Hold),
 }
 
-/// The one decider of [`Bound`]. A Mac's "none of this account's" holds it
-/// as unjudged: there whose it is can't be read.
-pub(crate) fn bound(recorded: Option<u32>, read: Owner) -> Bound {
-    match (recorded, read) {
+/// The one decider of [`Bound`]: the same account, then the same sandbox
+/// or none, since a program in none can read what svrngs keeps anyway.
+/// A Mac's "none of this account's" holds it as unjudged: there whose it
+/// is can't be read.
+pub(crate) fn bound((owner, sandbox): (Option<u32>, Option<&Sandbox>), read: &Owner) -> Bound {
+    match ((owner, sandbox), read) {
         (_, Owner::NoReader) => Bound::Carry,
-        (Some(was), Owner::Uid(uid)) if was == uid => Bound::Carry,
-        (Some(_), Owner::Uid(_)) => Bound::Held(Hold::Another),
-        (None, Owner::Uid(uid)) => Bound::Record(uid),
         (_, Owner::NotMine | Owner::Unjudged(_)) => Bound::Held(Hold::Unjudged),
+        ((Some(was), _), Owner::Uid(uid, _)) if was != *uid => Bound::Held(Hold::Another),
+        ((_, Some(was)), Owner::Uid(_, Some(now @ Sandbox::App(_)))) if was != now => {
+            Bound::Held(Hold::Another)
+        }
+        ((None, _), Owner::Uid(uid, now)) | ((_, None), Owner::Uid(uid, now @ Some(_))) => {
+            Bound::Record(*uid, now.clone())
+        }
+        (_, Owner::Uid(..)) => Bound::Carry,
     }
 }
 
@@ -1782,23 +1788,22 @@ pub(crate) async fn kept(door: &Door, lend: &Lend, conn: Conn) -> Result<(), Hol
         Source::Raw(Raw::Udp, _) => Raw::Udp,
         _ => Raw::Tcp,
     };
-    let read = door
-        .folders
-        .host
-        .transport
-        .owner(raw, conn, Side::Peer)
-        .await;
-    let bound = bound(lend.owner, read);
-    tracing::debug!(target: "door", lend = %lend.name, recorded = ?lend.owner, ?read, ?bound, "door: whose program answers the lend, by the account it recorded");
+    let read = door.folders.host.transport.program(raw, conn).await;
+    let recorded = (lend.owner, lend.sandbox.as_ref());
+    let bound = bound(recorded, &read);
+    tracing::debug!(target: "door", lend = %lend.name, ?recorded, ?read, ?bound, "door: whose program answers the lend, by the account and sandbox it recorded");
     match bound {
         Bound::Carry => Ok(()),
-        Bound::Record(uid) => {
-            let kept = lend::mutate(&door.data_dir, &lend.name, |l| l.owner = Some(uid));
-            tracing::info!(target: "door", lend = %lend.name, uid, ?kept, "door: a lend from before owners records the account its program runs as");
+        Bound::Record(uid, sandbox) => {
+            tracing::info!(target: "door", lend = %lend.name, uid, ?sandbox, "door: a lend from before this records the account and sandbox its program runs in");
+            let kept = lend::mutate(&door.data_dir, &lend.name, |l| {
+                (l.owner, l.sandbox) = (Some(uid), sandbox);
+            });
+            tracing::debug!(target: "door", lend = %lend.name, ?kept, "door: recorded");
             Ok(())
         }
         Bound::Held(held) => {
-            tracing::warn!(target: "door", lend = %lend.name, recorded = ?lend.owner, ?read, ?held, "door: refused — not the account the lend recorded answers it, or whose can't be told");
+            tracing::warn!(target: "door", lend = %lend.name, ?recorded, ?read, ?held, "door: refused — not the account or sandbox the lend recorded answers it, or whose can't be told");
             Err(held)
         }
     }

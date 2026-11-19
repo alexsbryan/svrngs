@@ -138,6 +138,7 @@ fn lend(name: &str, port: u16) -> Lend {
         asks: None,
         sends: Vec::new(),
         owner: None,
+        sandbox: None,
     }
 }
 
@@ -157,6 +158,9 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     // The account its program ran as (LEND_OWNER §5, 7); planted, watched
     // failing: `write` leaving it out (read back as none).
     shelf.owner = Some(1000);
+    // And the sandbox (LEND_SANDBOX); planted, watched failing: `write`
+    // leaving it out.
+    shelf.sandbox = Some(Sandbox::App("org.jellyfin.JellyfinServer".into()));
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));

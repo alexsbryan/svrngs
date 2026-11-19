@@ -290,6 +290,7 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
         asks: None,
         sends: Vec::new(),
         owner: None,
+        sandbox: None,
     }
 }
 
@@ -960,30 +961,89 @@ async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again()
 /// included; another uid is held as another's; a lend from before owners
 /// records the first uid read; a Mac's "none of this account's", and any
 /// read that can't be judged, hold it as unjudged, recorded or not; where
-/// no reader is, it carries as before. Planted, each watched failing:
-/// another uid carried anyway; a lend from before carried without its
-/// record.
+/// no reader is, it carries as before. Then the sandbox (LEND_SANDBOX): a
+/// program in an app's sandbox is held where none or another app was
+/// recorded, carried where the same app was or where it runs in none; a
+/// lend from before sandboxes records the first read. Every row of the one
+/// decider. Planted, each watched failing: another uid carried anyway; a
+/// lend from before carried without its record; a sandboxed program
+/// carried anyway; one in none held on an app's lend.
 #[test]
 fn a_connection_is_carried_only_to_the_account_its_lend_recorded() {
-    use crate::lend::Hold;
+    use crate::lend::{Hold, Sandbox};
     use crate::uid::Owner;
     let why = "no socket at that end on this computer";
-    for (recorded, read, decided) in [
-        (Some(1000), Owner::Uid(1000), Bound::Carry),
-        (Some(1000), Owner::Uid(1001), Bound::Held(Hold::Another)),
-        (Some(0), Owner::Uid(1000), Bound::Held(Hold::Another)),
-        (None, Owner::Uid(1000), Bound::Record(1000)),
-        (Some(502), Owner::NotMine, Bound::Held(Hold::Unjudged)),
-        (None, Owner::NotMine, Bound::Held(Hold::Unjudged)),
+    let (no, app) = (Sandbox::No, |id: &str| Sandbox::App(id.into()));
+    let (sab, jelly) = (
+        app("org.sabnzbd.sabnzbd"),
+        app("org.jellyfin.JellyfinServer"),
+    );
+    let read = |uid, sandbox: Option<&Sandbox>| Owner::Uid(uid, sandbox.cloned());
+    let another = Bound::Held(Hold::Another);
+    for ((owner, sandbox), read, decided) in [
+        ((Some(1000), Some(&no)), read(1000, Some(&no)), Bound::Carry),
+        ((Some(1000), None), read(1000, None), Bound::Carry),
         (
-            Some(1000),
+            (Some(1000), Some(&no)),
+            read(1001, Some(&no)),
+            another.clone(),
+        ),
+        ((Some(0), None), read(1000, None), another.clone()),
+        // The same account, then the same sandbox or none (LEND_SANDBOX).
+        (
+            (Some(1000), Some(&no)),
+            read(1000, Some(&sab)),
+            another.clone(),
+        ),
+        (
+            (Some(1000), Some(&jelly)),
+            read(1000, Some(&sab)),
+            another.clone(),
+        ),
+        (
+            (Some(1000), Some(&jelly)),
+            read(1000, Some(&jelly)),
+            Bound::Carry,
+        ),
+        (
+            (Some(1000), Some(&jelly)),
+            read(1000, Some(&no)),
+            Bound::Carry,
+        ),
+        // Another account's: not read, its account alone decides.
+        ((Some(973), None), read(973, None), Bound::Carry),
+        // From before owners, or before sandboxes: recorded as read.
+        (
+            (None, None),
+            read(1000, Some(&sab)),
+            Bound::Record(1000, Some(sab.clone())),
+        ),
+        ((None, None), read(973, None), Bound::Record(973, None)),
+        (
+            (Some(1000), None),
+            read(1000, Some(&no)),
+            Bound::Record(1000, Some(no.clone())),
+        ),
+        (
+            (Some(502), Some(&no)),
+            Owner::NotMine,
+            Bound::Held(Hold::Unjudged),
+        ),
+        ((None, None), Owner::NotMine, Bound::Held(Hold::Unjudged)),
+        (
+            (Some(1000), Some(&no)),
             Owner::Unjudged(why),
             Bound::Held(Hold::Unjudged),
         ),
-        (None, Owner::Unjudged(why), Bound::Held(Hold::Unjudged)),
-        (Some(1000), Owner::NoReader, Bound::Carry),
-        (None, Owner::NoReader, Bound::Carry),
+        (
+            (None, None),
+            Owner::Unjudged(why),
+            Bound::Held(Hold::Unjudged),
+        ),
+        ((Some(1000), None), Owner::NoReader, Bound::Carry),
+        ((None, None), Owner::NoReader, Bound::Carry),
     ] {
-        assert_eq!(bound(recorded, read), decided, "{recorded:?} {read:?}");
+        let decision = bound((owner, sandbox), &read);
+        assert_eq!(decision, decided, "{owner:?} {sandbox:?} {read:?}");
     }
 }

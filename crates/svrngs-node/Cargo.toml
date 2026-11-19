@@ -87,9 +87,12 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 qrcodegen = "=1.8.0"
 
 # libproc's read of this account's sockets (uid.rs `kernel`), svrngs's one
-# `unsafe` function, through the libc the lock already holds.
+# `unsafe` function, through the libc the lock already holds; and whether a
+# socket's holder is an App Sandbox app (uid.rs `mac::sandbox`), through the
+# Security.framework binding the lock already holds (rustls-platform-verifier's).
 [target.'cfg(target_os = "macos")'.dependencies]
 libc = "0.2"
+security-framework = "3.7"
 
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a

@@ -214,6 +214,7 @@ async fn a_phone_joins_by_the_link_sam_printed_and_is_in_again_without_asking(
         asks: None,
         sends: Vec::new(),
         owner: None,
+        sandbox: None,
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
 
@@ -531,6 +532,7 @@ async fn phone_joins_through(
         asks: None,
         sends: Vec::new(),
         owner: None,
+        sandbox: None,
     };
     lend::declare(dir.path(), &shelf, None).unwrap();
     let args =

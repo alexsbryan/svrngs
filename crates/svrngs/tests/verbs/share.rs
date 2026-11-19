@@ -261,7 +261,9 @@ impl cli::Here for Lender<'_> {
         self.running.listens(port)
     }
     fn owner(&self, raw: Option<svrngs_node::lend::Raw>, port: NonZeroU16) -> Owner {
-        self.owner.unwrap_or_else(|| self.running.owner(raw, port))
+        self.owner
+            .clone()
+            .unwrap_or_else(|| self.running.owner(raw, port))
     }
     fn prompt(&self, _: &svrngs_node::lend::LendName, asked: &str, _: bool) -> cli::Prompted {
         self.asked.borrow_mut().push(asked.to_string());
@@ -668,7 +670,7 @@ async fn a_lend_keeps_its_program_s_account_and_a_mac_only_this_one_s() {
         "nothing lent"
     );
     let mut kept = Lender::of(&sam, SECRET);
-    kept.owner = Some(Owner::Uid(4242));
+    kept.owner = Some(Owner::Uid(4242, None));
     shares(&kept, &["4533", "--group", "Lab"])
         .await
         .expect("navidrome is lent");

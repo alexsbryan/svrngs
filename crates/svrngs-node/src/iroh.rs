@@ -125,6 +125,8 @@ pub struct IrohTransport {
     /// The connections this computer's acceptor took, which [`Self::fetch`]
     /// closes with those it dialled.
     pub(crate) accepted: Accepted,
+    /// The sandboxes of lends' programs read so far ([`crate::uid::Seen`]).
+    seen: std::sync::Arc<crate::uid::Seen>,
 }
 
 /// The connections an acceptor took, each by the key its handshake verified
@@ -142,6 +144,7 @@ impl IrohTransport {
             known_addrs: std::sync::Mutex::new(HashMap::new()),
             conns: tokio::sync::watch::Sender::new(Connections::new()),
             accepted: Accepted::default(),
+            seen: Default::default(),
         }
     }
 
@@ -284,6 +287,9 @@ pub trait Net: Fetch + std::any::Any {
     /// Whose the socket at `side` of `conn` on this computer is
     /// ([`crate::uid::owner`]): read off the async runtime in the product.
     fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner>;
+    /// Whose program answers at `conn`'s peer, and in what sandbox
+    /// ([`crate::uid::owner`] asked with what it has read): read off the async runtime in the product.
+    fn program(&self, raw: Raw, conn: Conn) -> Later<'_, Owner>;
 }
 
 /// A connection's two halves as one, as a lend's service is spoken to.
@@ -446,7 +452,13 @@ impl Net for IrohTransport {
         })
     }
     fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner> {
-        let read = tokio::task::spawn_blocking(move || crate::uid::owner(raw, conn, side));
+        let read = tokio::task::spawn_blocking(move || crate::uid::owner(raw, conn, side, None));
+        Box::pin(async move { read.await.unwrap_or(Owner::Unjudged("the read stopped")) })
+    }
+    fn program(&self, raw: Raw, conn: Conn) -> Later<'_, Owner> {
+        let seen = self.seen.clone();
+        let read = move || crate::uid::owner(raw, conn, Side::Peer, Some(&seen));
+        let read = tokio::task::spawn_blocking(read);
         Box::pin(async move { read.await.unwrap_or(Owner::Unjudged("the read stopped")) })
     }
 }

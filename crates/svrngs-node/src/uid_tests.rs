@@ -13,7 +13,7 @@ fn conn(local: &str, peer: &str) -> Conn {
 
 /// The one uid among `rows` holding the socket at `side` of `c`, as the
 /// Linux reader answers it.
-fn answer(rows: &[(Ends, u32)], raw: Raw, c: Conn, side: Side) -> Owner {
+fn answer(rows: &[proc_net::Row], raw: Raw, c: Conn, side: Side) -> Owner {
     let (at, to) = ends(c, side);
     one(rows.iter().filter(|r| holds(raw, r.0, at, to)).map(|r| r.1))
 }
@@ -55,17 +55,26 @@ const UDP: &str = "   sl  local_address rem_address   st tx_queue rx_queue tr tm
 fn the_uid_column_answers_whose_each_end_of_a_connection_is() {
     let dialled = conn("127.0.0.1:53696", "127.0.0.1:631");
     let rows = proc_net::rows(TCP).unwrap();
-    assert_eq!(answer(&rows, Raw::Tcp, dialled, Side::Peer), Owner::Uid(0));
+    assert_eq!(
+        answer(&rows, Raw::Tcp, dialled, Side::Peer),
+        Owner::Uid(0, None)
+    );
     assert_eq!(
         answer(&rows, Raw::Tcp, dialled, Side::Local),
-        Owner::Uid(1000)
+        Owner::Uid(1000, None)
     );
     let dual = conn("127.0.0.1:60810", "127.0.0.1:60559");
     let rows = proc_net::rows(TCP6).unwrap();
-    assert_eq!(answer(&rows, Raw::Tcp, dual, Side::Peer), Owner::Uid(1000));
+    assert_eq!(
+        answer(&rows, Raw::Tcp, dual, Side::Peer),
+        Owner::Uid(1000, None)
+    );
     let flow = conn("127.0.0.1:34077", "127.0.0.53:53");
     let rows = proc_net::rows(UDP).unwrap();
-    assert_eq!(answer(&rows, Raw::Udp, flow, Side::Peer), Owner::Uid(193));
+    assert_eq!(
+        answer(&rows, Raw::Udp, flow, Side::Peer),
+        Owner::Uid(193, None)
+    );
 }
 
 /// **What the uid column can't settle is never an answer**: a socket in
@@ -87,7 +96,7 @@ fn what_the_uid_column_can_t_settle_is_never_an_answer() {
     let dialled = conn("127.0.0.1:53696", "127.0.0.1:631");
     assert_eq!(
         answer(&rows, Raw::Tcp, dialled, Side::Peer),
-        Owner::Uid(999)
+        Owner::Uid(999, None)
     );
     let nobody = conn("127.0.0.1:53696", "127.0.0.1:632");
     assert!(matches!(
@@ -170,8 +179,14 @@ fn this_computer_answers_for_a_connection_made_here() {
         local: dialled.local_addr().unwrap(),
         peer: dialled.peer_addr().unwrap(),
     };
-    assert_eq!(owner(Raw::Tcp, made, Side::Peer), Owner::Uid(uid));
-    assert_eq!(owner(Raw::Tcp, made, Side::Local), Owner::Uid(uid));
+    assert_eq!(
+        owner(Raw::Tcp, made, Side::Peer, None),
+        Owner::Uid(uid, None)
+    );
+    assert_eq!(
+        owner(Raw::Tcp, made, Side::Local, None),
+        Owner::Uid(uid, None)
+    );
     let service = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
     let flow = std::net::UdpSocket::bind("127.0.0.1:0").unwrap();
     flow.connect(service.local_addr().unwrap()).unwrap();
@@ -179,7 +194,16 @@ fn this_computer_answers_for_a_connection_made_here() {
         local: flow.local_addr().unwrap(),
         peer: service.local_addr().unwrap(),
     };
-    assert_eq!(owner(Raw::Udp, sent, Side::Peer), Owner::Uid(uid));
+    assert_eq!(
+        owner(Raw::Udp, sent, Side::Peer, None),
+        Owner::Uid(uid, None)
+    );
+    // This test's own sockets, asked with what is kept: its program, this
+    // test, in no sandbox, read once.
+    let seen = Seen::default();
+    let none = Owner::Uid(uid, Some(Sandbox::No));
+    assert_eq!(owner(Raw::Tcp, made, Side::Peer, Some(&seen)), none);
+    assert_eq!(owner(Raw::Udp, sent, Side::Peer, Some(&seen)), none);
     #[cfg(target_os = "macos")]
     {
         let late = std::thread::spawn(move || {
@@ -192,8 +216,8 @@ fn this_computer_answers_for_a_connection_made_here() {
             peer: queued.peer_addr().unwrap(),
         };
         assert_eq!(
-            owner(Raw::Tcp, queued, Side::Peer),
-            Owner::Uid(uid),
+            owner(Raw::Tcp, queued, Side::Peer, None),
+            Owner::Uid(uid, None),
             "accepted late"
         );
         let (listener, _kept) = late.join().unwrap().unwrap();
@@ -203,7 +227,7 @@ fn this_computer_answers_for_a_connection_made_here() {
             peer: never.peer_addr().unwrap(),
         };
         assert_eq!(
-            owner(Raw::Tcp, never, Side::Peer),
+            owner(Raw::Tcp, never, Side::Peer, None),
             Owner::NotMine,
             "never accepted"
         );
@@ -211,7 +235,7 @@ fn this_computer_answers_for_a_connection_made_here() {
             local: sent.local,
             peer: at("127.0.0.1:1"),
         };
-        assert_eq!(owner(Raw::Udp, nobody, Side::Peer), Owner::NotMine);
+        assert_eq!(owner(Raw::Udp, nobody, Side::Peer, None), Owner::NotMine);
         // A process of ours with no open files, which libproc answers 0
         // for, as it does a failure: the whole scan still answers.
         let mut bare = std::process::Command::new("/bin/sh")
@@ -219,9 +243,95 @@ fn this_computer_answers_for_a_connection_made_here() {
             .spawn()
             .unwrap();
         std::thread::sleep(std::time::Duration::from_millis(200));
-        let scanned = owner(Raw::Udp, nobody, Side::Peer);
+        let scanned = owner(Raw::Udp, nobody, Side::Peer, None);
         bare.kill().unwrap();
         bare.wait().unwrap();
         assert_eq!(scanned, Owner::NotMine, "a process with no files");
     }
+}
+
+/// **A Flatpak is read by the app its root names** (LEND_SANDBOX): a
+/// process's `/proc/<pid>` whose root holds the `.flatpak-info` read on the
+/// Fedora box (2026-11-19, sabnzbd) is that app, whichever instance; one
+/// whose root holds none is in no sandbox; one whose root is gone can't be
+/// judged, never none; one naming no app can't be judged. Planted, watched
+/// failing: `instance-id=` read for the app (the second run another app).
+#[test]
+fn a_flatpak_is_read_by_the_app_its_root_names() {
+    let info = |instance: &str| {
+        format!("[Application]\nname=org.sabnzbd.sabnzbd\nruntime=runtime/org.freedesktop.Platform/x86_64/26.08\n\n[Instance]\ninstance-id={instance}\napp-path=/home/a/.local/share/flatpak/app/org.sabnzbd.sabnzbd/x86_64/stable/c241/files\n")
+    };
+    let proc = tempfile::tempdir().unwrap();
+    std::fs::create_dir(proc.path().join("root")).unwrap();
+    let sabnzbd = Ok(Sandbox::App("org.sabnzbd.sabnzbd".into()));
+    for instance in ["1244589967", "839627432"] {
+        std::fs::write(proc.path().join("root/.flatpak-info"), info(instance)).unwrap();
+        assert_eq!(proc_net::flatpak(proc.path()), sabnzbd, "run {instance}");
+    }
+    std::fs::write(proc.path().join("root/.flatpak-info"), "[Application]\n").unwrap();
+    assert!(proc_net::flatpak(proc.path()).is_err(), "no app named");
+    std::fs::remove_file(proc.path().join("root/.flatpak-info")).unwrap();
+    assert_eq!(proc_net::flatpak(proc.path()), Ok(Sandbox::No));
+    std::fs::remove_dir(proc.path().join("root")).unwrap();
+    assert!(proc_net::flatpak(proc.path()).is_err(), "a process gone");
+}
+
+/// **The sockets a connection reaches are told apart by inode, and agree
+/// or say nothing**: each `/proc/net` row keeps its inode; the holders of
+/// the sockets there, one sandbox, are it; two sandboxes, or none read,
+/// can't be judged. Planted, watched failing: the inode read from the
+/// ninth field (the timeout, 0); `alike` taking the first said.
+#[test]
+fn the_sockets_a_connection_reaches_agree_or_say_nothing() {
+    let rows = proc_net::rows(TCP).unwrap();
+    assert_eq!((rows[0].2, rows[1].2), (2556494, 2550773));
+    let said = |all: Vec<Read>| proc_net::alike(all.into_iter(), "none");
+    let app = || Sandbox::App("org.sabnzbd.sabnzbd".into());
+    assert_eq!(said(vec![Ok(app()), Ok(app())]), Ok(app()));
+    assert_eq!(said(vec![Ok(Sandbox::No)]), Ok(Sandbox::No));
+    assert!(
+        said(vec![Ok(Sandbox::No), Ok(app())]).is_err(),
+        "two sandboxes"
+    );
+    assert_eq!(said(vec![]), Err("none"));
+    assert!(said(vec![Ok(app()), Err("unread")]).is_err());
+}
+
+/// **A sandbox is read once for what a taker must make anew** (LEND_SANDBOX):
+/// asked again at the same key, `Seen` answers what it kept without
+/// reading; at another key it reads; a read that failed is not kept; full,
+/// it empties. And a Mac's key: the `proc_bsdinfo` capture's start, in
+/// 2026, none for a record of another length. Planted, watched failing:
+/// nothing kept (read twice); never emptied (4097 kept); the start read at
+/// 112 (not in 2026).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_sandbox_is_read_once_for_what_a_taker_must_make_anew() {
+    let seen = Seen::default();
+    let reads = std::cell::Cell::new(0);
+    let read = |sandbox: Read| {
+        reads.set(reads.get() + 1);
+        sandbox
+    };
+    assert_eq!(
+        seen.get_or((7, 0), || read(Ok(Sandbox::No))),
+        Ok(Sandbox::No)
+    );
+    assert_eq!(seen.get_or((7, 0), || read(Err("again"))), Ok(Sandbox::No));
+    assert_eq!(reads.get(), 1, "kept, not read again");
+    assert!(seen.get_or((8, 0), || read(Err("unread"))).is_err());
+    assert_eq!(
+        seen.get_or((8, 0), || read(Ok(Sandbox::No))),
+        Ok(Sandbox::No)
+    );
+    assert_eq!(reads.get(), 3, "a failed read not kept");
+    for pid in 0..KEPT as u64 + 1 {
+        let _ = seen.get_or((pid, 1), || Ok(Sandbox::No));
+    }
+    assert!(seen.0.lock().unwrap().len() <= KEPT, "emptied when full");
+    let bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
+    let year = 1_767_225_600..1_798_761_600;
+    let start = record::start(&bsd).map(|us| us / 1_000_000);
+    assert!(start.is_some_and(|s| year.contains(&s)), "{start:?}");
+    assert_eq!(record::start(&bsd[..128]), None);
 }

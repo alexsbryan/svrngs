@@ -346,7 +346,7 @@ async fn an_open_lets_in_only_a_browser_this_account_runs() {
         let host = format!("{name}.localhost:{}", api.port());
         let headers = format!("Origin: http://{host}\r\nSec-Fetch-Site: same-origin\r\n");
         // The port every on-wire ask comes from (common/on_wire.rs `sent`).
-        on_wire::owns(&alex, 50_000, Owner::Uid(mine + 1));
+        on_wire::owns(&alex, 50_000, Owner::Uid(mine + 1, None));
         let theirs = ask(api, "POST", &host, &path, &headers, "").await;
         assert_eq!(theirs.status, 401, "{name}: {}", theirs.body);
         assert!(
@@ -356,7 +356,7 @@ async fn an_open_lets_in_only_a_browser_this_account_runs() {
             "{}",
             theirs.body
         );
-        on_wire::owns(&alex, 50_000, Owner::Uid(mine));
+        on_wire::owns(&alex, 50_000, Owner::Uid(mine, None));
         let ours = ask(api, "POST", &host, &path, &headers, "").await;
         assert_eq!(ours.status, 200, "{name}: the code unspent: {}", ours.body);
     }
