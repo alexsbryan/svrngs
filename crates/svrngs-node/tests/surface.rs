@@ -410,7 +410,8 @@ async fn an_app_finds_the_api_and_asks_the_groups_this_computer_holds() {
 /// Alex as this computer's person, not removed and nobody removed or asked
 /// to be, not left, keeping the order of removals, nobody visiting, two
 /// slots, no folder, nothing waiting, no fallback, offered Move; beside
-/// the groups this computer's key. The api file naming the listener stays
+/// the groups this computer's key, and no share of the public way spent
+/// (share-refusal). The api file naming the listener stays
 /// that test's. Planted: `keeps` never true (Alex's computer said not to
 /// keep the order, nor offered Move); the key beside the groups left out.
 #[tokio::test]
@@ -421,7 +422,7 @@ async fn an_app_asks_the_groups_this_computer_holds_on_the_wire() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "slots": 2, "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": "alex", "removed": false, "removals": [], "left": false, "keeps": true, "visiting": [], "slots": 2, "folders": [], "waiting": [], "fallback": null, "vacates": true }], "key": actor_of(&signing(1)), "share": null }),
     );
     house.close().await;
 }
@@ -462,7 +463,7 @@ async fn an_unreadable_register_is_not_read_as_not_removed() {
     let made = made_by_alex(&body);
     assert_eq!(
         body,
-        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "visiting": null, "slots": null, "folders": [], "waiting": null, "fallback": null }], "key": actor_of(&signing(1)) }),
+        serde_json::json!({ "groups": [{ "id": house.id, "name": "house", "made": made, "person": null, "removed": null, "removals": null, "left": null, "keeps": null, "visiting": null, "slots": null, "folders": [], "waiting": null, "fallback": null }], "key": actor_of(&signing(1)), "share": null }),
     );
     house.close().await;
 }
