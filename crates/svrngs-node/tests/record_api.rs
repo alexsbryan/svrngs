@@ -289,6 +289,7 @@ fn api_alone(dir: &tempfile::TempDir) -> axum::Router {
             live: Default::default(),
             transport: std::sync::Arc::new(Nobody),
             build: Vec::new(),
+            emergency: Vec::new(),
         },
         axum::Router::new(),
         axum::Router::new(),

@@ -55,7 +55,7 @@ fn a_link_carries_its_issuer_s_relay_with_lookup_or_without() {
             loopback_only: false,
         };
         let said = format!("n0_services {n0_services}");
-        let meeting = Meeting::of([], &relay.build());
+        let meeting = Meeting::of([], &relay.build(), &[]);
         assert_eq!(
             meeting.carried(Some(&home)),
             [home.clone()],
@@ -67,7 +67,7 @@ fn a_link_carries_its_issuer_s_relay_with_lookup_or_without() {
             "{said}: the build's first, dotless"
         );
     }
-    assert!(Meeting::of([], &no_relay().build())
+    assert!(Meeting::of([], &no_relay().build(), &[])
         .carried(None)
         .is_empty());
 }

@@ -288,7 +288,7 @@ async fn a_computer_that_answers_no_dial_is_asleep_within_the_cap() {
     );
     let said = transport
         .send(
-            &Contact::named(key, &svrngs_core::relay::Meeting::of([], &[]), None),
+            &Contact::named(key, &svrngs_core::relay::Meeting::of([], &[], &[]), None),
             get("/who"),
         )
         .await;

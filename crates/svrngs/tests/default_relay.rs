@@ -7,8 +7,10 @@
 //! a group keeps beside it (relay fallbacks), with no address lookup —
 //! n0's or any. A group made with `new --relay` keeps it in its record,
 //! every computer its link lets in meets the group there too, and each
-//! reaches each by key at the group's relays; no trace of any names an n0
-//! host. Planted: `cli::reach` answering the command's old posture,
+//! reaches each by key at the group's relays. n0's is the emergency behind
+//! ours (n0-emergency), so the build names it and no computer holds it
+//! while ours answers: no trace of any does more than name it. Planted:
+//! `cli::reach` answering the command's old posture,
 //! `RelayConfig::default()`'s n0 relays and lookup.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
@@ -19,7 +21,7 @@ use std::time::Duration;
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs::cli::{self, MeetAt, Verb};
 use svrngs::group;
-use svrngs_node::iroh::{EndpointAddr, RelayConfig, RelayUrl};
+use svrngs_node::iroh::{EndpointAddr, MemoryLookup, RelayConfig, RelayUrl};
 use svrngs_node::link::Link;
 use svrngs_node::node::Node;
 use svrngs_node::SigningKey;
@@ -102,9 +104,10 @@ async fn relay_here() -> (Server, String) {
 /// The group's own relay and the build's, a second relay on 127.0.0.1
 /// standing in for svrngs's so nothing leaves this computer (relay
 /// fallbacks): every computer meets the group at both, iroh making either
-/// its home, and n0 never.
+/// its home, and holds no n0's — the emergency behind ours is named, never
+/// held (n0-emergency).
 #[tokio::test(flavor = "multi_thread")]
-async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
+async fn a_group_s_own_relay_meets_every_member_and_n0_s_is_never_held() {
     traced();
     let ((_own, url), (_build, build)) = (relay_here().await, relay_here().await);
     let dirs = [(); 3].map(|()| tempfile::tempdir().unwrap());
@@ -182,15 +185,79 @@ async fn a_group_s_own_relay_meets_every_member_and_n0_never() {
         "the traces are read: {}",
         traces.len()
     );
-    for host in N0 {
-        let seen: Vec<_> = traces
-            .lines()
-            .filter(|l| l.contains(host))
-            .take(3)
-            .collect();
-        assert!(seen.is_empty(), "no computer names n0's {host}: {seen:#?}");
+    // The build names n0's now, the emergency behind ours (n0-emergency):
+    // named, never held while ours answers, and nothing else of any trace.
+    for node in &people {
+        let held = node.relays_held();
+        for host in N0 {
+            assert!(
+                !held.iter().any(|r| r.contains(host)),
+                "a computer holds n0's {host} while ours answers: {held:?}"
+            );
+        }
+    }
+    for line in traces
+        .lines()
+        .filter(|l| N0.iter().any(|host| l.contains(host)))
+    {
+        assert!(
+            line.contains("trailing dot") || line.contains("relay: where a group meets"),
+            "a trace does more than name n0's: {line}"
+        );
     }
     for node in &people {
         node.endpoint().close().await;
     }
+}
+
+/// **A computer at svrngs's keeps a link's relay whatever lookup its
+/// endpoint has** (review #135: `join_group` inferred the posture from an
+/// address lookup, so a test's `MemoryLookup` read as n0's and a link's
+/// relay was dropped): Sam's house is met at a relay of its own, Alex joins
+/// by its link with a `MemoryLookup` added to its endpoint as a test adds
+/// one, and the relay the link carried is kept in Alex's file for the
+/// group — the one decision is the command's `RelayConfig`, never the
+/// endpoint's lookup. Planted, watched red: the old inference in
+/// `join_group`, an endpoint with a lookup read as n0's, and no file was
+/// there.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_computer_at_svrngs_s_with_a_memory_lookup_keeps_its_link_s_relay() {
+    let ((_own, url), (_build, build)) = (relay_here().await, relay_here().await);
+    let ours = RelayConfig {
+        relay_urls: vec![build],
+        ..cli::reach(MeetAt::Svrngs)
+    };
+    let dirs = [(); 2].map(|()| tempfile::tempdir().unwrap());
+    let made = cli::parse(argv(&format!("new house --as Sam --relay {url}"))).unwrap();
+    let sam = computer(dirs[0].path(), 51, &ours).await;
+    let Verb::New {
+        name,
+        person,
+        relays: kept,
+        ..
+    } = made
+    else {
+        unreachable!("new parses as new")
+    };
+    let (seed, printed) = cli::new_group(&sam, name, person.unwrap(), None, &kept, &ours)
+        .await
+        .expect("Sam makes house");
+    let alex = computer(dirs[1].path(), 52, &ours).await;
+    alex.endpoint()
+        .address_lookup()
+        .unwrap()
+        .add(MemoryLookup::new());
+    let join = cli::parse(argv(&format!("join {} --as Alex", printed.client))).unwrap();
+    let Verb::Join { link, person, .. } = join else {
+        unreachable!("join parses as join")
+    };
+    let key = SigningKey::from_bytes(&[52; 32]);
+    cli::join_group(&alex, &key, &link, &person.unwrap())
+        .await
+        .expect("Alex is let in");
+    let file = alex.rail().group_dir(&seed.id()).unwrap().join("relay");
+    let kept = std::fs::read_to_string(&file).expect("the link's relay is kept");
+    assert_eq!(kept.trim(), url, "the relay the link carried");
+    sam.endpoint().close().await;
+    alex.endpoint().close().await;
 }

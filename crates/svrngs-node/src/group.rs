@@ -157,13 +157,13 @@ pub(crate) fn kept(path: &Path) -> Result<Option<String>, SeedError> {
 impl crate::node::Host {
     /// Keep `seed`'s group on this computer: its journal, the seed beside it,
     /// `origin` when given, the roster the seed founds, and where it meets
-    /// of `own`, the build's relays left out, as the record never names
-    /// them: from its founder, the keeper, the group's relays in its record
-    /// (`new --relay`, or where the founder is met now); from a joiner, the
-    /// first, the relay a link carried, in the file an old group is met by
-    /// until its keeper names its relays ([`meeting`]). What `new` and
-    /// `join` both write, in one order, so a group kept by either is the
-    /// same.
+    /// of `own`, the build's relays and n0's, the emergency behind them,
+    /// left out, as the record never names them: from its founder, the
+    /// keeper, the group's relays in its record (`new --relay`, or where the
+    /// founder is met now); from a joiner, the first, the relay a link
+    /// carried, in the file an old group is met by until its keeper names
+    /// its relays ([`meeting`]). What `new` and `join` both write, in one
+    /// order, so a group kept by either is the same.
     pub fn keep_group(
         &self,
         seed: &Seed,
@@ -174,7 +174,7 @@ impl crate::node::Host {
         let dir = rail.group_dir(&seed.id()).map_err(|e| e.to_string())?;
         let own: BTreeSet<Url> = own
             .iter()
-            .filter(|r| !self.build.contains(r))
+            .filter(|r| !self.build.contains(r) && !self.emergency.contains(r))
             .cloned()
             .collect();
         let founds = seed.founder_actor() == self.actor;
@@ -260,19 +260,25 @@ impl crate::node::Host {
         Ok(())
     }
 
-    /// Where `group` meets ([`meeting`]), by this computer's build.
+    /// Where `group` meets ([`meeting`]), by this computer's build and the
+    /// emergency behind it.
     pub(crate) fn meeting(&self, group: &str) -> Meeting {
-        meeting(&self.rail, group, &self.build)
+        meeting(&self.rail, group, &self.build, &self.emergency)
     }
 }
 
-/// Where `group` meets (relay fallbacks; svrn-docs `GROUP_RELAYS.md` §7):
-/// the relays its keeper names in its record, else, for an old group whose
-/// keeper has named none, the relay its file here keeps; joined with
-/// `build`'s, the one way a [`Meeting`] is made from a group. A register
-/// or a file that cannot be read is said at warn, and the group met at the
-/// build's relays alone.
-pub(crate) fn meeting(rail: &crate::RingRail, group: &str, build: &[Url]) -> Meeting {
+/// Where `group` meets (relay fallbacks; svrn-docs `GROUP_RELAYS.md` §7;
+/// n0-emergency): the relays its keeper names in its record, else, for an
+/// old group whose keeper has named none, the relay its file here keeps;
+/// joined with `build`'s and the `emergency` behind it, the one way a
+/// [`Meeting`] is made from a group. A register or a file that cannot be
+/// read is said at warn, and the group met at the build's relays alone.
+pub(crate) fn meeting(
+    rail: &crate::RingRail,
+    group: &str,
+    build: &[Url],
+    emergency: &[Url],
+) -> Meeting {
     let own = match rail.register(group).map(|r| r.meets) {
         Ok(Some(own)) => own,
         Ok(None) => filed(rail, group).into_iter().collect(),
@@ -281,7 +287,7 @@ pub(crate) fn meeting(rail: &crate::RingRail, group: &str, build: &[Url]) -> Mee
             BTreeSet::new()
         }
     };
-    Meeting::of(own, build)
+    Meeting::of(own, build, emergency)
 }
 
 /// The relay `group`'s file here keeps, an old group's, which its keeper

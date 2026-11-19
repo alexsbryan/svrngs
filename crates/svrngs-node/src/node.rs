@@ -270,6 +270,11 @@ pub struct Host {
     /// The build's relays, where it meets every group beside the group's
     /// own ([`RelayConfig::build`]; relay fallbacks).
     pub(crate) build: Vec<Url>,
+    /// n0's public relays, the emergency tier behind the build's
+    /// ([`crate::tiers::behind`]; n0-emergency): where this computer meets
+    /// when the build's fallback does not answer and no group it holds
+    /// names a relay of its own.
+    pub(crate) emergency: Vec<Url>,
     /// What its endpoint holds now, at which tier ([`crate::tiers`]).
     pub(crate) held: tokio::sync::watch::Sender<crate::tiers::Held>,
     /// The home the last [`Host::say_relay`] was asked to say, which the
@@ -337,7 +342,13 @@ impl Node {
         // moves it to the build's at once if none does (crate::tiers).
         let asked: std::collections::BTreeSet<Url> = asked.iter().cloned().collect();
         let groups = rail.namespaces().unwrap_or_default();
-        let meeting = crate::tiers::everywhere(&rail, &groups, &relay.build(), &asked);
+        let meeting = crate::tiers::everywhere(
+            &rail,
+            &groups,
+            &relay.build(),
+            &crate::tiers::behind(),
+            &asked,
+        );
         let (held, relays) = crate::tiers::Held::built(meeting, asked);
         let at = RelayConfig {
             relay_urls: relays.iter().map(ToString::to_string).collect(),
@@ -397,6 +408,7 @@ impl Node {
             actor: actor.clone(),
             relayed: relay.n0_services || !relay.relay_urls.is_empty(),
             build: relay.build(),
+            emergency: crate::tiers::behind(),
             held: tokio::sync::watch::Sender::new(held),
             asked: tokio::sync::watch::Sender::new(None),
             api_port,
@@ -465,6 +477,7 @@ impl Node {
             live: live.clone(),
             transport: transport.clone(),
             build: host.build.clone(),
+            emergency: host.emergency.clone(),
         };
         let routes = crate::api::router(
             rail_api.clone(),

@@ -394,6 +394,78 @@ async fn the_door_says_which_relay_carried_an_action() {
     node.endpoint().close().await;
 }
 
+/// **A computer whose groups name no relay meets at n0's while ours does
+/// not answer** (n0-emergency; RELAY_COMMONS 1: "n0's public relays come in
+/// only while ours does not answer"): Ada's group names none of its own,
+/// her build's relay is B, and n0's is on the wire. While B answers she is
+/// homed at B and holds no n0's; B stopped, she is homed at n0's; B back at
+/// its address, at B again, n0's out of the endpoint. Planted, watched red:
+/// `tiers::behind` answering none, and she was not homed at n0's within
+/// 76 s; the emergency held at the build's tier, and the first assertion
+/// failed.
+#[tokio::test(start_paused = true)]
+async fn a_group_with_none_of_its_own_meets_at_n0_s_while_ours_does_not_answer() {
+    let (n0, _dir, node, seed) = ada_beside_n0().await;
+    node.host().keep_group(&seed, None, &[]).unwrap();
+    homed_on(&node, B).await;
+    let held = node.relays_held();
+    assert!(
+        !held.contains(&n0),
+        "n0's held while ours answers: {held:?}"
+    );
+    on_wire::relay(B, Relaying::Down);
+    homed_on(&node, &n0).await;
+    on_wire::relay(B, Relaying::Up);
+    homed_on(&node, B).await;
+    let held = node.relays_held();
+    assert!(
+        !held.contains(&n0),
+        "n0's held once ours answers again: {held:?}"
+    );
+}
+
+/// **A link minted before the operator's switch is not kept at n0's** (the
+/// #134 gap, rescoped by n0-emergency to "n0 only in the emergency tier"):
+/// a joiner's link carries one of n0's relays and one of ours; the group is
+/// kept with the build's relays and n0's left out of the file it keeps
+/// (`Host::keep_group`), so it meets at ours while ours answers and never
+/// at n0's as its own. Planted, watched red: `keep_group` filtering the
+/// build's relays alone (the code before this unit), and n0's was filed.
+#[tokio::test(start_paused = true)]
+async fn a_link_minted_at_n0_s_is_not_kept_as_the_group_s_own() {
+    let (n0, _dir, node, seed) = ada_beside_n0().await;
+    let link: Vec<Url> = [&n0, B].iter().map(|r| r.parse().unwrap()).collect();
+    node.host().keep_group(&seed, None, &link).unwrap();
+    let file = node.rail().group_dir(&seed.id()).unwrap().join("relay");
+    assert!(!file.exists(), "n0's filed as the group's own: {file:?}");
+    homed_on(&node, B).await;
+    let held = node.relays_held();
+    assert!(!held.iter().any(|r| r.contains("iroh.link")), "{held:?}");
+}
+
+/// Ada's computer on this test's wire, her build's relay B, one of n0's
+/// relays up beside it, and a group named house founded by another computer
+/// (a joiner keeps it by a link): what the two n0-emergency tests start
+/// from, and that relay's URL.
+async fn ada_beside_n0() -> (String, tempfile::TempDir, Node, svrngs_node::group::Seed) {
+    let n0 = svrngs_node::relay::n0_relays()
+        .urls::<Vec<RelayUrl>>()
+        .remove(0)
+        .to_string();
+    on_wire::relay(&n0, Relaying::Up);
+    on_wire::relay(B, Relaying::Up);
+    let (dir, key) = (
+        tempfile::tempdir().unwrap(),
+        SigningKey::from_bytes(&[6; 32]),
+    );
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let node = on_wire::relayed(key.clone(), dir.path(), B, &[], every).await;
+    let name = |n: &str| svrngs_node::group::Name::parse(n).unwrap();
+    let founder = SigningKey::from_bytes(&[7; 32]);
+    let seed = svrngs_node::group::draw(name("house"), name("Ada"), founder.verifying_key());
+    (n0, dir, node, seed)
+}
+
 /// A server on 127.0.0.1 that answers every request 200 and is no relay:
 /// svrngs's ask of it passes (`tiers::answers`, `GET /ping`), and an
 /// endpoint never registers there, as at a captive portal taking TCP 443.

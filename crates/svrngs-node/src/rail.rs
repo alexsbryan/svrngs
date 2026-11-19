@@ -74,6 +74,10 @@ pub struct RailApi {
     /// The build's relays, where every group meets beside its own
     /// (`RelayConfig::build`): the fan-out dials a group's whole meeting.
     pub build: Vec<svrngs_core::relay::Url>,
+    /// n0's public relays, the emergency tier behind the build's
+    /// ([`crate::tiers::behind`]): the fan-out dials the group's meeting
+    /// as the node's own tiers hold it (n0-emergency).
+    pub emergency: Vec<svrngs_core::relay::Url>,
 }
 
 // ── The doors ────────────────────────────────────────────────
@@ -580,7 +584,7 @@ pub async fn live_push(
         )
     })?;
     let standing = standing_of(&api.rail, namespace)?;
-    let meeting = crate::group::meeting(&api.rail, namespace, &api.build);
+    let meeting = crate::group::meeting(&api.rail, namespace, &api.build, &api.emergency);
     let peers = live_peers(&actor_of(api.rail.signer()), namespace, &standing, &meeting);
     let peers = push_ephemeral(&*api.transport, peers, namespace, payload).await;
     let delivered = peers.iter().filter(|p| p.delivered).count();

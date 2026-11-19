@@ -364,6 +364,7 @@ fn api_of(rail: &Arc<RingRail>) -> RailApi {
         live: Arc::new(LiveBuffer::default()),
         transport: Arc::new(crate::iroh::tests::InProcess::asked_by(rail.signer())),
         build: Vec::new(),
+        emergency: Vec::new(),
     }
 }
 
@@ -467,7 +468,7 @@ fn the_live_fan_out_never_offers_a_browser() {
         &actor_of(&key(7)),
         "ledger",
         &standing,
-        &svrngs_core::relay::Meeting::of([], &[]),
+        &svrngs_core::relay::Meeting::of([], &[], &[]),
     );
     let named: Vec<_> = peers.iter().map(|p| p.name.as_deref()).collect();
     assert_eq!(named, [Some("bo")]);

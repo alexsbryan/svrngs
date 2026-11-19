@@ -81,6 +81,19 @@ impl Node {
         format!("{:?}", *self.host.held.borrow())
     }
 
+    /// The relays this computer's endpoint is given now, as [`crate::tiers`]
+    /// holds them, the meeting's three tiers apart from it: what a test of
+    /// the emergency reads, n0's absent while ours answers.
+    pub fn relays_held(&self) -> Vec<String> {
+        self.host
+            .held
+            .borrow()
+            .relays
+            .iter()
+            .map(ToString::to_string)
+            .collect()
+    }
+
     /// The relays this computer dials `actor` at, each way it dials: a
     /// folder's fetch and a lend's origin ([`Host::contact`]), then the
     /// round and the lend asks ([`Host::standing_peers`]) (#127).
@@ -777,7 +790,13 @@ impl Node {
         let token = crate::api::kept_token(&data_dir)?;
         let asked: std::collections::BTreeSet<Url> = asked.iter().cloned().collect();
         let groups = rail.namespaces().unwrap_or_default();
-        let meeting = crate::tiers::everywhere(&rail, &groups, &relay.build(), &asked);
+        let meeting = crate::tiers::everywhere(
+            &rail,
+            &groups,
+            &relay.build(),
+            &crate::tiers::behind(),
+            &asked,
+        );
         let (held, relays) = crate::tiers::Held::built(meeting, asked);
         net.relays(relays.into_iter().map(Into::into).collect(), Vec::new())
             .await;
@@ -811,8 +830,10 @@ impl Node {
         });
         let rail = Arc::new(RingRail::new(&data_dir, Arc::new(key)));
         let token = crate::api::kept_token(&data_dir)?;
-        let (held, _) =
-            crate::tiers::Held::built(svrngs_core::relay::Meeting::of([], &[]), Default::default());
+        let (held, _) = crate::tiers::Held::built(
+            svrngs_core::relay::Meeting::of([], &[], &[]),
+            Default::default(),
+        );
         let relay = RelayConfig {
             relay_urls: Vec::new(),
             n0_services: false,

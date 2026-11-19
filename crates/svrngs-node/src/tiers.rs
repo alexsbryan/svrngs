@@ -3,8 +3,11 @@
 //! `rings/current/GROUP_RELAYS.md` §7, the operator's "Tiers", 2026-11-02,
 //! corrected by the relay-fallback charter: a browser may reach this
 //! computer only through the build's fallback while it answers, so that is
-//! the tier held): the build's fallback alone while it answers, and the
-//! groups' own relays alone when it does not, one endpoint, so one home,
+//! the tier held; n0-emergency: n0's public relays are the third tier,
+//! behind ours, held only while neither ours nor a group's own answers,
+//! RELAY_COMMONS 1): the build's fallback alone while it answers, the
+//! groups' own relays alone when it does not, n0's alone when neither
+//! answers and no group names one of its own, one endpoint, so one home,
 //! serving every group; the build's whatever answers only when no group
 //! names one. svrngs-core's `Meeting::decide` is the one decision;
 //! [`Host::decide`] is the one place it changes the endpoint's relays
@@ -68,7 +71,10 @@ pub const HELD_AT_MOST: u32 = 30;
 pub(crate) struct Held {
     meeting: Meeting,
     tier: Tier,
-    relays: BTreeSet<Url>,
+    /// The relays this endpoint is given now, as [`Host::decide`] holds
+    /// them: what a test of the emergency reads, the meeting's three tiers
+    /// apart from it.
+    pub(crate) relays: BTreeSet<Url>,
     answers: bool,
     pub(crate) asked: BTreeSet<Url>,
 }
@@ -99,7 +105,7 @@ impl Host {
         let groups = self.rail.namespaces().inspect_err(|e| tracing::warn!(target: "tiers", error = %e, "tiers: the groups held cannot be listed, so this computer meets at the relays asked, else the build's"));
         let groups = groups.unwrap_or_default();
         self.held.send_modify(|h| {
-            h.meeting = everywhere(&self.rail, &groups, &self.build, &h.asked);
+            h.meeting = everywhere(&self.rail, &groups, &self.build, &self.emergency, &h.asked);
         });
     }
 
@@ -142,7 +148,10 @@ impl Host {
     /// answer, not the own tier's, moves the meeting. At the build's tier, the
     /// answer is whether this endpoint is [`Self::registered`] there, since
     /// a relay may take a connection and register nobody (review F1), and
-    /// one reached is left only after [`LEFT_AFTER`] misses (review F2).
+    /// one reached is left only after [`LEFT_AFTER`] misses (review F2). At
+    /// the groups' own or n0's, the answer is whether the build's answers
+    /// the ask, since the endpoint holds neither and a registration there
+    /// says nothing of it.
     pub(crate) async fn check(self: Arc<Self>) {
         let (mut every, mut misses, mut reached) = (tokio::time::interval(ASKED_EVERY), 0, false);
         let (mut wait, mut held_for) = (0, 0);
@@ -150,35 +159,36 @@ impl Host {
             every.tick().await;
             let Held { meeting, tier, .. } = self.held.borrow().clone();
             let build = meeting.build().clone();
-            let holding = tier == Tier::Own && held_for > 0;
+            let at_build = matches!(tier, Tier::Fallback | Tier::Unowned);
+            let holding = !at_build && held_for > 0;
             if holding {
                 held_for -= 1;
                 tracing::debug!(target: "tiers", misses, wait, left = held_for, "tiers: the build's fallback not asked — a move there registered nowhere, so moves are held off");
             }
-            let ask = tier == Tier::Own && !holding;
+            let ask = !at_build && !holding;
             // With no build tier, nothing to answer: the tier is the
             // groups' own whatever, and a group asked for next starts at
             // the build's until the first ask says otherwise.
             let answered = build.is_empty()
-                || match tier {
-                    Tier::Own => ask && any_answers(&*self.transport, &build).await,
-                    _ => self.registered(&build).await,
+                || match at_build {
+                    true => self.registered(&build).await,
+                    false => ask && any_answers(&*self.transport, &build).await,
                 };
             misses = if answered { 0 } else { misses + 1 };
             // A move to the build's that never registered holds the next
             // off, twice as long each time; a registration ends the hold.
-            if tier != Tier::Own && !answered && !reached {
+            if at_build && !answered && !reached {
                 wait = (wait * 2).clamp(1, HELD_AT_MOST);
                 held_for = wait;
-            } else if tier != Tier::Own && answered {
+            } else if at_build && answered {
                 wait = 0;
             }
             // Kept only once reached: a fallback this computer reached and
             // lost for a moment is held; one it never reached is left at once,
             // as is one a person's press left while this ask ran.
             let pressed = self.held.borrow().tier != tier;
-            let kept = !pressed && tier != Tier::Own && !answered && reached && misses < LEFT_AFTER;
-            reached = tier != Tier::Own && (answered || kept);
+            let kept = !pressed && at_build && !answered && reached && misses < LEFT_AFTER;
+            reached = at_build && (answered || kept);
             tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, pressed, kept, wait, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
             self.decide(Some(answered || kept)).await;
         }
@@ -287,18 +297,35 @@ impl Host {
 
 /// Where `groups` held under `rail` meet, joined, with a meeting of the
 /// relays `asked` when any; with neither, the build's tier alone, as a
-/// group naming none of its own.
+/// group naming none of its own; `emergency` the third tier behind the
+/// build's ([`behind`]).
 pub(crate) fn everywhere(
     rail: &crate::RingRail,
     groups: &[String],
     build: &[Url],
+    emergency: &[Url],
     asked: &BTreeSet<Url>,
 ) -> Meeting {
-    let asked = (!asked.is_empty()).then(|| Meeting::of(asked.iter().cloned(), build));
-    let each = groups.iter().map(|g| crate::group::meeting(rail, g, build));
+    let asked = (!asked.is_empty()).then(|| Meeting::of(asked.iter().cloned(), build, emergency));
+    let each = groups
+        .iter()
+        .map(|g| crate::group::meeting(rail, g, build, emergency));
     each.chain(asked)
         .reduce(Meeting::join)
-        .unwrap_or_else(|| Meeting::of([], build))
+        .unwrap_or_else(|| Meeting::of([], build, emergency))
+}
+
+/// n0's public relays, the emergency tier behind the build's, as the build
+/// names them ([`crate::relay::n0_relays`]; n0-emergency, RELAY_COMMONS 1):
+/// where this computer meets when the build's fallback does not answer and
+/// no group it holds names a relay of its own. [`Meeting::of`] drops them
+/// when the build names no relay, since n0's stand behind ours.
+pub(crate) fn behind() -> Vec<Url> {
+    crate::relay::n0_relays()
+        .urls::<Vec<RelayUrl>>()
+        .into_iter()
+        .map(Into::into)
+        .collect()
 }
 
 /// Whether any of `relays` answers `net`'s ask ([`answers`]), all asked
