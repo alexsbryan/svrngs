@@ -29,13 +29,16 @@ async fn relay_over(
     relay::spawn(&Relay { at, open }, root).await
 }
 
-/// Whether the relay at `server` lets the key of `seed` through.
-async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
+/// A client at `server` with the key of `seed`, as the computers that dial
+/// it build one: plain HTTP, but the TLS config built all the same.
+async fn client_at(
+    server: &iroh_relay::server::Server,
+    seed: u8,
+) -> Result<iroh_relay::client::Client, ConnectError> {
     let url: RelayUrl = format!("http://{}/", server.http_addr().unwrap())
         .parse()
         .unwrap();
     let key = SecretKey::from_bytes(&[seed; 32]);
-    // Plain HTTP, but the client builds its TLS config all the same.
     let tls = rustls::ClientConfig::builder_with_provider(std::sync::Arc::new(
         rustls::crypto::ring::default_provider(),
     ))
@@ -43,8 +46,15 @@ async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
     .unwrap()
     .with_root_certificates(rustls::RootCertStore::empty())
     .with_no_client_auth();
-    let client = ClientBuilder::new(url, key, DnsResolver::new()).tls_client_config(tls);
-    match client.connect().await {
+    ClientBuilder::new(url, key, DnsResolver::new())
+        .tls_client_config(tls)
+        .connect()
+        .await
+}
+
+/// Whether the relay at `server` lets the key of `seed` through.
+async fn admits(server: &iroh_relay::server::Server, seed: u8) -> bool {
+    match client_at(server, seed).await {
         Ok(_) => true,
         Err(e @ ConnectError::Handshake { .. }) => {
             assert!(e.to_string().contains("relay denied"), "{e}");
