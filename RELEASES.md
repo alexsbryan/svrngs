@@ -6,7 +6,7 @@ From V1.11.1, each release on GitHub carries a signature beside each
 file, `<file>.sig`, by the svrngs release key, and the key itself,
 `svrngs-release-key.asc` (also in this repository). Its fingerprint is
 `46B4D67C5E6621093BB1AB2B057BF9082AA03CFB`, and the release's tag is
-signed with it too. From the next release, it also carries the installer,
+signed with it too. From V1.11.2, it also carries the installer,
 `install.sh`, as the release's commit has it, with its signature, so
 something that installs svrngs for you can check the installer before it
 runs it. A package checks a download against
@@ -14,11 +14,87 @@ the key, and a PKGBUILD names this fingerprint in `validpgpkeys`, as
 svrngs's own does ([`packaging/arch`](packaging/arch/README.md)). To check
 one yourself, run `gpg --import svrngs-release-key.asc`, then
 `gpg --verify SHA256SUMS.sig SHA256SUMS`, then
-`shasum -a 256 -c SHA256SUMS`. From the next release, the installer
-installs exactly the file you checked, and the link's page only joins:
+`shasum -a 256 -c SHA256SUMS`. From V1.12.0, the installer installs
+exactly the file you checked, and the link's page only joins:
 `sh install.sh --archive svrngs-<os>-<arch>.tar.gz '<your link>'`. The
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/sign-release.sh`).
+
+## V1.12.0, 18 November 2026
+
+V1.12.0 installs an update only when it is signed, and keeps each lend to
+the program you lent.
+
+**Updates only from a signed release.** Before, svrngs checked an update
+against the checksums on the page it was installed from, so whoever ran
+that page chose what your computer installed. Now `svrngs update`, and
+**Update and restart** on your home page, install a new svrngs only when
+the svrngs release key signed its checksums and the download matches
+them. An update without that signature, one changed after it was signed,
+or one older than the last svrngs this computer installed is refused.
+`svrngs update` says why, and so does your home page, where the offer
+would be, with nothing to press. The trade: if you run your group's page
+yourself, it must serve each release's `get/SHA256SUMS.sig` beside its
+`SHA256SUMS`, or the computers installed from it don't update.
+
+**Install exactly the release you checked.** If you checked a download
+against the release key yourself, as *Signed releases* above shows, give
+the installer that file:
+`sh install.sh --archive svrngs-<os>-<arch>.tar.gz '<your link>'`. It
+installs that file and downloads no svrngs from the page, which it uses
+only to join your group. With `--give`, `--give-archive` does the same
+for Give's file.
+
+**Uninstall, keeping your data.**
+`curl -fsSL https://group.svrnme.sh/install.sh | sh -s -- --uninstall`
+stops svrngs and Give, and removes them, the svrngs opener, and what
+starts them when you log in. It keeps `~/.svrngs`, your key and your
+groups' copies, and says how to delete it. It doesn't leave your groups:
+run `svrngs leave <group>` first for any you mean to leave.
+
+**Your sign-in link works only for you.** `svrngs open` opens your home
+page signed in, by a link that works once. Before, another account on the
+same computer could read that link as your browser opened it, and use it
+first. Now only a browser that runs as you on this computer can use it.
+Another account's program gets *"This open can be used only by a browser
+you run on this computer."*, and your browser still gets in.
+
+**A lend stays with the program you lent.** When you lend a program,
+svrngs now notes which account runs it. If another account's program
+starts answering on that port, say after yours stops, your friends get a
+closed lend: *"ada's shelf is closed for now: another program is
+answering in its place on ada's computer. Try again once ada starts shelf
+again."* Its line on your home page says why and what to do. Before,
+svrngs passed your friends to whatever answered there.
+
+**On a Mac, svrngs lends only programs that run as you,** since there it
+can see only your own account's programs. Lending one that runs as another
+account is refused with how to fix it: *"svrngs can't lend port 8096: the
+program there doesn't run as you, and on a Mac svrngs can keep a lend
+only to programs that run as you. Run it as you, then lend it again."* A
+lend of such a program from before this release closes, and its line on
+your home page says so. On Linux, svrngs still lends a program that runs
+as another account, such as a system service, and keeps the lend to that
+account.
+
+**`svrngs new` works while svrngs runs.** Before, on a computer where
+svrngs starts when you log in, `svrngs new` refused, saying svrngs was
+already running. Now the svrngs running there makes the group, and the
+command prints its link and folder. If this computer hasn't yet reached
+the server your groups find it through, it says so.
+
+**A plainer question about apps.** When you lend a program that apps
+could send to, svrngs asks whether apps your friends open may send to it.
+The question now says first that people in your group can use all of it
+that isn't kept back, and that without your yes, those apps only read it.
+
+Groups and the record work as in V1.11.2. Press **Update and restart** on
+your home page, or run `svrngs update` and then `svrngs restart`. Your
+phone's page updates itself.
+
+V1.12.0 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.12.0`. Its publication and readback are recorded in
+`demo/runs/v1.12.0/2026-11-18/README.md`.
 
 ## V1.11.2, 18 November 2026
 
