@@ -1504,7 +1504,9 @@ fn install_sh_installs_and_keeps_give_beside_svrngs_only_when_asked() {
 /// here — what runs at login, svrngs and Give's program, the opener — and
 /// keeps the data dir and the profile's PATH line, each said, fetching
 /// nothing past install.sh itself; anything after it is refused before
-/// anything is taken, and run again it finds nothing left to take.
+/// anything is taken, `--archive` included though it is taken out of the
+/// arguments before the link is read, and run again it finds nothing left
+/// to take.
 /// Planted, watched failing: install.sh as 94413a92 left it, which refuses
 /// `--uninstall` as a link that names no page.
 #[test]
@@ -1545,15 +1547,20 @@ fn install_sh_uninstalls_what_it_put_here_and_keeps_the_data() {
             assert!(p.exists(), "{uname:?}: not installed: {}", p.display());
         }
 
-        let more = line(site.path(), "--uninstall", " --give", h, uname, zsh);
-        let err = String::from_utf8_lossy(&more.stderr);
-        assert_eq!(more.status.code(), Some(1), "{uname:?}: {err}");
-        assert!(
-            err.contains("--uninstall takes nothing after it, not --give."),
-            "{err}"
-        );
-        for p in &placed {
-            assert!(p.exists(), "{uname:?}: taken by a refusal: {}", p.display());
+        for (more, words) in [
+            (" --give", "--uninstall takes nothing after it, not --give."),
+            (
+                " --archive svrngs-linux-x86_64.tar.gz",
+                "--uninstall installs nothing, so it takes no --archive.",
+            ),
+        ] {
+            let more = line(site.path(), "--uninstall", more, h, uname, zsh);
+            let err = String::from_utf8_lossy(&more.stderr);
+            assert_eq!(more.status.code(), Some(1), "{uname:?}: {err}");
+            assert!(err.contains(words), "{err}");
+            for p in &placed {
+                assert!(p.exists(), "{uname:?}: taken by a refusal: {}", p.display());
+            }
         }
 
         let fetched = h.join("stubs/fetched");

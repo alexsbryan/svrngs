@@ -77,6 +77,8 @@ uninstall=""
 if [ "$link" = --uninstall ]; then
   uninstall=yes
   [ $# -eq 0 ] || no "--uninstall takes nothing after it, not $*."
+  # Taken out above wherever it stood, so $# never shows it.
+  [ -z "$archive$give_archive" ] || no "--uninstall installs nothing, so it takes no --archive."
 fi
 relay=""
 if [ "${1:-}" = --relay ]; then
