@@ -24,8 +24,9 @@ them as recommendations):
   Past it, after an economizing pass, stop with the counts and a ready diff
   (`ralph-result needs-human`). Do not carry on because the queue's total
   holds.
-- **The queue's test envelope is 1,200** (from 900). It takes in
-  n0-emergency's 240 against 120.
+- **The queue's test envelope is 1,400** (from 900, then 1,200; operator,
+  2026-11-19). It takes in n0-emergency's 240 against 120, share-refusal's
+  325 against 150 and webrtc-node's 310 against 200.
 - **DESIGN's 60 lines are net growth**, added minus removed.
 - **JavaScript gets no raise in advance.** At its cap, stop with the
   measured counts.

@@ -49,8 +49,9 @@ everything but JavaScript, which is tight.
 - **If measured necessary growth does not fit,** stop with the post-pass
   counts and the smallest ready cap diff (`ralph-result needs-human`). Do
   not edit BUDGET or the trust floor.
-- **Tests:** at most 1,200 added code lines across the queue, on the
-  existing harnesses (from 900; operator, 2026-11-18). Each row's own
+- **Tests:** at most 1,400 added code lines across the queue, on the
+  existing harnesses (from 900, then 1,200; operator, 2026-11-18 and
+  2026-11-19). Each row's own
   allowance binds: past it, stop and ask with counts.
 - **Product docs:** DESIGN is rewritten in place in each behavior commit, at
   most 60 lines of net growth in all (operator, 2026-11-18).
