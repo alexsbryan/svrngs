@@ -250,10 +250,8 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
         // The counters an operator watches, on loopback, where the box
         // alone reads them: two `--at` relays on one computer (the tests',
         // a local network's) would collide on the one port.
-        server.metrics_addr = Some(SocketAddr::from((
-            Ipv4Addr::LOCALHOST,
-            DEFAULT_METRICS_PORT,
-        )));
+        let metrics = SocketAddr::from((Ipv4Addr::LOCALHOST, DEFAULT_METRICS_PORT));
+        server.metrics_addr = Some(metrics);
     }
     Server::spawn(server).await.map_err(|e| {
         tracing::debug!(target: "relay", error = %e, "relay: refused — it did not start");
