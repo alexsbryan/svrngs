@@ -960,20 +960,18 @@ impl Direct {
         Ok(said.as_string().unwrap_or_default())
     }
 
-    /// The two dials of the spike's Q1: WebRTC alone (the window's channel
-    /// is open), then again with the relay beside it, so the relay is
-    /// backup on a connection whose first path is not the relay. Nothing
-    /// is closed between them: in iroh 1.4 the second dial answers with
-    /// the connection the first made, its addresses grown, so closing the
-    /// first, as the spike's two separate connections let it, closed the
-    /// connection itself (webrtc-page: the browser tier's first runs
-    /// fetched on a connection already "closed").
+    /// The two dials of the spike's Q1: WebRTC alone, then again with the
+    /// relay beside it, so the relay is backup on a connection whose first
+    /// path is not the relay. iroh may establish the second on the relay
+    /// alone, the custom address untried (the spike's Q1: dialled with the
+    /// relay beside it, iroh picks the relay) — so the first is kept too,
+    /// its path the window's channel, and whichever holds the channel
+    /// carries the dial: the second when it has it, its relay backup with
+    /// it, else the first, whose relay the remote's addresses add.
     pub async fn dial(&mut self) -> Result<(), JsError> {
         let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
-        // Dialled with the relay beside it first, iroh picks the relay and
-        // the custom address is never tried (the spike's Q1): alone first.
-        // Its handle is let go; the endpoint keeps the connection.
-        self.data
+        let first = self
+            .data
             .connect(
                 iroh::EndpointAddr::from_parts(self.peer, [custom.clone()]),
                 Alpn::Lend.bytes(),
@@ -984,12 +982,12 @@ impl Direct {
         if let Some(relay) = &self.relay {
             at.push(iroh::TransportAddr::Relay(relay.clone()));
         }
-        let conn = self
+        let second = self
             .data
             .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
             .await
             .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
-        self.conn = Some(conn);
+        self.conn = Some(if on_the_channel(&second) { second } else { first });
         Ok(())
     }
 
@@ -1039,7 +1037,29 @@ impl Direct {
         port.set_onmessage(Some(push.as_ref().unchecked_ref()));
         push.forget();
         self.dial().await?;
+        // The direct path is the attempt's point, and iroh may settle the
+        // connection on the relay first (the channel is still opening),
+        // leaving the film there: wait, bounded, for `webrtc` to be the
+        // selected path — the spike's Q1, 100 ms there. The relay carries
+        // if it never is, said in the trace.
+        let by = n0_future::time::Instant::now() + std::time::Duration::from_secs(3);
+        while !self.webrtc_selected() && n0_future::time::Instant::now() < by {
+            n0_future::time::sleep(std::time::Duration::from_millis(25)).await;
+        }
+        if !self.webrtc_selected() {
+            t!("RUNTIME: the direct path settled without webrtc: {}", self.paths());
+        }
         Ok(self.dialled())
+    }
+
+    /// Whether the data connection's selected path is the custom one (the
+    /// window's channel), as [`Self::paths`] spells it.
+    fn webrtc_selected(&self) -> bool {
+        self.conn.as_ref().is_some_and(|conn| {
+            conn.paths()
+                .iter()
+                .any(|p| p.is_selected() && matches!(p.remote_addr(), iroh::TransportAddr::Custom(_)))
+        })
     }
 
     /// The data connection's paths now: each one's kind, whether it is the
@@ -1062,6 +1082,14 @@ impl Direct {
             .collect();
         serde_json::Value::Array(list).to_string()
     }
+}
+
+/// Whether `conn`'s paths hold the custom one (the window's channel), as
+/// [`Direct::paths`] spells it: the connection the dial is carried by.
+fn on_the_channel(conn: &iroh::endpoint::Connection) -> bool {
+    conn.paths()
+        .iter()
+        .any(|p| matches!(p.remote_addr(), iroh::TransportAddr::Custom(_)))
 }
 
 /// `what`'s value in a message `port` brings, as a promise: the window's
