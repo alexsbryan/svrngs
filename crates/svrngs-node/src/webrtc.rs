@@ -30,7 +30,10 @@
 //! pre-requisites" 1).
 
 pub mod direct;
+pub mod paths;
 pub mod wire;
+
+pub use paths::{quick_paths, KEEP_ALIVE, PATH_IDLE};
 
 #[cfg(test)]
 pub(crate) mod tests;
@@ -56,15 +59,6 @@ use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 use crate::network::{Here, Network, Unread};
 use wire::{PeerKey, Wire};
 
-/// How long a path with no answer is given up after (the spike's
-/// `PATH_IDLE_MS` 3000; RELAY_COMMONS design 4): inside any player's
-/// buffer, and slack for a lossy Wi-Fi.
-pub const PATH_IDLE: Duration = Duration::from_secs(3);
-
-/// The keep-alive every path sends, a third of [`PATH_IDLE`] (the spike's
-/// `ms / 3`), so a live path is never idle that long.
-pub const KEEP_ALIVE: Duration = Duration::from_secs(1);
-
 /// The most peers one computer sets up at once: a few phones around one
 /// lender; past it, an offer waits for the public way (the operator,
 /// 2026-11-19: "cap outstanding attempts").
@@ -80,16 +74,6 @@ const SETUP: Duration = Duration::from_secs(10);
 /// ([`KEEP_ALIVE`]) keeps a live path's channel busy, so this closes a
 /// socket nothing has used for half a minute.
 const IDLE: Duration = Duration::from_secs(30);
-
-/// The path timing this computer's endpoint is built with ([`crate::guest`]'s
-/// `build_relayed_endpoint_with`): both ends carry it, since the computer
-/// sends the film and must find a dead path too (the spike's README).
-pub fn quick_paths() -> iroh::endpoint::QuicTransportConfig {
-    iroh::endpoint::QuicTransportConfig::builder()
-        .default_path_max_idle_timeout(PATH_IDLE)
-        .default_path_keep_alive_interval(KEEP_ALIVE)
-        .build()
-}
 
 /// Where the page offers a path: the route the offer and answer cross on
 /// [`Alpn::WebRtc`](crate::alpn::Alpn::WebRtc), JSON in and out, as the
