@@ -8,8 +8,13 @@ settings = "ralph/claude-settings.json"
 # The explicit final audit owns the full gate. No duplicate cadence audits.
 
 [models]
+# The operator, 2026-11-18: "Max Flash works (from DeepInfra), Opus High does
+# the rest". Flash does the units at max (AGENTS.md, "Ralph model effort");
+# Opus 5.5 reviews and directs at high. A per-role effort needs ralph.py at
+# commonwealth-ai 8ed8d99b0 or later (review_variant, resolve_variant).
 worker = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
-review = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
-resolve = "deepinfra/deepseek-ai/DeepSeek-V4.1-Flash"
-# Standing effort rule: AGENTS.md, "Ralph model effort".
+review = "claude-opus-5-5"
+resolve = "claude-opus-5-5"
 variant = "max"
+review_variant = "high"
+resolve_variant = "high"
