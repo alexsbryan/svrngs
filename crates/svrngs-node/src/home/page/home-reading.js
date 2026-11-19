@@ -40,6 +40,9 @@ import { get } from './routes.js?v=__VERSION__';
  * @property {string} origin
  * @property {Held[]} [groups]
  * @property {string} [key]
+ * @property {number | null} [share] when the door last refused a large
+ *   answer over the shared relay, unix seconds, while its share is spent
+ *   (share-refusal; surface.rs)
  * @property {Round} [round]
  * @property {string} [why]
  * @typedef {Own & acts.Fields & lending.Fields} State
@@ -50,7 +53,7 @@ import { get } from './routes.js?v=__VERSION__';
  * `visible`), the groups read or unread, and each message a feature's
  * `take` takes, which names its file (`flow`).
  * @typedef {{ type: 'again' | 'visible' }
- *   | { type: 'read', n: number, groups: Held[], key: string, round: Round['type'], why: string }
+ *   | { type: 'read', n: number, groups: Held[], key: string, share: number | null, round: Round['type'], why: string }
  *   | { type: 'unread', n: number, why: string }
  *   | acts.Taken
  *   | lending.Taken
@@ -195,11 +198,8 @@ export const HOME = (flows) => ({
         const old = late(state, 'groups', message.n);
         if (old) return no(state, old);
         if (message.type === 'unread') return go(state, { groups: 'unread' }, { why: message.why });
-        return go(
-          state,
-          { groups: 'read' },
-          { groups: message.groups, key: message.key, round: { type: message.round } },
-        );
+        const { groups, key, round, share } = message;
+        return go(state, { groups: 'read' }, { groups, key, share, round: { type: round } });
       }
       case 'made':
       case 'joined':
@@ -212,14 +212,13 @@ export const HOME = (flows) => ({
   io: {
     groups: ({ n: serial, round }) =>
       get('/v1/groups').then(
-        /** @param {{ groups: Held[], key: string }} answer */
-        ({ groups, key }) => ({
+        /** @param {{ groups: Held[], key: string, share: number | null }} answer */
+        (answer) => ({
+          ...answer,
           type: 'read',
           n: serial,
-          groups,
-          key,
           round,
-          why: `${groups.length} group(s)`,
+          why: `${answer.groups.length} group(s)`,
         }),
         (error) => ({ type: 'unread', n: serial, why: error.message }),
       ),

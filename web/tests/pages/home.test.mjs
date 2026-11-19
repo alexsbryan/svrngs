@@ -77,9 +77,10 @@ const ada = ({
   groups = [group()],
   people = [row('ada', ADA, 'started')],
   lent = [],
+  share = null,
   ...more
 } = {}) => ({
-  'GET /v1/groups': { groups, key: ADA },
+  'GET /v1/groups': { groups, key: ADA, share },
   ...Object.fromEntries(
     groups.flatMap((g) => [
       [`GET /v1/rail/people?namespace=${g.id}`, { people }],
@@ -163,6 +164,30 @@ test('the page says its own address at its foot, the origin it was opened at', a
     `Your home page, the same address each time svrngs starts: ${AT}/`,
   ]);
   assert.deepEqual(page.unanswered, []);
+});
+
+// The share's line (share-refusal; RELAY_COMMONS design 3, "The words"):
+// while /v1/groups says `share` — the unix seconds the door last refused a
+// large answer over the shared relay, and only while its share is spent
+// (surface.rs) — the page says the day, and that large things wait until
+// this computer reconnects to it; with no share, nothing. Planted, watched
+// failing: `shareSaid` answering the words whatever `share` says, where
+// the quiet page carried them.
+test('the lender is told the day its share was used up, while it is spent', async () => {
+  const at = 1_791_000_000;
+  const spent = await home(ada({ share: at }));
+  assert.deepEqual(
+    spent.text('#home > p').filter((p) => p.includes('share of the shared relay')),
+    [
+      `Your share of the shared relay was used up on ${q.day(at)}; large things you lend wait until this computer reconnects to it.`,
+    ],
+  );
+  const quiet = await home(ada());
+  assert.deepEqual(
+    quiet.text('#home > p').filter((p) => p.includes('share of the shared relay')),
+    [],
+    'nothing while the share is not spent',
+  );
 });
 
 // browser::the_home_page_says_an_unreadable_register, and the removed

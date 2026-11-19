@@ -5,6 +5,7 @@
 // done here, each group's section (group.js), each place after them
 // (PLACES), and the page's address last.
 import { html, useEffect, useStore } from '../ui/view.js?v=__VERSION__';
+import { day } from '../question.js?v=__VERSION__';
 import { Group } from './group.js?v=__VERSION__';
 import { Folder } from './group-folder.js?v=__VERSION__';
 import { ArrivalLinks, Choices, Notice, exposes } from './grouped.js?v=__VERSION__';
@@ -40,6 +41,17 @@ export const saidOnce = (state) => {
   const unplaced = state.q.unplaced ? `Its folder could not be made: ${state.q.unplaced}. ` : '';
   return SAID[state.at.said](state.q, unplaced, state.grouped);
 };
+
+// What the lender is told while this computer's share of the shared relay
+// is spent (share-refusal; RELAY_COMMONS design 3, "The words"): the day
+// its door last refused a large answer over it, and that large things wait
+// until this computer reconnects. Nothing while the share is not spent
+// (surface.rs says `share` then alone).
+/** @param {State} state */
+export const shareSaid = (state) =>
+  state.share == null
+    ? ''
+    : `Your share of the shared relay was used up on ${day(state.share)}; large things you lend wait until this computer reconnects to it.`;
 
 // For someone who cannot wait for this computer to find out on its own
 // (KEEP_GOING_AT_HOME 7): a form, as ./reach.js is, so the answer is said
@@ -128,6 +140,7 @@ export function Home({ store, flows, places }) {
   // section again, its GROUP new and its places gone until read again
   // (web/tests/pages/home.test.mjs, house kept as a group is made).
   const said = saidOnce(state);
+  const share = shareSaid(state);
   const groups = /** @type {Held[]} */ (state.groups);
   const sections = groups
     .filter((group) => !group.left)
@@ -161,6 +174,7 @@ export function Home({ store, flows, places }) {
   return html`
     ${update}
     ${said !== '' && html`<p>${said}</p>`}
+    ${share !== '' && html`<p>${share}</p>`}
     ${state.at.groups === 'rereading' && html`<p class="said">Reading your groups…</p>`}
     <${Choices} s=${state} />
     ${sections}
