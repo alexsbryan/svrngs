@@ -54,11 +54,17 @@ use wasm_bindgen::JsCast;
 /// Push one layer line to the page's `__trace` collector, if the page defined
 /// one. Best-effort: a missing collector must not break the dial.
 fn emit(line: &str) {
-    if let Ok(f) = js_sys::Reflect::get(&js_sys::global(), &JsValue::from_str("__trace")) {
+    if let Some(f) = get(&js_sys::global(), "__trace") {
         if let Ok(f) = f.dyn_into::<js_sys::Function>() {
             let _ = f.call1(&JsValue::UNDEFINED, &JsValue::from_str(line));
         }
     }
+}
+
+/// The property `what` of `of`, when it can be read: how the page reads
+/// what the browser holds.
+fn get(of: &JsValue, what: &str) -> Option<JsValue> {
+    js_sys::Reflect::get(of, &JsValue::from_str(what)).ok()
 }
 
 /// iroh's own events for `targets` (tracing-subscriber's `Targets`, as
@@ -128,7 +134,6 @@ fn computer(bytes: &[u8; 32]) -> Result<iroh::PublicKey, JsError> {
 /// carries the line; the published page (`web/index.html`, `connect-src
 /// 'self' wss: https:`) has no such line, and a worker no document to read.
 fn upgrades_insecure() -> bool {
-    let get = |of: &JsValue, what: &str| js_sys::Reflect::get(of, &JsValue::from_str(what)).ok();
     let document = get(&js_sys::global(), "document");
     let query = document.as_ref().and_then(|d| get(d, "querySelector"));
     let meta = query.and_then(|q| q.dyn_into::<js_sys::Function>().ok()).and_then(|q| {
@@ -146,9 +151,8 @@ fn upgrades_insecure() -> bool {
 /// https:` refuses it, and the mixed content would too, so the route is
 /// never tried there — no blocked request is issued for it.
 fn this_page_takes(relay: &svrngs_core::relay::Url) -> bool {
-    let https_page = js_sys::Reflect::get(&js_sys::global(), &JsValue::from_str("location"))
-        .ok()
-        .and_then(|l| js_sys::Reflect::get(&l, &JsValue::from_str("protocol")).ok())
+    let https_page = get(&js_sys::global(), "location")
+        .and_then(|l| get(&l, "protocol"))
         .and_then(|p| p.as_string())
         .is_some_and(|p| p == "https:");
     relay.scheme() == "https" || !https_page || upgrades_insecure()
@@ -1071,12 +1075,9 @@ async fn told(port: &web_sys::MessagePort, what: &str) -> Result<JsValue, JsErro
 /// place of whatever the port handed its messages to before: how the
 /// worker hears the window (webrtc-page).
 fn each_told(port: &web_sys::MessagePort, what: &str, mut each: impl FnMut(JsValue) + 'static) {
-    let key: JsValue = what.into();
+    let what = what.to_owned();
     let closure = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
-        if let Some(value) = js_sys::Reflect::get(&event.data(), &key)
-            .ok()
-            .filter(|v| !v.is_undefined())
-        {
+        if let Some(value) = get(&event.data(), &what).filter(|v| !v.is_undefined()) {
             each(value);
         }
     }) as Box<dyn FnMut(web_sys::MessageEvent)>);
