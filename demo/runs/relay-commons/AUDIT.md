@@ -8,7 +8,7 @@ row's figure is its own commits' sum, not a later reading.
 
 | Check | Verdict | Where |
 |---|---|---|
-| Full `scripts/check.sh`, svrngs-gate container, plain clone | never-ran (below, "The gate") | |
+| Full `scripts/check.sh`, svrngs-gate container, plain clone | failed at b170fc6e; rerun after the repairs (below, "The gate") | |
 | Each row's named checks, planted red then green | passed | "Plants", below |
 | HUMAN-relay-box: the box, `deploy-relay.sh`, load to drop, a phone on cellular | never-ran | the operator's |
 | HUMAN-phone-home: a real phone goes direct, falls back mid-stream, stays relayed on a network not enabled | never-ran | the operator's |
@@ -24,6 +24,9 @@ row's figure is its own commits' sum, not a later reading.
 | 4ed6db32 | Trust floor: three `listen` descriptions brought to their code (the offer's admission and cap; the relay's counters on loopback; a stale line cite). |
 | cc6fed0a | `Direct::go`'s bare 3 s is `paths::PATH_IDLE`. |
 | f3fe30b0 | DESIGN back within its +60 net (was +73); the direct path's "nothing past it" rephrased per the UDP decision. |
+| af24c051 | The gate's `new_relay`: `Host::check` decided an answer about the meeting it had snapshotted, so a `meet_at` during the 5 s ask read the group's own as silent and brought n0's in (since ce784518). An answer about a changed meeting now decides nothing. Reproduced red first. |
+| 66c37715 | The gate's `surface`: two rows' expected `/v1/groups` lacked the `share` 1b08385c added. |
+| a2661814 | The gate's `types` (12) and `typed lint` (7): the queue's JS typed. One guard read right: `!handed.key`, never true, is `!held`. JS at its cap, 8,674. |
 
 ## Counts against each allowance
 
@@ -41,14 +44,14 @@ Product lines, `lean_check` (all code but JavaScript, core within it):
 | deploy-relay | 140 script | +59 | |
 | self-host | +50 (core ≤15) | +95 (core +12), JS +7 | `Size:` b3ae73f2, 744a41e2 |
 | webrtc-page | +120 browser Rust, +60 JS | browser +226, node +37, JS +55 | `Size:` 36ebb09a, 47462fb6; JS cap the operator's (e46447fe, 80d270f2) |
-| the audit | — | +21 (core +8), JS 0 | a0e6afc1 −8, ce784518 +29 |
+| the audit | — | +28 (core +8), JS +1 | a0e6afc1 −8, ce784518 +29, af24c051 +5, a2661814 +2, JS +1 (`Size:` there) |
 
 Rows past their estimate land under the operator's rule of 2026-11-19
 ("a row's allowance is its estimate; the caps decide"), each with its
 `Size:` paragraph. Tests are not budgeted (the operator, 2026-11-19).
 
 Totals, d59c8246 to the audit: core 3,499 → 3,532 of 3,539; all code
-but JavaScript 21,474 → 22,562 of 23,101; JavaScript 8,544 → 8,673 of
+but JavaScript 21,474 → 22,569 of 23,101; JavaScript 8,544 → 8,674 of
 8,674. Core and non-JS caps unchanged; JavaScript's raised only by the
 operator. No standalone cut was made, so none was due a ratchet.
 
@@ -86,6 +89,21 @@ DESIGN: +106 / −46, **+60 net** of 60.
 
 ## The gate
 
-never-ran: to be run from a plain clone of this branch's head, mounted
-as `/work` (scripts/gate/README.md; PROMPT.addendum, "The audit's gate
-runs from a plain clone").
+Run from a plain clone of this branch's head mounted as `/work`
+(scripts/gate/README.md; PROMPT.addendum), by `target/audit-gate.sh`.
+
+**1. b170fc6e: failed** (1,559 s; ctl/log/sessions/REVIEW-audit-relay-commons-1.await.log).
+Every step passed but four:
+- tests: `new_relay` and `surface` (af24c051, 66c37715).
+- types and typed lint (a2661814).
+- browser: 33 of 45 rows. The first fault was not svrngs's. Playwright
+  1.59.1's server died on its own assertion (`WKPage._onTargetCreated`,
+  playwright-core/lib/server/webkit/wkPage.js:331, a second provisional
+  page while one was pending) in `navigations::…::webkit`, a chain of
+  cross-origin redirects. Every later row lost its browser (`ECONNREFUSED`
+  to the browser server, the proxy refused). Not reproduced in the
+  container at a2661814: the browser step 42 passed, and
+  `navigations::` 8 runs of 8, 4 passed each. One crash in 9 runs is not
+  a rate; the next gate run is the judge.
+
+**2.** Rerun after the repairs, recorded next.
