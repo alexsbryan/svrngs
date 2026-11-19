@@ -1,0 +1,50 @@
+<!-- section: relay-commons after=intro -->
+Read this queue's CHARTER.md and STATE.md, and svrn-docs
+`rings/current/RELAY_COMMONS.md`, before any work. The operator decided the
+design and asked for this queue. Keep marching through the assigned unit;
+another step boundary is not a new approval gate. A cap decision is the
+operator's under CHARTER, not a reason for a workaround.
+
+This is a dedicated worktree off main. Do not import another worktree's
+dirty files.
+- **Your scope:** this worktree and synthetic identities.
+- **Hands off:** the operator's running svrngs and its data,
+  `cw-jellyfin`, and the live llama-server on 9799.
+- **Never:** deploy, change DNS, buy, push, merge to main, release, or run
+  deploy-relay.sh against a real host.
+- **Only CHARTER's new dependencies:** iroh 1.4.x and its matching set, and
+  str0m 0.25. CSP and the trust floor stay unchanged.
+
+The spikes in svrn-docs `rings/current/webrtc-spike/` and
+`webrtc-transport-spike/` are ours. Port them, citing them in the commit
+body. Their findings bind (CHARTER, "Reuse"):
+- a fresh data endpoint dials WebRTC alone, then with the relay;
+- paths are given up after 3 s;
+- host ICE candidates only;
+- datagrams go in through a free function, never a wasm-bindgen method;
+- iroh never lives in a lent page.
+
+Do not send iroh's patch upstream or file anything with n0.
+
+This host is Fedora:
+- **Builds and focused checks:** in the toolbox (`toolbox run -c
+  sovereign-vulkan …`), with `CARGO_INCREMENTAL=0` and `TOKIO_WORKER_THREADS=4`
+  for thread-heavy suites. The toolbox caps 2048 tasks; read
+  `podman stats --no-stream sovereign-vulkan` before reading a thread panic as
+  a failure.
+- **The browser tiers and the final gate:** in the `svrngs-gate` container
+  exactly as `scripts/gate/README.md` gives it.
+- **Serialization:** browser tests and the gate run under
+  `flock /tmp/svrngs-gate.lock`. This host has `flock`, not BSD `lockf`.
+- **Commits:** made inside the toolbox (`toolbox run -c sovereign-vulkan git
+  commit -F <file>`), since the host's Node fails the hook. Never
+  `--no-verify`.
+
+<!-- section: done -->
+For each intermediate row, done means its assigned focused checks, red and
+green evidence, counts and commits, within CHARTER. Do not claim the full
+gate passed at an intermediate close. REVIEW-audit-relay-commons must run
+the unchanged full scripts/check.sh in the svrngs-gate container, exit 0.
+Then run ralph-result done as its own shell command. Long checks use
+`ralph-result await <budget> -- <command>`; the loop owns their lifetime. An
+operator-only blocker gets a committed package and `ralph-result needs-human`.

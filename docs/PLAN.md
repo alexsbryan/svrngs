@@ -15,6 +15,12 @@
 folder and a program is a word, and no beginner's bug does lasting harm to anyone
 else. Its queue is svrn-docs `rings/current/EXTENSION_POINT.md` §10, in order.
 
+**Our own relay, on its own branch** (operator, 2026-11-18: "Let's start a
+branch off main and ralph this Plan up"): the queue `ralph/next/relay-commons/`
+on `ralph/relay-commons`. It is the six units of svrn-docs
+`rings/current/RELAY_COMMONS.md`, after a survey, with a final audit. The box
+and the switch are the operator's (§3, 2026-11-18).
+
 **Current authority replacement**: Eudoxia owns authority, and every group is
 decided by its interpreter alone; a group an older svrngs made changes nothing
 (release 2). The decision and what follows it are svrn-docs
