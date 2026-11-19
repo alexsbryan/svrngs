@@ -205,12 +205,10 @@ impl Link {
     /// the origin — or the bare token.
     pub fn parse(raw: &str) -> Option<Self> {
         let raw = raw.trim();
-        let (origin, token) = if let Some(token) = raw.strip_prefix(CLIENT_PREFIX) {
-            (None, token)
-        } else if let Some((base, token)) = raw.split_once('#') {
-            (Some(Origin::parse(base)?), token)
-        } else {
-            (None, raw)
+        let (origin, token) = match (raw.strip_prefix(CLIENT_PREFIX), raw.split_once('#')) {
+            (Some(token), _) => (None, token),
+            (None, Some((base, token))) => (Some(Origin::parse(base)?), token),
+            (None, None) => (None, raw),
         };
         let token = Token::decode(token)?;
         tracing::debug!(target: "link", https = origin.is_some(), "link: parsed");

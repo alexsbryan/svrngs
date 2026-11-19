@@ -209,14 +209,11 @@ impl Name {
     /// A name from what a person typed, trimmed.
     pub fn parse(raw: &str) -> Result<Self, NotAName> {
         let name = raw.trim();
-        let why = if name.is_empty() {
-            NotAName::Empty
-        } else if name.len() > 64 {
-            NotAName::TooLong
-        } else if name.chars().any(char::is_control) {
-            NotAName::Control
-        } else {
-            return Ok(Self(name.to_string()));
+        let why = match () {
+            _ if name.is_empty() => NotAName::Empty,
+            _ if name.len() > 64 => NotAName::TooLong,
+            _ if name.chars().any(char::is_control) => NotAName::Control,
+            _ => return Ok(Self(name.to_string())),
         };
         tracing::debug!(target: "name", raw, why = ?why, "name: not a name");
         Err(why)
