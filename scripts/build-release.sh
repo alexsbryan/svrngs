@@ -9,7 +9,11 @@
 # releases, by svrngs's toolchain and targets, and still links no svrngs
 # crate (apps/give/tests/surface.rs).
 #
-#   scripts/build-release.sh [--out target/web/site]
+#   scripts/build-release.sh [--out target/web/site] [--only <platform>]
+#
+# --only builds one platform (as install.sh names it, e.g. linux-x86_64):
+# a relay's box needs only its own (deploy-relay.sh), and macOS's two build
+# only on a Mac.
 #
 # macOS's two by cargo; Linux's two static (musl) by zig through
 # cargo-zigbuild, the open-source cross toolchain (brew install zig;
@@ -20,11 +24,12 @@
 # one silently.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-OUT="target/web/site"
+OUT="target/web/site" ONLY=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --out) OUT="${2:?--out needs a directory}"; shift 2 ;;
-    *) echo "build-release: unknown argument $1 (only --out <dir>)" >&2; exit 2 ;;
+    --only) ONLY="${2:?--only needs a platform}"; shift 2 ;;
+    *) echo "build-release: unknown argument $1 (--out <dir>, --only <platform>)" >&2; exit 2 ;;
   esac
 done
 # Each tarball's name is install.sh's for the platform it names:
@@ -56,6 +61,7 @@ mkdir -p "$GET"
 failed=()
 for t in "${TARGETS[@]}"; do
   read -r platform triple build <<<"$t"
+  [ -z "$ONLY" ] || [ "$platform" = "$ONLY" ] || continue
   echo "build-release: $platform ($triple) by ${build}…"
   # shellcheck disable=SC2086 # $build is a command and its subcommand
   CARGO_INCREMENTAL=0 $build --release --locked -p svrngs -p give --target "$triple" || { echo "build-release: $platform did not build" >&2; failed+=("$platform"); continue; }
@@ -70,10 +76,13 @@ for t in "${TARGETS[@]}"; do
   done
 done
 if command -v sha256sum >/dev/null; then SHA_CMD="sha256sum"; else SHA_CMD="shasum -a 256"; fi
-if [ ${#failed[@]} -lt ${#TARGETS[@]} ]; then
+# What did build is summed, so a failed platform still leaves the rest checkable.
+if ls "$GET"/svrngs-*.tar.gz >/dev/null 2>&1; then
   ( cd "$GET" && $SHA_CMD svrngs-*.tar.gz give-*.tar.gz >SHA256SUMS )
   echo
   echo "built: $GET"
   cat "$GET/SHA256SUMS"
+else
+  echo "build-release: nothing was built${ONLY:+ for $ONLY}" >&2; exit 1
 fi
 [ ${#failed[@]} -eq 0 ] || { echo "build-release: not built: ${failed[*]}" >&2; exit 1; }

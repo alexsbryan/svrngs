@@ -77,13 +77,20 @@ else
   exit 1
 fi
 echo "ADDRESS4=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p')"
-echo "ADDRESS6=$(ip -6 route get 2606:4700:4700::1111 2>/dev/null | sed -n 's/.* src \([0-9a-f:]*\).*/\1/p')"
+# An IPv6 the box holds but cannot reach out from would fail Let's Encrypt,
+# which asks over IPv6 first: it is said only when a ping out answers.
+if ping -6 -c1 -W3 2606:4700:4700::1111 >/dev/null 2>&1; then
+  echo "ADDRESS6=$(ip -6 route get 2606:4700:4700::1111 2>/dev/null | sed -n 's/.* src \([0-9a-f:]*\).*/\1/p')"
+fi
 ON_BOX
-say "building $(git rev-parse --short HEAD) for Linux"
-run scripts/build-release.sh --out "$SITE"
-run cp web/install.sh "$SITE/install.sh"
 say "checking $HOST answers over ssh"
 run ssh -o ConnectTimeout=10 "$HOST" true
+# The box's own platform alone, as install.sh names it.
+PLATFORM=linux-x86_64
+[ -n "$DRY" ] || PLATFORM="linux-$(ssh "$HOST" uname -m | sed 's/^arm64$/aarch64/')"
+say "building $(git rev-parse --short HEAD) for $PLATFORM"
+run scripts/build-release.sh --out "$SITE" --only "$PLATFORM"
+run cp web/install.sh "$SITE/install.sh"
 run ssh "$HOST" 'rm -rf /tmp/site'
 run scp -rq "$SITE" "$HOST:/tmp/site"
 if [ -n "$DRY" ]; then
@@ -95,7 +102,8 @@ else
   out="$(ssh "$HOST" "NAME=$NAME sh -s" <"$BOX")"
   printf '%s\n' "$out"
   IP4="$(printf '%s\n' "$out" | sed -n 's/^ADDRESS4=//p')" IP6="$(printf '%s\n' "$out" | sed -n 's/^ADDRESS6=//p')"
-  [ -n "$IP4" ] && [ -n "$IP6" ] || { echo "deploy-relay: $HOST did not say its IPv4 and IPv6 (ip route get); its records cannot be made" >&2; exit 1; }
+  [ -n "$IP4" ] || { echo "deploy-relay: $HOST did not say its IPv4 (ip route get); its records cannot be made" >&2; exit 1; }
+  [ -n "$IP6" ] || say "$HOST cannot reach out over IPv6, so the name gets no AAAA; run this again once it can"
 fi
 add() { # add <A|AAAA> <address> — the name's record at Vercel, once
   if [ -n "$DRY" ] || [ "$(dig +short "$1" "$NAME" @ns1.vercel-dns.com 2>/dev/null)" != "$2" ]; then
@@ -105,7 +113,7 @@ add() { # add <A|AAAA> <address> — the name's record at Vercel, once
   fi
 }
 add A "$IP4"
-add AAAA "$IP6"
+[ -z "$IP6" ] || add AAAA "$IP6"
 say "waiting for https://$NAME/ to answer — the name, then its certificate"
 if [ -n "$DRY" ]; then
   say "would wait: scripts/relay-answers.sh https://$NAME/ until it answers"
