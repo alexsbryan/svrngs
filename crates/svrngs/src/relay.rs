@@ -166,27 +166,22 @@ fn verdict(
     person: Option<&str>,
     read: Result<Option<(String, Member)>, JoinError>,
 ) -> Access {
-    match read {
-        Ok(Some((group, member))) => {
-            match person {
-                None => {
-                    tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here")
-                }
-                Some(person) => {
-                    tracing::debug!(target: "relay", key, person, group, "relay: admitted — a pass's holder, its person standing in a group held here")
-                }
-            }
+    match (read, person) {
+        (Ok(Some((group, member))), None) => {
+            tracing::debug!(target: "relay", key, group, person = %member.person, "relay: admitted — the key stands in a group held here");
             return Access::Allow;
         }
-        Ok(None) => match person {
-            None => {
-                tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here")
-            }
-            Some(person) => {
-                tracing::debug!(target: "relay", key, person, "relay: refused — the person a pass names stands in no group held here")
-            }
-        },
-        Err(e) => {
+        (Ok(Some((group, _))), Some(person)) => {
+            tracing::debug!(target: "relay", key, person, group, "relay: admitted — a pass's holder, its person standing in a group held here");
+            return Access::Allow;
+        }
+        (Ok(None), None) => {
+            tracing::debug!(target: "relay", key, "relay: refused — the key stands in no group held here")
+        }
+        (Ok(None), Some(person)) => {
+            tracing::debug!(target: "relay", key, person, "relay: refused — the person a pass names stands in no group held here")
+        }
+        (Err(e), _) => {
             tracing::warn!(target: "relay", key, error = %e, "relay: refused — the record could not be read")
         }
     }
