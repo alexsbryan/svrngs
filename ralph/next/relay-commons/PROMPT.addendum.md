@@ -170,3 +170,32 @@ operator-only blocker gets a committed package and `ralph-result needs-human`.
 - **A group whose own relay is down along with ours.** n0's relays are held
   only while none of ours answers (`tiers.rs`); test that a group with its
   own relay, both down, still meets at n0's, and says so on the home page.
+
+**webrtc-page's stall: the director's read of the second session's runs**
+(2026-11-19, from target/webrtc-page-browser-all-5.log and -6.log):
+1. **The data connection has no relay path, so nothing can fall back.**
+   Each failing run's own trace: `page goes direct: [{"kind":"webrtc",
+   "rtt_ms":1,"selected":true}]`, one path, no relay. The fetch then sits
+   60 s, where with the relay beside it iroh would drop the silent path
+   after `PATH_IDLE` (3 s) and carry on. `Direct::dial`'s second dial was
+   to add the relay, but iroh 1.4 hands back the first connection and the
+   relay never joins it. RELAY_COMMONS design 4 keeps the relay as backup,
+   and HUMAN-phone-home's check is a fall-back mid-stream, so fix this
+   first. Prove it with the plant that exists for it (`__svrngsCloseWebrtc`,
+   the channel closed mid-film): the film must finish over the relay, and
+   `paths()` must list a relay path beside the WebRTC one.
+2. **Latent: the wire's state is one per worker, not one per attempt.**
+   `OUT`, `ARRIVED` and `PEER` in web/src/lib.rs are `thread_local!`s that
+   every `direct_start` overwrites, so two attempts in one worker (two lends
+   at once, or a re-announce after `letGo` or a new pass clears `directs`)
+   send the first one's datagrams to the second one's window. Own them per
+   `Direct`: an id the `send` closure captures (a u32 is Send) keying
+   thread-local maps, and `go`'s push closure capturing its own sender
+   rather than reading `ARRIVED`. The traces show one attempt per run, so
+   this is not the stall; it is the next one.
+3. **The stall's own cause is open.** The node read fewer than 20 datagrams
+   in about 60 s, where a 1 s keep-alive alone gives about 60, so the page's
+   datagrams, keep-alives included, stop reaching it. Lead (a) in
+   NEEDS_HUMAN-webrtc-page.md, counting at each hop, localizes it. With 1
+   fixed, it degrades to a 3 s fall-back rather than a hang, but the direct
+   path is the point of the row.
