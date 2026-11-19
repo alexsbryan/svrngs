@@ -33,7 +33,7 @@ const SAID = {
   'moved-public': () =>
     'Where your group usually meets did not answer, so this computer moved to the public way for now.',
   backup: () =>
-    'The public way did not answer, so this computer is reachable through its backup for now.',
+    'Neither the public way nor anywhere your groups usually meet answered, so this computer is reachable through its backup for now.',
   nowhere: () => 'The public way did not answer, and neither did anywhere else your groups meet.',
 };
 

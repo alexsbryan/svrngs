@@ -33,7 +33,7 @@ test('a group met at its fallback or at n0’s says why in a person’s words, a
     fallback:
       'This computer is reachable through the public way for now, so a phone can open House too. It goes back to the place House usually meets once the public way stops answering.',
     emergency:
-      'The public way is not answering, so this computer is reachable through its backup for now, and goes back to the public way once that answers.',
+      'This computer can’t reach the public way or anywhere else House usually meets, so it’s reachable through its backup for now. There’s nothing to do: it switches back by itself once one of them answers.',
   };
   for (const [why, line] of Object.entries(said)) {
     assert.ok(section(why).includes(line), section(why));
@@ -45,8 +45,8 @@ test('a group met at its fallback or at n0’s says why in a person’s words, a
 // The button of "Check the connection now" (KEEP_GOING_AT_HOME 7): a plain
 // form to home.rs `connection`, which sends the page back with what
 // happened in its address; each said in a person's words, once, with no
-// word §1 keeps from people, "backup" for a move to n0's while no group
-// names a relay of its own (n0-emergency). Planted: `SAID` without
+// word §1 keeps from people, "backup" for a move to n0's while none of
+// ours answers (n0-emergency; the audit, RELAY_COMMONS 2). Planted: `SAID` without
 // `moved`, which throws.
 test('the page says in a person’s words what pressing the button did', async () => {
   const { first } =
@@ -66,7 +66,7 @@ test('the page says in a person’s words what pressing the button did', async (
   );
   assert.equal(
     at('?backup'),
-    'The public way did not answer, so this computer is reachable through its backup for now.',
+    'Neither the public way nor anywhere your groups usually meet answered, so this computer is reachable through its backup for now.',
   );
   assert.equal(
     at('?nowhere'),

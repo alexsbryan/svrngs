@@ -82,8 +82,8 @@ const BACKUP = {
     `This computer can’t reach the place ${name} usually meets, so it’s reaching ${name} through the public way for now. There’s nothing to do: it switches back by itself once that place answers.`,
   fallback: (name) =>
     `This computer is reachable through the public way for now, so a phone can open ${name} too. It goes back to the place ${name} usually meets once the public way stops answering.`,
-  emergency: () =>
-    'The public way is not answering, so this computer is reachable through its backup for now, and goes back to the public way once that answers.',
+  emergency: (name) =>
+    `This computer can’t reach the public way or anywhere else ${name} usually meets, so it’s reachable through its backup for now. There’s nothing to do: it switches back by itself once one of them answers.`,
 };
 
 /**

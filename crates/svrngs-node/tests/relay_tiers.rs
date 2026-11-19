@@ -600,6 +600,52 @@ async fn a_group_with_none_of_its_own_meets_at_n0_s_while_ours_does_not_answer()
     assert_eq!(node.fallback_of(&seed.id()), None);
 }
 
+/// **A group whose own relay is down along with ours meets at n0's**
+/// (the audit, director 2026-11-19; RELAY_COMMONS 2: n0's is "below ours
+/// and below a group's own", in the endpoint "only while none of those
+/// answers"): Ada's group names an HTTPS relay of its own and her build's
+/// relay is B, n0's on the wire. Both answering, she is homed at her own
+/// and holds no n0's; both stopped, she is homed at n0's and her page says
+/// the group is met there; her own back, at her own again, n0's out of the
+/// endpoint. Planted, watched red: the decision as n0-emergency left it,
+/// n0's only for a computer whose groups name none of their own, and she
+/// was never homed at n0's.
+#[tokio::test(start_paused = true)]
+async fn a_group_whose_own_relay_is_down_with_ours_meets_at_n0_s() {
+    let own = "https://relay.example.org/";
+    let (n0, _dir, node, seed) = ada_beside_n0().await;
+    on_wire::relay(own, Relaying::Up);
+    let at_own = [own.parse::<Url>().unwrap()];
+    node.host().keep_group(&seed, None, &at_own).unwrap();
+    homed_on(&node, own).await;
+    assert!(
+        !node.relays_held().contains(&n0),
+        "{:?}",
+        node.relays_held()
+    );
+    on_wire::relay(own, Relaying::Down);
+    on_wire::relay(B, Relaying::Down);
+    homed_on(&node, &n0).await;
+    let held = node.relays_held();
+    assert!(
+        held.iter().all(|r| r.ends_with(".relay.n0.iroh.link/")),
+        "n0's alone, none of ours beside them: {held:?}"
+    );
+    assert_eq!(
+        node.fallback_of(&seed.id()),
+        Some(Away::Emergency),
+        "the home page says the group is met at n0's"
+    );
+    on_wire::relay(own, Relaying::Up);
+    homed_on(&node, own).await;
+    assert!(
+        !node.relays_held().contains(&n0),
+        "{:?}",
+        node.relays_held()
+    );
+    assert_eq!(node.fallback_of(&seed.id()), None);
+}
+
 /// **A link minted before the operator's switch is not kept at n0's** (the
 /// #134 gap, rescoped by n0-emergency to "n0 only in the emergency tier"):
 /// a joiner's link carries one of n0's relays and one of ours; the group is

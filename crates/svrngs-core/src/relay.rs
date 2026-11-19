@@ -91,12 +91,26 @@ pub enum Tier {
     /// The build's fallback alone: it answers, so a browser holding only
     /// the published page's policy reaches this computer through it.
     Fallback,
-    /// n0's public relays alone: the build's fallback is not answering, and
-    /// no group it holds names a relay of its own, so this computer is
-    /// reached the emergency way behind ours.
+    /// n0's public relays alone: neither the build's fallback nor a group's
+    /// own answers, so this computer is reached the emergency way behind
+    /// ours (RELAY_COMMONS 2: "below ours and below a group's own").
     Emergency,
     /// The build's too: no group it holds names one of its own.
     Unowned,
+}
+
+/// Which of ours answered at the last ask, as [`Meeting::decide`] reads
+/// it: a closed set, since n0's comes in only while none of ours answers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Answer {
+    /// The tier that comes first: a group's own HTTPS relay when a group
+    /// names one, else the build's fallback.
+    First,
+    /// Not the first, but the other of ours: the build's behind an own
+    /// HTTPS relay, or a group's plain-HTTP own behind the build's.
+    Second,
+    /// None of ours.
+    Neither,
 }
 
 impl Meeting {
@@ -160,32 +174,35 @@ impl Meeting {
 
     /// The one decision (§7; n0-emergency; self-host): the tier a computer
     /// meets its groups at, and the relays its endpoint holds for it, given
-    /// whether the tier that comes first `answers` — never, when there is
-    /// none. A group's own HTTPS relay comes before the build's, since a
-    /// page may take it; a plain-HTTP one stays behind the build's, since a
-    /// page cannot. So: the own HTTPS relays alone while they answer; else
-    /// the build's alone while it answers; else the own relays alone, when
-    /// a group names any, so a group that names a plain-HTTP relay is still
-    /// held when the build's does not answer; else n0's, the emergency
-    /// behind ours, only when no group it holds names one of its own —
-    /// nothing standing behind a build that names no relay of its own; and
-    /// the build's whatever answers only when no group it holds names one.
-    pub fn decide(&self, answers: bool) -> (Tier, BTreeSet<Url>) {
+    /// which of ours `answers`. A group's own HTTPS relay comes before the
+    /// build's, since a page may take it; a plain-HTTP one stays behind the
+    /// build's, since a page cannot. So: the own HTTPS relays alone while
+    /// they answer; else the build's alone while it answers; else the own
+    /// relays alone, when a group names any, so a group that names a
+    /// plain-HTTP relay is still held when the build's does not answer;
+    /// else, while neither answers, n0's, the emergency behind ours —
+    /// nothing standing behind a build that names no relay of its own (the
+    /// audit, RELAY_COMMONS 2: n0's is "below ours and below a group's
+    /// own"); and the build's whatever answers only when no group it holds
+    /// names one.
+    pub fn decide(&self, answers: Answer) -> (Tier, BTreeSet<Url>) {
         let browsable = self.own_https();
-        // `answers` is the first tier's answer; a build with no relay of its
-        // own is never held, so a "yes" for it counts only when it has one.
-        let answered = answers && !self.build.is_empty();
-        let tier = match (!browsable.is_empty(), self.own.is_empty(), answered) {
-            (true, _, true) => Tier::Own,
-            (true, _, _) if self.build.is_empty() => Tier::Own,
-            (true, _, _) => Tier::Fallback,
+        let first = answers == Answer::First;
+        // A group naming none of its own has no second of ours: n0's.
+        let to_n0 = answers == Answer::Neither || self.own.is_empty();
+        let tier = match (
+            self.build.is_empty(),
+            self.own.is_empty(),
+            !browsable.is_empty(),
+        ) {
+            (true, true, _) => Tier::Unowned,
+            (true, false, _) => Tier::Own,
+            _ if !first && to_n0 && !self.emergency.is_empty() => Tier::Emergency,
+            (false, true, _) => Tier::Unowned,
+            (false, false, true) if first => Tier::Own,
             (false, false, true) => Tier::Fallback,
+            (false, false, false) if first => Tier::Fallback,
             (false, false, false) => Tier::Own,
-            (false, true, true) => Tier::Unowned,
-            (false, true, false) if self.emergency.is_empty() || self.build.is_empty() => {
-                Tier::Unowned
-            }
-            (false, true, false) => Tier::Emergency,
         };
         let held = match tier {
             Tier::Own if !browsable.is_empty() && !self.build.is_empty() => browsable,
@@ -193,7 +210,7 @@ impl Meeting {
             Tier::Emergency => self.emergency.clone(),
             _ => self.build.clone(),
         };
-        tracing::debug!(target: "relay", ?tier, answers, held = held.len(), "relay: the tier a computer meets its groups at — a group's own HTTPS relay while it answers, else the build's fallback while it answers, else the group's own, else n0's; the build's whatever answers when a group names none of its own");
+        tracing::debug!(target: "relay", ?tier, ?answers, held = held.len(), "relay: the tier a computer meets its groups at — a group's own HTTPS relay while it answers, else the build's fallback while it answers, else the group's own, else, while neither answers, n0's; the build's whatever answers when a group names none of its own");
         (tier, held)
     }
 

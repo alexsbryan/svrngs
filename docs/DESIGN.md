@@ -1970,9 +1970,10 @@ tier answered, or which this computer moved to, once this endpoint is
 registered at the one it left for; an answer moves nobody. The
 door's line for each request let in names the relay that carried it, none when
 it came direct, and `tiers` says at debug why this computer is at it. One
-endpoint serves every group; a computer none of whose groups names a relay
-of its own meets at n0's while the build's fallback stops answering, and
-comes back to the fallback when it answers. A dial
+endpoint serves every group; a computer meets at n0's while neither the
+build's fallback nor its groups' own relays answer, svrngs asking the
+other of ours when the first is silent, and comes back to whichever
+answers. A dial
 to a member reaches the group's own tier and the build's, and the relay
 the record names for it,
 whichever tier this computer is at, since iroh dials a relay its endpoint
@@ -2896,8 +2897,8 @@ switch it cannot read it refuses.
    After it, svrngs's relay is the one most groups share — the same centre,
    ours rather than n0's — with `svrngs relay` the way out anyone can take,
    and n0's public relays stay in every build as the emergency behind ours:
-   a computer whose groups name no relay meets at n0's only while svrngs's
-    relay does not answer (§3), so an outage of ours is not an outage of the
+   a computer meets at n0's only while neither svrngs's relay nor its
+    groups' own answers (§3), so an outage of ours is not an outage of the
     groups. A group's own relay carries a phone's lends too: it admits a
     pass's holder, the fresh key a lend's page dials from, by the pass its
     person signed (§3, "A relay anyone runs"; self-host). And whoever

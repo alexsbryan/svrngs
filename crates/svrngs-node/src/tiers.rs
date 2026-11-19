@@ -9,7 +9,8 @@
 //! behind it): a group's own HTTPS relays alone while they answer, the
 //! build's fallback alone while they do not (or a group names none), the
 //! groups' own relays alone when the build's does not answer, n0's alone
-//! when neither answers and no group names one of its own, one endpoint,
+//! while neither the build's nor a group's own answers (the audit,
+//! RELAY_COMMONS 2: "below ours and below a group's own"), one endpoint,
 //! so one home, serving every group; the build's whatever answers only
 //! when no group names one. svrngs-core's `Meeting::decide` is the one decision;
 //! [`Host::decide`] is the one place it changes the endpoint's relays
@@ -26,7 +27,7 @@ use std::collections::BTreeSet;
 use std::sync::Arc;
 use std::time::Duration;
 
-use svrngs_core::relay::{Meeting, Tier, Url};
+use svrngs_core::relay::{Answer, Meeting, Tier, Url};
 
 use crate::iroh::RelayUrl;
 use crate::node::Host;
@@ -86,8 +87,7 @@ pub enum Away {
 
 /// What this computer's endpoint holds now, and from what: where its
 /// groups meet, as last read from their records ([`Host::refresh`]), the
-/// tier, the relays, whether the tier that comes first answered at the last
-/// ask, and the relays a `new` or `join` asked for before its group is kept.
+/// tier, the relays, which of ours answered at the last ask, and the relays a `new` or `join` asked for before its group is kept.
 #[derive(Debug, Clone)]
 pub(crate) struct Held {
     meeting: Meeting,
@@ -96,7 +96,7 @@ pub(crate) struct Held {
     /// them: what a test of the emergency reads, the meeting's three tiers
     /// apart from it.
     pub(crate) relays: BTreeSet<Url>,
-    answers: bool,
+    answers: Answer,
     pub(crate) asked: BTreeSet<Url>,
 }
 
@@ -105,12 +105,12 @@ impl Held {
     /// `asked` holds, the tier that comes first taken to answer until the
     /// first ask.
     pub(crate) fn built(meeting: Meeting, asked: BTreeSet<Url>) -> (Self, BTreeSet<Url>) {
-        let (tier, relays) = meeting.decide(true);
+        let (tier, relays) = meeting.decide(Answer::First);
         let held = Self {
             meeting,
             tier,
             relays: relays.clone(),
-            answers: true,
+            answers: Answer::First,
             asked,
         };
         (held, relays)
@@ -131,10 +131,9 @@ impl Host {
     }
 
     /// The one decision applied (§7): the endpoint given the relays the
-    /// tier needs and relieved of the rest, given whether the tier that
-    /// comes first `answers` (the last ask's, when `None`). Each change of
-    /// tier said.
-    pub(crate) async fn decide(&self, answers: Option<bool>) {
+    /// tier needs and relieved of the rest, given which of ours `answers`
+    /// (the last ask's, when `None`). Each change of tier said.
+    pub(crate) async fn decide(&self, answers: Option<Answer>) {
         let (mut add, mut drop, mut was) = (Vec::new(), Vec::new(), Tier::Own);
         self.held.send_modify(|held| {
             let answers = answers.unwrap_or(held.answers);
@@ -223,7 +222,11 @@ impl Host {
             let kept = !pressed && at_first && !answered && reached && misses < LEFT_AFTER;
             reached = at_first && (answered || kept);
             tracing::debug!(target: "tiers", first = first.len(), ?tier, answered, misses, reached, pressed, kept, wait, "tiers: whether the tier that comes first answers, at it whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
-            self.decide(Some(answered || kept)).await;
+            let answer = match answered || kept {
+                true => Answer::First,
+                false => self.second(&meeting).await,
+            };
+            self.decide(Some(answer)).await;
         }
     }
 
@@ -248,8 +251,12 @@ impl Host {
             meeting.build().clone()
         };
         let answered = first.is_empty() || any_answers(&*self.transport, &first).await;
-        self.decide(Some(answered).filter(|a| !a)).await;
-        let (tier, held) = meeting.decide(false);
+        let answer = match answered {
+            true => Answer::First,
+            false => self.second(&meeting).await,
+        };
+        self.decide((!answered).then_some(answer)).await;
+        let (tier, held) = meeting.decide(answer);
         let moved = !answered && self.registered(&held).await;
         tracing::debug!(target: "tiers", answered, moved, first_is_own, ?tier, "tiers: a person asked now whether the tier that comes first answers, and left it if not");
         match (answered, moved) {
@@ -259,6 +266,25 @@ impl Host {
             (_, true) if first_is_own && !meeting.build().is_empty() => "moved-public",
             (_, true) => "moved",
             _ => "nowhere",
+        }
+    }
+
+    /// Which of ours answers when the tier that comes first does not: the
+    /// other of ours — the build's behind an own HTTPS relay, a group's
+    /// plain-HTTP own behind the build's, none for a group naming none —
+    /// asked once, else neither, and n0's comes in (the audit,
+    /// RELAY_COMMONS 2).
+    async fn second(&self, meeting: &Meeting) -> Answer {
+        let second = match meeting.own_https().is_empty() {
+            true => meeting.own().clone(),
+            false => meeting.build().clone(),
+        };
+        let answers = !second.is_empty() && any_answers(&*self.transport, &second).await;
+        tracing::debug!(target: "tiers", second = second.len(), answers, "tiers: the first tier silent, whether the other of ours answers; n0's only while neither does");
+        if answers {
+            Answer::Second
+        } else {
+            Answer::Neither
         }
     }
 
@@ -377,8 +403,8 @@ pub(crate) fn everywhere(
 
 /// n0's public relays, the emergency tier behind the build's, as the build
 /// names them ([`crate::relay::n0_relays`]; n0-emergency, RELAY_COMMONS 1):
-/// where this computer meets when the build's fallback does not answer and
-/// no group it holds names a relay of its own. [`Meeting::of`] drops them
+/// where this computer meets while neither the build's fallback nor a
+/// group's own answers. [`Meeting::decide`] holds none
 /// when the build names no relay, since n0's stand behind ours.
 pub(crate) fn behind() -> Vec<Url> {
     crate::relay::n0_relays()
