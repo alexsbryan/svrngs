@@ -19,17 +19,6 @@ use svrngs::cli;
 static ALLOCATOR: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 fn main() -> ExitCode {
-    // `error` by default: what a person reads is the command's own words,
-    // and a trace may use any (DESIGN §1). RUST_LOG=debug shows every
-    // decision (ARCH 1).
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("error")),
-        )
-        .with_writer(std::io::stderr)
-        .init();
-
     let command = match cli::parse(std::env::args()) {
         Ok(c) => c,
         Err(why) => {
@@ -41,6 +30,22 @@ fn main() -> ExitCode {
             return ExitCode::from(1);
         }
     };
+    // `error` by default: what a person reads is the command's own words,
+    // and a trace may use any (DESIGN §1). RUST_LOG=debug shows every
+    // decision (ARCH 1). The relay is a daemon behind a capped journal, so
+    // it keeps warnings and never the debug decisions' keys and addresses
+    // (relay::FILTER; RELAY_COMMONS design 3, "The host's basics").
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                tracing_subscriber::EnvFilter::new(match &command {
+                    cli::Verb::Relay(_) => svrngs::relay::FILTER,
+                    _ => "error",
+                })
+            }),
+        )
+        .with_writer(std::io::stderr)
+        .init();
     let root = match cli::data_dir() {
         Ok(r) => r,
         Err(e) => return refuse(e),

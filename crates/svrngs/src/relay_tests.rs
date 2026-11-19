@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //! [`super::verdict`]: whom the relay lets through, by the read of where
-//! a key stands.
+//! a key stands; and [`super::FILTER`]: what the verb logs.
 
 use super::*;
 
@@ -60,4 +60,22 @@ async fn a_read_that_panicked_is_refused_as_that_never_as_no_group() {
         b2.len() == 1 && b2[0].contains("relay: refused — the key stands in no group held here"),
         "the read finding none: {b2:#?}"
     );
+}
+
+/// **The relay logs at warn with no `RUST_LOG`** (relay-share;
+/// RELAY_COMMONS design 3, "The host's basics"): the filter main.rs falls
+/// back to for the verb lets through an event on the relay's own target
+/// and on iroh-relay's at warn, and not one at debug. Planted: the filter
+/// left at `error`, where the warning is dropped.
+#[test]
+fn the_relay_logs_at_warn_with_no_rust_log() {
+    let kept = tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::new(FILTER))
+        .with_writer(|| Kept)
+        .finish();
+    tracing::subscriber::with_default(kept, || {
+        assert!(tracing::event_enabled!(target: "relay", tracing::Level::WARN));
+        assert!(!tracing::event_enabled!(target: "relay", tracing::Level::DEBUG));
+        assert!(tracing::event_enabled!(target: "iroh_relay::server", tracing::Level::WARN));
+    });
 }

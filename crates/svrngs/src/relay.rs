@@ -19,15 +19,18 @@
 //! (`AccessControl::on_connect`): by default a computer or phone standing
 //! in a group this computer holds — the register's one answer,
 //! [`RingRail::standing_anywhere`], read from the record on disk as svrngs
-//! running beside it writes it; with `--open`, everyone, each sending at
-//! most [`OPEN_RATE`]. Every decision traces at debug.
+//! running beside it writes it; with `--open`, everyone, each held to the
+//! share, [`SHARE_RATE`] with a [`SHARE_BURST`]. Every decision traces at
+//! debug.
 
-use std::net::{IpAddr, Ipv6Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
 use std::num::NonZeroU32;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use iroh_relay::defaults::{DEFAULT_HTTPS_PORT, DEFAULT_HTTP_PORT, DEFAULT_RELAY_QUIC_PORT};
+use iroh_relay::defaults::{
+    DEFAULT_HTTPS_PORT, DEFAULT_HTTP_PORT, DEFAULT_METRICS_PORT, DEFAULT_RELAY_QUIC_PORT,
+};
 use iroh_relay::server::{
     Access, AccessControl, AcmeConfig, CertConfig, ClientRateLimit, ClientRequest, QuicConfig,
     RelayConfig, Server, ServerConfig, TlsConfig,
@@ -39,17 +42,29 @@ use tokio::task::JoinError;
 use crate::cli::Refusal;
 use crate::identity;
 
-/// What an `--open` relay lets each computer or phone send it, in bytes a
-/// second: the most a phone's film at Demo A's bitrate drew through a
-/// relay in any one second, 8,799,728 of three takes, rounded up
-/// (`demo/runs/relay-rate/2026-10-12/`).
-pub const OPEN_RATE: NonZeroU32 = NonZeroU32::new(8_800_000).unwrap();
+/// What an `--open` relay holds each computer or phone to, in bytes a
+/// second: about one megabit. The numbers come from measurement: an AI
+/// answer passes whole (0.057 Mbit/s), a first open fits the burst beside
+/// it (Jellyfin's 2.11 MB brotli, 5.66 MB decoded; CHARTER, "Direction"),
+/// and a film (3.73 Mbit/s) is held once the burst is spent.
+pub const SHARE_RATE: NonZeroU32 = NonZeroU32::new(125_000).unwrap();
+
+/// The most one may send before [`SHARE_RATE`] holds it: an 8 MiB burst,
+/// which carries a first open whole.
+pub const SHARE_BURST: NonZeroU32 = NonZeroU32::new(8 * 1024 * 1024).unwrap();
+
+/// What `svrngs relay` logs with no `RUST_LOG` set: warnings, the relay's
+/// own and iroh-relay's, so a host's capped journal keeps what went wrong
+/// and never the debug decisions, which carry keys and addresses
+/// (RELAY_COMMONS design 3, "The host's basics").
+pub const FILTER: &str = "relay=warn,iroh_relay=warn";
 
 /// What `svrngs relay` was asked.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Relay {
     pub at: At,
-    /// `--open`: everyone, each held to [`OPEN_RATE`].
+    /// `--open`: everyone, each held to the share, [`SHARE_RATE`] with a
+    /// [`SHARE_BURST`].
     pub open: bool,
 }
 
@@ -172,13 +187,24 @@ pub async fn spawn(relay: &Relay, root: &Path) -> Result<Server, Refusal> {
     let mut config = RelayConfig::new(http);
     config.tls = tls;
     if relay.open {
-        config.limits.client_rx = Some(ClientRateLimit::new(OPEN_RATE));
+        let mut share = ClientRateLimit::new(SHARE_RATE);
+        share.max_burst_bytes = Some(SHARE_BURST);
+        config.limits.client_rx = Some(share);
     }
     tracing::debug!(target: "relay", ?relay, ?admits, "relay: starting");
     config.access = Arc::new(admits);
     let mut server = ServerConfig::default();
     server.relay = Some(config);
     server.quic = quic;
+    if matches!(relay.at, At::Name { .. }) {
+        // The counters an operator watches, on loopback, where the box
+        // alone reads them: two `--at` relays on one computer (the tests',
+        // a local network's) would collide on the one port.
+        server.metrics_addr = Some(SocketAddr::from((
+            Ipv4Addr::LOCALHOST,
+            DEFAULT_METRICS_PORT,
+        )));
+    }
     Server::spawn(server).await.map_err(|e| {
         tracing::debug!(target: "relay", error = %e, "relay: refused — it did not start");
         Refusal::RelayStart(e.to_string())
@@ -194,8 +220,9 @@ pub async fn run(relay: Relay, root: &Path) -> Result<(), Refusal> {
     };
     let whom = if relay.open {
         format!(
-            "every computer and phone that reaches it, each sending at most {} Mbit/s",
-            OPEN_RATE.get() * 8 / 1_000_000
+            "every computer and phone that reaches it, each held to {} Mbit/s, in {} MiB bursts",
+            SHARE_RATE.get() * 8 / 1_000_000,
+            SHARE_BURST.get() / (1024 * 1024)
         )
     } else {
         "the computers and phones of the groups this computer is in".to_string()

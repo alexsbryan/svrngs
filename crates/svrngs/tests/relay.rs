@@ -15,7 +15,7 @@ use iroh::dns::DnsResolver;
 use iroh_relay::client::{ClientBuilder, ConnectError};
 use svrngs::cli::{self, Refusal};
 use svrngs::group::Name;
-use svrngs::relay::{self, At, Relay};
+use svrngs::relay::{self, At, Relay, SHARE_BURST, SHARE_RATE};
 use svrngs_node::iroh::{RelayUrl, SecretKey};
 
 const SAM: u8 = 31;
@@ -93,6 +93,81 @@ async fn a_relay_lets_through_its_groups_alone_and_open_everyone() {
         "an open relay lets a stranger through"
     );
     sam.endpoint().close().await;
+}
+
+/// **A client sending past its burst is held to the share, and told**
+/// (relay-share): an open relay holds each computer to [`SHARE_RATE`]
+/// after a [`SHARE_BURST`]; a client sending a burst and more to another
+/// sees the rest arrive at the rate, and `Status::RateLimited` reaches
+/// it. Planted: no limit, where the rest arrives at once and nothing is
+/// told.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_client_sending_past_its_burst_is_held_to_the_share_and_told() {
+    use iroh_relay::protos::relay::{ClientToRelayMsg, Datagrams, RelayToClientMsg, Status};
+    use n0_future::{SinkExt, StreamExt};
+
+    const PAYLOAD: usize = 65_000;
+    // The last frames whose arrival rate is measured: the window sits past
+    // the burst, so the limiter's one read through an empty bucket is not
+    // in it.
+    const MEASURED: usize = 6;
+    let empty = tempfile::tempdir().unwrap();
+    let server = relay_over(empty.path(), true)
+        .await
+        .expect("an open relay starts");
+    let (mut stream, mut sink) = client_at(&server, 1)
+        .await
+        .expect("the sender is let through")
+        .split();
+    let (mut back, _) = client_at(&server, 2)
+        .await
+        .expect("the receiver is let through")
+        .split();
+
+    // A burst, and past it half a megabyte: four seconds at the rate.
+    let frames = (SHARE_BURST.get() as usize + 500_000).div_ceil(PAYLOAD);
+    let to = SecretKey::from_bytes(&[2; 32]).public();
+    let receiving = tokio::spawn(async move {
+        let (mut seen, mut first, mut last) = (0usize, None, None);
+        while seen < frames {
+            if let Some(Ok(RelayToClientMsg::Datagrams { .. })) = back.next().await {
+                seen += 1;
+                if seen == frames - MEASURED {
+                    first = Some(std::time::Instant::now());
+                }
+                last = Some(std::time::Instant::now());
+            }
+        }
+        (first.unwrap(), last.unwrap())
+    });
+    for _ in 0..frames {
+        sink.send(ClientToRelayMsg::Datagrams {
+            dst_endpoint_id: to,
+            datagrams: Datagrams::from(vec![0u8; PAYLOAD]),
+        })
+        .await
+        .expect("the relay takes the datagram");
+    }
+    let told = tokio::time::timeout(std::time::Duration::from_secs(20), async {
+        while let Some(next) = stream.next().await {
+            if matches!(next, Ok(RelayToClientMsg::Status(Status::RateLimited))) {
+                return;
+            }
+        }
+        panic!("the sender's stream ended first");
+    })
+    .await;
+    let (first, last) = tokio::time::timeout(std::time::Duration::from_secs(30), receiving)
+        .await
+        .expect("the datagrams arrive")
+        .unwrap();
+    let rate = (MEASURED * PAYLOAD) as f64 / last.duration_since(first).as_secs_f64();
+    let share = SHARE_RATE.get() as f64;
+    assert!(
+        rate <= 2.0 * share && rate >= share / 2.0,
+        "the tail moved at {rate} B/s, not the share's {share}"
+    );
+    told.expect("Status::RateLimited reaches the sender");
 }
 
 #[tokio::test(flavor = "multi_thread")]

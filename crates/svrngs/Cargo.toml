@@ -62,6 +62,9 @@ tower = { version = "0.5", features = ["util"] }
 # relay.rs dials the verb's relay as iroh's relay client does, which asks a
 # resolver: iroh's, at the version svrngs-node pins.
 iroh = "=1.4.2"
+# relay.rs's share test sends through that client: the Sink and Stream the
+# client is built on, as iroh names them, at the version the lock holds.
+n0-future = "0.3"
 
 # Upstream's posture, as svrngs-core and svrngs-node carry it.
 [lints.clippy]

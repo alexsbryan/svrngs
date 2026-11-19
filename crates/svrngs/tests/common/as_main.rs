@@ -98,23 +98,29 @@ pub fn past_header(out: &mut impl BufRead) {
 /// arguments after `--`, and an exit in place of a return, so libtest
 /// says nothing after svrngs.
 pub fn main() -> ! {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("error")),
-        )
-        .with_writer(std::io::stderr)
-        .init();
     let typed = std::env::args().skip_while(|a| a != "--").skip(1);
-    let code = match cli::parse(std::iter::once("svrngs".to_string()).chain(typed)) {
-        Ok(command) => run(command),
+    let command = match cli::parse(std::iter::once("svrngs".to_string()).chain(typed)) {
+        Ok(command) => command,
         Err(why) => {
             eprintln!("svrngs: {why}");
             eprintln!();
             eprintln!("{}", cli::USAGE);
-            1
+            std::io::stdout().flush().unwrap();
+            std::process::exit(1);
         }
     };
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                tracing_subscriber::EnvFilter::new(match &command {
+                    cli::Verb::Relay(_) => svrngs::relay::FILTER,
+                    _ => "error",
+                })
+            }),
+        )
+        .with_writer(std::io::stderr)
+        .init();
+    let code = run(command);
     std::io::stdout().flush().unwrap();
     std::process::exit(code.into());
 }

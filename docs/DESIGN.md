@@ -1888,10 +1888,18 @@ lets through only the computers and phones that stand in a group its
 computer holds, read from the record on disk and asked again on each
 connection, each refusal traced; a computer in no group is refused the
 verb, and one whose groups cannot be read is refused as that. `--open` lets
-everyone through, each at most `OPEN_RATE`, 8,800,000 bytes a second, the
-most a film at Demo A's bitrate drew.
+everyone through, each held to the share: 125,000 bytes a second, about a
+megabit, with an 8 MiB burst (`SHARE_RATE` and `SHARE_BURST`). The numbers
+come from measurement: an AI answer passes whole (0.057 Mbit/s), a first
+open fits the burst (Jellyfin's 2.11 MB brotli, 5.66 MB decoded), and a
+film (3.73 Mbit/s) is held once its burst is spent, by the shape of the
+traffic alone, with no list of apps. Only the commons' relay is held; a
+group's own, and anyone's, is not. At a name the relay serves its
+counters on loopback (`metrics_addr`) and logs at warn, so a host's capped
+journal keeps what went wrong and never the debug decisions' keys and
+addresses.
 
-The stock iroh-relay 1.0.2 binary carries a group too, served over HTTPS
+The stock iroh-relay 1.4.2 binary carries a group too, served over HTTPS
 at a name whose certificate a public authority signed (computers trust the
 public roots alone): `svrngs relay` is that server with group-only
 admission and its own certificates; a bare one admits whoever finds it.

@@ -4078,6 +4078,7 @@ dependencies = [
  "iroh",
  "iroh-relay",
  "mimalloc",
+ "n0-future",
  "rcgen",
  "reqwest 0.12.28",
  "ring",
