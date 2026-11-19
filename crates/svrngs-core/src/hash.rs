@@ -79,8 +79,7 @@ impl ContentHash {
     /// compare-across-encodings defect this type exists to remove
     /// (principle 6: absence is reported, never defaulted).
     pub fn from_hex(s: &str) -> Option<Self> {
-        let arr: [u8; 32] = hex::decode(s.trim()).ok()?.try_into().ok()?;
-        Some(ContentHash(arr))
+        hex::decode(s.trim()).ok()?.try_into().ok().map(ContentHash)
     }
 
     /// The 16-character prefix — 64-bit truncation, safe for <10M items per

@@ -99,11 +99,8 @@ impl Command for Redeem {
 
     fn confirm(&self, after: &Admission, written: &[OpId]) -> Result<(), RedeemRefusal> {
         let register = after.membership();
-        let admit = &written[0];
-        if !register.counts(admit) || !register.standing.contains(&self.key) {
-            return Err(RedeemRefusal::Uncounted);
-        }
-        Ok(())
+        let counted = register.counts(&written[0]) && register.standing.contains(&self.key);
+        counted.then_some(()).ok_or(RedeemRefusal::Uncounted)
     }
 }
 
