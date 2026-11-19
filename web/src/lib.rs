@@ -168,6 +168,20 @@ fn ways_in(link: Vec<svrngs_core::relay::Url>, meets: &[String]) -> Vec<RelayUrl
     ways
 }
 
+/// The relay `via` names, parsed, or none when it names none: refused
+/// when it is not one.
+fn named(via: &Option<String>) -> Result<Option<RelayUrl>, JsError> {
+    (via.as_deref().map(relay::parse).transpose())
+        .or_else(|e| refuse!("LAYER parse: REFUSED — {via:?} is not a relay: {e}"))
+}
+
+/// Every relay `relays` names, parsed, refused at the first that is not
+/// one: what a pass's holder is handed.
+fn handed(relays: &[String]) -> Result<Vec<RelayUrl>, JsError> {
+    let parsed = relays.iter().map(|relay| relay::parse(relay)).collect::<Result<_, _>>();
+    parsed.map_err(|e| JsError::new(&format!("{relays:?} is not a relay: {e}")))
+}
+
 /// [`bind`] for the group whose link's token is `token`: its issuer, and
 /// every relay it carries this page's policy takes — the public fallback
 /// beside the group's own HTTP relay, where that one is one the page may
@@ -290,7 +304,7 @@ async fn reach(
     via: Option<String>,
     alpn: Alpn,
     within: Option<std::time::Duration>,
-) -> Result<iroh::endpoint::Connection, JsError> {
+) -> Result<Dialled, JsError> {
     // The issuer's dial is held as iroh holds one, a lender's as
     // `dial::held` says, from whichever endpoint: a lender's 4 s of silence
     // would end the issuer's before its cap did (v1ui-race (a)).
@@ -305,11 +319,7 @@ async fn reach(
             Err(_) => refuse!("LAYER parse: REFUSED — {to:?} is not a computer's key"),
         },
     };
-    let named = match via.as_deref().map(relay::parse) {
-        None => None,
-        Some(Ok(url)) => Some(url),
-        Some(Err(e)) => refuse!("LAYER parse: REFUSED — {via:?} is not a relay: {e}"),
-    };
+    let named = named(&via)?;
     // A pass's holder has no document to judge the page's policy by: every
     // relay it was handed was taken by the page that handed it
     // ([`relays_of`], `relay_taken`), so the one named for a lender is
@@ -358,7 +368,7 @@ async fn reach(
                 // The HTTP rides a bi-stream per request, opened by
                 // `Dialled::fetch`. The tries still in flight are dropped
                 // with the set, so no losing route is left dialling.
-                return Ok(conn);
+                return Ok(Dialled { ep: None, conn });
             }
             Ok(Err(e)) => {
                 t!("LAYER tls/alpn+relay: a route failed: {e}");
@@ -454,7 +464,7 @@ impl Dialled {
 #[wasm_bindgen]
 pub async fn connect_to_join(key: Vec<u8>, token: String) -> Result<Dialled, JsError> {
     let bound = bind_for(key, &token, &[], false).await?;
-    let conn = reach(&bound, None, None, Alpn::Redeem, None).await?;
+    let conn = reach(&bound, None, None, Alpn::Redeem, None).await?.conn;
     let ep = Some(bound.ep);
     Ok(Dialled { ep, conn })
 }
@@ -482,11 +492,7 @@ pub async fn endpoint(key: Vec<u8>, token: String, meets: Option<Vec<String>>) -
 /// (self-host).
 #[wasm_bindgen]
 pub async fn holder_endpoint(key: Vec<u8>, relays: Vec<String>, pass: String) -> Result<Endpoint, JsError> {
-    let parsed: Vec<RelayUrl> = relays
-        .iter()
-        .map(|relay| relay::parse(relay))
-        .collect::<Result<_, _>>()
-        .map_err(|e| JsError::new(&format!("{relays:?} is not a relay: {e}")))?;
+    let parsed = handed(&relays)?;
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
@@ -750,8 +756,7 @@ impl Endpoint {
     /// whoever lends a service itself (DESIGN §3, call 4). The dial's
     /// [`Dialled::close`] closes only its connection.
     pub async fn dial(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), relay, Alpn::Member, Some(dial::DIAL_WITHIN)).await?;
-        Ok(Dialled { ep: None, conn })
+        reach(&self.bound, Some(lender), relay, Alpn::Member, Some(dial::DIAL_WITHIN)).await
     }
 
     /// Dial the computer that made the group's link, on the members'
@@ -759,16 +764,14 @@ impl Endpoint {
     /// from this endpoint, so the page dials it and the lenders at once
     /// from the one endpoint a relay keeps per key (v1ui-race (a)).
     pub async fn dial_link(&self) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, None, None, Alpn::Member, Some(dial::LINK_WITHIN)).await?;
-        Ok(Dialled { ep: None, conn })
+        reach(&self.bound, None, None, Alpn::Member, Some(dial::LINK_WITHIN)).await
     }
 
     /// Dial the computer whose key is `lender` through `relay`, as
     /// [`Self::dial`], on the pass holders' protocol, as a pass's holder:
     /// every request presents the pass (u5-2).
     pub async fn dial_lend(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), relay, Alpn::Lend, Some(dial::DIAL_WITHIN)).await?;
-        Ok(Dialled { ep: None, conn })
+        reach(&self.bound, Some(lender), relay, Alpn::Lend, Some(dial::DIAL_WITHIN)).await
     }
 
     /// Dial the computer whose key is `lender` through `relay` on the
@@ -776,8 +779,7 @@ impl Endpoint {
     /// `crates/svrngs-node/src/webrtc.rs` `OFFER_ROUTE`): the offer and its
     /// answer cross on this connection, the pass presented with it.
     pub async fn dial_webrtc(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
-        let conn = reach(&self.bound, Some(lender), relay, Alpn::WebRtc, Some(dial::DIAL_WITHIN)).await?;
-        Ok(Dialled { ep: None, conn })
+        reach(&self.bound, Some(lender), relay, Alpn::WebRtc, Some(dial::DIAL_WITHIN)).await
     }
 
     /// Close the endpoint, and every dial from it.
@@ -852,16 +854,8 @@ pub async fn direct_start(
             "LAYER parse: REFUSED — {lender:?} is not a computer's key: {e}"
         ))
     })?;
-    let named = match relay.as_deref().map(relay::parse) {
-        None => None,
-        Some(Ok(url)) => Some(url),
-        Some(Err(e)) => refuse!("LAYER parse: REFUSED — {relay:?} is not a relay: {e}"),
-    };
-    let parsed: Vec<RelayUrl> = relays
-        .iter()
-        .map(|one| relay::parse(one))
-        .collect::<Result<_, _>>()
-        .map_err(|e| JsError::new(&format!("{relays:?} is not a relay: {e}")))?;
+    let named = named(&relay)?;
+    let parsed = handed(&relays)?;
     // A pass kept before relay fallbacks names one relay and no `relays`:
     // the relay named for the lend is the data endpoint's way in then
     // (web/lend.js `direct`, as `opened` reads them).
@@ -936,19 +930,12 @@ impl Direct {
         )
         .await
         .map_err(|e| JsError::new(&format!("the offer was not answered: {e}")))?;
+        let said = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?).await;
         if !answer.ok() {
-            let status = answer.status();
-            let words = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?)
-                .await
-                .ok()
-                .and_then(|t| t.as_string())
-                .unwrap_or_default();
-            refuse!("the offer was refused: {status} {words}")
+            let words = said.ok().and_then(|t| t.as_string()).unwrap_or_default();
+            refuse!("the offer was refused: {} {words}", answer.status())
         }
-        let said = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?)
-            .await
-            .map_err(page)?;
-        Ok(said.as_string().unwrap_or_default())
+        Ok(said.map_err(page)?.as_string().unwrap_or_default())
     }
 
     /// The two dials of the spike's Q1: WebRTC alone, then again with the
@@ -978,7 +965,7 @@ impl Direct {
             .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
             .await
             .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
-        self.conn = Some(if on_the_channel(&second) { second } else { first });
+        self.conn = Some(if on_the_channel(&second, false) { second } else { first });
         Ok(())
     }
 
@@ -1049,11 +1036,7 @@ impl Direct {
     /// Whether the data connection's selected path is the custom one (the
     /// window's channel), as [`Self::paths`] spells it.
     fn webrtc_selected(&self) -> bool {
-        self.conn.as_ref().is_some_and(|conn| {
-            conn.paths()
-                .iter()
-                .any(|p| p.is_selected() && matches!(p.remote_addr(), iroh::TransportAddr::Custom(_)))
-        })
+        self.conn.as_ref().is_some_and(|conn| on_the_channel(conn, true))
     }
 
     /// The data connection's paths now: each one's kind, whether it is the
@@ -1079,11 +1062,11 @@ impl Direct {
 }
 
 /// Whether `conn`'s paths hold the custom one (the window's channel), as
-/// [`Direct::paths`] spells it: the connection the dial is carried by.
-fn on_the_channel(conn: &iroh::endpoint::Connection) -> bool {
-    conn.paths()
-        .iter()
-        .any(|p| matches!(p.remote_addr(), iroh::TransportAddr::Custom(_)))
+/// [`Direct::paths`] spells it, the selected one when `only_selected`: the
+/// connection the dial is carried by, and whether the channel carries it.
+fn on_the_channel(conn: &iroh::endpoint::Connection, only_selected: bool) -> bool {
+    let custom = |addr: &iroh::TransportAddr| matches!(addr, iroh::TransportAddr::Custom(_));
+    (conn.paths().iter()).any(|p| (p.is_selected() || !only_selected) && custom(p.remote_addr()))
 }
 
 /// `what`'s value in a message `port` brings, as a promise: the window's
