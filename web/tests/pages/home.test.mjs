@@ -851,18 +851,19 @@ test('each lend is one line with its form folded under it, and the wide button i
   assert.ok(phone.includes('<tbody id="lent">'));
 });
 
-// A lend whose port another account's program answers, or whose program
-// svrngs can't tell, says so on its lender's line (door.rs `answering`,
-// lent-row.js `HELD`), what to do beside it. Planted, watched failing:
-// lent-row.js not reading `held`.
+// A lend whose port another program answers, or whose program svrngs
+// can't tell, says so on its lender's line (door.rs `answering`,
+// lent-row.js `HELD`), what to do beside it, and the program it is kept to
+// by name (door.rs `offered`). Planted, watched failing: lent-row.js not
+// reading `held`; not reading `command`.
 test('a lend held from another account’s program says why on its lender’s line', async () => {
   const summary = async (/** @type {string} */ held) =>
-    (await home(ada({ lent: [lend('shelf', { answering: true, held })] }))).text(
-      '#lent li details summary',
-    )[0];
+    (
+      await home(ada({ lent: [lend('shelf', { answering: true, held, command: 'python3' })] }))
+    ).text('#lent li details summary')[0];
   assert.ok(
     (await summary('another')).includes(
-      'Another program is answering on shelf’s port, so nobody can open shelf. Start shelf again, or stop lending it and lend what runs there now.',
+      'Kept to python3 as it runs now. Another program is answering on shelf’s port, so nobody can open shelf. Start shelf again as you started it, or lend it again to keep it to what runs there now.',
     ),
   );
   assert.ok(

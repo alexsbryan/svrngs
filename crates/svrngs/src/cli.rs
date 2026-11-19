@@ -12,7 +12,7 @@
 //! svrngs join <link> [--as N] [--no-run]   join a group by its link, run
 //! svrngs link <group> [--origin U]
 //!                                          a new link to a group, print it, run
-//! svrngs share <port> --group G... [--name N] [--program P] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+//! svrngs share <port> --group G... [--name N] [--program P] [--pid I] [--limit L] [--refuse P]... [--upload M] [--reads P]... [--ask W] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
 //!                                          lend a service on this computer
 //! svrngs unshare <name> [--group G]...     stop lending it, or to G only
 //! svrngs share --folder <dir> --group <group> keep a folder the same on every member's disk,
@@ -274,6 +274,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     let mut reads = Vec::new();
     let (mut folder, mut groups) = (None, Vec::new());
     let mut asks = None;
+    let mut pid = None;
     let mut sign_in = false;
     let mut readers = false;
     let mut carries = None;
@@ -292,8 +293,9 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             "--relay" => matches!(verb.as_str(), "new" | "link"),
             "--at" => verb == "relay",
             "--joined" => matches!(verb.as_str(), "remove" | "handover"),
-            "--as" | "--origin" | "--name" | "--program" | "--kind" | "--limit" | "--refuse"
-            | "--upload" | "--reads" | "--sign-in" | "--folder" | "--group" | "--ask" => true,
+            "--as" | "--origin" | "--name" | "--program" | "--kind" | "--pid" | "--limit"
+            | "--refuse" | "--upload" | "--reads" | "--sign-in" | "--folder" | "--group"
+            | "--ask" => true,
             _ => false,
         };
         let raw = match valued {
@@ -316,6 +318,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             }
             "--name" => name = Some(lend_name(&raw).map_err(|why| format!("--name {why}"))?),
             "--program" | "--kind" => kind = Some(Program::parse(&raw).map_err(|_| not(A_PROGRAM))?),
+            "--pid" => pid = Some(raw.parse::<u32>().map_err(|_| not("a process id"))?),
             "--limit" => {
                 let what = "a number of people: 1 or more";
                 limit = Some(raw.parse::<NonZeroU16>().map_err(|_| not(what))?);
@@ -381,11 +384,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
         || upload.is_some()
         || !reads.is_empty()
         || asks.is_some()
+        || pid.is_some()
         || sign_in)
         && verb != "share"
     {
         return Err(
-            "--name, --program, --limit, --refuse, --upload, --reads, --ask and --sign-in-with-svrngs are `share` flags"
+            "--name, --program, --pid, --limit, --refuse, --upload, --reads, --ask and --sign-in-with-svrngs are `share` flags"
                 .into(),
         );
     }
@@ -467,6 +471,7 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
                     readers,
                     raw: carries,
                     audience: Audience::Legacy,
+                    pid,
                 },
                 groups,
             ))
@@ -823,7 +828,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             };
             let theirs = terms.as_ref().map_or("", |(t, _)| *t);
             let mut lend = share::lend_of(&asked, |p| here.listens(p), known, theirs)?;
-            share::bound(&mut lend, here.owner(asked.raw, asked.port))?;
+            share::bound(&mut lend, here.owner(asked.raw, asked.port), asked.pid)?;
             if !lend.sends.is_empty() && !sends_said(here, &lend)? {
                 lend.sends.clear();
             }
@@ -1407,6 +1412,10 @@ impl std::fmt::Display for Said {
                         if n.get() == 1 { "person" } else { "people" })?,
                     None => writeln!(f, "You lend {name} ({raw}port {port}) to the groups you chose, as many at once as want it. \
                         To let fewer in at once, change it on your home page, or `svrngs share {port} --group <group> --limit <number>`.")?,
+                }
+                if let Some(program) = &lend.command {
+                    let p = &program.name;
+                    writeln!(f, "Kept to {p} as it runs now: started the same way again, {p} keeps it; anything else on port {port} is held until you share {name} again.")?;
                 }
                 let ((theirs, by), kind) = (terms.clone().unwrap_or_default(), &lend.kind);
                 // How its people sign in, in the words of who wrote the group's file.

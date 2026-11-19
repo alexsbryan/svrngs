@@ -40,6 +40,7 @@ fn share_of(port: u16, kind: &str) -> Share {
         readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
+        pid: None,
     }
 }
 
@@ -676,4 +677,40 @@ async fn a_lend_keeps_its_program_s_account_and_a_mac_only_this_one_s() {
         .expect("navidrome is lent");
     let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
     assert_eq!(lent.owner, Some(4242));
+}
+
+/// **A lend is kept to the program its lender chose** (LEND_PROGRAM §4):
+/// `share 4533 --pid 999`, no process read on the port being 999, is
+/// refused, exit 1, in words that say what to do, and nothing is lent;
+/// `--pid 4321`, one of them, is lent with its program kept, and the share
+/// says its name. Planted, watched failing: the check skipped (lent).
+#[tokio::test]
+async fn a_lend_is_kept_to_the_program_its_lender_chose() {
+    use svrngs_node::lend::{self, LendName, Sandbox};
+    let wire = Wire::default();
+    let (sam, _held) = sams_lab(&wire).await;
+    let navidrome = LendName::parse("navidrome").unwrap();
+    let mine = svrngs_node::uid::mine().unwrap();
+    let mut serve = svrngs_node::node::holder(Sandbox::No, "navidrome");
+    serve.pids = vec![4321];
+    let mut lender = Lender::of(&sam, SECRET);
+    lender.owner = Some(Owner::Uid(mine, Some(serve.clone())));
+    let chose = |pid| ["4533", "--group", "Lab", "--pid", pid];
+    let refused = shares(&lender, &chose("999")).await.unwrap_err();
+    let words = "svrngs can't lend port 4533: process 999 isn't the program answering there now. Look at what runs on port 4533 again, then lend it.";
+    assert_eq!(
+        (refused.to_string().as_str(), refused.exit_code()),
+        (words, 1)
+    );
+    assert_eq!(
+        lend::read(sam.dir.path(), &navidrome).unwrap(),
+        None,
+        "nothing lent"
+    );
+    let said = shares(&lender, &chose("4321"))
+        .await
+        .expect("navidrome is lent");
+    assert!(said.contains("Kept to navidrome as it runs now"), "{said}");
+    let lent = lend::read(sam.dir.path(), &navidrome).unwrap().unwrap();
+    assert_eq!(lent.command, Some(serve.command));
 }

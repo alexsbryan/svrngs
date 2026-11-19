@@ -125,7 +125,7 @@ pub struct IrohTransport {
     /// The connections this computer's acceptor took, which [`Self::fetch`]
     /// closes with those it dialled.
     pub(crate) accepted: Accepted,
-    /// The sandboxes of lends' programs read so far ([`crate::uid::Seen`]).
+    /// The lends' programs read so far ([`crate::uid::Seen`]).
     seen: std::sync::Arc<crate::uid::Seen>,
 }
 
@@ -287,8 +287,9 @@ pub trait Net: Fetch + std::any::Any {
     /// Whose the socket at `side` of `conn` on this computer is
     /// ([`crate::uid::owner`]): read off the async runtime in the product.
     fn owner(&self, raw: Raw, conn: Conn, side: Side) -> Later<'_, Owner>;
-    /// Whose program answers at `conn`'s peer, and in what sandbox
-    /// ([`crate::uid::owner`] asked with what it has read): read off the async runtime in the product.
+    /// Whose program answers at `conn`'s peer, and what program
+    /// ([`crate::uid::owner`] asked with what it has read): read off the
+    /// async runtime in the product.
     fn program(&self, raw: Raw, conn: Conn) -> Later<'_, Owner>;
 }
 

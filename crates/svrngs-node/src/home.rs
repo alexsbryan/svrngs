@@ -743,6 +743,8 @@ struct ToLend {
     /// ([`drawn`]), posted back so the lend keeps what its lender saw, not
     /// the file as it is when they press (CONTRACTS §6.8); none before.
     terms: Option<String>,
+    /// The process chosen on the port, as `svrngs share --pid` takes it.
+    pid: Option<u32>,
 }
 
 /// `POST /running`: the lend decided as `svrngs share` decides one
@@ -761,7 +763,7 @@ async fn lend_one(
     };
     // What the page sent: a port that is none, 0 or past 65535, else a
     // body the page never sends.
-    let Json(ToLend { port, name, kind, groups, terms }) = asked.map_err(|e| match e {
+    let Json(ToLend { port, name, kind, groups, terms, pid }) = asked.map_err(|e| match e {
         JsonRejection::JsonDataError(_) => refused("That is not something running on this computer: look again, then lend it from the list.", &e),
         _ => refused("This computer could not read what the page sent: reload the page, then try again.", &e),
     })?;
@@ -798,6 +800,7 @@ async fn lend_one(
         readers: false,
         raw: None,
         audience: Audience::Selected(groups.clone()),
+        pid,
     };
     // The terms it keeps: those the page drew, posted back, so a file
     // changed since changes nothing (CONTRACTS §6.8); else its groups' own,
@@ -836,7 +839,7 @@ async fn lend_one(
         Some(conn) => at.host.transport.program(Raw::Tcp, conn).await,
         None => Owner::Unjudged("nothing answers on the port"),
     };
-    share::bound(&mut lend, read).map_err(|e| refused(&e.to_string(), &e))?;
+    share::bound(&mut lend, read, pid).map_err(|e| refused(&e.to_string(), &e))?;
     let stands = lend::read(dir, &lend.name).map(|had| had.is_some());
     tracing::debug!(target: "home", lend = %lend.name, ?stands, "home: lent from the page unless a lend of its name stands");
     let declared = stands.map(|stands| (!stands).then(|| lend::declare(dir, &lend, None)));

@@ -39,7 +39,7 @@ use std::time::Duration;
 
 use crate::lend::SendRow;
 use crate::lend::{Audience, Lend, LendError, LendName, Program, Raw, RefusedPath, Source, Upload};
-use crate::uid::{Conn, Owner, Side};
+use crate::uid::{self, Conn, Owner, Side};
 
 /// The programs svrngs ships terms for, one file each under `src/programs/`,
 /// `<word>.txt`, so adding a program is adding a file; each holds that word's
@@ -224,6 +224,9 @@ pub struct Share {
     /// lender chose, or [`Audience::Legacy`] when none was given, which is
     /// paused until selection, never all groups.
     pub audience: Audience,
+    /// `--pid`: the process its lender chose on the port, which must be
+    /// the program [`bound`] reads there (svrn-docs LEND_PROGRAM §4).
+    pub pid: Option<u32>,
 }
 
 /// Why a lend could not be decided, in a person's words.
@@ -239,6 +242,8 @@ pub enum ShareRefusal {
     NotYours(NonZeroU16),
     #[error("svrngs can't lend port {0}: it can't tell which account runs the program there ({1}). Start it again, then lend it again.")]
     Unowned(NonZeroU16, &'static str),
+    #[error("svrngs can't lend port {0}: process {1} isn't the program answering there now. Look at what runs on port {0} again, then lend it.")]
+    NotThere(NonZeroU16, u32),
 }
 
 /// The kind [`PROGRAMS`] names for `port`, if any.
@@ -506,11 +511,11 @@ fn answers(port: &NonZeroU16) -> bool {
     std::net::TcpStream::connect_timeout(&addr, Duration::from_millis(500)).is_ok()
 }
 
-/// Whose program answers on `port` now, and in what sandbox
-/// ([`crate::uid::owner`]): by a TCP
-/// connection to it, held while it is read; for UDP, the socket a datagram
-/// from this computer's 127.0.0.1 would reach, asked of no socket of ours,
-/// since one a program serves from is connected to no one.
+/// Whose program answers on `port` now, and what program
+/// ([`crate::uid::owner`]): by a TCP connection to it, held while it is
+/// read; for UDP, the socket a datagram from this computer's 127.0.0.1
+/// would reach, asked of no socket of ours, since one a program serves
+/// from is connected to no one.
 pub fn owner_at(raw: Option<Raw>, port: NonZeroU16) -> Owner {
     let to = std::net::SocketAddr::from(([127, 0, 0, 1], port.get()));
     let from = |local| Conn { local, peer: to };
@@ -528,21 +533,32 @@ pub fn owner_at(raw: Option<Raw>, port: NonZeroU16) -> Owner {
     }
 }
 
-/// `lend` bound to the account and sandbox `read` names as its program's
-/// (LEND_OWNER §4, LEND_SANDBOX): recorded, the door carries only to them; none where no reader is;
-/// refused on a Mac when no program of this account's answers, and
-/// wherever whose it is can't be told.
-pub fn bound(lend: &mut Lend, read: Owner) -> Result<(), ShareRefusal> {
-    let (Source::Port(port) | Source::Raw(_, port)) = lend.source else {
-        return Ok(());
+/// `lend` bound to the account, sandbox and program `read` names as its
+/// program's (LEND_OWNER §4, LEND_SANDBOX, LEND_PROGRAM §4): recorded, the
+/// door carries only to them; none where no reader is; refused on a Mac
+/// when no program of this account's answers, wherever whose it is can't be
+/// told, and when `pid` is asked for and isn't that program
+/// ([`crate::uid::among`]).
+pub fn bound(lend: &mut Lend, read: Owner, pid: Option<u32>) -> Result<(), ShareRefusal> {
+    let (raw, port) = match lend.source {
+        Source::Port(port) => (Raw::Tcp, port),
+        Source::Raw(raw, port) => (raw, port),
+        Source::Carried(..) => return Ok(()),
     };
-    tracing::debug!(target: "share", lend = %lend.name, port, ?read, "share: the account whose program answers, recorded with the lend or why it isn't lent");
-    match read {
-        Owner::Uid(uid, sandbox) => (lend.owner, lend.sandbox) = (Some(uid), sandbox),
-        Owner::NoReader => (lend.owner, lend.sandbox) = (None, None),
+    tracing::debug!(target: "share", lend = %lend.name, port, ?read, ?pid, "share: the program answering, recorded with the lend or why it isn't lent");
+    let (owner, holder) = match read {
+        Owner::Uid(uid, holder) => (Some(uid), holder),
+        Owner::NoReader => (None, None),
         Owner::NotMine => return Err(ShareRefusal::NotYours(port)),
         Owner::Unjudged(why) => return Err(ShareRefusal::Unowned(port, why)),
+    };
+    let among = |pid: &u32| (holder.as_ref()).is_some_and(|h| uid::among(h, *pid, raw, port.get()));
+    if let Some(pid) = pid.filter(|pid| !among(pid)) {
+        tracing::debug!(target: "share", lend = %lend.name, port, pid, "share: refused — the process asked for isn't the program answering");
+        return Err(ShareRefusal::NotThere(port, pid));
     }
+    lend.owner = owner;
+    (lend.sandbox, lend.command) = holder.map(|h| (h.sandbox, h.command)).unzip();
     Ok(())
 }
 
@@ -642,5 +658,6 @@ pub fn lend_of(
         sends,
         owner: None,
         sandbox: None,
+        command: None,
     })
 }

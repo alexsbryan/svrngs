@@ -53,6 +53,7 @@ fn share_of(origin: SocketAddr, kind: &str) -> Share {
         readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
+        pid: None,
     }
 }
 
@@ -185,6 +186,7 @@ async fn sam_shares_and_alex_reaches_it_as_alex_until_sam_stops() {
     let lent_to = svrngs_node::lend::Audience::Selected(vec![seed.id()]);
     let asked = Share {
         audience: lent_to,
+        pid: None,
         ..share_of(origin, "pad")
     };
     let lend = share::lend_of(
@@ -314,6 +316,7 @@ async fn llama_server_lent_by_its_kind_keeps_back_what_shows_one_person_s_chats(
     let lent_to = svrngs_node::lend::Audience::Selected(vec![lab.id()]);
     let asked = Share {
         audience: lent_to,
+        pid: None,
         ..share_of(origin, "llama-server")
     };
     let lend = share::lend_of(

@@ -896,9 +896,17 @@ async fn each_refusal_is_decided_before_the_service_is_asked() {
 /// records the sandbox it next reads. Planted, each watched failing:
 /// `bound` not asked about the sandbox (the app carried); the record from
 /// before skipped (its `sandbox` none).
+///
+/// Then another program of ada's own account, in no sandbox (LEND_PROGRAM
+/// §6): on a port lent from `serve`, held in the same words, the service
+/// hearing nothing; `serve` started again, carried. The lend from before
+/// records the program it next reads, and the listing names each lend's.
+/// Planted, watched failing: `bound` ignoring the program (the other
+/// carried).
 #[tokio::test]
 async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
     use svrngs_node::lend::Sandbox;
+    use svrngs_node::node::holder;
     use svrngs_node::uid::Owner;
     answer_at_a();
     let (origin, heads) = origins::head_origin().await;
@@ -924,6 +932,8 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         );
         let app = r#","sandbox":{"app":"org.sabnzbd.sabnzbd"}"#;
         declare(dir, "flat", origin.port(), &format!("{owned}{app}"));
+        let serve = r#","sandbox":"no","command":{"name":"serve","digest":"serve"}"#;
+        declare(dir, "served", origin.port(), &format!("{owned}{serve}"));
     })
     .await;
     let bo = world.as_key(2, Alpn::Member).await;
@@ -952,7 +962,8 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         Some(mine),
         "recorded at its first connection"
     );
-    let sabnzbd = Some(Sandbox::App("org.sabnzbd.sabnzbd".into()));
+    let sabnzbd = Sandbox::App("org.sabnzbd.sabnzbd".into());
+    let sabnzbd = Some(holder(sabnzbd, "sabnzbd"));
     on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, sabnzbd));
     let heard = heads.lock().unwrap().len();
     let words = "ada’s boxed is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts boxed again.";
@@ -968,11 +979,36 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         "the service heard nothing"
     );
     assert_eq!(ask(bo, "GET", "/lend/flat/whoami", "").await.status, 200);
-    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, Some(Sandbox::No)));
+    let other = Some(holder(Sandbox::No, "other"));
+    on_wire::owns(&world.a, origin.port(), Owner::Uid(mine, other));
+    let heard = heads.lock().unwrap().len();
+    let words = "ada’s served is closed for now: another program is answering in its place on ada’s computer. Try again once ada starts served again.";
+    refused(
+        &ask(bo, "GET", "/lend/served/whoami", "").await,
+        502,
+        "away",
+        words,
+    );
+    assert_eq!(
+        heads.lock().unwrap().len(),
+        heard,
+        "the service heard nothing"
+    );
+    let serve = holder(Sandbox::No, "serve");
+    on_wire::owns(
+        &world.a,
+        origin.port(),
+        Owner::Uid(mine, Some(serve.clone())),
+    );
+    assert_eq!(ask(bo, "GET", "/lend/served/whoami", "").await.status, 200);
     assert_eq!(ask(bo, "GET", "/lend/old/whoami", "").await.status, 200);
     let old = lend::read(world.dir.path(), &LendName::parse("old").unwrap());
     let old = old.unwrap().unwrap();
-    assert_eq!((old.owner, old.sandbox), (Some(mine), Some(Sandbox::No)));
+    let recorded = (old.owner, old.sandbox, old.command);
+    assert_eq!(
+        recorded,
+        (Some(mine), Some(Sandbox::No), Some(serve.command))
+    );
     on_wire::owns(&world.a, listed_port, Owner::Uid(mine + 1, None));
     let (_, lends) = listed(bo, "x-svrngs-version: 5\r\n").await;
     let held: Vec<_> = (lends["lends"].as_array().unwrap().iter())
@@ -980,4 +1016,8 @@ async fn a_lend_s_port_answered_by_another_account_s_program_is_held() {
         .collect();
     assert!(held.contains(&("listed", Some("another"))), "{lends:#}");
     assert!(held.contains(&("shelf", None)), "{lends:#}");
+    let named = (lends["lends"].as_array().unwrap().iter())
+        .find(|l| l["name"] == "served")
+        .map(|l| l["command"].clone());
+    assert_eq!(named, Some(serde_json::json!("serve")), "{lends:#}");
 }

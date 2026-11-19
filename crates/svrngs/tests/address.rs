@@ -367,6 +367,7 @@ fn the_home_page_and_a_lend_answer_at_one_address_across_a_restart() {
         readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Legacy,
+        pid: None,
     };
     let lend = share::lend_of(&asked, share::listens, None, "").expect("pad listens");
     cli::share_lend(dir.path(), &lend, None).unwrap();

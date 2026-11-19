@@ -90,6 +90,7 @@ async fn sam_through_a_relay_on_this_computer() {
         sends: Vec::new(),
         owner: None,
         sandbox: None,
+        command: None,
     };
     lend::declare(&sam_dir, &film, None).unwrap();
     let link = printed.https.expect("an https link on the origin");

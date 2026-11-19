@@ -20,19 +20,22 @@
 //! bounds-checked; [`kernel`]'s calls are the one `unsafe` in svrngs
 //! (DESIGN §5).
 //!
-//! A lend's program, [`program`], is read with its sandbox when it runs as
-//! svrngs's account (svrn-docs LEND_SANDBOX): a sandboxed app of that
-//! account can't read what svrngs keeps, yet shares its network.
-//! - Linux: the Flatpak app id of the processes holding the sockets that
-//!   listen there, by each one's inode among this account's `/proc/<pid>/fd`.
-//! - macOS: whether the process holding the socket is an App Sandbox app,
-//!   by its code's entitlement as Security.framework says, and its path.
+//! A lend's program, [`Holder`], is read with its account when it runs as
+//! svrngs's (svrn-docs LEND_SANDBOX, LEND_PROGRAM): its sandbox, since a
+//! sandboxed app of that account can't read what svrngs keeps yet shares
+//! its network, and its command ([`Holder::command`]).
+//! - Linux: the processes holding the sockets that listen there, by each
+//!   one's inode among this account's `/proc/<pid>/fd`: their Flatpak app
+//!   id, and each one's `exe` and `cmdline`.
+//! - macOS: the process holding the socket: whether it is an App Sandbox
+//!   app, by its code's entitlement as Security.framework says, and its
+//!   path; its executable's path and its arguments, by libproc and sysctl.
 
 use std::net::{IpAddr, SocketAddr};
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 use std::sync::PoisonError;
 
-use crate::lend::{Raw, Sandbox};
+use crate::lend::{Command, Raw, Sandbox};
 
 /// A connection on this computer, by its two ends as one of its sockets
 /// sees them: its own address, and the address it is connected to.
@@ -53,11 +56,11 @@ pub enum Side {
 /// Whose a socket is, as this computer says now.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Owner {
-    /// The uid of the account that holds it, and the sandbox of the program
-    /// answering there when [`program`] asks and that account is svrngs's:
-    /// another account's programs are that account's to read, so its
-    /// account alone decides.
-    Uid(u32, Option<Sandbox>),
+    /// The uid of the account that holds it, and the program answering
+    /// there when asked with [`Seen`] and that account is svrngs's: another
+    /// account's programs are that account's to read, so its account alone
+    /// decides.
+    Uid(u32, Option<Holder>),
     /// A Mac's: no process of this account's holds it, a TCP end within
     /// [`ACCEPT_WITHIN`]; whose it is, a Mac doesn't show svrngs.
     NotMine,
@@ -65,6 +68,51 @@ pub enum Owner {
     Unjudged(&'static str),
     /// This system has no reader, so nothing was asked.
     NoReader,
+}
+
+/// The program holding a socket of svrngs's account, as [`owner`] reads it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Holder {
+    pub sandbox: Sandbox,
+    pub command: Command,
+    /// Its processes found holding it: on Linux each holding a socket
+    /// listening there, on a Mac the one holding the connection's.
+    pub pids: Vec<u32>,
+}
+
+/// Whether process `pid` is the program `holder` was read as, on `port`
+/// (svrn-docs LEND_PROGRAM §4): one of its pids, or on a Mac one of this
+/// account's processes holding a `raw` socket listening there.
+pub fn among(holder: &Holder, pid: u32, raw: Raw, port: u16) -> bool {
+    #[cfg(target_os = "macos")]
+    let listens = || i32::try_from(pid).is_ok_and(|pid| mac::listening(pid, raw, port));
+    #[cfg(not(target_os = "macos"))]
+    let listens = || false;
+    let among = holder.pids.contains(&pid) || listens();
+    tracing::debug!(target: "uid", pid, ?raw, port, among, "uid: whether the process asked for holds the port");
+    among
+}
+
+/// The program processes `pids` are, in `sandbox`, by the commands they
+/// run (svrn-docs LEND_PROGRAM §2): each one's executable's path and its
+/// arguments past the first, sorted and each once, hashed, so processes of
+/// one program whose titles differ are one; named by its executables' file
+/// names. Its arguments are never kept or traced: they may hold secrets.
+#[cfg(any(target_os = "linux", target_os = "macos", test))]
+fn held(sandbox: Sandbox, ran: impl IntoIterator<Item = Vec<Vec<u8>>>, pids: Vec<u32>) -> Holder {
+    let ran: std::collections::BTreeSet<Vec<Vec<u8>>> = ran.into_iter().collect();
+    let hashed = serde_json::to_vec(&ran).expect("bytes always serialize");
+    let digest = hex::encode(ring::digest::digest(&ring::digest::SHA256, &hashed));
+    let file = |e: &[u8]| Some(String::from_utf8_lossy(e).rsplit('/').next()?.to_owned());
+    let files = ran.iter().filter_map(|r| file(r.first()?));
+    let names: std::collections::BTreeSet<String> = files.collect();
+    let name = names.into_iter().collect::<Vec<_>>().join(", ");
+    let command = Command { name, digest };
+    Holder {
+        sandbox,
+        command,
+        pids,
+    }
 }
 
 /// How long a Mac's reader looks again for a TCP end this account's
@@ -77,38 +125,37 @@ pub const ACCEPT_WITHIN: std::time::Duration = std::time::Duration::from_millis(
 
 /// The uid holding the socket at `side` of `conn`, a TCP connection or a UDP
 /// flow as `raw` says, read now and never kept; asked with `seen` and of
-/// svrngs's own account, with the sandbox of the program whose socket took
-/// it, kept there, or why it can't be told ([`Owner::Unjudged`]). A Mac's
-/// may wait up to [`ACCEPT_WITHIN`], so an async caller reads it off its
-/// runtime.
+/// svrngs's own account, with the program whose socket took it, kept there,
+/// or why it can't be told ([`Owner::Unjudged`]). A Mac's may wait up to
+/// [`ACCEPT_WITHIN`], so an async caller reads it off its runtime.
 pub fn owner(raw: Raw, conn: Conn, side: Side, seen: Option<&Seen>) -> Owner {
     let (at, to) = ends(conn, side);
     let owner = read(raw, at, to, seen);
-    tracing::debug!(target: "uid", ?raw, %at, %to, ?owner, "uid: whose the socket at this end is, and in what sandbox");
+    tracing::debug!(target: "uid", ?raw, %at, %to, ?owner, "uid: whose the socket at this end is, and what program");
     owner
 }
 
-/// The sandboxes [`owner`] read, each kept by what a program taking a
+/// The programs [`owner`] read, each kept by what a program taking a
 /// lend's port must make anew: on Linux the inode of a socket listening
 /// there, since a new socket has a new one; on a Mac the pid and start of
-/// the process holding it, since a process's App Sandbox is fixed at its
-/// launch. So a holder is read once, not at each connection (Linux's scan
-/// took 5–18 ms, 2026-11-19), and no other program can answer within what
-/// is kept: the window LEND_OWNER §3 keeps a cache out for. A Mac program
-/// updated on disk while it runs, whose signature Security then won't
-/// judge, keeps what was read of it.
+/// the process holding it, since a process's App Sandbox and command are
+/// fixed at its launch. So a holder is read once, not at each connection
+/// (Linux's scan took 5–18 ms, 2026-11-19), and no other program can
+/// answer within what is kept: the window LEND_OWNER §3 keeps a cache out
+/// for. A Mac program updated on disk while it runs, whose signature
+/// Security then won't judge, keeps what was read of it.
 #[derive(Debug, Default)]
 pub struct Seen(
     #[expect(clippy::disallowed_types, reason = "the uid reader's cache")]
-    std::sync::Mutex<std::collections::HashMap<(u64, u64), Sandbox>>,
+    std::sync::Mutex<std::collections::HashMap<(u64, u64), Holder>>,
 );
 
-/// A sandbox read, or why it can't be.
-type Read = Result<Sandbox, &'static str>;
+/// A program read, or why it can't be.
+type Read = Result<Holder, &'static str>;
 
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 impl Seen {
-    /// The sandbox kept at `key`, else `read`'s, kept when it is one. The
+    /// The program kept at `key`, else `read`'s, kept when it is one. The
     /// lock is held while it reads, so one listener is read once.
     fn get_or(&self, key: (u64, u64), read: impl FnOnce() -> Read) -> Read {
         let mut seen = self.0.lock().unwrap_or_else(PoisonError::into_inner);
@@ -116,26 +163,26 @@ impl Seen {
             return Ok(kept.clone());
         }
         let read = read();
-        tracing::debug!(target: "uid", ?key, ?read, "uid: the sandbox of the program holding a socket, read and kept");
-        if let Ok(sandbox) = &read {
+        tracing::debug!(target: "uid", ?key, ?read, "uid: the program holding a socket, read and kept");
+        if let Ok(holder) = &read {
             // Emptied when full, so a server forking a process for each
             // connection can't grow it without end; what was kept is read
             // again, as after a restart.
             if seen.len() >= KEPT {
                 seen.clear();
             }
-            seen.insert(key, sandbox.clone());
+            seen.insert(key, holder.clone());
         }
         read
     }
 }
 
-/// How many sandboxes [`Seen`] keeps before it empties.
+/// How many programs [`Seen`] keeps before it empties.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 const KEPT: usize = 4096;
 
-/// `uid`'s, asked with `seen` with its program's sandbox as `read` reads
-/// it there, or why that can't be told.
+/// `uid`'s, asked with `seen` with its program as `read` reads it there,
+/// or why that can't be told.
 #[cfg(any(target_os = "linux", target_os = "macos"))]
 fn with(uid: u32, seen: Option<&Seen>, read: impl FnOnce(&Seen) -> Read) -> Owner {
     let read = |seen| read(seen).map_or_else(Owner::Unjudged, |s| Owner::Uid(uid, Some(s)));
@@ -233,7 +280,7 @@ fn read(raw: Raw, at: SocketAddr, to: SocketAddr, seen: Option<&Seen>) -> Owner 
     );
     loop {
         match mac::ours(me, raw, (at, to)) {
-            Ok(Some(pid)) => return with(me, seen, |seen| mac::sandbox(pid, seen)),
+            Ok(Some(pid)) => return with(me, seen, |seen| mac::holder(pid, seen)),
             Err(e) => {
                 tracing::debug!(target: "uid", %at, error = %e, "uid: this account's processes can't be read");
                 return Owner::Unjudged("this account's programs can't be read");
@@ -281,38 +328,59 @@ mod proc_net {
     /// one it is connected to, its account and its inode.
     pub(super) type Row = (Ends, u32, u64);
 
-    /// The sandbox of the processes holding socket `inode`, by their files.
-    /// Yama's `ptrace_scope` 1 refuses none of these reads: they are
-    /// ptrace's read mode, not attach (seen on Omarchy 4.5, 2026-11-19).
-    /// Held by none whose files can be read, it is judged by the scopes of
-    /// those whose files can't be (svrn-docs LEND_SANDBOX).
+    /// The program of the processes holding socket `inode`, by their files:
+    /// their sandbox, all theirs alike, and their commands. Yama's
+    /// `ptrace_scope` 1 refuses none of these reads: they are ptrace's read
+    /// mode, not attach (seen on Omarchy 4.5, 2026-11-19). Held by none
+    /// whose files can be read, it can't be told; why, by the scopes of
+    /// those whose files can't be (svrn-docs LEND_SANDBOX, LEND_PROGRAM §2).
     #[cfg(target_os = "linux")]
     pub(super) fn holders(inode: u64) -> Read {
         use std::fs::{read_dir, read_link, read_to_string, DirEntry};
-        let held = std::path::PathBuf::from(format!("socket:[{inode}]"));
+        let socket = std::path::PathBuf::from(format!("socket:[{inode}]"));
         let procs = read_dir("/proc").map_err(|_| "this computer's programs can't be listed")?;
         let procs: Vec<DirEntry> = procs.flatten().collect();
-        let link = |f: DirEntry| read_link(f.path()).is_ok_and(|l| l == held);
+        let link = |f: DirEntry| read_link(f.path()).is_ok_and(|l| l == socket);
         let files = |p: &&DirEntry| read_dir(p.path().join("fd")).map(|fs| fs.flatten().any(link));
-        let holding = procs.iter().filter(|p| files(p).is_ok_and(|held| held));
-        let read: Vec<Read> = holding.map(|p| flatpak(&p.path())).collect();
-        if !read.is_empty() {
-            return alike(read.into_iter(), "no program holds it");
+        let holds = |p: &&DirEntry| files(p).is_ok_and(|holds| holds);
+        let holding: Vec<&DirEntry> = procs.iter().filter(holds).collect();
+        if !holding.is_empty() {
+            let flatpaks = holding.iter().map(|p| flatpak(&p.path()));
+            let sandbox = alike(flatpaks, "no program holds it")?;
+            let ran: Result<Vec<_>, _> = holding.iter().map(|p| ran(&p.path())).collect();
+            let pid = |p: &&DirEntry| p.file_name().to_str()?.parse().ok();
+            let pids = holding.iter().filter_map(pid).collect();
+            return Ok(held(sandbox, ran?, pids));
         }
         let scope = format!("user@{}.service/app.slice/app-flatpak-", mine()?);
         let theirs = |p: &DirEntry| read_to_string(p.path().join("cgroup"));
         let boxed = |p: &DirEntry| theirs(p).is_ok_and(|c| c.contains(&scope));
         match procs.iter().filter(|p| files(p).is_err()).any(boxed) {
             true => Err("a Flatpak whose files can't be read may hold the socket"),
-            false => Ok(Sandbox::No),
+            false => Err("no program whose files can be read holds the socket"),
         }
+    }
+
+    /// The command the process at `proc` (its `/proc/<pid>`) runs: its
+    /// executable's path, as it was where an update replaced its file
+    /// (` (deleted)`), then its arguments past the first, those ending a
+    /// title padded with NULs passed over.
+    pub(super) fn ran(proc: &std::path::Path) -> Result<Vec<Vec<u8>>, &'static str> {
+        let unread = "the program holding the socket can't be read";
+        let exe = std::fs::read_link(proc.join("exe")).map_err(|_| unread)?;
+        let exe = exe.into_os_string().into_encoded_bytes();
+        let exe = exe.strip_suffix(b" (deleted)").unwrap_or(&exe).to_vec();
+        let line = std::fs::read(proc.join("cmdline")).map_err(|_| unread)?;
+        let end = line.iter().rposition(|b| *b != 0).map_or(0, |at| at + 1);
+        let args = line[..end].split(|b| *b == 0).skip(1).map(<[u8]>::to_vec);
+        Ok(std::iter::once(exe).chain(args).collect())
     }
 
     /// The Flatpak app the process at `proc` (its `/proc/<pid>`) runs in, by
     /// its root's `.flatpak-info`, which Flatpak mounts read-only; none
     /// where its root has none, as xdg-desktop-portal reads it. Its root is
     /// read again, so a process that exited is no answer, never none.
-    pub(super) fn flatpak(proc: &std::path::Path) -> Read {
+    pub(super) fn flatpak(proc: &std::path::Path) -> Result<Sandbox, &'static str> {
         match std::fs::read_to_string(proc.join("root/.flatpak-info")) {
             Ok(info) => (info.lines().find_map(|l| l.strip_prefix("name=")))
                 .map(|app| Sandbox::App(app.to_owned()))
@@ -324,14 +392,18 @@ mod proc_net {
         }
     }
 
-    /// The one sandbox all of `read` say, or why not: none said, `none`.
-    pub(super) fn alike(read: impl Iterator<Item = Read>, none: &'static str) -> Read {
-        let mut said: Vec<Sandbox> = read.collect::<Result<_, _>>()?;
+    /// The one answer all of `read` give, a sandbox or a program, or why
+    /// not: none given, `none`.
+    pub(super) fn alike<T: Clone + PartialEq>(
+        read: impl Iterator<Item = Result<T, &'static str>>,
+        none: &'static str,
+    ) -> Result<T, &'static str> {
+        let mut said: Vec<T> = read.collect::<Result<_, _>>()?;
         said.dedup();
         match &said[..] {
             [one] => Ok(one.clone()),
             [] => Err(none),
-            _ => Err("programs in more than one sandbox hold the sockets there"),
+            _ => Err("programs that differ hold the sockets there"),
         }
     }
 
@@ -460,6 +532,19 @@ mod record {
     }
     const START: usize = 120;
 
+    /// A `KERN_PROCARGS2` answer's arguments past the first: its count, then
+    /// the executable's path and the NULs padding it, then that many
+    /// arguments, each ending in a NUL; the environment after them is
+    /// never read.
+    pub(super) fn args(procargs: &[u8]) -> Option<Vec<Vec<u8>>> {
+        let count = usize::try_from(word(procargs, 0)?).ok()?;
+        let path = procargs.get(4..)?;
+        let padded = &path[path.iter().position(|b| *b == 0)?..];
+        let argv = &padded[padded.iter().position(|b| *b != 0)?..];
+        let argv = argv.split(|b| *b == 0).take(count).skip(1);
+        Some(argv.map(<[u8]>::to_vec).collect())
+    }
+
     /// The 32-bit word at `at` in `bytes`, in this computer's byte order.
     pub(super) fn word(bytes: &[u8], at: usize) -> Option<u32> {
         Some(u32::from_ne_bytes(bytes.get(at..at + 4)?.try_into().ok()?))
@@ -471,12 +556,13 @@ mod record {
 mod mac {
     use super::*;
 
-    /// Whether process `pid` is an App Sandbox app, by its code's
-    /// entitlement as Security.framework reads it, and if so its code's
-    /// path; kept by its pid and start ([`Seen`]). Signed without the
-    /// entitlement (`errSecCSReqFailed`) or unsigned (`errSecCSUnsigned`)
-    /// is none; any other answer can't be judged.
-    pub(super) fn sandbox(pid: i32, seen: &Seen) -> Read {
+    /// The program of process `pid`, kept by its pid and start ([`Seen`]):
+    /// whether it is an App Sandbox app, by its code's entitlement as
+    /// Security.framework reads it, and if so its code's path; and its
+    /// command. Signed without the entitlement (`errSecCSReqFailed`) or
+    /// unsigned (`errSecCSUnsigned`) is none; any other answer can't be
+    /// judged.
+    pub(super) fn holder(pid: i32, seen: &Seen) -> Read {
         use security_framework::os::macos::code_signing::{Flags, GuestAttributes, SecCode};
         let bsd = kernel(Ask::Bsd(pid)).unwrap_or_default();
         let start = record::start(&bsd).ok_or("the program's start can't be read")?;
@@ -485,17 +571,45 @@ mod mac {
             asked.set_pid(pid);
             let app = r#"entitlement["com.apple.security.app-sandbox"] exists"#.parse();
             let code = SecCode::copy_guest_with_attribues(None, &asked, Flags::NONE);
-            match code.and_then(|c| c.check_validity(Flags::NONE, &app?).map(|()| c)) {
+            let sandbox = match code.and_then(|c| c.check_validity(Flags::NONE, &app?).map(|()| c)) {
                 Ok(code) => (code.path(Flags::NONE).ok().and_then(|u| u.to_path()))
                     .map(|path| Sandbox::App(path.display().to_string()))
-                    .ok_or("the path of the app holding the socket can't be read"),
-                Err(e) if matches!(e.code(), -67050 | -67062) => Ok(Sandbox::No),
+                    .ok_or("the path of the app holding the socket can't be read")?,
+                Err(e) if matches!(e.code(), -67050 | -67062) => Sandbox::No,
                 Err(e) => {
                     tracing::debug!(target: "uid", pid, error = %e, "uid: Security can't judge the signature of the process holding the socket");
-                    Err("the signature of the program holding the socket can't be read")
+                    return Err("the signature of the program holding the socket can't be read");
                 }
-            }
+            };
+            Ok(held(sandbox, [ran(pid)?], vec![pid.unsigned_abs()]))
         })
+    }
+
+    /// The command process `pid` runs: its executable's path, by
+    /// `proc_pidpath`, then its arguments past the first, by sysctl's
+    /// `KERN_PROCARGS2`.
+    fn ran(pid: i32) -> Result<Vec<Vec<u8>>, &'static str> {
+        let read = kernel(Ask::Path(pid)).and_then(|path| Ok((path, kernel(Ask::Args(pid))?)));
+        let (path, args) = read.map_err(|e| {
+            tracing::debug!(target: "uid", pid, error = %e, "uid: the command of the process holding the socket can't be read");
+            "the program holding the socket can't be read"
+        })?;
+        let args = record::args(&args).ok_or("the program's arguments can't be read")?;
+        Ok(std::iter::once(path).chain(args).collect())
+    }
+
+    /// Whether `pid`, one of this account's processes, holds a `raw`
+    /// socket listening on `port`.
+    pub(super) fn listening(pid: i32, raw: Raw, port: u16) -> bool {
+        let uid = kernel(Ask::Bsd(pid)).ok().and_then(|b| record::uid(&b));
+        let ours = uid.is_some_and(|u| mine() == Ok(u));
+        let files = (kernel(Ask::Files(pid)).ok()).filter(|_| ours);
+        let files = files.unwrap_or_default();
+        let sockets = (files.chunks_exact(8)).filter(|f| record::word(f, 4) == Some(2));
+        let fd = |f: &[u8]| i32::try_from(record::word(f, 0)?).ok();
+        let read = |fd| record::socket(&kernel(Ask::Socket(pid, fd)).ok()?);
+        let listens = |(r, (at, to)): (Raw, Ends)| r == raw && at.port() == port && to.port() == 0;
+        sockets.filter_map(fd).filter_map(read).any(listens)
     }
 
     /// The pid of one of `me`'s processes holding the `raw` end at `at`
@@ -553,6 +667,11 @@ mod mac {
         Socket(i32, i32),
         /// A process's `proc_bsdinfo`: `PROC_PIDTBSDINFO`.
         Bsd(i32),
+        /// A process's executable's path: `proc_pidpath`.
+        Path(i32),
+        /// A process's arguments, as [`record::args`] reads them:
+        /// `KERN_PROCARGS2`.
+        Args(i32),
     }
 
     /// `PROC_UID_ONLY`, `PROC_PIDTBSDINFO` and `PROC_PIDFDSOCKETINFO`, which
@@ -562,6 +681,8 @@ mod mac {
     const PROC_PIDFDSOCKETINFO: i32 = 3;
     /// Room for what began between asking a list's size and filling it.
     const SLACK: usize = 4096;
+    /// `PROC_PIDPATHINFO_MAXSIZE`, the longest path `proc_pidpath` answers.
+    const PATH_LEN: usize = 4096;
 
     /// `ask`'s answer, the bytes the kernel wrote. The one `unsafe` in svrngs:
     /// every product crate denies `unsafe_code`, and `scripts/lean_check.py`
@@ -614,6 +735,28 @@ mod mac {
                 // SAFETY: the length passed is `buf`'s, and the kernel refuses
                 // a buffer shorter than its record rather than overrun it.
                 unsafe { libc::proc_pidfdinfo(pid, fd, info, buf.as_mut_ptr().cast(), len(&buf)) }
+            }
+            Ask::Path(pid) => {
+                buf = vec![0u8; PATH_LEN];
+                let into = buf.as_mut_ptr().cast();
+                // SAFETY: the length passed is `buf`'s.
+                unsafe { libc::proc_pidpath(pid, into, len(&buf).unsigned_abs()) }
+            }
+            Ask::Args(pid) => {
+                let mut asked = [libc::CTL_KERN, libc::KERN_PROCARGS2, pid];
+                let (asked, mut size) = (asked.as_mut_ptr(), 0);
+                // SAFETY: with no buffer it writes only `size`, the length it
+                // would fill, which a process's arguments keep while it runs.
+                unsafe { libc::sysctl(asked, 3, none, &mut size, none, 0) };
+                buf = vec![0u8; size];
+                let into = buf.as_mut_ptr().cast();
+                // SAFETY: the length passed is `buf`'s, and `size` is set to
+                // what it wrote.
+                let read = unsafe { libc::sysctl(asked, 3, into, &mut size, none, 0) };
+                c_int::try_from(size)
+                    .ok()
+                    .filter(|_| read == 0)
+                    .unwrap_or(0)
             }
         };
         let why = std::io::Error::last_os_error();

@@ -2488,6 +2488,7 @@ async fn a_carried_taste_sends() {
         readers: false,
         raw: None,
         audience: svrngs_node::lend::Audience::Selected(vec![group.clone()]),
+        pid: None,
     };
     let lend = svrngs_node::share::lend_of(&asked, |_| true, None, "").unwrap();
     assert_eq!(

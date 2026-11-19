@@ -236,17 +236,24 @@ program of that account, read from this computer's sockets at the connection
 (`crates/svrngs-node/src/uid.rs`, `door::bound`). For a program of the account
 svrngs runs as it records the app sandbox it ran in too, none or an app's (a
 Flatpak's app id on Linux, a Mac App Sandbox app's path; `Lend::sandbox`), and
-carries only to a program in that sandbox or in none. The sandbox is read once
-for each listening socket on Linux and each process on a Mac, neither of which
-changes it while it lives; the account, at each connection. A restart under the
-same account, of the same app, keeps the lend. Another program in its place,
-another account's or another sandbox's, is refused 502, its asker told it is
-closed for now and why, and its lender's line says so with what to do. What
-can't be read is refused the same way. On Linux a program of any account can be lent,
-kept to its uid. On a Mac svrngs sees only this account's sockets, so lending
-another account's program is refused with the fix, to run it as you. A lend
-from before this records the account and sandbox read at its first connection.
-Where no reader is, a lend carries as it did.
+the program itself (`Lend::command`, svrn-docs `LEND_PROGRAM.md`): a hash of
+the executable's path and arguments past the first of each process holding
+its socket, sorted and each once, and the executable's name. It carries only
+to that program, in that sandbox or in none. The sandbox and the program are
+read once for each listening socket on Linux and each process on a Mac,
+neither of which changes them while it lives; the account, at each
+connection. A restart under the same account, of the same app, with the same
+command, keeps the lend. Another program in its place, another account's,
+another sandbox's or another command's, is refused 502, its asker told it is
+closed for now and why, and its lender's line says so with what to do:
+sharing it again keeps it to what runs there then. What can't be read is
+refused the same way. `svrngs share --pid <pid>`, and the home page's lend
+with `pid`, lends only if that process is the program read on the port. On
+Linux a program of any account can be lent, kept to its uid. On a Mac svrngs
+sees only this account's sockets, so lending another account's program is
+refused with the fix, to run it as you. A lend from before this records the
+account, sandbox and program read at its first connection. Where no reader
+is, a lend carries as it did.
 
 **A port, not a page.** A program that speaks UDP or TCP is lent with
 `svrngs share <port> --udp --program <name>`, or `--tcp`: its declaration says

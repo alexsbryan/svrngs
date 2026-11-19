@@ -1,5 +1,10 @@
 use super::*;
 
+/// The command `ran` makes, as [`held`] reads it.
+fn command(ran: impl IntoIterator<Item = Vec<Vec<u8>>>) -> Command {
+    held(Sandbox::No, ran, Vec::new()).command
+}
+
 fn at(addr: &str) -> SocketAddr {
     addr.parse().unwrap()
 }
@@ -201,9 +206,13 @@ fn this_computer_answers_for_a_connection_made_here() {
     // This test's own sockets, asked with what is kept: its program, this
     // test, in no sandbox, read once.
     let seen = Seen::default();
-    let none = Owner::Uid(uid, Some(Sandbox::No));
-    assert_eq!(owner(Raw::Tcp, made, Side::Peer, Some(&seen)), none);
-    assert_eq!(owner(Raw::Udp, sent, Side::Peer, Some(&seen)), none);
+    let tcp = owner(Raw::Tcp, made, Side::Peer, Some(&seen));
+    let Owner::Uid(read, Some(holder)) = &tcp else {
+        panic!("{tcp:?}")
+    };
+    assert_eq!((*read, &holder.sandbox), (uid, &Sandbox::No));
+    assert!(holder.pids.contains(&std::process::id()), "{holder:?}");
+    assert_eq!(owner(Raw::Udp, sent, Side::Peer, Some(&seen)), tcp);
     #[cfg(target_os = "macos")]
     {
         let late = std::thread::spawn(move || {
@@ -278,20 +287,26 @@ fn a_flatpak_is_read_by_the_app_its_root_names() {
 
 /// **The sockets a connection reaches are told apart by inode, and agree
 /// or say nothing**: each `/proc/net` row keeps its inode; the holders of
-/// the sockets there, one sandbox, are it; two sandboxes, or none read,
-/// can't be judged. Planted, watched failing: the inode read from the
-/// ninth field (the timeout, 0); `alike` taking the first said.
+/// the sockets there, one program, are it; two sandboxes or programs, or
+/// none read, can't be judged. Planted, watched failing: the inode read
+/// from the ninth field (the timeout, 0); `alike` taking the first said.
 #[test]
 fn the_sockets_a_connection_reaches_agree_or_say_nothing() {
+    use crate::node::holder;
     let rows = proc_net::rows(TCP).unwrap();
     assert_eq!((rows[0].2, rows[1].2), (2556494, 2550773));
     let said = |all: Vec<Read>| proc_net::alike(all.into_iter(), "none");
-    let app = || Sandbox::App("org.sabnzbd.sabnzbd".into());
+    let app = || holder(Sandbox::App("org.sabnzbd.sabnzbd".into()), "sabnzbd");
+    let none = |name| holder(Sandbox::No, name);
     assert_eq!(said(vec![Ok(app()), Ok(app())]), Ok(app()));
-    assert_eq!(said(vec![Ok(Sandbox::No)]), Ok(Sandbox::No));
+    assert_eq!(said(vec![Ok(none("serve"))]), Ok(none("serve")));
     assert!(
-        said(vec![Ok(Sandbox::No), Ok(app())]).is_err(),
+        said(vec![Ok(none("sabnzbd")), Ok(app())]).is_err(),
         "two sandboxes"
+    );
+    assert!(
+        said(vec![Ok(none("serve")), Ok(none("other"))]).is_err(),
+        "two programs"
     );
     assert_eq!(said(vec![]), Err("none"));
     assert!(said(vec![Ok(app()), Err("unread")]).is_err());
@@ -309,24 +324,19 @@ fn the_sockets_a_connection_reaches_agree_or_say_nothing() {
 fn a_sandbox_is_read_once_for_what_a_taker_must_make_anew() {
     let seen = Seen::default();
     let reads = std::cell::Cell::new(0);
-    let read = |sandbox: Read| {
+    let read = |holder: Read| {
         reads.set(reads.get() + 1);
-        sandbox
+        holder
     };
-    assert_eq!(
-        seen.get_or((7, 0), || read(Ok(Sandbox::No))),
-        Ok(Sandbox::No)
-    );
-    assert_eq!(seen.get_or((7, 0), || read(Err("again"))), Ok(Sandbox::No));
+    let no = || crate::node::holder(Sandbox::No, "serve");
+    assert_eq!(seen.get_or((7, 0), || read(Ok(no()))), Ok(no()));
+    assert_eq!(seen.get_or((7, 0), || read(Err("again"))), Ok(no()));
     assert_eq!(reads.get(), 1, "kept, not read again");
     assert!(seen.get_or((8, 0), || read(Err("unread"))).is_err());
-    assert_eq!(
-        seen.get_or((8, 0), || read(Ok(Sandbox::No))),
-        Ok(Sandbox::No)
-    );
+    assert_eq!(seen.get_or((8, 0), || read(Ok(no()))), Ok(no()));
     assert_eq!(reads.get(), 3, "a failed read not kept");
     for pid in 0..KEPT as u64 + 1 {
-        let _ = seen.get_or((pid, 1), || Ok(Sandbox::No));
+        let _ = seen.get_or((pid, 1), || Ok(no()));
     }
     assert!(seen.0.lock().unwrap().len() <= KEPT, "emptied when full");
     let bsd = hex::decode(include_str!("fixtures/proc_bsdinfo.hex").trim()).unwrap();
@@ -334,4 +344,170 @@ fn a_sandbox_is_read_once_for_what_a_taker_must_make_anew() {
     let start = record::start(&bsd).map(|us| us / 1_000_000);
     assert!(start.is_some_and(|s| year.contains(&s)), "{start:?}");
     assert_eq!(record::start(&bsd[..128]), None);
+}
+
+/// **A program is its processes' commands, whatever their titles**
+/// (LEND_PROGRAM §2, §6): a process's command is its executable's path and
+/// its arguments past the first, a title's NUL padding passed over, so an
+/// nginx master and worker, their titles in their first argument, are one
+/// program, and two holders of one command count once; a holder running
+/// another command is another program; an executable an update replaced
+/// (` (deleted)`) is read at its path; a Mac's `KERN_PROCARGS2` answer is
+/// read past its path's padding, up to its count, its environment never.
+/// Planted, each watched failing: ` (deleted)` not stripped (two programs);
+/// the count not kept to (the environment read as arguments).
+#[test]
+fn a_program_is_its_processes_commands_whatever_their_titles() {
+    let proc = |exe: &str, cmdline: &[u8]| {
+        let proc = tempfile::tempdir().unwrap();
+        std::os::unix::fs::symlink(exe, proc.path().join("exe")).unwrap();
+        std::fs::write(proc.path().join("cmdline"), cmdline).unwrap();
+        proc_net::ran(proc.path()).unwrap()
+    };
+    let nginx = "/usr/bin/nginx";
+    let master = proc(nginx, b"nginx: master process /usr/bin/nginx\0\0\0\0\0\0");
+    let worker = proc(
+        nginx,
+        b"nginx: worker process\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0",
+    );
+    assert_eq!(
+        (&master, &worker),
+        (&vec![nginx.as_bytes().to_vec()], &master)
+    );
+    assert_eq!(command([master.clone(), worker]), command([master.clone()]));
+    let served = b"python3\0-m\0http.server\08000\0";
+    let python = proc("/usr/bin/python3.13", served);
+    assert_eq!(
+        python,
+        proc("/usr/bin/python3.13 (deleted)", served),
+        "updated"
+    );
+    let both = command([python.clone(), master]);
+    assert_ne!(both, command([python.clone()]), "every holder counted");
+    assert_eq!(both.name, "nginx, python3.13");
+    let other = proc("/usr/bin/python3.13", b"python3\0-m\0http.server\08001\0");
+    assert_ne!(command([other]).digest, command([python]).digest);
+    let mut procargs = 3u32.to_ne_bytes().to_vec();
+    procargs.extend(b"/usr/bin/python3\0\0\0\0python3\0-m\0http.server\0PATH=/bin\0\0");
+    let args = |a: &[&str]| a.iter().map(|a| a.as_bytes().to_vec()).collect::<Vec<_>>();
+    assert_eq!(record::args(&procargs), Some(args(&["-m", "http.server"])));
+    assert_eq!(record::args(&procargs[..2]), None);
+}
+
+/// A listener on 127.0.0.1 held by this Python and, as its first argument
+/// says, by a child once it runs: `two` the same command under another
+/// title, `sleep` the `sleep` program. It prints its port and its child's
+/// pid, 0 for none, and keeps each connection it accepts.
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+const SERVE: &str = r#"
+import os, socket, sys, time
+if os.environ.pop("HELD", None):
+    time.sleep(60)
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+s.bind(("127.0.0.1", 0))
+s.listen(8)
+s.set_inheritable(True)
+child = 0
+if sys.argv[1] in ("two", "sleep"):
+    ran, done = os.pipe()
+    child = os.fork()
+    if child == 0:
+        os.environ["HELD"] = "1"
+        if sys.argv[1] == "two":
+            os.execv(sys.executable, ["another-title"] + sys.orig_argv[1:])
+        os.execv("/bin/sleep", ["sleep", "60"])
+    os.close(done)
+    os.read(ran, 1)
+print(s.getsockname()[1], child, flush=True)
+kept = []
+while True:
+    kept.append(s.accept())
+"#;
+
+/// **A program is read by its command, and a restart keeps it**
+/// (LEND_PROGRAM §2, §4, §6), as this computer reads it: a Python server
+/// read with what is kept is in no sandbox, its pid among its holders;
+/// started again with the same command, the same program; with other
+/// arguments, another. A listener a child holds too, under another title:
+/// on Linux both its holders, one program; that child is among them, as
+/// `among` asks, on a Mac by the listener it holds; this test's process is
+/// not. On Linux a child running `sleep` makes another program than the
+/// Python alone. Planted on Linux, watched failing: `holders` hashing only
+/// the first holder (the `sleep` child not counted).
+#[cfg(any(target_os = "linux", target_os = "macos"))]
+#[test]
+fn a_program_is_read_by_its_command_and_a_restart_keeps_it() {
+    use std::io::BufRead as _;
+    use std::os::unix::process::CommandExt as _;
+    /// A running [`SERVE`], its port and its child's pid; its group
+    /// killed when dropped, its child with it.
+    struct Serving(std::process::Child, u16, u32);
+    impl Drop for Serving {
+        fn drop(&mut self) {
+            let group = format!("-{}", self.0.id());
+            let _ = std::process::Command::new("kill")
+                .args(["-9", "--", &group])
+                .status();
+            let _ = self.0.wait();
+        }
+    }
+    let serve = |how: &str| {
+        let mut python = std::process::Command::new("python3")
+            .args(["-c", SERVE, how])
+            .stdout(std::process::Stdio::piped())
+            .process_group(0)
+            .spawn()
+            .expect("python3 runs here");
+        let mut said = String::new();
+        let out = python.stdout.take().unwrap();
+        std::io::BufReader::new(out).read_line(&mut said).unwrap();
+        let (port, child) = said.trim().split_once(' ').expect("a port and a pid");
+        Serving(python, port.parse().unwrap(), child.parse().unwrap())
+    };
+    let read = |at: &Serving| {
+        let dialled = std::net::TcpStream::connect(("127.0.0.1", at.1)).unwrap();
+        let made = Conn {
+            local: dialled.local_addr().unwrap(),
+            peer: dialled.peer_addr().unwrap(),
+        };
+        match owner(Raw::Tcp, made, Side::Peer, Some(&Seen::default())) {
+            Owner::Uid(_, Some(holder)) => holder,
+            other => panic!("{other:?}"),
+        }
+    };
+    let one = serve("one");
+    let first = read(&one);
+    assert_eq!(first.sandbox, Sandbox::No);
+    assert!(first.pids.contains(&one.0.id()), "{first:?}");
+    drop(one);
+    let again = serve("one");
+    assert_eq!(read(&again).command, first.command, "started again");
+    drop(again);
+    let other = serve("other");
+    assert_ne!(read(&other).command.digest, first.command.digest);
+    drop(other);
+    let two = serve("two");
+    let titled = read(&two);
+    assert!(among(&titled, two.2, Raw::Tcp, two.1), "{titled:?}");
+    assert!(!among(&titled, std::process::id(), Raw::Tcp, two.1));
+    #[cfg(target_os = "linux")]
+    {
+        let exe = std::fs::read_link(format!("/proc/{}/exe", two.0.id())).unwrap();
+        let ran = ["-c", SERVE, "two"].map(|a| a.as_bytes().to_vec());
+        let ran = std::iter::once(exe.into_os_string().into_encoded_bytes()).chain(ran);
+        assert_eq!(titled.pids.len(), 2, "{titled:?}");
+        assert_eq!(titled.command, command([ran.collect()]), "one program");
+        drop(two);
+        let slept = serve("sleep");
+        let both = read(&slept);
+        let python = proc_net::ran(std::path::Path::new(&format!("/proc/{}", slept.0.id())));
+        assert_eq!(both.pids.len(), 2, "{both:?}");
+        assert_ne!(
+            both.command,
+            command([python.unwrap()]),
+            "the child counted"
+        );
+        assert!(both.command.name.contains("sleep"), "{both:?}");
+    }
 }

@@ -1570,7 +1570,10 @@ async fn lending_from_the_page_says_each_refusal_apart_and_traces_it() {
 /// as uid 4242's, it is lent, keeping that account. Planted, watched
 /// failing: `share::bound` not asked (lent, its owner none). A Flatpak
 /// server of this account's is lent, its app recorded beside its account;
-/// planted, watched failing: the sandbox not recorded (none).
+/// planted, watched failing: the sandbox not recorded (none). Its program
+/// is recorded too; a `pid` not among the processes read on the port is
+/// refused 400 in `svrngs share --pid`'s words, and one among them lent
+/// (LEND_PROGRAM §4). Planted, watched failing: the check skipped (lent).
 #[tokio::test]
 async fn a_program_of_another_account_is_refused_where_it_is_lent() {
     use svrngs_node::uid::Owner;
@@ -1607,18 +1610,51 @@ async fn a_program_of_another_account_is_refused_where_it_is_lent() {
         lend::read(dir.path(), &pad).unwrap().unwrap().owner,
         Some(4242)
     );
-    // A Flatpak server of this account's is lent, bound to its own app.
-    let jellyfin = Some(svrngs_node::lend::Sandbox::App(
-        "org.jellyfin.JellyfinServer".into(),
-    ));
+    // A Flatpak server of this account's is lent, bound to its own app and
+    // its program.
+    let jellyfin = svrngs_node::lend::Sandbox::App("org.jellyfin.JellyfinServer".into());
+    let jellyfin = svrngs_node::node::holder(jellyfin, "jellyfin");
     let mine = svrngs_node::uid::mine().unwrap();
-    on_wire::owns(&alex, port, Owner::Uid(mine, jellyfin.clone()));
+    on_wire::owns(&alex, port, Owner::Uid(mine, Some(jellyfin.clone())));
     let flat = body.replace(r#""name":"pad""#, r#""name":"flat""#);
     let got = ask(&Browser::of(&alex), "POST", &home, "/running", &own, &flat).await;
     assert_eq!(got.status, 200, "{}", got.body);
     let flat = lend::LendName::parse("flat").unwrap();
     let lent = lend::read(dir.path(), &flat).unwrap().unwrap();
-    assert_eq!((lent.owner, lent.sandbox), (Some(mine), jellyfin));
+    let recorded = (lent.owner, lent.sandbox, lent.command);
+    let jellyfin = (Some(mine), Some(jellyfin.sandbox), Some(jellyfin.command));
+    assert_eq!(recorded, jellyfin);
+    let mut serve = svrngs_node::node::holder(svrngs_node::lend::Sandbox::No, "serve");
+    serve.pids = vec![4321];
+    on_wire::owns(&alex, port, Owner::Uid(mine, Some(serve)));
+    let chose = |pid: u32| {
+        let named = format!(r#""name":"chose{pid}","pid":{pid}"#);
+        body.replace(r#""name":"pad""#, &named)
+    };
+    let got = ask(
+        &Browser::of(&alex),
+        "POST",
+        &home,
+        "/running",
+        &own,
+        &chose(999),
+    )
+    .await;
+    let words = format!("svrngs can't lend port {port}: process 999 isn't the program answering there now. Look at what runs on port {port} again, then lend it.");
+    assert_eq!(
+        (got.status, got.json()["error"].as_str()),
+        (400, Some(words.as_str()))
+    );
+    let got = ask(
+        &Browser::of(&alex),
+        "POST",
+        &home,
+        "/running",
+        &own,
+        &chose(4321),
+    )
+    .await;
+    assert_eq!(got.status, 200, "{}", got.body);
     alex.net().close().await;
 }
 

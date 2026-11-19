@@ -144,16 +144,19 @@ function Headers({ name, kept, state, doing, send }) {
 }
 
 // Why nobody can open a lend while its program runs (door.rs `answering`):
-// whose program answers on its port isn't the account or sandbox it was
+// what answers on its port isn't the account, sandbox or program it was
 // lent from.
 const HELD = {
   another: (/** @type {string} */ name) =>
-    ` Another program is answering on ${name}’s port, so nobody can open ${name}. Start ${name} again, or stop lending it and lend what runs there now.`,
+    ` Another program is answering on ${name}’s port, so nobody can open ${name}. Start ${name} again as you started it, or lend it again to keep it to what runs there now.`,
   unjudged: (/** @type {string} */ name) =>
     ` svrngs can’t tell whose program is on ${name}’s port, so nobody can open ${name}. Start it again, or lend it again.`,
 };
 /** @param {{ name: string, held?: 'another' | 'unjudged' }} lend */
 const heldWords = (lend) => (lend.held ? HELD[lend.held](lend.name) : '');
+// The program it is kept to, by its name (door.rs `offered`).
+const keptTo = (/** @type {Lend} */ lend) =>
+  lend.command ? ` Kept to ${lend.command} as it runs now.` : '';
 
 // Whether apps wait on the lender: an account or key to make, or why not.
 const undone = (/** @type {AppsAccount | undefined} */ account) =>
@@ -172,7 +175,7 @@ export function Lent({ l: lend, signs, account, headers, groups, home }) {
   const limited = (limit ?? 0) > 0;
   const people = limit === 1 ? 'person' : 'people';
   const howMany = limited ? `up to ${limit} ${people}` : 'everyone in the groups you chose';
-  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
+  const words = `${lend.name}: ${howMany} at once, ${lend.using} using it now.${keptTo(lend)}${notRunning(lend, ' Not running now: start it, and your people can open it.')}${heldWords(lend)} ${lentTo(lend, groups)}`;
   const value = state.many ?? String(limit ?? '');
   const doing = { state: state.at.change === 'changing' ? 'busy' : 'idle' };
   const letEveryone =

@@ -31,6 +31,8 @@
  *   its lender listed it; absent from an svrngs from before (door.rs)
  * @property {'another' | 'unjudged'} [held] why nobody can open it while its
  *   program runs, in its lender's own `/lent` (door.rs `answering`)
+ * @property {string} [command] the name of the program it is kept to
+ *   (door.rs `offered`)
  * @property {string[] | null} [groups] the stable ids of the groups that may
  *   open it, in the owner's own `/lent` answer: `[]` paused, `null` legacy
  *   and needing selection (SCOPE_PARALLEL.md, owner `GET /lent`)

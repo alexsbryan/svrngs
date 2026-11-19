@@ -139,6 +139,7 @@ fn lend(name: &str, port: u16) -> Lend {
         sends: Vec::new(),
         owner: None,
         sandbox: None,
+        command: None,
     }
 }
 
@@ -161,6 +162,12 @@ fn a_lend_declared_is_read_back_and_withdrawn_whole() {
     // And the sandbox (LEND_SANDBOX); planted, watched failing: `write`
     // leaving it out.
     shelf.sandbox = Some(Sandbox::App("org.jellyfin.JellyfinServer".into()));
+    // And the program (LEND_PROGRAM §2); planted, watched failing: `write`
+    // leaving it out.
+    shelf.command = Some(Command {
+        name: "jellyfin".into(),
+        digest: "5f1c".into(),
+    });
     declare(root.path(), &shelf, Some(("authorization", "s3cret"))).unwrap();
     declare(root.path(), &lend("pad", 9000), None).unwrap();
     assert_eq!(read(root.path(), &shelf.name).unwrap(), Some(shelf.clone()));
@@ -416,6 +423,7 @@ fn a_lend_is_listed_only_through_a_group_it_is_lent_to() {
         sends: Vec::new(),
         answering: None,
         held: None,
+        command: None,
     };
     assert!(offered(Some(vec!["house".into()]), None).listed(house));
     assert!(!offered(Some(vec!["house".into()]), None).listed(|g| g == "trip"));

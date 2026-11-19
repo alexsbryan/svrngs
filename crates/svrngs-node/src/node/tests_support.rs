@@ -512,14 +512,14 @@ impl Net for OnWire {
         Box::pin(async move { owner })
     }
     /// What [`Wire::owns`] says of the peer's port, else this account's,
-    /// in no sandbox.
+    /// in no sandbox, the program [`holder`] calls `test`.
     fn program(&self, _: crate::lend::Raw, conn: Conn) -> crate::iroh::Later<'_, Owner> {
         let met = self.wire.0.lock().unwrap();
         let said = met
             .owners
             .get(&(*self.key.as_bytes(), conn.peer.port()))
             .cloned();
-        let none = |uid| Owner::Uid(uid, Some(crate::lend::Sandbox::No));
+        let none = |uid| Owner::Uid(uid, Some(holder(crate::lend::Sandbox::No, "test")));
         let owner = said.unwrap_or_else(|| crate::uid::mine().map_or_else(Owner::Unjudged, none));
         Box::pin(async move { owner })
     }
@@ -830,5 +830,19 @@ impl Node {
             every,
         )
         .await
+    }
+}
+
+/// A program as the reader gives one, its digest its name, for a test to
+/// say what answers a port ([`Wire::owns`]).
+pub fn holder(sandbox: crate::lend::Sandbox, name: &str) -> crate::uid::Holder {
+    let command = crate::lend::Command {
+        name: name.into(),
+        digest: name.into(),
+    };
+    crate::uid::Holder {
+        sandbox,
+        command,
+        pids: Vec::new(),
     }
 }

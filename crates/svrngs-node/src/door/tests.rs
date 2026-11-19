@@ -291,6 +291,7 @@ fn port_lend(name: &str, groups: &[&str]) -> Lend {
         sends: Vec::new(),
         owner: None,
         sandbox: None,
+        command: None,
     }
 }
 
@@ -964,13 +965,17 @@ async fn an_app_past_its_rate_is_refused_with_the_words_and_when_to_read_again()
 /// no reader is, it carries as before. Then the sandbox (LEND_SANDBOX): a
 /// program in an app's sandbox is held where none or another app was
 /// recorded, carried where the same app was or where it runs in none; a
-/// lend from before sandboxes records the first read. Every row of the one
-/// decider. Planted, each watched failing: another uid carried anyway; a
-/// lend from before carried without its record; a sandboxed program
-/// carried anyway; one in none held on an app's lend.
+/// lend from before sandboxes records the first read. Then the program
+/// (LEND_PROGRAM §3): the same digest carries, whatever its name; another
+/// is held, in an app's sandbox or in none; a lend from before programs
+/// records the first read. Every row of the one decider. Planted, each
+/// watched failing: another uid carried anyway; a lend from before carried
+/// without its record; a sandboxed program carried anyway; one in none held
+/// on an app's lend; `bound` ignoring the program (another carried).
 #[test]
 fn a_connection_is_carried_only_to_the_account_its_lend_recorded() {
-    use crate::lend::{Hold, Sandbox};
+    use crate::lend::{Command, Hold, Sandbox};
+    use crate::node::holder;
     use crate::uid::Owner;
     let why = "no socket at that end on this computer";
     let (no, app) = (Sandbox::No, |id: &str| Sandbox::App(id.into()));
@@ -978,72 +983,119 @@ fn a_connection_is_carried_only_to_the_account_its_lend_recorded() {
         app("org.sabnzbd.sabnzbd"),
         app("org.jellyfin.JellyfinServer"),
     );
-    let read = |uid, sandbox: Option<&Sandbox>| Owner::Uid(uid, sandbox.cloned());
+    let read = |uid, sandbox: Option<&Sandbox>| {
+        Owner::Uid(uid, sandbox.map(|s| holder(s.clone(), "serve")))
+    };
+    let ran = |name: &str| holder(Sandbox::No, name).command;
+    let (serve, other) = (ran("serve"), ran("other"));
+    let renamed = Command {
+        name: "renamed".into(),
+        digest: serve.digest.clone(),
+    };
     let another = Bound::Held(Hold::Another);
-    for ((owner, sandbox), read, decided) in [
-        ((Some(1000), Some(&no)), read(1000, Some(&no)), Bound::Carry),
-        ((Some(1000), None), read(1000, None), Bound::Carry),
+    let kept = |sandbox: &Sandbox| Bound::Record(1000, Some(holder(sandbox.clone(), "serve")));
+    for ((owner, sandbox, command), read, decided) in [
         (
-            (Some(1000), Some(&no)),
+            (Some(1000), Some(&no), Some(&serve)),
+            read(1000, Some(&no)),
+            Bound::Carry,
+        ),
+        ((Some(1000), None, None), read(1000, None), Bound::Carry),
+        (
+            (Some(1000), Some(&no), Some(&serve)),
             read(1001, Some(&no)),
             another.clone(),
         ),
-        ((Some(0), None), read(1000, None), another.clone()),
+        ((Some(0), None, None), read(1000, None), another.clone()),
         // The same account, then the same sandbox or none (LEND_SANDBOX).
         (
-            (Some(1000), Some(&no)),
+            (Some(1000), Some(&no), Some(&serve)),
             read(1000, Some(&sab)),
             another.clone(),
         ),
         (
-            (Some(1000), Some(&jelly)),
+            (Some(1000), Some(&jelly), Some(&serve)),
             read(1000, Some(&sab)),
             another.clone(),
         ),
         (
-            (Some(1000), Some(&jelly)),
+            (Some(1000), Some(&jelly), Some(&serve)),
             read(1000, Some(&jelly)),
             Bound::Carry,
         ),
         (
-            (Some(1000), Some(&jelly)),
+            (Some(1000), Some(&jelly), Some(&serve)),
+            read(1000, Some(&no)),
+            Bound::Carry,
+        ),
+        // Then the same program, by its digest alone (LEND_PROGRAM §3).
+        (
+            (Some(1000), Some(&no), Some(&other)),
+            read(1000, Some(&no)),
+            another.clone(),
+        ),
+        (
+            (Some(1000), Some(&jelly), Some(&other)),
+            read(1000, Some(&no)),
+            another.clone(),
+        ),
+        (
+            (Some(1000), Some(&jelly), Some(&other)),
+            read(1000, Some(&jelly)),
+            another.clone(),
+        ),
+        (
+            (Some(1000), Some(&no), Some(&renamed)),
             read(1000, Some(&no)),
             Bound::Carry,
         ),
         // Another account's: not read, its account alone decides.
-        ((Some(973), None), read(973, None), Bound::Carry),
-        // From before owners, or before sandboxes: recorded as read.
+        ((Some(973), None, None), read(973, None), Bound::Carry),
+        // From before owners, sandboxes or programs: recorded as read.
+        ((None, None, None), read(1000, Some(&sab)), kept(&sab)),
         (
-            (None, None),
-            read(1000, Some(&sab)),
-            Bound::Record(1000, Some(sab.clone())),
+            (None, None, None),
+            read(973, None),
+            Bound::Record(973, None),
         ),
-        ((None, None), read(973, None), Bound::Record(973, None)),
+        ((Some(1000), None, None), read(1000, Some(&no)), kept(&no)),
         (
-            (Some(1000), None),
+            (Some(1000), Some(&no), None),
             read(1000, Some(&no)),
-            Bound::Record(1000, Some(no.clone())),
+            kept(&no),
         ),
         (
-            (Some(502), Some(&no)),
+            (Some(1000), Some(&jelly), None),
+            read(1000, Some(&jelly)),
+            kept(&jelly),
+        ),
+        (
+            (Some(502), Some(&no), Some(&serve)),
             Owner::NotMine,
             Bound::Held(Hold::Unjudged),
         ),
-        ((None, None), Owner::NotMine, Bound::Held(Hold::Unjudged)),
         (
-            (Some(1000), Some(&no)),
+            (None, None, None),
+            Owner::NotMine,
+            Bound::Held(Hold::Unjudged),
+        ),
+        (
+            (Some(1000), Some(&no), Some(&serve)),
             Owner::Unjudged(why),
             Bound::Held(Hold::Unjudged),
         ),
         (
-            (None, None),
+            (None, None, None),
             Owner::Unjudged(why),
             Bound::Held(Hold::Unjudged),
         ),
-        ((Some(1000), None), Owner::NoReader, Bound::Carry),
-        ((None, None), Owner::NoReader, Bound::Carry),
+        ((Some(1000), None, None), Owner::NoReader, Bound::Carry),
+        ((None, None, None), Owner::NoReader, Bound::Carry),
     ] {
-        let decision = bound((owner, sandbox), &read);
-        assert_eq!(decision, decided, "{owner:?} {sandbox:?} {read:?}");
+        let decision = bound((owner, sandbox, command), &read);
+        assert_eq!(
+            decision, decided,
+            "{owner:?} {sandbox:?} {command:?} {read:?}"
+        );
     }
 }

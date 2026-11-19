@@ -47,7 +47,7 @@ an app's page svrngs won't load, and what to change.
       --relay changes where <group> meets (keeper only). Where svrngs runs
       here already, that svrngs makes the link, unless --origin is given.
 
-  svrngs share <port> --group <group>... [--name <name>] [--program <name>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
+  svrngs share <port> --group <group>... [--name <name>] [--program <name>] [--pid <id>] [--limit <n>] [--refuse <path>]... [--upload <Mbit/s>] [--reads <program>]... [--ask <words>] [--sign-in-with-svrngs] [--readers] [--udp | --tcp]
       Lend what runs on <port> on this computer to everyone in each
       --group, by its name or the start of its id; say it again for more.
       Each reaches it through this computer, as themselves. It asks for the
@@ -79,6 +79,10 @@ an app's page svrngs won't load, and what to change.
       --udp or --tcp lends a port that speaks UDP or TCP as it is, not
       as a page: it takes a --program, and --name and --limit as any lend
       does.
+      A lend is kept to the program answering on its port when you share
+      it, run as it runs then: started the same way again, it keeps the
+      lend; another program there is held until you share it again. --pid
+      lends it only if that process is the one answering there.
 
   svrngs unshare <name> [--group <group>]...
       Stop lending <name>; with --group, stop lending it to that group

@@ -371,6 +371,10 @@ pub struct Lend {
     /// ([`crate::door::bound`]). None where `owner` is, and for another
     /// account's program, whose sandbox is that account's to read.
     pub sandbox: Option<Sandbox>,
+    /// The program it was lent from, read with `sandbox` (svrn-docs
+    /// LEND_PROGRAM): the door carries a connection only to the same one
+    /// ([`crate::door::bound`]). None where `sandbox` is.
+    pub command: Option<Command>,
 }
 
 /// The sandbox a program runs in (svrn-docs LEND_SANDBOX): none, so it can
@@ -382,6 +386,19 @@ pub enum Sandbox {
     /// By the name its system gives it: a Flatpak's app id, a Mac App
     /// Sandbox app's path.
     App(String),
+}
+
+/// A program by the commands its processes run (svrn-docs LEND_PROGRAM
+/// §2, [`crate::uid`]): one program is one `digest`, a restart with the
+/// same command keeping it. Its arguments are only hashed, never kept.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Command {
+    /// Its executables' file names, for the person.
+    pub name: String,
+    /// SHA-256, hex, of its commands, each its executable's path and
+    /// arguments past the first, sorted and each once.
+    pub digest: String,
 }
 
 impl Lend {
@@ -436,6 +453,7 @@ impl Lend {
             sends: Vec::new(),
             owner: None,
             sandbox: None,
+            command: None,
         })
     }
 
@@ -493,6 +511,8 @@ struct LendFile {
     owner: Option<u32>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     sandbox: Option<Sandbox>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    command: Option<Command>,
 }
 
 /// The characters a sign-in client's id and secret may be made of
@@ -596,6 +616,10 @@ pub struct Offered {
     /// an svrngs from before this.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub held: Option<Hold>,
+    /// The name of the program it is kept to ([`Lend::command`]): absent
+    /// for none recorded, and passed over by an svrngs from before this.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub command: Option<String>,
 }
 
 /// Why a lend's port answers and nobody can open it (LEND_OWNER §4).
@@ -603,7 +627,7 @@ pub struct Offered {
 #[serde(rename_all = "lowercase")]
 pub enum Hold {
     /// Another program answers there, not the one it recorded: another
-    /// account's, or one in another sandbox.
+    /// account's, one in another sandbox, or another command.
     Another,
     /// Whose program answers there can't be told.
     Unjudged,
@@ -773,6 +797,7 @@ pub fn read(data_dir: &Path, name: &LendName) -> Result<Option<Lend>, LendError>
         sends: file.sends,
         owner: file.owner,
         sandbox: file.sandbox,
+        command: file.command,
     }))
 }
 
@@ -979,6 +1004,7 @@ fn write(data_dir: &Path, lend: &Lend) -> Result<(), LendError> {
         sends: lend.sends.clone(),
         owner: lend.owner,
         sandbox: lend.sandbox.clone(),
+        command: lend.command.clone(),
     };
     let text = serde_json::to_string_pretty(&file).expect("a declaration always serializes");
     let path = dir.join(format!("{}.json", lend.name));
