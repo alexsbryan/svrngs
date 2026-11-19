@@ -623,7 +623,12 @@ error codes and handling gracefully in the UI". So no list of apps. When the
 relay throttles a lender (iroh 1.4's `Status::RateLimited`), its door answers
 a large request that came over the commons with 429 and a new
 `LendRefusal::Share`, and the page says why and where it plays at full
-speed (RELAY_COMMONS §4, "When the share is spent").
+speed (RELAY_COMMONS §4, "When the share is spent"). iroh says "throttled"
+once per relay connection, never "cleared"; asked, "Reconnecting is fine": so
+svrngs remakes its connection to the commons once nothing large has been
+refused for a minute. A new connection is also a new bucket, so per-address
+byte limits in the relay's firewall bound a client that reconnects for
+bursts.
 
 By the operator, 2026-11-08, on `docs/LESSONS_FROM_BITTORRENT.md`: "Ok solve
 them all", all four parts built, overriding the counted-member trigger of the
