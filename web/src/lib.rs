@@ -1005,16 +1005,9 @@ impl Direct {
         // The channel is open: what it brings goes to the free `data_push`,
         // and the data endpoint dials (WebRTC alone, then with the relay).
         let (arrived, peer) = (self.arrived.clone(), *self.peer.as_bytes());
-        let push = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
-            if let Some(bytes) = js_sys::Reflect::get(&event.data(), &"datagram".into())
-                .ok()
-                .filter(|v| !v.is_undefined())
-            {
-                data_push(&arrived, peer, js_sys::Uint8Array::new(&bytes));
-            }
-        }) as Box<dyn FnMut(web_sys::MessageEvent)>);
-        port.set_onmessage(Some(push.as_ref().unchecked_ref()));
-        push.forget();
+        each_told(&port, "datagram", move |bytes| {
+            data_push(&arrived, peer, js_sys::Uint8Array::new(&bytes))
+        });
         self.dial().await?;
         // The direct path is the attempt's point, and iroh may settle the
         // connection on the relay first (the channel is still opening),
@@ -1074,18 +1067,26 @@ fn on_the_channel(conn: &iroh::endpoint::Connection, only_selected: bool) -> boo
 /// let be, and a value the window never sends leaves it waiting.
 async fn told(port: &web_sys::MessagePort, what: &str) -> Result<JsValue, JsError> {
     let promise = js_sys::Promise::new(&mut |resolve, _| {
-        let key: JsValue = what.into();
-        let closure = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
-            if let Ok(value) = js_sys::Reflect::get(&event.data(), &key) {
-                if !value.is_undefined() {
-                    let _ = resolve.call1(&JsValue::NULL, &value);
-                }
-            }
-        }) as Box<dyn FnMut(web_sys::MessageEvent)>);
-        port.set_onmessage(Some(closure.as_ref().unchecked_ref()));
-        closure.forget();
+        each_told(port, what, move |value| drop(resolve.call1(&JsValue::NULL, &value)));
     });
     wasm_bindgen_futures::JsFuture::from(promise).await.map_err(page)
+}
+
+/// Each value at `what` in a message `port` brings, handed to `each`, in
+/// place of whatever the port handed its messages to before: how the
+/// worker hears the window (webrtc-page).
+fn each_told(port: &web_sys::MessagePort, what: &str, mut each: impl FnMut(JsValue) + 'static) {
+    let key: JsValue = what.into();
+    let closure = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
+        if let Some(value) = js_sys::Reflect::get(&event.data(), &key)
+            .ok()
+            .filter(|v| !v.is_undefined())
+        {
+            each(value);
+        }
+    }) as Box<dyn FnMut(web_sys::MessageEvent)>);
+    port.set_onmessage(Some(closure.as_ref().unchecked_ref()));
+    closure.forget();
 }
 
 /// The page's own words for a value that could not be read (the wasm's
