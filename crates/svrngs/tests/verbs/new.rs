@@ -390,3 +390,49 @@ async fn new_asks_the_svrngs_running_here_to_make_the_group() {
         assert!(heard.contains(trace), "{trace}: {heard}");
     }
 }
+
+/// **`svrngs new` through the svrngs running here says when it has
+/// reached no relay** (new-while-running): a `new` that starts svrngs
+/// waits for a home relay and, reaching none, says "after 10 s, this
+/// computer has not yet reached the server your groups find it through"
+/// (cli.rs `wait_online`); asked of the svrngs running here, it said
+/// nothing of it. Sam's svrngs meets at the build's relay, down on the
+/// wire, so it is not online (`Host::online`, its wait on a paused clock):
+/// the group is made all the same, the route's answer says `online:
+/// false`, and the command says so, as `wait_online` does, traced.
+/// Watched failing on 005420b9: the answer had no `online`.
+#[tokio::test(start_paused = true)]
+async fn new_through_a_running_svrngs_that_reached_no_relay_says_so() {
+    let (heard, _heard) = crate::node_common::heard("cli=debug");
+    let wire = Wire::default();
+    let build = "http://10.0.0.3:3340/";
+    let ours = svrngs_node::iroh::RelayConfig {
+        relay_urls: vec![build.into()],
+        n0_services: false,
+        loopback_only: false,
+    };
+    let key = svrngs_node::SigningKey::from_bytes(&[5; 32]);
+    let dir = tempfile::tempdir().unwrap();
+    let every = std::time::Duration::from_secs(60);
+    let at = (dir.path().to_path_buf(), key.clone());
+    let node = Node::on_wire_relayed(&wire, at, &ours, &[], every).await;
+    let node = node.expect("Sam's svrngs starts, met at the build's relay");
+    let sam = crate::Computer { node, key, dir };
+    let _held = cli::claim(sam.dir.path()).expect("Sam's svrngs holds the data dir");
+
+    let asked = serde_json::json!({ "name": "work", "person": "Sam" });
+    let (status, made) = ask(&sam.node, "POST", group::NEW_ROUTE, &asked).await;
+    assert!(status.is_success(), "{made}");
+    let made: serde_json::Value = serde_json::from_str(&made).unwrap();
+    assert_eq!(made["online"], false, "it says it reached no relay: {made}");
+
+    let verb = cli::parse(["svrngs", "new", "house", "--as", "Sam"].map(String::from));
+    let said = cli::answer(verb.unwrap(), &crate::Running(&sam), &ours).await;
+    let said = said.expect("house is made all the same");
+    assert!(said.contains("Made house, with you as Sam."), "{said}");
+    let heard = String::from_utf8(heard.0.lock().unwrap().clone()).unwrap();
+    assert!(
+        heard.contains("cli: this computer has reached no relay, and is told so"),
+        "{heard}"
+    );
+}

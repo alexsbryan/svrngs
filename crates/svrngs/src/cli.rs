@@ -887,7 +887,7 @@ pub async fn answer(verb: Verb, here: &impl Here, relay: &RelayConfig) -> Result
             }
             (Err(Refusal::Busy(lock)), new @ Verb::New { .. }) => {
                 tracing::debug!(target: "cli", lock = %lock.display(), "cli: new — svrngs runs here already, so it is asked to make the group, as `join` is");
-                new_running(here, new).await?
+                new_running(here, new, &relay.relay_urls).await?
             }
             (claimed, other) => return start(other, root, relay, claimed?, None).await,
         },
@@ -2052,10 +2052,12 @@ pub async fn link_to(
 /// `svrngs new`, of the svrngs running here, the one writer of this
 /// computer's acts ([`group::NEW_ROUTE`]): its page checked here first,
 /// as a `new` that starts svrngs checks it ([`checked_page`]), and said as
-/// that one says it, less "Leave this running", for nothing runs. One that
-/// answers no group is an older build, said as [`link_running`] says it;
-/// its refusal, why traced, is that the group can't be kept.
-async fn new_running(here: &impl Here, new: Verb) -> Result<String, Refusal> {
+/// that one says it, less "Leave this running", for nothing runs; that it
+/// reached no relay as that one says it, where it `tried` any
+/// ([`unreached`]). One that answers no group is an older build, said as
+/// [`link_running`] says it; its refusal, why traced, is that the group
+/// can't be kept.
+async fn new_running(here: &impl Here, new: Verb, tried: &[String]) -> Result<String, Refusal> {
     let Verb::New {
         name,
         person,
@@ -2084,6 +2086,8 @@ async fn new_running(here: &impl Here, new: Verb) -> Result<String, Refusal> {
         return Err(Refusal::Keep(name.to_string()));
     };
     let seed = Seed::from_text(&made.seed).map_err(|_| Refusal::Older)?;
+    tracing::debug!(target: "cli", online = made.online, ?tried, "cli: new — made by the svrngs running here, which had reached a relay or not");
+    unreached(made.online, tried);
     let page = (made.https.as_deref())
         .and_then(Link::parse)
         .and_then(|l| l.origin);
@@ -2151,7 +2155,16 @@ fn unminted(seed: &Seed, e: Unminted) -> Refusal {
 async fn wait_online(node: &Node, tried: &[String]) {
     let online = node.host().online().await;
     tracing::debug!(target: "cli", online, ?tried, "cli: waited for a relay");
+    unreached(online, tried);
+}
+
+/// That this computer has reached no relay, said where it `tried` any,
+/// once [`svrngs_node::node::Host::online`] came to none: here, by a verb
+/// that started svrngs ([`wait_online`]), or by the svrngs running here
+/// ([`new_running`]).
+fn unreached(online: bool, tried: &[String]) {
     if !online && !tried.is_empty() {
+        tracing::debug!(target: "cli", ?tried, "cli: this computer has reached no relay, and is told so");
         let secs = svrngs_node::node::ONLINE_WAIT.as_secs();
         eprintln!("svrngs: after {secs} s, this computer has not yet reached the server your groups find it through. It goes on, and keeps trying; until it does, they may not reach you (RUST_LOG=debug names the server).");
     }

@@ -405,6 +405,7 @@ impl crate::node::Asking {
             beside,
             dir: dir.display().to_string(),
             placed: placed.err(),
+            online,
         })
     }
 }
@@ -430,7 +431,10 @@ pub struct NewAsk {
 
 /// A group the svrngs running here made for `new`, for the command to say
 /// in its own words: its seed as `seed.json` holds it, its first link, the
-/// groups called so already, and where its folder was placed or why not.
+/// groups called so already, where its folder was placed or why not, and
+/// whether this computer had reached a relay as it made it
+/// ([`crate::node::Host::online`], the wait a `new` that starts svrngs
+/// makes), so the command says so when it had not.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct NewMade {
     pub seed: String,
@@ -439,6 +443,7 @@ pub struct NewMade {
     pub beside: Vec<Namesake>,
     pub dir: String,
     pub placed: Option<String>,
+    pub online: bool,
 }
 
 /// A group made, after where its folder is and whether it was placed, and

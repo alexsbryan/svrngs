@@ -553,8 +553,20 @@ impl Net for OnWire {
             }
         })
     }
+    /// Once a relay it holds is up on the wire ([`Self::homes`]), as an
+    /// endpoint is online once it has a home: a computer holding none that
+    /// answers waits, as one whose relays never answer does.
     fn online(&self) -> crate::iroh::Later<'_, ()> {
-        Box::pin(async {})
+        use n0_future::StreamExt as _;
+        let mut homes = self.homes();
+        Box::pin(async move {
+            while let Some(now) = homes.next().await {
+                if !now.is_empty() {
+                    return;
+                }
+            }
+            std::future::pending().await
+        })
     }
     /// Held on the wire, its homes read again.
     fn relays(
