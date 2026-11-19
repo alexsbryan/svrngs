@@ -721,13 +721,11 @@ fn unsigned(
     act: String,
     grant: Option<Pass>,
 ) -> Result<svrngs_core::Op<svrngs_core::SignedOp>, JsError> {
-    let act = svrngs_core::RailAct::from_json(serde_json::from_str(&act)?).map_err(|e| JsError::new(&e.to_string()))?;
-    let prev = prev.map(|p| serde_json::from_value(p.into())).transpose()?;
     let kind = svrngs_core::SignedOp {
+        act: svrngs_core::RailAct::from_json(serde_json::from_str(&act)?).map_err(|e| JsError::new(&e.to_string()))?,
+        prev: prev.map(|p| serde_json::from_value(p.into())).transpose()?,
         seq: seq as u64,
-        prev,
         sig: String::new(),
-        act,
         on_behalf_of: None,
         view: None,
         grant,
