@@ -377,12 +377,12 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
     if origin.is_some() && !matches!(verb.as_str(), "new" | "link") {
         return Err("--origin is a `new` and `link` flag".into());
     }
-    if (name.is_some()
+    // What only a page takes, which --udp and --tcp refuse below.
+    let page = !refused.is_empty() || upload.is_some() || !reads.is_empty();
+    if (page
+        || name.is_some()
         || kind.is_some()
         || limit.is_some()
-        || !refused.is_empty()
-        || upload.is_some()
-        || !reads.is_empty()
         || asks.is_some()
         || pid.is_some()
         || sign_in)
@@ -452,7 +452,6 @@ pub fn parse<I: IntoIterator<Item = String>>(args: I) -> Result<Verb, String> {
             relays,
         }),
         "share" => {
-            let page = !refused.is_empty() || upload.is_some() || !reads.is_empty();
             if carries.is_some() && (page || asks.is_some() || sign_in) {
                 return Err("--udp and --tcp lend a port as it is, with no paths, upload, reads, ask or sign-in: those are a page's".into());
             }
@@ -997,10 +996,8 @@ fn restart(root: &Path) -> Result<String, Refusal> {
     let done = std::process::Command::new(manager).args(how).output();
     tracing::debug!(target: "cli", manager, ?done, "cli: restart — asked what keeps svrngs running");
     let said = "svrngs is restarting. Your home page comes back in a moment.\n";
-    (done
-        .is_ok_and(|out| out.status.success())
-        .then(|| said.to_string()))
-    .ok_or(Refusal::NotKept)
+    let kept = done.is_ok_and(|out| out.status.success());
+    kept.then(|| said.to_string()).ok_or(Refusal::NotKept)
 }
 
 /// A data dir as a verb reaches it, and what answers an ask of svrngs
@@ -1731,12 +1728,9 @@ pub fn unshare(root: &Path, name: &LendName, groups: &[String]) -> Result<Said, 
     if done.map_err(keep)? {
         return Ok(said(name.clone()));
     }
-    let lent = lend::all(root)
-        .map_err(keep)?
-        .into_iter()
-        .filter_map(Result::ok)
-        .map(|l| l.name)
-        .collect();
+    // Each lend that reads, its name.
+    let lent = lend::all(root).map_err(keep)?.into_iter().flatten();
+    let lent = lent.map(|l| l.name).collect();
     tracing::debug!(target: "cli", lend = %name, "cli: unshare — refused, nothing lent by that name");
     Err(Refusal::NotLent {
         name: name.clone(),
@@ -1943,17 +1937,15 @@ pub fn user_name() -> Option<Name> {
 /// (`getent passwd`).
 fn full_name(user: &str) -> Option<String> {
     let mac = cfg!(target_os = "macos");
-    let (cmd, args) = if mac {
-        ("id", ["-F", user])
-    } else {
-        ("getent", ["passwd", user])
+    let (cmd, args) = match mac {
+        true => ("id", ["-F", user]),
+        false => ("getent", ["passwd", user]),
     };
     let out = std::process::Command::new(cmd).args(args).output().ok();
     let text = String::from_utf8(out.filter(|o| o.status.success())?.stdout).ok()?;
-    let name = if mac {
-        text.trim()
-    } else {
-        text.split(':').nth(4)?.split(',').next()?.trim()
+    let name = match mac {
+        true => text.trim(),
+        false => text.split(':').nth(4)?.split(',').next()?.trim(),
     };
     (!name.is_empty()).then(|| name.to_string())
 }
