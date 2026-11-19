@@ -712,7 +712,7 @@ test('whose word a refusal is goes through the worker as the door said it', asyn
 // (shim.js). Planted, watched failing: the refusal page taken as the
 // lend's and shimmed, and the page carried the shim of a lend it is not.
 const SPENT =
-  'Sam’s computer has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi as Sam’s computer, through your group’s own relay, or in the svrngs app, soon.';
+  'Sam’s computer has used its share of the public way for now. Play it at full speed on the same Wi-Fi as Sam’s computer, or in the svrngs app, soon.';
 test('a share refusal to a tab is svrngs’s own page, with the words', async () => {
   const worker = lendWorker({
     lends: [page],

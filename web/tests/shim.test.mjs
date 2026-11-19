@@ -137,7 +137,7 @@ test('a string, an ArrayBuffer and a Blob are sent as they are', async () => {
 // waits says why. Planted, watched failing: the banner never shown, and
 // `appended` was empty.
 const SPENT =
-  'Sam’s computer has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi as Sam’s computer, through your group’s own relay, or in the svrngs app, soon.';
+  'Sam’s computer has used its share of the public way for now. Play it at full speed on the same Wi-Fi as Sam’s computer, or in the svrngs app, soon.';
 // The banner chain runs in a microtask after the wrapper's answer.
 const settled = () => new Promise((done) => setTimeout(done, 0));
 // The answer a refused subresource gets from the door, as svrngs marks it.

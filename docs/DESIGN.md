@@ -1895,8 +1895,9 @@ open fits the burst (Jellyfin's 2.11 MB brotli, 5.66 MB decoded), and a
 film (3.73 Mbit/s) is held once its burst is spent, by the shape of the
 traffic alone, with no list of apps. A computer the relay held answers a
 large request that came over it — a range, or a body over the burst —
-with 429, `x-svrngs-refused: share`, and the design's words in the
-lender's name (`door.rs` `over_share`, `spent_words`), which its home page
+with 429, `x-svrngs-refused: share`, and its words in the lender's name —
+the public way, never "relay", which a person's words never say (DESIGN
+§1, rule 1) — (`door.rs` `over_share`, `spent_words`), which its home page
 says the day of while the share is spent; nothing over a direct path or a
 group's own relay is refused, and the refusal holds until the connection
 to the relay ends of itself, since iroh 1.4.2 cannot remake one and

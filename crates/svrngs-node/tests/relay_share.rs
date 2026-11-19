@@ -210,7 +210,7 @@ async fn a_relay_with_a_tiny_rate_throttles_a_lender_and_the_door_refuses_a_rang
     .expect("the range over the spent relay was refused");
     assert!(refused.contains("x-svrngs-refused: share"), "{refused}");
     assert!(
-        refused.contains("has used its share of the shared relay for now"),
+        refused.contains("has used its share of the public way for now"),
         "{refused}"
     );
 

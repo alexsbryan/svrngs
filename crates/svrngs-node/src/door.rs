@@ -251,7 +251,7 @@ pub enum LendRefusal {
     /// (`crate::folder::carried::WRITES_AN_HOUR`), or read a lend as often
     /// as its rate allows ([`limit::READS_A_MINUTE`]).
     Limit,
-    /// The lender's computer has spent its share of the shared relay, so a
+    /// The lender's computer has spent its share of the public way, so a
     /// large answer over it waits (share-refusal; RELAY_COMMONS design 3).
     Share,
 }
@@ -1730,16 +1730,19 @@ struct Told {
 const OVER_SHARE: u64 = 8 * 1024 * 1024;
 
 /// The words of a share refusal, in the lender's name (RELAY_COMMONS
-/// design 3, "The words"): what the phone's worker shows as svrngs's page
-/// for a navigation and its shim as a banner for a subresource. The
-/// design's "Films play" is said "Play it", since the infra may not name
-/// Jellyfin's nouns (scripts/vocab_check.py, apps/jellyfin/nouns.txt).
+/// design 3, "The words"; its "shared relay" said "the public way", the
+/// home page's own words, since a person's words never say "relay",
+/// DESIGN §1 rule 1, the operator, 2026-11-18: be0a6c1c): what the phone's
+/// worker shows as svrngs's page for a navigation and its shim as a banner
+/// for a subresource. The design's "Films play" is said "Play it", since
+/// the infra may not name Jellyfin's nouns (scripts/vocab_check.py,
+/// apps/jellyfin/nouns.txt).
 fn spent_words(lender: Option<Person>) -> String {
     let (by, wifi) = match lender {
         Some(p) => (format!("{p}’s computer"), format!("as {p}’s computer")),
         None => ("This computer".into(), "as this computer".into()),
     };
-    format!("{by} has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi {wifi}, through your group’s own relay, or in the svrngs app, soon.")
+    format!("{by} has used its share of the public way for now. Play it at full speed on the same Wi-Fi {wifi}, or in the svrngs app, soon.")
 }
 
 /// Whether an answer is refused while the share is spent (share-refusal;

@@ -1146,7 +1146,7 @@ fn a_large_answer_over_the_build_s_relay_is_refused_while_its_share_is_spent() {
     );
     assert_eq!(
         said(&refused).2,
-        Some("Sam’s computer has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi as Sam’s computer, through your group’s own relay, or in the svrngs app, soon.")
+        Some("Sam’s computer has used its share of the public way for now. Play it at full speed on the same Wi-Fi as Sam’s computer, or in the svrngs app, soon.")
     );
     assert!(spent_words(None).starts_with("This computer has used its share"));
 }

@@ -42,16 +42,16 @@ export const saidOnce = (state) => {
   return SAID[state.at.said](state.q, unplaced, state.grouped);
 };
 
-// What the lender is told while this computer's share of the shared relay
+// What the lender is told while this computer's share of the public way
 // is spent (share-refusal; RELAY_COMMONS design 3, "The words"): the day
 // its door last refused a large answer over it, and that large things wait
-// until this computer reconnects. Nothing while the share is not spent
+// until it connects afresh. Nothing while the share is not spent
 // (surface.rs says `share` then alone).
 /** @param {State} state */
 export const shareSaid = (state) =>
   state.share == null
     ? ''
-    : `Your share of the shared relay was used up on ${day(state.share)}; large things you lend wait until this computer reconnects to it.`;
+    : `This computer's share of the public way was used up on ${day(state.share)}; large things you lend wait until it connects afresh.`;
 
 // For someone who cannot wait for this computer to find out on its own
 // (KEEP_GOING_AT_HOME 7): a form, as ./reach.js is, so the answer is said

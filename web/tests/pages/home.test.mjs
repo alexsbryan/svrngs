@@ -168,7 +168,7 @@ test('the page says its own address at its foot, the origin it was opened at', a
 
 // The share's line (share-refusal; RELAY_COMMONS design 3, "The words"):
 // while /v1/groups says `share` — the unix seconds the door last refused a
-// large answer over the shared relay, and only while its share is spent
+// large answer over the public way, and only while its share is spent
 // (surface.rs) — the page says the day, and that large things wait until
 // this computer reconnects to it; with no share, nothing. Planted, watched
 // failing: `shareSaid` answering the words whatever `share` says, where
@@ -177,14 +177,14 @@ test('the lender is told the day its share was used up, while it is spent', asyn
   const at = 1_791_000_000;
   const spent = await home(ada({ share: at }));
   assert.deepEqual(
-    spent.text('#home > p').filter((p) => p.includes('share of the shared relay')),
+    spent.text('#home > p').filter((p) => p.includes('share of the public way')),
     [
-      `Your share of the shared relay was used up on ${q.day(at)}; large things you lend wait until this computer reconnects to it.`,
+      `This computer's share of the public way was used up on ${q.day(at)}; large things you lend wait until it connects afresh.`,
     ],
   );
   const quiet = await home(ada());
   assert.deepEqual(
-    quiet.text('#home > p').filter((p) => p.includes('share of the shared relay')),
+    quiet.text('#home > p').filter((p) => p.includes('share of the public way')),
     [],
     'nothing while the share is not spent',
   );
