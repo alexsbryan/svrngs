@@ -11,8 +11,11 @@
 use std::collections::HashMap;
 use std::path::Path;
 
+use ring::digest;
+use ring::signature::{Ed25519KeyPair, KeyPair};
 use sha2::{Digest, Sha256};
 use svrngs_node::invite::ORIGIN_FILE;
+use svrngs_node::update::signed::{verify, Refusal, RELEASE_KEYS};
 use svrngs_node::update::{
     apply_at, check_by, fetch, packaged as packaged_words, Check, Get, Outcome, UpdateError,
     RELEASE_FILE,
@@ -305,4 +308,293 @@ async fn a_svrngs_that_cannot_write_beside_itself_is_refused_before_the_download
     );
     assert!(!asked.lock().unwrap().iter().any(|u| u.ends_with(&name)));
     assert_eq!(std::fs::read(&exe).unwrap(), b"the old svrngs");
+}
+
+// The signed-update check (update/signed.rs `verify`), against v1.11.2's
+// own `SHA256SUMS` and signature, and against signatures a test makes with
+// a key of its own.
+
+/// v1.11.2's `SHA256SUMS` and `SHA256SUMS.sig`, as `gh release download
+/// v1.11.2 -R alexsbryan/svrngs -p 'SHA256SUMS*'` gave them: public, and
+/// signed by the release key.
+const SUMS: &[u8] = include_bytes!("fixtures/v1.11.2/SHA256SUMS");
+const SIG: &[u8] = include_bytes!("fixtures/v1.11.2/SHA256SUMS.sig");
+/// When v1.11.2's signature was made: `gpg --list-packets`, "created".
+const V1_11_2: u32 = 1_795_043_504;
+
+/// SIG with the byte at `at` changed, after checking it is `was` there
+/// (`gpg --list-packets` and `xxd` on SIG: a header of two bytes; the body's
+/// algorithm at 4 and hash at 5; the creation time at 33 to 36, in the
+/// hashed area; the digest's first two bytes at 77; R from 81).
+fn sig_changed(at: usize, was: u8, to: u8) -> Vec<u8> {
+    assert_eq!(SIG[at], was, "SIG's byte {at}");
+    let mut sig = SIG.to_vec();
+    sig[at] = to;
+    sig
+}
+
+/// `body` as one signature packet, in the old format the release key's is.
+fn framed(body: Vec<u8>) -> Vec<u8> {
+    [vec![0x88, u8::try_from(body.len()).unwrap()], body].concat()
+}
+
+/// SIG with one more hashed subpacket, its counts said again.
+fn sig_with_subpacket(kind: u8, said: &[u8]) -> Vec<u8> {
+    let end = 8 + usize::from(u16::from_be_bytes([SIG[6], SIG[7]]));
+    let mut body = SIG[2..end].to_vec();
+    body.extend([said.len() as u8 + 1, kind]);
+    body.extend(said);
+    let hashed = u16::try_from(body.len() - 6).unwrap();
+    body[4..6].copy_from_slice(&hashed.to_be_bytes());
+    body.extend(&SIG[end..]);
+    framed(body)
+}
+
+/// A key of the test's own, never the release key.
+fn test_key(seed: u8) -> Ed25519KeyPair {
+    Ed25519KeyPair::from_seed_unchecked(&[seed; 32]).unwrap()
+}
+
+fn point(key: &Ed25519KeyPair) -> [u8; 32] {
+    key.public_key().as_ref().try_into().unwrap()
+}
+
+/// A signature packet made by hand, shaped as the release key's: its
+/// fields, and its hashed subpackets as (type, body).
+struct Packet {
+    version: u8,
+    kind: u8,
+    algorithm: u8,
+    hash: u8,
+    hashed: Vec<(u8, Vec<u8>)>,
+}
+
+impl Packet {
+    /// The release key's shape, made at `created`.
+    fn at(created: u32) -> Self {
+        Self {
+            version: 4,
+            kind: 0x00,
+            algorithm: 22,
+            hash: 10,
+            hashed: vec![(33, vec![4; 21]), (2, created.to_be_bytes().to_vec())],
+        }
+    }
+
+    /// The packet over `sums`, by `key`: its digest SHA-256 where it says
+    /// 8, else SHA-512, whatever it says.
+    fn sign(&self, sums: &[u8], key: &Ed25519KeyPair) -> Vec<u8> {
+        let mut body = vec![self.version, self.kind, self.algorithm, self.hash];
+        let subpackets: Vec<u8> = self
+            .hashed
+            .iter()
+            .flat_map(|(kind, said)| [vec![said.len() as u8 + 1, *kind], said.clone()].concat())
+            .collect();
+        body.extend(u16::try_from(subpackets.len()).unwrap().to_be_bytes());
+        body.extend(subpackets);
+        let algorithm = match self.hash {
+            8 => &digest::SHA256,
+            _ => &digest::SHA512,
+        };
+        let mut digest = digest::Context::new(algorithm);
+        digest.update(sums);
+        digest.update(&body);
+        digest.update(&[4, 0xFF]);
+        digest.update(&u32::try_from(body.len()).unwrap().to_be_bytes());
+        let digest = digest.finish();
+        let made = key.sign(digest.as_ref());
+        // Unhashed: the issuer's key ID, as gpg puts it, read by no one.
+        body.extend([0, 10, 9, 16, 0, 0, 0, 0, 0, 0, 0, 0]);
+        body.extend(&digest.as_ref()[..2]);
+        for half in made.as_ref().chunks(32) {
+            let first = half.iter().position(|&b| b != 0).unwrap();
+            let bits = (32 - first) * 8 - half[first].leading_zeros() as usize;
+            body.extend(u16::try_from(bits).unwrap().to_be_bytes());
+            body.extend(&half[first..]);
+        }
+        framed(body)
+    }
+}
+
+/// **v1.11.2's own sums verify against the release key**, as its signature
+/// was made (old format, a length of one byte), and the same packet in the
+/// old format's two-byte length and the new format's. Planted: the trailer's
+/// length counted without the six bytes before the subpackets (Digest, and
+/// every test key's signature refused).
+#[test]
+fn v1_11_2_s_sums_verify_against_the_release_key() {
+    let signed = verify(SUMS, SIG, RELEASE_KEYS).unwrap();
+    assert_eq!(signed.created(), V1_11_2);
+    let body = &SIG[2..];
+    let two = [&[0x89, 0][..], &[SIG[1]], body].concat();
+    let new = [&[0xC2, SIG[1]][..], body].concat();
+    assert_eq!(verify(SUMS, &two, RELEASE_KEYS), Ok(signed));
+    assert_eq!(verify(SUMS, &new, RELEASE_KEYS), Ok(signed));
+}
+
+/// **The sums with one byte changed are refused**: Digest, the signature's
+/// first two bytes of digest not these sums'. Planted: the digest's prefix
+/// not compared (Key, never Digest).
+#[test]
+fn the_sums_one_byte_changed_are_refused() {
+    let mut sums = SUMS.to_vec();
+    sums[0] ^= 1;
+    assert_eq!(verify(&sums, SIG, RELEASE_KEYS), Err(Refusal::Digest));
+}
+
+/// **The signature one byte changed is refused**: in R (Key), in the hashed
+/// area's creation time (Digest), in the digest's prefix (Digest). Planted:
+/// Ed25519 not asked (R changed, Ok); the digest's prefix not compared
+/// (the prefix changed, Ok; the time changed, Key).
+#[test]
+fn the_signature_one_byte_changed_is_refused() {
+    let r = sig_changed(81, 0x86, 0x87);
+    assert_eq!(verify(SUMS, &r, RELEASE_KEYS), Err(Refusal::Key));
+    let time = sig_changed(36, 0xb0, 0xb1);
+    assert_eq!(verify(SUMS, &time, RELEASE_KEYS), Err(Refusal::Digest));
+    let prefix = sig_changed(77, 0x4e, 0x4f);
+    assert_eq!(verify(SUMS, &prefix, RELEASE_KEYS), Err(Refusal::Digest));
+}
+
+/// **Bytes after the signature are refused**: one byte, and a second
+/// packet. Planted: what follows the packet not read (Ok).
+#[test]
+fn bytes_after_the_signature_are_refused() {
+    let one = [SIG, &[0]].concat();
+    assert_eq!(verify(SUMS, &one, RELEASE_KEYS), Err(Refusal::Trailing));
+    let twice = [SIG, SIG].concat();
+    assert_eq!(verify(SUMS, &twice, RELEASE_KEYS), Err(Refusal::Trailing));
+}
+
+/// **A critical subpacket svrngs does not read is refused**, in v1.11.2's
+/// signature and in one a test key signed whole; the same subpacket not
+/// critical is skipped. Planted: the critical bit not read (v1.11.2's,
+/// Digest).
+#[test]
+fn a_critical_subpacket_svrngs_does_not_read_is_refused() {
+    let real = sig_with_subpacket(0x80 | 99, b"!");
+    assert_eq!(
+        verify(SUMS, &real, RELEASE_KEYS),
+        Err(Refusal::Critical(99))
+    );
+    let key = test_key(7);
+    let mut packet = Packet::at(V1_11_2);
+    packet.hashed.push((0x80 | 99, b"!".to_vec()));
+    let critical = packet.sign(SUMS, &key);
+    assert_eq!(
+        verify(SUMS, &critical, &[point(&key)]),
+        Err(Refusal::Critical(99))
+    );
+    packet.hashed.last_mut().unwrap().0 = 99;
+    let skipped = packet.sign(SUMS, &key);
+    assert!(verify(SUMS, &skipped, &[point(&key)]).is_ok());
+}
+
+/// **Another hash, key algorithm, version or kind of signature is
+/// refused**: v1.11.2's with its hash said as SHA-1 or its algorithm as
+/// RSA; a test key's, validly signed but saying RSA, SHA-1, version 3 or a
+/// text signature. SHA-256 by the key verifies. Planted: the algorithm not
+/// read (v1.11.2's RSA, Digest); any hash read as SHA-512 (v1.11.2's
+/// SHA-1, Digest).
+#[test]
+fn another_hash_key_algorithm_version_or_kind_is_refused() {
+    let sha1 = sig_changed(5, 10, 2);
+    assert_eq!(verify(SUMS, &sha1, RELEASE_KEYS), Err(Refusal::Shape));
+    let rsa = sig_changed(4, 22, 1);
+    assert_eq!(verify(SUMS, &rsa, RELEASE_KEYS), Err(Refusal::Shape));
+    let key = test_key(7);
+    let keys = [point(&key)];
+    let shaped = |change: fn(&mut Packet)| {
+        let mut packet = Packet::at(V1_11_2);
+        change(&mut packet);
+        verify(SUMS, &packet.sign(SUMS, &key), &keys)
+    };
+    assert_eq!(shaped(|p| p.algorithm = 1), Err(Refusal::Shape));
+    assert_eq!(shaped(|p| p.hash = 2), Err(Refusal::Shape));
+    assert_eq!(shaped(|p| p.version = 3), Err(Refusal::Shape));
+    assert_eq!(shaped(|p| p.kind = 0x01), Err(Refusal::Shape));
+    assert!(shaped(|p| p.hash = 8).is_ok());
+}
+
+/// **Another key's signature is refused against the release key**, and
+/// verifies against its own, alone or as a second entry. Planted: Ed25519
+/// not asked (Ok against the release key; R changed, Ok).
+#[test]
+fn another_key_s_signature_is_refused() {
+    let key = test_key(7);
+    let theirs = Packet::at(V1_11_2 + 1).sign(SUMS, &key);
+    assert_eq!(verify(SUMS, &theirs, RELEASE_KEYS), Err(Refusal::Key));
+    let signed = verify(SUMS, &theirs, &[point(&key)]).unwrap();
+    assert_eq!(signed.created(), V1_11_2 + 1);
+    let rotated = [RELEASE_KEYS[0], point(&key)];
+    assert_eq!(verify(SUMS, &theirs, &rotated), Ok(signed));
+}
+
+/// **A signature saying no time it was made is refused**, and so is one
+/// saying two. Planted: no time read as 0 (Ok).
+#[test]
+fn a_signature_with_no_time_or_two_is_refused() {
+    let key = test_key(7);
+    let mut packet = Packet::at(V1_11_2);
+    packet.hashed.retain(|(kind, _)| *kind != 2);
+    let timeless = packet.sign(SUMS, &key);
+    assert_eq!(
+        verify(SUMS, &timeless, &[point(&key)]),
+        Err(Refusal::NoTime)
+    );
+    let mut packet = Packet::at(V1_11_2);
+    packet.hashed.push((2, 1u32.to_be_bytes().to_vec()));
+    let two = packet.sign(SUMS, &key);
+    assert_eq!(verify(SUMS, &two, &[point(&key)]), Err(Refusal::Packet));
+}
+
+/// **Anything but one whole signature packet is refused**: a partial
+/// length, a length left to the end, a public key's tag, nothing, and the
+/// packet cut short. Planted: a partial length read as its part's
+/// (Trailing).
+#[test]
+fn anything_but_one_whole_signature_packet_is_refused() {
+    let body = &SIG[2..];
+    let partial = [&[0xC2, 0xE7][..], body].concat();
+    assert_eq!(verify(SUMS, &partial, RELEASE_KEYS), Err(Refusal::Packet));
+    let to_the_end = [&[0x8B][..], body].concat();
+    assert_eq!(
+        verify(SUMS, &to_the_end, RELEASE_KEYS),
+        Err(Refusal::Packet)
+    );
+    let key_tag = [&[0x98, SIG[1]][..], body].concat();
+    assert_eq!(verify(SUMS, &key_tag, RELEASE_KEYS), Err(Refusal::Packet));
+    assert_eq!(verify(SUMS, &[], RELEASE_KEYS), Err(Refusal::Packet));
+    assert_eq!(
+        verify(SUMS, &SIG[..100], RELEASE_KEYS),
+        Err(Refusal::Packet)
+    );
+}
+
+/// **The pinned key is `svrngs-release-key.asc`'s**: the file's armor, its
+/// base64, then its first packet, a version 4 EdDSA public key on
+/// ed25519 whose point is 0x40 and 32 bytes; the first of RELEASE_KEYS is
+/// those 32. Planted: one byte of update/signed.rs `RELEASE_KEY` off
+/// (this, and v1.11.2's sums refused, Key).
+#[test]
+fn the_pinned_key_is_svrngs_release_key_asc_s() {
+    use base64::Engine;
+    let asc = include_str!("../../../svrngs-release-key.asc");
+    let armored: String = asc
+        .lines()
+        .skip_while(|line| !line.is_empty())
+        .skip(1)
+        .take_while(|line| !line.starts_with('=') && !line.starts_with("-----"))
+        .collect();
+    let bytes = base64::engine::general_purpose::STANDARD
+        .decode(armored)
+        .unwrap();
+    assert_eq!(bytes[0], 0x98, "a public key packet, its length one byte");
+    let key = &bytes[2..2 + usize::from(bytes[1])];
+    assert_eq!((key[0], key[5]), (4, 22), "version 4, EdDSA");
+    let ed25519 = [9, 0x2B, 6, 1, 4, 1, 0xDA, 0x47, 0x0F, 1];
+    assert_eq!(key[6..16], ed25519, "on ed25519");
+    assert_eq!(key[16..19], [1, 7, 0x40], "an MPI of 263 bits, 0x40 first");
+    assert_eq!(RELEASE_KEYS[0], key[19..51]);
+    assert_eq!(key.len(), 51);
 }

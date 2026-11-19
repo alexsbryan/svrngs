@@ -28,6 +28,8 @@ use std::time::Duration;
 use ring::digest::{digest, SHA256};
 use svrngs_core::link::Origin;
 
+pub mod signed;
+
 /// What `install.sh` writes, and the updater reads and writes: the hash of
 /// the tarball this computer installed, under the data dir. `web/install.sh`
 /// spells the same file in shell; `tests/install.rs` pins the pair.
