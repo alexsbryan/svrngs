@@ -258,8 +258,20 @@ pub trait Net: Fetch + std::any::Any {
     /// Whether `relay` answers this computer's ask ([`crate::tiers`]).
     fn answers<'a>(&'a self, relay: &'a svrngs_core::relay::Url) -> Later<'a, bool>;
     fn online(&self) -> Later<'_, ()>;
+    /// The endpoint's count of relay connections its relay reported rate
+    /// limited: `relay_conns_ratelimited`, incremented at most once per
+    /// connection (iroh 1.4.2 `socket/metrics.rs:55-60`,
+    /// `socket/transports/relay/actor.rs:810-816`). The node's share
+    /// watches it (share-refusal; RELAY_COMMONS design 3).
+    fn ratelimited(&self) -> u64;
     /// `add` given to the endpoint as relays, and `drop` taken from it.
     fn relays(&self, add: Vec<RelayUrl>, drop: Vec<RelayUrl>) -> Later<'_, ()>;
+    /// Each of `relays` left and taken again, one after the other
+    /// (`Endpoint::remove_relay`, `Endpoint::insert_relay`): what a relay
+    /// that reported this computer's connection rate limited may give a
+    /// new connection, and with it a new share (share-refusal;
+    /// RELAY_COMMONS design 3, "How it clears").
+    fn remade(&self, relays: &[RelayUrl]) -> Later<'_, ()>;
     fn send<'a>(&'a self, peer: &'a Contact, req: Request) -> Sent<'a, Streamed>;
     /// A connection to `to` on `alpn`, as [`dialled`].
     fn dial(&self, to: EndpointAddr, alpn: Alpn, within: Option<Duration>) -> Sent<'_, Connection>;
@@ -322,6 +334,9 @@ impl Net for IrohTransport {
     fn online(&self) -> Later<'_, ()> {
         Box::pin(self.endpoint.online())
     }
+    fn ratelimited(&self) -> u64 {
+        self.endpoint.metrics().socket.relay_conns_ratelimited.get()
+    }
     fn relays(&self, add: Vec<RelayUrl>, drop: Vec<RelayUrl>) -> Later<'_, ()> {
         Box::pin(async move {
             for relay in add {
@@ -331,6 +346,16 @@ impl Net for IrohTransport {
             }
             for relay in drop {
                 self.endpoint.remove_relay(&relay).await;
+            }
+        })
+    }
+    fn remade(&self, relays: &[RelayUrl]) -> Later<'_, ()> {
+        let relays = relays.to_vec();
+        Box::pin(async move {
+            for relay in relays {
+                self.endpoint.remove_relay(&relay).await;
+                let config = Arc::new(relay.clone().into());
+                self.endpoint.insert_relay(relay, config).await;
             }
         })
     }

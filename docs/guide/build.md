@@ -285,6 +285,7 @@ a browser tab gets a page of the words.
 | `removed` | This person was removed from the group | Nothing; they're no longer in it |
 | `ended` | This guest's visit ended | Nothing; the visit is over |
 | `limit` | Your app wrote, or read a lend, faster than the limits above | Wait the `Retry-After` seconds; look for a loop |
+| `share` | The lending computer has spent its share of the shared relay, and this answer is a range or over 8 MiB | Wait a minute; a film plays on the lender's Wi-Fi, through the group's own relay, or in the svrngs app |
 
 ## Or lend a server on a port
 

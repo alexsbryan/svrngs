@@ -563,3 +563,116 @@ async fn a_home_that_flips_and_comes_back_is_said_once() {
     assert!(host.say_relay(Some(b.clone())), "two asks running at B");
     assert_eq!((lines(), named()), (2, Some(b)), "A, then B");
 }
+
+/// **The relay's report spends the share, and the connection is left and
+/// taken again a minute after the last large refusal** (share-refusal;
+/// RELAY_COMMONS design 3, "The signal" and "How it clears"): the count of
+/// connections the relay reported rate limited rises while this computer
+/// holds the build's relay, so the door refuses large answers over it; a
+/// refusal restarts the minute; a minute with none leaves the relay and
+/// takes it again, and the share is not spent. Planted, watched red: the
+/// report read without the build's relay being left and taken again, where
+/// the share stays spent past the minute.
+#[tokio::test(start_paused = true)]
+async fn the_relay_s_report_spends_the_share_until_the_connection_is_remade() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[98; 32]);
+    let wire = Wire::default();
+    let build: Url = "http://127.0.0.1:9/".parse().unwrap();
+    wire.relay(&crate::iroh::RelayUrl::from(build.clone()), Relaying::Up);
+    let node = Node::on_wire_relayed(
+        &wire,
+        (dir.path().into(), key),
+        &crate::iroh::RelayConfig {
+            relay_urls: vec![build.to_string()],
+            n0_services: false,
+            loopback_only: false,
+        },
+        &[],
+        Duration::from_secs(3600),
+    )
+    .await
+    .unwrap();
+    let host = node.host();
+    let id = node.net().id();
+    assert!(
+        host.held.borrow().relays.contains(&build),
+        "the endpoint holds the build's relay, so the report is about it"
+    );
+    // The watch reads the count it starts at before a report is seen.
+    tokio::task::yield_now().await;
+    wire.ratelimited(id);
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert!(
+        host.share.borrow().limited.is_some(),
+        "the relay's report spends the share"
+    );
+
+    // A refusal restarts the minute.
+    host.share
+        .send_modify(|s| s.refused = Some((tokio::time::Instant::now(), Some(1_000))));
+    tokio::time::sleep(Duration::from_secs(59)).await;
+    assert!(wire.remade(id).is_empty(), "the minute has not passed");
+    assert!(
+        host.share.borrow().limited.is_some(),
+        "and the share is spent meanwhile"
+    );
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert_eq!(
+        wire.remade(id),
+        vec![crate::iroh::RelayUrl::from(build)],
+        "the relay left and taken again"
+    );
+    assert!(
+        host.share.borrow().limited.is_none(),
+        "the share is not spent once the connection is left and taken again"
+    );
+}
+
+/// **A report while this computer does not hold the build's relay says
+/// nothing of the share** (share-refusal): with the build's relay down and
+/// a group's own answering, the endpoint holds the group's own alone, and
+/// the relay's count rising does not spend the share — the door refuses
+/// nothing over a group's own relay. Planted, watched red: the count read
+/// whatever this computer holds, where the report spends the share while
+/// the endpoint holds the group's own.
+#[tokio::test(start_paused = true)]
+async fn a_report_while_this_computer_holds_no_build_relay_spends_nothing() {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[99; 32]);
+    let wire = Wire::default();
+    let (build, own): (Url, Url) = (
+        "http://127.0.0.1:9/".parse().unwrap(),
+        "http://127.0.0.1:10/".parse().unwrap(),
+    );
+    wire.relay(&crate::iroh::RelayUrl::from(build.clone()), Relaying::Down);
+    wire.relay(&crate::iroh::RelayUrl::from(own.clone()), Relaying::Up);
+    let node = Node::on_wire_relayed(
+        &wire,
+        (dir.path().into(), key),
+        &crate::iroh::RelayConfig {
+            relay_urls: vec![build.to_string()],
+            n0_services: false,
+            loopback_only: false,
+        },
+        &[own.clone()],
+        Duration::from_secs(3600),
+    )
+    .await
+    .unwrap();
+    // The first ask finds the build's relay down, so the endpoint holds the
+    // group's own alone.
+    tokio::time::sleep(Duration::from_secs(12)).await;
+    let held = node.host().held.borrow().relays.clone();
+    assert!(
+        held.contains(&own) && !held.contains(&build),
+        "the endpoint holds the group's own alone: {held:?}"
+    );
+    tokio::task::yield_now().await;
+    wire.ratelimited(node.net().id());
+    tokio::time::sleep(Duration::from_secs(2)).await;
+    assert!(
+        node.host().share.borrow().limited.is_none(),
+        "the report is not about the build's relay, so nothing is spent"
+    );
+}

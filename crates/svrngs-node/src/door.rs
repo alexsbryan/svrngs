@@ -251,6 +251,9 @@ pub enum LendRefusal {
     /// (`crate::folder::carried::WRITES_AN_HOUR`), or read a lend as often
     /// as its rate allows ([`limit::READS_A_MINUTE`]).
     Limit,
+    /// The lender's computer has spent its share of the shared relay, so a
+    /// large answer over it waits (share-refusal; RELAY_COMMONS design 3).
+    Share,
 }
 
 impl LendRefusal {
@@ -268,6 +271,7 @@ impl LendRefusal {
             LendRefusal::Removed => "removed",
             LendRefusal::Ended => "ended",
             LendRefusal::Limit => "limit",
+            LendRefusal::Share => "share",
         }
     }
 
@@ -1633,7 +1637,7 @@ pub(crate) async fn lend_for(
         Ok(Admit::Bare) => Vec::new(),
         Ok(Admit::Own) => secret_headers(&lend::secret_dir(&door.data_dir, &lend.name), &lend.name),
     };
-    let observed = via.and_then(|v| v.observe());
+    let observed = via.as_ref().and_then(Via::observe);
     if observed.is_none() {
         tracing::debug!(target: "door", actor, lend = %lend.name, "door: no path observed, so the person is taken to be away");
     }
@@ -1685,7 +1689,7 @@ pub(crate) async fn lend_for(
         door,
         (&lend, port),
         (&whose, &device, &person, app.as_ref()),
-        host.as_ref(),
+        (host.as_ref(), via),
         service_path,
         req,
         Told {
@@ -1714,6 +1718,51 @@ struct Told {
     /// The headers [`admit`]'s credential sends, the lend's own or the
     /// readers', none for an app's bare read.
     secret: Vec<(HeaderName, HeaderValue)>,
+}
+
+/// The largest answer the door carries over the build's relay while the
+/// relay has reported this computer's share spent (share-refusal;
+/// RELAY_COMMONS design 3, "The refusal"): a range, or a body over this, is
+/// refused [`LendRefusal::Share`]. The burst the relay grants one computer
+/// is 8 MiB (`crates/svrngs/src/relay.rs` `SHARE_BURST`), which carries an
+/// app's first open whole (Jellyfin's 5.66 MB, CHARTER "Direction") and no
+/// film.
+const OVER_SHARE: u64 = 8 * 1024 * 1024;
+
+/// The words of a share refusal, in the lender's name (RELAY_COMMONS
+/// design 3, "The words"): what the phone's worker shows as svrngs's page
+/// for a navigation and its shim as a banner for a subresource. The
+/// design's "Films play" is said "Play it", since the infra may not name
+/// Jellyfin's nouns (scripts/vocab_check.py, apps/jellyfin/nouns.txt).
+fn spent_words(lender: Option<Person>) -> String {
+    let (by, wifi) = match lender {
+        Some(p) => (format!("{p}’s computer"), format!("as {p}’s computer")),
+        None => ("This computer".into(), "as this computer".into()),
+    };
+    format!("{by} has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi {wifi}, through your group’s own relay, or in the svrngs app, soon.")
+}
+
+/// Whether an answer is refused while the share is spent (share-refusal;
+/// RELAY_COMMONS design 3, "The refusal"): a range, which asks for a part
+/// of something large by construction, or a body over the door's own line
+/// ([`OVER_SHARE`]). A body of no known length passes. The range is judged
+/// before its service is asked (`length` none); the line after it answered.
+fn over_share(spent: bool, range: bool, length: Option<u64>) -> bool {
+    spent && (range || length.is_some_and(|l| l > OVER_SHARE))
+}
+
+/// A large request over the build's relay refused while its share is spent
+/// (share-refusal): `429`, `x-svrngs-refused: share`, and the words. The
+/// refusal restarts the minute after which the connection is left and
+/// taken again ([`crate::node::SHARE_WAITED`]).
+fn share_spent(door: &Door, lend: &Lend) -> Response {
+    let at = (tokio::time::Instant::now(), unix_now());
+    door.folders
+        .host
+        .share
+        .send_modify(|s| s.refused = Some(at));
+    tracing::info!(target: "share", lend = %lend.name, "share: refused — a large answer over the build's relay while its share is spent");
+    LendRefusal::Share.say(StatusCode::TOO_MANY_REQUESTS, spent_words(lender_of(door)))
 }
 
 /// An app past [`READS_A_MINUTE`] of `lend` told so, `wait` before it may
@@ -1958,12 +2007,14 @@ fn tell_share(headers: &mut HeaderMap, share: Option<u64>) {
 }
 
 /// Carry `req` to `lend`'s service as `path` (with its query), the head
-/// rewritten, and stream the answer back.
+/// rewritten, and stream the answer back. A large answer whose request came
+/// over the build's relay is refused while its share is spent
+/// (share-refusal; RELAY_COMMONS design 3, "The refusal").
 async fn forward(
     door: &Door,
     (lend, port): (&Lend, NonZeroU16),
     (whose, device, person, app): (&PersonKey, &DeviceKey, &Person, Option<&Label>),
-    host: Option<&Person>,
+    (host, via): (Option<&Person>, Option<Via>),
     path: String,
     mut req: Request,
     Told {
@@ -1974,6 +2025,12 @@ async fn forward(
     }: Told,
 ) -> Result<Response, Response> {
     let actor = whose.as_str();
+    let relay = via.as_ref().and_then(Via::observe).and_then(|o| o.relay);
+    let over_build = relay.is_some_and(|r| door.folders.host.build.contains(&r.into()));
+    let spent = over_build && door.folders.host.share.borrow().limited.is_some();
+    if over_share(spent, req.headers().contains_key(header::RANGE), None) {
+        return Err(share_spent(door, lend));
+    }
     let range = req.headers().get(header::RANGE);
     let mut carriage = Carriage {
         lend: lend.name.to_string(),
@@ -2101,6 +2158,9 @@ async fn forward(
         .headers
         .get(header::CONTENT_LENGTH)
         .and_then(|l| l.to_str().ok()?.parse().ok());
+    if over_share(spent, false, length) {
+        return Err(share_spent(door, lend));
+    }
     let echoed = drop_echoed_secret(&mut parts.headers, &secret);
     if !echoed.is_empty() {
         tracing::warn!(target: "door", lend = %lend.name, headers = ?echoed,

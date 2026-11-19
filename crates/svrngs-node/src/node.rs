@@ -116,6 +116,38 @@ pub const ANSWER_WITHIN: Duration = Duration::from_secs(3);
 /// address before making a link, when it has a relay to reach.
 pub const ONLINE_WAIT: Duration = Duration::from_secs(10);
 
+/// How often the node reads the relay's count of connections it reported
+/// rate limited (share-refusal; RELAY_COMMONS design 3, "The signal").
+const SHARE_ASKED_EVERY: Duration = Duration::from_secs(1);
+
+/// How long after the last large request over the build's relay — or after
+/// the relay's report itself, with none — the node leaves its relay
+/// connection and takes it again: the minute RELAY_COMMONS design 3, "How
+/// it clears", waits, which is also about the time the relay's bucket
+/// takes to refill its 8 MiB burst at 125,000 bytes a second
+/// (`crates/svrngs/src/relay.rs` `SHARE_RATE`, `SHARE_BURST`).
+pub const SHARE_WAITED: Duration = Duration::from_secs(60);
+
+/// What this computer's connection to the build's relay has done
+/// (share-refusal; RELAY_COMMONS design 3): the relay's `RateLimited`
+/// report, counted in `relay_conns_ratelimited` (iroh 1.4.2
+/// `socket/metrics.rs:55-60`, incremented at most once per connection,
+/// `socket/transports/relay/actor.rs:810-816`), and each large request the
+/// door refused over it. The door refuses while [`Share::limited`] is
+/// set; [`Host::watch_share`] clears it a minute after the last refusal,
+/// leaving the connection and taking it again.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct Share {
+    /// When the relay last reported this computer's connection rate
+    /// limited, while it has not been left and taken again since; `None`
+    /// when the share is not spent.
+    pub(crate) limited: Option<tokio::time::Instant>,
+    /// When the door last refused a large request over the build's relay,
+    /// on the monotonic clock and the wall clock (unix seconds, which the
+    /// home page says); `None` when none was.
+    pub(crate) refused: Option<(tokio::time::Instant, Option<i64>)>,
+}
+
 /// Until this process is asked to stop: Ctrl-C, or SIGTERM, which a
 /// service manager and `kill` send (syp-6 b). Its caller then closes the
 /// node's endpoint, telling every peer each connection is closed. A
@@ -229,10 +261,11 @@ pub struct Node {
     _round: n0_future::task::AbortOnDropHandle<()>,
     /// Stopped with the node, in this order: the room's one owner
     /// ([`crate::room::owner::spawn`]); the watch on where this computer
-    /// meets its groups, which says each move ([`Host::moved`]), and the ask
-    /// of its groups' own relays ([`Host::check`]); and play's one owner
+    /// meets its groups, which says each move ([`Host::moved`]), the ask
+    /// of its groups' own relays ([`Host::check`]), and the share's watch
+    /// ([`Host::watch_share`]); and play's one owner
     /// ([`crate::play::spawn`]).
-    _tasks: [n0_future::task::AbortOnDropHandle<()>; 4],
+    _tasks: [n0_future::task::AbortOnDropHandle<()>; 5],
     /// Its folders' tasks and store, ended with it.
     _folders: Stop,
 }
@@ -277,6 +310,9 @@ pub struct Host {
     pub(crate) emergency: Vec<Url>,
     /// What its endpoint holds now, at which tier ([`crate::tiers`]).
     pub(crate) held: tokio::sync::watch::Sender<crate::tiers::Held>,
+    /// What its connection to the build's relay has done, and the door's
+    /// refusals over it ([`Share`]; share-refusal).
+    pub(crate) share: tokio::sync::watch::Sender<Share>,
     /// The home the last [`Host::say_relay`] was asked to say, which the
     /// next reads to tell a home that stayed from one passing through.
     asked: tokio::sync::watch::Sender<Option<Url>>,
@@ -410,6 +446,7 @@ impl Node {
             build: relay.build(),
             emergency: crate::tiers::behind(),
             held: tokio::sync::watch::Sender::new(held),
+            share: tokio::sync::watch::Sender::new(Share::default()),
             asked: tokio::sync::watch::Sender::new(None),
             api_port,
             minting: Default::default(),
@@ -444,6 +481,8 @@ impl Node {
         // this computer's home said (relay fallbacks).
         let homes = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().moved()));
         let tiers = n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().check()));
+        let share =
+            n0_future::task::AbortOnDropHandle::new(tokio::spawn(host.clone().watch_share()));
         let rounds = Rounds::new(Default::default());
         // One provider, its key and its code store, shared by the door that
         // mints a code and the API that redeems it.
@@ -554,7 +593,7 @@ impl Node {
             routes,
             _acceptor: acceptor,
             _round: round,
-            _tasks: [room, homes, tiers, play],
+            _tasks: [room, homes, tiers, share, play],
         })
     }
 
@@ -599,6 +638,61 @@ impl Host {
     pub async fn online(&self) -> bool {
         let wait = tokio::time::timeout(ONLINE_WAIT, self.transport.online());
         !self.relayed || wait.await.is_ok()
+    }
+
+    /// The relay's count of connections it reported rate limited, read
+    /// every [`SHARE_ASKED_EVERY`] for its connection to the build's relay;
+    /// and, a minute with nothing large refused after the report, the
+    /// connection left and taken again, once per report, traced
+    /// (share-refusal; RELAY_COMMONS design 3, "The signal" and "How it
+    /// clears").
+    ///
+    /// The count is the endpoint's, not one relay's, so it is read only
+    /// while this computer holds the build's relay, which alone carries the
+    /// share; a report while it holds a group's own or n0's says nothing of
+    /// it. iroh 1.4.2 keeps a relay connection a map removal does not close
+    /// (measured on a relay on 127.0.0.1: `relay_conns_success` unchanged
+    /// after remove+insert, `network_change` and 70 s removed), so the
+    /// connection left and taken again may be the same one; the minute is
+    /// also what the bucket takes to refill its burst, so the large
+    /// requests it was holding pass again either way.
+    pub(crate) async fn watch_share(self: Arc<Self>) {
+        let build: Vec<_> = self.build.iter().cloned().map(Into::into).collect();
+        let mut every = tokio::time::interval(SHARE_ASKED_EVERY);
+        let mut seen = self.transport.ratelimited();
+        loop {
+            every.tick().await;
+            let count = self.transport.ratelimited();
+            let at_build = self
+                .held
+                .borrow()
+                .relays
+                .iter()
+                .any(|r| self.build.contains(r));
+            if count > seen && at_build {
+                self.share
+                    .send_modify(|s| s.limited = Some(tokio::time::Instant::now()));
+            }
+            tracing::debug!(target: "share", count, seen, at_build,
+                "share: the relay's count of connections it reported rate limited, and whether this computer holds the build's relay");
+            seen = count;
+            let remake = at_build
+                && self.share.send_if_modified(|s| {
+                    let Some(limited) = s.limited else {
+                        return false;
+                    };
+                    if s.refused.map_or(limited, |(at, _)| at).elapsed() < SHARE_WAITED {
+                        return false;
+                    }
+                    s.limited = None;
+                    true
+                });
+            if remake {
+                tracing::debug!(target: "share", relays = build.len(),
+                    "share: a minute with nothing large refused, so this computer leaves its relay connection and takes it again");
+                self.transport.remade(&build).await;
+            }
+        }
     }
 
     /// One exchange of `namespace` with the node at `peer`, whatever this

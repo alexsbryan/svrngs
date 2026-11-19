@@ -1099,3 +1099,54 @@ fn a_connection_is_carried_only_to_the_account_its_lend_recorded() {
         );
     }
 }
+
+/// **A large answer over the build's relay is refused while its share is
+/// spent; a small one, and any over a direct path or a group's own relay,
+/// is not** (share-refusal; RELAY_COMMONS design 3, "The refusal"): a
+/// range is refused before its service is asked, a body over the door's
+/// own line after it, and the words are the design's in the lender's name.
+/// Planted, watched red: a range taken as small, where a film's range
+/// passes.
+#[test]
+fn a_large_answer_over_the_build_s_relay_is_refused_while_its_share_is_spent() {
+    assert!(over_share(true, true, None), "a range over the spent relay");
+    assert!(
+        !over_share(true, false, None),
+        "a request with no range is asked"
+    );
+    assert!(
+        !over_share(false, true, None),
+        "a range over a direct path or a group's own relay is never refused"
+    );
+    assert!(
+        over_share(true, false, Some(OVER_SHARE + 1)),
+        "a body over the line"
+    );
+    assert!(
+        !over_share(true, false, Some(OVER_SHARE)),
+        "a body at the line passes"
+    );
+    assert!(
+        !over_share(true, false, None),
+        "a body of no known length passes"
+    );
+    assert!(
+        !over_share(false, false, Some(OVER_SHARE + 1)),
+        "over a direct path it is never refused"
+    );
+
+    let refused = LendRefusal::Share.say(
+        StatusCode::TOO_MANY_REQUESTS,
+        spent_words(Some(Person::parse("Sam").unwrap())),
+    );
+    assert_eq!(
+        (said(&refused).0, said(&refused).1),
+        (429, Some("share")),
+        "429, marked as svrngs's own"
+    );
+    assert_eq!(
+        said(&refused).2,
+        Some("Sam’s computer has used its share of the shared relay for now. Play it at full speed on the same Wi-Fi as Sam’s computer, through your group’s own relay, or in the svrngs app, soon.")
+    );
+    assert!(spent_words(None).starts_with("This computer has used its share"));
+}

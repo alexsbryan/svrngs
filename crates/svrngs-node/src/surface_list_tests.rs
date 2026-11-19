@@ -40,11 +40,12 @@ fn spelled(route: &AppRoute) -> Option<String> {
 fn words() -> BTreeSet<String> {
     let every = [
         Away, Pass, Closed, Unlent, Path, Full, Fault, Unasked, Stopped, Removed, Ended, Limit,
+        Share,
     ];
     for r in every {
         match r {
             Away | Pass | Closed | Unlent | Path | Full | Fault | Unasked | Stopped | Removed
-            | Ended | Limit => {}
+            | Ended | Limit | Share => {}
         }
     }
     every

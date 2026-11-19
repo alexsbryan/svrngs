@@ -257,6 +257,11 @@ struct Met {
     /// Each computer's relays held, as its endpoint was given them
     /// ([`Net::relays`]).
     held: std::collections::BTreeMap<[u8; 32], std::collections::BTreeSet<crate::iroh::RelayUrl>>,
+    /// Each computer's count of relay connections its relay reported rate
+    /// limited, as its share reads it ([`Net::ratelimited`]).
+    ratelimited: std::collections::BTreeMap<[u8; 32], u64>,
+    /// Each computer's relays left and taken again ([`Net::remade`]).
+    remade: std::collections::BTreeMap<[u8; 32], Vec<crate::iroh::RelayUrl>>,
     /// Told of every change to a relay or to what a computer holds, so a
     /// computer's homes are read again.
     changed: Changed,
@@ -367,6 +372,31 @@ impl Wire {
         let (to, at) = tokio::sync::mpsc::unbounded_channel();
         self.0.lock().unwrap().holders.insert(*key.as_bytes(), to);
         at
+    }
+
+    /// The relay reports `key`'s computer's connection rate limited: one
+    /// more connection its share's count names ([`Net::ratelimited`];
+    /// share-refusal).
+    pub fn ratelimited(&self, key: PublicKey) {
+        *self
+            .0
+            .lock()
+            .unwrap()
+            .ratelimited
+            .entry(*key.as_bytes())
+            .or_default() += 1;
+    }
+
+    /// The relays `key`'s computer has left and taken again
+    /// ([`Net::remade`]; share-refusal).
+    pub fn remade(&self, key: PublicKey) -> Vec<crate::iroh::RelayUrl> {
+        self.0
+            .lock()
+            .unwrap()
+            .remade
+            .get(key.as_bytes())
+            .cloned()
+            .unwrap_or_default()
     }
 }
 
@@ -600,6 +630,17 @@ impl Net for OnWire {
             std::future::pending().await
         })
     }
+    /// As [`Wire::ratelimited`] says, none until a test says one.
+    fn ratelimited(&self) -> u64 {
+        *self
+            .wire
+            .0
+            .lock()
+            .unwrap()
+            .ratelimited
+            .get(self.key.as_bytes())
+            .unwrap_or(&0)
+    }
     /// Held on the wire, its homes read again.
     fn relays(
         &self,
@@ -611,6 +652,18 @@ impl Net for OnWire {
         held.extend(add);
         held.retain(|r| !drop.contains(r));
         met.changed.0.send_modify(|n| *n += 1);
+        Box::pin(async {})
+    }
+    /// Recorded for the test ([`Wire::remade`]), the wire holding nothing.
+    fn remade(&self, relays: &[crate::iroh::RelayUrl]) -> crate::iroh::Later<'_, ()> {
+        self.wire
+            .0
+            .lock()
+            .unwrap()
+            .remade
+            .entry(*self.key.as_bytes())
+            .or_default()
+            .extend(relays.iter().cloned());
         Box::pin(async {})
     }
     fn send<'a>(

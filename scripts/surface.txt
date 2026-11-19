@@ -38,3 +38,4 @@ refused stopped
 refused removed
 refused ended
 refused limit
+refused share
