@@ -70,6 +70,12 @@ ineligible, stay on the relay without binding."
 - **Where it lands.** webrtc-node closes as built. The gate is the new row
   webrtc-network, before webrtc-page.
 
+**A `git commit … -- ralph/next/relay-commons/STATE.md` you did not make is
+the operator's watcher** landing the loop's done marks. The loop's own
+commit fails on this host's Node 20, so the watcher commits it from the
+toolbox. Leave it alone, and do not inspect processes or `/proc`. Reads
+there are refused and end your session (webrtc-network 1).
+
 This is a dedicated worktree off main. Do not import another worktree's
 dirty files.
 - **Your scope:** this worktree and synthetic identities.
