@@ -124,7 +124,29 @@ pub async fn build_relayed_endpoint(
     alpns: Vec<Vec<u8>>,
     cfg: &RelayConfig,
 ) -> Result<Endpoint, String> {
-    relayed_endpoint_builder(secret_key, alpns, cfg)?
+    build_relayed_endpoint_with(secret_key, alpns, cfg, None, None).await
+}
+
+/// [`build_relayed_endpoint`] with this endpoint's custom transport and
+/// path timing: the WebRTC wire a page's offer is answered over, and the
+/// paths its offers are given up after (webrtc-node; `crate::webrtc`
+/// `quick_paths`). Both are the node's; a caller with neither uses
+/// [`build_relayed_endpoint`].
+pub async fn build_relayed_endpoint_with(
+    secret_key: SecretKey,
+    alpns: Vec<Vec<u8>>,
+    cfg: &RelayConfig,
+    wire: Option<Arc<dyn iroh::endpoint::transports::CustomTransport>>,
+    paths: Option<iroh::endpoint::QuicTransportConfig>,
+) -> Result<Endpoint, String> {
+    let mut builder = relayed_endpoint_builder(secret_key, alpns, cfg)?;
+    if let Some(wire) = wire {
+        builder = builder.add_custom_transport(wire);
+    }
+    if let Some(paths) = paths {
+        builder = builder.transport_config(paths);
+    }
+    builder
         .bind()
         .await
         .map_err(|e| format!("iroh endpoint bind failed: {e}"))

@@ -1,9 +1,10 @@
 # Events' nouns. The infra may not use them (scripts/vocab_check.py).
 # Not listed, since svrngs's code uses them in its own sense: `events` (a
 # folder's file-system events, crates/svrngs-node/src/synced.rs), `came` (in
-# a refusal's sentence, door/sign_in.rs) and `guest` (svrngs-node's guest
-# module, lib.rs:42).
-event
+# a refusal's sentence, door/sign_in.rs), `guest` (svrngs-node's guest
+# module, lib.rs:42) and `event` (str0m's `Event`, the WebRTC peer's loop;
+# webrtc.rs:278-292, the same collision the pages' DOM `event` has,
+# scripts/vocab_check.py's own note).
 coming
 guests
 rsvp
