@@ -302,13 +302,11 @@ impl Membership {
 
     /// What holds `key`, if it stands now; `None` if it does not.
     pub fn device(&self, key: &str) -> Option<Device> {
-        self.standing.contains(key).then(|| {
-            if self.browsers.contains(key) {
-                Device::Browser
-            } else {
-                Device::Computer
-            }
-        })
+        let device = match self.browsers.contains(key) {
+            true => Device::Browser,
+            false => Device::Computer,
+        };
+        self.standing.contains(key).then_some(device)
     }
 }
 
