@@ -343,10 +343,9 @@ impl Command for Take {
         let office = &before.membership().office;
         tracing::debug!(target: "register", key = %self.0, ?office, "take: an Accept of a hand-on to this key, or its holder's taking it back");
         match office {
-            Office::Pending { hand_on, to, .. } if *to == self.0 => {
-                let hand_on = hand_on.clone();
-                Ok(vec![RailAct::Accept { hand_on }])
-            }
+            Office::Pending { hand_on, to, .. } if *to == self.0 => Ok(vec![RailAct::Accept {
+                hand_on: hand_on.clone(),
+            }]),
             Office::Pending { by, .. } if *by == self.0 => {
                 Ok(vec![RailAct::HandOn { key: by.clone() }])
             }

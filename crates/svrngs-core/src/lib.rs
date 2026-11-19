@@ -793,7 +793,7 @@ impl Journaled for SignedOp {
     /// and a ring with no membership act folds byte-identically to the build
     /// before.
     fn line_version(&self) -> u32 {
-        match self.act {
+        match &self.act {
             RailAct::Authority { .. } | RailAct::Accept { .. } => AUTHORITY_LINE_VERSION,
             RailAct::GuestSlots { .. } | RailAct::Visit(Visit { under: Some(_), .. }) => {
                 GUESTS_LINE_VERSION
@@ -802,21 +802,14 @@ impl Journaled for SignedOp {
             _ if self.grant.as_ref().is_some_and(|p| p.op.is_some()) => APPROVAL_LINE_VERSION,
             RailAct::Holders { .. } => APPROVAL_LINE_VERSION,
             _ if self.grant.is_some() => AUTHORSHIP_LINE_VERSION,
-            RailAct::Admit {
-                invite:
-                    Some(Redemption {
-                        device: Device::Browser,
-                        ..
-                    }),
-                ..
-            } => BROWSER_LINE_VERSION,
-            RailAct::Invite {
-                device_of: Some(_), ..
-            } => DEVICE_LINE_VERSION,
-            RailAct::Invite { .. }
-            | RailAct::Admit {
-                invite: Some(_), ..
-            } => LINK_LINE_VERSION,
+            RailAct::Admit { invite, .. }
+                if invite.as_ref().is_some_and(|r| r.device == Device::Browser) =>
+            {
+                BROWSER_LINE_VERSION
+            }
+            RailAct::Invite { device_of, .. } if device_of.is_some() => DEVICE_LINE_VERSION,
+            RailAct::Admit { invite, .. } if invite.is_some() => LINK_LINE_VERSION,
+            RailAct::Invite { .. } => LINK_LINE_VERSION,
             RailAct::Admit { .. } => MEMBERSHIP_LINE_VERSION,
             RailAct::Remove { .. } | RailAct::HandOn { .. } => REMOVAL_LINE_VERSION,
             RailAct::Synced { .. } => SYNCED_LINE_VERSION,
@@ -891,10 +884,10 @@ fn actor_prefix(actor: &str) -> String {
 
 /// Enough of an op id to recognise, short enough to read in a sentence.
 pub fn short_id(id: &str) -> String {
-    if id.chars().count() > 12 {
-        format!("{}…", id.chars().take(12).collect::<String>())
-    } else {
-        id.to_string()
+    let head = actor_prefix(id);
+    match head.len() < id.len() {
+        true => format!("{head}…"),
+        false => head,
     }
 }
 
