@@ -124,13 +124,8 @@ impl Provider {
     /// The lend `raw` names and the client it declares, when it signs
     /// people in with svrngs.
     fn declared(&self, raw: &str) -> Option<(LendName, Lend, SignInWithSvrngs)> {
-        let name = match LendName::parse(raw) {
-            Ok(name) => name,
-            Err(why) => {
-                tracing::debug!(target: "oidc", raw, %why, "oidc: refused — not a lend's name");
-                return None;
-            }
-        };
+        let not = |why: &_| tracing::debug!(target: "oidc", raw, %why, "oidc: refused — not a lend's name");
+        let name = LendName::parse(raw).inspect_err(not).ok()?;
         match lend::read(&self.data_dir, &name) {
             Ok(Some(mut lend)) => lend
                 .sign_in_with_svrngs
@@ -307,13 +302,11 @@ async fn token(
     Path(lend): Path<String>,
     headers: HeaderMap,
     Form(form): Form<TokenForm>,
-) -> Response {
-    let Some((name, declared, config)) = p.declared(&lend) else {
-        return missing(&lend);
-    };
-    let grant = |why: &str| refuse(StatusCode::BAD_REQUEST, "invalid_grant", why);
-    let bad_client = |why: &str| refuse(StatusCode::UNAUTHORIZED, "invalid_client", why);
-    let bad = |error: &str, why: &str| refuse(StatusCode::BAD_REQUEST, error, why);
+) -> Result<Response, Response> {
+    let (name, declared, config) = p.declared(&lend).ok_or_else(|| missing(&lend))?;
+    let grant = |why: &str| Err(refuse(StatusCode::BAD_REQUEST, "invalid_grant", why));
+    let bad_client = |why: &str| Err(refuse(StatusCode::UNAUTHORIZED, "invalid_client", why));
+    let bad = |error: &str, why: &str| Err(refuse(StatusCode::BAD_REQUEST, error, why));
     if form.grant_type.as_deref() != Some("authorization_code") {
         return bad(
             "unsupported_grant_type",
@@ -380,20 +373,14 @@ async fn token(
     let sub = code.who.sub.clone();
     let mut claims = Claims::new(&issuer, &client_id, code.who, now(), TOKEN_LIFETIME);
     claims.nonce = code.nonce;
-    let signed = match p.key.token(claims) {
-        Ok(signed) => signed,
-        Err(why) => {
-            tracing::warn!(target: "oidc", %why, "oidc: refused — the token cannot be signed");
-            return refuse(
-                StatusCode::INTERNAL_SERVER_ERROR,
-                "server_error",
-                "this computer cannot sign the token",
-            );
-        }
-    };
+    let signed = p.key.token(claims).map_err(|why| {
+        tracing::warn!(target: "oidc", %why, "oidc: refused — the token cannot be signed");
+        let words = "this computer cannot sign the token";
+        refuse(StatusCode::INTERNAL_SERVER_ERROR, "server_error", words)
+    })?;
     tracing::debug!(target: "oidc", %issuer, client = %client_id, sub = %sub, "oidc: issued a token");
-    Json(serde_json::json!({ "access_token": signed, "token_type": "Bearer", "expires_in": TOKEN_LIFETIME, "id_token": signed }))
-        .into_response()
+    let answer = serde_json::json!({ "access_token": signed, "token_type": "Bearer", "expires_in": TOKEN_LIFETIME, "id_token": signed });
+    Ok(Json(answer).into_response())
 }
 
 /// `GET /oidc/{lend}/userinfo`: the claims the access token carries, when
@@ -403,9 +390,7 @@ async fn userinfo(
     Path(lend): Path<String>,
     headers: HeaderMap,
 ) -> Result<Response, Response> {
-    let Some((name, _declared, config)) = p.declared(&lend) else {
-        return Err(missing(&lend));
-    };
+    let (name, _declared, config) = p.declared(&lend).ok_or_else(|| missing(&lend))?;
     let invalid = |why| refuse(StatusCode::UNAUTHORIZED, "invalid_token", why);
     let token = bearer(&headers).map_err(invalid)?;
     let issuer = issuer(p.port, name.as_str());

@@ -181,8 +181,8 @@ impl Key {
     /// The JWKS an app fetches: this key alone, `EC` on `P-256`, its `x` and
     /// `y` the public point's halves, and the `kid` the header names.
     pub fn jwks(&self) -> String {
-        let x = url(self.point.get(1..33).expect("an uncompressed point's x"));
-        let y = url(self.point.get(33..65).expect("an uncompressed point's y"));
+        let x = URL_SAFE_NO_PAD.encode(self.point.get(1..33).expect("an uncompressed point's x"));
+        let y = URL_SAFE_NO_PAD.encode(self.point.get(33..65).expect("an uncompressed point's y"));
         let jwks = format!(
             r#"{{"keys":[{{"kid":"{}","kty":"EC","crv":"P-256","x":"{x}","y":"{y}"}}]}}"#,
             self.kid
@@ -190,11 +190,6 @@ impl Key {
         tracing::debug!(target: "oidc", kid = %self.kid, "oidc: the JWKS a client reads");
         jwks
     }
-}
-
-/// `bytes` base64url, unpadded: how a JWK spells `x` and `y`.
-fn url(bytes: &[u8]) -> String {
-    URL_SAFE_NO_PAD.encode(bytes)
 }
 
 pub(crate) mod front;
