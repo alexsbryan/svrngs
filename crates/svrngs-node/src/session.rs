@@ -68,6 +68,8 @@ pub(crate) const OPEN_PATH: &str = "/svrngs-open";
 pub(crate) const AS_PATH: &str = "/svrngs-as/";
 pub(crate) const HOME: &str = "svrngs";
 pub(crate) const PROOF: &str = "x-svrngs-browser";
+/// The header its own page's `yes` to a write rides on, which its proof signs.
+pub(crate) const INTENT: &str = "x-svrngs-intent";
 
 /// How far a proof's stamp may be from now, either way, in seconds.
 const FRESH: i64 = 60;
@@ -286,10 +288,8 @@ impl Sessions {
     }
 
     fn browser_key(&self, name: &str) -> ring::hmac::Tag {
-        ring::hmac::sign(
-            &self.key,
-            format!("browser/{name}/{}", self.port).as_bytes(),
-        )
+        let named = format!("browser/{name}/{}", self.port);
+        ring::hmac::sign(&self.key, named.as_bytes())
     }
 
     /// The capability a read's address carries (`/svrngs-as/<cap>/`): the
@@ -335,8 +335,7 @@ impl Sessions {
         if headers.get(header::HOST).and_then(|h| h.to_str().ok()) != Some(host.as_str()) {
             return Err(Unproven::OtherHost);
         }
-        let text = |h: &str| headers.get(h).map_or("", |v| v.to_str().unwrap_or(""));
-        let (digest, intent) = (text("x-svrngs-body"), text("x-svrngs-intent"));
+        let (digest, intent) = (text(headers, "x-svrngs-body"), text(headers, INTENT));
         let message = format!(
             "{host}\n{}\n{}\n{stamp}.{nonce}\n{digest}\n{intent}\n{}",
             req.method(),
@@ -367,10 +366,7 @@ impl Sessions {
             return;
         }
         let own = format!("http://{}", self.host(name));
-        let location = answer
-            .headers()
-            .get(header::LOCATION)
-            .and_then(|l| l.to_str().ok());
+        let location = (answer.headers().get(header::LOCATION)).and_then(|l| l.to_str().ok());
         let at = location.map(|l| l.strip_prefix(own.as_str()).unwrap_or(l));
         let Some(at) = at.filter(|a| local(a)) else {
             tracing::debug!(target: "session", name, status, ?location, "session: a redirect to another origin, whose onward request no proof here carries");
@@ -449,28 +445,17 @@ impl Sessions {
         {
             return false;
         }
+        const CODE: &str = "__svrngs_socket=";
         let query = req.uri().query().unwrap_or_default();
-        let Some(code) = query
-            .split('&')
-            .find_map(|p| p.strip_prefix("__svrngs_socket="))
-        else {
+        let (codes, rest): (Vec<_>, Vec<_>) = query.split('&').partition(|p| p.starts_with(CODE));
+        let Some(code) = codes.first().and_then(|p| p.strip_prefix(CODE)) else {
             return false;
         };
-        let rest = query
-            .split('&')
-            .filter(|p| !p.starts_with("__svrngs_socket="))
-            .collect::<Vec<_>>()
-            .join("&");
-        let at = format!(
-            "{}{}{}",
-            req.uri().path(),
-            if rest.is_empty() { "" } else { "?" },
-            rest
-        );
-        let valid = self
-            .sockets
-            .redeem(code)
-            .is_ok_and(|(host, path)| host == name && path == at);
+        let rest = rest.join("&");
+        let mark = if rest.is_empty() { "" } else { "?" };
+        let at = format!("{}{mark}{rest}", req.uri().path());
+        let redeemed = self.sockets.redeem(code);
+        let valid = redeemed.is_ok_and(|(host, path)| host == name && path == at);
         if let Ok(uri) = at.parse() {
             *req.uri_mut() = uri;
         }
@@ -489,11 +474,9 @@ impl Sessions {
         }
         let host = self.host(name);
         let headers = req.headers();
-        let own = (headers.get(header::ORIGIN))
-            .is_some_and(|h| h == format!("http://{host}").as_str())
-            && headers
-                .get(header::HOST)
-                .is_some_and(|h| h == host.as_str());
+        let origin = format!("http://{host}");
+        let own = (headers.get(header::ORIGIN)).is_some_and(|h| h == origin.as_str())
+            && (headers.get(header::HOST)).is_some_and(|h| h == host.as_str());
         if req.method() != Method::POST || !own {
             tracing::debug!(target: "session", name, own, "session: enrollment refused outside its own origin");
             return StatusCode::FORBIDDEN.into_response();
@@ -503,11 +486,8 @@ impl Sessions {
                 .refused("This open can be used only by a browser you run on this computer.");
         }
         let query = req.uri().query().unwrap_or_default();
-        let code = query
-            .split('&')
-            .find_map(|p| p.strip_prefix("code="))
-            .unwrap_or_default();
-        match self.codes.redeem(code) {
+        let code = query.split('&').find_map(|p| p.strip_prefix("code="));
+        match self.codes.redeem(code.unwrap_or_default()) {
             Ok((host, at)) if host == name => {
                 tracing::debug!(target: "session", name, "session: origin enrolled once, no cookie issued");
                 ([NO_STORE], Json(serde_json::json!({ "key": URL_SAFE_NO_PAD.encode(self.browser_key(name)), "at": at }))).into_response()
@@ -547,7 +527,7 @@ impl Sessions {
     pub(crate) fn strip(&self, headers: &mut HeaderMap) {
         headers.remove(PROOF);
         headers.remove("x-svrngs-body");
-        headers.remove("x-svrngs-intent");
+        headers.remove(INTENT);
         if self.token.shown(headers) {
             headers.remove(header::AUTHORIZATION);
         }
@@ -574,12 +554,7 @@ impl Sessions {
         if matches!(*req.method(), Method::GET | Method::HEAD) {
             return true;
         }
-        let wanted = req
-            .headers()
-            .get("x-svrngs-body")
-            .and_then(|h| h.to_str().ok())
-            .unwrap_or("")
-            .to_string();
+        let wanted = text(req.headers(), "x-svrngs-body").to_string();
         let body = std::mem::replace(req.body_mut(), axum::body::Body::empty());
         let bytes = match axum::body::to_bytes(body, 2 * 1024 * 1024).await {
             Ok(bytes) => bytes,
@@ -605,13 +580,14 @@ impl Sessions {
             "applications menu"
         };
         let page = format!("<!doctype html><meta charset=utf-8><title>Open svrngs from your computer</title><h1>Open svrngs from your computer</h1><p>{why}</p><p>Open svrngs from your {opener}, and it opens in your usual browser. A browser comes in only when this computer lets it, so that nothing else here can act as you.</p><p>To use this browser too, open the Terminal app, type <code>svrngs open --print</code>, and open the address it shows here within a minute.</p><p>A program, not a browser, sends the token in {file}.</p><p id=svrngs-session-state></p><script type=module src=/svrngs-session.js></script>");
-        (
-            StatusCode::UNAUTHORIZED,
-            [NO_STORE, (header::REFERRER_POLICY, "no-referrer")],
-            Html(page),
-        )
-            .into_response()
+        let heads = [NO_STORE, (header::REFERRER_POLICY, "no-referrer")];
+        (StatusCode::UNAUTHORIZED, heads, Html(page)).into_response()
     }
+}
+
+/// The header `name` as text, or nothing when it is absent or not text.
+pub(crate) fn text<'a>(headers: &'a HeaderMap, name: &str) -> &'a str {
+    headers.get(name).map_or("", |v| v.to_str().unwrap_or(""))
 }
 
 fn local(at: &str) -> bool {
@@ -629,9 +605,8 @@ struct Opening {
 }
 
 async fn open(State(s): State<Sessions>, Json(o): Json<Opening>) -> Json<serde_json::Value> {
-    Json(
-        serde_json::json!({ "open": s.open(o.lend.as_ref().map_or(HOME, Label::as_str), o.at.as_deref()) }),
-    )
+    let name = o.lend.as_ref().map_or(HOME, Label::as_str);
+    Json(serde_json::json!({ "open": s.open(name, o.at.as_deref()) }))
 }
 
 /// The address `req`'s connection came from.
@@ -642,9 +617,7 @@ pub(crate) fn peer(req: &Request) -> Option<SocketAddr> {
 }
 
 pub(crate) fn router(sessions: Sessions) -> Router {
-    Router::new()
-        .route("/v1/open", post(open))
-        .with_state(sessions)
+    (Router::new().route("/v1/open", post(open))).with_state(sessions)
 }
 
 #[cfg(test)]

@@ -82,7 +82,7 @@ pub(crate) enum Unconsented {
 
 impl Appending {
     fn for_request(shown: Shown, headers: &HeaderMap) -> Result<Self, Response> {
-        let intent = headers.get("x-svrngs-intent").is_some_and(|h| h == "yes");
+        let intent = crate::session::text(headers, crate::session::INTENT) == "yes";
         let appending = match (shown, headers.get(APPEND_HEADER)) {
             (Shown::Token, Some(kind)) => {
                 let kind = kind.to_str().ok().and_then(|k| Program::parse(k).ok());

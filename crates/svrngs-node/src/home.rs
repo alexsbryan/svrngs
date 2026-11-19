@@ -222,10 +222,7 @@ async fn only_itself(State(at): State<Asking>, mut req: Request, next: Next) -> 
     let opening = at_own && req.uri().path() == crate::session::OPEN_PATH;
     tracing::debug!(target: "home", path = %req.uri().path(), method = %req.method(), at_own, ?site, ?mode, ?origin, answers, ?shown, opening,
         "home: answered only to an open, then only with its session or the token, from itself, a typed address or, to read, a navigation");
-    let intent = req
-        .headers()
-        .get("x-svrngs-intent")
-        .is_some_and(|h| h == "yes");
+    let intent = crate::session::text(req.headers(), crate::session::INTENT) == "yes";
     let closed = || LendRefusal::closed("this page answers only itself");
     let answer = if opening {
         let from = crate::session::peer(&req);
