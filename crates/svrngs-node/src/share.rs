@@ -435,13 +435,9 @@ pub fn keep_key(dir: &Path, name: &LendName, how: Key<'_>, key: &str) -> Result<
 /// names no path or nothing answers. Asked once, as the key is pasted.
 pub async fn tried(port: NonZeroU16, how: Key<'_>, key: &str) -> Option<u16> {
     let (header, sent, path) = how.filter(|(.., path)| !path.is_empty())?;
-    let client = crate::http::builder()
-        .ok()?
-        .redirect(reqwest13::redirect::Policy::none());
-    let asked = client
-        .build()
-        .ok()?
-        .get(format!("http://127.0.0.1:{port}{path}"));
+    let none = reqwest13::redirect::Policy::none();
+    let client = crate::http::builder().ok()?.redirect(none).build().ok()?;
+    let asked = client.get(format!("http://127.0.0.1:{port}{path}"));
     let answered = asked.header(header, sent.replace("{}", key)).send().await;
     let status = answered.ok().map(|a| a.status().as_u16());
     tracing::debug!(target: "share", port, path, ?status, "share: a pasted key tried once on its own service, or none answered");
@@ -477,10 +473,7 @@ pub async fn sign_in_readers(
     if let Some(asked) = how.asked {
         ask = ask.header("authorization", asked);
     }
-    let answer = ask
-        .send()
-        .await
-        .map_err(|_| "it did not answer".to_string())?;
+    let answer = ask.send().await.map_err(|_| "it did not answer")?;
     let status = answer.status();
     tracing::debug!(target: "share", port, path = how.path, %status, "share: the readers' account asked to sign in");
     if !status.is_success() {
