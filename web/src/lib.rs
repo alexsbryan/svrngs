@@ -852,15 +852,13 @@ pub async fn direct_start(
         ))
     })?;
     let named = named(&relay)?;
-    let parsed = handed(&relays)?;
+    let mut parsed = handed(&relays)?;
     // A pass kept before relay fallbacks names one relay and no `relays`:
     // the relay named for the lend is the data endpoint's way in then
     // (web/lend.js `direct`, as `opened` reads them).
-    let parsed = if parsed.is_empty() {
-        named.iter().cloned().collect()
-    } else {
-        parsed
-    };
+    if parsed.is_empty() {
+        parsed.extend(named.iter().cloned());
+    }
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
