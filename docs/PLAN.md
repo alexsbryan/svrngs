@@ -533,8 +533,8 @@ The grapevine's standing carries are a row after V1 too (GRAPEVINE_DEMO
 | a size cap on Give's own lines, `apps/give/` beside the repository's and the core's: lean_check counts no `apps/` and the queue reported it each row (PLAN §1, give-app-runtime to give-page-host) | Give has landed, so the trigger has come; the cap is the operator's to set (`demo/runs/give/2026-10-26-release/NEEDS_HUMAN.md`) |
 | Give's people runs, `demo/give.md`: a Factorio world kept through a move and a takeover against the bars the operator chose, and a newcomer's fluency counted, once with Podman installed and once without. Never-ran (`demo/runs/give/2026-10-26-scenes/NEEDS_HUMAN.md`, "Go with those") | the operator names who and plays them |
 | the two-home game sessions of `demo/factorio.md` and `demo/minecraft.md`: each game 30 minutes between two homes, once on a direct path and once with the relay forced, desyncs, drops and the game's ping counted per path. Never-ran: no bars are set, and the one rehearsal (`demo/runs/factorio/2026-10-26-rehearsal.json`) ran both computers on one host, so neither path | the operator sets the bars and plays them (2026-10-26: "we can do the two-home session another time"), or a group playing through a lent port reports a desync or a drop |
-| the switch to svrngs's relay, parked at the gate (relay-park; §3, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (DESIGN §7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it; with it, #134 and #135 (`ralph/REVIEW_FINDINGS.md`), whose moment is the switch. Since 2026-11-18 it is the relay commons (§3): the units before it are svrn-docs `rings/current/RELAY_COMMONS.md` §8 — iroh 1.4.x, the build's relays as a list of names with spares, n0 as a third tier (#134 rescoped, #135), the relays' counters and alerts, the share and the defences, `deploy-relay.sh` rewritten, one box's ceiling measured, a real phone on cellular, the commons page and the self-host guide | V1 released on n0's relays (§1, "V1"; §3, 2026-10-15), and the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production"); the operator moved toward it on 2026-11-18 (§3) and orders its units in §1 |
-| "we run your relay": svrngs runs a relay for a group, at a markup, by `deploy-relay.sh` and a monthly payment, with no product code (svrn-docs `rings/current/RELAY_COMMONS.md` §6). Until then a form on the commons page collects interest | groups asking, counted by the form |
+| the switch to svrngs's relay, parked at the gate (relay-park; §3, 2026-10-13): the build's one constant flipped from n0's to svrngs's at `relay.svrnme.sh`, then `scripts/deploy-relay.sh`, then `scripts/deploy-page.sh`, in that order (DESIGN §7), each the operator's; n0's relays and lookup the command's default until then, and nothing else changed by it; with it, #134 and #135 (`ralph/REVIEW_FINDINGS.md`), whose moment is the switch. Since 2026-11-18 the units before it are svrn-docs `rings/current/RELAY_COMMONS.md`, "The work, in order": iroh 1.4.x; n0 as the emergency tier (#134 rescoped, #135); the relay box with the share, firewall limits, one alert, `deploy-relay.sh` for one OVH box, its ceiling measured and a real phone on cellular; the door's 429 and words; a phone's WebRTC path; self-hosting that relieves ours | V1 released on n0's relays (§1, "V1"; §3, 2026-10-15), and the operator starts paying for svrngs's relay (the operator, 2026-10-13: "until I'm actually ready to start paying / flip the switch for production"); the operator moved toward it on 2026-11-18 (§3) and orders its units in §1 |
+| "we run your relay": svrngs runs a relay for a group, at a markup, by `deploy-relay.sh` and a monthly payment, with no product code (svrn-docs `rings/current/RELAY_COMMONS.md`, "Waiting for its trigger") | groups asking, counted by the form |
 | AirPlay and Cast from a page, and DLNA: a screen handed a lend's address by a phone, for an app with no client of its own on it. In the reads (`demo/runs/u6/2026-10-05-screen/reads.json`) AirPlay from Safari on an iPhone showed the LG no video three ways — the page's address, which only the phone's worker answers; jellyfin-web, whose hls.js sets `disableRemotePlayback`; a plain LAN file, which the TV never fetched — and iOS has no Cast sender. Until 2026-10-05 this was U6 (DESIGN §3, "The room", call 1) | an app with no client of its own for a screen is asked for on one, counted |
 | a public address per lend, for a room with no member's computer in it: a relay that forwards bytes it cannot read to the lender, who holds a certificate per lend — a new service, and Let's Encrypt's per-domain limit (DESIGN §3, "The room", call 2) | a group with no computer in the room asks, counted |
 | a relay at a bare address, no name needed (svrn-docs `rings/current/GROUP_RELAYS.md` §4.4): a six-day Let's Encrypt certificate for the address, its `shortlived` profile, which tokio-rustls-acme 0.9.1, iroh-relay's ACME client, cannot ask — its `Identifier` is `Dns` alone and its order names no profile (`acme.rs:129-130`, `:301-303`); no second ACME client beside it (`ralph/next/relay/CHARTER.md`) | iroh-relay's ACME client asks for an address, or a member who would relay has no name to give it, counted |
@@ -612,23 +612,26 @@ something like streaming media on cellular network just can't do it on our
 relay for now (we'll make a mobile apps soon to enable it! or some other
 user friendly gate)". So media is not streamed over the commons. It lands with a phone's WebRTC path,
 which spike 1 found direct on a home's Wi-Fi and never on AT&T cellular
-(svrn-docs `rings/current/webrtc-spike/` and `webrtc-transport-spike/`; RELAY_COMMONS §4,
-"Media"). Then: "we host our relay and just throttle anything that doesn't
+(svrn-docs `rings/current/webrtc-spike/` and `webrtc-transport-spike/`; RELAY_COMMONS, design 4). Then: "we host our relay and just throttle anything that doesn't
 seem like a normal discovery request for now", and "Yeah add that rule". So
 the relays hold it themselves, by the shape of the traffic: each computer
 gets a token bucket, a low steady rate with a burst that opens an app. What
 connects, chats and syncs passes; what streams is held. The door only says
-why (RELAY_COMMONS §1 item 8, §4). Then: "It's not about predicting apps -- it's about sending appropriate
+why (RELAY_COMMONS, design 2). Then: "It's not about predicting apps -- it's about sending appropriate
 error codes and handling gracefully in the UI". So no list of apps. When the
 relay throttles a lender (iroh 1.4's `Status::RateLimited`), its door answers
 a large request that came over the commons with 429 and a new
 `LendRefusal::Share`, and the page says why and where it plays at full
-speed (RELAY_COMMONS §4, "When the share is spent"). iroh says "throttled"
+speed (RELAY_COMMONS, design 3). iroh says "throttled"
 once per relay connection, never "cleared"; asked, "Reconnecting is fine": so
 svrngs remakes its connection to the commons once nothing large has been
 refused for a minute. A new connection is also a new bucket, so per-address
 byte limits in the relay's firewall bound a client that reconnects for
-bursts.
+bursts. Then, of the note: "Could we do this with less?" Once the relay only
+connects, one $70 box carries ~1,000 computers sending flat out. So it is one
+box and one name, n0 behind it, six units of work, and what the throttle made
+moot waits for its trigger: chipping in and its public page, more boxes,
+"we run your relay" (RELAY_COMMONS, "Waiting for its trigger").
 
 By the operator, 2026-11-08, on `docs/LESSONS_FROM_BITTORRENT.md`: "Ok solve
 them all", all four parts built, overriding the counted-member trigger of the
