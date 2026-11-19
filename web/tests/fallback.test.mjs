@@ -43,7 +43,9 @@ test('a group met at its fallback or at n0’s says why in a person’s words, a
 // The button of "Check the connection now" (KEEP_GOING_AT_HOME 7): a plain
 // form to home.rs `connection`, which sends the page back with what
 // happened in its address; each said in a person's words, once, with no
-// word §1 keeps from people. Planted: `SAID` without `moved`, which throws.
+// word §1 keeps from people, "backup" for a move to n0's while no group
+// names a relay of its own (n0-emergency). Planted: `SAID` without
+// `moved`, which throws.
 test('the page says in a person’s words what pressing the button did', async () => {
   const { first } =
     await import('../../crates/svrngs-node/src/home/page/home-reading.js?v=__VERSION__');
@@ -56,10 +58,14 @@ test('the page says in a person’s words what pressing the button did', async (
     'The public way did not answer, so this computer moved to where your group usually meets.',
   );
   assert.equal(
+    at('?backup'),
+    'The public way did not answer, so this computer is reachable through its backup for now.',
+  );
+  assert.equal(
     at('?nowhere'),
     'The public way did not answer, and neither did anywhere else your groups meet.',
   );
-  for (const search of ['?stayed', '?moved', '?nowhere'])
+  for (const search of ['?stayed', '?moved', '?backup', '?nowhere'])
     assert.ok(!/relay|node|key/i.test(at(search)), at(search));
   const form = Connection();
   assert.deepEqual([form.props.method, form.props.action], ['post', '/connection']);

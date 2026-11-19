@@ -196,19 +196,23 @@ impl Host {
 
     /// The home page's button (KEEP_GOING_AT_HOME 7), for someone who cannot
     /// wait out [`LEFT_AFTER`]: the build's fallback asked once now and, when
-    /// it does not answer, left at once for the groups' own, and said home
-    /// only once this endpoint is [`Self::registered`] there. What happened,
-    /// as the page's address says it. An answer moves nobody: a blip decides
-    /// nothing here, and [`Self::check`] goes on as it was.
+    /// it does not answer, left at once for the groups' own, else for n0's,
+    /// the emergency behind it, and said home only once this endpoint is
+    /// [`Self::registered`] at the one it left for: "moved" for the own,
+    /// "backup" for n0's. What happened, as the page's address says it. An
+    /// answer moves nobody: a blip decides nothing here, and [`Self::check`]
+    /// goes on as it was.
     pub(crate) async fn check_now(&self) -> &'static str {
         let meeting = self.held.borrow().meeting.clone();
-        let (build, own) = (meeting.build(), meeting.own());
+        let build = meeting.build();
         let answered = build.is_empty() || any_answers(&*self.transport, build).await;
         self.decide(Some(answered).filter(|a| !a)).await;
-        let moved = !answered && self.registered(own).await;
-        tracing::debug!(target: "tiers", answered, moved, "tiers: a person asked now whether the build's fallback answers, and left it if not");
+        let (tier, held) = meeting.decide(false);
+        let moved = !answered && self.registered(&held).await;
+        tracing::debug!(target: "tiers", answered, moved, ?tier, "tiers: a person asked now whether the build's fallback answers, and left it if not");
         match (answered, moved) {
             (true, _) => "stayed",
+            (_, true) if tier == Tier::Emergency => "backup",
             (_, true) => "moved",
             _ => "nowhere",
         }

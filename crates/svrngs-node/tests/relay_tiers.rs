@@ -425,6 +425,9 @@ async fn a_group_with_none_of_its_own_meets_at_n0_s_while_ours_does_not_answer()
         Some(Tier::Emergency),
         "the home page says the group is met at n0's"
     );
+    // A person who presses while ours is down is told "backup", not
+    // "nowhere": this computer moved to n0's (KEEP_GOING_AT_HOME 7).
+    assert_eq!(pressed_on(&node).await, "/?view=computer&backup");
     on_wire::relay(B, Relaying::Up);
     homed_on(&node, B).await;
     let held = node.relays_held();

@@ -139,7 +139,15 @@ const reading = (state, message) => {
 // The address, read once as the page starts, and what it says was done
 // here.
 // What the address says was done here (home-page.js `SAID`).
-const DONE = /** @type {const} */ (['made', 'joined', 'left', 'stayed', 'moved', 'nowhere']);
+const DONE = /** @type {const} */ ([
+  'made',
+  'joined',
+  'left',
+  'stayed',
+  'moved',
+  'backup',
+  'nowhere',
+]);
 /** @typedef {'none' | typeof DONE[number]} Done */
 
 /**

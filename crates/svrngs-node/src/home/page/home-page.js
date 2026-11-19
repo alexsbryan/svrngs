@@ -28,6 +28,8 @@ const SAID = {
   stayed: () => 'The public way answers, so nothing changed.',
   moved: () =>
     'The public way did not answer, so this computer moved to where your group usually meets.',
+  backup: () =>
+    'The public way did not answer, so this computer is reachable through its backup for now.',
   nowhere: () => 'The public way did not answer, and neither did anywhere else your groups meet.',
 };
 
