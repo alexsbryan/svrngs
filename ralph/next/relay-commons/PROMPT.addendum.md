@@ -51,6 +51,24 @@ closed):
 The app builders' guide (docs/guide/build.md) is a developer's, and may say
 "relay".
 
+**The UDP decision** (operator, 2026-11-19, on the trust floor's WebRTC
+socket; it replaces the unconditional approval of 7b0b36cd): "On a network
+the lender has enabled for direct connections, a currently authorized phone
+may request one temporary UDP socket bound to the lender's selected private
+IPv4 address. Use host-only WebRTC, keep iroh authentication and relay
+fallback, and cap outstanding attempts. Close the socket on setup timeout,
+session end or idle expiry, or network change. If the network or address is
+ineligible, stay on the relay without binding."
+- **What is reused.** Room's precedent: network.rs `here` (the network, by
+  its router's hardware address) and `pick` (a private IPv4, never a public,
+  tunnel or link-local one), and Room's remembered network. Room's app
+  access is not turned on.
+- **What the guard is.** Network recognition guards against opening by
+  accident on a different network. It is not a firewall guarantee, so
+  nothing may say it keeps the port "on this Wi-Fi".
+- **Where it lands.** webrtc-node closes as built. The gate is the new row
+  webrtc-network, before webrtc-page.
+
 This is a dedicated worktree off main. Do not import another worktree's
 dirty files.
 - **Your scope:** this worktree and synthetic identities.

@@ -650,7 +650,15 @@ criteria is my choice". So the host is a rule: the cheapest box with IPv4
 and IPv6, the relay's ports, ~1 Gbps, DDoS protection, and a crowd that
 cannot run up the bill. OVH VPS-2 ($8.50, unlimited traffic) if its order
 confirms a US location and no fair-use limit, else Hetzner US
-(RELAY_COMMONS, design 1).
+(RELAY_COMMONS, design 1). Then, 2026-11-19, of the WebRTC socket the trust floor gains: "On a network
+the lender has enabled for direct connections, a currently authorized phone
+may request one temporary UDP socket bound to the lender's selected private
+IPv4 address", host-only, relay fallback, attempts capped, closed on
+timeout, end or network change, and no bind where the network or address is
+ineligible. It reuses Room's network recognition (network.rs `here`, `pick`)
+without Room's app access. That recognition guards against opening by
+accident on another network, and is no firewall
+(`ralph/next/relay-commons/`, the row webrtc-network).
 
 By the operator, 2026-11-08, on `docs/LESSONS_FROM_BITTORRENT.md`: "Ok solve
 them all", all four parts built, overriding the counted-member trigger of the
