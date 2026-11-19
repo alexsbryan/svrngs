@@ -1213,6 +1213,20 @@ impl Printed {
             page: made.page.clone(),
         }
     }
+
+    /// As svrngs running here told it ([`new_running`], [`link_running`]):
+    /// the page is the https link's origin.
+    fn told(client: String, https: Option<String>) -> Self {
+        let page = https
+            .as_deref()
+            .and_then(Link::parse)
+            .and_then(|l| l.origin);
+        Self {
+            client,
+            https,
+            page,
+        }
+    }
 }
 
 impl std::fmt::Display for Printed {
@@ -1318,6 +1332,16 @@ pub enum Said {
         group: Name,
         outcome: Outcome,
     },
+}
+
+impl Said {
+    /// The group's folder as svrngs running here told it ([`join_running`],
+    /// [`new_running`]): where it is, and why not placed, if it was not.
+    fn told_folder(seed: &Seed, dir: String, placed: Option<String>) -> Self {
+        let (group, dir) = (seed.name().clone(), PathBuf::from(dir));
+        let placed = placed.map_or(Ok(()), Err);
+        Said::Folder { group, dir, placed }
+    }
 }
 
 impl std::fmt::Display for Said {
@@ -1864,11 +1888,6 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
         Refusal::Older
     };
     let said: JoinOutcome = serde_json::from_str(&text).map_err(|e| older(e.to_string()))?;
-    let folder = |seed: &Seed, dir: String, placed: Option<String>| Said::Folder {
-        group: seed.name().clone(),
-        dir: PathBuf::from(dir),
-        placed: placed.map_or(Ok(()), Err),
-    };
     let held = |text: String| Seed::from_text(&text).map_err(&older);
     let named = |raw: String| Name::kept(raw).map_err(|why| older(why.to_string()));
     Ok(match said {
@@ -1884,12 +1903,12 @@ async fn join_running(here: &impl Here, link: &Link, person: &Name) -> Result<St
                 seed: seed.clone(),
                 person,
             };
-            format!("{joined}{}", folder(&seed, dir, placed))
+            format!("{joined}{}", Said::told_folder(&seed, dir, placed))
         }
         JoinOutcome::AlreadyIn { seed, dir, placed } => {
             let seed = held(seed)?;
             let already = Said::AlreadyIn(seed.clone());
-            format!("{already}{}", folder(&seed, dir, placed))
+            format!("{already}{}", Said::told_folder(&seed, dir, placed))
         }
         JoinOutcome::LinkRefused => return Err(Refusal::LinkRefused),
         JoinOutcome::NameTaken { holder, group } => {
@@ -2074,19 +2093,8 @@ async fn new_running(here: &impl Here, new: Verb, tried: &[String]) -> Result<St
     let seed = Seed::from_text(&made.seed).map_err(|_| Refusal::Older)?;
     tracing::debug!(target: "cli", online = made.online, ?tried, "cli: new — made by the svrngs running here, which had reached a relay or not");
     unreached(made.online, tried);
-    let page = (made.https.as_deref())
-        .and_then(Link::parse)
-        .and_then(|l| l.origin);
-    let link = Printed {
-        client: made.client,
-        https: made.https,
-        page,
-    };
-    let folder = Said::Folder {
-        group: seed.name().clone(),
-        dir: made.dir.into(),
-        placed: made.placed.map_or(Ok(()), Err),
-    };
+    let link = Printed::told(made.client, made.https);
+    let folder = Said::told_folder(&seed, made.dir, made.placed);
     let beside = made.beside;
     Ok(format!("{}\n{folder}", Said::Made { seed, link, beside }))
 }
@@ -2114,17 +2122,9 @@ async fn link_running(here: &impl Here, link: Verb) -> Result<Said, Refusal> {
         let why = told["error"].as_str().ok_or(Refusal::Older)?;
         return Err(Refusal::Meet(why.to_string()));
     };
-    let https: Option<String> = told["https"].as_str().map(Into::into);
-    let page = https
-        .as_deref()
-        .and_then(Link::parse)
-        .and_then(|l| l.origin);
+    let https = told["https"].as_str().map(Into::into);
     let device = serde_json::from_value(told["device"].clone()).map_err(|_| Refusal::Older)?;
-    let link = Printed {
-        client,
-        https,
-        page,
-    };
+    let link = Printed::told(client, https);
     Ok(Said::Linked { seed, link, device })
 }
 
