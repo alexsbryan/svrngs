@@ -281,13 +281,8 @@ impl RingJournal {
     /// [`Ed25519Verifier`] is the shipped one.
     pub fn admit(&self, roster: &Roster, verifier: &dyn RingVerifier) -> Result<Admission, RailError> {
         let (ops, skipped) = self.read()?;
-        Ok(admit(
-            &crate::ActSet::of(&ops),
-            &skipped,
-            roster,
-            &self.namespace,
-            verifier,
-        ))
+        let acts = crate::ActSet::of(&ops);
+        Ok(admit(&acts, &skipped, roster, &self.namespace, verifier))
     }
 
     /// What this node can honestly claim to need nothing below, per actor —
@@ -329,13 +324,8 @@ impl RingJournal {
     /// which its leaver's round tells (#190).
     pub(crate) fn removes_by(&self, actor: &str) -> Result<Vec<Op<SignedOp>>, RailError> {
         let (log, _) = self.caught_up()?;
-        Ok(log
-            .held
-            .removes
-            .iter()
-            .filter(|op| op.actor == actor)
-            .cloned()
-            .collect())
+        let theirs = log.held.removes.iter().filter(|op| op.actor == actor);
+        Ok(theirs.cloned().collect())
     }
 
     /// Every op this node holds that `theirs` says the peer is missing,
