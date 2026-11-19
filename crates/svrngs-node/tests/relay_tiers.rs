@@ -19,7 +19,7 @@ use std::net::SocketAddr;
 use std::time::{Duration, Instant};
 
 use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
-use svrngs_core::relay::Url;
+use svrngs_core::relay::{Tier, Url};
 use svrngs_node::iroh::{build_relayed_endpoint, EndpointAddr, RelayConfig, RelayUrl, SecretKey};
 use svrngs_node::node::{Node, Relaying};
 use svrngs_node::SigningKey;
@@ -413,8 +413,18 @@ async fn a_group_with_none_of_its_own_meets_at_n0_s_while_ours_does_not_answer()
         !held.contains(&n0),
         "n0's held while ours answers: {held:?}"
     );
+    assert_eq!(
+        node.fallback_of(&seed.id()),
+        None,
+        "met at ours says nothing"
+    );
     on_wire::relay(B, Relaying::Down);
     homed_on(&node, &n0).await;
+    assert_eq!(
+        node.fallback_of(&seed.id()),
+        Some(Tier::Emergency),
+        "the home page says the group is met at n0's"
+    );
     on_wire::relay(B, Relaying::Up);
     homed_on(&node, B).await;
     let held = node.relays_held();
@@ -422,6 +432,7 @@ async fn a_group_with_none_of_its_own_meets_at_n0_s_while_ours_does_not_answer()
         !held.contains(&n0),
         "n0's held once ours answers again: {held:?}"
     );
+    assert_eq!(node.fallback_of(&seed.id()), None);
 }
 
 /// **A link minted before the operator's switch is not kept at n0's** (the

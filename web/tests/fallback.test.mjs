@@ -1,10 +1,11 @@
 // The home page says when this computer meets a group at its fallback
-// (relay fallbacks; svrn-docs rings/current/GROUP_RELAYS.md §7): a group
+// (relay fallbacks; svrn-docs rings/current/GROUP_RELAYS.md §7) or at
+// n0's, the emergency behind it (n0-emergency; RELAY_COMMONS 1): a group
 // section, called as a function with no DOM, says it under the group's
 // name when /v1/groups says `fallback` (surface.rs `Held::fallback`), in
-// a person's words, why — its own relays unanswered, or another group
-// with none — and says nothing of it otherwise. Planted: the line drawn
-// whatever `fallback` says, and the last assertion failed.
+// a person's words, why — its own relays unanswered, another group with
+// none, or ours not answering — and says nothing of it otherwise. Planted:
+// the line drawn whatever `fallback` says, and the last assertion failed.
 
 import assert from 'node:assert/strict';
 import { register } from 'node:module';
@@ -23,12 +24,14 @@ const words = (v) =>
         ? v.map(words).join('')
         : words(v.props?.children);
 
-test('a group met at its fallback says why in a person’s words, and one met at its own says nothing', () => {
+test('a group met at its fallback or at n0’s says why in a person’s words, and one met at its own says nothing', () => {
   const section = (fallback) =>
     words(Group({ g: { id: 'ab12', name: 'House', removed: null, fallback } }));
   const said = {
     fallback:
       'This computer is reachable through the public way for now, so a phone can open House too. It goes back to the place House usually meets once the public way stops answering.',
+    emergency:
+      'The public way is not answering, so this computer is reachable through its backup for now, and goes back to the public way once that answers.',
   };
   for (const [why, line] of Object.entries(said)) {
     assert.ok(section(why).includes(line), section(why));

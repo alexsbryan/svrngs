@@ -1905,11 +1905,14 @@ public roots alone): `svrngs relay` is that server with group-only
 admission and its own certificates; a bare one admits whoever finds it.
 
 **Where a computer meets its groups.** A computer meets at the build's
-fallback while it answers, and at its groups' own relays when it does not,
-decided in one place (svrn-docs `rings/current/GROUP_RELAYS.md` §7, the
-operator's "Tiers", 2026-11-02; the relay-fallback charter, 2026-11-04: a
-browser holding only the published page's policy can reach a computer
-through the build's https fallback alone). The fallback comes first, and
+fallback while it answers, at its groups' own relays when it does not, and
+at n0's public relays, the emergency behind ours, only while neither that
+nor a group's own answers, decided in one place (svrn-docs
+`rings/current/GROUP_RELAYS.md` §7, the operator's "Tiers", 2026-11-02;
+the relay-fallback charter, 2026-11-04: a browser holding only the
+published page's policy can reach a computer through the build's https
+fallback alone; RELAY_COMMONS 1, 2026-11-18: "n0's public relays come in
+only while ours does not answer"). The fallback comes first, and
 every link carries it, so a phone can open the group whichever tier the
 computer was met at when the link was made. Its
 own are the relays its keeper names in its record by a `Meets` act (§6),
@@ -1918,10 +1921,14 @@ made with `svrngs new <name> --relay <name or url>`, once for each;
 svrngs runs or not, keeper
 only, and the new link carries them. The build's are one of a closed set,
 `cli::MeetAt`: n0's relays with n0's address lookup, or svrngs's relay at
-`https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup and n0
-none of the path. The build ships one, `cli::SHIPPED`: n0's for now, until
+`https://relay.svrnme.sh/` (`cli::DEFAULT_RELAY`) with no lookup. The
+emergency is always n0's public relays, which the build names as it names
+its own (`tiers::behind`, `relay::n0_relays`), so a build that names no
+relay of its own has nothing behind it, and a relay of n0's is never a
+group's own, a link's or a file's, a link minted before the operator's
+switch included. The build ships one, `cli::SHIPPED`: n0's for now, until
 the operator's switch (PLAN §1), and it is every group's fallback, named in
-no record, so the switch moves every group at once. The two tiers are a
+no record, so the switch moves every group at once. The three tiers are a
 type, svrngs-core's `relay::Meeting`, made only by `Meeting::of`, which
 always carries the build's; `Meeting::decide` is the one decision, and
 svrngs-node's `tiers` the one place it changes the endpoint's relays.
@@ -1931,7 +1938,10 @@ once it answers, since iroh's report stops probing once a relay answers
 and would never see one come back; at the build's, the answer is whether
 the endpoint is registered there — its home relay connected, iroh's
 `home_relay_status` — within `REGISTERED_WITHIN`, 5 s, since a relay may
-take a connection and register no one, as a captive portal does. One
+take a connection and register no one, as a captive portal does; at the
+groups' own or at n0's, it is whether the build's fallback answers the
+ask, since the endpoint holds neither and a registration there says
+nothing of it. One
 never registered at is left at the first ask that finds it so, the next
 move there held off 1, 2, 4 asks and on, to `HELD_AT_MOST`, 30, until one
 registers; one reached, once `LEFT_AFTER`, 3, asks in a row do, so a
@@ -1942,15 +1952,19 @@ answer, fires a round and says on This computer what happened, "moved" only once
 this computer is registered at the group's own; an answer moves nobody. The
 door's line for each request let in names the relay that carried it, none when
 it came direct, and `tiers` says at debug why this computer is at it. One
-endpoint serves every group, and only a computer none of whose groups names
-a relay of its own keeps the fallback when it stops answering. A dial
-to a member reaches both tiers and the relay the record names for it,
+endpoint serves every group; a computer none of whose groups names a relay
+of its own meets at n0's while the build's fallback stops answering, and
+comes back to the fallback when it answers. A dial
+to a member reaches the group's own tier and the build's, and the relay
+the record names for it,
 whichever tier this computer is at, since iroh dials a relay its endpoint
-does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a link carries
+does not hold (`crates/svrngs-node/tests/relay_tiers.rs`); a member met at
+n0's is dialled at the relay its record names for it. A link carries
 at most two relays, the computer's home first, else the group's own
 first, and beside it the build's first, or the group's own when the home
 is the build's (`Meeting::carried`), so a phone's page dials them and asks
-no lookup. `svrngs link` and the home page each wait for the home first, up
+no lookup; n0's is never carried, since a link names the build's, which
+every page may reach. `svrngs link` and the home page each wait for the home first, up
 to `ONLINE_WAIT`, 10 s, so a link made as svrngs starts names the relay it
 comes to be met at; one that reaches none in that time makes the link
 anyway. The page takes every route the link carries that its own policy
@@ -1963,7 +1977,8 @@ chosen only after reaching it. A page no relay of which answers within
 answer, so no dial is left running, and its next dial, or a lend worker's,
 binds again. Each change of tier and of home is traced,
 and the home page says when, and why, a group is met at the build's
-fallback. A computer that reaches none of its relays in 10 s says which it
+fallback, or at n0's while ours does not answer. A computer that reaches
+none of its relays in 10 s says which it
 tried, and goes on trying.
 
 ## 4. Domains, and the fork
@@ -2834,8 +2849,12 @@ switch it cannot read it refuses.
    --relay`. Until the switch a computer meets a group that keeps no relay at
    n0's relays and asks n0's lookup, while a phone's page asks it nothing.
    After it, svrngs's relay is the one most groups share — the same centre,
-   ours rather than n0's — with `svrngs relay` the way out anyone can take.
-   A relay that admits only its group cannot yet carry a phone's lends: the
+   ours rather than n0's — with `svrngs relay` the way out anyone can take,
+   and n0's public relays stay in every build as the emergency behind ours:
+   a computer whose groups name no relay meets at n0's only while svrngs's
+   relay does not answer (§3), so an outage of ours is not an outage of the
+   groups. A relay that admits only its
+   group cannot yet carry a phone's lends: the
    page opens each lend from a fresh key holding a pass, which stands in no
    group. And whoever serves a group's page serves the code that holds the
    person's key, its bytes unsealed while the page runs, so a group that does

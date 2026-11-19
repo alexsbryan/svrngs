@@ -75,11 +75,13 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  */
 
 // Why this computer reaches a group the backup way, by surface.rs's
-// `fallback` (relay fallbacks; svrngs-core relay.rs `Tier`).
+// `fallback` (relay fallbacks; n0-emergency; svrngs-core relay.rs `Tier`).
 /** @type {Record<NonNullable<Group['fallback']>, (name: string) => string>} */
 const BACKUP = {
   fallback: (name) =>
     `This computer is reachable through the public way for now, so a phone can open ${name} too. It goes back to the place ${name} usually meets once the public way stops answering.`,
+  emergency: () =>
+    'The public way is not answering, so this computer is reachable through its backup for now, and goes back to the public way once that answers.',
 };
 
 /**

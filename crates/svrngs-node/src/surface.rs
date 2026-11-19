@@ -198,9 +198,11 @@ struct Held {
     /// the default; `null` beside `removed`'s.
     slots: Option<u8>,
     /// Why this computer meets the group where it does now: the group names
-    /// relays of its own, and this computer is at the build's fallback
-    /// because that answers (relay fallbacks). The home page says so in a
-    /// person's words; `null` when it meets the group at its own.
+    /// relays of its own and this computer is at the build's fallback
+    /// because that answers, or the computer is at n0's, the emergency
+    /// behind ours, while neither answers (relay fallbacks; n0-emergency).
+    /// The home page says so in a person's words; `null` when it meets the
+    /// group at its own.
     fallback: Option<svrngs_core::relay::Tier>,
     /// A hand-on of the order of removals waiting on its Accept, to this
     /// computer or from it, with the person at its other end; absent when

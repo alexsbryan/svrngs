@@ -256,15 +256,20 @@ impl Host {
             .map(Into::into)
     }
 
-    /// The tier this computer meets `group` at, when it is the build's
-    /// fallback and the group names relays of its own: the home page says
-    /// why (relay fallbacks). `None` otherwise.
+    /// The tier this computer meets `group` at, when it is not the group's
+    /// own: the build's fallback, the group naming relays of its own and
+    /// this computer at the fallback because it answers, or n0's, the
+    /// emergency behind it, while neither that nor a group's own answers
+    /// (relay fallbacks; n0-emergency). The home page says so. `None`
+    /// otherwise.
     pub(crate) fn at_fallback(&self, group: &str) -> Option<Tier> {
         let (home, tier) = (self.home(), self.held.borrow().tier);
         let own = self.meeting(group).own().clone();
-        let at = home
-            .as_ref()
-            .is_some_and(|h| tier != Tier::Own && !own.is_empty() && !own.contains(h));
+        let at = home.as_ref().is_some_and(|h| match tier {
+            Tier::Emergency => true,
+            Tier::Fallback => !own.is_empty() && !own.contains(h),
+            _ => false,
+        });
         tracing::debug!(target: "tiers", group, home = ?home.as_ref().map(Url::as_str), ?tier, at, "tiers: whether this computer meets the group at its fallback");
         at.then_some(tier)
     }

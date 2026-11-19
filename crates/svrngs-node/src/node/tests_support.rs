@@ -94,6 +94,13 @@ impl Node {
             .collect()
     }
 
+    /// Why this computer meets `group` where it does now, as the home page
+    /// is told ([`crate::node::Host::at_fallback`]): what a test of the
+    /// emergency reads, `None` when it meets the group at its own.
+    pub fn fallback_of(&self, group: &str) -> Option<svrngs_core::relay::Tier> {
+        self.host.at_fallback(group)
+    }
+
     /// The relays this computer dials `actor` at, each way it dials: a
     /// folder's fetch and a lend's origin ([`Host::contact`]), then the
     /// round and the lend asks ([`Host::standing_peers`]) (#127).
