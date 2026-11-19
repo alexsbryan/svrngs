@@ -41,7 +41,8 @@ them as recommendations):
   before webrtc-page shared the worktree). `git apply` it first, then
   continue at NEEDS_HUMAN-self-host.md §4.
 - **webrtc-page resumes from its patch** (operator, 2026-11-19: "Raise the
-  JS cap to 8,668"; e46447fe, JavaScript most 8,667). Its page side is set
+  JS cap to 8,668", then "Just raise the cap": e46447fe and
+  80d270f2, JavaScript most 8,674, its +56 after self-host's +7). Its page side is set
   aside in `ralph/next/relay-commons/ctl/webrtc-page.patch`, out of the
   worktree while self-host ran: `git apply` it first, then continue at
   NEEDS_HUMAN-webrtc-page.md §3. Fix one bug first, planted: in its
