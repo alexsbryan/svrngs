@@ -2717,11 +2717,21 @@ page gives that line, from the page its group's https links are on, ours
 where the computer keeps none, to a computer that cannot keep yet, with
 the one other install it needs, Podman (`apps/give/page/index.js`).
 
-Publishing the binaries with the page is the operator's
-(`scripts/deploy-page.sh`). It reads `cli::SHIPPED` (§3, "Where a computer
-meets its groups"): a build at n0's relays it publishes and says so; a build
-at svrngs's it refuses to publish while the relay `DEFAULT_RELAY` names does
-not answer (`scripts/relay-answers.sh`); a switch it cannot read it refuses.
+Publishing the binaries with the page is the operator's, in three steps, so
+the page carries its release's signature:
+1. `scripts/deploy-page.sh --build` builds the site and prints its directory,
+   deploying nothing;
+2. `scripts/sign-release.sh <tag> <commit> <site>`, the operator's, signs into
+   the site's `get/`, signs the tag and makes the GitHub release;
+3. `scripts/deploy-page.sh --site <site>` checks `get/SHA256SUMS.sig` against
+   `svrngs-release-key.asc` in a keyring of its own, refuses a site without a
+   valid signature, and publishes one with it.
+
+With no argument it refuses and names the three steps. Each run reads
+`cli::SHIPPED` (§3, "Where a computer meets its groups"): a build at n0's
+relays it goes on with and says so; a build at svrngs's it refuses while the
+relay `DEFAULT_RELAY` names does not answer (`scripts/relay-answers.sh`); a
+switch it cannot read it refuses.
 
 ## 8. Risks
 

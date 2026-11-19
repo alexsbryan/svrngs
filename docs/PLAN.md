@@ -110,7 +110,7 @@ use one, open one up, run one, make your own (DESIGN §1). In order:
 2. **The shelf links the ladder**, landed: **See how they’re made**
    after the boxes (`home/ui/shelf.js`), +1 JavaScript, its economizing
    pass first. The guide builds the source's address from
-   `svrngs version`, as `scripts/deploy-page.sh:46` tags `v<version>`.
+   `svrngs version`, as `scripts/sign-release.sh` tags `v<version>`.
    **Its files** beside each app waits for a run that stalls there.
 3. **Release 1.11.0**, the operator's; landed, cut before units 1 and 2.
 4. **The run**, landed: `demo/runs/examples/2026-11-18/`, from the
@@ -1983,8 +1983,9 @@ the package's words, `/update` answers `packaged` and the page offers
 nothing (`update.rs` `packaged`). One that cannot write beside itself is
 refused before the download. The workspace's version is the release's
 (1.10.0 is V1.10), `svrngs version` says it with the commit
-`build-release.sh` built it from, and `deploy-page.sh` says the GitHub
-Release that keeps each version for packages. `packaging/arch/PKGBUILD`
+`build-release.sh` built it from, and `deploy-page.sh --build` names the
+`sign-release.sh` line that makes the GitHub Release keeping each version for
+packages. `packaging/arch/PKGBUILD`
 builds svrngs, and Give as a package of its own, from that release, each
 download checked against the release key; on Omarchy it installs, runs,
 says the package's line to `svrngs update` and removes cleanly, and refuses
