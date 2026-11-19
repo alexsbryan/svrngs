@@ -1,0 +1,14 @@
+{
+  "source": "45ac679958275b7308796c8d816d0047162eddc5",
+  "worktree": "/Users/alexsbryan/dev/svrngs-v1.12.0",
+  "started": "2026-11-19T07:27:20.558003+00:00",
+  "state": "passed",
+  "exit": 0,
+  "printed": [
+    "/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.xANdUXm703/site"
+  ],
+  "site": "/var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.xANdUXm703/site",
+  "sign": "scripts/sign-release.sh v1.12.0 45ac679958275b7308796c8d816d0047162eddc5 /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.xANdUXm703/site",
+  "deploy": "scripts/deploy-page.sh --site /var/folders/qf/4ntssn_10d598hw_5rjhx3740000gp/T/tmp.xANdUXm703/site",
+  "finished": "2026-11-19T07:33:35.582512+00:00"
+}

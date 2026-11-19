@@ -1,0 +1,372 @@
+clean worktree at 45ac6799
+note       open files: 1048576, raised to 10240
+note       kept awake while this runs (caffeinate, pid 90690)
+passed     principles pinned (0 s)
+passed     lean and RUST_ARCH (1 s)
+passed     trust floor (0 s)
+passed     advisories (1 s)
+passed     app nouns gate (0 s)
+passed     app nouns (1 s)
+passed     lint (0 s)
+passed     format (0 s)
+passed     page laws (18 s)
+passed     rustfmt (1 s)
+passed     script laws (8 s)
+passed     page integration (8 s)
+passed     clippy (61 s)
+passed     tests (526 s)
+passed     canaries (37 s)
+passed     ceiling canary (89 s)
+           CEILING idle round at 25 x 10,000: 0.0558 s of processor, the median of [2.8788790000000013, 0.055846000000002505, 0.04715699999999856], against 0.1 s; the last round's account {"acts_moved":0,"asleep":0,"cpu_s":0.04715699999999856,"dialled":24,"folds":{"digest":{"kept":96,"rebuilt":0},"offer":{"kept":48,"rebuilt":0},"register":{"kept":27,"rebuilt":0},"write_index":{"kept":126,"rebuilt":0}},"reached":24,"refused":0,"wall_s":0.008187958}
+passed     web rustfmt and clippy (10 s)
+passed     browser (127 s)
+passed     types (19 s)
+passed     typed lint (0 s)
+passed     joining in a browser (111 s)
+passed     pages (24 s)
+failed     scenes (224 s)
+              Compiling tokio v1.54.1
+              Compiling signature v2.2.0
+              Compiling sha2 v0.10.9
+              Compiling ed25519 v2.2.3
+              Compiling ed25519-dalek v2.2.0
+              Compiling eudoxia v0.1.0 (https://github.com/alexsbryan/eudoxia?rev=560b0c27b14891111bc46c01e461a0fdb6f48377#560b0c27)
+              Compiling eudoxia-community v0.1.0 (https://github.com/alexsbryan/eudoxia?rev=560b0c27b14891111bc46c01e461a0fdb6f48377#560b0c27)
+              Compiling tokio-util v0.7.18
+              Compiling tokio-rustls v0.26.4
+              Compiling tower v0.5.3
+              Compiling reloadable-state v0.1.0
+              Compiling rustls-cert-file-reader v0.4.2
+              Compiling backon v1.6.0
+              Compiling iroh-io v0.6.2
+              Compiling svrngs-core v1.12.0 (/Users/alexsbryan/dev/svrngs-v1.12.0/crates/svrngs-core)
+              Compiling rustls-cert-reloadable-resolver v0.7.1
+              Compiling tower-http v0.6.10
+              Compiling bao-tree v0.16.1
+              Compiling h2 v0.4.20
+              Compiling n0-future v0.3.2
+              Compiling tokio-stream v0.1.18
+              Compiling tokio-websockets v0.13.2
+              Compiling n0-watcher v1.0.0
+              Compiling irpc v0.17.0
+              Compiling netwatch v0.19.1
+              Compiling noq v1.0.1
+              Compiling svrngs-runtime v1.12.0 (/Users/alexsbryan/dev/svrngs-v1.12.0/crates/svrngs-runtime)
+              Compiling hyper v1.9.0
+              Compiling hickory-net v0.26.3
+              Compiling hickory-resolver v0.26.3
+              Compiling hyper-util v0.1.20
+              Compiling hyper-rustls v0.27.9
+              Compiling igd-next v0.17.1
+              Compiling axum v0.8.9
+              Compiling reqwest v0.12.28
+              Compiling iroh-dns v1.0.2
+              Compiling reqwest v0.13.3
+              Compiling iroh-metrics v1.0.1
+              Compiling tokio-rustls-acme v0.9.1
+              Compiling portmapper v0.19.1
+              Compiling iroh-relay v1.0.2
+              Compiling iroh v1.0.2
+              Compiling iroh-util v0.6.0
+              Compiling iroh-blobs v0.103.0
+              Compiling svrngs-node v1.12.0 (/Users/alexsbryan/dev/svrngs-v1.12.0/crates/svrngs-node)
+              Compiling svrngs v1.12.0 (/Users/alexsbryan/dev/svrngs-v1.12.0/crates/svrngs)
+               Finished `test` profile [unoptimized + debuginfo] target(s) in 56.30s
+                Running tests/scenes/main.rs (target/debug/deps/scenes-3a45788308181f19)
+           
+           running 20 tests
+           test doc::doc::chromium ... ok
+           test creator::creator::chromium ... ok
+           test events::events::chromium ... ok
+           test films::films::chromium ... ok
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           test give::give::chromium ... FAILED
+           test give_gone::give_gone::chromium ... FAILED
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           test grapevine::grapevine::chromium ... FAILED
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           test give_move::give_move::chromium ... FAILED
+           test holyarrs::holyarrs::chromium ... FAILED
+           test holyarrs::phone::webkit ... FAILED
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           test house_rules::house_rules::chromium ... FAILED
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           test keeping::keeping::chromium ... FAILED
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           test life::life::chromium ... FAILED
+           test money::money::chromium ... FAILED
+           test movie_night::movie_night::chromium ... FAILED
+           test night::night::chromium ... FAILED
+           test ports::ports::chromium ... FAILED
+           test pantry::pantry::chromium ... ok
+           test svrngs_here ... ignored, run by a scene's people, each in a process of its own, as svrngs
+           test redial::restarted::alone ... ok
+           
+           failures:
+           
+           ---- give::give::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17075641) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+           
+           ---- give_gone::give_gone::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17080060) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           
+           ---- grapevine::grapevine::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17080434) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           
+           ---- give_move::give_move::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17080409) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           
+           ---- holyarrs::holyarrs::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17080515) panicked at crates/svrngs/tests/scenes/films.rs:141:9:
+           lender.mjs printed no JSON: Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           
+           
+           ---- holyarrs::phone::webkit stdout ----
+           
+           thread 'tokio-rt-worker' (17080812) panicked at crates/svrngs/tests/scenes/films.rs:141:9:
+           lender.mjs printed no JSON: Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           
+           
+           ---- house_rules::house_rules::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17084756) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           
+           ---- keeping::keeping::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17084823) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           
+           ---- life::life::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17084919) panicked at crates/svrngs/tests/scenes/people.rs:699:14:
+           people.mjs answers
+           
+           ---- money::money::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17084958) panicked at crates/svrngs/tests/scenes/../../../svrngs-node/tests/browser/drive.rs:114:5:
+           the browser half failed (exit status: 3):
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           
+           
+           ---- movie_night::movie_night::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17085006) panicked at crates/svrngs/tests/scenes/films.rs:141:9:
+           lender.mjs printed no JSON: Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           
+           
+           ---- night::night::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17085417) panicked at crates/svrngs/tests/scenes/films.rs:141:9:
+           lender.mjs printed no JSON: Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           
+           
+           ---- ports::ports::chromium stdout ----
+           
+           thread 'tokio-rt-worker' (17087545) panicked at crates/svrngs/tests/scenes/../../../svrngs-node/tests/browser/drive.rs:114:5:
+           the browser half failed (exit status: 3):
+           Playwright's chromium cannot start — run: npm ci --prefix web && npx --prefix web playwright install chromium webkit
+           Error: browserType.connect: WebSocket error: connect ECONNREFUSED ::1:55535
+           Call log:
+           [2m  - <ws connecting> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33[22m
+           [2m  - <ws error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 error connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws connect error> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 connect ECONNREFUSED ::1:55535[22m
+           [2m  - <ws disconnected> ws://localhost:55535/d9bed691259954d1b412e3f84b208a33 code=1006 reason=[22m
+           
+           
+           
+           
+           failures:
+               give::give::chromium
+               give_gone::give_gone::chromium
+               give_move::give_move::chromium
+               grapevine::grapevine::chromium
+               holyarrs::holyarrs::chromium
+               holyarrs::phone::webkit
+               house_rules::house_rules::chromium
+               keeping::keeping::chromium
+               life::life::chromium
+               money::money::chromium
+               movie_night::movie_night::chromium
+               night::night::chromium
+               ports::ports::chromium
+           
+           test result: FAILED. 6 passed; 13 failed; 1 ignored; 0 measured; 1 filtered out; finished in 164.27s
+           
+           error: test failed, to rerun pass `-p svrngs --test scenes`
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+failed     scene give (chromium)
+failed     scene give_gone (chromium)
+failed     scene grapevine (chromium)
+failed     scene give_move (chromium)
+failed     scene holyarrs (chromium, webkit)
+failed     scene house_rules (chromium)
+failed     scene keeping (chromium)
+failed     scene life (chromium)
+failed     scene money (chromium)
+failed     scene movie_night (chromium)
+failed     scene night (chromium)
+failed     scene ports (chromium)
+passed     scene pantry (chromium)
+passed     scene redial (alone)
+passed     conformance canary (61 s)
+           computer  /-absolute paths                   passed
+           computer  64 MiB read by Range               passed
+           computer  64 MiB uploaded, its length told   passed
+           computer  Host check, absolute redirect      passed
+           computer  SharedArrayBuffer under COOP/COEP  passed
+           computer  WebSocket echo, OPEN read          passed
+           computer  a cold navigation, the lend's      passed
+           computer  cookie sign-in, read unreloaded    passed
+           computer  its own service worker             passed
+           computer  its worker answers no page or worker passed
+           computer  its worker, after svrngs's restarts could-not-judge, WebKit stops no worker on ask
+           computer  its worker, after svrngs's restarts passed
+           computer  local storage                      passed
+           computer  post, Origin checked               passed
+           computer  svrngs's worker refuses eval       passed
+           wildcard  /-absolute paths                   passed
+           wildcard  64 MiB read by Range               passed
+           wildcard  64 MiB uploaded, its length told   passed
+           wildcard  Host check, absolute redirect      passed
+           wildcard  SharedArrayBuffer under COOP/COEP  passed
+           wildcard  WebSocket echo, OPEN read          passed
+           wildcard  a cold navigation, the lend's      passed
+           wildcard  cookie sign-in, read unreloaded    passed
+           wildcard  its own service worker             passed
+           wildcard  its worker answers no page or worker passed
+           wildcard  its worker, after svrngs's restarts could-not-judge, WebKit stops no worker on ask
+           wildcard  its worker, after svrngs's restarts passed
+           wildcard  local storage                      passed
+           wildcard  post, Origin checked               passed
+           wildcard  svrngs's worker refuses eval       passed
+passed     playback (195 s)
+rate       WebKit seeks back to back (u5-11): way, lend; through the lend and straight at the canary, the ms the last took to play again and its verdict
+           computer	sam	408	passed	2928	passed
+           computer	bo	432	passed	2857	passed
+           wildcard	sam	457	passed	3601	passed
+           wildcard	bo	411	passed	2832	passed
+           of 4 here since 2026-11-19T07:16:56Z: 0 missed 5 s through a lend, 0 straight; 0 ended at a load above 12 cores
+passed     n0 (15 s)
+passed     app laws (16 s)
+note       took 1553 s in all
+exit 1
+rerun      scenes, alone, on 45ac6799 at 2026-11-19T07:21:05Z: the run above lost its shared Chromium mid-step (chrome-headless-shell, the browser process browsers.mjs launched, SIGSEGV KERN_INVALID_ADDRESS at 0x1b0 on CrBrowserMain, 2026-11-18 23:13:57 -0800, ~/Library/Logs/DiagnosticReports/chrome-headless-shell-2026-11-18-231359.ips), and every chromium scene after it refused to connect (ECONNREFUSED ::1:55535)
+passed     scenes (360 s)
+passed     scene doc (chromium)
+passed     scene creator (chromium)
+passed     scene events (chromium)
+passed     scene films (chromium)
+passed     scene give (chromium)
+passed     scene give_move (chromium)
+passed     scene give_gone (chromium)
+passed     scene grapevine (chromium)
+passed     scene holyarrs (chromium, webkit)
+passed     scene house_rules (chromium)
+passed     scene keeping (chromium)
+passed     scene money (chromium)
+passed     scene life (chromium)
+passed     scene movie_night (chromium)
+passed     scene pantry (chromium)
+passed     scene ports (chromium)
+passed     scene redial (alone)
+passed     scene night (chromium)
+exit 0
