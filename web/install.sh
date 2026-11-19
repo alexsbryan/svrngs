@@ -19,6 +19,10 @@
 #
 #   curl -fsSL <page>install.sh | sh -s -- '<page>' --relay <name> [--open]
 #
+# or, to take svrngs off this computer, `--uninstall` where the link goes:
+#
+#   curl -fsSL <page>install.sh | sh -s -- --uninstall
+#
 # It gets svrngs for this computer from the page's address the link names
 # (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, puts
 # it in ~/.local/bin with no sudo, and on the PATH of the person's login
@@ -48,6 +52,11 @@ no() {
 
 link="${1:-}"
 if [ $# -gt 0 ]; then shift; fi # what follows the link, `--as <name>`, is join's
+uninstall=""
+if [ "$link" = --uninstall ]; then
+  uninstall=yes
+  [ $# -eq 0 ] || no "--uninstall takes nothing after it, not $*."
+fi
 relay=""
 if [ "${1:-}" = --relay ]; then
   relay="${2:-}"
@@ -64,8 +73,10 @@ if [ "${1:-}" = --at ]; then
   shift 2
 fi
 from="${SVRNGS_FROM:-${link%%#*}}"
-case "$from" in http://* | https://*) ;; *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;; esac
-case "$from" in */) ;; *) from="$from/" ;; esac
+if [ -z "$uninstall" ]; then
+  case "$from" in http://* | https://*) ;; *) no "paste the whole line from your group's page, its link included: it says where svrngs comes from." ;; esac
+  case "$from" in */) ;; *) from="$from/" ;; esac
+fi
 
 case "$(uname -s)" in Darwin) os=darwin ;; Linux) os=linux ;; *) os="" ;; esac
 case "$(uname -m)" in arm64 | aarch64) arch=aarch64 ;; x86_64 | amd64) arch=x86_64 ;; *) arch="" ;; esac
@@ -101,6 +112,39 @@ else opener="${XDG_DATA_HOME:-$HOME/.local/share}/applications/svrngs.desktop"; 
 by_hand() {
   for pid in $(lsof -t "$dir/lock" 2>/dev/null); do kill "$pid" && say "Stopped the svrngs running here$1."; tries=0; while [ "$tries" -lt 50 ] && lsof -t "$dir/lock" >/dev/null 2>&1; do tries=$((tries + 1)); sleep 0.1; done; done
 }
+
+# --uninstall takes away what this line put here, each step said: what runs
+# at login (svrngs, a relay's, Give's), the programs, the opener. It keeps
+# the data dir, the person's key and their groups' copies, and the profile's
+# PATH line, which other programs in $bin may need: each said, with how to
+# remove it. A relay's Linux system unit is root's, so said and left.
+if [ -n "$uninstall" ]; then
+  for kept_as in sh.svrnme.svrngs:svrngs sh.svrnme.svrngs.relay:svrngs-relay sh.svrnme.give:give; do
+    label="${kept_as%%:*}" unit="${kept_as#*:}"
+    at
+    [ -f "$kept" ] || continue
+    stop || :
+    [ "$os" = darwin ] || systemctl --user disable --quiet "$unit.service" 2>/dev/null || :
+    rm -f "$kept" && say "Stopped $unit, and took it off what runs when you log in ($kept)."
+  done
+  [ "$os" = darwin ] || systemctl --user daemon-reload 2>/dev/null || :
+  by_hand ""
+  for program in svrngs give; do
+    [ ! -e "$bin/$program" ] || { rm -f "$bin/$program" && say "Removed $program from $bin."; }
+  done
+  [ ! -e "$opener" ] || { rm -rf "$opener" && say "Removed the svrngs opener, $opener."; }
+  relay_unit=/etc/systemd/system/svrngs-relay.service
+  [ ! -f "$relay_unit" ] || say "A relay runs from $relay_unit, which is root's: as root, run systemctl disable --now svrngs-relay and remove it."
+  for profile in "$HOME/.zshrc" "$HOME/.bash_profile" "$HOME/.bashrc"; do
+    ! grep -qF "export PATH=\"$bin:\$PATH\"" "$profile" 2>/dev/null ||
+      say "$profile still adds $bin to where your terminal looks for programs, since others may live there; remove that line if none do."
+  done
+  if [ -d "$dir" ]; then
+    say "Kept $dir: your key and your groups' copies. To delete them too: rm -rf '$dir'"
+  fi
+  say "svrngs is uninstalled. It left none of your groups: to leave one, run svrngs leave <group> before you uninstall."
+  exit 0
+fi
 
 tmp="$(mktemp -d)"
 restart=""
