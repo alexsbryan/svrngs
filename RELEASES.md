@@ -20,6 +20,36 @@ exactly the file you checked, and the link's page only joins:
 key signs only when the person who releases svrngs types its passphrase
 (`scripts/sign-release.sh`).
 
+## V1.12.2, 19 November 2026
+
+V1.12.2 keeps each lend to the program you lent.
+
+**A lend stays with its program.** When you lend something, svrngs now
+also notes the program answering on its port: what it runs and how it was
+started. Your friends reach only that program. Start it again the same
+way and it keeps its lend. If another program answers there, or the same
+one started differently, your friends get a closed lend, and its line on
+your home page says: *"Another program is answering on shelf's port, so
+nobody can open shelf. Start shelf again as you started it, or lend it
+again to keep it to what runs there now."* Each lend's line also says
+which program it's kept to. A lend you made before V1.12.2 is kept to the
+program that first answers it after you update.
+
+A Podman container's lend closes when the container restarts. Lend it
+again to keep it to the container that runs now.
+
+**Lend the process you chose.** `svrngs share <port> --pid <id>` lends the
+port only if that process is the one answering there. Tools that show you
+a process before you lend it, like the Omarchy bar plugin, use it.
+
+Groups and the record work as in V1.12.1. Press **Update and restart** on
+your home page, or run `svrngs update` and then `svrngs restart`. Your
+phone's page updates itself.
+
+V1.12.2 is the build at `group.svrnme.sh`, from the commit tagged
+`v1.12.2`. Its publication and readback are recorded in
+`demo/runs/v1.12.2/2026-11-19/README.md`.
+
 ## V1.12.1, 19 November 2026
 
 V1.12.1 keeps each lend to the app you lent, not only to your account.
