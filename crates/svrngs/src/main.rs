@@ -3,6 +3,8 @@
 //! so the tests exercise the same code this runs (the shape of upstream's
 //! `commonwealth/crates/commonwealth-rails/src/main.rs` at `e1a43bcd2`).
 
+#![deny(unsafe_code)]
+
 use std::process::ExitCode;
 
 use svrngs::cli;

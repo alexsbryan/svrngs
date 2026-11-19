@@ -3,6 +3,8 @@
 //! its writes. Adapters (svrngs-node) reach it through its queries and
 //! `commit`, never through a journal.
 
+#![deny(unsafe_code)]
+
 pub use svrngs_core::*;
 
 use std::collections::BTreeMap;

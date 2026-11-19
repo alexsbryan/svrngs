@@ -20,6 +20,8 @@
 //! only returned at the end — a layer that hangs must still be named, which is
 //! the whole reason the trace exists (ARCH §1, glassbox).
 
+#![deny(unsafe_code)]
+
 mod http;
 mod join;
 // The node's relay adapter, compiled here too: every relay URL the page

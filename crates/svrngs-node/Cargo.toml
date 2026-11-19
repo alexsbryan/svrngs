@@ -86,6 +86,11 @@ chrono = { version = "0.4", default-features = false, features = ["clock"] }
 # vendored JavaScript one would be counted against the page's budget.
 qrcodegen = "=1.8.0"
 
+# The socket table's read (uid.rs `sysctl`): `sysctlbyname`, the one
+# `unsafe` call in svrngs, through the libc the lock already holds.
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2"
+
 [features]
 # What only a test asks of a node (src/node/tests_support.rs): its routes as a
 # caller no socket can be, its transport, a round now.

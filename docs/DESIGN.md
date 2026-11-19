@@ -2007,6 +2007,12 @@ the command and the app. Every decision branch traces at debug. New code is
 held to these from its first line; forked code is held to them as it becomes
 ours. Upstream's shape stays until a change replaces it: the node's map of
 open journals sits behind a `Mutex`, which an actor per journal replaces.
+No `unsafe` but one call: every product crate root denies `unsafe_code`, so
+the compiler refuses any other, and the one function allowed it is the
+read of the kernel's table of sockets where only `sysctlbyname` gives it
+(`svrngs-node` `uid.rs`, `sysctl`), each condition of its call said beside
+it; `lean_check` refuses an exemption anywhere else. This holds svrngs's
+own code, not its dependencies.
 
 | Invariant | Held by | State |
 |---|---|---|

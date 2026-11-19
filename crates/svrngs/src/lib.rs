@@ -5,6 +5,8 @@
 //! the browser its code by a private page ([`handoff`]). A link's issuer,
 //! as iroh dials it, is the node's `join` since arch-command (a).
 
+#![deny(unsafe_code)]
+
 pub mod cli;
 pub use svrngs_node::group;
 pub mod handoff;

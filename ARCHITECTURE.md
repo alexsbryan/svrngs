@@ -652,6 +652,22 @@ for the door's count and the room's listeners. `src/network_tests.rs`
 plants configd's state, Linux's ARP table and a hardware address's
 spellings.
 
+Whose a socket on this computer is, is `uid.rs` (svrn-docs LEND_OWNER §2):
+`uid::owner`, for a connection named by its two ends (`uid::Conn`) and
+the end asked about (`uid::Side`), the uid the kernel's table records for
+that socket, or a UDP flow's, read at each ask and never kept:
+`/proc/net/tcp`, `tcp6`, `udp` and `udp6`'s uid column, or the
+`pcblist_n` sysctls `netstat` reads, each socket's records walked by their
+own length and kind; elsewhere `Owner::NoReader`. The sysctls list another
+program's sockets only to a program signed with a dotted identifier; one
+signed as the linker signs it is shown its own alone, and another's socket
+is not found. Only sockets whose
+addresses are the connection's answer, and none, two accounts, a table not
+read or a record of a length it wasn't built for is `Owner::Unjudged`.
+`uid::sysctl` is svrngs's one `unsafe` (DESIGN §5). `src/uid_tests.rs`
+reads a captured `/proc/net` table and a captured `pcblist_n`, and this
+computer's own.
+
 **`crates/svrngs`**: the command (DESIGN §5), the one crate with a binary.
 `identity.rs` is the device key, commonwealth-transport's `identity.rs`
 :1-126 at `e1a43bcd2`, its join proof and dial-info signing left behind, its

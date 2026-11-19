@@ -30,6 +30,8 @@
 //! production `MeshStore` is `in_memory()`, so anything treating it as
 //! durable loses the log on restart.
 
+#![deny(unsafe_code)]
+
 pub use svrngs_runtime::*;
 
 // The dialling half of sync, forked in U1 (docs/PLAN.md §4, U1's
@@ -82,6 +84,9 @@ mod session;
 // Where this computer is, and on which network: the router's hardware
 // address, this computer's address there, a caller's (the room; the door).
 pub mod network;
+// Whose a socket on this computer is: the uid the kernel's table records
+// (svrn-docs rings/current/LEND_OWNER.md §2).
+pub mod uid;
 // The room, u6-1's (docs/DESIGN.md §3, "The room"): the lends a person
 // turns on, served by the running node on the network each was turned on at.
 pub mod room;
