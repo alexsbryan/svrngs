@@ -47,7 +47,9 @@ use iroh::RelayUrl;
 use svrngs_core::alpn::Alpn;
 use svrngs_core::link::Token;
 use svrngs_core::pass::{Label, Pass};
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 /// Push one layer line to the page's `__trace` collector, if the page defined
 /// one. Best-effort: a missing collector must not break the dial.
@@ -769,8 +771,308 @@ impl Endpoint {
         Ok(Dialled { ep: None, conn })
     }
 
+    /// Dial the computer whose key is `lender` through `relay` on the
+    /// WebRTC protocol, as a phone offering a direct path does (webrtc-page;
+    /// `crates/svrngs-node/src/webrtc.rs` `OFFER_ROUTE`): the offer and its
+    /// answer cross on this connection, the pass presented with it.
+    pub async fn dial_webrtc(&self, lender: String, relay: Option<String>) -> Result<Dialled, JsError> {
+        let conn = reach(&self.bound, Some(lender), relay, Alpn::WebRtc, Some(dial::DIAL_WITHIN)).await?;
+        Ok(Dialled { ep: None, conn })
+    }
+
     /// Close the endpoint, and every dial from it.
     pub async fn close(&self) {
         self.bound.ep.close().await;
     }
+}
+
+// ── the direct path (webrtc-page; RELAY_COMMONS design 4) ───────────────
+//
+// The lend worker's fresh data endpoint, ported from the spike's `Data`
+// (svrn-docs `rings/current/webrtc-transport-spike/page/src/lib.rs`, the
+// port map): its own key and the wire whose datagrams the lend's window
+// carries — a service worker has no RTCPeerConnection, so the window holds
+// the channel and passes each datagram here over a port. It dials WebRTC
+// alone, then again with the relay beside it, since iroh takes a custom
+// path only on a connection whose first path is not the relay (the spike's
+// Q1); the offer naming this endpoint's key crosses on the run's own dial
+// (`Endpoint::dial_webrtc`).
+
+// The wire, the node's file compiled here too (the port map). Formatted
+// by its own crate's rustfmt.toml, not by this one's, as `relay` above is.
+#[path = "../../crates/svrngs-node/src/webrtc/wire.rs"]
+#[rustfmt::skip]
+mod wire;
+// The path timing both ends carry, the node's file too (webrtc-page; the
+// spike's README, "The pre-requisites" 1), formatted as the node's.
+#[path = "../../crates/svrngs-node/src/webrtc/paths.rs"]
+#[rustfmt::skip]
+mod paths;
+
+/// The wire's receive side: the queue of datagrams the window's channel
+/// brought, and the sender [`data_push`] fills it through.
+type Arrived = Option<tokio::sync::mpsc::UnboundedSender<(wire::PeerKey, Vec<u8>)>>;
+
+thread_local! {
+    /// The function each datagram out is handed to — the worker's port to
+    /// the window — and the peer the channel brings datagrams from, as the
+    /// spike's page held them (page/src/lib.rs:210-235): wasm runs on one
+    /// thread, so the wire's send function holds nothing.
+    static OUT: std::cell::RefCell<Option<js_sys::Function>> = std::cell::RefCell::default();
+    static PEER: std::cell::RefCell<wire::PeerKey> = const { std::cell::RefCell::new([0; 32]) };
+    static ARRIVED: std::cell::RefCell<Arrived> = std::cell::RefCell::default();
+}
+
+/// A datagram the window's channel brought, from the lender. A free
+/// function, not a method: the data endpoint's dial holds its object
+/// borrowed while it waits, and wasm-bindgen refuses every other call on
+/// it meanwhile, so the handshake's own replies would be thrown away (the
+/// spike's README, "A trap on the way"; page/src/lib.rs:210-235).
+#[wasm_bindgen]
+pub fn data_push(datagram: js_sys::Uint8Array) {
+    let (peer, bytes) = (PEER.with(|p| *p.borrow()), datagram.to_vec());
+    ARRIVED.with(|a| {
+        if let Some(tx) = a.borrow().as_ref() {
+            let _ = tx.send((peer, bytes));
+        }
+    });
+}
+
+/// The fresh data endpoint of a lend's direct path, and the connection it
+/// dials: the spike's `Data` (page/src/lib.rs:231-337).
+#[wasm_bindgen]
+pub struct Direct {
+    data: iroh::Endpoint,
+    conn: Option<iroh::endpoint::Connection>,
+    peer: iroh::EndpointId,
+    relay: Option<RelayUrl>,
+}
+
+/// Bind the data endpoint for the lender whose key is `lender`, 64 hex,
+/// reaching the network through `relays` (the pass's, as the run's
+/// endpoint is), dialling the lender through `relay` when it is named:
+/// every datagram out goes to `out`, and what the window's channel brings
+/// comes in through [`data_push`].
+#[wasm_bindgen]
+pub async fn direct_start(
+    lender: String,
+    relay: Option<String>,
+    relays: Vec<String>,
+    out: js_sys::Function,
+) -> Result<Direct, JsError> {
+    let lender: iroh::EndpointId = lender.parse().map_err(|e| {
+        JsError::new(&format!(
+            "LAYER parse: REFUSED — {lender:?} is not a computer's key: {e}"
+        ))
+    })?;
+    let named = match relay.as_deref().map(relay::parse) {
+        None => None,
+        Some(Ok(url)) => Some(url),
+        Some(Err(e)) => refuse!("LAYER parse: REFUSED — {relay:?} is not a relay: {e}"),
+    };
+    let parsed: Vec<RelayUrl> = relays
+        .iter()
+        .map(|one| relay::parse(one))
+        .collect::<Result<_, _>>()
+        .map_err(|e| JsError::new(&format!("{relays:?} is not a relay: {e}")))?;
+    if parsed.is_empty() {
+        refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
+    }
+    OUT.with(|o| *o.borrow_mut() = Some(out));
+    PEER.with(|p| *p.borrow_mut() = *lender.as_bytes());
+    let secret = iroh::SecretKey::generate();
+    let me = *secret.public().as_bytes();
+    let (arrived, arrivals) = tokio::sync::mpsc::unbounded_channel();
+    ARRIVED.with(|a| *a.borrow_mut() = Some(arrived));
+    let send: wire::Send = std::sync::Arc::new(|_to: &wire::PeerKey, datagram: &[u8]| {
+        OUT.with(|o| {
+            if let Some(f) = o.borrow().as_ref() {
+                let _ = f.call1(&JsValue::NULL, &js_sys::Uint8Array::from(datagram));
+            }
+        });
+    });
+    let data = iroh::Endpoint::builder(iroh::endpoint::presets::Minimal)
+        .secret_key(secret)
+        .relay_mode(iroh::RelayMode::custom(parsed.clone()))
+        .add_custom_transport(wire::Wire::new(&me, arrivals, send))
+        .transport_config(paths::quick_paths())
+        .bind()
+        .await
+        .map_err(|e| {
+            JsError::new(&format!(
+                "LAYER wasm-bindgen/iroh-endpoint: REFUSED — data endpoint bind failed: {e}"
+            ))
+        })?;
+    Ok(Direct {
+        data,
+        conn: None,
+        peer: lender,
+        relay: named.or_else(|| parsed.first().cloned()),
+    })
+}
+
+#[wasm_bindgen]
+impl Direct {
+    /// The data endpoint's key, which the offer names.
+    pub fn key(&self) -> String {
+        self.data.id().to_string()
+    }
+
+    /// The offer `offer` (the window's SDP, JSON) POSTed to the lender
+    /// through `dial`, on the WebRTC protocol, with `headers` (the pass
+    /// and the link this run's dials present): the lender's answer, JSON.
+    pub async fn signal(&self, dial: &Dialled, headers: js_sys::Array, offer: String) -> Result<String, JsError> {
+        let body = format!("{{\"key\":\"{}\",\"offer\":{}}}", self.data.id(), offer);
+        let pair = |name: &str, value: &str| js_sys::Array::of2(&name.into(), &value.into());
+        headers.push(&pair("content-type", "application/json"));
+        headers.push(&pair("content-length", &body.len().to_string()));
+        let blob = web_sys::Blob::new_with_str_sequence(&js_sys::Array::of1(&body.into()))
+            .map_err(|e| JsError::new(&format!("the offer is not a body: {e:?}")))?;
+        let answer = http::fetch(
+            dial.conn.clone(),
+            "POST".into(),
+            paths::OFFER_ROUTE.into(),
+            headers,
+            Some(blob.stream()),
+        )
+        .await
+        .map_err(|e| JsError::new(&format!("the offer was not answered: {e}")))?;
+        if !answer.ok() {
+            let status = answer.status();
+            let words = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?)
+                .await
+                .ok()
+                .and_then(|t| t.as_string())
+                .unwrap_or_default();
+            refuse!("the offer was refused: {status} {words}")
+        }
+        let said = wasm_bindgen_futures::JsFuture::from(answer.text().map_err(page)?)
+            .await
+            .map_err(page)?;
+        Ok(said.as_string().unwrap_or_default())
+    }
+
+    /// The two dials of the spike's Q1: WebRTC alone (the window's channel
+    /// is open), then again with the relay beside it, so the relay is
+    /// backup on a connection whose first path is not the relay; the first
+    /// carries nothing.
+    pub async fn dial(&mut self) -> Result<(), JsError> {
+        let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
+        let first = self
+            .data
+            .connect(
+                iroh::EndpointAddr::from_parts(self.peer, [custom.clone()]),
+                Alpn::Lend.bytes(),
+            )
+            .await
+            .map_err(|e| JsError::new(&format!("dial webrtc: {e}")))?;
+        let mut at = vec![custom];
+        if let Some(relay) = &self.relay {
+            at.push(iroh::TransportAddr::Relay(relay.clone()));
+        }
+        let conn = self
+            .data
+            .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
+            .await
+            .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
+        first.close(0u32.into(), b"the second carries on");
+        self.conn = Some(conn);
+        Ok(())
+    }
+
+    /// The data connection, as a dial the worker's fetches go through
+    /// (`web/lend.js` `dials`), or none before [`Self::dial`] returned.
+    pub fn dialled(&self) -> Option<Dialled> {
+        self.conn.clone().map(|conn| Dialled { ep: None, conn })
+    }
+
+    /// The direct attempt, driven here so the worker's JavaScript stays
+    /// thin (webrtc-page): the window `client` is asked over `port` for the
+    /// offer, which is signalled to the lender through `dial` with
+    /// `headers` (the pass and the link the run's own dials present); the
+    /// answer is handed back; and once the window says the channel is open,
+    /// the data endpoint dials, its channel's datagrams from then on going
+    /// in through [`data_push`]. Answers the data connection as a dial the
+    /// worker's fetches go through, or none when the channel never opened.
+    pub async fn go(
+        &mut self,
+        dial: &Dialled,
+        headers: js_sys::Array,
+        client: web_sys::Client,
+        port: web_sys::MessagePort,
+    ) -> Result<Option<Dialled>, JsError> {
+        let ask = js_sys::Object::new();
+        js_sys::Reflect::set(&ask, &"webrtc".into(), &"ask".into()).map_err(page)?;
+        client
+            .post_message_with_transfer(&ask, &js_sys::Array::of1(&port))
+            .map_err(page)?;
+        let offer = told(&port, "offer").await?;
+        let answer = self
+            .signal(dial, headers, offer.as_string().unwrap_or_default())
+            .await?;
+        let said = js_sys::Object::new();
+        js_sys::Reflect::set(&said, &"answer".into(), &answer.into()).map_err(page)?;
+        port.post_message(&said).map_err(page)?;
+        told(&port, "open").await?;
+        // The channel is open: what it brings goes to the free `data_push`,
+        // and the data endpoint dials (WebRTC alone, then with the relay).
+        let push = Closure::wrap(Box::new(|event: web_sys::MessageEvent| {
+            if let Some(bytes) = js_sys::Reflect::get(&event.data(), &"datagram".into())
+                .ok()
+                .filter(|v| !v.is_undefined())
+            {
+                data_push(js_sys::Uint8Array::new(&bytes));
+            }
+        }) as Box<dyn FnMut(web_sys::MessageEvent)>);
+        port.set_onmessage(Some(push.as_ref().unchecked_ref()));
+        push.forget();
+        self.dial().await?;
+        Ok(self.dialled())
+    }
+
+    /// The data connection's paths now: each one's kind, whether it is the
+    /// one selected, and its round trip, as JSON (the spike's `paths`).
+    pub fn paths(&self) -> String {
+        let Some(conn) = self.conn.as_ref() else {
+            return "[]".into();
+        };
+        let list: Vec<serde_json::Value> = conn
+            .paths()
+            .iter()
+            .map(|p| {
+                let kind = match p.remote_addr() {
+                    iroh::TransportAddr::Relay(_) => "relay",
+                    iroh::TransportAddr::Custom(_) => "webrtc",
+                    _ => "other",
+                };
+                serde_json::json!({ "kind": kind, "selected": p.is_selected(), "rtt_ms": p.rtt().as_millis() as u64 })
+            })
+            .collect();
+        serde_json::Value::Array(list).to_string()
+    }
+}
+
+/// `what`'s value in a message `port` brings, as a promise: the window's
+/// answer to the direct attempt's ask (webrtc-page). Later messages are
+/// let be, and a value the window never sends leaves it waiting.
+async fn told(port: &web_sys::MessagePort, what: &str) -> Result<JsValue, JsError> {
+    let promise = js_sys::Promise::new(&mut |resolve, _| {
+        let key: JsValue = what.into();
+        let closure = Closure::wrap(Box::new(move |event: web_sys::MessageEvent| {
+            if let Ok(value) = js_sys::Reflect::get(&event.data(), &key) {
+                if !value.is_undefined() {
+                    let _ = resolve.call1(&JsValue::NULL, &value);
+                }
+            }
+        }) as Box<dyn FnMut(web_sys::MessageEvent)>);
+        port.set_onmessage(Some(closure.as_ref().unchecked_ref()));
+        closure.forget();
+    });
+    wasm_bindgen_futures::JsFuture::from(promise).await.map_err(page)
+}
+
+/// The page's own words for a value that could not be read (the wasm's
+/// `JsValue` errors): as [`refuse!`] and [`Dialled::fetch`] say them.
+fn page(e: JsValue) -> JsError {
+    JsError::new(&format!("{e:?}"))
 }

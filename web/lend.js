@@ -204,6 +204,14 @@ let loaded = null;
 let endpoint = null;
 /** @type {string | null} */
 let linked = null;
+// The link each direct path's data endpoint holds, by its lender
+// (webrtc-page `direct`): the door checks it beside the pass, as this
+// run's own. And the lenders a direct attempt is running for: a page that
+// announces itself twice (a reload) is answered by the one attempt.
+/** @type {Map<string, string>} */
+const dataLinks = new Map();
+/** @type {Set<string>} */
+const directs = new Set();
 /** @type {Map<string, Promise<Dialled>>} */
 const dials = new Map();
 /** @type {Map<string, Cookie[]>} */
@@ -353,18 +361,52 @@ async function opened() {
   return holder_endpoint(bytes, handed.relays ?? (handed.relay ? [handed.relay] : []), handed.pass);
 }
 
-// The pass a request carries, and the link naming this run's endpoint
-// when the holder signed one (`opened`).
+// The pass a request carries, and the link naming the endpoint it goes
+// through: this run's, or a direct path's data endpoint for its lender
+// (`direct`), each when the holder signed one (`opened`).
 /**
  * @param {Held} handoff
+ * @param {Passed} lend
  * @returns {Promise<Header[]>}
  */
-async function passed(handoff) {
+async function passed(handoff, lend) {
   await bound();
   /** @type {Header[]} */
   const headers = [['x-svrngs-pass', handoff.pass]];
-  if (linked) headers.push(['x-svrngs-link', linked]);
+  const named = dataLinks.get(lenderOf(lend)) ?? linked;
+  if (named) headers.push(['x-svrngs-link', named]);
   return headers;
+}
+
+// The direct path for the lend `label` (webrtc-page; RELAY_COMMONS design
+// 4): the window holds the channel, a fresh data endpoint's wire carries
+// it, the offer and answer cross the lender's own dial, and the film rides
+// the data connection once it is open. What the person sees: nothing, but
+// faster; a lend with no window, or one whose holder this run cannot sign
+// with, stays relayed.
+/**
+ * @param {string} label
+ * @param {MessagePort} port the window's end of the channel's port
+ */
+async function direct(label, port) {
+  const held = await holding();
+  const lend = held?.lends.find((one) => one.label === label);
+  if (!lend || !handed.key || directs.has(lend.key)) return null;
+  directs.add(lend.key);
+  const core = await (loaded ??= init({ module_or_path: store.runtime() }));
+  const data = await core.direct_start(lend.key, lend.relay ?? null, (bytes) =>
+    port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]),
+  );
+  // The data endpoint's own key, named by a link the holder signs.
+  const to = data.key();
+  const sig = await crypto.subtle.sign('Ed25519', handed.key, core.link(handed.pass, to));
+  const named = new TextDecoder().decode(core.link(handed.pass, to, new Uint8Array(sig)));
+  dataLinks.set(lend.key, named);
+  const dial = await (await bound()).dial_webrtc(lend.key, lend.relay ?? null);
+  const via = await data.go(dial, await passed(held, lend), port);
+  if (via) dials.set(lend.key, Promise.resolve(via));
+  trace(`RUNTIME: ${lend.name} goes direct: ${data.paths()}`);
+  return via;
 }
 
 // ── cookies, a jar per lend ─────────────────────────────────────────────
@@ -1473,6 +1515,18 @@ scope.addEventListener('message', async (event) => {
 
 /** @param {Client | null} source */
 const fromHere = (source) => !!source?.url && new URL(source.url).origin === SCOPE.origin;
+
+// A window that can hold a direct path's channel announces itself
+// (shim.js), and the attempt for its lend runs (webrtc-page).
+scope.addEventListener('message', (event) => {
+  const given = /** @type {{ webrtc?: string, label?: string }} */ (event.data ?? {});
+  if (given.webrtc !== 'here' || !event.ports[0] || !fromHere(event.source)) return;
+  event.waitUntil(
+    direct(/** @type {string} */ (given.label), event.ports[0]).catch((error) =>
+      trace(`RUNTIME: the direct path failed: ${String(error)}`),
+    ),
+  );
+});
 
 // Whether `given` is an open of this lend's, with its pass.
 /** @param {any} given */

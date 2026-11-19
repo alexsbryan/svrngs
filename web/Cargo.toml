@@ -23,7 +23,16 @@ crate-type = ["cdylib"]
 # measuring build, browser-dial bd-1); iroh is bumped to the relay queue's
 # version (relay-survey: demo/runs/relay-commons/SURVEY.md, "The chosen
 # versions"), whose web probe resolves the same wasm-bindgen set.
-iroh = "=1.4.2"
+# `unstable-custom-transports` is the WebRTC path's slot (webrtc-page; the
+# node's own Cargo.toml).
+iroh = { version = "=1.4.2", features = ["unstable-custom-transports"] }
+# The wire's custom address and its datagram meta, as iroh's own traits
+# spell them (webrtc-page; `crates/svrngs-node/src/webrtc/wire.rs` compiled
+# here by `#[path]`): iroh-base and the two n0 crates iroh 1.4.2 resolves,
+# the node's pins, so no new crate joins this lock.
+iroh-base = "=1.4.2"
+n0-watcher = "=1.0.0"
+noq-udp = "=1.4.1"
 wasm-bindgen = "=0.2.128"
 wasm-bindgen-futures = "=0.4.78"
 js-sys = "=0.3.105"
@@ -38,9 +47,11 @@ hyper = { version = "1.11", default-features = false, features = ["client", "htt
 http-body-util = "0.1.5"
 bytes = "1"
 futures-util = { version = "0.3", default-features = false, features = ["sink"] }
-tokio = { version = "1", default-features = false }
+# `sync` is the wire's queue of arrived datagrams (webrtc-page), as the
+# spike's page took it.
+tokio = { version = "1", default-features = false, features = ["sync"] }
 wasm-streams = "0.5"
-web-sys = { version = "=0.3.105", features = ["Headers", "ReadableStream", "Response", "ResponseInit", "WritableStream"] }
+web-sys = { version = "=0.3.105", features = ["Blob", "Client", "Headers", "MessageEvent", "MessagePort", "ReadableStream", "Response", "ResponseInit", "WritableStream"] }
 thiserror = "2"
 # Joining (u4-5): the ask's and the redemption's bodies as the node reads
 # them, and a lender's key as the record spells it. The versions

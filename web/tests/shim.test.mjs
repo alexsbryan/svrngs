@@ -19,6 +19,10 @@ import { runInThisContext } from 'node:vm';
 // The worker the page's sockets are handed to: each socket's port, as the
 // shim posts it.
 const ports = [];
+// The worker's end of the direct path's channel (webrtc-page): the port the
+// shim transfers with `{webrtc: 'here'}`, which the worker's `direct` then
+// drives. The offer the window sends back arrives here.
+let webrtc = null;
 // The elements the shim appends to the page, in order.
 const appended = [];
 // What the page's own `fetch` answers, replaced by each test.
@@ -28,15 +32,41 @@ let answer = () => Promise.resolve(new Response('ok'));
 Object.defineProperty(globalThis, 'navigator', {
   value: {
     serviceWorker: {
-      controller: { postMessage: (asked, [port]) => asked.socket && ports.push(port) },
+      controller: {
+        postMessage: (asked, [port]) => {
+          if (asked.socket) ports.push(port);
+          if (asked.webrtc === 'here') webrtc = port;
+        },
+      },
       addEventListener: () => {},
     },
   },
   configurable: true,
   writable: true,
 });
+// A peer connection whose ICE gathering never completes, as a phone on a
+// network that never answers its gathering does (webrtc-page; the shim's
+// timeout is what sends the offer then).
+class NeverGathering {
+  iceGatheringState = 'new';
+  onicegatheringstatechange = null;
+  localDescription = null;
+  channel = { readyState: 'connecting', send() {}, onopen: null, onmessage: null };
+  createDataChannel() {
+    return this.channel;
+  }
+  async createOffer() {
+    return { type: 'offer' };
+  }
+  async setLocalDescription() {
+    this.localDescription = { type: 'offer', sdp: 'v=0' };
+  }
+  async setRemoteDescription() {}
+}
 Object.assign(globalThis, {
+  RTCPeerConnection: NeverGathering,
   window: globalThis,
+  top: globalThis,
   location: { href: 'https://lend.example/' },
   document: {
     currentScript: { src: 'https://lend.example/shim.js?l=lend&c=' },
@@ -178,4 +208,32 @@ test('a subresource refused while the share is spent shows the answer’s words 
   asked.responseText = JSON.stringify({ error: SPENT, kind: 'share' });
   asked.done();
   assert.equal(appended.at(-1).textContent, SPENT);
+});
+
+// The direct path's offer (webrtc-page; RELAY_COMMONS design 4): the window
+// gathers ICE candidates, then sends its offer to the worker over the
+// channel's port. A gathering that never completes — a network that never
+// answers it — must not hold the attempt: the 3 s timeout sends the offer
+// anyway, host candidates only, and the phone falls back to the relay if
+// they do not connect. Planted, watched failing with the patch's own
+// `setTimeout(done, 3000)`, whose `done` resolved only once
+// `iceGatheringState` was `complete`, so no offer was ever sent and the
+// attempt waited for good.
+test('a gathering that never completes still sends its offer after 3 s', async () => {
+  const said = [];
+  webrtc.onmessage = ({ data }) => said.push(data);
+  try {
+    webrtc.postMessage({ webrtc: 'ask' });
+    const by = Date.now() + 5_000;
+    while (Date.now() < by && !said.some((one) => one.offer))
+      await new Promise((rested) => setTimeout(rested, 50));
+    const offer = said.find((one) => one.offer);
+    assert.ok(
+      offer,
+      `the offer must be sent after the 3 s timeout, though gathering never completed; the window sent ${JSON.stringify(said)}`,
+    );
+    assert.match(offer.offer, /"sdp":"v=0"/);
+  } finally {
+    webrtc.close();
+  }
 });

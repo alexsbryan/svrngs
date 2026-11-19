@@ -2002,9 +2002,13 @@ tried, and goes on trying.
 
 **At home a phone goes direct**, on a network the lender enabled. The
 bytes of a film need not cross a relay when the phone and its lender are
-on one Wi-Fi: the group page's endpoint offers the lender a WebRTC path
-on the dial it already holds (`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`),
-naming the lend worker's fresh endpoint. The computer answers only while
+on one Wi-Fi: the lend's endpoint — the key its pass names, the page at
+its origin — offers the lender a WebRTC path on the dial it already holds
+(`Alpn::WebRtc`, `webrtc.rs` `OFFER_ROUTE`), naming the lend worker's
+fresh endpoint; the offer is answered only to a dialer holding a live
+pass for a lend this computer lends, as the door's own routes are
+(`door::holder_of_offer`), and the window holds the channel, a worker
+having no `RTCPeerConnection`. The computer answers only while
 it is on a network its lender turned direct connections on for, from the
 home page (`webrtc/direct.rs`; one setting per network, by its router's
 hardware address), and only with a private address there

@@ -43,6 +43,8 @@ mod keep_going;
 mod updated;
 // The one place a lent film is played (scripts/check.sh `playback`).
 mod playback;
+// The page's direct path (webrtc-page): a film over the window's channel.
+mod webrtc_page;
 // A browser half run and its JSON read: the demo scenes' too
 // (crates/svrngs/tests/scenes).
 mod drive;

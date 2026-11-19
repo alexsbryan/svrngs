@@ -275,6 +275,39 @@
   // `CONNECTING` and the rest are on it by `Object.assign`, just above.
   window.WebSocket = /** @type {typeof WebSocket} */ (/** @type {unknown} */ (Socket));
 
+  // The window's half of the direct path (webrtc-page; RELAY_COMMONS
+  // design 4): a worker has no RTCPeerConnection, so this window holds the
+  // channel and passes each datagram between it and the worker over a
+  // port. `__svrngsNoWebrtc`, which the tests set, withholds the
+  // datagrams: the lend stays relayed, as the plant says.
+  if (workers && window.top === window) {
+    const { port1, port2 } = new MessageChannel();
+    port1.onmessage = async ({ data: asked }) => {
+      if (asked.webrtc !== 'ask') return;
+      const pc = new RTCPeerConnection({ iceServers: [] });
+      const channel = pc.createDataChannel('iroh', { ordered: false, maxRetransmits: 0 });
+      channel.binaryType = 'arraybuffer';
+      await pc.setLocalDescription(await pc.createOffer());
+      await new Promise((gathered) => {
+        const done = () => pc.iceGatheringState === 'complete' && gathered();
+        pc.onicegatheringstatechange = done;
+        // The timeout resolves on its own: a gathering that never completes
+        // must not hold the attempt — the offer goes with what it has.
+        setTimeout(gathered, 3000);
+        done();
+      });
+      port1.postMessage({ offer: JSON.stringify(pc.localDescription) });
+      port1.onmessage = ({ data: said }) => {
+        if (said.answer) void pc.setRemoteDescription(JSON.parse(said.answer));
+        if (said.datagram && !globalThis.__svrngsNoWebrtc && channel.readyState === 'open')
+          channel.send(said.datagram);
+      };
+      channel.onopen = () => port1.postMessage({ open: true });
+      channel.onmessage = ({ data }) => port1.postMessage({ datagram: data }, [data]);
+    };
+    worker()?.postMessage({ webrtc: 'here' }, [port2]);
+  }
+
   // The app's own worker, in a realm of its own (session.js `registered`).
   if (workers)
     workers.register = async (script, options) => {

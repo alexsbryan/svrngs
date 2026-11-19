@@ -63,6 +63,10 @@ const logs = [];
 const watch = (context) => context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
   watch(context);
+  if (args.withhold)
+    await context.addInitScript(() => {
+      globalThis.__svrngsNoWebrtc = true;
+    });
   let page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await held(page, origin, args);
@@ -83,6 +87,15 @@ try {
   });
   await cdp?.send('ServiceWorker.enable');
 
+  // The direct path's line in the worker's trace, waited for when asked
+  // (`args.direct`, webrtc-page): the film's own fetch follows it, so the
+  // film rides the data connection, not the relay.
+  const traced = () => page.evaluate(() => fetch('svrngs-trace').then((r) => r.text()));
+  if (args.direct) {
+    const by = Date.now() + 20_000;
+    while (Date.now() < by && !(await traced()).includes('goes direct'))
+      await new Promise((r) => setTimeout(r, 250));
+  }
   // The film played (`play`, the playback step's), or its range fetched.
   const look = (page) =>
     args.seeks
@@ -133,6 +146,7 @@ try {
       runsAtStop,
       runs,
       other,
+      trace: args.direct || args.withhold ? await traced() : null,
       logs,
     }),
   );
