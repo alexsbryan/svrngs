@@ -402,20 +402,22 @@ async function passed(handoff, lend) {
 async function direct(label, port) {
   const held = await holding();
   const lend = held?.lends.find((one) => one.label === label);
-  if (!lend || !handed.key || directs.has(lend.key)) return null;
+  if (!held || !lend || directs.has(lend.key)) return;
   directs.set(lend.key, null);
   await (loaded ??= init({ module_or_path: store.runtime() }));
   // The pass's relays, as this run's own endpoint is opened with; the data
   // endpoint falls back to the relay named for the lend when it names none.
-  const data = await direct_start(lend.key, lend.relay ?? null, handed.relays ?? [], (bytes) =>
-    port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]),
-  );
+  /** @param {Uint8Array<ArrayBuffer>} bytes */
+  const forward = (bytes) => port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]);
+  const data = await direct_start(lend.key, lend.relay ?? null, handed.relays ?? [], forward);
   // Held in `directs` from here on: the fetch rides the endpoint this
   // object owns, and letting the wrapper be collected would drop it.
   directs.set(lend.key, data);
   // The data endpoint's own key, named by a link the holder signs.
   const to = data.key();
-  const sig = await crypto.subtle.sign('Ed25519', handed.key, link(handed.pass, to));
+  // The glue's bytes are a copy of its own, in a buffer of their own (`opened`).
+  const toSign = /** @type {Uint8Array<ArrayBuffer>} */ (link(handed.pass, to));
+  const sig = await crypto.subtle.sign('Ed25519', handed.key, toSign);
   const dial = await (await bound()).dial_webrtc(lend.key, lend.relay ?? null);
   // The offer crosses this run's own dial, so it presents this run's link
   // (`passed`, before the data endpoint's is set): the door checks the
@@ -950,6 +952,7 @@ function served(asked, res, said, set) {
   if (set) headed.set(PAGE_COOKIES, cookieFor(asked.jar, '/', true));
   const type = res.headers.get('content-type') ?? '';
   const html = asked.request.method === 'GET' && type.includes('text/html');
+  /** @param {BodyInit | null | undefined} body */
   const asIs = (body) =>
     new Response(body, { status: res.status, statusText: res.statusText, headers: headed });
   // A share refusal to a tab: the door drew svrngs's own page of the words
@@ -1538,7 +1541,9 @@ const fromHere = (source) => !!source?.url && new URL(source.url).origin === SCO
 // (shim.js), and the attempt for its lend runs (webrtc-page).
 scope.addEventListener('message', (event) => {
   const given = /** @type {{ webrtc?: string, label?: string }} */ (event.data ?? {});
-  if (given.webrtc !== 'here' || !event.ports[0] || !fromHere(event.source)) return;
+  const source = /** @type {Client | null} */ (event.source);
+  if (given.webrtc !== 'here' || !event.ports[0] || !fromHere(source)) return;
+  /** @param {unknown} error */
   const lost = (error) => trace(`RUNTIME: the direct path failed: ${String(error)}`);
   event.waitUntil(direct(/** @type {string} */ (given.label), event.ports[0]).catch(lost));
 });

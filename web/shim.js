@@ -120,7 +120,7 @@
   const REFUSED = 'x-svrngs-refused';
   /** @param {unknown} body */
   const wordsIn = (body) => {
-    const error = body && /** @type {{error?: unknown}} */ (body).error;
+    const error = /** @type {{error?: unknown} | null | undefined} */ (body)?.error;
     return typeof error === 'string' && error !== '' ? error : null;
   };
   /** @type {HTMLElement | null} */
@@ -133,6 +133,8 @@
       banner = document.createElement('div');
       banner.style.cssText =
         'position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#101014;color:#fff;padding:.75em 1em;font:16px/1.4 system-ui,sans-serif';
+      // Before the page's body is parsed there is none, whatever its type says.
+      // oxlint-disable-next-line typescript/no-unnecessary-condition
       (document.body ?? document.documentElement).append(banner);
     }
     banner.textContent = words;
@@ -290,7 +292,7 @@
       const channel = pc.createDataChannel('iroh', { ordered: false, maxRetransmits: 0 });
       channel.binaryType = 'arraybuffer';
       await pc.setLocalDescription(await pc.createOffer());
-      await new Promise((gathered) => {
+      await new Promise((/** @type {(v?: unknown) => void} */ gathered) => {
         // The timeout resolves on its own: a gathering that never completes
         // must not hold the attempt — the offer goes with what it has.
         setTimeout(gathered, 3000);
@@ -298,6 +300,7 @@
         if (pc.iceGatheringState === 'complete') gathered();
       });
       port1.postMessage({ offer: JSON.stringify(pc.localDescription) });
+      /** @param {MessageEvent<{ answer?: string, datagram?: ArrayBuffer }>} event */
       port1.onmessage = ({ data: said }) => {
         if (said.answer) void pc.setRemoteDescription(JSON.parse(said.answer));
         if (said.datagram && !globalThis.__svrngsNoWebrtc && channel.readyState === 'open')
@@ -306,7 +309,7 @@
       channel.onopen = () => port1.postMessage({ open: true });
       let back = 0;
       channel.onmessage = ({ data }) =>
-        ++back > globalThis.__svrngsCloseWebrtc
+        ++back > (globalThis.__svrngsCloseWebrtc ?? Infinity)
           ? pc.close()
           : port1.postMessage({ datagram: data }, [data]);
     };

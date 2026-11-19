@@ -7,3 +7,10 @@
 // `var`, since only a `var` is a property of globalThis; `let` would not be.
 // oxlint-disable-next-line no-var
 declare var __trace: ((line: string) => void) | undefined;
+// The direct path's two plants, set by the browser tests on a lend's page
+// and read by web/shim.js (webrtc-page): `__svrngsNoWebrtc` withholds the
+// channel's datagrams, `__svrngsCloseWebrtc` closes it after that many.
+// oxlint-disable-next-line no-var
+declare var __svrngsNoWebrtc: boolean | undefined;
+// oxlint-disable-next-line no-var
+declare var __svrngsCloseWebrtc: number | undefined;

@@ -24,6 +24,7 @@ function Line() {
     get('/v1/direct').then(set, () => {});
   }, []);
   if (!setting) return null;
+  /** @param {Error} why */
   const refusal = (why) => set({ ...setting, said: why.message });
   const turn = () => post('/v1/direct', { on: !setting.on }).then(set, refusal);
   return html`<p>${`${setting.said} `} <button onClick=${turn}>${words(setting.on)}</button></p>`;
