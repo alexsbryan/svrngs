@@ -30,6 +30,23 @@ them as recommendations):
 - **JavaScript gets no raise in advance.** At its cap, stop with the
   measured counts.
 
+**Words a person reads never say "relay"** (DESIGN §1, rule 1:
+docs/DESIGN.md:96-100). RELAY_COMMONS's design text said "shared relay";
+that was the design note's slip, not a wording to keep. Use the home page's
+own words (home-page.js, group.js): our relay is "the public way", a group's
+own is "where your group usually meets", and n0's is "its backup".
+share-refusal's two strings, before it closes (or the audit's, if it has
+closed):
+- the door's words (door.rs `spent_words`): "{by} has used its share of the
+  public way for now. Play it at full speed on the same Wi-Fi {wifi}, or in
+  the svrngs app, soon."
+- the lender's line (home-page.js): "This computer's share of the public
+  way was used up on {day}; large things you lend wait until it connects
+  afresh."
+
+The app builders' guide (docs/guide/build.md) is a developer's, and may say
+"relay".
+
 This is a dedicated worktree off main. Do not import another worktree's
 dirty files.
 - **Your scope:** this worktree and synthetic identities.
