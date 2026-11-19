@@ -327,14 +327,21 @@ mod mac {
     /// to `to`; an error when libproc fails, but for a process that exited
     /// or a file it closed while asked.
     pub(super) fn ours(me: u32, raw: Raw, at: SocketAddr, to: SocketAddr) -> std::io::Result<bool> {
-        // ESRCH: the process exited; EBADF: the file was closed.
-        let gone = |e: &std::io::Error| matches!(e.raw_os_error(), Some(3 | 9));
+        // Gone since it was listed: ESRCH, the process exited; EBADF, the
+        // file was closed; ENOTSOCK, the file was closed and its number
+        // reused for one that isn't a socket (seen 2026-11-18, the night
+        // scene's Jellyfin, while it streamed).
+        let gone = |e: &std::io::Error| matches!(e.raw_os_error(), Some(3 | 9 | 38));
         let int = |b: &[u8]| Some(i32::from_ne_bytes(b.get(..4)?.try_into().ok()?));
         let pids = kernel(Ask::Pids(me))?;
         for pid in pids.chunks_exact(4).filter_map(int) {
+            let failed = |ask: Ask, e: std::io::Error| {
+                tracing::debug!(target: "uid", ?ask, error = %e, "uid: libproc failed for one of this account's processes");
+                e
+            };
             let files = match kernel(Ask::Files(pid)) {
                 Err(e) if gone(&e) => continue,
-                files => files?,
+                files => files.map_err(|e| failed(Ask::Files(pid), e))?,
             };
             // Each a `proc_fdinfo`: the fd, then its kind, 2 a socket.
             let sockets = files
@@ -343,7 +350,7 @@ mod mac {
             for fd in sockets.filter_map(int) {
                 let socket = match kernel(Ask::Socket(pid, fd)) {
                     Err(e) if gone(&e) => continue,
-                    socket => socket?,
+                    socket => socket.map_err(|e| failed(Ask::Socket(pid, fd), e))?,
                 };
                 if socket.len() != record::SOCKET_LEN {
                     let len = socket.len();

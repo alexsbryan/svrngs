@@ -23,9 +23,10 @@ use tokio::process::{Child, Command};
 use crate::harness::{browsers, relay, relay_url, repo, site, Engine};
 
 /// The traces each person's svrngs keeps in `svrngs.log` in its `HOME`:
-/// the door's, the record's and the folder's decisions, at debug.
+/// the door's, the record's and the folder's decisions, and whose a lent
+/// program's socket was read as, at debug.
 const TRACED: &str =
-    "info,door=debug,origin=debug,folder=debug,home=debug,removal=debug,svrngs_node::ring_sync=debug,transport=warn";
+    "info,door=debug,uid=debug,origin=debug,folder=debug,home=debug,removal=debug,svrngs_node::ring_sync=debug,transport=warn";
 
 /// [`TRACED`], and the filters `SCENES_TRACED` names after it, as a run
 /// that reads iroh's path choices adds `iroh::_events=debug` (give-redial).
