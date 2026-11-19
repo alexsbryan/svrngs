@@ -538,14 +538,13 @@ pub fn admit(
     // not judged: its absence is the `SequenceHole` below. Two acts held at
     // `seq − 1` are a fork, and an act naming either follows a parent this
     // copy holds (forks void nothing, U7: the audit below names one).
-    let mut at: BTreeMap<(&str, u64), BTreeSet<&OpId>> = BTreeMap::new();
+    let mut at: BTreeMap<(&str, u64), BTreeSet<OpId>> = BTreeMap::new();
     for (id, op) in &authentic {
         at.entry((op.actor.as_str(), op.kind.seq))
             .or_default()
-            .insert(id);
+            .insert(id.clone());
     }
-    let mut broken: Vec<OpId> = Vec::new();
-    for (id, op) in &authentic {
+    authentic.retain(|id, op| {
         let seq = op.kind.seq;
         let follows = match (seq.checked_sub(1), op.kind.prev.as_ref()) {
             (None, prev) => prev.is_none(),
@@ -568,13 +567,9 @@ pub fn admit(
                 actor: op.actor.clone(),
                 seq,
             });
-            broken.push(id.clone());
         }
-    }
-    drop(at);
-    for id in &broken {
-        authentic.remove(id);
-    }
+        follows
+    });
     let parents: BTreeSet<(&str, &OpId)> = authentic
         .values()
         .filter_map(|op| Some((op.actor.as_str(), op.kind.prev.as_ref()?)))
