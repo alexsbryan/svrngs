@@ -166,15 +166,12 @@ fn request(
     let method = hyper::Method::from_bytes(method.as_bytes()).map_err(|_| Refused::Method(method.to_string()))?;
     let uri: hyper::Uri = path.parse().map_err(|_| Refused::Path(path.to_string()))?;
     let mut named = hyper::HeaderMap::new();
-    let host = headers_of(headers, |_, _, header, value| {
+    headers_of(headers, |_, _, header, value| {
         named.append(header, value);
     })?;
-    if !host {
-        named.insert(
-            hyper::header::HOST,
-            hyper::header::HeaderValue::from_static(UNNAMED_HOST),
-        );
-    }
+    named
+        .entry(hyper::header::HOST)
+        .or_insert(hyper::header::HeaderValue::from_static(UNNAMED_HOST));
     let body = match body {
         None => Either::Left(Empty::new()),
         Some(raw) => {
