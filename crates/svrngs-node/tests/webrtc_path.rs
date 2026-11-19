@@ -150,7 +150,7 @@ async fn selected(conn: &iroh::endpoint::Connection, kind: &str, by: Duration) -
     let now: Vec<String> = conn
         .paths()
         .iter()
-        .map(|p| format!("{:?} selected={}", p.remote_addr(), p.is_selected()))
+        .map(|p| format!("{:?}", p.remote_addr()))
         .collect();
     panic!("the selected path is not {kind} within {by:?}: {now:?}");
 }
