@@ -242,7 +242,6 @@ impl<'a> NativeAuthority<'a> {
             )),
             _ => None,
         };
-        let visits = lines.iter().filter_map(visit).collect();
         let mut m = Membership {
             bindings: bound
                 .iter()
@@ -259,7 +258,7 @@ impl<'a> NativeAuthority<'a> {
             keeper,
             office,
             cut: cut.collect(),
-            visits,
+            visits: lines.iter().filter_map(visit).collect(),
             slots: facts.setting().map(|(id, n)| (id.clone(), n)),
             counted,
             uncounted,

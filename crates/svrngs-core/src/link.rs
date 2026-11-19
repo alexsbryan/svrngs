@@ -160,10 +160,9 @@ impl Token {
             tracing::debug!(target: "link", "link: refused — the issuer's key is no key");
             return None;
         };
-        let secret = bytes[33..FIXED].try_into().expect("checked above");
         Some(Self {
             issuer,
-            secret,
+            secret: bytes[33..FIXED].try_into().expect("checked above"),
             relays,
         })
     }

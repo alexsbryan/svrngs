@@ -279,11 +279,9 @@ pub fn sign_act(
 /// a key that signs apart: a phone's holder, which no script holds as
 /// bytes (DESIGN §3), signs [`ring_op_message`] of its id.
 pub fn unsigned_act(actor: String, namespace: &str, ts_unix: i64, kind: SignedOp) -> Op<SignedOp> {
-    let id = content_id(namespace, &actor, ts_unix, &kind);
-    let v = kind.line_version();
     Op {
-        v,
-        id,
+        v: kind.line_version(),
+        id: content_id(namespace, &actor, ts_unix, &kind),
         ts_unix,
         actor,
         kind,
