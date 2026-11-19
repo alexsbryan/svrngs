@@ -29,6 +29,10 @@ them as recommendations):
 - **DESIGN's 60 lines are net growth**, added minus removed.
 - **JavaScript gets no raise in advance.** At its cap, stop with the
   measured counts.
+- **webrtc-node** (operator, 2026-11-18: "Approved both"): its product
+  allowance is +400, and the trust floor's line for the WebRTC peer's
+  socket (95f58944) is approved. It needs no further ask; a
+  `NEEDS_HUMAN-webrtc-floor.md` is not needed.
 
 **Words a person reads never say "relay"** (DESIGN §1, rule 1:
 docs/DESIGN.md:96-100). RELAY_COMMONS's design text said "shared relay";
