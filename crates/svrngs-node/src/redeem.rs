@@ -428,11 +428,7 @@ async fn call<T: DeserializeOwned>(
     use crate::iroh::whole;
     let no_answer = |e: String| RedeemError::NoAnswer(e);
     let body = serde_json::to_vec(body).map_err(|e| no_answer(e.to_string()))?;
-    let ask = axum::http::Request::post(route)
-        .header(axum::http::header::CONTENT_TYPE, "application/json");
-    let ask = ask
-        .body(body.into())
-        .map_err(|e| no_answer(e.to_string()))?;
+    let ask = crate::iroh::posted(route, body).map(Into::into);
     tracing::debug!(target: "redeem", route, issuer = %issuer.id.fmt_short(), "redeem: dialling the issuer by key");
     let answered = whole(net.ask_once(issuer, Alpn::Redeem, ask));
     let answer = answered.await.map_err(|e| no_answer(e.to_string()))?;

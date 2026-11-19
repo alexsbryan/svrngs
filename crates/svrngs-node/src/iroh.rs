@@ -454,10 +454,7 @@ impl Net for IrohTransport {
         let to = (std::net::Ipv4Addr::LOCALHOST, port);
         Box::pin(async move {
             let stream = tokio::net::TcpStream::connect(to).await?;
-            let conn = Conn {
-                local: stream.local_addr()?,
-                peer: stream.peer_addr()?,
-            };
+            let conn = ends(&stream)?;
             Ok((Box::new(stream) as _, conn))
         })
     }
@@ -477,6 +474,14 @@ impl Net for IrohTransport {
 /// what waits in the holder's uplink: over 40 Mbit/s one fetcher's ping p95
 /// was 110 ms at this and 261 ms at iroh's default, and the fetch no slower
 /// (`demo/runs/swarm/2026-11-08/README.md`).
+/// A TCP connection's two ends, as [`Net::owner`] reads whose they are.
+pub(crate) fn ends(stream: &tokio::net::TcpStream) -> std::io::Result<Conn> {
+    Ok(Conn {
+        local: stream.local_addr()?,
+        peer: stream.peer_addr()?,
+    })
+}
+
 pub(crate) const BLOBS_RECEIVE_WINDOW: u32 = 512 * 1024;
 
 /// A request held whole, so it can be sent again.

@@ -81,7 +81,7 @@ use crate::lend::Raw;
 use crate::lend::{self, Audience, LendName, Program, Source::Port};
 use crate::node::Asking;
 use crate::share::{self, Share, ShareRefusal};
-use crate::uid::{Conn, Owner};
+use crate::uid::Owner;
 
 /// The home page's host, before its port.
 const HOST: &str = "svrngs.localhost";
@@ -820,13 +820,7 @@ async fn lend_one(
     })?;
     // Whose program answers, read through the transport, so a test says it.
     let asked = tokio::net::TcpStream::connect(("127.0.0.1", port.get())).await;
-    let ends = |s: &tokio::net::TcpStream| {
-        Some(Conn {
-            local: s.local_addr().ok()?,
-            peer: s.peer_addr().ok()?,
-        })
-    };
-    let read = match asked.as_ref().ok().and_then(ends) {
+    let read = match asked.as_ref().ok().and_then(|s| crate::iroh::ends(s).ok()) {
         Some(conn) => at.host.transport.program(Raw::Tcp, conn).await,
         None => Owner::Unjudged("nothing answers on the port"),
     };
