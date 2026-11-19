@@ -165,17 +165,15 @@ impl Key {
             .map_err(|_| "the token's claims are not base64url")?;
         let claims: Claims = serde_json::from_slice(&payload)
             .map_err(|_| "the token's claims are not a sign-in's")?;
-        if claims.iss != issuer {
-            return Err("the token is another issuer's");
+        match () {
+            _ if claims.iss != issuer => Err("the token is another issuer's"),
+            _ if claims.aud != client => Err("the token is another client's"),
+            _ if claims.exp <= at => Err("the token has expired"),
+            _ => {
+                tracing::debug!(target: "oidc", kid = %self.kid, "oidc: a token verified under this computer's key");
+                Ok(claims)
+            }
         }
-        if claims.aud != client {
-            return Err("the token is another client's");
-        }
-        if claims.exp <= at {
-            return Err("the token has expired");
-        }
-        tracing::debug!(target: "oidc", kid = %self.kid, "oidc: a token verified under this computer's key");
-        Ok(claims)
     }
 
     /// The JWKS an app fetches: this key alone, `EC` on `P-256`, its `x` and
