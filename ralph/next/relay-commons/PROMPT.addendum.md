@@ -40,6 +40,15 @@ them as recommendations):
   `ralph/next/relay-commons/ctl/self-host-a.patch` (four files, green, made
   before webrtc-page shared the worktree). `git apply` it first, then
   continue at NEEDS_HUMAN-self-host.md §4.
+- **webrtc-page resumes from its patch** (operator, 2026-11-19: "Raise the
+  JS cap to 8,668"; e46447fe, JavaScript most 8,667). Its page side is set
+  aside in `ralph/next/relay-commons/ctl/webrtc-page.patch`, out of the
+  worktree while self-host ran: `git apply` it first, then continue at
+  NEEDS_HUMAN-webrtc-page.md §3. Fix one bug first, planted: in its
+  `web/shim.js`, `setTimeout(done, 3000)` never ends the wait, since `done`
+  resolves only once `iceGatheringState` is `complete`. Resolve on the
+  timeout unconditionally, so a gathering that never completes still sends
+  its offer after 3 s.
 - **DESIGN's 60 lines are net growth**, added minus removed.
 - **JavaScript gets no raise in advance.** At its cap, stop with the
   measured counts.
