@@ -6,12 +6,14 @@
 #
 # The operator runs it and types the release key's passphrase in gpg's
 # dialog; no agent signs (RELEASES.md, "Signed releases"). It signs what
-# deploy-page.sh built and published, after verify.py read it back.
+# `deploy-page.sh --build` built, before `deploy-page.sh --site` deploys
+# it: the page then carries get/SHA256SUMS.sig, which svrngs update
+# requires (DESIGN §7).
 #
 #   scripts/sign-release.sh v1.11.1 <commit> <site>
 #
-# <site> is the directory deploy-page.sh printed; its get/ holds the
-# downloads and SHA256SUMS. The notes are RELEASES.md's section for the
+# <site> is the directory `deploy-page.sh --build` printed; its get/ holds
+# the downloads and SHA256SUMS. The notes are RELEASES.md's section for the
 # version, as the tagged commit has it.
 set -eu
 tag=$1 commit=$2 get=$3/get
