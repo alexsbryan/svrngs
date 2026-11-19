@@ -14,8 +14,11 @@ the key, and a PKGBUILD names this fingerprint in `validpgpkeys`, as
 svrngs's own does ([`packaging/arch`](packaging/arch/README.md)). To check
 one yourself, run `gpg --import svrngs-release-key.asc`, then
 `gpg --verify SHA256SUMS.sig SHA256SUMS`, then
-`shasum -a 256 -c SHA256SUMS`. The key signs only when the person who
-releases svrngs types its passphrase (`scripts/sign-release.sh`).
+`shasum -a 256 -c SHA256SUMS`. From the next release, the installer
+installs exactly the file you checked, and the link's page only joins:
+`sh install.sh --archive svrngs-<os>-<arch>.tar.gz '<your link>'`. The
+key signs only when the person who releases svrngs types its passphrase
+(`scripts/sign-release.sh`).
 
 ## V1.11.2, 18 November 2026
 

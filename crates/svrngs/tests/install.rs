@@ -1084,6 +1084,143 @@ fn install_sh_refuses_give_off_its_sum_and_installs_nothing() {
     );
 }
 
+/// A tarball in `dir` holding `program`, a script `script`: a release
+/// someone checked, as they give it to the line.
+fn checked(dir: &Path, program: &str, script: &str) -> PathBuf {
+    let made = dir.join(program);
+    std::fs::create_dir_all(&made).unwrap();
+    std::fs::write(made.join(program), script).unwrap();
+    let exec = std::os::unix::fs::PermissionsExt::from_mode(0o755);
+    std::fs::set_permissions(made.join(program), exec).unwrap();
+    let tarball = dir.join(format!("checked {program}.tar.gz"));
+    let tar = std::process::Command::new("tar")
+        .arg("-czf")
+        .arg(&tarball)
+        .arg("-C")
+        .arg(&made)
+        .arg(program)
+        .status();
+    assert!(tar.unwrap().success());
+    tarball
+}
+
+/// `file`'s SHA-256, as install.sh keeps it in the release record.
+fn sum_of(file: &Path) -> String {
+    let bytes = std::fs::read(file).unwrap();
+    hex::encode(ring::digest::digest(&ring::digest::SHA256, &bytes))
+}
+
+/// **A release someone checked is installed as given, and the page only
+/// joins** (svrn-docs MARKETPLACE_REVIEW_SVRNGS.md §1): the page serves
+/// another svrngs and Give's program, with sums that match them, as a page
+/// someone else runs could. With `--archive` and `--give-archive` beside
+/// `--give`, each program installed is the given file's byte for byte, no
+/// file under the page's `get/` is fetched, the release kept is the given
+/// file's sum, and the page is still kept; `--archive` stands before the
+/// link as after it. Without them, the page's and its sum, as before.
+/// Watched failing on install.sh before `--archive`: the flag taken for
+/// join's, and the page's svrngs installed.
+#[test]
+fn install_sh_installs_the_archive_it_is_given_and_never_the_page_s() {
+    let site = site_of(Some(&format!("{STAND_IN}# the page's\n")), None);
+    let given = tempfile::tempdir().unwrap();
+    let ours = format!("{STAND_IN}# the release you checked\n");
+    let archive = checked(given.path(), "svrngs", &ours);
+    let give = "#!/bin/sh\necho \"checked give $*\"\n";
+    let give_archive = checked(given.path(), "give", give);
+    let (a, g) = (archive.display(), give_archive.display());
+    let after = format!(" --archive '{a}' --give --give-archive '{g}'");
+    // Before the link, as a caller that checked the release writes it.
+    let before = format!(" '{a}' '{PAGE}'");
+    for (link, more, gave) in [(PAGE, after.as_str(), true), ("--archive", &before, false)] {
+        let home = tempfile::tempdir().unwrap();
+        let _started = Started(home.path().to_path_buf());
+        let out = line(site.path(), link, more, home.path(), None, None);
+        let said = String::from_utf8_lossy(&out.stdout);
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert!(out.status.success(), "{more}: {said}{err}");
+        let bin = home.path().join(".local/bin");
+        assert_eq!(std::fs::read_to_string(bin.join("svrngs")).unwrap(), ours);
+        let used = format!("Using svrngs from {a}, the file you gave, in place of the page's.");
+        assert!(said.contains(&used), "not said: {used}\n{said}");
+        if gave {
+            assert_eq!(std::fs::read_to_string(bin.join("give")).unwrap(), give);
+        }
+        let fetched = std::fs::read_to_string(home.path().join("stubs/fetched")).unwrap();
+        assert_eq!(
+            fetched,
+            format!("{PAGE}install.sh\n"),
+            "the page's get/ asked"
+        );
+        let data = home.path().join(".svrngs");
+        let release = std::fs::read_to_string(data.join(RELEASE_FILE)).unwrap();
+        assert_eq!(
+            release,
+            sum_of(&archive),
+            "the release kept is the file given"
+        );
+        let origin = std::fs::read_to_string(data.join(ORIGIN_FILE)).unwrap();
+        assert_eq!(origin, PAGE, "the page is still kept, for links");
+    }
+
+    let home = tempfile::tempdir().unwrap();
+    let _started = Started(home.path().to_path_buf());
+    let out = line(site.path(), PAGE, "", home.path(), None, None);
+    assert!(out.status.success(), "{out:?}");
+    let installed = home.path().join(".local/bin/svrngs");
+    assert!(std::fs::read_to_string(installed)
+        .unwrap()
+        .ends_with("# the page's\n"));
+    let sums = std::fs::read_to_string(site.path().join("get/SHA256SUMS")).unwrap();
+    let release = std::fs::read_to_string(home.path().join(".svrngs").join(RELEASE_FILE));
+    assert!(
+        sums.starts_with(&release.unwrap()),
+        "the page's sum kept: {sums}"
+    );
+    let fetched = std::fs::read_to_string(home.path().join("stubs/fetched")).unwrap();
+    assert!(
+        fetched.contains(&format!("{PAGE}get/SHA256SUMS")),
+        "{fetched}"
+    );
+}
+
+/// An archive the line cannot use is refused before anything is installed
+/// or fetched from the page's `get/`, saying what to give instead: a file
+/// that is not there, `--archive` with no file, a file holding no svrngs,
+/// and `--give-archive` without `--give`, which alone installs Give's
+/// program. Watched failing on install.sh before `--archive`.
+#[test]
+fn install_sh_refuses_an_archive_it_cannot_use_and_installs_nothing() {
+    let site = stand_in_site(None);
+    let given = tempfile::tempdir().unwrap();
+    let junk = given.path().join("junk.tar.gz");
+    std::fs::write(&junk, "not a tarball").unwrap();
+    let give = checked(given.path(), "give", "#!/bin/sh\n");
+    let gone = given.path().join("gone.tar.gz");
+    let refusals = [
+        (format!(" --archive '{}'", gone.display()), format!("{} is not a file you can read, so nothing was installed: give --archive the release you checked.", gone.display())),
+        (" --archive".into(), "--archive wants the file of the release you checked, as svrngs-linux-x86_64.tar.gz is.".into()),
+        (format!(" --archive '{}'", junk.display()), format!("{} holds no svrngs program, so nothing was installed.", junk.display())),
+        (format!(" --give-archive '{}'", give.display()), "--give-archive is the file of Give's program, which only --give installs: add --give after the link.".into()),
+    ];
+    for (more, words) in refusals {
+        let home = tempfile::tempdir().unwrap();
+        let out = line(site.path(), PAGE, &more, home.path(), None, None);
+        let err = String::from_utf8_lossy(&out.stderr);
+        assert_eq!(out.status.code(), Some(1), "{more}: {err}");
+        assert!(err.contains(&words), "{more}: not said: {words}\n{err}");
+        assert!(
+            !home.path().join(".local/bin/svrngs").exists(),
+            "{more}: installed anyway"
+        );
+        let fetched = std::fs::read_to_string(home.path().join("stubs/fetched")).unwrap();
+        assert!(
+            !fetched.contains("get/"),
+            "{more}: the page's get/ asked: {fetched}"
+        );
+    }
+}
+
 /// `--relay <name> --open` on macOS: a LaunchAgent of its own running
 /// `svrngs relay <name> --open`, bootstrapped once, svrngs's own untouched.
 #[cfg(target_os = "macos")]

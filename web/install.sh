@@ -19,8 +19,17 @@
 #
 #   curl -fsSL <page>install.sh | sh -s -- '<page>' --relay <name> [--open]
 #
+# or, for whoever already checked a release from its signature, with that
+# release's file, before the link or after it (--give-archive is Give's
+# program's, with --give):
+#
+#   sh install.sh --archive <file> '<link or page>' [--give --give-archive <file>]
+#
 # It gets svrngs for this computer from the page's address the link names
-# (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, puts
+# (else $SVRNGS_FROM), refuses it unless it matches SHA256SUMS there, or
+# takes it from --archive's file as given, asking the page for no sums: a
+# release checked by its signature is installed exactly, and the page then
+# only joins and is kept for links, so it cannot choose the program. It puts
 # it in ~/.local/bin with no sudo, and on the PATH of the person's login
 # shell when it is zsh or bash, joins the link as `svrngs join` does
 # when there is one, keeps the page it came from in the data dir (where a
@@ -46,6 +55,18 @@ no() {
   exit 1
 }
 
+# --archive <file> and --give-archive <file> taken out wherever they stand,
+# the rest kept in their order.
+archive="" give_archive="" n=$#
+while [ "$n" -gt 0 ]; do
+  case "$1" in
+    --archive | --give-archive)
+      [ "$n" -gt 1 ] && [ -n "$2" ] || no "$1 wants the file of the release you checked, as svrngs-linux-x86_64.tar.gz is."
+      if [ "$1" = --archive ]; then archive="$2"; else give_archive="$2"; fi
+      shift 2 && n=$((n - 2)) ;;
+    *) set -- "$@" "$1" && shift && n=$((n - 1)) ;;
+  esac
+done
 link="${1:-}"
 if [ $# -gt 0 ]; then shift; fi # what follows the link, `--as <name>`, is join's
 relay=""
@@ -57,6 +78,8 @@ if [ "${1:-}" = --relay ]; then
 fi
 give=""
 [ "${1:-}" != --give ] || { give=give && shift; }
+[ -z "$give_archive" ] || [ -n "$give" ] ||
+  no "--give-archive is the file of Give's program, which only --give installs: add --give after the link."
 destination="/"
 if [ "${1:-}" = --at ]; then
   destination="${2:-}"
@@ -87,27 +110,37 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
-curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
-  no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
 sum=sha256sum && command -v sha256sum >/dev/null 2>&1 || sum="shasum -a 256"
-# Program $1 for this computer, from the page's get/ (scripts/build-release.sh),
-# refused unless it is the one SHA256SUMS lists, and unpacked in $tmp.
+# Program $1 for this computer, unpacked in $tmp, its tarball's sum in $want:
+# from the file $2 when one is given, copied first so the bytes summed are
+# the bytes installed; else from the page's get/ (scripts/build-release.sh),
+# refused unless it is the one SHA256SUMS there lists.
 get() {
   tarball="$1-$os-$arch.tar.gz"
-  say "Getting $1 for this computer from ${from}get/$tarball"
-  curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
-    no "could not get ${from}get/$tarball, so nothing was installed."
-  want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
-  got="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
-  [ -n "$want" ] && [ "$got" = "$want" ] ||
-    no "$tarball is not the one the release lists, so it was refused and nothing was installed."
-  say "Checked: $tarball is the one the release lists, unchanged on its way here."
-  tar -xzf "$tmp/$tarball" -C "$tmp" "$1" && chmod 755 "$tmp/$1"
+  if [ -n "$2" ]; then
+    [ -f "$2" ] && [ -r "$2" ] && cp -- "$2" "$tmp/$tarball" ||
+      no "$2 is not a file you can read, so nothing was installed: give --$3archive the release you checked."
+    say "Using $1 from $2, the file you gave, in place of the page's."
+    want="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
+  else
+    [ -f "$tmp/SHA256SUMS" ] || curl -fsSL "${from}get/SHA256SUMS" -o "$tmp/SHA256SUMS" ||
+      no "could not get ${from}get/SHA256SUMS to check it against, so nothing was installed."
+    say "Getting $1 for this computer from ${from}get/$tarball"
+    curl -fsSL "${from}get/$tarball" -o "$tmp/$tarball" ||
+      no "could not get ${from}get/$tarball, so nothing was installed."
+    want="$(awk -v f="$tarball" '$2 == f || $2 == "*" f { print $1 }' "$tmp/SHA256SUMS")"
+    got="$($sum "$tmp/$tarball" | cut -d' ' -f1)"
+    [ -n "$want" ] && [ "$got" = "$want" ] ||
+      no "$tarball is not the one the release lists, so it was refused and nothing was installed."
+    say "Checked: $tarball is the one the release lists, unchanged on its way here."
+  fi
+  tar -xzf "$tmp/$tarball" -C "$tmp" "$1" && chmod 755 "$tmp/$1" ||
+    no "${2:-$tarball} holds no $1 program, so nothing was installed."
 }
 # Both are checked before either is installed, so a refusal installs nothing.
-get svrngs
+get svrngs "$archive" ""
 svrngs_sum="$want"
-[ -z "$give" ] || get give
+[ -z "$give" ] || get give "$give_archive" give-
 
 dir="${SVRNGS_DIR:-$HOME/.svrngs}"
 bin="$HOME/.local/bin"

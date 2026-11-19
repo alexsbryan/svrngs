@@ -2659,7 +2659,13 @@ on mimalloc, since the malloc of zig's musl kept what svrngs freed
 fetched from anywhere else. `install.sh`, POSIX `sh`:
 - names the platform and refuses any other;
 - fetches the tarball and the sums from the address the link names, and
-  refuses a mismatch;
+  refuses a mismatch; or, given `--archive <file>` before the link or after
+  it (and `--give-archive <file>` with `--give`), installs that file as
+  given and asks the page for no sums for it. Whoever already checked a
+  release, from its signature, installs exactly that; the page then only
+  joins and is kept for links, and cannot choose the program. The release
+  kept for `svrngs update` is that file's sum. A file it cannot read or
+  that holds no program is refused, and nothing is installed;
 - installs into `~/.local/bin`, never with `sudo`, and puts it on the PATH
   of the person's login shell when that is zsh or bash, once, in the
   profile a new terminal window reads, and says so;
@@ -2694,9 +2700,10 @@ creation time on a second line, beside the hash; a computer with none kept, as
 `install.sh` leaves it, takes any validly signed sums, and its first checked
 update sets the floor. A missing, foreign or older signature is never offered:
 the home page says, where the offer would be, what stopped, why and the fix,
-and `svrngs update` says the same and exits 1. The install line is not
-covered, since it runs whatever the page serves; pacman checks the release key
-itself (`packaging/arch`).
+and `svrngs update` says the same and exits 1. The install line checks no
+signature: it runs whatever the page serves, unless it is given a release
+already checked (`--archive`, above); pacman checks the release key itself
+(`packaging/arch`).
 
 *A computer that keeps apps* gets Give's program from the same line, with
 `--give` after the link or the page's address. The page host serves it
