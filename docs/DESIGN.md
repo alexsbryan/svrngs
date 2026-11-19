@@ -2780,6 +2780,13 @@ the page carries its release's signature:
    `svrngs-release-key.asc` in a keyring of its own, refuses a site without a
    valid signature, and publishes one with it.
 
+The release's own last step is pacman's package. `scripts/arch-package.py
+<version>` reads the GitHub release back, checking it against the release
+key and nothing else, and writes `packaging/arch/PKGBUILD`'s version and
+sums from it. It then checks the result with `makepkg --verifysource` in an
+Arch container, after that check has refused a copy with one sum changed.
+The release's record keeps its verdict.
+
 With no argument it refuses and names the three steps. Each run reads
 `cli::SHIPPED` (§3, "Where a computer meets its groups"): a build at n0's
 relays it goes on with and says so; a build at svrngs's it refuses while the
