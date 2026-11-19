@@ -193,11 +193,10 @@ fn authored<C: Command>(
     // Write side equals replay (EUDOXIA_JUDGE §2): past the command's own
     // refusals, the group's interpreter says whether each line would count,
     // never a rule here.
-    if let Some(id) = ids.iter().find(|id| !after.membership().counts(id)) {
-        let why = after.membership().uncounted.get(id).cloned();
-        tracing::debug!(target: "rail:door", ns = a.namespace, %actor, %id, ?why,
+    if let Some(line) = lines.iter().find(|l| !after.membership().counts(&l.id)) {
+        let why = after.membership().uncounted.get(&line.id).cloned();
+        tracing::debug!(target: "rail:door", ns = a.namespace, %actor, id = %line.id, ?why,
             "commit refused — the group's interpreter would not count the line");
-        let line = lines.iter().find(|l| l.id == *id).expect("written");
         return Err(Refused::Uncounted(Uncounted::of(&after, line, why)));
     }
     Ok(Authored(lines, Some((a.roster.clone(), after))))
