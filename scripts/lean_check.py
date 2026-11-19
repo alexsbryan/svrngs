@@ -841,12 +841,18 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (2026-11-19) Raised again by the operator: self-host (b3ae73f2) took +7
 # of that for the group's own relay on the home page, so webrtc-page's +56
 # needs 8,674. JavaScript 8,667 -> 8,674.
+# (2026-11-19) The relay queue (ralph/relay-commons) rebased onto V1.12.2: each
+# fit alone, together all code but JavaScript 23,795 and JavaScript 8,687. The
+# operator chose an economizing pass (2026-11-19: "Do an economize pass"), not
+# a raise: these are the merge's counts as the pass's start, each of its cuts
+# to land the counts back under 23,101 and 8,674, and the caps then lowered to
+# where they land.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
-    ".": 23102,
+    ".": 23796,
 
-    "js": 8675,
+    "js": 8688,
 
     "swift": 1,
 }
