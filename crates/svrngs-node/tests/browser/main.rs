@@ -760,8 +760,15 @@ const FILM_PART: (u64, u64) = (0, MIB - 1);
 /// flakes/2026-11-12), and decoding varies with the host's load and media
 /// stack where the bytes do not.
 fn film_answered(answer: &Value, mp4: &Path, what: &str, shown: &Value) {
+    film_part_answered(answer, mp4, FILM_PART, what, shown);
+}
+
+/// [`film_answered`]'s judgment of `part` of the film `mp4`, for a test
+/// that fetches another part (webrtc-page's close: eight of the film's
+/// mebibytes, so the close is mid-film).
+fn film_part_answered(answer: &Value, mp4: &Path, part: (u64, u64), what: &str, shown: &Value) {
     let film = std::fs::read(mp4).unwrap();
-    let (from, to) = FILM_PART;
+    let (from, to) = part;
     let want = json!({
         "status": 206,
         "type": "video/mp4",

@@ -160,3 +160,53 @@ is served in (`web/shim.js`'s `{webrtc: 'here', label}`); (c) the runs
 that finish take ~80 ms for the same 1 MiB, so the stall is a state, not
 a rate.
 
+## 6. The stall found and fixed, and the row's checks green (2026-11-19, third session)
+
+**The stall was lifetime, not loss.** The worker's data endpoint was held
+by `direct()`'s local `Direct` alone; wasm-bindgen 0.2.128 frees an
+exported object when its JS wrapper is collected, so a GC mid-fetch
+dropped the iroh endpoint — `ERROR iroh::socket: Endpoint dropped without
+calling `Endpoint::close`. Aborting ungracefully.` in the worker's trace
+(`target/probe-run4.log`), the data connection's `I/O error: connection
+closed` after it, and the fetch never ended. GC timing is the
+intermittency, and why the browser tier sometimes passed. `Direct` is now
+held in `directs` — the map that already guards the one attempt per
+lender — and let go with its dial, or when a new pass arrives.
+
+**Two more faults the runs found, both fixed:**
+
+- `Direct::dial`'s second dial (the relay beside the custom address) may
+  be established by iroh on the relay alone, the custom address untried
+  (the spike's Q1, read again): the film then rides the relay and the
+  channel carries nothing. The first dial's connection — the custom path —
+  is now kept, and whichever connection holds the custom path carries the
+  dial; `Direct::go` waits, bounded (3 s), for that path to be selected,
+  and says so in the trace when it never is.
+- The tests' sandboxes (lend-worker, carried, lost-answer, proxied) cut
+  lend.js's parts and needed `directs` declared among their stand-ins.
+
+**The row's third check is written**
+(`the_channel_closed_mid_film_completes_over_the_relay`, both engines): a
+6 MiB part of the film, with the window closing the channel once
+`__svrngsCloseWebrtc` (a new tests' global in the shim, counting the wire
+itself) datagrams have come through it; the part must arrive whole, and
+within 4 s of the close's stall. Measured: 3,385-3,563 ms (Chromium and
+WebKit; the spike's Q3 was 3,188/3,180). Planted: the second dial without
+the relay, where the bytes after the close never come —
+`TypeError: FetchEvent.respondWith received an error: Error: error
+reading a body from connection` (`target/close-plant4.log`).
+
+**The checks, green:** `webrtc_page::` 6 passed, both engines, several
+runs; `the_published_page_allows_no_loopback` 1 passed; `webrtc_path` 1
+passed; `cargo test -p svrngs-node --lib webrtc` 7 passed; `node
+web/tests/run.mjs unit` 360 passed; `scripts/build-web.sh --lint` clean;
+oxlint and oxfmt clean; rustfmt clean; lean JavaScript 8,673 of 8,674,
+non-JS 22,541 of 23,101, core 3,524 of 3,539.
+
+**For the audit:** `scripts/trust_check.py` needs a git-visible checkout.
+This worktree's `.git` points at the main checkout's
+`.git/worktrees/...`, which the `svrngs-gate` container's `/work` mount
+does not hold, so its git steps there fail and every listener looks gone
+(`python3 scripts/trust_check.py` in this worktree on the host exits 0).
+Mount the main `.git` too, or run the gate from a plain clone.
+

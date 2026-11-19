@@ -100,20 +100,93 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
         trace.contains("goes direct"),
         "the worker must say the direct path came up:\n{shown:#}"
     );
-    // The line's own JSON, as the worker printed it (`Direct::paths`):
-    // serde_json orders an object's keys, so `kind` and `selected` are not
-    // adjacent, and the path is read rather than matched as text (the
-    // first runs of this test failed on that).
-    let paths: Value = trace
-        .lines()
-        .find_map(|l| l.split_once("goes direct: ").map(|(_, paths)| paths))
-        .and_then(|paths| serde_json::from_str(paths).ok())
-        .expect("the direct path's line holds its paths as JSON");
     assert!(
-        paths.as_array().is_some_and(|paths| paths
-            .iter()
-            .any(|path| path["kind"] == "webrtc" && path["selected"] == true)),
+        webrtc_selected(&goes_direct_paths(trace)),
         "the data connection's selected path must be webrtc:\n{shown:#}"
+    );
+    drop(ada);
+}
+
+in_both_engines!(
+    /// **The channel closed mid-film completes over the relay within 4 s**
+    /// (webrtc-page; RELAY_COMMONS design 4): the film's part rides
+    /// `webrtc*` (the worker waits for that selection, `Direct::go`), and
+    /// the window closes the channel once `__svrngsCloseWebrtc` datagrams
+    /// have come through it — a count of the wire's own, so the close
+    /// lands mid-film however far the page's reading runs behind; the
+    /// part must still arrive whole, and within 4 s of the close's stall —
+    /// the paths are given up after their 3 s of silence (`paths.rs`
+    /// `PATH_IDLE`, the spike's Q3: 3,188 ms in Chromium, 3,180 in
+    /// WebKit) with the relay beside them. The plant: the data endpoint's
+    /// second dial without the relay, where the bytes after the close
+    /// never come (`target/close-plant4.log`).
+    the_channel_closed_mid_film_completes_over_the_relay
+);
+async fn the_channel_closed_mid_film_completes_over_the_relay(engine: Engine) {
+    let site = site();
+    let relay = relay().await;
+    let bo = signing(7);
+    let dir = tempfile::tempdir().unwrap();
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    direct_on(dir.path());
+
+    let seen = drive(
+        engine,
+        "runtime.mjs",
+        json!({
+            "site": site,
+            "key": hex::encode(bo.to_bytes()),
+            "token": token(&signing(1), &relay),
+            "open": "page",
+            // 6 MiB, a fifth of the film, with the window closing the
+            // channel once 2000 datagrams have come through it: the
+            // wire's own count, so the close lands mid-film (about
+            // 2.5 MiB in) however far the page's reading runs behind,
+            // and the rest (about 3.5 MiB) fits the relay inside the 4 s.
+            "close": {
+                "path": "title.mp4",
+                "range": format!("bytes=0-{}", 6 * MIB - 1),
+                "after": 2000,
+            },
+            "direct": true,
+        }),
+        None,
+    )
+    .await;
+    let mut shown = seen.clone();
+    shown["trace"] = json!(format!(
+        "{} lines",
+        seen["trace"].as_str().map_or(0, |t| t.lines().count())
+    ));
+    eprintln!("the closed channel's run: {shown}");
+    eprintln!(
+        "the closed channel's trace:\n{}",
+        seen["trace"].as_str().unwrap_or_default()
+    );
+    assert!(at_origin(&seen["opened"], &label(1, "page")), "{shown:#}");
+    film_part_answered(
+        &seen["first"],
+        &mp4,
+        (0, 6 * MIB - 1),
+        "closed mid-film, over the relay",
+        &seen,
+    );
+    let trace = seen["trace"].as_str().unwrap_or_default();
+    assert!(
+        trace.contains("goes direct"),
+        "the channel closed mid-film is only a check with a direct path to close:\n{shown:#}"
+    );
+    assert!(
+        webrtc_selected(&goes_direct_paths(trace)),
+        "the film must be riding the window's channel before it is closed:\n{shown:#}"
+    );
+    // The paths are given up after their 3 s of silence, so a fallback
+    // that never happened (the close not reaching the channel) would
+    // answer the rest at once; the bar is the row's 4 s.
+    let fallback = seen["first"]["fallbackMs"].as_u64().unwrap_or(u64::MAX);
+    assert!(
+        (2500..=4000).contains(&fallback),
+        "the bytes after the channel closed must arrive over the relay within 4 s, took {fallback} ms:\n{shown:#}"
     );
     drop(ada);
 }
@@ -168,4 +241,25 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
         "no direct path may come up while the window withholds the datagrams:\n{shown:#}"
     );
     drop(ada);
+}
+
+/// The paths the trace's `goes direct` line holds, as JSON (`Direct::paths`):
+/// serde_json orders an object's keys, so `kind` and `selected` are not
+/// adjacent, and a path is read rather than matched as text (the first
+/// runs of these tests failed on that).
+fn goes_direct_paths(trace: &str) -> Value {
+    trace
+        .lines()
+        .find_map(|l| l.split_once("goes direct: ").map(|(_, paths)| paths))
+        .and_then(|paths| serde_json::from_str(paths).ok())
+        .expect("the direct path's line holds its paths as JSON")
+}
+
+/// Whether `paths` names `webrtc` as the selected one.
+fn webrtc_selected(paths: &Value) -> bool {
+    paths.as_array().is_some_and(|paths| {
+        paths
+            .iter()
+            .any(|path| path["kind"] == "webrtc" && path["selected"] == true)
+    })
 }

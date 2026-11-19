@@ -20,6 +20,7 @@
 //   node web/tests/runtime.mjs '{"engine": "chromium"|"webkit", "site": ...,
 //     "key": ..., "token": ...,
 //     "open": "<the lend's name>", "seeks": [s, s, s] | "film": {"path", "range"},
+//     "close": {"path", "range", "after"} | "withhold": true | "direct": true,
 //     "other": {"lend": "<label>", "path": "<file>", "range": "bytes=a-b"}}'
 //
 // Exit 0 with the JSON line; 3, naming the install command, when Playwright
@@ -49,6 +50,60 @@ async function range({ lend, path, range }) {
     };
   } catch (e) {
     return { error: String(e) };
+  }
+}
+
+// In the lend's page: `close.path`'s range read whole, with the window's
+// channel closed once `close.after` datagrams have crossed it
+// (`__svrngsCloseWebrtc`, shim.js) — a wire-side count, so the close
+// lands mid-film however far the page's reading runs behind — and the
+// longest stall between its reads, which is the fallback: the bytes after
+// the close arrive over the relay within `fallbackMs` (webrtc-page).
+async function closedFetch({ path, range, after }) {
+  const src = document.querySelector('video')?.currentSrc || document.querySelector('video')?.src;
+  try {
+    const signal = AbortSignal.timeout(60_000);
+    globalThis.__svrngsCloseWebrtc = after;
+    const res = await fetch(new URL(path, location.href), { headers: { range }, signal });
+    const reader = res.body.getReader();
+    const parts = [];
+    let bytes = 0;
+    let gap = 0;
+    let stall = 0;
+    let last = performance.now();
+    for (;;) {
+      const { value, done } = await reader.read();
+      const now = performance.now();
+      if (now - last > gap) {
+        gap = now - last;
+        stall = last;
+      }
+      last = now;
+      if (done) break;
+      parts.push(value);
+      bytes += value.byteLength;
+    }
+    const all = new Uint8Array(bytes);
+    let at = 0;
+    for (const part of parts) {
+      all.set(part, at);
+      at += part.byteLength;
+    }
+    const sha = [...new Uint8Array(await crypto.subtle.digest('SHA-256', all))]
+      .map((x) => x.toString(16).padStart(2, '0'))
+      .join('');
+    return {
+      src: src ?? null,
+      status: res.status,
+      type: res.headers.get('content-type'),
+      contentRange: res.headers.get('content-range'),
+      bytes,
+      sha,
+      gapMs: Math.round(gap),
+      fallbackMs: stall === 0 ? null : Math.round(performance.now() - stall),
+    };
+  } catch (e) {
+    return { src: src ?? null, error: String(e) };
   }
 }
 
@@ -97,11 +152,14 @@ try {
     while (Date.now() < by && !(await traced()).includes('goes direct'))
       await new Promise((r) => setTimeout(r, 250));
   }
-  // The film played (`play`, the playback step's), or its range fetched.
-  const look = (page) =>
-    args.seeks
-      ? page.evaluate(play, { at: null, within: 15_000 })
-      : page.evaluate(fetched, args.film);
+  // The film played (`play`, the playback step's), or its range fetched;
+  // `args.close` fetches it with the window's channel closed part-way
+  // through (`closedFetch`, webrtc-page).
+  const look = (page) => {
+    if (args.seeks) return page.evaluate(play, { at: null, within: 15_000 });
+    if (args.close) return page.evaluate(closedFetch, args.close);
+    return page.evaluate(fetched, args.film);
+  };
   const first = await look(page);
   const trace = args.direct || args.withhold ? await traced() : null;
   const seeks = [];

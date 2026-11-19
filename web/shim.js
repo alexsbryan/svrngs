@@ -278,23 +278,24 @@
   // The window's half of the direct path (webrtc-page; RELAY_COMMONS
   // design 4): a worker has no RTCPeerConnection, so this window holds the
   // channel and passes each datagram between it and the worker over a
-  // port. `__svrngsNoWebrtc`, which the tests set, withholds the
-  // datagrams: the lend stays relayed, as the plant says.
+  // port. Two globals are the tests': `__svrngsNoWebrtc` withholds the
+  // datagrams (the lend stays relayed, as the plant says), and
+  // `__svrngsCloseWebrtc` closes the channel once that many have crossed
+  // it — the close mid-film the fallback is judged by.
   if (workers && window.top === window) {
     const { port1, port2 } = new MessageChannel();
-    port1.onmessage = async ({ data: asked }) => {
-      if (asked.webrtc !== 'ask') return;
+    // The worker posts its one ask on this port (`Direct::go`).
+    port1.onmessage = async () => {
       const pc = new RTCPeerConnection({ iceServers: [] });
       const channel = pc.createDataChannel('iroh', { ordered: false, maxRetransmits: 0 });
       channel.binaryType = 'arraybuffer';
       await pc.setLocalDescription(await pc.createOffer());
       await new Promise((gathered) => {
-        const done = () => pc.iceGatheringState === 'complete' && gathered();
-        pc.onicegatheringstatechange = done;
         // The timeout resolves on its own: a gathering that never completes
         // must not hold the attempt — the offer goes with what it has.
         setTimeout(gathered, 3000);
-        done();
+        pc.onicegatheringstatechange = () => pc.iceGatheringState === 'complete' && gathered();
+        if (pc.iceGatheringState === 'complete') gathered();
       });
       port1.postMessage({ offer: JSON.stringify(pc.localDescription) });
       port1.onmessage = ({ data: said }) => {
@@ -303,7 +304,11 @@
           channel.send(said.datagram);
       };
       channel.onopen = () => port1.postMessage({ open: true });
-      channel.onmessage = ({ data }) => port1.postMessage({ datagram: data }, [data]);
+      let back = 0;
+      channel.onmessage = ({ data }) =>
+        ++back > globalThis.__svrngsCloseWebrtc
+          ? pc.close()
+          : port1.postMessage({ datagram: data }, [data]);
     };
     // The lend this page is of, as the worker named it on this script's
     // address (`l`): the worker answers the announcement for that lend.
