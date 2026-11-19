@@ -1032,9 +1032,11 @@ impl Direct {
         // The direct path is the attempt's point, and iroh may settle the
         // connection on the relay first (the channel is still opening),
         // leaving the film there: wait, bounded, for `webrtc` to be the
-        // selected path — the spike's Q1, 100 ms there. The relay carries
-        // if it never is, said in the trace.
-        let by = n0_future::time::Instant::now() + std::time::Duration::from_secs(3);
+        // selected path — the spike's Q1, 100 ms there — for as long as a
+        // silent path lives (`paths::PATH_IDLE`), since one not selected by
+        // then is given up. The relay carries if it never is, said in the
+        // trace.
+        let by = n0_future::time::Instant::now() + paths::PATH_IDLE;
         while !self.webrtc_selected() && n0_future::time::Instant::now() < by {
             n0_future::time::sleep(std::time::Duration::from_millis(25)).await;
         }
