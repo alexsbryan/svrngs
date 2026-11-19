@@ -386,10 +386,13 @@ impl Node {
         // The WebRTC wire is bound with the endpoint, so an offer's peer
         // rides this computer's own network and nothing above iroh changes
         // (webrtc-node; RELAY_COMMONS design 4).
-        let (endpoint, webrtc) = crate::webrtc::endpoint(
+        let (webrtc, wire) = crate::webrtc::WebRtc::new(secret.public().as_bytes());
+        let endpoint = crate::guest::build_relayed_endpoint_with(
             secret,
             Alpn::ALL.iter().map(|a| a.bytes().to_vec()).collect(),
             &at,
+            Some(wire),
+            Some(crate::webrtc::quick_paths()),
         )
         .await
         .map_err(NodeError::Endpoint)?;

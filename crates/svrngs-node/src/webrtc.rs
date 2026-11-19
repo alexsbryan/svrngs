@@ -71,27 +71,6 @@ pub fn quick_paths() -> iroh::endpoint::QuicTransportConfig {
 /// spike's `S` stream was (native/src/main.rs:135-148).
 pub const OFFER_ROUTE: &str = "/offer";
 
-/// The node's endpoint: [`crate::guest::build_relayed_endpoint`] with this
-/// computer's wire added and [`quick_paths`] given to it, and the handle
-/// its offers are answered through (webrtc-node; RELAY_COMMONS design 4).
-pub async fn endpoint(
-    secret: crate::iroh::SecretKey,
-    alpns: Vec<Vec<u8>>,
-    cfg: &crate::iroh::RelayConfig,
-) -> Result<(iroh::Endpoint, Arc<WebRtc>), String> {
-    let me = *secret.public().as_bytes();
-    let (webrtc, wire) = WebRtc::new(&me);
-    let endpoint = crate::guest::build_relayed_endpoint_with(
-        secret,
-        alpns,
-        cfg,
-        Some(wire),
-        Some(quick_paths()),
-    )
-    .await?;
-    Ok((endpoint, webrtc))
-}
-
 /// The WebRTC half's handle: the wire's send side, and what an offer is
 /// answered through. One [`Route`] owner is told of each peer's channel
 /// (RUST_ARCH 3: one owner and messages; the spike's map was behind a
@@ -212,19 +191,19 @@ struct Offered {
 
 async fn offer(State(webrtc): State<Arc<WebRtc>>, Json(asked): Json<Offered>) -> Response {
     let Some(data) = asked.key.parse::<EndpointId>().ok().map(|k| *k.as_bytes()) else {
-        return refused("the offer names no data key");
+        return refused("the offer names no data key".into());
     };
     let offer = serde_json::to_vec(&asked.offer).unwrap_or_default();
     match webrtc.answer(&offer, data) {
         Ok(answer) => ([(header::CONTENT_TYPE, "application/json")], answer).into_response(),
-        Err(why) => refused(&why),
+        Err(why) => refused(why),
     }
 }
 
 /// An offer this computer does not answer: `400` and why, as the spike's
 /// `{"error": ...}` (native/src/main.rs:146).
-fn refused(why: &str) -> Response {
-    tracing::debug!(target: "webrtc", why, "webrtc: an offer refused");
+fn refused(why: String) -> Response {
+    tracing::debug!(target: "webrtc", %why, "webrtc: an offer refused");
     (
         StatusCode::BAD_REQUEST,
         Json(serde_json::json!({ "error": why })),
