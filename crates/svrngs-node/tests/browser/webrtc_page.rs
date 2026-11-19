@@ -25,17 +25,27 @@ fn direct_on(dir: &Path) {
 
 /// A node lending a page and a film, as `playback.rs` lends them, with
 /// direct connections on: the phone holding bo's key opens it, and the
-/// film's part is fetched through its worker.
-async fn lent_film(dir: &Path, relay: &Server, bo: &SigningKey) -> (std::path::PathBuf, u64) {
-    let _ada = node(dir, relay, bo).await;
+/// film's part is fetched through its worker. The node is returned with
+/// them: the drive runs after, and a node dropped here would be off
+/// before the phone dials it (the first run of this test failed that way,
+/// "the computer that sent your link did not answer").
+async fn lent_film(dir: &Path, relay: &Server, bo: &SigningKey) -> (Node, std::path::PathBuf, u64) {
+    let ada = node(dir, relay, bo).await;
     let mp4 = dir.join("title.mp4");
     let size = film(&mp4);
     let (film_origin, _film_heads) = origins::kept_range_origin(mp4.clone(), size).await;
+    // `preload="none"`: WebKit's `<video>` otherwise asks the whole film in
+    // one request, and the worker streams all of it through the same event
+    // loop while the direct path is being set up — WebKit's runs of this
+    // test then stalled the data connection ("page goes direct" but the
+    // fetch's body never arrived, the peer idling out) until the film's own
+    // fetch, below, was judged; the film's fetch is this test's subject,
+    // and playing it is the playback step's (playback.rs).
     let html = "<!doctype html><title>a page</title>\
-                <video src=\"title.mp4\" playsinline preload=\"auto\"></video>";
+                <video src=\"title.mp4\" playsinline preload=\"none\"></video>";
     let page = one_origin(page_origin(html).await, film_origin).await;
     lend(dir, "page", page.port());
-    (mp4, size)
+    (ada, mp4, size)
 }
 
 in_both_engines!(
@@ -56,7 +66,7 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
     direct_on(dir.path());
 
     let seen = drive(
@@ -79,6 +89,10 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
         seen["trace"].as_str().map_or(0, |t| t.lines().count())
     ));
     eprintln!("the direct path's run: {shown}");
+    eprintln!(
+        "the direct path's trace:\n{}",
+        seen["trace"].as_str().unwrap_or_default()
+    );
     assert!(at_origin(&seen["opened"], &label(1, "page")), "{shown:#}");
     film_answered(&seen["first"], &mp4, "on the window's channel", &seen);
     let trace = seen["trace"].as_str().unwrap_or_default();
@@ -86,10 +100,22 @@ async fn a_lends_film_rides_the_windows_channel(engine: Engine) {
         trace.contains("goes direct"),
         "the worker must say the direct path came up:\n{shown:#}"
     );
+    // The line's own JSON, as the worker printed it (`Direct::paths`):
+    // serde_json orders an object's keys, so `kind` and `selected` are not
+    // adjacent, and the path is read rather than matched as text (the
+    // first runs of this test failed on that).
+    let paths: Value = trace
+        .lines()
+        .find_map(|l| l.split_once("goes direct: ").map(|(_, paths)| paths))
+        .and_then(|paths| serde_json::from_str(paths).ok())
+        .expect("the direct path's line holds its paths as JSON");
     assert!(
-        trace.contains("\"kind\":\"webrtc\",\"selected\":true"),
+        paths.as_array().is_some_and(|paths| paths
+            .iter()
+            .any(|path| path["kind"] == "webrtc" && path["selected"] == true)),
         "the data connection's selected path must be webrtc:\n{shown:#}"
     );
+    drop(ada);
 }
 
 in_both_engines!(
@@ -106,7 +132,7 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
     let relay = relay().await;
     let bo = signing(7);
     let dir = tempfile::tempdir().unwrap();
-    let (mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
+    let (ada, mp4, _size) = lent_film(dir.path(), &relay, &bo).await;
     direct_on(dir.path());
 
     let seen = drive(
@@ -129,6 +155,10 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
         seen["trace"].as_str().map_or(0, |t| t.lines().count())
     ));
     eprintln!("the withheld run: {shown}");
+    eprintln!(
+        "the withheld trace:\n{}",
+        seen["trace"].as_str().unwrap_or_default()
+    );
     film_answered(&seen["first"], &mp4, "withheld, over the relay", &seen);
     assert!(
         !seen["trace"]
@@ -137,4 +167,5 @@ async fn the_window_withholding_datagrams_keeps_it_relayed(engine: Engine) {
             .contains("goes direct"),
         "no direct path may come up while the window withholds the datagrams:\n{shown:#}"
     );
+    drop(ada);
 }

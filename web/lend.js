@@ -51,6 +51,7 @@
 import init, {
   actor,
   app_act,
+  direct_start,
   holder_endpoint,
   link,
   links,
@@ -393,17 +394,22 @@ async function direct(label, port) {
   const lend = held?.lends.find((one) => one.label === label);
   if (!lend || !handed.key || directs.has(lend.key)) return null;
   directs.add(lend.key);
-  const core = await (loaded ??= init({ module_or_path: store.runtime() }));
-  const data = await core.direct_start(lend.key, lend.relay ?? null, (bytes) =>
+  await (loaded ??= init({ module_or_path: store.runtime() }));
+  // The pass's relays, as this run's own endpoint is opened with; the data
+  // endpoint falls back to the relay named for the lend when it names none.
+  const data = await direct_start(lend.key, lend.relay ?? null, handed.relays ?? [], (bytes) =>
     port.postMessage({ datagram: bytes.buffer }, [bytes.buffer]),
   );
   // The data endpoint's own key, named by a link the holder signs.
   const to = data.key();
-  const sig = await crypto.subtle.sign('Ed25519', handed.key, core.link(handed.pass, to));
-  const named = new TextDecoder().decode(core.link(handed.pass, to, new Uint8Array(sig)));
-  dataLinks.set(lend.key, named);
+  const sig = await crypto.subtle.sign('Ed25519', handed.key, link(handed.pass, to));
   const dial = await (await bound()).dial_webrtc(lend.key, lend.relay ?? null);
+  // The offer crosses this run's own dial, so it presents this run's link
+  // (`passed`, before the data endpoint's is set): the door checks the
+  // dialer, which is this run's endpoint. The data endpoint's link is set
+  // after, for the fetches that ride its connection.
   const via = await data.go(dial, await passed(held, lend), port);
+  dataLinks.set(lend.key, new TextDecoder().decode(link(handed.pass, to, new Uint8Array(sig))));
   if (via) dials.set(lend.key, Promise.resolve(via));
   trace(`RUNTIME: ${lend.name} goes direct: ${data.paths()}`);
   return via;
@@ -789,7 +795,7 @@ async function proxied(asked, held) {
  * @param {Held} held
  * @returns {Promise<Header[]>}
  */
-async function headersFor({ request, where, jar }, held) {
+async function headersFor({ request, where, lend, jar }, held) {
   const headers = bounded(
     [...request.headers].filter(
       ([name]) => !['cookie', 'content-length'].includes(name.toLowerCase()),
@@ -805,7 +811,7 @@ async function headersFor({ request, where, jar }, held) {
   if (host) headers.push(['host', host]);
   const cookie = cookieFor(jar, where.path, false);
   if (cookie) headers.push(['cookie', cookie]);
-  headers.push(...(await passed(held)));
+  headers.push(...(await passed(held, lend)));
   // A browser names the origin a post comes from; a worker is not shown
   // it (WebKit's never, Chromium's but for a form's), and Nextcloud
   // refuses a sign-in posted without one. Named here
@@ -1380,7 +1386,7 @@ async function stopping(label) {
     trace(`RUNTIME: a page stops ${OWN} using ${label}, which it does not read: refused`);
     return closed();
   }
-  const headers = await passed(held);
+  const headers = await passed(held, lend);
   trace(`RUNTIME: a page stops ${OWN} using ${label}`);
   try {
     return await posted(lend, `/choices/${label}`, '{"said":"stop"}', headers);
@@ -1682,7 +1688,7 @@ async function switched({ url, protocols }, port) {
     ['sec-websocket-version', '13'],
     ['sec-websocket-key', key],
     // A lend was found, so the open is held.
-    ...(await passed(/** @type {Held} */ (held))),
+    ...(await passed(/** @type {Held} */ (held), lend)),
   ];
   if (protocols && protocols.length > 0) {
     headers.push(['sec-websocket-protocol', protocols.join(', ')]);

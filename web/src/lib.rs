@@ -875,6 +875,14 @@ pub async fn direct_start(
         .map(|one| relay::parse(one))
         .collect::<Result<_, _>>()
         .map_err(|e| JsError::new(&format!("{relays:?} is not a relay: {e}")))?;
+    // A pass kept before relay fallbacks names one relay and no `relays`:
+    // the relay named for the lend is the data endpoint's way in then
+    // (web/lend.js `direct`, as `opened` reads them).
+    let parsed = if parsed.is_empty() {
+        named.iter().cloned().collect()
+    } else {
+        parsed
+    };
     if parsed.is_empty() {
         refuse!("LAYER parse: REFUSED — no relay handed, and the page asks n0's lookup for none")
     }
@@ -954,12 +962,18 @@ impl Direct {
 
     /// The two dials of the spike's Q1: WebRTC alone (the window's channel
     /// is open), then again with the relay beside it, so the relay is
-    /// backup on a connection whose first path is not the relay; the first
-    /// carries nothing.
+    /// backup on a connection whose first path is not the relay. Nothing
+    /// is closed between them: in iroh 1.4 the second dial answers with
+    /// the connection the first made, its addresses grown, so closing the
+    /// first, as the spike's two separate connections let it, closed the
+    /// connection itself (webrtc-page: the browser tier's first runs
+    /// fetched on a connection already "closed").
     pub async fn dial(&mut self) -> Result<(), JsError> {
         let custom = iroh::TransportAddr::Custom(wire::addr_of(self.peer.as_bytes()));
-        let first = self
-            .data
+        // Dialled with the relay beside it first, iroh picks the relay and
+        // the custom address is never tried (the spike's Q1): alone first.
+        // Its handle is let go; the endpoint keeps the connection.
+        self.data
             .connect(
                 iroh::EndpointAddr::from_parts(self.peer, [custom.clone()]),
                 Alpn::Lend.bytes(),
@@ -975,7 +989,6 @@ impl Direct {
             .connect(iroh::EndpointAddr::from_parts(self.peer, at), Alpn::Lend.bytes())
             .await
             .map_err(|e| JsError::new(&format!("dial both: {e}")))?;
-        first.close(0u32.into(), b"the second carries on");
         self.conn = Some(conn);
         Ok(())
     }
@@ -987,25 +1000,24 @@ impl Direct {
     }
 
     /// The direct attempt, driven here so the worker's JavaScript stays
-    /// thin (webrtc-page): the window `client` is asked over `port` for the
-    /// offer, which is signalled to the lender through `dial` with
-    /// `headers` (the pass and the link the run's own dials present); the
-    /// answer is handed back; and once the window says the channel is open,
-    /// the data endpoint dials, its channel's datagrams from then on going
-    /// in through [`data_push`]. Answers the data connection as a dial the
-    /// worker's fetches go through, or none when the channel never opened.
+    /// thin (webrtc-page): the window is asked over `port` — the worker's
+    /// end of the channel it announced itself on (`{webrtc: 'here'}`,
+    /// shim.js) — for the offer, which is signalled to the lender through
+    /// `dial` with `headers` (the pass and the link the run's own dials
+    /// present); the answer is handed back; and once the window says the
+    /// channel is open, the data endpoint dials, its channel's datagrams
+    /// from then on going in through [`data_push`]. Answers the data
+    /// connection as a dial the worker's fetches go through, or none when
+    /// the channel never opened.
     pub async fn go(
         &mut self,
         dial: &Dialled,
         headers: js_sys::Array,
-        client: web_sys::Client,
         port: web_sys::MessagePort,
     ) -> Result<Option<Dialled>, JsError> {
         let ask = js_sys::Object::new();
         js_sys::Reflect::set(&ask, &"webrtc".into(), &"ask".into()).map_err(page)?;
-        client
-            .post_message_with_transfer(&ask, &js_sys::Array::of1(&port))
-            .map_err(page)?;
+        port.post_message(ask.as_ref()).map_err(page)?;
         let offer = told(&port, "offer").await?;
         let answer = self
             .signal(dial, headers, offer.as_string().unwrap_or_default())

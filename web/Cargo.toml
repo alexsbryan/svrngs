@@ -51,7 +51,7 @@ futures-util = { version = "0.3", default-features = false, features = ["sink"] 
 # spike's page took it.
 tokio = { version = "1", default-features = false, features = ["sync"] }
 wasm-streams = "0.5"
-web-sys = { version = "=0.3.105", features = ["Blob", "Client", "Headers", "MessageEvent", "MessagePort", "ReadableStream", "Response", "ResponseInit", "WritableStream"] }
+web-sys = { version = "=0.3.105", features = ["Blob", "Headers", "MessageEvent", "MessagePort", "ReadableStream", "Response", "ResponseInit", "WritableStream"] }
 thiserror = "2"
 # Joining (u4-5): the ask's and the redemption's bodies as the node reads
 # them, and a lender's key as the record spells it. The versions

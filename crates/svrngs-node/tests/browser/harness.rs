@@ -168,7 +168,7 @@ fn traced() {
             std::fs::File::create(kept.join(format!("{}.log", env!("CARGO_CRATE_NAME")))).unwrap();
         tracing_subscriber::fmt()
             .with_env_filter(tracing_subscriber::EnvFilter::new(
-                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug",
+                "door=debug,carriage=debug,lend=debug,transport=debug,iroh_relay=debug,rails=debug,folder=debug,svrngs_node::ring_sync=debug,webrtc=debug",
             ))
             .with_writer(std::sync::Mutex::new(log))
             .with_ansi(false)

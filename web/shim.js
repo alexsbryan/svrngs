@@ -305,7 +305,9 @@
       channel.onopen = () => port1.postMessage({ open: true });
       channel.onmessage = ({ data }) => port1.postMessage({ datagram: data }, [data]);
     };
-    worker()?.postMessage({ webrtc: 'here' }, [port2]);
+    // The lend this page is of, as the worker named it on this script's
+    // address (`l`): the worker answers the announcement for that lend.
+    worker()?.postMessage({ webrtc: 'here', label: me.searchParams.get('l') }, [port2]);
   }
 
   // The app's own worker, in a realm of its own (session.js `registered`).

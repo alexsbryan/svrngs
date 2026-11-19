@@ -63,10 +63,7 @@ const logs = [];
 const watch = (context) => context.on('console', (m) => logs.push(`${m.type()}: ${m.text()}`));
 try {
   watch(context);
-  if (args.withhold)
-    await context.addInitScript(() => {
-      globalThis.__svrngsNoWebrtc = true;
-    });
+  if (args.withhold) await context.addInitScript(() => (globalThis.__svrngsNoWebrtc = true));
   let page = await context.newPage();
   page.on('pageerror', (e) => logs.push(`pageerror: ${e}`));
   await held(page, origin, args);
@@ -89,7 +86,11 @@ try {
 
   // The direct path's line in the worker's trace, waited for when asked
   // (`args.direct`, webrtc-page): the film's own fetch follows it, so the
-  // film rides the data connection, not the relay.
+  // film rides the data connection, not the relay. The trace is read just
+  // after that fetch, before the worker is stopped below: the last lines a
+  // run writes may not have been kept yet when it goes, and WebKit's
+  // browser opens again without this context's init script (the plant's
+  // flag would be lost).
   const traced = () => page.evaluate(() => fetch('svrngs-trace').then((r) => r.text()));
   if (args.direct) {
     const by = Date.now() + 20_000;
@@ -102,6 +103,7 @@ try {
       ? page.evaluate(play, { at: null, within: 15_000 })
       : page.evaluate(fetched, args.film);
   const first = await look(page);
+  const trace = args.direct || args.withhold ? await traced() : null;
   const seeks = [];
   for (const at of args.seeks?.slice(0, -1) ?? [])
     seeks.push(await page.evaluate(play, { at, within: 15_000 }));
@@ -146,7 +148,7 @@ try {
       runsAtStop,
       runs,
       other,
-      trace: args.direct || args.withhold ? await traced() : null,
+      trace,
       logs,
     }),
   );
