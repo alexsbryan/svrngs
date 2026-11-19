@@ -838,12 +838,15 @@ IO_DEPS = {"tokio", "async-std", "smol", "iroh", "reqwest", "hyper", "axum", "to
 # (shim.js +25), and lend.js starts the attempt (+31). +56 against 40 free;
 # the pass's inlinings break the linter's complexity bound and
 # lend-worker.test.mjs, so +16. JavaScript 8,651 -> 8,667.
+# (2026-11-19) Raised again by the operator: self-host (b3ae73f2) took +7
+# of that for the group's own relay on the home page, so webrtc-page's +56
+# needs 8,674. JavaScript 8,667 -> 8,674.
 BUDGET = {
     "crates/svrngs-core": 3540,
 
     ".": 23102,
 
-    "js": 8668,
+    "js": 8675,
 
     "swift": 1,
 }
