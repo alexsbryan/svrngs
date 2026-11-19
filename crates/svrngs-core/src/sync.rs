@@ -294,16 +294,12 @@ pub fn ops_missing_from_within(
             }
             continue;
         };
-        let window: Vec<&Op<SignedOp>> = held
-            .iter()
-            .copied()
-            .filter(|op| op.kind.seq >= view.from && op.kind.seq <= view.mark)
-            .collect();
-        let over: Vec<&Op<SignedOp>> = held
-            .iter()
-            .copied()
-            .filter(|op| op.kind.seq > view.mark)
-            .collect();
+        // What is held in the claimed run, and what is above its mark.
+        let held_at = |at: &dyn Fn(u64) -> bool| -> Vec<&Op<SignedOp>> {
+            held.iter().copied().filter(|op| at(op.kind.seq)).collect()
+        };
+        let window = held_at(&|seq| seq >= view.from && seq <= view.mark);
+        let over = held_at(&|seq| seq > view.mark);
         // Folded over what is AUTHENTIC in the window, exactly as the peer's
         // head was ([`authentic`]); the unit below still carries everything
         // held — author-blind, store it and gossip it.

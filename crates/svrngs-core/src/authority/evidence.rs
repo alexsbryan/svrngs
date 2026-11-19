@@ -295,9 +295,8 @@ pub(crate) fn interpreted(
         Ok(roots) => NativeAuthority::of(&roots, lines, forged).membership(lines),
         Err(why) => {
             tracing::warn!(target: "rail:source", ?why, "source: the seed gives no roots, so nobody stands");
-            let office = Office::Missing;
             Membership {
-                office,
+                office: Office::Missing,
                 ..Membership::default()
             }
         }

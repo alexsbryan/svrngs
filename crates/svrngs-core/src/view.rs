@@ -74,10 +74,8 @@ impl View {
     /// delegates here, so the spec formula has exactly one home.
     pub fn fold_pairs(actor: &str, from: u64, mark: u64, pairs: &[(u64, String)]) -> Self {
         let mut by_seq: BTreeMap<u64, BTreeSet<String>> = BTreeMap::new();
-        for (seq, id) in pairs {
-            if *seq >= from && *seq <= mark {
-                by_seq.entry(*seq).or_default().insert(id.clone());
-            }
+        for (seq, id) in pairs.iter().filter(|(seq, _)| (from..=mark).contains(seq)) {
+            by_seq.entry(*seq).or_default().insert(id.clone());
         }
         let mut h = ContentHash::of(&[crate::sig::VIEW_DOMAIN, b"\0", actor.as_bytes()].concat());
         for (seq, ids) in &by_seq {

@@ -351,11 +351,8 @@ pub(crate) fn voids(ops: &[(&OpId, &Op<SignedOp>)], m: &mut Membership) {
         .filter(|(_, op)| op.kind.act.moves_membership())
         .map(|(id, _)| *id)
         .collect();
-    for (id, op) in ops {
+    for (id, op) in ops.iter().filter(|(id, _)| m.counted.contains(*id)) {
         if let RailAct::Correct { corrects, .. } = &op.kind.act {
-            if !m.counted.contains(*id) {
-                continue;
-            }
             if moves.contains(corrects) {
                 tracing::debug!(target: "rail:membership", id = %id, target = %corrects,
                     "membership: a Correct of an act that moves membership voids nothing");
