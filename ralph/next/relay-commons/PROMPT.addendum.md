@@ -5,6 +5,14 @@ design and asked for this queue. Keep marching through the assigned unit;
 another step boundary is not a new approval gate. A cap decision is the
 operator's under CHARTER, not a reason for a workaround.
 
+**No check.sh before the very end** (operator, 2026-11-18: "I don't want us
+to run interminable check.sh runs -- let's just save that for the very end").
+- Here, AGENTS.md's "Done" is this queue's final audit.
+- Before REVIEW-audit-relay-commons, run no `scripts/check.sh` in any form:
+  not the full gate, not `--touched`, and not its tiers by hand.
+- Close each unit on its row's own named focused checks.
+- The commit hook's `check.sh --fast` is the only check.sh a unit meets.
+
 This is a dedicated worktree off main. Do not import another worktree's
 dirty files.
 - **Your scope:** this worktree and synthetic identities.

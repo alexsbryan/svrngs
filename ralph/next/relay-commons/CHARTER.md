@@ -103,8 +103,11 @@ everything but JavaScript, which is tight.
 - **Production CSP and the trust floor stay unchanged.** WebRTC needs
   neither changed; a row that finds otherwise stops.
 - **Every new check is planted and watched failing first** (AGENTS.md 5).
-- **Focused checks close intermediate units.** The final audit runs the
-  unchanged full `scripts/check.sh` in the `svrngs-gate` container
-  (`scripts/gate/README.md`).
+- **Focused checks close intermediate units, and no `check.sh` runs before
+  the very end**, neither full nor `--touched` (operator, 2026-11-18: "I don't
+  want us to run interminable check.sh runs -- let's just save that for the
+  very end"). The commit hook's `--fast` is the only exception. The final
+  audit runs the unchanged full `scripts/check.sh` in the `svrngs-gate`
+  container (`scripts/gate/README.md`).
 - **Real-phone and real-box results stay never-ran** until the operator runs
   them. The loop alone marks STATE rows.
