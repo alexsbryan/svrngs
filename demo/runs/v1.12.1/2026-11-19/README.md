@@ -52,6 +52,15 @@ a keyring holding only `svrngs-release-key.asc`:
 The resolver was not deployed, and the trust floor is unchanged:
 `git diff v1.12.0 14dc7bb9 -- resolver scripts/trust_floor.txt` is empty.
 
+## The Arch package
+
+`packaging/arch/PKGBUILD` now sets pkgver 1.12.1, with each sum taken from
+the downloaded release assets. Each tarball's sum equals its line in the
+release's `SHA256SUMS`. In an x86_64 Arch container, with only
+`svrngs-release-key.asc` imported, `makepkg --verifysource` passed every
+sum and both signatures. A copy with one tarball sum changed by one
+character was refused (exit 1).
+
 ## Not judged
 
 - No Linux run of the whole check.
