@@ -172,10 +172,11 @@ operator-only blocker gets a committed package and `ralph-result needs-human`.
   own relay, both down, still meets at n0's, and says so on the home page.
 
 **webrtc-page's stall: the director's read of the second session's runs**
-(Update: 36a118cf answers 1. The connection on the window's channel is kept,
-and `the_channel_closed_mid_film_completes_over_the_relay` passes in both
-engines, several runs. 2 stands. For 3, check whether the stall still
-occurs over repeated runs; if it does not, say so in the row's close.)
+(Update: webrtc-page closed it, 36a118cf and 47462fb6. The stall was the
+data endpoint garbage-collected mid-fetch, now held in `directs`
+(NEEDS_HUMAN-webrtc-page.md section 6), not 1 or 3 below; the mid-film close
+falls back over the relay in 3.4-3.6 s. **2 stands, for the audit:** the
+wire's per-worker globals.)
 (2026-11-19, from target/webrtc-page-browser-all-5.log and -6.log):
 1. **The data connection has no relay path, so nothing can fall back.**
    Each failing run's own trace: `page goes direct: [{"kind":"webrtc",
@@ -203,3 +204,11 @@ occurs over repeated runs; if it does not, say so in the row's close.)
    NEEDS_HUMAN-webrtc-page.md, counting at each hop, localizes it. With 1
    fixed, it degrades to a 3 s fall-back rather than a hang, but the direct
    path is the point of the row.
+
+**The audit's gate runs from a plain clone.** In the `svrngs-gate`
+container, this worktree's `.git` file points at the main checkout's
+`.git/worktrees/`, which `/work` does not mount, so `scripts/trust_check.py`'s
+git steps fail and every listener reads as gone (NEEDS_HUMAN-webrtc-page.md
+section 6). Run the full `scripts/check.sh` from `git clone` of this branch's head
+(with `npm ci --prefix web`), mounted as `/work` as scripts/gate/README.md
+gives it, and record that clone's commit.
