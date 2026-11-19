@@ -94,10 +94,10 @@ impl Node {
             .collect()
     }
 
-    /// Why this computer meets `group` where it does now, as the home page
-    /// is told ([`crate::node::Host::at_fallback`]): what a test of the
+    /// Why this computer meets `group` the backup way, as the home page is
+    /// told ([`crate::node::Host::at_fallback`]): what a test of the
     /// emergency reads, `None` when it meets the group at its own.
-    pub fn fallback_of(&self, group: &str) -> Option<svrngs_core::relay::Tier> {
+    pub fn fallback_of(&self, group: &str) -> Option<crate::tiers::Away> {
         self.host.at_fallback(group)
     }
 

@@ -188,6 +188,47 @@ fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     );
 }
 
+/// **A group's own HTTPS relay comes before the build's; a plain-HTTP one
+/// stays behind it** (self-host; DESIGN §3, "Where a computer meets its
+/// groups"): a page refuses a plain-HTTP relay from an https page, so the
+/// own HTTPS relays alone are held while they answer, the build's alone
+/// while the own HTTPS does not, and a plain-HTTP own relay is held only
+/// when the build's does not answer (the test above). Planted: the own
+/// HTTPS relay left behind while it answers, and the first row failed.
+#[test]
+fn a_groups_own_https_relay_comes_before_the_builds() {
+    let url = |u: &str| Url::parse(u).unwrap();
+    let (a, b, ours) = (
+        url("https://relay.example.org/"),
+        url("http://10.0.0.2:3340/"),
+        url("https://relay.svrnme.sh/"),
+    );
+    let mesh = Meeting::of([a.clone()], core::slice::from_ref(&ours), &[]);
+    assert_eq!(
+        mesh.decide(true),
+        (Tier::Own, BTreeSet::from([a.clone()])),
+        "the own HTTPS relay comes before the build's while it answers"
+    );
+    assert_eq!(
+        mesh.decide(false),
+        (Tier::Fallback, BTreeSet::from([ours.clone()])),
+        "the build's while the own HTTPS relay does not answer"
+    );
+    // A plain-HTTP own relay beside it stays behind the build's: held
+    // neither while the own HTTPS relay answers nor while the build's does.
+    let mixed = Meeting::of([a.clone(), b.clone()], core::slice::from_ref(&ours), &[]);
+    assert_eq!(mixed.decide(true), (Tier::Own, BTreeSet::from([a.clone()])));
+    assert_eq!(
+        mixed.decide(false),
+        (Tier::Fallback, BTreeSet::from([ours]))
+    );
+    // A build naming no relay of its own leaves the own tier whole.
+    assert_eq!(
+        Meeting::of([a.clone(), b.clone()], &[], &[]).decide(true),
+        (Tier::Own, BTreeSet::from([a, b]))
+    );
+}
+
 /// **n0's are the emergency, held only while neither ours nor a group's
 /// own answers** (n0-emergency; RELAY_COMMONS 1, "n0's public relays come
 /// in only while ours does not answer"): a group naming none of its own

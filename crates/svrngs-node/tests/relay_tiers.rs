@@ -22,9 +22,11 @@ use std::time::{Duration, Instant};
 
 use iroh_relay::server::{ClientRateLimit, RelayConfig as RelayServer, Server, ServerConfig};
 use svrngs_core::pass::Label;
-use svrngs_core::relay::{Tier, Url};
+use svrngs_core::relay::Url;
+use svrngs_node::group::Seed;
 use svrngs_node::iroh::{build_relayed_endpoint, EndpointAddr, RelayConfig, RelayUrl, SecretKey};
 use svrngs_node::node::{Node, Relaying};
+use svrngs_node::tiers::Away;
 use svrngs_node::SigningKey;
 
 /// A plain-HTTP relay on 127.0.0.1 as `relay` configures it (its port 0
@@ -151,7 +153,7 @@ async fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     on_wire::relay(A, Relaying::Up);
     on_wire::relay(B, Relaying::Up);
     let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-    let (_dir, node) = ada_on_wire(B, A, every).await;
+    let (_dir, node, _seed) = ada_on_wire(B, A, every).await;
     eprintln!(
         "TIERS at the build's fallback while it answers: {} ms",
         homed_on(&node, B).await
@@ -184,6 +186,91 @@ async fn a_group_meets_at_the_builds_fallback_while_it_answers() {
     eprintln!(
         "TIERS the fallback back, at the fallback: {} ms",
         homed_on(&node, B).await
+    );
+}
+
+/// **A group's own HTTPS relay comes before the build's** (self-host;
+/// DESIGN §3, "Where a computer meets its groups"): Ada's group names an
+/// HTTPS relay of its own while her build's answers; she is held at her
+/// own and not at the build's, and her page says she meets there, not at
+/// the fallback. Planted: the own HTTPS relay left behind, and she was
+/// held at the build's.
+#[tokio::test(start_paused = true)]
+async fn a_group_meets_at_its_own_https_relay_while_the_build_s_answers() {
+    let own = "https://relay.example.org/";
+    on_wire::relay(B, Relaying::Up);
+    on_wire::relay(own, Relaying::Up);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node, seed) = ada_on_wire(B, own, every).await;
+    // The ask runs each ASKED_EVERY; wait for the decision it applies.
+    let (t, by) = (tokio::time::Instant::now(), homing_by());
+    while t.elapsed() < by && node.relays_held() != vec![own.to_string()] {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        node.relays_held(),
+        vec![own.to_string()],
+        "held at its own HTTPS relay"
+    );
+    assert_eq!(
+        node.fallback_of(&seed.id()),
+        None,
+        "the page says she meets at her own"
+    );
+    assert!(
+        node.tier_held().contains("tier: Own"),
+        "{}",
+        node.tier_held()
+    );
+}
+
+/// **The own HTTPS relay's silence is said as its own, and the press says
+/// which way it went** (self-host; KEEP_GOING_AT_HOME 7): Ada's group names
+/// an HTTPS relay of its own while her build's answers. With the own
+/// answering, the button says "stayed-own" and her page says she meets at
+/// her own; the own stopped, she is homed at the build's and her page says
+/// why in the own line's words, and the button says she moved to the public
+/// way. Planted, watched red: `at_fallback` answering the plain-HTTP
+/// `fallback` for the own's silence (the page said the wrong why), and
+/// `check_now` answering "stayed"/"moved" whatever tier came first.
+#[tokio::test(start_paused = true)]
+async fn the_own_https_relay_s_silence_is_said_as_its_own_and_the_press_says_which_way() {
+    let own = "https://relay.example.org/";
+    on_wire::relay(B, Relaying::Up);
+    on_wire::relay(own, Relaying::Up);
+    let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
+    let (_dir, node, seed) = ada_on_wire(B, own, every).await;
+    let (t, by) = (tokio::time::Instant::now(), homing_by());
+    while t.elapsed() < by && node.relays_held() != vec![own.to_string()] {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        node.fallback_of(&seed.id()),
+        None,
+        "the page says she meets at her own"
+    );
+    assert_eq!(
+        pressed_on(&node).await,
+        "/?view=computer&stayed-own",
+        "the button says the own answered"
+    );
+
+    on_wire::relay(own, Relaying::Cut);
+    homed_on(&node, B).await;
+    // The ask runs each ASKED_EVERY; wait for the decision it applies.
+    let (t, by) = (tokio::time::Instant::now(), homing_by());
+    while t.elapsed() < by && node.fallback_of(&seed.id()) != Some(Away::Unanswered) {
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert_eq!(
+        node.fallback_of(&seed.id()),
+        Some(Away::Unanswered),
+        "the page says the own is not answering, not that the own is plain-HTTP"
+    );
+    assert_eq!(
+        pressed_on(&node).await,
+        "/?view=computer&moved-public",
+        "the button says she moved to the public way"
     );
 }
 
@@ -251,7 +338,7 @@ async fn pressed_with_the_fallback_cut_this_computer_moves_now() {
     on_wire::relay(A, Relaying::Up);
     on_wire::relay(B, Relaying::Up);
     let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-    let (_dir, node) = ada_on_wire(B, A, every).await;
+    let (_dir, node, _seed) = ada_on_wire(B, A, every).await;
     homed_on(&node, B).await;
     on_wire::relay(B, Relaying::Cut);
     let t = tokio::time::Instant::now();
@@ -306,7 +393,7 @@ async fn an_ask_under_way_does_not_undo_a_press() {
     // The asks fall every ASKED_EVERY from the node's start.
     let started = tokio::time::Instant::now();
     let round = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-    let (_dir, node) = ada_on_wire(B, A, round).await;
+    let (_dir, node, _seed) = ada_on_wire(B, A, round).await;
     homed_on(&node, B).await;
     let lead = Duration::from_millis(1500);
     let asks = started.elapsed().as_millis() / every.as_millis() + 2;
@@ -328,7 +415,7 @@ async fn pressed_with_the_fallback_answering_nothing_moves() {
     on_wire::relay(A, Relaying::Up);
     on_wire::relay(B, Relaying::Up);
     let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-    let (_dir, node) = ada_on_wire(B, A, every).await;
+    let (_dir, node, _seed) = ada_on_wire(B, A, every).await;
     homed_on(&node, B).await;
     assert_eq!(pressed_on(&node).await, "/?view=computer&stayed");
     tokio::time::sleep(Duration::from_secs(5)).await;
@@ -497,7 +584,7 @@ async fn a_group_with_none_of_its_own_meets_at_n0_s_while_ours_does_not_answer()
     homed_on(&node, &n0).await;
     assert_eq!(
         node.fallback_of(&seed.id()),
-        Some(Tier::Emergency),
+        Some(Away::Emergency),
         "the home page says the group is met at n0's"
     );
     // A person who presses while ours is down is told "backup", not
@@ -597,7 +684,7 @@ async fn a_fallback_this_computer_cannot_register_at_is_left() {
     on_wire::relay(A, Relaying::Up);
     on_wire::relay(B, Relaying::Pings);
     let every = svrngs_node::ring_sync::DEFAULT_RING_SYNC_INTERVAL;
-    let (_dir, node) = ada_on_wire(B, A, every).await;
+    let (_dir, node, _seed) = ada_on_wire(B, A, every).await;
     eprintln!(
         "TIERS unregistered at the fallback, at its own: {} ms",
         homed_on(&node, A).await
@@ -616,8 +703,8 @@ const A: &str = "http://127.0.0.1:1/";
 const B: &str = "http://127.0.0.1:2/";
 
 /// [`ada`] on this test's wire, her round every `every`, her relays the
-/// wire's.
-async fn ada_on_wire(build: &str, own: &str, every: Duration) -> (tempfile::TempDir, Node) {
+/// wire's, with house's seed, whose `id()` names it.
+async fn ada_on_wire(build: &str, own: &str, every: Duration) -> (tempfile::TempDir, Node, Seed) {
     let (dir, key) = (
         tempfile::tempdir().unwrap(),
         SigningKey::from_bytes(&[3; 32]),
@@ -629,7 +716,7 @@ async fn ada_on_wire(build: &str, own: &str, every: Duration) -> (tempfile::Temp
     node.host()
         .keep_group(&seed, None, &at_own)
         .expect("Ada keeps house, met at her own relay");
-    (dir, node)
+    (dir, node, seed)
 }
 
 /// The relay `node`'s address names now.

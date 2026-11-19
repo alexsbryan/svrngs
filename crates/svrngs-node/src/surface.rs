@@ -197,13 +197,14 @@ struct Held {
     /// How many each computer can have visiting at once, the keeper's say or
     /// the default; `null` beside `removed`'s.
     slots: Option<u8>,
-    /// Why this computer meets the group where it does now: the group names
-    /// relays of its own and this computer is at the build's fallback
-    /// because that answers, or the computer is at n0's, the emergency
-    /// behind ours, while neither answers (relay fallbacks; n0-emergency).
-    /// The home page says so in a person's words; `null` when it meets the
-    /// group at its own.
-    fallback: Option<svrngs_core::relay::Tier>,
+    /// Why this computer meets the group the backup way: the group names an
+    /// HTTPS relay of its own and it is not answering, or names none a page
+    /// may take — a plain-HTTP own relay stays behind the build's — or the
+    /// computer is at n0's, the emergency behind ours, while neither
+    /// answers (relay fallbacks; n0-emergency; self-host). The home page
+    /// says so in a person's words; `null` when it meets the group at its
+    /// own.
+    fallback: Option<crate::tiers::Away>,
     /// A hand-on of the order of removals waiting on its Accept, to this
     /// computer or from it, with the person at its other end; absent when
     /// none waits here, or beside `removed`'s `null`.

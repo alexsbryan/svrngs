@@ -28,6 +28,8 @@ test('a group met at its fallback or at n0’s says why in a person’s words, a
   const section = (fallback) =>
     words(Group({ g: { id: 'ab12', name: 'House', removed: null, fallback } }));
   const said = {
+    unanswered:
+      'This computer can’t reach the place House usually meets, so it’s reaching House through the public way for now. There’s nothing to do: it switches back by itself once that place answers.',
     fallback:
       'This computer is reachable through the public way for now, so a phone can open House too. It goes back to the place House usually meets once the public way stops answering.',
     emergency:
@@ -53,9 +55,14 @@ test('the page says in a person’s words what pressing the button did', async (
     await import('../../crates/svrngs-node/src/home/page/home-page.js?v=__VERSION__');
   const at = (search) => said(first({ pathname: '/', search, origin: 'http://here', hash: '' }));
   assert.equal(at('?stayed'), 'The public way answers, so nothing changed.');
+  assert.equal(at('?stayed-own'), 'Where your group usually meets answers, so nothing changed.');
   assert.equal(
     at('?moved'),
     'The public way did not answer, so this computer moved to where your group usually meets.',
+  );
+  assert.equal(
+    at('?moved-public'),
+    'Where your group usually meets did not answer, so this computer moved to the public way for now.',
   );
   assert.equal(
     at('?backup'),
@@ -65,7 +72,7 @@ test('the page says in a person’s words what pressing the button did', async (
     at('?nowhere'),
     'The public way did not answer, and neither did anywhere else your groups meet.',
   );
-  for (const search of ['?stayed', '?moved', '?backup', '?nowhere'])
+  for (const search of ['?stayed', '?stayed-own', '?moved', '?moved-public', '?backup', '?nowhere'])
     assert.ok(!/relay|node|key/i.test(at(search)), at(search));
   const form = Connection();
   assert.deepEqual([form.props.method, form.props.action], ['post', '/connection']);

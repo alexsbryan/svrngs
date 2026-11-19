@@ -1913,16 +1913,18 @@ at a name whose certificate a public authority signed (computers trust the
 public roots alone): `svrngs relay` is that server with group-only
 admission and its own certificates; a bare one admits whoever finds it.
 
-**Where a computer meets its groups.** A computer meets at the build's
-fallback while it answers, at its groups' own relays when it does not, and
-at n0's public relays, the emergency behind ours, only while neither that
-nor a group's own answers, decided in one place (svrn-docs
+**Where a computer meets its groups.** A computer meets at its groups'
+own HTTPS relays while they answer, at the build's fallback while they do
+not (or when a group names none), and at n0's public relays, the emergency
+behind ours, only while neither answers, decided in one place (svrn-docs
 `rings/current/GROUP_RELAYS.md` §7, the operator's "Tiers", 2026-11-02;
 the relay-fallback charter, 2026-11-04: a browser holding only the
-published page's policy can reach a computer through the build's https
-fallback alone; RELAY_COMMONS 1, 2026-11-18: "n0's public relays come in
-only while ours does not answer"). The fallback comes first, and
-every link carries it, so a phone can open the group whichever tier the
+published page's policy can reach a computer only through a relay it may
+take; RELAY_COMMONS 1, 2026-11-18: "n0's public relays come in
+only while ours does not answer"; self-host, 2026-11-19: a group's own
+HTTPS relay comes before the build's, and a plain-HTTP one, a page cannot
+take, stays behind it). Every link carries the build's fallback beside the
+group's own, so a phone can open the group whichever tier the
 computer was met at when the link was made. Its
 own are the relays its keeper names in its record by a `Meets` act (§6),
 made with `svrngs new <name> --relay <name or url>`, once for each;
@@ -1941,24 +1943,25 @@ no record, so the switch moves every group at once. The three tiers are a
 type, svrngs-core's `relay::Meeting`, made only by `Meeting::of`, which
 always carries the build's; `Meeting::decide` is the one decision, and
 svrngs-node's `tiers` the one place it changes the endpoint's relays.
-svrngs asks the build's fallback itself every `tiers::ASKED_EVERY`, 10 s,
-each within `ANSWERS_WITHIN`, 3 s, and gives the endpoint the fallback
-once it answers, since iroh's report stops probing once a relay answers
-and would never see one come back; at the build's, the answer is whether
-the endpoint is registered there — its home relay connected, iroh's
-`home_relay_status` — within `REGISTERED_WITHIN`, 5 s, since a relay may
-take a connection and register no one, as a captive portal does; at the
-groups' own or at n0's, it is whether the build's fallback answers the
-ask, since the endpoint holds neither and a registration there says
-nothing of it. One
+svrngs asks the tier that comes first itself — the group's own HTTPS
+relay when a group names one, else the build's fallback — every
+`tiers::ASKED_EVERY`, 10 s, each within `ANSWERS_WITHIN`, 3 s, and moves
+the endpoint on its answer, since iroh's report stops probing once a relay
+answers and would never see one come back; at that tier, the answer is
+whether the endpoint is registered there — its home relay connected,
+iroh's `home_relay_status` — within `REGISTERED_WITHIN`, 5 s, since a
+relay may take a connection and register no one, as a captive portal does;
+at the others, it is whether the first tier answers the ask, since the
+endpoint holds it not and a registration there says nothing of it. One
 never registered at is left at the first ask that finds it so, the next
 move there held off 1, 2, 4 asks and on, to `HELD_AT_MOST`, 30, until one
-registers; one reached, once `LEFT_AFTER`, 3, asks in a row do, so a
-fallback that blinked is not left while iroh waits to dial it again.
+registers; one reached, once `LEFT_AFTER`, 3, asks in a row do, so a tier
+that blinked is not left while iroh waits to dial it again.
 "Check the connection now" on the home page is for someone who cannot wait:
-`POST /connection` asks the fallback once, leaves it at once when it does not
-answer, fires a round and says on This computer what happened, "moved" only once
-this computer is registered at the group's own; an answer moves nobody. The
+`POST /connection` asks the first tier once, leaves it at once when it does
+not answer, fires a round and says on This computer what happened — which
+tier answered, or which this computer moved to, once this endpoint is
+registered at the one it left for; an answer moves nobody. The
 door's line for each request let in names the relay that carried it, none when
 it came direct, and `tiers` says at debug why this computer is at it. One
 endpoint serves every group; a computer none of whose groups names a relay
@@ -1985,8 +1988,9 @@ chosen only after reaching it. A page no relay of which answers within
 `dial::LINK_WITHIN` closes its endpoint and says the computer did not
 answer, so no dial is left running, and its next dial, or a lend worker's,
 binds again. Each change of tier and of home is traced,
-and the home page says when, and why, a group is met at the build's
-fallback, or at n0's while ours does not answer. A computer that reaches
+and the home page says when, and why, a group is met the backup way — its
+own HTTPS relay not answering, or naming none a page may take, or n0's
+while ours does not answer. A computer that reaches
 none of its relays in 10 s says which it
 tried, and goes on trying.
 

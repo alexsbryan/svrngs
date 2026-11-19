@@ -35,7 +35,7 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  * @property {[string | null, number][] | null} waiting a fetch that found no holder, by writer's person
  * @property {Visit[] | null} visiting
  * @property {number | null} [slots] how many each computer can have visiting at once, the keeper's say or the default
- * @property {'fallback' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
+ * @property {'fallback' | 'unanswered' | 'emergency' | null} fallback why it is met the backup way (svrngs-core relay.rs `Tier`), `null` at its own
  * @property {true} [vacates] whether they keep its order of removals and leaving without handing it on leaves nobody keeping it
  * @property {{ to_you: boolean, person: string | null }} [offered] a hand-on of its order of removals waiting on its Accept, to this computer or from it, and who is at its other end
  * @property {string} [older] what is said of a group an older svrngs made, which nothing in changes now (svrngs-core `made_older`)
@@ -75,9 +75,11 @@ import { GroupRead } from './group-read.js?v=__VERSION__';
  */
 
 // Why this computer reaches a group the backup way, by surface.rs's
-// `fallback` (relay fallbacks; n0-emergency; svrngs-core relay.rs `Tier`).
+// `fallback` (relay fallbacks; n0-emergency; self-host).
 /** @type {Record<NonNullable<Group['fallback']>, (name: string) => string>} */
 const BACKUP = {
+  unanswered: (name) =>
+    `This computer can’t reach the place ${name} usually meets, so it’s reaching ${name} through the public way for now. There’s nothing to do: it switches back by itself once that place answers.`,
   fallback: (name) =>
     `This computer is reachable through the public way for now, so a phone can open ${name} too. It goes back to the place ${name} usually meets once the public way stops answering.`,
   emergency: () =>

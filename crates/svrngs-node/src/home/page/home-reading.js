@@ -147,7 +147,9 @@ const DONE = /** @type {const} */ ([
   'joined',
   'left',
   'stayed',
+  'stayed-own',
   'moved',
+  'moved-public',
   'backup',
   'nowhere',
 ]);

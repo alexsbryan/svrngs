@@ -2,14 +2,16 @@
 //! Where this computer meets its groups, in tiers (relay fallbacks; svrn-docs
 //! `rings/current/GROUP_RELAYS.md` §7, the operator's "Tiers", 2026-11-02,
 //! corrected by the relay-fallback charter: a browser may reach this
-//! computer only through the build's fallback while it answers, so that is
-//! the tier held; n0-emergency: n0's public relays are the third tier,
-//! behind ours, held only while neither ours nor a group's own answers,
-//! RELAY_COMMONS 1): the build's fallback alone while it answers, the
-//! groups' own relays alone when it does not, n0's alone when neither
-//! answers and no group names one of its own, one endpoint, so one home,
-//! serving every group; the build's whatever answers only when no group
-//! names one. svrngs-core's `Meeting::decide` is the one decision;
+//! computer only through a relay a page may take; n0-emergency: n0's
+//! public relays are the third tier, behind ours, held only while neither
+//! ours nor a group's own answers, RELAY_COMMONS 1; self-host: a group's
+//! own HTTPS relay comes before the build's, a plain-HTTP own relay stays
+//! behind it): a group's own HTTPS relays alone while they answer, the
+//! build's fallback alone while they do not (or a group names none), the
+//! groups' own relays alone when the build's does not answer, n0's alone
+//! when neither answers and no group names one of its own, one endpoint,
+//! so one home, serving every group; the build's whatever answers only
+//! when no group names one. svrngs-core's `Meeting::decide` is the one decision;
 //! [`Host::decide`] is the one place it changes the endpoint's relays
 //! (iroh-1.0.2 `Endpoint::insert_relay`, `remove_relay`, endpoint.rs:982,
 //! :996).
@@ -63,10 +65,29 @@ pub const LEFT_AFTER: u32 = 3;
 /// F1's residual: at its own relay 18 s of 60).
 pub const HELD_AT_MOST: u32 = 30;
 
+/// Why this computer meets a group the backup way, as the home page says
+/// it (relay fallbacks; n0-emergency; self-host): a closed set, one per
+/// state the page has words for.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Away {
+    /// The group names an HTTPS relay of its own and it is not answering,
+    /// so the build's fallback is the way in for now, and this computer
+    /// goes back to the group's own as soon as it answers (self-host).
+    Unanswered,
+    /// The group names no relay a phone may take — a plain-HTTP one stays
+    /// behind the build's, since a page cannot use it (self-host) — so the
+    /// public way is the way in while it answers.
+    Fallback,
+    /// Neither the build's nor a group's own answers: n0's public relays,
+    /// the emergency behind ours.
+    Emergency,
+}
+
 /// What this computer's endpoint holds now, and from what: where its
 /// groups meet, as last read from their records ([`Host::refresh`]), the
-/// tier, the relays, whether the build's fallback answered at the last ask,
-/// and the relays a `new` or `join` asked for before its group is kept.
+/// tier, the relays, whether the tier that comes first answered at the last
+/// ask, and the relays a `new` or `join` asked for before its group is kept.
 #[derive(Debug, Clone)]
 pub(crate) struct Held {
     meeting: Meeting,
@@ -81,8 +102,8 @@ pub(crate) struct Held {
 
 impl Held {
     /// What an endpoint built for `meeting`'s groups and the relays
-    /// `asked` holds, the build's fallback taken to answer until the first
-    /// ask.
+    /// `asked` holds, the tier that comes first taken to answer until the
+    /// first ask.
     pub(crate) fn built(meeting: Meeting, asked: BTreeSet<Url>) -> (Self, BTreeSet<Url>) {
         let (tier, relays) = meeting.decide(true);
         let held = Self {
@@ -110,8 +131,8 @@ impl Host {
     }
 
     /// The one decision applied (§7): the endpoint given the relays the
-    /// tier needs and relieved of the rest, given whether the build's
-    /// fallback `answers` (the last ask's, when `None`). Each change of
+    /// tier needs and relieved of the rest, given whether the tier that
+    /// comes first `answers` (the last ask's, when `None`). Each change of
     /// tier said.
     pub(crate) async fn decide(&self, answers: Option<bool>) {
         let (mut add, mut drop, mut was) = (Vec::new(), Vec::new(), Tier::Own);
@@ -142,77 +163,100 @@ impl Host {
         self.decide(None).await;
     }
 
-    /// Asks the build's fallback whether it answers, every [`ASKED_EVERY`],
-    /// and decides on each answer, until the node stops: the fallback is
-    /// the one tier a browser may reach this computer through, so its
-    /// answer, not the own tier's, moves the meeting. At the build's tier, the
-    /// answer is whether this endpoint is [`Self::registered`] there, since
-    /// a relay may take a connection and register nobody (review F1), and
-    /// one reached is left only after [`LEFT_AFTER`] misses (review F2). At
-    /// the groups' own or n0's, the answer is whether the build's answers
-    /// the ask, since the endpoint holds neither and a registration there
-    /// says nothing of it.
+    /// Asks the tier that comes first — the group's own HTTPS relay when a
+    /// group names one, else the build's fallback — whether it answers,
+    /// every [`ASKED_EVERY`], and decides on each answer, until the node
+    /// stops: that tier is the one a browser may reach this computer
+    /// through, so its answer, not the other's, moves the meeting. At it,
+    /// the answer is whether this endpoint is [`Self::registered`] there,
+    /// since a relay may take a connection and register nobody (review F1),
+    /// and one reached is left only after [`LEFT_AFTER`] misses (review
+    /// F2). Not at it, the answer is whether it answers the ask, since the
+    /// endpoint holds it not and a registration there says nothing of it.
     pub(crate) async fn check(self: Arc<Self>) {
         let (mut every, mut misses, mut reached) = (tokio::time::interval(ASKED_EVERY), 0, false);
         let (mut wait, mut held_for) = (0, 0);
         loop {
             every.tick().await;
             let Held { meeting, tier, .. } = self.held.borrow().clone();
-            let build = meeting.build().clone();
-            let at_build = matches!(tier, Tier::Fallback | Tier::Unowned);
-            let holding = !at_build && held_for > 0;
+            // The tier that comes first: the group's own HTTPS relay when
+            // a group names one, else the build's (self-host).
+            let own_https = meeting.own_https();
+            let first_is_build = own_https.is_empty();
+            let first = if first_is_build {
+                meeting.build().clone()
+            } else {
+                own_https
+            };
+            let at_first = if first_is_build {
+                matches!(tier, Tier::Fallback | Tier::Unowned)
+            } else {
+                tier == Tier::Own
+            };
+            let holding = !at_first && held_for > 0;
             if holding {
                 held_for -= 1;
-                tracing::debug!(target: "tiers", misses, wait, left = held_for, "tiers: the build's fallback not asked — a move there registered nowhere, so moves are held off");
+                tracing::debug!(target: "tiers", misses, wait, left = held_for, "tiers: the tier that comes first not asked — a move there registered nowhere, so moves are held off");
             }
-            let ask = !at_build && !holding;
-            // With no build tier, nothing to answer: the tier is the
+            let ask = !at_first && !holding;
+            // With no first tier, nothing to answer: the tier is the
             // groups' own whatever, and a group asked for next starts at
             // the build's until the first ask says otherwise.
-            let answered = build.is_empty()
-                || match at_build {
-                    true => self.registered(&build).await,
-                    false => ask && any_answers(&*self.transport, &build).await,
+            let answered = first.is_empty()
+                || match at_first {
+                    true => self.registered(&first).await,
+                    false => ask && any_answers(&*self.transport, &first).await,
                 };
             misses = if answered { 0 } else { misses + 1 };
-            // A move to the build's that never registered holds the next
+            // A move to the first tier that never registered holds the next
             // off, twice as long each time; a registration ends the hold.
-            if at_build && !answered && !reached {
+            if at_first && !answered && !reached {
                 wait = (wait * 2).clamp(1, HELD_AT_MOST);
                 held_for = wait;
-            } else if at_build && answered {
+            } else if at_first && answered {
                 wait = 0;
             }
-            // Kept only once reached: a fallback this computer reached and
+            // Kept only once reached: a tier this computer reached and
             // lost for a moment is held; one it never reached is left at once,
             // as is one a person's press left while this ask ran.
             let pressed = self.held.borrow().tier != tier;
-            let kept = !pressed && at_build && !answered && reached && misses < LEFT_AFTER;
-            reached = at_build && (answered || kept);
-            tracing::debug!(target: "tiers", build = build.len(), ?tier, answered, misses, reached, pressed, kept, wait, "tiers: whether the build's fallback answers, at the build's whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
+            let kept = !pressed && at_first && !answered && reached && misses < LEFT_AFTER;
+            reached = at_first && (answered || kept);
+            tracing::debug!(target: "tiers", first = first.len(), ?tier, answered, misses, reached, pressed, kept, wait, "tiers: whether the tier that comes first answers, at it whether this endpoint is registered there; a miss short of LEFT_AFTER in a row keeps one this computer reached");
             self.decide(Some(answered || kept)).await;
         }
     }
 
     /// The home page's button (KEEP_GOING_AT_HOME 7), for someone who cannot
-    /// wait out [`LEFT_AFTER`]: the build's fallback asked once now and, when
-    /// it does not answer, left at once for the groups' own, else for n0's,
-    /// the emergency behind it, and said home only once this endpoint is
-    /// [`Self::registered`] at the one it left for: "moved" for the own,
-    /// "backup" for n0's. What happened, as the page's address says it. An
-    /// answer moves nobody: a blip decides nothing here, and [`Self::check`]
-    /// goes on as it was.
+    /// wait out [`LEFT_AFTER`]: the tier that comes first — the group's own
+    /// HTTPS relay when a group names one, else the build's fallback —
+    /// asked once now and, when it does not answer, left at once for the
+    /// other, else for n0's, the emergency behind the build's, and said
+    /// home only once this endpoint is [`Self::registered`] at the one it
+    /// left for: "stayed", or "stayed-own" when the own answers, "moved"
+    /// for a move to the own, "moved-public" for a move to the build's,
+    /// "backup" for n0's. What happened, as the page's address says it.
+    /// An answer moves nobody: a blip decides nothing here, and
+    /// [`Self::check`] goes on as it was.
     pub(crate) async fn check_now(&self) -> &'static str {
         let meeting = self.held.borrow().meeting.clone();
-        let build = meeting.build();
-        let answered = build.is_empty() || any_answers(&*self.transport, build).await;
+        let own_https = meeting.own_https();
+        let first_is_own = !own_https.is_empty();
+        let first = if first_is_own {
+            own_https
+        } else {
+            meeting.build().clone()
+        };
+        let answered = first.is_empty() || any_answers(&*self.transport, &first).await;
         self.decide(Some(answered).filter(|a| !a)).await;
         let (tier, held) = meeting.decide(false);
         let moved = !answered && self.registered(&held).await;
-        tracing::debug!(target: "tiers", answered, moved, ?tier, "tiers: a person asked now whether the build's fallback answers, and left it if not");
+        tracing::debug!(target: "tiers", answered, moved, first_is_own, ?tier, "tiers: a person asked now whether the tier that comes first answers, and left it if not");
         match (answered, moved) {
+            (true, _) if first_is_own => "stayed-own",
             (true, _) => "stayed",
             (_, true) if tier == Tier::Emergency => "backup",
+            (_, true) if first_is_own && !meeting.build().is_empty() => "moved-public",
             (_, true) => "moved",
             _ => "nowhere",
         }
@@ -260,22 +304,29 @@ impl Host {
             .map(Into::into)
     }
 
-    /// The tier this computer meets `group` at, when it is not the group's
-    /// own: the build's fallback, the group naming relays of its own and
-    /// this computer at the fallback because it answers, or n0's, the
-    /// emergency behind it, while neither that nor a group's own answers
-    /// (relay fallbacks; n0-emergency). The home page says so. `None`
-    /// otherwise.
-    pub(crate) fn at_fallback(&self, group: &str) -> Option<Tier> {
+    /// Why this computer meets `group` the backup way, when it is not the
+    /// group's own: the build's fallback, the group naming relays of its
+    /// own and this computer at the fallback — because the own HTTPS
+    /// relay is not answering, or because the own is plain-HTTP and stays
+    /// behind the build's (self-host) — or n0's, the emergency behind it,
+    /// while neither that nor a group's own answers (relay fallbacks;
+    /// n0-emergency). The home page says so. `None` otherwise.
+    pub(crate) fn at_fallback(&self, group: &str) -> Option<Away> {
         let (home, tier) = (self.home(), self.held.borrow().tier);
-        let own = self.meeting(group).own().clone();
-        let at = home.as_ref().is_some_and(|h| match tier {
+        let meeting = self.meeting(group);
+        let own = meeting.own().clone();
+        let away = home.as_ref().is_some_and(|h| match tier {
             Tier::Emergency => true,
             Tier::Fallback => !own.is_empty() && !own.contains(h),
             _ => false,
         });
-        tracing::debug!(target: "tiers", group, home = ?home.as_ref().map(Url::as_str), ?tier, at, "tiers: whether this computer meets the group at its fallback");
-        at.then_some(tier)
+        let away = away.then(|| match tier {
+            Tier::Emergency => Away::Emergency,
+            _ if meeting.own_https().is_empty() => Away::Fallback,
+            _ => Away::Unanswered,
+        });
+        tracing::debug!(target: "tiers", group, home = ?home.as_ref().map(Url::as_str), ?tier, ?away, "tiers: why this computer meets the group the backup way, as the home page is told");
+        away
     }
 
     /// Each move of this computer's home said, until the node stops, with

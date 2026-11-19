@@ -27,8 +27,11 @@ const SAID = {
     `You left ${query.left}. Rejoining needs a new invitation, and this computer can’t rejoin yet.`,
   // The button below, as home.rs `connection` answers it.
   stayed: () => 'The public way answers, so nothing changed.',
+  'stayed-own': () => 'Where your group usually meets answers, so nothing changed.',
   moved: () =>
     'The public way did not answer, so this computer moved to where your group usually meets.',
+  'moved-public': () =>
+    'Where your group usually meets did not answer, so this computer moved to the public way for now.',
   backup: () =>
     'The public way did not answer, so this computer is reachable through its backup for now.',
   nowhere: () => 'The public way did not answer, and neither did anywhere else your groups meet.',
