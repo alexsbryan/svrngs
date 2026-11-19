@@ -81,18 +81,16 @@ pub fn believe(asked: String) -> Result<Group, JsError> {
     let Some(seed) = answered(&asked.group, &asked.seed) else {
         return Err(refuse("the answer's seed does not hash to the group it names"));
     };
+    let (id, person, older) = (asked.group, asked.person, seed.older());
     emit(&format!(
-        "JOIN: the answer is believed — the group {}, a device link of {:?}, made by an older svrngs: {}",
-        asked.group,
-        asked.person,
-        seed.older()
+        "JOIN: the answer is believed — the group {id}, a device link of {person:?}, made by an older svrngs: {older}"
     ));
     Ok(Group {
-        id: asked.group,
+        id,
         name: seed.name().to_string(),
-        person: asked.person.map(|p| p.to_string()),
+        person: person.map(|p| p.to_string()),
         maker: seed.founder().to_string(),
-        older: seed.older().then(|| svrngs_core::made_older(seed.name().as_str())),
+        older: older.then(|| svrngs_core::made_older(seed.name().as_str())),
     })
 }
 
