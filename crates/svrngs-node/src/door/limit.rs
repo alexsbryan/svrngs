@@ -95,10 +95,8 @@ impl Counts {
         let viewers = self.0.entry(lend.name.clone()).or_default();
         viewers.retain(|_, v| v.counted(now));
         let known = viewers.contains_key(actor);
-        if let Some(limit) = lend
-            .limit
-            .filter(|l| !known && viewers.len() >= usize::from(l.get()))
-        {
+        let at_most = |l: &NonZeroU16| !known && viewers.len() >= usize::from(l.get());
+        if let Some(limit) = lend.limit.filter(at_most) {
             return Verdict::Full {
                 using: u32::try_from(viewers.len()).unwrap_or(u32::MAX),
                 limit,
@@ -133,10 +131,8 @@ impl Counts {
 
     /// How many people are counted on `lend` at `now`.
     pub fn people(&self, lend: &LendName, now: Instant) -> u32 {
-        let n = self
-            .0
-            .get(lend)
-            .map_or(0, |p| p.values().filter(|v| v.counted(now)).count());
+        let viewers = self.0.get(lend);
+        let n = viewers.map_or(0, |p| p.values().filter(|v| v.counted(now)).count());
         u32::try_from(n).unwrap_or(u32::MAX)
     }
 }
