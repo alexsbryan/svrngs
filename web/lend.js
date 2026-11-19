@@ -890,20 +890,17 @@ function served(asked, res, said, set) {
   if (set) headed.set(PAGE_COOKIES, cookieFor(asked.jar, '/', true));
   const type = res.headers.get('content-type') ?? '';
   const html = asked.request.method === 'GET' && type.includes('text/html');
+  const asIs = (body) =>
+    new Response(body, { status: res.status, statusText: res.statusText, headers: headed });
   // A share refusal to a tab: the door drew svrngs's own page of the words
   // (door.rs `paged`; share-refusal), shown as it is — no shim of the
   // lend's in svrngs's page, and nothing of the lend's but the status.
   if (html && res.headers.get(REFUSED) === 'share') {
     trace(`RUNTIME: ${asked.path} is svrngs's own share refusal, shown as its page`);
-    return new Response(answer, {
-      status: res.status,
-      statusText: res.statusText,
-      headers: headed,
-    });
+    return asIs(answer);
   }
   if (html) return shimmed(asked, res, answer, headed);
-  const body = said && answer ? counted(answer, said) : answer;
-  return new Response(body, { status: res.status, statusText: res.statusText, headers: headed });
+  return asIs(said && answer ? counted(answer, said) : answer);
 }
 
 // A lend's answer `res` at the page's own origin (origin.rs `inert`), made

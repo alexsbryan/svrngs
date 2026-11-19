@@ -43,6 +43,7 @@ Object.assign(globalThis, {
     createElement: (tag) => ({
       tag,
       textContent: '',
+      style: {},
       attributes: {},
       setAttribute(name, value) {
         this.attributes[name] = value;
@@ -153,7 +154,7 @@ test('a subresource refused while the share is spent shows the answer’s words 
   await settled();
   assert.equal(appended.length, 1, 'one banner');
   assert.equal(appended[0].textContent, SPENT);
-  assert.match(appended[0].attributes.style, /position:fixed/);
+  assert.match(appended[0].style.cssText, /position:fixed/);
   // The next refusal says its words in the same banner, not a second one.
   answer = async () => refused('Sam’s computer has used its share for now.');
   await window.fetch('https://lend.example/segment');
