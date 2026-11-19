@@ -614,7 +614,12 @@ user friendly gate)". So a media lend is not answered over the commons,
 and the lender's door holds the rule. It lands with a phone's WebRTC path,
 which spike 1 found direct on a home's Wi-Fi and never on AT&T cellular
 (svrn-docs `rings/current/webrtc-spike/` and `webrtc-transport-spike/`; RELAY_COMMONS §4,
-"Media").
+"Media"). Then: "we host our relay and just throttle anything that doesn't
+seem like a normal discovery request for now", and "Yeah add that rule". So
+the relays hold it themselves, by the shape of the traffic: each computer
+gets a token bucket, a low steady rate with a burst that opens an app. What
+connects, chats and syncs passes; what streams is held. The door only says
+why (RELAY_COMMONS §1 item 8, §4).
 
 By the operator, 2026-11-08, on `docs/LESSONS_FROM_BITTORRENT.md`: "Ok solve
 them all", all four parts built, overriding the counted-member trigger of the
