@@ -7,7 +7,8 @@
 //! decisions are asked on one wire (common/on_wire.rs), each relay's answer
 //! and registration the wire's (`Wire::relay`), the clock paused. Over real
 //! relays, each its seam's own: a dial at a relay this endpoint does not
-//! hold, and the relay that carried an action as iroh's path names it; each
+//! hold, the relay that carried an action as iroh's path names it, and a
+//! relay with a tiny rate throttling a lender (share-refusal); each
 //! relay plain HTTP on 127.0.0.1, as `svrngs relay --at` serves one.
 
 #![allow(clippy::disallowed_methods, clippy::disallowed_types)]
@@ -16,18 +17,21 @@ mod common;
 mod on_wire;
 
 use std::net::SocketAddr;
+use std::num::NonZeroU32;
 use std::time::{Duration, Instant};
 
-use iroh_relay::server::{RelayConfig as RelayServer, Server, ServerConfig};
+use iroh_relay::server::{ClientRateLimit, RelayConfig as RelayServer, Server, ServerConfig};
+use svrngs_core::pass::Label;
 use svrngs_core::relay::{Tier, Url};
 use svrngs_node::iroh::{build_relayed_endpoint, EndpointAddr, RelayConfig, RelayUrl, SecretKey};
 use svrngs_node::node::{Node, Relaying};
 use svrngs_node::SigningKey;
 
-/// A plain-HTTP relay on 127.0.0.1 at `at` (port 0 for any), and its URL.
-async fn relay(at: SocketAddr) -> (Server, String) {
+/// A plain-HTTP relay on 127.0.0.1 as `relay` configures it (its port 0
+/// for any), and its URL.
+async fn relay(relay: RelayServer) -> (Server, String) {
     let mut config = ServerConfig::default();
-    config.relay = Some(RelayServer::new(at));
+    config.relay = Some(relay);
     let server = Server::spawn(config).await.expect("a relay on 127.0.0.1");
     let url = format!("http://{}/", server.http_addr().unwrap());
     (server, url)
@@ -48,7 +52,10 @@ fn at(url: &str) -> RelayConfig {
 #[tokio::test(flavor = "multi_thread")]
 async fn a_dial_reaches_a_member_at_a_relay_this_computer_does_not_hold() {
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
-    let ((_r1, u1), (_r2, u2)) = (relay(any).await, relay(any).await);
+    let ((_r1, u1), (_r2, u2)) = (
+        relay(RelayServer::new(any)).await,
+        relay(RelayServer::new(any)).await,
+    );
     let alpn = b"tiers/0".to_vec();
     let bind = |seed: u8, url: String| {
         let alpn = vec![alpn.clone()];
@@ -336,9 +343,87 @@ async fn pressed_with_the_fallback_answering_nothing_moves() {
 async fn the_door_says_which_relay_carried_an_action() {
     let (said, _heard) = common::heard("door=info");
     let any: SocketAddr = "127.0.0.1:0".parse().unwrap();
-    let (_relay, url) = relay(any).await;
-    let (_dir, node) = ada(&url, &url).await;
-    homed(&node, &url).await;
+    let (_relay, url) = relay(RelayServer::new(any)).await;
+    let (_dir, node, dialer, conn, label) = sam_reaches_ada_at(&url, 0).await;
+    let reply = ask(&conn, &label, "").await;
+    assert!(reply.starts_with("HTTP/1.1 200"), "{reply}");
+    let lines = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let line = lines.lines().find(|l| l.contains("door: let in"));
+    let line = line.unwrap_or_else(|| panic!("no line: {lines}"));
+    assert!(line.contains(&url), "{line}");
+    // apps/jellyfin/check/trio.py reads the fields before it, in this order.
+    assert!(line.contains(" relayed=Some(true) rtt_ms="), "{line}");
+    dialer.close().await;
+    node.endpoint().close().await;
+}
+
+/// **A relay with a tiny rate throttles a lender for real** (share-refusal;
+/// RELAY_COMMONS design 3, "The signal" and "The refusal"): an open relay
+/// held to a megabyte a second with a 64 KiB burst, a member pulling a
+/// range through it, so the lender's own endpoint is the connection the
+/// relay reports rate limited (iroh's `relay_conns_ratelimited`, read by
+/// `Host::watch_share`); the door then answers the next range over that
+/// relay `429`, `x-svrngs-refused: share`, in the design's words, while a
+/// request under the door's line passes. Planted, watched red: `Net::ratelimited`
+/// answering zero, where the range after the pull was served again and the
+/// poll timed out.
+#[tokio::test]
+async fn a_relay_with_a_tiny_rate_throttles_a_lender_and_the_door_refuses_a_range() {
+    let (said, _heard) = common::heard("share=debug");
+    let mut held = RelayServer::new("127.0.0.1:0".parse::<SocketAddr>().unwrap());
+    let mut share = ClientRateLimit::new(NonZeroU32::new(1_000_000).unwrap());
+    share.max_burst_bytes = NonZeroU32::new(64 * 1024);
+    held.limits.client_rx = Some(share);
+    let (_relay, url) = relay(held).await;
+    let (_dir, node, dialer, conn, label) = sam_reaches_ada_at(&url, 256 * 1024).await;
+    // The pull: its bytes go up through the relay until the bucket is spent.
+    let pulled = ask(&conn, &label, "Range: bytes=0-\r\n").await;
+    assert!(pulled.starts_with("HTTP/1.1 206"), "{pulled}");
+    assert!(pulled.len() > 256 * 1024, "whole: {}", pulled.len());
+    // The next range is refused once the watch, each second, has read the report.
+    let refused = tokio::time::timeout(Duration::from_secs(30), async {
+        loop {
+            let answered = ask(&conn, &label, "Range: bytes=0-\r\n").await;
+            if answered.starts_with("HTTP/1.1 429") {
+                return answered;
+            }
+            tokio::time::sleep(Duration::from_millis(500)).await;
+        }
+    })
+    .await
+    .expect("the range over the spent relay was refused");
+    assert!(refused.contains("x-svrngs-refused: share"), "{refused}");
+    assert!(refused.contains("has used its share of the public way for now"));
+    let small = ask(&conn, &label, "").await;
+    assert!(
+        small.starts_with("HTTP/1.1 200") && small.ends_with("ok"),
+        "{small}"
+    );
+    // The signal was the report of the build's relay this computer held.
+    let lines = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
+    let seen = lines
+        .lines()
+        .any(|l| l.contains("count=1") && l.contains("at_build=true"));
+    assert!(seen, "the relay's report was seen: {lines}");
+    dialer.close().await;
+    node.endpoint().close().await;
+}
+
+/// Ada's computer homed at `url`, her build's relay, lending `telly` (a
+/// [`serving`] of `big`) to her group, and Sam, let in, connected to her
+/// through `url` alone: a member's endpoint with no way but the relay.
+async fn sam_reaches_ada_at(
+    url: &str,
+    big: usize,
+) -> (
+    tempfile::TempDir,
+    Node,
+    iroh::Endpoint,
+    iroh::endpoint::Connection,
+    Label,
+) {
+    let (dir, node) = ada(url, url).await;
+    homed(&node, url).await;
     let group = node.rail().namespaces().unwrap().remove(0);
     let (sam, rail) = (SigningKey::from_bytes(&[9; 32]), node.rail());
     // Sam let in by a link Ada's computer mints: the group is sources-v1.
@@ -353,17 +438,10 @@ async fn the_door_says_which_relay_carried_an_action() {
         },
         |redeem| drop(rail.commit(&group, redeem).unwrap().unwrap()),
     );
-    let port = pings()
-        .await
-        .rsplit(':')
-        .next()
-        .unwrap()
-        .trim_end_matches('/')
-        .parse::<u16>();
+    let port = serving(big).await;
     let lends = svrngs_node::lend::lends_dir(node.rail().root());
     std::fs::create_dir_all(&lends).unwrap();
-    let lent =
-        serde_json::json!({ "port": port.unwrap(), "kind": "app", "limit": 3, "groups": [group] });
+    let lent = serde_json::json!({ "port": port, "kind": "app", "limit": 3, "groups": [group] });
     std::fs::write(lends.join("telly.json"), lent.to_string()).unwrap();
 
     let map = iroh::RelayMap::from(url.parse::<RelayUrl>().unwrap());
@@ -377,21 +455,18 @@ async fn the_door_says_which_relay_carried_an_action() {
         .unwrap();
     let at = EndpointAddr::new(node.endpoint().id()).with_relay_url(url.parse().unwrap());
     let conn = dialer.connect(at, svrngs_node::alpn::ALPN).await.unwrap();
+    let label = Label::of(node.endpoint().id().as_bytes(), "telly");
+    (dir, node, dialer, conn, label)
+}
+
+/// `GET /lend/<label>/` over `conn`, `extra` a header line (or none), the
+/// answer read whole: a member's request through the door, on the stream.
+async fn ask(conn: &iroh::endpoint::Connection, label: &Label, extra: &str) -> String {
     let (mut send, mut recv) = conn.open_bi().await.unwrap();
-    let label = svrngs_core::pass::Label::of(node.endpoint().id().as_bytes(), "telly");
-    let ask = format!("GET /lend/{label}/ HTTP/1.1\r\nHost: x\r\nConnection: close\r\n\r\n");
-    send.write_all(ask.as_bytes()).await.unwrap();
-    let reply = recv.read_to_end(1 << 16).await.unwrap();
-    let reply = String::from_utf8_lossy(&reply);
-    assert!(reply.starts_with("HTTP/1.1 200"), "{reply}");
-    let lines = String::from_utf8_lossy(&said.0.lock().unwrap()).into_owned();
-    let line = lines.lines().find(|l| l.contains("door: let in"));
-    let line = line.unwrap_or_else(|| panic!("no line: {lines}"));
-    assert!(line.contains(&url), "{line}");
-    // apps/jellyfin/check/trio.py reads the fields before it, in this order.
-    assert!(line.contains(" relayed=Some(true) rtt_ms="), "{line}");
-    dialer.close().await;
-    node.endpoint().close().await;
+    let head =
+        format!("GET /lend/{label}/ HTTP/1.1\r\nHost: x\r\n{extra}Connection: close\r\n\r\n");
+    send.write_all(head.as_bytes()).await.unwrap();
+    String::from_utf8_lossy(&recv.read_to_end(1 << 23).await.unwrap()).into_owned()
 }
 
 /// **A computer whose groups name no relay meets at n0's while ours does
@@ -480,22 +555,34 @@ async fn ada_beside_n0() -> (String, tempfile::TempDir, Node, svrngs_node::group
     (n0, dir, node, seed)
 }
 
-/// A server on 127.0.0.1 that answers every request 200 and is no relay:
-/// svrngs's ask of it passes (`tiers::answers`, `GET /ping`), and an
-/// endpoint never registers there, as at a captive portal taking TCP 443.
-async fn pings() -> String {
+/// A server on 127.0.0.1, and its port, that answers a request with
+/// `Range:` a 206 of `big` bytes and any other 200 `ok`: what a lend
+/// serves in the door's scenes over a real relay.
+async fn serving(big: usize) -> u16 {
     use tokio::io::{AsyncReadExt as _, AsyncWriteExt as _};
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let url = format!("http://{}/", listener.local_addr().unwrap());
+    let port = listener.local_addr().unwrap().port();
     tokio::spawn(async move {
         while let Ok((mut asked, _)) = listener.accept().await {
-            let _ = asked.read(&mut [0; 1024]).await;
-            let _ = asked
-                .write_all(b"HTTP/1.1 200 OK\r\ncontent-length: 0\r\n\r\n")
-                .await;
+            let mut buf = vec![0u8; 4096];
+            let n = asked.read(&mut buf).await.unwrap_or(0);
+            let ranged = String::from_utf8_lossy(&buf[..n])
+                .to_ascii_lowercase()
+                .contains("range:");
+            let (status, body) = if ranged {
+                ("206 Partial Content", vec![b'r'; big])
+            } else {
+                ("200 OK", b"ok".to_vec())
+            };
+            let head = format!(
+                "HTTP/1.1 {status}\r\ncontent-length: {}\r\nconnection: close\r\n\r\n",
+                body.len()
+            );
+            let _ = asked.write_all(head.as_bytes()).await;
+            let _ = asked.write_all(&body).await;
         }
     });
-    url
+    port
 }
 
 /// **A fallback this computer cannot register at is left for its own**

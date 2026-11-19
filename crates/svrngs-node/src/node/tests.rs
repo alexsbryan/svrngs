@@ -577,28 +577,7 @@ async fn a_home_that_flips_and_comes_back_is_said_once() {
 /// set spending nothing, where the share stayed spent.
 #[tokio::test(start_paused = true)]
 async fn the_relay_s_report_spends_the_share_for_the_life_of_the_connection() {
-    let dir = tempfile::tempdir().unwrap();
-    let key = SigningKey::from_bytes(&[98; 32]);
-    let wire = Wire::default();
-    let (build, own): (Url, Url) = (
-        "http://127.0.0.1:9/".parse().unwrap(),
-        "http://127.0.0.1:10/".parse().unwrap(),
-    );
-    wire.relay(&crate::iroh::RelayUrl::from(build.clone()), Relaying::Up);
-    wire.relay(&crate::iroh::RelayUrl::from(own.clone()), Relaying::Up);
-    let node = Node::on_wire_relayed(
-        &wire,
-        (dir.path().into(), key),
-        &crate::iroh::RelayConfig {
-            relay_urls: vec![build.to_string()],
-            n0_services: false,
-            loopback_only: false,
-        },
-        &[own.clone()],
-        Duration::from_secs(3600),
-    )
-    .await
-    .unwrap();
+    let (_dir, wire, node, build, _own) = sharing(98, Relaying::Up).await;
     let host = node.host();
     let id = node.net().id();
     assert!(
@@ -648,28 +627,7 @@ async fn the_relay_s_report_spends_the_share_for_the_life_of_the_connection() {
 /// the endpoint holds the group's own.
 #[tokio::test(start_paused = true)]
 async fn a_report_while_this_computer_holds_no_build_relay_spends_nothing() {
-    let dir = tempfile::tempdir().unwrap();
-    let key = SigningKey::from_bytes(&[99; 32]);
-    let wire = Wire::default();
-    let (build, own): (Url, Url) = (
-        "http://127.0.0.1:9/".parse().unwrap(),
-        "http://127.0.0.1:10/".parse().unwrap(),
-    );
-    wire.relay(&crate::iroh::RelayUrl::from(build.clone()), Relaying::Down);
-    wire.relay(&crate::iroh::RelayUrl::from(own.clone()), Relaying::Up);
-    let node = Node::on_wire_relayed(
-        &wire,
-        (dir.path().into(), key),
-        &crate::iroh::RelayConfig {
-            relay_urls: vec![build.to_string()],
-            n0_services: false,
-            loopback_only: false,
-        },
-        &[own.clone()],
-        Duration::from_secs(3600),
-    )
-    .await
-    .unwrap();
+    let (_dir, wire, node, build, own) = sharing(99, Relaying::Down).await;
     // The first ask finds the build's relay down, so the endpoint holds the
     // group's own alone.
     tokio::time::sleep(Duration::from_secs(12)).await;
@@ -685,4 +643,32 @@ async fn a_report_while_this_computer_holds_no_build_relay_spends_nothing() {
         !node.host().share.borrow().limited,
         "the report is not about the build's relay, so nothing is spent"
     );
+}
+
+/// A computer on a wire whose build's relay is `build` (as `state` has
+/// it) and whose group's own is `own`, up: the share's scenes.
+async fn sharing(seed: u8, state: Relaying) -> (tempfile::TempDir, Wire, Node, Url, Url) {
+    let dir = tempfile::tempdir().unwrap();
+    let key = SigningKey::from_bytes(&[seed; 32]);
+    let wire = Wire::default();
+    let (build, own): (Url, Url) = (
+        "http://127.0.0.1:9/".parse().unwrap(),
+        "http://127.0.0.1:10/".parse().unwrap(),
+    );
+    wire.relay(&crate::iroh::RelayUrl::from(build.clone()), state);
+    wire.relay(&crate::iroh::RelayUrl::from(own.clone()), Relaying::Up);
+    let node = Node::on_wire_relayed(
+        &wire,
+        (dir.path().into(), key),
+        &crate::iroh::RelayConfig {
+            relay_urls: vec![build.to_string()],
+            n0_services: false,
+            loopback_only: false,
+        },
+        &[own.clone()],
+        Duration::from_secs(3600),
+    )
+    .await
+    .unwrap();
+    (dir, wire, node, build, own)
 }
