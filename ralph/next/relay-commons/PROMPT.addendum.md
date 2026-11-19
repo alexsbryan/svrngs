@@ -13,6 +13,23 @@ to run interminable check.sh runs -- let's just save that for the very end").
 - Close each unit on its row's own named focused checks.
 - The commit hook's `check.sh --fast` is the only check.sh a unit meets.
 
+**Decisions** (operator, 2026-11-18: "Continue", after these were put to
+them as recommendations):
+- **A spent share stays spent** for the life of that relay connection.
+  iroh 1.4.2 cannot remake a relay connection (1b08385c's probe), so a
+  timed clear would let a second throttling stall with no words.
+  share-refusal removes the minute's timer and `Net::remade`. The refusal
+  holds until the connection to the build's relay ends of itself.
+- **Each row's own allowance is its ceiling**, for product and tests alike.
+  Past it, after an economizing pass, stop with the counts and a ready diff
+  (`ralph-result needs-human`). Do not carry on because the queue's total
+  holds.
+- **The queue's test envelope is 1,200** (from 900). It takes in
+  n0-emergency's 240 against 120.
+- **DESIGN's 60 lines are net growth**, added minus removed.
+- **JavaScript gets no raise in advance.** At its cap, stop with the
+  measured counts.
+
 This is a dedicated worktree off main. Do not import another worktree's
 dirty files.
 - **Your scope:** this worktree and synthetic identities.
