@@ -23,11 +23,7 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-#[expect(
-    clippy::disallowed_types,
-    reason = "the code store is one process's map, read and written by its own routes"
-)]
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::extract::{Path, State};
@@ -207,7 +203,7 @@ impl S256Challenge {
     reason = "the code store is one process's map, read and written by its own routes"
 )]
 pub(crate) struct Codes<T> {
-    inner: Mutex<HashMap<String, (T, i64, bool)>>,
+    inner: std::sync::Mutex<HashMap<String, (T, i64, bool)>>,
     rng: SystemRandom,
 }
 
@@ -218,7 +214,7 @@ impl<T: Clone> Codes<T> {
     )]
     pub(crate) fn new() -> Self {
         Self {
-            inner: Mutex::new(HashMap::new()),
+            inner: std::sync::Mutex::new(HashMap::new()),
             rng: SystemRandom::new(),
         }
     }

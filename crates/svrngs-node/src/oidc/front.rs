@@ -102,12 +102,8 @@ fn asked(query: Option<&str>) -> Result<BTreeMap<String, String>, String> {
 
 /// The ask refused, in a person's words, with the fact that refused it.
 fn refused(lend: &Lend, why: &str) -> Response {
-    tracing::debug!(target: "oidc", lend = %lend.name, why, "oidc: refused — the app's ask at the authorize path");
-    LendRefusal::Closed.say(
-        StatusCode::BAD_REQUEST,
-        format!(
-            "{} asked to sign you in in a way svrngs does not answer: {why}",
-            lend.name
-        ),
-    )
+    let name = &lend.name;
+    tracing::debug!(target: "oidc", lend = %name, why, "oidc: refused — the app's ask at the authorize path");
+    let words = format!("{name} asked to sign you in in a way svrngs does not answer: {why}");
+    LendRefusal::Closed.say(StatusCode::BAD_REQUEST, words)
 }
